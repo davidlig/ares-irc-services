@@ -17,6 +17,7 @@ use LogicException;
 use OverflowException;
 use Throwable;
 
+use function filter_var;
 use function sprintf;
 
 use const FILTER_VALIDATE_EMAIL;

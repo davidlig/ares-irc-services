@@ -27,8 +27,9 @@ register:
   example: "%command_prefix%\x02\x0303REGISTER #channel Gemeinschaftsprojekt\x03\x0F"
   short: "Einen Channel registrieren."
   help: |-
-    Registriert und verknüpft einen Channel mit Ihrem Nickname. Sie müssen bei
-    %nickserv% identifiziert sein.
+    Registriert einen Channel und verknüpft ihn mit Ihrem Nickname. Sie
+    müssen bei %nickserv% identifiziert sein. Im Modus APPROVAL muss ein
+    IRCop die Anfrage genehmigen.
   success: "\x0303✔\x03 Channel \x02%channel%\x02 wurde registriert."
   already_registered: "\x0304✗\x03 Der Channel \x02%channel%\x02 ist bereits registriert."
   channel_not_on_network: "\x0304✗\x03 Channel \x02%channel%\x02 existiert nicht im Netzwerk."
@@ -36,6 +37,74 @@ register:
   insufficient_channel_rank: "\x0304✗\x03 Du musst mindestens Operator-Status in \x02%channel%\x02 haben, um den Channel zu registrieren."
   limit_exceeded: "\x0304✗\x03 Sie haben das Maximum von %max% registrierten Channels erreicht."
   throttled: "\x0304✗\x03 Sie müssen \x02%minutes%\x02 Minute(n) warten, bevor Sie einen weiteren Channel registrieren."
+
+  awaiting_approval: "\x0307✔\x03 Die Anfrage für %channel% wartet auf die Freigabe durch einen IRCop."
+  restricted_indefinite: "\x0304✗\x03 Neue Registrierungsanfragen für \x02%channel%\x02 sind unbegrenzt gesperrt."
+  restricted_until: "\x0304✗\x03 Neue Registrierungsanfragen für \x02%channel%\x02 sind bis %date% gesperrt"
+
+# --- REGMODE ---------------------------------------------------------------
+regmode:
+  syntax: "REGMODE {DIRECT|APPROVAL|STATUS}"
+  example: "%command_prefix%\x02\x0303REGMODE APPROVAL\x03\x0F"
+  short: "Registrierungsmodus für Channels festlegen oder anzeigen."
+  help: |-
+    Registrierung auf DIRECT oder APPROVAL setzen oder STATUS abfragen.
+    DIRECT ist der Standard und registriert sofort.
+  status: "\x0307ℹ\x03 Der Channel-Registrierungsmodus ist %mode%."
+  changed: "\x0303✔\x03 Der Channel-Registrierungsmodus ist jetzt %mode%."
+
+# --- CREG ------------------------------------------------------------------
+creg:
+  syntax: "CREG {PENDING [page]|ACCEPT <#channel>|REJECT <#channel> <reason>}"
+  pending.syntax: "CREG PENDING [page]"
+  pending.example: "%command_prefix%\x02\x0303CREG PENDING\x03\x0F"
+  pending.short: "Listet offene Anfragen auf einer begrenzten Seite auf."
+  pending.help: "Listet offene Anfragen auf einer begrenzten Seite auf."
+  accept.syntax: "CREG ACCEPT <#channel>"
+  accept.example: "%command_prefix%\x02\x0303CREG ACCEPT #channel\x03\x0F"
+  accept.short: "Genehmigt eine Channel-Registrierungsanfrage."
+  accept.help: "Prüft die Anfrage erneut und aktiviert die Registrierung."
+  reject.syntax: "CREG REJECT <#channel> <reason>"
+  reject.example: "%command_prefix%\x02\x0303CREG REJECT #channel Benötigt ein öffentliches Topic\x03\x0F"
+  reject.short: "Lehnt eine Channel-Registrierungsanfrage ab."
+  reject.help: "Lehnt eine Anfrage mit erforderlicher Begründung und Sperre ab."
+  example: "%command_prefix%\x02\x0303CREG PENDING\x03\x0F"
+  short: "Channel-Registrierungsanfragen prüfen."
+  help: |-
+    Listet offene Anfragen auf oder nimmt eine an oder lehnt sie ab.
+    Ablehnungen benötigen eine Begründung. Nur ACCEPT registriert den Channel.
+  pending_header: "\x0314Offene Registrierungen (Seite %page%)\x03"
+  pending_item: "  %channel% — Antragsteller %requester%, eingereicht %submitted%: %description%"
+  accepted: "\x0303✔\x03 Die Registrierung für %channel% wurde genehmigt."
+  rejected: "\x0307✔\x03 Die Registrierung für %channel% wurde abgelehnt."
+  not_pending: "\x0304✗\x03 Für %channel% liegt keine offene Registrierung vor."
+  channel_not_on_network: "\x0304✗\x03 Der Channel %channel% ist nicht im Netzwerk."
+  founder_limit: "\x0304✗\x03 Der Antragsteller hat das Registrierungslimit erreicht."
+  requester_inactive: "\x0304✗\x03 Das anfragende Konto ist nicht mehr aktiv."
+  requester_ineligible: "\x0304✗\x03 Der Antragsteller benötigt aktuell Operator-Status im Channel."
+
+# --- STATUS ----------------------------------------------------------------
+status:
+  syntax: "STATUS <#channel>"
+  example: "%command_prefix%\x02\x0303STATUS #channel\x03\x0F"
+  short: "Channel-Registrierungsstatus anzeigen."
+  help: |-
+    Zeigt, ob ein Channel nicht registriert ist, auf Freigabe wartet,
+    abgelehnt oder registriert wurde.
+    Ablehnungsdetails sehen nur der Antragsteller und berechtigte IRCops.
+  unregistered: "\x0314%channel% ist nicht registriert.\x03"
+  pending: "\x0314%channel% wartet auf die Freigabe durch einen IRCop.\x03"
+  registered: "\x0314%channel% ist registriert.\x03"
+  suspended: "\x0314%channel% ist registriert, aber suspendiert.\x03"
+  forbidden: "\x0314%channel% ist für die Registrierung gesperrt.\x03"
+  pending_deletion: "\x0314%channel% steht zur Löschung an.\x03"
+  rejected_private: "\x0314Die Registrierungsanfrage für %channel% wurde abgelehnt.\x03"
+  rejected: "\x0314Die Registrierungsanfrage für %channel% wurde abgelehnt.\x03"
+  rejection_reason: "  \x0314Begründung\x03: %reason%"
+  rejection_audit: "  \x0314Abgelehnt von\x03: %operator% am %date%"
+  restriction_indefinite: "  \x0314Neue Anfragen sind unbegrenzt gesperrt.\x03"
+  restriction_until: "  \x0314Neue Anfragen sind bis %date% gesperrt\x03"
+  restriction_expired: "  \x0314Die Registrierungssperre endete am %date%.\x03"
 
 # --- INFO ------------------------------------------------------------------
 info:
@@ -108,6 +177,7 @@ help:
     deletion: "Löschung und Wiederherstellung"
     restrictions: "Einschränkungen"
     lookup: "Suche und Untersuchung"
+    registration_approval: "Registrierungsfreigabe"
   ircop_header: "\x02 ■ Verfügbare Befehle für IRC-Operatoren:\x02"
 
 # --- OP --------------------------------------------------------------------
@@ -526,6 +596,10 @@ drop:
   help: |-
     Entfernt einen registrierten Channel aus der Datenbank.
     FORCE löscht einen zur Löschung vorgemerkten Channel endgültig.
+    DROP einer abgelehnten Anfrage hebt sie nach Ablauf der Sperre auf.
+    Ein berechtigter IRCop kann eine unbefristete Sperre ausdrücklich
+    aufheben.
+  registration_restricted: "\x0304✗\x03 Diese Registrierungsanfrage ist bis %date% gesperrt."
   force:
     short: "Löscht einen zur Löschung vorgemerkten Channel endgültig."
   success: "\x0303✔\x03 Kanal \x02%channel%\x02 wurde zur Löschung markiert und kann während der Schonfrist wiederhergestellt werden."
@@ -700,6 +774,7 @@ history.message:
   set_secure_off: "Option SECURE deaktiviert"
   set_private_on: "Option PRIVATE aktiviert"
   set_private_off: "Option PRIVATE deaktiviert"
+  registration_approved: "Channel-Registrierung genehmigt"
   founder_changed: "Founder von %old_founder% zu %new_founder% geändert"
   successor_changed: "Successor von %old_successor% zu %new_successor% geändert"
   successor_cleared: "Successor gelöscht"
@@ -764,3 +839,5 @@ list:
   row: "%channel% | %founder% | %registered% | %last_used% | %status%"
   empty: "Keine Kanäle entsprechen dem Muster %pattern%."
   status_active: "Aktiv"
+  status_pending_registration: "Genehmigung ausstehend"
+  status_rejected_registration: "Registrierung abgelehnt"

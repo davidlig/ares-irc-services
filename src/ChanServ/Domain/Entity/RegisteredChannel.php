@@ -11,6 +11,8 @@ use LogicException;
 
 use function sprintf;
 use function strlen;
+use function strtolower;
+use function trim;
 
 /**
  * A registered IRC channel. Founder and successor are stored as nick IDs (FK to NickServ).
@@ -80,6 +82,16 @@ class RegisteredChannel
     /** Set when a manual DROP starts the recoverable deletion grace period. */
     private ?DateTimeImmutable $pendingDeletionAt = null;
 
+    private ?string $registrationRejectionReason = null;
+
+    private ?int $registrationRejectedByAccountId = null;
+
+    private ?string $registrationRejectedByNickname = null;
+
+    private ?DateTimeImmutable $registrationRejectedAt = null;
+
+    private ?DateTimeImmutable $registrationRestrictedUntil = null;
+
     private function __construct(DateTimeImmutable $createdAt)
     {
         $this->entrymsg = '';
@@ -98,6 +110,18 @@ class RegisteredChannel
         $channel->founderNickId = $founderNickId;
         $channel->description = $description;
         $channel->lastUsedAt = $registeredAt;
+
+        return $channel;
+    }
+
+    public static function createPendingRegistration(
+        DateTimeImmutable $submittedAt,
+        string $channelName,
+        int $requesterAccountId,
+        string $description,
+    ): self {
+        $channel = self::register($submittedAt, $channelName, $requesterAccountId, $description);
+        $channel->status = ChannelStatus::Pending;
 
         return $channel;
     }
@@ -329,6 +353,83 @@ class RegisteredChannel
         return $this->status;
     }
 
+    public function isPendingRegistration(): bool
+    {
+        return ChannelStatus::Pending === $this->status;
+    }
+
+    public function isRejectedRegistration(): bool
+    {
+        return ChannelStatus::Rejected === $this->status;
+    }
+
+    public function getRegistrationRejectionReason(): ?string
+    {
+        return $this->registrationRejectionReason;
+    }
+
+    public function getRegistrationRejectedByAccountId(): ?int
+    {
+        return $this->registrationRejectedByAccountId;
+    }
+
+    public function getRegistrationRejectedByNickname(): ?string
+    {
+        return $this->registrationRejectedByNickname;
+    }
+
+    public function getRegistrationRejectedAt(): ?DateTimeImmutable
+    {
+        return $this->registrationRejectedAt;
+    }
+
+    public function getRegistrationRestrictedUntil(): ?DateTimeImmutable
+    {
+        return $this->registrationRestrictedUntil;
+    }
+
+    public function orphanRejectedRegistrationRequester(): void
+    {
+        if (!$this->isRejectedRegistration()) {
+            throw new LogicException('Only rejected registrations can be orphaned.');
+        }
+
+        $this->founderNickId = 0;
+    }
+
+    public function approveRegistration(DateTimeImmutable $registeredAt): void
+    {
+        if (!$this->isPendingRegistration()) {
+            throw new LogicException('Only pending channel registrations can be approved.');
+        }
+
+        $this->status = ChannelStatus::Active;
+        $this->createdAt = $registeredAt;
+        $this->lastUsedAt = $registeredAt;
+    }
+
+    public function rejectRegistration(
+        string $reason,
+        int $operatorAccountId,
+        string $operatorNickname,
+        DateTimeImmutable $rejectedAt,
+        ?DateTimeImmutable $restrictedUntil,
+    ): void {
+        if (!$this->isPendingRegistration()) {
+            throw new LogicException('Only pending channel registrations can be rejected.');
+        }
+        if ('' === trim($reason)) {
+            throw new InvalidArgumentException('A rejection reason is required.');
+        }
+
+        $this->status = ChannelStatus::Rejected;
+        $this->registrationRejectionReason = $reason;
+        $this->registrationRejectedByAccountId = $operatorAccountId;
+        $this->registrationRejectedByNickname = $operatorNickname;
+        $this->registrationRejectedAt = $rejectedAt;
+        $this->registrationRestrictedUntil = $restrictedUntil;
+    }
+
     public function getSuspendedReason(): ?string
     {
         return $this->suspendedReason;
@@ -384,6 +485,10 @@ class RegisteredChannel
 
     public function suspend(string $reason, ?DateTimeImmutable $until = null): void
     {
+        if ($this->isPendingRegistration() || $this->isRejectedRegistration()) {
+            throw new LogicException('Registration requests cannot be suspended.');
+        }
+
         $this->status = ChannelStatus::Suspended;
         $this->suspendedReason = $reason;
         $this->suspendedUntil = $until;
@@ -391,6 +496,10 @@ class RegisteredChannel
 
     public function unsuspend(): void
     {
+        if ($this->isPendingRegistration() || $this->isRejectedRegistration()) {
+            throw new LogicException('Registration requests cannot be unsuspended.');
+        }
+
         $this->status = ChannelStatus::Active;
         $this->suspendedReason = null;
         $this->suspendedUntil = null;
@@ -407,7 +516,8 @@ class RegisteredChannel
      */
     public function isBlocked(): bool
     {
-        return $this->isSuspended() || $this->isForbidden() || $this->isPendingDeletion();
+        return $this->isSuspended() || $this->isForbidden() || $this->isPendingDeletion()
+            || $this->isPendingRegistration() || $this->isRejectedRegistration();
     }
 
     public function getForbiddenReason(): ?string

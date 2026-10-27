@@ -18,12 +18,6 @@ final class ChannelAccessDoctrineRepositoryTest extends DoctrineIntegrationTestC
 {
     private ChannelAccessRepositoryInterface $repository;
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->repository = new ChannelAccessDoctrineRepository($this->entityManager);
-    }
-
     #[Test]
     public function savePersistsAccess(): void
     {
@@ -188,5 +182,11 @@ final class ChannelAccessDoctrineRepositoryTest extends DoctrineIntegrationTestC
         $this->flushAndClear();
 
         self::assertSame(0, $deleted);
+    }
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->repository = new ChannelAccessDoctrineRepository($this->entityManager);
     }
 }

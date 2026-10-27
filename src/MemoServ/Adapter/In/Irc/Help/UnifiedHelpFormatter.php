@@ -6,7 +6,12 @@ namespace App\MemoServ\Adapter\In\Irc\Help;
 
 use function is_array;
 use function ltrim;
+use function method_exists;
+use function str_contains;
+use function str_pad;
+use function str_replace;
 use function strtoupper;
+use function usort;
 
 /**
  * Renders unified HELP output (header, command list, options, syntax, footer)

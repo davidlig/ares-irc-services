@@ -193,3 +193,11 @@ help:
 notify:
   nick_pending: "Ai \x02%count%\x02 mesaj(e) necitit(e). Listează mesajele: /msg %bot% \x0303LIST\x03"
   channel_pending: "Canalul \x02%channel%\x02 are \x02%count%\x02 mesaj(e) necitit(e). Verifică mesajele cu /msg %bot% \x0303LIST %channel%\x03"
+
+# --- CHANNEL REGISTRATION DECISIONS ---
+registration_decision:
+  accepted: "Cererea ta de înregistrare pentru %channel% a fost aprobată de %operator%."
+  rejected: "Cererea ta de înregistrare pentru %channel% a fost respinsă de %operator%."
+  reason: "Motiv: %reason%"
+  restriction: "Restricție rămasă: %remaining_seconds% secunde."
+  restriction_indefinite: "Acest canal este restricționat pe termen nelimitat."

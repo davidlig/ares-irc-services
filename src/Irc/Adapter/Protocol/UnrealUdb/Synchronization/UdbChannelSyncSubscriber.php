@@ -158,24 +158,6 @@ final class UdbChannelSyncSubscriber implements EventSubscriberInterface
         $this->refreshOptions(strtolower($event->channelName));
     }
 
-    private function refreshMlock(string $channelNameLower): void
-    {
-        $channel = $this->channels->findByName($channelNameLower);
-        if (null === $channel || $channel->forbidden) {
-            return;
-        }
-
-        $records = $this->exporter->channelRecords($channel);
-        $path = sprintf('%s::modes', $channel->name);
-        if (isset($records[$path])) {
-            $this->recordWriter->insert(self::BLOCK, $path, $records[$path]);
-
-            return;
-        }
-
-        $this->recordWriter->delete(self::BLOCK, $path);
-    }
-
     public function onChannelTopicChanged(ChannelTopicChangedEvent $event): void
     {
         $channelName = $event->channel->name->value;
@@ -205,6 +187,24 @@ final class UdbChannelSyncSubscriber implements EventSubscriberInterface
             $this->writeOptions($channel);
             $this->writeSuspend($channel);
         }
+    }
+
+    private function refreshMlock(string $channelNameLower): void
+    {
+        $channel = $this->channels->findByName($channelNameLower);
+        if (null === $channel || $channel->forbidden) {
+            return;
+        }
+
+        $records = $this->exporter->channelRecords($channel);
+        $path = sprintf('%s::modes', $channel->name);
+        if (isset($records[$path])) {
+            $this->recordWriter->insert(self::BLOCK, $path, $records[$path]);
+
+            return;
+        }
+
+        $this->recordWriter->delete(self::BLOCK, $path);
     }
 
     /** Recomputes the numeric options record after any flag change. */

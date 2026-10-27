@@ -20,6 +20,11 @@ use function array_filter;
 use function array_values;
 use function implode;
 use function sprintf;
+use function str_starts_with;
+use function strpos;
+use function strtoupper;
+use function substr;
+use function time;
 
 /**
  * Implements the InspIRCd SpanTree server-to-server link protocol (v4 / 1206).

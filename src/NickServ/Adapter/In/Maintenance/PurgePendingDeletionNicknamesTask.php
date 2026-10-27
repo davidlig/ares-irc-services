@@ -10,6 +10,7 @@ use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\Service\NickDropService;
 use App\NickServ\Domain\Entity\RegisteredNick;
 
+use function max;
 use function sprintf;
 
 final readonly class PurgePendingDeletionNicknamesTask implements MaintenanceTaskInterface

@@ -32,6 +32,7 @@ use function pack;
 use function random_bytes;
 use function rmdir;
 use function sprintf;
+use function str_repeat;
 use function strcmp;
 use function strlen;
 use function substr;

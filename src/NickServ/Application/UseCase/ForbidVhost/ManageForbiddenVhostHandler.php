@@ -9,6 +9,9 @@ use App\NickServ\Application\Port\Out\ForbiddenVhostRepositoryInterface;
 use App\NickServ\Application\Service\ForbiddenPatternValidator;
 use App\NickServ\Application\Service\ForbiddenVhostService;
 
+use function array_map;
+use function array_values;
+
 final readonly class ManageForbiddenVhostHandler
 {
     public function __construct(

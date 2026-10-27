@@ -193,3 +193,11 @@ help:
 notify:
   nick_pending: "Hai \x02%count%\x02 messaggio/i da leggere. Per elencarli: /msg %bot% \x0303LIST\x03"
   channel_pending: "Il canale \x02%channel%\x02 ha \x02%count%\x02 messaggio/i da leggere. Consultali con /msg %bot% \x0303LIST %channel%\x03"
+
+# --- CHANNEL REGISTRATION DECISIONS ---
+registration_decision:
+  accepted: "La tua richiesta di registrazione per %channel% è stata approvata da %operator%."
+  rejected: "La tua richiesta di registrazione per %channel% è stata rifiutata da %operator%."
+  reason: "Motivo: %reason%"
+  restriction: "Blocco residuo: %remaining_seconds% secondi."
+  restriction_indefinite: "Questo canale è bloccato a tempo indeterminato."

@@ -8,6 +8,8 @@ use InvalidArgumentException;
 
 use function array_slice;
 use function count;
+use function implode;
+use function intdiv;
 
 final class DurationFormatter
 {

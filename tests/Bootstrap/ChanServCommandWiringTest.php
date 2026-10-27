@@ -25,6 +25,8 @@ use PHPUnit\Framework\Attributes\Test;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function explode;
+
 #[CoversNothing]
 final class ChanServCommandWiringTest extends KernelTestCase
 {

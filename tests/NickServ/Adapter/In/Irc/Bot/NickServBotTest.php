@@ -34,27 +34,6 @@ final class NickServBotTest extends TestCase
 
     private NickServBot $bot;
 
-    protected function setUp(): void
-    {
-        $this->connectionHolder = new ActiveConnectionHolder();
-        $userLookup = $this->createStub(NetworkUserLookupPort::class);
-        $sendNoticePort = $this->createStub(SendNoticePort::class);
-        $pendingRegistry = $this->createStub(PendingNickRestoreRegistryInterface::class);
-        $localUserModeSync = $this->createStub(LocalUserModeSyncPort::class);
-        $this->uidGenerator = $this->createStub(ServiceUidGeneratorInterface::class);
-        $this->uidGenerator->method('generateUid')->willReturn(self::NICKSERV_UID);
-
-        $this->bot = new NickServBot(
-            $this->connectionHolder,
-            $userLookup,
-            $sendNoticePort,
-            $pendingRegistry,
-            $localUserModeSync,
-            $this->uidGenerator,
-            self::HOSTNAME,
-        );
-    }
-
     #[Test]
     public function getSubscribedEventsReturnsBurstCompleteWithPriority(): void
     {
@@ -588,5 +567,26 @@ final class NickServBotTest extends TestCase
 
         self::assertSame('CustomNS', $bot->getNickname());
         self::assertSame('CustomNS', $bot->getNick());
+    }
+
+    protected function setUp(): void
+    {
+        $this->connectionHolder = new ActiveConnectionHolder();
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $sendNoticePort = $this->createStub(SendNoticePort::class);
+        $pendingRegistry = $this->createStub(PendingNickRestoreRegistryInterface::class);
+        $localUserModeSync = $this->createStub(LocalUserModeSyncPort::class);
+        $this->uidGenerator = $this->createStub(ServiceUidGeneratorInterface::class);
+        $this->uidGenerator->method('generateUid')->willReturn(self::NICKSERV_UID);
+
+        $this->bot = new NickServBot(
+            $this->connectionHolder,
+            $userLookup,
+            $sendNoticePort,
+            $pendingRegistry,
+            $localUserModeSync,
+            $this->uidGenerator,
+            self::HOSTNAME,
+        );
     }
 }

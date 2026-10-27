@@ -14,6 +14,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function base64_encode;
+
 #[CoversClass(UdbValueDecoder::class)]
 #[CoversClass(UdbValueEncoder::class)]
 final class UdbValueCodecTest extends TestCase

@@ -12,6 +12,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function str_repeat;
+
 #[CoversClass(UnrealUdbRecordWriter::class)]
 final class UnrealUdbRecordWriterTest extends TestCase
 {
@@ -23,22 +25,6 @@ final class UnrealUdbRecordWriterTest extends TestCase
     private array $written = [];
 
     private UnrealUdbRecordWriter $writer;
-
-    protected function setUp(): void
-    {
-        $this->records = new FakeUdbRecords();
-        $origin = new UdbStreamOrigin('002', '0123456789abcdef');
-        $this->records->beginLocalStream($origin);
-        $this->sessionState = new RecordingSessionState(false, $origin);
-        $this->written = [];
-
-        $this->writer = $this->createWriter();
-    }
-
-    private function createWriter(): UnrealUdbRecordWriter
-    {
-        return new UnrealUdbRecordWriter($this->sessionState, $this->records);
-    }
 
     #[Test]
     public function insertValidatesPersistsAndSendsWhenReady(): void
@@ -257,5 +243,21 @@ final class UnrealUdbRecordWriterTest extends TestCase
         self::assertSame(['N' => ['davidlig::vhost' => 'v']], $this->records->blocks);
         self::assertSame([], $this->written);
         self::assertCount(1, $this->sessionState->queue);
+    }
+
+    protected function setUp(): void
+    {
+        $this->records = new FakeUdbRecords();
+        $origin = new UdbStreamOrigin('002', '0123456789abcdef');
+        $this->records->beginLocalStream($origin);
+        $this->sessionState = new RecordingSessionState(false, $origin);
+        $this->written = [];
+
+        $this->writer = $this->createWriter();
+    }
+
+    private function createWriter(): UnrealUdbRecordWriter
+    {
+        return new UnrealUdbRecordWriter($this->sessionState, $this->records);
     }
 }

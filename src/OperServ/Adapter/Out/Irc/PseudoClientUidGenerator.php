@@ -6,6 +6,8 @@ namespace App\OperServ\Adapter\Out\Irc;
 
 use App\Irc\Application\Port\In\ActiveConnectionHolderInterface;
 
+use function str_pad;
+
 use const STR_PAD_LEFT;
 
 class PseudoClientUidGenerator

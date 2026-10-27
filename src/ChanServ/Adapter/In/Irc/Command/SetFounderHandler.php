@@ -14,6 +14,7 @@ use App\ChanServ\Domain\Entity\RegisteredChannel;
 use DateTimeImmutable;
 
 use function base64_decode;
+use function ceil;
 use function inet_ntop;
 use function sprintf;
 use function trim;

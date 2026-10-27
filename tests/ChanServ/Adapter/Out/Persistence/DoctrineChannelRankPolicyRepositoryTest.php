@@ -17,6 +17,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function iterator_to_array;
+
 #[CoversClass(DoctrineChannelRankPolicyRepository::class)]
 final class DoctrineChannelRankPolicyRepositoryTest extends TestCase
 {

@@ -13,6 +13,7 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 use function in_array;
+use function str_split;
 
 /** Translates concrete IRC MODE grammar to stable semantic rank events. */
 final readonly class ChannelRankEventBridge implements EventSubscriberInterface

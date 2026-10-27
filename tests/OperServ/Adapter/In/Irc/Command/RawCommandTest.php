@@ -24,6 +24,8 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function str_repeat;
+
 #[CoversClass(RawCommand::class)]
 final class RawCommandTest extends TestCase
 {

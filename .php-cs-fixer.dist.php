@@ -46,7 +46,18 @@ return new Config()
             ],
         ],
 
+        // Keep constructors and magic methods together before visibility groups.
+        'ordered_class_elements' => [
+            'order' => ['use_trait', 'case', 'constant', 'property', 'construct', 'destruct', 'magic', 'method_public', 'method_protected', 'method_private'],
+            'sort_algorithm' => 'none',
+        ],
+
         // Imports optimization
+        'native_function_invocation' => [
+            'include' => ['@internal'],
+            'scope' => 'namespaced',
+            'strict' => true,
+        ],
         'global_namespace_import' => [
             'import_classes' => true,
             'import_constants' => true,

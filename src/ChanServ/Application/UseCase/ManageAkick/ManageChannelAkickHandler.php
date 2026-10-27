@@ -26,6 +26,10 @@ use App\ChanServ\Domain\ValueObject\AkickRule;
 use DateTimeImmutable;
 use InvalidArgumentException;
 
+use function array_values;
+use function ctype_digit;
+use function strtolower;
+
 final readonly class ManageChannelAkickHandler implements ManageChannelAkickHandlerInterface
 {
     public function __construct(

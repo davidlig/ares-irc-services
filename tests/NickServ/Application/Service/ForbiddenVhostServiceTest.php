@@ -20,12 +20,6 @@ final class ForbiddenVhostServiceTest extends TestCase
 
     private ForbiddenVhostService $service;
 
-    protected function setUp(): void
-    {
-        $this->repository = $this->createMock(ForbiddenVhostRepositoryInterface::class);
-        $this->service = new ForbiddenVhostService($this->repository);
-    }
-
     #[Test]
     public function forbidCreatesAndSavesForbiddenVhost(): void
     {
@@ -154,5 +148,11 @@ final class ForbiddenVhostServiceTest extends TestCase
         $result = $this->service->count();
 
         self::assertSame(5, $result);
+    }
+
+    protected function setUp(): void
+    {
+        $this->repository = $this->createMock(ForbiddenVhostRepositoryInterface::class);
+        $this->service = new ForbiddenVhostService($this->repository);
     }
 }

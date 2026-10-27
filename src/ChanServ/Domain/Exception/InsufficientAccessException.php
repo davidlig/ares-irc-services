@@ -10,6 +10,14 @@ use function sprintf;
 
 final class InsufficientAccessException extends DomainException
 {
+    public function __construct(
+        string $message,
+        private readonly string $channelName = '',
+        private readonly string $operation = '',
+    ) {
+        parent::__construct($message);
+    }
+
     public static function forChannel(string $channelName): self
     {
         return new self(sprintf('Insufficient access for channel "%s".', $channelName), $channelName, '');
@@ -22,14 +30,6 @@ final class InsufficientAccessException extends DomainException
             $channelName,
             $operation,
         );
-    }
-
-    public function __construct(
-        string $message,
-        private readonly string $channelName = '',
-        private readonly string $operation = '',
-    ) {
-        parent::__construct($message);
     }
 
     public function getChannelName(): string

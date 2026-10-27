@@ -9,8 +9,11 @@ use App\Irc\Application\Port\In\ProtocolServiceActionsInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
+use function implode;
 use function in_array;
 use function sprintf;
+use function strtolower;
+use function time;
 
 /**
  * InspIRCd v4 services: METADATA (account, accountnicks), MODE (+r/-r), SVSNICK, KILL, FMODE.

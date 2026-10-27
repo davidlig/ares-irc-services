@@ -18,6 +18,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function serialize;
+
 #[CoversClass(InspIRCdProtocolHandler::class)]
 final class LinkCredentialLoggingTest extends TestCase
 {

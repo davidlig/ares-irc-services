@@ -33,11 +33,6 @@ final class EnforceChannelAkickHandlerTest extends TestCase
 {
     private DateTimeImmutable $now;
 
-    protected function setUp(): void
-    {
-        $this->now = new DateTimeImmutable('2026-09-07 12:00:00 UTC');
-    }
-
     #[Test]
     public function joinSkipsUnavailableBlockedAndMissingMembers(): void
     {
@@ -152,6 +147,11 @@ final class EnforceChannelAkickHandlerTest extends TestCase
         self::assertSame(2, new SynchronizeAllChannelAkicksHandler($channels, $network, $enforcer)->handle(
             new SynchronizeAllChannelAkicks($this->now),
         ));
+    }
+
+    protected function setUp(): void
+    {
+        $this->now = new DateTimeImmutable('2026-09-07 12:00:00 UTC');
     }
 
     private function handler(

@@ -10,15 +10,12 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function array_count_values;
+
 #[CoversClass(InspIRCdChannelModeSupportFactory::class)]
 final class InspIRCdChannelModeSupportFactoryTest extends TestCase
 {
     private InspIRCdChannelModeSupportFactory $factory;
-
-    protected function setUp(): void
-    {
-        $this->factory = new InspIRCdChannelModeSupportFactory();
-    }
 
     #[Test]
     public function createDefaultReturnsFullInspircdProfile(): void
@@ -451,5 +448,10 @@ final class InspIRCdChannelModeSupportFactoryTest extends TestCase
 
         self::assertNotContains('v', $unsetWithoutParam);
         self::assertContains('r', $unsetWithoutParam);
+    }
+
+    protected function setUp(): void
+    {
+        $this->factory = new InspIRCdChannelModeSupportFactory();
     }
 }

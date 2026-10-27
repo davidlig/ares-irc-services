@@ -30,17 +30,14 @@ use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
 use RuntimeException;
 
+use function str_repeat;
+
 #[CoversClass(RegisterNickHandler::class)]
 #[CoversClass(RegisterNick::class)]
 #[CoversClass(RegisterNickResult::class)]
 final class RegisterNickHandlerTest extends TestCase
 {
     private DateTimeImmutable $now;
-
-    protected function setUp(): void
-    {
-        $this->now = new DateTimeImmutable('2026-09-06 12:00:00 UTC');
-    }
 
     #[Test]
     public function rejectsThrottledClientBeforeOtherValidation(): void
@@ -314,6 +311,11 @@ final class RegisterNickHandlerTest extends TestCase
             $result = $this->handler(repository: $repository, passwordHasher: $hasher, tokenGenerator: $tokens, verificationStore: $store, mail: $mail, throttle: $throttle, mode: $mode, emailPolicy: $policy)->handle($this->input(email: 'user@BLOCKED.ORG'));
             self::assertSame(RegisterNickOutcome::BlockedEmailDomain, $result->outcome);
         }
+    }
+
+    protected function setUp(): void
+    {
+        $this->now = new DateTimeImmutable('2026-09-06 12:00:00 UTC');
     }
 
     private function input(

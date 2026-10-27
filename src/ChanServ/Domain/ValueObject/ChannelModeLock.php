@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Domain\ValueObject;
 
+use function array_values;
+
 final readonly class ChannelModeLock
 {
     /** @param list<ChannelSetting> $settings */

@@ -6,7 +6,9 @@ namespace App\Irc\Adapter\Protocol\UnrealUdb\Synchronization;
 
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbUnsignedDecimal;
 
+use function array_filter;
 use function array_shift;
+use function array_values;
 use function count;
 
 /** Bounded durable-intent queue; reset deliberately preserves its contents. */

@@ -9,6 +9,9 @@ use App\OperServ\Application\Port\In\OperatorNetworkProjectionQuery;
 use App\OperServ\Domain\Repository\OperIrcopRepositoryInterface;
 use App\OperServ\Domain\ValueObject\ForcedVhost;
 
+use function array_map;
+use function array_values;
+
 final readonly class DoctrineOperatorNetworkProjectionQuery implements OperatorNetworkProjectionQuery
 {
     public function __construct(private OperIrcopRepositoryInterface $ircops) {}

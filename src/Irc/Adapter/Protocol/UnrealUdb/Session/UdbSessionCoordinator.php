@@ -40,6 +40,7 @@ use function array_diff;
 use function array_filter;
 use function array_keys;
 use function array_map;
+use function array_shift;
 use function bin2hex;
 use function count;
 use function in_array;
@@ -143,6 +144,12 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
     /** @var array<string, true> */
     private array $manifestRequestedBlocks = [];
 
+    private ?SessionEventPump $eventPump = null;
+
+    private ?string $deadlineWatcherId = null;
+
+    private int $deadlineGeneration = 0;
+
     public function __construct(
         private readonly string $sid,
         private readonly UdbBlockStateRepositoryInterface $blockStates,
@@ -172,12 +179,6 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
         $this->errorCorrelation = UdbUnsignedDecimal::fromInt(0);
         $this->mutationSequence = UdbUnsignedDecimal::fromInt(0);
     }
-
-    private ?SessionEventPump $eventPump = null;
-
-    private ?string $deadlineWatcherId = null;
-
-    private int $deadlineGeneration = 0;
 
     public function setEventPump(?SessionEventPump $eventPump): void
     {
@@ -387,15 +388,6 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
         });
     }
 
-    private function cancelDeadlineTimer(): void
-    {
-        ++$this->deadlineGeneration;
-        if (null !== $this->deadlineWatcherId) {
-            $this->scheduler->cancel($this->deadlineWatcherId);
-            $this->deadlineWatcherId = null;
-        }
-    }
-
     public function handleFrame(UdbFrame $frame, ConnectionInterface $connection): void
     {
         $this->connection = $connection;
@@ -530,6 +522,15 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
     public function getAvailableOperclasses(): array
     {
         return $this->oclgView->getAvailableOperclasses();
+    }
+
+    private function cancelDeadlineTimer(): void
+    {
+        ++$this->deadlineGeneration;
+        if (null !== $this->deadlineWatcherId) {
+            $this->scheduler->cancel($this->deadlineWatcherId);
+            $this->deadlineWatcherId = null;
+        }
     }
 
     private function handleHelAck(UdbFrame $frame): void

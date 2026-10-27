@@ -26,17 +26,6 @@ final class DelMemoHandlerTest extends TestCase
 
     private MemoRepositoryInterface $memoRepository;
 
-    protected function setUp(): void
-    {
-        $this->channelPort = $this->createStub(MemoChannelPort::class);
-        $this->memoRepository = $this->createStub(MemoRepositoryInterface::class);
-    }
-
-    private function createHandler(): DelMemoHandler
-    {
-        return new DelMemoHandler($this->channelPort, $this->memoRepository);
-    }
-
     #[Test]
     public function deletesNickMemoSuccessfully(): void
     {
@@ -138,5 +127,16 @@ final class DelMemoHandlerTest extends TestCase
 
         self::assertSame(DelMemoOutcome::AccessDenied, $result->outcome);
         self::assertSame('#Ares', $result->channelName);
+    }
+
+    protected function setUp(): void
+    {
+        $this->channelPort = $this->createStub(MemoChannelPort::class);
+        $this->memoRepository = $this->createStub(MemoRepositoryInterface::class);
+    }
+
+    private function createHandler(): DelMemoHandler
+    {
+        return new DelMemoHandler($this->channelPort, $this->memoRepository);
     }
 }

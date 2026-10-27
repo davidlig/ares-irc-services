@@ -21,6 +21,10 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function hash;
+use function is_string;
+use function serialize;
+
 #[CoversClass(SetCommand::class)]
 final class SetPasswordNoMutationDigestTest extends TestCase
 {

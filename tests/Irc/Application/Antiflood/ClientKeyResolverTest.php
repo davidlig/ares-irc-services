@@ -10,6 +10,9 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function base64_encode;
+use function inet_pton;
+
 #[CoversClass(ClientKeyResolver::class)]
 final class ClientKeyResolverTest extends TestCase
 {

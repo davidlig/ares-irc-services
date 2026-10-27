@@ -24,6 +24,8 @@ use Symfony\Component\Translation\Loader\ArrayLoader;
 use Symfony\Component\Translation\Translator;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function iterator_to_array;
+
 #[CoversClass(OperServHelpFormatterContextAdapter::class)]
 #[CoversClass(OperServContext::class)]
 final class OperServHelpFormatterContextAdapterTest extends TestCase
@@ -97,6 +99,21 @@ final class OperServHelpFormatterContextAdapterTest extends TestCase
         self::assertSame('help.group.operators_roles', $adapter->getHelpGroups()[0]['group_key']);
     }
 
+    #[Test]
+    public function translatesCommonFirstButHonorsExplicitDomains(): void
+    {
+        $translator = new Translator('en');
+        $translator->addLoader('array', new ArrayLoader());
+        $translator->addResource('array', ['shared.key' => 'Common %value% via %bot%'], 'en', 'common');
+        $translator->addResource('array', ['shared.key' => 'Service %value%'], 'en', 'operserv');
+        $translator->addResource('array', ['drop.short' => 'Explicit %value% via %bot%'], 'en', 'chanserv');
+        $context = $this->context(translator: $translator);
+        $adapter = new OperServHelpFormatterContextAdapter($context);
+
+        self::assertSame('Common x via OperServ', $adapter->trans('shared.key', ['value' => 'x']));
+        self::assertSame('Explicit x via OperServ', $context->transInDomain('drop.short', 'chanserv', ['value' => 'x']));
+    }
+
     /** @param list<OperServCommandInterface> $commands */
     private function context(
         array $commands = [],
@@ -118,21 +135,6 @@ final class OperServHelpFormatterContextAdapterTest extends TestCase
             new ServiceNicknameRegistry([]),
             $authorization ?? $this->createStub(OperatorAuthorizationQuery::class),
         );
-    }
-
-    #[Test]
-    public function translatesCommonFirstButHonorsExplicitDomains(): void
-    {
-        $translator = new Translator('en');
-        $translator->addLoader('array', new ArrayLoader());
-        $translator->addResource('array', ['shared.key' => 'Common %value% via %bot%'], 'en', 'common');
-        $translator->addResource('array', ['shared.key' => 'Service %value%'], 'en', 'operserv');
-        $translator->addResource('array', ['drop.short' => 'Explicit %value% via %bot%'], 'en', 'chanserv');
-        $context = $this->context(translator: $translator);
-        $adapter = new OperServHelpFormatterContextAdapter($context);
-
-        self::assertSame('Common x via OperServ', $adapter->trans('shared.key', ['value' => 'x']));
-        self::assertSame('Explicit x via OperServ', $context->transInDomain('drop.short', 'chanserv', ['value' => 'x']));
     }
 }
 

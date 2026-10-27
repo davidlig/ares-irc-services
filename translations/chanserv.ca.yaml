@@ -27,8 +27,9 @@ register:
   example: "%command_prefix%\x02\x0303REGISTER #canal Projecte comunitari\x03\x0F"
   short: "Registrar un canal."
   help: |-
-    Registra i associa un canal al teu sobrenom. T'has
-    d'haver identificat amb %nickserv%.
+    Registra i associa un canal al teu sobrenom. T’has d’haver
+    identificat amb %nickserv%. En mode APPROVAL, un IRCop ha d’aprovar
+    la sol·licitud.
   success: "\x0303✔\x03 El canal \x02%channel%\x02 ha estat registrat."
   already_registered: "\x0304✗\x03 El canal \x02%channel%\x02 ja està registrat."
   channel_not_on_network: "\x0304✗\x03 El canal \x02%channel%\x02 no existeix a la xarxa."
@@ -36,6 +37,75 @@ register:
   insufficient_channel_rank: "\x0304✗\x03 Heu de tenir com a mínim estat d'operador a \x02%channel%\x02 per registrar-lo."
   limit_exceeded: "\x0304✗\x03 Heu assolit el màxim de %max% canals registrats."
   throttled: "\x0304✗\x03 Heu d'esperar \x02%minutes%\x02 minut(s) abans de registrar un altre canal."
+
+  awaiting_approval: "\x0307✔\x03 Les sol·licituds per a %channel% esperen l’aprovació d’un IRCop."
+  restricted_indefinite: "\x0304✗\x03 Les noves sol·licituds per a \x02%channel%\x02 estan bloquejades indefinidament."
+  restricted_until: "\x0304✗\x03 Les noves sol·licituds per a \x02%channel%\x02 estan bloquejades fins a %date%"
+
+# --- REGMODE ---------------------------------------------------------------
+regmode:
+  syntax: "REGMODE {DIRECT|APPROVAL|STATUS}"
+  example: "%command_prefix%\x02\x0303REGMODE APPROVAL\x03\x0F"
+  short: "Establir o consultar el mode de registre del canal."
+  help: |-
+    Estableix el registre com a DIRECT o APPROVAL, o consulta STATUS.
+    DIRECT és el mode per defecte i manté el registre immediat.
+  status: "\x0307ℹ\x03 El mode de registre del canal és %mode%."
+  changed: "\x0303✔\x03 El mode de registre del canal ara és %mode%."
+
+# --- CREG ------------------------------------------------------------------
+creg:
+  syntax: "CREG {PENDING [page]|ACCEPT <#channel>|REJECT <#channel> <reason>}"
+  pending.syntax: "CREG PENDING [page]"
+  pending.example: "%command_prefix%\x02\x0303CREG PENDING\x03\x0F"
+  pending.short: "Llista les sol·licituds pendents en una pàgina limitada."
+  pending.help: "Mostra les sol·licituds pendents en una pàgina limitada."
+  accept.syntax: "CREG ACCEPT <#channel>"
+  accept.example: "%command_prefix%\x02\x0303CREG ACCEPT #channel\x03\x0F"
+  accept.short: "Aprova una sol·licitud de registre de canal."
+  accept.help: "Torna a validar el sol·licitant i activa el registre pendent."
+  reject.syntax: "CREG REJECT <#channel> <reason>"
+  reject.example: "%command_prefix%\x02\x0303CREG REJECT #channel Necessita un tema públic\x03\x0F"
+  reject.short: "Rebutja una sol·licitud de registre de canal."
+  reject.help: "Rebutja una sol·licitud amb un motiu obligatori i una restricció."
+  example: "%command_prefix%\x02\x0303CREG PENDING\x03\x0F"
+  short: "Revisar les sol·licituds de registre de canals."
+  help: |-
+    Llista les sol·licituds pendents, o n’accepta o rebutja una.
+    Els rebutjos requereixen un motiu. Només ACCEPT registra el canal.
+  pending_header: "\x0314Registres pendents (pàgina %page%)\x03"
+  pending_item: "  %channel% — sol·licitant %requester%, enviada %submitted%: %description%"
+  accepted: "\x0303✔\x03 El registre de %channel% ha estat aprovat."
+  rejected: "\x0307✔\x03 El registre de %channel% ha estat rebutjat."
+  not_pending: "\x0304✗\x03 El canal %channel% no té cap registre pendent."
+  channel_not_on_network: "\x0304✗\x03 El canal %channel% no és a la xarxa."
+  founder_limit: "\x0304✗\x03 El sol·licitant ha assolit el límit de canals registrats."
+  requester_inactive: "\x0304✗\x03 El compte sol·licitant ja no és actiu."
+  requester_ineligible: "\x0304✗\x03 El sol·licitant ha de tenir actualment estat d’operador al canal."
+
+# --- STATUS ----------------------------------------------------------------
+status:
+  syntax: "STATUS <#channel>"
+  example: "%command_prefix%\x02\x0303STATUS #channel\x03\x0F"
+  short: "Mostra l’estat del registre del canal."
+  help: |-
+    Mostra si un canal no està registrat, espera aprovació, ha estat
+    rebutjat o està registrat.
+    Els detalls del rebuig només són visibles per al sol·licitant i els
+    IRCops autoritzats.
+  unregistered: "\x0314%channel% no està registrat.\x03"
+  pending: "\x0314%channel% espera l’aprovació d’un IRCop.\x03"
+  registered: "\x0314%channel% està registrat.\x03"
+  suspended: "\x0314%channel% està registrat però suspès.\x03"
+  forbidden: "\x0314%channel% no es pot registrar.\x03"
+  pending_deletion: "\x0314%channel% està pendent d’eliminació.\x03"
+  rejected_private: "\x0314La sol·licitud de registre de %channel% ha estat rebutjada.\x03"
+  rejected: "\x0314La sol·licitud de registre de %channel% ha estat rebutjada.\x03"
+  rejection_reason: "  \x0314Motiu\x03: %reason%"
+  rejection_audit: "  \x0314Rebutjat per\x03: %operator% el %date%"
+  restriction_indefinite: "  \x0314Les noves sol·licituds estan bloquejades indefinidament.\x03"
+  restriction_until: "  \x0314Les noves sol·licituds estan bloquejades fins a %date%\x03"
+  restriction_expired: "  \x0314La restricció de registre va acabar el %date%.\x03"
 
 # --- INFO ------------------------------------------------------------------
 info:
@@ -108,6 +178,7 @@ help:
     deletion: "Eliminació i restauració"
     restrictions: "Restriccions"
     lookup: "Consulta i investigació"
+    registration_approval: "Aprovació del registre"
   ircop_header: "\x02 ■ Comandes disponibles per als IRCops:\x02"
 
 # --- OP --------------------------------------------------------------------
@@ -526,6 +597,9 @@ drop:
   help: |-
     Elimina un canal registrat de la base de dades.
     FORCE elimina definitivament un canal pendent d'eliminació.
+    DROP d’una sol·licitud rebutjada l’allibera quan acaba la restricció.
+    Un IRCop autoritzat pot alliberar explícitament una restricció indefinida.
+  registration_restricted: "\x0304✗\x03 Aquesta sol·licitud de registre està restringida fins a %date%."
   force:
     short: "Elimina definitivament un canal pendent d'eliminació."
   success: "\x0303✔\x03 El canal \x02%channel%\x02 ha estat marcat per a eliminació i pot ser restaurat durant el període de gràcia."
@@ -699,6 +773,7 @@ history.message:
   set_secure_off: "Opció SECURE desactivada"
   set_private_on: "Opció PRIVATE activada"
   set_private_off: "Opció PRIVATE desactivada"
+  registration_approved: "Registre del canal aprovat"
   founder_changed: "Fundador canviat de %old_founder% a %new_founder%"
   successor_changed: "Successor canviat de %old_successor% a %new_successor%"
   successor_cleared: "Successor esborrat"
@@ -763,3 +838,5 @@ list:
   row: "%channel% | %founder% | %registered% | %last_used% | %status%"
   empty: "Cap canal coincideix amb el patró %pattern%."
   status_active: "Actiu"
+  status_pending_registration: "Pendent d’aprovació"
+  status_rejected_registration: "Registre rebutjat"

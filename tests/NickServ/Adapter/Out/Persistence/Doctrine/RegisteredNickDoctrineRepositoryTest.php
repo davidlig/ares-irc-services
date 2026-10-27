@@ -25,20 +25,20 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 
+use function array_map;
 use function array_slice;
 use function count;
+use function max;
+use function str_contains;
+use function str_ends_with;
+use function strtolower;
+use function strtr;
 
 #[CoversClass(RegisteredNickDoctrineRepository::class)]
 #[Group('integration')]
 final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTestCase
 {
     private RegisteredNickRepositoryInterface $repository;
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->repository = new RegisteredNickDoctrineRepository($this->entityManager);
-    }
 
     #[Test]
     #[DataProvider('listPlatforms')]
@@ -508,16 +508,6 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
         self::assertSame([], $this->repository->findNicknamesByLastConnectIp('2001:db8::7'));
     }
 
-    /**
-     * @param list<RegisteredNick> $nicks
-     *
-     * @return list<string>
-     */
-    private function names(array $nicks): array
-    {
-        return array_map(static fn (RegisteredNick $nick): string => $nick->getNickname(), $nicks);
-    }
-
     #[Test]
     public function findRegisteredInactiveSinceReturnsOldNicks(): void
     {
@@ -690,6 +680,22 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
 
         self::assertCount(1, $result);
         self::assertSame('ExpiredDrop', $result[0]->getNickname());
+    }
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->repository = new RegisteredNickDoctrineRepository($this->entityManager);
+    }
+
+    /**
+     * @param list<RegisteredNick> $nicks
+     *
+     * @return list<string>
+     */
+    private function names(array $nicks): array
+    {
+        return array_map(static fn (RegisteredNick $nick): string => $nick->getNickname(), $nicks);
     }
 
     private function createRegisteredNick(string $nickname, string $email): RegisteredNick

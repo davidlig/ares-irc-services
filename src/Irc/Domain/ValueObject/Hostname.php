@@ -6,6 +6,7 @@ namespace App\Irc\Domain\ValueObject;
 
 use InvalidArgumentException;
 
+use function filter_var;
 use function sprintf;
 
 use const FILTER_FLAG_HOSTNAME;

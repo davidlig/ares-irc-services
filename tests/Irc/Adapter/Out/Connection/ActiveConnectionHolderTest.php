@@ -25,11 +25,6 @@ final class ActiveConnectionHolderTest extends TestCase
 {
     private ActiveConnectionHolder $holder;
 
-    protected function setUp(): void
-    {
-        $this->holder = new ActiveConnectionHolder();
-    }
-
     #[Test]
     public function getSubscribedEventsReturnsBurstCompleteAndConnectionLost(): void
     {
@@ -187,5 +182,10 @@ final class ActiveConnectionHolderTest extends TestCase
     {
         $this->holder->setRemoteServerSid('994');
         self::assertSame('994', $this->holder->getRemoteServerSid());
+    }
+
+    protected function setUp(): void
+    {
+        $this->holder = new ActiveConnectionHolder();
     }
 }

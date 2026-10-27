@@ -8,6 +8,7 @@
 /var/
 /vendor/
 /node_modules/
+/pnpm-lock.yaml
 ###< symfony/framework-bundle ###
 /.php-cs-fixer.cache
 /.deptrac.cache

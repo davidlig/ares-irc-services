@@ -26,11 +26,6 @@ final class InfoNickHandlerTest extends TestCase
 {
     private DateTimeImmutable $now;
 
-    protected function setUp(): void
-    {
-        $this->now = new DateTimeImmutable('2026-09-06 16:00:00 UTC');
-    }
-
     #[Test]
     public function returnsNotRegisteredWhenNotFound(): void
     {
@@ -259,6 +254,11 @@ final class InfoNickHandlerTest extends TestCase
         self::assertNull($result->email); // Oper cannot see email
         self::assertSame([], $result->channels); // Oper cannot see channels
         self::assertFalse($result->isOwnerIdentified);
+    }
+
+    protected function setUp(): void
+    {
+        $this->now = new DateTimeImmutable('2026-09-06 16:00:00 UTC');
     }
 
     private function createHandler(

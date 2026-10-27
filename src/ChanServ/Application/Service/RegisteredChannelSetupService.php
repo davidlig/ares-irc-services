@@ -10,6 +10,8 @@ use App\ChanServ\Application\Port\Out\ChanNetworkActions;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\Port\Out\RegisteredChannelSetupActions;
 
+use function strtolower;
+
 final readonly class RegisteredChannelSetupService implements RegisteredChannelSetup
 {
     public function __construct(

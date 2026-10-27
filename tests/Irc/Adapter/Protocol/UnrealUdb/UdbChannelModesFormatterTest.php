@@ -17,12 +17,6 @@ final class UdbChannelModesFormatterTest extends TestCase
 
     private UnrealUdbChannelModeSupport $udbSupport;
 
-    protected function setUp(): void
-    {
-        $this->formatter = new UdbChannelModesFormatter();
-        $this->udbSupport = new UnrealUdbChannelModeSupport();
-    }
-
     #[Test]
     public function formatReturnsNullForEmptyModeString(): void
     {
@@ -82,5 +76,11 @@ final class UdbChannelModesFormatterTest extends TestCase
     public function formatUsesOnlyTheUnrealUdbModeContract(): void
     {
         self::assertSame('+ntk key', $this->formatter->format('+rPntk', ['k' => 'key'], $this->udbSupport));
+    }
+
+    protected function setUp(): void
+    {
+        $this->formatter = new UdbChannelModesFormatter();
+        $this->udbSupport = new UnrealUdbChannelModeSupport();
     }
 }

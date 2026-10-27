@@ -7,6 +7,7 @@ namespace App\OperServ\Application\Security;
 use App\OperServ\Application\Port\In\OperatorPermissionCatalog;
 
 use function array_merge;
+use function array_unique;
 use function sort;
 
 final readonly class PermissionRegistry implements OperatorPermissionCatalog

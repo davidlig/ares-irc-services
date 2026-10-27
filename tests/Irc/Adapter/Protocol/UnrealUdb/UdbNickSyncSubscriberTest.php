@@ -34,46 +34,6 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 #[CoversClass(UdbNickSyncSubscriber::class)]
 final class UdbNickSyncSubscriberTest extends TestCase
 {
-    private function createSubscriber(
-        ?NickProjectionQuery $repo = null,
-        ?PasswordMigrationStateInterface $migrationState = null,
-        ?OperatorNetworkProjectionQuery $ircopRepo = null,
-        ?UdbRecordWriterInterface $writer = null,
-    ): UdbNickSyncSubscriber {
-        $defaultWriter = $this->createStub(UdbRecordWriterInterface::class);
-        $defaultWriter->method('insert')->willReturn(true);
-        $defaultWriter->method('delete')->willReturn(true);
-        $writer ??= $defaultWriter;
-
-        return new UdbNickSyncSubscriber(
-            $writer,
-            $repo ?? $this->createStub(NickProjectionQuery::class),
-            $migrationState ?? $this->createStub(PasswordMigrationStateInterface::class),
-            $ircopRepo ?? $this->createStub(OperatorNetworkProjectionQuery::class),
-            $this->createExporter($repo, $ircopRepo),
-        );
-    }
-
-    private function createExporter(
-        ?NickProjectionQuery $repo = null,
-        ?OperatorNetworkProjectionQuery $ircopRepo = null,
-    ): UdbRecordExporter {
-        return new UdbRecordExporter(
-            $repo ?? $this->createStub(NickProjectionQuery::class),
-            $this->createStub(ChannelProjectionQuery::class),
-            $ircopRepo ?? $this->createStub(OperatorNetworkProjectionQuery::class),
-            $this->createStub(GlineProjectionQuery::class),
-            $this->createStub(ChannelLookupPort::class),
-            $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-            new UdbChannelSuspendReasonResolver($this->createStub(TranslatorInterface::class), 'ChanServ'),
-        );
-    }
-
-    private function createNick(string $nickname, ?string $vhost = null): NickProjection
-    {
-        return new NickProjection(7, $nickname, 'argon2id:$argon2id$hash', $vhost, false, null, false);
-    }
-
     #[Test]
     public function getSubscribedEventsExportsOnlyDomainEvents(): void
     {
@@ -384,5 +344,45 @@ final class UdbNickSyncSubscriberTest extends TestCase
 
         $sub = $this->createSubscriber(repo: $repo, writer: $writer);
         $sub->onOperIrcopChanged(new OperIrcopChangedEvent(7, 'oper1'));
+    }
+
+    private function createSubscriber(
+        ?NickProjectionQuery $repo = null,
+        ?PasswordMigrationStateInterface $migrationState = null,
+        ?OperatorNetworkProjectionQuery $ircopRepo = null,
+        ?UdbRecordWriterInterface $writer = null,
+    ): UdbNickSyncSubscriber {
+        $defaultWriter = $this->createStub(UdbRecordWriterInterface::class);
+        $defaultWriter->method('insert')->willReturn(true);
+        $defaultWriter->method('delete')->willReturn(true);
+        $writer ??= $defaultWriter;
+
+        return new UdbNickSyncSubscriber(
+            $writer,
+            $repo ?? $this->createStub(NickProjectionQuery::class),
+            $migrationState ?? $this->createStub(PasswordMigrationStateInterface::class),
+            $ircopRepo ?? $this->createStub(OperatorNetworkProjectionQuery::class),
+            $this->createExporter($repo, $ircopRepo),
+        );
+    }
+
+    private function createExporter(
+        ?NickProjectionQuery $repo = null,
+        ?OperatorNetworkProjectionQuery $ircopRepo = null,
+    ): UdbRecordExporter {
+        return new UdbRecordExporter(
+            $repo ?? $this->createStub(NickProjectionQuery::class),
+            $this->createStub(ChannelProjectionQuery::class),
+            $ircopRepo ?? $this->createStub(OperatorNetworkProjectionQuery::class),
+            $this->createStub(GlineProjectionQuery::class),
+            $this->createStub(ChannelLookupPort::class),
+            $this->createStub(ActiveChannelModeSupportProviderInterface::class),
+            new UdbChannelSuspendReasonResolver($this->createStub(TranslatorInterface::class), 'ChanServ'),
+        );
+    }
+
+    private function createNick(string $nickname, ?string $vhost = null): NickProjection
+    {
+        return new NickProjection(7, $nickname, 'argon2id:$argon2id$hash', $vhost, false, null, false);
     }
 }

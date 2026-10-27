@@ -23,7 +23,10 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\Dotenv\Dotenv;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function array_key_last;
+use function array_unique;
 use function assert;
+use function count;
 use function dirname;
 use function implode;
 use function sprintf;
@@ -139,7 +142,7 @@ final class ServicesCommandHelpAlignmentTest extends TestCase
         }
 
         self::assertSame([], $missingKeys, sprintf('Missing translation keys found: %s', implode(', ', $missingKeys)));
-        self::assertSame(70, $totalCommands, 'Expected exactly 70 registered service commands across all 4 services.');
+        self::assertSame(73, $totalCommands, 'Expected exactly 73 registered service commands across all 4 services.');
     }
 
     #[Test]
@@ -198,7 +201,7 @@ final class ServicesCommandHelpAlignmentTest extends TestCase
                 }
             }
         }
-        self::assertSame(70, $total);
+        self::assertSame(73, $total);
     }
 
     #[Test]

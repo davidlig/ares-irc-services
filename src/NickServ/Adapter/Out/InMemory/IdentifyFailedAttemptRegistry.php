@@ -7,7 +7,10 @@ namespace App\NickServ\Adapter\Out\InMemory;
 use App\NickServ\Application\Port\Out\IdentifyLockoutTracker;
 use DateTimeImmutable;
 
+use function array_filter;
+use function array_values;
 use function count;
+use function max;
 
 /**
  * In-memory registry of failed IDENTIFY attempts per client key.

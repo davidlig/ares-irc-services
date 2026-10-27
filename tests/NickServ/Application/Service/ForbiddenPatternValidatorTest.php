@@ -10,15 +10,12 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function str_repeat;
+
 #[CoversClass(ForbiddenPatternValidator::class)]
 final class ForbiddenPatternValidatorTest extends TestCase
 {
     private ForbiddenPatternValidator $validator;
-
-    protected function setUp(): void
-    {
-        $this->validator = new ForbiddenPatternValidator();
-    }
 
     #[Test]
     public function isValidReturnsTrueForValidPatternWithWildcard(): void
@@ -128,5 +125,10 @@ final class ForbiddenPatternValidatorTest extends TestCase
     public function isValidReturnsTrueForPatternWithNumbers(): void
     {
         self::assertTrue($this->validator->isValid('*.test123.com'));
+    }
+
+    protected function setUp(): void
+    {
+        $this->validator = new ForbiddenPatternValidator();
     }
 }

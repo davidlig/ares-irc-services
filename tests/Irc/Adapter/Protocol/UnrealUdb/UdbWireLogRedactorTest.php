@@ -15,6 +15,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function base64_encode;
 use function str_repeat;
 
 #[CoversClass(UdbWireLogRedactor::class)]

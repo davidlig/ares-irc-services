@@ -13,17 +13,13 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 
+use function array_map;
+
 #[CoversClass(NickHistoryDoctrineRepository::class)]
 #[Group('integration')]
 final class NickHistoryDoctrineRepositoryTest extends DoctrineIntegrationTestCase
 {
     private NickHistoryRepositoryInterface $repository;
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->repository = new NickHistoryDoctrineRepository($this->entityManager);
-    }
 
     #[Test]
     public function savePersistsHistory(): void
@@ -326,6 +322,12 @@ final class NickHistoryDoctrineRepositoryTest extends DoctrineIntegrationTestCas
 
         self::assertSame([], $this->repository->findByNickId(1));
         self::assertCount(1, $this->repository->findByNickId(2));
+    }
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->repository = new NickHistoryDoctrineRepository($this->entityManager);
     }
 
     private function createHistory(

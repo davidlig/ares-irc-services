@@ -24,11 +24,6 @@ final class StatusNickHandlerTest extends TestCase
 {
     private DateTimeImmutable $now;
 
-    protected function setUp(): void
-    {
-        $this->now = new DateTimeImmutable('2026-09-06 15:00:00 UTC');
-    }
-
     #[Test]
     public function returnsUnregisteredOfflineWhenNickNotFoundAndOffline(): void
     {
@@ -201,5 +196,10 @@ final class StatusNickHandlerTest extends TestCase
         self::assertSame(StatusNickOutcome::PendingDeletion, $result->outcome);
         self::assertSame('olduser', $result->nickname);
         self::assertSame($deletionDate, $result->pendingDeletionAt);
+    }
+
+    protected function setUp(): void
+    {
+        $this->now = new DateTimeImmutable('2026-09-06 15:00:00 UTC');
     }
 }

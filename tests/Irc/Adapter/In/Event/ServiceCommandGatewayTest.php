@@ -26,24 +26,6 @@ final class ServiceCommandGatewayTest extends TestCase
 
     private ServiceCommandGateway $gateway;
 
-    protected function setUp(): void
-    {
-        $this->nickservListener = $this->createMock(ServiceCommandListenerInterface::class);
-        $this->nickservListener->method('getServiceName')->willReturn('NickServ');
-        $this->nickservListener->method('getServiceUid')->willReturn('001NICK');
-
-        $this->chanservListener = $this->createMock(ServiceCommandListenerInterface::class);
-        $this->chanservListener->method('getServiceName')->willReturn('ChanServ');
-        $this->chanservListener->method('getServiceUid')->willReturn('001CHAN');
-
-        $this->logger = $this->createMock(LoggerInterface::class);
-
-        $this->gateway = new ServiceCommandGateway(
-            listeners: [$this->nickservListener, $this->chanservListener],
-            logger: $this->logger,
-        );
-    }
-
     #[Test]
     public function subscribesToMessageReceivedEvent(): void
     {
@@ -309,5 +291,23 @@ final class ServiceCommandGatewayTest extends TestCase
 
         $listener = $this->gateway->findListenerFor('UnknownBot');
         self::assertNull($listener);
+    }
+
+    protected function setUp(): void
+    {
+        $this->nickservListener = $this->createMock(ServiceCommandListenerInterface::class);
+        $this->nickservListener->method('getServiceName')->willReturn('NickServ');
+        $this->nickservListener->method('getServiceUid')->willReturn('001NICK');
+
+        $this->chanservListener = $this->createMock(ServiceCommandListenerInterface::class);
+        $this->chanservListener->method('getServiceName')->willReturn('ChanServ');
+        $this->chanservListener->method('getServiceUid')->willReturn('001CHAN');
+
+        $this->logger = $this->createMock(LoggerInterface::class);
+
+        $this->gateway = new ServiceCommandGateway(
+            listeners: [$this->nickservListener, $this->chanservListener],
+            logger: $this->logger,
+        );
     }
 }

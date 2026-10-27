@@ -7,7 +7,10 @@ namespace App\NickServ\Adapter\Out\InMemory;
 use App\NickServ\Application\Port\Out\PendingEmailChangeStore;
 use DateTimeImmutable;
 
+use function hash_equals;
 use function sprintf;
+use function strcasecmp;
+use function strtolower;
 
 /**
  * In-memory store for pending email change confirmations.

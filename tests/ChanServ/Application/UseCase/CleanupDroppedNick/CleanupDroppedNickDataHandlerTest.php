@@ -20,6 +20,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function implode;
+
 #[CoversClass(CleanupDroppedNickData::class)]
 #[CoversClass(CleanupDroppedNickDataHandler::class)]
 final class CleanupDroppedNickDataHandlerTest extends TestCase
@@ -134,6 +136,59 @@ final class CleanupDroppedNickDataHandlerTest extends TestCase
         self::assertIsCallable($afterCommit);
         $afterCommit();
         self::assertSame('cleanup,delete,after_commit_registered,activity,drop', implode(',', $calls));
+    }
+
+    #[Test]
+    public function preservesRejectedNameRestrictionsWhenRequesterNicknameIsDropped(): void
+    {
+        $at = new DateTimeImmutable('2026-10-26T12:00:00+00:00');
+        $finite = RegisteredChannel::createPendingRegistration($at, '#finite', 7, 'description');
+        $finite->rejectRegistration('Reason', 9, 'Reviewer', $at, $at->modify('+24 hours'));
+        $indefinite = RegisteredChannel::createPendingRegistration($at, '#indefinite', 7, 'description');
+        $indefinite->rejectRegistration('Reason', 9, 'Reviewer', $at, null);
+        $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
+        $channels->expects(self::once())->method('findByFounderNickId')->with(7)->willReturn([$finite, $indefinite]);
+        $channels->expects(self::exactly(2))->method('save')->willReturnCallback(static function (RegisteredChannel $channel): void {
+            self::assertSame(0, $channel->getFounderNickId());
+        });
+        $channels->expects(self::never())->method('delete');
+        $events = $this->createMock(ChanServEventPublisher::class);
+        $events->expects(self::never())->method('publish');
+        $transaction = $this->createMock(ChanTransactionBoundary::class);
+        $transaction->expects(self::never())->method('afterCommit');
+        $activity = $this->createMock(NickDropCleanupActivitySink::class);
+        $activity->expects(self::never())->method('channelDropped');
+        $activity->expects(self::never())->method('founderTransferred');
+
+        $this->handler(
+            $this->createStub(ChannelAccessRepositoryInterface::class),
+            $this->createStub(ChannelAkickRepositoryInterface::class),
+            $channels,
+            $events,
+            $transaction,
+            $activity,
+        )->handle(new CleanupDroppedNickData(7, $at));
+
+        self::assertSame(0, $finite->getFounderNickId());
+        self::assertSame(0, $indefinite->getFounderNickId());
+        self::assertSame($at->modify('+24 hours')->format(DATE_ATOM), $finite->getRegistrationRestrictedUntil()?->format(DATE_ATOM));
+        self::assertNull($indefinite->getRegistrationRestrictedUntil());
+        self::assertSame('Reason', $finite->getRegistrationRejectionReason());
+        self::assertSame('Reviewer', $indefinite->getRegistrationRejectedByNickname());
+    }
+
+    #[Test]
+    public function removesPendingRequestWithoutPublishingRegisteredChannelDropEvents(): void
+    {
+        $pending = RegisteredChannel::createPendingRegistration(new DateTimeImmutable(), '#pending', 7, 'description');
+        $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
+        $channels->method('findByFounderNickId')->willReturn([$pending]);
+        $channels->expects(self::once())->method('delete')->with($pending);
+        $channels->expects(self::never())->method('save');
+        $events = $this->createMock(ChanServEventPublisher::class);
+        $events->expects(self::never())->method('publish');
+
+        $this->handler($this->createStub(ChannelAccessRepositoryInterface::class), $this->createStub(ChannelAkickRepositoryInterface::class), $channels, $events)->handle(new CleanupDroppedNickData(7, new DateTimeImmutable()));
     }
 
     private function handler(

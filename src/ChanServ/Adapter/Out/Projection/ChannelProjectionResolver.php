@@ -8,6 +8,7 @@ use App\ChanServ\Application\Port\In\ChannelProjection;
 use App\ChanServ\Application\Port\In\ChannelProjectionQuery;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
+use App\ChanServ\Domain\ValueObject\ChannelStatus;
 
 final readonly class ChannelProjectionResolver implements ChannelProjectionQuery
 {
@@ -19,6 +20,9 @@ final readonly class ChannelProjectionResolver implements ChannelProjectionQuery
     {
         $projections = [];
         foreach ($this->channels->iterateAll() as $channel) {
+            if ($this->isRegistrationRequest($channel)) {
+                continue;
+            }
             $projections[] = $this->project($channel);
         }
 
@@ -29,7 +33,12 @@ final readonly class ChannelProjectionResolver implements ChannelProjectionQuery
     {
         $channel = $this->channels->findByChannelName($channelName);
 
-        return null !== $channel ? $this->project($channel) : null;
+        return null !== $channel && !$this->isRegistrationRequest($channel) ? $this->project($channel) : null;
+    }
+
+    private function isRegistrationRequest(RegisteredChannel $channel): bool
+    {
+        return ChannelStatus::Pending === $channel->getStatus() || ChannelStatus::Rejected === $channel->getStatus();
     }
 
     private function project(RegisteredChannel $channel): ChannelProjection

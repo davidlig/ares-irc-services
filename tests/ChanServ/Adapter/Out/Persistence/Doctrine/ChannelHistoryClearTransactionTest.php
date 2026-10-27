@@ -24,6 +24,8 @@ use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use RuntimeException;
 
+use function array_map;
+
 #[CoversClass(ManageChannelHistoryHandler::class)]
 #[CoversClass(ChannelHistoryDoctrineRepository::class)]
 #[Group('integration')]

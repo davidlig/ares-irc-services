@@ -42,24 +42,6 @@ final class ChanServTopicApplySubscriberTest extends TestCase
 
     private ChanServTopicApplySubscriber $subscriber;
 
-    protected function setUp(): void
-    {
-        $this->channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
-        $this->channelLookup = $this->createMock(ChannelLookupPort::class);
-        $this->channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
-        $this->subscriber = new ChanServTopicApplySubscriber(
-            new ApplyStoredChannelTopicHandler(
-                $this->channelRepository,
-                new IrcChannelTopicNetworkQuery(
-                    $this->channelLookup,
-                    $this->createStub(ChannelSyncCompletedRegistryInterface::class),
-                    $this->createStub(UidResolverInterface::class),
-                ),
-                new IrcChannelTopicActions($this->channelServiceActions),
-            ),
-        );
-    }
-
     #[Test]
     public function subscribesToCorrectEvents(): void
     {
@@ -465,5 +447,23 @@ final class ChanServTopicApplySubscriberTest extends TestCase
 
         $event = new NetworkSynchronizationCompletedEvent('001');
         $this->subscriber->onSyncComplete($event);
+    }
+
+    protected function setUp(): void
+    {
+        $this->channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
+        $this->channelLookup = $this->createMock(ChannelLookupPort::class);
+        $this->channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
+        $this->subscriber = new ChanServTopicApplySubscriber(
+            new ApplyStoredChannelTopicHandler(
+                $this->channelRepository,
+                new IrcChannelTopicNetworkQuery(
+                    $this->channelLookup,
+                    $this->createStub(ChannelSyncCompletedRegistryInterface::class),
+                    $this->createStub(UidResolverInterface::class),
+                ),
+                new IrcChannelTopicActions($this->channelServiceActions),
+            ),
+        );
     }
 }

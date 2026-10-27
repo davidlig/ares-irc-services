@@ -8,6 +8,7 @@ use Doctrine\DBAL\ParameterType;
 use Psr\Log\AbstractLogger;
 use Stringable;
 
+use function array_values;
 use function assert;
 use function is_array;
 use function is_string;

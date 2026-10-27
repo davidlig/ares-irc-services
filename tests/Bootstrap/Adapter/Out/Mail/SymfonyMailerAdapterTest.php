@@ -19,16 +19,6 @@ final class SymfonyMailerAdapterTest extends TestCase
 
     private SymfonyMailerAdapter $adapter;
 
-    protected function setUp(): void
-    {
-        $this->symfonyMailer = $this->createMock(SymfonyMailerInterface::class);
-        $this->adapter = new SymfonyMailerAdapter(
-            $this->symfonyMailer,
-            'noreply@irc.example.com',
-            'MyIRC Network',
-        );
-    }
-
     #[Test]
     public function sendBuildsEmailWithFromToSubjectBodyAndDelegatesToSymfonyMailer(): void
     {
@@ -81,5 +71,15 @@ final class SymfonyMailerAdapterTest extends TestCase
             }));
 
         $this->adapter->send('recipient@example.com', 'Subject', 'Body');
+    }
+
+    protected function setUp(): void
+    {
+        $this->symfonyMailer = $this->createMock(SymfonyMailerInterface::class);
+        $this->adapter = new SymfonyMailerAdapter(
+            $this->symfonyMailer,
+            'noreply@irc.example.com',
+            'MyIRC Network',
+        );
     }
 }

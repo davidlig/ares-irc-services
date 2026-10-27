@@ -9,6 +9,9 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function hash;
+use function strtoupper;
+
 #[CoversClass(UuidRescueTokenCodec::class)]
 final class UuidRescueTokenCodecTest extends TestCase
 {

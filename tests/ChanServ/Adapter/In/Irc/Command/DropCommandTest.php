@@ -226,6 +226,50 @@ final class DropCommandTest extends TestCase
     }
 
     #[Test]
+    public function rejectedChannelCannotBeDroppedBeforeFiniteRestrictionExpires(): void
+    {
+        $at = new DateTimeImmutable();
+        $channel = RegisteredChannel::createPendingRegistration($at->modify('-1 hour'), '#test', 7, 'request');
+        $channel->rejectRegistration('Reason', 9, 'Reviewer', $at->modify('-1 hour'), $at->modify('+1 hour'));
+        $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channels->method('findByChannelName')->willReturn($channel);
+        $dropService = $this->createMock(ChanDropService::class);
+        $dropService->expects(self::never())->method('hardDropChannel');
+        $dropService->expects(self::never())->method('softDropChannel');
+        $command = $this->createCommandWith($channels, $dropService);
+        $messages = [];
+
+        $command->execute($this->createContext($this->createSender(), null, ['#test'], $messages));
+
+        self::assertContains('drop.registration_restricted', $messages);
+        self::assertTrue($channel->isRejectedRegistration());
+    }
+
+    #[Test]
+    public function expiredOrIndefiniteRejectedChannelUsesExistingDropForExplicitRelease(): void
+    {
+        foreach ([
+            'expired' => new DateTimeImmutable('-1 hour'),
+            'indefinite' => null,
+        ] as $restriction) {
+            $at = new DateTimeImmutable();
+            $channel = RegisteredChannel::createPendingRegistration($at->modify('-2 days'), '#test', 7, 'request');
+            $channel->rejectRegistration('Reason', 9, 'Reviewer', $at->modify('-1 day'), $restriction);
+            $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
+            $channels->method('findByChannelName')->willReturn($channel);
+            $dropService = $this->createMock(ChanDropService::class);
+            $dropService->expects(self::once())->method('hardDropChannel')->with($channel, self::isInstanceOf(DateTimeImmutable::class), 'registration-restriction-released', 'OperUser');
+            $dropService->expects(self::never())->method('softDropChannel');
+            $command = $this->createCommandWith($channels, $dropService);
+            $messages = [];
+
+            $command->execute($this->createContext($this->createSender(), null, ['#test'], $messages));
+
+            self::assertContains('drop.success', $messages);
+        }
+    }
+
+    #[Test]
     public function executeWithForceRequiresForcePermission(): void
     {
         $sender = $this->createSender();

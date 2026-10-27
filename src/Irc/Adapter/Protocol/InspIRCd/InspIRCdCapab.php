@@ -6,8 +6,17 @@ namespace App\Irc\Adapter\Protocol\InspIRCd;
 
 use App\Irc\Adapter\Protocol\IRCMessage;
 
+use function array_any;
+use function array_filter;
+use function array_values;
+use function asort;
+use function explode;
 use function in_array;
 use function strlen;
+use function strpos;
+use function strtolower;
+use function strtoupper;
+use function substr;
 
 /**
  * Parsed CAPAB data received from the remote InspIRCd server during link handshake.

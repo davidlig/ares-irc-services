@@ -9,6 +9,9 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function array_map;
+use function implode;
+
 #[CoversClass(UdbBlock::class)]
 final class UdbBlockTest extends TestCase
 {

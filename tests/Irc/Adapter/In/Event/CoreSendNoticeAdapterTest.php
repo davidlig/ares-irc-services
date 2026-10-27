@@ -24,12 +24,6 @@ final class CoreSendNoticeAdapterTest extends TestCase
 
     private CoreSendNoticeAdapter $adapter;
 
-    protected function setUp(): void
-    {
-        $this->connectionHolder = new ActiveConnectionHolder();
-        $this->adapter = new CoreSendNoticeAdapter($this->connectionHolder);
-    }
-
     #[Test]
     public function sendMessageDoesNothingWhenNotConnected(): void
     {
@@ -251,5 +245,11 @@ final class CoreSendNoticeAdapterTest extends TestCase
         $this->adapter->sendNoticeToChannel('001CS', '#test', "Line1\n\nLine2");
 
         self::assertSame(['NOTICE #test :Line1', 'NOTICE #test :Line2'], $lines);
+    }
+
+    protected function setUp(): void
+    {
+        $this->connectionHolder = new ActiveConnectionHolder();
+        $this->adapter = new CoreSendNoticeAdapter($this->connectionHolder);
     }
 }

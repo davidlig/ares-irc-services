@@ -32,6 +32,8 @@ use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
 use RuntimeException;
 
+use function str_repeat;
+
 #[CoversClass(VerifyNickHandler::class)]
 #[CoversClass(VerifyNick::class)]
 #[CoversClass(VerifyNickResult::class)]
@@ -44,13 +46,6 @@ final class VerifyNickHandlerTest extends TestCase
     private UuidRescueTokenCodec $codec;
 
     private IdentifiedSessionRegistry $sessions;
-
-    protected function setUp(): void
-    {
-        $this->temporary = new InMemoryTemporaryRescueTokenStore();
-        $this->codec = new UuidRescueTokenCodec();
-        $this->sessions = new IdentifiedSessionRegistry();
-    }
 
     #[Test]
     public function noPendingForMissingDisabledOrAlreadyConfirmedAccounts(): void
@@ -226,6 +221,13 @@ final class VerifyNickHandlerTest extends TestCase
         $result = $this->handler($this->account(), limiter: $limiter)->handle($this->input());
         self::assertSame(VerifyNickOutcome::LockedOut, $result->outcome);
         self::assertSame(123, $result->retryAfterSeconds);
+    }
+
+    protected function setUp(): void
+    {
+        $this->temporary = new InMemoryTemporaryRescueTokenStore();
+        $this->codec = new UuidRescueTokenCodec();
+        $this->sessions = new IdentifiedSessionRegistry();
     }
 
     private function challenge(): string

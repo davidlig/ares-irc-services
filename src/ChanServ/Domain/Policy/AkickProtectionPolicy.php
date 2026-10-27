@@ -7,6 +7,7 @@ namespace App\ChanServ\Domain\Policy;
 use App\ChanServ\Domain\ValueObject\AkickMask;
 
 use function fnmatch;
+use function strtolower;
 
 final readonly class AkickProtectionPolicy
 {

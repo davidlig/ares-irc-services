@@ -15,7 +15,10 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function base64_encode;
+use function implode;
 use function in_array;
+use function str_repeat;
 
 #[CoversClass(UdbSchema::class)]
 final class UdbSchemaTest extends TestCase
@@ -608,21 +611,6 @@ final class UdbSchemaTest extends TestCase
         ]));
     }
 
-    /**
-     * @return array<string, string>
-     */
-    private function spamfilterProfile(string $pattern, string $matchType): array
-    {
-        $prefix = 'F::' . $pattern . '::';
-
-        return [
-            $prefix . 'match-type' => $matchType,
-            $prefix . 'targets' => 'c',
-            $prefix . 'action' => 'kill',
-            $prefix . 'reason' => 'blocked',
-        ];
-    }
-
     // ---------- Secrets ----------
 
     /**
@@ -665,11 +653,6 @@ final class UdbSchemaTest extends TestCase
         yield 'access depth three' => ['C', ['#chan', 'access', 'nick'], false];
     }
 
-    private static function number(string $decimal): UdbUnsignedDecimal
-    {
-        return UdbUnsignedDecimal::parse($decimal) ?? throw new LogicException('The test uint64 fixture must be valid.');
-    }
-
     #[Test]
     public function typedContainersAndStoredKindsRejectUnknownDepthMasksAndMalformedEncoding(): void
     {
@@ -690,5 +673,25 @@ final class UdbSchemaTest extends TestCase
         self::assertFalse(UdbSchema::validateTyped(UdbBlock::Settings, ['nickserv'], UdbValue::none()));
         self::assertTrue(UdbSchema::validateAggregateTyped(UdbBlock::Nicks, ['nick' => UdbValue::none()]));
         self::assertFalse(UdbSchema::validateAggregateTyped(UdbBlock::Nicks, ['nick::pass' => UdbValue::none()]));
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function spamfilterProfile(string $pattern, string $matchType): array
+    {
+        $prefix = 'F::' . $pattern . '::';
+
+        return [
+            $prefix . 'match-type' => $matchType,
+            $prefix . 'targets' => 'c',
+            $prefix . 'action' => 'kill',
+            $prefix . 'reason' => 'blocked',
+        ];
+    }
+
+    private static function number(string $decimal): UdbUnsignedDecimal
+    {
+        return UdbUnsignedDecimal::parse($decimal) ?? throw new LogicException('The test uint64 fixture must be valid.');
     }
 }

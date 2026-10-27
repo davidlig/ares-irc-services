@@ -21,11 +21,6 @@ final class ChannelAccessPolicyTest extends TestCase
 {
     private ChannelAccessPolicy $policy;
 
-    protected function setUp(): void
-    {
-        $this->policy = new ChannelAccessPolicy();
-    }
-
     #[Test]
     public function unidentifiedUserAlwaysHasMinusOneEvenWhenFounderOrStored(): void
     {
@@ -112,5 +107,10 @@ final class ChannelAccessPolicyTest extends TestCase
 
         $this->expectException(InvalidArgumentException::class);
         ChannelLevelSet::defaults()->withOverride(ChannelLevel::NoJoin, 500);
+    }
+
+    protected function setUp(): void
+    {
+        $this->policy = new ChannelAccessPolicy();
     }
 }

@@ -19,12 +19,6 @@ final class DoctrineRegisterNickRepositoryTest extends DoctrineIntegrationTestCa
 {
     private RegisterNickRepository $repository;
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->repository = new DoctrineRegisterNickRepository($this->entityManager);
-    }
-
     #[Test]
     public function persistsAndFindsRegistrationCaseInsensitively(): void
     {
@@ -49,5 +43,11 @@ final class DoctrineRegisterNickRepositoryTest extends DoctrineIntegrationTestCa
     {
         self::assertNull($this->repository->findByNick('missing'));
         self::assertNull($this->repository->findByEmail('missing@example.com'));
+    }
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->repository = new DoctrineRegisterNickRepository($this->entityManager);
     }
 }

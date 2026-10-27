@@ -25,7 +25,9 @@ use PHPUnit\Framework\TestCase;
 use Stringable;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function implode;
 use function is_scalar;
+use function ksort;
 
 #[CoversClass(RegmodeCommand::class)]
 final class RegmodeCommandTest extends TestCase

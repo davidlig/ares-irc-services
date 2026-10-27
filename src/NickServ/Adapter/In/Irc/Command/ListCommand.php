@@ -21,6 +21,7 @@ use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentValidator;
 
 use function ceil;
 use function filter_var;
+use function max;
 
 use const FILTER_VALIDATE_INT;
 

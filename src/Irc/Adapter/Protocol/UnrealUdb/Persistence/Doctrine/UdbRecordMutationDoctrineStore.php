@@ -27,6 +27,7 @@ use function count;
 use function explode;
 use function str_starts_with;
 use function strtoupper;
+use function substr;
 
 /**
  * Commits each live record mutation together with the resulting block manifest.

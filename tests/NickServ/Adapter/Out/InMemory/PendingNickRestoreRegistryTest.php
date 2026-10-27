@@ -14,11 +14,6 @@ final class PendingNickRestoreRegistryTest extends TestCase
 {
     private PendingNickRestoreRegistry $registry;
 
-    protected function setUp(): void
-    {
-        $this->registry = new PendingNickRestoreRegistry();
-    }
-
     #[Test]
     public function markAddsUid(): void
     {
@@ -104,5 +99,10 @@ final class PendingNickRestoreRegistryTest extends TestCase
         self::assertTrue($this->registry->peek('001AAAA'));
         self::assertFalse($this->registry->peek('001BBBB'));
         self::assertTrue($this->registry->peek('001CCCC'));
+    }
+
+    protected function setUp(): void
+    {
+        $this->registry = new PendingNickRestoreRegistry();
     }
 }

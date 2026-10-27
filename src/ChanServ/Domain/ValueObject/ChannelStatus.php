@@ -10,4 +10,6 @@ enum ChannelStatus: string
     case Suspended = 'suspended';
     case PendingDeletion = 'pending_deletion';
     case Forbidden = 'forbidden';
+    case Pending = 'pending';
+    case Rejected = 'rejected';
 }

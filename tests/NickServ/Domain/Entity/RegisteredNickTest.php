@@ -14,6 +14,8 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 
+use function str_repeat;
+
 #[CoversClass(RegisteredNick::class)]
 final class RegisteredNickTest extends TestCase
 {

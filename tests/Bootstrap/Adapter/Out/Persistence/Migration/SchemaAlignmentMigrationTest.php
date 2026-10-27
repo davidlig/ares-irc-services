@@ -18,6 +18,8 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 
+use function array_map;
+
 #[CoversNothing]
 final class SchemaAlignmentMigrationTest extends TestCase
 {

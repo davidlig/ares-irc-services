@@ -30,6 +30,9 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
+use function hash;
+use function strtoupper;
+
 #[CoversClass(RecoverNickHandler::class)]
 #[CoversClass(RecoverNickResult::class)]
 #[CoversClass(RecoverNick::class)]
@@ -46,14 +49,6 @@ final class RecoverNickHandlerTest extends TestCase
     private InMemoryTemporaryRescueTokenStore $optional;
 
     private InMemoryRescueAttemptLimiter $limiter;
-
-    protected function setUp(): void
-    {
-        $this->now = new DateTimeImmutable('2026-10-22 UTC');
-        $this->pending = new RecoveryTokenRegistry();
-        $this->optional = new InMemoryTemporaryRescueTokenStore();
-        $this->limiter = new InMemoryRescueAttemptLimiter();
-    }
 
     #[Test]
     public function tokenModeNoArgumentOnlyExplainsWithoutAccountLookup(): void
@@ -279,6 +274,14 @@ final class RecoverNickHandlerTest extends TestCase
         $credentials->expects(self::never())->method('rotateAfterRecovery');
         $this->expectException(LogicException::class);
         $this->handler($this->account(), credentials: $credentials, codec: $codec)->handle(new RecoverNick('User', self::OLD));
+    }
+
+    protected function setUp(): void
+    {
+        $this->now = new DateTimeImmutable('2026-10-22 UTC');
+        $this->pending = new RecoveryTokenRegistry();
+        $this->optional = new InMemoryTemporaryRescueTokenStore();
+        $this->limiter = new InMemoryRescueAttemptLimiter();
     }
 
     private function account(?string $hash = 'default', ?string $email = 'user@example.com'): RegisteredNick

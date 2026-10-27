@@ -10,16 +10,12 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 use function count;
+use function preg_match_all;
 
 #[CoversClass(InspIRCdServiceIntroductionFormatter::class)]
 final class InspIRCdServiceIntroductionFormatterTest extends TestCase
 {
     private InspIRCdServiceIntroductionFormatter $formatter;
-
-    protected function setUp(): void
-    {
-        $this->formatter = new InspIRCdServiceIntroductionFormatter();
-    }
 
     #[Test]
     public function formatIntroductionProducesValidUidLine(): void
@@ -96,5 +92,10 @@ final class InspIRCdServiceIntroductionFormatterTest extends TestCase
         preg_match_all('/\d+/', $line, $matches);
         $numbers = $matches[0];
         self::assertGreaterThan(1, count($numbers));
+    }
+
+    protected function setUp(): void
+    {
+        $this->formatter = new InspIRCdServiceIntroductionFormatter();
     }
 }

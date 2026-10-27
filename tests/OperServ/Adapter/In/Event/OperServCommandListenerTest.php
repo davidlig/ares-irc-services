@@ -36,6 +36,8 @@ use RuntimeException;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Throwable;
 
+use function array_fill;
+
 #[CoversClass(OperServCommandListener::class)]
 #[CoversClass(OperServCommandLogSanitizer::class)]
 final class OperServCommandListenerTest extends TestCase
@@ -51,180 +53,6 @@ final class OperServCommandListenerTest extends TestCase
         self::assertNotNull($constructor);
         self::assertTrue($constructor->isPrivate());
         $constructor->invoke($reflection->newInstanceWithoutConstructor());
-    }
-
-    private static function senderView(): SenderView
-    {
-        return new SenderView(
-            uid: self::SENDER_UID,
-            nick: 'TestOper',
-            ident: 'oper',
-            hostname: 'oper.example',
-            cloakedHost: 'cloak.example',
-            ipBase64: 'b3Blcg==',
-            isIdentified: false,
-            isOper: true,
-            serverSid: '001',
-        );
-    }
-
-    private static function createServiceNicks(): ServiceNicknameRegistry
-    {
-        $nickservProvider = new class('nickserv', 'NickServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick) {}
-
-            public function getServiceKey(): string
-            {
-                return $this->key;
-            }
-
-            public function getNickname(): string
-            {
-                return $this->nick;
-            }
-        };
-        $chanservProvider = new class('chanserv', 'ChanServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick) {}
-
-            public function getServiceKey(): string
-            {
-                return $this->key;
-            }
-
-            public function getNickname(): string
-            {
-                return $this->nick;
-            }
-        };
-        $memoservProvider = new class('memoserv', 'MemoServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick) {}
-
-            public function getServiceKey(): string
-            {
-                return $this->key;
-            }
-
-            public function getNickname(): string
-            {
-                return $this->nick;
-            }
-        };
-        $operservProvider = new class('operserv', 'OperServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick) {}
-
-            public function getServiceKey(): string
-            {
-                return $this->key;
-            }
-
-            public function getNickname(): string
-            {
-                return $this->nick;
-            }
-        };
-
-        return new ServiceNicknameRegistry([
-            $nickservProvider,
-            $chanservProvider,
-            $memoservProvider,
-            $operservProvider,
-        ]);
-    }
-
-    private static function createOperServService(OperServCommandRegistry $registry, OperServNotifierInterface $notifier): OperServService
-    {
-        $preferences = self::createStub(UserMessagePreferenceQuery::class);
-        $preferences->method('prefersPrivateMessages')->willReturn(false);
-        $language = self::createStub(UserLanguageQuery::class);
-        $language->method('resolveFromAccount')->willReturn('en');
-
-        return new OperServService(
-            $registry,
-            self::createStub(NickAccountQuery::class),
-            $language,
-            $preferences,
-            $notifier,
-            self::createStub(TranslatorInterface::class),
-            self::createServiceNicks(),
-            self::createStub(OperatorAuthorizationQuery::class),
-            'en',
-            'UTC',
-        );
-    }
-
-    private static function createThrowCommand(string $name, Throwable $e): OperServCommandInterface
-    {
-        return new class($name, $e) implements OperServCommandInterface {
-            public function __construct(
-                private readonly string $commandName,
-                private readonly Throwable $exception,
-            ) {}
-
-            public function getName(): string
-            {
-                return $this->commandName;
-            }
-
-            public function getAliases(): array
-            {
-                return [];
-            }
-
-            public function getArgumentDefinition(): CommandArgumentDefinition
-            {
-                return new CommandArgumentDefinition($this->getSyntaxKey(), array_fill(0, $this->getMinArgs(), new Argument('argument')));
-            }
-
-            public function getMinArgs(): int
-            {
-                return 0;
-            }
-
-            public function getSyntaxKey(): string
-            {
-                return 'dummy.syntax';
-            }
-
-            public function getHelpKey(): string
-            {
-                return 'dummy.help';
-            }
-
-            public function getExampleKey(): string
-            {
-                return 'dummy.example';
-            }
-
-            public function getOrder(): int
-            {
-                return 0;
-            }
-
-            public function getShortDescKey(): string
-            {
-                return 'dummy.short';
-            }
-
-            public function getSubCommandHelp(): array
-            {
-                return [];
-            }
-
-            public function isOperOnly(): bool
-            {
-                return false;
-            }
-
-            public function getRequiredPermission(): ?string
-            {
-                return null;
-            }
-
-            public function execute(OperServContext $context): void
-            {
-                throw $this->exception;
-            }
-        };
     }
 
     #[Test]
@@ -550,5 +378,179 @@ final class OperServCommandListenerTest extends TestCase
         self::assertSame('RAW', OperServCommandLogSanitizer::commandName('RAW OPAQUE reset-token'));
         self::assertSame('GLOBAL', OperServCommandLogSanitizer::commandName('GLOBAL * NOTICE private-secret'));
         self::assertSame('UNKNOWN', OperServCommandLogSanitizer::commandName('private-secret payload'));
+    }
+
+    private static function senderView(): SenderView
+    {
+        return new SenderView(
+            uid: self::SENDER_UID,
+            nick: 'TestOper',
+            ident: 'oper',
+            hostname: 'oper.example',
+            cloakedHost: 'cloak.example',
+            ipBase64: 'b3Blcg==',
+            isIdentified: false,
+            isOper: true,
+            serverSid: '001',
+        );
+    }
+
+    private static function createServiceNicks(): ServiceNicknameRegistry
+    {
+        $nickservProvider = new class('nickserv', 'NickServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick) {}
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $chanservProvider = new class('chanserv', 'ChanServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick) {}
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $memoservProvider = new class('memoserv', 'MemoServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick) {}
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $operservProvider = new class('operserv', 'OperServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick) {}
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+
+        return new ServiceNicknameRegistry([
+            $nickservProvider,
+            $chanservProvider,
+            $memoservProvider,
+            $operservProvider,
+        ]);
+    }
+
+    private static function createOperServService(OperServCommandRegistry $registry, OperServNotifierInterface $notifier): OperServService
+    {
+        $preferences = self::createStub(UserMessagePreferenceQuery::class);
+        $preferences->method('prefersPrivateMessages')->willReturn(false);
+        $language = self::createStub(UserLanguageQuery::class);
+        $language->method('resolveFromAccount')->willReturn('en');
+
+        return new OperServService(
+            $registry,
+            self::createStub(NickAccountQuery::class),
+            $language,
+            $preferences,
+            $notifier,
+            self::createStub(TranslatorInterface::class),
+            self::createServiceNicks(),
+            self::createStub(OperatorAuthorizationQuery::class),
+            'en',
+            'UTC',
+        );
+    }
+
+    private static function createThrowCommand(string $name, Throwable $e): OperServCommandInterface
+    {
+        return new class($name, $e) implements OperServCommandInterface {
+            public function __construct(
+                private readonly string $commandName,
+                private readonly Throwable $exception,
+            ) {}
+
+            public function getName(): string
+            {
+                return $this->commandName;
+            }
+
+            public function getAliases(): array
+            {
+                return [];
+            }
+
+            public function getArgumentDefinition(): CommandArgumentDefinition
+            {
+                return new CommandArgumentDefinition($this->getSyntaxKey(), array_fill(0, $this->getMinArgs(), new Argument('argument')));
+            }
+
+            public function getMinArgs(): int
+            {
+                return 0;
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return 'dummy.syntax';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'dummy.help';
+            }
+
+            public function getExampleKey(): string
+            {
+                return 'dummy.example';
+            }
+
+            public function getOrder(): int
+            {
+                return 0;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'dummy.short';
+            }
+
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
+
+            public function getRequiredPermission(): ?string
+            {
+                return null;
+            }
+
+            public function execute(OperServContext $context): void
+            {
+                throw $this->exception;
+            }
+        };
     }
 }

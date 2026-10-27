@@ -8,9 +8,13 @@ use App\NickServ\Application\Port\Out\RegistrationPolicyRepository;
 use App\NickServ\Domain\ValueObject\RegistrationMode;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
+use Doctrine\DBAL\Platforms\AbstractMySQLPlatform;
 use RuntimeException;
+use UnexpectedValueException;
 
 use function is_string;
+use function json_decode;
+use function json_encode;
 
 /** Live queries avoid stale settings in the long-running daemon identity map. */
 final readonly class DoctrineRegistrationPolicyRepository implements RegistrationPolicyRepository
@@ -19,32 +23,33 @@ final readonly class DoctrineRegistrationPolicyRepository implements Registratio
 
     public function current(): RegistrationMode
     {
-        $value = $this->connection->fetchOne('SELECT mode FROM nickserv_registration_policy WHERE id = 1');
+        $value = $this->connection->fetchOne('SELECT setting_value FROM service_settings WHERE service_name = ? AND setting_name = ?', ['nickserv', 'registration_mode']);
 
-        return is_string($value) ? RegistrationMode::from($value) : RegistrationMode::Token;
+        return $this->decodeMode($value);
     }
 
     public function change(RegistrationMode $mode): RegistrationMode
     {
         for ($attempt = 0; $attempt < 3; ++$attempt) {
-            $value = $this->connection->fetchOne('SELECT mode FROM nickserv_registration_policy WHERE id = 1');
-            $previous = is_string($value) ? RegistrationMode::from($value) : RegistrationMode::Token;
+            $value = $this->connection->fetchOne('SELECT setting_value FROM service_settings WHERE service_name = ? AND setting_name = ?', ['nickserv', 'registration_mode']);
+            $previous = $this->decodeMode($value);
             if ($previous === $mode) {
                 return $previous;
             }
             if (false === $value) {
                 try {
-                    $this->connection->insert('nickserv_registration_policy', ['id' => 1, 'mode' => $mode->value]);
+                    $this->connection->insert('service_settings', ['service_name' => 'nickserv', 'setting_name' => 'registration_mode', 'setting_value' => json_encode($mode->value, JSON_THROW_ON_ERROR | JSON_PRESERVE_ZERO_FRACTION)]);
 
                     return $previous;
                 } catch (UniqueConstraintViolationException) {
-                    // Another writer initialized the singleton. Re-read before changing it.
+                    // Another writer initialized this setting. Re-read before changing it.
                     continue;
                 }
             }
+            $castType = $this->connection->getDatabasePlatform() instanceof AbstractMySQLPlatform ? 'BINARY' : 'TEXT';
             $changed = $this->connection->executeStatement(
-                'UPDATE nickserv_registration_policy SET mode = ? WHERE id = 1 AND mode = ?',
-                [$mode->value, $previous->value],
+                'UPDATE service_settings SET setting_value = ? WHERE service_name = ? AND setting_name = ? AND CAST(setting_value AS ' . $castType . ') = ?',
+                [json_encode($mode->value, JSON_THROW_ON_ERROR | JSON_PRESERVE_ZERO_FRACTION), 'nickserv', 'registration_mode', $value],
             );
             if (1 === $changed) {
                 return $previous;
@@ -52,5 +57,21 @@ final readonly class DoctrineRegistrationPolicyRepository implements Registratio
         }
 
         throw new RuntimeException('Registration policy changed concurrently; retry the command.');
+    }
+
+    private function decodeMode(mixed $value): RegistrationMode
+    {
+        if (false === $value) {
+            return RegistrationMode::Token;
+        }
+        if (!is_string($value)) {
+            throw new UnexpectedValueException('Registration mode must be stored as JSON text.');
+        }
+        $decoded = json_decode($value, true, 512, JSON_THROW_ON_ERROR);
+        if (!is_string($decoded)) {
+            throw new UnexpectedValueException('Registration mode must be a JSON string.');
+        }
+
+        return RegistrationMode::from($decoded);
     }
 }

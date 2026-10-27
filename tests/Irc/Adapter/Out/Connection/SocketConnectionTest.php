@@ -28,7 +28,13 @@ use function Amp\delay;
 use function Amp\Socket\listen;
 use function Amp\Socket\socketConnector;
 use function count;
+use function implode;
+use function rtrim;
+use function str_contains;
+use function str_repeat;
 use function strlen;
+use function strpos;
+use function substr;
 
 #[CoversClass(SocketConnection::class)]
 final class SocketConnectionTest extends TestCase
@@ -414,40 +420,6 @@ final class SocketConnectionTest extends TestCase
         $this->assertConnectionFailsAtClosedLoopbackPort(true, false);
     }
 
-    private function closedLoopbackPort(): int
-    {
-        // Avoid shared services that bind ephemeral ports on 127.0.0.1 in the test environment.
-        $server = listen('127.0.0.1:0');
-        $port = $this->serverPort($server);
-        $server->close();
-
-        return $port;
-    }
-
-    private function assertConnectionFailsAtClosedLoopbackPort(bool $useTls, bool $verifyPeer): void
-    {
-        $port = $this->closedLoopbackPort();
-        $originalConnector = socketConnector();
-        socketConnector(new DnsSocketConnector());
-        $connection = new SocketConnection('127.77.3.1', $port, $useTls, 1, $verifyPeer);
-
-        try {
-            try {
-                $connection->connect();
-            } catch (RuntimeException $e) {
-                self::assertStringContainsString('Failed to connect to 127.77.3.1:' . $port, $e->getMessage());
-                self::assertSame(ConnectionStatus::Error, $connection->getStatus());
-
-                return;
-            }
-
-            self::fail('Expected connection failure exception');
-        } finally {
-            socketConnector($originalConnector);
-            $connection->disconnect();
-        }
-    }
-
     #[Test]
     public function disconnectWhenNotConnectedDoesNotThrow(): void
     {
@@ -756,6 +728,40 @@ final class SocketConnectionTest extends TestCase
         } catch (RuntimeException $e) {
             self::assertStringContainsString('Error reading from IRC connection: Simulated read failure', $e->getMessage());
             self::assertSame(ConnectionStatus::Error, $conn->getStatus());
+        }
+    }
+
+    private function closedLoopbackPort(): int
+    {
+        // Avoid shared services that bind ephemeral ports on 127.0.0.1 in the test environment.
+        $server = listen('127.0.0.1:0');
+        $port = $this->serverPort($server);
+        $server->close();
+
+        return $port;
+    }
+
+    private function assertConnectionFailsAtClosedLoopbackPort(bool $useTls, bool $verifyPeer): void
+    {
+        $port = $this->closedLoopbackPort();
+        $originalConnector = socketConnector();
+        socketConnector(new DnsSocketConnector());
+        $connection = new SocketConnection('127.77.3.1', $port, $useTls, 1, $verifyPeer);
+
+        try {
+            try {
+                $connection->connect();
+            } catch (RuntimeException $e) {
+                self::assertStringContainsString('Failed to connect to 127.77.3.1:' . $port, $e->getMessage());
+                self::assertSame(ConnectionStatus::Error, $connection->getStatus());
+
+                return;
+            }
+
+            self::fail('Expected connection failure exception');
+        } finally {
+            socketConnector($originalConnector);
+            $connection->disconnect();
         }
     }
 

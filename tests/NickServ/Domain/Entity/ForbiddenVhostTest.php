@@ -12,6 +12,8 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 
+use function str_repeat;
+
 #[CoversClass(ForbiddenVhost::class)]
 final class ForbiddenVhostTest extends TestCase
 {

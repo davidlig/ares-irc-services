@@ -45,29 +45,6 @@ final class OperServBot implements NewOperServNotifierInterface, ServiceNickname
         $this->introduce($event->serverSid);
     }
 
-    private function introduce(string $serverSid): void
-    {
-        $module = $this->connectionHolder->getProtocolModule();
-        if (null === $module) {
-            return;
-        }
-
-        $module->getServiceActions()->introduceService(
-            $serverSid,
-            $this->operservNick,
-            $this->operservIdent,
-            $this->servicesVhost,
-            $this->uid,
-            $this->operservRealname,
-            $this->getServiceKey(),
-        );
-
-        $this->logger->info('OperServ introduced to network.', [
-            'uid' => $this->uid,
-            'nick' => $this->operservNick,
-        ]);
-    }
-
     public function getUserLookup(): NetworkUserLookupPort
     {
         return $this->userLookup;
@@ -104,5 +81,28 @@ final class OperServBot implements NewOperServNotifierInterface, ServiceNickname
     public function getNickname(): string
     {
         return $this->operservNick;
+    }
+
+    private function introduce(string $serverSid): void
+    {
+        $module = $this->connectionHolder->getProtocolModule();
+        if (null === $module) {
+            return;
+        }
+
+        $module->getServiceActions()->introduceService(
+            $serverSid,
+            $this->operservNick,
+            $this->operservIdent,
+            $this->servicesVhost,
+            $this->uid,
+            $this->operservRealname,
+            $this->getServiceKey(),
+        );
+
+        $this->logger->info('OperServ introduced to network.', [
+            'uid' => $this->uid,
+            'nick' => $this->operservNick,
+        ]);
     }
 }

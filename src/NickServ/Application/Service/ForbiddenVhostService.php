@@ -8,6 +8,8 @@ use App\NickServ\Application\Port\Out\ForbiddenVhostRepositoryInterface;
 use App\NickServ\Domain\Entity\ForbiddenVhost;
 use DateTimeImmutable;
 
+use function array_any;
+
 readonly class ForbiddenVhostService
 {
     public function __construct(

@@ -21,14 +21,27 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
+use function array_column;
+use function array_filter;
+use function array_map;
+use function array_search;
 use function array_slice;
+use function array_values;
 use function dirname;
+use function explode;
+use function implode;
 use function in_array;
 use function is_array;
 use function is_string;
+use function preg_match;
+use function preg_match_all;
 use function str_contains;
 use function str_ends_with;
+use function str_repeat;
 use function strlen;
+use function strtolower;
+use function strtoupper;
+use function substr;
 
 use const PREG_OFFSET_CAPTURE;
 
@@ -39,6 +52,10 @@ use const PREG_OFFSET_CAPTURE;
 #[UsesClass(IRCMessage::class)]
 final class UnifiedHelpFormatterTest extends TestCase
 {
+    private const array LOCALES = ['ca', 'de', 'el', 'en', 'es', 'eu', 'fr', 'gl', 'it', 'nl', 'pl', 'pt', 'ro', 'tr'];
+
+    private const array ALLOWED_COLORS = ['03', '07', '10', '14'];
+
     #[Test]
     public function keepsSpanishCommandExamplesIndependentOfMessageTransport(): void
     {
@@ -72,10 +89,6 @@ final class UnifiedHelpFormatterTest extends TestCase
             self::assertStringNotContainsString('/msg ', $example);
         }
     }
-
-    private const array LOCALES = ['ca', 'de', 'el', 'en', 'es', 'eu', 'fr', 'gl', 'it', 'nl', 'pl', 'pt', 'ro', 'tr'];
-
-    private const array ALLOWED_COLORS = ['03', '07', '10', '14'];
 
     #[Test]
     public function rendersFilteredGroupedGeneralHelp(): void

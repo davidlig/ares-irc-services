@@ -7,6 +7,7 @@ namespace App\Irc\Domain\ValueObject;
 use InvalidArgumentException;
 
 use function sprintf;
+use function str_contains;
 
 /**
  * An IRC server name must be a fully-qualified domain name (e.g. services.example.com).

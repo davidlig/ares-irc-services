@@ -6,8 +6,15 @@ namespace App\ChanServ\Domain\ValueObject;
 
 use InvalidArgumentException;
 
+use function ctype_alnum;
 use function fnmatch;
+use function str_contains;
+use function str_replace;
+use function str_split;
 use function strlen;
+use function strpos;
+use function strtolower;
+use function substr;
 
 final readonly class AkickMask
 {

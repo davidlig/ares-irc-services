@@ -7,6 +7,8 @@ namespace App\Tests\Irc\Adapter\Protocol\UnrealUdb;
 use App\Irc\Adapter\Runtime\LoopSchedulerInterface;
 use Closure;
 
+use function array_key_first;
+
 final class DeterministicLoopScheduler implements LoopSchedulerInterface
 {
     private int $sequence = 0;

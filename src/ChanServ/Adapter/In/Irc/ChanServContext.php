@@ -18,6 +18,9 @@ use DateTimeZone;
 use Symfony\Component\Translation\TranslatorBagInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function str_starts_with;
+use function trim;
+
 final readonly class ChanServContext implements IrcopAuthorizationSubject
 {
     public function __construct(

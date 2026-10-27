@@ -6,6 +6,7 @@ namespace App\Irc\Domain\ValueObject;
 
 use InvalidArgumentException;
 
+use function preg_match;
 use function sprintf;
 use function strlen;
 
@@ -36,13 +37,13 @@ readonly class Uid
         }
     }
 
-    public function equals(self $other): bool
-    {
-        return $other->value === $this->value;
-    }
-
     public function __toString(): string
     {
         return $this->value;
+    }
+
+    public function equals(self $other): bool
+    {
+        return $other->value === $this->value;
     }
 }

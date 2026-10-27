@@ -18,9 +18,12 @@ parameters:
   services.default_language: "%env(SERVICES_DEFAULT_LANGUAGE)%"
   services.default_timezone_fallback: "UTC"
   services.default_timezone: "%env(default:services.default_timezone_fallback:SERVICES_DEFAULT_TIMEZONE)%"
-  services.version: "v2.4.1"
+  services.version: "v2.5.0"
   services.guest_prefix: "%env(NICKSERV_GUEST_PREFIX)%"
   services.vhost_suffix: "%env(default::NICKSERV_VHOST_SUFFIX)%"
+
+  chanserv.reject_cooldown_hours_default: 24
+  chanserv.reject_cooldown_hours: "%env(non_negative_int:default:chanserv.reject_cooldown_hours_default:CHANSERV_REJECT_COOLDOWN)%"
 
   # IRCops debug channel (shared by all services)
   ircops.debug_channel_default: null
@@ -221,6 +224,13 @@ services:
     alias: App\NickServ\Adapter\Out\Persistence\Doctrine\DoctrineRegistrationPolicyRepository
   App\NickServ\Application\Port\Out\RegistrationPolicyRepository:
     alias: App\NickServ\Adapter\Out\Persistence\Doctrine\DoctrineRegistrationPolicyRepository
+  App\ChanServ\Application\Port\Out\RegistrationModeQuery:
+    alias: App\ChanServ\Adapter\Out\Persistence\Doctrine\DoctrineRegistrationPolicyRepository
+  App\ChanServ\Application\Port\Out\RegistrationPolicyRepository:
+    alias: App\ChanServ\Adapter\Out\Persistence\Doctrine\DoctrineRegistrationPolicyRepository
+  App\ChanServ\Application\UseCase\ReviewRegistration\ReviewRegistrationHandler:
+    arguments:
+      $rejectionCooldownHours: "%chanserv.reject_cooldown_hours%"
   App\NickServ\Application\UseCase\RegistrationMode\RegistrationModeHandlerInterface:
     alias: App\NickServ\Application\UseCase\RegistrationMode\RegistrationModeHandler
   App\NickServ\Adapter\In\Irc\Command\RegmodeCommand:
@@ -1361,6 +1371,12 @@ services:
   # Commands
   App\ChanServ\Adapter\In\Irc\Command\RegisterCommand:
     tags: ["chanserv.command"]
+  App\ChanServ\Adapter\In\Irc\Command\RegmodeCommand:
+    tags: ["chanserv.command"]
+  App\ChanServ\Adapter\In\Irc\Command\CregCommand:
+    tags: ["chanserv.command"]
+  App\ChanServ\Adapter\In\Irc\Command\StatusCommand:
+    tags: ["chanserv.command"]
 
   App\ChanServ\Application\UseCase\ShowInfo\ShowChannelInfoHandler:
     arguments:
@@ -2432,3 +2448,9 @@ services:
 
   App\Bootstrap\Adapter\In\Console\ValidateSchemaCommand:
     alias: doctrine.schema_validate_command
+
+  App\MemoServ\Application\Port\Out\ChannelRegistrationMemoText:
+    alias: App\MemoServ\Adapter\Out\Translation\ChannelRegistrationMemoTextAdapter
+
+  App\MemoServ\Application\UseCase\NotifyChannelRegistration\NotifyChannelRegistrationDecisionHandlerInterface:
+    alias: App\MemoServ\Application\UseCase\NotifyChannelRegistration\NotifyChannelRegistrationDecisionHandler

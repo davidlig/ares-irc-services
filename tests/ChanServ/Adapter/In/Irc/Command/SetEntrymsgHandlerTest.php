@@ -30,35 +30,14 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function str_repeat;
+
 #[CoversClass(SetEntrymsgHandler::class)]
 #[CoversClass(UpdateChannelSetting::class)]
 #[CoversClass(UpdateChannelSettingHandler::class)]
 #[CoversClass(UpdateChannelSettingResult::class)]
 final class SetEntrymsgHandlerTest extends TestCase
 {
-    private function createContext(
-        ChanServNotifierInterface $notifier,
-        TranslatorInterface $translator,
-        bool $withoutSender = false,
-    ): ChanServContext {
-        return new ChanServContext(
-            $withoutSender ? null : new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
-            null,
-            'SET',
-            ['ENTRYMSG', 'Welcome!'],
-            $notifier,
-            $translator,
-            'en',
-            'UTC',
-            'NOTICE',
-            new ChanServCommandRegistry([]),
-            $this->createStub(ChannelLookupPort::class),
-            new NullChannelModeSupport(),
-            $this->createStub(NetworkUserLookupPort::class),
-            $this->createServiceNicks(),
-        );
-    }
-
     #[Test]
     public function entrymsgTooLongRepliesTooLong(): void
     {
@@ -119,6 +98,29 @@ final class SetEntrymsgHandlerTest extends TestCase
             ),
             $channel,
             'Welcome!',
+        );
+    }
+
+    private function createContext(
+        ChanServNotifierInterface $notifier,
+        TranslatorInterface $translator,
+        bool $withoutSender = false,
+    ): ChanServContext {
+        return new ChanServContext(
+            $withoutSender ? null : new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
+            null,
+            'SET',
+            ['ENTRYMSG', 'Welcome!'],
+            $notifier,
+            $translator,
+            'en',
+            'UTC',
+            'NOTICE',
+            new ChanServCommandRegistry([]),
+            $this->createStub(ChannelLookupPort::class),
+            new NullChannelModeSupport(),
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
         );
     }
 

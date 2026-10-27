@@ -13,6 +13,7 @@ use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 
 use function array_find;
+use function implode;
 use function strtoupper;
 
 /**

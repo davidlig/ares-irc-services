@@ -41,31 +41,6 @@ final class SendMemoHandlerTest extends TestCase
 
     private MemoThrottlePort $throttle;
 
-    protected function setUp(): void
-    {
-        $this->userAccountPort = $this->createStub(MemoUserAccountPort::class);
-        $this->channelPort = $this->createStub(MemoChannelPort::class);
-        $this->memoRepository = $this->createStub(MemoRepositoryInterface::class);
-        $this->memoIgnoreRepository = $this->createStub(MemoIgnoreRepositoryInterface::class);
-        $this->memoSettingsRepository = $this->createStub(MemoSettingsRepositoryInterface::class);
-        $this->throttle = $this->createStub(MemoThrottlePort::class);
-    }
-
-    private function createHandler(): SendMemoHandler
-    {
-        return new SendMemoHandler(
-            $this->userAccountPort,
-            $this->channelPort,
-            $this->memoRepository,
-            $this->memoIgnoreRepository,
-            $this->memoSettingsRepository,
-            $this->throttle,
-            maxMemosPerNick: 10,
-            maxMemosPerChannel: 20,
-            sendMinIntervalSeconds: 30,
-        );
-    }
-
     #[Test]
     public function returnsThrottledWhenCooldownRemaining(): void
     {
@@ -309,5 +284,30 @@ final class SendMemoHandlerTest extends TestCase
 
         self::assertSame(SendMemoOutcome::LimitReached, $result->outcome);
         self::assertSame('#Ares', $result->targetName);
+    }
+
+    protected function setUp(): void
+    {
+        $this->userAccountPort = $this->createStub(MemoUserAccountPort::class);
+        $this->channelPort = $this->createStub(MemoChannelPort::class);
+        $this->memoRepository = $this->createStub(MemoRepositoryInterface::class);
+        $this->memoIgnoreRepository = $this->createStub(MemoIgnoreRepositoryInterface::class);
+        $this->memoSettingsRepository = $this->createStub(MemoSettingsRepositoryInterface::class);
+        $this->throttle = $this->createStub(MemoThrottlePort::class);
+    }
+
+    private function createHandler(): SendMemoHandler
+    {
+        return new SendMemoHandler(
+            $this->userAccountPort,
+            $this->channelPort,
+            $this->memoRepository,
+            $this->memoIgnoreRepository,
+            $this->memoSettingsRepository,
+            $this->throttle,
+            maxMemosPerNick: 10,
+            maxMemosPerChannel: 20,
+            sendMinIntervalSeconds: 30,
+        );
     }
 }

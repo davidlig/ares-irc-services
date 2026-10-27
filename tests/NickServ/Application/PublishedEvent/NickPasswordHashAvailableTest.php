@@ -9,6 +9,9 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function array_keys;
+use function get_object_vars;
+
 #[CoversClass(NickPasswordHashAvailable::class)]
 final class NickPasswordHashAvailableTest extends TestCase
 {

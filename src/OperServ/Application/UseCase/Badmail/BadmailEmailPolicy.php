@@ -9,6 +9,9 @@ use App\OperServ\Application\Port\Out\BadmailRepository;
 use App\OperServ\Domain\ValueObject\EmailDomain;
 use InvalidArgumentException;
 
+use function strrpos;
+use function substr;
+
 final readonly class BadmailEmailPolicy implements EmailDomainPolicy
 {
     public function __construct(private BadmailRepository $repository) {}

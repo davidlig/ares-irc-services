@@ -12,6 +12,9 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 
+use function serialize;
+use function strtolower;
+
 #[CoversClass(RecoveryTokenRegistry::class)]
 final class RecoveryTokenRegistryTest extends TestCase
 {

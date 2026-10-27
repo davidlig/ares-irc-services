@@ -25,6 +25,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
+use function array_map;
+
 #[CoversClass(MigrationOwnedSchemaListener::class)]
 final class MigrationOwnedSchemaListenerTest extends TestCase
 {
@@ -53,6 +55,35 @@ final class MigrationOwnedSchemaListenerTest extends TestCase
         // Projecting twice cannot overwrite explicit target assets or add duplicate indexes.
         new MigrationOwnedSchemaListener()->postGenerateSchema($event);
         self::assertSame($actual->getColumns(), $event->getSchema()->getTable('registered_nicks')->getColumns());
+    }
+
+    #[DataProvider('platforms')]
+    public function testCanonicalGlobalSettingsSchemaIsProjectedOnEveryPlatform(AbstractPlatform $platform): void
+    {
+        $manager = $this->createStub(AbstractSchemaManager::class);
+        $manager->method('listTableNames')->willReturn([]);
+        $connection = $this->createStub(Connection::class);
+        $connection->method('createSchemaManager')->willReturn($manager);
+        $connection->method('getDatabasePlatform')->willReturn($platform);
+        $em = $this->createStub(EntityManagerInterface::class);
+        $em->method('getConnection')->willReturn($connection);
+        $original = new Schema();
+        $event = new GenerateSchemaEventArgs($em, $original);
+        new MigrationOwnedSchemaListener()->postGenerateSchema($event);
+        self::assertFalse($original->hasTable('service_settings'));
+        $settings = $event->getSchema()->getTable('service_settings');
+        self::assertCount(3, $settings->getColumns());
+        foreach (['service_name', 'setting_name', 'setting_value'] as $column) {
+            self::assertTrue($settings->hasColumn($column));
+        }
+        $primary = $settings->getPrimaryKeyConstraint();
+        self::assertNotNull($primary);
+        self::assertSame(['service_name', 'setting_name'], array_map(static fn ($name): string => $name->toString(), $primary->getColumnNames()));
+        self::assertSame(32, $settings->getColumn('service_name')->getLength());
+        self::assertSame(64, $settings->getColumn('setting_name')->getLength());
+        self::assertSame('json', $settings->getColumn('setting_value')->getTypeName());
+        new MigrationOwnedSchemaListener()->postGenerateSchema($event);
+        self::assertSame($settings->getColumns(), $event->getSchema()->getTable('service_settings')->getColumns());
     }
 
     /** @return iterable<string, array{AbstractPlatform}> */

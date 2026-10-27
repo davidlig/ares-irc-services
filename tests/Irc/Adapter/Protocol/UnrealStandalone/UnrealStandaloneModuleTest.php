@@ -20,24 +20,6 @@ use Psr\Log\NullLogger;
 #[CoversClass(UnrealStandaloneModule::class)]
 final class UnrealStandaloneModuleTest extends TestCase
 {
-    private function createModule(): UnrealStandaloneModule
-    {
-        $handler = new UnrealStandaloneProtocolHandler('001');
-        $connectionHolder = new ActiveConnectionHolder();
-        $serviceActions = new UnrealStandaloneProtocolServiceActions($connectionHolder, new UnrealStandaloneServiceIntroductionFormatter(), new NullLogger());
-        $channelModeSupport = new UnrealStandaloneChannelModeSupport();
-        $userModeSupport = new UnrealStandaloneUserModeSupport();
-        $nickReservation = new UnrealStandaloneNickReservation($connectionHolder, new NullLogger());
-
-        return new UnrealStandaloneModule(
-            $handler,
-            $serviceActions,
-            $channelModeSupport,
-            $userModeSupport,
-            $nickReservation,
-        );
-    }
-
     #[Test]
     public function getProtocolNameReturnsUnreal(): void
     {
@@ -93,5 +75,23 @@ final class UnrealStandaloneModuleTest extends TestCase
         $module = $this->createModule();
 
         self::assertInstanceOf(UnrealStandaloneUserModeSupport::class, $module->getUserModeSupport());
+    }
+
+    private function createModule(): UnrealStandaloneModule
+    {
+        $handler = new UnrealStandaloneProtocolHandler('001');
+        $connectionHolder = new ActiveConnectionHolder();
+        $serviceActions = new UnrealStandaloneProtocolServiceActions($connectionHolder, new UnrealStandaloneServiceIntroductionFormatter(), new NullLogger());
+        $channelModeSupport = new UnrealStandaloneChannelModeSupport();
+        $userModeSupport = new UnrealStandaloneUserModeSupport();
+        $nickReservation = new UnrealStandaloneNickReservation($connectionHolder, new NullLogger());
+
+        return new UnrealStandaloneModule(
+            $handler,
+            $serviceActions,
+            $channelModeSupport,
+            $userModeSupport,
+            $nickReservation,
+        );
     }
 }

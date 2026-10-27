@@ -36,6 +36,8 @@ use stdClass;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Throwable;
 
+use function array_fill;
+
 #[CoversClass(MemoServCommandListener::class)]
 final class MemoServCommandListenerTest extends TestCase
 {
@@ -44,154 +46,6 @@ final class MemoServCommandListenerTest extends TestCase
     private const string BOT_NICK = 'MemoServ';
 
     private const string BOT_UID = '001MS';
-
-    private static function senderView(): SenderView
-    {
-        return new SenderView(
-            uid: self::SENDER_UID,
-            nick: 'TestUser',
-            ident: 'test',
-            hostname: 'user.example.com',
-            cloakedHost: 'user.example.com',
-            ipBase64: '',
-        );
-    }
-
-    private function createBot(): MemoServBot
-    {
-        $uidGenerator = $this->createStub(ServiceUidGeneratorInterface::class);
-        $uidGenerator->method('generateUid')->willReturn(self::BOT_UID);
-
-        $bot = new MemoServBot(
-            new ActiveConnectionHolder(),
-            $this->createStub(SendNoticePort::class),
-            $uidGenerator,
-            'services.example.com',
-            self::BOT_NICK,
-        );
-
-        $bot->onBurstComplete(new ServiceIntroductionRequestedEvent('001'));
-
-        return $bot;
-    }
-
-    private function createServiceNicks(): ServiceNicknameRegistry
-    {
-        $provider = new class implements ServiceNicknameProviderInterface {
-            public function getServiceKey(): string
-            {
-                return 'memoserv';
-            }
-
-            public function getNickname(): string
-            {
-                return 'MemoServ';
-            }
-        };
-
-        return new ServiceNicknameRegistry([$provider]);
-    }
-
-    /**
-     * @param iterable<MemoServCommandInterface> $commands
-     */
-    private function createService(
-        iterable $commands,
-        ?MemoUserAccountPort $userAccountPort = null,
-        ?MemoServUserPresentationPreferences $preferences = null,
-        ?MemoServNotifierInterface $notifier = null,
-    ): MemoServService {
-        return new MemoServService(
-            commandRegistry: new MemoServCommandRegistry($commands),
-            userAccountPort: $userAccountPort ?? $this->createStub(MemoUserAccountPort::class),
-            languageResolver: $preferences ?? $this->createStub(MemoServUserPresentationPreferences::class),
-            notifier: $notifier ?? $this->createStub(MemoServNotifierInterface::class),
-            messageTypeResolver: $preferences ?? $this->createStub(MemoServUserPresentationPreferences::class),
-            translator: $this->createStub(TranslatorInterface::class),
-            serviceNicks: $this->createServiceNicks(),
-            authorizationContext: $this->createStub(MemoAuthorizationContextInterface::class),
-            authorizationChecker: $this->createStub(MemoAuthorizationCheckerInterface::class),
-            eventDispatcher: $this->createStub(EventBusInterface::class),
-            defaultLanguage: 'en',
-            defaultTimezone: 'UTC',
-            logger: new NullLogger(),
-        );
-    }
-
-    private function createThrowCommand(string $name, Throwable $e): MemoServCommandInterface
-    {
-        return new class($name, $e) implements MemoServCommandInterface {
-            public function __construct(
-                private readonly string $name,
-                private readonly Throwable $exception,
-            ) {}
-
-            public function getName(): string
-            {
-                return $this->name;
-            }
-
-            public function getAliases(): array
-            {
-                return [];
-            }
-
-            public function getArgumentDefinition(): CommandArgumentDefinition
-            {
-                return new CommandArgumentDefinition($this->getSyntaxKey(), array_fill(0, $this->getMinArgs(), new Argument('argument')));
-            }
-
-            public function getMinArgs(): int
-            {
-                return 0;
-            }
-
-            public function getSyntaxKey(): string
-            {
-                return 'throw.syntax';
-            }
-
-            public function getHelpKey(): string
-            {
-                return 'throw.help';
-            }
-
-            public function getExampleKey(): string
-            {
-                return 'throw.example';
-            }
-
-            public function getOrder(): int
-            {
-                return 1;
-            }
-
-            public function getShortDescKey(): string
-            {
-                return 'throw.short';
-            }
-
-            public function getSubCommandHelp(): array
-            {
-                return [];
-            }
-
-            public function isOperOnly(): bool
-            {
-                return false;
-            }
-
-            public function getRequiredPermission(): ?string
-            {
-                return null;
-            }
-
-            public function execute(MemoServContext $context): null
-            {
-                throw $this->exception;
-            }
-        };
-    }
 
     #[Test]
     public function returnsServiceNameAndUid(): void
@@ -365,5 +219,153 @@ final class MemoServCommandListenerTest extends TestCase
         );
 
         $listener->onCommand(self::SENDER_UID, 'FAIL');
+    }
+
+    private static function senderView(): SenderView
+    {
+        return new SenderView(
+            uid: self::SENDER_UID,
+            nick: 'TestUser',
+            ident: 'test',
+            hostname: 'user.example.com',
+            cloakedHost: 'user.example.com',
+            ipBase64: '',
+        );
+    }
+
+    private function createBot(): MemoServBot
+    {
+        $uidGenerator = $this->createStub(ServiceUidGeneratorInterface::class);
+        $uidGenerator->method('generateUid')->willReturn(self::BOT_UID);
+
+        $bot = new MemoServBot(
+            new ActiveConnectionHolder(),
+            $this->createStub(SendNoticePort::class),
+            $uidGenerator,
+            'services.example.com',
+            self::BOT_NICK,
+        );
+
+        $bot->onBurstComplete(new ServiceIntroductionRequestedEvent('001'));
+
+        return $bot;
+    }
+
+    private function createServiceNicks(): ServiceNicknameRegistry
+    {
+        $provider = new class implements ServiceNicknameProviderInterface {
+            public function getServiceKey(): string
+            {
+                return 'memoserv';
+            }
+
+            public function getNickname(): string
+            {
+                return 'MemoServ';
+            }
+        };
+
+        return new ServiceNicknameRegistry([$provider]);
+    }
+
+    /**
+     * @param iterable<MemoServCommandInterface> $commands
+     */
+    private function createService(
+        iterable $commands,
+        ?MemoUserAccountPort $userAccountPort = null,
+        ?MemoServUserPresentationPreferences $preferences = null,
+        ?MemoServNotifierInterface $notifier = null,
+    ): MemoServService {
+        return new MemoServService(
+            commandRegistry: new MemoServCommandRegistry($commands),
+            userAccountPort: $userAccountPort ?? $this->createStub(MemoUserAccountPort::class),
+            languageResolver: $preferences ?? $this->createStub(MemoServUserPresentationPreferences::class),
+            notifier: $notifier ?? $this->createStub(MemoServNotifierInterface::class),
+            messageTypeResolver: $preferences ?? $this->createStub(MemoServUserPresentationPreferences::class),
+            translator: $this->createStub(TranslatorInterface::class),
+            serviceNicks: $this->createServiceNicks(),
+            authorizationContext: $this->createStub(MemoAuthorizationContextInterface::class),
+            authorizationChecker: $this->createStub(MemoAuthorizationCheckerInterface::class),
+            eventDispatcher: $this->createStub(EventBusInterface::class),
+            defaultLanguage: 'en',
+            defaultTimezone: 'UTC',
+            logger: new NullLogger(),
+        );
+    }
+
+    private function createThrowCommand(string $name, Throwable $e): MemoServCommandInterface
+    {
+        return new class($name, $e) implements MemoServCommandInterface {
+            public function __construct(
+                private readonly string $name,
+                private readonly Throwable $exception,
+            ) {}
+
+            public function getName(): string
+            {
+                return $this->name;
+            }
+
+            public function getAliases(): array
+            {
+                return [];
+            }
+
+            public function getArgumentDefinition(): CommandArgumentDefinition
+            {
+                return new CommandArgumentDefinition($this->getSyntaxKey(), array_fill(0, $this->getMinArgs(), new Argument('argument')));
+            }
+
+            public function getMinArgs(): int
+            {
+                return 0;
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return 'throw.syntax';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'throw.help';
+            }
+
+            public function getExampleKey(): string
+            {
+                return 'throw.example';
+            }
+
+            public function getOrder(): int
+            {
+                return 1;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'throw.short';
+            }
+
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
+
+            public function getRequiredPermission(): ?string
+            {
+                return null;
+            }
+
+            public function execute(MemoServContext $context): null
+            {
+                throw $this->exception;
+            }
+        };
     }
 }

@@ -30,11 +30,6 @@ final class InfoCommandTest extends TestCase
 {
     private DateTimeImmutable $now;
 
-    protected function setUp(): void
-    {
-        $this->now = new DateTimeImmutable('2026-09-06 18:00:00 UTC');
-    }
-
     #[Test]
     public function exposesInfoMetadata(): void
     {
@@ -293,6 +288,11 @@ final class InfoCommandTest extends TestCase
             'info.language',
             'reply.separator',
         ], $messages2);
+    }
+
+    protected function setUp(): void
+    {
+        $this->now = new DateTimeImmutable('2026-09-06 18:00:00 UTC');
     }
 
     /**

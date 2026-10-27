@@ -10,6 +10,13 @@ use PHPUnit\Framework\Attributes\Test;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Bundle\FrameworkBundle\Translation\Translator;
 
+use function file_put_contents;
+use function hash;
+use function substr;
+use function sys_get_temp_dir;
+use function tempnam;
+use function unlink;
+
 #[CoversNothing]
 final class TranslationLoaderWiringTest extends KernelTestCase
 {

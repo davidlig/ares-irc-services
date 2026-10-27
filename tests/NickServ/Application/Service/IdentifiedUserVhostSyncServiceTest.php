@@ -24,36 +24,6 @@ use ReflectionClass;
 #[CoversClass(IdentifiedUserVhostSyncService::class)]
 final class IdentifiedUserVhostSyncServiceTest extends TestCase
 {
-    private function createService(
-        RegisteredNickRepositoryInterface $nickRepo,
-        NickNetworkActions $notifier,
-        ?VhostDisplayResolver $resolver = null,
-        ?ForcedVhostCheckerInterface $forcedVhostChecker = null,
-        ?NickServActivitySink $logger = null,
-        ?NickChangeIdentificationPolicy $connectionHolder = null,
-    ): IdentifiedUserVhostSyncService {
-        return new IdentifiedUserVhostSyncService(
-            $nickRepo,
-            $notifier,
-            $resolver ?? new VhostDisplayResolver(),
-            $forcedVhostChecker ?? $this->createStub(ForcedVhostCheckerInterface::class),
-            $connectionHolder ?? $this->createStub(NickChangeIdentificationPolicy::class),
-            $logger ?? $this->createStub(NickServActivitySink::class),
-        );
-    }
-
-    private function createAccountWithId(string $nick): RegisteredNick
-    {
-        $account = RegisteredNick::createPending($nick, 'hash', 'u@e.com', 'en', new DateTimeImmutable('+1 hour'), new DateTimeImmutable());
-        $account->activate();
-
-        $refl = new ReflectionClass($account);
-        $idProp = $refl->getProperty('id');
-        $idProp->setValue($account, 1);
-
-        return $account;
-    }
-
     #[Test]
     public function syncVhostForUserClearsVhostWhenNotIdentifiedAndVhostActive(): void
     {
@@ -320,6 +290,36 @@ final class IdentifiedUserVhostSyncServiceTest extends TestCase
 
         $service = $this->createService($repo, $notifier, connectionHolder: $connectionHolder);
         $service->syncVhostForUser($user);
+    }
+
+    private function createService(
+        RegisteredNickRepositoryInterface $nickRepo,
+        NickNetworkActions $notifier,
+        ?VhostDisplayResolver $resolver = null,
+        ?ForcedVhostCheckerInterface $forcedVhostChecker = null,
+        ?NickServActivitySink $logger = null,
+        ?NickChangeIdentificationPolicy $connectionHolder = null,
+    ): IdentifiedUserVhostSyncService {
+        return new IdentifiedUserVhostSyncService(
+            $nickRepo,
+            $notifier,
+            $resolver ?? new VhostDisplayResolver(),
+            $forcedVhostChecker ?? $this->createStub(ForcedVhostCheckerInterface::class),
+            $connectionHolder ?? $this->createStub(NickChangeIdentificationPolicy::class),
+            $logger ?? $this->createStub(NickServActivitySink::class),
+        );
+    }
+
+    private function createAccountWithId(string $nick): RegisteredNick
+    {
+        $account = RegisteredNick::createPending($nick, 'hash', 'u@e.com', 'en', new DateTimeImmutable('+1 hour'), new DateTimeImmutable());
+        $account->activate();
+
+        $refl = new ReflectionClass($account);
+        $idProp = $refl->getProperty('id');
+        $idProp->setValue($account, 1);
+
+        return $account;
     }
 }
 

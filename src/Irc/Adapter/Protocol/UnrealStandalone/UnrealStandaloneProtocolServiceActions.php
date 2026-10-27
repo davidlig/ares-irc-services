@@ -10,7 +10,10 @@ use App\Irc\Application\Port\In\ProtocolServiceActionsInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
+use function implode;
 use function sprintf;
+use function str_contains;
+use function time;
 
 /**
  * UnrealIRCd: SVSLOGIN (account) + SVS2MODE (+r), SVSMODE, SVSNICK, KILL.

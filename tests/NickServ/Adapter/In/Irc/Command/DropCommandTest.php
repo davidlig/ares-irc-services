@@ -28,7 +28,9 @@ use Psr\Log\LoggerInterface;
 use Stringable;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function implode;
 use function is_scalar;
+use function ksort;
 
 use const DATE_ATOM;
 

@@ -29,6 +29,7 @@ use Throwable;
 use UnexpectedValueException;
 
 use function sprintf;
+use function str_repeat;
 
 use const DATE_ATOM;
 
@@ -43,20 +44,6 @@ final class UdbRecordMutationDoctrineStoreTest extends DoctrineIntegrationTestCa
     private UdbRecordMutationDoctrineStore $mutations;
 
     private UdbStreamOrigin $origin;
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        $this->records = new UdbRecordDoctrineRepository($this->entityManager);
-        $this->states = new UdbBlockStateDoctrineRepository($this->entityManager);
-        $this->mutations = new UdbRecordMutationDoctrineStore(
-            $this->entityManager,
-            new MockClock('2026-09-13 16:30:00 UTC'),
-        );
-        $this->origin = new UdbStreamOrigin('002', '0123456789abcdef');
-        $this->mutations->beginLocalStream($this->origin);
-    }
 
     #[Test]
     public function binaryMutationManifestAndReloadUseTheSameLogicalBytes(): void
@@ -334,13 +321,6 @@ final class UdbRecordMutationDoctrineStoreTest extends DoctrineIntegrationTestCa
         self::assertSame($oldModifiedAt->format(DATE_ATOM), $preservedManifest->getModifiedAt()->format(DATE_ATOM));
     }
 
-    private function upsert(string $block, string $path, string $logicalValue): ?UdbUnsignedDecimal
-    {
-        $value = UdbTestValues::fromLogical(UdbBlock::fromLetter($block) ?? throw new LogicException('Invalid fixture block.'), $path, $logicalValue);
-
-        return $this->mutations->upsertWithManifest($block, $path, $value, $this->origin);
-    }
-
     #[Test]
     public function blockDropAllocatesMonotonicCreditWithoutDeletingRecords(): void
     {
@@ -388,5 +368,26 @@ final class UdbRecordMutationDoctrineStoreTest extends DoctrineIntegrationTestCa
         $this->entityManager->clear();
         $this->expectException(UnexpectedValueException::class);
         new ReflectionMethod(UdbRecordMutationDoctrineStore::class, 'recordsByBlock')->invoke($this->mutations, 'N');
+    }
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->records = new UdbRecordDoctrineRepository($this->entityManager);
+        $this->states = new UdbBlockStateDoctrineRepository($this->entityManager);
+        $this->mutations = new UdbRecordMutationDoctrineStore(
+            $this->entityManager,
+            new MockClock('2026-09-13 16:30:00 UTC'),
+        );
+        $this->origin = new UdbStreamOrigin('002', '0123456789abcdef');
+        $this->mutations->beginLocalStream($this->origin);
+    }
+
+    private function upsert(string $block, string $path, string $logicalValue): ?UdbUnsignedDecimal
+    {
+        $value = UdbTestValues::fromLogical(UdbBlock::fromLetter($block) ?? throw new LogicException('Invalid fixture block.'), $path, $logicalValue);
+
+        return $this->mutations->upsertWithManifest($block, $path, $value, $this->origin);
     }
 }

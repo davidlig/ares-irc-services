@@ -14,12 +14,23 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Stringable;
 
+use function array_column;
+use function array_filter;
+use function array_push;
 use function array_slice;
+use function array_values;
 use function dirname;
+use function explode;
+use function implode;
 use function in_array;
 use function is_array;
 use function is_scalar;
 use function is_string;
+use function preg_match;
+use function preg_match_all;
+use function strtolower;
+use function strtr;
+use function trim;
 
 #[CoversClass(UnifiedHelpFormatter::class)]
 final class UnifiedHelpFormatterTest extends TestCase

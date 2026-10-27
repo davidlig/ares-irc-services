@@ -19,11 +19,6 @@ final class AutomaticRankPolicyTest extends TestCase
 {
     private AutomaticRankPolicy $policy;
 
-    protected function setUp(): void
-    {
-        $this->policy = new AutomaticRankPolicy();
-    }
-
     #[Test]
     public function founderReceivesHighestProtocolSupportedRank(): void
     {
@@ -82,5 +77,10 @@ final class AutomaticRankPolicyTest extends TestCase
         self::assertTrue(ChannelRank::Owner->isHigherThan(ChannelRank::Administrator));
         self::assertTrue(ChannelRank::Voice->isHigherThan(null));
         self::assertFalse(ChannelRank::Voice->isHigherThan(ChannelRank::Operator));
+    }
+
+    protected function setUp(): void
+    {
+        $this->policy = new AutomaticRankPolicy();
     }
 }

@@ -10,6 +10,7 @@ use InvalidArgumentException;
 use OverflowException;
 
 use function count;
+use function hash_equals;
 
 final class InMemoryTemporaryRescueTokenStore implements TemporaryRescueTokenStore
 {

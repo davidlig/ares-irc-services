@@ -25,6 +25,9 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function array_column;
+use function array_map;
+
 #[CoversClass(GlineCommand::class)]
 #[CoversClass(ManageGline::class)]
 #[CoversClass(ManageGlineResult::class)]

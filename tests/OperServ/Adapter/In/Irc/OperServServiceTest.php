@@ -34,6 +34,8 @@ use Symfony\Component\Translation\Loader\ArrayLoader;
 use Symfony\Component\Translation\Translator;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function array_fill;
+
 #[CoversClass(OperServService::class)]
 #[CoversClass(OperServContext::class)]
 #[CoversClass(OperServCommandRegistry::class)]

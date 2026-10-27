@@ -7,7 +7,9 @@ namespace App\Irc\Adapter\Protocol\UnrealUdb\Wire;
 use Stringable;
 use ValueError;
 
+use function intdiv;
 use function ltrim;
+use function preg_match;
 use function sprintf;
 use function strcmp;
 use function strlen;
@@ -21,6 +23,11 @@ final readonly class UdbUnsignedDecimal implements Stringable
     public const string MAX = '18446744073709551615';
 
     private function __construct(private string $value) {}
+
+    public function __toString(): string
+    {
+        return $this->value;
+    }
 
     public static function parse(string $value): ?self
     {
@@ -107,10 +114,5 @@ final readonly class UdbUnsignedDecimal implements Stringable
     public function incrementNonZero(): self
     {
         return $this->increment() ?? self::fromInt(1);
-    }
-
-    public function __toString(): string
-    {
-        return $this->value;
     }
 }

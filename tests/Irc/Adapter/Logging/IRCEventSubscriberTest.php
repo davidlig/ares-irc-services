@@ -23,6 +23,9 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
+use function array_pop;
+use function serialize;
+
 #[CoversClass(IRCEventSubscriber::class)]
 final class IRCEventSubscriberTest extends TestCase
 {
@@ -31,13 +34,6 @@ final class IRCEventSubscriberTest extends TestCase
     private TestHandler $handler;
 
     private IRCEventSubscriber $subscriber;
-
-    protected function setUp(): void
-    {
-        $this->handler = new TestHandler();
-        $this->logger = new Logger('test', [$this->handler]);
-        $this->subscriber = new IRCEventSubscriber($this->logger);
-    }
 
     #[Test]
     public function getSubscribedEventsReturnsCorrectEvents(): void
@@ -163,27 +159,6 @@ final class IRCEventSubscriberTest extends TestCase
         self::assertStringNotContainsString('verification-token', $record->context['raw']);
     }
 
-    private function record(): LogRecord
-    {
-        $records = $this->handler->getRecords();
-        self::assertCount(1, $records);
-        $record = array_pop($records);
-
-        return $record;
-    }
-
-    private function createServerLink(): ServerLink
-    {
-        return new ServerLink(
-            new ServerName('irc.example.com'),
-            new Hostname('192.168.1.1'),
-            new Port(7000),
-            new LinkPassword('secret'),
-            'Test Server',
-            true,
-        );
-    }
-
     #[Test]
     public function founderSecretsNeverReachPrivmsgOrSqueryLogFields(): void
     {
@@ -219,5 +194,33 @@ final class IRCEventSubscriberTest extends TestCase
             self::assertStringContainsString('******', $serialized);
             $this->handler->clear();
         }
+    }
+
+    protected function setUp(): void
+    {
+        $this->handler = new TestHandler();
+        $this->logger = new Logger('test', [$this->handler]);
+        $this->subscriber = new IRCEventSubscriber($this->logger);
+    }
+
+    private function record(): LogRecord
+    {
+        $records = $this->handler->getRecords();
+        self::assertCount(1, $records);
+        $record = array_pop($records);
+
+        return $record;
+    }
+
+    private function createServerLink(): ServerLink
+    {
+        return new ServerLink(
+            new ServerName('irc.example.com'),
+            new Hostname('192.168.1.1'),
+            new Port(7000),
+            new LinkPassword('secret'),
+            'Test Server',
+            true,
+        );
     }
 }

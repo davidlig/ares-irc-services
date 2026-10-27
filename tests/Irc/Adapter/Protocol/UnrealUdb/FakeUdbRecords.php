@@ -13,6 +13,10 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbRecordRepositoryInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbUnsignedDecimal;
 use RuntimeException;
 
+use function array_map;
+use function str_starts_with;
+use function strtolower;
+
 /**
  * In-memory UdbRecordRepositoryInterface fake with optional failure injection.
  */

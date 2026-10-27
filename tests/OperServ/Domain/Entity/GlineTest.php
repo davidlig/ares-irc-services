@@ -12,6 +12,8 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 
+use function array_fill;
+use function str_repeat;
 use function strlen;
 
 #[CoversClass(Gline::class)]

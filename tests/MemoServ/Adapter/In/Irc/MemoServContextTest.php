@@ -26,69 +26,6 @@ use function is_string;
 #[CoversClass(MemoServContext::class)]
 final class MemoServContextTest extends TestCase
 {
-    private function createServiceNicks(): ServiceNicknameRegistry
-    {
-        $nickservProvider = new class('nickserv', 'NickServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick) {}
-
-            public function getServiceKey(): string
-            {
-                return $this->key;
-            }
-
-            public function getNickname(): string
-            {
-                return $this->nick;
-            }
-        };
-        $chanservProvider = new class('chanserv', 'ChanServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick) {}
-
-            public function getServiceKey(): string
-            {
-                return $this->key;
-            }
-
-            public function getNickname(): string
-            {
-                return $this->nick;
-            }
-        };
-        $memoservProvider = new class('memoserv', 'MemoServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick) {}
-
-            public function getServiceKey(): string
-            {
-                return $this->key;
-            }
-
-            public function getNickname(): string
-            {
-                return $this->nick;
-            }
-        };
-        $operservProvider = new class('operserv', 'OperServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick) {}
-
-            public function getServiceKey(): string
-            {
-                return $this->key;
-            }
-
-            public function getNickname(): string
-            {
-                return $this->nick;
-            }
-        };
-
-        return new ServiceNicknameRegistry([
-            $nickservProvider,
-            $chanservProvider,
-            $memoservProvider,
-            $operservProvider,
-        ]);
-    }
-
     #[Test]
     public function exposesIndependentSenderIdentityAndIrcOperatorFacts(): void
     {
@@ -352,23 +289,6 @@ final class MemoServContextTest extends TestCase
         self::assertSame('missing.key', $context->trans('missing.key'));
     }
 
-    private function createMinimalContext(string $timezone = 'UTC'): MemoServContext
-    {
-        return new MemoServContext(
-            null,
-            null,
-            'LIST',
-            [],
-            $this->createStub(MemoServNotifierInterface::class),
-            $this->createStub(TranslatorInterface::class),
-            'en',
-            $timezone,
-            'NOTICE',
-            new MemoServCommandRegistry([]),
-            $this->createServiceNicks(),
-        );
-    }
-
     #[Test]
     public function getSenderReturnsSenderView(): void
     {
@@ -430,5 +350,85 @@ final class MemoServContextTest extends TestCase
         self::assertNull($context->getSender());
         self::assertNull($context->getSenderAccount());
         self::assertNull($context->getSenderAccountId());
+    }
+
+    private function createServiceNicks(): ServiceNicknameRegistry
+    {
+        $nickservProvider = new class('nickserv', 'NickServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick) {}
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $chanservProvider = new class('chanserv', 'ChanServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick) {}
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $memoservProvider = new class('memoserv', 'MemoServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick) {}
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $operservProvider = new class('operserv', 'OperServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick) {}
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+
+        return new ServiceNicknameRegistry([
+            $nickservProvider,
+            $chanservProvider,
+            $memoservProvider,
+            $operservProvider,
+        ]);
+    }
+
+    private function createMinimalContext(string $timezone = 'UTC'): MemoServContext
+    {
+        return new MemoServContext(
+            null,
+            null,
+            'LIST',
+            [],
+            $this->createStub(MemoServNotifierInterface::class),
+            $this->createStub(TranslatorInterface::class),
+            'en',
+            $timezone,
+            'NOTICE',
+            new MemoServCommandRegistry([]),
+            $this->createServiceNicks(),
+        );
     }
 }

@@ -19,12 +19,6 @@ final class MemoDoctrineRepositoryTest extends DoctrineIntegrationTestCase
 {
     private MemoRepositoryInterface $repository;
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->repository = new MemoDoctrineRepository($this->entityManager);
-    }
-
     #[Test]
     public function savePersistsMemoToNick(): void
     {
@@ -262,5 +256,11 @@ final class MemoDoctrineRepositoryTest extends DoctrineIntegrationTestCase
 
         self::assertSame([], $this->repository->findByTargetChannel(10));
         self::assertCount(1, $this->repository->findByTargetChannel(20));
+    }
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->repository = new MemoDoctrineRepository($this->entityManager);
     }
 }

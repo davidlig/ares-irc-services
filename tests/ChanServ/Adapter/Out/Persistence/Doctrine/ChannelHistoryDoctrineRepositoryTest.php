@@ -13,17 +13,13 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 
+use function array_map;
+
 #[CoversClass(ChannelHistoryDoctrineRepository::class)]
 #[Group('integration')]
 final class ChannelHistoryDoctrineRepositoryTest extends DoctrineIntegrationTestCase
 {
     private ChannelHistoryRepositoryInterface $repository;
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->repository = new ChannelHistoryDoctrineRepository($this->entityManager);
-    }
 
     #[Test]
     public function savePersistsHistory(): void
@@ -326,6 +322,12 @@ final class ChannelHistoryDoctrineRepositoryTest extends DoctrineIntegrationTest
 
         self::assertSame([], $this->repository->findByChannelId(1));
         self::assertCount(1, $this->repository->findByChannelId(2));
+    }
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->repository = new ChannelHistoryDoctrineRepository($this->entityManager);
     }
 
     private function createHistory(

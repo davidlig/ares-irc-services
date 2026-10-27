@@ -19,11 +19,6 @@ use Symfony\Component\Messenger\Stamp\ReceivedStamp;
 #[CoversClass(EmailDelayMiddleware::class)]
 final class EmailDelayMiddlewareTest extends TestCase
 {
-    private function createMiddleware(int $delaySeconds, ?ClockInterface $clock = null): EmailDelayMiddleware
-    {
-        return new EmailDelayMiddleware($delaySeconds, $clock ?? $this->createStub(ClockInterface::class));
-    }
-
     #[Test]
     public function handlePassesThroughNonSendEmailMessages(): void
     {
@@ -142,5 +137,10 @@ final class EmailDelayMiddlewareTest extends TestCase
         $result = $middleware->handle($envelope, $stack);
 
         self::assertSame($envelope, $result);
+    }
+
+    private function createMiddleware(int $delaySeconds, ?ClockInterface $clock = null): EmailDelayMiddleware
+    {
+        return new EmailDelayMiddleware($delaySeconds, $clock ?? $this->createStub(ClockInterface::class));
     }
 }

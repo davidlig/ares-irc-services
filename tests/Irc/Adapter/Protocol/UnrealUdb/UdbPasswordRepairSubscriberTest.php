@@ -25,6 +25,8 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function str_repeat;
+
 #[CoversClass(UdbPasswordRepairSubscriber::class)]
 final class UdbPasswordRepairSubscriberTest extends TestCase
 {

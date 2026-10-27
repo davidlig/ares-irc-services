@@ -22,12 +22,6 @@ final class CoreSendCtcpAdapterTest extends TestCase
 
     private CoreSendCtcpAdapter $adapter;
 
-    protected function setUp(): void
-    {
-        $this->connectionHolder = new ActiveConnectionHolder();
-        $this->adapter = new CoreSendCtcpAdapter($this->connectionHolder);
-    }
-
     #[Test]
     public function sendCtcpReplyDoesNothingWhenNotConnected(): void
     {
@@ -87,5 +81,11 @@ final class CoreSendCtcpAdapterTest extends TestCase
         self::assertSame('001NS', $capturedMessage->prefix);
         self::assertSame(['001TARGET'], $capturedMessage->params);
         self::assertSame("\x01PING 12345\x01", $capturedMessage->trailing);
+    }
+
+    protected function setUp(): void
+    {
+        $this->connectionHolder = new ActiveConnectionHolder();
+        $this->adapter = new CoreSendCtcpAdapter($this->connectionHolder);
     }
 }

@@ -33,50 +33,17 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
+use function array_filter;
+use function array_values;
+use function implode;
+use function serialize;
+use function str_starts_with;
+
 #[CoversClass(InspIRCdProtocolHandler::class)]
 final class InspIRCdProtocolHandlerTest extends TestCase
 {
     /** @var list<string> */
     private array $effects = [];
-
-    private function createHandler(
-        string $sid = 'A0A',
-        ?ActiveConnectionHolder $connectionHolder = null,
-        ?InspIRCdChannelModeSupportFactory $factory = null,
-        ?EventDispatcherInterface $eventDispatcher = null,
-        ?LoggerInterface $logger = null,
-    ): InspIRCdProtocolHandler {
-        return new InspIRCdProtocolHandler(
-            sid: $sid,
-            connectionHolder: $connectionHolder ?? new ActiveConnectionHolder(),
-            modeSupportFactory: $factory ?? new InspIRCdChannelModeSupportFactory(),
-            logger: $logger ?? new NullLogger(),
-            eventDispatcher: $eventDispatcher,
-        );
-    }
-
-    private function createServerLink(): ServerLink
-    {
-        return new ServerLink(
-            serverName: new ServerName('services.test.local'),
-            host: new Hostname('127.0.0.1'),
-            port: new Port(7029),
-            password: new LinkPassword('link-secret'),
-            description: 'Ares IRC Services',
-            useTls: false,
-        );
-    }
-
-    /** @param list<string> $written */
-    private function createRecordingConnection(array &$written): ConnectionInterface&MockObject
-    {
-        $connection = $this->createMock(ConnectionInterface::class);
-        $connection->expects(self::atLeastOnce())->method('writeLine')->willReturnCallback(static function (string $line) use (&$written): void {
-            $written[] = $line;
-        });
-
-        return $connection;
-    }
 
     #[Test]
     public function getProtocolNameReturnsInspircd(): void
@@ -445,49 +412,6 @@ final class InspIRCdProtocolHandlerTest extends TestCase
         self::assertSame([], $this->effects);
     }
 
-    /**
-     * @param list<string> $modules
-     * @param list<string> $extraLines
-     * @param list<string> $modSupport
-     */
-    private function sendRequiredCapab(
-        InspIRCdProtocolHandler $handler,
-        ConnectionInterface $connection,
-        ?string $version = '1206',
-        array $modules = ['services', 'cloak=cloak-host=synthetic.example'],
-        array $modSupport = ['account', 'chghost=hostchars=example'],
-        array $extraLines = [],
-    ): void {
-        $startParams = ['START'];
-        if (null !== $version) {
-            $startParams[] = $version;
-        }
-        $handler->handleIncoming(new IRCMessage(command: 'CAPAB', params: $startParams), $connection);
-        $handler->handleIncoming(new IRCMessage(command: 'CAPAB', params: ['MODULES'], trailing: implode(' ', $modules)), $connection);
-        $handler->handleIncoming(new IRCMessage(command: 'CAPAB', params: ['MODSUPPORT'], trailing: implode(' ', $modSupport)), $connection);
-        foreach ($extraLines as $line) {
-            $handler->handleIncoming(IRCMessage::fromRawLine($line), $connection);
-        }
-        $handler->handleIncoming(new IRCMessage(command: 'CAPAB', params: ['END']), $connection);
-    }
-
-    private function assertOutgoingBurstEffects(): void
-    {
-        self::assertCount(3, $this->effects);
-        self::assertMatchesRegularExpression('/^write::C2C BURST \d+$/', $this->effects[0]);
-        self::assertSame('event:' . NetworkBurstCompleteEvent::class, $this->effects[1]);
-        self::assertSame('write::C2C ENDBURST', $this->effects[2]);
-    }
-
-    private function assertCompletedBurstEffects(): void
-    {
-        self::assertCount(4, $this->effects);
-        self::assertMatchesRegularExpression('/^write::C2C BURST \d+$/', $this->effects[0]);
-        self::assertSame('event:' . NetworkBurstCompleteEvent::class, $this->effects[1]);
-        self::assertSame('write::C2C ENDBURST', $this->effects[2]);
-        self::assertSame('event:' . NetworkSyncCompleteEvent::class, $this->effects[3]);
-    }
-
     #[Test]
     public function handleIncomingUnknownCommandWritesNothing(): void
     {
@@ -622,6 +546,88 @@ final class InspIRCdProtocolHandlerTest extends TestCase
         self::assertTrue($module->getChannelModeSupport()->hasHalfOp());
         self::assertTrue($module->getChannelModeSupport()->hasOwner());
         self::assertTrue($module->getChannelModeSupport()->hasPermanentChannelMode());
+    }
+
+    private function createHandler(
+        string $sid = 'A0A',
+        ?ActiveConnectionHolder $connectionHolder = null,
+        ?InspIRCdChannelModeSupportFactory $factory = null,
+        ?EventDispatcherInterface $eventDispatcher = null,
+        ?LoggerInterface $logger = null,
+    ): InspIRCdProtocolHandler {
+        return new InspIRCdProtocolHandler(
+            sid: $sid,
+            connectionHolder: $connectionHolder ?? new ActiveConnectionHolder(),
+            modeSupportFactory: $factory ?? new InspIRCdChannelModeSupportFactory(),
+            logger: $logger ?? new NullLogger(),
+            eventDispatcher: $eventDispatcher,
+        );
+    }
+
+    private function createServerLink(): ServerLink
+    {
+        return new ServerLink(
+            serverName: new ServerName('services.test.local'),
+            host: new Hostname('127.0.0.1'),
+            port: new Port(7029),
+            password: new LinkPassword('link-secret'),
+            description: 'Ares IRC Services',
+            useTls: false,
+        );
+    }
+
+    /** @param list<string> $written */
+    private function createRecordingConnection(array &$written): ConnectionInterface&MockObject
+    {
+        $connection = $this->createMock(ConnectionInterface::class);
+        $connection->expects(self::atLeastOnce())->method('writeLine')->willReturnCallback(static function (string $line) use (&$written): void {
+            $written[] = $line;
+        });
+
+        return $connection;
+    }
+
+    /**
+     * @param list<string> $modules
+     * @param list<string> $extraLines
+     * @param list<string> $modSupport
+     */
+    private function sendRequiredCapab(
+        InspIRCdProtocolHandler $handler,
+        ConnectionInterface $connection,
+        ?string $version = '1206',
+        array $modules = ['services', 'cloak=cloak-host=synthetic.example'],
+        array $modSupport = ['account', 'chghost=hostchars=example'],
+        array $extraLines = [],
+    ): void {
+        $startParams = ['START'];
+        if (null !== $version) {
+            $startParams[] = $version;
+        }
+        $handler->handleIncoming(new IRCMessage(command: 'CAPAB', params: $startParams), $connection);
+        $handler->handleIncoming(new IRCMessage(command: 'CAPAB', params: ['MODULES'], trailing: implode(' ', $modules)), $connection);
+        $handler->handleIncoming(new IRCMessage(command: 'CAPAB', params: ['MODSUPPORT'], trailing: implode(' ', $modSupport)), $connection);
+        foreach ($extraLines as $line) {
+            $handler->handleIncoming(IRCMessage::fromRawLine($line), $connection);
+        }
+        $handler->handleIncoming(new IRCMessage(command: 'CAPAB', params: ['END']), $connection);
+    }
+
+    private function assertOutgoingBurstEffects(): void
+    {
+        self::assertCount(3, $this->effects);
+        self::assertMatchesRegularExpression('/^write::C2C BURST \d+$/', $this->effects[0]);
+        self::assertSame('event:' . NetworkBurstCompleteEvent::class, $this->effects[1]);
+        self::assertSame('write::C2C ENDBURST', $this->effects[2]);
+    }
+
+    private function assertCompletedBurstEffects(): void
+    {
+        self::assertCount(4, $this->effects);
+        self::assertMatchesRegularExpression('/^write::C2C BURST \d+$/', $this->effects[0]);
+        self::assertSame('event:' . NetworkBurstCompleteEvent::class, $this->effects[1]);
+        self::assertSame('write::C2C ENDBURST', $this->effects[2]);
+        self::assertSame('event:' . NetworkSyncCompleteEvent::class, $this->effects[3]);
     }
 
     private function createModuleWithHandler(InspIRCdProtocolHandler $handler, ActiveConnectionHolder $connectionHolder, InspIRCdChannelModeSupport $modeSupport): InspIRCdModule

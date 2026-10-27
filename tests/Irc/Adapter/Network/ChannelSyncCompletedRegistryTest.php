@@ -9,15 +9,12 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function microtime;
+
 #[CoversClass(ChannelSyncCompletedRegistry::class)]
 final class ChannelSyncCompletedRegistryTest extends TestCase
 {
     private ChannelSyncCompletedRegistry $registry;
-
-    protected function setUp(): void
-    {
-        $this->registry = new ChannelSyncCompletedRegistry();
-    }
 
     #[Test]
     public function markSyncCompletedMarksChannel(): void
@@ -71,5 +68,10 @@ final class ChannelSyncCompletedRegistryTest extends TestCase
         self::assertTrue($this->registry->isSyncCompleted('#alpha'));
         self::assertTrue($this->registry->isSyncCompleted('#beta'));
         self::assertFalse($this->registry->isSyncCompleted('#gamma'));
+    }
+
+    protected function setUp(): void
+    {
+        $this->registry = new ChannelSyncCompletedRegistry();
     }
 }

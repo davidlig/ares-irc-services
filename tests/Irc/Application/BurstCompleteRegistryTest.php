@@ -14,11 +14,6 @@ final class BurstCompleteRegistryTest extends TestCase
 {
     private BurstCompleteRegistry $registry;
 
-    protected function setUp(): void
-    {
-        $this->registry = new BurstCompleteRegistry();
-    }
-
     #[Test]
     public function isBurstCompleteReturnsFalseInitially(): void
     {
@@ -55,5 +50,10 @@ final class BurstCompleteRegistryTest extends TestCase
 
         $this->registry->setBurstComplete(true);
         self::assertTrue($this->registry->isBurstComplete());
+    }
+
+    protected function setUp(): void
+    {
+        $this->registry = new BurstCompleteRegistry();
     }
 }

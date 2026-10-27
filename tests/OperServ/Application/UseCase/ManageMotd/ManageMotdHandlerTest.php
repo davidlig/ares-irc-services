@@ -33,11 +33,6 @@ final class ManageMotdHandlerTest extends TestCase
 {
     private DateTimeImmutable $now;
 
-    protected function setUp(): void
-    {
-        $this->now = new DateTimeImmutable('2026-09-08T10:15:00+00:00');
-    }
-
     #[Test]
     public function addsMotdAndRecordsSafeAuditData(): void
     {
@@ -244,6 +239,11 @@ final class ManageMotdHandlerTest extends TestCase
         yield 'minutes' => ['2m', '2026-09-08T10:17:00+00:00'];
         yield 'hours' => ['3h', '2026-09-08T13:15:00+00:00'];
         yield 'days' => ['2d', '2026-09-10T10:15:00+00:00'];
+    }
+
+    protected function setUp(): void
+    {
+        $this->now = new DateTimeImmutable('2026-09-08T10:15:00+00:00');
     }
 
     private function command(

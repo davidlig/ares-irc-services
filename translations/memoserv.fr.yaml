@@ -194,3 +194,11 @@ help:
 notify:
   nick_pending: "Vous avez \x02%count%\x02 message(s) en attente de lecture. Pour les afficher : /msg %bot% \x0303LIST\x03"
   channel_pending: "Le salon \x02%channel%\x02 a \x02%count%\x02 message(s) en attente de lecture. Consultez-les avec /msg %bot% \x0303LIST %channel%\x03"
+
+# --- CHANNEL REGISTRATION DECISIONS ---
+registration_decision:
+  accepted: "Votre demande d’enregistrement de %channel% a été acceptée par %operator%."
+  rejected: "Votre demande d’enregistrement de %channel% a été refusée par %operator%."
+  reason: "Motif : %reason%"
+  restriction: "Restriction restante : %remaining_seconds% secondes."
+  restriction_indefinite: "Ce salon est soumis à une restriction indéfinie."

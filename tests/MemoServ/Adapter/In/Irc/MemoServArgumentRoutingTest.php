@@ -27,6 +27,9 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Translation\Translator;
 
+use function array_keys;
+use function dirname;
+
 #[CoversNothing]
 final class MemoServArgumentRoutingTest extends TestCase
 {

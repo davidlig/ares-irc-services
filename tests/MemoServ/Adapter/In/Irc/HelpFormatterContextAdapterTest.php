@@ -19,6 +19,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function array_fill;
 use function iterator_to_array;
 
 #[CoversClass(HelpFormatterContextAdapter::class)]
@@ -183,6 +184,28 @@ final class HelpFormatterContextAdapterTest extends TestCase
         self::assertSame('help.group.messages', $adapter->getHelpGroups()[0]['group_key']);
     }
 
+    #[Test]
+    public function exposesTheConfiguredBotNickname(): void
+    {
+        $notifier = $this->createStub(MemoServNotifierInterface::class);
+        $notifier->method('getNick')->willReturn('CustomMemo');
+        $context = new MemoServContext(
+            null,
+            null,
+            'HELP',
+            [],
+            $notifier,
+            $this->createStub(TranslatorInterface::class),
+            'en',
+            'UTC',
+            'NOTICE',
+            new MemoServCommandRegistry([]),
+            $this->createServiceNicks(),
+        );
+
+        self::assertSame('CustomMemo', new HelpFormatterContextAdapter($context)->getBotName());
+    }
+
     private function createMinimalContext(): MemoServContext
     {
         return new MemoServContext(
@@ -331,27 +354,5 @@ final class HelpFormatterContextAdapterTest extends TestCase
                 return null;
             }
         };
-    }
-
-    #[Test]
-    public function exposesTheConfiguredBotNickname(): void
-    {
-        $notifier = $this->createStub(MemoServNotifierInterface::class);
-        $notifier->method('getNick')->willReturn('CustomMemo');
-        $context = new MemoServContext(
-            null,
-            null,
-            'HELP',
-            [],
-            $notifier,
-            $this->createStub(TranslatorInterface::class),
-            'en',
-            'UTC',
-            'NOTICE',
-            new MemoServCommandRegistry([]),
-            $this->createServiceNicks(),
-        );
-
-        self::assertSame('CustomMemo', new HelpFormatterContextAdapter($context)->getBotName());
     }
 }

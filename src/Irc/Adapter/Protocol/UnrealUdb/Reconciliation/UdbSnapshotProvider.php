@@ -23,6 +23,7 @@ use UnexpectedValueException;
 
 use function bin2hex;
 use function chmod;
+use function ctype_digit;
 use function fclose;
 use function fopen;
 use function glob;
@@ -33,6 +34,7 @@ use function is_string;
 use function mkdir;
 use function random_bytes;
 use function rmdir;
+use function strcmp;
 use function strlen;
 use function substr;
 use function sys_get_temp_dir;

@@ -21,11 +21,6 @@ final class SocketConnectionFactoryTest extends TestCase
 {
     private SocketConnectionFactory $factory;
 
-    protected function setUp(): void
-    {
-        $this->factory = new SocketConnectionFactory(30);
-    }
-
     #[Test]
     public function createReturnsSocketConnection(): void
     {
@@ -69,5 +64,10 @@ final class SocketConnectionFactoryTest extends TestCase
         $refVerify = new ReflectionProperty(SocketConnection::class, 'tlsVerifyPeer');
         self::assertTrue($refTls->getValue($connection));
         self::assertFalse($refVerify->getValue($connection));
+    }
+
+    protected function setUp(): void
+    {
+        $this->factory = new SocketConnectionFactory(30);
     }
 }

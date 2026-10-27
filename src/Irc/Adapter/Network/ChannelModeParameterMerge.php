@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\Network;
 
+use function is_numeric;
+use function strcmp;
+
 /** Stateless ordering choices supplied by the native protocol adapter. */
 enum ChannelModeParameterMerge
 {

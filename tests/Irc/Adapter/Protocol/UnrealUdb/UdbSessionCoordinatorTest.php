@@ -52,9 +52,22 @@ use ReflectionProperty;
 use RuntimeException;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function array_fill;
+use function array_filter;
 use function array_slice;
+use function array_values;
+use function chmod;
 use function count;
+use function file_put_contents;
+use function hash;
+use function implode;
+use function pack;
+use function preg_match;
+use function preg_quote;
+use function str_contains;
+use function str_repeat;
 use function strlen;
+use function strtoupper;
 use function substr_count;
 
 #[CoversClass(UdbSessionCoordinator::class)]
@@ -82,32 +95,6 @@ final class UdbSessionCoordinatorTest extends DoctrineIntegrationTestCase
     private MutableUdbClock $clock;
 
     private DeterministicLoopScheduler $scheduler;
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-        UdbStagingSchemaFixture::create($this->entityManager->getConnection());
-        $this->blockStates = new FakeBlockStates();
-        $this->records = new FakeUdbRecords();
-        $this->snapshots = new FakeUdbSnapshots(['I' => ['1.2.3.4::clones' => '*5']]);
-
-        $this->connection = $this->createStub(ConnectionInterface::class);
-        $this->connection->method('writeLine')->willReturnCallback(function (string $line): void {
-            $this->written[] = $line;
-        });
-
-        $this->written = [];
-        $this->clock = new MutableUdbClock();
-        $this->scheduler = new DeterministicLoopScheduler();
-        $this->coordinator = new UdbSessionCoordinator(
-            '002',
-            $this->blockStates,
-            $this->snapshots,
-            scheduler: $this->scheduler,
-            clock: $this->clock,
-            mutations: $this->records,
-        );
-    }
 
     // ---------- Link establishment ----------
 
@@ -2476,292 +2463,6 @@ final class UdbSessionCoordinatorTest extends DoctrineIntegrationTestCase
         self::assertMatchesRegularExpression('/^:002 DB 001 HEL 4 ' . preg_quote(self::OWN_NAME, '/') . ' [0-9a-f]{16} OCL OCLG$/', $this->firstWrittenLine());
     }
 
-    private function coordinatorWithLogger(LoggerInterface $logger): UdbSessionCoordinator
-    {
-        return new UdbSessionCoordinator(
-            '002',
-            $this->blockStates,
-            $this->snapshots,
-            $logger,
-            new UdbOclgView(),
-            scheduler: $this->scheduler,
-            clock: $this->clock,
-            mutations: $this->records,
-        );
-    }
-
-    private function bootstrapCoordinator(
-        UdbWireTakeover $takeover,
-        ?LoggerInterface $logger = null,
-        ?UdbAuthorityStateRepositoryInterface $authority = null,
-        ?UdbRecordMutationStoreInterface $mutations = null,
-    ): UdbSessionCoordinator {
-        if (null === $authority) {
-            $defaultAuthority = $this->createStub(UdbAuthorityStateRepositoryInterface::class);
-            $defaultAuthority->method('isApproved')->willReturn(false);
-            $authority = $defaultAuthority;
-        }
-
-        return new UdbSessionCoordinator(
-            '002',
-            $this->blockStates,
-            $this->snapshots,
-            $logger ?? new NullLogger(),
-            new UdbOclgView(),
-            $takeover,
-            $authority,
-            mutations: $mutations,
-        );
-    }
-
-    private function createWireTakeover(LoggerInterface $logger = new NullLogger()): UdbWireTakeover
-    {
-        return new UdbWireTakeover(
-            new FakeUdbRecords(),
-            new FakeBlockStates(),
-            $this->entityManager,
-            $this->createEmptyExporter(),
-            $logger,
-            $this->clock,
-        );
-    }
-
-    /** Exporter over empty repositories: the SQL export yields no records. */
-    private function createEmptyExporter(): UdbRecordExporter
-    {
-        return new UdbRecordExporter(
-            $this->createStub(NickProjectionQuery::class),
-            $this->createStub(ChannelProjectionQuery::class),
-            $this->createStub(OperatorNetworkProjectionQuery::class),
-            $this->createStub(GlineProjectionQuery::class),
-            $this->createStub(ChannelLookupPort::class),
-            $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-            new UdbChannelSuspendReasonResolver($this->createStub(TranslatorInterface::class), 'ChanServ'),
-        );
-    }
-
-    /**
-     * @return list<array{0: UdbBlock, 1: string, 2: string}>
-     */
-    private function bootstrapRecords(): array
-    {
-        return [
-            [UdbBlock::Nicks, 'alice::vhost', 'a.example'],
-            [UdbBlock::Channels, '#chan::topic', 'welcome'],
-            [UdbBlock::Ips, '1.2.3.4::clones', '*5'],
-            [UdbBlock::Settings, 'propagator', 'hub1.example'],
-            [UdbBlock::Links, 'hub1.example::options', '*1'],
-            [UdbBlock::Lines, 'G::*@bad.example::reason', 'reason'],
-        ];
-    }
-
-    private function inventoryFrame(UdbBlock $block, string $digest, int $roundId, int $count, string $rootSid = '001', int $watermark = 0): UdbFrame
-    {
-        return new UdbFrame(
-            UdbFrameKind::Inf,
-            '001',
-            '002',
-            roundId: $roundId,
-            block: $block,
-            checksum: $digest,
-            count: $count,
-            watermark: $watermark,
-            rootSid: $rootSid,
-            rootEpoch: self::PEER_EPOCH,
-        );
-    }
-
-    private function committedMutation(UdbSessionCoordinator $coordinator, string $block, string $path, ?string $value): UdbMutation
-    {
-        $epoch = new ReflectionProperty(UdbSessionCoordinator::class, 'epoch')->getValue($coordinator);
-        $current = new ReflectionProperty(UdbSessionCoordinator::class, 'mutationSequence')->getValue($coordinator);
-        self::assertIsString($epoch);
-        self::assertInstanceOf(UdbUnsignedDecimal::class, $current);
-        $sequence = $current->increment();
-        self::assertNotNull($sequence);
-
-        if ($this->snapshots instanceof FakeUdbSnapshots) {
-            $this->snapshots->setWatermark((int) (string) $sequence);
-        }
-
-        return UdbTestValues::mutation($block, $path, $value)->assigned($sequence, new UdbStreamOrigin('002', $epoch));
-    }
-
-    private function stageBootstrapRecord(
-        UdbSessionCoordinator $coordinator,
-        ConnectionInterface $connection,
-        UdbBlock $block,
-        string $path,
-        string $logicalValue,
-        string $rootSid = '001',
-        int $watermark = 0,
-    ): void {
-        $digest = UdbTestValues::digest($block, [$path => $logicalValue]);
-        $coordinator->handleFrame($this->inventoryFrame($block, $digest, 1, 1, $rootSid, $watermark), $connection);
-        $coordinator->handleFrame(new UdbFrame(UdbFrameKind::Begin, '001', '002', roundId: 1, block: $block, txid: 'tx', checksum: $digest, watermark: $watermark), $connection);
-        $coordinator->handleFrame(new UdbFrame(
-            UdbFrameKind::Put,
-            '001',
-            '002',
-            roundId: 1,
-            block: $block,
-            txid: 'tx',
-            path: $path,
-            value: $logicalValue,
-            typedValue: UdbTestValues::fromLogical($block, $path, $logicalValue),
-        ), $connection);
-        $coordinator->handleFrame(new UdbFrame(UdbFrameKind::End, '001', '002', roundId: 1, block: $block, txid: 'tx', checksum: $digest, watermark: $watermark), $connection);
-    }
-
-    /** @return list<string> Latest writes from callback-driven transport dispatch. */
-    private function capturedWrites(): array
-    {
-        return $this->written;
-    }
-
-    private function captureConnection(UdbSessionCoordinator $coordinator): ConnectionInterface
-    {
-        $connection = $this->createStub(ConnectionInterface::class);
-        $connection->method('writeLine')->willReturnCallback(function (string $line): void {
-            $this->written[] = $line;
-        });
-
-        return $connection;
-    }
-
-    private function handle(UdbFrame $frame): void
-    {
-        $this->coordinator->handleFrame($frame, $this->connection);
-    }
-
-    private function prepareLink(): void
-    {
-        $this->coordinator->onStoreInitialized();
-        $this->coordinator->setOwnName(self::OWN_NAME);
-        $this->coordinator->onRemoteServer('001', 'ircd.example.net');
-        $this->coordinator->onLinkReady($this->connection);
-    }
-
-    private function seedStore(): void
-    {
-        foreach (UdbBlock::all() as $block) {
-            $this->blockStates->upsert($block->letter(), UdbChecksum::empty($block), 0);
-        }
-    }
-
-    /**
-     * Full authority handshake: HEL exchange, inventory barrier completed.
-     */
-    private function makeReady(): void
-    {
-        $this->startRound();
-        $this->handle($this->peerHelAck());
-    }
-
-    /** Starts an authorized round but deliberately leaves its HEL barrier pending. */
-    private function startRound(): void
-    {
-        $this->seedStore();
-        $this->prepareLink();
-        $this->handle($this->peerHel());
-        $this->handle($this->peerHelAck());
-    }
-
-    private function activeRoundId(): int
-    {
-        $roundId = $this->coordinator->activeRoundId();
-
-        self::assertIsInt($roundId);
-
-        return $roundId;
-    }
-
-    private function useSmallMutationQueue(): void
-    {
-        $this->coordinator = new UdbSessionCoordinator(
-            '002',
-            $this->blockStates,
-            $this->snapshots,
-            scheduler: $this->scheduler,
-            clock: $this->clock,
-            mutationQueue: new UdbMutationQueue(2),
-        );
-    }
-
-    private function expireOutstanding(): void
-    {
-        $this->clock->advance(300);
-    }
-
-    private function helRequest(): string
-    {
-        return ':002 DB 001 HEL 4 ' . self::OWN_NAME . ' ' . $this->epoch() . ' OCL OCLG';
-    }
-
-    private function helAck(): string
-    {
-        return ':002 DB 001 HEL 4 ACK ' . self::OWN_NAME . ' ' . $this->epoch() . ' OCL OCLG';
-    }
-
-    private function epoch(): string
-    {
-        $epoch = $this->coordinator->epoch();
-        self::assertMatchesRegularExpression('/^[0-9a-f]{16}$/', $epoch);
-
-        return $epoch;
-    }
-
-    private function peerHel(
-        string $propagator = self::OWN_NAME,
-        string $sourceSid = '001',
-        string $target = '002',
-        string $epoch = self::PEER_EPOCH,
-    ): UdbFrame {
-        return new UdbFrame(
-            UdbFrameKind::Hel,
-            $sourceSid,
-            $target,
-            propagator: $propagator,
-            epoch: $epoch,
-            capabilities: ['OCL', 'OCLG'],
-        );
-    }
-
-    private function peerHelAck(
-        string $propagator = self::OWN_NAME,
-        string $sourceSid = '001',
-        string $target = '002',
-        string $epoch = self::PEER_EPOCH,
-    ): UdbFrame {
-        return new UdbFrame(
-            UdbFrameKind::HelAck,
-            $sourceSid,
-            $target,
-            propagator: $propagator,
-            epoch: $epoch,
-            capabilities: ['OCL', 'OCLG'],
-        );
-    }
-
-    private function firstWrittenLine(): string
-    {
-        foreach ($this->written as $line) {
-            return $line;
-        }
-
-        self::fail('Expected at least one written line.');
-    }
-
-    private function extractTxid(string $line): string
-    {
-        $matches = array_fill(0, 2, '');
-        if (1 !== preg_match('/:002 DB 001 BEGIN \d+ I (\S+) /', $line, $matches)) {
-            self::fail('Expected a BEGIN frame with a transaction ID.');
-        }
-
-        return $matches[1];
-    }
-
     #[Test]
     public function udbBarrierDeadlineExpiresAndReoffersWithoutIncomingTraffic(): void
     {
@@ -3176,5 +2877,317 @@ final class UdbSessionCoordinatorTest extends DoctrineIntegrationTestCase
         $this->written = [];
         $this->handle(new UdbFrame(UdbFrameKind::Res, '001', '002', roundId: 99, block: UdbBlock::Ips));
         self::assertContains(':002 DB 001 ERR RES 4 99 I', $this->written);
+    }
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        UdbStagingSchemaFixture::create($this->entityManager->getConnection());
+        $this->blockStates = new FakeBlockStates();
+        $this->records = new FakeUdbRecords();
+        $this->snapshots = new FakeUdbSnapshots(['I' => ['1.2.3.4::clones' => '*5']]);
+
+        $this->connection = $this->createStub(ConnectionInterface::class);
+        $this->connection->method('writeLine')->willReturnCallback(function (string $line): void {
+            $this->written[] = $line;
+        });
+
+        $this->written = [];
+        $this->clock = new MutableUdbClock();
+        $this->scheduler = new DeterministicLoopScheduler();
+        $this->coordinator = new UdbSessionCoordinator(
+            '002',
+            $this->blockStates,
+            $this->snapshots,
+            scheduler: $this->scheduler,
+            clock: $this->clock,
+            mutations: $this->records,
+        );
+    }
+
+    private function coordinatorWithLogger(LoggerInterface $logger): UdbSessionCoordinator
+    {
+        return new UdbSessionCoordinator(
+            '002',
+            $this->blockStates,
+            $this->snapshots,
+            $logger,
+            new UdbOclgView(),
+            scheduler: $this->scheduler,
+            clock: $this->clock,
+            mutations: $this->records,
+        );
+    }
+
+    private function bootstrapCoordinator(
+        UdbWireTakeover $takeover,
+        ?LoggerInterface $logger = null,
+        ?UdbAuthorityStateRepositoryInterface $authority = null,
+        ?UdbRecordMutationStoreInterface $mutations = null,
+    ): UdbSessionCoordinator {
+        if (null === $authority) {
+            $defaultAuthority = $this->createStub(UdbAuthorityStateRepositoryInterface::class);
+            $defaultAuthority->method('isApproved')->willReturn(false);
+            $authority = $defaultAuthority;
+        }
+
+        return new UdbSessionCoordinator(
+            '002',
+            $this->blockStates,
+            $this->snapshots,
+            $logger ?? new NullLogger(),
+            new UdbOclgView(),
+            $takeover,
+            $authority,
+            mutations: $mutations,
+        );
+    }
+
+    private function createWireTakeover(LoggerInterface $logger = new NullLogger()): UdbWireTakeover
+    {
+        return new UdbWireTakeover(
+            new FakeUdbRecords(),
+            new FakeBlockStates(),
+            $this->entityManager,
+            $this->createEmptyExporter(),
+            $logger,
+            $this->clock,
+        );
+    }
+
+    /** Exporter over empty repositories: the SQL export yields no records. */
+    private function createEmptyExporter(): UdbRecordExporter
+    {
+        return new UdbRecordExporter(
+            $this->createStub(NickProjectionQuery::class),
+            $this->createStub(ChannelProjectionQuery::class),
+            $this->createStub(OperatorNetworkProjectionQuery::class),
+            $this->createStub(GlineProjectionQuery::class),
+            $this->createStub(ChannelLookupPort::class),
+            $this->createStub(ActiveChannelModeSupportProviderInterface::class),
+            new UdbChannelSuspendReasonResolver($this->createStub(TranslatorInterface::class), 'ChanServ'),
+        );
+    }
+
+    /**
+     * @return list<array{0: UdbBlock, 1: string, 2: string}>
+     */
+    private function bootstrapRecords(): array
+    {
+        return [
+            [UdbBlock::Nicks, 'alice::vhost', 'a.example'],
+            [UdbBlock::Channels, '#chan::topic', 'welcome'],
+            [UdbBlock::Ips, '1.2.3.4::clones', '*5'],
+            [UdbBlock::Settings, 'propagator', 'hub1.example'],
+            [UdbBlock::Links, 'hub1.example::options', '*1'],
+            [UdbBlock::Lines, 'G::*@bad.example::reason', 'reason'],
+        ];
+    }
+
+    private function inventoryFrame(UdbBlock $block, string $digest, int $roundId, int $count, string $rootSid = '001', int $watermark = 0): UdbFrame
+    {
+        return new UdbFrame(
+            UdbFrameKind::Inf,
+            '001',
+            '002',
+            roundId: $roundId,
+            block: $block,
+            checksum: $digest,
+            count: $count,
+            watermark: $watermark,
+            rootSid: $rootSid,
+            rootEpoch: self::PEER_EPOCH,
+        );
+    }
+
+    private function committedMutation(UdbSessionCoordinator $coordinator, string $block, string $path, ?string $value): UdbMutation
+    {
+        $epoch = new ReflectionProperty(UdbSessionCoordinator::class, 'epoch')->getValue($coordinator);
+        $current = new ReflectionProperty(UdbSessionCoordinator::class, 'mutationSequence')->getValue($coordinator);
+        self::assertIsString($epoch);
+        self::assertInstanceOf(UdbUnsignedDecimal::class, $current);
+        $sequence = $current->increment();
+        self::assertNotNull($sequence);
+
+        if ($this->snapshots instanceof FakeUdbSnapshots) {
+            $this->snapshots->setWatermark((int) (string) $sequence);
+        }
+
+        return UdbTestValues::mutation($block, $path, $value)->assigned($sequence, new UdbStreamOrigin('002', $epoch));
+    }
+
+    private function stageBootstrapRecord(
+        UdbSessionCoordinator $coordinator,
+        ConnectionInterface $connection,
+        UdbBlock $block,
+        string $path,
+        string $logicalValue,
+        string $rootSid = '001',
+        int $watermark = 0,
+    ): void {
+        $digest = UdbTestValues::digest($block, [$path => $logicalValue]);
+        $coordinator->handleFrame($this->inventoryFrame($block, $digest, 1, 1, $rootSid, $watermark), $connection);
+        $coordinator->handleFrame(new UdbFrame(UdbFrameKind::Begin, '001', '002', roundId: 1, block: $block, txid: 'tx', checksum: $digest, watermark: $watermark), $connection);
+        $coordinator->handleFrame(new UdbFrame(
+            UdbFrameKind::Put,
+            '001',
+            '002',
+            roundId: 1,
+            block: $block,
+            txid: 'tx',
+            path: $path,
+            value: $logicalValue,
+            typedValue: UdbTestValues::fromLogical($block, $path, $logicalValue),
+        ), $connection);
+        $coordinator->handleFrame(new UdbFrame(UdbFrameKind::End, '001', '002', roundId: 1, block: $block, txid: 'tx', checksum: $digest, watermark: $watermark), $connection);
+    }
+
+    /** @return list<string> Latest writes from callback-driven transport dispatch. */
+    private function capturedWrites(): array
+    {
+        return $this->written;
+    }
+
+    private function captureConnection(UdbSessionCoordinator $coordinator): ConnectionInterface
+    {
+        $connection = $this->createStub(ConnectionInterface::class);
+        $connection->method('writeLine')->willReturnCallback(function (string $line): void {
+            $this->written[] = $line;
+        });
+
+        return $connection;
+    }
+
+    private function handle(UdbFrame $frame): void
+    {
+        $this->coordinator->handleFrame($frame, $this->connection);
+    }
+
+    private function prepareLink(): void
+    {
+        $this->coordinator->onStoreInitialized();
+        $this->coordinator->setOwnName(self::OWN_NAME);
+        $this->coordinator->onRemoteServer('001', 'ircd.example.net');
+        $this->coordinator->onLinkReady($this->connection);
+    }
+
+    private function seedStore(): void
+    {
+        foreach (UdbBlock::all() as $block) {
+            $this->blockStates->upsert($block->letter(), UdbChecksum::empty($block), 0);
+        }
+    }
+
+    /**
+     * Full authority handshake: HEL exchange, inventory barrier completed.
+     */
+    private function makeReady(): void
+    {
+        $this->startRound();
+        $this->handle($this->peerHelAck());
+    }
+
+    /** Starts an authorized round but deliberately leaves its HEL barrier pending. */
+    private function startRound(): void
+    {
+        $this->seedStore();
+        $this->prepareLink();
+        $this->handle($this->peerHel());
+        $this->handle($this->peerHelAck());
+    }
+
+    private function activeRoundId(): int
+    {
+        $roundId = $this->coordinator->activeRoundId();
+
+        self::assertIsInt($roundId);
+
+        return $roundId;
+    }
+
+    private function useSmallMutationQueue(): void
+    {
+        $this->coordinator = new UdbSessionCoordinator(
+            '002',
+            $this->blockStates,
+            $this->snapshots,
+            scheduler: $this->scheduler,
+            clock: $this->clock,
+            mutationQueue: new UdbMutationQueue(2),
+        );
+    }
+
+    private function expireOutstanding(): void
+    {
+        $this->clock->advance(300);
+    }
+
+    private function helRequest(): string
+    {
+        return ':002 DB 001 HEL 4 ' . self::OWN_NAME . ' ' . $this->epoch() . ' OCL OCLG';
+    }
+
+    private function helAck(): string
+    {
+        return ':002 DB 001 HEL 4 ACK ' . self::OWN_NAME . ' ' . $this->epoch() . ' OCL OCLG';
+    }
+
+    private function epoch(): string
+    {
+        $epoch = $this->coordinator->epoch();
+        self::assertMatchesRegularExpression('/^[0-9a-f]{16}$/', $epoch);
+
+        return $epoch;
+    }
+
+    private function peerHel(
+        string $propagator = self::OWN_NAME,
+        string $sourceSid = '001',
+        string $target = '002',
+        string $epoch = self::PEER_EPOCH,
+    ): UdbFrame {
+        return new UdbFrame(
+            UdbFrameKind::Hel,
+            $sourceSid,
+            $target,
+            propagator: $propagator,
+            epoch: $epoch,
+            capabilities: ['OCL', 'OCLG'],
+        );
+    }
+
+    private function peerHelAck(
+        string $propagator = self::OWN_NAME,
+        string $sourceSid = '001',
+        string $target = '002',
+        string $epoch = self::PEER_EPOCH,
+    ): UdbFrame {
+        return new UdbFrame(
+            UdbFrameKind::HelAck,
+            $sourceSid,
+            $target,
+            propagator: $propagator,
+            epoch: $epoch,
+            capabilities: ['OCL', 'OCLG'],
+        );
+    }
+
+    private function firstWrittenLine(): string
+    {
+        foreach ($this->written as $line) {
+            return $line;
+        }
+
+        self::fail('Expected at least one written line.');
+    }
+
+    private function extractTxid(string $line): string
+    {
+        $matches = array_fill(0, 2, '');
+        if (1 !== preg_match('/:002 DB 001 BEGIN \d+ I (\S+) /', $line, $matches)) {
+            self::fail('Expected a BEGIN frame with a transaction ID.');
+        }
+
+        return $matches[1];
     }
 }

@@ -51,5 +51,10 @@
             <options><option name="default">0</option></options>
         </field>
         <field name="pendingDeletionAt" type="datetime_immutable" nullable="true" column="pending_deletion_at"/>
+        <field name="registrationRejectionReason" type="text" nullable="true" column="registration_rejection_reason"/>
+        <field name="registrationRejectedByAccountId" type="integer" nullable="true" column="registration_rejected_by_account_id"/>
+        <field name="registrationRejectedByNickname" type="string" length="64" nullable="true" column="registration_rejected_by_nickname"/>
+        <field name="registrationRejectedAt" type="datetime_immutable" nullable="true" column="registration_rejected_at"/>
+        <field name="registrationRestrictedUntil" type="datetime_immutable" nullable="true" column="registration_restricted_until"/>
     </entity>
 </doctrine-mapping>

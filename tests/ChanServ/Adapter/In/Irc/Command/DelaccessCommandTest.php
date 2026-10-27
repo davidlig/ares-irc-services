@@ -34,40 +34,6 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 #[CoversClass(RemoveOwnChannelAccessHandler::class)]
 final class DelaccessCommandTest extends TestCase
 {
-    private function createCommand(
-        RegisteredChannelRepositoryInterface $channels,
-        ChannelAccessRepositoryInterface $accessEntries,
-        EventBusInterface $events,
-    ): DelaccessCommand {
-        return new DelaccessCommand(new RemoveOwnChannelAccessHandler($channels, $accessEntries, $events));
-    }
-
-    /** @param array<string> $args */
-    private function createContext(
-        ?SenderView $sender,
-        ?ChanAccountView $senderAccount,
-        array $args,
-        ChanServNotifierInterface $notifier,
-        TranslatorInterface $translator,
-    ): ChanServContext {
-        return new ChanServContext(
-            $sender,
-            $senderAccount,
-            'DELACCESS',
-            $args,
-            $notifier,
-            $translator,
-            'en',
-            'UTC',
-            'NOTICE',
-            new ChanServCommandRegistry([]),
-            $this->createStub(ChannelLookupPort::class),
-            new NullChannelModeSupport(),
-            $this->createStub(NetworkUserLookupPort::class),
-            $this->createServiceNicks(),
-        );
-    }
-
     #[Test]
     public function replyInvalidChannelWhenFirstArgNotChannel(): void
     {
@@ -476,6 +442,40 @@ final class DelaccessCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $accessRepo, $this->createStub(EventBusInterface::class));
 
         self::assertFalse($cmd->allowsForbiddenChannel());
+    }
+
+    private function createCommand(
+        RegisteredChannelRepositoryInterface $channels,
+        ChannelAccessRepositoryInterface $accessEntries,
+        EventBusInterface $events,
+    ): DelaccessCommand {
+        return new DelaccessCommand(new RemoveOwnChannelAccessHandler($channels, $accessEntries, $events));
+    }
+
+    /** @param array<string> $args */
+    private function createContext(
+        ?SenderView $sender,
+        ?ChanAccountView $senderAccount,
+        array $args,
+        ChanServNotifierInterface $notifier,
+        TranslatorInterface $translator,
+    ): ChanServContext {
+        return new ChanServContext(
+            $sender,
+            $senderAccount,
+            'DELACCESS',
+            $args,
+            $notifier,
+            $translator,
+            'en',
+            'UTC',
+            'NOTICE',
+            new ChanServCommandRegistry([]),
+            $this->createStub(ChannelLookupPort::class),
+            new NullChannelModeSupport(),
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
+        );
     }
 
     private function createServiceNicks(): ServiceNicknameRegistry

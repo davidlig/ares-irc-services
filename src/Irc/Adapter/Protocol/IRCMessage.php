@@ -4,6 +4,18 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\Protocol;
 
+use function array_filter;
+use function array_shift;
+use function array_values;
+use function explode;
+use function implode;
+use function rtrim;
+use function str_starts_with;
+use function strpos;
+use function strtoupper;
+use function substr;
+use function trim;
+
 /**
  * Represents a parsed IRC message following RFC 1459 format:
  * [:prefix] COMMAND [params...] [:trailing].

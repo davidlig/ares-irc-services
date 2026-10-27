@@ -293,6 +293,75 @@ final class UnsuspendCommandTest extends TestCase
         self::assertSame('#test', $auditData->target);
     }
 
+    #[Test]
+    public function executeWithEmptyIpBase64DecodesAsAsterisk(): void
+    {
+        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', '', false, true, 'SID1', 'h', 'o');
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Test channel');
+        $channel->suspend('Abuse', null);
+        $reflection = new ReflectionClass(RegisteredChannel::class);
+        $idProp = $reflection->getProperty('id');
+        $idProp->setValue($channel, 1);
+
+        $channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
+        $channelRepository->method('findByChannelName')->willReturn($channel);
+        $channelRepository->expects(self::once())->method('save');
+
+        /** @var list<object> $dispatchedEvents */
+        $dispatchedEvents = [];
+        $eventDispatcher = $this->createStub(EventBusInterface::class);
+        $eventDispatcher->method('dispatch')->willReturnCallback(static function (ChannelUnsuspendedEvent $event) use (&$dispatchedEvents): ChannelUnsuspendedEvent {
+            $dispatchedEvents[] = $event;
+
+            return $event;
+        });
+
+        $messages = [];
+        $context = $this->createContext($sender, null, ['#test'], $messages, channelRepository: $channelRepository);
+
+        $cmd = $this->createCommandWith($channelRepository, $eventDispatcher);
+        $cmd->execute($context);
+
+        self::assertCount(1, $dispatchedEvents);
+        self::assertInstanceOf(ChannelUnsuspendedEvent::class, $dispatchedEvents[0]);
+        self::assertSame('*', $dispatchedEvents[0]->performedByIp);
+    }
+
+    #[Test]
+    public function executeWithInvalidBase64IpFallsBackToRawString(): void
+    {
+        $invalidBase64 = '!!!invalid!!!';
+        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', $invalidBase64, false, true, 'SID1', 'h', 'o');
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Test channel');
+        $channel->suspend('Abuse', null);
+        $reflection = new ReflectionClass(RegisteredChannel::class);
+        $idProp = $reflection->getProperty('id');
+        $idProp->setValue($channel, 1);
+
+        $channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
+        $channelRepository->method('findByChannelName')->willReturn($channel);
+        $channelRepository->expects(self::once())->method('save');
+
+        /** @var list<object> $dispatchedEvents */
+        $dispatchedEvents = [];
+        $eventDispatcher = $this->createStub(EventBusInterface::class);
+        $eventDispatcher->method('dispatch')->willReturnCallback(static function (ChannelUnsuspendedEvent $event) use (&$dispatchedEvents): ChannelUnsuspendedEvent {
+            $dispatchedEvents[] = $event;
+
+            return $event;
+        });
+
+        $messages = [];
+        $context = $this->createContext($sender, null, ['#test'], $messages, channelRepository: $channelRepository);
+
+        $cmd = $this->createCommandWith($channelRepository, $eventDispatcher);
+        $cmd->execute($context);
+
+        self::assertCount(1, $dispatchedEvents);
+        self::assertInstanceOf(ChannelUnsuspendedEvent::class, $dispatchedEvents[0]);
+        self::assertSame($invalidBase64, $dispatchedEvents[0]->performedByIp);
+    }
+
     private function createCommand(): UnsuspendCommand
     {
         return $this->createCommandWith(
@@ -414,74 +483,5 @@ final class UnsuspendCommandTest extends TestCase
         };
 
         return new ServiceNicknameRegistry([$provider1, $provider2, $provider3, $provider4]);
-    }
-
-    #[Test]
-    public function executeWithEmptyIpBase64DecodesAsAsterisk(): void
-    {
-        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', '', false, true, 'SID1', 'h', 'o');
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Test channel');
-        $channel->suspend('Abuse', null);
-        $reflection = new ReflectionClass(RegisteredChannel::class);
-        $idProp = $reflection->getProperty('id');
-        $idProp->setValue($channel, 1);
-
-        $channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
-        $channelRepository->method('findByChannelName')->willReturn($channel);
-        $channelRepository->expects(self::once())->method('save');
-
-        /** @var list<object> $dispatchedEvents */
-        $dispatchedEvents = [];
-        $eventDispatcher = $this->createStub(EventBusInterface::class);
-        $eventDispatcher->method('dispatch')->willReturnCallback(static function (ChannelUnsuspendedEvent $event) use (&$dispatchedEvents): ChannelUnsuspendedEvent {
-            $dispatchedEvents[] = $event;
-
-            return $event;
-        });
-
-        $messages = [];
-        $context = $this->createContext($sender, null, ['#test'], $messages, channelRepository: $channelRepository);
-
-        $cmd = $this->createCommandWith($channelRepository, $eventDispatcher);
-        $cmd->execute($context);
-
-        self::assertCount(1, $dispatchedEvents);
-        self::assertInstanceOf(ChannelUnsuspendedEvent::class, $dispatchedEvents[0]);
-        self::assertSame('*', $dispatchedEvents[0]->performedByIp);
-    }
-
-    #[Test]
-    public function executeWithInvalidBase64IpFallsBackToRawString(): void
-    {
-        $invalidBase64 = '!!!invalid!!!';
-        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', $invalidBase64, false, true, 'SID1', 'h', 'o');
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Test channel');
-        $channel->suspend('Abuse', null);
-        $reflection = new ReflectionClass(RegisteredChannel::class);
-        $idProp = $reflection->getProperty('id');
-        $idProp->setValue($channel, 1);
-
-        $channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
-        $channelRepository->method('findByChannelName')->willReturn($channel);
-        $channelRepository->expects(self::once())->method('save');
-
-        /** @var list<object> $dispatchedEvents */
-        $dispatchedEvents = [];
-        $eventDispatcher = $this->createStub(EventBusInterface::class);
-        $eventDispatcher->method('dispatch')->willReturnCallback(static function (ChannelUnsuspendedEvent $event) use (&$dispatchedEvents): ChannelUnsuspendedEvent {
-            $dispatchedEvents[] = $event;
-
-            return $event;
-        });
-
-        $messages = [];
-        $context = $this->createContext($sender, null, ['#test'], $messages, channelRepository: $channelRepository);
-
-        $cmd = $this->createCommandWith($channelRepository, $eventDispatcher);
-        $cmd->execute($context);
-
-        self::assertCount(1, $dispatchedEvents);
-        self::assertInstanceOf(ChannelUnsuspendedEvent::class, $dispatchedEvents[0]);
-        self::assertSame($invalidBase64, $dispatchedEvents[0]->performedByIp);
     }
 }

@@ -27,25 +27,6 @@ final class ChannelSuspensionServiceTest extends TestCase
     /** @var ChanServActivitySink&Stub */
     private ChanServActivitySink $logger;
 
-    protected function setUp(): void
-    {
-        $this->channelActions = $this->createStub(ChanNetworkActions::class);
-        $this->suspensionNotifier = $this->createStub(ChannelSuspensionNotifier::class);
-        $this->logger = $this->createStub(ChanServActivitySink::class);
-    }
-
-    private function createService(
-        ?ChanNetworkActions $channelActions = null,
-        ?ChannelSuspensionNotifier $suspensionNotifier = null,
-        ?ChanServActivitySink $logger = null,
-    ): ChannelSuspensionService {
-        return new ChannelSuspensionService(
-            $channelActions ?? $this->channelActions,
-            $suspensionNotifier ?? $this->suspensionNotifier,
-            $logger ?? $this->logger,
-        );
-    }
-
     #[Test]
     public function enforceSuspensionRemovesRegistrationModesAndSendsNotice(): void
     {
@@ -95,5 +76,24 @@ final class ChannelSuspensionServiceTest extends TestCase
             ->with('#test');
 
         $this->createService($channelActions)->liftSuspension($channel);
+    }
+
+    protected function setUp(): void
+    {
+        $this->channelActions = $this->createStub(ChanNetworkActions::class);
+        $this->suspensionNotifier = $this->createStub(ChannelSuspensionNotifier::class);
+        $this->logger = $this->createStub(ChanServActivitySink::class);
+    }
+
+    private function createService(
+        ?ChanNetworkActions $channelActions = null,
+        ?ChannelSuspensionNotifier $suspensionNotifier = null,
+        ?ChanServActivitySink $logger = null,
+    ): ChannelSuspensionService {
+        return new ChannelSuspensionService(
+            $channelActions ?? $this->channelActions,
+            $suspensionNotifier ?? $this->suspensionNotifier,
+            $logger ?? $this->logger,
+        );
     }
 }

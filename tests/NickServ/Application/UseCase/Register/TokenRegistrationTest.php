@@ -12,6 +12,8 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 
+use function method_exists;
+
 #[CoversClass(RegisteredNick::class)]
 #[CoversClass(RegisterNick::class)]
 final class TokenRegistrationTest extends TestCase

@@ -31,6 +31,9 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function serialize;
+use function str_starts_with;
+
 #[CoversClass(GlobalCommand::class)]
 #[CoversClass(SendGlobalMessage::class)]
 #[CoversClass(SendGlobalMessageHandler::class)]

@@ -29,6 +29,10 @@ use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
 use RuntimeException;
 
+use function hash;
+use function str_repeat;
+use function strtolower;
+
 #[CoversClass(ResendVerificationHandler::class)]
 #[CoversClass(ResendVerification::class)]
 #[CoversClass(ResendVerificationResult::class)]

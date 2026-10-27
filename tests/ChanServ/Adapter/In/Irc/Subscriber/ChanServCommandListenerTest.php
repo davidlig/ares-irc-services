@@ -66,6 +66,249 @@ final class ChanServCommandListenerTest extends TestCase
 
     private LoggerInterface&MockObject $logger;
 
+    #[Test]
+    public function getServiceNameReturnsChanServBotNick(): void
+    {
+        $listener = $this->createListener();
+        $this->userLookup->expects(self::never())->method('findByUid');
+        $this->chanServNotifier->expects(self::never())->method('sendMessage');
+        $this->accountPort->expects(self::never())->method('findAccountByNick');
+        $this->translator->expects(self::never())->method('trans');
+        $this->logger->expects(self::never())->method('warning');
+
+        self::assertSame(self::CHANSERV_NICK, $listener->getServiceName());
+    }
+
+    #[Test]
+    public function getServiceUidReturnsChanServBotUid(): void
+    {
+        $listener = $this->createListener();
+        $this->userLookup->expects(self::never())->method('findByUid');
+        $this->chanServNotifier->expects(self::never())->method('sendMessage');
+        $this->accountPort->expects(self::never())->method('findAccountByNick');
+        $this->translator->expects(self::never())->method('trans');
+        $this->logger->expects(self::never())->method('warning');
+
+        self::assertSame(self::CHANSERV_UID, $listener->getServiceUid());
+    }
+
+    #[Test]
+    public function onCommandWithEmptyTextDoesNothing(): void
+    {
+        $listener = $this->createListener();
+        $this->userLookup->expects(self::never())->method('findByUid');
+        $this->chanServNotifier->expects(self::never())->method('sendMessage');
+        $this->accountPort->expects(self::never())->method('findAccountByNick');
+        $this->translator->expects(self::never())->method('trans');
+        $this->logger->expects(self::never())->method('warning');
+
+        $listener->onCommand('001ABC', '');
+    }
+
+    #[Test]
+    public function onCommandWhenSenderNotFoundLogsWarningAndReturns(): void
+    {
+        $listener = $this->createListener();
+        $this->userLookup
+            ->expects(self::once())
+            ->method('findByUid')
+            ->with('999XXX')
+            ->willReturn(null);
+
+        $this->logger
+            ->expects(self::once())
+            ->method('warning')
+            ->with('ChanServ: could not resolve sender UID: 999XXX');
+
+        $this->chanServNotifier->expects(self::never())->method('sendMessage');
+        $this->accountPort->expects(self::never())->method('findAccountByNick');
+        $this->translator->expects(self::never())->method('trans');
+
+        $listener->onCommand('999XXX', 'INFO');
+    }
+
+    #[Test]
+    public function onCommandDispatchesToChanServServiceWithSenderView(): void
+    {
+        $sender = self::createSenderView();
+        $this->userLookup
+            ->expects(self::once())
+            ->method('findByUid')
+            ->with('001ABC')
+            ->willReturn($sender);
+
+        $executed = false;
+        $command = $this->createDummyCommand('INFO', static function (ChanServContext $context) use (&$executed, $sender): void {
+            $executed = true;
+            self::assertSame($sender->uid, $context->sender?->uid);
+            self::assertSame('INFO', $context->command);
+        });
+
+        $listener = $this->createListener([$command]);
+        $this->chanServNotifier->expects(self::never())->method('sendMessage');
+        $this->accountPort->expects(self::never())->method('findAccountByNick');
+        $this->translator->expects(self::never())->method('trans');
+        $this->logger->expects(self::never())->method('warning');
+
+        $listener->onCommand('001ABC', 'INFO');
+
+        self::assertTrue($executed);
+    }
+
+    #[Test]
+    public function onCommandChannelAlreadyRegisteredTranslatesAndSendsViaNotifier(): void
+    {
+        $sender = self::createSenderView();
+        $this->userLookup->expects(self::atLeastOnce())->method('findByUid')->with('001ABC')->willReturn($sender);
+        $this->accountPort
+            ->expects(self::atLeastOnce())
+            ->method('findAccountByNick')
+            ->with('TestUser')
+            ->willReturn(new ChanAccountView(1, 'TestUser', 'es'));
+
+        $this->translator
+            ->expects(self::once())
+            ->method('trans')
+            ->with('register.already_registered', ['%channel%' => '#test'], 'chanserv', 'es')
+            ->willReturn('El canal #test ya está registrado.');
+
+        $exception = ChannelAlreadyRegisteredException::forChannel('#test');
+        $command = $this->createThrowCommand('REGISTER', $exception);
+        $listener = $this->createListener([$command]);
+
+        $this->chanServNotifier
+            ->expects(self::once())
+            ->method('sendMessage')
+            ->with('001ABC', 'El canal #test ya está registrado.', 'NOTICE');
+        $this->logger->expects(self::never())->method('error');
+
+        $listener->onCommand('001ABC', 'REGISTER #test');
+    }
+
+    #[Test]
+    public function onCommandChannelNotRegisteredTranslatesAndSendsViaNotifier(): void
+    {
+        $sender = self::createSenderView();
+        $this->userLookup->expects(self::atLeastOnce())->method('findByUid')->with('001ABC')->willReturn($sender);
+        $this->accountPort->expects(self::atLeastOnce())->method('findAccountByNick')->with('TestUser')->willReturn(null);
+
+        $this->translator
+            ->expects(self::once())
+            ->method('trans')
+            ->with('error.channel_not_registered', ['%channel%' => '#mychan', '%bot%' => 'ChanServ'], 'common', 'en')
+            ->willReturn('Channel #mychan is not registered.');
+
+        $exception = ChannelNotRegisteredException::forChannel('#mychan');
+        $command = $this->createThrowCommand('ACCESS', $exception);
+        $listener = $this->createListener([$command]);
+
+        $this->chanServNotifier
+            ->expects(self::once())
+            ->method('sendMessage')
+            ->with('001ABC', 'Channel #mychan is not registered.', 'NOTICE');
+        $this->logger->expects(self::never())->method('error');
+
+        $listener->onCommand('001ABC', 'ACCESS #mychan LIST');
+    }
+
+    #[Test]
+    public function onCommandChannelNotRegisteredUsesNickLanguageWhenRegistered(): void
+    {
+        $sender = self::createSenderView();
+        $registeredNick = new ChanAccountView(1, 'TestUser', 'es');
+
+        $this->userLookup->expects(self::atLeastOnce())->method('findByUid')->with('001ABC')->willReturn($sender);
+        $this->accountPort->expects(self::atLeastOnce())->method('findAccountByNick')->with('TestUser')->willReturn($registeredNick);
+
+        $this->translator
+            ->expects(self::once())
+            ->method('trans')
+            ->with('error.channel_not_registered', ['%channel%' => '#mychan', '%bot%' => 'ChanServ'], 'common', 'es')
+            ->willReturn('El canal #mychan no está registrado.');
+
+        $exception = ChannelNotRegisteredException::forChannel('#mychan');
+        $command = $this->createThrowCommand('ACCESS', $exception);
+        $listener = $this->createListener([$command]);
+
+        $this->chanServNotifier
+            ->expects(self::once())
+            ->method('sendMessage')
+            ->with('001ABC', 'El canal #mychan no está registrado.', 'NOTICE');
+        $this->logger->expects(self::never())->method('error');
+
+        $listener->onCommand('001ABC', 'ACCESS #mychan LIST');
+    }
+
+    #[Test]
+    public function onCommandInsufficientAccessTranslatesAndSendsViaNotifier(): void
+    {
+        $sender = self::createSenderView();
+        $this->userLookup->expects(self::atLeastOnce())->method('findByUid')->with('001ABC')->willReturn($sender);
+        $this->accountPort->expects(self::atLeastOnce())->method('findAccountByNick')->with('TestUser')->willReturn(null);
+
+        $this->translator
+            ->expects(self::once())
+            ->method('trans')
+            ->with(
+                'error.insufficient_access',
+                ['%operation%' => 'OP', '%channel%' => '#mychan', '%bot%' => 'ChanServ'],
+                'common',
+                'en',
+            )
+            ->willReturn('Insufficient access to OP on channel "#mychan".');
+
+        $exception = InsufficientAccessException::forOperation('#mychan', 'OP');
+        $command = $this->createThrowCommand('OP', $exception);
+        $listener = $this->createListener([$command]);
+
+        $this->chanServNotifier
+            ->expects(self::once())
+            ->method('sendMessage')
+            ->with('001ABC', 'Insufficient access to OP on channel "#mychan".', 'NOTICE');
+        $this->logger->expects(self::never())->method('error');
+
+        $listener->onCommand('001ABC', 'OP #mychan user');
+    }
+
+    #[Test]
+    public function onCommandGenericThrowableLogsErrorAndDoesNotRethrow(): void
+    {
+        $sender = self::createSenderView();
+        $this->userLookup->expects(self::atLeastOnce())->method('findByUid')->with('001ABC')->willReturn($sender);
+
+        $exception = new RuntimeException('Unexpected error');
+        $command = $this->createThrowCommand('SOME', $exception);
+        $listener = $this->createListener([$command]);
+
+        $this->logger
+            ->expects(self::once())
+            ->method('error')
+            ->with(
+                'ChanServ dispatch error: Unexpected error',
+                self::callback(static fn (array $context): bool => isset($context['exception'], $context['sender'])
+                        && '001ABC' === $context['sender']),
+            );
+
+        $this->chanServNotifier->expects(self::never())->method('sendMessage');
+        $this->accountPort->expects(self::never())->method('findAccountByNick');
+        $this->translator->expects(self::never())->method('trans');
+
+        $listener->onCommand('001ABC', 'SOME CMD');
+    }
+
+    protected function setUp(): void
+    {
+        $this->chanServBot = $this->createChanServBotStub();
+        $this->userLookup = $this->createMock(NetworkUserLookupPort::class);
+        $this->chanServNotifier = $this->createMock(ChanServNotifierInterface::class);
+        $this->accountPort = $this->createMock(ChanUserAccountPort::class);
+        $messageTypeResolver = $this->createStub(ChanServUserPresentationPreferences::class);
+        $messageTypeResolver->method('prefersPrivateMessages')->willReturn(false);
+        $this->messageTypeResolver = $messageTypeResolver;
+        $this->translator = $this->createMock(TranslatorInterface::class);
+        $this->logger = $this->createMock(LoggerInterface::class);
+    }
+
     private static function createSenderView(): SenderView
     {
         return new SenderView(
@@ -80,19 +323,6 @@ final class ChanServCommandListenerTest extends TestCase
             serverSid: '001',
             displayHost: 'user.example.com',
         );
-    }
-
-    protected function setUp(): void
-    {
-        $this->chanServBot = $this->createChanServBotStub();
-        $this->userLookup = $this->createMock(NetworkUserLookupPort::class);
-        $this->chanServNotifier = $this->createMock(ChanServNotifierInterface::class);
-        $this->accountPort = $this->createMock(ChanUserAccountPort::class);
-        $messageTypeResolver = $this->createStub(ChanServUserPresentationPreferences::class);
-        $messageTypeResolver->method('prefersPrivateMessages')->willReturn(false);
-        $this->messageTypeResolver = $messageTypeResolver;
-        $this->translator = $this->createMock(TranslatorInterface::class);
-        $this->logger = $this->createMock(LoggerInterface::class);
     }
 
     private function createChanServBotStub(): ChanServBot
@@ -337,235 +567,5 @@ final class ChanServCommandListenerTest extends TestCase
                 ($this->callback)($context);
             }
         };
-    }
-
-    #[Test]
-    public function getServiceNameReturnsChanServBotNick(): void
-    {
-        $listener = $this->createListener();
-        $this->userLookup->expects(self::never())->method('findByUid');
-        $this->chanServNotifier->expects(self::never())->method('sendMessage');
-        $this->accountPort->expects(self::never())->method('findAccountByNick');
-        $this->translator->expects(self::never())->method('trans');
-        $this->logger->expects(self::never())->method('warning');
-
-        self::assertSame(self::CHANSERV_NICK, $listener->getServiceName());
-    }
-
-    #[Test]
-    public function getServiceUidReturnsChanServBotUid(): void
-    {
-        $listener = $this->createListener();
-        $this->userLookup->expects(self::never())->method('findByUid');
-        $this->chanServNotifier->expects(self::never())->method('sendMessage');
-        $this->accountPort->expects(self::never())->method('findAccountByNick');
-        $this->translator->expects(self::never())->method('trans');
-        $this->logger->expects(self::never())->method('warning');
-
-        self::assertSame(self::CHANSERV_UID, $listener->getServiceUid());
-    }
-
-    #[Test]
-    public function onCommandWithEmptyTextDoesNothing(): void
-    {
-        $listener = $this->createListener();
-        $this->userLookup->expects(self::never())->method('findByUid');
-        $this->chanServNotifier->expects(self::never())->method('sendMessage');
-        $this->accountPort->expects(self::never())->method('findAccountByNick');
-        $this->translator->expects(self::never())->method('trans');
-        $this->logger->expects(self::never())->method('warning');
-
-        $listener->onCommand('001ABC', '');
-    }
-
-    #[Test]
-    public function onCommandWhenSenderNotFoundLogsWarningAndReturns(): void
-    {
-        $listener = $this->createListener();
-        $this->userLookup
-            ->expects(self::once())
-            ->method('findByUid')
-            ->with('999XXX')
-            ->willReturn(null);
-
-        $this->logger
-            ->expects(self::once())
-            ->method('warning')
-            ->with('ChanServ: could not resolve sender UID: 999XXX');
-
-        $this->chanServNotifier->expects(self::never())->method('sendMessage');
-        $this->accountPort->expects(self::never())->method('findAccountByNick');
-        $this->translator->expects(self::never())->method('trans');
-
-        $listener->onCommand('999XXX', 'INFO');
-    }
-
-    #[Test]
-    public function onCommandDispatchesToChanServServiceWithSenderView(): void
-    {
-        $sender = self::createSenderView();
-        $this->userLookup
-            ->expects(self::once())
-            ->method('findByUid')
-            ->with('001ABC')
-            ->willReturn($sender);
-
-        $executed = false;
-        $command = $this->createDummyCommand('INFO', static function (ChanServContext $context) use (&$executed, $sender): void {
-            $executed = true;
-            self::assertSame($sender->uid, $context->sender?->uid);
-            self::assertSame('INFO', $context->command);
-        });
-
-        $listener = $this->createListener([$command]);
-        $this->chanServNotifier->expects(self::never())->method('sendMessage');
-        $this->accountPort->expects(self::never())->method('findAccountByNick');
-        $this->translator->expects(self::never())->method('trans');
-        $this->logger->expects(self::never())->method('warning');
-
-        $listener->onCommand('001ABC', 'INFO');
-
-        self::assertTrue($executed);
-    }
-
-    #[Test]
-    public function onCommandChannelAlreadyRegisteredTranslatesAndSendsViaNotifier(): void
-    {
-        $sender = self::createSenderView();
-        $this->userLookup->expects(self::atLeastOnce())->method('findByUid')->with('001ABC')->willReturn($sender);
-        $this->accountPort
-            ->expects(self::atLeastOnce())
-            ->method('findAccountByNick')
-            ->with('TestUser')
-            ->willReturn(new ChanAccountView(1, 'TestUser', 'es'));
-
-        $this->translator
-            ->expects(self::once())
-            ->method('trans')
-            ->with('register.already_registered', ['%channel%' => '#test'], 'chanserv', 'es')
-            ->willReturn('El canal #test ya está registrado.');
-
-        $exception = ChannelAlreadyRegisteredException::forChannel('#test');
-        $command = $this->createThrowCommand('REGISTER', $exception);
-        $listener = $this->createListener([$command]);
-
-        $this->chanServNotifier
-            ->expects(self::once())
-            ->method('sendMessage')
-            ->with('001ABC', 'El canal #test ya está registrado.', 'NOTICE');
-        $this->logger->expects(self::never())->method('error');
-
-        $listener->onCommand('001ABC', 'REGISTER #test');
-    }
-
-    #[Test]
-    public function onCommandChannelNotRegisteredTranslatesAndSendsViaNotifier(): void
-    {
-        $sender = self::createSenderView();
-        $this->userLookup->expects(self::atLeastOnce())->method('findByUid')->with('001ABC')->willReturn($sender);
-        $this->accountPort->expects(self::atLeastOnce())->method('findAccountByNick')->with('TestUser')->willReturn(null);
-
-        $this->translator
-            ->expects(self::once())
-            ->method('trans')
-            ->with('error.channel_not_registered', ['%channel%' => '#mychan', '%bot%' => 'ChanServ'], 'common', 'en')
-            ->willReturn('Channel #mychan is not registered.');
-
-        $exception = ChannelNotRegisteredException::forChannel('#mychan');
-        $command = $this->createThrowCommand('ACCESS', $exception);
-        $listener = $this->createListener([$command]);
-
-        $this->chanServNotifier
-            ->expects(self::once())
-            ->method('sendMessage')
-            ->with('001ABC', 'Channel #mychan is not registered.', 'NOTICE');
-        $this->logger->expects(self::never())->method('error');
-
-        $listener->onCommand('001ABC', 'ACCESS #mychan LIST');
-    }
-
-    #[Test]
-    public function onCommandChannelNotRegisteredUsesNickLanguageWhenRegistered(): void
-    {
-        $sender = self::createSenderView();
-        $registeredNick = new ChanAccountView(1, 'TestUser', 'es');
-
-        $this->userLookup->expects(self::atLeastOnce())->method('findByUid')->with('001ABC')->willReturn($sender);
-        $this->accountPort->expects(self::atLeastOnce())->method('findAccountByNick')->with('TestUser')->willReturn($registeredNick);
-
-        $this->translator
-            ->expects(self::once())
-            ->method('trans')
-            ->with('error.channel_not_registered', ['%channel%' => '#mychan', '%bot%' => 'ChanServ'], 'common', 'es')
-            ->willReturn('El canal #mychan no está registrado.');
-
-        $exception = ChannelNotRegisteredException::forChannel('#mychan');
-        $command = $this->createThrowCommand('ACCESS', $exception);
-        $listener = $this->createListener([$command]);
-
-        $this->chanServNotifier
-            ->expects(self::once())
-            ->method('sendMessage')
-            ->with('001ABC', 'El canal #mychan no está registrado.', 'NOTICE');
-        $this->logger->expects(self::never())->method('error');
-
-        $listener->onCommand('001ABC', 'ACCESS #mychan LIST');
-    }
-
-    #[Test]
-    public function onCommandInsufficientAccessTranslatesAndSendsViaNotifier(): void
-    {
-        $sender = self::createSenderView();
-        $this->userLookup->expects(self::atLeastOnce())->method('findByUid')->with('001ABC')->willReturn($sender);
-        $this->accountPort->expects(self::atLeastOnce())->method('findAccountByNick')->with('TestUser')->willReturn(null);
-
-        $this->translator
-            ->expects(self::once())
-            ->method('trans')
-            ->with(
-                'error.insufficient_access',
-                ['%operation%' => 'OP', '%channel%' => '#mychan', '%bot%' => 'ChanServ'],
-                'common',
-                'en',
-            )
-            ->willReturn('Insufficient access to OP on channel "#mychan".');
-
-        $exception = InsufficientAccessException::forOperation('#mychan', 'OP');
-        $command = $this->createThrowCommand('OP', $exception);
-        $listener = $this->createListener([$command]);
-
-        $this->chanServNotifier
-            ->expects(self::once())
-            ->method('sendMessage')
-            ->with('001ABC', 'Insufficient access to OP on channel "#mychan".', 'NOTICE');
-        $this->logger->expects(self::never())->method('error');
-
-        $listener->onCommand('001ABC', 'OP #mychan user');
-    }
-
-    #[Test]
-    public function onCommandGenericThrowableLogsErrorAndDoesNotRethrow(): void
-    {
-        $sender = self::createSenderView();
-        $this->userLookup->expects(self::atLeastOnce())->method('findByUid')->with('001ABC')->willReturn($sender);
-
-        $exception = new RuntimeException('Unexpected error');
-        $command = $this->createThrowCommand('SOME', $exception);
-        $listener = $this->createListener([$command]);
-
-        $this->logger
-            ->expects(self::once())
-            ->method('error')
-            ->with(
-                'ChanServ dispatch error: Unexpected error',
-                self::callback(static fn (array $context): bool => isset($context['exception'], $context['sender'])
-                        && '001ABC' === $context['sender']),
-            );
-
-        $this->chanServNotifier->expects(self::never())->method('sendMessage');
-        $this->accountPort->expects(self::never())->method('findAccountByNick');
-        $this->translator->expects(self::never())->method('trans');
-
-        $listener->onCommand('001ABC', 'SOME CMD');
     }
 }

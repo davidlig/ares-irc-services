@@ -104,7 +104,19 @@ policy used by registration and email changes, with explicit administrative exce
 ### ChanServ
 
 Manages channel registration, hierarchical access, policy, channel state, and channel recovery.
-IRCop permissions and each command's syntax are available through ChanServ HELP.
+IRCop permissions and each command's syntax are available through ChanServ HELP. REGMODE
+selects DIRECT registration (the default) or approval-based requests. IRCops review requests
+with CREG; STATUS reports lifecycle state without exposing pending requests through INFO.
+ACCEPT and REJECT use the existing IRCop command audit; only ACCEPT adds channel HISTORY.
+Rejection details and restrictions remain on the current channel registration.
+Global settings with runtime commands use `service_settings`, keyed by service and setting name.
+Values are encoded as JSON; the owning service validates each decoded value against its setting's type and rules.
+The dedicated migration `Version20261026000002` seeds ChanServ REGMODE `DIRECT` and NickServ REGMODE `TOKEN`.
+It intentionally drops the old NickServ policy without copying its mode; back up before upgrading.
+Downgrading removes the common settings and restores the old NickServ table empty, not its data.
+Migration `Version20261026000001` contains only ChanServ approval lifecycle metadata.
+Neither feature migration creates a ChanServ policy or registration-audit table.
+Settings without a runtime command remain configured through `.env`.
 
 ### MemoServ
 
@@ -274,6 +286,7 @@ retrying, and use the deployment backup and maintenance procedure.
 | `CHANSERV_REALNAME` | `Channel Registration Services` | Bot realname |
 | `CHANSERV_MAX_CHANNELS_PER_NICK` | `3` | Max registered channels per nick |
 | `CHANSERV_REGISTER_MIN_INTERVAL` | `21600` | Seconds between channel registrations |
+| `CHANSERV_REJECT_COOLDOWN` | `24` | Non-negative integer hours a rejected channel cannot be requested again (`0` = indefinite until an IRCop releases it with DROP); fractions and invalid values are rejected |
 | `CHANSERV_INACTIVITY_EXPIRY_DAYS` | `45` | Drop after days of inactivity (`0` = disabled) |
 | `CHANSERV_DROP_GRACE_DAYS` | `7` | Days a manually dropped channel remains restorable (`0` = deletion on maintenance) |
 | `CHANSERV_LIST_PAGE_SIZE` | `50` | Matching registrations per IRCop LIST page |

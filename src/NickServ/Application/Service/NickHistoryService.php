@@ -8,6 +8,8 @@ use App\NickServ\Application\Port\Out\NickHistoryRepositoryInterface;
 use App\NickServ\Domain\Entity\NickHistory;
 use DateTimeImmutable;
 
+use function array_merge;
+
 /**
  * Centralized service for recording nickname history entries.
  */

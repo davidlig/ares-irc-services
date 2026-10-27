@@ -5,7 +5,11 @@ declare(strict_types=1);
 namespace App\NickServ\Adapter\In\Irc\Subscriber;
 
 use function count;
+use function implode;
 use function in_array;
+use function preg_split;
+use function strtoupper;
+use function trim;
 
 /**
  * Masks passwords and credentials in NickServ command strings

@@ -191,3 +191,11 @@ help:
 notify:
   nick_pending: "You have \x02%count%\x02 unread message(s). To list them: /msg %bot% \x0303LIST\x03"
   channel_pending: "Channel \x02%channel%\x02 has \x02%count%\x02 unread message(s). Read them with /msg %bot% \x0303LIST %channel%\x03"
+
+# --- CHANNEL REGISTRATION DECISIONS ---
+registration_decision:
+  accepted: "Your registration request for %channel% was accepted by %operator%."
+  rejected: "Your registration request for %channel% was rejected by %operator%."
+  reason: "Reason: %reason%"
+  restriction: "Restriction remaining: %remaining_seconds% seconds."
+  restriction_indefinite: "This channel is restricted indefinitely."

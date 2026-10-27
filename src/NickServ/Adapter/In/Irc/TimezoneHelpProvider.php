@@ -6,6 +6,13 @@ namespace App\NickServ\Adapter\In\Irc;
 
 use DateTimeZone;
 
+use function array_find;
+use function sort;
+use function strpos;
+use function strtolower;
+use function substr;
+use function trim;
+
 /**
  * Provides timezone regions and identifiers for HELP SET TIMEZONE.
  *

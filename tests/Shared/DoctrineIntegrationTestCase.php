@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace App\Tests\Shared;
 
+use App\Bootstrap\Adapter\Out\Persistence\MigrationOwnedSchemaListener;
+use Doctrine\Common\EventManager;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\ORM\Configuration;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Mapping\Driver\SimplifiedXmlDriver;
 use Doctrine\ORM\Tools\SchemaTool;
+use Doctrine\ORM\Tools\ToolEvents;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -33,6 +36,12 @@ abstract class DoctrineIntegrationTestCase extends TestCase
         parent::tearDown();
     }
 
+    protected function flushAndClear(): void
+    {
+        $this->entityManager->flush();
+        $this->entityManager->clear();
+    }
+
     private function createInMemoryEntityManager(): EntityManager
     {
         $config = new Configuration();
@@ -55,7 +64,10 @@ abstract class DoctrineIntegrationTestCase extends TestCase
             'memory' => true,
         ], $config);
 
-        return new EntityManager($connection, $config);
+        $events = new EventManager();
+        $events->addEventListener([ToolEvents::postGenerateSchema], new MigrationOwnedSchemaListener());
+
+        return new EntityManager($connection, $config, $events);
     }
 
     private function createSchema(): void
@@ -63,11 +75,5 @@ abstract class DoctrineIntegrationTestCase extends TestCase
         $schemaTool = new SchemaTool($this->entityManager);
         $metadata = $this->entityManager->getMetadataFactory()->getAllMetadata();
         $schemaTool->createSchema($metadata);
-    }
-
-    protected function flushAndClear(): void
-    {
-        $this->entityManager->flush();
-        $this->entityManager->clear();
     }
 }

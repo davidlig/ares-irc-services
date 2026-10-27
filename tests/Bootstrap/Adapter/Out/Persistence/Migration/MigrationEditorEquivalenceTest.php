@@ -25,7 +25,11 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
 
+use function array_reverse;
+use function basename;
 use function dirname;
+use function glob;
+use function is_a;
 
 /** Migrations are outside the production coverage filter; exercise their executor explicitly. */
 #[CoversNothing]
@@ -43,7 +47,7 @@ final class MigrationEditorEquivalenceTest extends TestCase
         try {
             $paths = glob(dirname(__DIR__, 6) . '/migrations/Version*.php');
             self::assertIsArray($paths);
-            self::assertCount(32, $paths);
+            self::assertCount(34, $paths);
             $this->factory($connection)->getMetadataStorage()->ensureInitialized();
             foreach ($paths as $path) {
                 $class = 'App\\Migrations\\' . basename($path, '.php');
@@ -90,7 +94,7 @@ final class MigrationEditorEquivalenceTest extends TestCase
             $before = $connection->fetchAllAssociative("SELECT type, name, sql FROM sqlite_master WHERE name NOT LIKE 'sqlite_%' ORDER BY type, name");
             $configuration = new MigratorConfiguration()->setDryRun(true);
             $sql = $factory->getMigrator()->migrate(new MigrationPlanList($plans, 'up'), $configuration);
-            self::assertCount(32, $sql);
+            self::assertCount(34, $sql);
             self::assertSame($before, $connection->fetchAllAssociative("SELECT type, name, sql FROM sqlite_master WHERE name NOT LIKE 'sqlite_%' ORDER BY type, name"));
             $schema = $configuration->getFromSchema();
             self::assertNotNull($schema);
@@ -102,7 +106,7 @@ final class MigrationEditorEquivalenceTest extends TestCase
                 $downPlans[] = new MigrationPlan(new Version($class), $factory->getMigrationFactory()->createVersion($class), 'down');
             }
             $down = $factory->getMigrator()->migrate(new MigrationPlanList($downPlans, 'down'), $configuration);
-            self::assertCount(32, $down);
+            self::assertCount(34, $down);
             $restoredSchema = $configuration->getFromSchema();
             self::assertNotNull($restoredSchema);
             self::assertFalse($restoredSchema->hasTable('udb_records'));
@@ -115,7 +119,7 @@ final class MigrationEditorEquivalenceTest extends TestCase
                     $class = 'App\\Migrations\\' . basename($path, '.php');
                     $actualPlans[] = new MigrationPlan(new Version($class), $factory->getMigrationFactory()->createVersion($class), $direction);
                 }
-                self::assertCount(32, $factory->getMigrator()->migrate(new MigrationPlanList($actualPlans, $direction), new MigratorConfiguration()));
+                self::assertCount(34, $factory->getMigrator()->migrate(new MigrationPlanList($actualPlans, $direction), new MigratorConfiguration()));
                 if ('up' === $direction) {
                     self::assertSame(3, $connection->fetchOne('SELECT COUNT(*) FROM oper_roles'));
                     self::assertSame(1, $connection->fetchOne('SELECT COUNT(*) FROM udb_authority_state'));

@@ -13,6 +13,9 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function pack;
+use function str_repeat;
+
 #[CoversClass(UdbNativeRowCodec::class)]
 final class UdbNativeRowCodecTest extends TestCase
 {

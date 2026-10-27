@@ -18,8 +18,6 @@ class ChannelLevel
 
     public const int LEVEL_MAX = 499;
 
-    private int $id;
-
     /** Level keys for rank modes (only shown if IRCd supports that mode). */
     public const string KEY_AUTOADMIN = 'AUTOADMIN';
 
@@ -77,6 +75,8 @@ class ChannelLevel
         self::KEY_AKICK => 450,
         self::KEY_NOJOIN => -1,
     ];
+
+    private int $id;
 
     private int $channelId;
 

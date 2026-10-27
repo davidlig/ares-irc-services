@@ -11,6 +11,8 @@ use App\OperServ\Domain\Repository\OperIrcopRepositoryInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
+use function implode;
+
 /**
  * When a user loses their identified status, remove IRCOP user modes if they had a role assigned.
  */

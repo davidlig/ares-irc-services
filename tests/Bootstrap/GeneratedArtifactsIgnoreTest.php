@@ -8,6 +8,11 @@ use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function dirname;
+use function fclose;
+use function proc_close;
+use function proc_open;
+
 #[CoversNothing]
 final class GeneratedArtifactsIgnoreTest extends TestCase
 {

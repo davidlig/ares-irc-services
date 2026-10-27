@@ -12,20 +12,12 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function iterator_to_array;
+
 #[CoversClass(InMemoryChannelRepository::class)]
 final class InMemoryChannelRepositoryTest extends TestCase
 {
     private InMemoryChannelRepository $repository;
-
-    protected function setUp(): void
-    {
-        $this->repository = new InMemoryChannelRepository();
-    }
-
-    private function createChannel(string $name): Channel
-    {
-        return new Channel(new ChannelName($name), '', new DateTimeImmutable());
-    }
 
     #[Test]
     public function saveStoresChannel(): void
@@ -139,5 +131,15 @@ final class InMemoryChannelRepositoryTest extends TestCase
 
         self::assertSame($channel2, $this->repository->findByName(new ChannelName('#test')));
         self::assertSame(1, $this->repository->count());
+    }
+
+    protected function setUp(): void
+    {
+        $this->repository = new InMemoryChannelRepository();
+    }
+
+    private function createChannel(string $name): Channel
+    {
+        return new Channel(new ChannelName($name), '', new DateTimeImmutable());
     }
 }

@@ -23,11 +23,6 @@ final class NickServIdentifiedOwnerVoterTest extends TestCase
 {
     private NickServIdentifiedOwnerVoter $voter;
 
-    protected function setUp(): void
-    {
-        $this->voter = new NickServIdentifiedOwnerVoter(new IdentifiedAccountOwnerPolicy());
-    }
-
     #[Test]
     public function voteGrantsAccessForIdentifiedOwner(): void
     {
@@ -175,6 +170,11 @@ final class NickServIdentifiedOwnerVoterTest extends TestCase
         $result = $this->voter->vote($token, new stdClass(), [NickServPermission::IDENTIFIED_OWNER]);
 
         self::assertSame(VoterInterface::ACCESS_ABSTAIN, $result);
+    }
+
+    protected function setUp(): void
+    {
+        $this->voter = new NickServIdentifiedOwnerVoter(new IdentifiedAccountOwnerPolicy());
     }
 
     private function createNickServContext(?SenderView $sender, ?RegisteredNick $account): NickServContext

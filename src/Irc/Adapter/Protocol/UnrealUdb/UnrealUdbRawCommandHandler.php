@@ -14,8 +14,12 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbRawCommandResult;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
+use function array_filter;
+use function array_map;
 use function array_slice;
+use function array_values;
 use function count;
+use function explode;
 use function implode;
 use function sprintf;
 

@@ -21,11 +21,15 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function array_shift;
 use function assert;
 use function count;
 use function in_array;
 use function is_string;
+use function preg_split;
 use function sprintf;
+use function strtoupper;
+use function trim;
 
 use const PREG_SPLIT_NO_EMPTY;
 

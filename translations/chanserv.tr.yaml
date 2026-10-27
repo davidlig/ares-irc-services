@@ -27,8 +27,8 @@ register:
   example: "%command_prefix%\x02\x0303REGISTER #kanal Topluluk projesi\x03\x0F"
   short: "Bir kanalı kaydedin."
   help: |-
-    Bir kanalı kaydedin ve rumuzunuza bağlayın. %nickserv% ile kimliğiniz
-    doğrulanmış olmalıdır.
+    Kanalı kaydedip takma adına bağlar. %nickserv% ile kimliğini doğrula.
+    APPROVAL modunda bir IRCop isteği onaylamalıdır.
   success: "\x0303✔\x03 \x02%channel%\x02 kanalı kaydedildi."
   already_registered: "\x0304✗\x03 \x02%channel%\x02 kanalı zaten kayıtlı."
   channel_not_on_network: "\x0304✗\x03 \x02%channel%\x02 kanalı ağda mevcut değil."
@@ -36,6 +36,77 @@ register:
   insufficient_channel_rank: "\x0304✗\x03 Bu kanalı kaydetmek için \x02%channel%\x02 üzerinde en az operatör durumunda olmalısınız."
   limit_exceeded: "\x0304✗\x03 Maksimum %max% kayıtlı kanal sınırına ulaştınız."
   throttled: "\x0304✗\x03 Başka bir kanal kaydetmeden önce \x02%minutes%\x02 dakika beklemelisiniz."
+
+  awaiting_approval: "\x0307✔\x03 \x02%channel%\x02 kayıt isteği bir IRCop onayı bekliyor."
+  restricted_indefinite: "\x0304✗\x03 \x02%channel%\x02 için yeni istekler süresiz olarak engellendi."
+  restricted_until: "\x0304✗\x03 \x02%channel%\x02 için yeni istekler %date% tarihine kadar engellendi"
+
+# --- REGMODE ---------------------------------------------------------------
+regmode:
+  syntax: "REGMODE {DIRECT|APPROVAL|STATUS}"
+  example: "%command_prefix%\x02\x0303REGMODE APPROVAL\x03\x0F"
+  short: "Kanal kayıt modunu ayarlayın veya görüntüleyin."
+  help: |-
+    Kaydı DIRECT ya da APPROVAL olarak ayarlayın veya STATUS ile görüntüleyin.
+    DIRECT varsayılandır ve anında kaydı sürdürür.
+
+  status: "\x0307ℹ\x03 Kanal kayıt modu \x02%mode%\x02."
+  changed: "\x0303✔\x03 Kanal kayıt modu artık \x02%mode%\x02."
+
+# --- CREG ------------------------------------------------------------------
+creg:
+  syntax: "CREG {PENDING [sayfa]|ACCEPT <#kanal>|REJECT <#kanal> <neden>}"
+  pending.syntax: "CREG PENDING [sayfa]"
+  pending.example: "%command_prefix%\x02\x0303CREG PENDING\x03\x0F"
+  pending.short: "Bekleyen kayıt isteklerini listeleyin."
+  pending.help: "Bekleyen istekleri sınırlı bir sayfada listeler."
+  accept.syntax: "CREG ACCEPT <#kanal>"
+  accept.example: "%command_prefix%\x02\x0303CREG ACCEPT #canal\x03\x0F"
+  accept.short: "Bir kanal kayıt isteğini onaylayın."
+  accept.help: "İstek sahibini yeniden doğrular ve bekleyen kaydı etkinleştirir."
+  reject.syntax: "CREG REJECT <#kanal> <neden>"
+  reject.example: "%command_prefix%\x02\x0303CREG REJECT #canal Motivo público\x03\x0F"
+  reject.short: "Bir kanal kayıt isteğini reddedin."
+  reject.help: "İsteği zorunlu bir neden ve kısıtlamayla reddeder."
+  example: "%command_prefix%\x02\x0303CREG PENDING\x03\x0F"
+  short: "Kanal kayıt isteklerini inceleyin."
+  help: |-
+    Bekleyen istekleri listeler veya bir isteği kabul ya da reddeder.
+    Ret için neden gerekir. Kanalı yalnızca ACCEPT kaydeder.
+
+  pending_header: "\x0314Bekleyen kayıtlar (sayfa %page%)\x03"
+  pending_item: "  %channel% — isteyen %requester%, gönderim %submitted%: %description%"
+  accepted: "\x0303✔\x03 \x02%channel%\x02 kaydı onaylandı."
+  rejected: "\x0307✔\x03 \x02%channel%\x02 kaydı reddedildi."
+  not_pending: "\x0304✗\x03 \x02%channel%\x02 için bekleyen kayıt yok."
+  channel_not_on_network: "\x0304✗\x03 \x02%channel%\x02 ağda değil."
+  founder_limit: "\x0304✗\x03 İstek sahibi kanal kayıt sınırına ulaştı."
+  requester_inactive: "\x0304✗\x03 İstek sahibinin hesabı artık etkin değil."
+  requester_ineligible: "\x0304✗\x03 İstek sahibi şu anda kanalda operatör olmalıdır."
+
+# --- STATUS ----------------------------------------------------------------
+status:
+  syntax: "STATUS <#kanal>"
+  example: "%command_prefix%\x02\x0303STATUS #canal\x03\x0F"
+  short: "Kanal kayıt durumunu gösterin."
+  help: |-
+    Kanalın kayıtlı olmadığını, onay beklediğini, reddedildiğini veya kayıtlı
+    olduğunu gösterir.
+    Ret ayrıntılarını yalnızca istek sahibi ve yetkili IRCoplar görebilir.
+
+  unregistered: "\x0314%channel% kayıtlı değil.\x03"
+  pending: "\x0314%channel% IRCop onayı bekliyor.\x03"
+  registered: "\x0314%channel% kayıtlı.\x03"
+  suspended: "\x0314%channel% kayıtlı ancak askıya alınmış.\x03"
+  forbidden: "\x0314%channel% kaydedilemez.\x03"
+  pending_deletion: "\x0314%channel% silinmeyi bekliyor.\x03"
+  rejected_private: "\x0314%channel% için bir kayıt isteği reddedildi.\x03"
+  rejected: "\x0314%channel% kaydı reddedildi.\x03"
+  rejection_reason: "  \x0314Neden\x03: %reason%"
+  rejection_audit: "  \x0314Reddeden\x03: %operator%, tarih: %date%"
+  restriction_indefinite: "  \x0314Yeni istekler süresiz engellendi.\x03"
+  restriction_until: "  \x0314Yeni istekler %date% tarihine kadar engellendi\x03"
+  restriction_expired: "  \x0314Kayıt kısıtlaması %date% tarihinde sona erdi.\x03"
 
 # --- INFO ------------------------------------------------------------------
 info:
@@ -107,6 +178,7 @@ help:
     deletion: "Silme ve geri yükleme"
     restrictions: "Kısıtlamalar"
     lookup: "Arama ve inceleme"
+    registration_approval: "Kayıt onayı"
   ircop_header: "\x02 ■ IRC operatörleri için kullanılabilir komutlar:\x02"
 
 # --- OP --------------------------------------------------------------------
@@ -524,6 +596,9 @@ drop:
   help: |-
     Kayıtlı bir kanalı veritabanından siler.
     FORCE, silinmeyi bekleyen kanalı kalıcı olarak siler.
+    Reddedilen bir istekte DROP, engel kalkınca isteği serbest bırakır.
+    Yetkili IRCop süresiz engeli açıkça kaldırabilir.
+  registration_restricted: "\x0304✗\x03 Bu kayıt isteği %date% tarihine kadar kısıtlı."
   force:
     short: "Silinmeyi bekleyen kanalı kalıcı olarak siler."
   success: "\x0303✔\x03 Kanal \x02%channel%\x02 silinmek üzere işaretlendi ve ödemesiz dönem boyunca geri yüklenebilir."
@@ -701,6 +776,7 @@ history.message:
   set_private_off: "PRIVATE seçeneği devre dışı bırakıldı"
   founder_changed: "Kurucu %old_founder% yerine %new_founder% olarak değiştirildi"
   successor_changed: "Halef %old_successor% yerine %new_successor% olarak değiştirildi"
+  registration_approved: "Kanal kaydı onaylandı"
   successor_cleared: "Halef temizlendi"
   access_add: "%target_nickname% için erişim eklendi (seviye %level%)"
   access_del: "%target_nickname% için erişim kaldırıldı"
@@ -763,4 +839,6 @@ list:
   header: "Kanal | Kurucu | Kayıt | Son kullanım | Durum"
   row: "%channel% | %founder% | %registered% | %last_used% | %status%"
   empty: "%pattern% deseniyle eşleşen kanal yok."
+  status_pending_registration: "Onay bekliyor"
+  status_rejected_registration: "Kayıt reddedildi"
   status_active: "Etkin"

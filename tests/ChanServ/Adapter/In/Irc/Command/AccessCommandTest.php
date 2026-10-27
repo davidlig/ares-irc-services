@@ -45,6 +45,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function assert;
 use function is_string;
+use function json_encode;
 
 #[CoversTrait(ChanServArgumentDefinitionSupport::class)]
 #[CoversClass(AccessCommand::class)]
@@ -55,52 +56,6 @@ use function is_string;
 #[CoversClass(ChannelAccessEntryView::class)]
 final class AccessCommandTest extends TestCase
 {
-    /**
-     * @param string[] $args
-     */
-    private function createContext(
-        ?SenderView $sender,
-        ?ChanAccountView $senderAccount,
-        array $args,
-        ChanServNotifierInterface $notifier,
-        TranslatorInterface $translator,
-        bool $isLevelFounder = false,
-    ): ChanServContext {
-        return new ChanServContext(
-            $sender,
-            $senderAccount,
-            'ACCESS',
-            $args,
-            $notifier,
-            $translator,
-            'en',
-            'UTC',
-            'NOTICE',
-            new ChanServCommandRegistry([]),
-            $this->createStub(ChannelLookupPort::class),
-            new NullChannelModeSupport(),
-            $this->createStub(NetworkUserLookupPort::class),
-            $this->createServiceNicks(),
-            $isLevelFounder,
-        );
-    }
-
-    /**
-     * @return array{RegisteredChannelRepositoryInterface&Stub, ChannelAccessRepositoryInterface&Stub, ChanUserAccountPort&Stub, ChanServAccessHelper}
-     */
-    private function createStubReposAndHelper(): array
-    {
-        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
-        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
-
-        return [
-            $this->createStub(RegisteredChannelRepositoryInterface::class),
-            $accessRepo,
-            $this->createStub(ChanUserAccountPort::class),
-            new ChanServAccessHelper($accessRepo, $levelRepo),
-        ];
-    }
-
     #[Test]
     public function replyInvalidChannelWhenFirstArgNotChannel(): void
     {
@@ -173,33 +128,6 @@ final class AccessCommandTest extends TestCase
         $this->expectException(ChannelNotRegisteredException::class);
 
         $cmd->execute($this->createContext($sender, $account, ['#test', 'LIST'], $notifier, $translator));
-    }
-
-    private function createCommand(
-        RegisteredChannelRepositoryInterface $channels,
-        ChannelAccessRepositoryInterface $access,
-        ChanUserAccountPort $accounts,
-        ChanServAccessHelper $accessPolicy,
-        EventBusInterface $events,
-    ): AccessCommand {
-        return new AccessCommand(new ManageChannelAccessHandler(
-            $channels,
-            $access,
-            $accounts,
-            $accessPolicy,
-            new SymfonyChanServEventPublisher($events),
-        ));
-    }
-
-    private function createChannelMock(int $channelId = 1, int $founderNickId = 1): RegisteredChannel
-    {
-        $channel = $this->createStub(RegisteredChannel::class);
-        $channel->method('getId')->willReturn($channelId);
-        $channel->method('getFounderNickId')->willReturn($founderNickId);
-        $channel->method('isFounder')->willReturnCallback(static fn (int $id): bool => $id === $founderNickId);
-        $channel->method('getName')->willReturn('#test');
-
-        return $channel;
     }
 
     #[Test]
@@ -1116,6 +1044,79 @@ final class AccessCommandTest extends TestCase
         $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', 'NewNick', '10'], $notifier, $translator, true));
 
         self::assertSame(['access.max_entries'], $messages);
+    }
+
+    /**
+     * @param string[] $args
+     */
+    private function createContext(
+        ?SenderView $sender,
+        ?ChanAccountView $senderAccount,
+        array $args,
+        ChanServNotifierInterface $notifier,
+        TranslatorInterface $translator,
+        bool $isLevelFounder = false,
+    ): ChanServContext {
+        return new ChanServContext(
+            $sender,
+            $senderAccount,
+            'ACCESS',
+            $args,
+            $notifier,
+            $translator,
+            'en',
+            'UTC',
+            'NOTICE',
+            new ChanServCommandRegistry([]),
+            $this->createStub(ChannelLookupPort::class),
+            new NullChannelModeSupport(),
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
+            $isLevelFounder,
+        );
+    }
+
+    /**
+     * @return array{RegisteredChannelRepositoryInterface&Stub, ChannelAccessRepositoryInterface&Stub, ChanUserAccountPort&Stub, ChanServAccessHelper}
+     */
+    private function createStubReposAndHelper(): array
+    {
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+
+        return [
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $accessRepo,
+            $this->createStub(ChanUserAccountPort::class),
+            new ChanServAccessHelper($accessRepo, $levelRepo),
+        ];
+    }
+
+    private function createCommand(
+        RegisteredChannelRepositoryInterface $channels,
+        ChannelAccessRepositoryInterface $access,
+        ChanUserAccountPort $accounts,
+        ChanServAccessHelper $accessPolicy,
+        EventBusInterface $events,
+    ): AccessCommand {
+        return new AccessCommand(new ManageChannelAccessHandler(
+            $channels,
+            $access,
+            $accounts,
+            $accessPolicy,
+            new SymfonyChanServEventPublisher($events),
+        ));
+    }
+
+    private function createChannelMock(int $channelId = 1, int $founderNickId = 1): RegisteredChannel
+    {
+        $channel = $this->createStub(RegisteredChannel::class);
+        $channel->method('getId')->willReturn($channelId);
+        $channel->method('getFounderNickId')->willReturn($founderNickId);
+        $channel->method('isFounder')->willReturnCallback(static fn (int $id): bool => $id === $founderNickId);
+        $channel->method('getName')->willReturn('#test');
+
+        return $channel;
     }
 
     private function createServiceNicks(): ServiceNicknameRegistry

@@ -32,7 +32,10 @@ use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function array_filter;
+use function array_search;
 use function is_string;
+use function str_contains;
 
 #[CoversClass(InfoCommand::class)]
 #[CoversClass(ChannelInfoView::class)]
@@ -40,35 +43,6 @@ use function is_string;
 #[CoversClass(ShowChannelInfoHandler::class)]
 final class InfoCommandTest extends TestCase
 {
-    /**
-     * @param string[] $args
-     */
-    private function createContext(
-        array $args,
-        ChanServNotifierInterface $notifier,
-        TranslatorInterface $translator,
-        ?ChannelLookupPort $channelLookup = null,
-        ?ChanAccountView $senderAccount = null,
-        ?SenderView $sender = null,
-    ): ChanServContext {
-        return new ChanServContext(
-            $sender ?? new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
-            $senderAccount,
-            'INFO',
-            $args,
-            $notifier,
-            $translator,
-            'en',
-            'UTC',
-            'NOTICE',
-            new ChanServCommandRegistry([]),
-            $channelLookup ?? $this->createStub(ChannelLookupPort::class),
-            new NullChannelModeSupport(),
-            $this->createStub(NetworkUserLookupPort::class),
-            $this->createServiceNicks(),
-        );
-    }
-
     #[Test]
     public function replyInvalidChannelWhenFirstArgNotChannel(): void
     {
@@ -1162,6 +1136,35 @@ final class InfoCommandTest extends TestCase
         $cmd->execute($this->createContext(['#Test'], $notifier, $translator, $channelLookup));
 
         self::assertContains('info.topic', $rawMessages);
+    }
+
+    /**
+     * @param string[] $args
+     */
+    private function createContext(
+        array $args,
+        ChanServNotifierInterface $notifier,
+        TranslatorInterface $translator,
+        ?ChannelLookupPort $channelLookup = null,
+        ?ChanAccountView $senderAccount = null,
+        ?SenderView $sender = null,
+    ): ChanServContext {
+        return new ChanServContext(
+            $sender ?? new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
+            $senderAccount,
+            'INFO',
+            $args,
+            $notifier,
+            $translator,
+            'en',
+            'UTC',
+            'NOTICE',
+            new ChanServCommandRegistry([]),
+            $channelLookup ?? $this->createStub(ChannelLookupPort::class),
+            new NullChannelModeSupport(),
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
+        );
     }
 
     private function createCommand(

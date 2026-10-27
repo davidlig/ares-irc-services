@@ -11,51 +11,16 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function array_filter;
+use function implode;
+use function str_contains;
+
 #[CoversClass(CtcpVersionResponder::class)]
 final class CtcpVersionResponderTest extends TestCase
 {
     private ServiceUserPreferences $languageResolver;
 
     private CtcpVersionResponder $responder;
-
-    private function createTranslator(string $returnValue = ''): TranslatorInterface
-    {
-        return new class($returnValue) implements TranslatorInterface {
-            public function __construct(private string $return) {}
-
-            /**
-             * @param array<string, mixed> $parameters
-             */
-            public function trans(string $id, array $parameters = [], ?string $domain = null, ?string $locale = null): string
-            {
-                return $this->return;
-            }
-
-            public function getLocale(): string
-            {
-                return 'en';
-            }
-        };
-    }
-
-    private function createLanguageResolver(string $defaultLanguage = 'en'): ServiceUserPreferences
-    {
-        $preferences = $this->createStub(ServiceUserPreferences::class);
-        $preferences->method('languageFor')->willReturn($defaultLanguage);
-        $preferences->method('defaultLanguage')->willReturn($defaultLanguage);
-
-        return $preferences;
-    }
-
-    protected function setUp(): void
-    {
-        $this->languageResolver = $this->createLanguageResolver();
-        $this->responder = new CtcpVersionResponder(
-            $this->createTranslator(),
-            $this->languageResolver,
-            'v2.4.0',
-        );
-    }
 
     #[Test]
     public function getVersionResponseReturnsExpectedString(): void
@@ -158,5 +123,44 @@ final class CtcpVersionResponderTest extends TestCase
         $blankLines = array_filter($lines, static fn (string $line): bool => ' ' === $line);
 
         self::assertNotEmpty($blankLines);
+    }
+
+    protected function setUp(): void
+    {
+        $this->languageResolver = $this->createLanguageResolver();
+        $this->responder = new CtcpVersionResponder(
+            $this->createTranslator(),
+            $this->languageResolver,
+            'v2.4.0',
+        );
+    }
+
+    private function createTranslator(string $returnValue = ''): TranslatorInterface
+    {
+        return new class($returnValue) implements TranslatorInterface {
+            public function __construct(private string $return) {}
+
+            /**
+             * @param array<string, mixed> $parameters
+             */
+            public function trans(string $id, array $parameters = [], ?string $domain = null, ?string $locale = null): string
+            {
+                return $this->return;
+            }
+
+            public function getLocale(): string
+            {
+                return 'en';
+            }
+        };
+    }
+
+    private function createLanguageResolver(string $defaultLanguage = 'en'): ServiceUserPreferences
+    {
+        $preferences = $this->createStub(ServiceUserPreferences::class);
+        $preferences->method('languageFor')->willReturn($defaultLanguage);
+        $preferences->method('defaultLanguage')->willReturn($defaultLanguage);
+
+        return $preferences;
     }
 }

@@ -27,6 +27,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function array_shift;
 use function base64_encode;
 
 #[CoversClass(SetFounderHandler::class)]

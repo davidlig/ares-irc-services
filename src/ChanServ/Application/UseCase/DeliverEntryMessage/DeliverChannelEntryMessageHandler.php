@@ -8,6 +8,8 @@ use App\ChanServ\Application\Port\Out\ChannelEntryMessageDelivery;
 use App\ChanServ\Application\Port\Out\ChanServNetworkIdentity;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 
+use function strtolower;
+
 final readonly class DeliverChannelEntryMessageHandler implements DeliverChannelEntryMessageHandlerInterface
 {
     public function __construct(

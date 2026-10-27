@@ -39,6 +39,8 @@ use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 
+use function strtolower;
+
 #[CoversClass(SetNickSettingHandler::class)]
 #[CoversClass(SetNickSetting::class)]
 #[CoversClass(SetNickSettingResult::class)]

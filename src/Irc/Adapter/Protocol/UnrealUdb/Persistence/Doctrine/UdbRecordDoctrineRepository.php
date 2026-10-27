@@ -14,6 +14,7 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\EntityManagerInterface;
 use UnexpectedValueException;
 
+use function str_starts_with;
 use function substr;
 
 final readonly class UdbRecordDoctrineRepository implements UdbRecordRepositoryInterface

@@ -14,7 +14,9 @@ use ReflectionMethod;
 use Symfony\Component\Translation\Translator;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function hash;
 use function is_string;
+use function serialize;
 
 #[CoversClass(ChanServDebugNotifier::class)]
 final class ChanServDebugNotifierTest extends TestCase
@@ -236,20 +238,6 @@ final class ChanServDebugNotifierTest extends TestCase
         self::assertFalse($notifier->isConfigured());
     }
 
-    private function createNotifier(
-        ?ChanServNotifierInterface $chanNotifier = null,
-        ?TranslatorInterface $translator = null,
-        ?string $debugChannel = null,
-        string $language = 'en',
-    ): ChanServDebugNotifier {
-        return new ChanServDebugNotifier(
-            $chanNotifier ?? $this->createStub(ChanServNotifierInterface::class),
-            $translator ?? $this->createStub(TranslatorInterface::class),
-            $language,
-            $debugChannel,
-        );
-    }
-
     #[Test]
     public function realCatalogDebugOutputRemainsIdenticalInEveryLocale(): void
     {
@@ -300,5 +288,19 @@ final class ChanServDebugNotifierTest extends TestCase
             }
             self::assertSame($hash, hash('sha256', serialize($messages)), $locale);
         }
+    }
+
+    private function createNotifier(
+        ?ChanServNotifierInterface $chanNotifier = null,
+        ?TranslatorInterface $translator = null,
+        ?string $debugChannel = null,
+        string $language = 'en',
+    ): ChanServDebugNotifier {
+        return new ChanServDebugNotifier(
+            $chanNotifier ?? $this->createStub(ChanServNotifierInterface::class),
+            $translator ?? $this->createStub(TranslatorInterface::class),
+            $language,
+            $debugChannel,
+        );
     }
 }

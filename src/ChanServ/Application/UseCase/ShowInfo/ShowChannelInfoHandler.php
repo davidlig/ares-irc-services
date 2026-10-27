@@ -26,6 +26,9 @@ final readonly class ShowChannelInfoHandler implements ShowChannelInfoHandlerInt
         if (null === $channel) {
             return null;
         }
+        if ($channel->isPendingRegistration() || $channel->isRejectedRegistration()) {
+            return null;
+        }
 
         $privateInfoDenied = $this->isPrivateInfoDenied($channel, $query);
 

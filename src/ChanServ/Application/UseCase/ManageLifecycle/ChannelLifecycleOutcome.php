@@ -9,6 +9,7 @@ enum ChannelLifecycleOutcome
     case Dropped;
     case ForceDropped;
     case PendingDeletion;
+    case RegistrationRestricted;
     case NotRegistered;
     case Forbidden;
     case ForbiddenUpdated;

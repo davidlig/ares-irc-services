@@ -12,11 +12,16 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use RuntimeException;
 
+use function fclose;
 use function is_resource;
+use function microtime;
+use function min;
 use function proc_close;
 use function proc_get_status;
 use function proc_open;
 use function proc_terminate;
+use function time;
+use function usleep;
 
 use const PHP_BINARY;
 use const SIGTERM;
@@ -103,36 +108,6 @@ final class ConsumerProcessManager implements ConsumerProcessManagerInterface
         });
     }
 
-    private function spawn(): void
-    {
-        $command = [PHP_BINARY, $this->consolePath, 'messenger:consume', ...$this->transportNames, '--time-limit=3600', '--memory-limit=384M'];
-
-        $descriptorSpec = [
-            0 => ['pipe', 'r'],
-            1 => STDOUT,
-            2 => STDERR,
-        ];
-
-        $proc = @proc_open(
-            $command,
-            $descriptorSpec,
-            $pipes,
-            null,
-            null,
-        );
-
-        // @codeCoverageIgnoreStart
-        // Cannot test proc_open failure in unit tests - requires OS-level failure.
-        if (false === $proc || !is_resource($proc)) {
-            throw new RuntimeException('Failed to start Messenger consumer process.');
-        }
-        // @codeCoverageIgnoreEnd
-
-        $this->process = $proc;
-        $this->pipes = $pipes;
-        $this->startedAt = ($this->now)();
-    }
-
     public function stop(): void
     {
         if (null !== $this->supervisorId) {
@@ -171,6 +146,47 @@ final class ConsumerProcessManager implements ConsumerProcessManagerInterface
         $this->closePipes();
     }
 
+    public function isRunning(): bool
+    {
+        if (null === $this->process || !is_resource($this->process)) {
+            return false;
+        }
+
+        $status = proc_get_status($this->process);
+
+        return $status['running'];
+    }
+
+    private function spawn(): void
+    {
+        $command = [PHP_BINARY, $this->consolePath, 'messenger:consume', ...$this->transportNames, '--time-limit=3600', '--memory-limit=384M'];
+
+        $descriptorSpec = [
+            0 => ['pipe', 'r'],
+            1 => STDOUT,
+            2 => STDERR,
+        ];
+
+        $proc = @proc_open(
+            $command,
+            $descriptorSpec,
+            $pipes,
+            null,
+            null,
+        );
+
+        // @codeCoverageIgnoreStart
+        // Cannot test proc_open failure in unit tests - requires OS-level failure.
+        if (false === $proc || !is_resource($proc)) {
+            throw new RuntimeException('Failed to start Messenger consumer process.');
+        }
+        // @codeCoverageIgnoreEnd
+
+        $this->process = $proc;
+        $this->pipes = $pipes;
+        $this->startedAt = ($this->now)();
+    }
+
     private function closePipes(): void
     {
         if (null !== $this->pipes) {
@@ -185,16 +201,5 @@ final class ConsumerProcessManager implements ConsumerProcessManagerInterface
         }
 
         $this->pipes = null;
-    }
-
-    public function isRunning(): bool
-    {
-        if (null === $this->process || !is_resource($this->process)) {
-            return false;
-        }
-
-        $status = proc_get_status($this->process);
-
-        return $status['running'];
     }
 }

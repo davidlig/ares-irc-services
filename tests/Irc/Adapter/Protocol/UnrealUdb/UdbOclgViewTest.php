@@ -15,6 +15,10 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
+use function dechex;
+use function str_pad;
+use function str_repeat;
+
 use const STR_PAD_LEFT;
 
 #[CoversClass(UdbOclgView::class)]
@@ -27,13 +31,6 @@ final class UdbOclgViewTest extends TestCase
     private UdbOclgView $view;
 
     private MutableUdbClock $clock;
-
-    protected function setUp(): void
-    {
-        $this->clock = new MutableUdbClock();
-        $this->view = new UdbOclgView(clock: $this->clock);
-        $this->view->expectEpoch(self::EPOCH);
-    }
 
     #[Test]
     public function readySnapshotBecomesAvailableOnlyAfterEnd(): void
@@ -434,6 +431,13 @@ final class UdbOclgViewTest extends TestCase
 
         self::assertSame([], $view->getAvailableOperclasses());
         self::assertNull($view->nextDeadline());
+    }
+
+    protected function setUp(): void
+    {
+        $this->clock = new MutableUdbClock();
+        $this->view = new UdbOclgView(clock: $this->clock);
+        $this->view->expectEpoch(self::EPOCH);
     }
 
     private function frame(

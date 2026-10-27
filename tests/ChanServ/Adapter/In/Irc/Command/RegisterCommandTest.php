@@ -14,8 +14,10 @@ use App\ChanServ\Application\Port\Out\ChannelAkickRepositoryInterface;
 use App\ChanServ\Application\Port\Out\ChannelLevelRepositoryInterface;
 use App\ChanServ\Application\Port\Out\ChannelRegisterThrottlePort;
 use App\ChanServ\Application\Port\Out\ChanServOperatorAccess;
+use App\ChanServ\Application\Port\Out\ChanTransactionBoundary;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\PublishedEvent\ChannelRegisteredEvent;
+use App\ChanServ\Application\Service\ChannelRegistrationActivator;
 use App\ChanServ\Application\UseCase\RegisterChannel\RegisterChannel;
 use App\ChanServ\Application\UseCase\RegisterChannel\RegisterChannelHandler;
 use App\ChanServ\Application\UseCase\RegisterChannel\RegisterChannelHandlerInterface;
@@ -38,6 +40,9 @@ use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function strcasecmp;
+use function strtolower;
+
 #[CoversClass(RegisterCommand::class)]
 #[CoversClass(RegisterChannel::class)]
 #[CoversClass(RegisterChannelHandler::class)]
@@ -54,35 +59,6 @@ final class RegisterCommandTest extends TestCase
             'admin' => ['a'],
             'owner' => ['q'],
         ];
-    }
-
-    /**
-     * @param string[] $args
-     */
-    private function createContext(
-        ?SenderView $sender,
-        ?ChanAccountView $senderAccount,
-        array $args,
-        ChanServNotifierInterface $notifier,
-        TranslatorInterface $translator,
-        ChannelLookupPort $channelLookup,
-    ): ChanServContext {
-        return new ChanServContext(
-            $sender,
-            $senderAccount,
-            'REGISTER',
-            $args,
-            $notifier,
-            $translator,
-            'en',
-            'UTC',
-            'NOTICE',
-            new ChanServCommandRegistry([]),
-            $channelLookup,
-            new NullChannelModeSupport(),
-            $this->createStub(NetworkUserLookupPort::class),
-            $this->createServiceNicks(),
-        );
     }
 
     #[Test]
@@ -132,6 +108,46 @@ final class RegisterCommandTest extends TestCase
     public function usesLevelFounderReturnsFalse(): void
     {
         self::assertFalse(new RegisterCommand($this->createStub(RegisterChannelHandlerInterface::class))->usesLevelFounder());
+    }
+
+    #[Test]
+    public function finiteRegistrationRestrictionIncludesRemainingWaitInSeconds(): void
+    {
+        $sender = new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip');
+        $account = new ChanAccountView(1, 'User', 'en');
+        $handler = $this->createStub(RegisterChannelHandlerInterface::class);
+        $handler->method('handle')->willReturn(RegisterChannelResult::registrationRestricted(new DateTimeImmutable('+1 hour')));
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void {
+            $messages[] = $message;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translationParameters = [];
+        $translator->method('trans')->willReturnCallback(static function (string $key, array $parameters) use (&$translationParameters): string {
+            $translationParameters = $parameters;
+
+            return $key;
+        });
+        $channelLookup = $this->createStub(ChannelLookupPort::class);
+        $channelLookup->method('findByChannelName')->willReturn($this->channelViewWithSenderPrefix('#test', 'UID1', ['o']));
+
+        new RegisterCommand($handler)->execute($this->createContext(
+            $sender,
+            $account,
+            ['#test', 'Description'],
+            $notifier,
+            $translator,
+            $channelLookup,
+        ));
+
+        self::assertCount(1, $messages);
+        self::assertStringContainsString('register.restricted_until', $messages[0]);
+        self::assertArrayHasKey('%remaining_seconds%', $translationParameters);
+        self::assertIsString($translationParameters['%remaining_seconds%']);
+        $remainingSeconds = (int) $translationParameters['%remaining_seconds%'];
+        self::assertGreaterThanOrEqual(0, $remainingSeconds);
+        self::assertLessThanOrEqual(3600, $remainingSeconds);
     }
 
     #[Test]
@@ -871,28 +887,6 @@ final class RegisterCommandTest extends TestCase
         self::assertFalse($cmd->allowsForbiddenChannel());
     }
 
-    private function createNonRootRegistry(): ChanServOperatorAccess
-    {
-        $access = $this->createStub(ChanServOperatorAccess::class);
-        $access->method('isIrcop')->willReturnCallback(
-            static fn (string $nickname, ?int $accountId, bool $identified, bool $ircOperator): bool => $ircOperator,
-        );
-
-        return $access;
-    }
-
-    private function createRootRegistryFor(string $nick): ChanServOperatorAccess
-    {
-        $access = $this->createStub(ChanServOperatorAccess::class);
-        $access->method('isIrcop')->willReturnCallback(
-            static fn (string $nickname, ?int $accountId, bool $identified): bool => null !== $accountId
-                && $identified
-                && 0 === strcasecmp($nickname, $nick),
-        );
-
-        return $access;
-    }
-
     #[Test]
     public function operBypassesThrottle(): void
     {
@@ -1151,6 +1145,57 @@ final class RegisterCommandTest extends TestCase
         self::assertSame(['register.limit_exceeded'], $messages);
     }
 
+    /**
+     * @param string[] $args
+     */
+    private function createContext(
+        ?SenderView $sender,
+        ?ChanAccountView $senderAccount,
+        array $args,
+        ChanServNotifierInterface $notifier,
+        TranslatorInterface $translator,
+        ChannelLookupPort $channelLookup,
+    ): ChanServContext {
+        return new ChanServContext(
+            $sender,
+            $senderAccount,
+            'REGISTER',
+            $args,
+            $notifier,
+            $translator,
+            'en',
+            'UTC',
+            'NOTICE',
+            new ChanServCommandRegistry([]),
+            $channelLookup,
+            new NullChannelModeSupport(),
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
+        );
+    }
+
+    private function createNonRootRegistry(): ChanServOperatorAccess
+    {
+        $access = $this->createStub(ChanServOperatorAccess::class);
+        $access->method('isIrcop')->willReturnCallback(
+            static fn (string $nickname, ?int $accountId, bool $identified, bool $ircOperator): bool => $ircOperator,
+        );
+
+        return $access;
+    }
+
+    private function createRootRegistryFor(string $nick): ChanServOperatorAccess
+    {
+        $access = $this->createStub(ChanServOperatorAccess::class);
+        $access->method('isIrcop')->willReturnCallback(
+            static fn (string $nickname, ?int $accountId, bool $identified): bool => null !== $accountId
+                && $identified
+                && 0 === strcasecmp($nickname, $nick),
+        );
+
+        return $access;
+    }
+
     private function createCommand(
         RegisteredChannelRepositoryInterface $channelRepository,
         ChannelLevelRepositoryInterface $levelRepository,
@@ -1163,11 +1208,11 @@ final class RegisterCommandTest extends TestCase
     ): RegisterCommand {
         return new RegisterCommand(new RegisterChannelHandler(
             $channelRepository,
-            $levelRepository,
-            $akickRepository ?? $this->createStub(ChannelAkickRepositoryInterface::class),
+            new ChannelRegistrationActivator($levelRepository, $akickRepository ?? $this->createStub(ChannelAkickRepositoryInterface::class)),
             $throttle,
             $events,
             $operatorAccess,
+            $this->createStub(ChanTransactionBoundary::class),
             $maxChannelsPerNick,
             $registerMinIntervalSeconds,
         ));

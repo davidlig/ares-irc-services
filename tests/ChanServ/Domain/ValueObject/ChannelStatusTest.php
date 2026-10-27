@@ -9,6 +9,10 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function array_map;
+use function array_values;
+use function strtolower;
+
 #[CoversClass(ChannelStatus::class)]
 final class ChannelStatusTest extends TestCase
 {
@@ -39,6 +43,8 @@ final class ChannelStatusTest extends TestCase
                 ChannelStatus::Suspended => 'suspended',
                 ChannelStatus::PendingDeletion => 'pending_deletion',
                 ChannelStatus::Forbidden => 'forbidden',
+                ChannelStatus::Pending => 'pending',
+                ChannelStatus::Rejected => 'rejected',
             };
         }
 
@@ -60,6 +66,13 @@ final class ChannelStatusTest extends TestCase
         $value = 'FORBIDDEN';
 
         self::assertSame(ChannelStatus::Forbidden, self::parseValue(strtolower($value)));
+    }
+
+    #[Test]
+    public function approvalStatusesHaveStableValues(): void
+    {
+        self::assertSame(ChannelStatus::Pending, self::parseValue('pending'));
+        self::assertSame(ChannelStatus::Rejected, self::parseValue('rejected'));
     }
 
     private static function parseValue(string $value): ChannelStatus

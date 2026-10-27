@@ -22,12 +22,6 @@ final class UdbInboundFrameLogSubscriberTest extends TestCase
 
     private UdbInboundFrameLogSubscriber $subscriber;
 
-    protected function setUp(): void
-    {
-        $this->records = new TestHandler();
-        $this->subscriber = new UdbInboundFrameLogSubscriber(new Logger('test', [$this->records]));
-    }
-
     #[Test]
     public function ignoresNonDbMessagesWithoutStoppingPropagation(): void
     {
@@ -88,5 +82,11 @@ final class UdbInboundFrameLogSubscriberTest extends TestCase
         $genericRecordsList = $genericRecords->getRecords();
         self::assertCount(1, $genericRecordsList);
         self::assertSame('< PING', $genericRecordsList[0]->message);
+    }
+
+    protected function setUp(): void
+    {
+        $this->records = new TestHandler();
+        $this->subscriber = new UdbInboundFrameLogSubscriber(new Logger('test', [$this->records]));
     }
 }

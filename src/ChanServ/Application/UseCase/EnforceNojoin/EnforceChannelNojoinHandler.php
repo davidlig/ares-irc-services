@@ -14,6 +14,8 @@ use App\ChanServ\Domain\Entity\ChannelLevel;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\Policy\ChannelAccessPolicy;
 
+use function strtolower;
+
 final readonly class EnforceChannelNojoinHandler implements EnforceChannelNojoinHandlerInterface
 {
     public function __construct(

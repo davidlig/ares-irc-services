@@ -6,6 +6,12 @@ namespace App\OperServ\Domain\ValueObject;
 
 use InvalidArgumentException;
 
+use function filter_var;
+use function preg_match;
+use function strlen;
+use function strtolower;
+use function trim;
+
 final readonly class EmailDomain
 {
     public string $value;

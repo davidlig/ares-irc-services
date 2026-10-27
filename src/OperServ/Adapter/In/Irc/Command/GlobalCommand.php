@@ -18,6 +18,7 @@ use DateTimeImmutable;
 
 use function array_slice;
 use function implode;
+use function strtoupper;
 
 /** IRC parsing and presentation adapter for GLOBAL <mask|service> <NOTICE|PRIVMSG> <message>. */
 final readonly class GlobalCommand implements OperServCommandInterface

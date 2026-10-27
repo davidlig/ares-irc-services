@@ -8,6 +8,7 @@ use function count;
 use function hash;
 use function ksort;
 use function pack;
+use function preg_match;
 use function strlen;
 
 use const SORT_STRING;

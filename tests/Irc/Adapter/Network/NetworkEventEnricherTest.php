@@ -49,6 +49,8 @@ use Psr\Log\LoggerInterface;
 use ReflectionMethod;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
+use function time;
+
 #[CoversClass(NetworkEventEnricher::class)]
 #[CoversClass(ChannelModeStateSynchronizer::class)]
 final class NetworkEventEnricherTest extends TestCase

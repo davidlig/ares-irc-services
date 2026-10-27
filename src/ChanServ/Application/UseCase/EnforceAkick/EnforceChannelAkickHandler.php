@@ -14,6 +14,8 @@ use App\ChanServ\Domain\ValueObject\AkickMask;
 use App\ChanServ\Domain\ValueObject\AkickRule;
 use DateTimeImmutable;
 
+use function strtolower;
+
 final readonly class EnforceChannelAkickHandler implements EnforceChannelAkickHandlerInterface
 {
     public function __construct(

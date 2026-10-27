@@ -38,39 +38,6 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 #[CoversClass(PrepareChannelInviteResult::class)]
 final class InviteCommandTest extends TestCase
 {
-    private function createCommand(
-        RegisteredChannelRepositoryInterface $channels,
-        ChanServAccessHelper $access,
-    ): InviteCommand {
-        return new InviteCommand(new PrepareChannelInviteHandler($channels, $access));
-    }
-
-    /** @param array<string> $args */
-    private function createContext(
-        ?SenderView $sender,
-        ?ChanAccountView $senderAccount,
-        array $args,
-        ChanServNotifierInterface $notifier,
-        TranslatorInterface $translator,
-    ): ChanServContext {
-        return new ChanServContext(
-            $sender,
-            $senderAccount,
-            'INVITE',
-            $args,
-            $notifier,
-            $translator,
-            'en',
-            'UTC',
-            'NOTICE',
-            new ChanServCommandRegistry([]),
-            $this->createStub(ChannelLookupPort::class),
-            new NullChannelModeSupport(),
-            $this->createStub(NetworkUserLookupPort::class),
-            $this->createServiceNicks(),
-        );
-    }
-
     #[Test]
     public function replyInvalidChannelWhenFirstArgNotChannel(): void
     {
@@ -375,6 +342,39 @@ final class InviteCommandTest extends TestCase
 
         $cmd = $this->createCommand($channelRepo, $accessHelper);
         self::assertFalse($cmd->allowsForbiddenChannel());
+    }
+
+    private function createCommand(
+        RegisteredChannelRepositoryInterface $channels,
+        ChanServAccessHelper $access,
+    ): InviteCommand {
+        return new InviteCommand(new PrepareChannelInviteHandler($channels, $access));
+    }
+
+    /** @param array<string> $args */
+    private function createContext(
+        ?SenderView $sender,
+        ?ChanAccountView $senderAccount,
+        array $args,
+        ChanServNotifierInterface $notifier,
+        TranslatorInterface $translator,
+    ): ChanServContext {
+        return new ChanServContext(
+            $sender,
+            $senderAccount,
+            'INVITE',
+            $args,
+            $notifier,
+            $translator,
+            'en',
+            'UTC',
+            'NOTICE',
+            new ChanServCommandRegistry([]),
+            $this->createStub(ChannelLookupPort::class),
+            new NullChannelModeSupport(),
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
+        );
     }
 
     private function createServiceNicks(): ServiceNicknameRegistry

@@ -37,32 +37,6 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 #[CoversClass(UpdateChannelSettingResult::class)]
 final class SetEmailHandlerTest extends TestCase
 {
-    private function createContext(
-        ChanServNotifierInterface $notifier,
-        TranslatorInterface $translator,
-        bool $withoutSender = false,
-        bool $levelFounder = false,
-        bool $ircop = false,
-    ): ChanServContext {
-        return new ChanServContext(
-            $withoutSender ? null : new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip', true, $ircop),
-            null,
-            'SET',
-            ['EMAIL', 'test@example.com'],
-            $notifier,
-            $translator,
-            'en',
-            'UTC',
-            'NOTICE',
-            new ChanServCommandRegistry([]),
-            $this->createStub(ChannelLookupPort::class),
-            new NullChannelModeSupport(),
-            $this->createStub(NetworkUserLookupPort::class),
-            $this->createServiceNicks(),
-            isLevelFounder: $levelFounder,
-        );
-    }
-
     #[Test]
     public function invalidEmailRepliesInvalid(): void
     {
@@ -206,6 +180,32 @@ final class SetEmailHandlerTest extends TestCase
             self::assertSame($levelFounder ? 'user@blocked.org' : 'original@example.org', $channel->getEmail());
             self::assertSame([$levelFounder ? 'set.email.updated' : 'error.email_domain_blocked'], $messages);
         }
+    }
+
+    private function createContext(
+        ChanServNotifierInterface $notifier,
+        TranslatorInterface $translator,
+        bool $withoutSender = false,
+        bool $levelFounder = false,
+        bool $ircop = false,
+    ): ChanServContext {
+        return new ChanServContext(
+            $withoutSender ? null : new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip', true, $ircop),
+            null,
+            'SET',
+            ['EMAIL', 'test@example.com'],
+            $notifier,
+            $translator,
+            'en',
+            'UTC',
+            'NOTICE',
+            new ChanServCommandRegistry([]),
+            $this->createStub(ChannelLookupPort::class),
+            new NullChannelModeSupport(),
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
+            isLevelFounder: $levelFounder,
+        );
     }
 
     private function createHandler(RegisteredChannelRepositoryInterface $channels, ?EmailDomainPolicy $emailPolicy = null): SetEmailHandler

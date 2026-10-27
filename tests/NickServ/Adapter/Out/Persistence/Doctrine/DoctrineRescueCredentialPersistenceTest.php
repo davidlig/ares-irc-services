@@ -13,18 +13,14 @@ use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 
+use function hash;
+use function serialize;
+use function str_repeat;
+use function strtolower;
+
 #[CoversClass(DoctrineRescueCredentialPersistence::class)]
 final class DoctrineRescueCredentialPersistenceTest extends DoctrineIntegrationTestCase
 {
-    private function account(string $name = 'Rescue'): RegisteredNick
-    {
-        $nick = RegisteredNick::createPending($name, 'old-password', strtolower($name) . '@example.com', 'en', new DateTimeImmutable('2026-01-02'), new DateTimeImmutable('2026-01-01'));
-        $this->entityManager->persist($nick);
-        $this->entityManager->flush();
-
-        return $nick;
-    }
-
     #[Test]
     public function confirmationActivatesAndSynchronizesWithoutAllowingStaleMutation(): void
     {
@@ -152,5 +148,14 @@ final class DoctrineRescueCredentialPersistenceTest extends DoctrineIntegrationT
         self::assertFalse($store->rotateAfterRecovery($nick->getId(), null, 'stale', str_repeat('b', 64), $now));
         self::assertSame($hash, $nick->getRescueTokenHash());
         self::assertSame('new-password', $nick->getPasswordHash());
+    }
+
+    private function account(string $name = 'Rescue'): RegisteredNick
+    {
+        $nick = RegisteredNick::createPending($name, 'old-password', strtolower($name) . '@example.com', 'en', new DateTimeImmutable('2026-01-02'), new DateTimeImmutable('2026-01-01'));
+        $this->entityManager->persist($nick);
+        $this->entityManager->flush();
+
+        return $nick;
     }
 }

@@ -14,17 +14,13 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 
+use function array_map;
+
 #[CoversClass(ForbiddenVhostDoctrineRepository::class)]
 #[Group('integration')]
 final class ForbiddenVhostDoctrineRepositoryTest extends DoctrineIntegrationTestCase
 {
     private ForbiddenVhostRepositoryInterface $repository;
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->repository = new ForbiddenVhostDoctrineRepository($this->entityManager);
-    }
 
     #[Test]
     public function savePersistsForbiddenVhost(): void
@@ -194,5 +190,11 @@ final class ForbiddenVhostDoctrineRepositoryTest extends DoctrineIntegrationTest
         $this->expectException(UniqueConstraintViolationException::class);
         $this->repository->save($forbidden2);
         $this->entityManager->flush();
+    }
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->repository = new ForbiddenVhostDoctrineRepository($this->entityManager);
     }
 }

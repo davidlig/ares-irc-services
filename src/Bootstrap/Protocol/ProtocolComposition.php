@@ -12,6 +12,7 @@ use App\Irc\Application\Connect\ConnectionPreflightResult;
 use App\Irc\Application\Connect\ProtocolConnectionPreflightInterface;
 use InvalidArgumentException;
 
+use function array_keys;
 use function implode;
 use function sprintf;
 

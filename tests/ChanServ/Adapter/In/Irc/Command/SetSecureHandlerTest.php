@@ -25,30 +25,6 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 #[CoversClass(SetSecureHandler::class)]
 final class SetSecureHandlerTest extends TestCase
 {
-    private function createContext(
-        ChanServNotifierInterface $notifier,
-        TranslatorInterface $translator,
-        string $value,
-        bool $withoutSender = false,
-    ): ChanServContext {
-        return new ChanServContext(
-            $withoutSender ? null : new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
-            null,
-            'SET',
-            ['#test', 'SECURE', $value],
-            $notifier,
-            $translator,
-            'en',
-            'UTC',
-            'NOTICE',
-            new ChanServCommandRegistry([]),
-            $this->createStub(ChannelLookupPort::class),
-            new NullChannelModeSupport(),
-            $this->createStub(NetworkUserLookupPort::class),
-            $this->createServiceNicks(),
-        );
-    }
-
     #[Test]
     public function invalidValueRepliesSyntaxError(): void
     {
@@ -139,6 +115,30 @@ final class SetSecureHandlerTest extends TestCase
 
         self::assertSame(['set.secure.off'], $messages);
         self::assertCount(1, $channelNotices);
+    }
+
+    private function createContext(
+        ChanServNotifierInterface $notifier,
+        TranslatorInterface $translator,
+        string $value,
+        bool $withoutSender = false,
+    ): ChanServContext {
+        return new ChanServContext(
+            $withoutSender ? null : new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
+            null,
+            'SET',
+            ['#test', 'SECURE', $value],
+            $notifier,
+            $translator,
+            'en',
+            'UTC',
+            'NOTICE',
+            new ChanServCommandRegistry([]),
+            $this->createStub(ChannelLookupPort::class),
+            new NullChannelModeSupport(),
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
+        );
     }
 
     private function createServiceNicks(): ServiceNicknameRegistry

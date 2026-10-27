@@ -31,18 +31,6 @@ final class ServerDelinkedSubscriberTest extends TestCase
 
     private ServerDelinkedSubscriber $subscriber;
 
-    protected function setUp(): void
-    {
-        $this->userRepository = $this->createMock(NetworkUserRepositoryInterface::class);
-        $this->eventDispatcher = $this->createMock(EventDispatcherInterface::class);
-        $this->logger = $this->createMock(LoggerInterface::class);
-        $this->subscriber = new ServerDelinkedSubscriber(
-            $this->userRepository,
-            $this->eventDispatcher,
-            $this->logger,
-        );
-    }
-
     #[Test]
     public function getSubscribedEventsReturnsCorrectEvent(): void
     {
@@ -140,6 +128,18 @@ final class ServerDelinkedSubscriberTest extends TestCase
             ->method('info');
 
         $this->subscriber->onServerDelinked($event);
+    }
+
+    protected function setUp(): void
+    {
+        $this->userRepository = $this->createMock(NetworkUserRepositoryInterface::class);
+        $this->eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $this->logger = $this->createMock(LoggerInterface::class);
+        $this->subscriber = new ServerDelinkedSubscriber(
+            $this->userRepository,
+            $this->eventDispatcher,
+            $this->logger,
+        );
     }
 
     private function createUser(string $uid, string $nick, string $serverSid): NetworkUser

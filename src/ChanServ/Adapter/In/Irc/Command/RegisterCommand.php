@@ -18,6 +18,7 @@ use DateTimeImmutable;
 use function array_slice;
 use function implode;
 use function in_array;
+use function max;
 
 /** REGISTER <#channel> <description>. */
 final readonly class RegisterCommand implements ChanServCommandInterface
@@ -115,6 +116,7 @@ final readonly class RegisterCommand implements ChanServCommandInterface
 
             return;
         }
+        $occurredAt = new DateTimeImmutable();
         $result = $this->handler->handle(new RegisterChannel(
             channelName: $channelName,
             description: implode(' ', array_slice($context->args, 1)),
@@ -124,16 +126,25 @@ final readonly class RegisterCommand implements ChanServCommandInterface
             actorIrcOperator: $sender->isOper,
             channelExistsOnNetwork: null !== $channelView,
             hasRequiredChannelRank: null !== $channelView && $this->senderHasRequiredChannelPrefix($channelView, $sender->uid),
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: $occurredAt,
         ));
 
-        $this->present($context, $channelName, $result);
+        $this->present($context, $channelName, $result, $occurredAt);
     }
 
-    private function present(ChanServContext $context, string $channelName, RegisterChannelResult $result): void
+    private function present(ChanServContext $context, string $channelName, RegisterChannelResult $result, DateTimeImmutable $occurredAt): void
     {
         match ($result->outcome) {
             RegisterChannelOutcome::Registered => $context->reply('register.success', ['%channel%' => $channelName]),
+            RegisterChannelOutcome::AwaitingApproval => $context->reply('register.awaiting_approval', ['%channel%' => $channelName]),
+            RegisterChannelOutcome::RegistrationRestricted => $context->reply(
+                null === $result->restrictedUntil ? 'register.restricted_indefinite' : 'register.restricted_until',
+                [
+                    '%channel%' => $channelName,
+                    '%date%' => $context->formatDate($result->restrictedUntil),
+                    '%remaining_seconds%' => (string) (null === $result->restrictedUntil ? 0 : max(0, $result->restrictedUntil->getTimestamp() - $occurredAt->getTimestamp())),
+                ],
+            ),
             RegisterChannelOutcome::NotIdentified => $context->reply('error.not_identified'),
             RegisterChannelOutcome::PendingDeletion => $context->reply('register.pending_deletion', ['%channel%' => $channelName]),
             RegisterChannelOutcome::ChannelNotOnNetwork => $context->reply('register.channel_not_on_network', ['%channel%' => $channelName]),

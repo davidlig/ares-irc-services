@@ -13,8 +13,16 @@ use Doctrine\DBAL\Platforms\SQLitePlatform;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Query\ResultSetMappingBuilder;
 
+use function array_filter;
+use function array_unique;
+use function array_values;
 use function is_array;
+use function is_numeric;
 use function is_string;
+use function max;
+use function str_contains;
+use function strtolower;
+use function strtr;
 
 class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterface
 {
@@ -213,6 +221,22 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
         return array_values(array_filter($result, static fn (mixed $row): bool => $row instanceof RegisteredNick));
     }
 
+    public function findNicknamesByLastConnectIp(string $ip): array
+    {
+        $queryBuilder = $this->em->createQueryBuilder();
+        $queryBuilder->select('n.nickname')
+            ->from(RegisteredNick::class, 'n')
+            ->where('n.lastConnectIp = :ip')
+            ->setParameter('ip', $ip)
+            ->orderBy('n.nicknameLower', 'ASC')
+            ->addOrderBy('n.id', 'ASC');
+
+        /** @var list<string> $nicknames */
+        $nicknames = $queryBuilder->getQuery()->getSingleColumnResult();
+
+        return $nicknames;
+    }
+
     /** @return array{string, array<string, string>} */
     private function patternPredicate(string $pattern): array
     {
@@ -233,22 +257,6 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
         }
 
         return [$predicate, $parameters];
-    }
-
-    public function findNicknamesByLastConnectIp(string $ip): array
-    {
-        $queryBuilder = $this->em->createQueryBuilder();
-        $queryBuilder->select('n.nickname')
-            ->from(RegisteredNick::class, 'n')
-            ->where('n.lastConnectIp = :ip')
-            ->setParameter('ip', $ip)
-            ->orderBy('n.nicknameLower', 'ASC')
-            ->addOrderBy('n.id', 'ASC');
-
-        /** @var list<string> $nicknames */
-        $nicknames = $queryBuilder->getQuery()->getSingleColumnResult();
-
-        return $nicknames;
     }
 
     private static function toLikePattern(string $pattern): string

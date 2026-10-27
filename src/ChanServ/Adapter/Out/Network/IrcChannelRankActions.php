@@ -8,6 +8,8 @@ use App\ChanServ\Application\Port\Out\ChannelRankActions;
 use App\ChanServ\Domain\ValueObject\RankChangeAction;
 use App\Irc\Application\Port\In\ChannelServiceActionsPort;
 
+use function array_chunk;
+
 final readonly class IrcChannelRankActions implements ChannelRankActions
 {
     private const int MAX_CHANGES_PER_COMMAND = 6;

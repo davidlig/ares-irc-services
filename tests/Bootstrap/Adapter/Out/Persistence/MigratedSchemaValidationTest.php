@@ -30,6 +30,11 @@ use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Component\Console\Tester\CommandTester;
 
+use function array_intersect_key;
+use function dirname;
+use function serialize;
+use function str_repeat;
+
 #[CoversClass(ValidateSchemaCommand::class)]
 #[CoversClass(MigrationOwnedSchemaListener::class)]
 final class MigratedSchemaValidationTest extends TestCase
@@ -45,42 +50,14 @@ final class MigratedSchemaValidationTest extends TestCase
     /** @var array{env: array<string, mixed>, server: array<string, mixed>} */
     private array $previousDatabaseUrl;
 
-    protected function setUp(): void
-    {
-        $this->previousDatabaseUrl = [
-            'env' => array_intersect_key($_ENV, ['DATABASE_URL' => true]),
-            'server' => array_intersect_key($_SERVER, ['DATABASE_URL' => true]),
-        ];
-        // Each case owns its database, regardless of the runner's configured URL.
-        $_ENV['DATABASE_URL'] = $_SERVER['DATABASE_URL'] = 'sqlite:///:memory:';
-        $this->kernel = new Kernel('test', true);
-        $this->application = new Application($this->kernel);
-        $this->application->setAutoExit(false);
-        $this->kernel->boot();
-        $registry = $this->kernel->getContainer()->get('doctrine');
-        self::assertInstanceOf(ManagerRegistry::class, $registry);
-        $manager = $registry->getManager();
-        self::assertInstanceOf(EntityManagerInterface::class, $manager);
-        $this->entityManager = $manager;
-        $this->connection = $manager->getConnection();
-        self::assertTrue($this->connection->getParams()['memory'] ?? false);
-    }
-
-    protected function tearDown(): void
-    {
-        try {
-            $this->kernel->shutdown();
-        } finally {
-            unset($_ENV['DATABASE_URL'], $_SERVER['DATABASE_URL']);
-            $_ENV += $this->previousDatabaseUrl['env'];
-            $_SERVER += $this->previousDatabaseUrl['server'];
-        }
-    }
-
     public function testFullyMigratedDatabaseMatchesOrmMetadataWithoutChangingDataOrTechnicalAssets(): void
     {
         $this->migrate();
         $this->insertRecord();
+        foreach (['channel_registration_audit', 'chanserv_registration_policy', 'nickserv_registration_policy'] as $obsolete) {
+            self::assertFalse($this->connection->createSchemaManager()->tablesExist([$obsolete]));
+        }
+        self::assertSame(2, $this->connection->fetchOne('SELECT COUNT(*) FROM service_settings'));
         $before = $this->snapshot();
         $this->validate(0);
         self::assertSame($before, $this->snapshot());
@@ -96,6 +73,7 @@ final class MigratedSchemaValidationTest extends TestCase
         $this->migrate();
         $this->insertRecord();
         foreach ([
+            ['ALTER TABLE service_settings ADD unexpected_column TEXT', 'ALTER TABLE service_settings DROP COLUMN unexpected_column'],
             ['ALTER TABLE motd ADD unexpected_column TEXT', 'ALTER TABLE motd DROP COLUMN unexpected_column'],
             ['ALTER TABLE registered_nicks ADD list_search_key TEXT', 'ALTER TABLE registered_nicks DROP COLUMN list_search_key'],
             ['DROP INDEX idx_memos_sender', 'CREATE INDEX idx_memos_sender ON memos (sender_nick_id)'],
@@ -192,6 +170,38 @@ final class MigratedSchemaValidationTest extends TestCase
             self::assertSame($filter, $connection->getConfiguration()->getSchemaAssetsFilter());
             self::assertSame([], $events->getListeners('postGenerateSchema'));
             $connection->close();
+        }
+    }
+
+    protected function setUp(): void
+    {
+        $this->previousDatabaseUrl = [
+            'env' => array_intersect_key($_ENV, ['DATABASE_URL' => true]),
+            'server' => array_intersect_key($_SERVER, ['DATABASE_URL' => true]),
+        ];
+        // Each case owns its database, regardless of the runner's configured URL.
+        $_ENV['DATABASE_URL'] = $_SERVER['DATABASE_URL'] = 'sqlite:///:memory:';
+        $this->kernel = new Kernel('test', true);
+        $this->application = new Application($this->kernel);
+        $this->application->setAutoExit(false);
+        $this->kernel->boot();
+        $registry = $this->kernel->getContainer()->get('doctrine');
+        self::assertInstanceOf(ManagerRegistry::class, $registry);
+        $manager = $registry->getManager();
+        self::assertInstanceOf(EntityManagerInterface::class, $manager);
+        $this->entityManager = $manager;
+        $this->connection = $manager->getConnection();
+        self::assertTrue($this->connection->getParams()['memory'] ?? false);
+    }
+
+    protected function tearDown(): void
+    {
+        try {
+            $this->kernel->shutdown();
+        } finally {
+            unset($_ENV['DATABASE_URL'], $_SERVER['DATABASE_URL']);
+            $_ENV += $this->previousDatabaseUrl['env'];
+            $_SERVER += $this->previousDatabaseUrl['server'];
         }
     }
 

@@ -10,6 +10,7 @@ use LogicException;
 use SplQueue;
 
 use function count;
+use function max;
 
 final class SessionEventPump
 {

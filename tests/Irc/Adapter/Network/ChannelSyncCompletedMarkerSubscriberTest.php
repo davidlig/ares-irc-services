@@ -22,12 +22,6 @@ final class ChannelSyncCompletedMarkerSubscriberTest extends TestCase
 
     private ChannelSyncCompletedMarkerSubscriber $subscriber;
 
-    protected function setUp(): void
-    {
-        $this->registry = $this->createMock(ChannelSyncCompletedRegistryInterface::class);
-        $this->subscriber = new ChannelSyncCompletedMarkerSubscriber($this->registry);
-    }
-
     #[Test]
     public function getSubscribedEventsReturnsCorrectEvent(): void
     {
@@ -65,5 +59,11 @@ final class ChannelSyncCompletedMarkerSubscriberTest extends TestCase
             ->with('#test');
 
         $this->subscriber->onChannelSynced($event);
+    }
+
+    protected function setUp(): void
+    {
+        $this->registry = $this->createMock(ChannelSyncCompletedRegistryInterface::class);
+        $this->subscriber = new ChannelSyncCompletedMarkerSubscriber($this->registry);
     }
 }

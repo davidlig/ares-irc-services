@@ -30,24 +30,6 @@ final class IgnoreMemoHandlerTest extends TestCase
 
     private MemoIgnoreRepositoryInterface $memoIgnoreRepository;
 
-    protected function setUp(): void
-    {
-        $this->userAccountPort = $this->createStub(MemoUserAccountPort::class);
-        $this->channelPort = $this->createStub(MemoChannelPort::class);
-        $this->memoIgnoreRepository = $this->createStub(MemoIgnoreRepositoryInterface::class);
-    }
-
-    private function createHandler(): IgnoreMemoHandler
-    {
-        return new IgnoreMemoHandler(
-            $this->userAccountPort,
-            $this->channelPort,
-            $this->memoIgnoreRepository,
-            ignoreListLimitNick: 5,
-            ignoreListLimitChannel: 10,
-        );
-    }
-
     #[Test]
     public function returnsChannelNotRegisteredWhenChannelNotFound(): void
     {
@@ -396,5 +378,23 @@ final class IgnoreMemoHandlerTest extends TestCase
 
         self::assertSame(IgnoreMemoOutcome::AccessDenied, $result->outcome);
         self::assertSame('#Ares', $result->channelName);
+    }
+
+    protected function setUp(): void
+    {
+        $this->userAccountPort = $this->createStub(MemoUserAccountPort::class);
+        $this->channelPort = $this->createStub(MemoChannelPort::class);
+        $this->memoIgnoreRepository = $this->createStub(MemoIgnoreRepositoryInterface::class);
+    }
+
+    private function createHandler(): IgnoreMemoHandler
+    {
+        return new IgnoreMemoHandler(
+            $this->userAccountPort,
+            $this->channelPort,
+            $this->memoIgnoreRepository,
+            ignoreListLimitNick: 5,
+            ignoreListLimitChannel: 10,
+        );
     }
 }

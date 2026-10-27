@@ -16,6 +16,7 @@ use App\ChanServ\Domain\Policy\RankReconciliationPolicy;
 use App\ChanServ\Domain\ValueObject\ChannelRank;
 use App\ChanServ\Domain\ValueObject\RankChange;
 
+use function array_map;
 use function count;
 
 final readonly class EnforceChannelRanksHandler implements EnforceChannelRanksHandlerInterface

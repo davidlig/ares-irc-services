@@ -46,29 +46,6 @@ final class MemoServBot implements MemoServNotifierInterface, ServiceNicknamePro
         $this->introduce($event->serverSid);
     }
 
-    private function introduce(string $serverSid): void
-    {
-        $module = $this->connectionHolder->getProtocolModule();
-        if (null === $module) {
-            return;
-        }
-
-        $module->getServiceActions()->introduceService(
-            $serverSid,
-            $this->memoservNick,
-            $this->memoservIdent,
-            $this->servicesVhost,
-            $this->uid,
-            $this->memoservRealname,
-            $this->getServiceKey(),
-        );
-
-        $this->logger->info('MemoServ introduced to network.', [
-            'uid' => $this->uid,
-            'nick' => $this->memoservNick,
-        ]);
-    }
-
     public function sendNotice(string $targetUidOrNick, string $message): void
     {
         $this->sendNoticePort->sendNotice($this->uid, $targetUidOrNick, $message);
@@ -100,5 +77,28 @@ final class MemoServBot implements MemoServNotifierInterface, ServiceNicknamePro
     public function getNickname(): string
     {
         return $this->memoservNick;
+    }
+
+    private function introduce(string $serverSid): void
+    {
+        $module = $this->connectionHolder->getProtocolModule();
+        if (null === $module) {
+            return;
+        }
+
+        $module->getServiceActions()->introduceService(
+            $serverSid,
+            $this->memoservNick,
+            $this->memoservIdent,
+            $this->servicesVhost,
+            $this->uid,
+            $this->memoservRealname,
+            $this->getServiceKey(),
+        );
+
+        $this->logger->info('MemoServ introduced to network.', [
+            'uid' => $this->uid,
+            'nick' => $this->memoservNick,
+        ]);
     }
 }

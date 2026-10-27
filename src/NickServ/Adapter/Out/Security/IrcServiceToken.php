@@ -6,6 +6,7 @@ namespace App\NickServ\Adapter\Out\Security;
 
 use Symfony\Component\Security\Core\Authentication\Token\AbstractToken;
 
+use function implode;
 use function sprintf;
 
 /**

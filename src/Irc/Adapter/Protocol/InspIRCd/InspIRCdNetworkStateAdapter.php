@@ -33,14 +33,20 @@ use Psr\Log\NullLogger;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 use function array_slice;
+use function array_values;
 use function base64_encode;
 use function count;
+use function explode;
 use function in_array;
 use function inet_pton;
 use function preg_match;
 use function sprintf;
+use function str_contains;
 use function str_starts_with;
 use function strlen;
+use function strpos;
+use function substr;
+use function trim;
 
 /**
  * InspIRCd protocol adapter: parses UID, NICK, QUIT, FJOIN, IJOIN, FMODE,

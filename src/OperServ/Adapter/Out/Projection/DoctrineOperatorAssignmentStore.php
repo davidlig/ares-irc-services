@@ -15,6 +15,9 @@ use App\OperServ\Domain\Repository\OperRoleRepositoryInterface;
 use DateTimeImmutable;
 use LogicException;
 
+use function array_map;
+use function array_values;
+
 final readonly class DoctrineOperatorAssignmentStore implements OperatorAssignmentStore
 {
     public function __construct(private OperIrcopRepositoryInterface $assignments, private OperRoleRepositoryInterface $roles) {}

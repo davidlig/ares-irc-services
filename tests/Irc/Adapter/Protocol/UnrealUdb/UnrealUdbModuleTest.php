@@ -25,42 +25,12 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function class_implements;
+
 #[CoversClass(UnrealUdbModule::class)]
 final class UnrealUdbModuleTest extends TestCase
 {
     use CreatesUdbRecordWriter;
-
-    private function createModule(): UnrealUdbModule
-    {
-        $connectionHolder = new ActiveConnectionHolder();
-        $recordWriter = new UnrealUdbRecordWriter(
-            $this->createReadySessionState(),
-            $this->createStub(UdbRecordMutationStoreInterface::class),
-        );
-        $handler = new UnrealUdbProtocolHandler('001', $this->createCoordinator());
-        $serviceActions = new UnrealUdbProtocolServiceActions($connectionHolder, $recordWriter);
-        $channelModeSupport = new UnrealUdbChannelModeSupport();
-        $userModeSupport = new UnrealUdbUserModeSupport();
-        $nickReservation = new UnrealUdbNickReservation($recordWriter, $this->createStub(UdbRecordRepositoryInterface::class));
-
-        return new UnrealUdbModule(
-            $handler,
-            $serviceActions,
-            $channelModeSupport,
-            $userModeSupport,
-            $nickReservation,
-            new UnrealUdbRawCommandInterceptor($this->createStub(UdbRawCommandHandlerInterface::class)),
-        );
-    }
-
-    private function createCoordinator(): UdbSessionCoordinator
-    {
-        return new UdbSessionCoordinator(
-            '001',
-            $this->createStub(UdbBlockStateRepositoryInterface::class),
-            new FakeUdbSnapshots(),
-        );
-    }
 
     #[Test]
     public function getProtocolNameReturnsUnreal(): void
@@ -167,5 +137,37 @@ final class UnrealUdbModuleTest extends TestCase
 
         self::assertSame('DB INS', $module->intercept(['DB', '*', 'INS', 'S::propagator', 'hub.example'])->operation);
         self::assertSame('DB DEL', $module->intercept(['DB', '*', 'DEL', 'N::nick'])->operation);
+    }
+
+    private function createModule(): UnrealUdbModule
+    {
+        $connectionHolder = new ActiveConnectionHolder();
+        $recordWriter = new UnrealUdbRecordWriter(
+            $this->createReadySessionState(),
+            $this->createStub(UdbRecordMutationStoreInterface::class),
+        );
+        $handler = new UnrealUdbProtocolHandler('001', $this->createCoordinator());
+        $serviceActions = new UnrealUdbProtocolServiceActions($connectionHolder, $recordWriter);
+        $channelModeSupport = new UnrealUdbChannelModeSupport();
+        $userModeSupport = new UnrealUdbUserModeSupport();
+        $nickReservation = new UnrealUdbNickReservation($recordWriter, $this->createStub(UdbRecordRepositoryInterface::class));
+
+        return new UnrealUdbModule(
+            $handler,
+            $serviceActions,
+            $channelModeSupport,
+            $userModeSupport,
+            $nickReservation,
+            new UnrealUdbRawCommandInterceptor($this->createStub(UdbRawCommandHandlerInterface::class)),
+        );
+    }
+
+    private function createCoordinator(): UdbSessionCoordinator
+    {
+        return new UdbSessionCoordinator(
+            '001',
+            $this->createStub(UdbBlockStateRepositoryInterface::class),
+            new FakeUdbSnapshots(),
+        );
     }
 }

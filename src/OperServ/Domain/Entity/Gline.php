@@ -7,11 +7,18 @@ namespace App\OperServ\Domain\Entity;
 use DateTimeImmutable;
 use InvalidArgumentException;
 
+use function ctype_alnum;
 use function fnmatch;
 use function preg_match;
 use function sprintf;
+use function str_contains;
+use function str_split;
 use function strlen;
+use function strpos;
 use function strtolower;
+use function substr;
+use function substr_count;
+use function trim;
 
 final class Gline
 {
@@ -117,28 +124,6 @@ final class Gline
         $this->expiresAt = $expiresAt;
     }
 
-    private function setMask(string $mask): void
-    {
-        if ('' === $mask || strlen($mask) > self::MAX_MASK_LENGTH) {
-            throw new InvalidArgumentException(sprintf('Mask must be between 1 and %d characters.', self::MAX_MASK_LENGTH));
-        }
-
-        if (!self::isUserHostMask($mask)) {
-            throw new InvalidArgumentException('Invalid mask format. Must be in format user@host (e.g., *@192.168.*).');
-        }
-
-        $this->mask = $mask;
-    }
-
-    private function setReason(?string $reason): void
-    {
-        if (null !== $reason && strlen($reason) > self::MAX_REASON_LENGTH) {
-            throw new InvalidArgumentException(sprintf('Reason cannot exceed %d characters.', self::MAX_REASON_LENGTH));
-        }
-
-        $this->reason = '' !== $reason ? $reason : null;
-    }
-
     public static function isValidMask(string $mask): bool
     {
         if ('' === $mask) {
@@ -224,5 +209,27 @@ final class Gline
             'user' => '' !== $user ? $user : '*',
             'host' => '' !== $host ? $host : '*',
         ];
+    }
+
+    private function setMask(string $mask): void
+    {
+        if ('' === $mask || strlen($mask) > self::MAX_MASK_LENGTH) {
+            throw new InvalidArgumentException(sprintf('Mask must be between 1 and %d characters.', self::MAX_MASK_LENGTH));
+        }
+
+        if (!self::isUserHostMask($mask)) {
+            throw new InvalidArgumentException('Invalid mask format. Must be in format user@host (e.g., *@192.168.*).');
+        }
+
+        $this->mask = $mask;
+    }
+
+    private function setReason(?string $reason): void
+    {
+        if (null !== $reason && strlen($reason) > self::MAX_REASON_LENGTH) {
+            throw new InvalidArgumentException(sprintf('Reason cannot exceed %d characters.', self::MAX_REASON_LENGTH));
+        }
+
+        $this->reason = '' !== $reason ? $reason : null;
     }
 }

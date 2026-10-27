@@ -366,84 +366,6 @@ final class SuspendCommandTest extends TestCase
         self::assertSame(['duration' => '0'], $auditData->extra);
     }
 
-    private function createCommand(): SuspendCommand
-    {
-        return $this->createCommandWith(
-            $this->createStub(RegisteredChannelRepositoryInterface::class),
-            $this->createStub(ChannelSuspensionService::class),
-            $this->createStub(EventBusInterface::class),
-        );
-    }
-
-    private function createCommandWith(
-        RegisteredChannelRepositoryInterface $channels,
-        ChannelSuspensionService $suspensionService,
-        EventBusInterface $events,
-    ): SuspendCommand {
-        return new SuspendCommand(new ManageChannelLifecycleHandler(
-            $channels,
-            $this->createStub(ChanDropService::class),
-            $this->createStub(ChannelForbiddenService::class),
-            $suspensionService,
-            $events,
-            new ChannelHistoryService($this->createStub(ChannelHistoryRepositoryInterface::class)),
-        ));
-    }
-
-    private function createSender(): SenderView
-    {
-        return new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o');
-    }
-
-    private function createChannelWithId(string $channelName, int $id): RegisteredChannel
-    {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), $channelName, 1, 'Test channel');
-
-        $reflection = new ReflectionClass(RegisteredChannel::class);
-        $idProp = $reflection->getProperty('id');
-        $idProp->setValue($channel, $id);
-
-        return $channel;
-    }
-
-    /**
-     * @param array<string> $args
-     * @param array<string> $messages
-     */
-    private function createContext(
-        ?SenderView $sender,
-        array $args,
-        array &$messages,
-        ?RegisteredChannelRepositoryInterface $channelRepository = null,
-    ): ChanServContext {
-        $notifier = $this->createStub(ChanServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(static function (string $uid, string $message, string $type) use (&$messages): void {
-            $messages[] = $message;
-        });
-        $notifier->method('getNick')->willReturn('ChanServ');
-        $notifier->method('getServiceKey')->willReturn('chanserv');
-
-        $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
-
-        return new ChanServContext(
-            $sender,
-            null,
-            'SUSPEND',
-            $args,
-            $notifier,
-            $translator,
-            'en',
-            'UTC',
-            'NOTICE',
-            new ChanServCommandRegistry([]),
-            $this->createStub(ChannelLookupPort::class),
-            $this->createStub(ChannelModeSupportInterface::class),
-            $this->createStub(NetworkUserLookupPort::class),
-            $this->createServiceNicks(),
-        );
-    }
-
     #[Test]
     public function executeWithHourDurationParsesHours(): void
     {
@@ -611,6 +533,84 @@ final class SuspendCommandTest extends TestCase
         self::assertCount(1, $dispatchedEvents);
         self::assertInstanceOf(ChannelSuspendedEvent::class, $dispatchedEvents[0]);
         self::assertSame($invalidBase64, $dispatchedEvents[0]->performedByIp);
+    }
+
+    private function createCommand(): SuspendCommand
+    {
+        return $this->createCommandWith(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(ChannelSuspensionService::class),
+            $this->createStub(EventBusInterface::class),
+        );
+    }
+
+    private function createCommandWith(
+        RegisteredChannelRepositoryInterface $channels,
+        ChannelSuspensionService $suspensionService,
+        EventBusInterface $events,
+    ): SuspendCommand {
+        return new SuspendCommand(new ManageChannelLifecycleHandler(
+            $channels,
+            $this->createStub(ChanDropService::class),
+            $this->createStub(ChannelForbiddenService::class),
+            $suspensionService,
+            $events,
+            new ChannelHistoryService($this->createStub(ChannelHistoryRepositoryInterface::class)),
+        ));
+    }
+
+    private function createSender(): SenderView
+    {
+        return new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o');
+    }
+
+    private function createChannelWithId(string $channelName, int $id): RegisteredChannel
+    {
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), $channelName, 1, 'Test channel');
+
+        $reflection = new ReflectionClass(RegisteredChannel::class);
+        $idProp = $reflection->getProperty('id');
+        $idProp->setValue($channel, $id);
+
+        return $channel;
+    }
+
+    /**
+     * @param array<string> $args
+     * @param array<string> $messages
+     */
+    private function createContext(
+        ?SenderView $sender,
+        array $args,
+        array &$messages,
+        ?RegisteredChannelRepositoryInterface $channelRepository = null,
+    ): ChanServContext {
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $uid, string $message, string $type) use (&$messages): void {
+            $messages[] = $message;
+        });
+        $notifier->method('getNick')->willReturn('ChanServ');
+        $notifier->method('getServiceKey')->willReturn('chanserv');
+
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        return new ChanServContext(
+            $sender,
+            null,
+            'SUSPEND',
+            $args,
+            $notifier,
+            $translator,
+            'en',
+            'UTC',
+            'NOTICE',
+            new ChanServCommandRegistry([]),
+            $this->createStub(ChannelLookupPort::class),
+            $this->createStub(ChannelModeSupportInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
+        );
     }
 
     private function createServiceNicks(): ServiceNicknameRegistry

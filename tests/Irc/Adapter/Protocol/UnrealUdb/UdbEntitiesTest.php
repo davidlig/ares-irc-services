@@ -21,6 +21,7 @@ use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 
 use function hash;
+use function str_repeat;
 
 #[CoversClass(UdbRecord::class)]
 #[CoversClass(UdbBlockState::class)]

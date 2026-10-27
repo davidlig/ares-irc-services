@@ -25,113 +25,6 @@ final class CtcpHandlerTest extends TestCase
 {
     private CtcpVersionResponder $versionResponder;
 
-    private function createTranslator(): TranslatorInterface
-    {
-        return new class implements TranslatorInterface {
-            /**
-             * @param array<string, mixed> $parameters
-             */
-            public function trans(string $id, array $parameters = [], ?string $domain = null, ?string $locale = null): string
-            {
-                if ('ctcp.version.tribute' === $id) {
-                    return "Para mi leal y eterno amigo,\nLlenaste mi casa de vida.";
-                }
-
-                return '';
-            }
-
-            public function getLocale(): string
-            {
-                return 'en';
-            }
-        };
-    }
-
-    private function createLanguageResolver(string $language = 'en'): ServiceUserPreferences
-    {
-        $preferences = $this->createStub(ServiceUserPreferences::class);
-        $preferences->method('languageFor')->willReturn($language);
-        $preferences->method('defaultLanguage')->willReturn($language);
-
-        return $preferences;
-    }
-
-    private function createSenderView(string $uid): SenderView
-    {
-        return new SenderView(
-            uid: $uid,
-            nick: 'TestUser',
-            ident: 'test',
-            hostname: 'host.example',
-            cloakedHost: 'cloak.example',
-            ipBase64: 'dGVzdA==',
-            isIdentified: false,
-            serverSid: '001',
-        );
-    }
-
-    protected function setUp(): void
-    {
-        $this->versionResponder = new CtcpVersionResponder(
-            $this->createTranslator(),
-            $this->createLanguageResolver(),
-            'v2.4.0',
-        );
-    }
-
-    private function createUidRegistry(string $nickservUid = '002AAAAAA'): ServiceUidRegistry
-    {
-        $provider = new class('nickserv', 'NickServ', $nickservUid) implements ServiceUidProviderInterface {
-            public function __construct(private string $key, private string $nick, private string $uid) {}
-
-            public function getServiceKey(): string
-            {
-                return $this->key;
-            }
-
-            public function getNickname(): string
-            {
-                return $this->nick;
-            }
-
-            public function getUid(): string
-            {
-                return $this->uid;
-            }
-        };
-
-        return ServiceUidRegistry::fromIterable([$provider]);
-    }
-
-    private function createEmptyUidRegistry(): ServiceUidRegistry
-    {
-        return ServiceUidRegistry::fromIterable([]);
-    }
-
-    private function createUidRegistryWithUid(string $uid): ServiceUidRegistry
-    {
-        $provider = new class('nickserv', 'NickServ', $uid) implements ServiceUidProviderInterface {
-            public function __construct(private string $key, private string $nick, private string $uid) {}
-
-            public function getServiceKey(): string
-            {
-                return $this->key;
-            }
-
-            public function getNickname(): string
-            {
-                return $this->nick;
-            }
-
-            public function getUid(): string
-            {
-                return $this->uid;
-            }
-        };
-
-        return ServiceUidRegistry::fromIterable([$provider]);
-    }
-
     #[Test]
     public function getSubscribedEventsReturnsCorrectEvent(): void
     {
@@ -498,6 +391,113 @@ final class CtcpHandlerTest extends TestCase
 
         $handler->onMessage($event);
         self::assertTrue($event->isPropagationStopped());
+    }
+
+    protected function setUp(): void
+    {
+        $this->versionResponder = new CtcpVersionResponder(
+            $this->createTranslator(),
+            $this->createLanguageResolver(),
+            'v2.4.0',
+        );
+    }
+
+    private function createTranslator(): TranslatorInterface
+    {
+        return new class implements TranslatorInterface {
+            /**
+             * @param array<string, mixed> $parameters
+             */
+            public function trans(string $id, array $parameters = [], ?string $domain = null, ?string $locale = null): string
+            {
+                if ('ctcp.version.tribute' === $id) {
+                    return "Para mi leal y eterno amigo,\nLlenaste mi casa de vida.";
+                }
+
+                return '';
+            }
+
+            public function getLocale(): string
+            {
+                return 'en';
+            }
+        };
+    }
+
+    private function createLanguageResolver(string $language = 'en'): ServiceUserPreferences
+    {
+        $preferences = $this->createStub(ServiceUserPreferences::class);
+        $preferences->method('languageFor')->willReturn($language);
+        $preferences->method('defaultLanguage')->willReturn($language);
+
+        return $preferences;
+    }
+
+    private function createSenderView(string $uid): SenderView
+    {
+        return new SenderView(
+            uid: $uid,
+            nick: 'TestUser',
+            ident: 'test',
+            hostname: 'host.example',
+            cloakedHost: 'cloak.example',
+            ipBase64: 'dGVzdA==',
+            isIdentified: false,
+            serverSid: '001',
+        );
+    }
+
+    private function createUidRegistry(string $nickservUid = '002AAAAAA'): ServiceUidRegistry
+    {
+        $provider = new class('nickserv', 'NickServ', $nickservUid) implements ServiceUidProviderInterface {
+            public function __construct(private string $key, private string $nick, private string $uid) {}
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+
+            public function getUid(): string
+            {
+                return $this->uid;
+            }
+        };
+
+        return ServiceUidRegistry::fromIterable([$provider]);
+    }
+
+    private function createEmptyUidRegistry(): ServiceUidRegistry
+    {
+        return ServiceUidRegistry::fromIterable([]);
+    }
+
+    private function createUidRegistryWithUid(string $uid): ServiceUidRegistry
+    {
+        $provider = new class('nickserv', 'NickServ', $uid) implements ServiceUidProviderInterface {
+            public function __construct(private string $key, private string $nick, private string $uid) {}
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+
+            public function getUid(): string
+            {
+                return $this->uid;
+            }
+        };
+
+        return ServiceUidRegistry::fromIterable([$provider]);
     }
 
     private function createHandler(

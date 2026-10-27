@@ -10,6 +10,8 @@ use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 
 use function array_filter;
+use function array_values;
+use function is_numeric;
 
 final readonly class NickHistoryDoctrineRepository implements NickHistoryRepositoryInterface
 {

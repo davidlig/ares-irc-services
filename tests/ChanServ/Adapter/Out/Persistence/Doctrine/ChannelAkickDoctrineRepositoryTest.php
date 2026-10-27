@@ -19,18 +19,6 @@ final class ChannelAkickDoctrineRepositoryTest extends DoctrineIntegrationTestCa
 {
     private ChannelAkickDoctrineRepository $repository;
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->repository = new ChannelAkickDoctrineRepository($this->entityManager);
-    }
-
-    private function setCreatedAt(ChannelAkick $akick, DateTimeImmutable $time): void
-    {
-        $ref = new ReflectionProperty($akick, 'createdAt');
-        $ref->setValue($akick, $time);
-    }
-
     #[Test]
     public function savePersistsAkick(): void
     {
@@ -467,5 +455,17 @@ final class ChannelAkickDoctrineRepositoryTest extends DoctrineIntegrationTestCa
         $this->flushAndClear();
 
         self::assertSame(0, $this->repository->deleteByChannelId(999));
+    }
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->repository = new ChannelAkickDoctrineRepository($this->entityManager);
+    }
+
+    private function setCreatedAt(ChannelAkick $akick, DateTimeImmutable $time): void
+    {
+        $ref = new ReflectionProperty($akick, 'createdAt');
+        $ref->setValue($akick, $time);
     }
 }

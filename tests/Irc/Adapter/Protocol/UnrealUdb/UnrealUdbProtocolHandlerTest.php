@@ -37,14 +37,18 @@ use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
+use function array_filter;
 use function array_map;
+use function dirname;
 use function fclose;
 use function flock;
 use function fopen;
 use function implode;
 use function mkdir;
+use function preg_match;
 use function rmdir;
 use function sprintf;
+use function str_contains;
 use function strpos;
 use function substr_count;
 use function sys_get_temp_dir;
@@ -71,71 +75,6 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
 
     /** @var list<UdbSessionLock> */
     private array $sessionLocks = [];
-
-    protected function tearDown(): void
-    {
-        foreach ($this->sessionLocks as $lock) {
-            $lock->release();
-        }
-
-        foreach ($this->lockDirectories as $directory) {
-            @unlink($directory . '/udb.lock');
-            @rmdir($directory);
-            @rmdir(dirname($directory));
-            @rmdir(dirname(dirname($directory)));
-        }
-
-        parent::tearDown();
-    }
-
-    private function createConnection(): ConnectionInterface
-    {
-        $connection = $this->createStub(ConnectionInterface::class);
-        $connection->method('writeLine')->willReturnCallback(function (string $line): void {
-            $this->written[] = $line;
-        });
-
-        return $connection;
-    }
-
-    /** @return list<string> Latest transport writes after callback-driven dispatch. */
-    private function writtenLines(): array
-    {
-        return $this->written;
-    }
-
-    private function createHandler(string $sid = '002', ?EventDispatcherInterface $eventDispatcher = null): UnrealUdbProtocolHandler
-    {
-        $coordinator = new UdbSessionCoordinator(
-            $sid,
-            $this->createStub(UdbBlockStateRepositoryInterface::class),
-            new FakeUdbSnapshots(),
-        );
-
-        return new UnrealUdbProtocolHandler($sid, $coordinator, $this->createSessionLock(), eventDispatcher: $eventDispatcher);
-    }
-
-    private function createSessionLock(): UdbSessionLock
-    {
-        $directory = sys_get_temp_dir() . '/ares-udb-handler-' . uniqid('', true) . '/var/lock';
-        $this->lockDirectories[] = $directory;
-        $lock = new UdbSessionLock($directory);
-        $this->sessionLocks[] = $lock;
-
-        return $lock;
-    }
-
-    private function createServerLink(): ServerLink
-    {
-        return new ServerLink(
-            serverName: new ServerName('services.test.local'),
-            host: new Hostname('127.0.0.1'),
-            port: new Port(7029),
-            password: new LinkPassword('link-secret'),
-            description: 'Ares IRC Services',
-            useTls: false,
-        );
-    }
 
     #[Test]
     public function getProtocolNameReturnsUnrealUdb(): void
@@ -737,17 +676,6 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
         self::assertMatchesRegularExpression('/^NETINFO 0 \d+ 6100 \* 0 0 0 :Net$/', $this->writtenLine(0));
     }
 
-    private function writtenLine(int $index): string
-    {
-        foreach ($this->written as $position => $line) {
-            if ($position === $index) {
-                return $line;
-            }
-        }
-
-        self::fail(sprintf('Expected written line %d.', $index));
-    }
-
     #[Test]
     public function unrelatedCommandsFallThroughWithoutUdbSideEffects(): void
     {
@@ -824,5 +752,81 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
         $handler->handleIncoming(IRCMessage::fromRawLine(':ircd.example.net 402 services.test.local UDB4-1-nonce :No such server'), $connection);
         $handler->handleIncoming(IRCMessage::fromRawLine(':ircd.example.net 402 services.test.local :No such server'), $connection);
         $handler->handleIncoming(IRCMessage::fromRawLine(':ircd.example.net 402 services.test.local UDB4-1-nonce extra :No such server'), $connection);
+    }
+
+    protected function tearDown(): void
+    {
+        foreach ($this->sessionLocks as $lock) {
+            $lock->release();
+        }
+
+        foreach ($this->lockDirectories as $directory) {
+            @unlink($directory . '/udb.lock');
+            @rmdir($directory);
+            @rmdir(dirname($directory));
+            @rmdir(dirname(dirname($directory)));
+        }
+
+        parent::tearDown();
+    }
+
+    private function createConnection(): ConnectionInterface
+    {
+        $connection = $this->createStub(ConnectionInterface::class);
+        $connection->method('writeLine')->willReturnCallback(function (string $line): void {
+            $this->written[] = $line;
+        });
+
+        return $connection;
+    }
+
+    /** @return list<string> Latest transport writes after callback-driven dispatch. */
+    private function writtenLines(): array
+    {
+        return $this->written;
+    }
+
+    private function createHandler(string $sid = '002', ?EventDispatcherInterface $eventDispatcher = null): UnrealUdbProtocolHandler
+    {
+        $coordinator = new UdbSessionCoordinator(
+            $sid,
+            $this->createStub(UdbBlockStateRepositoryInterface::class),
+            new FakeUdbSnapshots(),
+        );
+
+        return new UnrealUdbProtocolHandler($sid, $coordinator, $this->createSessionLock(), eventDispatcher: $eventDispatcher);
+    }
+
+    private function createSessionLock(): UdbSessionLock
+    {
+        $directory = sys_get_temp_dir() . '/ares-udb-handler-' . uniqid('', true) . '/var/lock';
+        $this->lockDirectories[] = $directory;
+        $lock = new UdbSessionLock($directory);
+        $this->sessionLocks[] = $lock;
+
+        return $lock;
+    }
+
+    private function createServerLink(): ServerLink
+    {
+        return new ServerLink(
+            serverName: new ServerName('services.test.local'),
+            host: new Hostname('127.0.0.1'),
+            port: new Port(7029),
+            password: new LinkPassword('link-secret'),
+            description: 'Ares IRC Services',
+            useTls: false,
+        );
+    }
+
+    private function writtenLine(int $index): string
+    {
+        foreach ($this->written as $position => $line) {
+            if ($position === $index) {
+                return $line;
+            }
+        }
+
+        self::fail(sprintf('Expected written line %d.', $index));
     }
 }

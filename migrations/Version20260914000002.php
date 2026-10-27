@@ -17,18 +17,18 @@ use Doctrine\Migrations\AbstractMigration;
 
 final class Version20260914000002 extends AbstractMigration implements EditedSchemaMigration
 {
+    private const array PROTECTED_ROLES = [
+        ['ADMIN', 'Administrator role with full access'],
+        ['OPER', 'Operator role with standard access'],
+        ['PREOPER', 'Pre-operator role with limited access'],
+    ];
+
     private ?Schema $editedSchema = null;
 
     public function getEditedSchema(): ?Schema
     {
         return null === $this->editedSchema ? null : clone $this->editedSchema;
     }
-
-    private const array PROTECTED_ROLES = [
-        ['ADMIN', 'Administrator role with full access'],
-        ['OPER', 'Operator role with standard access'],
-        ['PREOPER', 'Pre-operator role with limited access'],
-    ];
 
     public function getDescription(): string
     {

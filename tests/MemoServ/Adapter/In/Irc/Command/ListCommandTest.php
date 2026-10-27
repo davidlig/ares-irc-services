@@ -31,69 +31,6 @@ use function str_repeat;
 #[CoversClass(ListCommand::class)]
 final class ListCommandTest extends TestCase
 {
-    private function createServiceNicks(): ServiceNicknameRegistry
-    {
-        $provider = new class implements ServiceNicknameProviderInterface {
-            public function getServiceKey(): string
-            {
-                return 'memoserv';
-            }
-
-            public function getNickname(): string
-            {
-                return 'MemoServ';
-            }
-        };
-
-        return new ServiceNicknameRegistry([$provider]);
-    }
-
-    /**
-     * @param list<string> $args
-     * @param string[]     $replies
-     */
-    private function createContext(
-        ?SenderView $sender,
-        ?MemoAccountView $senderAccount,
-        array $args,
-        array &$replies = [],
-    ): MemoServContext {
-        $notifier = $this->createStub(MemoServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$replies): void {
-            $replies[] = $m;
-        });
-        $notifier->method('getNick')->willReturn('MemoServ');
-
-        $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static function (string $id, array $params = []): string {
-            unset($params['%bot%'], $params['%memoserv%']);
-            if ([] === $params) {
-                return $id;
-            }
-            ksort($params);
-            $formatted = [];
-            foreach ($params as $key => $value) {
-                $formatted[] = (string) $key . ': ' . (is_scalar($value) || $value instanceof Stringable ? (string) $value : '');
-            }
-
-            return $id . ' [' . implode(', ', $formatted) . ']';
-        });
-
-        return new MemoServContext(
-            sender: $sender,
-            senderAccount: $senderAccount,
-            command: 'LIST',
-            args: $args,
-            notifier: $notifier,
-            translator: $translator,
-            language: 'en',
-            timezone: 'UTC',
-            messageType: 'NOTICE',
-            registry: new MemoServCommandRegistry([]),
-            serviceNicks: $this->createServiceNicks(),
-        );
-    }
-
     #[Test]
     public function exposesMetadata(): void
     {
@@ -212,5 +149,68 @@ final class ListCommandTest extends TestCase
         $command->execute($context);
 
         self::assertSame(['error.insufficient_access [%channel%: #Ares, %operation%: LIST]'], $replies);
+    }
+
+    private function createServiceNicks(): ServiceNicknameRegistry
+    {
+        $provider = new class implements ServiceNicknameProviderInterface {
+            public function getServiceKey(): string
+            {
+                return 'memoserv';
+            }
+
+            public function getNickname(): string
+            {
+                return 'MemoServ';
+            }
+        };
+
+        return new ServiceNicknameRegistry([$provider]);
+    }
+
+    /**
+     * @param list<string> $args
+     * @param string[]     $replies
+     */
+    private function createContext(
+        ?SenderView $sender,
+        ?MemoAccountView $senderAccount,
+        array $args,
+        array &$replies = [],
+    ): MemoServContext {
+        $notifier = $this->createStub(MemoServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$replies): void {
+            $replies[] = $m;
+        });
+        $notifier->method('getNick')->willReturn('MemoServ');
+
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static function (string $id, array $params = []): string {
+            unset($params['%bot%'], $params['%memoserv%']);
+            if ([] === $params) {
+                return $id;
+            }
+            ksort($params);
+            $formatted = [];
+            foreach ($params as $key => $value) {
+                $formatted[] = (string) $key . ': ' . (is_scalar($value) || $value instanceof Stringable ? (string) $value : '');
+            }
+
+            return $id . ' [' . implode(', ', $formatted) . ']';
+        });
+
+        return new MemoServContext(
+            sender: $sender,
+            senderAccount: $senderAccount,
+            command: 'LIST',
+            args: $args,
+            notifier: $notifier,
+            translator: $translator,
+            language: 'en',
+            timezone: 'UTC',
+            messageType: 'NOTICE',
+            registry: new MemoServCommandRegistry([]),
+            serviceNicks: $this->createServiceNicks(),
+        );
     }
 }

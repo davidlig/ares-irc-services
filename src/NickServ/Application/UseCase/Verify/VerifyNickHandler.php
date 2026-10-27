@@ -19,6 +19,8 @@ use App\NickServ\Application\Service\NickHistoryService;
 use App\NickServ\Domain\ValueObject\NickStatus;
 use DateTimeImmutable;
 
+use function strcasecmp;
+
 final readonly class VerifyNickHandler implements VerifyNickHandlerInterface
 {
     public function __construct(

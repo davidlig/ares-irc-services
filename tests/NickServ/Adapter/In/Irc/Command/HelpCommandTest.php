@@ -27,8 +27,12 @@ use RuntimeException;
 use Stringable;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function array_search;
 use function array_slice;
+use function explode;
+use function implode;
 use function is_scalar;
+use function strtr;
 
 #[CoversClass(HelpCommand::class)]
 final class HelpCommandTest extends TestCase
@@ -40,43 +44,6 @@ final class HelpCommandTest extends TestCase
         '%memoserv%' => 'MemoServ',
         '%operserv%' => 'OperServ',
     ];
-
-    private function createHelpCommand(int $inactivityExpiryDays = 0): HelpCommand
-    {
-        return new HelpCommand(
-            new UnifiedHelpFormatter(),
-            new TimezoneHelpProvider(),
-            $this->createStub(NickServOperatorAccess::class),
-            $inactivityExpiryDays,
-        );
-    }
-
-    /**
-     * @param list<string> $args
-     */
-    private function createContext(
-        ?SenderView $sender,
-        array $args,
-        NickServNotifierInterface $notifier,
-        TranslatorInterface $translator,
-        NickServCommandRegistry $registry,
-    ): NickServContext {
-        return new NickServContext(
-            $sender,
-            null,
-            'HELP',
-            $args,
-            $notifier,
-            $translator,
-            'en',
-            'UTC',
-            'NOTICE',
-            $registry,
-            new PendingVerificationRegistry(),
-            new RecoveryTokenRegistry(),
-            $this->createServiceNicks(),
-        );
-    }
 
     #[Test]
     public function doesNothingWhenSenderNull(): void
@@ -1337,6 +1304,43 @@ final class HelpCommandTest extends TestCase
         $this->expectExceptionMessage('Connection write failed');
 
         $this->createHelpCommand()->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), [], $notifier, $translator, new NickServCommandRegistry([])));
+    }
+
+    private function createHelpCommand(int $inactivityExpiryDays = 0): HelpCommand
+    {
+        return new HelpCommand(
+            new UnifiedHelpFormatter(),
+            new TimezoneHelpProvider(),
+            $this->createStub(NickServOperatorAccess::class),
+            $inactivityExpiryDays,
+        );
+    }
+
+    /**
+     * @param list<string> $args
+     */
+    private function createContext(
+        ?SenderView $sender,
+        array $args,
+        NickServNotifierInterface $notifier,
+        TranslatorInterface $translator,
+        NickServCommandRegistry $registry,
+    ): NickServContext {
+        return new NickServContext(
+            $sender,
+            null,
+            'HELP',
+            $args,
+            $notifier,
+            $translator,
+            'en',
+            'UTC',
+            'NOTICE',
+            $registry,
+            new PendingVerificationRegistry(),
+            new RecoveryTokenRegistry(),
+            $this->createServiceNicks(),
+        );
     }
 
     private function createServiceNicks(): ServiceNicknameRegistry

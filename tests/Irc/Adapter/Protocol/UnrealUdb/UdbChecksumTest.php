@@ -10,7 +10,11 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function array_unique;
+use function hash;
+use function str_repeat;
 use function strlen;
+use function strtoupper;
 
 #[CoversClass(UdbChecksum::class)]
 final class UdbChecksumTest extends TestCase

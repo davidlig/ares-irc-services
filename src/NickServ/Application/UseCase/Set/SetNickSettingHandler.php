@@ -28,9 +28,11 @@ use App\NickServ\Application\Service\VhostValidator;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use InvalidArgumentException;
 
+use function array_any;
 use function explode;
 use function filter_var;
 use function in_array;
+use function strcasecmp;
 use function strtolower;
 use function strtoupper;
 use function trim;

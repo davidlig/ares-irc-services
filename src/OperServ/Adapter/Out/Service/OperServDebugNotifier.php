@@ -83,6 +83,23 @@ final readonly class OperServDebugNotifier implements ServiceDebugNotifierInterf
         }
     }
 
+    public function isIrcopOrRoot(string $nick, bool $isIdentified, bool $isIrcOperator): bool
+    {
+        $accountId = $isIdentified ? $this->nickAccounts->findIdByNick($nick) : null;
+
+        return $this->authorization->ircOperator(new OperatorActor(
+            $nick,
+            $accountId,
+            $isIdentified,
+            $isIrcOperator,
+        ))->granted;
+    }
+
+    public function getDebugChannel(): ?string
+    {
+        return $this->debugChannel;
+    }
+
     /**
      * @param array<string, mixed> $extra
      */
@@ -154,22 +171,5 @@ final readonly class OperServDebugNotifier implements ServiceDebugNotifierInterf
         }
 
         $this->notify($message);
-    }
-
-    public function isIrcopOrRoot(string $nick, bool $isIdentified, bool $isIrcOperator): bool
-    {
-        $accountId = $isIdentified ? $this->nickAccounts->findIdByNick($nick) : null;
-
-        return $this->authorization->ircOperator(new OperatorActor(
-            $nick,
-            $accountId,
-            $isIdentified,
-            $isIrcOperator,
-        ))->granted;
-    }
-
-    public function getDebugChannel(): ?string
-    {
-        return $this->debugChannel;
     }
 }

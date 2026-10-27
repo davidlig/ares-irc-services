@@ -12,6 +12,8 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\EntityManagerInterface;
 use InvalidArgumentException;
 
+use function preg_match;
+
 final readonly class DoctrineRescueCredentialPersistence implements RescueCredentialPersistence
 {
     public function __construct(private EntityManagerInterface $entityManager) {}

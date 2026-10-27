@@ -11,7 +11,9 @@ use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
 use function chmod;
+use function dirname;
 use function fclose;
+use function file_put_contents;
 use function flock;
 use function fopen;
 use function mkdir;
@@ -28,19 +30,6 @@ use const LOCK_UN;
 final class UdbSessionLockTest extends TestCase
 {
     private string $directory;
-
-    protected function setUp(): void
-    {
-        $this->directory = sys_get_temp_dir() . '/ares-udb-lock-' . uniqid('', true) . '/var/lock';
-    }
-
-    protected function tearDown(): void
-    {
-        @unlink($this->directory . '/udb.lock');
-        @rmdir($this->directory);
-        @rmdir(dirname($this->directory));
-        @rmdir(dirname(dirname($this->directory)));
-    }
 
     #[Test]
     public function acquireCreatesTheApplicationLockDirectoryWhenMissing(): void
@@ -189,5 +178,18 @@ final class UdbSessionLockTest extends TestCase
         } finally {
             chmod($this->directory, 0o770);
         }
+    }
+
+    protected function setUp(): void
+    {
+        $this->directory = sys_get_temp_dir() . '/ares-udb-lock-' . uniqid('', true) . '/var/lock';
+    }
+
+    protected function tearDown(): void
+    {
+        @unlink($this->directory . '/udb.lock');
+        @rmdir($this->directory);
+        @rmdir(dirname($this->directory));
+        @rmdir(dirname(dirname($this->directory)));
     }
 }

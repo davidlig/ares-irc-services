@@ -26,6 +26,8 @@ use App\NickServ\Application\UseCase\IssueMigrationRescueToken\IssueMigrationRes
 use App\NickServ\Domain\Entity\RegisteredNick;
 use DateTimeImmutable;
 
+use function base64_decode;
+use function inet_ntop;
 use function sprintf;
 use function str_starts_with;
 use function strcasecmp;
@@ -92,6 +94,92 @@ final readonly class NickProtectionService
         }
 
         $this->enforceProtection($user, $occurredAt);
+    }
+
+    /**
+     * Called when a user quits the network. Receives only primitives; no Core event types.
+     */
+    public function onUserQuit(
+        string $uid,
+        string $nick,
+        string $reason,
+        string $ident,
+        string $displayHost,
+        string $hostname,
+        string $ipBase64,
+        DateTimeImmutable $occurredAt,
+    ): void {
+        $account = $this->nickRepository->findByNick($nick);
+        $registeredNick = null;
+
+        if (null === $account) {
+            $registeredNick = $this->identifiedRegistry->findNick($uid);
+            if (null !== $registeredNick) {
+                $account = $this->nickRepository->findByNick($registeredNick);
+            }
+        } else {
+            $registeredNick = $this->identifiedRegistry->findNick($uid);
+        }
+
+        $this->identifiedRegistry->remove($uid);
+
+        if (null === $account) {
+            return;
+        }
+
+        $account->markSeen($occurredAt);
+
+        $origin = '' !== $ident ? $ident . '@' . $displayHost : $displayHost;
+        $stored = '' !== $reason
+            ? sprintf('%s (%s)', $reason, $origin)
+            : ('' !== $origin ? $origin : null);
+
+        $account->updateQuitMessage($stored);
+
+        if (null !== $registeredNick && '' !== $ipBase64 && '*' !== $ipBase64) {
+            $ip = $this->decodeIp($ipBase64);
+            $account->updateLastConnection($ip, $hostname);
+        }
+
+        $this->nickRepository->save($account);
+    }
+
+    public function enforceProtection(NetworkUser $user, DateTimeImmutable $occurredAt): void
+    {
+        $nick = $user->nick;
+        $account = $this->nickRepository->findByNick($nick);
+
+        if (null === $account) {
+            return;
+        }
+
+        if ($account->isForbidden()) {
+            $reason = $account->getReason() ?? '';
+            $this->forbiddenService->notifyAndForceGuest($user->uid, $reason, $nick);
+
+            return;
+        }
+
+        if (!$account->isRegistered()) {
+            // Account is pending, suspended, or pending deletion.
+            // If the user has +r, enforce guest rename to prevent channel mode abuse.
+            if ($user->isIdentified) {
+                $this->enforceGuestRename($account, $user, $nick);
+            }
+
+            return;
+        }
+
+        if ($user->isIdentified) {
+            $this->handleIdentifiedEnforcement($account, $user, $nick, $occurredAt);
+        } else {
+            $this->enforceGuestRename($account, $user, $nick);
+        }
+    }
+
+    public function getDefaultLanguage(): string
+    {
+        return $this->defaultLanguage;
     }
 
     private function resolveProtectionTarget(string $uid, string $oldNick, string $newNick): ?NetworkUser
@@ -244,87 +332,6 @@ final readonly class NickProtectionService
         return false;
     }
 
-    /**
-     * Called when a user quits the network. Receives only primitives; no Core event types.
-     */
-    public function onUserQuit(
-        string $uid,
-        string $nick,
-        string $reason,
-        string $ident,
-        string $displayHost,
-        string $hostname,
-        string $ipBase64,
-        DateTimeImmutable $occurredAt,
-    ): void {
-        $account = $this->nickRepository->findByNick($nick);
-        $registeredNick = null;
-
-        if (null === $account) {
-            $registeredNick = $this->identifiedRegistry->findNick($uid);
-            if (null !== $registeredNick) {
-                $account = $this->nickRepository->findByNick($registeredNick);
-            }
-        } else {
-            $registeredNick = $this->identifiedRegistry->findNick($uid);
-        }
-
-        $this->identifiedRegistry->remove($uid);
-
-        if (null === $account) {
-            return;
-        }
-
-        $account->markSeen($occurredAt);
-
-        $origin = '' !== $ident ? $ident . '@' . $displayHost : $displayHost;
-        $stored = '' !== $reason
-            ? sprintf('%s (%s)', $reason, $origin)
-            : ('' !== $origin ? $origin : null);
-
-        $account->updateQuitMessage($stored);
-
-        if (null !== $registeredNick && '' !== $ipBase64 && '*' !== $ipBase64) {
-            $ip = $this->decodeIp($ipBase64);
-            $account->updateLastConnection($ip, $hostname);
-        }
-
-        $this->nickRepository->save($account);
-    }
-
-    public function enforceProtection(NetworkUser $user, DateTimeImmutable $occurredAt): void
-    {
-        $nick = $user->nick;
-        $account = $this->nickRepository->findByNick($nick);
-
-        if (null === $account) {
-            return;
-        }
-
-        if ($account->isForbidden()) {
-            $reason = $account->getReason() ?? '';
-            $this->forbiddenService->notifyAndForceGuest($user->uid, $reason, $nick);
-
-            return;
-        }
-
-        if (!$account->isRegistered()) {
-            // Account is pending, suspended, or pending deletion.
-            // If the user has +r, enforce guest rename to prevent channel mode abuse.
-            if ($user->isIdentified) {
-                $this->enforceGuestRename($account, $user, $nick);
-            }
-
-            return;
-        }
-
-        if ($user->isIdentified) {
-            $this->handleIdentifiedEnforcement($account, $user, $nick, $occurredAt);
-        } else {
-            $this->enforceGuestRename($account, $user, $nick);
-        }
-    }
-
     private function handleIdentifiedEnforcement(RegisteredNick $account, NetworkUser $user, string $nick, DateTimeImmutable $occurredAt): void
     {
         $identifiedNick = $this->identifiedRegistry->findNick($user->uid);
@@ -418,10 +425,5 @@ final readonly class NickProtectionService
         $ip = inet_ntop($binary);
 
         return false !== $ip ? $ip : '*';
-    }
-
-    public function getDefaultLanguage(): string
-    {
-        return $this->defaultLanguage;
     }
 }

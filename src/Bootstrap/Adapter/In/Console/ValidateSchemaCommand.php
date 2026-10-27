@@ -10,6 +10,8 @@ use Doctrine\ORM\Tools\ToolEvents;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
+use function in_array;
+
 final class ValidateSchemaCommand extends DoctrineValidateSchemaCommand
 {
     protected function execute(InputInterface $input, OutputInterface $output): int

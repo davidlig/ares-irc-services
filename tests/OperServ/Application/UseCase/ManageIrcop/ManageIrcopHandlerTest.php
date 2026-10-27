@@ -27,6 +27,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function array_values;
+
 #[CoversClass(IrcopListEntry::class)]
 #[CoversClass(ManageIrcop::class)]
 #[CoversClass(ManageIrcopHandler::class)]
@@ -37,11 +39,6 @@ use PHPUnit\Framework\TestCase;
 final class ManageIrcopHandlerTest extends TestCase
 {
     private DateTimeImmutable $occurredAt;
-
-    protected function setUp(): void
-    {
-        $this->occurredAt = new DateTimeImmutable('2026-09-08T11:30:00+00:00');
-    }
 
     #[Test]
     public function addsOperatorAndRecordsRootAuditAfterPersistenceBeforeProjection(): void
@@ -199,6 +196,11 @@ final class ManageIrcopHandlerTest extends TestCase
 
         self::assertSame(IrcopOutcome::UnknownAction, $result->outcome);
         self::assertSame([], $operations->entries);
+    }
+
+    protected function setUp(): void
+    {
+        $this->occurredAt = new DateTimeImmutable('2026-09-08T11:30:00+00:00');
     }
 
     private function handler(

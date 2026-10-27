@@ -41,24 +41,6 @@ final class ChanServRejoinSubscriberTest extends TestCase
 
     private ChanServRejoinSubscriber $subscriber;
 
-    protected function setUp(): void
-    {
-        $this->channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
-        $this->channelLookup = $this->createMock(ChannelLookupPort::class);
-        $this->modeSupportProvider = $this->createMock(ActiveChannelModeSupportProviderInterface::class);
-        $this->channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
-        $this->modeSupport = $this->createMock(ChannelModeSupportInterface::class);
-        $this->logger = $this->createMock(LoggerInterface::class);
-
-        $this->subscriber = $this->createSubscriber(
-            $this->channelRepository,
-            $this->channelLookup,
-            $this->modeSupportProvider,
-            $this->channelServiceActions,
-            $this->logger,
-        );
-    }
-
     #[Test]
     public function subscribesToCorrectEvents(): void
     {
@@ -883,6 +865,24 @@ final class ChanServRejoinSubscriberTest extends TestCase
         );
         $event = new NetworkSynchronizationCompletedEvent('001');
         $subscriber->onSyncCompleteReconcilePermanentMode($event);
+    }
+
+    protected function setUp(): void
+    {
+        $this->channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
+        $this->channelLookup = $this->createMock(ChannelLookupPort::class);
+        $this->modeSupportProvider = $this->createMock(ActiveChannelModeSupportProviderInterface::class);
+        $this->channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
+        $this->modeSupport = $this->createMock(ChannelModeSupportInterface::class);
+        $this->logger = $this->createMock(LoggerInterface::class);
+
+        $this->subscriber = $this->createSubscriber(
+            $this->channelRepository,
+            $this->channelLookup,
+            $this->modeSupportProvider,
+            $this->channelServiceActions,
+            $this->logger,
+        );
     }
 
     private function createSubscriber(

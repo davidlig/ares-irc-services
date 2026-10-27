@@ -18,6 +18,17 @@ use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
 use RuntimeException;
 
+use function fclose;
+use function fopen;
+use function iterator_to_array;
+use function restore_error_handler;
+use function set_error_handler;
+use function str_repeat;
+use function str_starts_with;
+use function stream_wrapper_register;
+use function stream_wrapper_restore;
+use function stream_wrapper_unregister;
+
 use const E_WARNING;
 
 /** Controlled synchronous filesystem faults; the native file wrapper is always restored. */

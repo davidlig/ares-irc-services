@@ -18,6 +18,9 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function str_repeat;
+use function strtoupper;
+
 #[CoversClass(UdbWireCodec::class)]
 #[CoversClass(UdbOclgViewDigest::class)]
 final class UdbWireCodecTest extends TestCase

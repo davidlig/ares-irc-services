@@ -10,6 +10,8 @@ use App\OperServ\Application\Port\Out\GlineEntry;
 use App\OperServ\Application\Port\Out\GlineRepository;
 use DateTimeImmutable;
 
+use function array_map;
+
 final readonly class DoctrineGlineProjectionQuery implements GlineProjectionQuery
 {
     public function __construct(private GlineRepository $glines) {}

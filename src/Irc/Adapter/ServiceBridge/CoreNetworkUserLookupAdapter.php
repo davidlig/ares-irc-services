@@ -12,6 +12,8 @@ use App\Irc\Domain\ValueObject\Nick;
 use App\Irc\Domain\ValueObject\Uid;
 use InvalidArgumentException;
 
+use function array_map;
+
 /**
  * Core implements NetworkUserLookupPort: resolves a connected user by UID or nick
  * and returns a SenderView DTO for Services. No Domain\IRC entities leak to Services.

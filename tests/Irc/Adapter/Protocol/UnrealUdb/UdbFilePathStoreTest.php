@@ -33,20 +33,6 @@ final class UdbFilePathStoreTest extends TestCase
 
     private UdbFilePathStore $store;
 
-    protected function setUp(): void
-    {
-        $this->directory = sys_get_temp_dir() . '/ares-udb-store-' . uniqid('', true);
-        mkdir($this->directory);
-        $this->path = $this->directory . '/.udb.lock';
-        $this->store = new UdbFilePathStore($this->path);
-    }
-
-    protected function tearDown(): void
-    {
-        @unlink($this->path);
-        @rmdir($this->directory);
-    }
-
     #[Test]
     public function saveCreatesTheExactFileAndAcquiresExclusively(): void
     {
@@ -130,5 +116,19 @@ final class UdbFilePathStoreTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Unable to open the UDB lock file.');
         $store->save(new Key('udb-session'));
+    }
+
+    protected function setUp(): void
+    {
+        $this->directory = sys_get_temp_dir() . '/ares-udb-store-' . uniqid('', true);
+        mkdir($this->directory);
+        $this->path = $this->directory . '/.udb.lock';
+        $this->store = new UdbFilePathStore($this->path);
+    }
+
+    protected function tearDown(): void
+    {
+        @unlink($this->path);
+        @rmdir($this->directory);
     }
 }

@@ -28,11 +28,6 @@ final class StatusCommandTest extends TestCase
 {
     private DateTimeImmutable $now;
 
-    protected function setUp(): void
-    {
-        $this->now = new DateTimeImmutable('2026-09-06 17:00:00 UTC');
-    }
-
     #[Test]
     public function exposesStatusMetadata(): void
     {
@@ -234,6 +229,11 @@ final class StatusCommandTest extends TestCase
             'status.pending_deletion',
             'reply.separator',
         ], $messages);
+    }
+
+    protected function setUp(): void
+    {
+        $this->now = new DateTimeImmutable('2026-09-06 17:00:00 UTC');
     }
 
     /**

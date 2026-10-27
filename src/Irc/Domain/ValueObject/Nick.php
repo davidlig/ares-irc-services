@@ -6,7 +6,9 @@ namespace App\Irc\Domain\ValueObject;
 
 use InvalidArgumentException;
 
+use function preg_match;
 use function sprintf;
+use function strcasecmp;
 
 /**
  * An IRC nickname.
@@ -26,13 +28,13 @@ readonly class Nick
         }
     }
 
-    public function equals(self $other): bool
-    {
-        return 0 === strcasecmp($this->value, $other->value);
-    }
-
     public function __toString(): string
     {
         return $this->value;
+    }
+
+    public function equals(self $other): bool
+    {
+        return 0 === strcasecmp($this->value, $other->value);
     }
 }

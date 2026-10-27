@@ -14,6 +14,8 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 
+use function str_repeat;
+
 #[CoversClass(RegisteredChannel::class)]
 final class RegisteredChannelTest extends TestCase
 {
@@ -41,6 +43,41 @@ final class RegisteredChannelTest extends TestCase
         self::assertFalse($channel->isFounder(2));
         self::assertGreaterThanOrEqual($before, $channel->getCreatedAt());
         self::assertLessThanOrEqual($after, $channel->getCreatedAt());
+    }
+
+    #[Test]
+    public function pendingRegistrationIsBlockedUntilAccepted(): void
+    {
+        $channel = RegisteredChannel::createPendingRegistration(new DateTimeImmutable(), '#test', 7, 'Description');
+
+        self::assertSame(ChannelStatus::Pending, $channel->getStatus());
+        self::assertTrue($channel->isPendingRegistration());
+        self::assertTrue($channel->isBlocked());
+
+        $approvedAt = new DateTimeImmutable('2026-10-27T12:00:00+00:00');
+        $channel->approveRegistration($approvedAt);
+
+        self::assertSame(ChannelStatus::Active, $channel->getStatus());
+        self::assertSame($approvedAt, $channel->getCreatedAt());
+        self::assertFalse($channel->isBlocked());
+    }
+
+    #[Test]
+    public function rejectionKeepsMandatoryOperatorReasonAndRestriction(): void
+    {
+        $rejectedAt = new DateTimeImmutable('2026-10-26T12:00:00+00:00');
+        $restrictedUntil = new DateTimeImmutable('2026-10-27T12:00:00+00:00');
+        $channel = RegisteredChannel::createPendingRegistration($rejectedAt, '#test', 7, 'Description');
+
+        $channel->rejectRegistration('Needs a public topic', 9, 'OperNick', $rejectedAt, $restrictedUntil);
+
+        self::assertSame(ChannelStatus::Rejected, $channel->getStatus());
+        self::assertTrue($channel->isBlocked());
+        self::assertSame('Needs a public topic', $channel->getRegistrationRejectionReason());
+        self::assertSame(9, $channel->getRegistrationRejectedByAccountId());
+        self::assertSame('OperNick', $channel->getRegistrationRejectedByNickname());
+        self::assertSame($rejectedAt, $channel->getRegistrationRejectedAt());
+        self::assertSame($restrictedUntil, $channel->getRegistrationRestrictedUntil());
     }
 
     #[Test]
@@ -394,6 +431,84 @@ final class RegisteredChannelTest extends TestCase
         $this->expectExceptionMessage('Only channels pending deletion can be restored.');
 
         $channel->restoreFromPendingDeletion();
+    }
+
+    #[Test]
+    public function suspensionTransitionsCannotOverwritePendingOrRejectedRegistrationState(): void
+    {
+        $at = new DateTimeImmutable('2026-10-26T12:00:00+00:00');
+        $pending = RegisteredChannel::createPendingRegistration($at, '#pending', 7, 'description');
+        $rejected = RegisteredChannel::createPendingRegistration($at, '#rejected', 8, 'description');
+        $rejected->rejectRegistration('Reason', 9, 'Reviewer', $at, null);
+
+        foreach ([$pending, $rejected] as $request) {
+            try {
+                $request->suspend('reason');
+                self::fail('Expected a registration request to refuse suspension.');
+            } catch (LogicException) {
+            }
+            try {
+                $request->unsuspend();
+                self::fail('Expected a registration request to refuse unsuspension.');
+            } catch (LogicException) {
+            }
+        }
+
+        self::assertTrue($pending->isPendingRegistration());
+        self::assertTrue($rejected->isRejectedRegistration());
+        self::assertNull($rejected->getRegistrationRestrictedUntil());
+    }
+
+    #[Test]
+    public function orphaningRejectedRequesterPreservesNameRestrictionAndDecisionSnapshot(): void
+    {
+        $at = new DateTimeImmutable('2026-10-26T12:00:00+00:00');
+        $until = $at->modify('+24 hours');
+        $rejected = RegisteredChannel::createPendingRegistration($at, '#restricted', 7, 'description');
+        $rejected->rejectRegistration('Reason', 9, 'Reviewer', $at, $until);
+
+        $rejected->orphanRejectedRegistrationRequester();
+
+        self::assertSame(0, $rejected->getFounderNickId());
+        self::assertTrue($rejected->isRejectedRegistration());
+        self::assertSame('Reason', $rejected->getRegistrationRejectionReason());
+        self::assertSame(9, $rejected->getRegistrationRejectedByAccountId());
+        self::assertSame('Reviewer', $rejected->getRegistrationRejectedByNickname());
+        self::assertSame($at, $rejected->getRegistrationRejectedAt());
+        self::assertSame($until, $rejected->getRegistrationRestrictedUntil());
+    }
+
+    #[Test]
+    public function registrationDecisionMethodsRejectWrongStatesAndBlankReasons(): void
+    {
+        $at = new DateTimeImmutable('2026-10-26T12:00:00+00:00');
+        $active = RegisteredChannel::register($at, '#active', 7, 'description');
+        try {
+            $active->approveRegistration($at);
+            self::fail('An active channel cannot be approved as a pending request.');
+        } catch (LogicException $exception) {
+            self::assertSame('Only pending channel registrations can be approved.', $exception->getMessage());
+        }
+        try {
+            $active->orphanRejectedRegistrationRequester();
+            self::fail('An active channel cannot be orphaned as a rejection.');
+        } catch (LogicException $exception) {
+            self::assertSame('Only rejected registrations can be orphaned.', $exception->getMessage());
+        }
+
+        $rejected = RegisteredChannel::createPendingRegistration($at, '#rejected', 8, 'description');
+        $rejected->rejectRegistration('Reason', 9, 'Reviewer', $at, null);
+        try {
+            $rejected->rejectRegistration('Again', 9, 'Reviewer', $at, null);
+            self::fail('A rejected request cannot be rejected a second time.');
+        } catch (LogicException $exception) {
+            self::assertSame('Only pending channel registrations can be rejected.', $exception->getMessage());
+        }
+
+        $pending = RegisteredChannel::createPendingRegistration($at, '#pending', 10, 'description');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('A rejection reason is required.');
+        $pending->rejectRegistration('  ', 9, 'Reviewer', $at, null);
     }
 
     #[Test]

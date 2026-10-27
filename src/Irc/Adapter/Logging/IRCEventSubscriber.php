@@ -13,6 +13,7 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 use function in_array;
+use function preg_replace;
 
 /**
  * Logs all IRC domain events to the dedicated 'irc' Monolog channel.

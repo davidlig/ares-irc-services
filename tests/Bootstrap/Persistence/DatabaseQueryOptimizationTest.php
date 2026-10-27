@@ -29,10 +29,27 @@ use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function array_column;
+use function array_diff;
+use function array_keys;
+use function array_map;
+use function array_values;
 use function count;
+use function getenv;
+use function hash_final;
+use function hash_init;
+use function hash_update;
+use function implode;
 use function in_array;
 use function is_int;
+use function json_encode;
+use function max;
+use function serialize;
+use function sort;
 use function sprintf;
+use function str_contains;
+use function strtolower;
+use function strtr;
 
 use const JSON_THROW_ON_ERROR;
 
@@ -53,6 +70,34 @@ final class DatabaseQueryOptimizationTest extends TestCase
 
     /** @var array<string, list<string>> Original columns whose data migrations must preserve. */
     private array $snapshotColumns = [];
+
+    #[Test]
+    public function migratedRepositoriesPreserveResultsAndUseSelectiveIndexes(): void
+    {
+        $this->seedEdgeCases();
+        $before = $this->snapshot();
+        $this->migrate('latest');
+        self::assertSame($before, $this->snapshot());
+        $this->assertIndexesPresent();
+        $this->assertLegacyListEquivalence();
+        $this->assertWhoipEquivalence();
+
+        $this->seedCardinality();
+        $before = $this->snapshot();
+        $this->refreshStatistics();
+        $this->assertSelectivePlans();
+        $this->removeFixtureStatistics();
+        self::assertTrue($this->connection->createSchemaManager()->introspectSchema()->hasTable('registered_nicks'), 'Optimized indexes must remain compatible with later Doctrine schema migrations.');
+
+        $this->entityManager->clear();
+        $this->migrate('App\\Migrations\\Version20260926000002');
+        $this->assertIndexesPresent(false);
+        self::assertSame($before, $this->snapshot(), 'Rollback must preserve all original account/channel data.');
+        $this->migrate('latest');
+        self::assertSame($before, $this->snapshot(), 'Reapplying must preserve all original account/channel data.');
+        $this->assertIndexesPresent();
+        $this->assertLegacyListEquivalence();
+    }
 
     protected function setUp(): void
     {
@@ -87,34 +132,6 @@ final class DatabaseQueryOptimizationTest extends TestCase
         if (isset($this->connection)) {
             $this->connection->close();
         }
-    }
-
-    #[Test]
-    public function migratedRepositoriesPreserveResultsAndUseSelectiveIndexes(): void
-    {
-        $this->seedEdgeCases();
-        $before = $this->snapshot();
-        $this->migrate('latest');
-        self::assertSame($before, $this->snapshot());
-        $this->assertIndexesPresent();
-        $this->assertLegacyListEquivalence();
-        $this->assertWhoipEquivalence();
-
-        $this->seedCardinality();
-        $before = $this->snapshot();
-        $this->refreshStatistics();
-        $this->assertSelectivePlans();
-        $this->removeFixtureStatistics();
-        self::assertTrue($this->connection->createSchemaManager()->introspectSchema()->hasTable('registered_nicks'), 'Optimized indexes must remain compatible with later Doctrine schema migrations.');
-
-        $this->entityManager->clear();
-        $this->migrate('App\\Migrations\\Version20260926000002');
-        $this->assertIndexesPresent(false);
-        self::assertSame($before, $this->snapshot(), 'Rollback must preserve all original account/channel data.');
-        $this->migrate('latest');
-        self::assertSame($before, $this->snapshot(), 'Reapplying must preserve all original account/channel data.');
-        $this->assertIndexesPresent();
-        $this->assertLegacyListEquivalence();
     }
 
     private function migrate(string $version): void

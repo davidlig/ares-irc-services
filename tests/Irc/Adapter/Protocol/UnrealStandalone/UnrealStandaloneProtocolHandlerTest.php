@@ -25,23 +25,6 @@ final class UnrealStandaloneProtocolHandlerTest extends TestCase
     /** @var list<string> */
     private array $effects = [];
 
-    private function createHandler(string $sid = '001', ?EventDispatcherInterface $eventDispatcher = null): UnrealStandaloneProtocolHandler
-    {
-        return new UnrealStandaloneProtocolHandler(sid: $sid, eventDispatcher: $eventDispatcher);
-    }
-
-    private function createServerLink(): ServerLink
-    {
-        return new ServerLink(
-            serverName: new ServerName('services.test.local'),
-            host: new Hostname('127.0.0.1'),
-            port: new Port(7029),
-            password: new LinkPassword('link-secret'),
-            description: 'Ares IRC Services',
-            useTls: false,
-        );
-    }
-
     #[Test]
     public function getProtocolNameReturnsUnreal(): void
     {
@@ -222,5 +205,22 @@ final class UnrealStandaloneProtocolHandlerTest extends TestCase
         $msg = new IRCMessage(command: 'PRIVMSG', params: ['#chan'], trailing: 'hi');
 
         $handler->handleIncoming($msg, $connection);
+    }
+
+    private function createHandler(string $sid = '001', ?EventDispatcherInterface $eventDispatcher = null): UnrealStandaloneProtocolHandler
+    {
+        return new UnrealStandaloneProtocolHandler(sid: $sid, eventDispatcher: $eventDispatcher);
+    }
+
+    private function createServerLink(): ServerLink
+    {
+        return new ServerLink(
+            serverName: new ServerName('services.test.local'),
+            host: new Hostname('127.0.0.1'),
+            port: new Port(7029),
+            password: new LinkPassword('link-secret'),
+            description: 'Ares IRC Services',
+            useTls: false,
+        );
     }
 }

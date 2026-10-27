@@ -21,7 +21,11 @@ use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentValidator;
 
 use function array_slice;
+use function base64_decode;
+use function implode;
+use function inet_ntop;
 use function sprintf;
+use function trim;
 
 final readonly class SuspendCommand implements NickServCommandInterface, IrcopAuditableCommandInterface
 {

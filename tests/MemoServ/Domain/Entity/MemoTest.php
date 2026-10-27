@@ -12,6 +12,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
 
+use function str_repeat;
 use function strlen;
 
 #[CoversClass(Memo::class)]

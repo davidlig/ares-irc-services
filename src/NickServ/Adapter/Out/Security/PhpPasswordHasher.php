@@ -7,6 +7,9 @@ namespace App\NickServ\Adapter\Out\Security;
 use App\NickServ\Application\Port\Out\PasswordHasher;
 use RuntimeException;
 
+use function password_hash;
+use function password_verify;
+
 use const PASSWORD_BCRYPT;
 
 final readonly class PhpPasswordHasher implements PasswordHasher

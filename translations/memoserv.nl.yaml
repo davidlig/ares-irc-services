@@ -193,3 +193,11 @@ help:
 notify:
   nick_pending: "Je hebt \x02%count%\x02 ongelezen bericht(en). Toon de berichten: /msg %bot% \x0303LIST\x03"
   channel_pending: "Kanaal \x02%channel%\x02 heeft \x02%count%\x02 ongelezen bericht(en). Bekijk berichten met /msg %bot% \x0303LIST %channel%\x03"
+
+# --- CHANNEL REGISTRATION DECISIONS ---
+registration_decision:
+  accepted: "Je registratieaanvraag voor %channel% is goedgekeurd door %operator%."
+  rejected: "Je registratieaanvraag voor %channel% is afgewezen door %operator%."
+  reason: "Reden: %reason%"
+  restriction: "Resterende blokkering: %remaining_seconds% seconden."
+  restriction_indefinite: "Dit kanaal is onbeperkt geblokkeerd."

@@ -15,6 +15,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 use function array_diff;
 use function array_keys;
+use function array_map;
 use function count;
 use function implode;
 use function in_array;

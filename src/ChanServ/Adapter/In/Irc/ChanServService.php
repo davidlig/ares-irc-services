@@ -29,6 +29,7 @@ use Psr\Log\NullLogger;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Throwable;
 
+use function array_shift;
 use function array_slice;
 use function array_values;
 use function base64_decode;

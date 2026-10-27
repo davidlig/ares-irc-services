@@ -11,6 +11,9 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function array_map;
+use function str_repeat;
+
 #[CoversClass(UdbFrame::class)]
 #[CoversClass(UdbFrameKind::class)]
 final class UdbFrameTest extends TestCase

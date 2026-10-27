@@ -38,6 +38,8 @@ use Symfony\Component\Messenger\Envelope;
 
 use function array_filter;
 use function array_values;
+use function range;
+use function serialize;
 
 #[CoversClass(IRCClient::class)]
 final class IRCClientTest extends TestCase
@@ -55,50 +57,6 @@ final class IRCClientTest extends TestCase
     private IRCClient $client;
 
     private ServerLink $link;
-
-    protected function setUp(): void
-    {
-        $this->connection = $this->createStub(ConnectionInterface::class);
-        $this->connection->method('isConnected')->willReturn(false);
-        $this->connection->method('readLine')->willReturn(null);
-
-        $this->protocol = $this->createStub(ProtocolHandlerInterface::class);
-        $this->protocol->method('getProtocolName')->willReturn('unreal');
-
-        $this->eventDispatcher = $this->createStub(EventBusInterface::class);
-        $this->eventDispatcher->method('dispatch')->willReturnArgument(0);
-
-        $this->messageBus = $this->createStub(AsyncMessageDispatcherInterface::class);
-        $this->messageBus->method('dispatch')->willReturn(new Envelope(new stdClass()));
-
-        $this->burstCompleteRegistry = new BurstCompleteRegistry();
-        $this->link = new ServerLink(
-            new ServerName('irc.test.local'),
-            new Hostname('127.0.0.1'),
-            new Port(7000),
-            new LinkPassword('secret'),
-            'Test Server',
-            false,
-        );
-
-        $this->client = $this->createClient();
-    }
-
-    private function createClient(
-        ?LoopSchedulerInterface $loopScheduler = null,
-        ?SessionEventPump $eventPump = null,
-    ): IRCClient {
-        return new IRCClient(
-            $this->connection,
-            $this->protocol,
-            $this->eventDispatcher,
-            $this->messageBus,
-            $this->burstCompleteRegistry,
-            60,
-            loopScheduler: $loopScheduler ?? new RevoltLoopScheduler(),
-            eventPump: $eventPump,
-        );
-    }
 
     #[Test]
     public function connectCallsConnectionAndHandshakeAndDispatchesConnectionEstablished(): void
@@ -757,5 +715,49 @@ final class IRCClientTest extends TestCase
         $this->client = $this->createClient();
 
         $this->client->disconnect();
+    }
+
+    protected function setUp(): void
+    {
+        $this->connection = $this->createStub(ConnectionInterface::class);
+        $this->connection->method('isConnected')->willReturn(false);
+        $this->connection->method('readLine')->willReturn(null);
+
+        $this->protocol = $this->createStub(ProtocolHandlerInterface::class);
+        $this->protocol->method('getProtocolName')->willReturn('unreal');
+
+        $this->eventDispatcher = $this->createStub(EventBusInterface::class);
+        $this->eventDispatcher->method('dispatch')->willReturnArgument(0);
+
+        $this->messageBus = $this->createStub(AsyncMessageDispatcherInterface::class);
+        $this->messageBus->method('dispatch')->willReturn(new Envelope(new stdClass()));
+
+        $this->burstCompleteRegistry = new BurstCompleteRegistry();
+        $this->link = new ServerLink(
+            new ServerName('irc.test.local'),
+            new Hostname('127.0.0.1'),
+            new Port(7000),
+            new LinkPassword('secret'),
+            'Test Server',
+            false,
+        );
+
+        $this->client = $this->createClient();
+    }
+
+    private function createClient(
+        ?LoopSchedulerInterface $loopScheduler = null,
+        ?SessionEventPump $eventPump = null,
+    ): IRCClient {
+        return new IRCClient(
+            $this->connection,
+            $this->protocol,
+            $this->eventDispatcher,
+            $this->messageBus,
+            $this->burstCompleteRegistry,
+            60,
+            loopScheduler: $loopScheduler ?? new RevoltLoopScheduler(),
+            eventPump: $eventPump,
+        );
     }
 }

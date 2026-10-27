@@ -27,7 +27,9 @@ use PHPUnit\Framework\TestCase;
 use Stringable;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function implode;
 use function is_scalar;
+use function ksort;
 
 #[CoversClass(ListCommand::class)]
 final class ListCommandTest extends TestCase
@@ -132,6 +134,8 @@ final class ListCommandTest extends TestCase
             [ChannelStatus::Suspended, 'list.status_suspended'],
             [ChannelStatus::PendingDeletion, 'list.status_pending_deletion'],
             [ChannelStatus::Forbidden, 'list.status_forbidden'],
+            [ChannelStatus::Pending, 'list.status_pending_registration'],
+            [ChannelStatus::Rejected, 'list.status_rejected_registration'],
         ];
 
         foreach ($statuses as [$status, $key]) {

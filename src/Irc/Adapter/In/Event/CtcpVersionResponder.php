@@ -7,6 +7,11 @@ namespace App\Irc\Adapter\In\Event;
 use App\Irc\Application\Port\Out\ServiceUserPreferences;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function array_map;
+use function explode;
+use function str_repeat;
+use function str_replace;
+
 final readonly class CtcpVersionResponder
 {
     private const array ASCII_ART = [

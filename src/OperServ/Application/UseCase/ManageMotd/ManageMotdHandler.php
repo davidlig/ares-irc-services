@@ -12,9 +12,11 @@ use App\OperServ\Application\Port\Out\MotdRepository;
 use DateInterval;
 use DateTimeImmutable;
 
+use function array_map;
 use function count;
 use function ctype_digit;
 use function preg_match;
+use function strtolower;
 
 final readonly class ManageMotdHandler implements ManageMotdHandlerInterface
 {

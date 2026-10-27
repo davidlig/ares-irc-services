@@ -6,8 +6,16 @@ namespace App\NickServ\Adapter\Out\Security;
 
 use App\NickServ\Application\Port\Out\RescueTokenCodec;
 
+use function bin2hex;
 use function chr;
+use function hash;
+use function hash_equals;
 use function ord;
+use function preg_match;
+use function random_bytes;
+use function strtolower;
+use function substr;
+use function trim;
 
 final class UuidRescueTokenCodec implements RescueTokenCodec
 {

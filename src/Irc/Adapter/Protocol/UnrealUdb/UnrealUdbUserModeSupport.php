@@ -6,6 +6,8 @@ namespace App\Irc\Adapter\Protocol\UnrealUdb;
 
 use App\Irc\Application\Port\In\UserModeSupportInterface;
 
+use function implode;
+
 /**
  * UnrealUdb IRCOp-only user modes.
  *

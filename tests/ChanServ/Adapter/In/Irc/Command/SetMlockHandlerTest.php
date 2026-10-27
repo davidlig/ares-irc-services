@@ -29,34 +29,11 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function array_map;
+
 #[CoversClass(SetMlockHandler::class)]
 final class SetMlockHandlerTest extends TestCase
 {
-    private function createContext(
-        ChanServNotifierInterface $notifier,
-        TranslatorInterface $translator,
-        ?ChannelLookupPort $channelLookup = null,
-        ?ChannelModeSupportInterface $modeSupport = null,
-        bool $withoutSender = false,
-    ): ChanServContext {
-        return new ChanServContext(
-            $withoutSender ? null : new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
-            null,
-            'SET',
-            ['#test', 'MLOCK', 'on'],
-            $notifier,
-            $translator,
-            'en',
-            'UTC',
-            'NOTICE',
-            new ChanServCommandRegistry([]),
-            $channelLookup ?? $this->createStub(ChannelLookupPort::class),
-            $modeSupport ?? new NullChannelModeSupport(),
-            $this->createStub(NetworkUserLookupPort::class),
-            $this->createServiceNicks(),
-        );
-    }
-
     #[Test]
     public function invalidValueRepliesSyntaxError(): void
     {
@@ -187,6 +164,31 @@ final class SetMlockHandlerTest extends TestCase
 
         self::assertSame(['set.mlock.off'], $messages);
         self::assertCount(1, $channelNotices);
+    }
+
+    private function createContext(
+        ChanServNotifierInterface $notifier,
+        TranslatorInterface $translator,
+        ?ChannelLookupPort $channelLookup = null,
+        ?ChannelModeSupportInterface $modeSupport = null,
+        bool $withoutSender = false,
+    ): ChanServContext {
+        return new ChanServContext(
+            $withoutSender ? null : new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
+            null,
+            'SET',
+            ['#test', 'MLOCK', 'on'],
+            $notifier,
+            $translator,
+            'en',
+            'UTC',
+            'NOTICE',
+            new ChanServCommandRegistry([]),
+            $channelLookup ?? $this->createStub(ChannelLookupPort::class),
+            $modeSupport ?? new NullChannelModeSupport(),
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
+        );
     }
 
     private function createServiceNicks(): ServiceNicknameRegistry

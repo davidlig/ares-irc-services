@@ -16,6 +16,8 @@ use DateTimeZone;
 use Symfony\Component\Translation\TranslatorBagInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function trim;
+
 /**
  * Carries all the context a NickServ command needs to execute.
  *

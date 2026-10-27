@@ -64,62 +64,6 @@ use function is_string;
 #[CoversClass(ResolveChannelSettingHandler::class)]
 final class SetCommandTest extends TestCase
 {
-    /** @param array<string> $args */
-    private function createContext(
-        ?SenderView $sender,
-        ?ChanAccountView $senderAccount,
-        array $args,
-        ChanServNotifierInterface $notifier,
-        TranslatorInterface $translator,
-    ): ChanServContext {
-        return new ChanServContext(
-            $sender,
-            $senderAccount,
-            'SET',
-            $args,
-            $notifier,
-            $translator,
-            'en',
-            'UTC',
-            'NOTICE',
-            new ChanServCommandRegistry([]),
-            $this->createStub(ChannelLookupPort::class),
-            new NullChannelModeSupport(),
-            $this->createStub(NetworkUserLookupPort::class),
-            $this->createServiceNicks(),
-        );
-    }
-
-    private function createSetCommand(
-        RegisteredChannelRepositoryInterface $channelRepo,
-        ChanServAccessHelper $accessHelper,
-        ?ChanUserAccountPort $nickRepo = null,
-        ?SetFounderHandler $founderHandler = null,
-        ?ConfigureChannelSecureHandlerInterface $configureSecure = null,
-    ): SetCommand {
-        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
-        $nickRepo ??= $this->createStub(ChanUserAccountPort::class);
-        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
-        $eventDispatcher = $this->createStub(EventBusInterface::class);
-        $trans = $this->createStub(TranslatorInterface::class);
-        $trans->method('trans')->willReturnCallback(static fn (string $id): string => $id);
-        $settingUpdater = new UpdateChannelSettingHandler($this->createStub(EmailDomainPolicy::class), $channelRepo, $nickRepo, $eventDispatcher, new ChannelHistoryService($this->createStub(ChannelHistoryRepositoryInterface::class)));
-
-        return new SetCommand(
-            new ResolveChannelSettingHandler($channelRepo, $accessHelper),
-            $founderHandler ?? $this->createFounderHandler(),
-            new SetSuccessorHandler($settingUpdater),
-            new SetDescHandler($settingUpdater),
-            new SetUrlHandler($settingUpdater),
-            new SetEmailHandler($settingUpdater),
-            new SetEntrymsgHandler($settingUpdater),
-            new SetTopiclockHandler($settingUpdater),
-            new SetMlockHandler($this->createStub(ConfigureChannelMlockHandlerInterface::class), new MlockStateFromChannelResolver()),
-            new SetSecureHandler($configureSecure ?? $this->createStub(ConfigureChannelSecureHandlerInterface::class)),
-            new SetPrivateHandler($settingUpdater),
-        );
-    }
-
     #[Test]
     public function replyInvalidChannelWhenFirstArgNotChannel(): void
     {
@@ -657,6 +601,62 @@ final class SetCommandTest extends TestCase
         );
 
         self::assertFalse($cmd->allowsForbiddenChannel());
+    }
+
+    /** @param array<string> $args */
+    private function createContext(
+        ?SenderView $sender,
+        ?ChanAccountView $senderAccount,
+        array $args,
+        ChanServNotifierInterface $notifier,
+        TranslatorInterface $translator,
+    ): ChanServContext {
+        return new ChanServContext(
+            $sender,
+            $senderAccount,
+            'SET',
+            $args,
+            $notifier,
+            $translator,
+            'en',
+            'UTC',
+            'NOTICE',
+            new ChanServCommandRegistry([]),
+            $this->createStub(ChannelLookupPort::class),
+            new NullChannelModeSupport(),
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
+        );
+    }
+
+    private function createSetCommand(
+        RegisteredChannelRepositoryInterface $channelRepo,
+        ChanServAccessHelper $accessHelper,
+        ?ChanUserAccountPort $nickRepo = null,
+        ?SetFounderHandler $founderHandler = null,
+        ?ConfigureChannelSecureHandlerInterface $configureSecure = null,
+    ): SetCommand {
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $nickRepo ??= $this->createStub(ChanUserAccountPort::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $eventDispatcher = $this->createStub(EventBusInterface::class);
+        $trans = $this->createStub(TranslatorInterface::class);
+        $trans->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $settingUpdater = new UpdateChannelSettingHandler($this->createStub(EmailDomainPolicy::class), $channelRepo, $nickRepo, $eventDispatcher, new ChannelHistoryService($this->createStub(ChannelHistoryRepositoryInterface::class)));
+
+        return new SetCommand(
+            new ResolveChannelSettingHandler($channelRepo, $accessHelper),
+            $founderHandler ?? $this->createFounderHandler(),
+            new SetSuccessorHandler($settingUpdater),
+            new SetDescHandler($settingUpdater),
+            new SetUrlHandler($settingUpdater),
+            new SetEmailHandler($settingUpdater),
+            new SetEntrymsgHandler($settingUpdater),
+            new SetTopiclockHandler($settingUpdater),
+            new SetMlockHandler($this->createStub(ConfigureChannelMlockHandlerInterface::class), new MlockStateFromChannelResolver()),
+            new SetSecureHandler($configureSecure ?? $this->createStub(ConfigureChannelSecureHandlerInterface::class)),
+            new SetPrivateHandler($settingUpdater),
+        );
     }
 
     private function createFounderHandler(): SetFounderHandler

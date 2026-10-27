@@ -15,6 +15,9 @@ use App\NickServ\Application\UseCase\Verify\VerifyNickResult;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 
+use function base64_decode;
+use function inet_ntop;
+
 final readonly class VerifyCommand implements NickServCommandInterface
 {
     public function __construct(

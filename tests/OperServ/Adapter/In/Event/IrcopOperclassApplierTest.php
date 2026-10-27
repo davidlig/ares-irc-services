@@ -23,44 +23,6 @@ use ReflectionClass;
 #[CoversClass(IrcopOperclassApplier::class)]
 final class IrcopOperclassApplierTest extends TestCase
 {
-    private function createModule(ProtocolServiceActionsInterface $actions, ?string $serverSid = '001'): ActiveProtocolModuleHolderInterface
-    {
-        $module = $this->createStub(ProtocolModuleInterface::class);
-        $module->method('getServiceActions')->willReturn($actions);
-
-        $holder = $this->createStub(ActiveProtocolModuleHolderInterface::class);
-        $holder->method('getProtocolModule')->willReturn($module);
-        $holder->method('getServerSid')->willReturn($serverSid);
-
-        return $holder;
-    }
-
-    private function createNonOperclassModule(string $serverSid = '001'): ActiveProtocolModuleHolderInterface
-    {
-        $module = $this->createStub(ProtocolModuleInterface::class);
-        $module->method('getServiceActions')->willReturn($this->createStub(ProtocolServiceActionsInterface::class));
-
-        $holder = $this->createStub(ActiveProtocolModuleHolderInterface::class);
-        $holder->method('getProtocolModule')->willReturn($module);
-        $holder->method('getServerSid')->willReturn($serverSid);
-
-        return $holder;
-    }
-
-    private function createApplier(
-        ?IdentifiedSessionRegistry $registry = null,
-        ?ActiveProtocolModuleHolderInterface $holder = null,
-        ?OperIrcopRepositoryInterface $ircopRepo = null,
-        ?NickProjectionQuery $nickRepo = null,
-    ): IrcopOperclassApplier {
-        return new IrcopOperclassApplier(
-            $registry ?? new IdentifiedSessionRegistry(),
-            $holder ?? $this->createStub(ActiveProtocolModuleHolderInterface::class),
-            $ircopRepo ?? $this->createStub(OperIrcopRepositoryInterface::class),
-            $nickRepo ?? $this->createStub(NickProjectionQuery::class),
-        );
-    }
-
     #[Test]
     public function applyForNickReturnsFalseWhenTheRoleHasNoOperclass(): void
     {
@@ -187,5 +149,43 @@ final class IrcopOperclassApplierTest extends TestCase
         $applier->updateForRole(5, null);
 
         self::assertSame([['001', 'UID123', 'TestNick', null]], $actions->operclassCalls);
+    }
+
+    private function createModule(ProtocolServiceActionsInterface $actions, ?string $serverSid = '001'): ActiveProtocolModuleHolderInterface
+    {
+        $module = $this->createStub(ProtocolModuleInterface::class);
+        $module->method('getServiceActions')->willReturn($actions);
+
+        $holder = $this->createStub(ActiveProtocolModuleHolderInterface::class);
+        $holder->method('getProtocolModule')->willReturn($module);
+        $holder->method('getServerSid')->willReturn($serverSid);
+
+        return $holder;
+    }
+
+    private function createNonOperclassModule(string $serverSid = '001'): ActiveProtocolModuleHolderInterface
+    {
+        $module = $this->createStub(ProtocolModuleInterface::class);
+        $module->method('getServiceActions')->willReturn($this->createStub(ProtocolServiceActionsInterface::class));
+
+        $holder = $this->createStub(ActiveProtocolModuleHolderInterface::class);
+        $holder->method('getProtocolModule')->willReturn($module);
+        $holder->method('getServerSid')->willReturn($serverSid);
+
+        return $holder;
+    }
+
+    private function createApplier(
+        ?IdentifiedSessionRegistry $registry = null,
+        ?ActiveProtocolModuleHolderInterface $holder = null,
+        ?OperIrcopRepositoryInterface $ircopRepo = null,
+        ?NickProjectionQuery $nickRepo = null,
+    ): IrcopOperclassApplier {
+        return new IrcopOperclassApplier(
+            $registry ?? new IdentifiedSessionRegistry(),
+            $holder ?? $this->createStub(ActiveProtocolModuleHolderInterface::class),
+            $ircopRepo ?? $this->createStub(OperIrcopRepositoryInterface::class),
+            $nickRepo ?? $this->createStub(NickProjectionQuery::class),
+        );
     }
 }

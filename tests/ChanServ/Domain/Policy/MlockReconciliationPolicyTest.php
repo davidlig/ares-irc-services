@@ -16,6 +16,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function array_map;
+
 #[CoversClass(MlockReconciliationPolicy::class)]
 #[CoversClass(ChannelModeLock::class)]
 #[CoversClass(ChannelSetting::class)]
@@ -26,11 +28,6 @@ use PHPUnit\Framework\TestCase;
 final class MlockReconciliationPolicyTest extends TestCase
 {
     private MlockReconciliationPolicy $policy;
-
-    protected function setUp(): void
-    {
-        $this->policy = new MlockReconciliationPolicy();
-    }
 
     #[Test]
     public function inactiveLockDoesNotReconcile(): void
@@ -127,6 +124,11 @@ final class MlockReconciliationPolicyTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
         new ModeName('');
+    }
+
+    protected function setUp(): void
+    {
+        $this->policy = new MlockReconciliationPolicy();
     }
 
     private function setting(string $name, ?string $parameter = null): ChannelSetting

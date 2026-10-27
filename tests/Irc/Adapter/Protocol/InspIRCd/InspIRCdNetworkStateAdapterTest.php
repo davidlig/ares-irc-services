@@ -24,6 +24,9 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
+use function base64_encode;
+use function inet_pton;
+
 #[CoversClass(InspIRCdNetworkStateAdapter::class)]
 final class InspIRCdNetworkStateAdapterTest extends TestCase
 {

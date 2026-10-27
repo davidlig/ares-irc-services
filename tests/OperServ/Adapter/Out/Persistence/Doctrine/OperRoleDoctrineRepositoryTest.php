@@ -19,22 +19,6 @@ final class OperRoleDoctrineRepositoryTest extends DoctrineIntegrationTestCase
 {
     private OperRoleRepositoryInterface $repository;
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->repository = new OperRoleDoctrineRepository($this->entityManager);
-    }
-
-    private function createRole(string $name, string $description = '', bool $protected = false): OperRole
-    {
-        return OperRole::create($name, $description, $protected);
-    }
-
-    private function createPermission(string $name, string $description = ''): OperPermission
-    {
-        return OperPermission::create($name, $description);
-    }
-
     #[Test]
     public function findReturnsNullWhenNotFound(): void
     {
@@ -253,5 +237,21 @@ final class OperRoleDoctrineRepositoryTest extends DoctrineIntegrationTestCase
         $this->flushAndClear();
 
         self::assertFalse($this->repository->hasPermission($roleId, OperPermission::KILL));
+    }
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->repository = new OperRoleDoctrineRepository($this->entityManager);
+    }
+
+    private function createRole(string $name, string $description = '', bool $protected = false): OperRole
+    {
+        return OperRole::create($name, $description, $protected);
+    }
+
+    private function createPermission(string $name, string $description = ''): OperPermission
+    {
+        return OperPermission::create($name, $description);
     }
 }

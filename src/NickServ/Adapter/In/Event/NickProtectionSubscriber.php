@@ -171,24 +171,6 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
         $this->syncNetworkIdentification->handle(new SyncNetworkIdentification($user, $this->clock->now()));
     }
 
-    private function handleServiceAuthenticationModeChange(UserModesChangedEvent $event): void
-    {
-        if (str_contains($event->modeDelta, '-r')) {
-            return;
-        }
-
-        $this->pendingProtectionRegistry?->cancel($event->uid);
-
-        $senderView = $this->networkUserLookup->findByUid($event->uid);
-        if (null === $senderView || !$senderView->isIdentified) {
-            return;
-        }
-
-        $user = IrcNetworkUserMapper::map($senderView);
-        $this->identifiedUserVhostSync->syncVhostForUser($user);
-        $this->nickProtectionService->enforceProtection($user, $this->clock->now());
-    }
-
     public function onUserQuit(UserLeftNetworkEvent $event): void
     {
         $this->pendingProtectionRegistry?->cancel($event->uid);
@@ -224,6 +206,24 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
 
             $this->nickProtectionService->enforceProtection(IrcNetworkUserMapper::map($senderView), $this->clock->now());
         }
+    }
+
+    private function handleServiceAuthenticationModeChange(UserModesChangedEvent $event): void
+    {
+        if (str_contains($event->modeDelta, '-r')) {
+            return;
+        }
+
+        $this->pendingProtectionRegistry?->cancel($event->uid);
+
+        $senderView = $this->networkUserLookup->findByUid($event->uid);
+        if (null === $senderView || !$senderView->isIdentified) {
+            return;
+        }
+
+        $user = IrcNetworkUserMapper::map($senderView);
+        $this->identifiedUserVhostSync->syncVhostForUser($user);
+        $this->nickProtectionService->enforceProtection($user, $this->clock->now());
     }
 
     private function shouldDeferProtectionCheck(): bool

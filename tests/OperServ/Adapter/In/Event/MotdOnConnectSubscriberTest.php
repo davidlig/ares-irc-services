@@ -35,75 +35,6 @@ final class MotdOnConnectSubscriberTest extends TestCase
 {
     private int $nextMotdId = 1;
 
-    private function dto(string $uid = '001ABC'): UserJoinedNetworkDTO
-    {
-        return new UserJoinedNetworkDTO(
-            uid: $uid,
-            nick: 'TestUser',
-            ident: 'test',
-            hostname: 'test.example',
-            cloakedHost: 'cloak.example',
-            ipBase64: 'dGVzdA==',
-            displayHost: 'test.example',
-        );
-    }
-
-    private function motd(
-        string $text,
-        string $botNickname,
-        string $messageType,
-        ?int $creatorAccountId = null,
-        ?DateTimeImmutable $expiresAt = null,
-    ): MotdEntry {
-        return new MotdEntry(
-            $this->nextMotdId++,
-            $text,
-            $botNickname,
-            'PRIVMSG' === $messageType ? MessageDelivery::Interactive : MessageDelivery::NonInteractive,
-            true,
-            new DateTimeImmutable('2026-09-08T00:00:00+00:00'),
-            $expiresAt,
-            0,
-        );
-    }
-
-    private function sub(
-        ?MotdRepository $r = null,
-        ?ServiceUidRegistry $u = null,
-        ?ActiveProtocolModuleHolderInterface $c = null,
-        ?ChannelLookupPort $cl = null,
-        ?ServiceChannelRegistrationPort $cr = null,
-        ?PseudoClientUidGenerator $p = null,
-        ?NetworkUserLookupPort $l = null,
-        ?NickAccountQuery $n = null,
-        ?SendNoticePort $s = null,
-        ?NickCollisionResolver $f = null,
-        ?string $debugChannel = null,
-    ): MotdOnConnectSubscriber {
-        return new MotdOnConnectSubscriber(
-            $r ?? $this->createStub(MotdRepository::class),
-            $u ?? $this->createStub(ServiceUidRegistry::class),
-            $c ?? $this->createStub(ActiveProtocolModuleHolderInterface::class),
-            $cl ?? $this->createStub(ChannelLookupPort::class),
-            $cr ?? $this->createStub(ServiceChannelRegistrationPort::class),
-            $p ?? $this->createStub(PseudoClientUidGenerator::class),
-            $l ?? $this->createStub(NetworkUserLookupPort::class),
-            $n ?? $this->createStub(NickAccountQuery::class),
-            $s ?? $this->createStub(SendNoticePort::class),
-            $f ?? $this->createStub(NickCollisionResolver::class),
-            $debugChannel,
-        );
-    }
-
-    private function mod(ProtocolServiceActionsInterface $sa): ProtocolModuleInterface
-    {
-        $m = $this->createStub(ProtocolModuleInterface::class);
-        $m->method('getServiceActions')->willReturn($sa);
-        $m->method('getNickReservation')->willReturn($this->createStub(ServiceNickReservationInterface::class));
-
-        return $m;
-    }
-
     #[Test]
     public function events(): void
     {
@@ -639,5 +570,74 @@ final class MotdOnConnectSubscriberTest extends TestCase
 
         $x = $this->sub(r: $r, u: $u, c: $c, p: $p, l: $l, n: $n, debugChannel: '#ircops');
         $x->onSyncComplete();
+    }
+
+    private function dto(string $uid = '001ABC'): UserJoinedNetworkDTO
+    {
+        return new UserJoinedNetworkDTO(
+            uid: $uid,
+            nick: 'TestUser',
+            ident: 'test',
+            hostname: 'test.example',
+            cloakedHost: 'cloak.example',
+            ipBase64: 'dGVzdA==',
+            displayHost: 'test.example',
+        );
+    }
+
+    private function motd(
+        string $text,
+        string $botNickname,
+        string $messageType,
+        ?int $creatorAccountId = null,
+        ?DateTimeImmutable $expiresAt = null,
+    ): MotdEntry {
+        return new MotdEntry(
+            $this->nextMotdId++,
+            $text,
+            $botNickname,
+            'PRIVMSG' === $messageType ? MessageDelivery::Interactive : MessageDelivery::NonInteractive,
+            true,
+            new DateTimeImmutable('2026-09-08T00:00:00+00:00'),
+            $expiresAt,
+            0,
+        );
+    }
+
+    private function sub(
+        ?MotdRepository $r = null,
+        ?ServiceUidRegistry $u = null,
+        ?ActiveProtocolModuleHolderInterface $c = null,
+        ?ChannelLookupPort $cl = null,
+        ?ServiceChannelRegistrationPort $cr = null,
+        ?PseudoClientUidGenerator $p = null,
+        ?NetworkUserLookupPort $l = null,
+        ?NickAccountQuery $n = null,
+        ?SendNoticePort $s = null,
+        ?NickCollisionResolver $f = null,
+        ?string $debugChannel = null,
+    ): MotdOnConnectSubscriber {
+        return new MotdOnConnectSubscriber(
+            $r ?? $this->createStub(MotdRepository::class),
+            $u ?? $this->createStub(ServiceUidRegistry::class),
+            $c ?? $this->createStub(ActiveProtocolModuleHolderInterface::class),
+            $cl ?? $this->createStub(ChannelLookupPort::class),
+            $cr ?? $this->createStub(ServiceChannelRegistrationPort::class),
+            $p ?? $this->createStub(PseudoClientUidGenerator::class),
+            $l ?? $this->createStub(NetworkUserLookupPort::class),
+            $n ?? $this->createStub(NickAccountQuery::class),
+            $s ?? $this->createStub(SendNoticePort::class),
+            $f ?? $this->createStub(NickCollisionResolver::class),
+            $debugChannel,
+        );
+    }
+
+    private function mod(ProtocolServiceActionsInterface $sa): ProtocolModuleInterface
+    {
+        $m = $this->createStub(ProtocolModuleInterface::class);
+        $m->method('getServiceActions')->willReturn($sa);
+        $m->method('getNickReservation')->willReturn($this->createStub(ServiceNickReservationInterface::class));
+
+        return $m;
     }
 }

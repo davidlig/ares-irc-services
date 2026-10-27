@@ -156,6 +156,8 @@ final readonly class ListCommand implements ChanServCommandInterface, IrcopAudit
             ChannelStatus::Suspended => 'list.status_suspended',
             ChannelStatus::PendingDeletion => 'list.status_pending_deletion',
             ChannelStatus::Forbidden => 'list.status_forbidden',
+            ChannelStatus::Pending => 'list.status_pending_registration',
+            ChannelStatus::Rejected => 'list.status_rejected_registration',
         };
 
         $context->reply('list.row', [

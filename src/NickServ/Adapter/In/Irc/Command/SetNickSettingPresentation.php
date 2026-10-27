@@ -10,6 +10,10 @@ use App\NickServ\Application\UseCase\Set\SetNickSettingOutcome;
 use App\NickServ\Application\UseCase\Set\SetNickSettingResult;
 use App\NickServ\Domain\Entity\RegisteredNick;
 
+use function ceil;
+use function implode;
+use function strtolower;
+
 final class SetNickSettingPresentation
 {
     public static function present(NickServContext $context, SetNickSettingResult $result): bool

@@ -6,6 +6,8 @@ namespace App\NickServ\Application\Service;
 
 use App\NickServ\Application\Port\In\NickVhostDisplayResolver;
 
+use function trim;
+
 /**
  * Builds the display vhost sent to the IRCd (user part + optional suffix).
  * E.g. stored "mi-vhost" with suffix "virtual" → "mi-vhost.virtual".

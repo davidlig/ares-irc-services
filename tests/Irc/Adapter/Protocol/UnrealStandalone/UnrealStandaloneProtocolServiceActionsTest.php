@@ -20,22 +20,6 @@ final class UnrealStandaloneProtocolServiceActionsTest extends TestCase
     /** @var list<string> */
     private array $written = [];
 
-    protected function setUp(): void
-    {
-        $this->written = [];
-        $connection = $this->createStub(ConnectionInterface::class);
-        $connection->method('writeLine')->willReturnCallback(function (string $line): void {
-            $this->written[] = $line;
-        });
-        $connection->method('isConnected')->willReturn(true);
-
-        $this->connectionHolder = new ActiveConnectionHolder();
-
-        $reflection = new ReflectionClass($this->connectionHolder);
-        $property = $reflection->getProperty('connection');
-        $property->setValue($this->connectionHolder, $connection);
-    }
-
     #[Test]
     public function setUserAccountSendsSvsloginAndSvs2modeForLogin(): void
     {
@@ -383,5 +367,21 @@ final class UnrealStandaloneProtocolServiceActionsTest extends TestCase
         self::assertCount(1, $this->written);
         self::assertStringContainsString(':001 UID NickServ 1', $this->written[0]);
         self::assertStringContainsString('001AAAAAA', $this->written[0]);
+    }
+
+    protected function setUp(): void
+    {
+        $this->written = [];
+        $connection = $this->createStub(ConnectionInterface::class);
+        $connection->method('writeLine')->willReturnCallback(function (string $line): void {
+            $this->written[] = $line;
+        });
+        $connection->method('isConnected')->willReturn(true);
+
+        $this->connectionHolder = new ActiveConnectionHolder();
+
+        $reflection = new ReflectionClass($this->connectionHolder);
+        $property = $reflection->getProperty('connection');
+        $property->setValue($this->connectionHolder, $connection);
     }
 }

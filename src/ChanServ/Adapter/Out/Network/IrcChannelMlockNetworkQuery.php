@@ -15,7 +15,12 @@ use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\Irc\Application\Port\In\ChannelModeSupportInterface;
 use App\Irc\Application\Port\In\ChannelView;
 
+use function array_filter;
+use function array_map;
+use function array_unique;
+use function array_values;
 use function in_array;
+use function str_split;
 
 final readonly class IrcChannelMlockNetworkQuery implements ChannelMlockNetworkQuery
 {

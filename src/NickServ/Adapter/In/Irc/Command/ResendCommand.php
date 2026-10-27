@@ -12,7 +12,9 @@ use App\NickServ\Application\UseCase\Resend\ResendVerificationOutcome;
 use App\NickServ\Application\UseCase\Resend\ResendVerificationResult;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 
+use function base64_decode;
 use function ceil;
+use function inet_ntop;
 
 final readonly class ResendCommand implements NickServCommandInterface
 {
