@@ -18,22 +18,67 @@ use App\ChanServ\Application\UseCase\ReviewRegistration\ReviewRegistrationHandle
 use App\ChanServ\Application\UseCase\ReviewRegistration\ReviewRegistrationOutcome;
 use App\ChanServ\Application\UseCase\ReviewRegistration\ReviewRegistrationResult;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
+use App\Irc\Adapter\In\Event\CommandExecutedAuditSubscriber;
 use App\Irc\Adapter\Protocol\NullChannelModeSupport;
 use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\Irc\Application\Port\In\ChannelView;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceNicknameRegistry;
+use App\Irc\Application\PublishedEvent\CommandExecutedEvent;
+use App\OperServ\Adapter\Out\Logging\PsrCommandAuditSink;
+use App\OperServ\Application\Port\In\Audit\CommandAuditCategory;
+use App\OperServ\Application\UseCase\RecordCommandAudit;
 use ArrayObject;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(CregCommand::class)]
 final class CregCommandTest extends TestCase
 {
+    #[Test]
+    #[TestWith([true])]
+    #[TestWith([false])]
+    public function successfulDecisionsKeepTheirExistingIrcopLogTrace(bool $accepted): void
+    {
+        $pending = RegisteredChannel::createPendingRegistration(new DateTimeImmutable(), '#test', 7, 'Description');
+        $review = $this->createStub(ReviewRegistrationHandlerInterface::class);
+        $review->method('handle')->willReturn(new ReviewRegistrationResult($accepted ? ReviewRegistrationOutcome::Accepted : ReviewRegistrationOutcome::Rejected));
+        [$command, $context, $messages] = $this->context(
+            $accepted ? ['ACCEPT', '#test'] : ['REJECT', '#test', 'Needs', 'more', 'detail'],
+            $this->channelRepository($pending),
+            $this->createStub(ChanUserAccountPort::class),
+            $review,
+        );
+        $before = new DateTimeImmutable();
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::once())->method('info')->with('Security command audit', self::callback(
+            static fn (array $data): bool => CommandAuditCategory::OperatorAction->value === $data['category']
+                && 'chanserv' === $data['service']
+                && 'Operator' === $data['actor']
+                && 'CREG' === $data['operation']
+                && ChanServPermission::REGISTRATION_REVIEW === $data['permission']
+                && '#test' === $data['target']
+                && ($accepted ? 'accepted' : 'rejected') === $data['metadata_decision']
+                && ($accepted ? !isset($data['reason']) : 'Needs more detail' === $data['reason'])
+                && is_string($data['occurred_at'])
+                && $before->getTimestamp() <= new DateTimeImmutable($data['occurred_at'])->getTimestamp()
+                && new DateTimeImmutable($data['occurred_at'])->getTimestamp() <= new DateTimeImmutable()->getTimestamp(),
+        ));
+        $audit = new CommandExecutedAuditSubscriber(new RecordCommandAudit([new PsrCommandAuditSink($logger)]));
+
+        $outcome = $command->execute($context);
+        $audit->onPublishedCommandExecuted(new CommandExecutedEvent($command, 'chanserv', 'Operator', 'CREG', ChanServPermission::REGISTRATION_REVIEW, $outcome));
+
+        self::assertTrue($outcome->success);
+        self::assertSame([$accepted ? 'creg.accepted' : 'creg.rejected'], iterator_to_array($messages));
+    }
+
     #[Test]
     public function exposesCompleteReviewCommandMetadataAndPermission(): void
     {

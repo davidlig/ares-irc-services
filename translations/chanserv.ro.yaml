@@ -40,7 +40,7 @@ register:
 
   awaiting_approval: "\x0307✔\x03 Cererea de înregistrare pentru \x02%channel%\x02 așteaptă aprobarea unui IRCop."
   restricted_indefinite: "\x0304✗\x03 Cereri noi pentru \x02%channel%\x02 sunt blocate pe termen nelimitat."
-  restricted_until: "\x0304✗\x03 Cereri noi pentru \x02%channel%\x02 sunt blocate până la %date% (aproximativ %remaining_seconds% secunde rămase)."
+  restricted_until: "\x0304✗\x03 Cereri noi pentru \x02%channel%\x02 sunt blocate până la %date%"
 
 # --- REGMODE ---------------------------------------------------------------
 regmode:
@@ -107,7 +107,7 @@ status:
   rejection_reason: "  \x0314Motiv\x03: %reason%"
   rejection_audit: "  \x0314Respinsă de\x03: %operator% la %date%"
   restriction_indefinite: "  \x0314Cererile noi sunt blocate pe termen nelimitat.\x03"
-  restriction_until: "  \x0314Cererile noi sunt blocate până la %date% (aproximativ %remaining_seconds% secunde rămase).\x03"
+  restriction_until: "  \x0314Cererile noi sunt blocate până la %date%\x03"
   restriction_expired: "  \x0314Restricția de înregistrare s-a încheiat la %date%.\x03"
 
 # --- INFO ------------------------------------------------------------------

@@ -138,16 +138,8 @@ Channel hard drop (`ChannelDropCleanupEvent`, published inside the deletion tran
 | `channel_levels` | delete | ChanServ |
 | `channel_akick` | delete | ChanServ |
 | `channel_history` | delete | ChanServ |
-| `channel_registration_audit` | delete with the current registration | ChanServ |
 | `memos` / `memo_settings` / `memo_ignores` targeting the channel | delete | MemoServ |
 | UDB `C` block projection | delete after commit | UnrealUdb |
-
-Registration-decision audit belongs to the current registration, not permanently to its name.
-`RegisteredChannelDoctrineRepository::delete` removes it in the same transaction as the
-registration, including expired-rejection replacement and pending-request cleanup. Soft DROP
-and RESTORE preserve it. Removing a requesting nickname also preserves it when the rejected
-registration survives; a new registration never inherits the deleted registration's audit.
-The audit's account identifiers are snapshots, not nickname-owned dependent records.
 
 Nickname hard drop (`NickDropCleanupEvent`, published inside the deletion transaction):
 

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\ChanServ\Adapter\Out\Persistence\Doctrine;
 
-use App\ChanServ\Adapter\Out\Persistence\Doctrine\DoctrineChannelRegistrationAuditRepository;
 use App\ChanServ\Adapter\Out\Persistence\Doctrine\RegisteredChannelDoctrineRepository;
 use App\ChanServ\Application\Port\Out\ChanTransactionBoundary;
 use App\ChanServ\Application\Port\Out\RegistrationModeQuery;
@@ -14,7 +13,6 @@ use App\ChanServ\Application\UseCase\CleanupDroppedNick\CleanupDroppedNickData;
 use App\ChanServ\Application\UseCase\CleanupDroppedNick\CleanupDroppedNickDataHandler;
 use App\ChanServ\Application\UseCase\RegisterChannel\RegisterChannel;
 use App\ChanServ\Application\UseCase\RegisterChannel\RegisterChannelHandler;
-use App\ChanServ\Domain\Entity\ChannelRegistrationAudit;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\ValueObject\RegistrationMode;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
@@ -34,17 +32,18 @@ use ReflectionNamedType;
 final class ApprovalRestrictionCleanupTest extends DoctrineIntegrationTestCase
 {
     #[Test]
-    public function recoverableDropAndRestoreKeepAuditUntilDefinitiveDrop(): void
+    public function mappedRegistrationSchemaDoesNotHaveDedicatedAuditStorage(): void
+    {
+        self::assertFalse($this->entityManager->getConnection()->createSchemaManager()->tablesExist(['channel_registration_audit']));
+    }
+
+    #[Test]
+    public function recoverableDropAndRestorePreserveRegistrationUntilDefinitiveDrop(): void
     {
         $at = new DateTimeImmutable('2026-10-27T12:00:00+00:00');
         $channels = new RegisteredChannelDoctrineRepository($this->entityManager);
         $channel = RegisteredChannel::register($at, '#test', 7, 'description');
         $channels->save($channel);
-        new DoctrineChannelRegistrationAuditRepository($this->entityManager)->save(
-            ChannelRegistrationAudit::recordDecision('#test', 7, 9, 'Root', true, null, null, $at),
-        );
-        $connection = $this->entityManager->getConnection();
-        $before = $connection->fetchAllAssociative('SELECT * FROM channel_registration_audit');
         $drop = $this->construct(ChanDropService::class, [
             'channelRepository' => $channels,
             'transactionBoundary' => $this->transactionBoundary(),
@@ -52,28 +51,22 @@ final class ApprovalRestrictionCleanupTest extends DoctrineIntegrationTestCase
 
         $drop->softDropChannel($channel, $at);
         self::assertTrue($channel->isPendingDeletion());
-        self::assertSame($before, $connection->fetchAllAssociative('SELECT * FROM channel_registration_audit'));
         $drop->restoreChannel($channel, $at);
         self::assertFalse($channel->isPendingDeletion());
-        self::assertSame($before, $connection->fetchAllAssociative('SELECT * FROM channel_registration_audit'));
         $drop->hardDropChannel($channel, $at);
         self::assertNull($channels->findByChannelName('#test'));
-        self::assertSame([], $connection->fetchAllAssociative('SELECT * FROM channel_registration_audit'));
     }
 
     #[Test]
     #[TestWith([false])]
     #[TestWith([true])]
-    public function expiredRejectionReplacementRemovesOldAuditAndFailureRollsBackBoth(bool $fail): void
+    public function expiredRejectionReplacementStartsFreshAndFailurePreservesRejection(bool $fail): void
     {
         $at = new DateTimeImmutable('2026-10-27T12:00:00+00:00');
         $channels = new RegisteredChannelDoctrineRepository($this->entityManager);
         $channel = RegisteredChannel::createPendingRegistration($at->modify('-2 days'), '#test', 7, 'description');
         $channel->rejectRegistration('Reason', 9, 'Root', $at->modify('-2 days'), $at->modify('-1 day'));
         $channels->save($channel);
-        new DoctrineChannelRegistrationAuditRepository($this->entityManager)->save(
-            ChannelRegistrationAudit::recordDecision('#TEST', 7, 9, 'Root', false, 'Reason', $at->modify('-1 day'), $at),
-        );
         $mode = $this->createStub(RegistrationModeQuery::class);
         $mode->method('current')->willReturn(RegistrationMode::Approval);
         $register = $this->construct(RegisterChannelHandler::class, [
@@ -85,7 +78,6 @@ final class ApprovalRestrictionCleanupTest extends DoctrineIntegrationTestCase
         $command = new RegisterChannel('#TEST', 'New request', 8, 'Other', true, false, true, true, $at);
         $connection = $this->entityManager->getConnection();
         $beforeChannel = $connection->fetchAllAssociative('SELECT * FROM registered_channels');
-        $beforeAudit = $connection->fetchAllAssociative('SELECT * FROM channel_registration_audit');
         if ($fail) {
             $connection->executeStatement("CREATE TRIGGER prevent_insert BEFORE INSERT ON registered_channels BEGIN SELECT RAISE(ABORT, 'Replacement failed'); END");
         }
@@ -94,7 +86,6 @@ final class ApprovalRestrictionCleanupTest extends DoctrineIntegrationTestCase
         } catch (DriverException) {
             self::assertTrue($fail);
             self::assertSame($beforeChannel, $connection->fetchAllAssociative('SELECT * FROM registered_channels'));
-            self::assertSame($beforeAudit, $connection->fetchAllAssociative('SELECT * FROM channel_registration_audit'));
 
             return;
         }
@@ -105,7 +96,6 @@ final class ApprovalRestrictionCleanupTest extends DoctrineIntegrationTestCase
         self::assertNotNull($replacement);
         self::assertTrue($replacement->isPendingRegistration());
         self::assertSame(8, $replacement->getFounderNickId());
-        self::assertSame([], $connection->fetchAllAssociative('SELECT * FROM channel_registration_audit'));
     }
 
     private function transactionBoundary(): ChanTransactionBoundary
@@ -117,7 +107,7 @@ final class ApprovalRestrictionCleanupTest extends DoctrineIntegrationTestCase
     }
 
     #[Test]
-    public function requesterCleanupOrphansRejectionsButPreservesRestrictionsAndAudit(): void
+    public function requesterCleanupOrphansRejectionsButPreservesRestrictions(): void
     {
         $at = new DateTimeImmutable('2026-10-26T12:00:00+00:00');
         $channels = new RegisteredChannelDoctrineRepository($this->entityManager);
@@ -125,9 +115,6 @@ final class ApprovalRestrictionCleanupTest extends DoctrineIntegrationTestCase
             $request = RegisteredChannel::createPendingRegistration($at, $name, 7, 'description');
             $request->rejectRegistration('Reason', 9, 'Root', $at, $until);
             $channels->save($request);
-            new DoctrineChannelRegistrationAuditRepository($this->entityManager)->save(
-                ChannelRegistrationAudit::recordDecision($name, 7, 9, 'Root', false, 'Reason', $until, $at),
-            );
         }
         $this->flushAndClear();
 
@@ -150,7 +137,6 @@ final class ApprovalRestrictionCleanupTest extends DoctrineIntegrationTestCase
         self::assertSame(['Reason', 'Reason'], array_column($rows, 'registration_rejection_reason'));
         self::assertNotNull($rows[0]['registration_restricted_until']);
         self::assertNull($rows[1]['registration_restricted_until']);
-        self::assertSame(2, $this->tableCount('channel_registration_audit'));
 
         $mode = $this->createStub(RegistrationModeQuery::class);
         $mode->method('current')->willReturn(RegistrationMode::Approval);
@@ -167,17 +153,6 @@ final class ApprovalRestrictionCleanupTest extends DoctrineIntegrationTestCase
         $this->flushAndClear();
         $after = hash('sha256', serialize($this->entityManager->getConnection()->fetchAllAssociative('SELECT * FROM registered_channels ORDER BY name')));
         self::assertSame($before, $after);
-        self::assertSame(2, $this->tableCount('channel_registration_audit'));
-    }
-
-    private function tableCount(string $table): int
-    {
-        $count = $this->entityManager->getConnection()->fetchOne('SELECT COUNT(*) FROM ' . $table);
-        if (!is_numeric($count)) {
-            throw new LogicException('Expected a numeric table count.');
-        }
-
-        return (int) $count;
     }
 
     /**

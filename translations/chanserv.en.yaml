@@ -32,7 +32,7 @@ register:
   success: "\x0303✔\x03 Channel \x02%channel%\x02 has been registered."
   awaiting_approval: "\x0307✔\x03 Registration request for \x02%channel%\x02 is awaiting IRCop approval."
   restricted_indefinite: "\x0304✗\x03 New registration requests for \x02%channel%\x02 are blocked indefinitely."
-  restricted_until: "\x0304✗\x03 New registration requests for \x02%channel%\x02 are blocked until %date% (about %remaining_seconds% seconds remaining)."
+  restricted_until: "\x0304✗\x03 New registration requests for \x02%channel%\x02 are blocked until %date%"
   already_registered: "\x0304✗\x03 Channel \x02%channel%\x02 is already registered."
   channel_not_on_network: "\x0304✗\x03 Channel \x02%channel%\x02 does not exist on the network."
   pending_deletion: "\x0304✗\x03 Channel \x02%channel%\x02 is pending deletion and cannot be registered."
@@ -100,7 +100,7 @@ status:
   rejection_reason: "  \x0314Reason\x03: %reason%"
   rejection_audit: "  \x0314Rejected by\x03: %operator% on %date%"
   restriction_indefinite: "  \x0314New requests are blocked indefinitely.\x03"
-  restriction_until: "  \x0314New requests are blocked until %date% (about %remaining_seconds% seconds remaining).\x03"
+  restriction_until: "  \x0314New requests are blocked until %date%\x03"
   restriction_expired: "  \x0314The registration restriction ended at %date%.\x03"
 
 # --- INFO ------------------------------------------------------------------

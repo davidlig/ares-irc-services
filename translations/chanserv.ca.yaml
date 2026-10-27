@@ -40,7 +40,7 @@ register:
 
   awaiting_approval: "\x0307✔\x03 Les sol·licituds per a %channel% esperen l’aprovació d’un IRCop."
   restricted_indefinite: "\x0304✗\x03 Les noves sol·licituds per a \x02%channel%\x02 estan bloquejades indefinidament."
-  restricted_until: "\x0304✗\x03 Les noves sol·licituds per a \x02%channel%\x02 estan bloquejades fins a %date% (queden aproximadament %remaining_seconds% segons)."
+  restricted_until: "\x0304✗\x03 Les noves sol·licituds per a \x02%channel%\x02 estan bloquejades fins a %date%"
 
 # --- REGMODE ---------------------------------------------------------------
 regmode:
@@ -104,7 +104,7 @@ status:
   rejection_reason: "  \x0314Motiu\x03: %reason%"
   rejection_audit: "  \x0314Rebutjat per\x03: %operator% el %date%"
   restriction_indefinite: "  \x0314Les noves sol·licituds estan bloquejades indefinidament.\x03"
-  restriction_until: "  \x0314Les noves sol·licituds estan bloquejades fins a %date% (queden aproximadament %remaining_seconds% segons).\x03"
+  restriction_until: "  \x0314Les noves sol·licituds estan bloquejades fins a %date%\x03"
   restriction_expired: "  \x0314La restricció de registre va acabar el %date%.\x03"
 
 # --- INFO ------------------------------------------------------------------

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Application\UseCase\ReviewRegistration;
 
-use App\ChanServ\Application\Port\Out\ChannelRegistrationAuditRepository;
 use App\ChanServ\Application\Port\Out\ChanTransactionBoundary;
 use App\ChanServ\Application\Port\Out\ChanUserAccountPort;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
@@ -12,7 +11,6 @@ use App\ChanServ\Application\PublishedEvent\ChannelRegisteredEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelRegistrationDecisionEvent;
 use App\ChanServ\Application\Service\ChannelHistoryService;
 use App\ChanServ\Application\Service\ChannelRegistrationActivator;
-use App\ChanServ\Domain\Entity\ChannelRegistrationAudit;
 use App\Shared\Application\Port\EventBusInterface;
 use InvalidArgumentException;
 
@@ -27,7 +25,6 @@ final readonly class ReviewRegistrationHandler implements ReviewRegistrationHand
         private EventBusInterface $events,
         private ChannelHistoryService $history,
         private ChanUserAccountPort $accounts,
-        private ChannelRegistrationAuditRepository $audit,
         private ChanTransactionBoundary $transactionBoundary,
         private int $maxChannelsPerNick = 3,
         private int $rejectionCooldownHours = 24,
@@ -84,22 +81,12 @@ final readonly class ReviewRegistrationHandler implements ReviewRegistrationHand
         }
 
         $restrictedUntil = $channel->getRegistrationRestrictedUntil();
-        $this->transactionBoundary->transactional(function () use ($channel, $accepted, $requesterId, $command, $restrictedUntil): void {
+        $this->transactionBoundary->transactional(function () use ($channel, $accepted, $command): void {
             if ($accepted) {
                 $this->activator->activate($channel);
             }
 
             $this->channels->save($channel);
-            $this->audit->save(ChannelRegistrationAudit::recordDecision(
-                $channel->getName(),
-                $requesterId,
-                $command->operatorAccountId,
-                $command->operatorNickname,
-                $accepted,
-                $accepted ? null : $command->rejectionReason,
-                $accepted ? null : $restrictedUntil,
-                $command->occurredAt,
-            ));
             if ($accepted) {
                 $this->history->recordWithExplicitMetadata(
                     channelId: $channel->getId(),

@@ -39,7 +39,7 @@ register:
 
   awaiting_approval: "\x0307✔\x03 \x02%channel%\x02 kayıt isteği bir IRCop onayı bekliyor."
   restricted_indefinite: "\x0304✗\x03 \x02%channel%\x02 için yeni istekler süresiz olarak engellendi."
-  restricted_until: "\x0304✗\x03 \x02%channel%\x02 için yeni istekler %date% tarihine kadar engellendi (yaklaşık %remaining_seconds% saniye kaldı)."
+  restricted_until: "\x0304✗\x03 \x02%channel%\x02 için yeni istekler %date% tarihine kadar engellendi"
 
 # --- REGMODE ---------------------------------------------------------------
 regmode:
@@ -105,7 +105,7 @@ status:
   rejection_reason: "  \x0314Neden\x03: %reason%"
   rejection_audit: "  \x0314Reddeden\x03: %operator%, tarih: %date%"
   restriction_indefinite: "  \x0314Yeni istekler süresiz engellendi.\x03"
-  restriction_until: "  \x0314Yeni istekler %date% tarihine kadar engellendi (yaklaşık %remaining_seconds% saniye kaldı).\x03"
+  restriction_until: "  \x0314Yeni istekler %date% tarihine kadar engellendi\x03"
   restriction_expired: "  \x0314Kayıt kısıtlaması %date% tarihinde sona erdi.\x03"
 
 # --- INFO ------------------------------------------------------------------

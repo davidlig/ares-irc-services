@@ -107,6 +107,10 @@ Manages channel registration, hierarchical access, policy, channel state, and ch
 IRCop permissions and each command's syntax are available through ChanServ HELP. REGMODE
 selects DIRECT registration (the default) or approval-based requests. IRCops review requests
 with CREG; STATUS reports lifecycle state without exposing pending requests through INFO.
+ACCEPT and REJECT use the existing IRCop command audit; only ACCEPT adds channel HISTORY.
+Rejection details and restrictions remain on the current channel registration.
+Migration `Version20261027000001` removes the redundant registration-audit table and its data;
+back up the database before applying it. Downgrading recreates that table empty, not its deleted rows.
 
 ### MemoServ
 

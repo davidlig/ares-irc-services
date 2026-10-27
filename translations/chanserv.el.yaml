@@ -40,7 +40,7 @@ register:
 
   awaiting_approval: "\x0307✔\x03 Το αίτημα για το %channel% αναμένει έγκριση από IRCop."
   restricted_indefinite: "\x0304✗\x03 Τα νέα αιτήματα εγγραφής για \x02%channel%\x02 αποκλείονται επ’ αόριστον."
-  restricted_until: "\x0304✗\x03 Τα νέα αιτήματα εγγραφής για \x02%channel%\x02 αποκλείονται έως %date% (απομένουν περίπου %remaining_seconds% δευτερόλεπτα)."
+  restricted_until: "\x0304✗\x03 Τα νέα αιτήματα εγγραφής για \x02%channel%\x02 αποκλείονται έως %date%"
 
 # --- REGMODE ---------------------------------------------------------------
 regmode:
@@ -104,7 +104,7 @@ status:
   rejection_reason: "  \x0314Αιτιολογία\x03: %reason%"
   rejection_audit: "  \x0314Απορρίφθηκε από\x03: %operator% στις %date%"
   restriction_indefinite: "  \x0314Τα νέα αιτήματα αποκλείονται επ’ αόριστον.\x03"
-  restriction_until: "  \x0314Τα νέα αιτήματα αποκλείονται έως %date% (απομένουν περίπου %remaining_seconds% δευτερόλεπτα).\x03"
+  restriction_until: "  \x0314Τα νέα αιτήματα αποκλείονται έως %date%\x03"
   restriction_expired: "  \x0314Ο περιορισμός εγγραφής έληξε στις %date%.\x03"
 
 # --- INFO ------------------------------------------------------------------

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\ChanServ\Adapter\Out\Persistence\Doctrine;
 
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
-use App\ChanServ\Domain\Entity\ChannelRegistrationAudit;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\ValueObject\ChannelStatus;
 use DateTimeImmutable;
@@ -34,13 +33,8 @@ final readonly class RegisteredChannelDoctrineRepository implements RegisteredCh
 
     public function delete(RegisteredChannel $channel): void
     {
-        $this->em->wrapInTransaction(function () use ($channel): void {
-            $this->em->remove($channel);
-            $this->em->flush();
-            $this->em->createQuery('DELETE FROM ' . ChannelRegistrationAudit::class . ' audit WHERE LOWER(audit.channelName) = :channelName')
-                ->setParameter('channelName', $channel->getNameLower())
-                ->execute();
-        });
+        $this->em->remove($channel);
+        $this->em->flush();
     }
 
     public function findByChannelName(string $channelName): ?RegisteredChannel

@@ -40,7 +40,7 @@ register:
 
   awaiting_approval: "\x0307✔\x03 Registratieaanvraag voor \x02%channel%\x02 wacht op goedkeuring door een IRCop."
   restricted_indefinite: "\x0304✗\x03 Nieuwe aanvragen voor \x02%channel%\x02 zijn onbeperkt geblokkeerd."
-  restricted_until: "\x0304✗\x03 Nieuwe aanvragen voor \x02%channel%\x02 zijn geblokkeerd tot %date% (nog ongeveer %remaining_seconds% seconden)."
+  restricted_until: "\x0304✗\x03 Nieuwe aanvragen voor \x02%channel%\x02 zijn geblokkeerd tot %date%"
 
 # --- REGMODE ---------------------------------------------------------------
 regmode:
@@ -106,7 +106,7 @@ status:
   rejection_reason: "  \x0314Reden\x03: %reason%"
   rejection_audit: "  \x0314Afgewezen door\x03: %operator% op %date%"
   restriction_indefinite: "  \x0314Nieuwe aanvragen zijn onbeperkt geblokkeerd.\x03"
-  restriction_until: "  \x0314Nieuwe aanvragen zijn geblokkeerd tot %date% (nog circa %remaining_seconds% seconden).\x03"
+  restriction_until: "  \x0314Nieuwe aanvragen zijn geblokkeerd tot %date%\x03"
   restriction_expired: "  \x0314De registratiebeperking eindigde op %date%.\x03"
 
 # --- INFO ------------------------------------------------------------------

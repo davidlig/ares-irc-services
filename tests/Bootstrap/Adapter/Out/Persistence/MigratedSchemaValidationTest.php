@@ -81,6 +81,7 @@ final class MigratedSchemaValidationTest extends TestCase
     {
         $this->migrate();
         $this->insertRecord();
+        self::assertFalse($this->connection->createSchemaManager()->tablesExist(['channel_registration_audit']));
         $before = $this->snapshot();
         $this->validate(0);
         self::assertSame($before, $this->snapshot());

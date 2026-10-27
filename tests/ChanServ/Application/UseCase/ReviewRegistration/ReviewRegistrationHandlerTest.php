@@ -8,7 +8,6 @@ use App\ChanServ\Application\Model\ChanAccountView;
 use App\ChanServ\Application\Port\Out\ChannelAkickRepositoryInterface;
 use App\ChanServ\Application\Port\Out\ChannelHistoryRepositoryInterface;
 use App\ChanServ\Application\Port\Out\ChannelLevelRepositoryInterface;
-use App\ChanServ\Application\Port\Out\ChannelRegistrationAuditRepository;
 use App\ChanServ\Application\Port\Out\ChanTransactionBoundary;
 use App\ChanServ\Application\Port\Out\ChanUserAccountPort;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
@@ -22,7 +21,6 @@ use App\ChanServ\Application\UseCase\ReviewRegistration\ReviewRegistrationOutcom
 use App\ChanServ\Application\UseCase\ReviewRegistration\ReviewRegistrationResult;
 use App\ChanServ\Domain\Entity\ChannelHistory;
 use App\ChanServ\Domain\Entity\ChannelLevel;
-use App\ChanServ\Domain\Entity\ChannelRegistrationAudit;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\ValueObject\ChannelStatus;
 use App\Shared\Application\Port\EventBusInterface;
@@ -69,7 +67,6 @@ final class ReviewRegistrationHandlerTest extends TestCase
             $this->createStub(EventBusInterface::class),
             new ChannelHistoryService($this->createStub(ChannelHistoryRepositoryInterface::class)),
             $accounts,
-            $this->createStub(ChannelRegistrationAuditRepository::class),
             $this->createStub(ChanTransactionBoundary::class),
         );
 
@@ -85,8 +82,6 @@ final class ReviewRegistrationHandlerTest extends TestCase
         $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channels->expects(self::once())->method('findByChannelName')->willReturn($pending);
         $channels->expects(self::once())->method('save')->with($pending);
-        $audit = $this->createMock(ChannelRegistrationAuditRepository::class);
-        $audit->expects(self::once())->method('save')->with(self::callback(static fn (ChannelRegistrationAudit $record): bool => !$record->wasAccepted() && null === $record->getRestrictedUntil() && 'Reason' === $record->getRejectionReason()));
         $transaction = $this->createMock(ChanTransactionBoundary::class);
         $transaction->expects(self::once())->method('transactional')->willReturnCallback(static fn (callable $operation): mixed => $operation());
         $events = $this->createMock(EventBusInterface::class);
@@ -97,7 +92,6 @@ final class ReviewRegistrationHandlerTest extends TestCase
             $events,
             new ChannelHistoryService($this->createStub(ChannelHistoryRepositoryInterface::class)),
             $this->createStub(ChanUserAccountPort::class),
-            $audit,
             $transaction,
             rejectionCooldownHours: 0,
         );
@@ -113,7 +107,6 @@ final class ReviewRegistrationHandlerTest extends TestCase
             $this->createStub(EventBusInterface::class),
             new ChannelHistoryService($this->createStub(ChannelHistoryRepositoryInterface::class)),
             $this->createStub(ChanUserAccountPort::class),
-            $this->createStub(ChannelRegistrationAuditRepository::class),
             $this->createStub(ChanTransactionBoundary::class),
             rejectionCooldownHours: -1,
         );
@@ -138,7 +131,6 @@ final class ReviewRegistrationHandlerTest extends TestCase
             $this->createStub(EventBusInterface::class),
             new ChannelHistoryService($this->createStub(ChannelHistoryRepositoryInterface::class)),
             $accounts,
-            $this->createStub(ChannelRegistrationAuditRepository::class),
             $this->createStub(ChanTransactionBoundary::class),
         );
 
@@ -171,11 +163,9 @@ final class ReviewRegistrationHandlerTest extends TestCase
 
         $accounts = $this->createMock(ChanUserAccountPort::class);
         $accounts->expects(self::once())->method('findAccountById')->with(7)->willReturn(new ChanAccountView(7, 'Requester', 'en'));
-        $audit = $this->createMock(ChannelRegistrationAuditRepository::class);
-        $audit->expects(self::once())->method('save');
         $transaction = $this->createMock(ChanTransactionBoundary::class);
         $transaction->expects(self::once())->method('transactional')->willReturnCallback(static fn (callable $operation): mixed => $operation());
-        $handler = new ReviewRegistrationHandler($channels, new ChannelRegistrationActivator($levels, $akicks), $events, new ChannelHistoryService($history), $accounts, $audit, $transaction);
+        $handler = new ReviewRegistrationHandler($channels, new ChannelRegistrationActivator($levels, $akicks), $events, new ChannelHistoryService($history), $accounts, $transaction);
         $result = $handler->handle(new ReviewRegistration('#test', true, 9, 'ApprovingOper', $at, requesterHasRequiredChannelRank: true));
 
         self::assertSame(ReviewRegistrationOutcome::Accepted, $result->outcome);
@@ -197,8 +187,6 @@ final class ReviewRegistrationHandlerTest extends TestCase
         $akicks->expects(self::never())->method('deleteByChannelId');
         $events = $this->createMock(EventBusInterface::class);
         $events->expects(self::once())->method('dispatch')->with(self::isInstanceOf(ChannelRegistrationDecisionEvent::class));
-        $audit = $this->createMock(ChannelRegistrationAuditRepository::class);
-        $audit->expects(self::once())->method('save');
         $transaction = $this->createMock(ChanTransactionBoundary::class);
         $transaction->expects(self::once())->method('transactional')->willReturnCallback(static fn (callable $operation): mixed => $operation());
         $history = $this->createMock(ChannelHistoryRepositoryInterface::class);
@@ -210,7 +198,6 @@ final class ReviewRegistrationHandlerTest extends TestCase
             $events,
             new ChannelHistoryService($history),
             $this->createStub(ChanUserAccountPort::class),
-            $audit,
             $transaction,
             rejectionCooldownHours: 24,
         );
@@ -220,6 +207,8 @@ final class ReviewRegistrationHandlerTest extends TestCase
         self::assertSame(ChannelStatus::Rejected, $channel->getStatus());
         self::assertSame('Needs a public topic', $channel->getRegistrationRejectionReason());
         self::assertSame('ApprovingOper', $channel->getRegistrationRejectedByNickname());
+        self::assertSame(9, $channel->getRegistrationRejectedByAccountId());
+        self::assertSame($at->format(DATE_ATOM), $channel->getRegistrationRejectedAt()?->format(DATE_ATOM));
         self::assertSame($at->modify('+24 hours')->format(DATE_ATOM), $channel->getRegistrationRestrictedUntil()?->format(DATE_ATOM));
     }
 
@@ -242,7 +231,6 @@ final class ReviewRegistrationHandlerTest extends TestCase
             $this->neverDispatchEvents(),
             new ChannelHistoryService($this->createStub(ChannelHistoryRepositoryInterface::class)),
             $accounts,
-            $this->createStub(ChannelRegistrationAuditRepository::class),
             $transaction,
         );
 
@@ -278,7 +266,6 @@ final class ReviewRegistrationHandlerTest extends TestCase
             $events,
             new ChannelHistoryService($this->createStub(ChannelHistoryRepositoryInterface::class)),
             $accounts,
-            $this->createStub(ChannelRegistrationAuditRepository::class),
             $transaction,
             maxChannelsPerNick: 3,
         );
@@ -302,7 +289,6 @@ final class ReviewRegistrationHandlerTest extends TestCase
             $this->createStub(EventBusInterface::class),
             new ChannelHistoryService($this->createStub(ChannelHistoryRepositoryInterface::class)),
             $this->createStub(ChanUserAccountPort::class),
-            $this->createStub(ChannelRegistrationAuditRepository::class),
             $this->createStub(ChanTransactionBoundary::class),
         );
 
@@ -336,7 +322,6 @@ final class ReviewRegistrationHandlerTest extends TestCase
             $this->neverDispatchEvents(),
             new ChannelHistoryService($this->createStub(ChannelHistoryRepositoryInterface::class)),
             $accounts,
-            $this->createStub(ChannelRegistrationAuditRepository::class),
             $transaction,
             maxChannelsPerNick: 3,
         );

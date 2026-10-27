@@ -40,7 +40,7 @@ register:
 
   awaiting_approval: "\x0307✔\x03 %channel% eskaerak IRCop baten onespena behar du."
   restricted_indefinite: "\x0304✗\x03 Erregistro-eskaera berriak \x02%channel%\x02 mugagabe blokeatuta daude."
-  restricted_until: "\x0304✗\x03 Erregistro-eskaera berriak \x02%channel%\x02 %date% arte blokeatuta daude (gutxi gorabehera %remaining_seconds% segundo falta dira)."
+  restricted_until: "\x0304✗\x03 Erregistro-eskaera berriak \x02%channel%\x02 %date% arte blokeatuta daude"
 
 # --- REGMODE ---------------------------------------------------------------
 regmode:
@@ -104,7 +104,7 @@ status:
   rejection_reason: "  \x0314Arrazoia\x03: %reason%"
   rejection_audit: "  \x0314Nork ukatua\x03: %operator%, %date% egunean"
   restriction_indefinite: "  \x0314Eskaera berriak mugagabe blokeatuta daude.\x03"
-  restriction_until: "  \x0314Eskaera berriak %date% arte blokeatuta daude (gutxi gorabehera %remaining_seconds% segundo falta dira).\x03"
+  restriction_until: "  \x0314Eskaera berriak %date% arte blokeatuta daude\x03"
   restriction_expired: "  \x0314Erregistro-murrizketa %date% egunean amaitu zen.\x03"
 
 # --- INFO ------------------------------------------------------------------

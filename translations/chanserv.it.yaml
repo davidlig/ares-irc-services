@@ -40,7 +40,7 @@ register:
 
   awaiting_approval: "\x0307✔\x03 La richiesta di registrazione per \x02%channel%\x02 attende l’approvazione di un IRCop."
   restricted_indefinite: "\x0304✗\x03 Le nuove richieste per \x02%channel%\x02 sono bloccate a tempo indeterminato."
-  restricted_until: "\x0304✗\x03 Le nuove richieste per \x02%channel%\x02 sono bloccate fino al %date% (circa %remaining_seconds% secondi rimanenti)."
+  restricted_until: "\x0304✗\x03 Le nuove richieste per \x02%channel%\x02 sono bloccate fino al %date%"
 
 # --- REGMODE ---------------------------------------------------------------
 regmode:
@@ -107,7 +107,7 @@ status:
   rejection_reason: "  \x0314Motivo\x03: %reason%"
   rejection_audit: "  \x0314Rifiutato da\x03: %operator% il %date%"
   restriction_indefinite: "  \x0314Le nuove richieste sono bloccate a tempo indeterminato.\x03"
-  restriction_until: "  \x0314Le nuove richieste sono bloccate fino al %date% (circa %remaining_seconds% secondi rimanenti).\x03"
+  restriction_until: "  \x0314Le nuove richieste sono bloccate fino al %date%\x03"
   restriction_expired: "  \x0314Il blocco alla registrazione è terminato il %date%.\x03"
 
 # --- INFO ------------------------------------------------------------------

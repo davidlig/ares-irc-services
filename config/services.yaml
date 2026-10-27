@@ -228,8 +228,6 @@ services:
     alias: App\ChanServ\Adapter\Out\Persistence\Doctrine\DoctrineRegistrationPolicyRepository
   App\ChanServ\Application\Port\Out\RegistrationPolicyRepository:
     alias: App\ChanServ\Adapter\Out\Persistence\Doctrine\DoctrineRegistrationPolicyRepository
-  App\ChanServ\Application\Port\Out\ChannelRegistrationAuditRepository:
-    alias: App\ChanServ\Adapter\Out\Persistence\Doctrine\DoctrineChannelRegistrationAuditRepository
   App\ChanServ\Application\UseCase\ReviewRegistration\ReviewRegistrationHandler:
     arguments:
       $rejectionCooldownHours: "%chanserv.reject_cooldown_hours%"
