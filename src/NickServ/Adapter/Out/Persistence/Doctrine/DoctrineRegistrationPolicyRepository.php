@@ -13,6 +13,8 @@ use RuntimeException;
 use UnexpectedValueException;
 
 use function is_string;
+use function json_decode;
+use function json_encode;
 
 /** Live queries avoid stale settings in the long-running daemon identity map. */
 final readonly class DoctrineRegistrationPolicyRepository implements RegistrationPolicyRepository
