@@ -19,5 +19,6 @@ final readonly class ManageChannelLifecycle
         public ?string $reason = null,
         public ?string $duration = null,
         public bool $force = false,
+        public bool $releaseRejectedRegistration = false,
     ) {}
 }

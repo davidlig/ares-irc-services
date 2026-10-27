@@ -30,7 +30,7 @@ register:
     Kanalı kaydedip takma adına bağlar. %nickserv% ile kimliğini doğrula.
     APPROVAL modunda bir IRCop isteği onaylamalıdır.
   success: "\x0303✔\x03 \x02%channel%\x02 kanalı kaydedildi."
-  already_registered: "\x0304✗\x03 \x02%channel%\x02 kanalı zaten kayıtlı."
+  already_registered: "\x0304✗\x03 Kanal \x02%channel%\x02 zaten kayıtlı veya kayıt isteği işleniyor."
   channel_not_on_network: "\x0304✗\x03 \x02%channel%\x02 kanalı ağda mevcut değil."
   pending_deletion: "\x0304✗\x03 \x02%channel%\x02 kanalı silinmeyi bekliyor ve kaydedilemez."
   insufficient_channel_rank: "\x0304✗\x03 Bu kanalı kaydetmek için \x02%channel%\x02 üzerinde en az operatör durumunda olmalısınız."
@@ -77,7 +77,7 @@ creg:
   pending_header: "\x0314Bekleyen kayıtlar (sayfa %page%)\x03"
   pending_item: "  %channel% — isteyen %requester%, gönderim %submitted%: %description%"
   accepted: "\x0303✔\x03 \x02%channel%\x02 kaydı onaylandı."
-  rejected: "\x0307✔\x03 \x02%channel%\x02 kaydı reddedildi."
+  rejected: "\x0303✔\x03 \x02%channel%\x02 kaydı reddedildi."
   not_pending: "\x0304✗\x03 \x02%channel%\x02 için bekleyen kayıt yok."
   channel_not_on_network: "\x0304✗\x03 \x02%channel%\x02 ağda değil."
   founder_limit: "\x0304✗\x03 İstek sahibi kanal kayıt sınırına ulaştı."
@@ -88,25 +88,25 @@ creg:
 status:
   syntax: "STATUS <#kanal>"
   example: "%command_prefix%\x02\x0303STATUS #canal\x03\x0F"
+  header: "\x02Kanal durumu \x0307%channel%\x03\x02"
   short: "Kanal kayıt durumunu gösterin."
   help: |-
     Kanalın kayıtlı olmadığını, onay beklediğini, reddedildiğini veya kayıtlı
     olduğunu gösterir.
     Ret ayrıntılarını yalnızca istek sahibi ve yetkili IRCoplar görebilir.
 
-  unregistered: "\x0314%channel% kayıtlı değil.\x03"
-  pending: "\x0314%channel% IRCop onayı bekliyor.\x03"
-  registered: "\x0314%channel% kayıtlı.\x03"
-  suspended: "\x0314%channel% kayıtlı ancak askıya alınmış.\x03"
-  forbidden: "\x0314%channel% kaydedilemez.\x03"
-  pending_deletion: "\x0314%channel% silinmeyi bekliyor.\x03"
-  rejected_private: "\x0314%channel% için bir kayıt isteği reddedildi.\x03"
-  rejected: "\x0314%channel% kaydı reddedildi.\x03"
-  rejection_reason: "  \x0314Neden\x03: %reason%"
-  rejection_audit: "  \x0314Reddeden\x03: %operator%, tarih: %date%"
-  restriction_indefinite: "  \x0314Yeni istekler süresiz engellendi.\x03"
-  restriction_until: "  \x0314Yeni istekler %date% tarihine kadar engellendi\x03"
-  restriction_expired: "  \x0314Kayıt kısıtlaması %date% tarihinde sona erdi.\x03"
+  unregistered: "  \x0314Durum                   \x03: Kayıtlı değil"
+  pending: "  \x0314Durum                   \x03: \x0307Onay bekliyor\x03"
+  registered: "  \x0314Durum                   \x03: \x0303Kayıtlı\x03"
+  suspended: "  \x0314Durum                   \x03: \x0304Askıya alındı\x03"
+  forbidden: "  \x0314Durum                   \x03: \x0304Yasaklandı\x03"
+  pending_deletion: "  \x0314Durum                   \x03: \x0307Silinmeyi bekliyor\x03"
+  rejected_private: "  \x0314Durum                   \x03: \x0304Kayıt reddedildi\x03"
+  rejected: "  \x0314Durum                   \x03: \x0304Kayıt reddedildi\x03"
+  rejection_reason: "  \x0314Neden                   \x03: %reason%"
+  rejection_audit: "  \x0314Reddeden                \x03: %operator%, %date% tarihinde"
+  restriction_until: "  \x0314Kullanılabilir olduğu tarih\x03: %date%"
+  footer: "\x0314─────────────────────────────\x03\x0F"
 
 # --- INFO ------------------------------------------------------------------
 info:
@@ -596,8 +596,8 @@ drop:
   help: |-
     Kayıtlı bir kanalı veritabanından siler.
     FORCE, silinmeyi bekleyen kanalı kalıcı olarak siler.
-    Reddedilen bir istekte DROP, engel kalkınca isteği serbest bırakır.
-    Yetkili IRCop süresiz engeli açıkça kaldırabilir.
+    DROP yetkisi olan bir IRCop reddedilmiş kaydı da FORCE ile
+    veya FORCE olmadan hemen serbest bırakabilir. FORCE ayrıca DROP_FORCE gerektirir.
   registration_restricted: "\x0304✗\x03 Bu kayıt isteği %date% tarihine kadar kısıtlı."
   force:
     short: "Silinmeyi bekleyen kanalı kalıcı olarak siler."

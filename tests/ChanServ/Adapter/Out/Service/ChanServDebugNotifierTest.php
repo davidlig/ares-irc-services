@@ -101,6 +101,40 @@ final class ChanServDebugNotifierTest extends TestCase
     }
 
     #[Test]
+    public function completedCregDecisionIsDistinguishedInDebugOutput(): void
+    {
+        $messages = [];
+        $chanNotifier = $this->createMock(ChanServNotifierInterface::class);
+        $chanNotifier->expects(self::exactly(2))->method('sendMessage')->willReturnCallback(
+            static function (string $target, string $message) use (&$messages): void {
+                $messages[] = $message;
+            },
+        );
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static function (string $id, array $params = []): string {
+            if ('debug.action_message' === $id) {
+                return (is_string($params['%command%'] ?? null) ? $params['%command%'] : '') . ' '
+                    . (is_string($params['%operator%'] ?? null) ? $params['%operator%'] : '') . ' '
+                    . (is_string($params['%target%'] ?? null) ? $params['%target%'] : '') . ' '
+                    . (is_string($params['%reason%'] ?? null) ? $params['%reason%'] : '');
+            }
+            if ('debug.prefix_reason' === $id) {
+                return 'Reason: ' . (is_string($params['%reason%'] ?? null) ? $params['%reason%'] : '');
+            }
+
+            return $id;
+        });
+        $notifier = $this->createNotifier($chanNotifier, $translator, '#ircops');
+
+        $notifier->log('OperUser', 'CREG', '#accepted', null, null, null, ['decision' => 'accepted']);
+        $notifier->log('OperUser', 'CREG', '#rejected', null, null, 'duplicate', ['decision' => 'rejected']);
+
+        self::assertStringContainsString('CREG ACCEPT', $messages[0]);
+        self::assertStringContainsString('CREG REJECT', $messages[1]);
+        self::assertStringContainsString('duplicate', $messages[1]);
+    }
+
+    #[Test]
     public function logWithFounderActionSendsFounderActionReasonToChannel(): void
     {
         $chanNotifier = $this->createMock(ChanServNotifierInterface::class);

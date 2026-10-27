@@ -31,7 +31,7 @@ register:
     identifié auprès de %nickserv%. En mode APPROVAL, un IRCop doit
     approuver la demande.
   success: "\x0303✔\x03 Le canal \x02%channel%\x02 a été enregistré."
-  already_registered: "\x0304✗\x03 Le canal \x02%channel%\x02 est déjà enregistré."
+  already_registered: "\x0304✗\x03 Le salon \x02%channel%\x02 est déjà enregistré ou une demande est en cours."
   channel_not_on_network: "\x0304✗\x03 Le canal \x02%channel%\x02 n'existe pas sur le réseau."
   pending_deletion: "\x0304✗\x03 Le canal \x02%channel%\x02 est en attente de suppression et ne peut pas être enregistré."
   insufficient_channel_rank: "\x0304✗\x03 Vous devez avoir au moins le statut d'opérateur sur \x02%channel%\x02 pour l'enregistrer."
@@ -55,7 +55,7 @@ regmode:
 
 # --- CREG ------------------------------------------------------------------
 creg:
-  syntax: "CREG {PENDING [page]|ACCEPT <#channel>|REJECT <#channel> <reason>}"
+  syntax: "CREG {PENDING [page]|ACCEPT <#channel>|REJECT <#channel> <raison>}"
   pending.syntax: "CREG PENDING [page]"
   pending.example: "%command_prefix%\x02\x0303CREG PENDING\x03\x0F"
   pending.short: "Liste les demandes en attente sur une page limitée."
@@ -64,10 +64,10 @@ creg:
   accept.example: "%command_prefix%\x02\x0303CREG ACCEPT #channel\x03\x0F"
   accept.short: "Approuver une demande d’enregistrement de salon."
   accept.help: "Revérifie la demande et active l’enregistrement en attente."
-  reject.syntax: "CREG REJECT <#channel> <reason>"
+  reject.syntax: "CREG REJECT <#channel> <raison>"
   reject.example: "%command_prefix%\x02\x0303CREG REJECT #channel Sujet public requis\x03\x0F"
   reject.short: "Refuser une demande d’enregistrement de salon."
-  reject.help: "Refuse une demande avec un motif obligatoire et une restriction."
+  reject.help: "Refuse une demande avec un raison obligatoire et une restriction."
   example: "%command_prefix%\x02\x0303CREG PENDING\x03\x0F"
   short: "Examiner les demandes d’enregistrement de salons."
   help: |-
@@ -76,7 +76,7 @@ creg:
   pending_header: "\x0314Enregistrements en attente (page %page%)\x03"
   pending_item: "  %channel% — demandeur %requester%, soumise le %submitted%: %description%"
   accepted: "\x0303✔\x03 L’enregistrement de %channel% a été approuvé."
-  rejected: "\x0307✔\x03 L’enregistrement de %channel% a été refusé."
+  rejected: "\x0303✔\x03 L’enregistrement de %channel% a été refusé."
   not_pending: "\x0304✗\x03 Aucune demande en attente pour %channel%."
   channel_not_on_network: "\x0304✗\x03 Le salon %channel% n’est pas sur le réseau."
   founder_limit: "\x0304✗\x03 Le demandeur a atteint la limite d’enregistrement de salons."
@@ -87,25 +87,25 @@ creg:
 status:
   syntax: "STATUS <#channel>"
   example: "%command_prefix%\x02\x0303STATUS #channel\x03\x0F"
+  header: "\x02Statut du salon \x0307%channel%\x03\x02"
   short: "Afficher le statut d’enregistrement du salon."
   help: |-
     Indique si un salon est non enregistré, en attente d’approbation,
     refusé ou enregistré.
     Les détails du refus sont visibles uniquement par le demandeur et
     les IRCops autorisés.
-  unregistered: "\x0314%channel% n’est pas enregistré.\x03"
-  pending: "\x0314%channel% attend l’approbation d’un IRCop.\x03"
-  registered: "\x0314%channel% est enregistré.\x03"
-  suspended: "\x0314%channel% est enregistré mais suspendu.\x03"
-  forbidden: "\x0314%channel% ne peut pas être enregistré.\x03"
-  pending_deletion: "\x0314%channel% est en attente de suppression.\x03"
-  rejected_private: "\x0314La demande d’enregistrement de %channel% a été refusée.\x03"
-  rejected: "\x0314La demande d’enregistrement de %channel% a été refusée.\x03"
-  rejection_reason: "  \x0314Motif\x03: %reason%"
-  rejection_audit: "  \x0314Refusé par\x03: %operator% le %date%"
-  restriction_indefinite: "  \x0314Les nouvelles demandes sont bloquées indéfiniment.\x03"
-  restriction_until: "  \x0314Les nouvelles demandes sont bloquées jusqu’au %date%\x03"
-  restriction_expired: "  \x0314La restriction d’enregistrement a pris fin le %date%.\x03"
+  unregistered: "  \x0314Statut                  \x03: Non enregistré"
+  pending: "  \x0314Statut                  \x03: \x0307En attente d’approbation\x03"
+  registered: "  \x0314Statut                  \x03: \x0303Enregistré\x03"
+  suspended: "  \x0314Statut                  \x03: \x0304Suspendu\x03"
+  forbidden: "  \x0314Statut                  \x03: \x0304Interdit\x03"
+  pending_deletion: "  \x0314Statut                  \x03: \x0307En attente de suppression\x03"
+  rejected_private: "  \x0314Statut                  \x03: \x0304Enregistrement refusé\x03"
+  rejected: "  \x0314Statut                  \x03: \x0304Enregistrement refusé\x03"
+  rejection_reason: "  \x0314Raison                  \x03: %reason%"
+  rejection_audit: "  \x0314Refusé par              \x03: %operator% le %date%"
+  restriction_until: "  \x0314Disponible à partir du  \x03: %date%"
+  footer: "\x0314─────────────────────────────\x03\x0F"
 
 # --- INFO ------------------------------------------------------------------
 info:
@@ -605,8 +605,8 @@ drop:
   help: |-
     Supprime un salon enregistré de la base de données.
     FORCE supprime définitivement un salon en attente de suppression.
-    DROP libère une demande refusée lorsque sa restriction expire.
-    Un IRCop autorisé peut explicitement lever une restriction indéfinie.
+    Un IRCop ayant DROP peut aussi libérer immédiatement un
+    enregistrement refusé, avec ou sans FORCE. FORCE exige aussi DROP_FORCE.
   registration_restricted: "\x0304✗\x03 Cette demande d’enregistrement est bloquée jusqu’au %date%."
   force:
     short: "Supprime définitivement un salon en attente de suppression."

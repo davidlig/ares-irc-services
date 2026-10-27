@@ -226,7 +226,7 @@ final class DropCommandTest extends TestCase
     }
 
     #[Test]
-    public function rejectedChannelCannotBeDroppedBeforeFiniteRestrictionExpires(): void
+    public function authorizedDropImmediatelyReleasesRejectedChannelDuringFiniteRestriction(): void
     {
         $at = new DateTimeImmutable();
         $channel = RegisteredChannel::createPendingRegistration($at->modify('-1 hour'), '#test', 7, 'request');
@@ -234,15 +234,35 @@ final class DropCommandTest extends TestCase
         $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channels->method('findByChannelName')->willReturn($channel);
         $dropService = $this->createMock(ChanDropService::class);
-        $dropService->expects(self::never())->method('hardDropChannel');
+        $dropService->expects(self::once())->method('hardDropChannel')->with($channel, self::isInstanceOf(DateTimeImmutable::class), 'registration-restriction-released', 'OperUser');
         $dropService->expects(self::never())->method('softDropChannel');
         $command = $this->createCommandWith($channels, $dropService);
         $messages = [];
 
         $command->execute($this->createContext($this->createSender(), null, ['#test'], $messages));
 
-        self::assertContains('drop.registration_restricted', $messages);
-        self::assertTrue($channel->isRejectedRegistration());
+        self::assertContains('drop.success', $messages);
+    }
+
+    #[Test]
+    public function authorizedForceDropAlsoImmediatelyReleasesRejectedChannel(): void
+    {
+        $at = new DateTimeImmutable();
+        $channel = RegisteredChannel::createPendingRegistration($at->modify('-1 hour'), '#test', 7, 'request');
+        $channel->rejectRegistration('Reason', 9, 'Reviewer', $at->modify('-1 hour'), $at->modify('+1 hour'));
+        $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channels->method('findByChannelName')->willReturn($channel);
+        $dropService = $this->createMock(ChanDropService::class);
+        $dropService->expects(self::once())->method('hardDropChannel')->with($channel, self::isInstanceOf(DateTimeImmutable::class), 'registration-restriction-released', 'OperUser');
+        $authorization = $this->createStub(AuthorizationCheckerInterface::class);
+        $authorization->method('isGranted')->willReturn(true);
+        $messages = [];
+
+        $this->createCommandWith($channels, $dropService, $authorization)->execute(
+            $this->createContext($this->createSender(), null, ['#test', 'FORCE'], $messages),
+        );
+
+        self::assertContains('drop.force_success', $messages);
     }
 
     #[Test]

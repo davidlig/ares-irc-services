@@ -118,15 +118,6 @@ Migration `Version20261026000001` contains only ChanServ approval lifecycle meta
 Neither feature migration creates a ChanServ policy or registration-audit table.
 Settings without a runtime command remain configured through `.env`.
 
-**Upgrade:** apply migration `Version20261027000001` before starting the updated daemon.
-It makes memo sender account IDs nullable and adds a service-name snapshot. New CREG
-ACCEPT/REJECT memos display the configured `CHANSERV_NICK` in MemoServ LIST and READ;
-existing human and historical memos are not rewritten. Decision bodies omit the
-operator identity; finite rejection availability is UTC, and indefinite rejections
-have no availability clause. Service authorship survives deletion of the deciding
-operator's account. Rolling this migration back is refused while service-authored
-memos exist; do not delete or rewrite those memos to force a rollback.
-
 ### MemoServ
 
 Provides offline messaging for users and channels, delivery on the next identify or join,
@@ -301,6 +292,27 @@ retrying, and use the deployment backup and maintenance procedure.
 | `CHANSERV_LIST_PAGE_SIZE` | `50` | Matching registrations per IRCop LIST page |
 | `CHANSERV_HISTORY_RETENTION_DAYS` | `30` | Days to keep action history (`0` = forever) |
 | `CHANSERV_HISTORY_VIEW_LIMIT` | `40` | Max history entries per page |
+
+ChanServ `STATUS <#channel>` shows a registration-state header and aligned fields.
+For rejected requests, the requester can see the reason; centrally recognized IRCops,
+including Root, can additionally see the deciding operator/date and finite availability
+as an absolute UTC timestamp. Visibility does not grant administrative permissions.
+Operators with `DROP` permission can release a rejected registration immediately with
+`DROP <#channel>`, even during an active or indefinite restriction. `DROP <#channel> FORCE`
+also releases it and still requires the additional `DROP_FORCE` permission. Pending
+requests and ordinary registered-channel deletion retain their existing behavior.
+
+**Upgrade:** apply migration `Version20261027000001` before starting the updated daemon.
+It makes memo sender account IDs nullable and adds a service-name snapshot. New CREG
+ACCEPT/REJECT memos display the configured `CHANSERV_NICK` in MemoServ LIST and READ;
+existing human and historical memos are not rewritten. Decision bodies omit the
+operator identity; finite rejection availability is UTC, and indefinite rejections
+have no availability clause. Service authorship survives deletion of the deciding
+operator's account. Rolling this migration back is refused while service-authored
+memos exist; do not delete or rewrite those memos to force a rollback.
+With `IRCOPS_DEBUG_CHANNEL` configured, the existing ChanServ audit pipeline announces
+each successful decision once as `CREG ACCEPT` or `CREG REJECT`; structured audit
+records retain operation `CREG` and its decision metadata.
 
 ### MemoServ
 

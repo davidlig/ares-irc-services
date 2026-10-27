@@ -33,7 +33,7 @@ register:
   awaiting_approval: "\x0307✔\x03 Registration request for \x02%channel%\x02 is awaiting IRCop approval."
   restricted_indefinite: "\x0304✗\x03 New registration requests for \x02%channel%\x02 are blocked indefinitely."
   restricted_until: "\x0304✗\x03 New registration requests for \x02%channel%\x02 are blocked until %date%"
-  already_registered: "\x0304✗\x03 Channel \x02%channel%\x02 is already registered."
+  already_registered: "\x0304✗\x03 Channel \x02%channel%\x02 is already registered or has a registration request in progress."
   channel_not_on_network: "\x0304✗\x03 Channel \x02%channel%\x02 does not exist on the network."
   pending_deletion: "\x0304✗\x03 Channel \x02%channel%\x02 is pending deletion and cannot be registered."
   insufficient_channel_rank: "\x0304✗\x03 You must have at least operator status on \x02%channel%\x02 to register it."
@@ -74,7 +74,7 @@ creg:
   pending_header: "\x0314Pending registrations (page %page%)\x03"
   pending_item: "  %channel% — requester %requester%, submitted %submitted%: %description%"
   accepted: "\x0303✔\x03 Registration for \x02%channel%\x02 was approved."
-  rejected: "\x0307✔\x03 Registration for \x02%channel%\x02 was rejected."
+  rejected: "\x0303✔\x03 Registration for \x02%channel%\x02 was rejected."
   not_pending: "\x0304✗\x03 Channel \x02%channel%\x02 has no pending registration."
   channel_not_on_network: "\x0304✗\x03 Channel \x02%channel%\x02 is not on the network."
   founder_limit: "\x0304✗\x03 The requester has reached the channel registration limit."
@@ -85,23 +85,23 @@ creg:
 status:
   syntax: "STATUS <#channel>"
   example: "%command_prefix%\x02\x0303STATUS #channel\x03\x0F"
+  header: "\x02Status of channel \x0307%channel%\x03\x02"
   short: "Show channel registration status."
   help: |-
     Show whether a channel is unregistered, pending approval, rejected or registered.
     Rejection details are visible only to the requester and authorized IRCops.
-  unregistered: "\x0314%channel% is not registered.\x03"
-  pending: "\x0314%channel% is awaiting IRCop approval.\x03"
-  registered: "\x0314%channel% is registered.\x03"
-  suspended: "\x0314%channel% is registered but suspended.\x03"
-  forbidden: "\x0314%channel% is forbidden from registration.\x03"
-  pending_deletion: "\x0314%channel% is pending deletion.\x03"
-  rejected_private: "\x0314%channel% has a rejected registration request.\x03"
-  rejected: "\x0314%channel% registration was rejected.\x03"
-  rejection_reason: "  \x0314Reason\x03: %reason%"
-  rejection_audit: "  \x0314Rejected by\x03: %operator% on %date%"
-  restriction_indefinite: "  \x0314New requests are blocked indefinitely.\x03"
-  restriction_until: "  \x0314New requests are blocked until %date%\x03"
-  restriction_expired: "  \x0314The registration restriction ended at %date%.\x03"
+  unregistered: "  \x0314Status                  \x03: Not registered"
+  pending: "  \x0314Status                  \x03: \x0307Approval pending\x03"
+  registered: "  \x0314Status                  \x03: \x0303Registered\x03"
+  suspended: "  \x0314Status                  \x03: \x0304Suspended\x03"
+  forbidden: "  \x0314Status                  \x03: \x0304Forbidden\x03"
+  pending_deletion: "  \x0314Status                  \x03: \x0307Pending deletion\x03"
+  rejected_private: "  \x0314Status                  \x03: \x0304Registration rejected\x03"
+  rejected: "  \x0314Status                  \x03: \x0304Registration rejected\x03"
+  rejection_reason: "  \x0314Reason                  \x03: %reason%"
+  rejection_audit: "  \x0314Rejected by             \x03: %operator% on %date%"
+  restriction_until: "  \x0314Available from          \x03: %date%"
+  footer: "\x0314─────────────────────────────\x03\x0F"
 
 # --- INFO ------------------------------------------------------------------
 info:
@@ -584,8 +584,8 @@ drop:
   help: |-
     Deletes a registered channel from the database.
     FORCE permanently deletes a channel that is pending deletion.
-    DROP on a rejected request releases it only after its cooldown; an indefinite
-    restriction can be explicitly released by an authorized IRCop.
+    An IRCop with DROP permission can also immediately release a
+    rejected registration, with or without FORCE. FORCE additionally requires DROP_FORCE.
   registration_restricted: "\x0304✗\x03 This registration request is restricted until %date%."
   force:
     short: "Permanently deletes a channel that is pending deletion."

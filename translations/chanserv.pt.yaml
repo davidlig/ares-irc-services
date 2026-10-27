@@ -30,7 +30,7 @@ register:
     Regista um canal e associa-o à tua alcunha. Identifica-te com %nickserv%.
     No modo APPROVAL, um IRCop tem de aprovar o pedido.
   success: "\x0303✔\x03 O canal \x02%channel%\x02 foi registado."
-  already_registered: "\x0304✗\x03 O canal \x02%channel%\x02 já está registado."
+  already_registered: "\x0304✗\x03 O canal \x02%channel%\x02 já está registado ou tem um pedido de registo em curso."
   channel_not_on_network: "\x0304✗\x03 O canal \x02%channel%\x02 não existe na rede."
   pending_deletion: "\x0304✗\x03 O canal \x02%channel%\x02 está pendente de eliminação e não pode ser registado."
   insufficient_channel_rank: "\x0304✗\x03 Tem de ter pelo menos estado de operador em \x02%channel%\x02 para o registar."
@@ -55,7 +55,7 @@ regmode:
 
 # --- CREG ------------------------------------------------------------------
 creg:
-  syntax: "CREG {PENDING [página]|ACCEPT <#canal>|REJECT <#canal> <motivo>}"
+  syntax: "CREG {PENDING [página]|ACCEPT <#canal>|REJECT <#canal> <razão>}"
   pending.syntax: "CREG PENDING [página]"
   pending.example: "%command_prefix%\x02\x0303CREG PENDING\x03\x0F"
   pending.short: "Listar pedidos de registo pendentes."
@@ -64,10 +64,10 @@ creg:
   accept.example: "%command_prefix%\x02\x0303CREG ACCEPT #canal\x03\x0F"
   accept.short: "Aprovar um pedido de registo de canal."
   accept.help: "Valida novamente o requerente e ativa o registo pendente."
-  reject.syntax: "CREG REJECT <#canal> <motivo>"
-  reject.example: "%command_prefix%\x02\x0303CREG REJECT #canal Motivo público\x03\x0F"
+  reject.syntax: "CREG REJECT <#canal> <razão>"
+  reject.example: "%command_prefix%\x02\x0303CREG REJECT #canal Razão público\x03\x0F"
   reject.short: "Rejeitar um pedido de registo de canal."
-  reject.help: "Rejeita o pedido com motivo obrigatório e restrição."
+  reject.help: "Rejeita o pedido com razão obrigatório e restrição."
   example: "%command_prefix%\x02\x0303CREG PENDING\x03\x0F"
   short: "Analisar pedidos de registo de canais."
   help: |-
@@ -77,7 +77,7 @@ creg:
   pending_header: "\x0314Registos pendentes (página %page%)\x03"
   pending_item: "  %channel% — requerente %requester%, enviado %submitted%: %description%"
   accepted: "\x0303✔\x03 O registo de \x02%channel%\x02 foi aprovado."
-  rejected: "\x0307✔\x03 O registo de \x02%channel%\x02 foi rejeitado."
+  rejected: "\x0303✔\x03 O registo de \x02%channel%\x02 foi rejeitado."
   not_pending: "\x0304✗\x03 O canal \x02%channel%\x02 não tem registo pendente."
   channel_not_on_network: "\x0304✗\x03 O canal \x02%channel%\x02 não está na rede."
   founder_limit: "\x0304✗\x03 O requerente atingiu o limite de registos de canais."
@@ -88,6 +88,7 @@ creg:
 status:
   syntax: "STATUS <#canal>"
   example: "%command_prefix%\x02\x0303STATUS #canal\x03\x0F"
+  header: "\x02Estado do canal \x0307%channel%\x03\x02"
   short: "Mostrar o estado de registo de um canal."
   help: |-
     Indica se o canal não está registado, aguarda aprovação, foi rejeitado ou
@@ -95,19 +96,18 @@ status:
     Os detalhes da rejeição só são visíveis ao requerente e a IRCops
     autorizados.
 
-  unregistered: "\x0314%channel% não está registado.\x03"
-  pending: "\x0314%channel% aguarda aprovação de um IRCop.\x03"
-  registered: "\x0314%channel% está registado.\x03"
-  suspended: "\x0314%channel% está registado, mas suspenso.\x03"
-  forbidden: "\x0314%channel% está impedido de ser registado.\x03"
-  pending_deletion: "\x0314%channel% aguarda eliminação.\x03"
-  rejected_private: "\x0314%channel% tem um pedido de registo rejeitado.\x03"
-  rejected: "\x0314O registo de %channel% foi rejeitado.\x03"
-  rejection_reason: "  \x0314Motivo\x03: %reason%"
-  rejection_audit: "  \x0314Rejeitado por\x03: %operator% em %date%"
-  restriction_indefinite: "  \x0314Novos pedidos estão bloqueados indefinidamente.\x03"
-  restriction_until: "  \x0314Novos pedidos estão bloqueados até %date%\x03"
-  restriction_expired: "  \x0314A restrição de registo terminou em %date%.\x03"
+  unregistered: "  \x0314Estado                  \x03: Não registado"
+  pending: "  \x0314Estado                  \x03: \x0307A aguardar aprovação\x03"
+  registered: "  \x0314Estado                  \x03: \x0303Registado\x03"
+  suspended: "  \x0314Estado                  \x03: \x0304Suspenso\x03"
+  forbidden: "  \x0314Estado                  \x03: \x0304Proibido\x03"
+  pending_deletion: "  \x0314Estado                  \x03: \x0307A aguardar eliminação\x03"
+  rejected_private: "  \x0314Estado                  \x03: \x0304Registo rejeitado\x03"
+  rejected: "  \x0314Estado                  \x03: \x0304Registo rejeitado\x03"
+  rejection_reason: "  \x0314Razão                   \x03: %reason%"
+  rejection_audit: "  \x0314Rejeitado por           \x03: %operator% em %date%"
+  restriction_until: "  \x0314Disponível a partir de  \x03: %date%"
+  footer: "\x0314─────────────────────────────\x03\x0F"
 
 # --- INFO ------------------------------------------------------------------
 info:
@@ -595,10 +595,10 @@ drop:
     - "%command_prefix%\x02\x0303DROP #canal FORCE\x03\x0F"
   short: "Remover um canal registado."
   help: |-
-    Remove um canal registado da base de dados.
+    Elimina um canal registado da base de dados.
     FORCE elimina permanentemente um canal pendente de eliminação.
-    DROP num pedido rejeitado liberta-o após o fim do bloqueio.
-    Um IRCop autorizado pode libertar explicitamente um bloqueio indefinido.
+    Um IRCop com a permissão DROP também pode libertar imediatamente
+    um registo rejeitado, com ou sem FORCE. FORCE também requer DROP_FORCE.
   registration_restricted: "\x0304✗\x03 Este pedido de registo está restringido até %date%."
   force:
     short: "Elimina permanentemente um canal pendente de eliminação."

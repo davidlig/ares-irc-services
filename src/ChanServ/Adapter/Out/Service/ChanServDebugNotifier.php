@@ -81,7 +81,13 @@ final readonly class ChanServDebugNotifier implements ChanAuditSink, ServiceDebu
         }
 
         $coloredOperator = self::COLOR_BLUE . $operator . self::COLOR_RESET;
-        $coloredCommand = self::COLOR_RED . $command . self::COLOR_RESET;
+        $decision = $extra['decision'] ?? null;
+        $decisionLabel = match (true) {
+            'CREG' === $command && 'accepted' === $decision => ' ACCEPT',
+            'CREG' === $command && 'rejected' === $decision => ' REJECT',
+            default => '',
+        };
+        $coloredCommand = self::COLOR_RED . $command . $decisionLabel . self::COLOR_RESET;
         $coloredTarget = self::COLOR_BLUE . $target . self::COLOR_RESET;
 
         $option = $extra['option'] ?? null;

@@ -31,7 +31,7 @@ register:
     identifikatuta egon behar duzu. APPROVAL moduan, IRCop batek
     eskaera onartu behar du.
   success: "\x0303✔\x03 \x02%channel%\x02 kanala erregistratu da."
-  already_registered: "\x0304✗\x03 \x02%channel%\x02 kanala jada erregistratuta dago."
+  already_registered: "\x0304✗\x03 Kanal hau \x02%channel%\x02 jada erregistratuta dago edo erregistro-eskaera egiten ari da."
   channel_not_on_network: "\x0304✗\x03 \x02%channel%\x02 kanala ez dago sarean."
   pending_deletion: "\x0304✗\x03 \x02%channel%\x02 kanala ezabatzearen zain dago eta ezin da erregistratu."
   insufficient_channel_rank: "\x0304✗\x03 \x02%channel%\x02 erregistratzeko gutxienez operadore maila izan behar duzu."
@@ -55,7 +55,7 @@ regmode:
 
 # --- CREG ------------------------------------------------------------------
 creg:
-  syntax: "CREG {PENDING [page]|ACCEPT <#channel>|REJECT <#channel> <reason>}"
+  syntax: "CREG {PENDING [page]|ACCEPT <#channel>|REJECT <#channel> <arrazoia>}"
   pending.syntax: "CREG PENDING [page]"
   pending.example: "%command_prefix%\x02\x0303CREG PENDING\x03\x0F"
   pending.short: "Zain dauden eskaerak orrialde mugatu batean zerrendatzen ditu."
@@ -64,7 +64,7 @@ creg:
   accept.example: "%command_prefix%\x02\x0303CREG ACCEPT #channel\x03\x0F"
   accept.short: "Kanal-erregistro eskaera bat onartu."
   accept.help: "Eskaera berriz balioztatu eta zain dagoen erregistroa aktibatzen du."
-  reject.syntax: "CREG REJECT <#channel> <reason>"
+  reject.syntax: "CREG REJECT <#channel> <arrazoia>"
   reject.example: "%command_prefix%\x02\x0303CREG REJECT #channel Gai publiko bat behar du\x03\x0F"
   reject.short: "Kanal-erregistro eskaera bat ukatu."
   reject.help: "Eskaera arrazoia eta murrizketa eskatuz ukatzen du."
@@ -76,7 +76,7 @@ creg:
   pending_header: "\x0314Zain dauden erregistroak (%page%. orrialdea)\x03"
   pending_item: "  %channel% — eskatzailea %requester%, bidalita %submitted%: %description%"
   accepted: "\x0303✔\x03 %channel% kanalaren erregistroa onartu da."
-  rejected: "\x0307✔\x03 %channel% kanalaren erregistroa ukatu da."
+  rejected: "\x0303✔\x03 %channel% kanalaren erregistroa ukatu da."
   not_pending: "\x0304✗\x03 %channel% kanalak ez du erregistro-eskaerarik zain."
   channel_not_on_network: "\x0304✗\x03 %channel% kanala ez dago sarean."
   founder_limit: "\x0304✗\x03 Eskatzaileak kanalen erregistro-muga gainditu du."
@@ -87,25 +87,25 @@ creg:
 status:
   syntax: "STATUS <#channel>"
   example: "%command_prefix%\x02\x0303STATUS #channel\x03\x0F"
+  header: "\x02Kanalaren egoera \x0307%channel%\x03\x02"
   short: "Kanalaren erregistro-egoera erakutsi."
   help: |-
     Kanala erregistratu gabe, onespenaren zain, ukatua edo
     erregistratua dagoen erakusten du.
     Ukatze-xehetasunak eskatzaileak eta baimendutako IRCop-ek soilik
     ikus ditzakete.
-  unregistered: "\x0314%channel% ez dago erregistratuta.\x03"
-  pending: "\x0314%channel% IRCop baten onespenaren zain dago.\x03"
-  registered: "\x0314%channel% erregistratuta dago.\x03"
-  suspended: "\x0314%channel% erregistratuta dago baina etenda.\x03"
-  forbidden: "\x0314%channel% ezin da erregistratu.\x03"
-  pending_deletion: "\x0314%channel% ezabatzeko zain dago.\x03"
-  rejected_private: "\x0314%channel% kanalaren erregistro-eskaera ukatu da.\x03"
-  rejected: "\x0314%channel% kanalaren erregistro-eskaera ukatu da.\x03"
-  rejection_reason: "  \x0314Arrazoia\x03: %reason%"
-  rejection_audit: "  \x0314Nork ukatua\x03: %operator%, %date% egunean"
-  restriction_indefinite: "  \x0314Eskaera berriak mugagabe blokeatuta daude.\x03"
-  restriction_until: "  \x0314Eskaera berriak %date% arte blokeatuta daude\x03"
-  restriction_expired: "  \x0314Erregistro-murrizketa %date% egunean amaitu zen.\x03"
+  unregistered: "  \x0314Egoera                  \x03: Erregistratu gabe"
+  pending: "  \x0314Egoera                  \x03: \x0307Onarpenaren zain\x03"
+  registered: "  \x0314Egoera                  \x03: \x0303Erregistratuta\x03"
+  suspended: "  \x0314Egoera                  \x03: \x0304Etenda\x03"
+  forbidden: "  \x0314Egoera                  \x03: \x0304Debekatuta\x03"
+  pending_deletion: "  \x0314Egoera                  \x03: \x0307Ezabatzeko zain\x03"
+  rejected_private: "  \x0314Egoera                  \x03: \x0304Erregistroa ukatua\x03"
+  rejected: "  \x0314Egoera                  \x03: \x0304Erregistroa ukatua\x03"
+  rejection_reason: "  \x0314Arrazoia                \x03: %reason%"
+  rejection_audit: "  \x0314Nork ukatua             \x03: %operator% %date% egunean"
+  restriction_until: "  \x0314Noiztik erabilgarri     \x03: %date%"
+  footer: "\x0314─────────────────────────────\x03\x0F"
 
 # --- INFO ------------------------------------------------------------------
 info:
@@ -596,9 +596,9 @@ drop:
   short: "Ezabatu erregistratutako kanal bat."
   help: |-
     Erregistratutako kanal bat datu-basetik ezabatzen du.
-    FORCEk ezabatzeko zain dagoen kanala behin betiko ezabatzen du.
-    Ukatutako eskaera baten DROP-ek murrizketa amaitzean askatzen du.
-    Baimendutako IRCop batek mugarik gabeko murrizketa berariaz ken dezake.
+    FORCE aukerak ezabatzeko zain dagoen kanala behin betiko ezabatzen du.
+    DROP baimena duen IRCop batek ukatutako erregistro bat berehala
+    askatu dezake, FORCE erabilita edo gabe. FORCE aukerak DROP_FORCE ere behar du.
   registration_restricted: "\x0304✗\x03 Erregistro-eskaera hau %date% arte mugatuta dago."
   force:
     short: "Ezabatzeko zain dagoen kanala behin betiko ezabatzen du."
