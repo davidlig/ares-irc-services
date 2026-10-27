@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Bootstrap\Adapter\Out\Persistence;
 
 use Doctrine\DBAL\Platforms\AbstractMySQLPlatform;
-use Doctrine\DBAL\Platforms\SQLitePlatform;
-use Doctrine\DBAL\Schema\ColumnEditor;
+use Doctrine\DBAL\Schema\Column;
+use Doctrine\DBAL\Schema\PrimaryKeyConstraint;
+use Doctrine\DBAL\Schema\Table;
 use Doctrine\DBAL\Schema\TableEditor;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Tools\Event\GenerateSchemaEventArgs;
 
 /** Projects only explicitly migration-owned extensions during read-only schema validation. */
@@ -39,17 +41,14 @@ final class MigrationOwnedSchemaListener
                 }
             });
         }
-        // SQLite introspects an INTEGER PRIMARY KEY as autoincrement even for assigned IDs.
-        // Keep the singleton's generator NONE; this changes only its portable schema representation.
-        foreach (['nickserv_registration_policy', 'chanserv_registration_policy'] as $policyTable) {
-            if (!$connection->getDatabasePlatform() instanceof SQLitePlatform || !$schema->hasTable($policyTable)) {
-                continue;
-            }
-            $editor->modifyTableByUnquotedName($policyTable, static function (TableEditor $table): void {
-                $table->modifyColumnByUnquotedName('id', static function (ColumnEditor $column): void {
-                    $column->setAutoincrement(true);
-                });
-            });
+        // DBAL-only runtime settings still need a canonical schema for drift detection.
+        if (!$schema->hasTable('service_settings')) {
+            $settings = Table::editor()->setUnquotedName('service_settings');
+            $settings->addColumn(Column::editor()->setUnquotedName('service_name')->setTypeName(Types::STRING)->setLength(32)->create());
+            $settings->addColumn(Column::editor()->setUnquotedName('setting_name')->setTypeName(Types::STRING)->setLength(64)->create());
+            $settings->addColumn(Column::editor()->setUnquotedName('setting_value')->setTypeName(Types::TEXT)->create());
+            $settings->addPrimaryKeyConstraint(PrimaryKeyConstraint::editor()->setUnquotedName('primary')->setUnquotedColumnNames('service_name', 'setting_name')->create());
+            $editor->addTable($settings->create());
         }
         $event->setSchema($editor->create());
     }

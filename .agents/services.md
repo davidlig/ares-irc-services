@@ -105,6 +105,14 @@ During the bounded migration, a new IRC adapter may implement the legacy command
 that compatibility stops at the adapter. `NickServContext`, `SenderView`, translation keys, framework
 services, and protocol actions must not enter the use case.
 
+### Commands that change global settings
+
+Persist command-backed global settings in the common `service_settings` store, never in a new
+one-row configuration table. Every new command of this type uses a consumer-owned typed port
+and ships a migration seeding required defaults. Reuse the `(service_name, setting_name)` key
+and preserve live runtime updates; see `persistence.md`. Settings without a command remain in
+`.env`. Account/channel preferences are separate resource-owned data, not global settings.
+
 ## 4. Translations
 
 Every user-visible translation key exists in:

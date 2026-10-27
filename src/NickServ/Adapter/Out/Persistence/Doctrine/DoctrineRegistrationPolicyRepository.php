@@ -19,7 +19,7 @@ final readonly class DoctrineRegistrationPolicyRepository implements Registratio
 
     public function current(): RegistrationMode
     {
-        $value = $this->connection->fetchOne('SELECT mode FROM nickserv_registration_policy WHERE id = 1');
+        $value = $this->connection->fetchOne('SELECT setting_value FROM service_settings WHERE service_name = ? AND setting_name = ?', ['nickserv', 'registration_mode']);
 
         return is_string($value) ? RegistrationMode::from($value) : RegistrationMode::Token;
     }
@@ -27,24 +27,24 @@ final readonly class DoctrineRegistrationPolicyRepository implements Registratio
     public function change(RegistrationMode $mode): RegistrationMode
     {
         for ($attempt = 0; $attempt < 3; ++$attempt) {
-            $value = $this->connection->fetchOne('SELECT mode FROM nickserv_registration_policy WHERE id = 1');
+            $value = $this->connection->fetchOne('SELECT setting_value FROM service_settings WHERE service_name = ? AND setting_name = ?', ['nickserv', 'registration_mode']);
             $previous = is_string($value) ? RegistrationMode::from($value) : RegistrationMode::Token;
             if ($previous === $mode) {
                 return $previous;
             }
             if (false === $value) {
                 try {
-                    $this->connection->insert('nickserv_registration_policy', ['id' => 1, 'mode' => $mode->value]);
+                    $this->connection->insert('service_settings', ['service_name' => 'nickserv', 'setting_name' => 'registration_mode', 'setting_value' => $mode->value]);
 
                     return $previous;
                 } catch (UniqueConstraintViolationException) {
-                    // Another writer initialized the singleton. Re-read before changing it.
+                    // Another writer initialized this setting. Re-read before changing it.
                     continue;
                 }
             }
             $changed = $this->connection->executeStatement(
-                'UPDATE nickserv_registration_policy SET mode = ? WHERE id = 1 AND mode = ?',
-                [$mode->value, $previous->value],
+                'UPDATE service_settings SET setting_value = ? WHERE service_name = ? AND setting_name = ? AND setting_value = ?',
+                [$mode->value, 'nickserv', 'registration_mode', $previous->value],
             );
             if (1 === $changed) {
                 return $previous;

@@ -56,13 +56,8 @@ final class MigrationOwnedSchemaListenerTest extends TestCase
     }
 
     #[DataProvider('platforms')]
-    public function testAssignedSingletonPolicyIdsMatchOnlySqliteIntrospection(AbstractPlatform $platform): void
+    public function testCanonicalGlobalSettingsSchemaIsProjectedOnEveryPlatform(AbstractPlatform $platform): void
     {
-        $schema = Schema::editor();
-        foreach (['nickserv_registration_policy', 'chanserv_registration_policy'] as $name) {
-            $schema->addTable(Table::editor()->setUnquotedName($name)
-                ->addColumn(Column::editor()->setUnquotedName('id')->setTypeName(Types::INTEGER)->create())->create());
-        }
         $manager = $this->createStub(AbstractSchemaManager::class);
         $manager->method('listTableNames')->willReturn([]);
         $connection = $this->createStub(Connection::class);
@@ -70,11 +65,22 @@ final class MigrationOwnedSchemaListenerTest extends TestCase
         $connection->method('getDatabasePlatform')->willReturn($platform);
         $em = $this->createStub(EntityManagerInterface::class);
         $em->method('getConnection')->willReturn($connection);
-        $event = new GenerateSchemaEventArgs($em, $schema->create());
+        $original = new Schema();
+        $event = new GenerateSchemaEventArgs($em, $original);
         new MigrationOwnedSchemaListener()->postGenerateSchema($event);
-        foreach (['nickserv_registration_policy', 'chanserv_registration_policy'] as $name) {
-            self::assertSame($platform instanceof SQLitePlatform, $event->getSchema()->getTable($name)->getColumn('id')->getAutoincrement());
+        self::assertFalse($original->hasTable('service_settings'));
+        $settings = $event->getSchema()->getTable('service_settings');
+        self::assertCount(3, $settings->getColumns());
+        foreach (['service_name', 'setting_name', 'setting_value'] as $column) {
+            self::assertTrue($settings->hasColumn($column));
         }
+        $primary = $settings->getPrimaryKeyConstraint();
+        self::assertNotNull($primary);
+        self::assertSame(['service_name', 'setting_name'], array_map(static fn ($name): string => $name->toString(), $primary->getColumnNames()));
+        self::assertSame(32, $settings->getColumn('service_name')->getLength());
+        self::assertSame(64, $settings->getColumn('setting_name')->getLength());
+        new MigrationOwnedSchemaListener()->postGenerateSchema($event);
+        self::assertSame($settings->getColumns(), $event->getSchema()->getTable('service_settings')->getColumns());
     }
 
     /** @return iterable<string, array{AbstractPlatform}> */

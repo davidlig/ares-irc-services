@@ -117,6 +117,20 @@ rebuilds must preserve/recreate them explicitly. Index creation may lock tables;
 backup and maintenance procedures. For downgrade, restore compatible code before removing helper
 columns; migration rollback removes only the new indexes and generated columns, not source data.
 
+### Global settings changed by commands
+
+Use the common `service_settings` table for all services' global settings that have a command
+for runtime changes. The composite key is `(service_name, setting_name)`; `setting_value` stores
+the serialized scalar validated by the owning service. Do not create singleton configuration
+tables for individual settings or services. Keep typed ports owned by each consumer, and keep
+live reads and atomic scoped updates in its persistence adapter.
+
+Every new command of this kind must include a migration seeding each required setting's default;
+a fallback or lazy insert alone does not satisfy this requirement. REGMODE seeds are ChanServ
+`DIRECT` and NickServ `TOKEN`. Existing `.env` settings stay there while they have no command.
+The schema listener declares this DBAL-only table canonically so schema validation still detects
+drift rather than silently accepting arbitrary stored columns.
+
 ## 8. Reference cleanup
 
 **Non-negotiable** — a definitive DROP of a nickname or a channel cleans every dependent

@@ -109,8 +109,12 @@ selects DIRECT registration (the default) or approval-based requests. IRCops rev
 with CREG; STATUS reports lifecycle state without exposing pending requests through INFO.
 ACCEPT and REJECT use the existing IRCop command audit; only ACCEPT adds channel HISTORY.
 Rejection details and restrictions remain on the current channel registration.
-Migration `Version20261027000001` removes the redundant registration-audit table and its data;
-back up the database before applying it. Downgrading recreates that table empty, not its deleted rows.
+Global settings with runtime commands use `service_settings`, keyed by service and setting name.
+Migration `Version20261026000001` seeds ChanServ REGMODE `DIRECT` and NickServ REGMODE `TOKEN`.
+It intentionally drops the old NickServ policy without copying its mode; back up before upgrading.
+Downgrading removes the common settings and restores the old NickServ table empty, not its data.
+The consolidated feature migration never creates a ChanServ policy or registration-audit table.
+Settings without a runtime command remain configured through `.env`.
 
 ### MemoServ
 

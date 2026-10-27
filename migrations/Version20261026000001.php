@@ -24,7 +24,7 @@ final class Version20261026000001 extends AbstractMigration implements EditedSch
 
     public function getDescription(): string
     {
-        return 'Add ChanServ registration approval states and mode policy';
+        return 'Add ChanServ approval states and common command-backed service settings';
     }
 
     public function preUp(Schema $schema): void
@@ -49,24 +49,14 @@ final class Version20261026000001 extends AbstractMigration implements EditedSch
             $table->addColumn(Column::editor()->setUnquotedName('registration_rejected_at')->setTypeName(Types::DATETIME_IMMUTABLE)->setNotnull(false)->create());
             $table->addColumn(Column::editor()->setUnquotedName('registration_restricted_until')->setTypeName(Types::DATETIME_IMMUTABLE)->setNotnull(false)->create());
         });
-        $policy = Table::editor()->setUnquotedName('chanserv_registration_policy');
-        $policy->addColumn(Column::editor()->setUnquotedName('id')->setTypeName(Types::INTEGER)->create());
-        $policy->addColumn(Column::editor()->setUnquotedName('mode')->setTypeName(Types::STRING)->setLength(8)->create());
-        $policy->addPrimaryKeyConstraint(PrimaryKeyConstraint::editor()->setUnquotedName('primary')->setUnquotedColumnNames(...['id'])->create());
-        $editor->addTable($policy->create());
-
-        $audit = Table::editor()->setUnquotedName('channel_registration_audit');
-        $audit->addColumn(Column::editor()->setUnquotedName('id')->setTypeName(Types::INTEGER)->setAutoincrement(true)->create());
-        $audit->addColumn(Column::editor()->setUnquotedName('channel_name')->setTypeName(Types::STRING)->setLength(64)->create());
-        $audit->addColumn(Column::editor()->setUnquotedName('requester_account_id')->setTypeName(Types::INTEGER)->create());
-        $audit->addColumn(Column::editor()->setUnquotedName('operator_account_id')->setTypeName(Types::INTEGER)->create());
-        $audit->addColumn(Column::editor()->setUnquotedName('operator_nickname')->setTypeName(Types::STRING)->setLength(64)->create());
-        $audit->addColumn(Column::editor()->setUnquotedName('accepted')->setTypeName(Types::BOOLEAN)->create());
-        $audit->addColumn(Column::editor()->setUnquotedName('rejection_reason')->setTypeName(Types::TEXT)->setNotnull(false)->create());
-        $audit->addColumn(Column::editor()->setUnquotedName('restricted_until')->setTypeName(Types::DATETIME_IMMUTABLE)->setNotnull(false)->create());
-        $audit->addColumn(Column::editor()->setUnquotedName('occurred_at')->setTypeName(Types::DATETIME_IMMUTABLE)->create());
-        $audit->addPrimaryKeyConstraint(PrimaryKeyConstraint::editor()->setUnquotedName('primary')->setUnquotedColumnNames(...['id'])->create());
-        $editor->addTable($audit->create());
+        $settings = Table::editor()->setUnquotedName('service_settings');
+        $settings->addColumn(Column::editor()->setUnquotedName('service_name')->setTypeName(Types::STRING)->setLength(32)->create());
+        $settings->addColumn(Column::editor()->setUnquotedName('setting_name')->setTypeName(Types::STRING)->setLength(64)->create());
+        $settings->addColumn(Column::editor()->setUnquotedName('setting_value')->setTypeName(Types::TEXT)->create());
+        $settings->addPrimaryKeyConstraint(PrimaryKeyConstraint::editor()->setUnquotedName('primary')->setUnquotedColumnNames('service_name', 'setting_name')->create());
+        $editor->addTable($settings->create());
+        // Explicit reset: do not copy the legacy NickServ mode into the new store.
+        $editor->dropTableByUnquotedName('nickserv_registration_policy');
 
         $target = $editor->create();
         $this->editedSchema = clone $target;
@@ -74,6 +64,8 @@ final class Version20261026000001 extends AbstractMigration implements EditedSch
         foreach ($this->platform->getAlterSchemaSQL($diff) as $sql) {
             $this->addSql($sql);
         }
+        $this->addSql("INSERT INTO service_settings (service_name, setting_name, setting_value) VALUES ('chanserv', 'registration_mode', 'DIRECT')");
+        $this->addSql("INSERT INTO service_settings (service_name, setting_name, setting_value) VALUES ('nickserv', 'registration_mode', 'TOKEN')");
     }
 
     public function down(Schema $schema): void
@@ -86,8 +78,14 @@ final class Version20261026000001 extends AbstractMigration implements EditedSch
             $table->dropColumnByUnquotedName('registration_rejected_at');
             $table->dropColumnByUnquotedName('registration_restricted_until');
         });
-        $editor->dropTableByUnquotedName('chanserv_registration_policy');
-        $editor->dropTableByUnquotedName('channel_registration_audit');
+        $editor->dropTableByUnquotedName('service_settings');
+        // Restore the historical empty table; the discarded mode is not recoverable.
+        $policy = Table::editor()->setUnquotedName('nickserv_registration_policy');
+        $policy->addColumn(Column::editor()->setUnquotedName('id')->setTypeName(Types::INTEGER)->create());
+        $policy->addColumn(Column::editor()->setUnquotedName('mode')->setTypeName(Types::STRING)->setLength(5)->create());
+        $policy->addPrimaryKeyConstraint(PrimaryKeyConstraint::editor()->setUnquotedName('primary')->setUnquotedColumnNames('id')->create());
+        $policyTable = $policy->create();
+        $editor->addTable($policyTable);
         $target = $editor->create();
         $this->editedSchema = clone $target;
         // Native drops retain SQLite's migration-owned COLLATE NOCASE expression index.
@@ -100,7 +98,9 @@ final class Version20261026000001 extends AbstractMigration implements EditedSch
         ] as $column) {
             $this->addSql('ALTER TABLE registered_channels DROP COLUMN ' . $column);
         }
-        $this->addSql($this->platform->getDropTableSQL('chanserv_registration_policy'));
-        $this->addSql($this->platform->getDropTableSQL('channel_registration_audit'));
+        $this->addSql($this->platform->getDropTableSQL('service_settings'));
+        foreach ($this->platform->getCreateTableSQL($policyTable) as $sql) {
+            $this->addSql($sql);
+        }
     }
 }

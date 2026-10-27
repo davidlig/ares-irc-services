@@ -81,7 +81,10 @@ final class MigratedSchemaValidationTest extends TestCase
     {
         $this->migrate();
         $this->insertRecord();
-        self::assertFalse($this->connection->createSchemaManager()->tablesExist(['channel_registration_audit']));
+        foreach (['channel_registration_audit', 'chanserv_registration_policy', 'nickserv_registration_policy'] as $obsolete) {
+            self::assertFalse($this->connection->createSchemaManager()->tablesExist([$obsolete]));
+        }
+        self::assertSame(2, $this->connection->fetchOne('SELECT COUNT(*) FROM service_settings'));
         $before = $this->snapshot();
         $this->validate(0);
         self::assertSame($before, $this->snapshot());
@@ -97,6 +100,7 @@ final class MigratedSchemaValidationTest extends TestCase
         $this->migrate();
         $this->insertRecord();
         foreach ([
+            ['ALTER TABLE service_settings ADD unexpected_column TEXT', 'ALTER TABLE service_settings DROP COLUMN unexpected_column'],
             ['ALTER TABLE motd ADD unexpected_column TEXT', 'ALTER TABLE motd DROP COLUMN unexpected_column'],
             ['ALTER TABLE registered_nicks ADD list_search_key TEXT', 'ALTER TABLE registered_nicks DROP COLUMN list_search_key'],
             ['DROP INDEX idx_memos_sender', 'CREATE INDEX idx_memos_sender ON memos (sender_nick_id)'],
