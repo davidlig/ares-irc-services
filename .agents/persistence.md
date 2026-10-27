@@ -120,10 +120,14 @@ columns; migration rollback removes only the new indexes and generated columns, 
 ### Global settings changed by commands
 
 Use the common `service_settings` table for all services' global settings that have a command
-for runtime changes. The composite key is `(service_name, setting_name)`; `setting_value` stores
-the serialized scalar validated by the owning service. Do not create singleton configuration
-tables for individual settings or services. Keep typed ports owned by each consumer, and keep
-live reads and atomic scoped updates in its persistence adapter.
+for runtime changes. The composite key is `(service_name, setting_name)`; `setting_value` remains
+`JSON`, preserving the scalar type. The owning service explicitly decodes the value, defines the
+semantic type, and validates both the decoded type and allowed values through its typed port.
+When encoding scalar values, preserve float identity with `JSON_PRESERVE_ZERO_FRACTION` and
+fail on malformed JSON rather than silently coercing or defaulting an existing invalid value.
+Never use unchecked casts or infer the type from stored contents alone. Do not create singleton
+configuration tables for individual settings or services. Keep typed ports owned by each consumer,
+and keep live reads and atomic scoped updates in its persistence adapter.
 
 Every new command of this kind must include a migration seeding each required setting's default;
 a fallback or lazy insert alone does not satisfy this requirement. REGMODE seeds are ChanServ

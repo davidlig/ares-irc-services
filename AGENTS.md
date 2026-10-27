@@ -378,6 +378,10 @@ consumer-owned typed ports and include a migration that seeds every required set
 REGMODE defaults are ChanServ `DIRECT` and NickServ `TOKEN`. Settings configured only through
 `.env` remain there until they have an associated runtime command; do not migrate them implicitly.
 
+Store `service_settings.setting_value` as JSON. Each owning service explicitly decodes the
+value and validates its semantic type and allowed values through its consumer-owned typed port.
+Never use unchecked casts or infer the setting type from the stored contents alone.
+
 Rules:
 - Domain and Application never receive `EntityManagerInterface`;
 - business repository contracts normally live in the consuming Application `Port/Out`;

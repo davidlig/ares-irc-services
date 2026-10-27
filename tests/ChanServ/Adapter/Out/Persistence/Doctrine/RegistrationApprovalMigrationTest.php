@@ -19,16 +19,48 @@ use Doctrine\DBAL\Schema\SQLiteSchemaManager;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 
 #[CoversNothing]
 final class RegistrationApprovalMigrationTest extends TestCase
 {
+    #[Test]
+    public function approvalUpgradeAndDowngradePreserveGlobalSettingsAndExistingRows(): void
+    {
+        $db = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
+        $db->executeStatement('CREATE TABLE registered_channels (id INTEGER PRIMARY KEY, name TEXT)');
+        $db->executeStatement('CREATE TABLE nickserv_registration_policy (id INTEGER PRIMARY KEY, mode VARCHAR(5) NOT NULL)');
+        $db->executeStatement('CREATE TABLE service_settings (service_name VARCHAR(32) NOT NULL, setting_name VARCHAR(64) NOT NULL, setting_value TEXT NOT NULL, PRIMARY KEY (service_name, setting_name))');
+        $db->insert('registered_channels', ['id' => 1, 'name' => '#preserve']);
+        $db->insert('nickserv_registration_policy', ['id' => 1, 'mode' => 'EMAIL']);
+        $db->insert('service_settings', ['service_name' => 'chanserv', 'setting_name' => 'registration_mode', 'setting_value' => '"APPROVAL"']);
+        $beforePolicy = $db->fetchAllAssociative('SELECT * FROM nickserv_registration_policy');
+        $beforeSettings = $db->fetchAllAssociative('SELECT * FROM service_settings');
+
+        $up = new Version20261026000001($db, new NullLogger());
+        $up->up($db->createSchemaManager()->introspectSchema());
+        foreach ($up->getSql() as $query) {
+            $db->executeStatement($query->getStatement());
+        }
+        self::assertSame($beforePolicy, $db->fetchAllAssociative('SELECT * FROM nickserv_registration_policy'));
+        self::assertSame($beforeSettings, $db->fetchAllAssociative('SELECT * FROM service_settings'));
+        self::assertSame('#preserve', $db->fetchOne('SELECT name FROM registered_channels WHERE id = 1'));
+
+        $down = new Version20261026000001($db, new NullLogger());
+        $down->down($db->createSchemaManager()->introspectSchema());
+        foreach ($down->getSql() as $query) {
+            $db->executeStatement($query->getStatement());
+        }
+        self::assertSame($beforePolicy, $db->fetchAllAssociative('SELECT * FROM nickserv_registration_policy'));
+        self::assertSame($beforeSettings, $db->fetchAllAssociative('SELECT * FROM service_settings'));
+        self::assertSame('#preserve', $db->fetchOne('SELECT name FROM registered_channels WHERE id = 1'));
+        $db->close();
+    }
+
     #[DataProvider('platforms')]
     #[Test]
-    public function portableMigrationContainsOnlyTheFinalSchemaAndSeededDefaults(AbstractPlatform $platform): void
+    public function portableApprovalMigrationDoesNotTouchGlobalSettings(AbstractPlatform $platform): void
     {
         $connection = $this->createStub(Connection::class);
         $connection->method('getDatabasePlatform')->willReturn($platform);
@@ -50,14 +82,15 @@ final class RegistrationApprovalMigrationTest extends TestCase
         self::assertNotNull($target);
         self::assertTrue($before->hasTable('nickserv_registration_policy'));
         self::assertFalse($before->hasTable('service_settings'));
-        self::assertTrue($target->hasTable('service_settings'));
-        foreach (['nickserv_registration_policy', 'chanserv_registration_policy', 'channel_registration_audit'] as $obsolete) {
+        self::assertFalse($target->hasTable('service_settings'));
+        self::assertTrue($target->hasTable('nickserv_registration_policy'));
+        foreach (['chanserv_registration_policy', 'channel_registration_audit'] as $obsolete) {
             self::assertFalse($target->hasTable($obsolete));
         }
         self::assertTrue($target->getTable('registered_channels')->hasColumn('registration_restricted_until'));
         $sql = implode("\n", array_map(static fn ($query): string => $query->getStatement(), $migration->getSql()));
-        self::assertStringContainsString("'chanserv', 'registration_mode', 'DIRECT'", $sql);
-        self::assertStringContainsString("'nickserv', 'registration_mode', 'TOKEN'", $sql);
+        self::assertStringNotContainsString('service_settings', $sql);
+        self::assertStringNotContainsString('nickserv_registration_policy', $sql);
         self::assertStringNotContainsString('chanserv_registration_policy', $sql);
         self::assertStringNotContainsString('channel_registration_audit', $sql);
         $migration->preDown($target);
@@ -66,47 +99,6 @@ final class RegistrationApprovalMigrationTest extends TestCase
         $restored = $migration->getEditedSchema();
         self::assertNotNull($restored);
         self::assertTrue(new Comparator($platform)->compareSchemas($before, $restored)->isEmpty());
-    }
-
-    #[Test]
-    #[TestWith(['EMAIL'])]
-    #[TestWith(['TOKEN'])]
-    #[TestWith([null])]
-    public function commonSettingsMigrationDiscardsPreviousNickServMode(?string $oldMode): void
-    {
-        $connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
-        $connection->executeStatement('CREATE TABLE registered_channels (id INTEGER PRIMARY KEY, name TEXT)');
-        $connection->executeStatement('CREATE TABLE nickserv_registration_policy (id INTEGER PRIMARY KEY, mode VARCHAR(5) NOT NULL)');
-        $connection->executeStatement('CREATE TABLE unrelated_data (id INTEGER PRIMARY KEY, value TEXT)');
-        $connection->insert('registered_channels', ['id' => 1, 'name' => '#preserve']);
-        $connection->insert('unrelated_data', ['id' => 1, 'value' => 'preserve']);
-        if (null !== $oldMode) {
-            $connection->insert('nickserv_registration_policy', ['id' => 1, 'mode' => $oldMode]);
-        }
-        $migration = new Version20261026000001($connection, new NullLogger());
-        $migration->up($connection->createSchemaManager()->introspectSchema());
-        foreach ($migration->getSql() as $query) {
-            $connection->executeStatement($query->getStatement());
-        }
-        foreach (['nickserv_registration_policy', 'chanserv_registration_policy', 'channel_registration_audit'] as $obsolete) {
-            self::assertFalse($connection->createSchemaManager()->tablesExist([$obsolete]));
-        }
-        self::assertSame([
-            ['service_name' => 'chanserv', 'setting_name' => 'registration_mode', 'setting_value' => 'DIRECT'],
-            ['service_name' => 'nickserv', 'setting_name' => 'registration_mode', 'setting_value' => 'TOKEN'],
-        ], $connection->fetchAllAssociative('SELECT * FROM service_settings ORDER BY service_name'));
-        self::assertSame('#preserve', $connection->fetchOne('SELECT name FROM registered_channels WHERE id = 1'));
-        self::assertSame('preserve', $connection->fetchOne('SELECT value FROM unrelated_data WHERE id = 1'));
-        $rollback = new Version20261026000001($connection, new NullLogger());
-        $rollback->down($connection->createSchemaManager()->introspectSchema());
-        foreach ($rollback->getSql() as $query) {
-            $connection->executeStatement($query->getStatement());
-        }
-        self::assertFalse($connection->createSchemaManager()->tablesExist(['service_settings']));
-        self::assertSame(0, $connection->fetchOne('SELECT COUNT(*) FROM nickserv_registration_policy'));
-        self::assertSame('#preserve', $connection->fetchOne('SELECT name FROM registered_channels WHERE id = 1'));
-        self::assertSame('preserve', $connection->fetchOne('SELECT value FROM unrelated_data WHERE id = 1'));
-        $connection->close();
     }
 
     /** @return iterable<string, array{AbstractPlatform}> */

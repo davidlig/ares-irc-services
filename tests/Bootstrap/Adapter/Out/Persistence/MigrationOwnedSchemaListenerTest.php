@@ -79,6 +79,7 @@ final class MigrationOwnedSchemaListenerTest extends TestCase
         self::assertSame(['service_name', 'setting_name'], array_map(static fn ($name): string => $name->toString(), $primary->getColumnNames()));
         self::assertSame(32, $settings->getColumn('service_name')->getLength());
         self::assertSame(64, $settings->getColumn('setting_name')->getLength());
+        self::assertSame('json', $settings->getColumn('setting_value')->getTypeName());
         new MigrationOwnedSchemaListener()->postGenerateSchema($event);
         self::assertSame($settings->getColumns(), $event->getSchema()->getTable('service_settings')->getColumns());
     }

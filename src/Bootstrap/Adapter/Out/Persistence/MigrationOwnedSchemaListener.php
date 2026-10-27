@@ -46,7 +46,7 @@ final class MigrationOwnedSchemaListener
             $settings = Table::editor()->setUnquotedName('service_settings');
             $settings->addColumn(Column::editor()->setUnquotedName('service_name')->setTypeName(Types::STRING)->setLength(32)->create());
             $settings->addColumn(Column::editor()->setUnquotedName('setting_name')->setTypeName(Types::STRING)->setLength(64)->create());
-            $settings->addColumn(Column::editor()->setUnquotedName('setting_value')->setTypeName(Types::TEXT)->create());
+            $settings->addColumn(Column::editor()->setUnquotedName('setting_value')->setTypeName(Types::JSON)->create());
             $settings->addPrimaryKeyConstraint(PrimaryKeyConstraint::editor()->setUnquotedName('primary')->setUnquotedColumnNames('service_name', 'setting_name')->create());
             $editor->addTable($settings->create());
         }

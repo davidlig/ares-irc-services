@@ -110,10 +110,12 @@ with CREG; STATUS reports lifecycle state without exposing pending requests thro
 ACCEPT and REJECT use the existing IRCop command audit; only ACCEPT adds channel HISTORY.
 Rejection details and restrictions remain on the current channel registration.
 Global settings with runtime commands use `service_settings`, keyed by service and setting name.
-Migration `Version20261026000001` seeds ChanServ REGMODE `DIRECT` and NickServ REGMODE `TOKEN`.
+Values are encoded as JSON; the owning service validates each decoded value against its setting's type and rules.
+The dedicated migration `Version20261026000002` seeds ChanServ REGMODE `DIRECT` and NickServ REGMODE `TOKEN`.
 It intentionally drops the old NickServ policy without copying its mode; back up before upgrading.
 Downgrading removes the common settings and restores the old NickServ table empty, not its data.
-The consolidated feature migration never creates a ChanServ policy or registration-audit table.
+Migration `Version20261026000001` contains only ChanServ approval lifecycle metadata.
+Neither feature migration creates a ChanServ policy or registration-audit table.
 Settings without a runtime command remain configured through `.env`.
 
 ### MemoServ
