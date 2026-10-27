@@ -25,7 +25,11 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
 
+use function array_reverse;
+use function basename;
 use function dirname;
+use function glob;
+use function is_a;
 
 /** Migrations are outside the production coverage filter; exercise their executor explicitly. */
 #[CoversNothing]

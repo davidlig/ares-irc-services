@@ -13,6 +13,11 @@ use App\OperServ\Domain\Entity\BadmailEntry;
 use App\OperServ\Domain\ValueObject\EmailDomain;
 use InvalidArgumentException;
 
+use function ceil;
+use function in_array;
+use function max;
+use function trim;
+
 final readonly class ManageBadmailHandler
 {
     private int $pageSize;

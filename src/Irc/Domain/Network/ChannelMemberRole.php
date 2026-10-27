@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Irc\Domain\Network;
 
+use function array_search;
+
 enum ChannelMemberRole: string
 {
     case None = '';

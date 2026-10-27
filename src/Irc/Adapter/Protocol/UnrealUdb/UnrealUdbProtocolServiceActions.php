@@ -17,7 +17,9 @@ use Psr\Log\NullLogger;
 use function count;
 use function implode;
 use function sprintf;
+use function str_replace;
 use function str_split;
+use function time;
 
 /**
  * UnrealUdb service actions: UDB-native behavior.

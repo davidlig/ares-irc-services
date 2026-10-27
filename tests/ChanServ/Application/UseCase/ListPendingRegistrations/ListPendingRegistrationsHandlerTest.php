@@ -14,6 +14,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function array_map;
+
 #[CoversClass(ListPendingRegistrationsHandler::class)]
 #[CoversClass(PendingRegistrationView::class)]
 final class ListPendingRegistrationsHandlerTest extends TestCase

@@ -38,6 +38,10 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function array_column;
+use function is_string;
+use function iterator_to_array;
+
 #[CoversClass(CregCommand::class)]
 final class CregCommandTest extends TestCase
 {

@@ -65,75 +65,6 @@ final class NickServCommandListenerTest extends TestCase
 
     private NickServCommandListener $listener;
 
-    private static function senderView(): SenderView
-    {
-        return new SenderView(
-            uid: self::SENDER_UID,
-            nick: 'TestUser',
-            ident: 'test',
-            hostname: 'host.example',
-            cloakedHost: 'cloak.example',
-            ipBase64: 'dGVzdA==',
-            isIdentified: false,
-            serverSid: '001',
-        );
-    }
-
-    protected function setUp(): void
-    {
-        $uidGenerator = $this->createStub(ServiceUidGeneratorInterface::class);
-        $uidGenerator->method('generateUid')->willReturn('001NS');
-
-        $this->nickServBot = new NickServBot(
-            new ActiveConnectionHolder(),
-            $this->createStub(NetworkUserLookupPort::class),
-            $this->createStub(SendNoticePort::class),
-            $this->createStub(PendingNickRestoreRegistryInterface::class),
-            $this->createStub(LocalUserModeSyncPort::class),
-            $uidGenerator,
-            'services.example.com',
-            'NickServ',
-        );
-
-        $this->nickServBot->onBurstComplete(new ServiceIntroductionRequestedEvent('001'));
-
-        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $this->nickServNotifier = $this->createMock(NickServNotifierInterface::class);
-        $this->messageTypeResolver = new UserMessageTypeResolver($nickRepository);
-        $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id);
-
-        $this->nickServService = new NickServService(
-            $this->createStub(AuthorizationContextInterface::class),
-            $this->createStub(AuthorizationCheckerInterface::class),
-            new NickServCommandRegistry([]),
-            $nickRepository,
-            new UserLanguageResolver($nickRepository, new SessionLanguageRegistry(), 'en'),
-            $this->nickServNotifier,
-            $this->messageTypeResolver,
-            $translator,
-            new PendingVerificationRegistry(),
-            new RecoveryTokenRegistry(),
-            $this->createServiceNicks(),
-            $this->createStub(EventBusInterface::class),
-            'en',
-            'UTC',
-        );
-
-        $this->userLookup = $this->createMock(NetworkUserLookupPort::class);
-        $this->sendNotice = $this->createMock(SendNoticePort::class);
-        $this->logger = $this->createMock(LoggerInterface::class);
-
-        $this->listener = new NickServCommandListener(
-            $this->nickServBot,
-            $this->nickServService,
-            $this->userLookup,
-            $this->sendNotice,
-            $this->messageTypeResolver,
-            $this->logger,
-        );
-    }
-
     #[Test]
     public function getServiceNameReturnsBotNick(): void
     {
@@ -298,6 +229,75 @@ final class NickServCommandListenerTest extends TestCase
             );
 
         $this->listener->onCommand(self::SENDER_UID, 'LIST');
+    }
+
+    protected function setUp(): void
+    {
+        $uidGenerator = $this->createStub(ServiceUidGeneratorInterface::class);
+        $uidGenerator->method('generateUid')->willReturn('001NS');
+
+        $this->nickServBot = new NickServBot(
+            new ActiveConnectionHolder(),
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createStub(SendNoticePort::class),
+            $this->createStub(PendingNickRestoreRegistryInterface::class),
+            $this->createStub(LocalUserModeSyncPort::class),
+            $uidGenerator,
+            'services.example.com',
+            'NickServ',
+        );
+
+        $this->nickServBot->onBurstComplete(new ServiceIntroductionRequestedEvent('001'));
+
+        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $this->nickServNotifier = $this->createMock(NickServNotifierInterface::class);
+        $this->messageTypeResolver = new UserMessageTypeResolver($nickRepository);
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id);
+
+        $this->nickServService = new NickServService(
+            $this->createStub(AuthorizationContextInterface::class),
+            $this->createStub(AuthorizationCheckerInterface::class),
+            new NickServCommandRegistry([]),
+            $nickRepository,
+            new UserLanguageResolver($nickRepository, new SessionLanguageRegistry(), 'en'),
+            $this->nickServNotifier,
+            $this->messageTypeResolver,
+            $translator,
+            new PendingVerificationRegistry(),
+            new RecoveryTokenRegistry(),
+            $this->createServiceNicks(),
+            $this->createStub(EventBusInterface::class),
+            'en',
+            'UTC',
+        );
+
+        $this->userLookup = $this->createMock(NetworkUserLookupPort::class);
+        $this->sendNotice = $this->createMock(SendNoticePort::class);
+        $this->logger = $this->createMock(LoggerInterface::class);
+
+        $this->listener = new NickServCommandListener(
+            $this->nickServBot,
+            $this->nickServService,
+            $this->userLookup,
+            $this->sendNotice,
+            $this->messageTypeResolver,
+            $this->logger,
+        );
+    }
+
+    private static function senderView(): SenderView
+    {
+        return new SenderView(
+            uid: self::SENDER_UID,
+            nick: 'TestUser',
+            ident: 'test',
+            hostname: 'host.example',
+            cloakedHost: 'cloak.example',
+            ipBase64: 'dGVzdA==',
+            isIdentified: false,
+            serverSid: '001',
+        );
     }
 
     private function createThrowCommand(string $name, Throwable $e): NickServCommandInterface

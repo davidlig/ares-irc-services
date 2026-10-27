@@ -15,7 +15,14 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbChecksum;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbUnsignedDecimal;
 use RuntimeException;
 
+use function bin2hex;
+use function chmod;
 use function count;
+use function fclose;
+use function fopen;
+use function mkdir;
+use function random_bytes;
+use function sys_get_temp_dir;
 
 /** Schema-aware typed fixtures shared by the UDB adapter tests. */
 final class UdbTestValues

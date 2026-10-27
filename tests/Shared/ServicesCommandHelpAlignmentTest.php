@@ -23,7 +23,10 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\Dotenv\Dotenv;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function array_key_last;
+use function array_unique;
 use function assert;
+use function count;
 use function dirname;
 use function implode;
 use function sprintf;

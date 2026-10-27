@@ -22,6 +22,9 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 
+use function array_map;
+use function implode;
+
 #[CoversNothing]
 final class RegistrationApprovalMigrationTest extends TestCase
 {

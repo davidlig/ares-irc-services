@@ -6,6 +6,8 @@ namespace App\Irc\Adapter\Protocol\UnrealUdb;
 
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\PasswordMigrationStateInterface;
 
+use function strtolower;
+
 final class UnrealUdbMigrationState implements PasswordMigrationStateInterface
 {
     /** @var array<string, true> */

@@ -18,12 +18,6 @@ final class SymfonyAuthorizationCheckerAdapterTest extends TestCase
 
     private SymfonyAuthorizationCheckerAdapter $adapter;
 
-    protected function setUp(): void
-    {
-        $this->symfonyChecker = $this->createMock(SymfonyAuthorizationCheckerInterface::class);
-        $this->adapter = new SymfonyAuthorizationCheckerAdapter($this->symfonyChecker);
-    }
-
     #[Test]
     public function isGrantedDelegatesToSymfonyCheckerAndReturnsResult(): void
     {
@@ -33,5 +27,11 @@ final class SymfonyAuthorizationCheckerAdapterTest extends TestCase
             ->willReturn(true);
 
         self::assertTrue($this->adapter->isGranted('ROLE_USER', null));
+    }
+
+    protected function setUp(): void
+    {
+        $this->symfonyChecker = $this->createMock(SymfonyAuthorizationCheckerInterface::class);
+        $this->adapter = new SymfonyAuthorizationCheckerAdapter($this->symfonyChecker);
     }
 }

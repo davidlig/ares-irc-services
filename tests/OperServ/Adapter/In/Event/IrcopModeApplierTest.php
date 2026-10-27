@@ -24,56 +24,13 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use UnexpectedValueException;
 
+use function base64_encode;
+use function inet_pton;
 use function is_string;
 
 #[CoversClass(IrcopModeApplier::class)]
 final class IrcopModeApplierTest extends TestCase
 {
-    private function createApplier(
-        ?IdentifiedSessionRegistry $registry = null,
-        ?ActiveProtocolModuleHolderInterface $holder = null,
-        ?NetworkUserLookupPort $userLookup = null,
-    ): IrcopModeApplier {
-        return new IrcopModeApplier(
-            $registry ?? new IdentifiedSessionRegistry(),
-            $holder ?? $this->createStub(ActiveProtocolModuleHolderInterface::class),
-            $this->createStub(OperIrcopRepositoryInterface::class),
-            $this->createStub(NickProjectionQuery::class),
-            $userLookup ?? $this->createStub(NetworkUserLookupPort::class),
-            new NullLogger(),
-        );
-    }
-
-    private function createUserModeSupportStub(): UserModeSupportInterface
-    {
-        $support = $this->createStub(UserModeSupportInterface::class);
-        $support->method('buildModeParams')->willReturnCallback(
-            static function (string $sign, array $modes): array {
-                $modeString = '';
-                foreach ($modes as $mode) {
-                    if (!is_string($mode)) {
-                        throw new UnexpectedValueException('User modes must be strings.');
-                    }
-
-                    $modeString .= $mode;
-                }
-
-                return [$sign . $modeString, []];
-            },
-        );
-
-        return $support;
-    }
-
-    private function createModuleWithUserModeSupport(ProtocolServiceActionsInterface $serviceActions): ProtocolModuleInterface
-    {
-        $module = $this->createStub(ProtocolModuleInterface::class);
-        $module->method('getServiceActions')->willReturn($serviceActions);
-        $module->method('getUserModeSupport')->willReturn($this->createUserModeSupportStub());
-
-        return $module;
-    }
-
     #[Test]
     public function applyAndRemoveReturnFalseWhenServerSidIsMissing(): void
     {
@@ -755,5 +712,50 @@ final class IrcopModeApplierTest extends TestCase
         );
 
         $applier->updateModesForRole($roleId, ['H'], ['q']);
+    }
+
+    private function createApplier(
+        ?IdentifiedSessionRegistry $registry = null,
+        ?ActiveProtocolModuleHolderInterface $holder = null,
+        ?NetworkUserLookupPort $userLookup = null,
+    ): IrcopModeApplier {
+        return new IrcopModeApplier(
+            $registry ?? new IdentifiedSessionRegistry(),
+            $holder ?? $this->createStub(ActiveProtocolModuleHolderInterface::class),
+            $this->createStub(OperIrcopRepositoryInterface::class),
+            $this->createStub(NickProjectionQuery::class),
+            $userLookup ?? $this->createStub(NetworkUserLookupPort::class),
+            new NullLogger(),
+        );
+    }
+
+    private function createUserModeSupportStub(): UserModeSupportInterface
+    {
+        $support = $this->createStub(UserModeSupportInterface::class);
+        $support->method('buildModeParams')->willReturnCallback(
+            static function (string $sign, array $modes): array {
+                $modeString = '';
+                foreach ($modes as $mode) {
+                    if (!is_string($mode)) {
+                        throw new UnexpectedValueException('User modes must be strings.');
+                    }
+
+                    $modeString .= $mode;
+                }
+
+                return [$sign . $modeString, []];
+            },
+        );
+
+        return $support;
+    }
+
+    private function createModuleWithUserModeSupport(ProtocolServiceActionsInterface $serviceActions): ProtocolModuleInterface
+    {
+        $module = $this->createStub(ProtocolModuleInterface::class);
+        $module->method('getServiceActions')->willReturn($serviceActions);
+        $module->method('getUserModeSupport')->willReturn($this->createUserModeSupportStub());
+
+        return $module;
     }
 }

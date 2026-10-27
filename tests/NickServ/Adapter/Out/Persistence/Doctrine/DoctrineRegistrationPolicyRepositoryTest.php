@@ -22,6 +22,8 @@ use RuntimeException;
 use UnexpectedValueException;
 use ValueError;
 
+use function in_array;
+
 #[CoversClass(DoctrineRegistrationPolicyRepository::class)]
 final class DoctrineRegistrationPolicyRepositoryTest extends DoctrineIntegrationTestCase
 {

@@ -20,24 +20,6 @@ final class InspIRCdNickReservationTest extends TestCase
 
     private ActiveConnectionHolder $connectionHolder;
 
-    protected function setUp(): void
-    {
-        $this->written = [];
-        $connection = $this->createStub(ConnectionInterface::class);
-        $connection->method('writeLine')->willReturnCallback(function (string $line): void {
-            $this->written[] = $line;
-        });
-
-        $this->connectionHolder = new ActiveConnectionHolder();
-
-        $reflection = new ReflectionClass($this->connectionHolder);
-        $property = $reflection->getProperty('connection');
-        $property->setValue($this->connectionHolder, $connection);
-
-        $sidProperty = $reflection->getProperty('serverSid');
-        $sidProperty->setValue($this->connectionHolder, '001');
-    }
-
     #[Test]
     public function reserveNickSendsAddlineQCommand(): void
     {
@@ -143,5 +125,23 @@ final class InspIRCdNickReservationTest extends TestCase
         $reservation->releaseNick('NickServ');
 
         self::assertEmpty($this->written);
+    }
+
+    protected function setUp(): void
+    {
+        $this->written = [];
+        $connection = $this->createStub(ConnectionInterface::class);
+        $connection->method('writeLine')->willReturnCallback(function (string $line): void {
+            $this->written[] = $line;
+        });
+
+        $this->connectionHolder = new ActiveConnectionHolder();
+
+        $reflection = new ReflectionClass($this->connectionHolder);
+        $property = $reflection->getProperty('connection');
+        $property->setValue($this->connectionHolder, $connection);
+
+        $sidProperty = $reflection->getProperty('serverSid');
+        $sidProperty->setValue($this->connectionHolder, '001');
     }
 }

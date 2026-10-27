@@ -21,6 +21,7 @@ use Psr\Log\NullLogger;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Throwable;
 
+use function array_key_last;
 use function count;
 use function implode;
 use function sprintf;

@@ -4,6 +4,13 @@ declare(strict_types=1);
 
 namespace App\OperServ\Application;
 
+use function array_fill_keys;
+use function array_filter;
+use function array_keys;
+use function array_map;
+use function explode;
+use function strtolower;
+
 final readonly class RootUserRegistry
 {
     /** @var array<string, true> */

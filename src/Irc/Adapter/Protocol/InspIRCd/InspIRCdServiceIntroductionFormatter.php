@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Irc\Adapter\Protocol\InspIRCd;
 
 use function sprintf;
+use function time;
 
 /**
  * InspIRCd SpanTree: introduce a service pseudo-client with a UID line.

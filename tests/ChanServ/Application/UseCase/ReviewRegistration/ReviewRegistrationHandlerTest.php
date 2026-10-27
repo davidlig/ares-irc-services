@@ -31,6 +31,8 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
 
+use function count;
+
 #[CoversClass(ReviewRegistrationHandler::class)]
 #[CoversClass(ReviewRegistration::class)]
 #[CoversClass(ReviewRegistrationResult::class)]

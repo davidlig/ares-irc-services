@@ -32,13 +32,20 @@ use Psr\Log\NullLogger;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 use function array_slice;
+use function array_values;
 use function count;
+use function explode;
 use function in_array;
+use function ltrim;
 use function preg_match;
 use function sprintf;
+use function str_contains;
 use function str_starts_with;
+use function strcmp;
+use function strlen;
 use function strpos;
 use function substr;
+use function trim;
 
 /**
  * UnrealIRCd protocol adapter: parses UID, NICK, QUIT, SJOIN, PART, KICK,

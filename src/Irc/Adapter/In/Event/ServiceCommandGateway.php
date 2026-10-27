@@ -10,7 +10,9 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
+use function array_find;
 use function in_array;
+use function strtolower;
 
 /**
  * Single entry point for PRIVMSG and SQUERY targeting a service. Listens to MessageReceivedEvent,

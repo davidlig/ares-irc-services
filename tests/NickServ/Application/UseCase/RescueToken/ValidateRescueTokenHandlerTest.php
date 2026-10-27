@@ -18,6 +18,9 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function str_repeat;
+use function strtoupper;
+
 #[CoversClass(ValidateRescueTokenHandler::class)]
 #[CoversClass(RescueTokenValidation::class)]
 #[CoversClass(RescueTokenValidationResult::class)]

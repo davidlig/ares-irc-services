@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Irc\Adapter\Protocol\UnrealStandalone;
 
 use function sprintf;
+use function time;
 
 /**
  * UnrealIRCd: introduce a service pseudo-client with a UID line.

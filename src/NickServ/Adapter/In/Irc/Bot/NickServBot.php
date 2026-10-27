@@ -54,30 +54,6 @@ final class NickServBot implements NickServNotifierInterface, NickNetworkActions
         $this->introduce($event->serverSid);
     }
 
-    private function introduce(string $serverSid): void
-    {
-        $module = $this->connectionHolder->getProtocolModule();
-        if (null === $module) {
-            return;
-        }
-
-        $module->getServiceActions()->introduceService(
-            $serverSid,
-            $this->nickservNick,
-            $this->nickservIdent,
-            $this->servicesVhost,
-            $this->uid,
-            $this->nickservRealname,
-            $this->getServiceKey(),
-        );
-
-        $this->logger->info('NickServ introduced to network.', [
-            'uid' => $this->uid,
-            'nick' => $this->nickservNick,
-            'host' => $this->servicesVhost,
-        ]);
-    }
-
     public function sendNotice(string $targetUidOrNick, string $message): void
     {
         $this->sendNoticePort->sendNotice($this->uid, $targetUidOrNick, $message);
@@ -148,11 +124,6 @@ final class NickServBot implements NickServNotifierInterface, NickNetworkActions
         $this->userLookup->updateVhost($targetUid, '' === $vhost ? '*' : $vhost);
     }
 
-    private function getServerSid(): string
-    {
-        return $this->connectionHolder->getServerSid() ?? '';
-    }
-
     public function getNick(): string
     {
         return $this->nickservNick;
@@ -171,5 +142,34 @@ final class NickServBot implements NickServNotifierInterface, NickNetworkActions
     public function getNickname(): string
     {
         return $this->nickservNick;
+    }
+
+    private function introduce(string $serverSid): void
+    {
+        $module = $this->connectionHolder->getProtocolModule();
+        if (null === $module) {
+            return;
+        }
+
+        $module->getServiceActions()->introduceService(
+            $serverSid,
+            $this->nickservNick,
+            $this->nickservIdent,
+            $this->servicesVhost,
+            $this->uid,
+            $this->nickservRealname,
+            $this->getServiceKey(),
+        );
+
+        $this->logger->info('NickServ introduced to network.', [
+            'uid' => $this->uid,
+            'nick' => $this->nickservNick,
+            'host' => $this->servicesVhost,
+        ]);
+    }
+
+    private function getServerSid(): string
+    {
+        return $this->connectionHolder->getServerSid() ?? '';
     }
 }

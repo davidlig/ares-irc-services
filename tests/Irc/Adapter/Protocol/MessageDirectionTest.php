@@ -9,6 +9,10 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function array_map;
+use function array_unique;
+use function array_values;
+
 #[CoversClass(MessageDirection::class)]
 final class MessageDirectionTest extends TestCase
 {

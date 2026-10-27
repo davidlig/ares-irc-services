@@ -8,7 +8,11 @@ use App\NickServ\Application\Port\Out\RescueAttemptLimiter;
 use DateTimeImmutable;
 use InvalidArgumentException;
 
+use function array_filter;
+use function array_values;
 use function count;
+use function max;
+use function min;
 
 final class InMemoryRescueAttemptLimiter implements RescueAttemptLimiter
 {

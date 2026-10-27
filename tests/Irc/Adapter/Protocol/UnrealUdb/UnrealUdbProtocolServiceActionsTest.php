@@ -24,33 +24,6 @@ final class UnrealUdbProtocolServiceActionsTest extends TestCase
     /** @var list<string> */
     private array $written = [];
 
-    protected function setUp(): void
-    {
-        $this->written = [];
-        $connection = $this->createStub(ConnectionInterface::class);
-        $connection->method('writeLine')->willReturnCallback(function (string $line): void {
-            $this->written[] = $line;
-        });
-        $connection->method('isConnected')->willReturn(true);
-
-        $this->connectionHolder = new ActiveConnectionHolder();
-
-        $reflection = new ReflectionClass($this->connectionHolder);
-        $property = $reflection->getProperty('connection');
-        $property->setValue($this->connectionHolder, $connection);
-        $sidProperty = $reflection->getProperty('serverSid');
-        $sidProperty->setValue($this->connectionHolder, '001');
-    }
-
-    private function createActions(): UnrealUdbProtocolServiceActions
-    {
-        return new UnrealUdbProtocolServiceActions(
-            $this->connectionHolder,
-            $this->createUdbRecordWriter($this->connectionHolder),
-            clock: new MutableUdbClock(1_800_000_000),
-        );
-    }
-
     #[Test]
     public function setUserAccountIsNoOp(): void
     {
@@ -549,5 +522,32 @@ final class UnrealUdbProtocolServiceActionsTest extends TestCase
         self::assertCount(1, $this->written);
         self::assertStringContainsString(':001 UID NickServ 1', $this->written[0]);
         self::assertStringContainsString('001AAAAAA', $this->written[0]);
+    }
+
+    protected function setUp(): void
+    {
+        $this->written = [];
+        $connection = $this->createStub(ConnectionInterface::class);
+        $connection->method('writeLine')->willReturnCallback(function (string $line): void {
+            $this->written[] = $line;
+        });
+        $connection->method('isConnected')->willReturn(true);
+
+        $this->connectionHolder = new ActiveConnectionHolder();
+
+        $reflection = new ReflectionClass($this->connectionHolder);
+        $property = $reflection->getProperty('connection');
+        $property->setValue($this->connectionHolder, $connection);
+        $sidProperty = $reflection->getProperty('serverSid');
+        $sidProperty->setValue($this->connectionHolder, '001');
+    }
+
+    private function createActions(): UnrealUdbProtocolServiceActions
+    {
+        return new UnrealUdbProtocolServiceActions(
+            $this->connectionHolder,
+            $this->createUdbRecordWriter($this->connectionHolder),
+            clock: new MutableUdbClock(1_800_000_000),
+        );
     }
 }

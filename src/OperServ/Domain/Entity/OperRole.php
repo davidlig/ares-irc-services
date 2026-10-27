@@ -4,10 +4,15 @@ declare(strict_types=1);
 
 namespace App\OperServ\Domain\Entity;
 
+use function array_any;
 use function array_filter;
+use function array_unique;
 use function array_values;
 use function in_array;
 use function is_array;
+use function json_decode;
+use function json_encode;
+use function strtoupper;
 
 class OperRole
 {

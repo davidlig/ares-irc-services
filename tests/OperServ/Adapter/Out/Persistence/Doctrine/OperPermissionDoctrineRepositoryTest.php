@@ -18,12 +18,6 @@ final class OperPermissionDoctrineRepositoryTest extends DoctrineIntegrationTest
 {
     private OperPermissionRepositoryInterface $repository;
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->repository = new OperPermissionDoctrineRepository($this->entityManager);
-    }
-
     #[Test]
     public function findReturnsNullWhenNotFound(): void
     {
@@ -107,5 +101,11 @@ final class OperPermissionDoctrineRepositoryTest extends DoctrineIntegrationTest
 
         self::assertNotNull($found);
         self::assertSame('operserv.network.view', $found->getName());
+    }
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->repository = new OperPermissionDoctrineRepository($this->entityManager);
     }
 }

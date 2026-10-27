@@ -9,6 +9,8 @@ use App\ChanServ\Application\Port\In\NickChannelAssociationQuery;
 use App\NickServ\Application\Port\Out\AssociatedChannel;
 use App\NickServ\Application\Port\Out\NickAssociatedChannelsPort;
 
+use function array_map;
+
 final readonly class ChanServNickAssociatedChannelsAdapter implements NickAssociatedChannelsPort
 {
     public function __construct(private NickChannelAssociationQuery $query) {}

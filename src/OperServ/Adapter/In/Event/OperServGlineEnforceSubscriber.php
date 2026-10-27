@@ -16,6 +16,8 @@ use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 use function count;
+use function max;
+use function time;
 
 final readonly class OperServGlineEnforceSubscriber implements EventSubscriberInterface
 {

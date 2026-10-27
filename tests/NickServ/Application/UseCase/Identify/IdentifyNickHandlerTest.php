@@ -25,6 +25,8 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
 
+use function str_repeat;
+
 #[CoversClass(IdentifyNickHandler::class)]
 #[CoversClass(IdentifyNick::class)]
 #[CoversClass(IdentifyNickResult::class)]

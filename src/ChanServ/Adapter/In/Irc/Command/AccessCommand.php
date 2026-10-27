@@ -16,8 +16,11 @@ use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use DateTimeImmutable;
 
+use function base64_decode;
+use function inet_ntop;
 use function sprintf;
 use function strtoupper;
+use function trim;
 
 /** ACCESS <#channel> ADD|DEL|LIST [nickname] [level]. */
 final readonly class AccessCommand implements ChanServCommandInterface

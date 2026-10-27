@@ -17,6 +17,9 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function array_column;
+use function iterator_to_array;
+
 #[CoversClass(CoreChannelLookupAdapter::class)]
 #[CoversClass(ChannelModeView::class)]
 final class CoreChannelLookupAdapterTest extends TestCase

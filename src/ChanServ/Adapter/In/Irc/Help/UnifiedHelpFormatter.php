@@ -9,7 +9,15 @@ use function explode;
 use function implode;
 use function is_array;
 use function ltrim;
+use function max;
+use function mb_strlen;
+use function method_exists;
+use function str_contains;
+use function str_pad;
+use function str_repeat;
+use function str_replace;
 use function strtoupper;
+use function usort;
 
 /**
  * Renders unified HELP output (header, command list, options, syntax, footer)

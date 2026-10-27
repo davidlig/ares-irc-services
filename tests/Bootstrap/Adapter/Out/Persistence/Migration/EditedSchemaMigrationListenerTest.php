@@ -24,6 +24,11 @@ use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 use function array_key_exists;
+use function getenv;
+use function putenv;
+use function sys_get_temp_dir;
+use function tempnam;
+use function unlink;
 
 #[CoversClass(EditedSchemaMigrationListener::class)]
 final class EditedSchemaMigrationListenerTest extends KernelTestCase
@@ -81,6 +86,55 @@ final class EditedSchemaMigrationListenerTest extends KernelTestCase
         self::assertSame($beforeProcess, getenv('DATABASE_URL'));
         self::assertFalse(self::$booted);
         self::assertNull(self::$kernel);
+    }
+
+    #[Test]
+    public function leavesSqlOnlyMigrationResultUntouched(): void
+    {
+        $connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
+        try {
+            $migration = new Version20260927000002($connection, new NullLogger());
+            $version = new Version($migration::class);
+            $plan = new MigrationPlan($version, $migration, 'up');
+            $result = new ExecutionResult($version);
+            $original = new Schema();
+            $result->setToSchema($original);
+            $plan->markAsExecuted($result);
+            new EditedSchemaMigrationListener()->onMigrationsVersionExecuted(new MigrationsVersionEventArgs($connection, $plan, new MigratorConfiguration()));
+            self::assertSame($original, $result->getToSchema());
+        } finally {
+            $connection->close();
+        }
+    }
+
+    #[Test]
+    public function targetWithoutExecutedResultFailsClosed(): void
+    {
+        $connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
+        try {
+            $migration = new Version20260914000001($connection, new NullLogger());
+            $migration->up(new Schema());
+            self::assertNotNull($migration->getEditedSchema());
+            $plan = new MigrationPlan(new Version($migration::class), $migration, 'up');
+            $this->expectException(LogicException::class);
+            new EditedSchemaMigrationListener()->onMigrationsVersionExecuted(new MigrationsVersionEventArgs($connection, $plan, new MigratorConfiguration()));
+        } finally {
+            $connection->close();
+        }
+    }
+
+    #[Test]
+    public function missingTargetFailsClosed(): void
+    {
+        $connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
+        try {
+            $migration = new Version20260914000001($connection, new NullLogger());
+            $plan = new MigrationPlan(new Version($migration::class), $migration, 'up');
+            $this->expectException(LogicException::class);
+            new EditedSchemaMigrationListener()->onMigrationsVersionExecuted(new MigrationsVersionEventArgs($connection, $plan, new MigratorConfiguration()));
+        } finally {
+            $connection->close();
+        }
     }
 
     private function assertProductionAutoconfigurationInPrivateDatabase(): void
@@ -142,55 +196,6 @@ final class EditedSchemaMigrationListenerTest extends KernelTestCase
                 }
                 putenv(false === $previousProcess ? 'DATABASE_URL' : 'DATABASE_URL=' . $previousProcess);
             }
-        }
-    }
-
-    #[Test]
-    public function leavesSqlOnlyMigrationResultUntouched(): void
-    {
-        $connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
-        try {
-            $migration = new Version20260927000002($connection, new NullLogger());
-            $version = new Version($migration::class);
-            $plan = new MigrationPlan($version, $migration, 'up');
-            $result = new ExecutionResult($version);
-            $original = new Schema();
-            $result->setToSchema($original);
-            $plan->markAsExecuted($result);
-            new EditedSchemaMigrationListener()->onMigrationsVersionExecuted(new MigrationsVersionEventArgs($connection, $plan, new MigratorConfiguration()));
-            self::assertSame($original, $result->getToSchema());
-        } finally {
-            $connection->close();
-        }
-    }
-
-    #[Test]
-    public function targetWithoutExecutedResultFailsClosed(): void
-    {
-        $connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
-        try {
-            $migration = new Version20260914000001($connection, new NullLogger());
-            $migration->up(new Schema());
-            self::assertNotNull($migration->getEditedSchema());
-            $plan = new MigrationPlan(new Version($migration::class), $migration, 'up');
-            $this->expectException(LogicException::class);
-            new EditedSchemaMigrationListener()->onMigrationsVersionExecuted(new MigrationsVersionEventArgs($connection, $plan, new MigratorConfiguration()));
-        } finally {
-            $connection->close();
-        }
-    }
-
-    #[Test]
-    public function missingTargetFailsClosed(): void
-    {
-        $connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
-        try {
-            $migration = new Version20260914000001($connection, new NullLogger());
-            $plan = new MigrationPlan(new Version($migration::class), $migration, 'up');
-            $this->expectException(LogicException::class);
-            new EditedSchemaMigrationListener()->onMigrationsVersionExecuted(new MigrationsVersionEventArgs($connection, $plan, new MigratorConfiguration()));
-        } finally {
-            $connection->close();
         }
     }
 }

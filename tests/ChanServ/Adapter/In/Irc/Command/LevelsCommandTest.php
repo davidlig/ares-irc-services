@@ -36,6 +36,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function count;
 use function is_string;
+use function str_contains;
 
 #[CoversTrait(ChanServArgumentDefinitionSupport::class)]
 #[CoversClass(LevelsCommand::class)]
@@ -44,32 +45,6 @@ use function is_string;
 #[CoversClass(ManageChannelLevelsResult::class)]
 final class LevelsCommandTest extends TestCase
 {
-    /** @param array<string> $args */
-    private function createContext(
-        ?SenderView $sender,
-        ?ChanAccountView $senderAccount,
-        array $args,
-        ChanServNotifierInterface $notifier,
-        TranslatorInterface $translator,
-    ): ChanServContext {
-        return new ChanServContext(
-            $sender,
-            $senderAccount,
-            'LEVELS',
-            $args,
-            $notifier,
-            $translator,
-            'en',
-            'UTC',
-            'NOTICE',
-            new ChanServCommandRegistry([]),
-            $this->createStub(ChannelLookupPort::class),
-            new NullChannelModeSupport(),
-            $this->createStub(NetworkUserLookupPort::class),
-            $this->createServiceNicks(),
-        );
-    }
-
     #[Test]
     public function replyInvalidChannelWhenFirstArgNotChannel(): void
     {
@@ -752,6 +727,32 @@ final class LevelsCommandTest extends TestCase
         ));
 
         self::assertFalse($cmd->allowsForbiddenChannel());
+    }
+
+    /** @param array<string> $args */
+    private function createContext(
+        ?SenderView $sender,
+        ?ChanAccountView $senderAccount,
+        array $args,
+        ChanServNotifierInterface $notifier,
+        TranslatorInterface $translator,
+    ): ChanServContext {
+        return new ChanServContext(
+            $sender,
+            $senderAccount,
+            'LEVELS',
+            $args,
+            $notifier,
+            $translator,
+            'en',
+            'UTC',
+            'NOTICE',
+            new ChanServCommandRegistry([]),
+            $this->createStub(ChannelLookupPort::class),
+            new NullChannelModeSupport(),
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
+        );
     }
 
     private function createServiceNicks(): ServiceNicknameRegistry

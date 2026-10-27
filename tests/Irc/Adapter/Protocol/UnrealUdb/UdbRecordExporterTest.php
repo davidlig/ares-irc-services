@@ -27,6 +27,8 @@ use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function str_repeat;
+
 #[CoversClass(UdbRecordExporter::class)]
 final class UdbRecordExporterTest extends TestCase
 {
@@ -43,30 +45,6 @@ final class UdbRecordExporterTest extends TestCase
     private UdbChannelSuspendReasonResolver $suspendReasonResolver;
 
     private UdbRecordExporter $exporter;
-
-    protected function setUp(): void
-    {
-        $this->nicks = $this->createStub(NickProjectionQuery::class);
-        $this->channels = $this->createStub(ChannelProjectionQuery::class);
-        $this->operators = $this->createStub(OperatorNetworkProjectionQuery::class);
-        $this->glines = $this->createStub(GlineProjectionQuery::class);
-        $this->channelLookup = $this->createStub(ChannelLookupPort::class);
-
-        $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturn('pending deletion reason');
-        $this->suspendReasonResolver = new UdbChannelSuspendReasonResolver($translator, 'ChanServ', 'en');
-
-        $this->exporter = new UdbRecordExporter(
-            $this->nicks,
-            $this->channels,
-            $this->operators,
-            $this->glines,
-            $this->channelLookup,
-            $this->createModeSupportProvider(),
-            $this->suspendReasonResolver,
-            clock: new MutableUdbClock(new DateTimeImmutable('2026-08-30 10:30:00')->getTimestamp()),
-        );
-    }
 
     #[Test]
     public function getChannelLookupReturnsConfiguredPort(): void
@@ -369,34 +347,6 @@ final class UdbRecordExporterTest extends TestCase
         self::assertSame([], $this->exporter->glineRecords(new GlineProjection('*@bad.example', null, new DateTimeImmutable('2026-08-30 10:00:00'), null)));
     }
 
-    private function createExporterWithOperators(OperatorNetworkProjectionQuery $operators): UdbRecordExporter
-    {
-        return new UdbRecordExporter(
-            $this->nicks,
-            $this->channels,
-            $operators,
-            $this->createStub(GlineProjectionQuery::class),
-            $this->channelLookup,
-            $this->createModeSupportProvider(),
-            $this->suspendReasonResolver,
-        );
-    }
-
-    private function createModeSupportProvider(): ActiveChannelModeSupportProviderInterface
-    {
-        $support = $this->createStub(ChannelModeSupportInterface::class);
-        $support->method('getSupportedPrefixModes')->willReturn(['q', 'a', 'o', 'h', 'v']);
-        $support->method('getListModeLetters')->willReturn(['b', 'e', 'I']);
-        $support->method('getChannelRegisteredModeLetter')->willReturn('r');
-        $support->method('getPermanentChannelModeLetter')->willReturn('P');
-        $support->method('getChannelSettingModesWithParamOnSet')->willReturn(['l', 'k', 'j', 'f', 'L']);
-
-        $provider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
-        $provider->method('getSupport')->willReturn($support);
-
-        return $provider;
-    }
-
     #[Test]
     public function encodedBlockRecordsEncodesSqlOwnedBlockPaths(): void
     {
@@ -483,6 +433,58 @@ final class UdbRecordExporterTest extends TestCase
         $this->expectExceptionMessage('Current SQL export contains an invalid N-block record.');
 
         $this->exporter->encodedBlockRecords(UdbBlock::Nicks);
+    }
+
+    protected function setUp(): void
+    {
+        $this->nicks = $this->createStub(NickProjectionQuery::class);
+        $this->channels = $this->createStub(ChannelProjectionQuery::class);
+        $this->operators = $this->createStub(OperatorNetworkProjectionQuery::class);
+        $this->glines = $this->createStub(GlineProjectionQuery::class);
+        $this->channelLookup = $this->createStub(ChannelLookupPort::class);
+
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturn('pending deletion reason');
+        $this->suspendReasonResolver = new UdbChannelSuspendReasonResolver($translator, 'ChanServ', 'en');
+
+        $this->exporter = new UdbRecordExporter(
+            $this->nicks,
+            $this->channels,
+            $this->operators,
+            $this->glines,
+            $this->channelLookup,
+            $this->createModeSupportProvider(),
+            $this->suspendReasonResolver,
+            clock: new MutableUdbClock(new DateTimeImmutable('2026-08-30 10:30:00')->getTimestamp()),
+        );
+    }
+
+    private function createExporterWithOperators(OperatorNetworkProjectionQuery $operators): UdbRecordExporter
+    {
+        return new UdbRecordExporter(
+            $this->nicks,
+            $this->channels,
+            $operators,
+            $this->createStub(GlineProjectionQuery::class),
+            $this->channelLookup,
+            $this->createModeSupportProvider(),
+            $this->suspendReasonResolver,
+        );
+    }
+
+    private function createModeSupportProvider(): ActiveChannelModeSupportProviderInterface
+    {
+        $support = $this->createStub(ChannelModeSupportInterface::class);
+        $support->method('getSupportedPrefixModes')->willReturn(['q', 'a', 'o', 'h', 'v']);
+        $support->method('getListModeLetters')->willReturn(['b', 'e', 'I']);
+        $support->method('getChannelRegisteredModeLetter')->willReturn('r');
+        $support->method('getPermanentChannelModeLetter')->willReturn('P');
+        $support->method('getChannelSettingModesWithParamOnSet')->willReturn(['l', 'k', 'j', 'f', 'L']);
+
+        $provider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
+        $provider->method('getSupport')->willReturn($support);
+
+        return $provider;
     }
 
     private function createNick(

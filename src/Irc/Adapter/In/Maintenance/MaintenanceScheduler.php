@@ -9,6 +9,10 @@ use Psr\Log\LoggerInterface;
 use Throwable;
 
 use function count;
+use function hrtime;
+use function iterator_to_array;
+use function round;
+use function usort;
 
 /**
  * Runs registered MaintenanceTaskInterface instances from the IRC event loop.

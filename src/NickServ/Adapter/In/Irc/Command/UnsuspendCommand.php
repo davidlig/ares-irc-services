@@ -17,6 +17,8 @@ use App\NickServ\Application\UseCase\Unsuspend\UnsuspendNickOutcome;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 
+use function base64_decode;
+use function inet_ntop;
 use function sprintf;
 
 final readonly class UnsuspendCommand implements NickServCommandInterface, IrcopAuditableCommandInterface

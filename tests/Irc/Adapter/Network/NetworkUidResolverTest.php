@@ -22,12 +22,6 @@ final class NetworkUidResolverTest extends TestCase
 
     private UidResolverInterface $resolver;
 
-    protected function setUp(): void
-    {
-        $this->userRepository = $this->createMock(NetworkUserRepositoryInterface::class);
-        $this->resolver = new NetworkUidResolver($this->userRepository);
-    }
-
     #[Test]
     public function resolvesUidToNick(): void
     {
@@ -82,5 +76,11 @@ final class NetworkUidResolverTest extends TestCase
             ->method('findByUid');
 
         self::assertNull($this->resolver->resolveUidToNick(''));
+    }
+
+    protected function setUp(): void
+    {
+        $this->userRepository = $this->createMock(NetworkUserRepositoryInterface::class);
+        $this->resolver = new NetworkUidResolver($this->userRepository);
     }
 }

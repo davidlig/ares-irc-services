@@ -8,6 +8,8 @@ use App\Irc\Application\Port\In\UidResolverInterface;
 use App\Irc\Domain\Repository\NetworkUserRepositoryInterface;
 use App\Irc\Domain\ValueObject\Uid;
 
+use function preg_match;
+
 final readonly class NetworkUidResolver implements UidResolverInterface
 {
     public function __construct(

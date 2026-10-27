@@ -22,6 +22,9 @@ use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 
+use function array_column;
+use function str_repeat;
+
 #[CoversClass(DoctrineBadmailRepository::class)]
 #[CoversClass(ManageBadmailHandler::class)]
 #[CoversClass(ManageBadmail::class)]

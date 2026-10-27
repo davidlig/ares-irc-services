@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Adapter\In\Event;
 
+use function array_keys;
+use function strtolower;
+
 final class PendingChannelRankSynchronizations
 {
     /** @var array<string, true> */

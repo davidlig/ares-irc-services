@@ -23,6 +23,7 @@ use function array_slice;
 use function implode;
 use function in_array;
 use function max;
+use function strtoupper;
 use function trim;
 
 final readonly class CregCommand implements ChanServCommandInterface, IrcopAuditableCommandInterface

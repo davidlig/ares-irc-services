@@ -15,6 +15,8 @@ use Symfony\Component\Translation\Translator;
 
 use function dirname;
 use function is_string;
+use function strtr;
+use function trim;
 
 #[CoversClass(DurationFormatter::class)]
 final class DurationFormatterTest extends TestCase

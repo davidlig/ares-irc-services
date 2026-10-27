@@ -31,100 +31,6 @@ use function is_string;
 #[CoversClass(ChanServContext::class)]
 final class ChanServContextTest extends TestCase
 {
-    private function createServiceNicks(): ServiceNicknameRegistry
-    {
-        $nickservProvider = new class('nickserv', 'NickServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick) {}
-
-            public function getServiceKey(): string
-            {
-                return $this->key;
-            }
-
-            public function getNickname(): string
-            {
-                return $this->nick;
-            }
-        };
-        $chanservProvider = new class('chanserv', 'ChanServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick) {}
-
-            public function getServiceKey(): string
-            {
-                return $this->key;
-            }
-
-            public function getNickname(): string
-            {
-                return $this->nick;
-            }
-        };
-        $memoservProvider = new class('memoserv', 'MemoServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick) {}
-
-            public function getServiceKey(): string
-            {
-                return $this->key;
-            }
-
-            public function getNickname(): string
-            {
-                return $this->nick;
-            }
-        };
-        $operservProvider = new class('operserv', 'OperServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick) {}
-
-            public function getServiceKey(): string
-            {
-                return $this->key;
-            }
-
-            public function getNickname(): string
-            {
-                return $this->nick;
-            }
-        };
-
-        return new ServiceNicknameRegistry([
-            $nickservProvider,
-            $chanservProvider,
-            $memoservProvider,
-            $operservProvider,
-        ]);
-    }
-
-    /**
-     * @param string[] $args
-     */
-    private function createContext(
-        ?SenderView $sender,
-        ChanServNotifierInterface $notifier,
-        TranslatorInterface $translator,
-        array $args = ['#test', 'INFO'],
-        ?ChannelLookupPort $channelLookup = null,
-        ?ChannelModeSupportInterface $modeSupport = null,
-        ?ChanAccountView $senderAccount = null,
-        string $language = 'en',
-    ): ChanServContext {
-        return new ChanServContext(
-            $sender,
-            $senderAccount,
-            'INFO',
-            $args,
-            $notifier,
-            $translator,
-            $language,
-            'Europe/Madrid',
-            'NOTICE',
-            new ChanServCommandRegistry([]),
-            $channelLookup ?? $this->createStub(ChannelLookupPort::class),
-            $modeSupport ?? new NullChannelModeSupport(),
-            $this->createStub(NetworkUserLookupPort::class),
-            $this->createServiceNicks(),
-        );
-    }
-
     #[Test]
     public function exposesIndependentSenderIdentityAndIrcOperatorFacts(): void
     {
@@ -692,5 +598,99 @@ final class ChanServContextTest extends TestCase
         self::assertNull($context->getSender());
         self::assertNull($context->getSenderAccount());
         self::assertNull($context->getSenderAccountId());
+    }
+
+    private function createServiceNicks(): ServiceNicknameRegistry
+    {
+        $nickservProvider = new class('nickserv', 'NickServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick) {}
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $chanservProvider = new class('chanserv', 'ChanServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick) {}
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $memoservProvider = new class('memoserv', 'MemoServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick) {}
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $operservProvider = new class('operserv', 'OperServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick) {}
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+
+        return new ServiceNicknameRegistry([
+            $nickservProvider,
+            $chanservProvider,
+            $memoservProvider,
+            $operservProvider,
+        ]);
+    }
+
+    /**
+     * @param string[] $args
+     */
+    private function createContext(
+        ?SenderView $sender,
+        ChanServNotifierInterface $notifier,
+        TranslatorInterface $translator,
+        array $args = ['#test', 'INFO'],
+        ?ChannelLookupPort $channelLookup = null,
+        ?ChannelModeSupportInterface $modeSupport = null,
+        ?ChanAccountView $senderAccount = null,
+        string $language = 'en',
+    ): ChanServContext {
+        return new ChanServContext(
+            $sender,
+            $senderAccount,
+            'INFO',
+            $args,
+            $notifier,
+            $translator,
+            $language,
+            'Europe/Madrid',
+            'NOTICE',
+            new ChanServCommandRegistry([]),
+            $channelLookup ?? $this->createStub(ChannelLookupPort::class),
+            $modeSupport ?? new NullChannelModeSupport(),
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
+        );
     }
 }

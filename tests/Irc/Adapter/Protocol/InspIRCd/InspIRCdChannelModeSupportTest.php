@@ -15,11 +15,6 @@ final class InspIRCdChannelModeSupportTest extends TestCase
 {
     private InspIRCdChannelModeSupportFactory $factory;
 
-    protected function setUp(): void
-    {
-        $this->factory = new InspIRCdChannelModeSupportFactory();
-    }
-
     #[Test]
     public function defaultSupportHasAllRanks(): void
     {
@@ -165,5 +160,10 @@ final class InspIRCdChannelModeSupportTest extends TestCase
 
         self::assertFalse($support->hasVoice());
         self::assertTrue($support->hasOp());
+    }
+
+    protected function setUp(): void
+    {
+        $this->factory = new InspIRCdChannelModeSupportFactory();
     }
 }

@@ -42,6 +42,10 @@ use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use RuntimeException;
 
+use function hash;
+use function serialize;
+use function str_repeat;
+
 #[CoversNothing]
 final class RegistrationReviewRegressionTest extends DoctrineIntegrationTestCase
 {

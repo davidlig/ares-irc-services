@@ -14,11 +14,6 @@ final class RevoltLoopSchedulerTest extends TestCase
 {
     private RevoltLoopScheduler $scheduler;
 
-    protected function setUp(): void
-    {
-        $this->scheduler = new RevoltLoopScheduler();
-    }
-
     #[Test]
     public function delaySchedulesCallbackAndCanBeCancelled(): void
     {
@@ -72,5 +67,10 @@ final class RevoltLoopSchedulerTest extends TestCase
         \Amp\delay(0.03);
 
         self::assertSame($countAtCancel, $count);
+    }
+
+    protected function setUp(): void
+    {
+        $this->scheduler = new RevoltLoopScheduler();
     }
 }

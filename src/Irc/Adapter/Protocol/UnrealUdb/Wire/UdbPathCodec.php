@@ -14,6 +14,7 @@ use function in_array;
 use function ord;
 use function preg_match;
 use function sprintf;
+use function str_contains;
 use function str_pad;
 use function strlen;
 use function strpbrk;
@@ -61,33 +62,6 @@ final class UdbPathCodec
     public static function encodeComponent(string $raw): ?string
     {
         return self::encodeWithinLimits($raw, self::COMPONENT_RAW_MAX, self::COMPONENT_ENCODED_MAX);
-    }
-
-    private static function encodeWithinLimits(string $raw, int $rawLimit, int $encodedLimit): ?string
-    {
-        $encoded = '';
-        $length = strlen($raw);
-        if ($length > $rawLimit || str_contains($raw, "\0")) {
-            return null;
-        }
-        for ($i = 0; $i < $length; ++$i) {
-            $byte = $raw[$i];
-            $ord = ord($byte);
-            $fragment = 58 === $ord || 37 === $ord || $ord <= 32 || $ord >= 127
-                ? sprintf('%%%02X', $ord) : $byte;
-            $next = self::appendEncoded($encoded, $fragment, $encodedLimit);
-            if (null === $next) {
-                return null;
-            }
-            $encoded = $next;
-        }
-
-        return $encoded;
-    }
-
-    private static function appendEncoded(string $encoded, string $fragment, int $limit): ?string
-    {
-        return strlen($encoded) + strlen($fragment) <= $limit ? $encoded . $fragment : null;
     }
 
     /** Strict canonical decode. Returns null for malformed, non-canonical or NUL-containing input. */
@@ -259,5 +233,32 @@ final class UdbPathCodec
     public static function parseTimeT(string $value): ?int
     {
         return self::parseUnsignedInt($value, PHP_INT_MAX);
+    }
+
+    private static function encodeWithinLimits(string $raw, int $rawLimit, int $encodedLimit): ?string
+    {
+        $encoded = '';
+        $length = strlen($raw);
+        if ($length > $rawLimit || str_contains($raw, "\0")) {
+            return null;
+        }
+        for ($i = 0; $i < $length; ++$i) {
+            $byte = $raw[$i];
+            $ord = ord($byte);
+            $fragment = 58 === $ord || 37 === $ord || $ord <= 32 || $ord >= 127
+                ? sprintf('%%%02X', $ord) : $byte;
+            $next = self::appendEncoded($encoded, $fragment, $encodedLimit);
+            if (null === $next) {
+                return null;
+            }
+            $encoded = $next;
+        }
+
+        return $encoded;
+    }
+
+    private static function appendEncoded(string $encoded, string $fragment, int $limit): ?string
+    {
+        return strlen($encoded) + strlen($fragment) <= $limit ? $encoded . $fragment : null;
     }
 }

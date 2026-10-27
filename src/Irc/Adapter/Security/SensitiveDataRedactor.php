@@ -7,7 +7,12 @@ namespace App\Irc\Adapter\Security;
 use App\Irc\Adapter\Protocol\IRCMessage;
 
 use function count;
+use function implode;
 use function in_array;
+use function preg_match;
+use function preg_split;
+use function strtoupper;
+use function trim;
 
 /**
  * Masks passwords and credentials in NickServ command strings

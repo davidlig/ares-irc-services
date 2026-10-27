@@ -16,8 +16,14 @@ use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentValidator;
 use DateTimeImmutable;
 
+use function array_slice;
+use function ceil;
 use function count;
+use function filter_var;
+use function implode;
+use function max;
 use function strtoupper;
+use function trim;
 
 final readonly class BadmailCommand implements OperServCommandInterface
 {

@@ -12,6 +12,9 @@ use App\OperServ\Domain\Repository\OperPermissionRepositoryInterface;
 use App\OperServ\Domain\Repository\OperRoleRepositoryInterface;
 use LogicException;
 
+use function array_map;
+use function array_values;
+
 final readonly class DoctrineOperatorRoleStore implements OperatorRoleStore
 {
     public function __construct(private OperRoleRepositoryInterface $roles, private OperPermissionRepositoryInterface $permissions) {}

@@ -33,6 +33,15 @@ use PHPUnit\Framework\Attributes\Test;
 use Symfony\Component\Clock\MockClock;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
+use function array_filter;
+use function bin2hex;
+use function random_bytes;
+use function rmdir;
+use function str_contains;
+use function str_repeat;
+use function sys_get_temp_dir;
+use function unlink;
+
 #[CoversClass(UdbAuthorityStateDoctrineRepository::class)]
 #[CoversClass(UdbSessionCoordinator::class)]
 #[CoversClass(UnrealUdbProtocolHandler::class)]

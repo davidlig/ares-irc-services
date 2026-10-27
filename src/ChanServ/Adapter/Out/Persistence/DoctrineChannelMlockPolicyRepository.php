@@ -12,6 +12,9 @@ use App\ChanServ\Domain\ValueObject\ChannelModeLock;
 use App\ChanServ\Domain\ValueObject\ChannelSetting;
 use App\ChanServ\Domain\ValueObject\ModeName;
 
+use function str_split;
+use function strtolower;
+
 final readonly class DoctrineChannelMlockPolicyRepository implements ChannelMlockPolicyRepository
 {
     public function __construct(private RegisteredChannelRepositoryInterface $channels) {}

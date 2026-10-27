@@ -13,6 +13,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function array_fill;
+
 #[CoversClass(MemoServCommandRegistry::class)]
 final class MemoServCommandRegistryTest extends TestCase
 {

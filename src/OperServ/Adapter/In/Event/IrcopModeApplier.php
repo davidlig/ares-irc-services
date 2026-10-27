@@ -14,6 +14,10 @@ use Psr\Log\LoggerInterface;
 
 use function array_diff;
 use function array_intersect;
+use function array_values;
+use function implode;
+use function ltrim;
+use function str_split;
 
 /**
  * Applies or removes IRCOP user modes for a role.

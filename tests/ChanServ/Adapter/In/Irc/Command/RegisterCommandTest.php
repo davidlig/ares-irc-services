@@ -40,6 +40,9 @@ use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function strcasecmp;
+use function strtolower;
+
 #[CoversClass(RegisterCommand::class)]
 #[CoversClass(RegisterChannel::class)]
 #[CoversClass(RegisterChannelHandler::class)]
@@ -56,35 +59,6 @@ final class RegisterCommandTest extends TestCase
             'admin' => ['a'],
             'owner' => ['q'],
         ];
-    }
-
-    /**
-     * @param string[] $args
-     */
-    private function createContext(
-        ?SenderView $sender,
-        ?ChanAccountView $senderAccount,
-        array $args,
-        ChanServNotifierInterface $notifier,
-        TranslatorInterface $translator,
-        ChannelLookupPort $channelLookup,
-    ): ChanServContext {
-        return new ChanServContext(
-            $sender,
-            $senderAccount,
-            'REGISTER',
-            $args,
-            $notifier,
-            $translator,
-            'en',
-            'UTC',
-            'NOTICE',
-            new ChanServCommandRegistry([]),
-            $channelLookup,
-            new NullChannelModeSupport(),
-            $this->createStub(NetworkUserLookupPort::class),
-            $this->createServiceNicks(),
-        );
     }
 
     #[Test]
@@ -913,28 +887,6 @@ final class RegisterCommandTest extends TestCase
         self::assertFalse($cmd->allowsForbiddenChannel());
     }
 
-    private function createNonRootRegistry(): ChanServOperatorAccess
-    {
-        $access = $this->createStub(ChanServOperatorAccess::class);
-        $access->method('isIrcop')->willReturnCallback(
-            static fn (string $nickname, ?int $accountId, bool $identified, bool $ircOperator): bool => $ircOperator,
-        );
-
-        return $access;
-    }
-
-    private function createRootRegistryFor(string $nick): ChanServOperatorAccess
-    {
-        $access = $this->createStub(ChanServOperatorAccess::class);
-        $access->method('isIrcop')->willReturnCallback(
-            static fn (string $nickname, ?int $accountId, bool $identified): bool => null !== $accountId
-                && $identified
-                && 0 === strcasecmp($nickname, $nick),
-        );
-
-        return $access;
-    }
-
     #[Test]
     public function operBypassesThrottle(): void
     {
@@ -1191,6 +1143,57 @@ final class RegisterCommandTest extends TestCase
         $cmd->execute($this->createContext($sender, $account, ['#test', 'Desc'], $notifier, $translator, $channelLookup));
 
         self::assertSame(['register.limit_exceeded'], $messages);
+    }
+
+    /**
+     * @param string[] $args
+     */
+    private function createContext(
+        ?SenderView $sender,
+        ?ChanAccountView $senderAccount,
+        array $args,
+        ChanServNotifierInterface $notifier,
+        TranslatorInterface $translator,
+        ChannelLookupPort $channelLookup,
+    ): ChanServContext {
+        return new ChanServContext(
+            $sender,
+            $senderAccount,
+            'REGISTER',
+            $args,
+            $notifier,
+            $translator,
+            'en',
+            'UTC',
+            'NOTICE',
+            new ChanServCommandRegistry([]),
+            $channelLookup,
+            new NullChannelModeSupport(),
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
+        );
+    }
+
+    private function createNonRootRegistry(): ChanServOperatorAccess
+    {
+        $access = $this->createStub(ChanServOperatorAccess::class);
+        $access->method('isIrcop')->willReturnCallback(
+            static fn (string $nickname, ?int $accountId, bool $identified, bool $ircOperator): bool => $ircOperator,
+        );
+
+        return $access;
+    }
+
+    private function createRootRegistryFor(string $nick): ChanServOperatorAccess
+    {
+        $access = $this->createStub(ChanServOperatorAccess::class);
+        $access->method('isIrcop')->willReturnCallback(
+            static fn (string $nickname, ?int $accountId, bool $identified): bool => null !== $accountId
+                && $identified
+                && 0 === strcasecmp($nickname, $nick),
+        );
+
+        return $access;
     }
 
     private function createCommand(

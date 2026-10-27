@@ -23,12 +23,6 @@ final class CoreNetworkUserLookupAdapterTest extends TestCase
 
     private CoreNetworkUserLookupAdapter $adapter;
 
-    protected function setUp(): void
-    {
-        $this->repository = $this->createMock(NetworkUserRepositoryInterface::class);
-        $this->adapter = new CoreNetworkUserLookupAdapter($this->repository);
-    }
-
     #[Test]
     public function findByUidReturnsSenderViewWhenUserExists(): void
     {
@@ -292,6 +286,12 @@ final class CoreNetworkUserLookupAdapterTest extends TestCase
         $result = $this->adapter->fromNetworkUser($user);
 
         self::assertSame('+iroH', $result->modes);
+    }
+
+    protected function setUp(): void
+    {
+        $this->repository = $this->createMock(NetworkUserRepositoryInterface::class);
+        $this->adapter = new CoreNetworkUserLookupAdapter($this->repository);
     }
 
     private function createNetworkUser(

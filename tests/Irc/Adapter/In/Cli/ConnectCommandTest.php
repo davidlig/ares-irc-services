@@ -19,6 +19,8 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
 use Throwable;
 
+use function array_merge;
+
 #[CoversClass(ConnectCommand::class)]
 final class ConnectCommandTest extends TestCase
 {
@@ -42,58 +44,6 @@ final class ConnectCommandTest extends TestCase
         'useTls' => false,
         'tlsVerifyPeer' => true,
     ];
-
-    /**
-     * @param array{
-     *     serverName?: string,
-     *     host?: string,
-     *     port?: int,
-     *     password?: string,
-     *     description?: string,
-     *     useTls?: bool,
-     *     tlsVerifyPeer?: bool,
-     * } $defaults
-     */
-    private function createCommand(
-        ?ConnectToServerHandlerInterface $handler = null,
-        ?ConsumerProcessManagerInterface $consumerManager = null,
-        array $defaults = [],
-        ?ProtocolConnectionPreflightInterface $connectionPreflight = null,
-    ): ConnectCommand {
-        $m = array_merge(self::DEFAULTS, $defaults);
-        $defaultHandler = new HandlerStub($this->createClientThatReturnsFromRun(), null);
-        if (null === $connectionPreflight) {
-            $connectionPreflight = $this->createStub(ProtocolConnectionPreflightInterface::class);
-            $connectionPreflight->method('prepare')->willReturn(new ConnectionPreflightResult(true));
-        }
-
-        return new ConnectCommand(
-            handler: $handler ?? $defaultHandler,
-            consumerManager: $consumerManager ?? $this->createStub(ConsumerProcessManagerInterface::class),
-            connectionPreflight: $connectionPreflight,
-            defaultServerName: $m['serverName'],
-            defaultHost: $m['host'],
-            defaultPort: $m['port'],
-            defaultPassword: $m['password'],
-            defaultDescription: $m['description'],
-            defaultUseTls: $m['useTls'],
-            defaultTlsVerifyPeer: $m['tlsVerifyPeer'],
-        );
-    }
-
-    private function createClientThatReturnsFromRun(): IrcSessionInterface
-    {
-        return new class implements IrcSessionInterface {
-            public function run(): void {}
-
-            public function disconnect(?string $reason = null): void {}
-
-            public function getProtocolName(): string
-            {
-                return 'test';
-            }
-        };
-    }
 
     #[Test]
     public function executeSuccessUsesDefaultsAndReturnsSuccess(): void
@@ -407,6 +357,58 @@ final class ConnectCommandTest extends TestCase
         $exitCode = $tester->execute(['--no-consumer' => true]);
 
         self::assertSame(Command::SUCCESS, $exitCode);
+    }
+
+    /**
+     * @param array{
+     *     serverName?: string,
+     *     host?: string,
+     *     port?: int,
+     *     password?: string,
+     *     description?: string,
+     *     useTls?: bool,
+     *     tlsVerifyPeer?: bool,
+     * } $defaults
+     */
+    private function createCommand(
+        ?ConnectToServerHandlerInterface $handler = null,
+        ?ConsumerProcessManagerInterface $consumerManager = null,
+        array $defaults = [],
+        ?ProtocolConnectionPreflightInterface $connectionPreflight = null,
+    ): ConnectCommand {
+        $m = array_merge(self::DEFAULTS, $defaults);
+        $defaultHandler = new HandlerStub($this->createClientThatReturnsFromRun(), null);
+        if (null === $connectionPreflight) {
+            $connectionPreflight = $this->createStub(ProtocolConnectionPreflightInterface::class);
+            $connectionPreflight->method('prepare')->willReturn(new ConnectionPreflightResult(true));
+        }
+
+        return new ConnectCommand(
+            handler: $handler ?? $defaultHandler,
+            consumerManager: $consumerManager ?? $this->createStub(ConsumerProcessManagerInterface::class),
+            connectionPreflight: $connectionPreflight,
+            defaultServerName: $m['serverName'],
+            defaultHost: $m['host'],
+            defaultPort: $m['port'],
+            defaultPassword: $m['password'],
+            defaultDescription: $m['description'],
+            defaultUseTls: $m['useTls'],
+            defaultTlsVerifyPeer: $m['tlsVerifyPeer'],
+        );
+    }
+
+    private function createClientThatReturnsFromRun(): IrcSessionInterface
+    {
+        return new class implements IrcSessionInterface {
+            public function run(): void {}
+
+            public function disconnect(?string $reason = null): void {}
+
+            public function getProtocolName(): string
+            {
+                return 'test';
+            }
+        };
     }
 }
 

@@ -41,6 +41,7 @@ use function array_values;
 use function assert;
 use function bin2hex;
 use function count;
+use function ctype_digit;
 use function explode;
 use function hash;
 use function implode;
@@ -51,8 +52,10 @@ use function is_string;
 use function preg_match;
 use function random_bytes;
 use function str_starts_with;
+use function strcmp;
 use function strlen;
 use function strpos;
+use function strtoupper;
 use function substr;
 
 use const PHP_INT_MAX;
@@ -287,6 +290,58 @@ final class UdbWireTakeover
         return UdbWireTakeoverOutcome::ignored();
     }
 
+    public function finalize(): string
+    {
+        if (!$this->isComplete() || !$this->tailReplayComplete || null === $this->generationId || null === $this->rootSid || null === $this->rootEpoch || null === $this->roundWatermark) {
+            throw new LogicException('Cannot finalize an incomplete UDB wire takeover round.');
+        }
+
+        $checkpoint = new UdbDatasetCheckpoint(new UdbStreamOrigin($this->rootSid, $this->rootEpoch), $this->tailWatermark ?? $this->roundWatermark);
+        $this->em->wrapInTransaction(function () use ($checkpoint): void {
+            $this->validateGenerationMetadata();
+            foreach (UdbBlock::all() as $block) {
+                $this->validatePersistedStage($block);
+            }
+            $this->replayTail();
+            foreach (UdbBlock::all() as $block) {
+                if (in_array($block, self::SQL_OWNED, true)) {
+                    $this->records->replaceBlock($block->letter(), $this->exporter->encodedBlockRecords($block));
+                } else {
+                    $this->replaceBlockFromStage($block);
+                }
+                $summary = $this->liveBlockSummary($block);
+                $this->blockStates->upsert($block->letter(), $summary['digest'], $summary['count']);
+            }
+            $state = $this->em->find(UdbAuthorityState::class, 1);
+            if (!$state instanceof UdbAuthorityState) {
+                $state = new UdbAuthorityState();
+                $this->em->persist($state);
+            }
+            $state->recordImportedCheckpoint($checkpoint);
+            $this->stageUpdate('udb_staged_generations', ['promoted' => true], ['generation_id' => $this->generationId]);
+            $this->em->getConnection()->delete('udb_staged_mutations', ['generation_id' => $this->generationId]);
+            $this->em->getConnection()->delete('udb_staged_records', ['generation_id' => $this->generationId]);
+            $this->em->getConnection()->delete('udb_staged_transfers', ['generation_id' => $this->generationId]);
+            $this->em->getConnection()->delete('udb_staged_generations', ['generation_id' => $this->generationId]);
+            $this->em->flush();
+        });
+        $this->em->clear();
+
+        return $this->fingerprint();
+    }
+
+    public function markTailReplayComplete(): void
+    {
+        if (!$this->isComplete() || null === $this->generationId) {
+            return;
+        }
+
+        foreach (UdbBlock::all() as $block) {
+            $this->validatePersistedStage($block);
+        }
+        $this->tailReplayComplete = true;
+    }
+
     /** @return array{frame: UdbFrame, block: UdbBlock, path: string, value: ?UdbValue, wire: string}|null */
     private function validatedMutation(UdbFrame $frame): ?array
     {
@@ -380,46 +435,6 @@ final class UdbWireTakeover
             'value' => $value?->logicalValue(),
             'value_kind' => $value?->kind->value,
         ]);
-    }
-
-    public function finalize(): string
-    {
-        if (!$this->isComplete() || !$this->tailReplayComplete || null === $this->generationId || null === $this->rootSid || null === $this->rootEpoch || null === $this->roundWatermark) {
-            throw new LogicException('Cannot finalize an incomplete UDB wire takeover round.');
-        }
-
-        $checkpoint = new UdbDatasetCheckpoint(new UdbStreamOrigin($this->rootSid, $this->rootEpoch), $this->tailWatermark ?? $this->roundWatermark);
-        $this->em->wrapInTransaction(function () use ($checkpoint): void {
-            $this->validateGenerationMetadata();
-            foreach (UdbBlock::all() as $block) {
-                $this->validatePersistedStage($block);
-            }
-            $this->replayTail();
-            foreach (UdbBlock::all() as $block) {
-                if (in_array($block, self::SQL_OWNED, true)) {
-                    $this->records->replaceBlock($block->letter(), $this->exporter->encodedBlockRecords($block));
-                } else {
-                    $this->replaceBlockFromStage($block);
-                }
-                $summary = $this->liveBlockSummary($block);
-                $this->blockStates->upsert($block->letter(), $summary['digest'], $summary['count']);
-            }
-            $state = $this->em->find(UdbAuthorityState::class, 1);
-            if (!$state instanceof UdbAuthorityState) {
-                $state = new UdbAuthorityState();
-                $this->em->persist($state);
-            }
-            $state->recordImportedCheckpoint($checkpoint);
-            $this->stageUpdate('udb_staged_generations', ['promoted' => true], ['generation_id' => $this->generationId]);
-            $this->em->getConnection()->delete('udb_staged_mutations', ['generation_id' => $this->generationId]);
-            $this->em->getConnection()->delete('udb_staged_records', ['generation_id' => $this->generationId]);
-            $this->em->getConnection()->delete('udb_staged_transfers', ['generation_id' => $this->generationId]);
-            $this->em->getConnection()->delete('udb_staged_generations', ['generation_id' => $this->generationId]);
-            $this->em->flush();
-        });
-        $this->em->clear();
-
-        return $this->fingerprint();
     }
 
     private function inventory(UdbFrame $frame, UdbBlock $block): UdbWireTakeoverOutcome
@@ -760,18 +775,6 @@ final class UdbWireTakeover
         $this->logger->warning('UDB wire bootstrap: staged transfer discarded.', ['block' => $block->letter(), 'reason' => $reason]);
 
         return UdbWireTakeoverOutcome::error($block, $roundId, $subcommand, 2);
-    }
-
-    public function markTailReplayComplete(): void
-    {
-        if (!$this->isComplete() || null === $this->generationId) {
-            return;
-        }
-
-        foreach (UdbBlock::all() as $block) {
-            $this->validatePersistedStage($block);
-        }
-        $this->tailReplayComplete = true;
     }
 
     /** Revalidate the received checkpoint before replay within the promotion transaction. */

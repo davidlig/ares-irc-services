@@ -26,12 +26,6 @@ final class BurstCompleteRegistrySubscriberTest extends TestCase
 
     private BurstCompleteRegistrySubscriber $subscriber;
 
-    protected function setUp(): void
-    {
-        $this->registry = new BurstCompleteRegistry();
-        $this->subscriber = new BurstCompleteRegistrySubscriber($this->registry);
-    }
-
     #[Test]
     public function getSubscribedEventsReturnsCorrectEvents(): void
     {
@@ -81,6 +75,12 @@ final class BurstCompleteRegistrySubscriberTest extends TestCase
         $this->subscriber->onConnectionLost($event);
 
         self::assertFalse($this->registry->isBurstComplete());
+    }
+
+    protected function setUp(): void
+    {
+        $this->registry = new BurstCompleteRegistry();
+        $this->subscriber = new BurstCompleteRegistrySubscriber($this->registry);
     }
 
     private function createServerLink(): ServerLink

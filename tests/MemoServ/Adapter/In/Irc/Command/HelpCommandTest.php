@@ -24,7 +24,11 @@ use RuntimeException;
 use Stringable;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function array_fill;
+use function array_last;
 use function dirname;
+use function explode;
+use function file_get_contents;
 use function implode;
 use function is_scalar;
 use function ksort;
@@ -32,162 +36,6 @@ use function ksort;
 #[CoversClass(HelpCommand::class)]
 final class HelpCommandTest extends TestCase
 {
-    private function createServiceNicks(): ServiceNicknameRegistry
-    {
-        $provider = new class implements ServiceNicknameProviderInterface {
-            public function getServiceKey(): string
-            {
-                return 'memoserv';
-            }
-
-            public function getNickname(): string
-            {
-                return 'MemoServ';
-            }
-        };
-
-        return new ServiceNicknameRegistry([$provider]);
-    }
-
-    /**
-     * @param list<string>                       $args
-     * @param string[]                           $replies
-     * @param iterable<MemoServCommandInterface> $commands
-     */
-    private function createContext(
-        ?SenderView $sender,
-        ?MemoAccountView $senderAccount,
-        array $args,
-        array &$replies = [],
-        iterable $commands = [],
-        ?TranslatorInterface $translation = null,
-        ?RuntimeException $sendFailure = null,
-    ): MemoServContext {
-        $notifier = $this->createStub(MemoServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$replies, $sendFailure): void {
-            if (null !== $sendFailure) {
-                throw $sendFailure;
-            }
-            $replies[] = $m;
-        });
-        $notifier->method('getNick')->willReturn('MemoServ');
-
-        $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static function (string $id, array $params = []): string {
-            unset($params['%bot%'], $params['%memoserv%']);
-            if ([] === $params) {
-                return $id;
-            }
-            ksort($params);
-            $formatted = [];
-            foreach ($params as $key => $value) {
-                $formatted[] = (string) $key . ': ' . (is_scalar($value) || $value instanceof Stringable ? (string) $value : '');
-            }
-
-            return $id . ' [' . implode(', ', $formatted) . ']';
-        });
-
-        return new MemoServContext(
-            sender: $sender,
-            senderAccount: $senderAccount,
-            command: 'HELP',
-            args: $args,
-            notifier: $notifier,
-            translator: $translation ?? $translator,
-            language: 'en',
-            timezone: 'UTC',
-            messageType: 'NOTICE',
-            registry: new MemoServCommandRegistry($commands),
-            serviceNicks: $this->createServiceNicks(),
-        );
-    }
-
-    /**
-     * @param list<array{name: string, desc_key: string, help_key: string, syntax_key: string, example_key: string}> $subcommands
-     */
-    private function createDummyCommand(string $name, int $order = 1, array $subcommands = [], bool $operOnly = false): MemoServCommandInterface
-    {
-        return new class($name, $order, $subcommands, $operOnly) implements MemoServCommandInterface {
-            /**
-             * @param list<array{name: string, desc_key: string, help_key: string, syntax_key: string, example_key: string}> $subcommands
-             */
-            public function __construct(
-                private string $name,
-                private int $order,
-                private array $subcommands,
-                private bool $operOnly,
-            ) {}
-
-            public function getName(): string
-            {
-                return $this->name;
-            }
-
-            public function getAliases(): array
-            {
-                return [];
-            }
-
-            public function getArgumentDefinition(): CommandArgumentDefinition
-            {
-                return new CommandArgumentDefinition($this->getSyntaxKey(), array_fill(0, $this->getMinArgs(), new Argument('argument')));
-            }
-
-            public function getMinArgs(): int
-            {
-                return 0;
-            }
-
-            public function getSyntaxKey(): string
-            {
-                return 'dummy.syntax';
-            }
-
-            public function getHelpKey(): string
-            {
-                return 'dummy.help';
-            }
-
-            public function getExampleKey(): string
-            {
-                return 'dummy.example';
-            }
-
-            public function getOrder(): int
-            {
-                return $this->order;
-            }
-
-            public function getShortDescKey(): string
-            {
-                return 'dummy.short';
-            }
-
-            /**
-             * @return list<array{name: string, desc_key: string, help_key: string, syntax_key: string, example_key: string}>
-             */
-            public function getSubCommandHelp(): array
-            {
-                return $this->subcommands;
-            }
-
-            public function isOperOnly(): bool
-            {
-                return $this->operOnly;
-            }
-
-            public function getRequiredPermission(): ?string
-            {
-                return null;
-            }
-
-            public function execute(MemoServContext $context): null
-            {
-                return null;
-            }
-        };
-    }
-
     #[Test]
     public function exposesMetadata(): void
     {
@@ -402,5 +250,161 @@ final class HelpCommandTest extends TestCase
             self::assertStringNotContainsString('IrcHelpStyle', $source);
             self::assertDoesNotMatchRegularExpression('/[›ℹ⚠✗●◆─]|\x02|\x03\d{0,2}|\x0F|\\\\x0[23]|\\\\x0F/u', $source);
         }
+    }
+
+    private function createServiceNicks(): ServiceNicknameRegistry
+    {
+        $provider = new class implements ServiceNicknameProviderInterface {
+            public function getServiceKey(): string
+            {
+                return 'memoserv';
+            }
+
+            public function getNickname(): string
+            {
+                return 'MemoServ';
+            }
+        };
+
+        return new ServiceNicknameRegistry([$provider]);
+    }
+
+    /**
+     * @param list<string>                       $args
+     * @param string[]                           $replies
+     * @param iterable<MemoServCommandInterface> $commands
+     */
+    private function createContext(
+        ?SenderView $sender,
+        ?MemoAccountView $senderAccount,
+        array $args,
+        array &$replies = [],
+        iterable $commands = [],
+        ?TranslatorInterface $translation = null,
+        ?RuntimeException $sendFailure = null,
+    ): MemoServContext {
+        $notifier = $this->createStub(MemoServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$replies, $sendFailure): void {
+            if (null !== $sendFailure) {
+                throw $sendFailure;
+            }
+            $replies[] = $m;
+        });
+        $notifier->method('getNick')->willReturn('MemoServ');
+
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static function (string $id, array $params = []): string {
+            unset($params['%bot%'], $params['%memoserv%']);
+            if ([] === $params) {
+                return $id;
+            }
+            ksort($params);
+            $formatted = [];
+            foreach ($params as $key => $value) {
+                $formatted[] = (string) $key . ': ' . (is_scalar($value) || $value instanceof Stringable ? (string) $value : '');
+            }
+
+            return $id . ' [' . implode(', ', $formatted) . ']';
+        });
+
+        return new MemoServContext(
+            sender: $sender,
+            senderAccount: $senderAccount,
+            command: 'HELP',
+            args: $args,
+            notifier: $notifier,
+            translator: $translation ?? $translator,
+            language: 'en',
+            timezone: 'UTC',
+            messageType: 'NOTICE',
+            registry: new MemoServCommandRegistry($commands),
+            serviceNicks: $this->createServiceNicks(),
+        );
+    }
+
+    /**
+     * @param list<array{name: string, desc_key: string, help_key: string, syntax_key: string, example_key: string}> $subcommands
+     */
+    private function createDummyCommand(string $name, int $order = 1, array $subcommands = [], bool $operOnly = false): MemoServCommandInterface
+    {
+        return new class($name, $order, $subcommands, $operOnly) implements MemoServCommandInterface {
+            /**
+             * @param list<array{name: string, desc_key: string, help_key: string, syntax_key: string, example_key: string}> $subcommands
+             */
+            public function __construct(
+                private string $name,
+                private int $order,
+                private array $subcommands,
+                private bool $operOnly,
+            ) {}
+
+            public function getName(): string
+            {
+                return $this->name;
+            }
+
+            public function getAliases(): array
+            {
+                return [];
+            }
+
+            public function getArgumentDefinition(): CommandArgumentDefinition
+            {
+                return new CommandArgumentDefinition($this->getSyntaxKey(), array_fill(0, $this->getMinArgs(), new Argument('argument')));
+            }
+
+            public function getMinArgs(): int
+            {
+                return 0;
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return 'dummy.syntax';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'dummy.help';
+            }
+
+            public function getExampleKey(): string
+            {
+                return 'dummy.example';
+            }
+
+            public function getOrder(): int
+            {
+                return $this->order;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'dummy.short';
+            }
+
+            /**
+             * @return list<array{name: string, desc_key: string, help_key: string, syntax_key: string, example_key: string}>
+             */
+            public function getSubCommandHelp(): array
+            {
+                return $this->subcommands;
+            }
+
+            public function isOperOnly(): bool
+            {
+                return $this->operOnly;
+            }
+
+            public function getRequiredPermission(): ?string
+            {
+                return null;
+            }
+
+            public function execute(MemoServContext $context): null
+            {
+                return null;
+            }
+        };
     }
 }

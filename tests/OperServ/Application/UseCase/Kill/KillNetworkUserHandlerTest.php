@@ -23,6 +23,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 use function in_array;
+use function strtolower;
 
 #[CoversClass(KillNetworkUser::class)]
 #[CoversClass(KillNetworkUserHandler::class)]

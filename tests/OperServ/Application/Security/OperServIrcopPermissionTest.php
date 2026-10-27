@@ -10,6 +10,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function class_implements;
+
 #[CoversClass(OperServIrcopPermission::class)]
 final class OperServIrcopPermissionTest extends TestCase
 {

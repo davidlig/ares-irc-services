@@ -23,29 +23,6 @@ final class InspIRCdModuleTest extends TestCase
 {
     private InspIRCdChannelModeSupportFactory $modeSupportFactory;
 
-    protected function setUp(): void
-    {
-        $this->modeSupportFactory = new InspIRCdChannelModeSupportFactory();
-    }
-
-    private function createModule(): InspIRCdModule
-    {
-        $handler = new InspIRCdProtocolHandler('A0A');
-        $connectionHolder = new ActiveConnectionHolder();
-        $serviceActions = new InspIRCdProtocolServiceActions($connectionHolder, new InspIRCdServiceIntroductionFormatter(), new NullLogger());
-        $channelModeSupport = $this->modeSupportFactory->createDefault();
-        $userModeSupport = new InspIRCdUserModeSupport();
-        $nickReservation = new InspIRCdNickReservation($connectionHolder, new NullLogger());
-
-        return new InspIRCdModule(
-            $handler,
-            $serviceActions,
-            $channelModeSupport,
-            $userModeSupport,
-            $nickReservation,
-        );
-    }
-
     #[Test]
     public function getProtocolNameReturnsInspircd(): void
     {
@@ -125,5 +102,28 @@ final class InspIRCdModuleTest extends TestCase
         self::assertFalse($module->getChannelModeSupport()->hasPermanentChannelMode());
         self::assertFalse($module->getChannelModeSupport()->hasOwner());
         self::assertSame(['v', 'o'], $module->getChannelModeSupport()->getSupportedPrefixModes());
+    }
+
+    protected function setUp(): void
+    {
+        $this->modeSupportFactory = new InspIRCdChannelModeSupportFactory();
+    }
+
+    private function createModule(): InspIRCdModule
+    {
+        $handler = new InspIRCdProtocolHandler('A0A');
+        $connectionHolder = new ActiveConnectionHolder();
+        $serviceActions = new InspIRCdProtocolServiceActions($connectionHolder, new InspIRCdServiceIntroductionFormatter(), new NullLogger());
+        $channelModeSupport = $this->modeSupportFactory->createDefault();
+        $userModeSupport = new InspIRCdUserModeSupport();
+        $nickReservation = new InspIRCdNickReservation($connectionHolder, new NullLogger());
+
+        return new InspIRCdModule(
+            $handler,
+            $serviceActions,
+            $channelModeSupport,
+            $userModeSupport,
+            $nickReservation,
+        );
     }
 }

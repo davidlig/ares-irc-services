@@ -16,6 +16,8 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
 
+use function array_map;
+
 #[CoversClass(DoctrineOperatorRoleStore::class)]
 #[CoversClass(OperatorRoleRecord::class)]
 final class DoctrineOperatorRoleStoreTest extends TestCase

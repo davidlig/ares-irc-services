@@ -34,6 +34,8 @@ final readonly class ChanServPermission
 
     public const string REGISTRATION_REVIEW = 'chanserv.registration_review';
 
+    private function __construct() {}
+
     /**
      * @return list<string>
      */
@@ -56,6 +58,4 @@ final readonly class ChanServPermission
             self::REGISTRATION_REVIEW,
         ];
     }
-
-    private function __construct() {}
 }

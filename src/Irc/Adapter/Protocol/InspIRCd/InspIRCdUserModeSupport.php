@@ -6,6 +6,8 @@ namespace App\Irc\Adapter\Protocol\InspIRCd;
 
 use App\Irc\Application\Port\In\UserModeSupportInterface;
 
+use function implode;
+
 /**
  * InspIRCd user mode support.
  *

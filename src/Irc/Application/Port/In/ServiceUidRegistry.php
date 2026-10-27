@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Irc\Application\Port\In;
 
+use function array_find;
+use function strtolower;
+
 /**
  * Registry that provides UID lookup for services.
  * Allows resolving a service nickname to its UID for message sending.

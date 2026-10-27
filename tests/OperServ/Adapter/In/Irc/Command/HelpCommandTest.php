@@ -26,10 +26,16 @@ use RuntimeException;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function dirname;
+use function explode;
+use function file_get_contents;
+use function implode;
 use function is_array;
 use function is_scalar;
 use function is_string;
+use function str_repeat;
 use function strtolower;
+use function strtr;
+use function substr_count;
 
 #[CoversClass(HelpCommand::class)]
 final class HelpCommandTest extends TestCase

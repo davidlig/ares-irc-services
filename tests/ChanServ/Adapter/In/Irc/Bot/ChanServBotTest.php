@@ -43,29 +43,6 @@ final class ChanServBotTest extends TestCase
 
     private ChanServBot $bot;
 
-    protected function setUp(): void
-    {
-        $this->connectionHolder = new ActiveConnectionHolder();
-        $this->channelLookup = $this->createStub(ChannelLookupPort::class);
-        $this->applyOutgoingChannelModes = $this->createStub(ApplyOutgoingChannelModesPort::class);
-        $this->channelRegistration = $this->createStub(ServiceChannelRegistrationPort::class);
-        $this->sendNoticePort = $this->createStub(SendNoticePort::class);
-        $this->uidGenerator = $this->createStub(ServiceUidGeneratorInterface::class);
-        $this->uidGenerator->method('generateUid')->willReturn(self::CHANSERV_UID);
-
-        $this->bot = new ChanServBot(
-            $this->connectionHolder,
-            $this->channelLookup,
-            $this->applyOutgoingChannelModes,
-            $this->channelRegistration,
-            $this->sendNoticePort,
-            $this->uidGenerator,
-            self::HOSTNAME,
-        );
-
-        $this->bot->onBurstComplete(new ServiceIntroductionRequestedEvent('001'));
-    }
-
     #[Test]
     public function getSubscribedEventsReturnsBurstCompleteWithPriority(): void
     {
@@ -487,5 +464,28 @@ final class ChanServBotTest extends TestCase
     public function getNicknameReturnsConfiguredNick(): void
     {
         self::assertSame('ChanServ', $this->bot->getNickname());
+    }
+
+    protected function setUp(): void
+    {
+        $this->connectionHolder = new ActiveConnectionHolder();
+        $this->channelLookup = $this->createStub(ChannelLookupPort::class);
+        $this->applyOutgoingChannelModes = $this->createStub(ApplyOutgoingChannelModesPort::class);
+        $this->channelRegistration = $this->createStub(ServiceChannelRegistrationPort::class);
+        $this->sendNoticePort = $this->createStub(SendNoticePort::class);
+        $this->uidGenerator = $this->createStub(ServiceUidGeneratorInterface::class);
+        $this->uidGenerator->method('generateUid')->willReturn(self::CHANSERV_UID);
+
+        $this->bot = new ChanServBot(
+            $this->connectionHolder,
+            $this->channelLookup,
+            $this->applyOutgoingChannelModes,
+            $this->channelRegistration,
+            $this->sendNoticePort,
+            $this->uidGenerator,
+            self::HOSTNAME,
+        );
+
+        $this->bot->onBurstComplete(new ServiceIntroductionRequestedEvent('001'));
     }
 }

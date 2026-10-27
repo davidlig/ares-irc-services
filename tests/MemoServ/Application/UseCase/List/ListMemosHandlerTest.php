@@ -18,6 +18,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function str_repeat;
+
 #[CoversClass(ListMemosHandler::class)]
 #[CoversClass(ListMemos::class)]
 #[CoversClass(ListMemosResult::class)]
@@ -28,18 +30,6 @@ final class ListMemosHandlerTest extends TestCase
     private MemoChannelPort $channelPort;
 
     private MemoRepositoryInterface $memoRepository;
-
-    protected function setUp(): void
-    {
-        $this->userAccountPort = $this->createStub(MemoUserAccountPort::class);
-        $this->channelPort = $this->createStub(MemoChannelPort::class);
-        $this->memoRepository = $this->createStub(MemoRepositoryInterface::class);
-    }
-
-    private function createHandler(): ListMemosHandler
-    {
-        return new ListMemosHandler($this->userAccountPort, $this->channelPort, $this->memoRepository);
-    }
 
     #[Test]
     public function listsNickMemosSuccessfully(): void
@@ -159,5 +149,17 @@ final class ListMemosHandlerTest extends TestCase
 
         self::assertSame(ListMemosOutcome::AccessDenied, $result->outcome);
         self::assertSame('#Ares', $result->channelName);
+    }
+
+    protected function setUp(): void
+    {
+        $this->userAccountPort = $this->createStub(MemoUserAccountPort::class);
+        $this->channelPort = $this->createStub(MemoChannelPort::class);
+        $this->memoRepository = $this->createStub(MemoRepositoryInterface::class);
+    }
+
+    private function createHandler(): ListMemosHandler
+    {
+        return new ListMemosHandler($this->userAccountPort, $this->channelPort, $this->memoRepository);
     }
 }

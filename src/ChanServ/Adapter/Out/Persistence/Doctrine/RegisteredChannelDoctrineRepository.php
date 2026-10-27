@@ -16,6 +16,9 @@ use Doctrine\ORM\Query\ResultSetMappingBuilder;
 use function array_filter;
 use function array_values;
 use function count;
+use function is_numeric;
+use function max;
+use function str_contains;
 use function strtolower;
 use function strtr;
 
@@ -72,28 +75,6 @@ final readonly class RegisteredChannelDoctrineRepository implements RegisteredCh
         $result = $this->em->createNativeQuery($sql, $mapping)->setParameters($parameters)->getResult();
 
         return array_values(array_filter($result, static fn (mixed $row): bool => $row instanceof RegisteredChannel));
-    }
-
-    /** @return array{string, array<string, string>} */
-    private function patternPredicate(string $pattern): array
-    {
-        $platform = $this->em->getConnection()->getDatabasePlatform();
-        $expression = match (true) {
-            $platform instanceof AbstractMySQLPlatform => 'c.list_search_key',
-            // SQLite LIKE already folds ASCII, just like its built-in LOWER.
-            $platform instanceof SQLitePlatform => 'c.name_lower',
-            default => 'LOWER(c.name_lower)',
-        };
-        $predicate = $expression . " LIKE :pattern ESCAPE '!'";
-        $parameters = ['pattern' => self::toLikePattern($pattern)];
-        if (!str_contains($pattern, '*')) {
-            $equality = $platform instanceof SQLitePlatform ? $expression . ' COLLATE NOCASE' : $expression;
-            // Keep LIKE: equality can ignore trailing spaces or broaden linguistic matches.
-            $predicate = $equality . ' = :exact AND ' . $predicate;
-            $parameters['exact'] = strtolower($pattern);
-        }
-
-        return [$predicate, $parameters];
     }
 
     public function existsByChannelName(string $channelName): bool
@@ -156,6 +137,64 @@ final readonly class RegisteredChannelDoctrineRepository implements RegisteredCh
         );
     }
 
+    public function findByIds(array $ids): array
+    {
+        if (empty($ids)) {
+            return [];
+        }
+
+        return $this->em
+            ->getRepository(RegisteredChannel::class)
+            ->findBy(['id' => $ids]);
+    }
+
+    public function clearSuccessorNickId(int $successorNickId): void
+    {
+        $this->em
+            ->createQuery(
+                'UPDATE ' . RegisteredChannel::class . ' c SET c.successorNickId = NULL WHERE c.successorNickId = :successorNickId'
+            )
+            ->setParameter('successorNickId', $successorNickId)
+            ->execute();
+    }
+
+    public function findForbiddenChannels(): array
+    {
+        $qb = $this->em->createQueryBuilder();
+        $qb->select('c')
+            ->from(RegisteredChannel::class, 'c')
+            ->where('c.status = :status')
+            ->setParameter('status', ChannelStatus::Forbidden);
+
+        /** @var array<mixed> $result */
+        $result = $qb->getQuery()->getResult();
+
+        /* @var array<RegisteredChannel> */
+        return array_values(array_filter($result, static fn ($row): bool => $row instanceof RegisteredChannel));
+    }
+
+    /** @return array{string, array<string, string>} */
+    private function patternPredicate(string $pattern): array
+    {
+        $platform = $this->em->getConnection()->getDatabasePlatform();
+        $expression = match (true) {
+            $platform instanceof AbstractMySQLPlatform => 'c.list_search_key',
+            // SQLite LIKE already folds ASCII, just like its built-in LOWER.
+            $platform instanceof SQLitePlatform => 'c.name_lower',
+            default => 'LOWER(c.name_lower)',
+        };
+        $predicate = $expression . " LIKE :pattern ESCAPE '!'";
+        $parameters = ['pattern' => self::toLikePattern($pattern)];
+        if (!str_contains($pattern, '*')) {
+            $equality = $platform instanceof SQLitePlatform ? $expression . ' COLLATE NOCASE' : $expression;
+            // Keep LIKE: equality can ignore trailing spaces or broaden linguistic matches.
+            $predicate = $equality . ' = :exact AND ' . $predicate;
+            $parameters['exact'] = strtolower($pattern);
+        }
+
+        return [$predicate, $parameters];
+    }
+
     /**
      * @param array<string, mixed> $parameters
      *
@@ -197,42 +236,6 @@ final readonly class RegisteredChannelDoctrineRepository implements RegisteredCh
                 }
             }
         } while (self::PAGE_SIZE === count($page));
-    }
-
-    public function findByIds(array $ids): array
-    {
-        if (empty($ids)) {
-            return [];
-        }
-
-        return $this->em
-            ->getRepository(RegisteredChannel::class)
-            ->findBy(['id' => $ids]);
-    }
-
-    public function clearSuccessorNickId(int $successorNickId): void
-    {
-        $this->em
-            ->createQuery(
-                'UPDATE ' . RegisteredChannel::class . ' c SET c.successorNickId = NULL WHERE c.successorNickId = :successorNickId'
-            )
-            ->setParameter('successorNickId', $successorNickId)
-            ->execute();
-    }
-
-    public function findForbiddenChannels(): array
-    {
-        $qb = $this->em->createQueryBuilder();
-        $qb->select('c')
-            ->from(RegisteredChannel::class, 'c')
-            ->where('c.status = :status')
-            ->setParameter('status', ChannelStatus::Forbidden);
-
-        /** @var array<mixed> $result */
-        $result = $qb->getQuery()->getResult();
-
-        /* @var array<RegisteredChannel> */
-        return array_values(array_filter($result, static fn ($row): bool => $row instanceof RegisteredChannel));
     }
 
     private static function toLikePattern(string $pattern): string

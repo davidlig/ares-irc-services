@@ -18,8 +18,15 @@ use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentValidator;
 
+use function array_keys;
+use function array_map;
 use function array_slice;
+use function base64_decode;
+use function implode;
+use function inet_ntop;
 use function sprintf;
+use function strtolower;
+use function strtoupper;
 
 final readonly class SasetCommand implements NickServCommandInterface, IrcopAuditableCommandInterface
 {

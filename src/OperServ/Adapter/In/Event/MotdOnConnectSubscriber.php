@@ -24,9 +24,13 @@ use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use ValueError;
 
+use function array_filter;
+use function array_values;
 use function in_array;
+use function max;
 use function sprintf;
 use function strtolower;
+use function time;
 
 /**
  * Sends configured MOTD messages to users when they connect to the network.

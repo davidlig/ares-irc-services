@@ -9,27 +9,26 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Filesystem\Filesystem;
 
+use function array_merge;
+use function bin2hex;
+use function chmod;
+use function copy;
+use function dirname;
+use function fclose;
+use function file_get_contents;
+use function file_put_contents;
+use function getenv;
+use function mkdir;
+use function proc_close;
+use function proc_open;
+use function random_bytes;
+use function stream_get_contents;
+use function sys_get_temp_dir;
+
 #[CoversNothing]
 final class MakefileTest extends TestCase
 {
     private string $directory;
-
-    protected function setUp(): void
-    {
-        $this->directory = sys_get_temp_dir() . '/ares-make-' . bin2hex(random_bytes(8));
-        mkdir($this->directory . '/vendor/bin', 0o700, true);
-        mkdir($this->directory . '/scripts', 0o700);
-        copy(dirname(__DIR__, 2) . '/Makefile', $this->directory . '/Makefile');
-        $this->stub('vendor/bin/phpunit', '#!/bin/sh' . "\nprintf '%s\\n' \"\$@\"\nexit \"\${STUB_EXIT:-0}\"\n");
-        $this->stub('scripts/check-coverage.sh', '#!/bin/sh' . "\nprintf '%s\\n' \"\$@\"\nexit \"\${STUB_EXIT:-0}\"\n");
-        $this->stub('compose-spy', '#!/bin/sh' . "\n[ \"\${PS_FAIL:-0}\" = 0 ] || exit 1\nprintf '%s' \"\${CONTAINER_ID:-}\"\n");
-        $this->stub('docker', '#!/bin/sh' . "\n[ \"\$1\" = inspect ] || exit 91\n[ \"\${INSPECT_FAIL:-0}\" = 0 ] || exit 1\nprintf '%s' \"\${HEALTH_STATUS:-healthy}\"\n");
-    }
-
-    protected function tearDown(): void
-    {
-        new Filesystem()->remove($this->directory);
-    }
 
     #[Test]
     public function runsPhpunitWithoutCoverageAndPropagatesFailures(): void
@@ -86,6 +85,23 @@ final class MakefileTest extends TestCase
             [$code] = $this->runMake($removed);
             self::assertNotSame(0, $code);
         }
+    }
+
+    protected function setUp(): void
+    {
+        $this->directory = sys_get_temp_dir() . '/ares-make-' . bin2hex(random_bytes(8));
+        mkdir($this->directory . '/vendor/bin', 0o700, true);
+        mkdir($this->directory . '/scripts', 0o700);
+        copy(dirname(__DIR__, 2) . '/Makefile', $this->directory . '/Makefile');
+        $this->stub('vendor/bin/phpunit', '#!/bin/sh' . "\nprintf '%s\\n' \"\$@\"\nexit \"\${STUB_EXIT:-0}\"\n");
+        $this->stub('scripts/check-coverage.sh', '#!/bin/sh' . "\nprintf '%s\\n' \"\$@\"\nexit \"\${STUB_EXIT:-0}\"\n");
+        $this->stub('compose-spy', '#!/bin/sh' . "\n[ \"\${PS_FAIL:-0}\" = 0 ] || exit 1\nprintf '%s' \"\${CONTAINER_ID:-}\"\n");
+        $this->stub('docker', '#!/bin/sh' . "\n[ \"\$1\" = inspect ] || exit 91\n[ \"\${INSPECT_FAIL:-0}\" = 0 ] || exit 1\nprintf '%s' \"\${HEALTH_STATUS:-healthy}\"\n");
+    }
+
+    protected function tearDown(): void
+    {
+        new Filesystem()->remove($this->directory);
     }
 
     private function stub(string $path, string $script): void

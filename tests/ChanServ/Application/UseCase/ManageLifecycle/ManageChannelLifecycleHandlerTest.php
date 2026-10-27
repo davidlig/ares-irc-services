@@ -37,11 +37,6 @@ final class ManageChannelLifecycleHandlerTest extends TestCase
 {
     private DateTimeImmutable $now;
 
-    protected function setUp(): void
-    {
-        $this->now = new DateTimeImmutable('2026-09-09T10:00:00+00:00');
-    }
-
     #[Test]
     public function ircopOnlyCanBeEnabledAndDisabledWithPublishedUpdates(): void
     {
@@ -508,6 +503,11 @@ final class ManageChannelLifecycleHandlerTest extends TestCase
 
         self::assertSame(ChannelLifecycleOutcome::Unsuspended, $result->outcome);
         self::assertFalse($channel->isSuspended());
+    }
+
+    protected function setUp(): void
+    {
+        $this->now = new DateTimeImmutable('2026-09-09T10:00:00+00:00');
     }
 
     private function command(

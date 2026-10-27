@@ -6,6 +6,13 @@ namespace App\OperServ\Adapter\Out\Security;
 
 use App\OperServ\Application\Port\Out\RootIdentityRegistry;
 
+use function array_fill_keys;
+use function array_filter;
+use function array_keys;
+use function array_map;
+use function explode;
+use function strtolower;
+
 final readonly class ConfiguredRootIdentityRegistry implements RootIdentityRegistry
 {
     /** @var array<string, true> */

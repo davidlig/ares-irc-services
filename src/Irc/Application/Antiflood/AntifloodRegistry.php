@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\Irc\Application\Antiflood;
 
+use function array_filter;
+use function array_values;
 use function count;
+use function max;
 
 /**
  * In-memory antiflood registry for IRC service commands.

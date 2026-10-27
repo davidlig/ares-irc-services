@@ -14,6 +14,8 @@ use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
 use Symfony\Component\Mime\RawMessage;
 
+use function array_map;
+
 #[CoversClass(RegistrationVerificationEmailHandler::class)]
 #[CoversClass(RegistrationVerificationEmail::class)]
 final class RegistrationVerificationEmailHandlerTest extends TestCase

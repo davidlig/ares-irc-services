@@ -25,6 +25,15 @@ use PHPUnit\Framework\Attributes\TestWith;
 use ReflectionClass;
 use ReflectionNamedType;
 
+use function array_column;
+use function array_key_exists;
+use function array_map;
+use function class_exists;
+use function hash;
+use function interface_exists;
+use function is_numeric;
+use function serialize;
+
 #[CoversClass(CleanupDroppedNickDataHandler::class)]
 #[CoversClass(RegisteredChannelDoctrineRepository::class)]
 #[CoversClass(RegisterChannelHandler::class)]
@@ -98,14 +107,6 @@ final class ApprovalRestrictionCleanupTest extends DoctrineIntegrationTestCase
         self::assertSame(8, $replacement->getFounderNickId());
     }
 
-    private function transactionBoundary(): ChanTransactionBoundary
-    {
-        $boundary = $this->createStub(ChanTransactionBoundary::class);
-        $boundary->method('transactional')->willReturnCallback(fn (callable $operation): mixed => $this->entityManager->wrapInTransaction($operation));
-
-        return $boundary;
-    }
-
     #[Test]
     public function requesterCleanupOrphansRejectionsButPreservesRestrictions(): void
     {
@@ -153,6 +154,14 @@ final class ApprovalRestrictionCleanupTest extends DoctrineIntegrationTestCase
         $this->flushAndClear();
         $after = hash('sha256', serialize($this->entityManager->getConnection()->fetchAllAssociative('SELECT * FROM registered_channels ORDER BY name')));
         self::assertSame($before, $after);
+    }
+
+    private function transactionBoundary(): ChanTransactionBoundary
+    {
+        $boundary = $this->createStub(ChanTransactionBoundary::class);
+        $boundary->method('transactional')->willReturnCallback(fn (callable $operation): mixed => $this->entityManager->wrapInTransaction($operation));
+
+        return $boundary;
     }
 
     /**

@@ -18,6 +18,8 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
 
+use function str_repeat;
+
 #[CoversClass(IssueMigrationRescueTokenHandler::class)]
 #[CoversClass(IssueMigrationRescueToken::class)]
 final class IssueMigrationRescueTokenHandlerTest extends TestCase

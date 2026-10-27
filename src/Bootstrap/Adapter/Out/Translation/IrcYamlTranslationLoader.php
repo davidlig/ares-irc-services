@@ -13,6 +13,7 @@ use Symfony\Component\Yaml\Yaml;
 use function is_array;
 use function is_string;
 use function sprintf;
+use function str_ireplace;
 
 /** Decodes explicitly tagged IRC controls before translation parameters are interpolated. */
 final class IrcYamlTranslationLoader extends YamlFileLoader

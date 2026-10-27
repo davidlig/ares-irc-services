@@ -15,6 +15,7 @@ use Throwable;
 
 use function Amp\Socket\connect;
 use function Amp\Socket\connectTls;
+use function implode;
 use function is_string;
 use function rtrim;
 use function sprintf;
@@ -140,31 +141,6 @@ class SocketConnection implements ConnectionInterface
         }
     }
 
-    /** @param list<string> $parts */
-    private function writeChunk(array $parts): void
-    {
-        $this->writePayload(implode("\r\n", $parts) . "\r\n");
-    }
-
-    private function writePayload(string $payload): void
-    {
-        if (!$this->isConnected()) {
-            throw new RuntimeException('Cannot write: connection is not open.');
-        }
-
-        try {
-            $this->socket?->write($payload);
-        } catch (Throwable $e) {
-            $this->status = ConnectionStatus::Error;
-
-            $this->logger->error('Failed to write to the IRC connection.', [
-                'error' => $e->getMessage(),
-            ]);
-
-            throw new RuntimeException('Failed to write to the IRC connection.', 0, $e);
-        }
-    }
-
     public function readLine(): ?string
     {
         if (!$this->isConnected()) {
@@ -225,5 +201,30 @@ class SocketConnection implements ConnectionInterface
     public function getStatus(): ConnectionStatus
     {
         return $this->status;
+    }
+
+    /** @param list<string> $parts */
+    private function writeChunk(array $parts): void
+    {
+        $this->writePayload(implode("\r\n", $parts) . "\r\n");
+    }
+
+    private function writePayload(string $payload): void
+    {
+        if (!$this->isConnected()) {
+            throw new RuntimeException('Cannot write: connection is not open.');
+        }
+
+        try {
+            $this->socket?->write($payload);
+        } catch (Throwable $e) {
+            $this->status = ConnectionStatus::Error;
+
+            $this->logger->error('Failed to write to the IRC connection.', [
+                'error' => $e->getMessage(),
+            ]);
+
+            throw new RuntimeException('Failed to write to the IRC connection.', 0, $e);
+        }
     }
 }

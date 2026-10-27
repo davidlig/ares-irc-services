@@ -66,64 +66,6 @@ final class NickProtectionSubscriberTest extends TestCase
 
     private DateTimeImmutable $now;
 
-    protected function setUp(): void
-    {
-        $this->burstState = new BurstState();
-        $this->networkUserLookup = $this->createMock(NetworkUserLookupPort::class);
-        $this->notifier = $this->createMock(NickNetworkActions::class);
-        $this->now = new DateTimeImmutable('2026-01-02 03:04:05');
-        $this->clock = $this->createStub(Clock::class);
-        $this->clock->method('now')->willReturn($this->now);
-        $this->syncNetworkIdentification = new RecordingSyncNetworkIdentificationHandler();
-
-        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $userLookup = $this->createStub(NickNetworkUserLookup::class);
-        $translator = $this->createStub(NickProtectionNotifier::class);
-        $pendingRegistry = $this->createStub(PendingNickRestoreRegistryInterface::class);
-
-        $nickProtectionService = new NickProtectionService(
-            $nickRepository,
-            $userLookup,
-            $this->notifier,
-            $this->burstState,
-            new IdentifiedSessionRegistry(),
-            new SessionLanguageRegistry(),
-            $pendingRegistry,
-            $translator,
-            $this->createStub(NickServEventPublisher::class),
-            $this->createStub(ForbiddenNickService::class),
-            $this->createStub(NickChangeIdentificationPolicy::class),
-            $this->guestNicknameGenerator(),
-            $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
-            $this->serviceAuthenticationMode(),
-        );
-
-        $ircopRepository = $this->createStub(ForcedVhostCheckerInterface::class);
-
-        $nickChangePolicy = $this->createStub(NickChangeIdentificationPolicy::class);
-        $vhostSync = new IdentifiedUserVhostSyncService(
-            $nickRepository,
-            $this->notifier,
-            new VhostDisplayResolver(),
-            $ircopRepository,
-            $nickChangePolicy,
-        );
-
-        $nativeModule = $this->createStub(NativeAuthenticationTestProtocolModule::class);
-        $connectionHolder = $this->createStub(ActiveProtocolModuleHolderInterface::class);
-        $connectionHolder->method('getProtocolModule')->willReturn($nativeModule);
-
-        $this->subscriber = new NickProtectionSubscriber(
-            $nickProtectionService,
-            $vhostSync,
-            $this->burstState,
-            $this->networkUserLookup,
-            $connectionHolder,
-            $this->clock,
-            $this->syncNetworkIdentification,
-        );
-    }
-
     #[Test]
     public function getSubscribedEventsReturnsAllHandlersWithPriorities(): void
     {
@@ -942,6 +884,64 @@ final class NickProtectionSubscriberTest extends TestCase
         );
 
         $subscriber->onIrcMessageProcessed(new IrcMessageHandledEvent());
+    }
+
+    protected function setUp(): void
+    {
+        $this->burstState = new BurstState();
+        $this->networkUserLookup = $this->createMock(NetworkUserLookupPort::class);
+        $this->notifier = $this->createMock(NickNetworkActions::class);
+        $this->now = new DateTimeImmutable('2026-01-02 03:04:05');
+        $this->clock = $this->createStub(Clock::class);
+        $this->clock->method('now')->willReturn($this->now);
+        $this->syncNetworkIdentification = new RecordingSyncNetworkIdentificationHandler();
+
+        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $userLookup = $this->createStub(NickNetworkUserLookup::class);
+        $translator = $this->createStub(NickProtectionNotifier::class);
+        $pendingRegistry = $this->createStub(PendingNickRestoreRegistryInterface::class);
+
+        $nickProtectionService = new NickProtectionService(
+            $nickRepository,
+            $userLookup,
+            $this->notifier,
+            $this->burstState,
+            new IdentifiedSessionRegistry(),
+            new SessionLanguageRegistry(),
+            $pendingRegistry,
+            $translator,
+            $this->createStub(NickServEventPublisher::class),
+            $this->createStub(ForbiddenNickService::class),
+            $this->createStub(NickChangeIdentificationPolicy::class),
+            $this->guestNicknameGenerator(),
+            $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
+            $this->serviceAuthenticationMode(),
+        );
+
+        $ircopRepository = $this->createStub(ForcedVhostCheckerInterface::class);
+
+        $nickChangePolicy = $this->createStub(NickChangeIdentificationPolicy::class);
+        $vhostSync = new IdentifiedUserVhostSyncService(
+            $nickRepository,
+            $this->notifier,
+            new VhostDisplayResolver(),
+            $ircopRepository,
+            $nickChangePolicy,
+        );
+
+        $nativeModule = $this->createStub(NativeAuthenticationTestProtocolModule::class);
+        $connectionHolder = $this->createStub(ActiveProtocolModuleHolderInterface::class);
+        $connectionHolder->method('getProtocolModule')->willReturn($nativeModule);
+
+        $this->subscriber = new NickProtectionSubscriber(
+            $nickProtectionService,
+            $vhostSync,
+            $this->burstState,
+            $this->networkUserLookup,
+            $connectionHolder,
+            $this->clock,
+            $this->syncNetworkIdentification,
+        );
     }
 
     private function createVhostSyncService(): IdentifiedUserVhostSyncService

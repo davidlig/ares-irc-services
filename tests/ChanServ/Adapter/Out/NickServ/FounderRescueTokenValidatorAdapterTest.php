@@ -16,6 +16,8 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function serialize;
+
 #[CoversClass(FounderRescueTokenValidatorAdapter::class)]
 #[CoversClass(FounderRescueTokenResult::class)]
 final class FounderRescueTokenValidatorAdapterTest extends TestCase

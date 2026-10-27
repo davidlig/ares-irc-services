@@ -18,12 +18,6 @@ final class MemoIgnoreDoctrineRepositoryTest extends DoctrineIntegrationTestCase
 {
     private MemoIgnoreRepositoryInterface $repository;
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->repository = new MemoIgnoreDoctrineRepository($this->entityManager);
-    }
-
     #[Test]
     public function savePersistsIgnoreForNick(): void
     {
@@ -192,5 +186,11 @@ final class MemoIgnoreDoctrineRepositoryTest extends DoctrineIntegrationTestCase
 
         self::assertSame([], $this->repository->listByTargetChannel(10));
         self::assertCount(1, $this->repository->listByTargetChannel(20));
+    }
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->repository = new MemoIgnoreDoctrineRepository($this->entityManager);
     }
 }

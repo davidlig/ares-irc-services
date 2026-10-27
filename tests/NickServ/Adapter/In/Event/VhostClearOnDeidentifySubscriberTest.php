@@ -23,16 +23,6 @@ final class VhostClearOnDeidentifySubscriberTest extends TestCase
 
     private VhostClearOnDeidentifySubscriber $subscriber;
 
-    protected function setUp(): void
-    {
-        $this->userLookup = $this->createMock(NetworkUserLookupPort::class);
-        $this->notifier = $this->createMock(NickServNotifierInterface::class);
-        $this->subscriber = new VhostClearOnDeidentifySubscriber(
-            $this->userLookup,
-            $this->notifier,
-        );
-    }
-
     #[Test]
     public function subscribesToUserModeChangedEvent(): void
     {
@@ -149,5 +139,15 @@ final class VhostClearOnDeidentifySubscriberTest extends TestCase
             ->method('setUserVhost');
 
         $this->subscriber->onUserModeChanged($event);
+    }
+
+    protected function setUp(): void
+    {
+        $this->userLookup = $this->createMock(NetworkUserLookupPort::class);
+        $this->notifier = $this->createMock(NickServNotifierInterface::class);
+        $this->subscriber = new VhostClearOnDeidentifySubscriber(
+            $this->userLookup,
+            $this->notifier,
+        );
     }
 }

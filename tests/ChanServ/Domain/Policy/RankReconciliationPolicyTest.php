@@ -12,17 +12,14 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function array_map;
+
 #[CoversClass(RankReconciliationPolicy::class)]
 #[CoversClass(RankChange::class)]
 #[CoversClass(RankChangeAction::class)]
 final class RankReconciliationPolicyTest extends TestCase
 {
     private RankReconciliationPolicy $policy;
-
-    protected function setUp(): void
-    {
-        $this->policy = new RankReconciliationPolicy();
-    }
 
     #[Test]
     public function ordinaryJoinGrantsMissingDesiredRankWithoutDowngrading(): void
@@ -100,6 +97,11 @@ final class RankReconciliationPolicyTest extends TestCase
         );
         self::assertSame([], $this->policy->forLiveGrant(ChannelRank::Administrator, ChannelRank::Operator, false));
         self::assertSame([], $this->policy->forLiveGrant(ChannelRank::Voice, ChannelRank::Operator, true));
+    }
+
+    protected function setUp(): void
+    {
+        $this->policy = new RankReconciliationPolicy();
     }
 
     /**

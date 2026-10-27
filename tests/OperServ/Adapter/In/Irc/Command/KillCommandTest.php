@@ -31,6 +31,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function in_array;
+use function strtolower;
 
 #[CoversClass(KillCommand::class)]
 #[CoversClass(KillNetworkUser::class)]

@@ -7,6 +7,9 @@ namespace App\OperServ\Domain\Entity;
 use App\OperServ\Domain\ValueObject\EmailDomain;
 use InvalidArgumentException;
 
+use function preg_match;
+use function trim;
+
 /** Persisted by Doctrine, which supplies its generated identifier. */
 class BadmailEntry
 {

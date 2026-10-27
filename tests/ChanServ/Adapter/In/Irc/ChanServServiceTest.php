@@ -51,7 +51,10 @@ use RuntimeException;
 use Symfony\Component\Translation\Translator;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function base64_encode;
+use function inet_pton;
 use function is_string;
+use function serialize;
 
 final class ChanServTestContextHolder
 {
@@ -72,69 +75,6 @@ final class ChanServTestAuditRecorder implements CommandAuditRecorder
 #[CoversClass(ChanServService::class)]
 final class ChanServServiceTest extends TestCase
 {
-    private function createServiceNicks(): ServiceNicknameRegistry
-    {
-        $nickservProvider = new class('nickserv', 'NickServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick) {}
-
-            public function getServiceKey(): string
-            {
-                return $this->key;
-            }
-
-            public function getNickname(): string
-            {
-                return $this->nick;
-            }
-        };
-        $chanservProvider = new class('chanserv', 'ChanServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick) {}
-
-            public function getServiceKey(): string
-            {
-                return $this->key;
-            }
-
-            public function getNickname(): string
-            {
-                return $this->nick;
-            }
-        };
-        $memoservProvider = new class('memoserv', 'MemoServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick) {}
-
-            public function getServiceKey(): string
-            {
-                return $this->key;
-            }
-
-            public function getNickname(): string
-            {
-                return $this->nick;
-            }
-        };
-        $operservProvider = new class('operserv', 'OperServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick) {}
-
-            public function getServiceKey(): string
-            {
-                return $this->key;
-            }
-
-            public function getNickname(): string
-            {
-                return $this->nick;
-            }
-        };
-
-        return new ServiceNicknameRegistry([
-            $nickservProvider,
-            $chanservProvider,
-            $memoservProvider,
-            $operservProvider,
-        ]);
-    }
-
     #[Test]
     public function dispatchesToExistingCommandHandler(): void
     {
@@ -1826,65 +1766,6 @@ final class ChanServServiceTest extends TestCase
         $service->dispatch('FAILCMD', $sender);
 
         self::assertInstanceOf(ChanServContext::class, $contextHolder->context);
-    }
-
-    private function createPreferences(
-        string $defaultLanguage = 'en',
-        bool $prefersPrivate = false,
-    ): ChanServUserPresentationPreferences {
-        $resolver = $this->createStub(ChanServUserPresentationPreferences::class);
-        $resolver->method('languageFor')->willReturnCallback(
-            static fn (string $uid, string $nickname, ?string $accountLanguage): string => $accountLanguage ?? $defaultLanguage,
-        );
-        $resolver->method('defaultLanguage')->willReturn($defaultLanguage);
-        $resolver->method('prefersPrivateMessages')->willReturn($prefersPrivate);
-
-        return $resolver;
-    }
-
-    private function createMessageTypeResolver(mixed $ignored = null, bool $prefersPrivate = false): ChanServUserPresentationPreferences
-    {
-        return $this->createPreferences(prefersPrivate: $prefersPrivate);
-    }
-
-    private function createChanServService(
-        ChanServCommandRegistry $registry,
-        RegisteredChannelRepositoryInterface $channelRepository,
-        ChanUserAccountPort $nickRepository,
-        ChanServNotifierInterface $notifier,
-        ChanServUserPresentationPreferences $messageTypeResolver,
-        TranslatorInterface $translator,
-        ChannelLookupPort $channelLookup,
-        ActiveChannelModeSupportProviderInterface $modeSupportProvider,
-        NetworkUserLookupPort $userLookup,
-        ServiceNicknameRegistry $serviceNicks,
-        string $defaultLanguage = 'en',
-        string $defaultTimezone = 'UTC',
-        ?LoggerInterface $logger = null,
-        ?AuthorizationContextInterface $authorizationContext = null,
-        ?AuthorizationCheckerInterface $authorizationChecker = null,
-        ?EventBusInterface $eventDispatcher = null,
-        ?CommandAuditRecorder $commandAudit = null,
-    ): ChanServService {
-        return new ChanServService(
-            $registry,
-            $channelRepository,
-            $nickRepository,
-            $messageTypeResolver,
-            $notifier,
-            $translator,
-            $channelLookup,
-            $modeSupportProvider,
-            $userLookup,
-            $serviceNicks,
-            $authorizationContext ?? $this->createStub(AuthorizationContextInterface::class),
-            $authorizationChecker ?? $this->createStub(AuthorizationCheckerInterface::class),
-            $eventDispatcher ?? $this->createStub(EventBusInterface::class),
-            $commandAudit ?? $this->createStub(CommandAuditRecorder::class),
-            $defaultLanguage,
-            $defaultTimezone,
-            $logger ?? $this->createStub(LoggerInterface::class),
-        );
     }
 
     #[Test]
@@ -3673,5 +3554,127 @@ final class ChanServServiceTest extends TestCase
         self::assertSame('#test', $record->target);
         self::assertSame('ident@host', $record->targetHost);
         self::assertSame('!!invalid-base64!!', $record->targetIp);
+    }
+
+    private function createServiceNicks(): ServiceNicknameRegistry
+    {
+        $nickservProvider = new class('nickserv', 'NickServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick) {}
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $chanservProvider = new class('chanserv', 'ChanServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick) {}
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $memoservProvider = new class('memoserv', 'MemoServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick) {}
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $operservProvider = new class('operserv', 'OperServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick) {}
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+
+        return new ServiceNicknameRegistry([
+            $nickservProvider,
+            $chanservProvider,
+            $memoservProvider,
+            $operservProvider,
+        ]);
+    }
+
+    private function createPreferences(
+        string $defaultLanguage = 'en',
+        bool $prefersPrivate = false,
+    ): ChanServUserPresentationPreferences {
+        $resolver = $this->createStub(ChanServUserPresentationPreferences::class);
+        $resolver->method('languageFor')->willReturnCallback(
+            static fn (string $uid, string $nickname, ?string $accountLanguage): string => $accountLanguage ?? $defaultLanguage,
+        );
+        $resolver->method('defaultLanguage')->willReturn($defaultLanguage);
+        $resolver->method('prefersPrivateMessages')->willReturn($prefersPrivate);
+
+        return $resolver;
+    }
+
+    private function createMessageTypeResolver(mixed $ignored = null, bool $prefersPrivate = false): ChanServUserPresentationPreferences
+    {
+        return $this->createPreferences(prefersPrivate: $prefersPrivate);
+    }
+
+    private function createChanServService(
+        ChanServCommandRegistry $registry,
+        RegisteredChannelRepositoryInterface $channelRepository,
+        ChanUserAccountPort $nickRepository,
+        ChanServNotifierInterface $notifier,
+        ChanServUserPresentationPreferences $messageTypeResolver,
+        TranslatorInterface $translator,
+        ChannelLookupPort $channelLookup,
+        ActiveChannelModeSupportProviderInterface $modeSupportProvider,
+        NetworkUserLookupPort $userLookup,
+        ServiceNicknameRegistry $serviceNicks,
+        string $defaultLanguage = 'en',
+        string $defaultTimezone = 'UTC',
+        ?LoggerInterface $logger = null,
+        ?AuthorizationContextInterface $authorizationContext = null,
+        ?AuthorizationCheckerInterface $authorizationChecker = null,
+        ?EventBusInterface $eventDispatcher = null,
+        ?CommandAuditRecorder $commandAudit = null,
+    ): ChanServService {
+        return new ChanServService(
+            $registry,
+            $channelRepository,
+            $nickRepository,
+            $messageTypeResolver,
+            $notifier,
+            $translator,
+            $channelLookup,
+            $modeSupportProvider,
+            $userLookup,
+            $serviceNicks,
+            $authorizationContext ?? $this->createStub(AuthorizationContextInterface::class),
+            $authorizationChecker ?? $this->createStub(AuthorizationCheckerInterface::class),
+            $eventDispatcher ?? $this->createStub(EventBusInterface::class),
+            $commandAudit ?? $this->createStub(CommandAuditRecorder::class),
+            $defaultLanguage,
+            $defaultTimezone,
+            $logger ?? $this->createStub(LoggerInterface::class),
+        );
     }
 }

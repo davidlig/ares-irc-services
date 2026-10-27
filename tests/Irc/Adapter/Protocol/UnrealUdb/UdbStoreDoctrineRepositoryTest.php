@@ -28,6 +28,7 @@ use PHPUnit\Framework\Attributes\Test;
 use UnexpectedValueException;
 
 use function count;
+use function str_repeat;
 
 use const DATE_ATOM;
 
@@ -42,14 +43,6 @@ final class UdbStoreDoctrineRepositoryTest extends DoctrineIntegrationTestCase
     private UdbBlockStateRepositoryInterface $states;
 
     private UdbAuthorityStateRepositoryInterface $authority;
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->records = new UdbRecordDoctrineRepository($this->entityManager);
-        $this->states = new UdbBlockStateDoctrineRepository($this->entityManager);
-        $this->authority = new UdbAuthorityStateDoctrineRepository($this->entityManager);
-    }
 
     #[Test]
     public function mappedBinaryValueHydratesEntityAndScalarProjectionWithoutByteLoss(): void
@@ -312,27 +305,6 @@ final class UdbStoreDoctrineRepositoryTest extends DoctrineIntegrationTestCase
         self::assertFalse($this->authority->isApproved());
     }
 
-    private function upsert(string $block, string $path, string $logicalValue): bool
-    {
-        return $this->records->upsert($block, $path, UdbTestValues::fromLogical(UdbBlock::fromLetter($block) ?? throw new LogicException('Invalid fixture block.'), $path, $logicalValue));
-    }
-
-    /**
-     * @param array<string, string> $records
-     */
-    private function seedBlock(string $block, array $records): void
-    {
-        $this->records->seedBlock($block, UdbTestValues::typedMap(UdbBlock::fromLetter($block) ?? throw new LogicException('Invalid fixture block.'), $records));
-    }
-
-    /**
-     * @param array<string, string> $records
-     */
-    private function replaceBlock(string $block, array $records): void
-    {
-        $this->records->replaceBlock($block, UdbTestValues::typedMap(UdbBlock::fromLetter($block) ?? throw new LogicException('Invalid fixture block.'), $records));
-    }
-
     #[Test]
     public function corruptSqlKindsAndMismatchedLogicalBytesAreRejected(): void
     {
@@ -376,5 +348,34 @@ final class UdbStoreDoctrineRepositoryTest extends DoctrineIntegrationTestCase
                 }
             }
         }
+    }
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->records = new UdbRecordDoctrineRepository($this->entityManager);
+        $this->states = new UdbBlockStateDoctrineRepository($this->entityManager);
+        $this->authority = new UdbAuthorityStateDoctrineRepository($this->entityManager);
+    }
+
+    private function upsert(string $block, string $path, string $logicalValue): bool
+    {
+        return $this->records->upsert($block, $path, UdbTestValues::fromLogical(UdbBlock::fromLetter($block) ?? throw new LogicException('Invalid fixture block.'), $path, $logicalValue));
+    }
+
+    /**
+     * @param array<string, string> $records
+     */
+    private function seedBlock(string $block, array $records): void
+    {
+        $this->records->seedBlock($block, UdbTestValues::typedMap(UdbBlock::fromLetter($block) ?? throw new LogicException('Invalid fixture block.'), $records));
+    }
+
+    /**
+     * @param array<string, string> $records
+     */
+    private function replaceBlock(string $block, array $records): void
+    {
+        $this->records->replaceBlock($block, UdbTestValues::typedMap(UdbBlock::fromLetter($block) ?? throw new LogicException('Invalid fixture block.'), $records));
     }
 }

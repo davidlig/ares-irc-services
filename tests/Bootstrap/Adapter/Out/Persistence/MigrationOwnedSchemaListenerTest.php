@@ -25,6 +25,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
+use function array_map;
+
 #[CoversClass(MigrationOwnedSchemaListener::class)]
 final class MigrationOwnedSchemaListenerTest extends TestCase
 {

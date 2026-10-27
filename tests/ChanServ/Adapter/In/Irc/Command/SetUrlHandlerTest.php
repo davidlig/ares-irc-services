@@ -35,29 +35,6 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 #[CoversClass(UpdateChannelSettingResult::class)]
 final class SetUrlHandlerTest extends TestCase
 {
-    private function createContext(
-        ChanServNotifierInterface $notifier,
-        TranslatorInterface $translator,
-        bool $withoutSender = false,
-    ): ChanServContext {
-        return new ChanServContext(
-            $withoutSender ? null : new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
-            null,
-            'SET',
-            ['URL', 'https://example.com'],
-            $notifier,
-            $translator,
-            'en',
-            'UTC',
-            'NOTICE',
-            new ChanServCommandRegistry([]),
-            $this->createStub(ChannelLookupPort::class),
-            new NullChannelModeSupport(),
-            $this->createStub(NetworkUserLookupPort::class),
-            $this->createServiceNicks(),
-        );
-    }
-
     #[Test]
     public function handleUpdatesUrlAndReplies(): void
     {
@@ -116,6 +93,29 @@ final class SetUrlHandlerTest extends TestCase
             ),
             $channel,
             'https://example.com',
+        );
+    }
+
+    private function createContext(
+        ChanServNotifierInterface $notifier,
+        TranslatorInterface $translator,
+        bool $withoutSender = false,
+    ): ChanServContext {
+        return new ChanServContext(
+            $withoutSender ? null : new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
+            null,
+            'SET',
+            ['URL', 'https://example.com'],
+            $notifier,
+            $translator,
+            'en',
+            'UTC',
+            'NOTICE',
+            new ChanServCommandRegistry([]),
+            $this->createStub(ChannelLookupPort::class),
+            new NullChannelModeSupport(),
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
         );
     }
 

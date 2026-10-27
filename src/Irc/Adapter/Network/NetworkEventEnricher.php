@@ -44,7 +44,11 @@ use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
+use function array_merge;
+use function array_unique;
+use function array_values;
 use function preg_match;
+use function time;
 
 /**
  * Listens to raw protocol events, resolves entities via repos, and dispatches domain events.

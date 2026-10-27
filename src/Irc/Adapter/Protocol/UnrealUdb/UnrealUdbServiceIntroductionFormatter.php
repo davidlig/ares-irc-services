@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Irc\Adapter\Protocol\UnrealUdb;
 
 use function sprintf;
+use function time;
 
 /**
  * UnrealUdb: introduce a service pseudo-client with a UID line.

@@ -14,8 +14,18 @@ use ReflectionClass;
 
 use function array_slice;
 use function count;
+use function file;
+use function file_exists;
+use function file_put_contents;
 use function is_array;
+use function json_decode;
+use function microtime;
 use function proc_terminate;
+use function rename;
+use function sys_get_temp_dir;
+use function tempnam;
+use function unlink;
+use function var_export;
 
 use const FILE_IGNORE_NEW_LINES;
 use const JSON_THROW_ON_ERROR;
@@ -74,33 +84,6 @@ final class ConsumerProcessManagerTest extends TestCase
         } finally {
             @unlink($script);
         }
-    }
-
-    private function createTemporaryConsoleScript(): string
-    {
-        $tmp = tempnam(sys_get_temp_dir(), 'ares_console_');
-        if (false === $tmp) {
-            self::fail('Could not create temp file');
-        }
-        $path = $tmp . '.php';
-        rename($tmp, $path);
-        file_put_contents($path, "<?php\ndeclare(strict_types=1);\nexit(0);\n");
-
-        return $path;
-    }
-
-    private function createTemporaryConsoleScriptBlocking(): string
-    {
-        $tmp = tempnam(sys_get_temp_dir(), 'ares_console_');
-        if (false === $tmp) {
-            self::fail('Could not create temp file');
-        }
-        $path = $tmp . '.php';
-        rename($tmp, $path);
-        // Block on stdin — process runs until pipes are closed by stop()
-        file_put_contents($path, "<?php fgets(STDIN);\n");
-
-        return $path;
     }
 
     #[Test]
@@ -405,6 +388,33 @@ final class ConsumerProcessManagerTest extends TestCase
             @unlink($script);
             @unlink($ready);
         }
+    }
+
+    private function createTemporaryConsoleScript(): string
+    {
+        $tmp = tempnam(sys_get_temp_dir(), 'ares_console_');
+        if (false === $tmp) {
+            self::fail('Could not create temp file');
+        }
+        $path = $tmp . '.php';
+        rename($tmp, $path);
+        file_put_contents($path, "<?php\ndeclare(strict_types=1);\nexit(0);\n");
+
+        return $path;
+    }
+
+    private function createTemporaryConsoleScriptBlocking(): string
+    {
+        $tmp = tempnam(sys_get_temp_dir(), 'ares_console_');
+        if (false === $tmp) {
+            self::fail('Could not create temp file');
+        }
+        $path = $tmp . '.php';
+        rename($tmp, $path);
+        // Block on stdin — process runs until pipes are closed by stop()
+        file_put_contents($path, "<?php fgets(STDIN);\n");
+
+        return $path;
     }
 
     private function createTemporaryConsoleScriptRecordingArguments(string $record): string

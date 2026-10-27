@@ -20,6 +20,8 @@ use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 
+use function implode;
+
 #[CoversNothing]
 #[Group('integration')]
 final class WhoipIndexTest extends DoctrineIntegrationTestCase

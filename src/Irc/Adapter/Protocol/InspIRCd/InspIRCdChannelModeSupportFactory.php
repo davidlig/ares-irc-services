@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace App\Irc\Adapter\Protocol\InspIRCd;
 
 use function array_key_exists;
+use function array_keys;
 use function in_array;
+use function strtolower;
+use function uksort;
 
 /**
  * Creates InspIRCdChannelModeSupport instances from CAPAB data or with default InspIRCd docs profile.

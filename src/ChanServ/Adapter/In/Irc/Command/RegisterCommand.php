@@ -18,6 +18,7 @@ use DateTimeImmutable;
 use function array_slice;
 use function implode;
 use function in_array;
+use function max;
 
 /** REGISTER <#channel> <description>. */
 final readonly class RegisterCommand implements ChanServCommandInterface

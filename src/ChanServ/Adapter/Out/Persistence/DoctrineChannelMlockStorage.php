@@ -8,6 +8,8 @@ use App\ChanServ\Application\Port\Out\ChannelMlockStorage;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\ValueObject\ChannelModeLock;
 
+use function implode;
+
 final readonly class DoctrineChannelMlockStorage implements ChannelMlockStorage
 {
     public function store(RegisteredChannel $channel, ChannelModeLock $modeLock): void

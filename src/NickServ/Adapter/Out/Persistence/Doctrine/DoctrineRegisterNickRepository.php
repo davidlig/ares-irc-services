@@ -8,6 +8,8 @@ use App\NickServ\Application\Port\Out\RegisterNickRepository;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use Doctrine\ORM\EntityManagerInterface;
 
+use function strtolower;
+
 final readonly class DoctrineRegisterNickRepository implements RegisterNickRepository
 {
     public function __construct(private EntityManagerInterface $entityManager) {}

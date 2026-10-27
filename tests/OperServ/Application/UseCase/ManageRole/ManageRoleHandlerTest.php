@@ -25,6 +25,10 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function array_values;
+use function strtoupper;
+use function trim;
+
 #[CoversClass(ManageRole::class)]
 #[CoversClass(ManageRoleHandler::class)]
 #[CoversClass(ManageRoleResult::class)]
@@ -32,11 +36,6 @@ use PHPUnit\Framework\TestCase;
 final class ManageRoleHandlerTest extends TestCase
 {
     private DateTimeImmutable $occurredAt;
-
-    protected function setUp(): void
-    {
-        $this->occurredAt = new DateTimeImmutable('2026-09-08T12:30:00+00:00');
-    }
 
     /**
      * @param list<string>                              $permissionCatalog
@@ -465,6 +464,11 @@ final class ManageRoleHandlerTest extends TestCase
         yield 'operclass OFF is not a clear value' => [RoleAction::OperclassSet, self::role(operclass: 'NetAdmin'), 'admin', 'OFF', [], [], true, true, ['NetAdmin'], RoleOutcome::OperclassNotAvailable];
         yield 'operclass unchanged' => [RoleAction::OperclassSet, self::role(operclass: 'NetAdmin'), 'admin', 'netadmin', [], [], true, true, ['NetAdmin'], RoleOutcome::OperclassSet];
         yield 'operclass clear no-op' => [RoleAction::OperclassSet, self::role(), 'admin', '', [], [], true, true, ['NetAdmin'], RoleOutcome::OperclassCleared];
+    }
+
+    protected function setUp(): void
+    {
+        $this->occurredAt = new DateTimeImmutable('2026-09-08T12:30:00+00:00');
     }
 
     /**

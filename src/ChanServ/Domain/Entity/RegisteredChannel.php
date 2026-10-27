@@ -11,6 +11,8 @@ use LogicException;
 
 use function sprintf;
 use function strlen;
+use function strtolower;
+use function trim;
 
 /**
  * A registered IRC channel. Founder and successor are stored as nick IDs (FK to NickServ).

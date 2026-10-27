@@ -12,16 +12,31 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function array_column;
+use function array_diff;
+use function array_filter;
+use function array_map;
+use function array_search;
 use function array_slice;
+use function array_unique;
+use function array_values;
 use function array_walk_recursive;
 use function count;
 use function dirname;
 use function end;
+use function explode;
+use function file_get_contents;
+use function implode;
 use function in_array;
 use function is_array;
 use function is_string;
+use function preg_match;
+use function preg_match_all;
+use function serialize;
 use function str_contains;
 use function str_ends_with;
+use function strtolower;
+use function substr_count;
 
 #[CoversClass(UnifiedHelpFormatter::class)]
 final class UnifiedHelpFormatterTest extends TestCase

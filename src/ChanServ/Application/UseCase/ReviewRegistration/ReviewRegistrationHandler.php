@@ -14,6 +14,7 @@ use App\ChanServ\Application\Service\ChannelRegistrationActivator;
 use App\Shared\Application\Port\EventBusInterface;
 use InvalidArgumentException;
 
+use function array_filter;
 use function count;
 use function sprintf;
 

@@ -18,31 +18,12 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Component\Translation\Translator;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function hash;
+use function serialize;
+
 #[CoversClass(NickServDebugNotifier::class)]
 final class NickServDebugNotifierTest extends TestCase
 {
-    private function createNotifier(
-        ?string $debugChannel = '#opers',
-        ?NickServNotifierInterface $notifier = null,
-        ?RegisteredNickRepositoryInterface $nickRepo = null,
-        ?NickServOperatorAccess $operatorAccess = null,
-        ?TranslatorInterface $translator = null,
-        ?NetworkUserLookupPort $userLookup = null,
-        ?IdentifiedSessionRegistry $identifiedRegistry = null,
-        string $language = 'en',
-    ): NickServDebugNotifier {
-        return new NickServDebugNotifier(
-            $notifier ?? $this->createStub(NickServNotifierInterface::class),
-            $userLookup ?? $this->createStub(NetworkUserLookupPort::class),
-            $identifiedRegistry ?? new IdentifiedSessionRegistry(),
-            $operatorAccess ?? $this->createStub(NickServOperatorAccess::class),
-            $nickRepo ?? $this->createStub(RegisteredNickRepositoryInterface::class),
-            $translator ?? $this->createStub(TranslatorInterface::class),
-            $language,
-            $debugChannel,
-        );
-    }
-
     #[Test]
     public function getServiceNameReturnsNickserv(): void
     {
@@ -452,5 +433,27 @@ final class NickServDebugNotifierTest extends TestCase
             }
             self::assertSame($hash, hash('sha256', serialize($messages)), $locale);
         }
+    }
+
+    private function createNotifier(
+        ?string $debugChannel = '#opers',
+        ?NickServNotifierInterface $notifier = null,
+        ?RegisteredNickRepositoryInterface $nickRepo = null,
+        ?NickServOperatorAccess $operatorAccess = null,
+        ?TranslatorInterface $translator = null,
+        ?NetworkUserLookupPort $userLookup = null,
+        ?IdentifiedSessionRegistry $identifiedRegistry = null,
+        string $language = 'en',
+    ): NickServDebugNotifier {
+        return new NickServDebugNotifier(
+            $notifier ?? $this->createStub(NickServNotifierInterface::class),
+            $userLookup ?? $this->createStub(NetworkUserLookupPort::class),
+            $identifiedRegistry ?? new IdentifiedSessionRegistry(),
+            $operatorAccess ?? $this->createStub(NickServOperatorAccess::class),
+            $nickRepo ?? $this->createStub(RegisteredNickRepositoryInterface::class),
+            $translator ?? $this->createStub(TranslatorInterface::class),
+            $language,
+            $debugChannel,
+        );
     }
 }

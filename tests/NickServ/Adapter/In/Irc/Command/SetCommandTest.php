@@ -27,6 +27,8 @@ use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function array_column;
+
 #[CoversClass(SetCommand::class)]
 final class SetCommandTest extends TestCase
 {

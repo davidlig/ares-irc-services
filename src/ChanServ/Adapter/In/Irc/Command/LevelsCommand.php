@@ -22,6 +22,7 @@ use DateTimeImmutable;
 use function in_array;
 use function sprintf;
 use function strtoupper;
+use function trim;
 
 /**
  * LEVELS <#channel> LIST|SET|RESET [level] [value].

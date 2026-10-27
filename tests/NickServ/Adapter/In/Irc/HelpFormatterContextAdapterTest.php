@@ -23,98 +23,11 @@ use Symfony\Component\Translation\Loader\ArrayLoader;
 use Symfony\Component\Translation\Translator;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function iterator_to_array;
+
 #[CoversClass(HelpFormatterContextAdapter::class)]
 final class HelpFormatterContextAdapterTest extends TestCase
 {
-    private function createAdapter(NickServContext $context): HelpFormatterContextAdapter
-    {
-        return new HelpFormatterContextAdapter(
-            $context,
-            $this->createStub(NickServOperatorAccess::class),
-        );
-    }
-
-    private function createContext(
-        ?SenderView $sender,
-        NickServNotifierInterface $notifier,
-        TranslatorInterface $translator,
-        NickServCommandRegistry $registry,
-    ): NickServContext {
-        return new NickServContext(
-            $sender ?? new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
-            null,
-            'HELP',
-            [],
-            $notifier,
-            $translator,
-            'en',
-            'UTC',
-            'NOTICE',
-            $registry,
-            new PendingVerificationRegistry(),
-            new RecoveryTokenRegistry(),
-            $this->createServiceNicks(),
-        );
-    }
-
-    private function createServiceNicks(): ServiceNicknameRegistry
-    {
-        $provider1 = new class('nickserv', 'NickServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick) {}
-
-            public function getServiceKey(): string
-            {
-                return $this->key;
-            }
-
-            public function getNickname(): string
-            {
-                return $this->nick;
-            }
-        };
-        $provider2 = new class('chanserv', 'ChanServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick) {}
-
-            public function getServiceKey(): string
-            {
-                return $this->key;
-            }
-
-            public function getNickname(): string
-            {
-                return $this->nick;
-            }
-        };
-        $provider3 = new class('memoserv', 'MemoServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick) {}
-
-            public function getServiceKey(): string
-            {
-                return $this->key;
-            }
-
-            public function getNickname(): string
-            {
-                return $this->nick;
-            }
-        };
-        $provider4 = new class('operserv', 'OperServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick) {}
-
-            public function getServiceKey(): string
-            {
-                return $this->key;
-            }
-
-            public function getNickname(): string
-            {
-                return $this->nick;
-            }
-        };
-
-        return new ServiceNicknameRegistry([$provider1, $provider2, $provider3, $provider4]);
-    }
-
     #[Test]
     public function replyDelegatesToContext(): void
     {
@@ -351,6 +264,109 @@ final class HelpFormatterContextAdapterTest extends TestCase
         self::assertFalse($adapter->hasIrcopAccess());
     }
 
+    #[Test]
+    public function delegatesBotNicknameAndLocalizedDurationToTheContext(): void
+    {
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('getNick')->willReturn('CustomNick');
+        $translator = new Translator('en');
+        $translator->addLoader('array', new ArrayLoader());
+        $translator->addResource('array', ['duration.unit.second.singular' => 'second'], 'en', 'common');
+        $adapter = $this->createAdapter($this->createContext(null, $notifier, $translator, new NickServCommandRegistry([])));
+
+        self::assertSame('CustomNick', $adapter->getBotName());
+        self::assertSame('1 second', $adapter->formatDuration(1));
+    }
+
+    private function createAdapter(NickServContext $context): HelpFormatterContextAdapter
+    {
+        return new HelpFormatterContextAdapter(
+            $context,
+            $this->createStub(NickServOperatorAccess::class),
+        );
+    }
+
+    private function createContext(
+        ?SenderView $sender,
+        NickServNotifierInterface $notifier,
+        TranslatorInterface $translator,
+        NickServCommandRegistry $registry,
+    ): NickServContext {
+        return new NickServContext(
+            $sender ?? new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
+            null,
+            'HELP',
+            [],
+            $notifier,
+            $translator,
+            'en',
+            'UTC',
+            'NOTICE',
+            $registry,
+            new PendingVerificationRegistry(),
+            new RecoveryTokenRegistry(),
+            $this->createServiceNicks(),
+        );
+    }
+
+    private function createServiceNicks(): ServiceNicknameRegistry
+    {
+        $provider1 = new class('nickserv', 'NickServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick) {}
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $provider2 = new class('chanserv', 'ChanServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick) {}
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $provider3 = new class('memoserv', 'MemoServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick) {}
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $provider4 = new class('operserv', 'OperServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick) {}
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+
+        return new ServiceNicknameRegistry([$provider1, $provider2, $provider3, $provider4]);
+    }
+
     private function createCommandStub(string $name, bool $operOnly = false): NickServCommandInterface
     {
         return new class($name, $operOnly) implements NickServCommandInterface {
@@ -509,19 +525,5 @@ final class HelpFormatterContextAdapterTest extends TestCase
                 return null;
             }
         };
-    }
-
-    #[Test]
-    public function delegatesBotNicknameAndLocalizedDurationToTheContext(): void
-    {
-        $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('getNick')->willReturn('CustomNick');
-        $translator = new Translator('en');
-        $translator->addLoader('array', new ArrayLoader());
-        $translator->addResource('array', ['duration.unit.second.singular' => 'second'], 'en', 'common');
-        $adapter = $this->createAdapter($this->createContext(null, $notifier, $translator, new NickServCommandRegistry([])));
-
-        self::assertSame('CustomNick', $adapter->getBotName());
-        self::assertSame('1 second', $adapter->formatDuration(1));
     }
 }

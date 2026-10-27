@@ -11,6 +11,8 @@ use App\Irc\Application\Port\In\SendNoticePort;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
+use function explode;
+
 /**
  * Core implements SendNoticePort: sends NOTICE/PRIVMSG over the active IRC connection.
  * Services use this port to reply to users without depending on Connection or protocol details.

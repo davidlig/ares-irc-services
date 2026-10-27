@@ -24,30 +24,28 @@ use ReflectionMethod;
 use RuntimeException;
 use UnexpectedValueException;
 
+use function array_diff;
+use function array_values;
+use function bin2hex;
 use function count;
+use function fclose;
+use function file_put_contents;
+use function fopen;
+use function fwrite;
+use function glob;
+use function iterator_to_array;
+use function mkdir;
+use function random_bytes;
+use function rewind;
+use function rmdir;
+use function str_repeat;
+use function sys_get_temp_dir;
+use function unlink;
 
 #[CoversClass(UdbSnapshotProvider::class)]
 final class UdbSnapshotProviderTest extends TestCase
 {
     private Connection $connection;
-
-    protected function setUp(): void
-    {
-        $this->connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
-        $this->connection->executeStatement('CREATE TABLE udb_authority_state (id INTEGER PRIMARY KEY, dataset_sid VARCHAR(3) NOT NULL, dataset_epoch VARCHAR(16) NOT NULL, dataset_watermark VARCHAR(20) NOT NULL)');
-        $this->connection->executeStatement('CREATE TABLE udb_records (id INTEGER PRIMARY KEY, block VARCHAR(1) NOT NULL, path VARCHAR(8191) NOT NULL, value BLOB NOT NULL, value_kind INTEGER NOT NULL)');
-        $this->connection->insert('udb_authority_state', [
-            'id' => 1,
-            'dataset_sid' => '002',
-            'dataset_epoch' => '0123456789abcdef',
-            'dataset_watermark' => '7',
-        ]);
-    }
-
-    protected function tearDown(): void
-    {
-        $this->connection->close();
-    }
 
     #[Test]
     public function malformedDirectSqlBinaryValueFailsClosedWithTheSqlFieldDiagnostic(): void
@@ -332,5 +330,23 @@ final class UdbSnapshotProviderTest extends TestCase
         } finally {
             self::assertSame($before, glob(sys_get_temp_dir() . '/ares-udb4-*') ?: []);
         }
+    }
+
+    protected function setUp(): void
+    {
+        $this->connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
+        $this->connection->executeStatement('CREATE TABLE udb_authority_state (id INTEGER PRIMARY KEY, dataset_sid VARCHAR(3) NOT NULL, dataset_epoch VARCHAR(16) NOT NULL, dataset_watermark VARCHAR(20) NOT NULL)');
+        $this->connection->executeStatement('CREATE TABLE udb_records (id INTEGER PRIMARY KEY, block VARCHAR(1) NOT NULL, path VARCHAR(8191) NOT NULL, value BLOB NOT NULL, value_kind INTEGER NOT NULL)');
+        $this->connection->insert('udb_authority_state', [
+            'id' => 1,
+            'dataset_sid' => '002',
+            'dataset_epoch' => '0123456789abcdef',
+            'dataset_watermark' => '7',
+        ]);
+    }
+
+    protected function tearDown(): void
+    {
+        $this->connection->close();
     }
 }

@@ -14,6 +14,11 @@ use App\Irc\Application\Port\In\ActiveChannelModeSupportProviderInterface;
 use App\Irc\Application\Port\In\ChannelServiceActionsPort;
 use App\Irc\Application\Port\In\ServiceUidRegistry;
 
+use function array_filter;
+use function array_find;
+use function array_map;
+use function array_values;
+use function implode;
 use function in_array;
 
 final readonly class IrcRegisteredChannelSetupActions implements RegisteredChannelSetupActions

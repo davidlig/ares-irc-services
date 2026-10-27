@@ -28,6 +28,8 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
 
+use function serialize;
+
 #[CoversClass(RegisterChannelHandler::class)]
 #[CoversClass(RegisterChannelResult::class)]
 final class RegisterChannelHandlerTest extends TestCase

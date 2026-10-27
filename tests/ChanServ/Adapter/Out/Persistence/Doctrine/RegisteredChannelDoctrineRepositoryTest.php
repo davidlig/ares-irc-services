@@ -23,21 +23,22 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 
+use function array_map;
 use function array_slice;
 use function count;
+use function iterator_to_array;
+use function max;
 use function sprintf;
+use function str_contains;
+use function str_ends_with;
+use function strtolower;
+use function strtr;
 
 #[CoversClass(RegisteredChannelDoctrineRepository::class)]
 #[Group('integration')]
 final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationTestCase
 {
     private RegisteredChannelRepositoryInterface $repository;
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->repository = new RegisteredChannelDoctrineRepository($this->entityManager);
-    }
 
     #[Test]
     #[DataProvider('listPlatforms')]
@@ -445,5 +446,11 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
         $result = $this->repository->findForbiddenChannels();
 
         self::assertSame([], $result);
+    }
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->repository = new RegisteredChannelDoctrineRepository($this->entityManager);
     }
 }

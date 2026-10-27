@@ -20,6 +20,7 @@ use LogicException;
 use OverflowException;
 use Throwable;
 
+use function filter_var;
 use function sprintf;
 use function str_starts_with;
 

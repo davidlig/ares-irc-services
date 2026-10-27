@@ -12,7 +12,16 @@ use App\Irc\Domain\ValueObject\UserMask;
 use DateTimeImmutable;
 use DateTimeInterface;
 
+use function array_filter;
+use function array_values;
+use function base64_decode;
+use function implode;
 use function in_array;
+use function inet_ntop;
+use function ltrim;
+use function str_contains;
+use function str_split;
+use function strtolower;
 
 /**
  * Represents a user currently connected to the IRC network.

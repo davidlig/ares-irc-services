@@ -40,6 +40,11 @@ use ReflectionNamedType;
 use ReflectionProperty;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function array_key_exists;
+use function class_exists;
+use function interface_exists;
+use function serialize;
+
 #[CoversClass(ManageChannelLifecycleHandler::class)]
 final class ApprovalLifecycleIsolationTest extends TestCase
 {

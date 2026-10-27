@@ -8,6 +8,8 @@ use App\OperServ\Application\Port\In\IrcopAccessQuery;
 use App\OperServ\Application\Port\In\OperatorActor;
 use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
 
+use function array_any;
+
 final readonly class IrcopAccessQueryService implements IrcopAccessQuery
 {
     public function __construct(private OperatorAuthorizationQuery $authorization) {}

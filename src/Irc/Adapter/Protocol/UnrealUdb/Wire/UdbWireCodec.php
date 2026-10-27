@@ -9,6 +9,7 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbBlock;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbValue;
 use InvalidArgumentException;
 
+use function array_map;
 use function array_slice;
 use function array_values;
 use function assert;
@@ -135,6 +136,13 @@ final class UdbWireCodec
             'OCLG' => self::parseOclg($sourceSid, $target, $message),
             default => null,
         };
+    }
+
+    /** Native valid_server_name uses non-strict host characters, not DNS syntax. */
+    public static function isValidPropagator(string $propagator): bool
+    {
+        return '?' === $propagator || '-' === $propagator
+            || (str_contains($propagator, '.') && 1 === preg_match('/^[A-Za-z0-9_\-.:\/]{1,63}\z/', $propagator));
     }
 
     private static function parseHel(string $sourceSid, string $target, IRCMessage $message): ?UdbFrame
@@ -380,13 +388,6 @@ final class UdbWireCodec
         }
 
         return $line;
-    }
-
-    /** Native valid_server_name uses non-strict host characters, not DNS syntax. */
-    public static function isValidPropagator(string $propagator): bool
-    {
-        return '?' === $propagator || '-' === $propagator
-            || (str_contains($propagator, '.') && 1 === preg_match('/^[A-Za-z0-9_\-.:\/]{1,63}\z/', $propagator));
     }
 
     private static function validSid(string $sid): bool

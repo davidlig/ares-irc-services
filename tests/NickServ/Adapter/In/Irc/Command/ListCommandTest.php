@@ -26,7 +26,9 @@ use PHPUnit\Framework\TestCase;
 use Stringable;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function implode;
 use function is_scalar;
+use function ksort;
 
 #[CoversClass(ListCommand::class)]
 final class ListCommandTest extends TestCase

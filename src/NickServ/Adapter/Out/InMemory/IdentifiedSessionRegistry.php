@@ -8,7 +8,9 @@ use App\NickServ\Application\Port\In\IdentifiedSessionQuery;
 use App\NickServ\Application\Port\Out\IdentifiedSessionTracker;
 use Psr\Log\LoggerInterface;
 
+use function array_find_key;
 use function count;
+use function strtolower;
 
 /**
  * In-memory registry that tracks which registered nickname each connected

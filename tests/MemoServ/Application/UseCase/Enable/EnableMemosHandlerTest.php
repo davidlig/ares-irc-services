@@ -25,17 +25,6 @@ final class EnableMemosHandlerTest extends TestCase
 
     private MemoSettingsRepositoryInterface $memoSettingsRepository;
 
-    protected function setUp(): void
-    {
-        $this->channelPort = $this->createStub(MemoChannelPort::class);
-        $this->memoSettingsRepository = $this->createStub(MemoSettingsRepositoryInterface::class);
-    }
-
-    private function createHandler(): EnableMemosHandler
-    {
-        return new EnableMemosHandler($this->channelPort, $this->memoSettingsRepository);
-    }
-
     #[Test]
     public function enablesNickMemosWhenNoSettingsRow(): void
     {
@@ -168,5 +157,16 @@ final class EnableMemosHandlerTest extends TestCase
 
         self::assertSame(EnableMemosOutcome::EnabledChannel, $result->outcome);
         self::assertTrue($settings->isEnabled());
+    }
+
+    protected function setUp(): void
+    {
+        $this->channelPort = $this->createStub(MemoChannelPort::class);
+        $this->memoSettingsRepository = $this->createStub(MemoSettingsRepositoryInterface::class);
+    }
+
+    private function createHandler(): EnableMemosHandler
+    {
+        return new EnableMemosHandler($this->channelPort, $this->memoSettingsRepository);
     }
 }

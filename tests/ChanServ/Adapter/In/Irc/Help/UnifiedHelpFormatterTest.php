@@ -13,13 +13,34 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function array_column;
+use function array_filter;
+use function array_keys;
+use function array_map;
+use function array_merge;
+use function array_search;
 use function array_slice;
+use function array_values;
 use function dirname;
+use function explode;
+use function implode;
 use function in_array;
 use function is_array;
 use function is_string;
+use function max;
+use function mb_strlen;
+use function preg_match;
+use function preg_match_all;
 use function sprintf;
 use function str_ends_with;
+use function str_pad;
+use function str_repeat;
+use function strpos;
+use function strtolower;
+use function strtr;
+use function substr;
+use function substr_count;
+use function trim;
 
 use const STR_PAD_LEFT;
 

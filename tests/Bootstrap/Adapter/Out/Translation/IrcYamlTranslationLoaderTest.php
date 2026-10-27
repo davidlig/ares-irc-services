@@ -13,24 +13,17 @@ use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Translation\Exception\InvalidResourceException;
 use Symfony\Component\Translation\Translator;
 
+use function file_put_contents;
+use function glob;
+use function sys_get_temp_dir;
+use function tempnam;
+
 use const PHP_INT_SIZE;
 
 #[CoversClass(IrcYamlTranslationLoader::class)]
 final class IrcYamlTranslationLoaderTest extends TestCase
 {
     private string $resource;
-
-    protected function setUp(): void
-    {
-        $file = tempnam(sys_get_temp_dir(), 'irc-yaml-test-');
-        self::assertIsString($file);
-        $this->resource = $file;
-    }
-
-    protected function tearDown(): void
-    {
-        new Filesystem()->remove([$this->resource, $this->resource . '-cache']);
-    }
 
     #[Test]
     public function decodesOnlyTaggedControlsAndPreservesCatalogMetadata(): void
@@ -99,5 +92,17 @@ final class IrcYamlTranslationLoaderTest extends TestCase
         yield 'tagged sequence' => ['message: !irc [value]'];
         yield 'tagged mapping' => ['message: !irc {key: value}'];
         yield 'nested invalid tag' => ['group: {message: !unknown value}'];
+    }
+
+    protected function setUp(): void
+    {
+        $file = tempnam(sys_get_temp_dir(), 'irc-yaml-test-');
+        self::assertIsString($file);
+        $this->resource = $file;
+    }
+
+    protected function tearDown(): void
+    {
+        new Filesystem()->remove([$this->resource, $this->resource . '-cache']);
     }
 }

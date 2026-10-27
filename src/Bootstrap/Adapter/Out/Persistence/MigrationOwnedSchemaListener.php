@@ -12,6 +12,8 @@ use Doctrine\DBAL\Schema\TableEditor;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Tools\Event\GenerateSchemaEventArgs;
 
+use function in_array;
+
 /** Projects only explicitly migration-owned extensions during read-only schema validation. */
 final class MigrationOwnedSchemaListener
 {

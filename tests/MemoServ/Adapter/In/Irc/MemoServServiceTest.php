@@ -31,6 +31,7 @@ use RuntimeException;
 use Symfony\Component\Translation\Translator;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function array_fill;
 use function is_string;
 
 final class MemoServContextHolder
@@ -46,69 +47,6 @@ final class MemoServContextHolder
 #[CoversClass(MemoServService::class)]
 final class MemoServServiceTest extends TestCase
 {
-    private function createServiceNicks(): ServiceNicknameRegistry
-    {
-        $nickservProvider = new class('nickserv', 'NickServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick) {}
-
-            public function getServiceKey(): string
-            {
-                return $this->key;
-            }
-
-            public function getNickname(): string
-            {
-                return $this->nick;
-            }
-        };
-        $chanservProvider = new class('chanserv', 'ChanServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick) {}
-
-            public function getServiceKey(): string
-            {
-                return $this->key;
-            }
-
-            public function getNickname(): string
-            {
-                return $this->nick;
-            }
-        };
-        $memoservProvider = new class('memoserv', 'MemoServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick) {}
-
-            public function getServiceKey(): string
-            {
-                return $this->key;
-            }
-
-            public function getNickname(): string
-            {
-                return $this->nick;
-            }
-        };
-        $operservProvider = new class('operserv', 'OperServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick) {}
-
-            public function getServiceKey(): string
-            {
-                return $this->key;
-            }
-
-            public function getNickname(): string
-            {
-                return $this->nick;
-            }
-        };
-
-        return new ServiceNicknameRegistry([
-            $nickservProvider,
-            $chanservProvider,
-            $memoservProvider,
-            $operservProvider,
-        ]);
-    }
-
     #[Test]
     public function dispatchesToExistingCommandHandler(): void
     {
@@ -905,6 +843,69 @@ final class MemoServServiceTest extends TestCase
         );
 
         $service->dispatch('TESTCMD', $sender);
+    }
+
+    private function createServiceNicks(): ServiceNicknameRegistry
+    {
+        $nickservProvider = new class('nickserv', 'NickServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick) {}
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $chanservProvider = new class('chanserv', 'ChanServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick) {}
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $memoservProvider = new class('memoserv', 'MemoServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick) {}
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $operservProvider = new class('operserv', 'OperServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick) {}
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+
+        return new ServiceNicknameRegistry([
+            $nickservProvider,
+            $chanservProvider,
+            $memoservProvider,
+            $operservProvider,
+        ]);
     }
 
     private function createMemoServService(

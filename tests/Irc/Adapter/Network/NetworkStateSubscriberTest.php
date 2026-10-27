@@ -42,18 +42,6 @@ final class NetworkStateSubscriberTest extends TestCase
 
     private NetworkStateSubscriber $subscriber;
 
-    protected function setUp(): void
-    {
-        $this->userRepository = $this->createMock(NetworkUserRepositoryInterface::class);
-        $this->channelRepository = $this->createMock(ChannelRepositoryInterface::class);
-        $this->logger = $this->createMock(LoggerInterface::class);
-        $this->subscriber = new NetworkStateSubscriber(
-            $this->userRepository,
-            $this->channelRepository,
-            $this->logger,
-        );
-    }
-
     #[Test]
     public function getSubscribedEventsReturnsAllEvents(): void
     {
@@ -372,6 +360,18 @@ final class NetworkStateSubscriberTest extends TestCase
         $this->logger->expects(self::never())->method('info');
 
         $this->subscriber->onChannelTopicChanged($event);
+    }
+
+    protected function setUp(): void
+    {
+        $this->userRepository = $this->createMock(NetworkUserRepositoryInterface::class);
+        $this->channelRepository = $this->createMock(ChannelRepositoryInterface::class);
+        $this->logger = $this->createMock(LoggerInterface::class);
+        $this->subscriber = new NetworkStateSubscriber(
+            $this->userRepository,
+            $this->channelRepository,
+            $this->logger,
+        );
     }
 
     private function createUser(string $uid, string $nick): NetworkUser

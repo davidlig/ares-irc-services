@@ -26,94 +26,11 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function iterator_to_array;
+
 #[CoversClass(HelpFormatterContextAdapter::class)]
 final class HelpFormatterContextAdapterTest extends TestCase
 {
-    private function createContext(
-        ChanServNotifierInterface $notifier,
-        TranslatorInterface $translator,
-        ChanServCommandRegistry $registry,
-        ?ChannelModeSupportInterface $channelModeSupport = null,
-        ?NetworkUserLookupPort $userLookup = null,
-        ?SenderView $sender = null,
-        ?ChanAccountView $account = null,
-    ): ChanServContext {
-        return new ChanServContext(
-            $sender ?? new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
-            $account,
-            'HELP',
-            [],
-            $notifier,
-            $translator,
-            'en',
-            'UTC',
-            'NOTICE',
-            $registry,
-            $this->createStub(ChannelLookupPort::class),
-            $channelModeSupport ?? new NullChannelModeSupport(),
-            $userLookup ?? $this->createStub(NetworkUserLookupPort::class),
-            $this->createServiceNicks(),
-        );
-    }
-
-    private function createServiceNicks(): ServiceNicknameRegistry
-    {
-        $provider1 = new class('nickserv', 'NickServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick) {}
-
-            public function getServiceKey(): string
-            {
-                return $this->key;
-            }
-
-            public function getNickname(): string
-            {
-                return $this->nick;
-            }
-        };
-        $provider2 = new class('chanserv', 'ChanServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick) {}
-
-            public function getServiceKey(): string
-            {
-                return $this->key;
-            }
-
-            public function getNickname(): string
-            {
-                return $this->nick;
-            }
-        };
-        $provider3 = new class('memoserv', 'MemoServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick) {}
-
-            public function getServiceKey(): string
-            {
-                return $this->key;
-            }
-
-            public function getNickname(): string
-            {
-                return $this->nick;
-            }
-        };
-        $provider4 = new class('operserv', 'OperServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick) {}
-
-            public function getServiceKey(): string
-            {
-                return $this->key;
-            }
-
-            public function getNickname(): string
-            {
-                return $this->nick;
-            }
-        };
-
-        return new ServiceNicknameRegistry([$provider1, $provider2, $provider3, $provider4]);
-    }
-
     #[Test]
     public function replyDelegatesToContext(): void
     {
@@ -1337,11 +1254,6 @@ final class HelpFormatterContextAdapterTest extends TestCase
         self::assertSame('DROP', $ircopCommands[0]->getName());
     }
 
-    private function createAdapter(ChanServContext $context): HelpFormatterContextAdapter
-    {
-        return new HelpFormatterContextAdapter($context, $this->createStub(ChanServOperatorAccess::class));
-    }
-
     #[Test]
     public function exposesTheConfiguredBotNickname(): void
     {
@@ -1351,5 +1263,95 @@ final class HelpFormatterContextAdapterTest extends TestCase
         $adapter = new HelpFormatterContextAdapter($context, $this->createStub(ChanServOperatorAccess::class));
 
         self::assertSame('CustomChan', $adapter->getBotName());
+    }
+
+    private function createContext(
+        ChanServNotifierInterface $notifier,
+        TranslatorInterface $translator,
+        ChanServCommandRegistry $registry,
+        ?ChannelModeSupportInterface $channelModeSupport = null,
+        ?NetworkUserLookupPort $userLookup = null,
+        ?SenderView $sender = null,
+        ?ChanAccountView $account = null,
+    ): ChanServContext {
+        return new ChanServContext(
+            $sender ?? new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
+            $account,
+            'HELP',
+            [],
+            $notifier,
+            $translator,
+            'en',
+            'UTC',
+            'NOTICE',
+            $registry,
+            $this->createStub(ChannelLookupPort::class),
+            $channelModeSupport ?? new NullChannelModeSupport(),
+            $userLookup ?? $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
+        );
+    }
+
+    private function createServiceNicks(): ServiceNicknameRegistry
+    {
+        $provider1 = new class('nickserv', 'NickServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick) {}
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $provider2 = new class('chanserv', 'ChanServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick) {}
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $provider3 = new class('memoserv', 'MemoServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick) {}
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $provider4 = new class('operserv', 'OperServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick) {}
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+
+        return new ServiceNicknameRegistry([$provider1, $provider2, $provider3, $provider4]);
+    }
+
+    private function createAdapter(ChanServContext $context): HelpFormatterContextAdapter
+    {
+        return new HelpFormatterContextAdapter($context, $this->createStub(ChanServOperatorAccess::class));
     }
 }

@@ -15,6 +15,8 @@ use App\ChanServ\Domain\Entity\ChannelLevel;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\Exception\ChannelNotRegisteredException;
 
+use function strtolower;
+
 final readonly class ManageChannelAccessHandler implements ManageChannelAccessHandlerInterface
 {
     public function __construct(

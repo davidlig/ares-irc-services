@@ -20,18 +20,6 @@ final class OperIrcopDoctrineRepositoryTest extends DoctrineIntegrationTestCase
 {
     private OperIrcopDoctrineRepository $repository;
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->repository = new OperIrcopDoctrineRepository($this->entityManager);
-    }
-
-    private function setAddedAt(OperIrcop $ircop, DateTimeImmutable $time): void
-    {
-        $ref = new ReflectionProperty($ircop, 'addedAt');
-        $ref->setValue($ircop, $time);
-    }
-
     #[Test]
     public function findReturnsNullWhenNotFound(): void
     {
@@ -260,6 +248,18 @@ final class OperIrcopDoctrineRepositoryTest extends DoctrineIntegrationTestCase
         self::assertNull($found1->getAddedById());
         self::assertSame(901, $found2->getAddedById());
         self::assertNull($found3->getAddedById());
+    }
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->repository = new OperIrcopDoctrineRepository($this->entityManager);
+    }
+
+    private function setAddedAt(OperIrcop $ircop, DateTimeImmutable $time): void
+    {
+        $ref = new ReflectionProperty($ircop, 'addedAt');
+        $ref->setValue($ircop, $time);
     }
 
     private function createOperRole(string $name): OperRole

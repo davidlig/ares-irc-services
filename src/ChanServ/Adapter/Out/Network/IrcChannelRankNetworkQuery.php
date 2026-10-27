@@ -16,6 +16,7 @@ use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\NickServ\Application\Port\In\NickAccountQuery;
 
 use function in_array;
+use function strcasecmp;
 
 final readonly class IrcChannelRankNetworkQuery implements ChannelRankNetworkQuery
 {

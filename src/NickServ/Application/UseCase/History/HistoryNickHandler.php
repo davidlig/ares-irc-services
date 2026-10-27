@@ -11,6 +11,7 @@ use App\NickServ\Application\Service\NickHistoryService;
 use LogicException;
 
 use function ceil;
+use function is_int;
 use function min;
 
 final readonly class HistoryNickHandler implements HistoryNickHandlerInterface

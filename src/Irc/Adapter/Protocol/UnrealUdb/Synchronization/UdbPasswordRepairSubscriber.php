@@ -15,6 +15,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 use function sprintf;
 use function str_ends_with;
+use function str_starts_with;
 use function strtolower;
 
 /**

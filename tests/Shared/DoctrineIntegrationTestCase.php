@@ -36,6 +36,12 @@ abstract class DoctrineIntegrationTestCase extends TestCase
         parent::tearDown();
     }
 
+    protected function flushAndClear(): void
+    {
+        $this->entityManager->flush();
+        $this->entityManager->clear();
+    }
+
     private function createInMemoryEntityManager(): EntityManager
     {
         $config = new Configuration();
@@ -69,11 +75,5 @@ abstract class DoctrineIntegrationTestCase extends TestCase
         $schemaTool = new SchemaTool($this->entityManager);
         $metadata = $this->entityManager->getMetadataFactory()->getAllMetadata();
         $schemaTool->createSchema($metadata);
-    }
-
-    protected function flushAndClear(): void
-    {
-        $this->entityManager->flush();
-        $this->entityManager->clear();
     }
 }

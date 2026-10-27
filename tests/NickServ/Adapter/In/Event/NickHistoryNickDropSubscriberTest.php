@@ -20,15 +20,6 @@ final class NickHistoryNickDropSubscriberTest extends TestCase
 
     private NickHistoryNickDropSubscriber $subscriber;
 
-    protected function setUp(): void
-    {
-        $this->historyRepository = $this->createMock(NickHistoryRepositoryInterface::class);
-
-        $this->subscriber = new NickHistoryNickDropSubscriber(
-            $this->historyRepository,
-        );
-    }
-
     #[Test]
     public function subscribesToNickDropEvent(): void
     {
@@ -76,5 +67,14 @@ final class NickHistoryNickDropSubscriberTest extends TestCase
             ->with(999);
 
         $this->subscriber->onNickDrop($event);
+    }
+
+    protected function setUp(): void
+    {
+        $this->historyRepository = $this->createMock(NickHistoryRepositoryInterface::class);
+
+        $this->subscriber = new NickHistoryNickDropSubscriber(
+            $this->historyRepository,
+        );
     }
 }

@@ -38,43 +38,6 @@ final class UdbStoreInitializerTest extends TestCase
 
     private UdbStoreInitializationListener $coordinator;
 
-    protected function setUp(): void
-    {
-        $this->records = new FakeUdbRecords();
-        $this->states = new FakeBlockStates();
-        $this->coordinator = $this->createStub(UdbStoreInitializationListener::class);
-    }
-
-    private function createExporter(bool $withChannelAndGline = false): UdbRecordExporter
-    {
-        $nick = new NickProjection(7, 'david', self::BCRYPT_HASH, 'david.example.net', false, null, false);
-        $nicks = $this->createStub(NickProjectionQuery::class);
-        $nicks->method('all')->willReturn([$nick]);
-        $nicks->method('findById')->willReturn($nick);
-
-        $channels = $this->createStub(ChannelProjectionQuery::class);
-        $glines = $this->createStub(GlineProjectionQuery::class);
-
-        if ($withChannelAndGline) {
-            $channels->method('all')->willReturn([
-                new ChannelProjection(1, '#chan', 7, null, false, '', [], false, false, null, false, false),
-            ]);
-            $glines->method('active')->willReturn([
-                new GlineProjection('*@bad.example', 'abuse', new DateTimeImmutable(), null),
-            ]);
-        }
-
-        return new UdbRecordExporter(
-            $nicks,
-            $channels,
-            $this->createStub(OperatorNetworkProjectionQuery::class),
-            $glines,
-            $this->createStub(ChannelLookupPort::class),
-            $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-            new UdbChannelSuspendReasonResolver($this->createStub(TranslatorInterface::class), 'ChanServ'),
-        );
-    }
-
     #[Test]
     public function getSubscribedEventsListensToNetworkSyncComplete(): void
     {
@@ -146,5 +109,42 @@ final class UdbStoreInitializerTest extends TestCase
 
         self::assertArrayNotHasKey('N', $this->records->blocks);
         self::assertCount(6, $this->states->states);
+    }
+
+    protected function setUp(): void
+    {
+        $this->records = new FakeUdbRecords();
+        $this->states = new FakeBlockStates();
+        $this->coordinator = $this->createStub(UdbStoreInitializationListener::class);
+    }
+
+    private function createExporter(bool $withChannelAndGline = false): UdbRecordExporter
+    {
+        $nick = new NickProjection(7, 'david', self::BCRYPT_HASH, 'david.example.net', false, null, false);
+        $nicks = $this->createStub(NickProjectionQuery::class);
+        $nicks->method('all')->willReturn([$nick]);
+        $nicks->method('findById')->willReturn($nick);
+
+        $channels = $this->createStub(ChannelProjectionQuery::class);
+        $glines = $this->createStub(GlineProjectionQuery::class);
+
+        if ($withChannelAndGline) {
+            $channels->method('all')->willReturn([
+                new ChannelProjection(1, '#chan', 7, null, false, '', [], false, false, null, false, false),
+            ]);
+            $glines->method('active')->willReturn([
+                new GlineProjection('*@bad.example', 'abuse', new DateTimeImmutable(), null),
+            ]);
+        }
+
+        return new UdbRecordExporter(
+            $nicks,
+            $channels,
+            $this->createStub(OperatorNetworkProjectionQuery::class),
+            $glines,
+            $this->createStub(ChannelLookupPort::class),
+            $this->createStub(ActiveChannelModeSupportProviderInterface::class),
+            new UdbChannelSuspendReasonResolver($this->createStub(TranslatorInterface::class), 'ChanServ'),
+        );
     }
 }

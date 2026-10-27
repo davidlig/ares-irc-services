@@ -20,6 +20,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function implode;
+
 #[CoversClass(CleanupDroppedNickData::class)]
 #[CoversClass(CleanupDroppedNickDataHandler::class)]
 final class CleanupDroppedNickDataHandlerTest extends TestCase

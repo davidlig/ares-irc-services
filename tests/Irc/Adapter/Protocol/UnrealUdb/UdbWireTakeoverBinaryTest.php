@@ -34,7 +34,15 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 use Traversable;
 use UnexpectedValueException;
 
+use function fclose;
+use function fopen;
+use function fwrite;
+use function hash;
+use function iterator_to_array;
+use function rewind;
 use function sprintf;
+use function str_repeat;
+use function str_starts_with;
 
 /** Portable type-boundary regressions, not a claim of PostgreSQL runtime proof. */
 #[CoversClass(UdbWireTakeover::class)]
@@ -159,13 +167,6 @@ final class UdbWireTakeoverBinaryTest extends DoctrineIntegrationTestCase
         self::assertSame(257, $this->entityManager->getConnection()->fetchOne("SELECT COUNT(*) FROM udb_records WHERE block = 'I'"));
     }
 
-    private function takeover(): UdbWireTakeover
-    {
-        $exporter = new UdbRecordExporter($this->createStub(NickProjectionQuery::class), $this->createStub(ChannelProjectionQuery::class), $this->createStub(OperatorNetworkProjectionQuery::class), $this->createStub(GlineProjectionQuery::class), $this->createStub(ChannelLookupPort::class), $this->createStub(ActiveChannelModeSupportProviderInterface::class), new UdbChannelSuspendReasonResolver($this->createStub(TranslatorInterface::class), 'ChanServ'));
-
-        return new UdbWireTakeover(new FakeUdbRecords(), new FakeBlockStates(), $this->entityManager, $exporter);
-    }
-
     #[Test]
     public function malformedSqlFieldsAndUnpreparedPrivateStagesFailClosed(): void
     {
@@ -250,5 +251,12 @@ final class UdbWireTakeoverBinaryTest extends DoctrineIntegrationTestCase
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage('record limit');
         new ReflectionMethod(UdbWireTakeover::class, 'applyTailMutation')->invoke($takeover, UdbBlock::Ips, 'INS', '192.0.2.1::clones', '*1', 2);
+    }
+
+    private function takeover(): UdbWireTakeover
+    {
+        $exporter = new UdbRecordExporter($this->createStub(NickProjectionQuery::class), $this->createStub(ChannelProjectionQuery::class), $this->createStub(OperatorNetworkProjectionQuery::class), $this->createStub(GlineProjectionQuery::class), $this->createStub(ChannelLookupPort::class), $this->createStub(ActiveChannelModeSupportProviderInterface::class), new UdbChannelSuspendReasonResolver($this->createStub(TranslatorInterface::class), 'ChanServ'));
+
+        return new UdbWireTakeover(new FakeUdbRecords(), new FakeBlockStates(), $this->entityManager, $exporter);
     }
 }

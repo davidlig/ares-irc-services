@@ -14,6 +14,8 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
 
+use function array_map;
+
 #[CoversClass(ChannelProjectionResolver::class)]
 #[CoversClass(ChannelProjection::class)]
 final class ChannelProjectionResolverTest extends TestCase

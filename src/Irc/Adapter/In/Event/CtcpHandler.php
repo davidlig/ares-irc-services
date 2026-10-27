@@ -15,6 +15,9 @@ use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 use function in_array;
+use function preg_match;
+use function strtolower;
+use function strtoupper;
 
 final readonly class CtcpHandler implements EventSubscriberInterface
 {

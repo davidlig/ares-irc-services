@@ -9,7 +9,11 @@ use App\Irc\Domain\Network\Channel;
 use App\Irc\Domain\Network\ChannelMemberRole;
 use App\Irc\Domain\Network\NetworkUser;
 
+use function array_fill_keys;
+use function array_keys;
+use function array_unique;
 use function count;
+use function implode;
 use function in_array;
 use function str_replace;
 use function str_split;

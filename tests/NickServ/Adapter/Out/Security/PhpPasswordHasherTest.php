@@ -9,6 +9,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function password_get_info;
+use function str_repeat;
 use function strlen;
 
 use const PASSWORD_BCRYPT;
@@ -17,11 +19,6 @@ use const PASSWORD_BCRYPT;
 final class PhpPasswordHasherTest extends TestCase
 {
     private PhpPasswordHasher $hasher;
-
-    protected function setUp(): void
-    {
-        $this->hasher = new PhpPasswordHasher();
-    }
 
     #[Test]
     public function hashProducesFixedBcryptHash(): void
@@ -118,5 +115,10 @@ final class PhpPasswordHasherTest extends TestCase
         $hash = '$argon2id$v=19$m=65536,t=4,p=1$abcdefghijklmnopqrstuvwxyz$1234567890abcdefghij';
 
         self::assertFalse($this->hasher->verify('test', $hash));
+    }
+
+    protected function setUp(): void
+    {
+        $this->hasher = new PhpPasswordHasher();
     }
 }

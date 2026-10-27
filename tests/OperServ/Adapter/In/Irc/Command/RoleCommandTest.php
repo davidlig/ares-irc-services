@@ -25,6 +25,9 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function array_column;
+use function str_ends_with;
+
 #[CoversClass(RoleCommand::class)]
 #[CoversClass(ManageRole::class)]
 #[CoversClass(ManageRoleResult::class)]
@@ -524,6 +527,35 @@ final class RoleCommandTest extends TestCase
         ], $descriptionLookups);
     }
 
+    #[Test]
+    public function permissionListPreservesMalformedPermissionDescriptions(): void
+    {
+        $handler = new RecordingManageRoleHandler(true, new ManageRoleResult(
+            RoleOutcome::PermissionsListed,
+            self::role(),
+            availableValues: ['invalid', '.missing-domain', 'missing-operation.'],
+        ));
+        $notifier = new RecordingRoleNotifier();
+        $translator = new RecordingRoleTranslation();
+
+        new RoleCommand($handler)->execute($this->context(['PERMS', 'LIST', 'ADMIN'], $notifier, $translator));
+
+        $descriptions = [];
+        foreach ($translator->translations as $translation) {
+            if ('role.perms.list.row' === $translation['key']) {
+                $descriptions[] = $translation['parameters']['%description%'];
+            }
+        }
+        self::assertSame(['.missing-domain', 'invalid', 'missing-operation.'], $descriptions);
+        self::assertSame([
+            'role.perms.list.header',
+            'role.perms.list.columns',
+            'role.perms.list.row',
+            'role.perms.list.row',
+            'role.perms.list.row',
+        ], $notifier->messages);
+    }
+
     /** @param list<string> $arguments
      * @param list<string> $expectedMessages
      */
@@ -567,35 +599,6 @@ final class RoleCommandTest extends TestCase
             new ServiceNicknameRegistry([]),
             $this->createStub(OperatorAuthorizationQuery::class),
         );
-    }
-
-    #[Test]
-    public function permissionListPreservesMalformedPermissionDescriptions(): void
-    {
-        $handler = new RecordingManageRoleHandler(true, new ManageRoleResult(
-            RoleOutcome::PermissionsListed,
-            self::role(),
-            availableValues: ['invalid', '.missing-domain', 'missing-operation.'],
-        ));
-        $notifier = new RecordingRoleNotifier();
-        $translator = new RecordingRoleTranslation();
-
-        new RoleCommand($handler)->execute($this->context(['PERMS', 'LIST', 'ADMIN'], $notifier, $translator));
-
-        $descriptions = [];
-        foreach ($translator->translations as $translation) {
-            if ('role.perms.list.row' === $translation['key']) {
-                $descriptions[] = $translation['parameters']['%description%'];
-            }
-        }
-        self::assertSame(['.missing-domain', 'invalid', 'missing-operation.'], $descriptions);
-        self::assertSame([
-            'role.perms.list.header',
-            'role.perms.list.columns',
-            'role.perms.list.row',
-            'role.perms.list.row',
-            'role.perms.list.row',
-        ], $notifier->messages);
     }
 }
 

@@ -15,6 +15,8 @@ use App\Irc\Application\Port\In\Command\IrcopAuditData;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 
+use function strtoupper;
+
 final readonly class RegmodeCommand implements ChanServCommandInterface, IrcopAuditableCommandInterface
 {
     use ChanServArgumentDefinitionSupport;

@@ -14,10 +14,13 @@ use function assert;
 use function base64_decode;
 use function base64_encode;
 use function count;
+use function ctype_alnum;
+use function ctype_alpha;
 use function explode;
 use function in_array;
 use function inet_ntop;
 use function inet_pton;
+use function intdiv;
 use function ltrim;
 use function ord;
 use function preg_match;
@@ -31,7 +34,9 @@ use function strcmp;
 use function strlen;
 use function strpos;
 use function strtolower;
+use function strtoupper;
 use function substr;
+use function trim;
 
 use const PHP_INT_MAX;
 
@@ -260,72 +265,6 @@ final class UdbSchema
         return self::validateTyped($blockEnum, $components, $value);
     }
 
-    private static function numericValue(string $logicalValue): ?UdbValue
-    {
-        if (!str_starts_with($logicalValue, '*')) {
-            return null;
-        }
-        $number = UdbUnsignedDecimal::parse(substr($logicalValue, 1));
-
-        return null === $number ? null : UdbValue::number($number);
-    }
-
-    /**
-     * @param list<string> $components
-     */
-    private static function channelValueKind(array $components): string|UdbValueKind|null
-    {
-        $depth = count($components);
-        $key = strtolower($components[$depth - 1] ?? '');
-        if (1 === $depth || (2 === $depth && 'access' === $key)) {
-            return UdbValueKind::None;
-        }
-        if (2 === $depth) {
-            return 'options' === $key
-                ? UdbValueKind::Number
-                : (in_array($key, self::CHANNEL_KEYS, true) && 'access' !== $key ? UdbValueKind::String : null);
-        }
-        if (3 === $depth && 'access' === strtolower($components[1])) {
-            return 'any';
-        }
-
-        return null;
-    }
-
-    /**
-     * @param list<string> $components
-     */
-    private static function lineValueKind(array $components): ?UdbValueKind
-    {
-        $depth = count($components);
-        if (3 !== $depth) {
-            return null;
-        }
-
-        return match (strtolower($components[2])) {
-            'expires', 'ban-time' => UdbValueKind::Number,
-            'reason', 'match-type', 'targets', 'action' => UdbValueKind::String,
-            default => null,
-        };
-    }
-
-    /**
-     * @param list<string> $components
-     */
-    private static function validNoneContainer(UdbBlock $block, array $components): bool
-    {
-        $depth = count($components);
-
-        return match ($block) {
-            UdbBlock::Nicks => 1 === $depth && self::nickName($components[0]),
-            UdbBlock::Channels => (1 === $depth && self::channelName($components[0]))
-                || (2 === $depth && self::channelName($components[0]) && 'access' === strtolower($components[1])),
-            UdbBlock::Ips => 1 === $depth && self::ipHostMask($components[0]),
-            UdbBlock::Links => 1 === $depth && self::serverName($components[0]),
-            default => false,
-        };
-    }
-
     /**
      * Validates invariants that only become observable from a complete block.
      *
@@ -429,6 +368,72 @@ final class UdbSchema
             UdbBlock::Nicks => 2 === count($components) && 'pass' === $key,
             UdbBlock::Channels => 2 === count($components) && 'modes' === $key,
             UdbBlock::Settings => 1 === count($components) && 'encryption_key' === $key,
+            default => false,
+        };
+    }
+
+    private static function numericValue(string $logicalValue): ?UdbValue
+    {
+        if (!str_starts_with($logicalValue, '*')) {
+            return null;
+        }
+        $number = UdbUnsignedDecimal::parse(substr($logicalValue, 1));
+
+        return null === $number ? null : UdbValue::number($number);
+    }
+
+    /**
+     * @param list<string> $components
+     */
+    private static function channelValueKind(array $components): string|UdbValueKind|null
+    {
+        $depth = count($components);
+        $key = strtolower($components[$depth - 1] ?? '');
+        if (1 === $depth || (2 === $depth && 'access' === $key)) {
+            return UdbValueKind::None;
+        }
+        if (2 === $depth) {
+            return 'options' === $key
+                ? UdbValueKind::Number
+                : (in_array($key, self::CHANNEL_KEYS, true) && 'access' !== $key ? UdbValueKind::String : null);
+        }
+        if (3 === $depth && 'access' === strtolower($components[1])) {
+            return 'any';
+        }
+
+        return null;
+    }
+
+    /**
+     * @param list<string> $components
+     */
+    private static function lineValueKind(array $components): ?UdbValueKind
+    {
+        $depth = count($components);
+        if (3 !== $depth) {
+            return null;
+        }
+
+        return match (strtolower($components[2])) {
+            'expires', 'ban-time' => UdbValueKind::Number,
+            'reason', 'match-type', 'targets', 'action' => UdbValueKind::String,
+            default => null,
+        };
+    }
+
+    /**
+     * @param list<string> $components
+     */
+    private static function validNoneContainer(UdbBlock $block, array $components): bool
+    {
+        $depth = count($components);
+
+        return match ($block) {
+            UdbBlock::Nicks => 1 === $depth && self::nickName($components[0]),
+            UdbBlock::Channels => (1 === $depth && self::channelName($components[0]))
+                || (2 === $depth && self::channelName($components[0]) && 'access' === strtolower($components[1])),
+            UdbBlock::Ips => 1 === $depth && self::ipHostMask($components[0]),
+            UdbBlock::Links => 1 === $depth && self::serverName($components[0]),
             default => false,
         };
     }

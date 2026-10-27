@@ -6,6 +6,9 @@ namespace App\Irc\Adapter\Network;
 
 use App\Irc\Application\Port\In\ChannelSyncCompletedRegistryInterface;
 
+use function microtime;
+use function strtolower;
+
 /**
  * In-memory registry of channel names that have completed sync
  * (all ChannelSyncedEvent subscribers have run: +r, SECURE strip, MLOCK, topic apply).

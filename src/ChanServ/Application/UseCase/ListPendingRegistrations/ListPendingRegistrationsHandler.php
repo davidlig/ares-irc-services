@@ -7,6 +7,8 @@ namespace App\ChanServ\Application\UseCase\ListPendingRegistrations;
 use App\ChanServ\Application\Port\Out\ChanUserAccountPort;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 
+use function count;
+
 final readonly class ListPendingRegistrationsHandler
 {
     public function __construct(

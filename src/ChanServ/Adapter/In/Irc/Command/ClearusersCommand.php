@@ -18,6 +18,7 @@ use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use DateTimeImmutable;
 
 use function array_slice;
+use function implode;
 use function trim;
 
 final class ClearusersCommand implements ChanServCommandInterface, IrcopAuditableCommandInterface

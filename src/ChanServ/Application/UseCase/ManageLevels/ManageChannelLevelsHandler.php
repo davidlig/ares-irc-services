@@ -10,6 +10,7 @@ use App\ChanServ\Application\Service\ChannelHistoryService;
 use App\ChanServ\Domain\Entity\ChannelLevel;
 
 use function in_array;
+use function strtolower;
 
 final readonly class ManageChannelLevelsHandler implements ManageChannelLevelsHandlerInterface
 {

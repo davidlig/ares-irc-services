@@ -141,28 +141,6 @@ class ChannelAkick
         $this->expiresAt = $expiresAt;
     }
 
-    private function setMask(string $mask): void
-    {
-        if ('' === $mask || strlen($mask) > self::MAX_MASK_LENGTH) {
-            throw new InvalidArgumentException(sprintf('Mask must be between 1 and %d characters.', self::MAX_MASK_LENGTH));
-        }
-
-        if (!self::isValidMask($mask)) {
-            throw new InvalidArgumentException('Invalid mask format. Must contain at least one ! and one @ (e.g., *!*@*.isp.com).');
-        }
-
-        $this->mask = $mask;
-    }
-
-    private function setReason(?string $reason): void
-    {
-        if (null !== $reason && strlen($reason) > self::MAX_REASON_LENGTH) {
-            throw new InvalidArgumentException(sprintf('Reason cannot exceed %d characters.', self::MAX_REASON_LENGTH));
-        }
-
-        $this->reason = '' !== $reason ? $reason : null;
-    }
-
     public static function isValidMask(string $mask): bool
     {
         if ('' === $mask) {
@@ -198,5 +176,27 @@ class ChannelAkick
         }
 
         return $alnumCount >= self::MIN_ALNUM_CHARS;
+    }
+
+    private function setMask(string $mask): void
+    {
+        if ('' === $mask || strlen($mask) > self::MAX_MASK_LENGTH) {
+            throw new InvalidArgumentException(sprintf('Mask must be between 1 and %d characters.', self::MAX_MASK_LENGTH));
+        }
+
+        if (!self::isValidMask($mask)) {
+            throw new InvalidArgumentException('Invalid mask format. Must contain at least one ! and one @ (e.g., *!*@*.isp.com).');
+        }
+
+        $this->mask = $mask;
+    }
+
+    private function setReason(?string $reason): void
+    {
+        if (null !== $reason && strlen($reason) > self::MAX_REASON_LENGTH) {
+            throw new InvalidArgumentException(sprintf('Reason cannot exceed %d characters.', self::MAX_REASON_LENGTH));
+        }
+
+        $this->reason = '' !== $reason ? $reason : null;
     }
 }

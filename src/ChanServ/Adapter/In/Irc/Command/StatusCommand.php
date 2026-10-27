@@ -15,6 +15,8 @@ use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use DateTimeImmutable;
 
+use function max;
+
 final readonly class StatusCommand implements ChanServCommandInterface
 {
     use ChanServArgumentDefinitionSupport;

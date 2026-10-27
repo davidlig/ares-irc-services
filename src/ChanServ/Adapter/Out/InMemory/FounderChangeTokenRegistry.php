@@ -49,6 +49,16 @@ final class FounderChangeTokenRegistry implements FounderChangeTokenPort
         return $this->validateAndConsumeToken($entry, $token, $channelId);
     }
 
+    public function getLastRequestAt(int $channelId): ?DateTimeImmutable
+    {
+        return $this->lastRequestAt[$channelId] ?? null;
+    }
+
+    public function recordRequest(int $channelId): void
+    {
+        $this->lastRequestAt[$channelId] = new DateTimeImmutable();
+    }
+
     /**
      * @param array{newFounderNickId: int, token: string, expiresAt: DateTimeImmutable} $entry
      */
@@ -61,15 +71,5 @@ final class FounderChangeTokenRegistry implements FounderChangeTokenPort
         unset($this->entries[$channelId]);
 
         return $newFounderNickId;
-    }
-
-    public function getLastRequestAt(int $channelId): ?DateTimeImmutable
-    {
-        return $this->lastRequestAt[$channelId] ?? null;
-    }
-
-    public function recordRequest(int $channelId): void
-    {
-        $this->lastRequestAt[$channelId] = new DateTimeImmutable();
     }
 }

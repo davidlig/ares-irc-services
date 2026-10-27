@@ -32,6 +32,14 @@ use RuntimeException;
 use Throwable;
 use UnexpectedValueException;
 
+use function file_put_contents;
+use function iterator_to_array;
+use function pack;
+use function str_repeat;
+use function sys_get_temp_dir;
+use function tempnam;
+use function unlink;
+
 #[CoversClass(UdbAuthorityState::class)]
 #[CoversClass(UdbBlockState::class)]
 #[CoversClass(UdbDatasetCheckpoint::class)]

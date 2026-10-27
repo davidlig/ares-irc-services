@@ -14,6 +14,8 @@ use App\ChanServ\Domain\ValueObject\ChannelLevelSet;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 
+use function strtolower;
+
 final readonly class DoctrineChannelRankPolicyRepository implements ChannelRankPolicyRepository
 {
     public function __construct(

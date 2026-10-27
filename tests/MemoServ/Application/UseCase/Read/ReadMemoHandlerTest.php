@@ -29,18 +29,6 @@ final class ReadMemoHandlerTest extends TestCase
 
     private MemoRepositoryInterface $memoRepository;
 
-    protected function setUp(): void
-    {
-        $this->userAccountPort = $this->createStub(MemoUserAccountPort::class);
-        $this->channelPort = $this->createStub(MemoChannelPort::class);
-        $this->memoRepository = $this->createStub(MemoRepositoryInterface::class);
-    }
-
-    private function createHandler(): ReadMemoHandler
-    {
-        return new ReadMemoHandler($this->userAccountPort, $this->channelPort, $this->memoRepository);
-    }
-
     #[Test]
     public function readsNickMemoSuccessfully(): void
     {
@@ -177,5 +165,17 @@ final class ReadMemoHandlerTest extends TestCase
 
         self::assertSame(ReadMemoOutcome::AccessDenied, $result->outcome);
         self::assertSame('#Ares', $result->channelName);
+    }
+
+    protected function setUp(): void
+    {
+        $this->userAccountPort = $this->createStub(MemoUserAccountPort::class);
+        $this->channelPort = $this->createStub(MemoChannelPort::class);
+        $this->memoRepository = $this->createStub(MemoRepositoryInterface::class);
+    }
+
+    private function createHandler(): ReadMemoHandler
+    {
+        return new ReadMemoHandler($this->userAccountPort, $this->channelPort, $this->memoRepository);
     }
 }

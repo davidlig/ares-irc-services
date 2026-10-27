@@ -10,22 +10,14 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Translation\Translator;
 
+use function hash;
+use function implode;
+
 /** Pins decoded runtime messages from before extraction, including IRC controls. */
 #[CoversNothing]
 final class SharedRuntimeTranslationTest extends TestCase
 {
     private const array LOCALES = ['ca', 'de', 'el', 'en', 'es', 'eu', 'fr', 'gl', 'it', 'nl', 'pl', 'pt', 'ro', 'tr'];
-
-    private static function translator(string $locale): Translator
-    {
-        $translator = new Translator($locale);
-        $translator->addLoader('yaml', new IrcYamlTranslationLoader());
-        foreach (['common', 'nickserv', 'chanserv', 'memoserv', 'operserv'] as $domain) {
-            $translator->addResource('yaml', __DIR__ . '/../../../translations/' . $domain . '.' . $locale . '.yaml', $locale, $domain);
-        }
-
-        return $translator;
-    }
 
     #[Test]
     public function registrationErrorsUseExistingCommonMessages(): void
@@ -237,5 +229,16 @@ final class SharedRuntimeTranslationTest extends TestCase
             self::assertFalse($translator->getCatalogue($locale)->defines('suspend.permanent', 'nickserv'), $locale . ':nickserv:suspend.permanent');
             self::assertFalse($translator->getCatalogue($locale)->defines('gline.permanent', 'operserv'), $locale . ':operserv:gline.permanent');
         }
+    }
+
+    private static function translator(string $locale): Translator
+    {
+        $translator = new Translator($locale);
+        $translator->addLoader('yaml', new IrcYamlTranslationLoader());
+        foreach (['common', 'nickserv', 'chanserv', 'memoserv', 'operserv'] as $domain) {
+            $translator->addResource('yaml', __DIR__ . '/../../../translations/' . $domain . '.' . $locale . '.yaml', $locale, $domain);
+        }
+
+        return $translator;
     }
 }

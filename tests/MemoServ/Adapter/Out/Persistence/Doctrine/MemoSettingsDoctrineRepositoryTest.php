@@ -18,12 +18,6 @@ final class MemoSettingsDoctrineRepositoryTest extends DoctrineIntegrationTestCa
 {
     private MemoSettingsRepositoryInterface $repository;
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->repository = new MemoSettingsDoctrineRepository($this->entityManager);
-    }
-
     #[Test]
     public function savePersistsSettingsForNick(): void
     {
@@ -138,5 +132,11 @@ final class MemoSettingsDoctrineRepositoryTest extends DoctrineIntegrationTestCa
 
         self::assertNull($this->repository->findByTargetChannel(10));
         self::assertNotNull($this->repository->findByTargetChannel(20));
+    }
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->repository = new MemoSettingsDoctrineRepository($this->entityManager);
     }
 }

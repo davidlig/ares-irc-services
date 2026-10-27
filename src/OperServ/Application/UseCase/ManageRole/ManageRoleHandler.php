@@ -16,10 +16,13 @@ use App\OperServ\Application\Port\Out\OperatorRoleRecord;
 use App\OperServ\Application\Port\Out\OperatorRoleStore;
 
 use function array_diff;
+use function array_unique;
 use function array_values;
 use function count;
 use function implode;
 use function in_array;
+use function ltrim;
+use function str_split;
 use function strcasecmp;
 use function strtoupper;
 use function trim;

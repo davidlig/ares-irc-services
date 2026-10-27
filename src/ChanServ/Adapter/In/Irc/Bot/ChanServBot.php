@@ -61,29 +61,6 @@ final class ChanServBot implements ChanServNotifierInterface, ChannelServiceActi
         $this->introduce($event->serverSid);
     }
 
-    private function introduce(string $serverSid): void
-    {
-        $module = $this->connectionHolder->getProtocolModule();
-        if (null === $module) {
-            return;
-        }
-
-        $module->getServiceActions()->introduceService(
-            $serverSid,
-            $this->chanservNick,
-            $this->chanservIdent,
-            $this->servicesVhost,
-            $this->uid,
-            $this->chanservRealname,
-            $this->getServiceKey(),
-        );
-
-        $this->logger->info('ChanServ introduced to network.', [
-            'uid' => $this->uid,
-            'nick' => $this->chanservNick,
-        ]);
-    }
-
     public function sendNotice(string $targetUidOrNick, string $message): void
     {
         $this->sendNoticePort->sendNotice($this->uid, $targetUidOrNick, $message);
@@ -218,5 +195,28 @@ final class ChanServBot implements ChanServNotifierInterface, ChannelServiceActi
     public function getNickname(): string
     {
         return $this->chanservNick;
+    }
+
+    private function introduce(string $serverSid): void
+    {
+        $module = $this->connectionHolder->getProtocolModule();
+        if (null === $module) {
+            return;
+        }
+
+        $module->getServiceActions()->introduceService(
+            $serverSid,
+            $this->chanservNick,
+            $this->chanservIdent,
+            $this->servicesVhost,
+            $this->uid,
+            $this->chanservRealname,
+            $this->getServiceKey(),
+        );
+
+        $this->logger->info('ChanServ introduced to network.', [
+            'uid' => $this->uid,
+            'nick' => $this->chanservNick,
+        ]);
     }
 }

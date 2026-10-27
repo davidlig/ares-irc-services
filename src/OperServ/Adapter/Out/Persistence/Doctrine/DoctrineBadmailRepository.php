@@ -11,6 +11,12 @@ use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
 use UnexpectedValueException;
 
+use function array_map;
+use function is_numeric;
+use function is_string;
+use function strtolower;
+use function strtr;
+
 final readonly class DoctrineBadmailRepository implements BadmailRepository
 {
     public function __construct(private EntityManagerInterface $em) {}

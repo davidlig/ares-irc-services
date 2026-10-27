@@ -26,6 +26,8 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
 
+use function array_filter;
+use function array_values;
 use function count;
 
 use const DATE_ATOM;

@@ -16,7 +16,9 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 
+use function array_values;
 use function count;
+use function strtolower;
 
 #[CoversClass(CoreServiceChannelRegistrationAdapter::class)]
 final class CoreServiceChannelRegistrationAdapterTest extends TestCase
@@ -24,51 +26,6 @@ final class CoreServiceChannelRegistrationAdapterTest extends TestCase
     private ChannelRepositoryInterface $repository;
 
     private CoreServiceChannelRegistrationAdapter $adapter;
-
-    protected function setUp(): void
-    {
-        $this->repository = new class implements ChannelRepositoryInterface {
-            /** @var array<string, Channel> */
-            private array $channels = [];
-
-            public function save(Channel $channel): void
-            {
-                $this->channels[strtolower($channel->name->value)] = $channel;
-            }
-
-            public function remove(ChannelName $name): void
-            {
-                unset($this->channels[strtolower($name->value)]);
-            }
-
-            public function findByName(ChannelName $name): ?Channel
-            {
-                return $this->channels[strtolower($name->value)] ?? null;
-            }
-
-            public function all(): array
-            {
-                return array_values($this->channels);
-            }
-
-            public function iterateAll(): iterable
-            {
-                foreach ($this->channels as $channel) {
-                    yield $channel;
-                }
-            }
-
-            public function count(): int
-            {
-                return count($this->channels);
-            }
-        };
-
-        $this->adapter = new CoreServiceChannelRegistrationAdapter(
-            $this->repository,
-            new NullLogger(),
-        );
-    }
 
     #[Test]
     public function registerServiceChannelJoinCreatesNewChannelWhenNotExists(): void
@@ -219,5 +176,50 @@ final class CoreServiceChannelRegistrationAdapterTest extends TestCase
         $this->adapter->unregisterServiceChannelPart('nohash', '001CS');
 
         self::assertSame(0, $this->repository->count());
+    }
+
+    protected function setUp(): void
+    {
+        $this->repository = new class implements ChannelRepositoryInterface {
+            /** @var array<string, Channel> */
+            private array $channels = [];
+
+            public function save(Channel $channel): void
+            {
+                $this->channels[strtolower($channel->name->value)] = $channel;
+            }
+
+            public function remove(ChannelName $name): void
+            {
+                unset($this->channels[strtolower($name->value)]);
+            }
+
+            public function findByName(ChannelName $name): ?Channel
+            {
+                return $this->channels[strtolower($name->value)] ?? null;
+            }
+
+            public function all(): array
+            {
+                return array_values($this->channels);
+            }
+
+            public function iterateAll(): iterable
+            {
+                foreach ($this->channels as $channel) {
+                    yield $channel;
+                }
+            }
+
+            public function count(): int
+            {
+                return count($this->channels);
+            }
+        };
+
+        $this->adapter = new CoreServiceChannelRegistrationAdapter(
+            $this->repository,
+            new NullLogger(),
+        );
     }
 }

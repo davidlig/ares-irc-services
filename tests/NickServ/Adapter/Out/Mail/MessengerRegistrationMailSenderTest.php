@@ -15,6 +15,9 @@ use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function serialize;
+use function str_contains;
+
 #[CoversClass(MessengerRegistrationMailSender::class)]
 final class MessengerRegistrationMailSenderTest extends TestCase
 {

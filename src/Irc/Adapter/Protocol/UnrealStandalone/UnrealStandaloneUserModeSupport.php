@@ -6,6 +6,8 @@ namespace App\Irc\Adapter\Protocol\UnrealStandalone;
 
 use App\Irc\Application\Port\In\UserModeSupportInterface;
 
+use function implode;
+
 /**
  * UnrealIRCd IRCOp-only user modes.
  *

@@ -30,6 +30,10 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 
+use function array_column;
+use function array_map;
+use function implode;
+use function str_repeat;
 use function strlen;
 
 #[CoversClass(UdbSchema::class)]

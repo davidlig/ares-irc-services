@@ -23,31 +23,15 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
+use function hash;
+use function serialize;
+
 #[CoversClass(NetworkEventEnricher::class)]
 #[CoversClass(InspIRCdNetworkStateAdapter::class)]
 #[CoversClass(ChannelModeStateSynchronizer::class)]
 #[CoversClass(ChannelModeParameterMerge::class)]
 final class InspIRCdTimestampRegressionTest extends TestCase
 {
-    /** @return array{Channel, InspIRCdNetworkStateAdapter} */
-    private function network(): array
-    {
-        $channel = new Channel(new ChannelName('#test'), '+nk', new DateTimeImmutable('@100'));
-        $channel->applyModeParam('k', 'akey');
-        $repo = new InMemoryChannelRepository();
-        $repo->save($channel);
-        $dispatcher = new EventDispatcher();
-        $support = $this->createStub(ChannelModeSupportInterface::class);
-        $support->method('getListModeLetters')->willReturn(['b', 'e', 'I']);
-        $support->method('getChannelSettingModesWithParamOnSet')->willReturn(['k', 'l']);
-        $support->method('getChannelSettingModesUnsetWithParam')->willReturn(['k']);
-        $provider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
-        $provider->method('getSupport')->willReturn($support);
-        $dispatcher->addSubscriber(new NetworkEventEnricher($repo, new InMemoryNetworkUserRepository(), $dispatcher, $this->createStub(SkipIdentifiedModeStripRegistry::class), $provider, $this->createStub(ActiveProtocolModuleHolderInterface::class)));
-
-        return [$channel, new InspIRCdNetworkStateAdapter($dispatcher)];
-    }
-
     #[Test]
     public function lowerFmodeIsAcceptedWithoutLoweringChannelTimestamp(): void
     {
@@ -82,5 +66,24 @@ final class InspIRCdTimestampRegressionTest extends TestCase
         $a->handleMessage(IRCMessage::fromRawLine(':001 FMODE #test 101 +t'));
         $a->handleMessage(IRCMessage::fromRawLine(':001 LMODE #test 101 b bad!*@* 90 setter'));
         self::assertSame($before, hash('sha256', serialize($c)));
+    }
+
+    /** @return array{Channel, InspIRCdNetworkStateAdapter} */
+    private function network(): array
+    {
+        $channel = new Channel(new ChannelName('#test'), '+nk', new DateTimeImmutable('@100'));
+        $channel->applyModeParam('k', 'akey');
+        $repo = new InMemoryChannelRepository();
+        $repo->save($channel);
+        $dispatcher = new EventDispatcher();
+        $support = $this->createStub(ChannelModeSupportInterface::class);
+        $support->method('getListModeLetters')->willReturn(['b', 'e', 'I']);
+        $support->method('getChannelSettingModesWithParamOnSet')->willReturn(['k', 'l']);
+        $support->method('getChannelSettingModesUnsetWithParam')->willReturn(['k']);
+        $provider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
+        $provider->method('getSupport')->willReturn($support);
+        $dispatcher->addSubscriber(new NetworkEventEnricher($repo, new InMemoryNetworkUserRepository(), $dispatcher, $this->createStub(SkipIdentifiedModeStripRegistry::class), $provider, $this->createStub(ActiveProtocolModuleHolderInterface::class)));
+
+        return [$channel, new InspIRCdNetworkStateAdapter($dispatcher)];
     }
 }

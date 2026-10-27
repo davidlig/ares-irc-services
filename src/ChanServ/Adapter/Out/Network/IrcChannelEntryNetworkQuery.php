@@ -13,6 +13,8 @@ use App\Irc\Application\Port\In\ChannelView;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
 
+use function strcasecmp;
+
 final readonly class IrcChannelEntryNetworkQuery implements ChannelEntryNetworkQuery
 {
     public function __construct(

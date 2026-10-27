@@ -53,6 +53,8 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function assert;
 use function is_string;
+use function json_encode;
+use function str_contains;
 
 #[CoversTrait(ChanServArgumentDefinitionSupport::class)]
 #[CoversClass(AkickCommand::class)]
@@ -63,129 +65,6 @@ use function is_string;
 #[CoversClass(ChannelAkickEntryView::class)]
 final class AkickCommandTest extends TestCase
 {
-    /**
-     * @param string[] $args
-     */
-    private function createContext(
-        ?SenderView $sender,
-        ?ChanAccountView $senderAccount,
-        array $args,
-        ChanServNotifierInterface $notifier,
-        TranslatorInterface $translator,
-        ?ChannelLookupPort $channelLookup = null,
-    ): ChanServContext {
-        return new ChanServContext(
-            $sender,
-            $senderAccount,
-            'AKICK',
-            $args,
-            $notifier,
-            $translator,
-            'en',
-            'UTC',
-            'NOTICE',
-            new ChanServCommandRegistry([]),
-            $channelLookup ?? $this->createStub(ChannelLookupPort::class),
-            new NullChannelModeSupport(),
-            $this->createStub(NetworkUserLookupPort::class),
-            $this->createServiceNicks(),
-        );
-    }
-
-    /**
-     * @return array{RegisteredChannelRepositoryInterface&Stub, ChannelAkickRepositoryInterface&Stub, ChanUserAccountPort&Stub, ChannelAccessRepositoryInterface&Stub, ChanServAccessHelper}
-     */
-    private function createStubReposAndHelper(): array
-    {
-        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
-        $akickRepo = $this->createStub(ChannelAkickRepositoryInterface::class);
-        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
-
-        return [
-            $this->createStub(RegisteredChannelRepositoryInterface::class),
-            $akickRepo,
-            $this->createStub(ChanUserAccountPort::class),
-            $accessRepo,
-            new ChanServAccessHelper($accessRepo, $levelRepo),
-        ];
-    }
-
-    private function createCommand(
-        RegisteredChannelRepositoryInterface $channelRepository,
-        ChannelAkickRepositoryInterface $akickRepository,
-        ChanUserAccountPort $nickRepository,
-        ChannelAccessRepositoryInterface $accessRepository,
-        ChanServAccessHelper $accessHelper,
-        ChannelLookupPort $channelLookup,
-        EventBusInterface $eventDispatcher,
-        ?BurstCompletePort $burstComplete = null,
-        ?NetworkUserLookupPort $userLookup = null,
-        ?ChanServNotifierInterface $notifier = null,
-        ?ChannelEntryNetworkQuery $entryNetwork = null,
-        ?AkickActions $akickActions = null,
-    ): AkickCommand {
-        $burstComplete ??= $this->createStub(BurstCompletePort::class);
-        $userLookup ??= $this->createStub(NetworkUserLookupPort::class);
-
-        if (null === $entryNetwork) {
-            $networkStub = $this->createStub(ChannelEntryNetworkQuery::class);
-            $networkStub->method('synchronizationComplete')->willReturnCallback($burstComplete->isComplete(...));
-            $networkStub->method('findChannel')->willReturnCallback(static function (string $channelName) use ($channelLookup, $userLookup): ?ChannelEntryNetworkState {
-                $view = $channelLookup->findByChannelName($channelName);
-                if (null === $view) {
-                    return null;
-                }
-
-                $members = [];
-                foreach ($view->members as $entry) {
-                    $user = $userLookup->findByUid($entry['uid']);
-                    if (null !== $user) {
-                        $members[] = new ChannelEntryMember(
-                            $user->uid,
-                            $user->nick,
-                            $user->toUserMask(),
-                            $user->isIdentified,
-                            $user->isOper,
-                            false,
-                        );
-                    }
-                }
-
-                return new ChannelEntryNetworkState($view->name, $members);
-            });
-            $network = $networkStub;
-        } else {
-            $network = $entryNetwork;
-        }
-
-        if (null === $akickActions) {
-            $actionsStub = $this->createStub(AkickActions::class);
-            if (null !== $notifier) {
-                $actionsStub->method('banAndKick')->willReturnCallback(static function (string $channelName, string $uid, string $mask, string $reason) use ($notifier): void {
-                    $notifier->setChannelModes($channelName, '+b', [$mask]);
-                    $notifier->kickFromChannel($channelName, $uid, $reason);
-                });
-            }
-            $actions = $actionsStub;
-        } else {
-            $actions = $akickActions;
-        }
-
-        return new AkickCommand(new ManageChannelAkickHandler(
-            $channelRepository,
-            $akickRepository,
-            $nickRepository,
-            $accessRepository,
-            $accessHelper,
-            new AkickAdditionPolicy(),
-            new AkickMatchPolicy(),
-            new AkickProtectionPolicy(),
-            $network,
-            $actions,
-            new SymfonyChanServEventPublisher($eventDispatcher),
-        ));
-    }
-
     #[Test]
     public function executeReturnsEarlyWhenSenderIsNull(): void
     {
@@ -206,19 +85,6 @@ final class AkickCommandTest extends TestCase
         );
 
         $command->execute($this->createContext(null, $account, ['#test', 'LIST'], $notifier, $this->createStub(TranslatorInterface::class)));
-    }
-
-    private function createChannelMock(int $channelId = 1, int $founderNickId = 1): RegisteredChannelRepositoryInterface
-    {
-        $channel = $this->createStub(RegisteredChannel::class);
-        $channel->method('getId')->willReturn($channelId);
-        $channel->method('getFounderNickId')->willReturn($founderNickId);
-        $channel->method('isFounder')->willReturnCallback(static fn (int $id): bool => $id === $founderNickId);
-
-        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
-        $channelRepo->method('findByChannelName')->willReturn($channel);
-
-        return $channelRepo;
     }
 
     #[Test]
@@ -2405,6 +2271,142 @@ final class AkickCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class), $this->createStub(EventBusInterface::class));
 
         self::assertFalse($cmd->allowsForbiddenChannel());
+    }
+
+    /**
+     * @param string[] $args
+     */
+    private function createContext(
+        ?SenderView $sender,
+        ?ChanAccountView $senderAccount,
+        array $args,
+        ChanServNotifierInterface $notifier,
+        TranslatorInterface $translator,
+        ?ChannelLookupPort $channelLookup = null,
+    ): ChanServContext {
+        return new ChanServContext(
+            $sender,
+            $senderAccount,
+            'AKICK',
+            $args,
+            $notifier,
+            $translator,
+            'en',
+            'UTC',
+            'NOTICE',
+            new ChanServCommandRegistry([]),
+            $channelLookup ?? $this->createStub(ChannelLookupPort::class),
+            new NullChannelModeSupport(),
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
+        );
+    }
+
+    /**
+     * @return array{RegisteredChannelRepositoryInterface&Stub, ChannelAkickRepositoryInterface&Stub, ChanUserAccountPort&Stub, ChannelAccessRepositoryInterface&Stub, ChanServAccessHelper}
+     */
+    private function createStubReposAndHelper(): array
+    {
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $akickRepo = $this->createStub(ChannelAkickRepositoryInterface::class);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+
+        return [
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $akickRepo,
+            $this->createStub(ChanUserAccountPort::class),
+            $accessRepo,
+            new ChanServAccessHelper($accessRepo, $levelRepo),
+        ];
+    }
+
+    private function createCommand(
+        RegisteredChannelRepositoryInterface $channelRepository,
+        ChannelAkickRepositoryInterface $akickRepository,
+        ChanUserAccountPort $nickRepository,
+        ChannelAccessRepositoryInterface $accessRepository,
+        ChanServAccessHelper $accessHelper,
+        ChannelLookupPort $channelLookup,
+        EventBusInterface $eventDispatcher,
+        ?BurstCompletePort $burstComplete = null,
+        ?NetworkUserLookupPort $userLookup = null,
+        ?ChanServNotifierInterface $notifier = null,
+        ?ChannelEntryNetworkQuery $entryNetwork = null,
+        ?AkickActions $akickActions = null,
+    ): AkickCommand {
+        $burstComplete ??= $this->createStub(BurstCompletePort::class);
+        $userLookup ??= $this->createStub(NetworkUserLookupPort::class);
+
+        if (null === $entryNetwork) {
+            $networkStub = $this->createStub(ChannelEntryNetworkQuery::class);
+            $networkStub->method('synchronizationComplete')->willReturnCallback($burstComplete->isComplete(...));
+            $networkStub->method('findChannel')->willReturnCallback(static function (string $channelName) use ($channelLookup, $userLookup): ?ChannelEntryNetworkState {
+                $view = $channelLookup->findByChannelName($channelName);
+                if (null === $view) {
+                    return null;
+                }
+
+                $members = [];
+                foreach ($view->members as $entry) {
+                    $user = $userLookup->findByUid($entry['uid']);
+                    if (null !== $user) {
+                        $members[] = new ChannelEntryMember(
+                            $user->uid,
+                            $user->nick,
+                            $user->toUserMask(),
+                            $user->isIdentified,
+                            $user->isOper,
+                            false,
+                        );
+                    }
+                }
+
+                return new ChannelEntryNetworkState($view->name, $members);
+            });
+            $network = $networkStub;
+        } else {
+            $network = $entryNetwork;
+        }
+
+        if (null === $akickActions) {
+            $actionsStub = $this->createStub(AkickActions::class);
+            if (null !== $notifier) {
+                $actionsStub->method('banAndKick')->willReturnCallback(static function (string $channelName, string $uid, string $mask, string $reason) use ($notifier): void {
+                    $notifier->setChannelModes($channelName, '+b', [$mask]);
+                    $notifier->kickFromChannel($channelName, $uid, $reason);
+                });
+            }
+            $actions = $actionsStub;
+        } else {
+            $actions = $akickActions;
+        }
+
+        return new AkickCommand(new ManageChannelAkickHandler(
+            $channelRepository,
+            $akickRepository,
+            $nickRepository,
+            $accessRepository,
+            $accessHelper,
+            new AkickAdditionPolicy(),
+            new AkickMatchPolicy(),
+            new AkickProtectionPolicy(),
+            $network,
+            $actions,
+            new SymfonyChanServEventPublisher($eventDispatcher),
+        ));
+    }
+
+    private function createChannelMock(int $channelId = 1, int $founderNickId = 1): RegisteredChannelRepositoryInterface
+    {
+        $channel = $this->createStub(RegisteredChannel::class);
+        $channel->method('getId')->willReturn($channelId);
+        $channel->method('getFounderNickId')->willReturn($founderNickId);
+        $channel->method('isFounder')->willReturnCallback(static fn (int $id): bool => $id === $founderNickId);
+
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+
+        return $channelRepo;
     }
 
     private function createServiceNicks(): ServiceNicknameRegistry

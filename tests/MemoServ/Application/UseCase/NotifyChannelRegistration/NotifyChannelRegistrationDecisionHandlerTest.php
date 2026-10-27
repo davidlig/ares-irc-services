@@ -17,6 +17,9 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function array_map;
+use function str_repeat;
+
 #[CoversClass(NotifyChannelRegistrationDecisionHandler::class)]
 #[CoversClass(NotifyChannelRegistrationDecision::class)]
 final class NotifyChannelRegistrationDecisionHandlerTest extends TestCase

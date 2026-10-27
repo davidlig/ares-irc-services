@@ -110,22 +110,6 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
         return self::HELP_GROUPS;
     }
 
-    private function shouldShowByName(HelpableCommandInterface $command): bool
-    {
-        $name = $command->getName();
-        if (isset(self::MODE_DEPENDENT_COMMANDS[$name])) {
-            $mode = self::MODE_DEPENDENT_COMMANDS[$name];
-            $map = [
-                'a' => $this->context->getChannelModeSupport()->hasAdmin(),
-                'h' => $this->context->getChannelModeSupport()->hasHalfOp(),
-            ];
-
-            return $map[$mode];
-        }
-
-        return true;
-    }
-
     /**
      * @return iterable<HelpableCommandInterface>
      */
@@ -163,6 +147,22 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
             $sender->isOper,
             ChanServPermission::allIrcop(),
         );
+    }
+
+    private function shouldShowByName(HelpableCommandInterface $command): bool
+    {
+        $name = $command->getName();
+        if (isset(self::MODE_DEPENDENT_COMMANDS[$name])) {
+            $mode = self::MODE_DEPENDENT_COMMANDS[$name];
+            $map = [
+                'a' => $this->context->getChannelModeSupport()->hasAdmin(),
+                'h' => $this->context->getChannelModeSupport()->hasHalfOp(),
+            ];
+
+            return $map[$mode];
+        }
+
+        return true;
     }
 
     /**

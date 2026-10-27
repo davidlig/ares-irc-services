@@ -18,7 +18,10 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 use Throwable;
 
 use function function_exists;
+use function is_numeric;
 use function is_string;
+use function pcntl_async_signals;
+use function pcntl_signal;
 use function sprintf;
 
 use const SIGHUP;

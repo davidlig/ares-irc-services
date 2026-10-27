@@ -20,6 +20,9 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Component\Translation\Translator;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function hash;
+use function serialize;
+
 #[CoversClass(OperServDebugNotifier::class)]
 final class OperServDebugNotifierTest extends TestCase
 {
@@ -370,36 +373,6 @@ final class OperServDebugNotifierTest extends TestCase
         self::assertSame($userLookup, $debug->getUserLookup());
     }
 
-    private function createDebugNotifier(
-        ?ChannelServiceActionsPort $channelActions = null,
-        ?NetworkUserLookupPort $userLookup = null,
-        ?OperServNotifierInterface $notifier = null,
-        ?NickAccountQuery $nickAccounts = null,
-        ?OperatorAuthorizationQuery $authorization = null,
-        ?TranslatorInterface $translator = null,
-        ?string $debugChannel = '#ircops',
-        string $language = 'en',
-    ): OperServDebugNotifier {
-        return new OperServDebugNotifier(
-            channelActions: $channelActions ?? $this->createStub(ChannelServiceActionsPort::class),
-            userLookup: $userLookup ?? $this->createStub(NetworkUserLookupPort::class),
-            notifier: $notifier ?? $this->createStub(OperServNotifierInterface::class),
-            nickAccounts: $nickAccounts ?? $this->createStub(NickAccountQuery::class),
-            authorization: $authorization ?? $this->deniedAuthorization(),
-            translator: $translator ?? $this->createStub(TranslatorInterface::class),
-            defaultLanguage: $language,
-            debugChannel: $debugChannel,
-        );
-    }
-
-    private function deniedAuthorization(): OperatorAuthorizationQuery
-    {
-        $authorization = $this->createStub(OperatorAuthorizationQuery::class);
-        $authorization->method('ircOperator')->willReturn(AuthorizationDecision::denied());
-
-        return $authorization;
-    }
-
     #[Test]
     public function realCatalogDebugOutputRemainsIdenticalInEveryLocale(): void
     {
@@ -450,5 +423,35 @@ final class OperServDebugNotifierTest extends TestCase
             }
             self::assertSame($hash, hash('sha256', serialize($messages)), $locale);
         }
+    }
+
+    private function createDebugNotifier(
+        ?ChannelServiceActionsPort $channelActions = null,
+        ?NetworkUserLookupPort $userLookup = null,
+        ?OperServNotifierInterface $notifier = null,
+        ?NickAccountQuery $nickAccounts = null,
+        ?OperatorAuthorizationQuery $authorization = null,
+        ?TranslatorInterface $translator = null,
+        ?string $debugChannel = '#ircops',
+        string $language = 'en',
+    ): OperServDebugNotifier {
+        return new OperServDebugNotifier(
+            channelActions: $channelActions ?? $this->createStub(ChannelServiceActionsPort::class),
+            userLookup: $userLookup ?? $this->createStub(NetworkUserLookupPort::class),
+            notifier: $notifier ?? $this->createStub(OperServNotifierInterface::class),
+            nickAccounts: $nickAccounts ?? $this->createStub(NickAccountQuery::class),
+            authorization: $authorization ?? $this->deniedAuthorization(),
+            translator: $translator ?? $this->createStub(TranslatorInterface::class),
+            defaultLanguage: $language,
+            debugChannel: $debugChannel,
+        );
+    }
+
+    private function deniedAuthorization(): OperatorAuthorizationQuery
+    {
+        $authorization = $this->createStub(OperatorAuthorizationQuery::class);
+        $authorization->method('ircOperator')->willReturn(AuthorizationDecision::denied());
+
+        return $authorization;
     }
 }

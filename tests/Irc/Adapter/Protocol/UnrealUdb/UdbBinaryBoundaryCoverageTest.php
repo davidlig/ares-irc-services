@@ -21,7 +21,20 @@ use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
 use RuntimeException;
 
+use function array_fill;
+use function fclose;
+use function file_put_contents;
+use function fopen;
+use function fwrite;
+use function hash;
+use function implode;
+use function pack;
+use function rewind;
+use function str_repeat;
 use function strlen;
+use function sys_get_temp_dir;
+use function tempnam;
+use function unlink;
 
 use const PHP_INT_MAX;
 

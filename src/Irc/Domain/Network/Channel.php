@@ -9,6 +9,8 @@ use App\Irc\Domain\ValueObject\Uid;
 use DateTimeImmutable;
 use DateTimeInterface;
 
+use function array_filter;
+use function array_values;
 use function count;
 use function in_array;
 

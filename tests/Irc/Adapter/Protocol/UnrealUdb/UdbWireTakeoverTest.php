@@ -43,7 +43,12 @@ use ReflectionMethod;
 use ReflectionProperty;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function base64_encode;
 use function count;
+use function hash;
+use function intdiv;
+use function min;
+use function str_repeat;
 use function strlen;
 
 #[CoversClass(UdbWireTakeover::class)]
@@ -60,23 +65,6 @@ final class UdbWireTakeoverTest extends DoctrineIntegrationTestCase
     private UdbWireTakeover $takeover;
 
     private MutableUdbClock $clock;
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->records = new UdbRecordDoctrineRepository($this->entityManager);
-        $this->states = new UdbBlockStateDoctrineRepository($this->entityManager);
-        $this->em = $this->entityManager;
-        UdbStagingSchemaFixture::create($this->entityManager->getConnection());
-        $this->clock = new MutableUdbClock();
-        $this->takeover = new UdbWireTakeover(
-            $this->records,
-            $this->states,
-            $this->em,
-            $this->createEmptyExporter(),
-            clock: $this->clock,
-        );
-    }
 
     #[Test]
     public function provisionalInsertDeleteAndDropBindDurablyWithoutLiveVisibilityOrCredit(): void
@@ -450,16 +438,6 @@ final class UdbWireTakeoverTest extends DoctrineIntegrationTestCase
         $this->assertError($this->takeover->acceptMutation($overflow), UdbBlock::Nicks, 1, 'DEL', 2);
         $this->takeover->reset();
         $this->assertIgnored($this->takeover->acceptMutation($last));
-    }
-
-    private function provisionalIns(int|UdbUnsignedDecimal $sequence, string $sid = '001', string $epoch = '1111111111111111'): UdbFrame
-    {
-        return new UdbFrame(UdbFrameKind::Ins, $sid, '*', epoch: $epoch, sequence: $sequence, path: 'I::192.0.2.1::clones', typedValue: UdbValue::number(UdbUnsignedDecimal::fromInt(1)));
-    }
-
-    private function bindProvisional(int|UdbUnsignedDecimal $watermark = 0, string $sid = '001', string $epoch = '1111111111111111', UdbBlock $block = UdbBlock::Ips): UdbWireTakeoverOutcome
-    {
-        return $this->takeover->accept(new UdbFrame(UdbFrameKind::Inf, '001', '002', roundId: 1, block: $block, checksum: UdbChecksum::empty($block), count: 0, watermark: $watermark, rootSid: $sid, rootEpoch: $epoch));
     }
 
     #[Test]
@@ -1156,127 +1134,6 @@ final class UdbWireTakeoverTest extends DoctrineIntegrationTestCase
         yield 'record payload' => ['udb_staged_records', 'value', '*6'];
     }
 
-    /**
-     * @param array<string, string> $records
-     */
-    private function stagedTransfer(UdbBlock $block, array $records): UdbWireTakeoverOutcome
-    {
-        return $this->stagedTransferFor($block, 'tx-' . $block->letter(), $records);
-    }
-
-    /**
-     * @param array<string, string> $records
-     */
-    private function stagedTransferFor(UdbBlock $block, string $txid, array $records, int $roundId = 1): UdbWireTakeoverOutcome
-    {
-        $digest = UdbTestValues::digest($block, $records);
-
-        if ([] === $records) {
-            return $this->inventory($block, $roundId, $digest, 0);
-        }
-        $this->assertRequest($this->inventory($block, $roundId, $digest, count($records)), $block, $roundId);
-        $this->assertIgnored($this->begin($block, $txid, $digest, $roundId));
-        foreach ($records as $path => $value) {
-            $this->assertIgnored($this->put($block, $txid, $path, $value, $roundId));
-        }
-
-        return $this->end($block, $txid, $digest, $roundId);
-    }
-
-    private function completeOtherBlocks(UdbBlock $completedBlock): void
-    {
-        foreach (UdbBlock::all() as $block) {
-            if ($completedBlock !== $block) {
-                $this->assertIgnored($this->inventory($block, digest: UdbChecksum::empty($block)));
-            }
-        }
-        $this->takeover->markTailReplayComplete();
-    }
-
-    private function inventory(UdbBlock $block, int $roundId = 1, ?string $digest = null, int $count = 0, int $watermark = 0): UdbWireTakeoverOutcome
-    {
-        return $this->takeover->accept($this->frame(UdbFrameKind::Inf, $block, checksum: $digest ?? hash('sha256', 'remote-divergent-' . $block->letter()), roundId: $roundId, count: $count, watermark: $watermark));
-    }
-
-    private function begin(UdbBlock $block, ?string $txid, ?string $checksum = null, int $roundId = 1): UdbWireTakeoverOutcome
-    {
-        return $this->takeover->accept($this->frame(UdbFrameKind::Begin, $block, $txid, $checksum ?? hash('sha256', 'remote-divergent-' . $block->letter()), roundId: $roundId, watermark: 0));
-    }
-
-    private function put(UdbBlock $block, string $txid, string $path, string $value, int $roundId = 1): UdbWireTakeoverOutcome
-    {
-        return $this->takeover->accept($this->frame(UdbFrameKind::Put, $block, $txid, path: $path, value: $value, roundId: $roundId));
-    }
-
-    private function end(UdbBlock $block, ?string $txid, ?string $checksum = null, int $roundId = 1): UdbWireTakeoverOutcome
-    {
-        return $this->takeover->accept($this->frame(UdbFrameKind::End, $block, $txid, $checksum ?? hash('sha256', 'remote-divergent-' . $block->letter()), roundId: $roundId, watermark: 0));
-    }
-
-    private function assertIgnored(UdbWireTakeoverOutcome $outcome): void
-    {
-        self::assertSame(UdbWireTakeoverOutcomeKind::Ignored, $outcome->kind);
-    }
-
-    private function assertRequest(UdbWireTakeoverOutcome $outcome, UdbBlock $block, int $roundId): void
-    {
-        self::assertSame(UdbWireTakeoverOutcomeKind::Request, $outcome->kind);
-        self::assertSame($block, $outcome->block);
-        self::assertSame((string) $roundId, (string) $outcome->roundId);
-    }
-
-    private function assertAcknowledgement(UdbWireTakeoverOutcome $outcome, UdbBlock $block, int $roundId, string $txid, string $digest): void
-    {
-        self::assertSame(UdbWireTakeoverOutcomeKind::Acknowledge, $outcome->kind);
-        self::assertSame($block, $outcome->block);
-        self::assertSame((string) $roundId, (string) $outcome->roundId);
-        self::assertSame($txid, $outcome->txid);
-        self::assertSame($digest, $outcome->digest);
-    }
-
-    private function assertError(UdbWireTakeoverOutcome $outcome, UdbBlock $block, int $roundId, string $subcommand, int $errorCode): void
-    {
-        self::assertSame(UdbWireTakeoverOutcomeKind::Error, $outcome->kind);
-        self::assertSame($block, $outcome->block);
-        self::assertSame((string) $roundId, (string) $outcome->roundId);
-        self::assertSame($subcommand, $outcome->subcommand);
-        self::assertSame($errorCode, $outcome->errorCode);
-    }
-
-    private function takeoverWithLogger(LoggerInterface $logger): UdbWireTakeover
-    {
-        return new UdbWireTakeover($this->records, $this->states, $this->em, $this->createEmptyExporter(), $logger, $this->clock);
-    }
-
-    private function createEmptyExporter(): UdbRecordExporter
-    {
-        return new UdbRecordExporter(
-            $this->createStub(NickProjectionQuery::class),
-            $this->createStub(ChannelProjectionQuery::class),
-            $this->createStub(OperatorNetworkProjectionQuery::class),
-            $this->createStub(GlineProjectionQuery::class),
-            $this->createStub(ChannelLookupPort::class),
-            $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-            new UdbChannelSuspendReasonResolver($this->createStub(TranslatorInterface::class), 'ChanServ'),
-        );
-    }
-
-    private function frame(
-        UdbFrameKind $kind,
-        UdbBlock $block,
-        ?string $txid = null,
-        ?string $checksum = null,
-        ?string $path = null,
-        ?string $value = null,
-        int $roundId = 1,
-        ?int $count = null,
-        ?int $watermark = null,
-    ): UdbFrame {
-        $typedValue = null !== $path && null !== $value ? (UdbSchema::typedValueForStoredRecord($block->letter(), $path, $value) ?? UdbValue::string($value)) : null;
-
-        return new UdbFrame($kind, '001', '002', roundId: $roundId, block: $block, txid: $txid, checksum: $checksum, path: $path, value: $value, count: $count, watermark: $watermark, typedValue: $typedValue, rootSid: '001', rootEpoch: '1111111111111111');
-    }
-
     #[Test]
     public function malformedTailPathsAndSequenceGapsReturnErrorsWithoutStaging(): void
     {
@@ -1422,5 +1279,153 @@ final class UdbWireTakeoverTest extends DoctrineIntegrationTestCase
         $this->begin(UdbBlock::Ips, 'tx1', $digest);
         $outcome = $this->takeover->accept(new UdbFrame(UdbFrameKind::Put, '001', '002', roundId: 1, block: UdbBlock::Ips, txid: 'tx1', path: str_repeat('x', 8193), value: 'x', typedValue: UdbValue::string('x')));
         $this->assertError($outcome, UdbBlock::Ips, 1, 'PUT', 2);
+    }
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->records = new UdbRecordDoctrineRepository($this->entityManager);
+        $this->states = new UdbBlockStateDoctrineRepository($this->entityManager);
+        $this->em = $this->entityManager;
+        UdbStagingSchemaFixture::create($this->entityManager->getConnection());
+        $this->clock = new MutableUdbClock();
+        $this->takeover = new UdbWireTakeover(
+            $this->records,
+            $this->states,
+            $this->em,
+            $this->createEmptyExporter(),
+            clock: $this->clock,
+        );
+    }
+
+    private function provisionalIns(int|UdbUnsignedDecimal $sequence, string $sid = '001', string $epoch = '1111111111111111'): UdbFrame
+    {
+        return new UdbFrame(UdbFrameKind::Ins, $sid, '*', epoch: $epoch, sequence: $sequence, path: 'I::192.0.2.1::clones', typedValue: UdbValue::number(UdbUnsignedDecimal::fromInt(1)));
+    }
+
+    private function bindProvisional(int|UdbUnsignedDecimal $watermark = 0, string $sid = '001', string $epoch = '1111111111111111', UdbBlock $block = UdbBlock::Ips): UdbWireTakeoverOutcome
+    {
+        return $this->takeover->accept(new UdbFrame(UdbFrameKind::Inf, '001', '002', roundId: 1, block: $block, checksum: UdbChecksum::empty($block), count: 0, watermark: $watermark, rootSid: $sid, rootEpoch: $epoch));
+    }
+
+    /**
+     * @param array<string, string> $records
+     */
+    private function stagedTransfer(UdbBlock $block, array $records): UdbWireTakeoverOutcome
+    {
+        return $this->stagedTransferFor($block, 'tx-' . $block->letter(), $records);
+    }
+
+    /**
+     * @param array<string, string> $records
+     */
+    private function stagedTransferFor(UdbBlock $block, string $txid, array $records, int $roundId = 1): UdbWireTakeoverOutcome
+    {
+        $digest = UdbTestValues::digest($block, $records);
+
+        if ([] === $records) {
+            return $this->inventory($block, $roundId, $digest, 0);
+        }
+        $this->assertRequest($this->inventory($block, $roundId, $digest, count($records)), $block, $roundId);
+        $this->assertIgnored($this->begin($block, $txid, $digest, $roundId));
+        foreach ($records as $path => $value) {
+            $this->assertIgnored($this->put($block, $txid, $path, $value, $roundId));
+        }
+
+        return $this->end($block, $txid, $digest, $roundId);
+    }
+
+    private function completeOtherBlocks(UdbBlock $completedBlock): void
+    {
+        foreach (UdbBlock::all() as $block) {
+            if ($completedBlock !== $block) {
+                $this->assertIgnored($this->inventory($block, digest: UdbChecksum::empty($block)));
+            }
+        }
+        $this->takeover->markTailReplayComplete();
+    }
+
+    private function inventory(UdbBlock $block, int $roundId = 1, ?string $digest = null, int $count = 0, int $watermark = 0): UdbWireTakeoverOutcome
+    {
+        return $this->takeover->accept($this->frame(UdbFrameKind::Inf, $block, checksum: $digest ?? hash('sha256', 'remote-divergent-' . $block->letter()), roundId: $roundId, count: $count, watermark: $watermark));
+    }
+
+    private function begin(UdbBlock $block, ?string $txid, ?string $checksum = null, int $roundId = 1): UdbWireTakeoverOutcome
+    {
+        return $this->takeover->accept($this->frame(UdbFrameKind::Begin, $block, $txid, $checksum ?? hash('sha256', 'remote-divergent-' . $block->letter()), roundId: $roundId, watermark: 0));
+    }
+
+    private function put(UdbBlock $block, string $txid, string $path, string $value, int $roundId = 1): UdbWireTakeoverOutcome
+    {
+        return $this->takeover->accept($this->frame(UdbFrameKind::Put, $block, $txid, path: $path, value: $value, roundId: $roundId));
+    }
+
+    private function end(UdbBlock $block, ?string $txid, ?string $checksum = null, int $roundId = 1): UdbWireTakeoverOutcome
+    {
+        return $this->takeover->accept($this->frame(UdbFrameKind::End, $block, $txid, $checksum ?? hash('sha256', 'remote-divergent-' . $block->letter()), roundId: $roundId, watermark: 0));
+    }
+
+    private function assertIgnored(UdbWireTakeoverOutcome $outcome): void
+    {
+        self::assertSame(UdbWireTakeoverOutcomeKind::Ignored, $outcome->kind);
+    }
+
+    private function assertRequest(UdbWireTakeoverOutcome $outcome, UdbBlock $block, int $roundId): void
+    {
+        self::assertSame(UdbWireTakeoverOutcomeKind::Request, $outcome->kind);
+        self::assertSame($block, $outcome->block);
+        self::assertSame((string) $roundId, (string) $outcome->roundId);
+    }
+
+    private function assertAcknowledgement(UdbWireTakeoverOutcome $outcome, UdbBlock $block, int $roundId, string $txid, string $digest): void
+    {
+        self::assertSame(UdbWireTakeoverOutcomeKind::Acknowledge, $outcome->kind);
+        self::assertSame($block, $outcome->block);
+        self::assertSame((string) $roundId, (string) $outcome->roundId);
+        self::assertSame($txid, $outcome->txid);
+        self::assertSame($digest, $outcome->digest);
+    }
+
+    private function assertError(UdbWireTakeoverOutcome $outcome, UdbBlock $block, int $roundId, string $subcommand, int $errorCode): void
+    {
+        self::assertSame(UdbWireTakeoverOutcomeKind::Error, $outcome->kind);
+        self::assertSame($block, $outcome->block);
+        self::assertSame((string) $roundId, (string) $outcome->roundId);
+        self::assertSame($subcommand, $outcome->subcommand);
+        self::assertSame($errorCode, $outcome->errorCode);
+    }
+
+    private function takeoverWithLogger(LoggerInterface $logger): UdbWireTakeover
+    {
+        return new UdbWireTakeover($this->records, $this->states, $this->em, $this->createEmptyExporter(), $logger, $this->clock);
+    }
+
+    private function createEmptyExporter(): UdbRecordExporter
+    {
+        return new UdbRecordExporter(
+            $this->createStub(NickProjectionQuery::class),
+            $this->createStub(ChannelProjectionQuery::class),
+            $this->createStub(OperatorNetworkProjectionQuery::class),
+            $this->createStub(GlineProjectionQuery::class),
+            $this->createStub(ChannelLookupPort::class),
+            $this->createStub(ActiveChannelModeSupportProviderInterface::class),
+            new UdbChannelSuspendReasonResolver($this->createStub(TranslatorInterface::class), 'ChanServ'),
+        );
+    }
+
+    private function frame(
+        UdbFrameKind $kind,
+        UdbBlock $block,
+        ?string $txid = null,
+        ?string $checksum = null,
+        ?string $path = null,
+        ?string $value = null,
+        int $roundId = 1,
+        ?int $count = null,
+        ?int $watermark = null,
+    ): UdbFrame {
+        $typedValue = null !== $path && null !== $value ? (UdbSchema::typedValueForStoredRecord($block->letter(), $path, $value) ?? UdbValue::string($value)) : null;
+
+        return new UdbFrame($kind, '001', '002', roundId: $roundId, block: $block, txid: $txid, checksum: $checksum, path: $path, value: $value, count: $count, watermark: $watermark, typedValue: $typedValue, rootSid: '001', rootEpoch: '1111111111111111');
     }
 }

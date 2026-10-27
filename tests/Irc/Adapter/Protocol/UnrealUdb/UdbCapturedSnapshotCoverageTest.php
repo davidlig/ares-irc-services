@@ -17,7 +17,18 @@ use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
 use RuntimeException;
 
+use function fclose;
+use function file_put_contents;
+use function fopen;
+use function iterator_to_array;
+use function mkdir;
+use function pack;
+use function rmdir;
+use function str_repeat;
 use function strlen;
+use function sys_get_temp_dir;
+use function tempnam;
+use function unlink;
 
 #[CoversClass(UdbCapturedSnapshot::class)]
 final class UdbCapturedSnapshotCoverageTest extends TestCase

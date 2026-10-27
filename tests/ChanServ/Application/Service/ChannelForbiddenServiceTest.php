@@ -38,72 +38,6 @@ final class ChannelForbiddenServiceTest extends TestCase
     /** @var ChanServActivitySink&Stub */
     private ChanServActivitySink $logger;
 
-    protected function setUp(): void
-    {
-        $this->channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
-        $this->dropService = $this->createStub(ChanDropService::class);
-        $this->channelActions = $this->createStub(ChanNetworkActions::class);
-        $this->eventPublisher = $this->createStub(ChanServEventPublisher::class);
-        $this->logger = $this->createStub(ChanServActivitySink::class);
-    }
-
-    private function createService(
-        ?RegisteredChannelRepositoryInterface $channelRepository = null,
-        ?ChanDropService $dropService = null,
-        ?ChanNetworkActions $channelActions = null,
-        ?ChanServEventPublisher $eventPublisher = null,
-        ?ChanServActivitySink $logger = null,
-    ): ChannelForbiddenService {
-        return new ChannelForbiddenService(
-            $channelRepository ?? $this->channelRepository,
-            $dropService ?? $this->dropService,
-            $channelActions ?? $this->channelActions,
-            $eventPublisher ?? $this->eventPublisher,
-            $logger ?? $this->logger,
-        );
-    }
-
-    private function createForbiddenChannelWithId(string $channelName, string $reason, int $id): RegisteredChannel
-    {
-        $channel = RegisteredChannel::createForbidden(new DateTimeImmutable(), $channelName, $reason);
-
-        $reflection = new ReflectionClass(RegisteredChannel::class);
-        $idProp = $reflection->getProperty('id');
-        $idProp->setValue($channel, $id);
-
-        return $channel;
-    }
-
-    private function createRegisteredChannelWithId(string $channelName, int $founderId, string $desc, int $id): RegisteredChannel
-    {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), $channelName, $founderId, $desc);
-
-        $reflection = new ReflectionClass(RegisteredChannel::class);
-        $idProp = $reflection->getProperty('id');
-        $idProp->setValue($channel, $id);
-
-        return $channel;
-    }
-
-    /**
-     * @return RegisteredChannelRepositoryInterface&Stub
-     */
-    private function repositoryThatSavesAndSetsId(): RegisteredChannelRepositoryInterface
-    {
-        $repository = $this->createStub(RegisteredChannelRepositoryInterface::class);
-        $repository->method('save')
-            ->willReturnCallback(static function (RegisteredChannel $channel): void {
-                $reflection = new ReflectionClass(RegisteredChannel::class);
-                $idProp = $reflection->getProperty('id');
-
-                if (!$idProp->isInitialized($channel)) {
-                    $idProp->setValue($channel, 999);
-                }
-            });
-
-        return $repository;
-    }
-
     // --- forbid() tests ---
 
     #[Test]
@@ -852,5 +786,71 @@ final class ChannelForbiddenServiceTest extends TestCase
 
         $this->createService($repository, channelActions: $actions, logger: $logger)
             ->enforceConfiguredForbiddenChannel('#bad');
+    }
+
+    protected function setUp(): void
+    {
+        $this->channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $this->dropService = $this->createStub(ChanDropService::class);
+        $this->channelActions = $this->createStub(ChanNetworkActions::class);
+        $this->eventPublisher = $this->createStub(ChanServEventPublisher::class);
+        $this->logger = $this->createStub(ChanServActivitySink::class);
+    }
+
+    private function createService(
+        ?RegisteredChannelRepositoryInterface $channelRepository = null,
+        ?ChanDropService $dropService = null,
+        ?ChanNetworkActions $channelActions = null,
+        ?ChanServEventPublisher $eventPublisher = null,
+        ?ChanServActivitySink $logger = null,
+    ): ChannelForbiddenService {
+        return new ChannelForbiddenService(
+            $channelRepository ?? $this->channelRepository,
+            $dropService ?? $this->dropService,
+            $channelActions ?? $this->channelActions,
+            $eventPublisher ?? $this->eventPublisher,
+            $logger ?? $this->logger,
+        );
+    }
+
+    private function createForbiddenChannelWithId(string $channelName, string $reason, int $id): RegisteredChannel
+    {
+        $channel = RegisteredChannel::createForbidden(new DateTimeImmutable(), $channelName, $reason);
+
+        $reflection = new ReflectionClass(RegisteredChannel::class);
+        $idProp = $reflection->getProperty('id');
+        $idProp->setValue($channel, $id);
+
+        return $channel;
+    }
+
+    private function createRegisteredChannelWithId(string $channelName, int $founderId, string $desc, int $id): RegisteredChannel
+    {
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), $channelName, $founderId, $desc);
+
+        $reflection = new ReflectionClass(RegisteredChannel::class);
+        $idProp = $reflection->getProperty('id');
+        $idProp->setValue($channel, $id);
+
+        return $channel;
+    }
+
+    /**
+     * @return RegisteredChannelRepositoryInterface&Stub
+     */
+    private function repositoryThatSavesAndSetsId(): RegisteredChannelRepositoryInterface
+    {
+        $repository = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $repository->method('save')
+            ->willReturnCallback(static function (RegisteredChannel $channel): void {
+                $reflection = new ReflectionClass(RegisteredChannel::class);
+                $idProp = $reflection->getProperty('id');
+
+                if (!$idProp->isInitialized($channel)) {
+                    $idProp->setValue($channel, 999);
+                }
+            });
+
+        return $repository;
     }
 }

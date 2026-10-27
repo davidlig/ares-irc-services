@@ -766,15 +766,6 @@ final class IrcopsDebugChannelProtectionSubscriberTest extends TestCase
         $subscriber->onSyncComplete($event);
     }
 
-    private function createEvent(string $uid, string $channelName): UserJoinedChannelEvent
-    {
-        return new UserJoinedChannelEvent(
-            new Uid($uid),
-            new ChannelName($channelName),
-            ChannelMemberRole::None,
-        );
-    }
-
     #[Test]
     public function enabledRegisteredChannelActivatesAndKicksExistingUnauthorizedMember(): void
     {
@@ -846,6 +837,15 @@ final class IrcopsDebugChannelProtectionSubscriberTest extends TestCase
         $subscriber->onChannelRestored(new ChannelRestoredEvent(1, '#ops', '#ops', 'Oper', $now));
         $subscriber->onSettingsChanged(new ChannelSettingsChangedEvent('#ops'));
         $subscriber->onChannelDrop(new ChannelDropEvent(1, '#ops', '#ops', 'drop', $now, true));
+    }
+
+    private function createEvent(string $uid, string $channelName): UserJoinedChannelEvent
+    {
+        return new UserJoinedChannelEvent(
+            new Uid($uid),
+            new ChannelName($channelName),
+            ChannelMemberRole::None,
+        );
     }
 
     private function projection(bool $ircopOnly = true, bool $suspended = false, bool $pendingDeletion = false): ChannelProjection

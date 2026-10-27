@@ -8,6 +8,8 @@ use App\OperServ\Domain\Entity\OperRole;
 use App\OperServ\Domain\Repository\OperRoleRepositoryInterface;
 use Doctrine\ORM\EntityManagerInterface;
 
+use function strtoupper;
+
 final readonly class OperRoleDoctrineRepository implements OperRoleRepositoryInterface
 {
     public function __construct(private EntityManagerInterface $em) {}

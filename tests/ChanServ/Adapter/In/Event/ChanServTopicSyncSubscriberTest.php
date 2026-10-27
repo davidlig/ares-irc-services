@@ -27,6 +27,8 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 
+use function microtime;
+
 #[CoversClass(ChanServTopicSyncSubscriber::class)]
 #[CoversClass(IrcChannelTopicActions::class)]
 #[CoversClass(IrcChannelTopicNetworkQuery::class)]
@@ -45,31 +47,6 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
     private UidResolverInterface $uidResolver;
 
     private ChanServTopicSyncSubscriber $subscriber;
-
-    protected function setUp(): void
-    {
-        $this->channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
-        $this->channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
-        $this->syncCompletedRegistry = $this->createMock(ChannelSyncCompletedRegistryInterface::class);
-        $this->uidResolver = $this->createStub(UidResolverInterface::class);
-        $this->subscriber = $this->createSubscriber($this->uidResolver);
-    }
-
-    private function createSubscriber(UidResolverInterface $uidResolver): ChanServTopicSyncSubscriber
-    {
-        return new ChanServTopicSyncSubscriber(new SynchronizeReceivedChannelTopicHandler(
-            $this->channelRepository,
-            new IrcChannelTopicNetworkQuery(
-                $this->createStub(ChannelLookupPort::class),
-                $this->syncCompletedRegistry,
-                $uidResolver,
-            ),
-            new IrcChannelTopicActions($this->channelServiceActions),
-            new SystemChannelTopicClock(),
-            'ChanServ',
-            'NickServ',
-        ));
-    }
 
     #[Test]
     public function subscribesToChannelTopicReceivedEvent(): void
@@ -644,5 +621,30 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
         );
 
         $subscriber->onTopicReceived($event);
+    }
+
+    protected function setUp(): void
+    {
+        $this->channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
+        $this->channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
+        $this->syncCompletedRegistry = $this->createMock(ChannelSyncCompletedRegistryInterface::class);
+        $this->uidResolver = $this->createStub(UidResolverInterface::class);
+        $this->subscriber = $this->createSubscriber($this->uidResolver);
+    }
+
+    private function createSubscriber(UidResolverInterface $uidResolver): ChanServTopicSyncSubscriber
+    {
+        return new ChanServTopicSyncSubscriber(new SynchronizeReceivedChannelTopicHandler(
+            $this->channelRepository,
+            new IrcChannelTopicNetworkQuery(
+                $this->createStub(ChannelLookupPort::class),
+                $this->syncCompletedRegistry,
+                $uidResolver,
+            ),
+            new IrcChannelTopicActions($this->channelServiceActions),
+            new SystemChannelTopicClock(),
+            'ChanServ',
+            'NickServ',
+        ));
     }
 }

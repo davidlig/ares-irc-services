@@ -9,6 +9,8 @@ use App\ChanServ\Application\Port\Out\ChannelTopicNetworkQuery;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 
+use function strtolower;
+
 final readonly class ApplyStoredChannelTopicHandler implements ApplyStoredChannelTopicHandlerInterface
 {
     public function __construct(

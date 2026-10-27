@@ -10,6 +10,7 @@ use App\ChanServ\Application\Port\Out\ChannelTopicNetworkQuery;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 
 use function str_contains;
+use function strcasecmp;
 use function strtolower;
 
 final readonly class SynchronizeReceivedChannelTopicHandler implements SynchronizeReceivedChannelTopicHandlerInterface

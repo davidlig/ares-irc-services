@@ -15,11 +15,6 @@ final class SessionEventPumpTest extends TestCase
 {
     private SessionEventPump $pump;
 
-    protected function setUp(): void
-    {
-        $this->pump = new SessionEventPump();
-    }
-
     #[Test]
     public function initialState(): void
     {
@@ -276,5 +271,10 @@ final class SessionEventPumpTest extends TestCase
         $this->pump->drain();
 
         self::assertTrue($executed);
+    }
+
+    protected function setUp(): void
+    {
+        $this->pump = new SessionEventPump();
     }
 }

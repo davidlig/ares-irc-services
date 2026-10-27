@@ -14,11 +14,6 @@ final class UnrealUdbServiceIntroductionFormatterTest extends TestCase
 {
     private UnrealUdbServiceIntroductionFormatter $formatter;
 
-    protected function setUp(): void
-    {
-        $this->formatter = new UnrealUdbServiceIntroductionFormatter();
-    }
-
     #[Test]
     public function formatIntroductionProducesValidUidLine(): void
     {
@@ -90,5 +85,10 @@ final class UnrealUdbServiceIntroductionFormatterTest extends TestCase
         );
 
         self::assertStringEndsWith(':Test Bot Service', $line);
+    }
+
+    protected function setUp(): void
+    {
+        $this->formatter = new UnrealUdbServiceIntroductionFormatter();
     }
 }

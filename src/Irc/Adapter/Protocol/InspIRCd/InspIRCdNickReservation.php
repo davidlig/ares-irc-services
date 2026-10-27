@@ -10,6 +10,7 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
 use function sprintf;
+use function time;
 
 /**
  * InspIRCd v4 nick reservation via ADDLINE/DELLINE commands.

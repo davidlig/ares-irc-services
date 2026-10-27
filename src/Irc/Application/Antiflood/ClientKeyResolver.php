@@ -6,6 +6,9 @@ namespace App\Irc\Application\Antiflood;
 
 use App\Irc\Application\Port\In\SenderView;
 
+use function base64_decode;
+use function inet_ntop;
+
 /**
  * Resolves a stable client key for antiflood throttling.
  * Prefer IP → cloaked host → hostname so limits persist across reconnects; fall back to UID.

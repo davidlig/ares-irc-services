@@ -13,6 +13,13 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function count;
+use function implode;
+use function mb_check_encoding;
+use function str_repeat;
+use function strlen;
+use function strtr;
+
 #[CoversClass(ChannelRegistrationMemoTextAdapter::class)]
 final class ChannelRegistrationMemoTextAdapterTest extends TestCase
 {

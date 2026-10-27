@@ -27,8 +27,11 @@ use Stringable;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function base64_encode;
+use function bin2hex;
+use function implode;
 use function inet_pton;
 use function is_scalar;
+use function ksort;
 
 #[CoversClass(UseripCommand::class)]
 final class UseripCommandTest extends TestCase

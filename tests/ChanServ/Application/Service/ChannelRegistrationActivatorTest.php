@@ -15,6 +15,8 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
 
+use function count;
+
 #[CoversClass(ChannelRegistrationActivator::class)]
 final class ChannelRegistrationActivatorTest extends TestCase
 {

@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\NickServ\Adapter\In\Irc;
 
+use function spl_object_id;
+use function strtoupper;
+
 /**
  * Holds all registered NickServ command modules.
  * Commands are injected via tagged services (tag: nickserv.command).

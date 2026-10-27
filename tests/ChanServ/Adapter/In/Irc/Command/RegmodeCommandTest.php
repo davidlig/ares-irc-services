@@ -38,6 +38,9 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function in_array;
+use function iterator_to_array;
+
 #[CoversClass(RegmodeCommand::class)]
 final class RegmodeCommandTest extends TestCase
 {

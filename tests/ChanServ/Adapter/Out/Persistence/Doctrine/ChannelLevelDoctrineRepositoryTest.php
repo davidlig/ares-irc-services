@@ -18,12 +18,6 @@ final class ChannelLevelDoctrineRepositoryTest extends DoctrineIntegrationTestCa
 {
     private ChannelLevelRepositoryInterface $repository;
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->repository = new ChannelLevelDoctrineRepository($this->entityManager);
-    }
-
     #[Test]
     public function savePersistsLevel(): void
     {
@@ -122,5 +116,11 @@ final class ChannelLevelDoctrineRepositoryTest extends DoctrineIntegrationTestCa
 
         self::assertSame([], $this->repository->listByChannel(1));
         self::assertCount(1, $this->repository->listByChannel(2));
+    }
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->repository = new ChannelLevelDoctrineRepository($this->entityManager);
     }
 }

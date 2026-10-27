@@ -10,6 +10,7 @@ use App\OperServ\Application\Port\Out\RootIdentityRegistry;
 use App\OperServ\Domain\Repository\OperIrcopRepositoryInterface;
 
 use function array_key_exists;
+use function array_values;
 use function strtolower;
 
 final readonly class DoctrineProtectedGlineSubjects implements ProtectedGlineSubjects

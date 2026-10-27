@@ -35,44 +35,6 @@ final class ChanServEntryMsgSubscriberTest extends TestCase
 
     private string $chanservUid = '001CHAN';
 
-    protected function setUp(): void
-    {
-        $this->channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
-        $this->notifier = $this->createMock(SendNoticePort::class);
-        $uidRegistry = $this->createUidRegistry();
-        $this->subscriber = new ChanServEntryMsgSubscriber(
-            new DeliverChannelEntryMessageHandler(
-                $this->channelRepository,
-                new IrcChannelEntryMessageDelivery($this->notifier, $uidRegistry),
-                new ServiceRegistryChanServNetworkIdentity($uidRegistry),
-            ),
-        );
-    }
-
-    private function createUidRegistry(string $uid = '001CHAN'): ServiceUidRegistry
-    {
-        $provider = new class('chanserv', 'ChanServ', $uid) implements ServiceUidProviderInterface {
-            public function __construct(private string $key, private string $nick, private string $uid) {}
-
-            public function getServiceKey(): string
-            {
-                return $this->key;
-            }
-
-            public function getNickname(): string
-            {
-                return $this->nick;
-            }
-
-            public function getUid(): string
-            {
-                return $this->uid;
-            }
-        };
-
-        return ServiceUidRegistry::fromIterable([$provider]);
-    }
-
     #[Test]
     public function subscribesToUserJoinedChannelEvent(): void
     {
@@ -303,5 +265,43 @@ final class ChanServEntryMsgSubscriberTest extends TestCase
 
         $event = new UserJoinedChannelEvent('001ABCD', '#test');
         $this->subscriber->onUserJoinedChannel($event);
+    }
+
+    protected function setUp(): void
+    {
+        $this->channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
+        $this->notifier = $this->createMock(SendNoticePort::class);
+        $uidRegistry = $this->createUidRegistry();
+        $this->subscriber = new ChanServEntryMsgSubscriber(
+            new DeliverChannelEntryMessageHandler(
+                $this->channelRepository,
+                new IrcChannelEntryMessageDelivery($this->notifier, $uidRegistry),
+                new ServiceRegistryChanServNetworkIdentity($uidRegistry),
+            ),
+        );
+    }
+
+    private function createUidRegistry(string $uid = '001CHAN'): ServiceUidRegistry
+    {
+        $provider = new class('chanserv', 'ChanServ', $uid) implements ServiceUidProviderInterface {
+            public function __construct(private string $key, private string $nick, private string $uid) {}
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+
+            public function getUid(): string
+            {
+                return $this->uid;
+            }
+        };
+
+        return ServiceUidRegistry::fromIterable([$provider]);
     }
 }

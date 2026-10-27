@@ -9,7 +9,9 @@ use App\Irc\Domain\Repository\NetworkUserRepositoryInterface;
 use App\Irc\Domain\ValueObject\Nick;
 use App\Irc\Domain\ValueObject\Uid;
 
+use function array_values;
 use function count;
+use function strtolower;
 
 class InMemoryNetworkUserRepository implements NetworkUserRepositoryInterface
 {

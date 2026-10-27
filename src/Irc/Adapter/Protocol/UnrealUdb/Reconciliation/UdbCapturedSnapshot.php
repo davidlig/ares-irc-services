@@ -15,6 +15,7 @@ use function fclose;
 use function feof;
 use function fopen;
 use function fread;
+use function fwrite;
 use function is_array;
 use function is_dir;
 use function is_file;
@@ -41,6 +42,11 @@ final class UdbCapturedSnapshot
         private readonly array $counts,
         public readonly UdbDatasetCheckpoint $checkpoint,
     ) {}
+
+    public function __destruct()
+    {
+        $this->close();
+    }
 
     public function digest(UdbBlock $block): string
     {
@@ -96,17 +102,6 @@ final class UdbCapturedSnapshot
         }
     }
 
-    /** @return array{path: int, kind: int, value: int} */
-    private static function decodeHeader(string $header): array
-    {
-        $lengths = 9 === strlen($header) ? unpack('Npath/Ckind/Nvalue', $header) : false;
-        if (!is_array($lengths) || !is_int($lengths['path'] ?? null) || !is_int($lengths['kind'] ?? null) || !is_int($lengths['value'] ?? null)) {
-            throw new RuntimeException('The UDB snapshot spool is malformed.');
-        }
-
-        return ['path' => $lengths['path'], 'kind' => $lengths['kind'], 'value' => $lengths['value']];
-    }
-
     public function close(): void
     {
         foreach ($this->files as $file) {
@@ -117,11 +112,6 @@ final class UdbCapturedSnapshot
         if (is_dir($this->directory)) {
             rmdir($this->directory);
         }
-    }
-
-    public function __destruct()
-    {
-        $this->close();
     }
 
     /** @param resource $stream */
@@ -138,6 +128,17 @@ final class UdbCapturedSnapshot
             }
             $offset += $written;
         }
+    }
+
+    /** @return array{path: int, kind: int, value: int} */
+    private static function decodeHeader(string $header): array
+    {
+        $lengths = 9 === strlen($header) ? unpack('Npath/Ckind/Nvalue', $header) : false;
+        if (!is_array($lengths) || !is_int($lengths['path'] ?? null) || !is_int($lengths['kind'] ?? null) || !is_int($lengths['value'] ?? null)) {
+            throw new RuntimeException('The UDB snapshot spool is malformed.');
+        }
+
+        return ['path' => $lengths['path'], 'kind' => $lengths['kind'], 'value' => $lengths['value']];
     }
 
     /** @param resource $stream */

@@ -9,6 +9,9 @@ use App\NickServ\Application\Port\In\NickProjectionQuery;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Domain\Entity\RegisteredNick;
 
+use function array_map;
+use function array_values;
+
 final readonly class NickProjectionResolver implements NickProjectionQuery
 {
     public function __construct(private RegisteredNickRepositoryInterface $nicks) {}

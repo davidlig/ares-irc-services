@@ -15,7 +15,12 @@ use App\NickServ\Application\Port\Out\NickServOperatorAccess;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 
+use function array_find;
+use function explode;
+use function implode;
 use function strlen;
+use function strtoupper;
+use function trim;
 
 /**
  * HELP [command [sub-option]].

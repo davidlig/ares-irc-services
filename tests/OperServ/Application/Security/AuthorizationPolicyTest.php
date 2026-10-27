@@ -18,7 +18,9 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 
+use function array_map;
 use function in_array;
+use function strtolower;
 
 #[CoversClass(AuthorizationDecision::class)]
 #[CoversClass(OperatorActor::class)]

@@ -8,7 +8,9 @@ use App\Irc\Domain\Network\Channel;
 use App\Irc\Domain\Repository\ChannelRepositoryInterface;
 use App\Irc\Domain\ValueObject\ChannelName;
 
+use function array_values;
 use function count;
+use function strtolower;
 
 class InMemoryChannelRepository implements ChannelRepositoryInterface
 {

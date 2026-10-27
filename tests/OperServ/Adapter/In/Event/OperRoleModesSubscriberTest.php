@@ -25,6 +25,8 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 
+use function implode;
+
 #[CoversClass(OperRoleModesSubscriber::class)]
 final class OperRoleModesSubscriberTest extends TestCase
 {

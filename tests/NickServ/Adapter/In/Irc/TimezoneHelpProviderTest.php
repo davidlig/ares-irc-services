@@ -10,7 +10,10 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 
+use function array_filter;
 use function in_array;
+use function sort;
+use function strtolower;
 
 #[CoversClass(TimezoneHelpProvider::class)]
 final class TimezoneHelpProviderTest extends TestCase

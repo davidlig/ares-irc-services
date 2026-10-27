@@ -17,8 +17,10 @@ use Psr\Log\NullLogger;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Throwable;
 
+use function array_shift;
 use function count;
 use function is_string;
+use function preg_split;
 use function sprintf;
 use function strtoupper;
 use function trim;

@@ -21,15 +21,12 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use ReflectionClass;
 
+use function implode;
+
 #[CoversClass(OperRoleModesDeidentifiedSubscriber::class)]
 final class OperRoleModesDeidentifiedSubscriberTest extends TestCase
 {
     private ActiveConnectionHolder $connectionHolder;
-
-    protected function setUp(): void
-    {
-        $this->connectionHolder = new ActiveConnectionHolder();
-    }
 
     #[Test]
     public function getSubscribedEventsReturnsUserDeidentifiedEvent(): void
@@ -196,6 +193,11 @@ final class OperRoleModesDeidentifiedSubscriberTest extends TestCase
         );
 
         $subscriber->onUserDeidentified($event);
+    }
+
+    protected function setUp(): void
+    {
+        $this->connectionHolder = new ActiveConnectionHolder();
     }
 
     private function createModeSupportStub(): UserModeSupportInterface

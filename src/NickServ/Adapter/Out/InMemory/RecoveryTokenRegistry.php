@@ -9,7 +9,11 @@ use DateTimeImmutable;
 use OverflowException;
 
 use function count;
+use function hash;
+use function hash_equals;
 use function sprintf;
+use function strtolower;
+use function trim;
 
 /**
  * In-memory store for password recovery tokens (RECOVER command).

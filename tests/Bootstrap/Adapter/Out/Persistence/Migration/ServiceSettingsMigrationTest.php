@@ -23,6 +23,11 @@ use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 
+use function array_map;
+use function implode;
+use function json_decode;
+use function json_encode;
+
 #[CoversNothing]
 final class ServiceSettingsMigrationTest extends TestCase
 {

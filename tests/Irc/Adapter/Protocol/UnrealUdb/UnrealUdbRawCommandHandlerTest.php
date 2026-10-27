@@ -14,6 +14,8 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
+use function str_repeat;
+
 #[CoversClass(UnrealUdbRawCommandHandler::class)]
 #[CoversClass(UdbRawCommandResult::class)]
 #[CoversClass(ParsedUdbPath::class)]
@@ -27,17 +29,6 @@ final class UnrealUdbRawCommandHandlerTest extends TestCase
     private array $written = [];
 
     private UnrealUdbRawCommandHandler $handler;
-
-    protected function setUp(): void
-    {
-        $this->records = new FakeUdbRecords();
-        $this->sessionState = new RecordingSessionState(true);
-        $this->records->beginLocalStream($this->sessionState->streamOrigin());
-        $this->written = [];
-
-        $writer = new UnrealUdbRecordWriter($this->sessionState, $this->records);
-        $this->handler = new UnrealUdbRawCommandHandler($writer);
-    }
 
     #[Test]
     public function insValidatesPersistsAndPropagates(): void
@@ -314,5 +305,16 @@ final class UnrealUdbRawCommandHandlerTest extends TestCase
         self::assertSame('raw.udb.invalid_path', $error->errorKey);
         self::assertSame(['%path%' => 'p'], $error->errorParams);
         self::assertNull($error->auditLine);
+    }
+
+    protected function setUp(): void
+    {
+        $this->records = new FakeUdbRecords();
+        $this->sessionState = new RecordingSessionState(true);
+        $this->records->beginLocalStream($this->sessionState->streamOrigin());
+        $this->written = [];
+
+        $writer = new UnrealUdbRecordWriter($this->sessionState, $this->records);
+        $this->handler = new UnrealUdbRawCommandHandler($writer);
     }
 }

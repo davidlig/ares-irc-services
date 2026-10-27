@@ -55,6 +55,8 @@ final readonly class NickServPermission
     /** IRCop permission to change the network registration policy. */
     public const string REGMODE = 'nickserv.regmode';
 
+    private function __construct() {}
+
     /** @return list<string> */
     public static function allIrcop(): array
     {
@@ -75,6 +77,4 @@ final readonly class NickServPermission
             self::REGMODE,
         ];
     }
-
-    private function __construct() {}
 }

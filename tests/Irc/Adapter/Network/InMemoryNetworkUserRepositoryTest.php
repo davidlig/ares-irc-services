@@ -19,28 +19,6 @@ final class InMemoryNetworkUserRepositoryTest extends TestCase
 {
     private InMemoryNetworkUserRepository $repository;
 
-    protected function setUp(): void
-    {
-        $this->repository = new InMemoryNetworkUserRepository();
-    }
-
-    private function createUser(string $uid, string $nick): NetworkUser
-    {
-        return new NetworkUser(
-            uid: new Uid($uid),
-            nick: new Nick($nick),
-            ident: new Ident('user'),
-            hostname: 'hostname',
-            cloakedHost: 'cloaked.host',
-            virtualHost: 'vhost',
-            modes: '+i',
-            connectedAt: new DateTimeImmutable(),
-            realName: 'Test User',
-            serverSid: '001',
-            ipBase64: 'dGVzdA==',
-        );
-    }
-
     #[Test]
     public function addStoresUser(): void
     {
@@ -180,5 +158,27 @@ final class InMemoryNetworkUserRepositoryTest extends TestCase
         $this->repository->updateVirtualHost(new Uid('NONEXISTENT'), 'new.vhost.com');
 
         self::assertNull($this->repository->findByUid(new Uid('NONEXISTENT')));
+    }
+
+    protected function setUp(): void
+    {
+        $this->repository = new InMemoryNetworkUserRepository();
+    }
+
+    private function createUser(string $uid, string $nick): NetworkUser
+    {
+        return new NetworkUser(
+            uid: new Uid($uid),
+            nick: new Nick($nick),
+            ident: new Ident('user'),
+            hostname: 'hostname',
+            cloakedHost: 'cloaked.host',
+            virtualHost: 'vhost',
+            modes: '+i',
+            connectedAt: new DateTimeImmutable(),
+            realName: 'Test User',
+            serverSid: '001',
+            ipBase64: 'dGVzdA==',
+        );
     }
 }

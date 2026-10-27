@@ -12,6 +12,8 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
+use function class_implements;
+
 #[CoversClass(DoctrineIdentityMapClearSubscriber::class)]
 final class DoctrineIdentityMapClearSubscriberTest extends TestCase
 {

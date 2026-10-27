@@ -19,6 +19,11 @@ final readonly class GlobalMessageMask
         public string $vhost,
     ) {}
 
+    public function __toString(): string
+    {
+        return sprintf('%s!%s@%s', $this->nickname, $this->ident, $this->vhost);
+    }
+
     public static function fromString(string $mask): self
     {
         if (1 !== preg_match('/^([^!]+)!([^@]+)@(.+)$/', $mask, $matches)) {
@@ -63,10 +68,5 @@ final readonly class GlobalMessageMask
         if (1 !== preg_match('/^[a-zA-Z0-9][a-zA-Z0-9.-]*[a-zA-Z0-9]$/', $vhost)) {
             throw new ValueError('Vhost must be a valid hostname');
         }
-    }
-
-    public function __toString(): string
-    {
-        return sprintf('%s!%s@%s', $this->nickname, $this->ident, $this->vhost);
     }
 }

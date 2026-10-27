@@ -33,37 +33,14 @@ use RuntimeException;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function array_slice;
+use function explode;
+use function implode;
+use function is_string;
+use function json_encode;
 
 #[CoversClass(HelpCommand::class)]
 final class HelpCommandTest extends TestCase
 {
-    /**
-     * @param string[] $args
-     */
-    private function createContext(
-        array $args,
-        ChanServNotifierInterface $notifier,
-        TranslatorInterface $translator,
-        ChanServCommandRegistry $registry,
-    ): ChanServContext {
-        return new ChanServContext(
-            new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
-            null,
-            'HELP',
-            $args,
-            $notifier,
-            $translator,
-            'en',
-            'UTC',
-            'NOTICE',
-            $registry,
-            $this->createStub(ChannelLookupPort::class),
-            new NullChannelModeSupport(),
-            $this->createStub(NetworkUserLookupPort::class),
-            $this->createServiceNicks(),
-        );
-    }
-
     #[Test]
     public function helpCommandHasNoHelpParameters(): void
     {
@@ -1247,15 +1224,6 @@ final class HelpCommandTest extends TestCase
         self::assertFalse($cmd->allowsForbiddenChannel());
     }
 
-    private function createCommand(int $inactivityExpiryDays = 0, ?ChanServOperatorAccess $operatorAccess = null): HelpCommand
-    {
-        return new HelpCommand(
-            new UnifiedHelpFormatter(),
-            $operatorAccess ?? $this->createStub(ChanServOperatorAccess::class),
-            $inactivityExpiryDays,
-        );
-    }
-
     /** @param list<string> $args */
     #[Test]
     #[DataProvider('renderFailureScenarios')]
@@ -1308,6 +1276,42 @@ final class HelpCommandTest extends TestCase
         $this->expectExceptionMessage('Connection write failed');
 
         $this->createCommand()->execute($this->createContext([], $notifier, $translator, new ChanServCommandRegistry([])));
+    }
+
+    /**
+     * @param string[] $args
+     */
+    private function createContext(
+        array $args,
+        ChanServNotifierInterface $notifier,
+        TranslatorInterface $translator,
+        ChanServCommandRegistry $registry,
+    ): ChanServContext {
+        return new ChanServContext(
+            new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
+            null,
+            'HELP',
+            $args,
+            $notifier,
+            $translator,
+            'en',
+            'UTC',
+            'NOTICE',
+            $registry,
+            $this->createStub(ChannelLookupPort::class),
+            new NullChannelModeSupport(),
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
+        );
+    }
+
+    private function createCommand(int $inactivityExpiryDays = 0, ?ChanServOperatorAccess $operatorAccess = null): HelpCommand
+    {
+        return new HelpCommand(
+            new UnifiedHelpFormatter(),
+            $operatorAccess ?? $this->createStub(ChanServOperatorAccess::class),
+            $inactivityExpiryDays,
+        );
     }
 
     private function createServiceNicks(): ServiceNicknameRegistry

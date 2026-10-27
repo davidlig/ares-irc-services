@@ -40,31 +40,6 @@ final class OperServBotTest extends TestCase
 
     private string $operservRealname = 'Network Operations Services';
 
-    protected function setUp(): void
-    {
-        $this->connectionHolder = new ActiveConnectionHolder();
-        $this->userLookup = $this->createStub(NetworkUserLookupPort::class);
-        $this->sendNoticePort = $this->createStub(SendNoticePort::class);
-        $this->uidGenerator = $this->createStub(ServiceUidGeneratorInterface::class);
-        $this->uidGenerator->method('generateUid')->willReturn($this->operservUid);
-        $this->logger = $this->createStub(LoggerInterface::class);
-    }
-
-    private function createBot(): OperServBot
-    {
-        return new OperServBot(
-            $this->connectionHolder,
-            $this->userLookup,
-            $this->sendNoticePort,
-            $this->uidGenerator,
-            $this->servicesVhost,
-            $this->operservNick,
-            $this->operservIdent,
-            $this->operservRealname,
-            $this->logger,
-        );
-    }
-
     #[Test]
     public function getSubscribedEventsReturnsCorrectEventsArray(): void
     {
@@ -254,5 +229,30 @@ final class OperServBotTest extends TestCase
         $bot = $this->createBot();
 
         self::assertSame($this->operservNick, $bot->getNickname());
+    }
+
+    protected function setUp(): void
+    {
+        $this->connectionHolder = new ActiveConnectionHolder();
+        $this->userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $this->sendNoticePort = $this->createStub(SendNoticePort::class);
+        $this->uidGenerator = $this->createStub(ServiceUidGeneratorInterface::class);
+        $this->uidGenerator->method('generateUid')->willReturn($this->operservUid);
+        $this->logger = $this->createStub(LoggerInterface::class);
+    }
+
+    private function createBot(): OperServBot
+    {
+        return new OperServBot(
+            $this->connectionHolder,
+            $this->userLookup,
+            $this->sendNoticePort,
+            $this->uidGenerator,
+            $this->servicesVhost,
+            $this->operservNick,
+            $this->operservIdent,
+            $this->operservRealname,
+            $this->logger,
+        );
     }
 }

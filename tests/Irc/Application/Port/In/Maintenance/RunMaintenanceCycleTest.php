@@ -9,6 +9,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function get_object_vars;
+
 #[CoversClass(RunMaintenanceCycle::class)]
 final class RunMaintenanceCycleTest extends TestCase
 {

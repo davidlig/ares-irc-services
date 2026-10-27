@@ -23,6 +23,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function base64_encode;
+use function implode;
 use function inet_pton;
 
 #[CoversClass(ResendCommand::class)]

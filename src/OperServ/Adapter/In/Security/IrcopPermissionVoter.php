@@ -10,6 +10,8 @@ use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 
+use function preg_match;
+
 /**
  * Grants access when the user is an IRCOP with a specific permission.
  *

@@ -44,90 +44,6 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 #[CoversClass(UdbChannelSyncSubscriber::class)]
 final class UdbChannelSyncSubscriberTest extends TestCase
 {
-    private function createSubscriber(
-        ?ChannelProjectionQuery $channelRepo = null,
-        ?NickProjectionQuery $nickRepo = null,
-        ?ChannelLookupPort $lookup = null,
-        ?UdbRecordWriterInterface $writer = null,
-    ): UdbChannelSyncSubscriber {
-        $defaultWriter = $this->createStub(UdbRecordWriterInterface::class);
-        $defaultWriter->method('insert')->willReturn(true);
-        $defaultWriter->method('delete')->willReturn(true);
-        $writer ??= $defaultWriter;
-
-        return new UdbChannelSyncSubscriber(
-            $writer,
-            $channelRepo ?? $this->createStub(ChannelProjectionQuery::class),
-            $this->createExporter($channelRepo, $nickRepo, $lookup),
-        );
-    }
-
-    private function createExporter(
-        ?ChannelProjectionQuery $channelRepo = null,
-        ?NickProjectionQuery $nickRepo = null,
-        ?ChannelLookupPort $lookup = null,
-    ): UdbRecordExporter {
-        $support = $this->createStub(ChannelModeSupportInterface::class);
-        $support->method('getSupportedPrefixModes')->willReturn(['q', 'a', 'o', 'h', 'v']);
-        $support->method('getListModeLetters')->willReturn(['b', 'e', 'I']);
-        $support->method('getChannelRegisteredModeLetter')->willReturn('r');
-        $support->method('getPermanentChannelModeLetter')->willReturn('P');
-        $support->method('getChannelSettingModesWithParamOnSet')->willReturn(['l', 'k', 'j', 'f', 'L']);
-
-        $provider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
-        $provider->method('getSupport')->willReturn($support);
-
-        $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturn('pending deletion reason');
-
-        return new UdbRecordExporter(
-            $nickRepo ?? $this->createStub(NickProjectionQuery::class),
-            $channelRepo ?? $this->createStub(ChannelProjectionQuery::class),
-            $this->createStub(OperatorNetworkProjectionQuery::class),
-            $this->createStub(GlineProjectionQuery::class),
-            $lookup ?? $this->createStub(ChannelLookupPort::class),
-            $provider,
-            new UdbChannelSuspendReasonResolver($translator, 'ChanServ', 'en'),
-        );
-    }
-
-    /**
-     * @param array<string, string> $mlockParams
-     */
-    private function createChannel(
-        string $name = '#chan',
-        int $founderNickId = 7,
-        ?string $topic = null,
-        bool $mlockActive = false,
-        bool $topicLock = false,
-        bool $forbidden = false,
-        bool $suspended = false,
-        bool $pendingDeletion = false,
-        string $mlock = '+nt',
-        array $mlockParams = [],
-        ?string $suspensionReason = null,
-        bool $secure = false,
-        bool $ircopOnly = false,
-    ): ChannelProjection {
-        return new ChannelProjection(
-            id: 1,
-            name: $name,
-            founderNickId: $founderNickId,
-            topic: $topic,
-            mlockActive: $mlockActive,
-            mlock: $mlock,
-            mlockParams: $mlockParams,
-            topicLock: $topicLock,
-            forbidden: $forbidden,
-            forbiddenReason: $forbidden ? 'forbidden' : null,
-            suspended: $suspended,
-            pendingDeletion: $pendingDeletion,
-            suspensionReason: $suspensionReason,
-            secure: $secure,
-            ircopOnly: $ircopOnly,
-        );
-    }
-
     #[Test]
     public function getSubscribedEventsExportsOnlyDomainEvents(): void
     {
@@ -562,6 +478,90 @@ final class UdbChannelSyncSubscriberTest extends TestCase
             ['C', '#both::options', '*6'],
             ['C', '#pending::suspend', 'pending deletion reason'],
         ], $inserts);
+    }
+
+    private function createSubscriber(
+        ?ChannelProjectionQuery $channelRepo = null,
+        ?NickProjectionQuery $nickRepo = null,
+        ?ChannelLookupPort $lookup = null,
+        ?UdbRecordWriterInterface $writer = null,
+    ): UdbChannelSyncSubscriber {
+        $defaultWriter = $this->createStub(UdbRecordWriterInterface::class);
+        $defaultWriter->method('insert')->willReturn(true);
+        $defaultWriter->method('delete')->willReturn(true);
+        $writer ??= $defaultWriter;
+
+        return new UdbChannelSyncSubscriber(
+            $writer,
+            $channelRepo ?? $this->createStub(ChannelProjectionQuery::class),
+            $this->createExporter($channelRepo, $nickRepo, $lookup),
+        );
+    }
+
+    private function createExporter(
+        ?ChannelProjectionQuery $channelRepo = null,
+        ?NickProjectionQuery $nickRepo = null,
+        ?ChannelLookupPort $lookup = null,
+    ): UdbRecordExporter {
+        $support = $this->createStub(ChannelModeSupportInterface::class);
+        $support->method('getSupportedPrefixModes')->willReturn(['q', 'a', 'o', 'h', 'v']);
+        $support->method('getListModeLetters')->willReturn(['b', 'e', 'I']);
+        $support->method('getChannelRegisteredModeLetter')->willReturn('r');
+        $support->method('getPermanentChannelModeLetter')->willReturn('P');
+        $support->method('getChannelSettingModesWithParamOnSet')->willReturn(['l', 'k', 'j', 'f', 'L']);
+
+        $provider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
+        $provider->method('getSupport')->willReturn($support);
+
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturn('pending deletion reason');
+
+        return new UdbRecordExporter(
+            $nickRepo ?? $this->createStub(NickProjectionQuery::class),
+            $channelRepo ?? $this->createStub(ChannelProjectionQuery::class),
+            $this->createStub(OperatorNetworkProjectionQuery::class),
+            $this->createStub(GlineProjectionQuery::class),
+            $lookup ?? $this->createStub(ChannelLookupPort::class),
+            $provider,
+            new UdbChannelSuspendReasonResolver($translator, 'ChanServ', 'en'),
+        );
+    }
+
+    /**
+     * @param array<string, string> $mlockParams
+     */
+    private function createChannel(
+        string $name = '#chan',
+        int $founderNickId = 7,
+        ?string $topic = null,
+        bool $mlockActive = false,
+        bool $topicLock = false,
+        bool $forbidden = false,
+        bool $suspended = false,
+        bool $pendingDeletion = false,
+        string $mlock = '+nt',
+        array $mlockParams = [],
+        ?string $suspensionReason = null,
+        bool $secure = false,
+        bool $ircopOnly = false,
+    ): ChannelProjection {
+        return new ChannelProjection(
+            id: 1,
+            name: $name,
+            founderNickId: $founderNickId,
+            topic: $topic,
+            mlockActive: $mlockActive,
+            mlock: $mlock,
+            mlockParams: $mlockParams,
+            topicLock: $topicLock,
+            forbidden: $forbidden,
+            forbiddenReason: $forbidden ? 'forbidden' : null,
+            suspended: $suspended,
+            pendingDeletion: $pendingDeletion,
+            suspensionReason: $suspensionReason,
+            secure: $secure,
+            ircopOnly: $ircopOnly,
+        );
     }
 
     private function createIrcChannel(string $name): IrcChannel

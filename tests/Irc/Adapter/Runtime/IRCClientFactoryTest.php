@@ -37,35 +37,6 @@ final class IRCClientFactoryTest extends TestCase
 
     private ServerLink $link;
 
-    protected function setUp(): void
-    {
-        $handler = $this->createStub(ProtocolHandlerInterface::class);
-        $handler->method('getProtocolName')->willReturn('unreal');
-        $this->module = $this->createStub(ProtocolRuntimeModuleInterface::class);
-        $this->module->method('getHandler')->willReturn($handler);
-        $this->connectionFactory = $this->createMock(ConnectionFactoryInterface::class);
-        $this->connectionHolder = new ActiveConnectionHolder();
-
-        $this->factory = new IRCClientFactory(
-            $this->module,
-            $this->connectionFactory,
-            $this->connectionHolder,
-            $this->createStub(EventBusInterface::class),
-            $this->createStub(AsyncMessageDispatcherInterface::class),
-            new BurstCompleteRegistry(),
-            60,
-        );
-
-        $this->link = new ServerLink(
-            new ServerName('irc.test.local'),
-            new Hostname('127.0.0.1'),
-            new Port(7000),
-            new LinkPassword('secret'),
-            'Test',
-            false,
-        );
-    }
-
     #[Test]
     public function createReturnsIRCClientAndSetsModuleOnHolder(): void
     {
@@ -99,5 +70,34 @@ final class IRCClientFactoryTest extends TestCase
         $client = $factory->create($this->link);
 
         self::assertSame('unreal', $client->getProtocolName());
+    }
+
+    protected function setUp(): void
+    {
+        $handler = $this->createStub(ProtocolHandlerInterface::class);
+        $handler->method('getProtocolName')->willReturn('unreal');
+        $this->module = $this->createStub(ProtocolRuntimeModuleInterface::class);
+        $this->module->method('getHandler')->willReturn($handler);
+        $this->connectionFactory = $this->createMock(ConnectionFactoryInterface::class);
+        $this->connectionHolder = new ActiveConnectionHolder();
+
+        $this->factory = new IRCClientFactory(
+            $this->module,
+            $this->connectionFactory,
+            $this->connectionHolder,
+            $this->createStub(EventBusInterface::class),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            new BurstCompleteRegistry(),
+            60,
+        );
+
+        $this->link = new ServerLink(
+            new ServerName('irc.test.local'),
+            new Hostname('127.0.0.1'),
+            new Port(7000),
+            new LinkPassword('secret'),
+            'Test',
+            false,
+        );
     }
 }

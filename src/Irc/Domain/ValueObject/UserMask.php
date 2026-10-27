@@ -21,6 +21,11 @@ readonly class UserMask
         }
     }
 
+    public function __toString(): string
+    {
+        return $this->value;
+    }
+
     public static function fromParts(string $nick, string $ident, string $host): self
     {
         return new self(sprintf('%s!%s@%s', $nick, $ident, $host));
@@ -29,10 +34,5 @@ readonly class UserMask
     public static function fromString(string $mask): self
     {
         return new self($mask);
-    }
-
-    public function __toString(): string
-    {
-        return $this->value;
     }
 }

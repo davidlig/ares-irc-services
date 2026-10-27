@@ -32,6 +32,10 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 
+use function base64_encode;
+use function inet_pton;
+use function strtolower;
+
 #[CoversClass(NickProtectionService::class)]
 final class NickProtectionServiceTest extends TestCase
 {
@@ -41,27 +45,6 @@ final class NickProtectionServiceTest extends TestCase
         $service = $this->createServiceWithDefaultLanguage('es');
 
         self::assertSame('es', $service->getDefaultLanguage());
-    }
-
-    private function createServiceWithDefaultLanguage(string $language): NickProtectionService
-    {
-        return new NickProtectionService(
-            $this->createStub(RegisteredNickRepositoryInterface::class),
-            $this->createStub(NickNetworkUserLookup::class),
-            $this->createStub(NickNetworkActions::class),
-            new BurstState(),
-            new IdentifiedSessionRegistry(),
-            new SessionLanguageRegistry(),
-            $this->createStub(PendingNickRestoreRegistryInterface::class),
-            $this->createStub(NickProtectionNotifier::class),
-            $this->createStub(NickServEventPublisher::class),
-            $this->createStub(ForbiddenNickService::class),
-            $this->createStub(NickChangeIdentificationPolicy::class),
-            $this->guestNicknameGenerator(),
-            $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
-            $this->authenticationModeQuery(),
-            defaultLanguage: $language,
-        );
     }
 
     #[Test]
@@ -907,13 +890,6 @@ final class NickProtectionServiceTest extends TestCase
         self::assertNull($identifiedRegistry->findNick('UID1'));
     }
 
-    private function setNickId(RegisteredNick $nick, int $id): void
-    {
-        $reflection = new ReflectionClass($nick);
-        $property = $reflection->getProperty('id');
-        $property->setValue($nick, $id);
-    }
-
     #[Test]
     public function onUserQuitWithEmptyIdentAndReason(): void
     {
@@ -1683,6 +1659,34 @@ final class NickProtectionServiceTest extends TestCase
         $service->enforceProtection($user, $now);
         self::assertSame('Alice', $sessions->findNick('UID1'));
         self::assertNull($account->getRescueTokenHash());
+    }
+
+    private function createServiceWithDefaultLanguage(string $language): NickProtectionService
+    {
+        return new NickProtectionService(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NickNetworkUserLookup::class),
+            $this->createStub(NickNetworkActions::class),
+            new BurstState(),
+            new IdentifiedSessionRegistry(),
+            new SessionLanguageRegistry(),
+            $this->createStub(PendingNickRestoreRegistryInterface::class),
+            $this->createStub(NickProtectionNotifier::class),
+            $this->createStub(NickServEventPublisher::class),
+            $this->createStub(ForbiddenNickService::class),
+            $this->createStub(NickChangeIdentificationPolicy::class),
+            $this->guestNicknameGenerator(),
+            $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
+            $this->authenticationModeQuery(),
+            defaultLanguage: $language,
+        );
+    }
+
+    private function setNickId(RegisteredNick $nick, int $id): void
+    {
+        $reflection = new ReflectionClass($nick);
+        $property = $reflection->getProperty('id');
+        $property->setValue($nick, $id);
     }
 
     private function authenticationModeQuery(): NicknameAuthenticationModeQuery

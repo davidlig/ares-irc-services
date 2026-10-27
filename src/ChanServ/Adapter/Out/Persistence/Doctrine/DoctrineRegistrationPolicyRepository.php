@@ -28,22 +28,6 @@ final readonly class DoctrineRegistrationPolicyRepository implements Registratio
         return $this->decodeMode($value);
     }
 
-    private function decodeMode(mixed $value): RegistrationMode
-    {
-        if (false === $value) {
-            return RegistrationMode::Direct;
-        }
-        if (!is_string($value)) {
-            throw new UnexpectedValueException('Registration mode must be stored as JSON text.');
-        }
-        $decoded = json_decode($value, true, 512, JSON_THROW_ON_ERROR);
-        if (!is_string($decoded)) {
-            throw new UnexpectedValueException('Registration mode must be a JSON string.');
-        }
-
-        return RegistrationMode::from($decoded);
-    }
-
     public function change(RegistrationMode $mode): RegistrationMode
     {
         for ($attempt = 0; $attempt < 3; ++$attempt) {
@@ -72,5 +56,21 @@ final readonly class DoctrineRegistrationPolicyRepository implements Registratio
         }
 
         throw new RuntimeException('Registration policy changed concurrently; retry the command.');
+    }
+
+    private function decodeMode(mixed $value): RegistrationMode
+    {
+        if (false === $value) {
+            return RegistrationMode::Direct;
+        }
+        if (!is_string($value)) {
+            throw new UnexpectedValueException('Registration mode must be stored as JSON text.');
+        }
+        $decoded = json_decode($value, true, 512, JSON_THROW_ON_ERROR);
+        if (!is_string($decoded)) {
+            throw new UnexpectedValueException('Registration mode must be a JSON string.');
+        }
+
+        return RegistrationMode::from($decoded);
     }
 }

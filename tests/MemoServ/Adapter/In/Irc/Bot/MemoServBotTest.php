@@ -31,23 +31,6 @@ final class MemoServBotTest extends TestCase
 
     private MemoServBot $bot;
 
-    protected function setUp(): void
-    {
-        $this->connectionHolder = new ActiveConnectionHolder();
-        $this->sendNoticePort = $this->createStub(SendNoticePort::class);
-        $this->uidGenerator = $this->createStub(ServiceUidGeneratorInterface::class);
-        $this->uidGenerator->method('generateUid')->willReturn(self::MEMOSERV_UID);
-
-        $this->bot = new MemoServBot(
-            $this->connectionHolder,
-            $this->sendNoticePort,
-            $this->uidGenerator,
-            self::HOSTNAME,
-        );
-
-        $this->bot->onBurstComplete(new ServiceIntroductionRequestedEvent('001'));
-    }
-
     #[Test]
     public function getSubscribedEventsReturnsBurstCompleteWithPriority(): void
     {
@@ -175,5 +158,22 @@ final class MemoServBotTest extends TestCase
     public function getNicknameReturnsConfiguredNick(): void
     {
         self::assertSame('MemoServ', $this->bot->getNickname());
+    }
+
+    protected function setUp(): void
+    {
+        $this->connectionHolder = new ActiveConnectionHolder();
+        $this->sendNoticePort = $this->createStub(SendNoticePort::class);
+        $this->uidGenerator = $this->createStub(ServiceUidGeneratorInterface::class);
+        $this->uidGenerator->method('generateUid')->willReturn(self::MEMOSERV_UID);
+
+        $this->bot = new MemoServBot(
+            $this->connectionHolder,
+            $this->sendNoticePort,
+            $this->uidGenerator,
+            self::HOSTNAME,
+        );
+
+        $this->bot->onBurstComplete(new ServiceIntroductionRequestedEvent('001'));
     }
 }

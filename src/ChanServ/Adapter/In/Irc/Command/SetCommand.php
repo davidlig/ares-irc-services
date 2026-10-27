@@ -14,6 +14,7 @@ use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use function array_slice;
 use function implode;
 use function strtoupper;
+use function trim;
 
 /**
  * SET <#channel> <option> [value].

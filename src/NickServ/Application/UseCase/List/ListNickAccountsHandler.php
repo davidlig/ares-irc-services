@@ -6,6 +6,9 @@ namespace App\NickServ\Application\UseCase\List;
 
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 
+use function ceil;
+use function max;
+
 final readonly class ListNickAccountsHandler implements ListNickAccountsHandlerInterface
 {
     private int $pageSize;

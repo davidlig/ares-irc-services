@@ -31,11 +31,21 @@ use PHPUnit\Framework\Attributes\Test;
 use Symfony\Component\Translation\Translator;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function array_column;
+use function implode;
+use function mb_strtolower;
+use function str_replace;
+
 #[CoversClass(BadmailCommand::class)]
 final class BadmailIrcFlowTest extends DoctrineIntegrationTestCase
 {
     /** @var list<string> */
     private array $messages = [];
+
+    private bool $allowed = true;
+
+    /** @var list<CommandAuditRecord> */
+    private array $auditRecords = [];
 
     #[Test]
     public function commandMetadataAndAllPublicDispatchActions(): void
@@ -246,11 +256,6 @@ final class BadmailIrcFlowTest extends DoctrineIntegrationTestCase
 
         return $translator;
     }
-
-    private bool $allowed = true;
-
-    /** @var list<CommandAuditRecord> */
-    private array $auditRecords = [];
 
     private function command(bool $allowed = true): BadmailCommand
     {

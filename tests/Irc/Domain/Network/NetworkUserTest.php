@@ -14,26 +14,13 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function base64_encode;
+use function inet_pton;
+use function str_contains;
+
 #[CoversClass(NetworkUser::class)]
 final class NetworkUserTest extends TestCase
 {
-    private function createUser(string $modes = '+i', string $ipBase64 = '*'): NetworkUser
-    {
-        return new NetworkUser(
-            uid: new Uid('AAA111'),
-            nick: new Nick('Nick'),
-            ident: new Ident('ident'),
-            hostname: 'host.example',
-            cloakedHost: 'cloak.example',
-            virtualHost: 'vhost.example',
-            modes: $modes,
-            connectedAt: new DateTimeImmutable('2024-01-01T00:00:00Z'),
-            realName: 'Real Name',
-            serverSid: '001',
-            ipBase64: $ipBase64,
-        );
-    }
-
     #[Test]
     public function nickAndVirtualHostAndModesCanChange(): void
     {
@@ -168,5 +155,22 @@ final class NetworkUserTest extends TestCase
         $mask = $user->toUserMask();
 
         self::assertSame('TestUser!testident@testhost.example.com', $mask->value);
+    }
+
+    private function createUser(string $modes = '+i', string $ipBase64 = '*'): NetworkUser
+    {
+        return new NetworkUser(
+            uid: new Uid('AAA111'),
+            nick: new Nick('Nick'),
+            ident: new Ident('ident'),
+            hostname: 'host.example',
+            cloakedHost: 'cloak.example',
+            virtualHost: 'vhost.example',
+            modes: $modes,
+            connectedAt: new DateTimeImmutable('2024-01-01T00:00:00Z'),
+            realName: 'Real Name',
+            serverSid: '001',
+            ipBase64: $ipBase64,
+        );
     }
 }

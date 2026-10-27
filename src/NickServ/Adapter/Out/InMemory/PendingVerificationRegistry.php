@@ -7,7 +7,9 @@ namespace App\NickServ\Adapter\Out\InMemory;
 use App\NickServ\Adapter\In\Maintenance\PurgeExpiredPendingTask;
 use DateTimeImmutable;
 
+use function hash_equals;
 use function sprintf;
+use function strtolower;
 
 /**
  * In-memory store for email verification tokens issued during REGISTER.

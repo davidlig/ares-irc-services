@@ -10,7 +10,12 @@ use function implode;
 use function is_array;
 use function is_int;
 use function ltrim;
+use function method_exists;
+use function str_contains;
+use function str_pad;
+use function str_replace;
 use function strtoupper;
+use function usort;
 
 /**
  * Renders unified HELP output (header, command list, options, syntax, footer)
@@ -206,14 +211,6 @@ final readonly class UnifiedHelpFormatter
         return $lines;
     }
 
-    private function preserveParagraphRows(string $message): string
-    {
-        return implode("\n", array_map(
-            static fn (string $line): string => '' === $line ? ' ' : $line,
-            explode("\n", $message),
-        ));
-    }
-
     /** @return list<string> */
     public function renderExamples(HelpFormatterContextInterface $context, string $exampleKey): array
     {
@@ -236,6 +233,14 @@ final readonly class UnifiedHelpFormatter
         }
 
         return $lines;
+    }
+
+    private function preserveParagraphRows(string $message): string
+    {
+        return implode("\n", array_map(
+            static fn (string $line): string => '' === $line ? ' ' : $line,
+            explode("\n", $message),
+        ));
     }
 
     private function addBotMessagePrefix(HelpFormatterContextInterface $context, string $example): string
