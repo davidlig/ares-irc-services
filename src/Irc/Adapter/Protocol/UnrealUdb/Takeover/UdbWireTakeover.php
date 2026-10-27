@@ -38,7 +38,6 @@ use UnexpectedValueException;
 
 use function array_unique;
 use function array_values;
-use function assert;
 use function bin2hex;
 use function count;
 use function ctype_digit;
@@ -220,15 +219,16 @@ final class UdbWireTakeover
     public function accept(UdbFrame $frame): UdbWireTakeoverOutcome
     {
         $block = $frame->block;
-        if (null === $block || null === $frame->roundId) {
+        $roundId = $frame->roundId;
+        if (null === $block || null === $roundId) {
             return UdbWireTakeoverOutcome::ignored();
         }
 
         return match ($frame->kind) {
-            UdbFrameKind::Inf => $this->inventory($frame, $block),
-            UdbFrameKind::Begin => $this->begin($frame, $block),
-            UdbFrameKind::Put => $this->put($frame, $block),
-            UdbFrameKind::End => $this->end($frame, $block),
+            UdbFrameKind::Inf => $this->inventory($frame, $block, $roundId),
+            UdbFrameKind::Begin => $this->begin($frame, $block, $roundId),
+            UdbFrameKind::Put => $this->put($frame, $block, $roundId),
+            UdbFrameKind::End => $this->end($frame, $block, $roundId),
             default => UdbWireTakeoverOutcome::ignored(),
         };
     }
@@ -437,23 +437,22 @@ final class UdbWireTakeover
         ]);
     }
 
-    private function inventory(UdbFrame $frame, UdbBlock $block): UdbWireTakeoverOutcome
+    private function inventory(UdbFrame $frame, UdbBlock $block, UdbUnsignedDecimal $roundId): UdbWireTakeoverOutcome
     {
-        assert(null !== $frame->roundId);
         if (null === $frame->checksum || null === $frame->count || null === $frame->watermark || null === $frame->rootSid || null === $frame->rootEpoch
             || 1 !== preg_match('/^[0-9A-Z]{3}\z/', $frame->rootSid) || 1 !== preg_match('/^[0-9a-f]{16}\z/', $frame->rootEpoch)
         ) {
-            return UdbWireTakeoverOutcome::error($block, $frame->roundId, 'INF', 2);
+            return UdbWireTakeoverOutcome::error($block, $roundId, 'INF', 2);
         }
         if (null === $this->roundId) {
             if ($this->expire()) {
-                return UdbWireTakeoverOutcome::error($block, $frame->roundId, 'INF', 5);
+                return UdbWireTakeoverOutcome::error($block, $roundId, 'INF', 5);
             }
             foreach ($this->provisional as $mutation) {
                 if ($mutation['frame']->sourceSid !== $frame->rootSid || $mutation['frame']->epoch !== $frame->rootEpoch) {
                     $this->reset();
 
-                    return UdbWireTakeoverOutcome::error($block, $frame->roundId, 'INF', 5);
+                    return UdbWireTakeoverOutcome::error($block, $roundId, 'INF', 5);
                 }
             }
             $survivors = [];
@@ -466,7 +465,7 @@ final class UdbWireTakeover
                 if (null === $sequence || !$tail->increment()?->equals($sequence)) {
                     $this->reset();
 
-                    return UdbWireTakeoverOutcome::error($block, $frame->roundId, 'INF', 5);
+                    return UdbWireTakeoverOutcome::error($block, $roundId, 'INF', 5);
                 }
                 $survivors[] = $mutation;
                 $tail = $sequence;
@@ -474,7 +473,7 @@ final class UdbWireTakeover
             $generationId = bin2hex(random_bytes(16));
             $this->createGeneration($frame, $generationId, $survivors);
             // Adopt the agreed snapshot and tail only after the complete SQL transaction commits.
-            $this->roundId = $frame->roundId;
+            $this->roundId = $roundId;
             $this->roundAbsoluteDeadline ??= $this->clock->now() + self::ABSOLUTE_TIMEOUT;
             $this->roundWatermark = $frame->watermark;
             $this->tailWatermark = $tail;
@@ -482,12 +481,12 @@ final class UdbWireTakeover
             $this->rootEpoch = $frame->rootEpoch;
             $this->generationId = $generationId;
             $this->clearProvisional();
-        } elseif (!$this->roundId->equals($frame->roundId)) {
-            return UdbWireTakeoverOutcome::error($block, $frame->roundId, 'INF', 5);
+        } elseif (!$this->roundId->equals($roundId)) {
+            return UdbWireTakeoverOutcome::error($block, $roundId, 'INF', 5);
         } elseif (null === $this->roundWatermark || !$this->roundWatermark->equals($frame->watermark) || $this->rootSid !== $frame->rootSid || $this->rootEpoch !== $frame->rootEpoch) {
             $this->reset();
 
-            return UdbWireTakeoverOutcome::error($block, $frame->roundId, 'INF', 3);
+            return UdbWireTakeoverOutcome::error($block, $roundId, 'INF', 3);
         }
 
         $letter = $block->letter();
@@ -501,13 +500,13 @@ final class UdbWireTakeover
 
         $local = $this->liveBlockSummary($block);
         if ($local['count'] === $frame->count && $local['digest'] === $frame->checksum) {
-            $this->stageReusableBlock($block, $frame->roundId, $frame->checksum, $frame->count);
+            $this->stageReusableBlock($block, $roundId, $frame->checksum, $frame->count);
             $this->completed[] = $letter;
 
             return UdbWireTakeoverOutcome::ignored();
         }
 
-        return UdbWireTakeoverOutcome::request($block, $frame->roundId);
+        return UdbWireTakeoverOutcome::request($block, $roundId);
     }
 
     private function stageReusableBlock(UdbBlock $block, UdbUnsignedDecimal $roundId, string $digest, int $count): void
@@ -558,25 +557,24 @@ final class UdbWireTakeover
         }
     }
 
-    private function begin(UdbFrame $frame, UdbBlock $block): UdbWireTakeoverOutcome
+    private function begin(UdbFrame $frame, UdbBlock $block, UdbUnsignedDecimal $roundId): UdbWireTakeoverOutcome
     {
-        assert(null !== $frame->roundId);
         if (null === $frame->txid || null === $frame->checksum) {
             return UdbWireTakeoverOutcome::ignored();
         }
-        if (null === $this->roundId || !$this->roundId->equals($frame->roundId) || !isset($this->requestedBlocks[$block->letter()])) {
-            return UdbWireTakeoverOutcome::error($block, $frame->roundId, 'BEGIN', 5);
+        if (null === $this->roundId || !$this->roundId->equals($roundId) || !isset($this->requestedBlocks[$block->letter()])) {
+            return UdbWireTakeoverOutcome::error($block, $roundId, 'BEGIN', 5);
         }
         if (isset($this->completedTransfers[$block->letter()]) || isset($this->stages[$block->letter()])) {
-            return UdbWireTakeoverOutcome::error($block, $frame->roundId, 'BEGIN', 4);
+            return UdbWireTakeoverOutcome::error($block, $roundId, 'BEGIN', 4);
         }
         $inventory = $this->inventory[$block->letter()] ?? null;
         $watermark = $frame->watermark;
         if (null === $inventory || null === $inventory['count'] || null === $watermark || $inventory['digest'] !== $frame->checksum || null === $this->roundWatermark || !$this->roundWatermark->equals($watermark)) {
-            return UdbWireTakeoverOutcome::error($block, $frame->roundId, 'BEGIN', 3);
+            return UdbWireTakeoverOutcome::error($block, $roundId, 'BEGIN', 3);
         }
         if (null === $this->generationId) {
-            return UdbWireTakeoverOutcome::error($block, $frame->roundId, 'BEGIN', 5);
+            return UdbWireTakeoverOutcome::error($block, $roundId, 'BEGIN', 5);
         }
 
         $now = $this->clock->now();
@@ -588,7 +586,7 @@ final class UdbWireTakeover
             $this->stageInsert('udb_staged_transfers', [
                 'generation_id' => $this->generationId,
                 'block' => $block->letter(),
-                'round_id' => (string) $frame->roundId,
+                'round_id' => (string) $roundId,
                 'txid' => $frame->txid,
                 'digest' => $frame->checksum,
                 'watermark' => (string) $watermark,
@@ -606,7 +604,7 @@ final class UdbWireTakeover
         }
         $this->stages[$block->letter()] = [
             'txid' => $frame->txid,
-            'roundId' => $frame->roundId,
+            'roundId' => $roundId,
             'digest' => $frame->checksum ?? '',
             'watermark' => $watermark,
             'expectedCount' => $inventory['count'],
@@ -620,33 +618,27 @@ final class UdbWireTakeover
         return UdbWireTakeoverOutcome::ignored();
     }
 
-    private function put(UdbFrame $frame, UdbBlock $block): UdbWireTakeoverOutcome
+    private function put(UdbFrame $frame, UdbBlock $block, UdbUnsignedDecimal $roundId): UdbWireTakeoverOutcome
     {
-        assert(null !== $frame->roundId);
         $stage = $this->stageFor($frame, $block);
         if (null === $stage || null === $frame->path || null === $frame->typedValue || null === $frame->value || null === $this->generationId) {
-            return UdbWireTakeoverOutcome::error($block, $frame->roundId, 'PUT', 5);
+            return UdbWireTakeoverOutcome::error($block, $roundId, 'PUT', 5);
         }
         if ($stage['count'] >= $this->maxStageRecords) {
-            return $this->abortWithError($block, $frame->roundId, 'PUT', 'record limit exhausted');
+            return $this->abortWithError($block, $roundId, 'PUT', 'record limit exhausted');
         }
         $logicalValue = $frame->typedValue->logicalValue();
         if (strlen($logicalValue) > UdbPathCodec::VALUE_MAX) {
-            return $this->abortWithError($block, $frame->roundId, 'PUT', 'oversized typed value');
+            return $this->abortWithError($block, $roundId, 'PUT', 'oversized typed value');
         }
         $wireValue = UdbValueEncoder::encode($frame->typedValue);
-        if (strlen($frame->path) + strlen($wireValue) > UdbPathCodec::RECORD_LINE_MAX || !UdbPathCodec::fitsLimits($frame->path, $logicalValue)) {
-            return $this->abortWithError($block, $frame->roundId, 'PUT', 'malformed or oversized PUT record');
+        $components = UdbPathCodec::decodePathWithinLimits($frame->path, $logicalValue);
+        if (null === $components || strlen($frame->path) + strlen($wireValue) > UdbPathCodec::RECORD_LINE_MAX) {
+            return $this->abortWithError($block, $roundId, 'PUT', 'malformed or oversized PUT record');
         }
 
-        $components = [];
-        foreach (explode('::', $frame->path) as $component) {
-            $decoded = UdbPathCodec::decodeComponent($component);
-            assert(null !== $decoded);
-            $components[] = $decoded;
-        }
         if (!UdbSchema::validateTyped($block, $components, $frame->typedValue)) {
-            return $this->abortWithError($block, $frame->roundId, 'PUT', 'schema-invalid PUT record');
+            return $this->abortWithError($block, $roundId, 'PUT', 'schema-invalid PUT record');
         }
 
         $identityPath = UdbRecord::identity($frame->path, $block->letter());
@@ -664,7 +656,7 @@ final class UdbWireTakeover
                 'value_kind' => $frame->typedValue->kind->value,
             ]);
         } catch (Throwable) {
-            return $this->abortWithError($block, $frame->roundId, 'PUT', 'duplicate or unpersistable path');
+            return $this->abortWithError($block, $roundId, 'PUT', 'duplicate or unpersistable path');
         }
         ++$stage['count'];
         $stage['bytes'] += $rowBytes;
@@ -673,7 +665,7 @@ final class UdbWireTakeover
         if ($stage['bytes'] > $this->maxStageBytes) {
             $this->em->getConnection()->delete('udb_staged_records', ['generation_id' => $this->generationId, 'block' => $block->letter()]);
 
-            return $this->abortWithError($block, $frame->roundId, 'PUT', 'byte limit exhausted');
+            return $this->abortWithError($block, $roundId, 'PUT', 'byte limit exhausted');
         }
         $this->stageUpdate('udb_staged_transfers', ['record_count' => $stage['count'], 'byte_count' => $stage['bytes']], ['generation_id' => $this->generationId, 'block' => $block->letter()]);
         $this->touchRound();
@@ -681,33 +673,32 @@ final class UdbWireTakeover
         return UdbWireTakeoverOutcome::ignored();
     }
 
-    private function end(UdbFrame $frame, UdbBlock $block): UdbWireTakeoverOutcome
+    private function end(UdbFrame $frame, UdbBlock $block, UdbUnsignedDecimal $roundId): UdbWireTakeoverOutcome
     {
-        assert(null !== $frame->roundId);
         if (null === $frame->txid) {
             return UdbWireTakeoverOutcome::ignored();
         }
         if (null === $frame->watermark) {
-            return UdbWireTakeoverOutcome::error($block, $frame->roundId, 'END', 2);
+            return UdbWireTakeoverOutcome::error($block, $roundId, 'END', 2);
         }
         $watermark = $frame->watermark;
         $completed = $this->completedTransfers[$block->letter()] ?? null;
         if (null !== $completed) {
-            if ($completed['roundId']->equals($frame->roundId) && $completed['txid'] === $frame->txid && $completed['digest'] === $frame->checksum && $completed['watermark']->equals($watermark)) {
-                return UdbWireTakeoverOutcome::acknowledge($block, $frame->roundId, $frame->txid, $completed['digest'], $completed['watermark']);
+            if ($completed['roundId']->equals($roundId) && $completed['txid'] === $frame->txid && $completed['digest'] === $frame->checksum && $completed['watermark']->equals($watermark)) {
+                return UdbWireTakeoverOutcome::acknowledge($block, $roundId, $frame->txid, $completed['digest'], $completed['watermark']);
             }
 
-            return UdbWireTakeoverOutcome::error($block, $frame->roundId, 'END', 5);
+            return UdbWireTakeoverOutcome::error($block, $roundId, 'END', 5);
         }
 
         $stage = $this->stageFor($frame, $block);
         if (null === $stage) {
-            return UdbWireTakeoverOutcome::error($block, $frame->roundId, 'END', 5);
+            return UdbWireTakeoverOutcome::error($block, $roundId, 'END', 5);
         }
         unset($this->stages[$block->letter()]);
 
         if (null === $this->generationId) {
-            return UdbWireTakeoverOutcome::error($block, $frame->roundId, 'END', 5);
+            return UdbWireTakeoverOutcome::error($block, $roundId, 'END', 5);
         }
         $digest = UdbChecksum::fromRecords($block, $this->stagedRows($block));
         if (($frame->checksum ?? '') !== $digest
@@ -718,13 +709,13 @@ final class UdbWireTakeover
             $this->em->getConnection()->delete('udb_staged_records', ['generation_id' => $this->generationId, 'block' => $block->letter()]);
             $this->em->getConnection()->delete('udb_staged_transfers', ['generation_id' => $this->generationId, 'block' => $block->letter()]);
 
-            return UdbWireTakeoverOutcome::error($block, $frame->roundId, 'END', 3);
+            return UdbWireTakeoverOutcome::error($block, $roundId, 'END', 3);
         }
         if (!new UdbSnapshotValidator()->validate($block, $this->stagedValidationRows($block))) {
             $this->em->getConnection()->delete('udb_staged_records', ['generation_id' => $this->generationId, 'block' => $block->letter()]);
             $this->em->getConnection()->delete('udb_staged_transfers', ['generation_id' => $this->generationId, 'block' => $block->letter()]);
 
-            return UdbWireTakeoverOutcome::error($block, $frame->roundId, 'END', 2);
+            return UdbWireTakeoverOutcome::error($block, $roundId, 'END', 2);
         }
 
         $connection = $this->em->getConnection();
@@ -740,10 +731,10 @@ final class UdbWireTakeover
         }
 
         $this->completed[] = $block->letter();
-        $this->completedTransfers[$block->letter()] = ['roundId' => $frame->roundId, 'txid' => $frame->txid, 'digest' => $digest, 'watermark' => $watermark];
+        $this->completedTransfers[$block->letter()] = ['roundId' => $roundId, 'txid' => $frame->txid, 'digest' => $digest, 'watermark' => $watermark];
         $this->touchRound();
 
-        return UdbWireTakeoverOutcome::acknowledge($block, $frame->roundId, $frame->txid, $digest, $watermark);
+        return UdbWireTakeoverOutcome::acknowledge($block, $roundId, $frame->txid, $digest, $watermark);
     }
 
     /**

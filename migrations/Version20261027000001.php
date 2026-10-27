@@ -47,7 +47,7 @@ final class Version20261027000001 extends AbstractMigration implements EditedSch
             $memos->modifyColumnByUnquotedName('sender_nick_id', static function (ColumnEditor $column): void {
                 $column->setNotNull(false);
             });
-            $memos->addColumn(Column::editor()->setUnquotedName('sender_service_name')->setTypeName(Types::STRING)->setLength(64)->setNotNull(false)->create());
+            $memos->addColumn(Column::editor()->setUnquotedName('sender_name')->setTypeName(Types::STRING)->setLength(64)->setNotNull(false)->create());
         });
         $target = $editor->create();
         $this->editedSchema = clone $target;
@@ -61,13 +61,13 @@ final class Version20261027000001 extends AbstractMigration implements EditedSch
     {
         // A fresh-install dry run propagates an edited schema without creating physical tables.
         if ($this->connection->createSchemaManager()->tablesExist(['memos'])
-            && !in_array($this->connection->fetchOne('SELECT COUNT(*) FROM memos WHERE sender_service_name IS NOT NULL'), [false, 0, '0'], true)) {
+            && !in_array($this->connection->fetchOne('SELECT COUNT(*) FROM memos WHERE sender_name IS NOT NULL'), [false, 0, '0'], true)) {
             throw new RuntimeException('Cannot remove service memo sender support while service-authored memos exist.');
         }
 
         $editor = (clone $schema)->edit();
         $editor->modifyTableByUnquotedName('memos', static function ($memos): void {
-            $memos->dropColumnByUnquotedName('sender_service_name');
+            $memos->dropColumnByUnquotedName('sender_name');
             $memos->modifyColumnByUnquotedName('sender_nick_id', static function (ColumnEditor $column): void {
                 $column->setNotNull(true);
             });

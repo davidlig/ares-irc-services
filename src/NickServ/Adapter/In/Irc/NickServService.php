@@ -22,7 +22,6 @@ use Psr\Log\NullLogger;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function array_shift;
-use function assert;
 use function count;
 use function in_array;
 use function is_string;
@@ -113,7 +112,7 @@ final readonly class NickServService
                 return;
             }
 
-            $this->executeHandlerAfterValidation($context, $handler, $args);
+            $this->executeHandlerAfterValidation($context, $handler, $args, $sender);
         } finally {
             $this->authorizationContext->clear();
         }
@@ -148,11 +147,8 @@ final readonly class NickServService
     /**
      * @param list<string> $args
      */
-    private function executeHandlerAfterValidation(NickServContext $context, NickServCommandInterface $handler, array $args): void
+    private function executeHandlerAfterValidation(NickServContext $context, NickServCommandInterface $handler, array $args, SenderView $sender): void
     {
-        $sender = $context->sender;
-        assert(null !== $sender);
-
         $validation = CommandArgumentValidator::validatePrefix($handler->getArgumentDefinition(), $args);
         if (null !== $validation->syntaxKey) {
             $context->reply('error.syntax', [

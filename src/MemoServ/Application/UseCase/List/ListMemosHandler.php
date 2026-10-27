@@ -8,8 +8,8 @@ use App\MemoServ\Application\Model\MemoListItem;
 use App\MemoServ\Application\Port\Out\MemoChannelPort;
 use App\MemoServ\Application\Port\Out\MemoRepositoryInterface;
 use App\MemoServ\Application\Port\Out\MemoUserAccountPort;
+use LogicException;
 
-use function assert;
 use function strtolower;
 
 final readonly class ListMemosHandler implements ListMemosHandlerInterface
@@ -45,10 +45,12 @@ final readonly class ListMemosHandler implements ListMemosHandlerInterface
         $items = [];
         $index = 1;
         foreach ($memos as $memo) {
-            $senderDisplay = $memo->getSenderServiceName();
+            $senderDisplay = $memo->getSenderName();
             if (null === $senderDisplay) {
                 $senderNickId = $memo->getSenderNickId();
-                assert(null !== $senderNickId);
+                if (null === $senderNickId) {
+                    throw new LogicException('Memo sender representation is missing.');
+                }
                 $senderDisplay = $this->userAccountPort->findNicknameById($senderNickId) ?? (string) $senderNickId;
             }
             $items[] = new MemoListItem($index, $senderDisplay, $memo->getCreatedAt(), $memo->getMessage(), $memo->isRead());

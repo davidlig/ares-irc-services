@@ -61,7 +61,7 @@ final class NotifyChannelRegistrationDecisionHandlerTest extends TestCase
         self::assertCount(2, $saved);
         self::assertSame([12, 12], array_map(static fn (Memo $memo): ?int => $memo->getTargetNickId(), $saved));
         self::assertSame([null, null], array_map(static fn (Memo $memo): ?int => $memo->getSenderNickId(), $saved));
-        self::assertSame(['ChannelBot', 'ChannelBot'], array_map(static fn (Memo $memo): ?string => $memo->getSenderServiceName(), $saved));
+        self::assertSame(['ChannelBot', 'ChannelBot'], array_map(static fn (Memo $memo): ?string => $memo->getSenderName(), $saved));
         self::assertSame(['Decision part one', 'Decision part two'], array_map(static fn (Memo $memo): string => $memo->getMessage(), $saved));
         self::assertSame([$occurredAt, $occurredAt], array_map(static fn (Memo $memo): DateTimeImmutable => $memo->getCreatedAt(), $saved));
     }

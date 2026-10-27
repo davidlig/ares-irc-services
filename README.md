@@ -303,7 +303,7 @@ also releases it and still requires the additional `DROP_FORCE` permission. Pend
 requests and ordinary registered-channel deletion retain their existing behavior.
 
 **Upgrade:** apply migration `Version20261027000001` before starting the updated daemon.
-It makes memo sender account IDs nullable and adds a service-name snapshot. New CREG
+It makes memo sender account IDs nullable and adds a `sender_name` snapshot. New CREG
 ACCEPT/REJECT memos display the configured `CHANSERV_NICK` in MemoServ LIST and READ;
 existing human and historical memos are not rewritten. Decision bodies omit the
 operator identity; finite rejection availability is UTC, and indefinite rejections

@@ -48,6 +48,7 @@ use function count;
 use function hash;
 use function intdiv;
 use function min;
+use function serialize;
 use function str_repeat;
 use function strlen;
 
@@ -1279,6 +1280,31 @@ final class UdbWireTakeoverTest extends DoctrineIntegrationTestCase
         $this->begin(UdbBlock::Ips, 'tx1', $digest);
         $outcome = $this->takeover->accept(new UdbFrame(UdbFrameKind::Put, '001', '002', roundId: 1, block: UdbBlock::Ips, txid: 'tx1', path: str_repeat('x', 8193), value: 'x', typedValue: UdbValue::string('x')));
         $this->assertError($outcome, UdbBlock::Ips, 1, 'PUT', 2);
+    }
+
+    #[Test]
+    public function rejectedPeerFramesLeaveExistingDataUntouched(): void
+    {
+        $this->records->upsert('N', 'fixture::vhost', UdbValue::string('safe.example'));
+        $connection = $this->em->getConnection();
+        $hash = hash('sha256', serialize($connection->fetchAllAssociative('SELECT * FROM udb_records ORDER BY id')));
+        foreach ([UdbFrameKind::Inf, UdbFrameKind::Begin, UdbFrameKind::Put, UdbFrameKind::End] as $kind) {
+            $outcome = $this->takeover->accept(new UdbFrame($kind, '001', '002', block: UdbBlock::Ips));
+            self::assertSame(UdbWireTakeoverOutcomeKind::Ignored, $outcome->kind);
+            self::assertSame($hash, hash('sha256', serialize($connection->fetchAllAssociative('SELECT * FROM udb_records ORDER BY id'))));
+            self::assertSame(0, $connection->fetchOne('SELECT COUNT(*) FROM udb_staged_generations'));
+        }
+        $this->inventory(UdbBlock::Ips);
+        $this->begin(UdbBlock::Ips, 'tx-hash');
+        $frame = UdbWireCodec::parse(IRCMessage::fromRawLine(UdbWireCodec::put('001', '002', 1, UdbBlock::Ips, 'tx-hash', '192.0.2.1::clones', UdbValue::string('wrong-kind'))));
+        self::assertNotNull($frame);
+        $outcome = $this->takeover->accept($frame);
+        $this->assertError($outcome, UdbBlock::Ips, 1, 'PUT', 2);
+        self::assertSame($hash, hash('sha256', serialize($connection->fetchAllAssociative('SELECT * FROM udb_records ORDER BY id'))));
+        self::assertSame(0, $connection->fetchOne('SELECT COUNT(*) FROM udb_staged_records'));
+        self::assertSame(0, $connection->fetchOne('SELECT COUNT(*) FROM udb_staged_transfers'));
+        self::assertSame([], $this->takeover->completedBlocks());
+        self::assertFalse($this->takeover->canPromote());
     }
 
     protected function setUp(): void

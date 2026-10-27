@@ -10,7 +10,6 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbUnsignedDecimal;
 use function array_key_exists;
 use function array_map;
 use function array_slice;
-use function assert;
 use function base64_decode;
 use function base64_encode;
 use function count;
@@ -294,14 +293,19 @@ final class UdbSchema
                 $decoded[] = $component;
             }
 
-            if (!self::validate($block, $decoded, $value)) {
+            if (UdbBlock::Lines === $block) {
+                $lineValidation = self::lineValidationDetails($decoded, $value);
+                if (null === $lineValidation) {
+                    return false;
+                }
+                if (array_key_exists('spamfilterPattern', $lineValidation)) {
+                    $lineProfiles[$decoded[1]]['__decodedPattern'] = $lineValidation['spamfilterPattern'];
+                    $lineProfiles[$decoded[1]][strtolower($decoded[2])] = $value;
+                }
+            } elseif (!self::validate($block, $decoded, $value)) {
                 return false;
-            }
-
-            if (UdbBlock::Nicks === $block && 2 === count($decoded)) {
+            } elseif (2 === count($decoded)) {
                 $nickProfiles[strtolower($decoded[0])][strtolower($decoded[1])] = $value;
-            } elseif (UdbBlock::Lines === $block && 'f' === strtolower($decoded[0])) {
-                $lineProfiles[$decoded[1]][strtolower($decoded[2])] = $value;
             }
         }
 
@@ -320,7 +324,7 @@ final class UdbSchema
                 continue;
             }
 
-            if ('regex' === $profile['match-type'] && !self::spamfilterRegexCompiles($pattern)) {
+            if ('regex' === $profile['match-type'] && !self::spamfilterRegexCompiles($profile['__decodedPattern'])) {
                 return false;
             }
         }
@@ -554,28 +558,46 @@ final class UdbSchema
      */
     private static function validateLines(array $components, string $value): bool
     {
+        return null !== self::lineValidationDetails($components, $value);
+    }
+
+    /**
+     * @param list<string> $components
+     *
+     * @return array{spamfilterPattern?: string}|null
+     */
+    private static function lineValidationDetails(array $components, string $value): ?array
+    {
         $depth = count($components);
         $type = strtoupper($components[0]);
 
         if ($depth < 2 || $depth > 3 || 1 !== strlen($type) || !in_array($type, self::TKL_TYPES, true)) {
-            return false;
+            return null;
         }
 
         if ('F' === $type) {
-            return 3 === $depth && self::spamfilterPattern($components[1]) && self::spamfilterSubkey($components[2], $value);
+            if (3 !== $depth) {
+                return null;
+            }
+            $pattern = self::spamfilterPattern($components[1]);
+            if (null === $pattern || !self::spamfilterSubkey($components[2], $value)) {
+                return null;
+            }
+
+            return ['spamfilterPattern' => $pattern];
         }
 
         $patternValid = 'Z' === $type
             ? self::zlineMask($components[1])
             : ('Q' === $type ? self::qlineMask($components[1]) : self::lineMask($components[1]));
         if (!$patternValid || 3 !== $depth) {
-            return false;
+            return null;
         }
 
         return match (strtolower($components[2])) {
-            'reason' => self::nonEmptyNoStar($value),
-            'expires' => self::positiveNumericRecord($value),
-            default => false,
+            'reason' => self::nonEmptyNoStar($value) ? [] : null,
+            'expires' => self::positiveNumericRecord($value) ? [] : null,
+            default => null,
         };
     }
 
@@ -872,38 +894,33 @@ final class UdbSchema
     }
 
     /** RFC 4648 canonical base64 with the mandatory "b64:" prefix. */
-    private static function spamfilterPattern(string $stored): bool
+    private static function spamfilterPattern(string $stored): ?string
     {
         if (!str_starts_with($stored, 'b64:')) {
-            return false;
+            return null;
         }
 
         $encoded = substr($stored, 4);
         $length = strlen($encoded);
 
         if (0 === $length || 0 !== $length % 4 || $length > 4096) {
-            return false;
+            return null;
         }
 
         $decoded = base64_decode($encoded, true);
         if (false === $decoded || '' === $decoded || strlen($decoded) > self::SPAMFILTER_PATTERN_MAX) {
-            return false;
+            return null;
         }
 
         if (str_contains($decoded, "\0")) {
-            return false;
+            return null;
         }
 
-        return base64_encode($decoded) === $encoded;
+        return base64_encode($decoded) === $encoded ? $decoded : null;
     }
 
-    private static function spamfilterRegexCompiles(string $stored): bool
+    private static function spamfilterRegexCompiles(string $pattern): bool
     {
-        $pattern = base64_decode(substr($stored, 4), true);
-        // validateAggregate() reaches this only after spamfilterPattern()
-        // proved that the component is canonical Base64.
-        assert(false !== $pattern);
-
         $delimiter = '~';
         $escaped = '';
         $backslashes = 0;

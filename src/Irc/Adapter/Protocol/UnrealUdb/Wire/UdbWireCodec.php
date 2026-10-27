@@ -12,7 +12,6 @@ use InvalidArgumentException;
 use function array_map;
 use function array_slice;
 use function array_values;
-use function assert;
 use function count;
 use function implode;
 use function in_array;
@@ -154,7 +153,7 @@ final class UdbWireCodec
         $argumentOffset = $isAck ? 4 : 3;
         $capabilityOffset = $isAck ? 6 : 5;
         $paramCount = count($message->params);
-        if (($isAck && 7 !== $paramCount && 8 !== $paramCount) || (!$isAck && 6 !== $paramCount && 7 !== $paramCount)) {
+        if (($isAck && ($paramCount < 6 || $paramCount > 8)) || (!$isAck && ($paramCount < 5 || $paramCount > 7))) {
             return null;
         }
         $propagator = $message->params[$argumentOffset] ?? '';
@@ -431,7 +430,9 @@ final class UdbWireCodec
      */
     private static function parseHelCapabilities(array $capabilities): ?array
     {
-        assert([] !== $capabilities);
+        if ([] === $capabilities) {
+            return null;
+        }
         $normalized = array_values(array_map(strtoupper(...), $capabilities));
 
         return 'OCL' === $normalized[0] && (!isset($normalized[1]) || 'OCLG' === $normalized[1]) ? $normalized : null;

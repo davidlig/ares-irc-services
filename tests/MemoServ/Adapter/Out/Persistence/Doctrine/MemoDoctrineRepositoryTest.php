@@ -37,14 +37,14 @@ final class MemoDoctrineRepositoryTest extends DoctrineIntegrationTestCase
     #[Test]
     public function serviceSenderSnapshotPersistsWithoutAnOperatorAccountReference(): void
     {
-        $memo = new Memo(targetNickId: 1, targetChannelId: null, senderNickId: null, message: 'Decision', createdAt: new DateTimeImmutable(), senderServiceName: 'ChannelBot');
+        $memo = new Memo(targetNickId: 1, targetChannelId: null, senderNickId: null, message: 'Decision', createdAt: new DateTimeImmutable(), senderName: 'ChannelBot');
 
         $this->repository->save($memo);
         $this->flushAndClear();
 
         $persisted = $this->repository->findByTargetNick(1)[0];
         self::assertNull($persisted->getSenderNickId());
-        self::assertSame('ChannelBot', $persisted->getSenderServiceName());
+        self::assertSame('ChannelBot', $persisted->getSenderName());
         $this->repository->deleteAllForNick(7);
         self::assertCount(1, $this->repository->findByTargetNick(1));
     }

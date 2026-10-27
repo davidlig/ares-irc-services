@@ -29,11 +29,11 @@ final class ServiceMemoSenderMigrationTest extends TestCase
         }
 
         self::assertTrue(false === $connection->createSchemaManager()->introspectSchema()->getTable('memos')->getColumn('sender_nick_id')->getNotnull());
-        self::assertTrue(false === $connection->createSchemaManager()->introspectSchema()->getTable('memos')->getColumn('sender_service_name')->getNotnull());
-        self::assertSame(['sender_nick_id' => 7, 'sender_service_name' => null, 'message' => 'historic'], $connection->fetchAssociative('SELECT sender_nick_id, sender_service_name, message FROM memos WHERE id = 1'));
+        self::assertTrue(false === $connection->createSchemaManager()->introspectSchema()->getTable('memos')->getColumn('sender_name')->getNotnull());
+        self::assertSame(['sender_nick_id' => 7, 'sender_name' => null, 'message' => 'historic'], $connection->fetchAssociative('SELECT sender_nick_id, sender_name, message FROM memos WHERE id = 1'));
 
-        $connection->executeStatement("INSERT INTO memos (target_nick_id, sender_nick_id, sender_service_name, message, created_at) VALUES (13, NULL, 'ChannelBot', 'new service memo', '2026-10-27 10:00:00')");
-        self::assertSame(['sender_nick_id' => null, 'sender_service_name' => 'ChannelBot'], $connection->fetchAssociative('SELECT sender_nick_id, sender_service_name FROM memos WHERE id = 2'));
+        $connection->executeStatement("INSERT INTO memos (target_nick_id, sender_nick_id, sender_name, message, created_at) VALUES (13, NULL, 'ChannelBot', 'new service memo', '2026-10-27 10:00:00')");
+        self::assertSame(['sender_nick_id' => null, 'sender_name' => 'ChannelBot'], $connection->fetchAssociative('SELECT sender_nick_id, sender_name FROM memos WHERE id = 2'));
         $connection->close();
     }
 
@@ -49,7 +49,7 @@ final class ServiceMemoSenderMigrationTest extends TestCase
         foreach ($migration->getSql() as $query) {
             $connection->executeStatement($query->getStatement());
         }
-        $connection->executeStatement("INSERT INTO memos (sender_nick_id, sender_service_name, message) VALUES (NULL, 'ChannelBot', 'service')");
+        $connection->executeStatement("INSERT INTO memos (sender_nick_id, sender_name, message) VALUES (NULL, 'ChannelBot', 'service')");
 
         $rollback = new Version20261027000001($connection, new NullLogger());
         $this->expectException(RuntimeException::class);

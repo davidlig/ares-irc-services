@@ -109,15 +109,15 @@ final class MemoTest extends TestCase
         $memo = new Memo(1, null, null, 'Decision', new DateTimeImmutable(), 'ChanServ');
 
         self::assertNull($memo->getSenderNickId());
-        self::assertSame('ChanServ', $memo->getSenderServiceName());
+        self::assertSame('ChanServ', $memo->getSenderName());
     }
 
     #[Test]
     public function constructorRejectsMissingOrAmbiguousSender(): void
     {
-        foreach ([[null, null], [1, 'ChanServ']] as [$senderNickId, $senderServiceName]) {
+        foreach ([[null, null], [1, 'ChanServ']] as [$senderNickId, $senderName]) {
             try {
-                new Memo(1, null, $senderNickId, 'Decision', new DateTimeImmutable(), $senderServiceName);
+                new Memo(1, null, $senderNickId, 'Decision', new DateTimeImmutable(), $senderName);
                 self::fail('Expected sender representation validation to fail.');
             } catch (InvalidArgumentException $exception) {
                 self::assertSame('Exactly one sender representation must be set.', $exception->getMessage());

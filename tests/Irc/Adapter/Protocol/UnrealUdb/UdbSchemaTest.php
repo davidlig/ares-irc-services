@@ -24,6 +24,12 @@ use function str_repeat;
 final class UdbSchemaTest extends TestCase
 {
     #[Test]
+    public function aggregateRejectsInvalidNicknameRecords(): void
+    {
+        self::assertFalse(UdbSchema::validateAggregate(UdbBlock::Nicks, ['nick::pass' => '']));
+    }
+
+    #[Test]
     public function aggregateSpamfilterTypeAndLeavesAreAsciiCaseInsensitiveWithoutFoldingPatterns(): void
     {
         $invalid = 'b64%3A' . base64_encode('[');

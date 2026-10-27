@@ -18,7 +18,6 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Throwable;
 
-use function assert;
 use function explode;
 
 /**
@@ -65,8 +64,9 @@ final readonly class UnrealUdbRecordWriter implements UdbRecordWriterInterface
         }
 
         $components = explode('::', $path);
+        $encodedPath = UdbPathCodec::encodePath($components);
         $typedValue = UdbSchema::typedValueFor($blockEnum, $components, $value);
-        if (null === $typedValue) {
+        if (null === $typedValue || null === $encodedPath) {
             $this->logger->warning('Rejected UDB mutation failing schema validation.', [
                 'block' => $blockEnum->letter(),
                 'path' => $path,
@@ -75,10 +75,6 @@ final readonly class UnrealUdbRecordWriter implements UdbRecordWriterInterface
             return false;
         }
 
-        // The schema guarantees bounded, encodable components, so the
-        // canonical encoding cannot fail here.
-        $encodedPath = UdbPathCodec::encodePath($components);
-        assert(null !== $encodedPath);
         $sequence = null;
         if (!$this->persistInsert($blockEnum->letter(), $encodedPath, $typedValue, $this->sessionState->streamOrigin(), $sequence)) {
             return false;
