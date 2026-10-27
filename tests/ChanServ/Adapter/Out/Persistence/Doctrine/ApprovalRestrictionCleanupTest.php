@@ -6,7 +6,9 @@ namespace App\Tests\ChanServ\Adapter\Out\Persistence\Doctrine;
 
 use App\ChanServ\Adapter\Out\Persistence\Doctrine\DoctrineChannelRegistrationAuditRepository;
 use App\ChanServ\Adapter\Out\Persistence\Doctrine\RegisteredChannelDoctrineRepository;
+use App\ChanServ\Application\Port\Out\ChanTransactionBoundary;
 use App\ChanServ\Application\Port\Out\RegistrationModeQuery;
+use App\ChanServ\Application\Service\ChanDropService;
 use App\ChanServ\Application\Service\ChannelRegistrationActivator;
 use App\ChanServ\Application\UseCase\CleanupDroppedNick\CleanupDroppedNickData;
 use App\ChanServ\Application\UseCase\CleanupDroppedNick\CleanupDroppedNickDataHandler;
@@ -17,17 +19,103 @@ use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\ValueObject\RegistrationMode;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
 use DateTimeImmutable;
+use Doctrine\DBAL\Exception\DriverException;
 use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\TestWith;
 use ReflectionClass;
 use ReflectionNamedType;
 
 #[CoversClass(CleanupDroppedNickDataHandler::class)]
 #[CoversClass(RegisteredChannelDoctrineRepository::class)]
 #[CoversClass(RegisterChannelHandler::class)]
+#[CoversClass(ChanDropService::class)]
 final class ApprovalRestrictionCleanupTest extends DoctrineIntegrationTestCase
 {
+    #[Test]
+    public function recoverableDropAndRestoreKeepAuditUntilDefinitiveDrop(): void
+    {
+        $at = new DateTimeImmutable('2026-10-27T12:00:00+00:00');
+        $channels = new RegisteredChannelDoctrineRepository($this->entityManager);
+        $channel = RegisteredChannel::register($at, '#test', 7, 'description');
+        $channels->save($channel);
+        new DoctrineChannelRegistrationAuditRepository($this->entityManager)->save(
+            ChannelRegistrationAudit::recordDecision('#test', 7, 9, 'Root', true, null, null, $at),
+        );
+        $connection = $this->entityManager->getConnection();
+        $before = $connection->fetchAllAssociative('SELECT * FROM channel_registration_audit');
+        $drop = $this->construct(ChanDropService::class, [
+            'channelRepository' => $channels,
+            'transactionBoundary' => $this->transactionBoundary(),
+        ]);
+
+        $drop->softDropChannel($channel, $at);
+        self::assertTrue($channel->isPendingDeletion());
+        self::assertSame($before, $connection->fetchAllAssociative('SELECT * FROM channel_registration_audit'));
+        $drop->restoreChannel($channel, $at);
+        self::assertFalse($channel->isPendingDeletion());
+        self::assertSame($before, $connection->fetchAllAssociative('SELECT * FROM channel_registration_audit'));
+        $drop->hardDropChannel($channel, $at);
+        self::assertNull($channels->findByChannelName('#test'));
+        self::assertSame([], $connection->fetchAllAssociative('SELECT * FROM channel_registration_audit'));
+    }
+
+    #[Test]
+    #[TestWith([false])]
+    #[TestWith([true])]
+    public function expiredRejectionReplacementRemovesOldAuditAndFailureRollsBackBoth(bool $fail): void
+    {
+        $at = new DateTimeImmutable('2026-10-27T12:00:00+00:00');
+        $channels = new RegisteredChannelDoctrineRepository($this->entityManager);
+        $channel = RegisteredChannel::createPendingRegistration($at->modify('-2 days'), '#test', 7, 'description');
+        $channel->rejectRegistration('Reason', 9, 'Root', $at->modify('-2 days'), $at->modify('-1 day'));
+        $channels->save($channel);
+        new DoctrineChannelRegistrationAuditRepository($this->entityManager)->save(
+            ChannelRegistrationAudit::recordDecision('#TEST', 7, 9, 'Root', false, 'Reason', $at->modify('-1 day'), $at),
+        );
+        $mode = $this->createStub(RegistrationModeQuery::class);
+        $mode->method('current')->willReturn(RegistrationMode::Approval);
+        $register = $this->construct(RegisterChannelHandler::class, [
+            'channelRepository' => $channels,
+            'activator' => $this->construct(ChannelRegistrationActivator::class),
+            'registrationMode' => $mode,
+            'transactionBoundary' => $this->transactionBoundary(),
+        ]);
+        $command = new RegisterChannel('#TEST', 'New request', 8, 'Other', true, false, true, true, $at);
+        $connection = $this->entityManager->getConnection();
+        $beforeChannel = $connection->fetchAllAssociative('SELECT * FROM registered_channels');
+        $beforeAudit = $connection->fetchAllAssociative('SELECT * FROM channel_registration_audit');
+        if ($fail) {
+            $connection->executeStatement("CREATE TRIGGER prevent_insert BEFORE INSERT ON registered_channels BEGIN SELECT RAISE(ABORT, 'Replacement failed'); END");
+        }
+        try {
+            $result = $register->handle($command);
+        } catch (DriverException) {
+            self::assertTrue($fail);
+            self::assertSame($beforeChannel, $connection->fetchAllAssociative('SELECT * FROM registered_channels'));
+            self::assertSame($beforeAudit, $connection->fetchAllAssociative('SELECT * FROM channel_registration_audit'));
+
+            return;
+        }
+
+        self::assertFalse($fail, 'The replacement must fail when insertion is rejected.');
+        self::assertSame('AwaitingApproval', $result->outcome->name);
+        $replacement = $channels->findByChannelName('#test');
+        self::assertNotNull($replacement);
+        self::assertTrue($replacement->isPendingRegistration());
+        self::assertSame(8, $replacement->getFounderNickId());
+        self::assertSame([], $connection->fetchAllAssociative('SELECT * FROM channel_registration_audit'));
+    }
+
+    private function transactionBoundary(): ChanTransactionBoundary
+    {
+        $boundary = $this->createStub(ChanTransactionBoundary::class);
+        $boundary->method('transactional')->willReturnCallback(fn (callable $operation): mixed => $this->entityManager->wrapInTransaction($operation));
+
+        return $boundary;
+    }
+
     #[Test]
     public function requesterCleanupOrphansRejectionsButPreservesRestrictionsAndAudit(): void
     {

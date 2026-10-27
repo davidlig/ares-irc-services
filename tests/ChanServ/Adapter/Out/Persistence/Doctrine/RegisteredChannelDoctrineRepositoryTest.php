@@ -6,11 +6,13 @@ namespace App\Tests\ChanServ\Adapter\Out\Persistence\Doctrine;
 
 use App\ChanServ\Adapter\Out\Persistence\Doctrine\RegisteredChannelDoctrineRepository;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
+use App\ChanServ\Domain\Entity\ChannelRegistrationAudit;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\ValueObject\ChannelStatus;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
 use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Exception\DriverException;
 use Doctrine\DBAL\Platforms\MariaDBPlatform;
 use Doctrine\DBAL\Platforms\MySQLPlatform;
 use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
@@ -22,6 +24,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
+use RuntimeException;
 
 use function array_slice;
 use function count;
@@ -282,6 +285,99 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
         $this->flushAndClear();
 
         self::assertNull($this->repository->findByChannelName('#test'));
+    }
+
+    #[Test]
+    #[DataProvider('auditedRegistrationStates')]
+    public function definitiveDeletionRemovesOnlyTheCurrentChannelsAudit(string $state): void
+    {
+        $at = new DateTimeImmutable('2026-10-27T12:00:00+00:00');
+        $channel = 'registered' === $state
+            ? RegisteredChannel::register($at, '#Test', 1, 'Test')
+            : RegisteredChannel::createPendingRegistration($at, '#Test', 1, 'Test');
+        if ('rejected' === $state) {
+            $channel->rejectRegistration('Reason', 9, 'Root', $at, null);
+        }
+        $this->repository->save($channel);
+        $other = RegisteredChannel::register($at, '#other', 2, 'Other');
+        $this->repository->save($other);
+        foreach (['#Test', '#TEST', '#other'] as $name) {
+            $this->entityManager->persist(ChannelRegistrationAudit::recordDecision($name, 1, 9, 'Root', false, 'Reason', null, $at));
+        }
+        $this->entityManager->flush();
+
+        $this->repository->delete($channel);
+        $this->flushAndClear();
+
+        self::assertNull($this->repository->findByChannelName('#test'));
+        self::assertNotNull($this->repository->findByChannelName('#other'));
+        self::assertSame(['#other'], $this->entityManager->getConnection()->fetchFirstColumn('SELECT channel_name FROM channel_registration_audit'));
+        $this->repository->save(RegisteredChannel::createPendingRegistration($at, '#TEST', 3, 'New request'));
+        self::assertSame(['#other'], $this->entityManager->getConnection()->fetchFirstColumn('SELECT channel_name FROM channel_registration_audit'));
+    }
+
+    /** @return iterable<string, array{string}> */
+    public static function auditedRegistrationStates(): iterable
+    {
+        yield 'registered' => ['registered'];
+        yield 'pending' => ['pending'];
+        yield 'rejected' => ['rejected'];
+    }
+
+    #[Test]
+    #[DataProvider('deletionFailureTables')]
+    public function failedDefinitiveDeletionPreservesTheRegistrationAndItsAudit(string $table): void
+    {
+        $at = new DateTimeImmutable('2026-10-27T12:00:00+00:00');
+        $channel = RegisteredChannel::register($at, '#test', 1, 'Test');
+        $this->repository->save($channel);
+        $this->entityManager->persist(ChannelRegistrationAudit::recordDecision('#test', 1, 9, 'Root', true, null, null, $at));
+        $this->entityManager->flush();
+        $connection = $this->entityManager->getConnection();
+        $before = $connection->fetchAllAssociative('SELECT * FROM channel_registration_audit');
+        $beforeChannel = $connection->fetchAllAssociative('SELECT * FROM registered_channels');
+        $connection->executeStatement('CREATE TRIGGER prevent_deletion BEFORE DELETE ON ' . $table . " BEGIN SELECT RAISE(ABORT, 'Deletion failed'); END");
+
+        try {
+            $this->repository->delete($channel);
+            self::fail('The database must reject the channel deletion.');
+        } catch (DriverException) {
+            self::assertSame($before, $connection->fetchAllAssociative('SELECT * FROM channel_registration_audit'));
+            self::assertSame($beforeChannel, $connection->fetchAllAssociative('SELECT * FROM registered_channels'));
+        }
+    }
+
+    /** @return iterable<string, array{string}> */
+    public static function deletionFailureTables(): iterable
+    {
+        yield 'channel deletion fails' => ['registered_channels'];
+        yield 'audit deletion fails' => ['channel_registration_audit'];
+    }
+
+    #[Test]
+    public function outerRollbackRestoresTheRegistrationAndItsAudit(): void
+    {
+        $at = new DateTimeImmutable('2026-10-27T12:00:00+00:00');
+        $channel = RegisteredChannel::register($at, '#test', 1, 'Test');
+        $this->repository->save($channel);
+        $this->entityManager->persist(ChannelRegistrationAudit::recordDecision('#test', 1, 9, 'Root', true, null, null, $at));
+        $this->entityManager->flush();
+        $connection = $this->entityManager->getConnection();
+        $before = $connection->fetchAllAssociative('SELECT * FROM channel_registration_audit');
+
+        try {
+            $connection->transactional(function () use ($channel, $connection): void {
+                $this->repository->delete($channel);
+                self::assertSame([], $connection->fetchAllAssociative('SELECT * FROM channel_registration_audit'));
+                throw new RuntimeException('Abort the replacement');
+            });
+        } catch (RuntimeException $exception) {
+            self::assertSame('Abort the replacement', $exception->getMessage());
+        }
+
+        $this->entityManager->clear();
+        self::assertNotNull($this->repository->findByChannelName('#test'));
+        self::assertSame($before, $connection->fetchAllAssociative('SELECT * FROM channel_registration_audit'));
     }
 
     #[Test]
