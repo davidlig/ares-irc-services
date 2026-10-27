@@ -196,8 +196,7 @@ notify:
 
 # --- CHANNEL REGISTRATION DECISIONS ---
 registration_decision:
-  accepted: "Cererea ta de înregistrare pentru %channel% a fost aprobată de %operator%."
-  rejected: "Cererea ta de înregistrare pentru %channel% a fost respinsă de %operator%."
+  accepted: "Cererea ta de înregistrare pentru %channel% a fost aprobată."
+  rejected: "Cererea ta de înregistrare pentru %channel% a fost respinsă."
   reason: "Motiv: %reason%"
-  restriction: "Restricție rămasă: %remaining_seconds% secunde."
-  restriction_indefinite: "Acest canal este restricționat pe termen nelimitat."
+  restriction: "Disponibilă de la: %date%"

@@ -193,8 +193,7 @@ notify:
 
 # --- CHANNEL REGISTRATION DECISIONS ---
 registration_decision:
-  accepted: "Twoja prośba o rejestrację %channel% została zatwierdzona przez %operator%."
-  rejected: "Twoja prośba o rejestrację %channel% została odrzucona przez %operator%."
+  accepted: "Twoja prośba o rejestrację kanału %channel% została zatwierdzona."
+  rejected: "Twoja prośba o rejestrację kanału %channel% została odrzucona."
   reason: "Powód: %reason%"
-  restriction: "Pozostały czas blokady: %remaining_seconds% sekund."
-  restriction_indefinite: "Ten kanał jest zablokowany bezterminowo."
+  restriction: "Dostępny od: %date%"

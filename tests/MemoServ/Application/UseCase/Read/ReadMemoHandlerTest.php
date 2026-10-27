@@ -76,6 +76,22 @@ final class ReadMemoHandlerTest extends TestCase
     }
 
     #[Test]
+    public function serviceSenderSnapshotTakesPrecedenceOverHumanAccountLookup(): void
+    {
+        $memo = new Memo(1, null, null, 'Decision', new DateTimeImmutable(), 'ChannelBot');
+        $repository = $this->createStub(MemoRepositoryInterface::class);
+        $repository->method('findByTargetNickAndIndex')->willReturn($memo);
+        $this->memoRepository = $repository;
+        $accounts = $this->createMock(MemoUserAccountPort::class);
+        $accounts->expects(self::never())->method('findNicknameById');
+        $this->userAccountPort = $accounts;
+
+        $result = $this->createHandler()->handle(new ReadMemo(1, null, 1, new DateTimeImmutable()));
+
+        self::assertSame('ChannelBot', $result->from);
+    }
+
+    #[Test]
     public function returnsNotFoundWhenNickMemoDoesNotExist(): void
     {
         $memoRepo = $this->createStub(MemoRepositoryInterface::class);

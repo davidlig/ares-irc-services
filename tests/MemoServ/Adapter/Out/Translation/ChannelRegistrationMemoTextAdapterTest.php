@@ -31,9 +31,9 @@ final class ChannelRegistrationMemoTextAdapterTest extends TestCase
             self::assertSame('memoserv', $domain);
             self::assertSame('es', $locale);
             $template = match ($id) {
-                'registration_decision.rejected' => 'Rejected %channel% by %operator%.',
+                'registration_decision.rejected' => 'Rejected %channel%.',
                 'registration_decision.reason' => 'Reason: %reason%',
-                'registration_decision.restriction' => 'Restriction remaining: %remaining_seconds% seconds.',
+                'registration_decision.restriction' => 'Available from %date%.',
                 default => $id,
             };
 
@@ -47,7 +47,7 @@ final class ChannelRegistrationMemoTextAdapterTest extends TestCase
             'Op',
             false,
             str_repeat('é', 200),
-            new DateTimeImmutable('2026-10-26T10:00:30+00:00'),
+            new DateTimeImmutable('2026-10-26T12:00:30+02:00'),
             new DateTimeImmutable('2026-10-26T10:00:00+00:00'),
         );
 
@@ -59,25 +59,24 @@ final class ChannelRegistrationMemoTextAdapterTest extends TestCase
             self::assertTrue(mb_check_encoding($message, 'UTF-8'));
         }
         $combined = implode('', $messages);
-        self::assertStringContainsString('Rejected #chan by Op.', $combined);
+        self::assertStringContainsString('Rejected #chan.', $combined);
         self::assertStringContainsString('Reason: ' . str_repeat('é', 200), $combined);
-        self::assertStringContainsString('Restriction remaining: 30 seconds.', $combined);
+        self::assertStringContainsString('Available from 26/10/2026 10:00 UTC.', $combined);
     }
 
     #[Test]
-    public function rendersIndefiniteRestrictionForRejection(): void
+    public function omitsIndefiniteRestrictionForRejection(): void
     {
         $translator = $this->createMock(TranslatorInterface::class);
-        $translator->expects(self::exactly(3))->method('trans')->willReturnMap([
-            ['registration_decision.rejected', ['%channel%' => '#chan', '%operator%' => 'Op'], 'memoserv', 'en', 'Rejected #chan by Op.'],
+        $translator->expects(self::exactly(2))->method('trans')->willReturnMap([
+            ['registration_decision.rejected', ['%channel%' => '#chan'], 'memoserv', 'en', 'Rejected #chan.'],
             ['registration_decision.reason', ['%reason%' => 'policy'], 'memoserv', 'en', 'Reason: policy'],
-            ['registration_decision.restriction_indefinite', [], 'memoserv', 'en', 'Restricted indefinitely.'],
         ]);
         $input = new NotifyChannelRegistrationDecision(4, '#chan', 12, 7, 'Op', false, 'policy', null, new DateTimeImmutable('2026-10-26T10:00:00+00:00'));
 
         $messages = new ChannelRegistrationMemoTextAdapter($translator)->render($input, 'en');
 
-        self::assertSame(['Rejected #chan by Op. Reason: policy Restricted indefinitely.'], $messages);
+        self::assertSame(['Rejected #chan. Reason: policy'], $messages);
     }
 
     #[Test]
@@ -86,10 +85,10 @@ final class ChannelRegistrationMemoTextAdapterTest extends TestCase
         $translator = $this->createMock(TranslatorInterface::class);
         $translator->expects(self::once())->method('trans')->with(
             'registration_decision.accepted',
-            ['%channel%' => '#chan', '%operator%' => 'Op'],
+            ['%channel%' => '#chan'],
             'memoserv',
             'fr',
-        )->willReturn('Accepted #chan by Op.');
+        )->willReturn('Accepted #chan.');
 
         $messages = new ChannelRegistrationMemoTextAdapter($translator)->render(new NotifyChannelRegistrationDecision(
             4,
@@ -103,7 +102,7 @@ final class ChannelRegistrationMemoTextAdapterTest extends TestCase
             new DateTimeImmutable('2026-10-26T10:00:00+00:00'),
         ), 'fr');
 
-        self::assertSame(['Accepted #chan by Op.'], $messages);
+        self::assertSame(['Accepted #chan.'], $messages);
     }
 
     #[Test]

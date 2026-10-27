@@ -9,6 +9,7 @@ use App\MemoServ\Application\Port\Out\MemoChannelPort;
 use App\MemoServ\Application\Port\Out\MemoRepositoryInterface;
 use App\MemoServ\Application\Port\Out\MemoUserAccountPort;
 
+use function assert;
 use function strtolower;
 
 final readonly class ListMemosHandler implements ListMemosHandlerInterface
@@ -44,7 +45,12 @@ final readonly class ListMemosHandler implements ListMemosHandlerInterface
         $items = [];
         $index = 1;
         foreach ($memos as $memo) {
-            $senderDisplay = $this->userAccountPort->findNicknameById($memo->getSenderNickId()) ?? (string) $memo->getSenderNickId();
+            $senderDisplay = $memo->getSenderServiceName();
+            if (null === $senderDisplay) {
+                $senderNickId = $memo->getSenderNickId();
+                assert(null !== $senderNickId);
+                $senderDisplay = $this->userAccountPort->findNicknameById($senderNickId) ?? (string) $senderNickId;
+            }
             $items[] = new MemoListItem($index, $senderDisplay, $memo->getCreatedAt(), $memo->getMessage(), $memo->isRead());
             ++$index;
         }

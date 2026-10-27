@@ -192,8 +192,7 @@ notify:
 
 # --- CHANNEL REGISTRATION DECISIONS ---
 registration_decision:
-  accepted: "%channel% kayıt isteğin %operator% tarafından onaylandı."
-  rejected: "%channel% kayıt isteğin %operator% tarafından reddedildi."
+  accepted: "%channel% kayıt isteğin kabul edildi."
+  rejected: "%channel% kayıt isteğin reddedildi."
   reason: "Neden: %reason%"
-  restriction: "Kalan kısıtlama: %remaining_seconds% saniye."
-  restriction_indefinite: "Bu kanal süresiz olarak kısıtlandı."
+  restriction: "Kullanılabilir olduğu tarih: %date%"

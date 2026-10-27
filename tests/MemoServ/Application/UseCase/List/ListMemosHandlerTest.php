@@ -81,6 +81,22 @@ final class ListMemosHandlerTest extends TestCase
     }
 
     #[Test]
+    public function serviceSenderSnapshotTakesPrecedenceOverHumanAccountLookup(): void
+    {
+        $memo = new Memo(1, null, null, 'Decision', new DateTimeImmutable(), 'ChannelBot');
+        $repository = $this->createStub(MemoRepositoryInterface::class);
+        $repository->method('findByTargetNick')->willReturn([$memo]);
+        $this->memoRepository = $repository;
+        $accounts = $this->createMock(MemoUserAccountPort::class);
+        $accounts->expects(self::never())->method('findNicknameById');
+        $this->userAccountPort = $accounts;
+
+        $result = $this->createHandler()->handle(new ListMemos(1, 'Alice'));
+
+        self::assertSame('ChannelBot', $result->items[0]->senderDisplay);
+    }
+
+    #[Test]
     public function returnsEmptyWhenNoNickMemos(): void
     {
         $memoRepo = $this->createStub(MemoRepositoryInterface::class);

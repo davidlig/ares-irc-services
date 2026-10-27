@@ -2452,5 +2452,8 @@ services:
   App\MemoServ\Application\Port\Out\ChannelRegistrationMemoText:
     alias: App\MemoServ\Adapter\Out\Translation\ChannelRegistrationMemoTextAdapter
 
+  App\MemoServ\Application\Port\Out\ServiceMemoSender:
+    alias: App\MemoServ\Adapter\Out\Irc\ConfiguredChanServMemoSender
+
   App\MemoServ\Application\UseCase\NotifyChannelRegistration\NotifyChannelRegistrationDecisionHandlerInterface:
     alias: App\MemoServ\Application\UseCase\NotifyChannelRegistration\NotifyChannelRegistrationDecisionHandler

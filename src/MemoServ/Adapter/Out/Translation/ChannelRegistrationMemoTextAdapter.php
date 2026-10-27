@@ -7,10 +7,10 @@ namespace App\MemoServ\Adapter\Out\Translation;
 use App\MemoServ\Application\Port\Out\ChannelRegistrationMemoText;
 use App\MemoServ\Application\UseCase\NotifyChannelRegistration\NotifyChannelRegistrationDecision;
 use App\MemoServ\Domain\Entity\Memo;
+use DateTimeZone;
 use InvalidArgumentException;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-use function max;
 use function mb_check_encoding;
 use function mb_strcut;
 use function strlen;
@@ -29,7 +29,6 @@ final readonly class ChannelRegistrationMemoTextAdapter implements ChannelRegist
         $translation = $decision->accepted ? 'registration_decision.accepted' : 'registration_decision.rejected';
         $message = $this->translator->trans($translation, [
             '%channel%' => $decision->channelName,
-            '%operator%' => $decision->operatorNickname,
         ], 'memoserv', $language);
 
         if (!$decision->accepted) {
@@ -38,12 +37,9 @@ final readonly class ChannelRegistrationMemoTextAdapter implements ChannelRegist
             ], 'memoserv', $language);
         }
 
-        if (!$decision->accepted && null === $decision->restrictedUntil) {
-            $message .= ' ' . $this->translator->trans('registration_decision.restriction_indefinite', [], 'memoserv', $language);
-        } elseif (!$decision->accepted) {
-            $remainingSeconds = max(0, $decision->restrictedUntil->getTimestamp() - $decision->occurredAt->getTimestamp());
+        if (!$decision->accepted && null !== $decision->restrictedUntil) {
             $message .= ' ' . $this->translator->trans('registration_decision.restriction', [
-                '%remaining_seconds%' => (string) $remainingSeconds,
+                '%date%' => $decision->restrictedUntil->setTimezone(new DateTimeZone('UTC'))->format('d/m/Y H:i') . ' UTC',
             ], 'memoserv', $language);
         }
 

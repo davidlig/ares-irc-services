@@ -199,8 +199,7 @@ notify:
 
 # --- CHANNEL REGISTRATION DECISIONS ---
 registration_decision:
-  accepted: "Deine Registrierungsanfrage für %channel% wurde von %operator% angenommen."
-  rejected: "Deine Registrierungsanfrage für %channel% wurde von %operator% abgelehnt."
+  accepted: "Deine Registrierungsanfrage für %channel% wurde angenommen."
+  rejected: "Deine Registrierungsanfrage für %channel% wurde abgelehnt."
   reason: "Begründung: %reason%"
-  restriction: "Verbleibende Sperre: %remaining_seconds% Sekunden."
-  restriction_indefinite: "Dieser Channel ist dauerhaft gesperrt."
+  restriction: "Verfügbar ab: %date%"

@@ -194,8 +194,7 @@ notify:
 
 # --- CHANNEL REGISTRATION DECISIONS ---
 registration_decision:
-  accepted: "Your registration request for %channel% was accepted by %operator%."
-  rejected: "Your registration request for %channel% was rejected by %operator%."
+  accepted: "Your registration request for %channel% was accepted."
+  rejected: "Your registration request for %channel% was rejected."
   reason: "Reason: %reason%"
-  restriction: "Restriction remaining: %remaining_seconds% seconds."
-  restriction_indefinite: "This channel is restricted indefinitely."
+  restriction: "Available from: %date%"

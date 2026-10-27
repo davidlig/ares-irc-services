@@ -118,6 +118,15 @@ Migration `Version20261026000001` contains only ChanServ approval lifecycle meta
 Neither feature migration creates a ChanServ policy or registration-audit table.
 Settings without a runtime command remain configured through `.env`.
 
+**Upgrade:** apply migration `Version20261027000001` before starting the updated daemon.
+It makes memo sender account IDs nullable and adds a service-name snapshot. New CREG
+ACCEPT/REJECT memos display the configured `CHANSERV_NICK` in MemoServ LIST and READ;
+existing human and historical memos are not rewritten. Decision bodies omit the
+operator identity; finite rejection availability is UTC, and indefinite rejections
+have no availability clause. Service authorship survives deletion of the deciding
+operator's account. Rolling this migration back is refused while service-authored
+memos exist; do not delete or rewrite those memos to force a rollback.
+
 ### MemoServ
 
 Provides offline messaging for users and channels, delivery on the next identify or join,

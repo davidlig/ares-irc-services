@@ -7,6 +7,7 @@ namespace App\Tests\MemoServ\Application\UseCase\NotifyChannelRegistration;
 use App\MemoServ\Application\Port\Out\ChannelRegistrationMemoText;
 use App\MemoServ\Application\Port\Out\MemoRepositoryInterface;
 use App\MemoServ\Application\Port\Out\MemoUserAccountPort;
+use App\MemoServ\Application\Port\Out\ServiceMemoSender;
 use App\MemoServ\Application\UseCase\NotifyChannelRegistration\NotifyChannelRegistrationDecision;
 use App\MemoServ\Application\UseCase\NotifyChannelRegistration\NotifyChannelRegistrationDecisionHandler;
 use App\MemoServ\Domain\Entity\Memo;
@@ -42,7 +43,9 @@ final class NotifyChannelRegistrationDecisionHandlerTest extends TestCase
             $saved[] = $memo;
         });
 
-        $handler = new NotifyChannelRegistrationDecisionHandler($accounts, $repository, $texts);
+        $sender = $this->createMock(ServiceMemoSender::class);
+        $sender->expects(self::once())->method('getSenderName')->willReturn('ChannelBot');
+        $handler = new NotifyChannelRegistrationDecisionHandler($accounts, $repository, $texts, $sender);
         $handler->handle(new NotifyChannelRegistrationDecision(
             44,
             '#approved',
@@ -57,7 +60,8 @@ final class NotifyChannelRegistrationDecisionHandlerTest extends TestCase
 
         self::assertCount(2, $saved);
         self::assertSame([12, 12], array_map(static fn (Memo $memo): ?int => $memo->getTargetNickId(), $saved));
-        self::assertSame([7, 7], array_map(static fn (Memo $memo): int => $memo->getSenderNickId(), $saved));
+        self::assertSame([null, null], array_map(static fn (Memo $memo): ?int => $memo->getSenderNickId(), $saved));
+        self::assertSame(['ChannelBot', 'ChannelBot'], array_map(static fn (Memo $memo): ?string => $memo->getSenderServiceName(), $saved));
         self::assertSame(['Decision part one', 'Decision part two'], array_map(static fn (Memo $memo): string => $memo->getMessage(), $saved));
         self::assertSame([$occurredAt, $occurredAt], array_map(static fn (Memo $memo): DateTimeImmutable => $memo->getCreatedAt(), $saved));
     }
@@ -72,7 +76,9 @@ final class NotifyChannelRegistrationDecisionHandlerTest extends TestCase
         $texts = $this->createMock(ChannelRegistrationMemoText::class);
         $texts->expects(self::never())->method('render');
 
-        $handler = new NotifyChannelRegistrationDecisionHandler($accounts, $repository, $texts);
+        $sender = $this->createStub(ServiceMemoSender::class);
+        $sender->method('getSenderName')->willReturn('ChannelBot');
+        $handler = new NotifyChannelRegistrationDecisionHandler($accounts, $repository, $texts, $sender);
         $handler->handle(new NotifyChannelRegistrationDecision(
             44,
             '#approved',
@@ -96,7 +102,9 @@ final class NotifyChannelRegistrationDecisionHandlerTest extends TestCase
         $texts->method('render')->willReturn(['First valid chunk', $invalid]);
         $repository = $this->createMock(MemoRepositoryInterface::class);
         $repository->expects(self::never())->method('save');
-        $handler = new NotifyChannelRegistrationDecisionHandler($accounts, $repository, $texts);
+        $sender = $this->createStub(ServiceMemoSender::class);
+        $sender->method('getSenderName')->willReturn('ChannelBot');
+        $handler = new NotifyChannelRegistrationDecisionHandler($accounts, $repository, $texts, $sender);
 
         $this->expectException(InvalidArgumentException::class);
         $handler->handle(new NotifyChannelRegistrationDecision(44, '#channel', 12, 7, 'Operator', true, null, null, new DateTimeImmutable('2026-10-26T10:00:00+00:00')));

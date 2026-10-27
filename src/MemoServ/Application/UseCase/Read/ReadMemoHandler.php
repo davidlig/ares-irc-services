@@ -8,6 +8,7 @@ use App\MemoServ\Application\Port\Out\MemoChannelPort;
 use App\MemoServ\Application\Port\Out\MemoRepositoryInterface;
 use App\MemoServ\Application\Port\Out\MemoUserAccountPort;
 
+use function assert;
 use function strtolower;
 
 final readonly class ReadMemoHandler implements ReadMemoHandlerInterface
@@ -41,7 +42,12 @@ final readonly class ReadMemoHandler implements ReadMemoHandlerInterface
         $memo->markAsRead($command->occurredAt);
         $this->memoRepository->save($memo);
 
-        $from = $this->userAccountPort->findNicknameById($memo->getSenderNickId()) ?? (string) $memo->getSenderNickId();
+        $from = $memo->getSenderServiceName();
+        if (null === $from) {
+            $senderNickId = $memo->getSenderNickId();
+            assert(null !== $senderNickId);
+            $from = $this->userAccountPort->findNicknameById($senderNickId) ?? (string) $senderNickId;
+        }
 
         return ReadMemoResult::success($command->index, $from, $memo->getMessage(), $memo->getCreatedAt());
     }
