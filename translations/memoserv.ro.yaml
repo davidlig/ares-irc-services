@@ -76,7 +76,7 @@ del:
 
 # --- IGNORE ----------------------------------------------------------------
 ignore:
-  syntax: "IGNORE {ADD|DEL|LIST} [#canal] [poreclă]"
+  syntax: "IGNORE {ADD [#canal] <poreclă>|DEL [#canal] <poreclă>|LIST [#canal]}"
   short: "Gestionați lista de ignorare pentru mesaje."
   help: |-
     Gestionează poreclele de la care nu dorești să primești mesaje, atât pentru

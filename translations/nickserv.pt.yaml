@@ -203,7 +203,7 @@ info:
 
 # --- SET -------------------------------------------------------------------
 set:
-  syntax: "SET <opção> [valor]"
+  syntax: "SET {PASSWORD <nova_palavra-passe>|EMAIL <email> <token>|LANGUAGE <código>|TIMEZONE <fuso_horário>|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
   short: "Alterar as opções do seu nickname."
   help: |-
     Altera as definições do seu nickname. Tem de estar identificado para alterar
@@ -335,7 +335,7 @@ set:
 
 # --- SASET -----------------------------------------------------------------
 saset:
-  syntax: "SASET <nickname> <opção> [valor]"
+  syntax: "SASET <nickname> {PASSWORD <nova_palavra-passe>|EMAIL <novo_email>|LANGUAGE <código>|TIMEZONE {<fuso_horário>|OFF}|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
   short: "Modificar as configurações de outro nickname."
   help: |-
     Permite a um IRCop alterar as definições de outro nickname registado. Não
@@ -374,7 +374,7 @@ saset:
 
   # --- SASET TIMEZONE ------------------------------------------------------
   timezone:
-    syntax: "SASET <nickname> TIMEZONE <fuso_horário|OFF>"
+    syntax: "SASET <nickname> TIMEZONE {<fuso_horário>|OFF}"
     short: "Alterar o fuso horário de um nickname."
     help: "Define ou remove o fuso horário de outro nickname. Use OFF para o remover."
     example: "%command_prefix%\x02\x0303SASET Utilizador TIMEZONE Europe/Madrid\x03\x0F"
@@ -598,7 +598,7 @@ unforbid:
 
 # --- FORBIDVHOST -----------------------------------------------------------
 forbidvhost:
-  syntax: "FORBIDVHOST {ADD|DEL|LIST} [padrão]"
+  syntax: "FORBIDVHOST {ADD <padrão>|DEL <padrão>|LIST}"
   short: "Gerir padrões de vhost proibidos."
   help: |-
     Gere os padrões que impedem a definição de vhosts correspondentes a SET VHOST.
@@ -643,7 +643,7 @@ forbidvhost:
 
 # --- HISTORY ---
 history:
-  syntax: "HISTORY <nickname> {ADD|DEL|VIEW|CLEAR}"
+  syntax: "HISTORY <nickname> {ADD <mensagem>|DEL <id>|VIEW [PAGE|ALL]|CLEAR}"
   short: "Ver ou gerir histórico de ações do nickname."
   help: |-
     Consulta e gere o histórico de ações de um nickname. Regista automaticamente

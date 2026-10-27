@@ -78,7 +78,7 @@ del:
 
 # --- IGNORE ----------------------------------------------------------------
 ignore:
-  syntax: "IGNORE {ADD|DEL|LIST} [#canale] [nickname]"
+  syntax: "IGNORE {ADD [#canale] <nickname>|DEL [#canale] <nickname>|LIST [#canale]}"
   short: "Gestisce la lista ignore per i messaggi."
   help: |-
     Gestisce i nickname da cui non vuoi ricevere messaggi, sia nel tuo account sia

@@ -206,7 +206,7 @@ secure:
 
 # --- SET -------------------------------------------------------------------
 set:
-  syntax: "SET <#canal> <opção> [valor]"
+  syntax: "SET <#canal> {FOUNDER <apelido> [token]|SUCCESSOR [nickname]|DESC <descrição>|URL [url]|EMAIL [email]|ENTRYMSG [mensagem]|TOPICLOCK {ON|OFF}|MLOCK {ON|OFF}|PRIVATE {ON|OFF}|SECURE {ON|OFF}}"
   example: "%command_prefix%\x02\x0303SET #canal DESC Um canal comunitário\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303SET #canal URL https://example.test\x03\x0F"
@@ -361,7 +361,7 @@ set:
 
 # --- ACCESS ----------------------------------------------------------------
 access:
-  syntax: "ACCESS <#canal> {ADD|DEL|LIST} [nickname] [nível]"
+  syntax: "ACCESS <#canal> {ADD <nickname> <nível>|DEL <nickname>|LIST}"
   example: "%command_prefix%\x02\x0303ACCESS #canal LIST\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303ACCESS #canal ADD Alice 100\x03\x0F"
@@ -418,7 +418,7 @@ delaccess:
 
 # --- LEVELS ----------------------------------------------------------------
 levels:
-  syntax: "LEVELS <#canal> {LIST|SET|RESET} [nível] [valor]"
+  syntax: "LEVELS <#canal> {LIST|SET <nível> <valor>|RESET}"
   example: "%command_prefix%\x02\x0303LEVELS #canal LIST\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303LEVELS #canal SET OPDEOP 50\x03\x0F"
@@ -522,7 +522,7 @@ dehalfop:
 
 # --- AKICK -----------------------------------------------------------------
 akick:
-  syntax: "AKICK <#canal> {ADD|DEL|LIST} [máscara] [expiração] [motivo]"
+  syntax: "AKICK <#canal> {ADD <máscara> [expiração] [motivo]|DEL {<máscara>|<número>}|LIST}"
   example: "%command_prefix%\x02\x0303AKICK #canal ADD *!*@* 0\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303AKICK #canal ADD *!*@* 7d Spam\x03\x0F"
@@ -556,7 +556,7 @@ akick:
 
   # --- AKICK DEL -----------------------------------------------------------
   del:
-    syntax: "AKICK <#canal> DEL <máscara|número>"
+    syntax: "AKICK <#canal> DEL {<máscara>|<número>}"
     example: "%command_prefix%\x02\x0303AKICK #canal DEL *!*@*\x03\x0F"
     examples:
       - "%command_prefix%\x02\x0303AKICK #canal DEL 2\x03\x0F"
@@ -703,7 +703,7 @@ debug:
 
 # --- HISTORY ---
 history:
-  syntax: "HISTORY <#canal> {ADD|DEL|VIEW|CLEAR}"
+  syntax: "HISTORY <#canal> {ADD <mensagem>|DEL <id>|VIEW [PAGE|ALL]|CLEAR}"
   example: "%command_prefix%\x02\x0303HISTORY #canal ADD Revisão da moderação\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303HISTORY #canal DEL 42\x03\x0F"

@@ -78,7 +78,7 @@ del:
 
 # --- IGNORE ----------------------------------------------------------------
 ignore:
-  syntax: "IGNORE {ADD|DEL|LIST} [#channel] [nickname]"
+  syntax: "IGNORE {ADD [#channel] <nickname>|DEL [#channel] <nickname>|LIST [#channel]}"
   short: "Gestionar la llista d'ignorats per a missatges."
   help: |-
     Permet gestionar els sobrenoms dels quals no vols rebre missatges, tant al teu

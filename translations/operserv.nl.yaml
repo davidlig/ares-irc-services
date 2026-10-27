@@ -140,7 +140,7 @@ role:
       done: "\x0303✓\x03 De operclass voor rol %role% is ingesteld."
       cleared: "\x0303✓\x03 De operclass voor rol %role% is verwijderd."
       not_available: "\x0304✗\x03 Operclass \x02%operclass%\x02 is niet beschikbaar in het netwerk. Beschikbare operclasses: %available%."
-  syntax: "ROLE <optie> [parameters]"
+  syntax: "ROLE {ADD <naam> [beschrijving]|DEL <naam>|LIST|PERMS {{ADD|DEL} <rol> <permissie>|{LIST|CLEAR} <rol>}|MODES {VIEW <rol>|SET <rol> [modi]}|VHOST {VIEW <rol>|SET <rol> [vhost]}}"
   short: "Beheert operatorrollen, rechten en instellingen."
   help: |-
     Beheert operatorrollen, rechten en instellingen.
@@ -148,7 +148,7 @@ role:
     De rollen ADMIN, OPER en PREOPER zijn beschermd en kunnen niet verwijderd
     worden.
     Alleen voor Root-gebruikers.
-  syntax_operclass: "ROLE <optie> [parameters]"
+  syntax_operclass: "ROLE {ADD <naam> [beschrijving]|DEL <naam>|LIST|PERMS {{ADD|DEL} <rol> <permissie>|{LIST|CLEAR} <rol>}|MODES {VIEW <rol>|SET <rol> [modi]}|VHOST {VIEW <rol>|SET <rol> [vhost]}|OPERCLASS {LIST|VIEW <naam>|SET <naam> [operclass]}}"
   help_operclass: |-
     Beheer operatorrollen. ADD maakt een nieuwe rol aan, DEL verwijdert deze,
     LIST toont alle rollen, PERMS beheert permissies voor een rol, MODES beheert IRCOP-modi,
@@ -321,7 +321,7 @@ kill:
 
 # --- GLINE -----------------------------------------------------------------
 gline:
-  syntax: "GLINE {ADD <masker> <verloop> <reden>|DEL <masker|nummer>|LIST [masker]}"
+  syntax: "GLINE {ADD <masker> <verloop> <reden>|DEL {<masker>|<nummer>}|LIST [masker]}"
   short: "Beheer netwerkbrede G-lines."
   help: |-
     Beheert netwerkbrede G-lines (bans).
@@ -361,7 +361,7 @@ gline:
 
   # --- GLINE DEL -----------------------------------------------------------
   del:
-    syntax: "GLINE DEL <masker|nummer>"
+    syntax: "GLINE DEL {<masker>|<nummer>}"
     short: "Verwijder een G-line."
     help: |-
       Verwijdert een G-line uit de lijst.
@@ -498,7 +498,7 @@ motd:
 
 # --- BADMAIL ---------------------------------------------------------------
 badmail:
-  syntax: "BADMAIL {ADD|DEL|LIST} <parameters>"
+  syntax: "BADMAIL {ADD <domein> <reden>|DEL {nummer|ALL}|LIST <patroon> [pagina]}"
   short: "Geblokkeerde e-maildomeinen beheren."
   help: |-
     Geblokkeerde e-maildomeinen beheren.

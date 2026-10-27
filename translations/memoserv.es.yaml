@@ -76,7 +76,7 @@ del:
 
 # --- IGNORE ----------------------------------------------------------------
 ignore:
-  syntax: "IGNORE {ADD|DEL|LIST} [#canal] [apodo]"
+  syntax: "IGNORE {ADD [#canal] <apodo>|DEL [#canal] <apodo>|LIST [#canal]}"
   short: "Gestiona la lista de ignorados para mensajes."
   help: |-
     Permite gestionar los apodos de los que no deseas recibir mensajes, tanto

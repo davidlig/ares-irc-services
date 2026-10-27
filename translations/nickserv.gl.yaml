@@ -205,7 +205,7 @@ info:
 
 # --- SET -------------------------------------------------------------------
 set:
-  syntax: "SET <opción> [valor]"
+  syntax: "SET {PASSWORD <novo_contrasinal>|EMAIL <email> <token>|LANGUAGE <código>|TIMEZONE <fuso_horario>|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
   short: "Cambiar as opcións do teu alcume."
   help: |-
     Modifica a configuración do teu alcume. Debes identificarte para cambiarestas
@@ -335,7 +335,7 @@ set:
 
 # --- SASET -----------------------------------------------------------------
 saset:
-  syntax: "SASET <alcume> <opción> [valor]"
+  syntax: "SASET <alcume> {PASSWORD <novo_contrasinal>|EMAIL <novo_correo>|LANGUAGE <código>|TIMEZONE {<fuso_horario>|OFF}|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
   short: "Modificar a configuración doutro alcume."
   help: |-
     Permite a un IRCop cambiar a configuración doutro alcume rexistrado. Non
@@ -374,7 +374,7 @@ saset:
 
   # --- SASET TIMEZONE ------------------------------------------------------
   timezone:
-    syntax: "SASET <alcume> TIMEZONE <fuso_horario|OFF>"
+    syntax: "SASET <alcume> TIMEZONE {<fuso_horario>|OFF}"
     short: "Cambiar o fuso horario dun alcume."
     help: "Establece ou elimina o fuso horario doutro alcume. Usa OFF para eliminalo."
     example: "%command_prefix%\x02\x0303SASET Usuario TIMEZONE Europe/Madrid\x03\x0F"
@@ -597,7 +597,7 @@ unforbid:
 
 # --- FORBIDVHOST -----------------------------------------------------------
 forbidvhost:
-  syntax: "FORBIDVHOST {ADD|DEL|LIST} [patrón]"
+  syntax: "FORBIDVHOST {ADD <patrón>|DEL <patrón>|LIST}"
   short: "Xestionar os patróns de vhost prohibidos."
   help: |-
     Xestiona os patróns que impiden establecer vhosts coincidentes con SET VHOST.
@@ -643,7 +643,7 @@ forbidvhost:
 
 # --- HISTORY ---
 history:
-  syntax: "HISTORY <alcume> {ADD|DEL|VIEW|CLEAR}"
+  syntax: "HISTORY <alcume> {ADD <mensaxe>|DEL <id>|VIEW [PAGE|ALL]|CLEAR}"
   short: "Ver ou xestionar o historial de accións do alcume."
   help: |-
     Consulta e xestiona o historial de accións dun alcume. Rexistra automaticamente

@@ -141,7 +141,7 @@ role:
       done: "\x0303✓\x03 Η operclass ρυθμίστηκε για τον ρόλο %role%."
       cleared: "\x0303✓\x03 Η operclass αφαιρέθηκε από τον ρόλο %role%."
       not_available: "\x0304✗\x03 Η operclass \x02%operclass%\x02 δεν είναι διαθέσιμη στο δίκτυο. Διαθέσιμες operclasses: %available%."
-  syntax: "ROLE <επιλογή> [παράμετροι]"
+  syntax: "ROLE {ADD <name> [description]|DEL <name>|LIST|PERMS {{ADD|DEL} <ρόλος> <permission>|{LIST|CLEAR} <ρόλος>}|MODES {VIEW <ρόλος>|SET <ρόλος> [modes]}|VHOST {VIEW <ρόλος>|SET <ρόλος> [pattern]}}"
   short: "Διαχείριση ρόλων operator."
   help: |-
     Διαχείριση ρόλων operator. ADD δημιουργεί νέο ρόλο, DEL τον αφαιρεί,
@@ -150,7 +150,7 @@ role:
     αναγκαστικού vhost για έναν ρόλο.
     Οι προστατευμένοι ρόλοι (ADMIN, OPER, PREOPER) δεν μπορούν να διαγραφούν.
     Αυτή η εντολή περιορίζεται σε Root χρήστες.
-  syntax_operclass: "ROLE <επιλογή> [παράμετροι]"
+  syntax_operclass: "ROLE {ADD <name> [description]|DEL <name>|LIST|PERMS {{ADD|DEL} <ρόλος> <permission>|{LIST|CLEAR} <ρόλος>}|MODES {VIEW <ρόλος>|SET <ρόλος> [modes]}|VHOST {VIEW <ρόλος>|SET <ρόλος> [pattern]}|OPERCLASS {LIST|VIEW <name>|SET <name> [operclass]}}"
   help_operclass: |-
     Διαχείριση ρόλων operator. ADD δημιουργεί νέο ρόλο, DEL τον αφαιρεί,
     LIST εμφανίζει όλους τους ρόλους, PERMS διαχειρίζεται άδειες για έναν ρόλο,
@@ -328,7 +328,7 @@ kill:
 
 # --- GLINE -----------------------------------------------------------------
 gline:
-  syntax: "GLINE {ADD <mask> <expiry> <αιτιολογία>|DEL <mask|number>|LIST [mask]}"
+  syntax: "GLINE {ADD <mask> <expiry> <αιτιολογία>|DEL {<mask>|<number>}|LIST [mask]}"
   short: "Διαχείριση G-lines σε όλο το δίκτυο."
   help: |-
     Διαχείριση G-lines σε όλο το δίκτυο (καθολικοί αποκλεισμοί).
@@ -370,7 +370,7 @@ gline:
 
   # --- GLINE DEL -----------------------------------------------------------
   del:
-    syntax: "GLINE DEL <mask|number>"
+    syntax: "GLINE DEL {<mask>|<number>}"
     short: "Αφαίρεση G-line."
     help: |-
       Αφαιρεί ένα G-line από τη λίστα.
@@ -525,7 +525,7 @@ motd:
 
 # --- BADMAIL ---------------------------------------------------------------
 badmail:
-  syntax: "BADMAIL {ADD|DEL|LIST} <παράμετροι>"
+  syntax: "BADMAIL {ADD <τομέας> <αιτιολογία>|DEL {αριθμός|ALL}|LIST <μοτίβο> [σελίδα]}"
   short: "Διαχείριση αποκλεισμένων τομέων email."
   help: |-
     Διαχείριση αποκλεισμένων τομέων email.

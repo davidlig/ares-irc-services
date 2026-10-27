@@ -76,7 +76,7 @@ del:
 
 # --- IGNORE ----------------------------------------------------------------
 ignore:
-  syntax: "IGNORE {ADD|DEL|LIST} [#kanala] [ezizena]"
+  syntax: "IGNORE {ADD [#kanala] <ezizena>|DEL [#kanala] <ezizena>|LIST [#kanala]}"
   short: "Kudeatu mezuetarako baztertze zerrenda."
   help: |-
     Kudeatu mezurik jaso nahi ez duzun ezizenen zerrenda, zure kontuan zein

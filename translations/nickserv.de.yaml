@@ -208,7 +208,7 @@ info:
 
 # --- SET -------------------------------------------------------------------
 set:
-  syntax: "SET <Option> [Wert]"
+  syntax: "SET {PASSWORD <neues_passwort>|EMAIL <email> <token>|LANGUAGE <Code>|TIMEZONE <Zeitzone>|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
   short: "Optionen deines Nicknames ändern."
   help: |-
     Ändert die Einstellungen deines Nicknames. Du musst identifiziert sein, um
@@ -342,7 +342,7 @@ set:
 
 # --- SASET -----------------------------------------------------------------
 saset:
-  syntax: "SASET <Nickname> <Option> [Wert]"
+  syntax: "SASET <Nickname> {PASSWORD <neues_Passwort>|EMAIL <neue_E-Mail>|LANGUAGE <Code>|TIMEZONE {<Zeitzone>|OFF}|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [VHost]}"
   short: "Einstellungen eines anderen Nicknames ändern."
   help: |-
     Ermöglicht IRC-Operatoren, die Einstellungen eines anderen registrierten
@@ -382,7 +382,7 @@ saset:
 
   # --- SASET TIMEZONE ------------------------------------------------------
   timezone:
-    syntax: "SASET <Nickname> TIMEZONE <Zeitzone|OFF>"
+    syntax: "SASET <Nickname> TIMEZONE {<Zeitzone>|OFF}"
     short: "Zeitzone eines Nicknames ändern."
     help: |-
       Legt die Zeitzone eines anderen Nicknames fest oder entfernt sie. Verwende OFF
@@ -613,7 +613,7 @@ unforbid:
 
 # --- FORBIDVHOST -----------------------------------------------------------
 forbidvhost:
-  syntax: "FORBIDVHOST {ADD|DEL|LIST} [Muster]"
+  syntax: "FORBIDVHOST {ADD <Muster>|DEL <Muster>|LIST}"
   short: "Gesperrte VHost-Muster verwalten."
   help: |-
     Verwaltet Muster, die passende VHosts mit SET VHOST verhindern. * steht für
@@ -657,7 +657,7 @@ forbidvhost:
 
 # --- HISTORY ---
 history:
-  syntax: "HISTORY <nickname> {ADD|DEL|VIEW|CLEAR}"
+  syntax: "HISTORY <nickname> {ADD <Nachricht>|DEL <id>|VIEW [PAGE|ALL]|CLEAR}"
   short: "Nickname-Aktionsverlauf anzeigen oder verwalten."
   help: |-
     Zeigt und verwaltet den Aktionsverlauf eines Nicknames. Sperren sowie Passwort-,

@@ -204,7 +204,7 @@ secure:
 
 # --- SET -------------------------------------------------------------------
 set:
-  syntax: "SET <#kanala> <aukera> [balioa]"
+  syntax: "SET <#kanala> {FOUNDER <ezizena> [tokena]|SUCCESSOR [ezizena]|DESC <deskribapena>|URL [urla]|EMAIL [posta]|ENTRYMSG [mezua]|TOPICLOCK {ON|OFF}|MLOCK {ON|OFF}|PRIVATE {ON|OFF}|SECURE {ON|OFF}}"
   example: "%command_prefix%\x02\x0303SET #kanala DESC Komunitate-kanala\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303SET #kanala URL https://example.test\x03\x0F"
@@ -359,7 +359,7 @@ set:
 
 # --- ACCESS ----------------------------------------------------------------
 access:
-  syntax: "ACCESS <#kanala> {ADD|DEL|LIST} [ezizena] [maila]"
+  syntax: "ACCESS <#kanala> {ADD <ezizena> <maila>|DEL <ezizena>|LIST}"
   example: "%command_prefix%\x02\x0303ACCESS #kanala LIST\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303ACCESS #kanala ADD Ane 100\x03\x0F"
@@ -416,7 +416,7 @@ delaccess:
 
 # --- LEVELS ----------------------------------------------------------------
 levels:
-  syntax: "LEVELS <#kanala> {LIST|SET|RESET} [maila] [balioa]"
+  syntax: "LEVELS <#kanala> {LIST|SET <maila> <balioa>|RESET}"
   example: "%command_prefix%\x02\x0303LEVELS #kanala LIST\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303LEVELS #kanala SET OPDEOP 50\x03\x0F"
@@ -522,7 +522,7 @@ dehalfop:
 
 # --- AKICK -----------------------------------------------------------------
 akick:
-  syntax: "AKICK <#kanala> {ADD|DEL|LIST} [maskara] [iraungitzea] [arrazoia]"
+  syntax: "AKICK <#kanala> {ADD <maskara> [iraungitzea] [arrazoia]|DEL {<maskara>|<zenbakia>}|LIST}"
   example: "%command_prefix%\x02\x0303AKICK #kanala ADD *!*@* 0\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303AKICK #kanala ADD *!*@* 7d Spam\x03\x0F"
@@ -556,7 +556,7 @@ akick:
 
   # --- AKICK DEL -----------------------------------------------------------
   del:
-    syntax: "AKICK <#kanala> DEL <maskara|zenbakia>"
+    syntax: "AKICK <#kanala> DEL {<maskara>|<zenbakia>}"
     example: "%command_prefix%\x02\x0303AKICK #kanala DEL *!*@*\x03\x0F"
     examples:
       - "%command_prefix%\x02\x0303AKICK #kanala DEL 2\x03\x0F"
@@ -701,7 +701,7 @@ debug:
 
 # --- HISTORY ---
 history:
-  syntax: "HISTORY <#kanala> {ADD|DEL|VIEW|CLEAR}"
+  syntax: "HISTORY <#kanala> {ADD <mezua>|DEL <ida>|VIEW [PAGE|ALL]|CLEAR}"
   example: "%command_prefix%\x02\x0303HISTORY #kanala ADD Moderazio-berrikuspena\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303HISTORY #kanala DEL 42\x03\x0F"

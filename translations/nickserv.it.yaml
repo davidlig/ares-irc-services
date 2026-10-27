@@ -202,7 +202,7 @@ info:
 
 # --- SET -------------------------------------------------------------------
 set:
-  syntax: "SET <opzione> [valore]"
+  syntax: "SET {PASSWORD <nuova_password>|EMAIL <email> <token>|LANGUAGE <codice>|TIMEZONE <fuso_orario>|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
   short: "Cambiare le opzioni del tuo nickname."
   help: |-
     Modifica le impostazioni del tuo nickname. Per cambiare queste opzioni devi
@@ -334,7 +334,7 @@ set:
 
 # --- SASET -----------------------------------------------------------------
 saset:
-  syntax: "SASET <nickname> <opzione> [valore]"
+  syntax: "SASET <nickname> {PASSWORD <nuova_password>|EMAIL <nuova_email>|LANGUAGE <codice>|TIMEZONE {<fuso_orario>|OFF}|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
   short: "Modificare le impostazioni di un altro nickname."
   help: |-
     Consente a un IRCop di modificare le impostazioni di un altro nickname
@@ -374,7 +374,7 @@ saset:
 
   # --- SASET TIMEZONE ------------------------------------------------------
   timezone:
-    syntax: "SASET <nickname> TIMEZONE <fuso_orario|OFF>"
+    syntax: "SASET <nickname> TIMEZONE {<fuso_orario>|OFF}"
     short: "Cambiare il fuso orario di un nickname."
     help: "Imposta o rimuove il fuso orario di un altro nickname. Usa OFF per rimuoverlo."
     example: "%command_prefix%\x02\x0303SASET Utente TIMEZONE Europe/Madrid\x03\x0F"
@@ -599,7 +599,7 @@ unforbid:
 
 # --- FORBIDVHOST -----------------------------------------------------------
 forbidvhost:
-  syntax: "FORBIDVHOST {ADD|DEL|LIST} [pattern]"
+  syntax: "FORBIDVHOST {ADD <pattern>|DEL <pattern>|LIST}"
   short: "Gestisce i pattern vhost vietati."
   help: |-
     Gestisce i modelli che impediscono di impostare vhost corrispondenti con SET
@@ -644,7 +644,7 @@ forbidvhost:
 
 # --- HISTORY ---
 history:
-  syntax: "HISTORY <nickname> {ADD|DEL|VIEW|CLEAR}"
+  syntax: "HISTORY <nickname> {ADD <messaggio>|DEL <id>|VIEW [PAGE|ALL]|CLEAR}"
   short: "Visualizza o gestisce la cronologia azioni del nickname."
   help: |-
     Consulta e gestisce la cronologia delle azioni di un nickname. Registra

@@ -76,7 +76,7 @@ del:
 
 # --- IGNORE ----------------------------------------------------------------
 ignore:
-  syntax: "IGNORE {ADD|DEL|LIST} [#canle] [alcume]"
+  syntax: "IGNORE {ADD [#canle] <alcume>|DEL [#canle] <alcume>|LIST [#canle]}"
   short: "Xestionar a lista de ignorados para mensaxes."
   help: |-
     Xestiona os alcumes dos que non queres recibir mensaxes, tanto na túa conta

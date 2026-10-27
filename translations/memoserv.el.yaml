@@ -78,7 +78,7 @@ del:
 
 # --- IGNORE ----------------------------------------------------------------
 ignore:
-  syntax: "IGNORE {ADD|DEL|LIST} [#channel] [nickname]"
+  syntax: "IGNORE {ADD [#channel] <nickname>|DEL [#channel] <nickname>|LIST [#channel]}"
   short: "Διαχείριση λίστας αγνόησης για μηνύματα."
   help: |-
     ADD προσθέτει ένα ψευδώνυμο στη λίστα αγνόησής σας (ή του καναλιού)· DEL

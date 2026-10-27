@@ -76,7 +76,7 @@ del:
 
 # --- IGNORE ----------------------------------------------------------------
 ignore:
-  syntax: "IGNORE {ADD|DEL|LIST} [#kanał] [nick]"
+  syntax: "IGNORE {ADD [#kanał] <nick>|DEL [#kanał] <nick>|LIST [#kanał]}"
   short: "Zarządzaj listą ignorowanych dla wiadomości."
   help: |-
     Zarządza pseudonimami, od których nie chcesz otrzymywać wiadomości — na Twoim

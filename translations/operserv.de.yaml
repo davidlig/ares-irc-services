@@ -141,7 +141,7 @@ role:
       done: "\x0303✓\x03 Operclass für die Rolle %role% konfiguriert."
       cleared: "\x0303✓\x03 Operclass der Rolle %role% entfernt."
       not_available: "\x0304✗\x03 Die Operclass \x02%operclass%\x02 ist im Netzwerk nicht verfugbar. Verfugbare Operclasses: %available%."
-  syntax: "ROLE <Option> [Parameter]"
+  syntax: "ROLE {ADD <Name> [Beschreibung]|DEL <Name>|LIST|PERMS {{ADD|DEL} <Rolle> <Berechtigung>|{LIST|CLEAR} <Rolle>}|MODES {VIEW <Rolle>|SET <Rolle> [Modi]}|VHOST {VIEW <Rolle>|SET <Rolle> [VHost]}}"
   short: "Verwaltet Operator-Rollen, Berechtigungen und Einstellungen."
   help: |-
     Verwaltet Operator-Rollen, Berechtigungen und Einstellungen.
@@ -149,7 +149,7 @@ role:
     Die Rollen ADMIN, OPER und PREOPER sind geschützt und können nicht gelöscht
     werden.
     Nur für Root-Benutzer.
-  syntax_operclass: "ROLE <Option> [Parameter]"
+  syntax_operclass: "ROLE {ADD <Name> [Beschreibung]|DEL <Name>|LIST|PERMS {{ADD|DEL} <Rolle> <Berechtigung>|{LIST|CLEAR} <Rolle>}|MODES {VIEW <Rolle>|SET <Rolle> [Modi]}|VHOST {VIEW <Rolle>|SET <Rolle> [VHost]}|OPERCLASS {LIST|VIEW <Name>|SET <Name> [operclass]}}"
   help_operclass: |-
     Verwaltet Operator-Rollen. ADD erstellt eine neue Rolle, DEL löscht sie,
     LIST zeigt alle Rollen, PERMS verwaltet Berechtigungen einer Rolle, MODES verwaltet IRCOP-Modes,
@@ -324,7 +324,7 @@ kill:
 
 # --- GLINE -----------------------------------------------------------------
 gline:
-  syntax: "GLINE {ADD <Maske> <Ablauf> <Begründung>|DEL <Maske|Nummer>|LIST [Maske]}"
+  syntax: "GLINE {ADD <Maske> <Ablauf> <Begründung>|DEL {<Maske>|<Nummer>}|LIST [Maske]}"
   short: "Netzwerkweite G-Lines verwalten."
   help: |-
     Verwaltet netzwerkweite G-Lines (Bans).
@@ -364,7 +364,7 @@ gline:
 
   # --- GLINE DEL -----------------------------------------------------------
   del:
-    syntax: "GLINE DEL <Maske|Nummer>"
+    syntax: "GLINE DEL {<Maske>|<Nummer>}"
     short: "Eine G-Line entfernen."
     help: |-
       Entfernt eine G-Line aus der Liste.
@@ -500,7 +500,7 @@ motd:
 
 # --- BADMAIL ---------------------------------------------------------------
 badmail:
-  syntax: "BADMAIL {ADD|DEL|LIST} <Parameter>"
+  syntax: "BADMAIL {ADD <Domain> <Begründung>|DEL {Nummer|ALL}|LIST <Muster> [Seite]}"
   short: "Gesperrte E-Mail-Domains verwalten."
   help: |-
     Gesperrte E-Mail-Domains verwalten.

@@ -205,7 +205,7 @@ secure:
 
 # --- SET -------------------------------------------------------------------
 set:
-  syntax: "SET <#canle> <opción> [valor]"
+  syntax: "SET <#canle> {FOUNDER <alcume> [token]|SUCCESSOR [alcume]|DESC <descrición>|URL [url]|EMAIL [correo]|ENTRYMSG [mensaxe]|TOPICLOCK {ON|OFF}|MLOCK {ON|OFF}|PRIVATE {ON|OFF}|SECURE {ON|OFF}}"
   example: "%command_prefix%\x02\x0303SET #canle DESC Unha canle comunitaria\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303SET #canle URL https://example.test\x03\x0F"
@@ -360,7 +360,7 @@ set:
 
 # --- ACCESS ----------------------------------------------------------------
 access:
-  syntax: "ACCESS <#canle> {ADD|DEL|LIST} [alcume] [nivel]"
+  syntax: "ACCESS <#canle> {ADD <alcume> <nivel>|DEL <alcume>|LIST}"
   example: "%command_prefix%\x02\x0303ACCESS #canle LIST\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303ACCESS #canle ADD Alicia 100\x03\x0F"
@@ -417,7 +417,7 @@ delaccess:
 
 # --- LEVELS ----------------------------------------------------------------
 levels:
-  syntax: "LEVELS <#canle> {LIST|SET|RESET} [nivel] [valor]"
+  syntax: "LEVELS <#canle> {LIST|SET <nivel> <valor>|RESET}"
   example: "%command_prefix%\x02\x0303LEVELS #canle LIST\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303LEVELS #canle SET OPDEOP 50\x03\x0F"
@@ -521,7 +521,7 @@ dehalfop:
 
 # --- AKICK -----------------------------------------------------------------
 akick:
-  syntax: "AKICK <#canle> {ADD|DEL|LIST} [máscara] [caducidade] [motivo]"
+  syntax: "AKICK <#canle> {ADD <máscara> [caducidade] [motivo]|DEL {<máscara>|<número>}|LIST}"
   example: "%command_prefix%\x02\x0303AKICK #canle ADD *!*@* 0\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303AKICK #canle ADD *!*@* 7d Spam\x03\x0F"
@@ -557,7 +557,7 @@ akick:
 
   # --- AKICK DEL -----------------------------------------------------------
   del:
-    syntax: "AKICK <#canle> DEL <máscara|número>"
+    syntax: "AKICK <#canle> DEL {<máscara>|<número>}"
     example: "%command_prefix%\x02\x0303AKICK #canle DEL *!*@*\x03\x0F"
     examples:
       - "%command_prefix%\x02\x0303AKICK #canle DEL 2\x03\x0F"
@@ -704,7 +704,7 @@ debug:
 
 # --- HISTORY ---
 history:
-  syntax: "HISTORY <#canle> {ADD|DEL|VIEW|CLEAR}"
+  syntax: "HISTORY <#canle> {ADD <mensaxe>|DEL <id>|VIEW [PAGE|ALL]|CLEAR}"
   example: "%command_prefix%\x02\x0303HISTORY #canle ADD Revisión de moderación\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303HISTORY #canle DEL 42\x03\x0F"
