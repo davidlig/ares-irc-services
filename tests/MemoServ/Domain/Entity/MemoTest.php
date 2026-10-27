@@ -104,6 +104,37 @@ final class MemoTest extends TestCase
     }
 
     #[Test]
+    public function serviceAuthoredMemoHasOnlyServiceSenderSnapshot(): void
+    {
+        $memo = new Memo(1, null, null, 'Decision', new DateTimeImmutable(), 'ChanServ');
+
+        self::assertNull($memo->getSenderNickId());
+        self::assertSame('ChanServ', $memo->getSenderName());
+    }
+
+    #[Test]
+    public function constructorRejectsMissingOrAmbiguousSender(): void
+    {
+        foreach ([[null, null], [1, 'ChanServ']] as [$senderNickId, $senderName]) {
+            try {
+                new Memo(1, null, $senderNickId, 'Decision', new DateTimeImmutable(), $senderName);
+                self::fail('Expected sender representation validation to fail.');
+            } catch (InvalidArgumentException $exception) {
+                self::assertSame('Exactly one sender representation must be set.', $exception->getMessage());
+            }
+        }
+    }
+
+    #[Test]
+    public function constructorRejectsEmptyServiceSenderSnapshot(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Service sender name cannot be empty.');
+
+        new Memo(1, null, null, 'Decision', new DateTimeImmutable(), '');
+    }
+
+    #[Test]
     public function getIdReturnsReflectedId(): void
     {
         $memo = new Memo(1, null, 2, 'msg', new DateTimeImmutable());

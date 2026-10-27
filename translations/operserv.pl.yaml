@@ -140,14 +140,14 @@ role:
       done: "\x0303✓\x03 Operclass skonfigurowana dla roli %role%."
       cleared: "\x0303✓\x03 Operclass usunięta z roli %role%."
       not_available: "\x0304✗\x03 Operclass \x02%operclass%\x02 nie jest dostepna w sieci. Dostepne operclasses: %available%."
-  syntax: "ROLE <opcja> [parametry]"
+  syntax: "ROLE {ADD <nazwa> [opis]|DEL <nazwa>|LIST|PERMS {{ADD|DEL} <rola> <uprawnienie>|{LIST|CLEAR} <rola>}|MODES {VIEW <rola>|SET <rola> [tryby]}|VHOST {VIEW <rola>|SET <rola> [vhost]}}"
   short: "Zarządza rolami operatorów, ich uprawnieniami i konfiguracją."
   help: |-
     Zarządza rolami operatorów, ich uprawnieniami i konfiguracją.
 
     Role ADMIN, OPER i PREOPER są chronione i nie można ich usunąć.
     Polecenie wyłącznie dla użytkowników Root.
-  syntax_operclass: "ROLE <opcja> [parametry]"
+  syntax_operclass: "ROLE {ADD <nazwa> [opis]|DEL <nazwa>|LIST|PERMS {{ADD|DEL} <rola> <uprawnienie>|{LIST|CLEAR} <rola>}|MODES {VIEW <rola>|SET <rola> [tryby]}|VHOST {VIEW <rola>|SET <rola> [vhost]}|OPERCLASS {LIST|VIEW <nazwa>|SET <nazwa> [operclass]}}"
   help_operclass: |-
     Zarządza rolami operatorów, ich uprawnieniami i konfiguracją.
 
@@ -320,7 +320,7 @@ kill:
 
 # --- GLINE -----------------------------------------------------------------
 gline:
-  syntax: "GLINE {ADD <maska> <wygaśnięcie> <powód>|DEL <maska|numer>|LIST [maska]}"
+  syntax: "GLINE {ADD <maska> <wygaśnięcie> <powód>|DEL {<maska>|<numer>}|LIST [maska]}"
   short: "Zarządzaj globalnymi G-line'ami w sieci."
   help: |-
     Zarządza globalnymi blokadami sieci (G-lines).
@@ -360,7 +360,7 @@ gline:
 
   # --- GLINE DEL -----------------------------------------------------------
   del:
-    syntax: "GLINE DEL <maska|numer>"
+    syntax: "GLINE DEL {<maska>|<numer>}"
     short: "Usuń G-line."
     help: |-
       Usuwa G-line z listy.
@@ -494,7 +494,7 @@ motd:
 
 # --- BADMAIL ---------------------------------------------------------------
 badmail:
-  syntax: "BADMAIL {ADD|DEL|LIST} <parametry>"
+  syntax: "BADMAIL {ADD <domena> <powód>|DEL {numer|ALL}|LIST <wzorzec> [strona]}"
   short: "Zarządzaj zablokowanymi domenami email."
   help: |-
     Zarządzaj zablokowanymi domenami email.

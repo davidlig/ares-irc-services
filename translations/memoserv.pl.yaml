@@ -76,7 +76,7 @@ del:
 
 # --- IGNORE ----------------------------------------------------------------
 ignore:
-  syntax: "IGNORE {ADD|DEL|LIST} [#kanał] [nick]"
+  syntax: "IGNORE {ADD [#kanał] <nick>|DEL [#kanał] <nick>|LIST [#kanał]}"
   short: "Zarządzaj listą ignorowanych dla wiadomości."
   help: |-
     Zarządza pseudonimami, od których nie chcesz otrzymywać wiadomości — na Twoim
@@ -193,8 +193,7 @@ notify:
 
 # --- CHANNEL REGISTRATION DECISIONS ---
 registration_decision:
-  accepted: "Twoja prośba o rejestrację %channel% została zatwierdzona przez %operator%."
-  rejected: "Twoja prośba o rejestrację %channel% została odrzucona przez %operator%."
+  accepted: "Twoja prośba o rejestrację kanału %channel% została zatwierdzona."
+  rejected: "Twoja prośba o rejestrację kanału %channel% została odrzucona."
   reason: "Powód: %reason%"
-  restriction: "Pozostały czas blokady: %remaining_seconds% sekund."
-  restriction_indefinite: "Ten kanał jest zablokowany bezterminowo."
+  restriction: "Dostępny od: %date%"

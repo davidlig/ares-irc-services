@@ -204,7 +204,7 @@ info:
 
 # --- SET -------------------------------------------------------------------
 set:
-  syntax: "SET <option> [value]"
+  syntax: "SET {PASSWORD <new_password>|EMAIL <email> <token>|LANGUAGE <code>|TIMEZONE <timezone>|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
   short: "Change your nickname options."
   help: |-
     Changes your nickname settings. You must be identified to change these
@@ -334,7 +334,7 @@ set:
 
 # --- SASET -----------------------------------------------------------------
 saset:
-  syntax: "SASET <nickname> <option> [value]"
+  syntax: "SASET <nickname> {PASSWORD <new_password>|EMAIL <new_email>|LANGUAGE <code>|TIMEZONE {<timezone>|OFF}|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
   short: "Modify another nickname's settings."
   help: |-
     Allows an IRC operator to change another registered nickname's settings.
@@ -373,7 +373,7 @@ saset:
 
   # --- SASET TIMEZONE ------------------------------------------------------
   timezone:
-    syntax: "SASET <nickname> TIMEZONE <timezone|OFF>"
+    syntax: "SASET <nickname> TIMEZONE {<timezone>|OFF}"
     short: "Change a nickname's timezone."
     help: "Sets or clears another nickname's timezone. Use OFF to clear it."
     example: "%command_prefix%\x02\x0303SASET User TIMEZONE Europe/Madrid\x03\x0F"
@@ -595,7 +595,7 @@ unforbid:
 
 # --- FORBIDVHOST -----------------------------------------------------------
 forbidvhost:
-  syntax: "FORBIDVHOST {ADD|DEL|LIST} [pattern]"
+  syntax: "FORBIDVHOST {ADD <pattern>|DEL <pattern>|LIST}"
   short: "Manage forbidden vhost patterns."
   help: |-
     Manages patterns that prevent matching vhosts from being set with SET VHOST.
@@ -639,7 +639,7 @@ forbidvhost:
 
 # --- HISTORY ---
 history:
-  syntax: "HISTORY <nickname> {ADD|DEL|VIEW|CLEAR}"
+  syntax: "HISTORY <nickname> {ADD <message>|DEL <id>|VIEW [PAGE|ALL]|CLEAR}"
   short: "View or manage nickname action history."
   help: |-
     Views and manages a nickname's action history. Suspensions, password or email

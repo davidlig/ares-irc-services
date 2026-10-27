@@ -4,14 +4,12 @@ declare(strict_types=1);
 
 namespace App\Tests\ChanServ\Adapter\In\Irc\Command;
 
-use App\ChanServ\Adapter\In\Irc\ChanAuthorizationCheckerInterface;
 use App\ChanServ\Adapter\In\Irc\ChanServCommandRegistry;
 use App\ChanServ\Adapter\In\Irc\ChanServContext;
 use App\ChanServ\Adapter\In\Irc\ChanServNotifierInterface;
 use App\ChanServ\Adapter\In\Irc\Command\StatusCommand;
 use App\ChanServ\Application\Model\ChanAccountView;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
-use App\ChanServ\Application\Security\ChanServPermission;
 use App\ChanServ\Application\UseCase\ShowRegistrationStatus\ShowRegistrationStatusHandler;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\Irc\Adapter\Protocol\NullChannelModeSupport;
@@ -19,7 +17,13 @@ use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceNicknameRegistry;
+use App\OperServ\Adapter\Out\Security\ConfiguredRootIdentityRegistry;
+use App\OperServ\Application\Port\Out\OperatorRoleAccess;
+use App\OperServ\Application\Security\OperatorAuthorizationService;
+use App\OperServ\Application\Security\OperatorPermissionPolicy;
+use App\OperServ\Application\Security\RootAuthorizationPolicy;
 use DateTimeImmutable;
+use DateTimeZone;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -29,22 +33,29 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 final class StatusCommandTest extends TestCase
 {
     #[Test]
-    public function finiteRestrictionReportsRemainingSecondsToRequester(): void
+    public function requesterSeesAlignedRejectionWithoutOperatorAudit(): void
     {
         $messages = $this->executeStatus($this->rejectedChannel(new DateTimeImmutable('+1 hour')), 10);
 
-        self::assertCount(4, $messages);
-        self::assertStringContainsString('status.restriction_until', $messages[3]);
-        self::assertStringContainsString('status.restriction_until', $messages[3]);
+        self::assertSame([
+            'status.header',
+            'status.rejected',
+            'status.rejection_reason',
+            'status.footer',
+        ], $messages);
     }
 
     #[Test]
-    public function indefiniteRestrictionDoesNotReportFiniteWait(): void
+    public function indefiniteRestrictionOmitsAvailabilityForRequester(): void
     {
         $messages = $this->executeStatus($this->rejectedChannel(null), 10);
 
-        self::assertStringContainsString('status.restriction_indefinite', $messages[3]);
-        self::assertStringNotContainsString('remaining_seconds', $messages[3]);
+        self::assertSame([
+            'status.header',
+            'status.rejected',
+            'status.rejection_reason',
+            'status.footer',
+        ], $messages);
     }
 
     #[Test]
@@ -52,16 +63,39 @@ final class StatusCommandTest extends TestCase
     {
         $messages = $this->executeStatus($this->rejectedChannel(new DateTimeImmutable('+1 hour')), 11);
 
-        self::assertCount(1, $messages);
-        self::assertStringContainsString('status.rejected_private', $messages[0]);
+        self::assertSame(['status.header', 'status.rejected_private', 'status.footer'], $messages);
     }
 
     #[Test]
-    public function authorizedReviewerCanSeeRejectionAndExpiredRestrictionDetails(): void
+    public function anyCentrallyRecognizedIrcopCanSeeAuditWithoutReviewPermission(): void
     {
-        $messages = $this->executeStatus($this->rejectedChannel(new DateTimeImmutable('-1 hour')), 11, '#test', true);
+        $messages = $this->executeStatus($this->rejectedChannel(new DateTimeImmutable('-1 hour')), 11, '#test', true, actorIsIrcop: true);
 
-        self::assertSame(['status.rejected', 'status.rejection_reason', 'status.rejection_audit', 'status.restriction_expired'], $messages);
+        self::assertSame([
+            'status.header',
+            'status.rejected',
+            'status.rejection_reason',
+            'status.rejection_audit',
+            'status.restriction_until',
+            'status.footer',
+        ], $messages);
+    }
+
+    #[Test]
+    public function configuredRootCanSeeRejectionAuditWithoutNetworkOperFlag(): void
+    {
+        $messages = $this->executeStatus($this->rejectedChannel(new DateTimeImmutable('+1 hour')), 11, actorNickname: 'Root');
+
+        self::assertContains('status.rejection_audit', $messages);
+        self::assertContains('status.restriction_until', $messages);
+    }
+
+    #[Test]
+    public function rawOperFlagWithoutCentralRoleIsNotEnoughToSeeRejectionAudit(): void
+    {
+        $messages = $this->executeStatus($this->rejectedChannel(new DateTimeImmutable('+1 hour')), 11, actorIsIrcop: true);
+
+        self::assertSame(['status.header', 'status.rejected_private', 'status.footer'], $messages);
     }
 
     #[Test]
@@ -99,7 +133,7 @@ final class StatusCommandTest extends TestCase
             [$pending, '#pending', 'status.pending'],
             [$deleting, '#deleting', 'status.pending_deletion'],
         ] as [$channel, $name, $key]) {
-            self::assertSame([$key], $this->executeStatus($channel, 10, $name));
+            self::assertSame(['status.header', $key, 'status.footer'], $this->executeStatus($channel, 10, $name));
         }
     }
 
@@ -115,8 +149,15 @@ final class StatusCommandTest extends TestCase
      *
      * @return list<string>
      */
-    private function executeStatus(?RegisteredChannel $channel, int $requesterAccountId, string $channelName = '#test', bool $operatorAuthorized = false, ?array $commandArgs = null): array
-    {
+    private function executeStatus(
+        ?RegisteredChannel $channel,
+        int $requesterAccountId,
+        string $channelName = '#test',
+        bool $operatorAuthorized = false,
+        ?array $commandArgs = null,
+        string $actorNickname = 'Requester',
+        bool $actorIsIrcop = false,
+    ): array {
         $repository = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $repository->method('findByChannelName')->willReturn($channel);
         $notifier = $this->createStub(ChanServNotifierInterface::class);
@@ -127,12 +168,12 @@ final class StatusCommandTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translationParameters = [];
         $translator->method('trans')->willReturnCallback(static function (string $key, array $parameters) use (&$translationParameters): string {
-            $translationParameters[] = $parameters;
+            $translationParameters[] = ['key' => $key, 'parameters' => $parameters];
 
             return $key;
         });
         $context = new ChanServContext(
-            new SenderView('UID1', 'Requester', 'ident', 'host', 'cloak', '127.0.0.1'),
+            new SenderView('UID1', $actorNickname, 'ident', 'host', 'cloak', '127.0.0.1', true, $actorIsIrcop),
             new ChanAccountView($requesterAccountId, 'Requester', 'en'),
             'STATUS',
             $commandArgs ?? [$channelName],
@@ -148,16 +189,24 @@ final class StatusCommandTest extends TestCase
             $this->createStub(ServiceNicknameRegistry::class),
         );
 
-        $authorization = $this->createStub(ChanAuthorizationCheckerInterface::class);
-        $authorization->method('isGranted')->willReturnCallback(static fn (string $permission, ChanServContext $context): bool => ChanServPermission::REGISTRATION_REVIEW === $permission && $operatorAuthorized);
+        $roleAccess = $this->createStub(OperatorRoleAccess::class);
+        $roleAccess->method('hasAssignedRole')->willReturn($operatorAuthorized);
+        $authorization = new OperatorAuthorizationService(
+            new RootAuthorizationPolicy(new ConfiguredRootIdentityRegistry('Root')),
+            new OperatorPermissionPolicy(new RootAuthorizationPolicy(new ConfiguredRootIdentityRegistry('Root')), $roleAccess),
+            $roleAccess,
+        );
         new StatusCommand(new ShowRegistrationStatusHandler($repository), $authorization)->execute($context);
 
-        if (isset($translationParameters[3]) && null !== $channel && $channel->getRegistrationRestrictedUntil() instanceof DateTimeImmutable) {
-            self::assertArrayHasKey('%remaining_seconds%', $translationParameters[3]);
-            self::assertIsString($translationParameters[3]['%remaining_seconds%']);
-            $remainingSeconds = (int) $translationParameters[3]['%remaining_seconds%'];
-            self::assertGreaterThanOrEqual(0, $remainingSeconds);
-            self::assertLessThanOrEqual(3600, $remainingSeconds);
+        if (null !== $channel && null !== $channel->getRegistrationRestrictedUntil()) {
+            foreach ($translationParameters as $translation) {
+                if ('status.restriction_until' === $translation['key']) {
+                    self::assertSame(
+                        $channel->getRegistrationRestrictedUntil()->setTimezone(new DateTimeZone('UTC'))->format('d/m/Y H:i T'),
+                        $translation['parameters']['%date%'],
+                    );
+                }
+            }
         }
 
         return $messages;

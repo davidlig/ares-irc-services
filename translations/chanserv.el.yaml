@@ -31,7 +31,7 @@ register:
     να έχετε ταυτοποιηθεί στο %nickserv%. Στη λειτουργία APPROVAL, ένας
     IRCop πρέπει να εγκρίνει το αίτημα.
   success: "\x0303✔\x03 Το κανάλι \x02%channel%\x02 έχει καταχωρηθεί."
-  already_registered: "\x0304✗\x03 Το κανάλι \x02%channel%\x02 είναι ήδη καταχωρημένο."
+  already_registered: "\x0304✗\x03 Το κανάλι \x02%channel%\x02 είναι ήδη εγγεγραμμένο ή η εγγραφή του εκκρεμεί."
   channel_not_on_network: "\x0304✗\x03 Το κανάλι \x02%channel%\x02 δεν υπάρχει στο δίκτυο."
   pending_deletion: "\x0304✗\x03 Το κανάλι \x02%channel%\x02 είναι σε αναμονή διαγραφής και δεν μπορεί να καταχωρηθεί."
   insufficient_channel_rank: "\x0304✗\x03 Πρέπει να έχεις τουλάχιστον κατάσταση operator στο \x02%channel%\x02 για να το καταχωρήσεις."
@@ -55,7 +55,7 @@ regmode:
 
 # --- CREG ------------------------------------------------------------------
 creg:
-  syntax: "CREG {PENDING [page]|ACCEPT <#channel>|REJECT <#channel> <reason>}"
+  syntax: "CREG {PENDING [page]|ACCEPT <#channel>|REJECT <#channel> <αιτία>}"
   pending.syntax: "CREG PENDING [page]"
   pending.example: "%command_prefix%\x02\x0303CREG PENDING\x03\x0F"
   pending.short: "Εμφανίζει εκκρεμή αιτήματα σε περιορισμένη σελίδα."
@@ -64,10 +64,10 @@ creg:
   accept.example: "%command_prefix%\x02\x0303CREG ACCEPT #channel\x03\x0F"
   accept.short: "Εγκρίνει αίτημα εγγραφής καναλιού."
   accept.help: "Ελέγχει ξανά το αίτημα και ενεργοποιεί την εγγραφή."
-  reject.syntax: "CREG REJECT <#channel> <reason>"
+  reject.syntax: "CREG REJECT <#channel> <αιτία>"
   reject.example: "%command_prefix%\x02\x0303CREG REJECT #channel Απαιτείται δημόσιο θέμα\x03\x0F"
   reject.short: "Απορρίπτει αίτημα εγγραφής καναλιού."
-  reject.help: "Απορρίπτει αίτημα με υποχρεωτική αιτιολογία και περιορισμό."
+  reject.help: "Απορρίπτει αίτημα με υποχρεωτική αιτία και περιορισμό."
   example: "%command_prefix%\x02\x0303CREG PENDING\x03\x0F"
   short: "Έλεγχος αιτημάτων εγγραφής καναλιών."
   help: |-
@@ -76,7 +76,7 @@ creg:
   pending_header: "\x0314Εκκρεμείς εγγραφές (σελίδα %page%)\x03"
   pending_item: "  %channel% — αιτών %requester%, υποβλήθηκε %submitted%: %description%"
   accepted: "\x0303✔\x03 Η εγγραφή του %channel% εγκρίθηκε."
-  rejected: "\x0307✔\x03 Η εγγραφή του %channel% απορρίφθηκε."
+  rejected: "\x0303✔\x03 Η εγγραφή του %channel% απορρίφθηκε."
   not_pending: "\x0304✗\x03 Το %channel% δεν έχει εκκρεμές αίτημα εγγραφής."
   channel_not_on_network: "\x0304✗\x03 Το κανάλι %channel% δεν βρίσκεται στο δίκτυο."
   founder_limit: "\x0304✗\x03 Ο αιτών έφτασε το όριο εγγραφών καναλιών."
@@ -87,25 +87,25 @@ creg:
 status:
   syntax: "STATUS <#channel>"
   example: "%command_prefix%\x02\x0303STATUS #channel\x03\x0F"
+  header: "\x02Κατάσταση καναλιού \x0307%channel%\x03\x02"
   short: "Προβολή κατάστασης εγγραφής καναλιού."
   help: |-
     Εμφανίζει αν το κανάλι δεν είναι εγγεγραμμένο, αναμένει έγκριση,
     απορρίφθηκε ή είναι εγγεγραμμένο.
     Οι λεπτομέρειες απόρριψης είναι ορατές μόνο στον αιτούντα και
     στους εξουσιοδοτημένους IRCops.
-  unregistered: "\x0314Το %channel% δεν είναι εγγεγραμμένο.\x03"
-  pending: "\x0314Το %channel% αναμένει έγκριση από IRCop.\x03"
-  registered: "\x0314Το %channel% είναι εγγεγραμμένο.\x03"
-  suspended: "\x0314Το %channel% είναι εγγεγραμμένο αλλά σε αναστολή.\x03"
-  forbidden: "\x0314Το %channel% δεν επιτρέπεται να εγγραφεί.\x03"
-  pending_deletion: "\x0314Το %channel% εκκρεμεί προς διαγραφή.\x03"
-  rejected_private: "\x0314Το αίτημα εγγραφής του %channel% απορρίφθηκε.\x03"
-  rejected: "\x0314Το αίτημα εγγραφής του %channel% απορρίφθηκε.\x03"
-  rejection_reason: "  \x0314Αιτιολογία\x03: %reason%"
-  rejection_audit: "  \x0314Απορρίφθηκε από\x03: %operator% στις %date%"
-  restriction_indefinite: "  \x0314Τα νέα αιτήματα αποκλείονται επ’ αόριστον.\x03"
-  restriction_until: "  \x0314Τα νέα αιτήματα αποκλείονται έως %date%\x03"
-  restriction_expired: "  \x0314Ο περιορισμός εγγραφής έληξε στις %date%.\x03"
+  unregistered: "  \x0314Κατάσταση               \x03: Μη εγγεγραμμένο"
+  pending: "  \x0314Κατάσταση               \x03: \x0307Σε αναμονή έγκρισης\x03"
+  registered: "  \x0314Κατάσταση               \x03: \x0303Εγγεγραμμένο\x03"
+  suspended: "  \x0314Κατάσταση               \x03: \x0304Σε αναστολή\x03"
+  forbidden: "  \x0314Κατάσταση               \x03: \x0304Απαγορευμένο\x03"
+  pending_deletion: "  \x0314Κατάσταση               \x03: \x0307Σε αναμονή διαγραφής\x03"
+  rejected_private: "  \x0314Κατάσταση               \x03: \x0304Απόρριψη εγγραφής\x03"
+  rejected: "  \x0314Κατάσταση               \x03: \x0304Απόρριψη εγγραφής\x03"
+  rejection_reason: "  \x0314Αιτία                   \x03: %reason%"
+  rejection_audit: "  \x0314Απορρίφθηκε από         \x03: %operator% στις %date%"
+  restriction_until: "  \x0314Διαθέσιμο από           \x03: %date%"
+  footer: "\x0314─────────────────────────────\x03\x0F"
 
 # --- INFO ------------------------------------------------------------------
 info:
@@ -205,7 +205,7 @@ secure:
 
 # --- SET -------------------------------------------------------------------
 set:
-  syntax: "SET <#channel> <option> [value]"
+  syntax: "SET <#channel> {FOUNDER <ψευδώνυμο> [token]|SUCCESSOR [nickname]|DESC <description>|URL [url]|EMAIL [email]|ENTRYMSG [message]|TOPICLOCK {ON|OFF}|MLOCK {ON|OFF}|PRIVATE {ON|OFF}|SECURE {ON|OFF}}"
   example: "%command_prefix%\x02\x0303SET #κανάλι DESC Ένα κοινοτικό κανάλι\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303SET #κανάλι URL https://example.test\x03\x0F"
@@ -278,7 +278,7 @@ set:
 
   # --- SET EMAIL -----------------------------------------------------------
   email:
-    syntax: "SET <#κανάλι> EMAIL <email|none>"
+    syntax: "SET <#κανάλι> EMAIL [email]"
     example: "%command_prefix%\x02\x0303SET #κανάλι EMAIL team@example.test\x03\x0F"
     examples:
       - "%command_prefix%\x02\x0303SET #κανάλι EMAIL\x03\x0F"
@@ -293,7 +293,7 @@ set:
 
   # --- SET ENTRYMSG --------------------------------------------------------
   entrymsg:
-    syntax: "SET <#κανάλι> ENTRYMSG <message|none>"
+    syntax: "SET <#κανάλι> ENTRYMSG [message]"
     example: "%command_prefix%\x02\x0303SET #κανάλι ENTRYMSG Καλώς ορίσατε\x03\x0F"
     examples:
       - "%command_prefix%\x02\x0303SET #κανάλι ENTRYMSG\x03\x0F"
@@ -363,7 +363,7 @@ set:
 
 # --- ACCESS ----------------------------------------------------------------
 access:
-  syntax: "ACCESS <#channel> {ADD|DEL|LIST} [nickname] [level]"
+  syntax: "ACCESS <#channel> {ADD <nickname> <level>|DEL <nickname>|LIST}"
   example: "%command_prefix%\x02\x0303ACCESS #κανάλι LIST\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303ACCESS #κανάλι ADD Αλίκη 100\x03\x0F"
@@ -421,7 +421,7 @@ delaccess:
 
 # --- LEVELS ----------------------------------------------------------------
 levels:
-  syntax: "LEVELS <#channel> {LIST|SET|RESET} [level] [value]"
+  syntax: "LEVELS <#channel> {LIST|SET <level> <value>|RESET}"
   example: "%command_prefix%\x02\x0303LEVELS #κανάλι LIST\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303LEVELS #κανάλι SET OPDEOP 50\x03\x0F"
@@ -528,7 +528,7 @@ dehalfop:
 
 # --- AKICK -----------------------------------------------------------------
 akick:
-  syntax: "AKICK <#channel> {ADD|DEL|LIST} [mask] [expiry] [αιτιολογία]"
+  syntax: "AKICK <#channel> {ADD <mask> [expiry] [αιτιολογία]|DEL {<mask>|<number>}|LIST}"
   example: "%command_prefix%\x02\x0303AKICK #κανάλι ADD *!*@* 0\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303AKICK #κανάλι ADD *!*@* 7d Spam\x03\x0F"
@@ -563,7 +563,7 @@ akick:
 
   # --- AKICK DEL -----------------------------------------------------------
   del:
-    syntax: "AKICK <#channel> DEL <mask|number>"
+    syntax: "AKICK <#channel> DEL {<mask>|<number>}"
     example: "%command_prefix%\x02\x0303AKICK #κανάλι DEL *!*@*\x03\x0F"
     examples:
       - "%command_prefix%\x02\x0303AKICK #κανάλι DEL 2\x03\x0F"
@@ -602,12 +602,10 @@ drop:
     - "%command_prefix%\x02\x0303DROP #κανάλι FORCE\x03\x0F"
   short: "Διαγραφή καταχωρημένου καναλιού."
   help: |-
-    Αφαιρεί ένα καταχωρημένο κανάλι από τη βάση δεδομένων.
-    Αυτή η εντολή απαιτεί άδεια IRCop: chanserv.drop.
-    Το FORCE διαγράφει οριστικά ένα κανάλι σε αναμονή διαγραφής και απαιτεί άδεια
-    IRCop: chanserv.drop.force.
-    Το DROP αποδεσμεύει απορριφθέν αίτημα μετά τη λήξη του περιορισμού.
-    Εξουσιοδοτημένος IRCop μπορεί να άρει ρητά έναν αόριστο περιορισμό.
+    Διαγράφει ένα εγγεγραμμένο κανάλι από τη βάση δεδομένων.
+    Το FORCE διαγράφει οριστικά ένα κανάλι που εκκρεμεί προς διαγραφή.
+    Ένας IRCop με άδεια DROP μπορεί επίσης να αποδεσμεύσει άμεσα
+    μια απορριφθείσα εγγραφή, με ή χωρίς FORCE. Το FORCE απαιτεί επιπλέον DROP_FORCE.
   registration_restricted: "\x0304✗\x03 Αυτό το αίτημα εγγραφής αποκλείεται έως %date%."
   force:
     short: "Διαγράφει οριστικά ένα κανάλι που εκκρεμεί προς διαγραφή."
@@ -727,7 +725,7 @@ debug:
 
 # --- HISTORY ---
 history:
-  syntax: "HISTORY <#channel> {ADD|DEL|VIEW|CLEAR}"
+  syntax: "HISTORY <#channel> {ADD <message>|DEL <id>|VIEW [PAGE|ALL]|CLEAR}"
   example: "%command_prefix%\x02\x0303HISTORY #κανάλι ADD Έλεγχος συντονισμού\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303HISTORY #κανάλι DEL 42\x03\x0F"

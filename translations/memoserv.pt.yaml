@@ -76,7 +76,7 @@ del:
 
 # --- IGNORE ----------------------------------------------------------------
 ignore:
-  syntax: "IGNORE {ADD|DEL|LIST} [#canal] [nickname]"
+  syntax: "IGNORE {ADD [#canal] <nickname>|DEL [#canal] <nickname>|LIST [#canal]}"
   short: "Gerir lista de ignorados para mensagens."
   help: |-
     Permite gerir os nicknames dos quais não pretende receber mensagens, na sua
@@ -193,8 +193,7 @@ notify:
 
 # --- CHANNEL REGISTRATION DECISIONS ---
 registration_decision:
-  accepted: "O teu pedido de registo de %channel% foi aprovado por %operator%."
-  rejected: "O teu pedido de registo de %channel% foi rejeitado por %operator%."
-  reason: "Motivo: %reason%"
-  restriction: "Restrição restante: %remaining_seconds% segundos."
-  restriction_indefinite: "Este canal está restringido indefinidamente."
+  accepted: "O teu pedido de registo de %channel% foi aprovado."
+  rejected: "O teu pedido de registo de %channel% foi rejeitado."
+  reason: "Razão: %reason%"
+  restriction: "Disponível a partir de: %date%"

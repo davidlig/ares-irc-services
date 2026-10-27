@@ -31,7 +31,7 @@ register:
     %nickserv%.
     În modul APPROVAL, un IRCop trebuie să aprobe cererea.
   success: "\x0303✔\x03 Canalul \x02%channel%\x02 a fost înregistrat."
-  already_registered: "\x0304✗\x03 Canalul \x02%channel%\x02 este deja înregistrat."
+  already_registered: "\x0304✗\x03 Canalul \x02%channel%\x02 este deja înregistrat sau are o cerere de înregistrare în curs."
   channel_not_on_network: "\x0304✗\x03 Canalul \x02%channel%\x02 nu există în rețea."
   pending_deletion: "\x0304✗\x03 Canalul \x02%channel%\x02 este în așteptare de ștergere și nu poate fi înregistrat."
   insufficient_channel_rank: "\x0304✗\x03 Trebuie să ai cel puțin statut de operator pe \x02%channel%\x02 pentru a-l înregistra."
@@ -78,7 +78,7 @@ creg:
   pending_header: "\x0314Înregistrări în așteptare (pagina %page%)\x03"
   pending_item: "  %channel% — solicitant %requester%, trimisă %submitted%: %description%"
   accepted: "\x0303✔\x03 Înregistrarea pentru \x02%channel%\x02 a fost aprobată."
-  rejected: "\x0307✔\x03 Înregistrarea pentru \x02%channel%\x02 a fost respinsă."
+  rejected: "\x0303✔\x03 Înregistrarea pentru \x02%channel%\x02 a fost respinsă."
   not_pending: "\x0304✗\x03 Canalul \x02%channel%\x02 nu are o înregistrare în așteptare."
   channel_not_on_network: "\x0304✗\x03 Canalul \x02%channel%\x02 nu este în rețea."
   founder_limit: "\x0304✗\x03 Solicitantul a atins limita de înregistrări de canale."
@@ -89,6 +89,7 @@ creg:
 status:
   syntax: "STATUS <#canal>"
   example: "%command_prefix%\x02\x0303STATUS #canal\x03\x0F"
+  header: "\x02Starea canalului \x0307%channel%\x03\x02"
   short: "Afișează starea înregistrării canalului."
   help: |-
     Arată dacă un canal nu este înregistrat, așteaptă aprobarea, a fost respins
@@ -96,19 +97,18 @@ status:
     Detaliile respingerii sunt vizibile doar solicitantului și IRCopilor
     autorizați.
 
-  unregistered: "\x0314%channel% nu este înregistrat.\x03"
-  pending: "\x0314%channel% așteaptă aprobarea unui IRCop.\x03"
-  registered: "\x0314%channel% este înregistrat.\x03"
-  suspended: "\x0314%channel% este înregistrat, dar suspendat.\x03"
-  forbidden: "\x0314Înregistrarea pentru %channel% este interzisă.\x03"
-  pending_deletion: "\x0314%channel% este în așteptarea ștergerii.\x03"
-  rejected_private: "\x0314%channel% are o cerere de înregistrare respinsă.\x03"
-  rejected: "\x0314Înregistrarea pentru %channel% a fost respinsă.\x03"
-  rejection_reason: "  \x0314Motiv\x03: %reason%"
-  rejection_audit: "  \x0314Respinsă de\x03: %operator% la %date%"
-  restriction_indefinite: "  \x0314Cererile noi sunt blocate pe termen nelimitat.\x03"
-  restriction_until: "  \x0314Cererile noi sunt blocate până la %date%\x03"
-  restriction_expired: "  \x0314Restricția de înregistrare s-a încheiat la %date%.\x03"
+  unregistered: "  \x0314Stare                   \x03: Neînregistrat"
+  pending: "  \x0314Stare                   \x03: \x0307În așteptarea aprobării\x03"
+  registered: "  \x0314Stare                   \x03: \x0303Înregistrat\x03"
+  suspended: "  \x0314Stare                   \x03: \x0304Suspendat\x03"
+  forbidden: "  \x0314Stare                   \x03: \x0304Interzis\x03"
+  pending_deletion: "  \x0314Stare                   \x03: \x0307În așteptarea ștergerii\x03"
+  rejected_private: "  \x0314Stare                   \x03: \x0304Înregistrare respinsă\x03"
+  rejected: "  \x0314Stare                   \x03: \x0304Înregistrare respinsă\x03"
+  rejection_reason: "  \x0314Motiv                   \x03: %reason%"
+  rejection_audit: "  \x0314Respinsă de             \x03: %operator% la %date%"
+  restriction_until: "  \x0314Disponibilă de la       \x03: %date%"
+  footer: "\x0314─────────────────────────────\x03\x0F"
 
 # --- INFO ------------------------------------------------------------------
 info:
@@ -209,7 +209,7 @@ secure:
 
 # --- SET -------------------------------------------------------------------
 set:
-  syntax: "SET <#canal> <opțiune> [valoare]"
+  syntax: "SET <#canal> {FOUNDER <poreclă> [token]|SUCCESSOR [poreclă]|DESC <descriere>|URL [url]|EMAIL [e-mail]|ENTRYMSG [mesaj]|TOPICLOCK {ON|OFF}|MLOCK {ON|OFF}|PRIVATE {ON|OFF}|SECURE {ON|OFF}}"
   example: "%command_prefix%\x02\x0303SET #canal DESC Un canal comunitar\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303SET #canal URL https://example.test\x03\x0F"
@@ -367,7 +367,7 @@ set:
 
 # --- ACCESS ----------------------------------------------------------------
 access:
-  syntax: "ACCESS <#canal> {ADD|DEL|LIST} [poreclă] [nivel]"
+  syntax: "ACCESS <#canal> {ADD <poreclă> <nivel>|DEL <poreclă>|LIST}"
   example: "%command_prefix%\x02\x0303ACCESS #canal LIST\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303ACCESS #canal ADD Alice 100\x03\x0F"
@@ -424,7 +424,7 @@ delaccess:
 
 # --- LEVELS ----------------------------------------------------------------
 levels:
-  syntax: "LEVELS <#canal> {LIST|SET|RESET} [nivel] [valoare]"
+  syntax: "LEVELS <#canal> {LIST|SET <nivel> <valoare>|RESET}"
   example: "%command_prefix%\x02\x0303LEVELS #canal LIST\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303LEVELS #canal SET OPDEOP 50\x03\x0F"
@@ -528,7 +528,7 @@ dehalfop:
 
 # --- AKICK -----------------------------------------------------------------
 akick:
-  syntax: "AKICK <#canal> {ADD|DEL|LIST} [mască] [expirare] [motiv]"
+  syntax: "AKICK <#canal> {ADD <mască> [expirare] [motiv]|DEL {<mască>|<număr>}|LIST}"
   example: "%command_prefix%\x02\x0303AKICK #canal ADD *!*@* 0\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303AKICK #canal ADD *!*@* 7d Spam\x03\x0F"
@@ -561,7 +561,7 @@ akick:
 
   # --- AKICK DEL -----------------------------------------------------------
   del:
-    syntax: "AKICK <#canal> DEL <mască|număr>"
+    syntax: "AKICK <#canal> DEL {<mască>|<număr>}"
     example: "%command_prefix%\x02\x0303AKICK #canal DEL *!*@*\x03\x0F"
     examples:
       - "%command_prefix%\x02\x0303AKICK #canal DEL 2\x03\x0F"
@@ -598,10 +598,10 @@ drop:
     - "%command_prefix%\x02\x0303DROP #canal FORCE\x03\x0F"
   short: "Eliminați un canal înregistrat."
   help: |-
-    Elimină din baza de date un canal înregistrat.
+    Șterge un canal înregistrat din baza de date.
     FORCE șterge definitiv un canal aflat în așteptarea ștergerii.
-    DROP pentru o cerere respinsă o elimină după expirarea blocării.
-    Un IRCop autorizat poate elibera explicit o blocare nelimitată.
+    Un IRCop cu permisiunea DROP poate elibera imediat și o
+    înregistrare respinsă, cu sau fără FORCE. FORCE necesită și DROP_FORCE.
   registration_restricted: "\x0304✗\x03 Această cerere de înregistrare este restricționată până la %date%."
   force:
     short: "Șterge definitiv un canal aflat în așteptarea ștergerii."
@@ -705,7 +705,7 @@ debug:
 
 # --- HISTORY ---
 history:
-  syntax: "HISTORY <#canal> {ADD|DEL|VIEW|CLEAR}"
+  syntax: "HISTORY <#canal> {ADD <mesaj>|DEL <id>|VIEW [PAGE|ALL]|CLEAR}"
   example: "%command_prefix%\x02\x0303HISTORY #canal ADD Revizuire moderare\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303HISTORY #canal DEL 42\x03\x0F"

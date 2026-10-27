@@ -204,7 +204,7 @@ info:
 
 # --- SET -------------------------------------------------------------------
 set:
-  syntax: "SET <optie> [waarde]"
+  syntax: "SET {PASSWORD <nieuw_wachtwoord>|EMAIL <email> <token>|LANGUAGE <code>|TIMEZONE <tijdzone>|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
   short: "Wijzig de opties van je bijnaam."
   help: |-
     Wijzigt de instellingen van je bijnaam. Je moet geïdentificeerd zijn om deze
@@ -336,7 +336,7 @@ set:
 
 # --- SASET -----------------------------------------------------------------
 saset:
-  syntax: "SASET <bijnaam> <optie> [waarde]"
+  syntax: "SASET <bijnaam> {PASSWORD <nieuw_wachtwoord>|EMAIL <nieuwe_e-mail>|LANGUAGE <code>|TIMEZONE {<tijdzone>|OFF}|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
   short: "Instellingen van een andere bijnaam wijzigen."
   help: |-
     Hiermee kan een IRC-operator instellingen van een andere geregistreerde bijnaam
@@ -375,7 +375,7 @@ saset:
 
   # --- SASET TIMEZONE ------------------------------------------------------
   timezone:
-    syntax: "SASET <bijnaam> TIMEZONE <tijdzone|OFF>"
+    syntax: "SASET <bijnaam> TIMEZONE {<tijdzone>|OFF}"
     short: "Tijdzone van een bijnaam wijzigen."
     help: |-
       Stelt de tijdzone van een andere bijnaam in of verwijdert deze. Gebruik OFF om
@@ -600,7 +600,7 @@ unforbid:
 
 # --- FORBIDVHOST -----------------------------------------------------------
 forbidvhost:
-  syntax: "FORBIDVHOST {ADD|DEL|LIST} [patroon]"
+  syntax: "FORBIDVHOST {ADD <patroon>|DEL <patroon>|LIST}"
   short: "Beheer verboden vhost-patronen."
   help: |-
     Beheert patronen die overeenkomende VHosts via SET VHOST blokkeren. * staat voor
@@ -643,7 +643,7 @@ forbidvhost:
 
 # --- HISTORY ---
 history:
-  syntax: "HISTORY <bijnaam> {ADD|DEL|VIEW|CLEAR}"
+  syntax: "HISTORY <bijnaam> {ADD <bericht>|DEL <id>|VIEW [PAGE|ALL]|CLEAR}"
   short: "Bekijk of beheer bijnaamactiegeschiedenis."
   help: |-
     Raadpleegt en beheert de actgeschiedenis van een bijnaam. Opschortingen en

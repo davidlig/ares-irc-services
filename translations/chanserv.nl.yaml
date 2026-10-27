@@ -31,7 +31,7 @@ register:
     %nickserv%.
     In de modus APPROVAL moet een IRCop de aanvraag goedkeuren.
   success: "\x0303✔\x03 Kanaal \x02%channel%\x02 is geregistreerd."
-  already_registered: "\x0304✗\x03 Kanaal \x02%channel%\x02 is al geregistreerd."
+  already_registered: "\x0304✗\x03 Kanaal \x02%channel%\x02 is al geregistreerd of heeft een lopende registratieaanvraag."
   channel_not_on_network: "\x0304✗\x03 Kanaal \x02%channel%\x02 bestaat niet op het netwerk."
   pending_deletion: "\x0304✗\x03 Kanaal \x02%channel%\x02 staat op het punt verwijderd te worden en kan niet worden geregistreerd."
   insufficient_channel_rank: "\x0304✗\x03 Je moet minstens operatorstatus hebben op \x02%channel%\x02 om het kanaal te registreren."
@@ -78,7 +78,7 @@ creg:
   pending_header: "\x0314Openstaande registraties (pagina %page%)\x03"
   pending_item: "  %channel% — aanvrager %requester%, ingediend %submitted%: %description%"
   accepted: "\x0303✔\x03 Registratie van \x02%channel%\x02 is goedgekeurd."
-  rejected: "\x0307✔\x03 Registratie van \x02%channel%\x02 is afgewezen."
+  rejected: "\x0303✔\x03 Registratie van \x02%channel%\x02 is afgewezen."
   not_pending: "\x0304✗\x03 Kanaal \x02%channel%\x02 heeft geen openstaande registratie."
   channel_not_on_network: "\x0304✗\x03 Kanaal \x02%channel%\x02 is niet op het netwerk."
   founder_limit: "\x0304✗\x03 De aanvrager heeft de registratielimiet voor kanalen bereikt."
@@ -89,25 +89,25 @@ creg:
 status:
   syntax: "STATUS <#kanaal>"
   example: "%command_prefix%\x02\x0303STATUS #canal\x03\x0F"
+  header: "\x02Status van kanaal \x0307%channel%\x03\x02"
   short: "Toon de registratiestatus van een kanaal."
   help: |-
     Toont of een kanaal niet geregistreerd is, op goedkeuring wacht, is
     afgewezen of geregistreerd is.
     Afwijsgegevens zijn alleen zichtbaar voor de aanvrager en bevoegde IRCops.
 
-  unregistered: "\x0314%channel% is niet geregistreerd.\x03"
-  pending: "\x0314%channel% wacht op goedkeuring door een IRCop.\x03"
-  registered: "\x0314%channel% is geregistreerd.\x03"
-  suspended: "\x0314%channel% is geregistreerd maar geschorst.\x03"
-  forbidden: "\x0314%channel% mag niet worden geregistreerd.\x03"
-  pending_deletion: "\x0314%channel% staat op het punt verwijderd te worden.\x03"
-  rejected_private: "\x0314%channel% heeft een afgewezen registratieaanvraag.\x03"
-  rejected: "\x0314Registratie van %channel% is afgewezen.\x03"
-  rejection_reason: "  \x0314Reden\x03: %reason%"
-  rejection_audit: "  \x0314Afgewezen door\x03: %operator% op %date%"
-  restriction_indefinite: "  \x0314Nieuwe aanvragen zijn onbeperkt geblokkeerd.\x03"
-  restriction_until: "  \x0314Nieuwe aanvragen zijn geblokkeerd tot %date%\x03"
-  restriction_expired: "  \x0314De registratiebeperking eindigde op %date%.\x03"
+  unregistered: "  \x0314Status                  \x03: Niet geregistreerd"
+  pending: "  \x0314Status                  \x03: \x0307Wacht op goedkeuring\x03"
+  registered: "  \x0314Status                  \x03: \x0303Geregistreerd\x03"
+  suspended: "  \x0314Status                  \x03: \x0304Geschorst\x03"
+  forbidden: "  \x0314Status                  \x03: \x0304Verboden\x03"
+  pending_deletion: "  \x0314Status                  \x03: \x0307Wacht op verwijdering\x03"
+  rejected_private: "  \x0314Status                  \x03: \x0304Registratie afgewezen\x03"
+  rejected: "  \x0314Status                  \x03: \x0304Registratie afgewezen\x03"
+  rejection_reason: "  \x0314Reden                   \x03: %reason%"
+  rejection_audit: "  \x0314Afgewezen door          \x03: %operator% op %date%"
+  restriction_until: "  \x0314Beschikbaar vanaf       \x03: %date%"
+  footer: "\x0314─────────────────────────────\x03\x0F"
 
 # --- INFO ------------------------------------------------------------------
 info:
@@ -206,7 +206,7 @@ secure:
 
 # --- SET -------------------------------------------------------------------
 set:
-  syntax: "SET <#kanaal> <optie> [waarde]"
+  syntax: "SET <#kanaal> {FOUNDER <bijnaam> [token]|SUCCESSOR [bijnaam]|DESC <beschrijving>|URL [url]|EMAIL [e-mail]|ENTRYMSG [bericht]|TOPICLOCK {ON|OFF}|MLOCK {ON|OFF}|PRIVATE {ON|OFF}|SECURE {ON|OFF}}"
   example: "%command_prefix%\x02\x0303SET #kanaal DESC Een gemeenschapskanaal\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303SET #kanaal URL https://example.test\x03\x0F"
@@ -366,7 +366,7 @@ set:
 
 # --- ACCESS ----------------------------------------------------------------
 access:
-  syntax: "ACCESS <#kanaal> {ADD|DEL|LIST} [bijnaam] [niveau]"
+  syntax: "ACCESS <#kanaal> {ADD <bijnaam> <niveau>|DEL <bijnaam>|LIST}"
   example: "%command_prefix%\x02\x0303ACCESS #kanaal LIST\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303ACCESS #kanaal ADD Alice 100\x03\x0F"
@@ -423,7 +423,7 @@ delaccess:
 
 # --- LEVELS ----------------------------------------------------------------
 levels:
-  syntax: "LEVELS <#kanaal> {LIST|SET|RESET} [niveau] [waarde]"
+  syntax: "LEVELS <#kanaal> {LIST|SET <niveau> <waarde>|RESET}"
   example: "%command_prefix%\x02\x0303LEVELS #kanaal LIST\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303LEVELS #kanaal SET OPDEOP 50\x03\x0F"
@@ -529,7 +529,7 @@ dehalfop:
 
 # --- AKICK -----------------------------------------------------------------
 akick:
-  syntax: "AKICK <#kanaal> {ADD|DEL|LIST} [masker] [verloop] [reden]"
+  syntax: "AKICK <#kanaal> {ADD <masker> [verloop] [reden]|DEL {<masker>|<nummer>}|LIST}"
   example: "%command_prefix%\x02\x0303AKICK #kanaal ADD *!*@* 0\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303AKICK #kanaal ADD *!*@* 7d Spam\x03\x0F"
@@ -563,7 +563,7 @@ akick:
 
   # --- AKICK DEL -----------------------------------------------------------
   del:
-    syntax: "AKICK <#kanaal> DEL <masker|nummer>"
+    syntax: "AKICK <#kanaal> DEL {<masker>|<nummer>}"
     example: "%command_prefix%\x02\x0303AKICK #kanaal DEL *!*@*\x03\x0F"
     examples:
       - "%command_prefix%\x02\x0303AKICK #kanaal DEL 2\x03\x0F"
@@ -603,9 +603,9 @@ drop:
   short: "Laat een geregistreerd kanaal vallen."
   help: |-
     Verwijdert een geregistreerd kanaal uit de database.
-    FORCE verwijdert een kanaal dat op verwijdering wacht definitief.
-    DROP op een afgewezen aanvraag heft deze op na afloop van de blokkering.
-    Een bevoegde IRCop kan een onbeperkte blokkering expliciet opheffen.
+    FORCE verwijdert een kanaal dat wordt verwijderd definitief.
+    Een IRCop met DROP-recht kan een afgewezen registratie ook
+    direct vrijgeven, met of zonder FORCE. FORCE vereist ook DROP_FORCE.
   registration_restricted: "\x0304✗\x03 Deze registratieaanvraag is beperkt tot %date%."
   force:
     short: "Verwijdert een kanaal dat op verwijdering wacht definitief."
@@ -706,7 +706,7 @@ debug:
 
 # --- HISTORY ---
 history:
-  syntax: "HISTORY <#kanaal> {ADD|DEL|VIEW|CLEAR}"
+  syntax: "HISTORY <#kanaal> {ADD <bericht>|DEL <id>|VIEW [PAGE|ALL]|CLEAR}"
   example: "%command_prefix%\x02\x0303HISTORY #kanaal ADD Moderatiecontrole\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303HISTORY #kanaal DEL 42\x03\x0F"

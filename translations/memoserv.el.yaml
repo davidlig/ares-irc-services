@@ -78,7 +78,7 @@ del:
 
 # --- IGNORE ----------------------------------------------------------------
 ignore:
-  syntax: "IGNORE {ADD|DEL|LIST} [#channel] [nickname]"
+  syntax: "IGNORE {ADD [#channel] <nickname>|DEL [#channel] <nickname>|LIST [#channel]}"
   short: "Διαχείριση λίστας αγνόησης για μηνύματα."
   help: |-
     ADD προσθέτει ένα ψευδώνυμο στη λίστα αγνόησής σας (ή του καναλιού)· DEL
@@ -194,8 +194,7 @@ notify:
 
 # --- CHANNEL REGISTRATION DECISIONS ---
 registration_decision:
-  accepted: "Το αίτημα εγγραφής για το %channel% έγινε δεκτό από τον/την %operator%."
-  rejected: "Το αίτημα εγγραφής για το %channel% απορρίφθηκε από τον/την %operator%."
-  reason: "Αιτιολογία: %reason%"
-  restriction: "Υπόλοιπος περιορισμός: %remaining_seconds% δευτερόλεπτα."
-  restriction_indefinite: "Αυτό το κανάλι έχει περιορισμό επ’ αόριστον."
+  accepted: "Το αίτημα εγγραφής για το %channel% έγινε δεκτό."
+  rejected: "Το αίτημα εγγραφής για το %channel% απορρίφθηκε."
+  reason: "Αιτία: %reason%"
+  restriction: "Διαθέσιμο από: %date%"

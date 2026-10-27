@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\NickServ\Adapter\In\Irc\Command;
 
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
+use App\Irc\Application\Port\In\SenderView;
 use App\NickServ\Adapter\In\Irc\NickServCommandInterface;
 use App\NickServ\Adapter\In\Irc\NickServContext;
 use App\NickServ\Adapter\Out\User\IrcNetworkUserMapper;
@@ -19,7 +20,6 @@ use App\NickServ\Application\UseCase\Identify\IdentifyNickResult;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 
-use function assert;
 use function ceil;
 use function strcasecmp;
 
@@ -131,7 +131,7 @@ final readonly class IdentifyCommand implements NickServCommandInterface
             senderIsIdentified: $sender->isIdentified,
         ));
 
-        $this->present($context, $result);
+        $this->present($context, $result, $sender);
 
         return null;
     }
@@ -141,11 +141,11 @@ final readonly class IdentifyCommand implements NickServCommandInterface
         return NicknameAuthenticationMode::NativeNick === $this->authenticationMode->current();
     }
 
-    private function present(NickServContext $context, IdentifyNickResult $result): void
+    private function present(NickServContext $context, IdentifyNickResult $result, SenderView $sender): void
     {
         switch ($result->outcome) {
             case IdentifyNickOutcome::Success:
-                $this->handleSuccess($context, $result);
+                $this->handleSuccess($context, $result, $sender, $result->requireNickname());
                 break;
             case IdentifyNickOutcome::AlreadyIdentified:
                 $context->reply('identify.already_identified', ['nickname' => $result->nickname]);
@@ -179,32 +179,29 @@ final readonly class IdentifyCommand implements NickServCommandInterface
         }
     }
 
-    private function handleSuccess(NickServContext $context, IdentifyNickResult $result): void
+    private function handleSuccess(NickServContext $context, IdentifyNickResult $result, SenderView $sender, string $nickname): void
     {
-        $sender = $context->sender;
-        assert(null !== $sender && null !== $result->nickname);
-
-        $currentHolder = $this->userLookup->findByNick($result->nickname);
+        $currentHolder = $this->userLookup->findByNick($nickname);
         if (null !== $currentHolder && $sender->uid !== $currentHolder->uid) {
             $killReason = $context->transIn(
                 'identify.kill_reason',
-                ['nickname' => $result->nickname, 'source' => $sender->nick],
+                ['nickname' => $nickname, 'source' => $sender->nick],
                 $result->accountLanguage ?? '',
             );
             $context->getNotifier()->killUser($currentHolder->uid, $killReason);
-            $context->reply('identify.ghost_released', ['nickname' => $result->nickname]);
+            $context->reply('identify.ghost_released', ['nickname' => $nickname]);
         }
 
-        if (0 !== strcasecmp($sender->nick, $result->nickname) || $this->pendingRegistry->peek($sender->uid)) {
-            $context->getNotifier()->forceNick($sender->uid, $result->nickname);
+        if (0 !== strcasecmp($sender->nick, $nickname) || $this->pendingRegistry->peek($sender->uid)) {
+            $context->getNotifier()->forceNick($sender->uid, $nickname);
         }
 
-        $context->getNotifier()->setUserAccount($sender->uid, $result->nickname);
+        $context->getNotifier()->setUserAccount($sender->uid, $nickname);
 
         if (null !== $result->displayVhost && '' !== $result->displayVhost) {
             $context->getNotifier()->setUserVhost($sender->uid, $result->displayVhost, $sender->serverSid);
         }
 
-        $context->reply('identify.success', ['nickname' => $result->nickname]);
+        $context->reply('identify.success', ['nickname' => $nickname]);
     }
 }

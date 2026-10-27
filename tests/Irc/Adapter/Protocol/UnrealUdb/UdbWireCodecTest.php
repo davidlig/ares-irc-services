@@ -211,7 +211,7 @@ final class UdbWireCodecTest extends TestCase
     public function rejectsLegacyAndMalformedFrames(): void
     {
         $malformed = [
-            'PRIVMSG #chan :hello', ':001 DB', ':001 DB 002 OPT S',
+            'PRIVMSG #chan :hello', ':001 DB', ':001 DB 002 OPT S', ':001 DB 002 HEL 4 x 0123456789abcdef', ':001 DB 002 HEL 4 ACK x 0123456789abcdef',
             ':001 DB 002 HEL 5 x', ':001 DB 002 HEL 4', ':001 DB 002 HEL 4 x 0123456789ABCDEf OCL', ':001 DB 002 HEL 4 x 0123456789abcdef OCL EXTRA',
             ':001 DB 002 INF 1 N ' . self::DIGEST . ' 0',
             ':001 DB 002 INF 0 N ' . self::DIGEST . ' 0 1', ':001 DB 002 INF 1 X ' . self::DIGEST . ' 0 1', ':001 DB 002 INF 1 N ' . strtoupper(self::DIGEST) . ' 0 1', ':001 DB 002 INF 1 N ' . self::DIGEST . ' x 1', ':001 DB 002 INF 1 N ' . self::DIGEST . ' 0 1 bad',

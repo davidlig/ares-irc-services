@@ -207,7 +207,7 @@ info:
 
 # --- SET -------------------------------------------------------------------
 set:
-  syntax: "SET <option> [value]"
+  syntax: "SET {PASSWORD <new_password>|EMAIL <email> <token>|LANGUAGE <code>|TIMEZONE <timezone>|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
   short: "Αλλάξτε τις επιλογές του ψευδωνύμου σας."
   help: |-
     Τροποποιεί τις ρυθμίσεις του ψευδωνύμου σας. Πρέπει να έχετε ταυτοποιηθεί για να
@@ -344,7 +344,7 @@ set:
 
 # --- SASET -----------------------------------------------------------------
 saset:
-  syntax: "SASET <ψευδώνυμο> <επιλογή> [τιμή]"
+  syntax: "SASET <ψευδώνυμο> {PASSWORD <νέος_κωδικός>|EMAIL <νέο_email>|LANGUAGE <κωδικός>|TIMEZONE {<ζώνη_ώρας>|OFF}|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
   short: "Τροποποίηση ρυθμίσεων άλλου ψευδωνύμου."
   help: |-
     Επιτρέπει σε IRC Operator να τροποποιεί τις ρυθμίσεις ενός καταχωρημένου
@@ -405,7 +405,7 @@ saset:
 
   # --- SASET TIMEZONE ------------------------------------------------------
   timezone:
-    syntax: "SASET <ψευδώνυμο> TIMEZONE <ζώνη_ώρας|OFF>"
+    syntax: "SASET <ψευδώνυμο> TIMEZONE {<ζώνη_ώρας>|OFF}"
     short: "Αλλαγή ζώνης ώρας ψευδωνύμου."
     help: |-
       Ορίζει ή εκκαθαρίζει τη ζώνη ώρας άλλου ψευδωνύμου.
@@ -686,7 +686,7 @@ unforbid:
 
 # --- FORBIDVHOST -----------------------------------------------------------
 forbidvhost:
-  syntax: "FORBIDVHOST {ADD|DEL|LIST} [pattern]"
+  syntax: "FORBIDVHOST {ADD <pattern>|DEL <pattern>|LIST}"
   short: "Διαχείριση απαγορευμένων μοτίβων vhost."
   help: |-
     Διαχειρίζεται μοτίβα που εμποδίζουν τον ορισμό vhost που ταιριάζουν με SET
@@ -742,7 +742,7 @@ forbidvhost:
 
 # --- HISTORY ---
 history:
-  syntax: "HISTORY <nickname> {ADD|DEL|VIEW|CLEAR}"
+  syntax: "HISTORY <nickname> {ADD <message>|DEL <id>|VIEW [PAGE|ALL]|CLEAR}"
   short: "Προβολή ή διαχείριση ιστορικού ενεργειών ψευδωνύμου."
   help: |-
     Διαχείριση του ιστορικού ενεργειών για ένα ψευδώνυμο.

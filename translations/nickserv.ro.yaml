@@ -206,7 +206,7 @@ info:
 
 # --- SET -------------------------------------------------------------------
 set:
-  syntax: "SET <opțiune> [valoare]"
+  syntax: "SET {PASSWORD <parolă_nouă>|EMAIL <email> <token>|LANGUAGE <cod>|TIMEZONE <fus_orar>|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
   short: "Schimbați opțiunile poreclei dumneavoastră."
   help: |-
     Modifică setările poreclei tale. Trebuie să fii identificat pentru a schimba
@@ -339,7 +339,7 @@ set:
 
 # --- SASET -----------------------------------------------------------------
 saset:
-  syntax: "SASET <poreclă> <opțiune> [valoare]"
+  syntax: "SASET <poreclă> {PASSWORD <parolă_nouă>|EMAIL <e-mail_nou>|LANGUAGE <cod>|TIMEZONE {<fus_orar>|OFF}|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
   short: "Modifică setările altei porecle."
   help: |-
     Permite unui IRCop să schimbe setările altei porecle înregistrate. Poreclele
@@ -376,7 +376,7 @@ saset:
 
   # --- SASET TIMEZONE ------------------------------------------------------
   timezone:
-    syntax: "SASET <poreclă> TIMEZONE <fus_orar|OFF>"
+    syntax: "SASET <poreclă> TIMEZONE {<fus_orar>|OFF}"
     short: "Schimbă fusul orar al unei porecle."
     help: "Setează sau elimină fusul orar al altei porecle. Folosește OFF pentru eliminare."
     example: "%command_prefix%\x02\x0303SASET Utilizator TIMEZONE Europe/Madrid\x03\x0F"
@@ -603,7 +603,7 @@ unforbid:
 
 # --- FORBIDVHOST -----------------------------------------------------------
 forbidvhost:
-  syntax: "FORBIDVHOST {ADD|DEL|LIST} [model]"
+  syntax: "FORBIDVHOST {ADD <model>|DEL <model>|LIST}"
   short: "Gestionați modelele de vhost interzise."
   help: |-
     Gestionează tiparele care împiedică setarea VHost-urilor corespunzătoare prin
@@ -649,7 +649,7 @@ forbidvhost:
 
 # --- HISTORY ---
 history:
-  syntax: "HISTORY <poreclă> {ADD|DEL|VIEW|CLEAR}"
+  syntax: "HISTORY <poreclă> {ADD <mesaj>|DEL <id>|VIEW [PAGE|ALL]|CLEAR}"
   short: "Vizualizați sau gestionați istoricul de acțiuni al poreclei."
   help: |-
     Consultă și gestionează istoricul acțiunilor unei porecle. Suspendările și

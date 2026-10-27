@@ -139,14 +139,14 @@ role:
       done: "\x0303✓\x03 Operclass configured for role %role%."
       cleared: "\x0303✓\x03 Operclass removed from role %role%."
       not_available: "\x0304✗\x03 Operclass \x02%operclass%\x02 is not available on the network. Available operclasses: %available%."
-  syntax: "ROLE <option> [parameters]"
+  syntax: "ROLE {ADD <name> [description]|DEL <name>|LIST|PERMS {{ADD|DEL} <role> <permission>|{LIST|CLEAR} <role>}|MODES {VIEW <role>|SET <role> [modes]}|VHOST {VIEW <role>|SET <role> [vhost]}}"
   short: "Manages operator roles, their permissions and their settings."
   help: |-
     Manages operator roles, their permissions and their settings.
 
     The ADMIN, OPER and PREOPER roles are protected and cannot be deleted.
     Restricted to Root users.
-  syntax_operclass: "ROLE <option> [parameters]"
+  syntax_operclass: "ROLE {ADD <name> [description]|DEL <name>|LIST|PERMS {{ADD|DEL} <role> <permission>|{LIST|CLEAR} <role>}|MODES {VIEW <role>|SET <role> [modes]}|VHOST {VIEW <role>|SET <role> [vhost]}|OPERCLASS {LIST|VIEW <name>|SET <name> [operclass]}}"
   help_operclass: |-
     Manages operator roles, their permissions and their settings.
 
@@ -319,7 +319,7 @@ kill:
 
 # --- GLINE -----------------------------------------------------------------
 gline:
-  syntax: "GLINE {ADD <mask> <expiry> <reason>|DEL <mask|number>|LIST [mask]}"
+  syntax: "GLINE {ADD <mask> <expiry> <reason>|DEL {<mask>|<number>}|LIST [mask]}"
   short: "Manage network-wide G-lines."
   help: |-
     Manages network G-lines (global bans).
@@ -359,7 +359,7 @@ gline:
 
   # --- GLINE DEL -----------------------------------------------------------
   del:
-    syntax: "GLINE DEL <mask|number>"
+    syntax: "GLINE DEL {<mask>|<number>}"
     short: "Remove a G-line."
     help: |-
       Removes a G-line from the list.
@@ -494,7 +494,7 @@ motd:
 
 # --- BADMAIL ---------------------------------------------------------------
 badmail:
-  syntax: "BADMAIL {ADD|DEL|LIST} <parameters>"
+  syntax: "BADMAIL {ADD <domain> <reason>|DEL {number|ALL}|LIST <pattern> [page]}"
   short: "Manage blocked email domains."
   help: |-
     Manage blocked email domains.

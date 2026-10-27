@@ -11,6 +11,7 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbUnsignedDecimal;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 
 use function str_repeat;
 
@@ -138,6 +139,26 @@ final class UnrealUdbRecordWriterTest extends TestCase
 
         self::assertFalse($result);
         self::assertSame([], $this->records->blocks);
+    }
+
+    #[Test]
+    public function insertRejectsUnencodablePathsWithoutPersistence(): void
+    {
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::once())
+            ->method('warning')
+            ->with('Rejected UDB mutation failing schema validation.', [
+                'block' => 'N',
+                'path' => "nick\0::access",
+            ]);
+        $writer = new UnrealUdbRecordWriter($this->sessionState, $this->records, $logger);
+
+        $result = $writer->insert('N', "nick\0::access", 'value');
+
+        self::assertFalse($result);
+        self::assertSame([], $this->records->blocks);
+        self::assertSame([], $this->sessionState->queue);
+        self::assertSame([], $this->written);
     }
 
     #[Test]

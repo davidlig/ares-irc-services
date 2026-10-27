@@ -7,6 +7,7 @@ namespace App\MemoServ\Application\UseCase\NotifyChannelRegistration;
 use App\MemoServ\Application\Port\Out\ChannelRegistrationMemoText;
 use App\MemoServ\Application\Port\Out\MemoRepositoryInterface;
 use App\MemoServ\Application\Port\Out\MemoUserAccountPort;
+use App\MemoServ\Application\Port\Out\ServiceMemoSender;
 use App\MemoServ\Domain\Entity\Memo;
 use InvalidArgumentException;
 
@@ -19,6 +20,7 @@ final readonly class NotifyChannelRegistrationDecisionHandler implements NotifyC
         private MemoUserAccountPort $userAccountPort,
         private MemoRepositoryInterface $memoRepository,
         private ChannelRegistrationMemoText $memoText,
+        private ServiceMemoSender $serviceMemoSender,
     ) {}
 
     public function handle(NotifyChannelRegistrationDecision $decision): void
@@ -28,6 +30,7 @@ final readonly class NotifyChannelRegistrationDecisionHandler implements NotifyC
         }
 
         $language = $this->userAccountPort->getLanguage($decision->requesterAccountId);
+        $senderName = $this->serviceMemoSender->getSenderName();
         $messages = $this->memoText->render($decision, $language);
         foreach ($messages as $message) {
             if (255 < strlen($message) || !mb_check_encoding($message, 'UTF-8')) {
@@ -39,9 +42,10 @@ final readonly class NotifyChannelRegistrationDecisionHandler implements NotifyC
             $this->memoRepository->save(new Memo(
                 $decision->requesterAccountId,
                 null,
-                $decision->operatorAccountId,
+                null,
                 $message,
                 $decision->occurredAt,
+                $senderName,
             ));
         }
     }

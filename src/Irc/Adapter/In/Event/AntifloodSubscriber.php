@@ -20,7 +20,6 @@ use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-use function assert;
 use function in_array;
 
 /**
@@ -71,11 +70,12 @@ final readonly class AntifloodSubscriber implements EventSubscriberInterface
 
     public function onMessage(MessageReceivedEvent $event): void
     {
-        if (!$this->shouldProcessMessage($event)) {
+        $prefix = $event->message->prefix;
+        if (null === $prefix || '' === $prefix || !$this->shouldProcessMessage($event)) {
             return;
         }
 
-        $this->processFloodCheck($event);
+        $this->processFloodCheck($event, $prefix);
     }
 
     private function shouldProcessMessage(MessageReceivedEvent $event): bool
@@ -88,17 +88,15 @@ final readonly class AntifloodSubscriber implements EventSubscriberInterface
 
         return in_array($message->command, ['PRIVMSG', 'SQUERY'], true)
             && '' !== ($message->params[0] ?? '')
-            && '' !== ($message->prefix ?? '')
             && null !== $this->gateway->findListenerFor($message->params[0]);
     }
 
-    private function processFloodCheck(MessageReceivedEvent $event): void
+    private function processFloodCheck(MessageReceivedEvent $event, string $prefix): void
     {
         $message = $event->message;
-        assert(null !== $message->prefix);
 
         $target = $message->params[0];
-        $sender = $this->userLookup->findByUid($message->prefix);
+        $sender = $this->userLookup->findByUid($prefix);
         $listener = $this->gateway->findListenerFor($target);
 
         if (null === $sender || null === $listener || $sender->isOper || $this->isRoot($sender)) {

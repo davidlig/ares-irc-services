@@ -4,18 +4,16 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Adapter\In\Irc\Command;
 
-use App\ChanServ\Adapter\In\Irc\ChanAuthorizationCheckerInterface;
 use App\ChanServ\Adapter\In\Irc\ChanServCommandInterface;
 use App\ChanServ\Adapter\In\Irc\ChanServContext;
-use App\ChanServ\Application\Security\ChanServPermission;
 use App\ChanServ\Application\UseCase\ShowRegistrationStatus\RegistrationStatusView;
 use App\ChanServ\Application\UseCase\ShowRegistrationStatus\ShowRegistrationStatusHandler;
 use App\ChanServ\Domain\ValueObject\ChannelStatus;
+use App\OperServ\Application\Port\In\OperatorActor;
+use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
-use DateTimeImmutable;
-
-use function max;
+use DateTimeZone;
 
 final readonly class StatusCommand implements ChanServCommandInterface
 {
@@ -23,7 +21,7 @@ final readonly class StatusCommand implements ChanServCommandInterface
 
     public function __construct(
         private ShowRegistrationStatusHandler $handler,
-        private ?ChanAuthorizationCheckerInterface $authorizationChecker = null,
+        private ?OperatorAuthorizationQuery $authorization = null,
     ) {}
 
     public function getName(): string
@@ -98,35 +96,37 @@ final readonly class StatusCommand implements ChanServCommandInterface
         }
         $channelName = $context->args[0];
         $status = $this->handler->handle($channelName);
+        $context->reply('status.header', ['%channel%' => $channelName]);
         if (null === $status) {
-            $context->reply('status.unregistered', ['%channel%' => $channelName]);
-
-            return;
-        }
-        if (ChannelStatus::Pending === $status->status) {
-            $context->reply('status.pending', ['%channel%' => $channelName]);
-
-            return;
-        }
-        if (ChannelStatus::Rejected === $status->status) {
+            $context->reply('status.unregistered');
+        } elseif (ChannelStatus::Pending === $status->status) {
+            $context->reply('status.pending');
+        } elseif (ChannelStatus::Rejected === $status->status) {
             $this->presentRejection($context, $channelName, $status);
-
-            return;
+        } else {
+            $key = match ($status->status) {
+                ChannelStatus::Active => 'status.registered',
+                ChannelStatus::PendingDeletion => 'status.pending_deletion',
+                ChannelStatus::Forbidden => 'status.forbidden',
+                default => 'status.suspended',
+            };
+            $context->reply($key);
         }
-        $key = match ($status->status) {
-            ChannelStatus::Active => 'status.registered',
-            ChannelStatus::PendingDeletion => 'status.pending_deletion',
-            ChannelStatus::Forbidden => 'status.forbidden',
-            default => 'status.suspended',
-        };
-        $context->reply($key, ['%channel%' => $channelName]);
+        $context->reply('status.footer');
     }
 
     private function presentRejection(ChanServContext $context, string $channelName, RegistrationStatusView $status): void
     {
         $requester = null !== $context->senderAccount && $context->senderAccount->id === $status->requesterAccountId;
-        $operator = null !== $this->authorizationChecker
-            && $this->authorizationChecker->isGranted(ChanServPermission::REGISTRATION_REVIEW, $context);
+        $nickname = $context->getSenderNickname();
+        $operator = null !== $this->authorization
+            && null !== $nickname
+            && $this->authorization->ircOperator(new OperatorActor(
+                nickname: $nickname,
+                identifiedAccountId: $context->getSenderAccountId(),
+                identified: $context->isSenderIdentified(),
+                ircOperator: $context->isSenderIrcOperator(),
+            ))->granted;
         if (!$requester && !$operator) {
             $context->reply('status.rejected_private', ['%channel%' => $channelName]);
 
@@ -137,19 +137,16 @@ final readonly class StatusCommand implements ChanServCommandInterface
         if (null !== $status->rejectionReason) {
             $context->reply('status.rejection_reason', ['%reason%' => $status->rejectionReason]);
         }
-        if (null !== $status->rejectedByNickname && null !== $status->rejectedAt) {
+        if ($operator && null !== $status->rejectedByNickname && null !== $status->rejectedAt) {
             $context->reply('status.rejection_audit', [
                 '%operator%' => $status->rejectedByNickname,
                 '%date%' => $context->formatDate($status->rejectedAt),
             ]);
         }
-        $now = new DateTimeImmutable();
-        $restrictionKey = null === $status->restrictedUntil
-            ? 'status.restriction_indefinite'
-            : ($now < $status->restrictedUntil ? 'status.restriction_until' : 'status.restriction_expired');
-        $context->reply($restrictionKey, [
-            '%date%' => $context->formatDate($status->restrictedUntil),
-            '%remaining_seconds%' => (string) (null === $status->restrictedUntil ? 0 : max(0, $status->restrictedUntil->getTimestamp() - $now->getTimestamp())),
-        ]);
+        if ($operator && null !== $status->restrictedUntil) {
+            $context->reply('status.restriction_until', [
+                '%date%' => $status->restrictedUntil->setTimezone(new DateTimeZone('UTC'))->format('d/m/Y H:i T'),
+            ]);
+        }
     }
 }

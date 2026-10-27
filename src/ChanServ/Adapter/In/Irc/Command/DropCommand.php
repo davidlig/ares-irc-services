@@ -128,7 +128,13 @@ final class DropCommand implements ChanServCommandInterface, IrcopAuditableComma
             return CommandOutcome::rejected();
         }
 
-        $result = $this->handler->handle($this->lifecycleRequest($context, $channelName, ChannelLifecycleAction::Drop, force: $force));
+        $result = $this->handler->handle($this->lifecycleRequest(
+            $context,
+            $channelName,
+            ChannelLifecycleAction::Drop,
+            force: $force,
+            releaseRejectedRegistration: true,
+        ));
         if (ChannelLifecycleOutcome::NotRegistered === $result->outcome) {
             $context->reply('error.channel_not_registered', ['%channel%' => $channelName]);
 
@@ -139,12 +145,6 @@ final class DropCommand implements ChanServCommandInterface, IrcopAuditableComma
 
             return CommandOutcome::rejected();
         }
-        if (ChannelLifecycleOutcome::RegistrationRestricted === $result->outcome) {
-            $context->reply('drop.registration_restricted', ['%date%' => $context->formatDate($result->expiresAt)]);
-
-            return CommandOutcome::rejected();
-        }
-
         $context->reply($force ? 'drop.force_success' : 'drop.success', ['%channel%' => $channelName]);
 
         return CommandOutcome::success(new IrcopAuditData(target: $channelName, extra: $force ? ['force' => true] : []));

@@ -140,7 +140,7 @@ role:
       done: "\x0303✓\x03 Operclass-a ezarri zaio %role% rolari."
       cleared: "\x0303✓\x03 Operclass-a kendu zaio %role% rolari."
       not_available: "\x0304✗\x03 \x02%operclass%\x02 operclass ez dago erabilgarri sarean. Erabilgarri daudenak: %available%."
-  syntax: "ROLE <aukera> [parametroak]"
+  syntax: "ROLE {ADD <izena> [deskribapena]|DEL <izena>|LIST|PERMS {{ADD|DEL} <rola> <baimena>|{LIST|CLEAR} <rola>}|MODES {VIEW <rola>|SET <rola> [moduak]}|VHOST {VIEW <rola>|SET <rola> [vhost]}}"
   short: "Kudeatu operadore rolak."
   help: |-
     Operadore rolak kudeatzen ditu. ADDek rol berri bat sortzen du, DELek kentzen
@@ -150,7 +150,7 @@ role:
     VHOSTek rol baten behartutako vhost eredua kudeatzen du.
     Babestutako rolak (ADMIN, OPER, PREOPER) ezin dira ezabatu.
     Komando hau Root erabiltzaileentzat mugatuta dago.
-  syntax_operclass: "ROLE <aukera> [parametroak]"
+  syntax_operclass: "ROLE {ADD <izena> [deskribapena]|DEL <izena>|LIST|PERMS {{ADD|DEL} <rola> <baimena>|{LIST|CLEAR} <rola>}|MODES {VIEW <rola>|SET <rola> [moduak]}|VHOST {VIEW <rola>|SET <rola> [vhost]}|OPERCLASS {LIST|VIEW <izena>|SET <izena> [operclass]}}"
   help_operclass: |-
     Operadore rolak kudeatzen ditu. ADDek rol berri bat sortzen du, DELek kentzen du,
     LISTek rol guztiak erakusten ditu, PERMSek rol baten baimenak kudeatzen ditu, MODESek IRCOP moduak kudeatzen ditu,
@@ -325,7 +325,7 @@ kill:
 
 # --- GLINE -----------------------------------------------------------------
 gline:
-  syntax: "GLINE {ADD <maskara> <iraungitzea> <arrazoia>|DEL <maskara|zenbakia>|LIST [maskara]}"
+  syntax: "GLINE {ADD <maskara> <iraungitzea> <arrazoia>|DEL {<maskara>|<zenbakia>}|LIST [maskara]}"
   short: "Kudeatu sare osoko G-lineak."
   help: |-
     Sare osoko G-lineak (debeku globalak) kudeatzen ditu.
@@ -368,7 +368,7 @@ gline:
 
   # --- GLINE DEL -----------------------------------------------------------
   del:
-    syntax: "GLINE DEL <maskara|zenbakia>"
+    syntax: "GLINE DEL {<maskara>|<zenbakia>}"
     short: "Kendu G-line bat."
     help: |-
       G-line bat zerrendatik kentzen du.
@@ -523,7 +523,7 @@ motd:
 
 # --- BADMAIL ---------------------------------------------------------------
 badmail:
-  syntax: "BADMAIL {ADD|DEL|LIST} <parametroak>"
+  syntax: "BADMAIL {ADD <domeinua> <arrazoia>|DEL {zenbakia|ALL}|LIST <eredua> [orria]}"
   short: "Blokeatutako posta-domeinuak kudeatu."
   help: |-
     Blokeatutako posta-domeinuak kudeatu.

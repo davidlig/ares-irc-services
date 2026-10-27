@@ -30,7 +30,7 @@ register:
     Kanalı kaydedip takma adına bağlar. %nickserv% ile kimliğini doğrula.
     APPROVAL modunda bir IRCop isteği onaylamalıdır.
   success: "\x0303✔\x03 \x02%channel%\x02 kanalı kaydedildi."
-  already_registered: "\x0304✗\x03 \x02%channel%\x02 kanalı zaten kayıtlı."
+  already_registered: "\x0304✗\x03 Kanal \x02%channel%\x02 zaten kayıtlı veya kayıt isteği işleniyor."
   channel_not_on_network: "\x0304✗\x03 \x02%channel%\x02 kanalı ağda mevcut değil."
   pending_deletion: "\x0304✗\x03 \x02%channel%\x02 kanalı silinmeyi bekliyor ve kaydedilemez."
   insufficient_channel_rank: "\x0304✗\x03 Bu kanalı kaydetmek için \x02%channel%\x02 üzerinde en az operatör durumunda olmalısınız."
@@ -77,7 +77,7 @@ creg:
   pending_header: "\x0314Bekleyen kayıtlar (sayfa %page%)\x03"
   pending_item: "  %channel% — isteyen %requester%, gönderim %submitted%: %description%"
   accepted: "\x0303✔\x03 \x02%channel%\x02 kaydı onaylandı."
-  rejected: "\x0307✔\x03 \x02%channel%\x02 kaydı reddedildi."
+  rejected: "\x0303✔\x03 \x02%channel%\x02 kaydı reddedildi."
   not_pending: "\x0304✗\x03 \x02%channel%\x02 için bekleyen kayıt yok."
   channel_not_on_network: "\x0304✗\x03 \x02%channel%\x02 ağda değil."
   founder_limit: "\x0304✗\x03 İstek sahibi kanal kayıt sınırına ulaştı."
@@ -88,25 +88,25 @@ creg:
 status:
   syntax: "STATUS <#kanal>"
   example: "%command_prefix%\x02\x0303STATUS #canal\x03\x0F"
+  header: "\x02Kanal durumu \x0307%channel%\x03\x02"
   short: "Kanal kayıt durumunu gösterin."
   help: |-
     Kanalın kayıtlı olmadığını, onay beklediğini, reddedildiğini veya kayıtlı
     olduğunu gösterir.
     Ret ayrıntılarını yalnızca istek sahibi ve yetkili IRCoplar görebilir.
 
-  unregistered: "\x0314%channel% kayıtlı değil.\x03"
-  pending: "\x0314%channel% IRCop onayı bekliyor.\x03"
-  registered: "\x0314%channel% kayıtlı.\x03"
-  suspended: "\x0314%channel% kayıtlı ancak askıya alınmış.\x03"
-  forbidden: "\x0314%channel% kaydedilemez.\x03"
-  pending_deletion: "\x0314%channel% silinmeyi bekliyor.\x03"
-  rejected_private: "\x0314%channel% için bir kayıt isteği reddedildi.\x03"
-  rejected: "\x0314%channel% kaydı reddedildi.\x03"
-  rejection_reason: "  \x0314Neden\x03: %reason%"
-  rejection_audit: "  \x0314Reddeden\x03: %operator%, tarih: %date%"
-  restriction_indefinite: "  \x0314Yeni istekler süresiz engellendi.\x03"
-  restriction_until: "  \x0314Yeni istekler %date% tarihine kadar engellendi\x03"
-  restriction_expired: "  \x0314Kayıt kısıtlaması %date% tarihinde sona erdi.\x03"
+  unregistered: "  \x0314Durum                   \x03: Kayıtlı değil"
+  pending: "  \x0314Durum                   \x03: \x0307Onay bekliyor\x03"
+  registered: "  \x0314Durum                   \x03: \x0303Kayıtlı\x03"
+  suspended: "  \x0314Durum                   \x03: \x0304Askıya alındı\x03"
+  forbidden: "  \x0314Durum                   \x03: \x0304Yasaklandı\x03"
+  pending_deletion: "  \x0314Durum                   \x03: \x0307Silinmeyi bekliyor\x03"
+  rejected_private: "  \x0314Durum                   \x03: \x0304Kayıt reddedildi\x03"
+  rejected: "  \x0314Durum                   \x03: \x0304Kayıt reddedildi\x03"
+  rejection_reason: "  \x0314Neden                   \x03: %reason%"
+  rejection_audit: "  \x0314Reddeden                \x03: %operator%, %date% tarihinde"
+  restriction_until: "  \x0314Kullanılabilir olduğu tarih\x03: %date%"
+  footer: "\x0314─────────────────────────────\x03\x0F"
 
 # --- INFO ------------------------------------------------------------------
 info:
@@ -205,7 +205,7 @@ secure:
 
 # --- SET -------------------------------------------------------------------
 set:
-  syntax: "SET <#channel> <seçenek> [değer]"
+  syntax: "SET <#channel> {FOUNDER <takma_ad> [token]|SUCCESSOR [nickname]|DESC <açıklama>|URL [url]|EMAIL [e-posta]|ENTRYMSG [mesaj]|TOPICLOCK {ON|OFF}|MLOCK {ON|OFF}|PRIVATE {ON|OFF}|SECURE {ON|OFF}}"
   example: "%command_prefix%\x02\x0303SET #kanal DESC Bir topluluk kanalı\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303SET #kanal URL https://example.test\x03\x0F"
@@ -358,7 +358,7 @@ set:
 
 # --- ACCESS ----------------------------------------------------------------
 access:
-  syntax: "ACCESS <#channel> {ADD|DEL|LIST} [nickname] [seviye]"
+  syntax: "ACCESS <#channel> {ADD <nickname> <seviye>|DEL <nickname>|LIST}"
   example: "%command_prefix%\x02\x0303ACCESS #kanal LIST\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303ACCESS #kanal ADD Alicia 100\x03\x0F"
@@ -418,7 +418,7 @@ delaccess:
 
 # --- LEVELS ----------------------------------------------------------------
 levels:
-  syntax: "LEVELS <#channel> {LIST|SET|RESET} [seviye] [değer]"
+  syntax: "LEVELS <#channel> {LIST|SET <seviye> <değer>|RESET}"
   example: "%command_prefix%\x02\x0303LEVELS #kanal LIST\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303LEVELS #kanal SET OPDEOP 50\x03\x0F"
@@ -524,7 +524,7 @@ dehalfop:
 
 # --- AKICK -----------------------------------------------------------------
 akick:
-  syntax: "AKICK <#channel> {ADD|DEL|LIST} [maske] [süre] [gerekçe]"
+  syntax: "AKICK <#channel> {ADD <maske> [süre] [gerekçe]|DEL {<maske>|<numara>}|LIST}"
   example: "%command_prefix%\x02\x0303AKICK #kanal ADD *!*@* 0\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303AKICK #kanal ADD *!*@* 7d Spam\x03\x0F"
@@ -557,7 +557,7 @@ akick:
 
   # --- AKICK DEL -----------------------------------------------------------
   del:
-    syntax: "AKICK <#channel> DEL <maske|numara>"
+    syntax: "AKICK <#channel> DEL {<maske>|<numara>}"
     example: "%command_prefix%\x02\x0303AKICK #kanal DEL *!*@*\x03\x0F"
     examples:
       - "%command_prefix%\x02\x0303AKICK #kanal DEL 2\x03\x0F"
@@ -596,8 +596,8 @@ drop:
   help: |-
     Kayıtlı bir kanalı veritabanından siler.
     FORCE, silinmeyi bekleyen kanalı kalıcı olarak siler.
-    Reddedilen bir istekte DROP, engel kalkınca isteği serbest bırakır.
-    Yetkili IRCop süresiz engeli açıkça kaldırabilir.
+    DROP yetkisi olan bir IRCop reddedilmiş kaydı da FORCE ile
+    veya FORCE olmadan hemen serbest bırakabilir. FORCE ayrıca DROP_FORCE gerektirir.
   registration_restricted: "\x0304✗\x03 Bu kayıt isteği %date% tarihine kadar kısıtlı."
   force:
     short: "Silinmeyi bekleyen kanalı kalıcı olarak siler."
@@ -702,7 +702,7 @@ debug:
 
 # --- HISTORY ---
 history:
-  syntax: "HISTORY <#channel> {ADD|DEL|VIEW|CLEAR}"
+  syntax: "HISTORY <#channel> {ADD <mesaj>|DEL <id>|VIEW [PAGE|ALL]|CLEAR}"
   example: "%command_prefix%\x02\x0303HISTORY #kanal ADD Moderasyon incelemesi\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303HISTORY #kanal DEL 42\x03\x0F"

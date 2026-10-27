@@ -148,6 +148,7 @@ final class UdbPathCodecTest extends TestCase
         self::assertTrue(UdbPathCodec::fitsLimits('N::nick::pass', 'sha256:' . str_repeat('a', 64)));
         self::assertTrue(UdbPathCodec::fitsLimits('C::#chan::topic', 'hello world'));
         self::assertTrue(UdbPathCodec::fitsLimits('S::key', null));
+        self::assertSame(['N', 'nick', 'pass'], UdbPathCodec::decodePathWithinLimits('N::nick::pass', 'sha256:' . str_repeat('a', 64)));
     }
 
     #[Test]
@@ -158,6 +159,8 @@ final class UdbPathCodecTest extends TestCase
         self::assertFalse(UdbPathCodec::fitsLimits('a', "bad\nvalue"));
         self::assertFalse(UdbPathCodec::fitsLimits('a', "bad\rvalue"));
         self::assertFalse(UdbPathCodec::fitsLimits('a', str_repeat('b', UdbPathCodec::VALUE_MAX + 1)));
+        self::assertNull(UdbPathCodec::decodePathWithinLimits('N::%41::pass', 'value'));
+        self::assertNull(UdbPathCodec::decodePathWithinLimits(str_repeat('a::', UdbPathCodec::PATH_COMPONENTS_MAX) . 'a', null));
     }
 
     #[Test]

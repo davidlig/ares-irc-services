@@ -14,7 +14,8 @@
         </id>
         <field name="targetNickId" type="integer" column="target_nick_id" nullable="true"/>
         <field name="targetChannelId" type="integer" column="target_channel_id" nullable="true"/>
-        <field name="senderNickId" type="integer" column="sender_nick_id"/>
+        <field name="senderNickId" type="integer" column="sender_nick_id" nullable="true"/>
+        <field name="senderName" type="string" column="sender_name" length="64" nullable="true"/>
         <field name="message" type="text" column="message"/>
         <field name="createdAt" type="datetime_immutable" column="created_at"/>
         <field name="readAt" type="datetime_immutable" column="read_at" nullable="true"/>

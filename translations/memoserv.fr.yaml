@@ -79,7 +79,7 @@ del:
 
 # --- IGNORE ----------------------------------------------------------------
 ignore:
-  syntax: "IGNORE {ADD|DEL|LIST} [#canal] [surnom]"
+  syntax: "IGNORE {ADD [#canal] <surnom>|DEL [#canal] <surnom>|LIST [#canal]}"
   short: "Gérer la liste d'ignorés pour les messages."
   help: |-
     Gère les pseudonymes dont vous ne souhaitez pas recevoir de messages, pour votre
@@ -197,8 +197,7 @@ notify:
 
 # --- CHANNEL REGISTRATION DECISIONS ---
 registration_decision:
-  accepted: "Votre demande d’enregistrement de %channel% a été acceptée par %operator%."
-  rejected: "Votre demande d’enregistrement de %channel% a été refusée par %operator%."
-  reason: "Motif : %reason%"
-  restriction: "Restriction restante : %remaining_seconds% secondes."
-  restriction_indefinite: "Ce salon est soumis à une restriction indéfinie."
+  accepted: "Votre demande d’enregistrement de %channel% a été acceptée."
+  rejected: "Votre demande d’enregistrement de %channel% a été refusée."
+  reason: "Raison : %reason%"
+  restriction: "Disponible à partir du : %date%"

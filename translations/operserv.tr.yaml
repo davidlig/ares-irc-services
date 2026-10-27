@@ -139,14 +139,14 @@ role:
       done: "\x0303✓\x03 %role% rolü için operclass yapılandırıldı."
       cleared: "\x0303✓\x03 %role% rolünün operclass değeri silindi."
       not_available: "\x0304✗\x03 \x02%operclass%\x02 operclass'i agda mevcut degil. Mevcut operclass'lar: %available%."
-  syntax: "ROLE <seçenek> [parametreler]"
+  syntax: "ROLE {ADD <ad> [açıklama]|DEL <ad>|LIST|PERMS {{ADD|DEL} <rol> <izin>|{LIST|CLEAR} <rol>}|MODES {VIEW <rol>|SET <rol> [modlar]}|VHOST {VIEW <rol>|SET <rol> [sanal_host]}}"
   short: "Operatör rollerini, izinlerini ve yapılandırmalarını yönetir."
   help: |-
     Operatör rollerini, izinlerini ve yapılandırmalarını yönetir.
 
     ADMIN, OPER ve PREOPER rolleri korumalıdır ve silinemez.
     Yalnızca Root kullanıcıları kullanabilir.
-  syntax_operclass: "ROLE <seçenek> [parametreler]"
+  syntax_operclass: "ROLE {ADD <ad> [açıklama]|DEL <ad>|LIST|PERMS {{ADD|DEL} <rol> <izin>|{LIST|CLEAR} <rol>}|MODES {VIEW <rol>|SET <rol> [modlar]}|VHOST {VIEW <rol>|SET <rol> [sanal_host]}|OPERCLASS {LIST|VIEW <ad>|SET <ad> [operclass]}}"
   help_operclass: |-
     Operatör rollerini, izinlerini ve yapılandırmalarını yönetir.
 
@@ -317,7 +317,7 @@ kill:
 
 # --- GLINE -----------------------------------------------------------------
 gline:
-  syntax: "GLINE {ADD <maske> <süre> <gerekçe>|DEL <maske|numara>|LIST [maske]}"
+  syntax: "GLINE {ADD <maske> <süre> <gerekçe>|DEL {<maske>|<numara>}|LIST [maske]}"
   short: "Ağ genelindeki G-line'ları yönetin."
   help: |-
     Ağ genelindeki G-line yasaklarını yönetir.
@@ -357,7 +357,7 @@ gline:
 
   # --- GLINE DEL -----------------------------------------------------------
   del:
-    syntax: "GLINE DEL <maske|numara>"
+    syntax: "GLINE DEL {<maske>|<numara>}"
     short: "Bir G-line'ı kaldırın."
     help: |-
       Listeden bir G-line kaydını siler.
@@ -491,7 +491,7 @@ motd:
 
 # --- BADMAIL ---------------------------------------------------------------
 badmail:
-  syntax: "BADMAIL {ADD|DEL|LIST} <parametreler>"
+  syntax: "BADMAIL {ADD <alan_adı> <gerekçe>|DEL {numara|ALL}|LIST <kalıp> [sayfa]}"
   short: "Engellenen e-posta alan adlarını yönet."
   help: |-
     Engellenen e-posta alan adlarını yönet.

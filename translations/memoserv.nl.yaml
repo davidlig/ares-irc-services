@@ -79,7 +79,7 @@ del:
 
 # --- IGNORE ----------------------------------------------------------------
 ignore:
-  syntax: "IGNORE {ADD|DEL|LIST} [#kanaal] [bijnaam]"
+  syntax: "IGNORE {ADD [#kanaal] <bijnaam>|DEL [#kanaal] <bijnaam>|LIST [#kanaal]}"
   short: "Beheer negeerlijst voor berichten."
   help: |-
     Beheert bijnamen waarvan je geen berichten wilt ontvangen, voor je account of
@@ -196,8 +196,7 @@ notify:
 
 # --- CHANNEL REGISTRATION DECISIONS ---
 registration_decision:
-  accepted: "Je registratieaanvraag voor %channel% is goedgekeurd door %operator%."
-  rejected: "Je registratieaanvraag voor %channel% is afgewezen door %operator%."
+  accepted: "Je registratieaanvraag voor %channel% is goedgekeurd."
+  rejected: "Je registratieaanvraag voor %channel% is afgewezen."
   reason: "Reden: %reason%"
-  restriction: "Resterende blokkering: %remaining_seconds% seconden."
-  restriction_indefinite: "Dit kanaal is onbeperkt geblokkeerd."
+  restriction: "Beschikbaar vanaf: %date%"

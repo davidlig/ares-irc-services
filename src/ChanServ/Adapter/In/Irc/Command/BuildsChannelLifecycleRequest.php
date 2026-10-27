@@ -23,6 +23,7 @@ trait BuildsChannelLifecycleRequest
         ?string $reason = null,
         ?string $duration = null,
         bool $force = false,
+        bool $releaseRejectedRegistration = false,
     ): ManageChannelLifecycle {
         $sender = $context->sender;
         if (null === $sender) {
@@ -40,6 +41,7 @@ trait BuildsChannelLifecycleRequest
             reason: $reason,
             duration: $duration,
             force: $force,
+            releaseRejectedRegistration: $releaseRejectedRegistration,
         );
     }
 

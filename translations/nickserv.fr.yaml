@@ -205,7 +205,7 @@ info:
 
 # --- SET -------------------------------------------------------------------
 set:
-  syntax: "SET <option> [valeur]"
+  syntax: "SET {PASSWORD <nouveau_motdepasse>|EMAIL <email> <token>|LANGUAGE <code>|TIMEZONE <fuseau_horaire>|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
   short: "Modifier les options de votre pseudo."
   help: |-
     Modifie les paramètres de votre pseudonyme. Vous devez être identifié pour
@@ -340,7 +340,7 @@ set:
 
 # --- SASET -----------------------------------------------------------------
 saset:
-  syntax: "SASET <surnom> <option> [valeur]"
+  syntax: "SASET <surnom> {PASSWORD <nouveau_mdp>|EMAIL <nouvel_e-mail>|LANGUAGE <code>|TIMEZONE {<fuseau_horaire>|OFF}|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
   short: "Modifier les paramètres d'un autre surnom."
   help: |-
     Permet à un IRCop de modifier les paramètres d’un autre pseudonyme enregistré.
@@ -379,7 +379,7 @@ saset:
 
   # --- SASET TIMEZONE ------------------------------------------------------
   timezone:
-    syntax: "SASET <surnom> TIMEZONE <fuseau_horaire|OFF>"
+    syntax: "SASET <surnom> TIMEZONE {<fuseau_horaire>|OFF}"
     short: "Changer le fuseau horaire d'un surnom."
     help: |-
       Définit ou supprime le fuseau horaire d’un autre pseudonyme. Utilisez OFF pour
@@ -610,7 +610,7 @@ unforbid:
 
 # --- FORBIDVHOST -----------------------------------------------------------
 forbidvhost:
-  syntax: "FORBIDVHOST {ADD|DEL|LIST} [motif]"
+  syntax: "FORBIDVHOST {ADD <motif>|DEL <motif>|LIST}"
   short: "Gérer les motifs de vhost interdits."
   help: |-
     Gère les motifs qui empêchent de définir un hôte virtuel correspondant avec SET
@@ -655,7 +655,7 @@ forbidvhost:
 
 # --- HISTORY ---
 history:
-  syntax: "HISTORY <surnom> {ADD|DEL|VIEW|CLEAR}"
+  syntax: "HISTORY <surnom> {ADD <message>|DEL <id>|VIEW [PAGE|ALL]|CLEAR}"
   short: "Consulter ou gérer l'historique des actions du surnom."
   help: |-
     Consulte et gère l’historique des actions d’un pseudonyme. Les suspensions,

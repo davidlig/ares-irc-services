@@ -140,14 +140,14 @@ role:
       done: "\x0303✓\x03 Operclass configurată pentru rolul %role%."
       cleared: "\x0303✓\x03 Operclass eliminată pentru rolul %role%."
       not_available: "\x0304✗\x03 Operclass \x02%operclass%\x02 nu este disponibila in retea. Operclasses disponibile: %available%."
-  syntax: "ROLE <opțiune> [parametri]"
+  syntax: "ROLE {ADD <nume> [descriere]|DEL <nume>|LIST|PERMS {{ADD|DEL} <rol> <permisiune>|{LIST|CLEAR} <rol>}|MODES {VIEW <rol>|SET <rol> [moduri]}|VHOST {VIEW <rol>|SET <rol> [vhost]}}"
   short: "Gestionează rolurile operatorilor, permisiunile și configurarea lor."
   help: |-
     Gestionează rolurile operatorilor, permisiunile și configurarea lor.
 
     Rolurile ADMIN, OPER și PREOPER sunt protejate și nu pot fi șterse.
     Comandă rezervată utilizatorilor Root.
-  syntax_operclass: "ROLE <opțiune> [parametri]"
+  syntax_operclass: "ROLE {ADD <nume> [descriere]|DEL <nume>|LIST|PERMS {{ADD|DEL} <rol> <permisiune>|{LIST|CLEAR} <rol>}|MODES {VIEW <rol>|SET <rol> [moduri]}|VHOST {VIEW <rol>|SET <rol> [vhost]}|OPERCLASS {LIST|VIEW <nume>|SET <nume> [operclass]}}"
   help_operclass: |-
     Gestionează rolurile de operator. ADD creează un nou rol, DEL îl șterge,
     LIST afișează toate rolurile, PERMS gestionează permisiunile unui rol, MODES gestionează modurile IRCOP,
@@ -322,7 +322,7 @@ kill:
 
 # --- GLINE -----------------------------------------------------------------
 gline:
-  syntax: "GLINE {ADD <mască> <expirare> <motiv>|DEL <mască|număr>|LIST [mască]}"
+  syntax: "GLINE {ADD <mască> <expirare> <motiv>|DEL {<mască>|<număr>}|LIST [mască]}"
   short: "Gestionați G-line-urile la nivel de rețea."
   help: |-
     Gestionează G-line-uri (banuri globale) pentru rețea.
@@ -362,7 +362,7 @@ gline:
 
   # --- GLINE DEL -----------------------------------------------------------
   del:
-    syntax: "GLINE DEL <mască|număr>"
+    syntax: "GLINE DEL {<mască>|<număr>}"
     short: "Eliminați un G-line."
     help: |-
       Elimină un G-line din listă.
@@ -495,7 +495,7 @@ motd:
 
 # --- BADMAIL ---------------------------------------------------------------
 badmail:
-  syntax: "BADMAIL {ADD|DEL|LIST} <parametri>"
+  syntax: "BADMAIL {ADD <domeniu> <motiv>|DEL {număr|ALL}|LIST <model> [pagină]}"
   short: "Administrează domeniile email blocate."
   help: |-
     Administrează domeniile email blocate.

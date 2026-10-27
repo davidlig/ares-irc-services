@@ -136,51 +136,35 @@ final class UdbPathCodec
      */
     public static function fitsLimits(string $path, ?string $value): bool
     {
-        if ('' === $path || strlen($path) > self::PATH_MAX || !self::isCanonicalPath($path)) {
-            return false;
-        }
-
-        if (null !== $value) {
-            if (strlen($value) > self::VALUE_MAX || strpbrk($value, "\r\n")) {
-                return false;
-            }
-        }
-
-        $valueLength = null !== $value && '' !== $value ? 1 + strlen($value) : 0;
-        $lineLength = strlen($path) + $valueLength + 1;
-
-        // @phpstan-ignore smallerOrEqual.alwaysTrue
-        return $lineLength <= self::RECORD_LINE_MAX;
+        return null !== self::decodePathWithinLimits($path, $value);
     }
 
     /** Validates a canonical full path (every component decodes and re-encodes identically). */
     public static function isCanonicalPath(string $path): bool
     {
-        if ('' === $path || strlen($path) > self::PATH_MAX) {
-            return false;
+        return null !== self::decodeCanonicalPath($path);
+    }
+
+    /**
+     * Validates an encoded path and record value, returning the decoded components on success.
+     *
+     * @return list<string>|null
+     */
+    public static function decodePathWithinLimits(string $path, ?string $value): ?array
+    {
+        $components = self::decodeCanonicalPath($path);
+        if (null === $components) {
+            return null;
         }
 
-        $components = explode('::', $path);
-        if (count($components) > self::PATH_COMPONENTS_MAX) {
-            return false;
+        if (null !== $value && (strlen($value) > self::VALUE_MAX || strpbrk($value, "\r\n"))) {
+            return null;
         }
 
-        foreach ($components as $component) {
-            if ('' === $component || strlen($component) > self::COMPONENT_ENCODED_MAX) {
-                return false;
-            }
+        $valueLength = null !== $value && '' !== $value ? 1 + strlen($value) : 0;
+        $lineLength = strlen($path) + $valueLength + 1;
 
-            $decoded = self::decodeComponent($component);
-            if (null === $decoded || strlen($decoded) > self::COMPONENT_RAW_MAX) {
-                return false;
-            }
-
-            if (self::encodeComponent($decoded) !== $component) {
-                return false;
-            }
-        }
-
-        return true;
+        return $lineLength <= self::RECORD_LINE_MAX ? $components : null;
     }
 
     /** Checks a complete UDB record line, including conservative framing and CRLF budget. */
@@ -233,6 +217,38 @@ final class UdbPathCodec
     public static function parseTimeT(string $value): ?int
     {
         return self::parseUnsignedInt($value, PHP_INT_MAX);
+    }
+
+    /** @return list<string>|null */
+    private static function decodeCanonicalPath(string $path): ?array
+    {
+        if ('' === $path || strlen($path) > self::PATH_MAX) {
+            return null;
+        }
+
+        $components = explode('::', $path);
+        if (count($components) > self::PATH_COMPONENTS_MAX) {
+            return null;
+        }
+
+        $decodedComponents = [];
+        foreach ($components as $component) {
+            if ('' === $component || strlen($component) > self::COMPONENT_ENCODED_MAX) {
+                return null;
+            }
+
+            $decoded = self::decodeComponent($component);
+            if (null === $decoded || strlen($decoded) > self::COMPONENT_RAW_MAX) {
+                return null;
+            }
+
+            if (self::encodeComponent($decoded) !== $component) {
+                return null;
+            }
+            $decodedComponents[] = $decoded;
+        }
+
+        return $decodedComponents;
     }
 
     private static function encodeWithinLimits(string $raw, int $rawLimit, int $encodedLimit): ?string

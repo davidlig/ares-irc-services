@@ -139,14 +139,14 @@ role:
       done: "\x0303✓\x03 Operclass configurada para o cargo %role%."
       cleared: "\x0303✓\x03 Operclass removida do cargo %role%."
       not_available: "\x0304✗\x03 A operclass \x02%operclass%\x02 nao esta disponivel na rede. Operclasses disponiveis: %available%."
-  syntax: "ROLE <opção> [parâmetros]"
+  syntax: "ROLE {ADD <nome> [descrição]|DEL <nome>|LIST|PERMS {{ADD|DEL} <cargo> <permissão>|{LIST|CLEAR} <cargo>}|MODES {VIEW <cargo>|SET <cargo> [modos]}|VHOST {VIEW <cargo>|SET <cargo> [vhost]}}"
   short: "Permite gerir os cargos dos operadores, as respetivas permissões e configuração."
   help: |-
     Permite gerir os cargos dos operadores, as respetivas permissões e configuração.
 
     Os cargos ADMIN, OPER e PREOPER estão protegidos e não podem ser eliminados.
     Comando reservado a utilizadores Root.
-  syntax_operclass: "ROLE <opção> [parâmetros]"
+  syntax_operclass: "ROLE {ADD <nome> [descrição]|DEL <nome>|LIST|PERMS {{ADD|DEL} <cargo> <permissão>|{LIST|CLEAR} <cargo>}|MODES {VIEW <cargo>|SET <cargo> [modos]}|VHOST {VIEW <cargo>|SET <cargo> [vhost]}|OPERCLASS {LIST|VIEW <nome>|SET <nome> [operclass]}}"
   help_operclass: |-
     Permite gerir os cargos dos operadores, as respetivas permissões e configuração.
 
@@ -318,7 +318,7 @@ kill:
 
 # --- GLINE -----------------------------------------------------------------
 gline:
-  syntax: "GLINE {ADD <máscara> <expiração> <motivo>|DEL <máscara|número>|LIST [máscara]}"
+  syntax: "GLINE {ADD <máscara> <expiração> <motivo>|DEL {<máscara>|<número>}|LIST [máscara]}"
   short: "Gerir G-lines globais da rede."
   help: |-
     Gere as G-lines (banimentos globais) da rede.
@@ -358,7 +358,7 @@ gline:
 
   # --- GLINE DEL -----------------------------------------------------------
   del:
-    syntax: "GLINE DEL <máscara|número>"
+    syntax: "GLINE DEL {<máscara>|<número>}"
     short: "Remover uma G-line."
     help: |-
       Remove uma G-line da lista.
@@ -492,7 +492,7 @@ motd:
 
 # --- BADMAIL ---------------------------------------------------------------
 badmail:
-  syntax: "BADMAIL {ADD|DEL|LIST} <parâmetros>"
+  syntax: "BADMAIL {ADD <domínio> <motivo>|DEL {número|ALL}|LIST <padrão> [página]}"
   short: "Gerir domínios de email bloqueados."
   help: |-
     Gerir domínios de email bloqueados.

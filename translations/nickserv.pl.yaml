@@ -204,7 +204,7 @@ info:
 
 # --- SET -------------------------------------------------------------------
 set:
-  syntax: "SET <opcja> [wartość]"
+  syntax: "SET {PASSWORD <nowe_hasło>|EMAIL <email> <token>|LANGUAGE <kod>|TIMEZONE <strefa_czasowa>|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
   short: "Zmień opcje swojego nicka."
   help: |-
     Zmienia ustawienia Twojego pseudonimu. Aby zmienić te opcje, musisz być
@@ -335,7 +335,7 @@ set:
 
 # --- SASET -----------------------------------------------------------------
 saset:
-  syntax: "SASET <nick> <opcja> [wartość]"
+  syntax: "SASET <nick> {PASSWORD <nowe_hasło>|EMAIL <nowy_e-mail>|LANGUAGE <kod>|TIMEZONE {<strefa_czasowa>|OFF}|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
   short: "Modyfikuj ustawienia innego nicka."
   help: |-
     Pozwala IRCop zmienić ustawienia innego zarejestrowanego pseudonimu. Nie
@@ -374,7 +374,7 @@ saset:
 
   # --- SASET TIMEZONE ------------------------------------------------------
   timezone:
-    syntax: "SASET <nick> TIMEZONE <strefa_czasowa|OFF>"
+    syntax: "SASET <nick> TIMEZONE {<strefa_czasowa>|OFF}"
     short: "Zmień strefę czasową nicka."
     help: "Ustawia lub usuwa strefę czasową innego pseudonimu. Użyj OFF, aby ją usunąć."
     example: "%command_prefix%\x02\x0303SASET Użytkownik TIMEZONE Europe/Madrid\x03\x0F"
@@ -595,7 +595,7 @@ unforbid:
 
 # --- FORBIDVHOST -----------------------------------------------------------
 forbidvhost:
-  syntax: "FORBIDVHOST {ADD|DEL|LIST} [wzorzec]"
+  syntax: "FORBIDVHOST {ADD <wzorzec>|DEL <wzorzec>|LIST}"
   short: "Zarządzaj zabronionymi wzorcami vhost."
   help: |-
     Zarządza wzorcami blokującymi ustawianie hostów vhost pasujących do SET VHOST.
@@ -639,7 +639,7 @@ forbidvhost:
 
 # --- HISTORY ---
 history:
-  syntax: "HISTORY <nick> {ADD|DEL|VIEW|CLEAR}"
+  syntax: "HISTORY <nick> {ADD <wiadomość>|DEL <id>|VIEW [PAGE|ALL]|CLEAR}"
   short: "Przeglądaj lub zarządzaj historią działań nicka."
   help: |-
     Wyświetla historię działań pseudonimu. Automatycznie zapisuje zawieszenia,

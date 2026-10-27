@@ -204,7 +204,7 @@ info:
 
 # --- SET -------------------------------------------------------------------
 set:
-  syntax: "SET <aukera> [balioa]"
+  syntax: "SET {PASSWORD <pasahitz_berria>|EMAIL <email> <token>|LANGUAGE <kodea>|TIMEZONE <ordu-zona>|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost-a]}"
   short: "Aldatu zure ezizenaren aukerak."
   help: |-
     Zure ezizenaren ezarpenak aldatzen ditu. Aukera hauek aldatzeko
@@ -339,7 +339,7 @@ set:
 
 # --- SASET -----------------------------------------------------------------
 saset:
-  syntax: "SASET <ezizen> <aukera> [balio]"
+  syntax: "SASET <ezizen> {PASSWORD <pasahitz_berria>|EMAIL <posta_berria>|LANGUAGE <kodea>|TIMEZONE {<ordu_zona>|OFF}|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
   short: "Beste ezizen baten ezarpenak aldatu."
   help: |-
     IRC Operadore bati erregistratutako ezizen baten ezarpenak aldatzea ahalbidetzen
@@ -401,7 +401,7 @@ saset:
 
   # --- SASET TIMEZONE ------------------------------------------------------
   timezone:
-    syntax: "SASET <ezizen> TIMEZONE <ordu_zona|OFF>"
+    syntax: "SASET <ezizen> TIMEZONE {<ordu_zona>|OFF}"
     short: "Ezizen baten ordu-zona aldatu."
     help: |-
       Beste ezizen baten ordu-zona ezartzen edo garbitzen du.
@@ -663,7 +663,7 @@ unforbid:
 
 # --- FORBIDVHOST -----------------------------------------------------------
 forbidvhost:
-  syntax: "FORBIDVHOST {ADD|DEL|LIST} [eredua]"
+  syntax: "FORBIDVHOST {ADD <eredua>|DEL <eredua>|LIST}"
   short: "Kudeatu debekatutako vhost ereduak."
   help: |-
     SET VHOST bidez bat datozen vhost-ak ezartzea eragozten duten ereduak
@@ -708,7 +708,7 @@ forbidvhost:
 
 # --- HISTORY ---
 history:
-  syntax: "HISTORY <ezizena> {ADD|DEL|VIEW|CLEAR}"
+  syntax: "HISTORY <ezizena> {ADD <mezua>|DEL <ida>|VIEW [PAGE|ALL]|CLEAR}"
   short: "Ikusi edo kudeatu ezizenaren ekintza historia."
   help: |-
     Ezizen baten ekintza historia kudeatzen du.

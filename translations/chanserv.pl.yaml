@@ -31,7 +31,7 @@ register:
     %nickserv%.
     W trybie APPROVAL IRCop musi zatwierdzić prośbę.
   success: "\x0303✔\x03 Kanał \x02%channel%\x02 został zarejestrowany."
-  already_registered: "\x0304✗\x03 Kanał \x02%channel%\x02 jest już zarejestrowany."
+  already_registered: "\x0304✗\x03 Kanał \x02%channel%\x02 jest już zarejestrowany lub trwa jego rejestracja."
   channel_not_on_network: "\x0304✗\x03 Kanał \x02%channel%\x02 nie istnieje w sieci."
   pending_deletion: "\x0304✗\x03 Kanał \x02%channel%\x02 oczekuje na usunięcie i nie może być zarejestrowany."
   insufficient_channel_rank: "\x0304✗\x03 Musisz mieć co najmniej status operatora na \x02%channel%\x02, aby zarejestrować kanał."
@@ -78,7 +78,7 @@ creg:
   pending_header: "\x0314Oczekujące rejestracje (strona %page%)\x03"
   pending_item: "  %channel% — wnioskodawca %requester%, wysłano %submitted%: %description%"
   accepted: "\x0303✔\x03 Rejestracja \x02%channel%\x02 została zatwierdzona."
-  rejected: "\x0307✔\x03 Rejestracja \x02%channel%\x02 została odrzucona."
+  rejected: "\x0303✔\x03 Rejestracja \x02%channel%\x02 została odrzucona."
   not_pending: "\x0304✗\x03 Kanał \x02%channel%\x02 nie ma oczekującej rejestracji."
   channel_not_on_network: "\x0304✗\x03 Kanału \x02%channel%\x02 nie ma w sieci."
   founder_limit: "\x0304✗\x03 Wnioskodawca osiągnął limit rejestracji kanałów."
@@ -89,25 +89,25 @@ creg:
 status:
   syntax: "STATUS <#kanał>"
   example: "%command_prefix%\x02\x0303STATUS #canal\x03\x0F"
+  header: "\x02Stan kanału \x0307%channel%\x03\x02"
   short: "Pokaż stan rejestracji kanału."
   help: |-
     Pokazuje, czy kanał jest niezarejestrowany, oczekuje na zatwierdzenie,
     został odrzucony lub jest zarejestrowany.
     Szczegóły odrzucenia widzi tylko wnioskodawca i uprawnieni IRCopowie.
 
-  unregistered: "\x0314%channel% nie jest zarejestrowany.\x03"
-  pending: "\x0314%channel% oczekuje na zatwierdzenie IRCopa.\x03"
-  registered: "\x0314%channel% jest zarejestrowany.\x03"
-  suspended: "\x0314%channel% jest zarejestrowany, ale zawieszony.\x03"
-  forbidden: "\x0314Rejestracja %channel% jest zabroniona.\x03"
-  pending_deletion: "\x0314%channel% oczekuje na usunięcie.\x03"
-  rejected_private: "\x0314Prośba o rejestrację %channel% została odrzucona.\x03"
-  rejected: "\x0314Rejestracja %channel% została odrzucona.\x03"
-  rejection_reason: "  \x0314Powód\x03: %reason%"
-  rejection_audit: "  \x0314Odrzucono przez\x03: %operator% dnia %date%"
-  restriction_indefinite: "  \x0314Nowe prośby są bezterminowo zablokowane.\x03"
-  restriction_until: "  \x0314Nowe prośby są zablokowane do %date%\x03"
-  restriction_expired: "  \x0314Ograniczenie rejestracji wygasło %date%.\x03"
+  unregistered: "  \x0314Stan                    \x03: Niezarejestrowany"
+  pending: "  \x0314Stan                    \x03: \x0307Oczekuje na zatwierdzenie\x03"
+  registered: "  \x0314Stan                    \x03: \x0303Zarejestrowany\x03"
+  suspended: "  \x0314Stan                    \x03: \x0304Zawieszony\x03"
+  forbidden: "  \x0314Stan                    \x03: \x0304Zabroniony\x03"
+  pending_deletion: "  \x0314Stan                    \x03: \x0307Oczekuje na usunięcie\x03"
+  rejected_private: "  \x0314Stan                    \x03: \x0304Rejestracja odrzucona\x03"
+  rejected: "  \x0314Stan                    \x03: \x0304Rejestracja odrzucona\x03"
+  rejection_reason: "  \x0314Powód                   \x03: %reason%"
+  rejection_audit: "  \x0314Odrzucono przez         \x03: %operator% dnia %date%"
+  restriction_until: "  \x0314Dostępny od             \x03: %date%"
+  footer: "\x0314─────────────────────────────\x03\x0F"
 
 # --- INFO ------------------------------------------------------------------
 info:
@@ -206,7 +206,7 @@ secure:
 
 # --- SET -------------------------------------------------------------------
 set:
-  syntax: "SET <#kanał> <opcja> [wartość]"
+  syntax: "SET <#kanał> {FOUNDER <nick> [token]|SUCCESSOR [nick]|DESC <opis>|URL [url]|EMAIL [e-mail]|ENTRYMSG [wiadomość]|TOPICLOCK {ON|OFF}|MLOCK {ON|OFF}|PRIVATE {ON|OFF}|SECURE {ON|OFF}}"
   example: "%command_prefix%\x02\x0303SET #kanał DESC Kanał społecznościowy\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303SET #kanał URL https://example.test\x03\x0F"
@@ -357,7 +357,7 @@ set:
 
 # --- ACCESS ----------------------------------------------------------------
 access:
-  syntax: "ACCESS <#kanał> {ADD|DEL|LIST} [nick] [poziom]"
+  syntax: "ACCESS <#kanał> {ADD <nick> <poziom>|DEL <nick>|LIST}"
   example: "%command_prefix%\x02\x0303ACCESS #kanał LIST\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303ACCESS #kanał ADD Alicia 100\x03\x0F"
@@ -414,7 +414,7 @@ delaccess:
 
 # --- LEVELS ----------------------------------------------------------------
 levels:
-  syntax: "LEVELS <#kanał> {LIST|SET|RESET} [poziom] [wartość]"
+  syntax: "LEVELS <#kanał> {LIST|SET <poziom> <wartość>|RESET}"
   example: "%command_prefix%\x02\x0303LEVELS #kanał LIST\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303LEVELS #kanał SET OPDEOP 50\x03\x0F"
@@ -518,7 +518,7 @@ dehalfop:
 
 # --- AKICK -----------------------------------------------------------------
 akick:
-  syntax: "AKICK <#kanał> {ADD|DEL|LIST} [maska] [wygaśnięcie] [powód]"
+  syntax: "AKICK <#kanał> {ADD <maska> [wygaśnięcie] [powód]|DEL {<maska>|<numer>}|LIST}"
   example: "%command_prefix%\x02\x0303AKICK #kanał ADD *!*@* 0\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303AKICK #kanał ADD *!*@* 7d Spam\x03\x0F"
@@ -553,7 +553,7 @@ akick:
 
   # --- AKICK DEL -----------------------------------------------------------
   del:
-    syntax: "AKICK <#kanał> DEL <maska|numer>"
+    syntax: "AKICK <#kanał> DEL {<maska>|<numer>}"
     example: "%command_prefix%\x02\x0303AKICK #kanał DEL *!*@*\x03\x0F"
     examples:
       - "%command_prefix%\x02\x0303AKICK #kanał DEL 2\x03\x0F"
@@ -592,8 +592,8 @@ drop:
   help: |-
     Usuwa zarejestrowany kanał z bazy danych.
     FORCE trwale usuwa kanał oczekujący na usunięcie.
-    DROP odrzuconej prośby usuwa ją po zakończeniu blokady.
-    Uprawniony IRCop może jawnie zdjąć blokadę bezterminową.
+    IRCop z uprawnieniem DROP może też natychmiast zwolnić
+    odrzuconą rejestrację, z FORCE lub bez. FORCE wymaga dodatkowo DROP_FORCE.
   registration_restricted: "\x0304✗\x03 Ta prośba o rejestrację jest zablokowana do %date%."
   force:
     short: "Trwale usuwa kanał oczekujący na usunięcie."
@@ -695,7 +695,7 @@ debug:
 
 # --- HISTORY ---
 history:
-  syntax: "HISTORY <#kanał> {ADD|DEL|VIEW|CLEAR}"
+  syntax: "HISTORY <#kanał> {ADD <wiadomość>|DEL <id>|VIEW [PAGE|ALL]|CLEAR}"
   example: "%command_prefix%\x02\x0303HISTORY #kanał ADD Przegląd moderacji\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303HISTORY #kanał DEL 42\x03\x0F"

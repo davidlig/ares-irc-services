@@ -204,7 +204,7 @@ info:
 
 # --- SET --------------------------------------------------------------------
 set:
-  syntax: "SET <opción> [valor]"
+  syntax: "SET {PASSWORD <nueva_contraseña>|EMAIL <email> <token>|LANGUAGE <código>|TIMEZONE <zona>|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
   short: "Cambiar opciones de tu apodo."
   help: |-
     Modifica la configuración de tu apodo. Debes estar identificado para cambiar
@@ -334,7 +334,7 @@ set:
 
 # --- SASET (IRCop) --------------------------------------------------------------
 saset:
-  syntax: "SASET <apodo> <opción> [valor]"
+  syntax: "SASET <apodo> {PASSWORD <nueva_contraseña>|EMAIL <nuevo_email>|LANGUAGE <código>|TIMEZONE {<zona>|OFF}|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
   short: "Modifica la configuración de otro apodo."
   help: |-
     Permite a un IRCop cambiar la configuración de otro apodo registrado. No
@@ -373,7 +373,7 @@ saset:
 
   # --- SASET TIMEZONE ------------------------------------------------------
   timezone:
-    syntax: "SASET <apodo> TIMEZONE <zona|OFF>"
+    syntax: "SASET <apodo> TIMEZONE {<zona>|OFF}"
     short: "Cambia la zona horaria de un apodo."
     help: "Establece o quita la zona horaria de otro apodo. Usa OFF para quitarla."
     example: "%command_prefix%\x02\x0303SASET Usuario TIMEZONE Europe/Madrid\x03\x0f"
@@ -598,7 +598,7 @@ unforbid:
 
 # --- FORBIDVHOST (IRCop) ---------------------------------------------------------
 forbidvhost:
-  syntax: "FORBIDVHOST {ADD|DEL|LIST} [patrón]"
+  syntax: "FORBIDVHOST {ADD <patrón>|DEL <patrón>|LIST}"
   short: "Gestiona vhosts prohibidos."
   help: |-
     Gestiona los patrones que impiden establecer vhosts coincidentes con SET
@@ -644,7 +644,7 @@ forbidvhost:
 
 # --- HISTORY ---
 history:
-  syntax: "HISTORY <apodo> {ADD|DEL|VIEW|CLEAR}"
+  syntax: "HISTORY <apodo> {ADD <mensaje>|DEL <id>|VIEW [PAGE|ALL]|CLEAR}"
   short: "Ver o gestionar el historial de acciones de un apodo."
   help: |-
     Consulta y gestiona el historial de acciones de un apodo. Registra

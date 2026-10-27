@@ -76,7 +76,7 @@ del:
 
 # --- IGNORE ----------------------------------------------------------------
 ignore:
-  syntax: "IGNORE {ADD|DEL|LIST} [#kanala] [ezizena]"
+  syntax: "IGNORE {ADD [#kanala] <ezizena>|DEL [#kanala] <ezizena>|LIST [#kanala]}"
   short: "Kudeatu mezuetarako baztertze zerrenda."
   help: |-
     Kudeatu mezurik jaso nahi ez duzun ezizenen zerrenda, zure kontuan zein
@@ -189,8 +189,7 @@ notify:
 
 # --- CHANNEL REGISTRATION DECISIONS ---
 registration_decision:
-  accepted: "%channel% kanalaren erregistro-eskaera %operator% erabiltzaileak onartu du."
-  rejected: "%channel% kanalaren erregistro-eskaera %operator% erabiltzaileak ukatu du."
+  accepted: "%channel% kanalaren erregistro-eskaera onartu da."
+  rejected: "%channel% kanalaren erregistro-eskaera ukatu da."
   reason: "Arrazoia: %reason%"
-  restriction: "Geratzen den murrizketa: %remaining_seconds% segundo."
-  restriction_indefinite: "Kanal honek mugagabeko murrizketa du."
+  restriction: "Noiztik erabilgarri: %date%"

@@ -204,7 +204,7 @@ info:
 
 # --- SET -------------------------------------------------------------------
 set:
-  syntax: "SET <option> [value]"
+  syntax: "SET {PASSWORD <new_password>|EMAIL <email> <token>|LANGUAGE <code>|TIMEZONE <timezone>|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
   short: "Canviar les opcions del teu sobrenom."
   help: |-
     Modifica la configuració del teu sobrenom. T'has d'haver identificat per canviar
@@ -336,7 +336,7 @@ set:
 
 # --- SASET -----------------------------------------------------------------
 saset:
-  syntax: "SASET <sobrenom> <opció> [valor]"
+  syntax: "SASET <sobrenom> {PASSWORD <nova_contrasenya>|EMAIL <nou_correu>|LANGUAGE <codi>|TIMEZONE {<zona_horària>|OFF}|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
   short: "Modificar la configuració d'un altre sobrenom."
   help: |-
     Permet que un IRCop canviï la configuració d'un altre sobrenom registrat. No
@@ -375,7 +375,7 @@ saset:
 
   # --- SASET TIMEZONE ------------------------------------------------------
   timezone:
-    syntax: "SASET <sobrenom> TIMEZONE <zona_horària|OFF>"
+    syntax: "SASET <sobrenom> TIMEZONE {<zona_horària>|OFF}"
     short: "Canviar la zona horària d'un sobrenom."
     help: |-
       Estableix o elimina la zona horària d'un altre
@@ -602,7 +602,7 @@ unforbid:
 
 # --- FORBIDVHOST -----------------------------------------------------------
 forbidvhost:
-  syntax: "FORBIDVHOST {ADD|DEL|LIST} [pattern]"
+  syntax: "FORBIDVHOST {ADD <pattern>|DEL <pattern>|LIST}"
   short: "Gestionar els patrons de vhost prohibits."
   help: |-
     Gestiona els patrons que impedeixen hosts virtuals
@@ -648,7 +648,7 @@ forbidvhost:
 
 # --- HISTORY ---
 history:
-  syntax: "HISTORY <nickname> {ADD|DEL|VIEW|CLEAR}"
+  syntax: "HISTORY <nickname> {ADD <message>|DEL <id>|VIEW [PAGE|ALL]|CLEAR}"
   short: "Veure o gestionar l'historial d'accions del sobrenom."
   help: |-
     Consulta i gestiona l'historial d'accions d'un sobrenom. Registra automàticament

@@ -203,7 +203,7 @@ info:
 
 # --- SET -------------------------------------------------------------------
 set:
-  syntax: "SET <seçenek> [değer]"
+  syntax: "SET {PASSWORD <yeni_şifre>|EMAIL <email> <token>|LANGUAGE <kod>|TIMEZONE <zaman_dilimi>|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
   short: "Rumuz seçeneklerinizi değiştirin."
   help: |-
     Takma adınızın ayarlarını değiştirir. Bu seçenekleri değiştirmek için
@@ -333,7 +333,7 @@ set:
 
 # --- SASET -----------------------------------------------------------------
 saset:
-  syntax: "SASET <rumuz> <seçenek> [değer]"
+  syntax: "SASET <rumuz> {PASSWORD <yeni_şifre>|EMAIL <yeni_e-posta>|LANGUAGE <kod>|TIMEZONE {<zaman_dilimi>|OFF}|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
   short: "Başka bir rumuzun ayarlarını değiştir."
   help: |-
     IRCop kullanıcısının başka bir kayıtlı takma adın ayarlarını değiştirmesini
@@ -372,7 +372,7 @@ saset:
 
   # --- SASET TIMEZONE ------------------------------------------------------
   timezone:
-    syntax: "SASET <rumuz> TIMEZONE <zaman_dilimi|OFF>"
+    syntax: "SASET <rumuz> TIMEZONE {<zaman_dilimi>|OFF}"
     short: "Bir rumuzun zaman dilimini değiştir."
     help: |-
       Başka bir takma adın saat dilimini ayarlar veya kaldırır. Kaldırmak için OFF
@@ -595,7 +595,7 @@ unforbid:
 
 # --- FORBIDVHOST -----------------------------------------------------------
 forbidvhost:
-  syntax: "FORBIDVHOST {ADD|DEL|LIST} [kalıp]"
+  syntax: "FORBIDVHOST {ADD <kalıp>|DEL <kalıp>|LIST}"
   short: "Yasaklı vhost kalıplarını yönetin."
   help: |-
     SET VHOST ile eşleşen vhost ayarlarını engelleyen kalıpları yönetir. * herhangi
@@ -638,7 +638,7 @@ forbidvhost:
 
 # --- HISTORY ---
 history:
-  syntax: "HISTORY <nickname> {ADD|DEL|VIEW|CLEAR}"
+  syntax: "HISTORY <nickname> {ADD <mesaj>|DEL <id>|VIEW [PAGE|ALL]|CLEAR}"
   short: "Rumuz eylem geçmişini görüntüleyin veya yönetin."
   help: |-
     Takma adın işlem geçmişini görüntüler ve yönetir. Askıya alma, parola veya

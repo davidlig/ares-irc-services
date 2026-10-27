@@ -143,14 +143,14 @@ role:
       done: "\x0303✓\x03 S'ha configurat l'operclass per al rol %role%."
       cleared: "\x0303✓\x03 S'ha eliminat l'operclass del rol %role%."
       not_available: "\x0304✗\x03 L'operclass \x02%operclass%\x02 no està disponible a la xarxa. Operclasses disponibles: %available%."
-  syntax: "ROLE <opció> [paràmetres]"
+  syntax: "ROLE {ADD <name> [description]|DEL <name>|LIST|PERMS {{ADD|DEL} <rol> <permís>|{LIST|CLEAR} <rol>}|MODES {VIEW <rol>|SET <rol> [modes]}|VHOST {VIEW <rol>|SET <rol> [vhost]}}"
   short: "Permet gestionar els rols d'operador, els seus permisos i la configuració."
   help: |-
     Permet gestionar els rols d'operador, els seus permisos i la configuració.
 
     Els rols ADMIN, OPER i PREOPER estan protegits i no es poden eliminar.
     Ordre exclusiva per a usuaris Root.
-  syntax_operclass: "ROLE <opció> [paràmetres]"
+  syntax_operclass: "ROLE {ADD <name> [description]|DEL <name>|LIST|PERMS {{ADD|DEL} <rol> <permís>|{LIST|CLEAR} <rol>}|MODES {VIEW <rol>|SET <rol> [modes]}|VHOST {VIEW <rol>|SET <rol> [vhost]}|OPERCLASS {LIST|VIEW <name>|SET <name> [operclass]}}"
   help_operclass: |-
     Permet gestionar els rols d'operador, els seus permisos i la configuració.
 
@@ -323,7 +323,7 @@ kill:
 
 # --- GLINE -----------------------------------------------------------------
 gline:
-  syntax: "GLINE {ADD <mask> <expiry> <motiu>|DEL <mask|number>|LIST [mask]}"
+  syntax: "GLINE {ADD <mask> <expiry> <motiu>|DEL {<mask>|<number>}|LIST [mask]}"
   short: "Gestionar les G-lines de tota la xarxa."
   help: |-
     Gestiona les G-lines (prohibicions globals) de la xarxa.
@@ -363,7 +363,7 @@ gline:
 
   # --- GLINE DEL -----------------------------------------------------------
   del:
-    syntax: "GLINE DEL <mask|number>"
+    syntax: "GLINE DEL {<mask>|<number>}"
     short: "Treure una G-line."
     help: |-
       Elimina una G-line de la llista.
@@ -503,7 +503,7 @@ motd:
 
 # --- BADMAIL ---------------------------------------------------------------
 badmail:
-  syntax: "BADMAIL {ADD|DEL|LIST} <paràmetres>"
+  syntax: "BADMAIL {ADD <domini> <motiu>|DEL {número|ALL}|LIST <patró> [pàgina]}"
   short: "Administrar dominis de correu bloquejats."
   help: |-
     Administrar dominis de correu bloquejats.

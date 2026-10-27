@@ -31,7 +31,7 @@ register:
     identificado con %nickserv%. No modo APPROVAL, un IRCop debe
     aprobar a solicitude.
   success: "\x0303✔\x03 A canle \x02%channel%\x02 foi rexistrada."
-  already_registered: "\x0304✗\x03 O canal \x02%channel%\x02 xa está rexistrado."
+  already_registered: "\x0304✗\x03 A canle \x02%channel%\x02 xa está rexistrada ou ten unha solicitude de rexistro en curso."
   channel_not_on_network: "\x0304✗\x03 A canle \x02%channel%\x02 non existe na rede."
   pending_deletion: "\x0304✗\x03 O canal \x02%channel%\x02 está pendente de eliminación e non se pode rexistrar."
   insufficient_channel_rank: "\x0304✗\x03 Debes ter polo menos estado de operador en \x02%channel%\x02 para rexistrala."
@@ -55,7 +55,7 @@ regmode:
 
 # --- CREG ------------------------------------------------------------------
 creg:
-  syntax: "CREG {PENDING [page]|ACCEPT <#channel>|REJECT <#channel> <reason>}"
+  syntax: "CREG {PENDING [page]|ACCEPT <#channel>|REJECT <#channel> <razón>}"
   pending.syntax: "CREG PENDING [page]"
   pending.example: "%command_prefix%\x02\x0303CREG PENDING\x03\x0F"
   pending.short: "Lista as solicitudes pendentes nunha páxina limitada."
@@ -64,10 +64,10 @@ creg:
   accept.example: "%command_prefix%\x02\x0303CREG ACCEPT #channel\x03\x0F"
   accept.short: "Aprobar unha solicitude de rexistro de canle."
   accept.help: "Volver validar a solicitude e activar o rexistro pendente."
-  reject.syntax: "CREG REJECT <#channel> <reason>"
+  reject.syntax: "CREG REJECT <#channel> <razón>"
   reject.example: "%command_prefix%\x02\x0303CREG REJECT #channel Precisa un tema público\x03\x0F"
   reject.short: "Rexeitar unha solicitude de rexistro de canle."
-  reject.help: "Rexeita unha solicitude cun motivo obrigatorio e unha restrición."
+  reject.help: "Rexeita unha solicitude cun razón obrigatorio e unha restrición."
   example: "%command_prefix%\x02\x0303CREG PENDING\x03\x0F"
   short: "Revisar as solicitudes de rexistro de canles."
   help: |-
@@ -76,7 +76,7 @@ creg:
   pending_header: "\x0314Rexistros pendentes (páxina %page%)\x03"
   pending_item: "  %channel% — solicitante %requester%, enviada o %submitted%: %description%"
   accepted: "\x0303✔\x03 O rexistro de %channel% foi aprobado."
-  rejected: "\x0307✔\x03 O rexistro de %channel% foi rexeitado."
+  rejected: "\x0303✔\x03 O rexistro de %channel% foi rexeitado."
   not_pending: "\x0304✗\x03 %channel% non ten ningunha solicitude de rexistro pendente."
   channel_not_on_network: "\x0304✗\x03 A canle %channel% non está na rede."
   founder_limit: "\x0304✗\x03 A persoa solicitante alcanzou o límite de rexistro de canles."
@@ -87,25 +87,25 @@ creg:
 status:
   syntax: "STATUS <#channel>"
   example: "%command_prefix%\x02\x0303STATUS #channel\x03\x0F"
+  header: "\x02Estado da canle \x0307%channel%\x03\x02"
   short: "Amosar o estado do rexistro da canle."
   help: |-
     Amosa se unha canle non está rexistrada, agarda aprobación,
     foi rexeitada ou está rexistrada.
     Os detalles do rexeitamento só son visibles para a persoa solicitante
     e para IRCops autorizados.
-  unregistered: "\x0314%channel% non está rexistrada.\x03"
-  pending: "\x0314%channel% agarda a aprobación dun IRCop.\x03"
-  registered: "\x0314%channel% está rexistrada.\x03"
-  suspended: "\x0314%channel% está rexistrada pero suspendida.\x03"
-  forbidden: "\x0314%channel% non se pode rexistrar.\x03"
-  pending_deletion: "\x0314%channel% está pendente de eliminación.\x03"
-  rejected_private: "\x0314A solicitude de rexistro de %channel% foi rexeitada.\x03"
-  rejected: "\x0314A solicitude de rexistro de %channel% foi rexeitada.\x03"
-  rejection_reason: "  \x0314Motivo\x03: %reason%"
-  rejection_audit: "  \x0314Rexeitada por\x03: %operator% o %date%"
-  restriction_indefinite: "  \x0314As novas solicitudes están bloqueadas indefinidamente.\x03"
-  restriction_until: "  \x0314As novas solicitudes están bloqueadas ata %date%\x03"
-  restriction_expired: "  \x0314A restrición de rexistro rematou o %date%.\x03"
+  unregistered: "  \x0314Estado                  \x03: Sen rexistrar"
+  pending: "  \x0314Estado                  \x03: \x0307Pendente de aprobación\x03"
+  registered: "  \x0314Estado                  \x03: \x0303Rexistrada\x03"
+  suspended: "  \x0314Estado                  \x03: \x0304Suspendida\x03"
+  forbidden: "  \x0314Estado                  \x03: \x0304Prohibida\x03"
+  pending_deletion: "  \x0314Estado                  \x03: \x0307Pendente de eliminación\x03"
+  rejected_private: "  \x0314Estado                  \x03: \x0304Rexistro rexeitado\x03"
+  rejected: "  \x0314Estado                  \x03: \x0304Rexistro rexeitado\x03"
+  rejection_reason: "  \x0314Razón                   \x03: %reason%"
+  rejection_audit: "  \x0314Rexeitada por           \x03: %operator% o %date%"
+  restriction_until: "  \x0314Dispoñible a partir do  \x03: %date%"
+  footer: "\x0314─────────────────────────────\x03\x0F"
 
 # --- INFO ------------------------------------------------------------------
 info:
@@ -205,7 +205,7 @@ secure:
 
 # --- SET -------------------------------------------------------------------
 set:
-  syntax: "SET <#canle> <opción> [valor]"
+  syntax: "SET <#canle> {FOUNDER <alcume> [token]|SUCCESSOR [alcume]|DESC <descrición>|URL [url]|EMAIL [correo]|ENTRYMSG [mensaxe]|TOPICLOCK {ON|OFF}|MLOCK {ON|OFF}|PRIVATE {ON|OFF}|SECURE {ON|OFF}}"
   example: "%command_prefix%\x02\x0303SET #canle DESC Unha canle comunitaria\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303SET #canle URL https://example.test\x03\x0F"
@@ -360,7 +360,7 @@ set:
 
 # --- ACCESS ----------------------------------------------------------------
 access:
-  syntax: "ACCESS <#canle> {ADD|DEL|LIST} [alcume] [nivel]"
+  syntax: "ACCESS <#canle> {ADD <alcume> <nivel>|DEL <alcume>|LIST}"
   example: "%command_prefix%\x02\x0303ACCESS #canle LIST\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303ACCESS #canle ADD Alicia 100\x03\x0F"
@@ -417,7 +417,7 @@ delaccess:
 
 # --- LEVELS ----------------------------------------------------------------
 levels:
-  syntax: "LEVELS <#canle> {LIST|SET|RESET} [nivel] [valor]"
+  syntax: "LEVELS <#canle> {LIST|SET <nivel> <valor>|RESET}"
   example: "%command_prefix%\x02\x0303LEVELS #canle LIST\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303LEVELS #canle SET OPDEOP 50\x03\x0F"
@@ -521,7 +521,7 @@ dehalfop:
 
 # --- AKICK -----------------------------------------------------------------
 akick:
-  syntax: "AKICK <#canle> {ADD|DEL|LIST} [máscara] [caducidade] [motivo]"
+  syntax: "AKICK <#canle> {ADD <máscara> [caducidade] [motivo]|DEL {<máscara>|<número>}|LIST}"
   example: "%command_prefix%\x02\x0303AKICK #canle ADD *!*@* 0\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303AKICK #canle ADD *!*@* 7d Spam\x03\x0F"
@@ -557,7 +557,7 @@ akick:
 
   # --- AKICK DEL -----------------------------------------------------------
   del:
-    syntax: "AKICK <#canle> DEL <máscara|número>"
+    syntax: "AKICK <#canle> DEL {<máscara>|<número>}"
     example: "%command_prefix%\x02\x0303AKICK #canle DEL *!*@*\x03\x0F"
     examples:
       - "%command_prefix%\x02\x0303AKICK #canle DEL 2\x03\x0F"
@@ -598,8 +598,8 @@ drop:
   help: |-
     Elimina unha canle rexistrada da base de datos.
     FORCE elimina permanentemente unha canle pendente de eliminación.
-    DROP libera unha solicitude rexeitada cando remata a restrición.
-    Un IRCop autorizado pode liberar expresamente unha restrición indefinida.
+    Un IRCop co permiso DROP tamén pode liberar inmediatamente
+    un rexistro rexeitado, con FORCE ou sen el. FORCE require tamén DROP_FORCE.
   registration_restricted: "\x0304✗\x03 Esta solicitude de rexistro está restrinxida ata %date%."
   force:
     short: "Elimina permanentemente unha canle pendente de eliminación."
@@ -704,7 +704,7 @@ debug:
 
 # --- HISTORY ---
 history:
-  syntax: "HISTORY <#canle> {ADD|DEL|VIEW|CLEAR}"
+  syntax: "HISTORY <#canle> {ADD <mensaxe>|DEL <id>|VIEW [PAGE|ALL]|CLEAR}"
   example: "%command_prefix%\x02\x0303HISTORY #canle ADD Revisión de moderación\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303HISTORY #canle DEL 42\x03\x0F"

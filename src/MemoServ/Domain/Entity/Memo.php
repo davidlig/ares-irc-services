@@ -12,7 +12,7 @@ use function strlen;
 
 /**
  * A memo sent to a nickname or a channel.
- * Exactly one of targetNickId or targetChannelId must be set.
+ * Exactly one recipient and exactly one sender representation must be set.
  */
 class Memo
 {
@@ -24,7 +24,9 @@ class Memo
 
     private ?int $targetChannelId = null;
 
-    private int $senderNickId;
+    private ?int $senderNickId;
+
+    private ?string $senderName;
 
     private string $message;
 
@@ -35,18 +37,26 @@ class Memo
     public function __construct(
         ?int $targetNickId,
         ?int $targetChannelId,
-        int $senderNickId,
+        ?int $senderNickId,
         string $message,
         DateTimeImmutable $createdAt,
+        ?string $senderName = null,
     ) {
         $nickSet = null !== $targetNickId;
         $channelSet = null !== $targetChannelId;
         if ($nickSet === $channelSet) {
             throw new InvalidArgumentException('Exactly one of targetNickId or targetChannelId must be set.');
         }
+        if ((null === $senderNickId) === (null === $senderName)) {
+            throw new InvalidArgumentException('Exactly one sender representation must be set.');
+        }
+        if (null !== $senderName && '' === $senderName) {
+            throw new InvalidArgumentException('Service sender name cannot be empty.');
+        }
         $this->targetNickId = $targetNickId;
         $this->targetChannelId = $targetChannelId;
         $this->senderNickId = $senderNickId;
+        $this->senderName = $senderName;
         self::assertValidMessage($message);
         $this->message = $message;
         $this->createdAt = $createdAt;
@@ -67,9 +77,14 @@ class Memo
         return $this->targetChannelId;
     }
 
-    public function getSenderNickId(): int
+    public function getSenderNickId(): ?int
     {
         return $this->senderNickId;
+    }
+
+    public function getSenderName(): ?string
+    {
+        return $this->senderName;
     }
 
     public function getMessage(): string

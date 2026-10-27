@@ -57,7 +57,7 @@ final readonly class ManageChannelLifecycleHandler implements ManageChannelLifec
         }
         if ($channel->isRejectedRegistration()) {
             $restrictedUntil = $channel->getRegistrationRestrictedUntil();
-            if (null !== $restrictedUntil && $command->occurredAt < $restrictedUntil) {
+            if (null !== $restrictedUntil && $command->occurredAt < $restrictedUntil && !$command->releaseRejectedRegistration) {
                 return new ChannelLifecycleResult(ChannelLifecycleOutcome::RegistrationRestricted, $restrictedUntil);
             }
             $this->dropService->hardDropChannel(
