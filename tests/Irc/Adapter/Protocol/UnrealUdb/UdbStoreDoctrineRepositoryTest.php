@@ -27,6 +27,7 @@ use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use UnexpectedValueException;
 
+use function array_keys;
 use function count;
 use function str_repeat;
 
@@ -256,6 +257,8 @@ final class UdbStoreDoctrineRepositoryTest extends DoctrineIntegrationTestCase
     #[Test]
     public function blockStatesAreUpsertedPerBlock(): void
     {
+        self::assertSame([], $this->states->all());
+
         $firstModifiedAt = new DateTimeImmutable('2026-09-13 10:00:00');
         $secondModifiedAt = new DateTimeImmutable('2026-09-13 11:00:00');
         $this->states->upsert('S', str_repeat('a', 64), 1, $firstModifiedAt);
@@ -265,6 +268,9 @@ final class UdbStoreDoctrineRepositoryTest extends DoctrineIntegrationTestCase
 
         $all = $this->states->all();
         self::assertCount(2, $all);
+        self::assertSame(['S', 'L'], array_keys($all));
+        self::assertFalse($this->entityManager->contains($all['S']));
+        self::assertFalse($this->entityManager->contains($all['L']));
         self::assertSame(str_repeat('b', 64), $all['S']->getChecksum());
         self::assertSame(2, $all['S']->getRecordCount());
         self::assertSame($secondModifiedAt->format(DATE_ATOM), $all['S']->getModifiedAt()->format(DATE_ATOM));
