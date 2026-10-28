@@ -702,6 +702,8 @@ unforbid:
 
 # --- DEBUG -----------------------------------------------------------------
 debug:
+  registration_completed: "%operator% heeft kanaal %target% geregistreerd"
+  registration_pending: "%operator% heeft de registratie van kanaal %target% aangevraagd"
   founder_action: "Niveau-oprichter actie"
 
 # --- HISTORY ---

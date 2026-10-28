@@ -71,6 +71,7 @@ use App\ChanServ\Application\UseCase\ShowRegistrationStatus\ShowRegistrationStat
 use App\ChanServ\Domain\Entity\ChannelAccess;
 use App\ChanServ\Domain\Entity\ChannelHistory;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
+use App\ChanServ\Domain\Exception\ChannelAlreadyRegisteredException;
 use App\ChanServ\Domain\ValueObject\RegistrationMode;
 use App\Irc\Adapter\In\Event\CommandExecutedAuditSubscriber;
 use App\Irc\Adapter\Protocol\NullChannelModeSupport;
@@ -106,6 +107,8 @@ use App\NickServ\Application\Service\VhostDisplayResolver;
 use App\NickServ\Application\UseCase\Info\InfoNickHandler;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\OperServ\Adapter\Out\Irc\ActiveConnectionCommandAuditPresenter;
+use App\OperServ\Adapter\Out\Irc\DebugChannelCommandAuditSink;
+use App\OperServ\Adapter\Out\Logging\PsrCommandAuditSink;
 use App\OperServ\Adapter\Out\Security\ConfiguredRootIdentityRegistry;
 use App\OperServ\Application\IrcopAccessQueryService;
 use App\OperServ\Application\Port\In\Audit\CommandAuditRecord;
@@ -146,6 +149,9 @@ use function serialize;
 use function str_starts_with;
 
 #[CoversClass(ChanServService::class)]
+#[CoversClass(RegisterCommand::class)]
+#[CoversClass(CommandExecutedAuditSubscriber::class)]
+#[CoversClass(ChanServDebugNotifier::class)]
 #[CoversClass(ManageChannelLifecycleHandler::class)]
 #[CoversClass(ReviewRegistrationHandler::class)]
 #[CoversClass(NickServIdentifiedRequesterSession::class)]
@@ -553,6 +559,185 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
                     }
                 }
             }
+        }
+    }
+
+    /** @return iterable<string, array{RegistrationMode, string, bool, bool, ?string, string}> */
+    public static function registrationAudits(): iterable
+    {
+        foreach ([RegistrationMode::Direct, RegistrationMode::Approval] as $mode) {
+            foreach ([['Other', false, false], ['Oper', true, true], ['Root', false, false], ['RawOper', true, false]] as [$nick, $oper, $role]) {
+                foreach ([null, '', '#ircops'] as $debug) {
+                    foreach (['success', 'syntax', 'unidentified', 'restricted', 'pending-deletion', 'already-registered', ...('Other' === $nick ? ['quota', 'rank', 'throttle', 'missing-network'] : [])] as $case) {
+                        yield $mode->name . '/' . $nick . '/' . ($debug ?? 'null') . '/' . $case => [$mode, $nick, $oper, $role, $debug, $case];
+                    }
+                }
+            }
+        }
+    }
+
+    #[Test]
+    #[DataProvider('registrationAudits')]
+    public function registerUsesCentralAuditByActualOutcome(RegistrationMode $mode, string $nick, bool $oper, bool $role, ?string $debugChannel, string $case): void
+    {
+        $repository = new RegisteredChannelDoctrineRepository($this->entityManager);
+        if (in_array($case, ['restricted', 'pending-deletion', 'already-registered'], true)) {
+            $existing = RegisteredChannel::createPendingRegistration(new DateTimeImmutable('-1 day'), '#private', 10, 'previous');
+            if ('restricted' === $case) {
+                $existing->rejectRegistration('duplicate', 99, 'Reviewer', new DateTimeImmutable(), null);
+            } elseif ('pending-deletion' === $case) {
+                $existing->approveRegistration(new DateTimeImmutable('-1 hour'));
+                $existing->markPendingDeletion(new DateTimeImmutable());
+            }
+            $repository->save($existing);
+        }
+        $before = $this->entityManager->getConnection()->fetchAllAssociative('SELECT * FROM registered_channels');
+        /** @var ArrayObject<int, array{string, string, string}> $notices */
+        $notices = new ArrayObject();
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message, string $type) use ($notices): void {
+            $notices->append([$target, $message, $type]);
+        });
+        $translator = new Translator('en');
+        $translator->addLoader('irc', new IrcYamlTranslationLoader());
+        foreach (['chanserv', 'common'] as $domain) {
+            $translator->addResource('irc', dirname(__DIR__, 5) . '/translations/' . $domain . '.en.yaml', 'en', $domain);
+        }
+        $presenter = new ActiveConnectionCommandAuditPresenter(new ServiceDebugNotifierRegistry([
+            new ChanServDebugNotifier($notifier, $translator, 'en', $debugChannel),
+        ]));
+        /** @var ArrayObject<int, CommandAuditRecord> $records */
+        $records = new ArrayObject();
+        $sink = $this->createStub(CommandAuditSink::class);
+        $sink->method('record')->willReturnCallback(static function (CommandAuditRecord $record) use ($records): void {
+            $records->append($record);
+        });
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects('success' === $case ? self::once() : self::never())->method('info')
+            ->with('Security command audit', self::callback(static fn (array $context): bool => 'user_action' === $context['category']
+                && 'REGISTER' === $context['operation'] && $nick === $context['actor']
+                && (RegistrationMode::Approval === $mode ? 'awaiting_approval' : 'registered') === $context['metadata_outcome']));
+        $subscriber = new CommandExecutedAuditSubscriber(new RecordCommandAudit([
+            $sink, new PsrCommandAuditSink($logger), new DebugChannelCommandAuditSink($presenter),
+        ]));
+        /** @var ArrayObject<int, CommandExecutedEvent> $executions */
+        $executions = new ArrayObject();
+        $events = $this->createStub(EventBusInterface::class);
+        $events->method('dispatch')->willReturnCallback(static function (object $event) use ($subscriber, $executions): void {
+            if ($event instanceof CommandExecutedEvent) {
+                $executions->append($event);
+                $subscriber->onPublishedCommandExecuted($event);
+            }
+        });
+        $boundary = $this->createStub(ChanTransactionBoundary::class);
+        $boundary->method('transactional')->willReturnCallback(static fn (callable $operation): mixed => $operation());
+        $query = $this->createStub(RegistrationModeQuery::class);
+        $query->method('current')->willReturn($mode);
+        $roles = $this->createStub(OperatorRoleAccess::class);
+        $roles->method('hasAssignedRole')->willReturn($role);
+        $root = new RootAuthorizationPolicy(new ConfiguredRootIdentityRegistry('Root'));
+        $operators = new OperChanServOperatorAccess(new IrcopAccessQueryService(new OperatorAuthorizationService(
+            $root,
+            new OperatorPermissionPolicy($root, $roles),
+            $roles,
+        )));
+        $throttle = $this->createStub(ChannelRegisterThrottlePort::class);
+        $throttle->method('getRemainingCooldownSeconds')->willReturn('throttle' === $case ? 60 : 0);
+        $register = new RegisterChannelHandler($repository, new ChannelRegistrationActivator(
+            $this->createStub(ChannelLevelRepositoryInterface::class),
+            $this->createStub(ChannelAkickRepositoryInterface::class),
+        ), $throttle, $events, $operators, $boundary, maxChannelsPerNick: 'quota' === $case ? 0 : 3, registrationMode: $query);
+        $sender = $this->sender($nick, 'unidentified' !== $case, $oper);
+        $messages = new ArrayObject();
+        $lookup = $this->createStub(ChannelLookupPort::class);
+        $lookup->method('findByChannelName')->willReturn('missing-network' === $case ? null : new ChannelView(
+            '#private',
+            '+o',
+            null,
+            1,
+            [['uid' => $sender->uid, 'roleLetter' => 'rank' === $case ? 'v' : 'o']],
+        ));
+        $drop = $this->createStub(ChanDropService::class);
+        try {
+            $this->service(
+                $repository,
+                $nick,
+                $sender->isIdentified,
+                $oper,
+                10,
+                $role,
+                $messages,
+                $this->createStub(ReviewRegistrationHandlerInterface::class),
+                $drop,
+                $register,
+                eventBus: $events,
+                requester: $sender,
+                channelLookupOverride: $lookup,
+            )->dispatch('syntax' === $case ? 'REGISTER #private' : 'REGISTER #private confidential-description', $sender);
+            self::assertNotSame('already-registered', $case);
+        } catch (ChannelAlreadyRegisteredException) {
+            self::assertSame('already-registered', $case);
+        }
+        $success = 'success' === $case;
+        self::assertCount($success ? 1 : 0, $records);
+        self::assertCount($success && null !== $debugChannel && '' !== $debugChannel ? 1 : 0, $notices);
+        self::assertSame(0, $this->entityManager->getConnection()->fetchOne('SELECT COUNT(*) FROM channel_history'));
+        if (!$success) {
+            foreach ($executions as $execution) {
+                self::assertNotNull($execution->outcome);
+                self::assertFalse($execution->outcome->success);
+                self::assertNull($execution->outcome->auditData);
+            }
+            self::assertSame($before, $this->entityManager->getConnection()->fetchAllAssociative('SELECT * FROM registered_channels'));
+            $reply = match ($case) {
+                'syntax' => 'error.syntax',
+                'unidentified' => 'error.not_identified',
+                'restricted' => 'register.restricted_indefinite',
+                'pending-deletion' => 'drop.pending_deletion',
+                'quota' => 'register.limit_exceeded',
+                'rank' => 'register.insufficient_channel_rank',
+                'throttle' => 'register.throttled',
+                'missing-network' => 'register.channel_not_on_network',
+                default => null,
+            };
+            self::assertSame(null === $reply ? [] : [$reply], iterator_to_array($messages));
+
+            return;
+        }
+        $pending = RegistrationMode::Approval === $mode;
+        self::assertSame([$pending ? 'register.awaiting_approval' : 'register.success'], iterator_to_array($messages));
+        self::assertCount(1, $executions);
+        $execution = $executions[0];
+        self::assertInstanceOf(CommandExecutedEvent::class, $execution);
+        self::assertNotNull($execution->outcome);
+        self::assertTrue($execution->outcome->success);
+        self::assertSame('IDENTIFIED', $execution->permission);
+        $this->entityManager->clear();
+        $channel = $this->findChannel($repository);
+        self::assertNotNull($channel);
+        self::assertSame($pending, $channel->isPendingRegistration());
+        self::assertSame(10, $channel->getFounderNickId());
+        self::assertCount(1, $repository->findByFounderNickId(10));
+        $record = $records[0];
+        self::assertInstanceOf(CommandAuditRecord::class, $record);
+        self::assertSame('user_action', $record->category->value);
+        self::assertSame('IDENTIFIED', $record->permission);
+        self::assertSame('chanserv', $record->service);
+        self::assertSame($nick, $record->actor);
+        self::assertSame('REGISTER', $record->operation);
+        self::assertSame('#private', $record->target);
+        self::assertSame(['outcome' => $pending ? 'awaiting_approval' : 'registered'], $record->metadata);
+        self::assertNull($record->reason);
+        self::assertNull($record->targetHost);
+        self::assertNull($record->targetIp);
+        if (null !== $debugChannel && '' !== $debugChannel) {
+            $notice = $notices[0];
+            self::assertNotNull($notice);
+            self::assertSame('#ircops', $notice[0]);
+            self::assertSame('NOTICE', $notice[2]);
+            $plain = preg_replace('/\x03(?:\d{1,2}(?:,\d{1,2})?)?/', '', $notice[1]);
+            self::assertSame($nick . ($pending ? ' submitted a registration request for #private' : ' registered channel #private'), $plain);
+            self::assertStringNotContainsString('confidential-description', $notice[1]);
         }
     }
 
@@ -1012,6 +1197,7 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
         ?SenderView $requester = null,
         ?ListRegisteredChannelsHandlerInterface $listHandler = null,
         ?TranslatorInterface $translatorOverride = null,
+        ?ChannelLookupPort $channelLookupOverride = null,
     ): ChanServService {
         if ($channel instanceof RegisteredChannel) {
             $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
@@ -1098,7 +1284,7 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
             $preferences,
             $notifier,
             $translator,
-            $this->channelLookup($requester),
+            $channelLookupOverride ?? $this->channelLookup($requester),
             $this->modeSupportProvider(),
             $userLookup,
             new ServiceNicknameRegistry([]),

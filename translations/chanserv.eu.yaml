@@ -697,6 +697,8 @@ unforbid:
 
 # --- DEBUG -----------------------------------------------------------------
 debug:
+  registration_completed: "%operator% erabiltzaileak %target% kanala erregistratu du"
+  registration_pending: "%operator% erabiltzaileak %target% kanala erregistratzeko eskaera bidali du"
   founder_action: "Sortzaile mailako ekintza"
 
 # --- HISTORY ---

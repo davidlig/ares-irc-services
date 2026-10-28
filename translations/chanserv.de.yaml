@@ -697,6 +697,8 @@ unforbid:
 
 # --- DEBUG -----------------------------------------------------------------
 debug:
+  registration_completed: "%operator% hat den Kanal %target% registriert"
+  registration_pending: "%operator% hat die Registrierung des Kanals %target% beantragt"
   founder_action: "Level-Founder-Aktion"
 
 # --- HISTORY ---

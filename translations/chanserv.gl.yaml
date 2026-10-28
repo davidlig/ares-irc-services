@@ -700,6 +700,8 @@ unforbid:
 
 # --- DEBUG -----------------------------------------------------------------
 debug:
+  registration_completed: "%operator% rexistrou a canle %target%"
+  registration_pending: "%operator% solicitou o rexistro da canle %target%"
   founder_action: "Acción de nivel-fundador"
 
 # --- HISTORY ---

@@ -683,6 +683,8 @@ unforbid:
 
 # --- DEBUG -----------------------------------------------------------------
 debug:
+  registration_completed: "%operator% registered channel %target%"
+  registration_pending: "%operator% submitted a registration request for %target%"
   founder_action: "Level-founder action"
 
 # --- HISTORY ---

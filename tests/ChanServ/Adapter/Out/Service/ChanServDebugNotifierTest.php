@@ -22,6 +22,28 @@ use function serialize;
 final class ChanServDebugNotifierTest extends TestCase
 {
     #[Test]
+    public function registrationNoticesUseConfiguredDebugLocaleInAllCatalogs(): void
+    {
+        foreach (['ca', 'de', 'el', 'en', 'es', 'eu', 'fr', 'gl', 'it', 'nl', 'pl', 'pt', 'ro', 'tr'] as $locale) {
+            $translator = new Translator('es');
+            $translator->addLoader('irc', new IrcYamlTranslationLoader());
+            $translator->addResource('irc', __DIR__ . '/../../../../../translations/chanserv.' . $locale . '.yaml', $locale, 'chanserv');
+            foreach (['registered' => 'registration_completed', 'awaiting_approval' => 'registration_pending'] as $outcome => $key) {
+                $expected = $translator->trans('debug.' . $key, [
+                    '%operator%' => "\x0302Alice\x03", '%target%' => "\x0302#channel\x03",
+                ], 'chanserv', $locale);
+                self::assertNotSame('debug.' . $key, $expected);
+                self::assertStringContainsString("\x0302Alice\x03", $expected);
+                self::assertStringContainsString("\x0302#channel\x03", $expected);
+                self::assertStringNotContainsString('%', $expected);
+                $notifier = $this->createMock(ChanServNotifierInterface::class);
+                $notifier->expects(self::once())->method('sendMessage')->with('#debug', $expected, 'NOTICE');
+                new ChanServDebugNotifier($notifier, $translator, $locale, '#debug')->log('Alice', 'REGISTER', '#channel', extra: ['outcome' => $outcome]);
+            }
+        }
+    }
+
+    #[Test]
     public function getServiceNameReturnsChanServ(): void
     {
         $notifier = $this->createNotifier();

@@ -180,3 +180,17 @@ DROP_FORCE. The reply describes the actual permanent removal,
 not a grace period. Ordinary registered-channel DROP and RESTORE retain their
 existing grace-period behavior. Cancellation keeps existing DROP audit/cleanup
 policies and adds no channel HISTORY action.
+
+### REGISTER audit and debug notices
+
+Successful REGISTER actions use the centralized command-audit pipeline for ordinary
+identified users and IRCop/Root requesters alike. Records retain operation `REGISTER`,
+category `user_action`, permission `IDENTIFIED`, and semantic outcome metadata:
+`registered` for completed registration or `awaiting_approval` for a submitted request.
+Configured debug-channel notices distinguish these outcomes using the debug language;
+request notices state only that registration was requested. With no debug channel,
+structured audit remains enabled. Each successful action produces exactly one record
+and, when configured, one notice. Failed attempts produce neither success audit
+records nor success notices.
+Requester replies, authorization, quotas and HISTORY remain unchanged; CREG ACCEPT/REJECT
+retain their existing audit/debug behavior.
