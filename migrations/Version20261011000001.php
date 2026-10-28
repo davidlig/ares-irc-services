@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Migrations;
 
-use App\Bootstrap\Adapter\Out\Persistence\Migration\EditedSchemaMigration;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbBlock;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbSchema;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbValueKind;
@@ -19,27 +18,21 @@ use Doctrine\DBAL\Schema\Index\IndexType;
 use Doctrine\DBAL\Schema\PrimaryKeyConstraint;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Schema\Table;
-use Doctrine\DBAL\Schema\TableEditor;
+use Doctrine\DBAL\Schema\UniqueConstraint;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\Migrations\AbstractMigration;
 use Doctrine\Migrations\Exception\AbortMigration;
 
 use function explode;
+use function implode;
 use function is_string;
 use function preg_match;
 use function str_contains;
 use function strlen;
 
-final class Version20261011000001 extends AbstractMigration implements EditedSchemaMigration
+final class Version20261011000001 extends AbstractMigration
 {
-    private ?Schema $editedSchema = null;
-
-    public function getEditedSchema(): ?Schema
-    {
-        return null === $this->editedSchema ? null : clone $this->editedSchema;
-    }
-
     public function getDescription(): string
     {
         return 'Persist UDB typed row kinds and imported dataset checkpoints';
@@ -47,20 +40,16 @@ final class Version20261011000001 extends AbstractMigration implements EditedSch
 
     public function preUp(Schema $schema): void
     {
-        $this->editedSchema = null;
-        $schema->getTables();
+        $this->validateExistingValues(false);
     }
 
     public function preDown(Schema $schema): void
     {
-        $this->editedSchema = null;
-        $schema->getTables();
+        $this->validateExistingValues(true);
     }
 
     public function up(Schema $schema): void
     {
-        $this->validateExistingValues(false);
-        $editor = (clone $schema)->edit();
         $generations = Table::editor()->setUnquotedName('udb_staged_generations');
         $generations->addColumn(Column::editor()->setUnquotedName('generation_id')->setTypeName(Types::STRING)->setLength(32)->create());
         $generations->addColumn(Column::editor()->setUnquotedName('round_id')->setTypeName(Types::STRING)->setLength(20)->create());
@@ -70,7 +59,6 @@ final class Version20261011000001 extends AbstractMigration implements EditedSch
         $generations->addColumn(Column::editor()->setUnquotedName('created_at')->setTypeName(Types::INTEGER)->create());
         $generations->addColumn(Column::editor()->setUnquotedName('promoted')->setTypeName(Types::BOOLEAN)->setDefaultValue(false)->create());
         $generations->addPrimaryKeyConstraint(PrimaryKeyConstraint::editor()->setUnquotedName('primary')->setUnquotedColumnNames(...['generation_id'])->create());
-        $editor->addTable($generations->create());
         $transfers = Table::editor()->setUnquotedName('udb_staged_transfers');
         $transfers->addColumn(Column::editor()->setUnquotedName('generation_id')->setTypeName(Types::STRING)->setLength(32)->create());
         $transfers->addColumn(Column::editor()->setUnquotedName('block')->setTypeName(Types::STRING)->setLength(1)->create());
@@ -83,7 +71,6 @@ final class Version20261011000001 extends AbstractMigration implements EditedSch
         $transfers->addColumn(Column::editor()->setUnquotedName('byte_count')->setTypeName(Types::INTEGER)->create());
         $transfers->addColumn(Column::editor()->setUnquotedName('complete')->setTypeName(Types::BOOLEAN)->setDefaultValue(false)->create());
         $transfers->addPrimaryKeyConstraint(PrimaryKeyConstraint::editor()->setUnquotedName('primary')->setUnquotedColumnNames(...['generation_id', 'block'])->create());
-        $editor->addTable($transfers->create());
         $staged = Table::editor()->setUnquotedName('udb_staged_records');
         $staged->addColumn(Column::editor()->setUnquotedName('id')->setTypeName(Types::INTEGER)->setAutoincrement(true)->create());
         $staged->addColumn(Column::editor()->setUnquotedName('generation_id')->setTypeName(Types::STRING)->setLength(32)->create());
@@ -96,7 +83,6 @@ final class Version20261011000001 extends AbstractMigration implements EditedSch
         $staged->addPrimaryKeyConstraint(PrimaryKeyConstraint::editor()->setUnquotedName('primary')->setUnquotedColumnNames(...['id'])->create());
         $staged->addIndex(Index::editor()->setUnquotedName('uniq_udb_stage_generation_identity')->setType(IndexType::UNIQUE)->setUnquotedColumnNames(...['generation_id', 'block', 'identity_hash'])->create());
         $staged->addIndex(Index::editor()->setUnquotedName('idx_udb_stage_generation_block')->setType(IndexType::REGULAR)->setUnquotedColumnNames(...['generation_id', 'block', 'id'])->create());
-        $editor->addTable($staged->create());
         $tail = Table::editor()->setUnquotedName('udb_staged_mutations');
         $tail->addColumn(Column::editor()->setUnquotedName('id')->setTypeName(Types::INTEGER)->setAutoincrement(true)->create());
         $tail->addColumn(Column::editor()->setUnquotedName('generation_id')->setTypeName(Types::STRING)->setLength(32)->create());
@@ -109,40 +95,47 @@ final class Version20261011000001 extends AbstractMigration implements EditedSch
         $tail->addPrimaryKeyConstraint(PrimaryKeyConstraint::editor()->setUnquotedName('primary')->setUnquotedColumnNames(...['id'])->create());
         $tail->addIndex(Index::editor()->setUnquotedName('uniq_udb_stage_mutation_sequence')->setType(IndexType::UNIQUE)->setUnquotedColumnNames(...['generation_id', 'sequence'])->create());
         $tail->addIndex(Index::editor()->setUnquotedName('idx_udb_stage_mutation_order')->setType(IndexType::REGULAR)->setUnquotedColumnNames(...['generation_id', 'id'])->create());
-        $editor->addTable($tail->create());
-        $editor->modifyTableByUnquotedName('udb_records', static function (TableEditor $records): void {
-            $records->addColumn(Column::editor()->setUnquotedName('value_kind')->setTypeName(Types::SMALLINT)->setDefaultValue(1)->create());
-            $records->modifyColumnByUnquotedName('value', static function (ColumnEditor $value): void {
-                $value->setTypeName(Types::BINARY)->setLength(4096)->setFixed(false);
-            });
-        });
-        $editor->modifyTableByUnquotedName('udb_authority_state', static function (TableEditor $authority): void {
-            $authority->addColumn(Column::editor()->setUnquotedName('origin_sid')->setTypeName(Types::STRING)->setLength(3)->setNotNull(false)->create());
-            $authority->addColumn(Column::editor()->setUnquotedName('origin_epoch')->setTypeName(Types::STRING)->setLength(16)->setNotNull(false)->create());
-            $authority->addColumn(Column::editor()->setUnquotedName('origin_watermark')->setTypeName(Types::STRING)->setLength(20)->setNotNull(false)->create());
-            $authority->addColumn(Column::editor()->setUnquotedName('dataset_sid')->setTypeName(Types::STRING)->setLength(3)->setNotNull(false)->create());
-            $authority->addColumn(Column::editor()->setUnquotedName('dataset_epoch')->setTypeName(Types::STRING)->setLength(16)->setNotNull(false)->create());
-            $authority->addColumn(Column::editor()->setUnquotedName('dataset_watermark')->setTypeName(Types::STRING)->setLength(20)->setNotNull(false)->create());
-        });
 
-        $target = $editor->create();
-        $this->editedSchema = clone $target;
-        $comparison = clone $schema;
         if ($this->platform instanceof PostgreSQLPlatform) {
             $this->addSql("ALTER TABLE udb_records ALTER COLUMN value TYPE BYTEA USING convert_to(value, 'UTF8')");
-            // Compare against the separately queued conversion, not an implicit BYTEA cast.
-            $comparison = (clone $schema)->edit()->modifyTableByUnquotedName('udb_records', static function (TableEditor $records): void {
-                $records->modifyColumnByUnquotedName('value', static function (ColumnEditor $value): void {
-                    $value->setTypeName(Types::BINARY)->setLength(4096)->setFixed(false);
-                });
-            })->create();
         }
-        $diff = $this->connection->createSchemaManager()->createComparator()->compareSchemas($comparison, $target);
-        foreach ($this->platform->getAlterSchemaSQL($diff) as $sql) {
+        foreach ($this->platform->getCreateTablesSQL([$generations->create(), $transfers->create(), $staged->create(), $tail->create()]) as $sql) {
             $this->addSql($sql);
         }
+        $statements = match (true) {
+            $this->platform instanceof SQLitePlatform => [
+                'ALTER TABLE udb_authority_state ADD COLUMN origin_sid VARCHAR(3) DEFAULT NULL',
+                'ALTER TABLE udb_authority_state ADD COLUMN origin_epoch VARCHAR(16) DEFAULT NULL',
+                'ALTER TABLE udb_authority_state ADD COLUMN origin_watermark VARCHAR(20) DEFAULT NULL',
+                'ALTER TABLE udb_authority_state ADD COLUMN dataset_sid VARCHAR(3) DEFAULT NULL',
+                'ALTER TABLE udb_authority_state ADD COLUMN dataset_epoch VARCHAR(16) DEFAULT NULL',
+                'ALTER TABLE udb_authority_state ADD COLUMN dataset_watermark VARCHAR(20) DEFAULT NULL',
+            ],
+            $this->platform instanceof PostgreSQLPlatform => [
+                'ALTER TABLE udb_authority_state ADD origin_sid VARCHAR(3) DEFAULT NULL',
+                'ALTER TABLE udb_authority_state ADD origin_epoch VARCHAR(16) DEFAULT NULL',
+                'ALTER TABLE udb_authority_state ADD origin_watermark VARCHAR(20) DEFAULT NULL',
+                'ALTER TABLE udb_authority_state ADD dataset_sid VARCHAR(3) DEFAULT NULL',
+                'ALTER TABLE udb_authority_state ADD dataset_epoch VARCHAR(16) DEFAULT NULL',
+                'ALTER TABLE udb_authority_state ADD dataset_watermark VARCHAR(20) DEFAULT NULL',
+                'ALTER TABLE udb_records ADD value_kind SMALLINT DEFAULT 1 NOT NULL',
+            ],
+            default => [
+                'ALTER TABLE udb_authority_state ADD origin_sid VARCHAR(3) DEFAULT NULL, ADD origin_epoch VARCHAR(16) DEFAULT'
+                . ' NULL, ADD origin_watermark VARCHAR(20) DEFAULT NULL, ADD dataset_sid VARCHAR(3) DEFAULT NULL, ADD'
+                . ' dataset_epoch VARCHAR(16) DEFAULT NULL, ADD dataset_watermark VARCHAR(20) DEFAULT NULL',
+                'ALTER TABLE udb_records ADD value_kind SMALLINT DEFAULT 1 NOT NULL, CHANGE value value VARBINARY(4096) NOT'
+                . ' NULL',
+            ],
+        };
+        foreach ($statements as $sql) {
+            $this->addSql($sql);
+        }
+        if ($this->platform instanceof SQLitePlatform) {
+            $this->rebuildSqliteRecords(false);
+        }
 
-        // Fresh multi-version dry-runs have a virtual table, not physical rows.
+        // Queued fresh-install SQL has no physical UDB rows yet.
         // Real upgrades always retain preflight and typed backfill.
         if (!$this->connection->createSchemaManager()->tablesExist(['udb_records'])) {
             return;
@@ -175,44 +168,110 @@ final class Version20261011000001 extends AbstractMigration implements EditedSch
 
     public function down(Schema $schema): void
     {
-        $this->validateExistingValues(true);
-        $editor = (clone $schema)->edit();
-        $editor->dropTableByUnquotedName('udb_staged_records');
-        $editor->dropTableByUnquotedName('udb_staged_mutations');
-        $editor->dropTableByUnquotedName('udb_staged_transfers');
-        $editor->dropTableByUnquotedName('udb_staged_generations');
-        $editor->modifyTableByUnquotedName('udb_authority_state', static function (TableEditor $authority): void {
-            $authority->dropColumnByUnquotedName('origin_sid');
-            $authority->dropColumnByUnquotedName('origin_epoch');
-            $authority->dropColumnByUnquotedName('origin_watermark');
-            $authority->dropColumnByUnquotedName('dataset_sid');
-            $authority->dropColumnByUnquotedName('dataset_epoch');
-            $authority->dropColumnByUnquotedName('dataset_watermark');
-        });
-        $editor->modifyTableByUnquotedName('udb_records', static function (TableEditor $records): void {
-            $records->dropColumnByUnquotedName('value_kind');
-            $records->modifyColumnByUnquotedName('value', static function (ColumnEditor $value): void {
-                $value->setTypeName(Types::TEXT)->setLength(null)->setFixed(false);
-            });
-        });
-        $target = $editor->create();
-        $this->editedSchema = clone $target;
-        $comparison = clone $schema;
         if ($this->platform instanceof PostgreSQLPlatform) {
             $this->addSql("ALTER TABLE udb_records ALTER COLUMN value TYPE TEXT USING convert_from(value, 'UTF8')");
-            $comparison = (clone $schema)->edit()->modifyTableByUnquotedName('udb_records', static function (TableEditor $records): void {
-                $records->modifyColumnByUnquotedName('value', static function (ColumnEditor $value): void {
-                    $value->setTypeName(Types::TEXT)->setLength(null)->setFixed(false);
-                });
-            })->create();
         }
-        $diff = $this->connection->createSchemaManager()->createComparator()->compareSchemas($comparison, $target);
-        foreach ($this->platform->getAlterSchemaSQL($diff) as $sql) {
+        foreach (['udb_staged_generations', 'udb_staged_mutations', 'udb_staged_records', 'udb_staged_transfers'] as $table) {
+            $this->addSql($this->platform->getDropTableSQL($table));
+        }
+        $statements = match (true) {
+            $this->platform instanceof SQLitePlatform => [
+                'ALTER TABLE udb_authority_state DROP COLUMN origin_sid',
+                'ALTER TABLE udb_authority_state DROP COLUMN origin_epoch',
+                'ALTER TABLE udb_authority_state DROP COLUMN origin_watermark',
+                'ALTER TABLE udb_authority_state DROP COLUMN dataset_sid',
+                'ALTER TABLE udb_authority_state DROP COLUMN dataset_epoch',
+                'ALTER TABLE udb_authority_state DROP COLUMN dataset_watermark',
+            ],
+            $this->platform instanceof PostgreSQLPlatform => [
+                'ALTER TABLE udb_authority_state DROP origin_sid',
+                'ALTER TABLE udb_authority_state DROP origin_epoch',
+                'ALTER TABLE udb_authority_state DROP origin_watermark',
+                'ALTER TABLE udb_authority_state DROP dataset_sid',
+                'ALTER TABLE udb_authority_state DROP dataset_epoch',
+                'ALTER TABLE udb_authority_state DROP dataset_watermark',
+                'ALTER TABLE udb_records DROP value_kind',
+            ],
+            default => [
+                'ALTER TABLE udb_authority_state DROP origin_sid, DROP origin_epoch, DROP origin_watermark, DROP dataset_sid,'
+                . ' DROP dataset_epoch, DROP dataset_watermark',
+                'ALTER TABLE udb_records DROP value_kind, CHANGE value value LONGTEXT NOT NULL',
+            ],
+        };
+        foreach ($statements as $sql) {
             $this->addSql($sql);
         }
         if ($this->platform instanceof SQLitePlatform) {
-            // SQLite's rebuild copies storage classes, so explicitly restore TEXT
-            // only after the byte-preserving UTF-8/NUL preflight has succeeded.
+            $this->rebuildSqliteRecords(true);
+        }
+    }
+
+    /** Queue this conversion without discarding existing table constraints or native index DDL. */
+    private function rebuildSqliteRecords(bool $downgrade): void
+    {
+        $manager = $this->connection->createSchemaManager();
+        if ($manager->tablesExist(['udb_records'])) {
+            $source = $manager->introspectTableByUnquotedName('udb_records');
+            $indexes = $this->connection->fetchFirstColumn("SELECT sql FROM sqlite_schema WHERE type = 'index' AND tbl_name = 'udb_records' AND sql IS NOT NULL ORDER BY name");
+        } else {
+            // Fresh chained planning has no physical table yet. Declare its historical source,
+            // without depending on Doctrine Migrations' unmodified virtual schema.
+            $editor = Table::editor()->setUnquotedName('udb_records');
+            $editor->addColumn(Column::editor()->setUnquotedName('id')->setTypeName(Types::INTEGER)->setAutoincrement(true)->create());
+            $editor->addColumn(Column::editor()->setUnquotedName('block')->setTypeName(Types::STRING)->setLength(1)->setCollation('BINARY')->create());
+            $editor->addColumn(Column::editor()->setUnquotedName('path')->setTypeName(Types::STRING)->setLength(8192)->setCollation('BINARY')->create());
+            $editor->addColumn(Column::editor()->setUnquotedName('identity_path')->setTypeName(Types::BINARY)->setLength(8192)->create());
+            $editor->addColumn(Column::editor()->setUnquotedName('identity_hash')->setTypeName(Types::BINARY)->setLength(32)->create());
+            $editor->addColumn(Column::editor()->setUnquotedName('value')->setTypeName($downgrade ? Types::BINARY : Types::TEXT)->setCollation($downgrade ? null : 'BINARY')->create());
+            $editor->addColumn(Column::editor()->setUnquotedName('updated_at')->setTypeName(Types::DATETIMETZ_IMMUTABLE)->create());
+            $editor->addPrimaryKeyConstraint(PrimaryKeyConstraint::editor()->setUnquotedName('primary')->setUnquotedColumnNames('id')->create());
+            $editor->addUniqueConstraint(UniqueConstraint::editor()->setQuotedName('uniq_udb_record_block_identity')->setQuotedColumnNames('block', 'identity_hash')->create());
+            if ($downgrade) {
+                $editor->addColumn(Column::editor()->setUnquotedName('value_kind')->setTypeName(Types::SMALLINT)->setDefaultValue(1)->create());
+            }
+            $source = $editor->create();
+            $indexes = ['CREATE INDEX idx_udb_record_block ON udb_records (block)'];
+        }
+        $editor = $source->edit()->setQuotedName('udb_records')->setIndexes();
+        $editor->modifyColumnByUnquotedName('value', static function (ColumnEditor $column) use ($downgrade): void {
+            $column->setTypeName($downgrade ? Types::TEXT : Types::BINARY)->setLength($downgrade ? null : 4096);
+        });
+        if ($downgrade) {
+            $editor->dropColumnByUnquotedName('value_kind');
+        } else {
+            $editor->addColumn(Column::editor()->setUnquotedName('value_kind')->setTypeName(Types::SMALLINT)->setDefaultValue(1)->create());
+        }
+        foreach ($source->getColumns() as $column) {
+            if ($downgrade && 'value_kind' === $column->getName()) {
+                continue;
+            }
+            $name = $column->getObjectName()->getIdentifier()->getValue();
+            $editor->modifyColumnByUnquotedName($name, static function (ColumnEditor $editor) use ($name): void {
+                $editor->setQuotedName($name);
+            });
+        }
+        $target = $editor->create();
+        $columns = [];
+        foreach ($source->getColumns() as $column) {
+            if ($target->hasColumn($column->getName())) {
+                $columns[] = $this->platform->quoteIdentifier($column->getName());
+            }
+        }
+        $list = implode(', ', $columns);
+        $this->addSql('CREATE TEMPORARY TABLE __temp__udb_records AS SELECT ' . $list . ' FROM udb_records');
+        $this->addSql('DROP TABLE udb_records');
+        foreach ($this->platform->getCreateTableSQL($target) as $sql) {
+            $this->addSql($sql);
+        }
+        $this->addSql('INSERT INTO udb_records (' . $list . ') SELECT ' . $list . ' FROM __temp__udb_records');
+        $this->addSql('DROP TABLE __temp__udb_records');
+        foreach ($indexes as $sql) {
+            if (!is_string($sql)) {
+                throw new AbortMigration('Cannot decode an existing SQLite UDB index.');
+            }
+            $this->addSql($sql);
+        }
+        if ($downgrade) {
             $this->addSql('UPDATE udb_records SET value = CAST(value AS TEXT)');
         }
     }

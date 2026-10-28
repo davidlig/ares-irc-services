@@ -96,4 +96,55 @@ final class ListPatternIndexMigrationTest extends TestCase
 
         $migration->up(new Schema());
     }
+
+    #[Test]
+    #[DataProvider('mysqlPlatforms')]
+    public function plansFreshInstallWithoutReadingNotYetCreatedSourceColumns(AbstractMySQLPlatform $platform): void
+    {
+        $manager = $this->createStub(SQLiteSchemaManager::class);
+        $manager->method('tablesExist')->willReturn(false);
+        $connection = $this->createMock(Connection::class);
+        $connection->method('getDatabasePlatform')->willReturn($platform);
+        $connection->method('createSchemaManager')->willReturn($manager);
+        $defaults = ['charset' => 'utf8mb4', 'collation' => 'utf8mb4_unicode_ci'];
+        $connection->method('fetchAssociative')->willReturnOnConsecutiveCalls(false, $defaults, false, $defaults);
+        $connection->expects(self::never())->method('executeStatement');
+        $migration = new Version20260927000002($connection, new NullLogger());
+        $schema = new Schema();
+
+        $migration->up($schema);
+
+        self::assertSame([
+            'ALTER TABLE registered_nicks ADD list_search_key VARCHAR(32) CHARACTER SET `utf8mb4` COLLATE `utf8mb4_unicode_ci` GENERATED ALWAYS AS (LOWER(nickname_lower)) VIRTUAL',
+            'CREATE INDEX idx_registered_nicks_list_pattern ON registered_nicks (list_search_key)',
+            'ALTER TABLE registered_channels ADD list_search_key VARCHAR(64) CHARACTER SET `utf8mb4` COLLATE `utf8mb4_unicode_ci` GENERATED ALWAYS AS (LOWER(name_lower)) VIRTUAL',
+            'CREATE INDEX idx_registered_channels_list_pattern ON registered_channels (list_search_key)',
+        ], array_map(static fn (Query $query): string => $query->getStatement(), $migration->getSql()));
+        self::assertFalse($schema->hasTable('registered_nicks'));
+        self::assertFalse($schema->hasTable('registered_channels'));
+    }
+
+    #[Test]
+    public function neverSubstitutesDatabaseDefaultsForAnUnknownExistingSourceColumn(): void
+    {
+        $manager = $this->createStub(SQLiteSchemaManager::class);
+        $manager->method('tablesExist')->willReturn(true);
+        $connection = $this->createMock(Connection::class);
+        $connection->method('getDatabasePlatform')->willReturn(new MySQLPlatform());
+        $connection->method('createSchemaManager')->willReturn($manager);
+        $connection->expects(self::once())->method('fetchAssociative')->willReturn(false);
+        $migration = new Version20260927000002($connection, new NullLogger());
+
+        $this->expectException(AbortMigration::class);
+        $this->expectExceptionMessage('Cannot determine the source collation for registered_nicks.nickname_lower');
+
+        $migration->up(new Schema());
+    }
+
+    /** @return iterable<string, array{AbstractMySQLPlatform}> */
+    public static function mysqlPlatforms(): iterable
+    {
+        yield 'mysql' => [new MySQLPlatform()];
+        yield 'mariadb' => [new MariaDBPlatform()];
+    }
 }

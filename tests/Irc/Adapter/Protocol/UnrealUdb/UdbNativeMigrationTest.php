@@ -5,15 +5,18 @@ declare(strict_types=1);
 namespace App\Tests\Irc\Adapter\Protocol\UnrealUdb;
 
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbSchema;
+use App\Migrations\Version20260914000017;
+use App\Migrations\Version20260914000019;
 use App\Migrations\Version20261011000001;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DriverManager;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Platforms\MariaDBPlatform;
 use Doctrine\DBAL\Platforms\MySQLPlatform;
 use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
 use Doctrine\DBAL\Schema\AbstractSchemaManager;
-use Doctrine\DBAL\Schema\Comparator;
+use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\Migrations\Configuration\Configuration;
 use Doctrine\Migrations\Configuration\Connection\ExistingConnection;
@@ -32,6 +35,8 @@ use Psr\Log\NullLogger;
 
 use function array_column;
 use function array_map;
+use function array_values;
+use function hash;
 use function implode;
 use function str_repeat;
 use function strlen;
@@ -39,6 +44,40 @@ use function strlen;
 #[CoversClass(UdbSchema::class)]
 final class UdbNativeMigrationTest extends TestCase
 {
+    #[Test]
+    public function existingIdentityUniquenessAndAdditionalIndexesSurviveBothDirections(): void
+    {
+        $connection = $this->oldDatabase();
+        try {
+            $connection->executeStatement('CREATE UNIQUE INDEX preserved_identity ON udb_records (block, identity_hash)');
+            $connection->executeStatement("CREATE INDEX preserved_path ON udb_records (path COLLATE NOCASE) WHERE block = 'N'");
+            $connection->executeStatement('ALTER TABLE udb_records ADD COLUMN preserved_note TEXT NOT NULL DEFAULT \'owned\'');
+            $indexSql = $connection->fetchAllAssociative("SELECT name, sql FROM sqlite_schema WHERE type = 'index' AND tbl_name = 'udb_records' ORDER BY name");
+            foreach (['up', 'down'] as $direction) {
+                $this->migrate($connection, true, $direction);
+                self::assertArrayHasKey('preserved_identity', $connection->createSchemaManager()->listTableIndexes('udb_records'));
+                $this->migrate($connection, false, $direction);
+                $indexes = $connection->createSchemaManager()->listTableIndexes('udb_records');
+                self::assertArrayHasKey('preserved_identity', $indexes);
+                self::assertTrue($indexes['preserved_identity']->isUnique());
+                self::assertArrayHasKey('preserved_path', $indexes);
+                self::assertSame($indexSql, $connection->fetchAllAssociative("SELECT name, sql FROM sqlite_schema WHERE type = 'index' AND tbl_name = 'udb_records' ORDER BY name"));
+                self::assertSame(['owned'], $connection->fetchFirstColumn('SELECT DISTINCT preserved_note FROM udb_records'));
+                $tableSql = $connection->fetchOne("SELECT sql FROM sqlite_schema WHERE type = 'table' AND name = 'udb_records'");
+                self::assertIsString($tableSql);
+                self::assertStringContainsString('uniq_udb_record_block_identity', $tableSql);
+                try {
+                    $connection->executeStatement('INSERT INTO udb_records (block, path, identity_path, identity_hash, value, updated_at) SELECT block, path, identity_path, identity_hash, value, updated_at FROM udb_records WHERE id = 1');
+                    self::fail('Duplicate logical identities must remain rejected.');
+                } catch (UniqueConstraintViolationException) {
+                    self::assertSame(6, $connection->fetchOne('SELECT COUNT(*) FROM udb_records'));
+                }
+            }
+        } finally {
+            $connection->close();
+        }
+    }
+
     #[Test]
     public function realExecutorBinaryUpgradeAndUtf8DowngradePreserveLiteralBackslashes(): void
     {
@@ -117,12 +156,13 @@ final class UdbNativeMigrationTest extends TestCase
         $connection = $this->createStub(Connection::class);
         $connection->method('getDatabasePlatform')->willReturn($platform);
         $manager = $this->createStub(AbstractSchemaManager::class);
-        $manager->method('createComparator')->willReturn(new Comparator($platform));
+        $manager->method('tablesExist')->willReturn(true);
         $connection->method('createSchemaManager')->willReturn($manager);
         $connection->method('executeQuery')->willReturnCallback(static fn (string $sql) => $database->executeQuery($sql));
         try {
             $schema = $database->createSchemaManager()->introspectSchema();
             $migration = new Version20261011000001($connection, new NullLogger());
+            $migration->preUp($schema);
             $migration->up($schema);
             $statements = array_map(static fn ($query): string => $query->getStatement(), $migration->getSql());
             $sql = implode("\n", $statements);
@@ -182,10 +222,26 @@ final class UdbNativeMigrationTest extends TestCase
     private function oldDatabase(): Connection
     {
         $connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
-        $connection->executeStatement('CREATE TABLE udb_records (id INTEGER PRIMARY KEY AUTOINCREMENT, block VARCHAR(1) NOT NULL, path VARCHAR(8192) NOT NULL, value TEXT NOT NULL)');
-        $connection->executeStatement('CREATE TABLE udb_authority_state (id INTEGER PRIMARY KEY, approved BOOLEAN NOT NULL, approved_at DATETIME DEFAULT NULL, fingerprint VARCHAR(64) DEFAULT NULL, protocol_revision VARCHAR(40) DEFAULT NULL)');
+        foreach ([new Version20260914000017($connection, new NullLogger()), new Version20260914000019($connection, new NullLogger())] as $migration) {
+            $migration->up(new Schema());
+            foreach ($migration->getSql() as $query) {
+                $types = [];
+                foreach ($query->getTypes() as $type) {
+                    self::assertIsString($type);
+                    $types[] = $type;
+                }
+                $connection->executeStatement($query->getStatement(), array_values($query->getParameters()), $types);
+            }
+        }
         foreach ([['C', '#test::access::alice', '*12'], ['N', 'alice::pass', '*12'], ['N', 'bob::pass', '*secret'], ['N', 'carol::vhost', '*42'], ['I', '192.0.2.1::clones', '*7'], ['C', '#test::access', '']] as [$block, $path, $value]) {
-            $connection->insert('udb_records', ['block' => $block, 'path' => $path, 'value' => $value]);
+            $connection->insert('udb_records', [
+                'block' => $block,
+                'path' => $path,
+                'identity_path' => $path,
+                'identity_hash' => hash('sha256', $path, true),
+                'value' => $value,
+                'updated_at' => 0,
+            ], ['identity_path' => Types::BINARY, 'identity_hash' => Types::BINARY]);
         }
 
         return $connection;

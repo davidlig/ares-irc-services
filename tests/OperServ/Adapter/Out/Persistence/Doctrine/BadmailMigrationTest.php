@@ -12,7 +12,6 @@ use Doctrine\DBAL\Platforms\MariaDBPlatform;
 use Doctrine\DBAL\Platforms\MySQLPlatform;
 use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
 use Doctrine\DBAL\Platforms\SQLitePlatform;
-use Doctrine\DBAL\Schema\Comparator;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Schema\SQLiteSchemaManager;
 use PHPUnit\Framework\Attributes\CoversNothing;
@@ -26,31 +25,29 @@ final class BadmailMigrationTest extends TestCase
 {
     #[DataProvider('platforms')]
     #[Test]
-    public function portableQueuedMigrationAndDetachedTarget(AbstractPlatform $platform): void
+    public function portableQueuedMigrationPreservesInputSchema(AbstractPlatform $platform): void
     {
         $connection = $this->createStub(Connection::class);
         $connection->method('getDatabasePlatform')->willReturn($platform);
-        $manager = $this->createStub(SQLiteSchemaManager::class);
-        $manager->method('createComparator')->willReturn(new Comparator($platform));
-        $connection->method('createSchemaManager')->willReturn($manager);
+        $connection->method('createSchemaManager')->willReturn($this->createStub(SQLiteSchemaManager::class));
         $migration = new Version20261025000001($connection, new NullLogger());
         self::assertSame('Create the OperServ blocked email domain list', $migration->getDescription());
-        self::assertNull($migration->getEditedSchema());
         $schema = new Schema();
         $migration->preUp($schema);
         $migration->up($schema);
         self::assertFalse($schema->hasTable('operserv_badmail'));
-        $target = $migration->getEditedSchema();
-        self::assertNotNull($target);
-        self::assertTrue($target->hasTable('operserv_badmail'));
         self::assertNotEmpty($migration->getSql());
-        $migration->preDown($target);
-        self::assertNull($migration->getEditedSchema());
-        $migration->down($target);
-        $down = $migration->getEditedSchema();
-        self::assertNotNull($down);
-        self::assertFalse($down->hasTable('operserv_badmail'));
-        self::assertTrue($target->hasTable('operserv_badmail'));
+        self::assertStringStartsWith('CREATE TABLE operserv_badmail ', $migration->getSql()[0]->getStatement());
+        foreach ($migration->getSql() as $query) {
+            self::assertSame([], $query->getParameters());
+            self::assertSame([], $query->getTypes());
+        }
+        $rollback = new Version20261025000001($connection, new NullLogger());
+        $rollback->preDown($schema);
+        $rollback->down($schema);
+        self::assertCount(1, $rollback->getSql());
+        self::assertSame($platform->getDropTableSQL('operserv_badmail'), $rollback->getSql()[0]->getStatement());
+        self::assertFalse($schema->hasTable('operserv_badmail'));
     }
 
     #[Test]

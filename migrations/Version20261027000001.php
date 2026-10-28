@@ -4,78 +4,87 @@ declare(strict_types=1);
 
 namespace App\Migrations;
 
-use App\Bootstrap\Adapter\Out\Persistence\Migration\EditedSchemaMigration;
-use Doctrine\DBAL\Schema\Column;
-use Doctrine\DBAL\Schema\ColumnEditor;
+use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
+use Doctrine\DBAL\Platforms\SQLitePlatform;
 use Doctrine\DBAL\Schema\Schema;
-use Doctrine\DBAL\Types\Types;
 use Doctrine\Migrations\AbstractMigration;
 use RuntimeException;
 
 use function in_array;
 
-final class Version20261027000001 extends AbstractMigration implements EditedSchemaMigration
+final class Version20261027000001 extends AbstractMigration
 {
-    private ?Schema $editedSchema = null;
-
-    public function getEditedSchema(): ?Schema
-    {
-        return null === $this->editedSchema ? null : clone $this->editedSchema;
-    }
-
     public function getDescription(): string
     {
         return 'Allow memos to snapshot a service nickname as their sender';
     }
 
-    public function preUp(Schema $schema): void
-    {
-        $this->editedSchema = null;
-        $schema->getTables();
-    }
-
     public function preDown(Schema $schema): void
     {
-        $this->editedSchema = null;
-        $schema->getTables();
+        // Fresh dry runs have no physical memo table or records to inspect.
+        if ($this->connection->createSchemaManager()->tablesExist(['memos'])
+            && !in_array($this->connection->fetchOne('SELECT COUNT(*) FROM memos WHERE sender_name IS NOT NULL'), [false, 0, '0'], true)) {
+            throw new RuntimeException('Cannot remove service memo sender support while service-authored memos exist.');
+        }
     }
 
     public function up(Schema $schema): void
     {
-        $editor = (clone $schema)->edit();
-        $editor->modifyTableByUnquotedName('memos', static function ($memos): void {
-            $memos->modifyColumnByUnquotedName('sender_nick_id', static function (ColumnEditor $column): void {
-                $column->setNotNull(false);
-            });
-            $memos->addColumn(Column::editor()->setUnquotedName('sender_name')->setTypeName(Types::STRING)->setLength(64)->setNotNull(false)->create());
-        });
-        $target = $editor->create();
-        $this->editedSchema = clone $target;
-        $diff = $this->connection->createSchemaManager()->createComparator()->compareSchemas(clone $schema, $target);
-        foreach ($this->platform->getAlterSchemaSQL($diff) as $sql) {
+        $statements = match (true) {
+            $this->platform instanceof SQLitePlatform => [
+                'CREATE TEMPORARY TABLE __temp__memos AS SELECT id, target_nick_id, target_channel_id, sender_nick_id,'
+                . ' message, created_at, read_at FROM memos',
+                'DROP TABLE memos',
+                'CREATE TABLE memos (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, target_nick_id INTEGER DEFAULT NULL,'
+                . ' target_channel_id INTEGER DEFAULT NULL, sender_nick_id INTEGER DEFAULT NULL, message CLOB NOT NULL,'
+                . ' created_at DATETIME NOT NULL, read_at DATETIME DEFAULT NULL, sender_name VARCHAR(64) DEFAULT NULL)',
+                'INSERT INTO memos (id, target_nick_id, target_channel_id, sender_nick_id, message, created_at, read_at)'
+                . ' SELECT id, target_nick_id, target_channel_id, sender_nick_id, message, created_at, read_at FROM __temp__memos',
+                'DROP TABLE __temp__memos',
+                'CREATE INDEX idx_memos_sender ON memos (sender_nick_id)',
+                'CREATE INDEX idx_memos_target_channel ON memos (target_channel_id)',
+                'CREATE INDEX idx_memos_target_nick ON memos (target_nick_id)',
+            ],
+            $this->platform instanceof PostgreSQLPlatform => [
+                'ALTER TABLE memos ADD sender_name VARCHAR(64) DEFAULT NULL',
+                'ALTER TABLE memos ALTER sender_nick_id DROP NOT NULL',
+            ],
+            default => [
+                'ALTER TABLE memos ADD sender_name VARCHAR(64) DEFAULT NULL, CHANGE sender_nick_id sender_nick_id INT DEFAULT'
+                . ' NULL',
+            ],
+        };
+        foreach ($statements as $sql) {
             $this->addSql($sql);
         }
     }
 
     public function down(Schema $schema): void
     {
-        // A fresh-install dry run propagates an edited schema without creating physical tables.
-        if ($this->connection->createSchemaManager()->tablesExist(['memos'])
-            && !in_array($this->connection->fetchOne('SELECT COUNT(*) FROM memos WHERE sender_name IS NOT NULL'), [false, 0, '0'], true)) {
-            throw new RuntimeException('Cannot remove service memo sender support while service-authored memos exist.');
-        }
-
-        $editor = (clone $schema)->edit();
-        $editor->modifyTableByUnquotedName('memos', static function ($memos): void {
-            $memos->dropColumnByUnquotedName('sender_name');
-            $memos->modifyColumnByUnquotedName('sender_nick_id', static function (ColumnEditor $column): void {
-                $column->setNotNull(true);
-            });
-        });
-        $target = $editor->create();
-        $this->editedSchema = clone $target;
-        $diff = $this->connection->createSchemaManager()->createComparator()->compareSchemas(clone $schema, $target);
-        foreach ($this->platform->getAlterSchemaSQL($diff) as $sql) {
+        $statements = match (true) {
+            $this->platform instanceof SQLitePlatform => [
+                'CREATE TEMPORARY TABLE __temp__memos AS SELECT id, target_nick_id, target_channel_id, sender_nick_id,'
+                . ' message, created_at, read_at FROM memos',
+                'DROP TABLE memos',
+                'CREATE TABLE memos (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, target_nick_id INTEGER DEFAULT NULL,'
+                . ' target_channel_id INTEGER DEFAULT NULL, sender_nick_id INTEGER NOT NULL, message CLOB NOT NULL, created_at'
+                . ' DATETIME NOT NULL, read_at DATETIME DEFAULT NULL)',
+                'INSERT INTO memos (id, target_nick_id, target_channel_id, sender_nick_id, message, created_at, read_at)'
+                . ' SELECT id, target_nick_id, target_channel_id, sender_nick_id, message, created_at, read_at FROM __temp__memos',
+                'DROP TABLE __temp__memos',
+                'CREATE INDEX idx_memos_target_nick ON memos (target_nick_id)',
+                'CREATE INDEX idx_memos_target_channel ON memos (target_channel_id)',
+                'CREATE INDEX idx_memos_sender ON memos (sender_nick_id)',
+            ],
+            $this->platform instanceof PostgreSQLPlatform => [
+                'ALTER TABLE memos DROP sender_name',
+                'ALTER TABLE memos ALTER sender_nick_id SET NOT NULL',
+            ],
+            default => [
+                'ALTER TABLE memos DROP sender_name, CHANGE sender_nick_id sender_nick_id INT NOT NULL',
+            ],
+        };
+        foreach ($statements as $sql) {
             $this->addSql($sql);
         }
     }

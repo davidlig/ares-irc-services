@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\Bootstrap\Adapter\Out\Persistence\Migration;
 
-use App\Migrations\Version20261021000002;
 use App\Migrations\Version20261026000002;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DriverManager;
@@ -13,9 +12,10 @@ use Doctrine\DBAL\Platforms\MariaDBPlatform;
 use Doctrine\DBAL\Platforms\MySQLPlatform;
 use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
 use Doctrine\DBAL\Platforms\SQLitePlatform;
-use Doctrine\DBAL\Schema\Comparator;
+use Doctrine\DBAL\Schema\Column;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Schema\SQLiteSchemaManager;
+use Doctrine\DBAL\Schema\Table;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -37,42 +37,36 @@ final class ServiceSettingsMigrationTest extends TestCase
     {
         $connection = $this->createStub(Connection::class);
         $connection->method('getDatabasePlatform')->willReturn($platform);
-        $manager = $this->createStub(SQLiteSchemaManager::class);
-        $manager->method('createComparator')->willReturn(new Comparator($platform));
-        $connection->method('createSchemaManager')->willReturn($manager);
-        $schema = new Schema();
-        $schema->createTable('registered_channels')->addColumn('id', 'integer');
-        $legacy = new Version20261021000002($connection, new NullLogger());
-        $legacy->up($schema);
-        $before = $legacy->getEditedSchema();
-        self::assertNotNull($before);
+        $connection->method('createSchemaManager')->willReturn($this->createStub(SQLiteSchemaManager::class));
+        $before = new Schema([
+            Table::editor()->setUnquotedName('registered_channels')->addColumn(Column::editor()->setUnquotedName('id')->setTypeName('integer')->create())->create(),
+            Table::editor()->setUnquotedName('nickserv_registration_policy')->addColumn(Column::editor()->setUnquotedName('id')->setTypeName('integer')->create())->create(),
+        ]);
+        $beforeSql = $before->toSql($platform);
         $migration = new Version20261026000002($connection, new NullLogger());
         self::assertNotEmpty($migration->getDescription());
-        self::assertNull($migration->getEditedSchema());
         $migration->preUp($before);
         $migration->up($before);
-        $target = $migration->getEditedSchema();
-        self::assertNotNull($target);
+        self::assertSame($beforeSql, $before->toSql($platform));
         self::assertTrue($before->hasTable('nickserv_registration_policy'));
         self::assertFalse($before->hasTable('service_settings'));
-        self::assertTrue($target->hasTable('service_settings'));
-        self::assertSame('json', $target->getTable('service_settings')->getColumn('setting_value')->getTypeName());
-        foreach (['nickserv_registration_policy', 'chanserv_registration_policy', 'channel_registration_audit'] as $obsolete) {
-            self::assertFalse($target->hasTable($obsolete));
-        }
-        self::assertFalse($target->getTable('registered_channels')->hasColumn('registration_restricted_until'));
+        self::assertCount(4, $migration->getSql());
+        self::assertStringStartsWith('CREATE TABLE service_settings ', $migration->getSql()[0]->getStatement());
+        self::assertStringContainsString('setting_value ' . $platform->getJsonTypeDeclarationSQL([]), $migration->getSql()[0]->getStatement());
+        self::assertSame('DROP TABLE nickserv_registration_policy', $migration->getSql()[1]->getStatement());
         $sql = implode("\n", array_map(static fn ($query): string => $query->getStatement(), $migration->getSql()));
         self::assertStringContainsString("'chanserv', 'registration_mode', '\"DIRECT\"'", $sql);
         self::assertStringContainsString("'nickserv', 'registration_mode', '\"TOKEN\"'", $sql);
-        self::assertStringNotContainsString('registered_channels', $sql);
-        self::assertStringNotContainsString('chanserv_registration_policy', $sql);
-        self::assertStringNotContainsString('channel_registration_audit', $sql);
-        $migration->preDown($target);
-        self::assertNull($migration->getEditedSchema());
-        $migration->down($target);
-        $restored = $migration->getEditedSchema();
-        self::assertNotNull($restored);
-        self::assertTrue(new Comparator($platform)->compareSchemas($before, $restored)->isEmpty());
+        foreach (['registered_channels', 'chanserv_registration_policy', 'channel_registration_audit'] as $unrelated) {
+            self::assertStringNotContainsString($unrelated, $sql);
+        }
+        $rollback = new Version20261026000002($connection, new NullLogger());
+        $rollback->preDown($before);
+        $rollback->down($before);
+        self::assertCount(2, $rollback->getSql());
+        self::assertSame('DROP TABLE service_settings', $rollback->getSql()[0]->getStatement());
+        self::assertStringStartsWith('CREATE TABLE nickserv_registration_policy ', $rollback->getSql()[1]->getStatement());
+        self::assertSame($beforeSql, $before->toSql($platform));
     }
 
     #[Test]

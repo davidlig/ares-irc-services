@@ -41,6 +41,14 @@ final class Version20260927000002 extends AbstractMigration
                     . ' WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = :table AND COLUMN_NAME = :column',
                     ['table' => $table, 'column' => $column],
                 );
+                if (false === $metadata && !$this->connection->createSchemaManager()->tablesExist([$table])) {
+                    // Initial table creation inherits these defaults. A fresh dry run
+                    // queues that creation without making the source columns physical.
+                    $metadata = $this->connection->fetchAssociative(
+                        'SELECT DEFAULT_CHARACTER_SET_NAME AS charset, DEFAULT_COLLATION_NAME AS collation'
+                        . ' FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = DATABASE()',
+                    );
+                }
                 $charset = $metadata['charset'] ?? null;
                 $collation = $metadata['collation'] ?? null;
                 if (!is_string($charset) || '' === $charset || !is_string($collation) || '' === $collation) {
