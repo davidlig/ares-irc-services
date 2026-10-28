@@ -10,6 +10,7 @@ use App\Migrations\Version20260914000019;
 use App\Migrations\Version20261011000001;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DriverManager;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Platforms\MariaDBPlatform;
 use Doctrine\DBAL\Platforms\MySQLPlatform;
@@ -43,6 +44,40 @@ use function strlen;
 #[CoversClass(UdbSchema::class)]
 final class UdbNativeMigrationTest extends TestCase
 {
+    #[Test]
+    public function existingIdentityUniquenessAndAdditionalIndexesSurviveBothDirections(): void
+    {
+        $connection = $this->oldDatabase();
+        try {
+            $connection->executeStatement('CREATE UNIQUE INDEX preserved_identity ON udb_records (block, identity_hash)');
+            $connection->executeStatement("CREATE INDEX preserved_path ON udb_records (path COLLATE NOCASE) WHERE block = 'N'");
+            $connection->executeStatement('ALTER TABLE udb_records ADD COLUMN preserved_note TEXT NOT NULL DEFAULT \'owned\'');
+            $indexSql = $connection->fetchAllAssociative("SELECT name, sql FROM sqlite_schema WHERE type = 'index' AND tbl_name = 'udb_records' ORDER BY name");
+            foreach (['up', 'down'] as $direction) {
+                $this->migrate($connection, true, $direction);
+                self::assertArrayHasKey('preserved_identity', $connection->createSchemaManager()->listTableIndexes('udb_records'));
+                $this->migrate($connection, false, $direction);
+                $indexes = $connection->createSchemaManager()->listTableIndexes('udb_records');
+                self::assertArrayHasKey('preserved_identity', $indexes);
+                self::assertTrue($indexes['preserved_identity']->isUnique());
+                self::assertArrayHasKey('preserved_path', $indexes);
+                self::assertSame($indexSql, $connection->fetchAllAssociative("SELECT name, sql FROM sqlite_schema WHERE type = 'index' AND tbl_name = 'udb_records' ORDER BY name"));
+                self::assertSame(['owned'], $connection->fetchFirstColumn('SELECT DISTINCT preserved_note FROM udb_records'));
+                $tableSql = $connection->fetchOne("SELECT sql FROM sqlite_schema WHERE type = 'table' AND name = 'udb_records'");
+                self::assertIsString($tableSql);
+                self::assertStringContainsString('uniq_udb_record_block_identity', $tableSql);
+                try {
+                    $connection->executeStatement('INSERT INTO udb_records (block, path, identity_path, identity_hash, value, updated_at) SELECT block, path, identity_path, identity_hash, value, updated_at FROM udb_records WHERE id = 1');
+                    self::fail('Duplicate logical identities must remain rejected.');
+                } catch (UniqueConstraintViolationException) {
+                    self::assertSame(6, $connection->fetchOne('SELECT COUNT(*) FROM udb_records'));
+                }
+            }
+        } finally {
+            $connection->close();
+        }
+    }
+
     #[Test]
     public function realExecutorBinaryUpgradeAndUtf8DowngradePreserveLiteralBackslashes(): void
     {

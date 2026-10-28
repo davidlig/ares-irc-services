@@ -22,6 +22,8 @@ use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
 
 use function array_reverse;
+use function array_search;
+use function array_splice;
 use function basename;
 use function count;
 use function dirname;
@@ -131,6 +133,66 @@ final class MigrationExecutionEquivalenceTest extends TestCase
             self::assertSame($before, $connection->fetchAllAssociative("SELECT type, name, sql FROM sqlite_master WHERE name NOT LIKE 'sqlite_%' ORDER BY type, name"));
         } finally {
             $connection->close();
+        }
+    }
+
+    #[Test]
+    public function installedRollbackSimulationHasOnlyTheAcceptedRedundantIndexAndRemainsExecutable(): void
+    {
+        $connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
+        $replay = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
+        try {
+            $paths = glob(dirname(__DIR__, 6) . '/migrations/Version*.php');
+            self::assertIsArray($paths);
+            foreach ([$connection, $replay] as $database) {
+                foreach ($paths as $path) {
+                    $this->execute($database, 'App\\Migrations\\' . basename($path, '.php'), 'up', false);
+                }
+            }
+            $factory = $this->factory($connection);
+            $plans = [];
+            foreach (array_reverse($paths) as $path) {
+                $class = 'App\\Migrations\\' . basename($path, '.php');
+                $plans[] = new MigrationPlan(new Version($class), $factory->getMigrationFactory()->createVersion($class), 'down');
+            }
+            $before = $connection->fetchAllAssociative('SELECT name, sql FROM sqlite_schema ORDER BY name');
+            $metadata = $connection->fetchAllAssociative('SELECT * FROM doctrine_migration_versions ORDER BY version');
+            $authority = $connection->fetchAllAssociative('SELECT * FROM udb_authority_state');
+            $factory->getMigrator()->migrate(new MigrationPlanList($plans, 'down'), new MigratorConfiguration()->setDryRun(true));
+            self::assertSame($before, $connection->fetchAllAssociative('SELECT name, sql FROM sqlite_schema ORDER BY name'));
+            self::assertSame($metadata, $connection->fetchAllAssociative('SELECT * FROM doctrine_migration_versions ORDER BY version'));
+            self::assertSame($authority, $connection->fetchAllAssociative('SELECT * FROM udb_authority_state'));
+            $accepted = 'CREATE UNIQUE INDEX uniq_udb_records_block_identity ON udb_records (block, identity_hash)';
+            $differences = 0;
+            foreach ($plans as $plan) {
+                $class = (string) $plan->getVersion();
+                $actual = $factory->getMigrationFactory()->createVersion($class);
+                $factory->getMigrator()->migrate(new MigrationPlanList([new MigrationPlan(new Version($class), $actual, 'down')], 'down'), new MigratorConfiguration());
+                $dry = [];
+                foreach ($plan->getMigration()->getSql() as $query) {
+                    $dry[] = [$query->getStatement(), $query->getParameters(), $query->getTypes()];
+                    self::assertSame([], $query->getParameters());
+                    self::assertSame([], $query->getTypes());
+                    $replay->executeStatement($query->getStatement());
+                }
+                $executed = [];
+                foreach ($actual->getSql() as $query) {
+                    $executed[] = [$query->getStatement(), $query->getParameters(), $query->getTypes()];
+                }
+                if ('App\\Migrations\\Version20261011000001' === $class) {
+                    $position = array_search([$accepted, [], []], $dry, true);
+                    self::assertIsInt($position);
+                    array_splice($dry, $position, 1);
+                    ++$differences;
+                }
+                self::assertSame($executed, $dry, $class);
+            }
+            self::assertSame(1, $differences);
+            self::assertSame(['doctrine_migration_versions'], $connection->createSchemaManager()->listTableNames());
+            self::assertSame($connection->fetchAllAssociative('SELECT name, sql FROM sqlite_schema ORDER BY name'), $replay->fetchAllAssociative('SELECT name, sql FROM sqlite_schema ORDER BY name'));
+        } finally {
+            $connection->close();
+            $replay->close();
         }
     }
 

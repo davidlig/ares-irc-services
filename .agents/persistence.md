@@ -212,6 +212,10 @@ that only preceding queued SQL would create, mutate the supplied schema, or rein
 propagation to simulate them. A fresh chained dry run must plan the same migration SQL, parameters
 and types as real execution without creating tables, changing rows or recording applied versions.
 Validate results against physical schemas and stored records, not an internal virtual target.
+For an installed full-chain SQLite rollback simulation, the UDB conversion may additionally recreate
+`uniq_udb_records_block_identity`, which an earlier queued rollback removes. This explicitly accepted
+dry-run-only statement must remain executable and non-writing, with the same final physical result.
+Do not generalize this exception to other SQL differences or isolated rollback data/index loss.
 
 Use plural `getCreateTablesSQL()` when preserving table/foreign-key ordering. SQLite handles its
 foreign keys inline; other platforms can emit them after table creation. Use native CREATE/DROP

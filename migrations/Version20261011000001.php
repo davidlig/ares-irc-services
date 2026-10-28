@@ -12,17 +12,20 @@ use Doctrine\DBAL\ParameterType;
 use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
 use Doctrine\DBAL\Platforms\SQLitePlatform;
 use Doctrine\DBAL\Schema\Column;
+use Doctrine\DBAL\Schema\ColumnEditor;
 use Doctrine\DBAL\Schema\Index;
 use Doctrine\DBAL\Schema\Index\IndexType;
 use Doctrine\DBAL\Schema\PrimaryKeyConstraint;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Schema\Table;
+use Doctrine\DBAL\Schema\UniqueConstraint;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\Migrations\AbstractMigration;
 use Doctrine\Migrations\Exception\AbortMigration;
 
 use function explode;
+use function implode;
 use function is_string;
 use function preg_match;
 use function str_contains;
@@ -107,16 +110,6 @@ final class Version20261011000001 extends AbstractMigration
                 'ALTER TABLE udb_authority_state ADD COLUMN dataset_sid VARCHAR(3) DEFAULT NULL',
                 'ALTER TABLE udb_authority_state ADD COLUMN dataset_epoch VARCHAR(16) DEFAULT NULL',
                 'ALTER TABLE udb_authority_state ADD COLUMN dataset_watermark VARCHAR(20) DEFAULT NULL',
-                'CREATE TEMPORARY TABLE __temp__udb_records AS SELECT id, block, path, identity_path, identity_hash, value,'
-                . ' updated_at FROM udb_records',
-                'DROP TABLE udb_records',
-                'CREATE TABLE udb_records (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, block VARCHAR(1) NOT NULL, path'
-                . ' VARCHAR(8192) NOT NULL, identity_path BLOB NOT NULL, identity_hash BLOB NOT NULL, value BLOB NOT NULL,'
-                . ' updated_at DATETIME NOT NULL, value_kind SMALLINT DEFAULT 1 NOT NULL)',
-                'INSERT INTO udb_records (id, block, path, identity_path, identity_hash, value, updated_at) SELECT id, block,'
-                . ' path, identity_path, identity_hash, value, updated_at FROM __temp__udb_records',
-                'DROP TABLE __temp__udb_records',
-                'CREATE INDEX idx_udb_record_block ON udb_records (block)',
             ],
             $this->platform instanceof PostgreSQLPlatform => [
                 'ALTER TABLE udb_authority_state ADD origin_sid VARCHAR(3) DEFAULT NULL',
@@ -137,6 +130,9 @@ final class Version20261011000001 extends AbstractMigration
         };
         foreach ($statements as $sql) {
             $this->addSql($sql);
+        }
+        if ($this->platform instanceof SQLitePlatform) {
+            $this->rebuildSqliteRecords(false);
         }
 
         // Queued fresh-install SQL has no physical UDB rows yet.
@@ -180,26 +176,12 @@ final class Version20261011000001 extends AbstractMigration
         }
         $statements = match (true) {
             $this->platform instanceof SQLitePlatform => [
-                'CREATE TEMPORARY TABLE __temp__udb_authority_state AS SELECT id, approved, approved_at, fingerprint,'
-                . ' protocol_revision FROM udb_authority_state',
-                'DROP TABLE udb_authority_state',
-                'CREATE TABLE udb_authority_state (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, approved BOOLEAN NOT NULL,'
-                . ' approved_at DATETIME DEFAULT NULL, fingerprint VARCHAR(64) DEFAULT NULL, protocol_revision VARCHAR(40)'
-                . ' DEFAULT NULL)',
-                'INSERT INTO udb_authority_state (id, approved, approved_at, fingerprint, protocol_revision) SELECT id,'
-                . ' approved, approved_at, fingerprint, protocol_revision FROM __temp__udb_authority_state',
-                'DROP TABLE __temp__udb_authority_state',
-                'CREATE TEMPORARY TABLE __temp__udb_records AS SELECT id, block, path, identity_path, identity_hash, value,'
-                . ' updated_at FROM udb_records',
-                'DROP TABLE udb_records',
-                'CREATE TABLE udb_records (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, block VARCHAR(1) NOT NULL, path'
-                . ' VARCHAR(8192) NOT NULL, identity_path BLOB NOT NULL, identity_hash BLOB NOT NULL, value CLOB NOT NULL,'
-                . ' updated_at DATETIME NOT NULL)',
-                'INSERT INTO udb_records (id, block, path, identity_path, identity_hash, value, updated_at) SELECT id, block,'
-                . ' path, identity_path, identity_hash, value, updated_at FROM __temp__udb_records',
-                'DROP TABLE __temp__udb_records',
-                'CREATE INDEX idx_udb_record_block ON udb_records (block)',
-                'UPDATE udb_records SET value = CAST(value AS TEXT)',
+                'ALTER TABLE udb_authority_state DROP COLUMN origin_sid',
+                'ALTER TABLE udb_authority_state DROP COLUMN origin_epoch',
+                'ALTER TABLE udb_authority_state DROP COLUMN origin_watermark',
+                'ALTER TABLE udb_authority_state DROP COLUMN dataset_sid',
+                'ALTER TABLE udb_authority_state DROP COLUMN dataset_epoch',
+                'ALTER TABLE udb_authority_state DROP COLUMN dataset_watermark',
             ],
             $this->platform instanceof PostgreSQLPlatform => [
                 'ALTER TABLE udb_authority_state DROP origin_sid',
@@ -218,6 +200,79 @@ final class Version20261011000001 extends AbstractMigration
         };
         foreach ($statements as $sql) {
             $this->addSql($sql);
+        }
+        if ($this->platform instanceof SQLitePlatform) {
+            $this->rebuildSqliteRecords(true);
+        }
+    }
+
+    /** Queue this conversion without discarding existing table constraints or native index DDL. */
+    private function rebuildSqliteRecords(bool $downgrade): void
+    {
+        $manager = $this->connection->createSchemaManager();
+        if ($manager->tablesExist(['udb_records'])) {
+            $source = $manager->introspectTableByUnquotedName('udb_records');
+            $indexes = $this->connection->fetchFirstColumn("SELECT sql FROM sqlite_schema WHERE type = 'index' AND tbl_name = 'udb_records' AND sql IS NOT NULL ORDER BY name");
+        } else {
+            // Fresh chained planning has no physical table yet. Declare its historical source,
+            // without depending on Doctrine Migrations' unmodified virtual schema.
+            $editor = Table::editor()->setUnquotedName('udb_records');
+            $editor->addColumn(Column::editor()->setUnquotedName('id')->setTypeName(Types::INTEGER)->setAutoincrement(true)->create());
+            $editor->addColumn(Column::editor()->setUnquotedName('block')->setTypeName(Types::STRING)->setLength(1)->setCollation('BINARY')->create());
+            $editor->addColumn(Column::editor()->setUnquotedName('path')->setTypeName(Types::STRING)->setLength(8192)->setCollation('BINARY')->create());
+            $editor->addColumn(Column::editor()->setUnquotedName('identity_path')->setTypeName(Types::BINARY)->setLength(8192)->create());
+            $editor->addColumn(Column::editor()->setUnquotedName('identity_hash')->setTypeName(Types::BINARY)->setLength(32)->create());
+            $editor->addColumn(Column::editor()->setUnquotedName('value')->setTypeName($downgrade ? Types::BINARY : Types::TEXT)->setCollation($downgrade ? null : 'BINARY')->create());
+            $editor->addColumn(Column::editor()->setUnquotedName('updated_at')->setTypeName(Types::DATETIMETZ_IMMUTABLE)->create());
+            $editor->addPrimaryKeyConstraint(PrimaryKeyConstraint::editor()->setUnquotedName('primary')->setUnquotedColumnNames('id')->create());
+            $editor->addUniqueConstraint(UniqueConstraint::editor()->setQuotedName('uniq_udb_record_block_identity')->setQuotedColumnNames('block', 'identity_hash')->create());
+            if ($downgrade) {
+                $editor->addColumn(Column::editor()->setUnquotedName('value_kind')->setTypeName(Types::SMALLINT)->setDefaultValue(1)->create());
+            }
+            $source = $editor->create();
+            $indexes = ['CREATE INDEX idx_udb_record_block ON udb_records (block)'];
+        }
+        $editor = $source->edit()->setQuotedName('udb_records')->setIndexes();
+        $editor->modifyColumnByUnquotedName('value', static function (ColumnEditor $column) use ($downgrade): void {
+            $column->setTypeName($downgrade ? Types::TEXT : Types::BINARY)->setLength($downgrade ? null : 4096);
+        });
+        if ($downgrade) {
+            $editor->dropColumnByUnquotedName('value_kind');
+        } else {
+            $editor->addColumn(Column::editor()->setUnquotedName('value_kind')->setTypeName(Types::SMALLINT)->setDefaultValue(1)->create());
+        }
+        foreach ($source->getColumns() as $column) {
+            if ($downgrade && 'value_kind' === $column->getName()) {
+                continue;
+            }
+            $name = $column->getObjectName()->getIdentifier()->getValue();
+            $editor->modifyColumnByUnquotedName($name, static function (ColumnEditor $editor) use ($name): void {
+                $editor->setQuotedName($name);
+            });
+        }
+        $target = $editor->create();
+        $columns = [];
+        foreach ($source->getColumns() as $column) {
+            if ($target->hasColumn($column->getName())) {
+                $columns[] = $this->platform->quoteIdentifier($column->getName());
+            }
+        }
+        $list = implode(', ', $columns);
+        $this->addSql('CREATE TEMPORARY TABLE __temp__udb_records AS SELECT ' . $list . ' FROM udb_records');
+        $this->addSql('DROP TABLE udb_records');
+        foreach ($this->platform->getCreateTableSQL($target) as $sql) {
+            $this->addSql($sql);
+        }
+        $this->addSql('INSERT INTO udb_records (' . $list . ') SELECT ' . $list . ' FROM __temp__udb_records');
+        $this->addSql('DROP TABLE __temp__udb_records');
+        foreach ($indexes as $sql) {
+            if (!is_string($sql)) {
+                throw new AbortMigration('Cannot decode an existing SQLite UDB index.');
+            }
+            $this->addSql($sql);
+        }
+        if ($downgrade) {
+            $this->addSql('UPDATE udb_records SET value = CAST(value AS TEXT)');
         }
     }
 

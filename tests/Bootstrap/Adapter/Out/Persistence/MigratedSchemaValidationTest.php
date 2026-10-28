@@ -106,6 +106,12 @@ final class MigratedSchemaValidationTest extends TestCase
     public function testDuplicateLegacyIdentityFailsClosedWithoutDeletingRows(): void
     {
         $this->migrate('App\\Migrations\\Version20261025000001');
+        // Model a legacy installation whose identity uniqueness was already missing.
+        $table = $this->connection->createSchemaManager()->introspectTableByUnquotedName('udb_records')->edit()->setUniqueConstraints()->create();
+        $this->connection->executeStatement('DROP TABLE udb_records');
+        foreach ($this->connection->getDatabasePlatform()->getCreateTableSQL($table) as $sql) {
+            $this->connection->executeStatement($sql);
+        }
         $this->insertRecord();
         $this->insertRecord();
         $before = $this->snapshot();
