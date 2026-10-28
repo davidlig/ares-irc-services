@@ -453,6 +453,9 @@ Read `.agents/testing.md`.
 
 ## 12. Workflow
 
+Before modifying `README.md`, obtain explicit user approval for the specific edit.
+General implementation authorization does not imply approval to modify `README.md`.
+
 For implementation tasks:
 
 1. inspect the affected bounded context/protocol adapter and direct callers;
