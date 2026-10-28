@@ -79,7 +79,7 @@ final class DatabaseQueryOptimizationTest extends TestCase
         $this->migrate('latest');
         self::assertSame($before, $this->snapshot());
         $this->assertIndexesPresent();
-        $this->assertLegacyListEquivalence();
+        $this->assertListMatchingAndLifecycleVisibility();
         $this->assertWhoipEquivalence();
 
         $this->seedCardinality();
@@ -96,7 +96,7 @@ final class DatabaseQueryOptimizationTest extends TestCase
         $this->migrate('latest');
         self::assertSame($before, $this->snapshot(), 'Reapplying must preserve all original account/channel data.');
         $this->assertIndexesPresent();
-        $this->assertLegacyListEquivalence();
+        $this->assertListMatchingAndLifecycleVisibility();
     }
 
     protected function setUp(): void
@@ -238,7 +238,7 @@ final class DatabaseQueryOptimizationTest extends TestCase
         }
     }
 
-    private function assertLegacyListEquivalence(): void
+    private function assertListMatchingAndLifecycleVisibility(): void
     {
         $patterns = ['Alpha', 'ALPHA', 'al*', '*a*', 'missing', 'Éclair', 'écl*', '*mega', 'Σ*', 'İ*', 'percent%name', 'under_score', 'bang!name', 'query?name', 'back\\slash', 'trail ', 'trail', 'many**end', 'mixedstored', 'MIXED*', 'Ämixed', 'ämixed', '*MiXeD*', '*', ''];
         foreach ([['registered_nicks', 'nickname_lower', new RegisteredNickDoctrineRepository($this->entityManager), ''], ['registered_channels', 'name_lower', new RegisteredChannelDoctrineRepository($this->entityManager), '#']] as [$table, $key, $repository, $prefix]) {
@@ -246,11 +246,17 @@ final class DatabaseQueryOptimizationTest extends TestCase
                 $pattern = $prefix . $pattern;
                 $like = strtr(strtolower($pattern), ['!' => '!!', '%' => '!%', '_' => '!_', '*' => '%']);
                 $legacy = ' FROM ' . $table . " WHERE LOWER($key) LIKE ? ESCAPE '!'";
-                $expectedCount = self::databaseInteger($this->connection->fetchOne('SELECT COUNT(*)' . $legacy, [$like]));
+                $parameters = [$like];
+                if ('registered_channels' === $table) {
+                    $legacy .= ' AND status NOT IN (?, ?)';
+                    $parameters[] = ChannelStatus::Pending->value;
+                    $parameters[] = ChannelStatus::Rejected->value;
+                }
+                $expectedCount = self::databaseInteger($this->connection->fetchOne('SELECT COUNT(*)' . $legacy, $parameters));
                 self::assertSame($expectedCount, $repository->countByPattern($pattern), $table . ': ' . $pattern);
                 foreach ([[0, 3], [3, 3], [99999, 3], [-1, 3], [0, 0]] as [$offset, $limit]) {
                     $sql = $this->connection->getDatabasePlatform()->modifyLimitQuery('SELECT id' . $legacy . " ORDER BY $key ASC, id ASC", max(0, $limit), max(0, $offset));
-                    $expected = array_map(self::databaseInteger(...), $this->connection->fetchFirstColumn($sql, [$like]));
+                    $expected = array_map(self::databaseInteger(...), $this->connection->fetchFirstColumn($sql, $parameters));
                     $actual = array_map(static fn (RegisteredChannel|RegisteredNick $entity): int => $entity->getId(), $repository->searchByPattern($pattern, $offset, $limit));
                     self::assertSame($expected, $actual, $table . ': ' . $pattern . ' page ' . $offset);
                 }

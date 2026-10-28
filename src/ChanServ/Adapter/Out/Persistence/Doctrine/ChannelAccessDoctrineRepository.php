@@ -6,9 +6,12 @@ namespace App\ChanServ\Adapter\Out\Persistence\Doctrine;
 
 use App\ChanServ\Application\Port\Out\ChannelAccessRepositoryInterface;
 use App\ChanServ\Domain\Entity\ChannelAccess;
+use App\ChanServ\Domain\Entity\RegisteredChannel;
+use App\ChanServ\Domain\ValueObject\ChannelStatus;
 use Doctrine\ORM\EntityManagerInterface;
 
 use function array_filter;
+use function array_values;
 use function is_numeric;
 
 final readonly class ChannelAccessDoctrineRepository implements ChannelAccessRepositoryInterface
@@ -65,6 +68,24 @@ final readonly class ChannelAccessDoctrineRepository implements ChannelAccessRep
         return $this->em
             ->getRepository(ChannelAccess::class)
             ->findBy(['nickId' => $nickId], ['level' => 'DESC']);
+    }
+
+    public function findEstablishedByNick(int $nickId): array
+    {
+        /** @var array<mixed> $entries */
+        $entries = $this->em->createQueryBuilder()
+            ->select('a')
+            ->from(ChannelAccess::class, 'a')
+            ->leftJoin(RegisteredChannel::class, 'c', 'WITH', 'c.id = a.channelId')
+            ->where('a.nickId = :nickId')
+            ->andWhere('(c.id IS NULL OR c.status NOT IN (:requestStatuses))')
+            ->setParameter('nickId', $nickId)
+            ->setParameter('requestStatuses', [ChannelStatus::Pending->value, ChannelStatus::Rejected->value])
+            ->orderBy('a.level', 'DESC')
+            ->getQuery()
+            ->getResult();
+
+        return array_values(array_filter($entries, static fn (mixed $entry): bool => $entry instanceof ChannelAccess));
     }
 
     public function deleteByNickId(int $nickId): void

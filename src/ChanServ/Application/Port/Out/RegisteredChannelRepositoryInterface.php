@@ -15,16 +15,22 @@ interface RegisteredChannelRepositoryInterface
 
     public function findByChannelName(string $channelName): ?RegisteredChannel;
 
-    /** Counts every channel whose canonical name matches a case-insensitive, strict star glob. */
+    /** Counts listed channels matching a strict star glob, excluding pending/rejected registrations. */
     public function countByPattern(string $pattern): int;
 
-    /** @return list<RegisteredChannel> bounded, stable ascending page of channels matching the strict star glob */
+    /** @return list<RegisteredChannel> bounded, stable ascending page matching the strict star glob, excluding pending/rejected registrations */
     public function searchByPattern(string $pattern, int $offset, int $limit): array;
 
     public function existsByChannelName(string $channelName): bool;
 
     /** @return RegisteredChannel[] */
     public function findByFounderNickId(int $founderNickId): array;
+
+    /** @return RegisteredChannel[] Founder associations ordered by name, excluding pending/rejected registrations. */
+    public function findEstablishedByFounderNickId(int $founderNickId): array;
+
+    /** @return RegisteredChannel[] Successor associations ordered by name, excluding pending/rejected registrations. */
+    public function findEstablishedBySuccessorNickId(int $successorNickId): array;
 
     /**
      * @return RegisteredChannel[] Channels where user is successor

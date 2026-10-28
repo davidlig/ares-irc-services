@@ -158,7 +158,12 @@ access to stored addresses: blocking a domain does not retroactively disable rec
 In APPROVAL mode, REGISTER creates a request, not an approved channel. Pending and
 rejected registrations do not appear in NickServ INFO's established channel
 associations. Approval makes the founder association visible under the existing
-INFO privacy rules.
+INFO privacy rules. These associations are filtered by dedicated persistence
+queries; generic ownership and cleanup queries retain their complete state view.
+
+ChanServ LIST also excludes pending and rejected requests from both its total and
+its pages. Its matching, ordering, permissions and visibility of other states are
+unchanged. Authorized reviewers can still inspect pending requests with CREG PENDING.
 
 `CHANSERV_MAX_CHANNELS_PER_NICK` applies to ordinary requesters both at submission
 and approval. Rejected registrations never count; the request being accepted does

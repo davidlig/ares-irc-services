@@ -21,22 +21,16 @@ final readonly class NickChannelAssociationQueryService implements NickChannelAs
 
     public function findForNick(int $nickId): array
     {
-        $accessEntries = $this->accessRepository->findByNick($nickId);
-        $founderChannels = $this->channelRepository->findByFounderNickId($nickId);
-        $successorChannels = $this->channelRepository->findBySuccessorNickId($nickId);
+        $accessEntries = $this->accessRepository->findEstablishedByNick($nickId);
+        $founderChannels = $this->channelRepository->findEstablishedByFounderNickId($nickId);
+        $successorChannels = $this->channelRepository->findEstablishedBySuccessorNickId($nickId);
 
         /** @var array<int, array{name: string, type: 'founder'|'successor'|'access', level: ?int}> $channels */
         $channels = [];
         foreach ($founderChannels as $channel) {
-            if ($channel->isPendingRegistration() || $channel->isRejectedRegistration()) {
-                continue;
-            }
             $channels[$channel->getId()] = ['name' => $channel->getName(), 'type' => 'founder', 'level' => null];
         }
         foreach ($successorChannels as $channel) {
-            if ($channel->isPendingRegistration() || $channel->isRejectedRegistration()) {
-                continue;
-            }
             $channels[$channel->getId()] ??= ['name' => $channel->getName(), 'type' => 'successor', 'level' => null];
         }
 
@@ -49,11 +43,6 @@ final readonly class NickChannelAssociationQueryService implements NickChannelAs
         }
         if ([] !== $missingChannelIds) {
             foreach ($this->channelRepository->findByIds($missingChannelIds) as $channel) {
-                if ($channel->isPendingRegistration() || $channel->isRejectedRegistration()) {
-                    unset($channels[$channel->getId()]);
-
-                    continue;
-                }
                 if (isset($channels[$channel->getId()])) {
                     $channels[$channel->getId()]['name'] = $channel->getName();
                 }

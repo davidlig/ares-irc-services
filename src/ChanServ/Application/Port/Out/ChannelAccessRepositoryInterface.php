@@ -27,6 +27,11 @@ interface ChannelAccessRepositoryInterface
     public function findByNick(int $nickId): array;
 
     /**
+     * @return ChannelAccess[] ordered by level descending; pending/rejected channels excluded, missing references retained
+     */
+    public function findEstablishedByNick(int $nickId): array;
+
+    /**
      * Delete all access entries for a nick (used when nick is dropped).
      */
     public function deleteByNickId(int $nickId): void;

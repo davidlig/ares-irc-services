@@ -18,6 +18,7 @@ use App\ChanServ\Adapter\In\Irc\ChanServService;
 use App\ChanServ\Adapter\In\Irc\ChanServUserPresentationPreferences;
 use App\ChanServ\Adapter\In\Irc\Command\CregCommand;
 use App\ChanServ\Adapter\In\Irc\Command\DropCommand;
+use App\ChanServ\Adapter\In\Irc\Command\ListCommand;
 use App\ChanServ\Adapter\In\Irc\Command\RegisterCommand;
 use App\ChanServ\Adapter\In\Irc\Command\StatusCommand;
 use App\ChanServ\Adapter\Out\NickServ\NickServIdentifiedRequesterSession;
@@ -53,6 +54,8 @@ use App\ChanServ\Application\UseCase\CleanupChannelAccess\CleanupChannelAccessHa
 use App\ChanServ\Application\UseCase\CleanupChannelAkick\CleanupChannelAkickHandler;
 use App\ChanServ\Application\UseCase\CleanupChannelHistory\CleanupChannelHistoryHandler;
 use App\ChanServ\Application\UseCase\CleanupChannelLevels\CleanupChannelLevelsHandler;
+use App\ChanServ\Application\UseCase\List\ListRegisteredChannelsHandler;
+use App\ChanServ\Application\UseCase\List\ListRegisteredChannelsHandlerInterface;
 use App\ChanServ\Application\UseCase\ListPendingRegistrations\ListPendingRegistrationsHandler;
 use App\ChanServ\Application\UseCase\ManageLifecycle\ManageChannelLifecycleHandler;
 use App\ChanServ\Application\UseCase\RegisterChannel\RegisterChannel;
@@ -129,8 +132,11 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function array_filter;
 use function array_key_last;
+use function array_map;
 use function array_values;
+use function ceil;
 use function dirname;
+use function explode;
 use function hash;
 use function implode;
 use function in_array;
@@ -850,6 +856,99 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
         self::assertCount(2, $memos->findByTargetNick($requesterId));
     }
 
+    /** @return iterable<string, array{string, int, list<string>, int, bool}> */
+    public static function listVisibilityCases(): iterable
+    {
+        yield 'first page ignores request rows before registered rows' => ['#visible-*', 1, ['#visible-a', '#visible-b'], 4, true];
+        yield 'second page retains pending deletion and forbidden' => ['#visible-*', 2, ['#visible-c', '#visible-d'], 4, true];
+        yield 'past final page' => ['#visible-*', 3, [], 4, true];
+        yield 'pending exact lookup' => ['#visible-00-pending', 1, [], 0, true];
+        yield 'rejected exact lookup' => ['#visible-01-rejected', 1, [], 0, true];
+        yield 'only request rows match' => ['#visible-0*', 1, [], 0, true];
+        yield 'LIST permission remains required' => ['#visible-*', 1, [], 0, false];
+    }
+
+    /** @param list<string> $expectedNames */
+    #[Test]
+    #[DataProvider('listVisibilityCases')]
+    public function listExcludesUnacceptedRequestsBeforeCountingAndPagination(string $pattern, int $page, array $expectedNames, int $total, bool $granted): void
+    {
+        $repository = new RegisteredChannelDoctrineRepository($this->entityManager);
+        $at = new DateTimeImmutable('-1 day');
+        $active = RegisteredChannel::register($at, '#visible-a', 1, 'active');
+        $suspended = RegisteredChannel::register($at, '#visible-b', 1, 'suspended');
+        $suspended->suspend('test');
+        $deleting = RegisteredChannel::register($at, '#visible-c', 1, 'deleting');
+        $deleting->markPendingDeletion($at);
+        $forbidden = RegisteredChannel::createForbidden($at, '#visible-d', 'test');
+        $pending = RegisteredChannel::createPendingRegistration($at, '#visible-00-pending', 1, 'pending');
+        $rejected = RegisteredChannel::createPendingRegistration($at, '#visible-01-rejected', 1, 'rejected');
+        $rejected->rejectRegistration('duplicate', 99, 'Reviewer', $at, new DateTimeImmutable('+1 day'));
+        foreach ([$active, $suspended, $deleting, $forbidden, $pending, $rejected] as $channel) {
+            $repository->save($channel);
+        }
+        $this->entityManager->clear();
+        $accounts = $this->createStub(ChanUserAccountPort::class);
+        $accounts->method('findNicknamesByIds')->willReturn([1 => 'Owner']);
+        $handler = new ListRegisteredChannelsHandler($repository, $accounts, 2);
+        $translator = new Translator('en');
+        $translator->addLoader('yaml', new IrcYamlTranslationLoader());
+        foreach (['chanserv', 'common'] as $domain) {
+            $translator->addResource('yaml', dirname(__DIR__, 5) . '/translations/' . $domain . '.en.yaml', 'en', $domain);
+        }
+        $observed = new class {
+            public ?CommandOutcome $outcome = null;
+        };
+        $events = $this->createStub(EventBusInterface::class);
+        $events->method('dispatch')->willReturnCallback(static function (object $event) use ($observed): void {
+            if ($event instanceof CommandExecutedEvent) {
+                $observed->outcome = $event->outcome;
+            }
+        });
+        $messages = new ArrayObject();
+        $service = $this->service(
+            $repository,
+            'Reviewer',
+            true,
+            true,
+            99,
+            true,
+            $messages,
+            $this->createStub(ReviewRegistrationHandlerInterface::class),
+            $this->createStub(ChanDropService::class),
+            allowedPermissions: $granted ? ['chanserv.list', 'chanserv.registration_review'] : [],
+            eventBus: $events,
+            listHandler: $handler,
+            translatorOverride: $translator,
+        );
+        $before = hash('sha256', serialize($this->entityManager->getConnection()->fetchAllAssociative('SELECT * FROM registered_channels ORDER BY id')));
+        $service->dispatch('LIST ' . $pattern . ' ' . $page, $this->sender('Reviewer', true, true));
+        if (!$granted) {
+            self::assertNull($observed->outcome);
+            self::assertSame([$translator->trans('error.permission_denied', [], 'common')], iterator_to_array($messages));
+        } else {
+            self::assertNotNull($observed->outcome);
+            self::assertTrue($observed->outcome->success);
+            self::assertNotNull($observed->outcome->auditData);
+            self::assertSame(['page' => $page, 'total' => $total], $observed->outcome->auditData->extra);
+            $lines = iterator_to_array($messages);
+            self::assertNotEmpty($lines);
+            self::assertSame($translator->trans('list.page', ['%page%' => $page, '%pages%' => (int) ceil($total / 2), '%total%' => $total], 'common'), $lines[array_key_last($lines)]);
+            $rows = array_values(array_filter($lines, static fn (string $line): bool => str_starts_with($line, '#')));
+            self::assertSame($expectedNames, array_map(static fn (string $row): string => explode(' | ', $row)[0], $rows));
+            self::assertStringNotContainsString('#visible-00-pending', implode("\n", $rows));
+            self::assertStringNotContainsString('#visible-01-rejected', implode("\n", $rows));
+            if (1 === $page && '#visible-*' === $pattern) {
+                self::assertInstanceOf(ArrayObject::class, $messages);
+                $messages->exchangeArray([]);
+                $service->dispatch('CREG PENDING', $this->sender('Reviewer', true, true));
+                self::assertStringContainsString('#visible-00-pending', implode("\n", iterator_to_array($messages)));
+                self::assertStringNotContainsString('#visible-01-rejected', implode("\n", iterator_to_array($messages)));
+            }
+        }
+        self::assertSame($before, hash('sha256', serialize($this->entityManager->getConnection()->fetchAllAssociative('SELECT * FROM registered_channels ORDER BY id'))));
+    }
+
     private function nickInfo(RegisteredChannelDoctrineRepository $channels, string $nickname, ?string $viewer = null): string
     {
         $nicks = new RegisteredNickDoctrineRepository($this->entityManager);
@@ -911,6 +1010,8 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
         ?EventBusInterface $eventBus = null,
         ?ChanUserAccountPort $accountPort = null,
         ?SenderView $requester = null,
+        ?ListRegisteredChannelsHandlerInterface $listHandler = null,
+        ?TranslatorInterface $translatorOverride = null,
     ): ChanServService {
         if ($channel instanceof RegisteredChannel) {
             $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
@@ -959,6 +1060,9 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
         );
         $drop = new DropCommand($lifecycle, $checker);
         $commands = [$status, $creg, $drop];
+        if (null !== $listHandler) {
+            $commands[] = new ListCommand($listHandler);
+        }
         if (null !== $registerHandler) {
             $commands[] = new RegisterCommand($registerHandler);
         }
@@ -973,8 +1077,12 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
             }
             $messages[] = $message;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $key): string => $key);
+        if (null === $translatorOverride) {
+            $translator = $this->createStub(TranslatorInterface::class);
+            $translator->method('trans')->willReturnCallback(static fn (string $key): string => $key);
+        } else {
+            $translator = $translatorOverride;
+        }
         $preferences = $this->createStub(ChanServUserPresentationPreferences::class);
         $preferences->method('languageFor')->willReturn('en');
         $preferences->method('prefersPrivateMessages')->willReturn(false);

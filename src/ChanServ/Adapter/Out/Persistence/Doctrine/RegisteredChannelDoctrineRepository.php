@@ -51,7 +51,7 @@ final readonly class RegisteredChannelDoctrineRepository implements RegisteredCh
 
     public function countByPattern(string $pattern): int
     {
-        [$predicate, $parameters] = $this->patternPredicate($pattern);
+        [$predicate, $parameters] = $this->listedPatternPredicate($pattern);
 
         $count = $this->em->getConnection()->fetchOne(
             'SELECT COUNT(c.id) FROM registered_channels c WHERE ' . $predicate,
@@ -63,7 +63,7 @@ final readonly class RegisteredChannelDoctrineRepository implements RegisteredCh
 
     public function searchByPattern(string $pattern, int $offset, int $limit): array
     {
-        [$predicate, $parameters] = $this->patternPredicate($pattern);
+        [$predicate, $parameters] = $this->listedPatternPredicate($pattern);
         $mapping = new ResultSetMappingBuilder($this->em);
         $mapping->addRootEntityFromClassMetadata(RegisteredChannel::class, 'c');
         $sql = 'SELECT ' . $mapping->generateSelectClause()
@@ -106,6 +106,16 @@ final readonly class RegisteredChannelDoctrineRepository implements RegisteredCh
 
         // @phpstan-ignore instanceof.alwaysTrue
         return array_filter($result, static fn ($row): bool => $row instanceof RegisteredChannel);
+    }
+
+    public function findEstablishedByFounderNickId(int $founderNickId): array
+    {
+        return $this->findEstablishedByNickRole('founderNickId', $founderNickId);
+    }
+
+    public function findEstablishedBySuccessorNickId(int $successorNickId): array
+    {
+        return $this->findEstablishedByNickRole('successorNickId', $successorNickId);
     }
 
     public function iterateAll(): iterable
@@ -173,8 +183,26 @@ final readonly class RegisteredChannelDoctrineRepository implements RegisteredCh
         return array_values(array_filter($result, static fn ($row): bool => $row instanceof RegisteredChannel));
     }
 
+    /**
+     * @param 'founderNickId'|'successorNickId' $field
+     *
+     * @return list<RegisteredChannel>
+     */
+    private function findEstablishedByNickRole(string $field, int $nickId): array
+    {
+        $statuses = array_filter(
+            ChannelStatus::cases(),
+            static fn (ChannelStatus $status): bool => ChannelStatus::Pending !== $status && ChannelStatus::Rejected !== $status,
+        );
+
+        return $this->em->getRepository(RegisteredChannel::class)->findBy(
+            [$field => $nickId, 'status' => $statuses],
+            ['name' => 'ASC'],
+        );
+    }
+
     /** @return array{string, array<string, string>} */
-    private function patternPredicate(string $pattern): array
+    private function listedPatternPredicate(string $pattern): array
     {
         $platform = $this->em->getConnection()->getDatabasePlatform();
         $expression = match (true) {
@@ -191,6 +219,10 @@ final readonly class RegisteredChannelDoctrineRepository implements RegisteredCh
             $predicate = $equality . ' = :exact AND ' . $predicate;
             $parameters['exact'] = strtolower($pattern);
         }
+
+        $predicate .= ' AND c.status NOT IN (:registrationPending, :registrationRejected)';
+        $parameters['registrationPending'] = ChannelStatus::Pending->value;
+        $parameters['registrationRejected'] = ChannelStatus::Rejected->value;
 
         return [$predicate, $parameters];
     }
