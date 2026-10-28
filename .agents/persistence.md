@@ -194,7 +194,46 @@ New references — any new table or column storing a nick or channel id ships wi
 
 External protocol/log/mail effects occur after commit.
 
-## 9. Integration tests
+## 9. Native migration authoring
+
+Extend Doctrine's `AbstractMigration` directly. Use native, non-deprecated DBAL APIs and keep
+schema operations, seeds, data conversions, engine-specific SQL and rollback guards explicit.
+Do not add a migration base, trait, schema-target cache, listener bridge or parallel schema model.
+
+- `preUp()` and `preDown()` prepare and validate before queued changes; rejected operations
+  must preserve schema, records and migration metadata.
+- `up()` and `down()` queue DDL/DML with `addSql()`. Use public platform SQL generators and
+  DBAL table/column/index editors where appropriate. Do not construct internal `TableDiff` objects.
+- `postUp()` and `postDown()` run after SQL is frozen and also run during a dry run. They cannot
+  enqueue more SQL or unconditionally write data. Leave unnecessary hooks inherited.
+
+Native queued SQL does not update Doctrine Migrations' virtual `Schema`. Do not inspect structures
+that only preceding queued SQL would create, mutate the supplied schema, or reintroduce target
+propagation to simulate them. A fresh chained dry run must plan the same migration SQL, parameters
+and types as real execution without creating tables, changing rows or recording applied versions.
+Validate results against physical schemas and stored records, not an internal virtual target.
+
+Use plural `getCreateTablesSQL()` when preserving table/foreign-key ordering. SQLite handles its
+foreign keys inline; other platforms can emit them after table creation. Use native CREATE/DROP
+INDEX for index-only changes rather than reconstructing SQLite tables from a frozen column list;
+later-owned columns, records and unrelated technical indexes must survive index maintenance.
+Exercise upgrades with the actual historical schema rather than incomplete hand-written fixtures.
+
+For MySQL/MariaDB LIST indexes, existing source columns determine charset/collation. Only when a
+physical source table is absent during fresh planning may the initial table's inherited database
+defaults supply them. Never replace an unknown existing column's collation with a guessed default.
+
+Keep version identities and applied-version metadata stable. New schema/data behavior normally
+requires a new version; an authorized historical maintenance rewrite must demonstrate equivalent
+executed SQL and persisted effects, except explicitly approved SQL-only optimizations that preserve
+physical schemas, data and refusal behavior. Respect MySQL/MariaDB non-transactional DDL limitations.
+
+Verify SQLite, MariaDB, MySQL and PostgreSQL separately: platform SQL tests are not real-engine
+proof. Use explicitly authorized disposable databases and synthetic data/credentials, retain
+engine/version results, and remove only resources created for the verification. Never reuse a
+deployment database or its credentials for migration tests.
+
+## 10. Integration tests
 
 Doctrine adapter tests cover:
 - round-trip;

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Tests\Bootstrap\Adapter\Out\Persistence;
 
 use App\Bootstrap\Adapter\In\Console\ValidateSchemaCommand;
-use App\Bootstrap\Adapter\Out\Persistence\Migration\EditedSchemaMigrationListener;
 use App\Bootstrap\Adapter\Out\Persistence\MigrationOwnedSchemaListener;
 use App\Kernel;
 use Doctrine\Common\EventManager;
@@ -16,8 +15,6 @@ use Doctrine\Migrations\Configuration\Configuration;
 use Doctrine\Migrations\Configuration\Connection\ExistingConnection;
 use Doctrine\Migrations\Configuration\Migration\ExistingConfiguration;
 use Doctrine\Migrations\DependencyFactory;
-use Doctrine\Migrations\EventDispatcher;
-use Doctrine\Migrations\Events;
 use Doctrine\Migrations\Tools\Console\Command\MigrateCommand;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Mapping\ClassMetadataFactory;
@@ -211,9 +208,6 @@ final class MigratedSchemaValidationTest extends TestCase
         $configuration = new Configuration();
         $configuration->addMigrationsDirectory('App\\Migrations', dirname(__DIR__, 5) . '/migrations');
         $factory = DependencyFactory::fromConnection(new ExistingConfiguration($configuration), new ExistingConnection($this->connection));
-        $events = new EventManager();
-        $events->addEventListener([Events::onMigrationsVersionExecuted], new EditedSchemaMigrationListener());
-        $factory->setService(EventDispatcher::class, new EventDispatcher($this->connection, $events));
         $migration = new CommandTester(new MigrateCommand($factory));
         self::assertSame(0, $migration->execute(['version' => $version, '--dry-run' => $dryRun], ['interactive' => false]), $migration->getDisplay());
     }

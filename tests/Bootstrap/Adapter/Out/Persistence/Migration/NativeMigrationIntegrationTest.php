@@ -4,22 +4,17 @@ declare(strict_types=1);
 
 namespace App\Tests\Bootstrap\Adapter\Out\Persistence\Migration;
 
-use App\Bootstrap\Adapter\Out\Persistence\Migration\EditedSchemaMigrationListener;
 use App\Migrations\Version20260914000001;
-use App\Migrations\Version20260927000002;
+use App\Migrations\Version20260914000002;
+use App\Migrations\Version20260914000003;
 use Doctrine\DBAL\DriverManager;
-use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\DependencyFactory;
-use Doctrine\Migrations\Event\MigrationsVersionEventArgs;
 use Doctrine\Migrations\Metadata\MigrationPlan;
 use Doctrine\Migrations\Metadata\MigrationPlanList;
 use Doctrine\Migrations\MigratorConfiguration;
-use Doctrine\Migrations\Version\ExecutionResult;
 use Doctrine\Migrations\Version\Version;
-use LogicException;
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
-use Psr\Log\NullLogger;
 use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
@@ -30,11 +25,11 @@ use function sys_get_temp_dir;
 use function tempnam;
 use function unlink;
 
-#[CoversClass(EditedSchemaMigrationListener::class)]
-final class EditedSchemaMigrationListenerTest extends KernelTestCase
+#[CoversNothing]
+final class NativeMigrationIntegrationTest extends KernelTestCase
 {
     #[Test]
-    public function productionAutoconfigurationSuppliesTargetBeforeNextVersionPlanning(): void
+    public function productionAutoconfigurationPlansNativeMigrationsWithoutWriting(): void
     {
         $this->assertProductionAutoconfigurationInPrivateDatabase();
     }
@@ -42,7 +37,7 @@ final class EditedSchemaMigrationListenerTest extends KernelTestCase
     #[Test]
     public function productionProofPreservesAlreadyMigratedConfiguredDatabaseAndEnvironment(): void
     {
-        $path = tempnam(sys_get_temp_dir(), 'ares-listener-ci-');
+        $path = tempnam(sys_get_temp_dir(), 'ares-native-ci-');
         self::assertIsString($path);
         $shared = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'path' => $path]);
         try {
@@ -88,55 +83,6 @@ final class EditedSchemaMigrationListenerTest extends KernelTestCase
         self::assertNull(self::$kernel);
     }
 
-    #[Test]
-    public function leavesSqlOnlyMigrationResultUntouched(): void
-    {
-        $connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
-        try {
-            $migration = new Version20260927000002($connection, new NullLogger());
-            $version = new Version($migration::class);
-            $plan = new MigrationPlan($version, $migration, 'up');
-            $result = new ExecutionResult($version);
-            $original = new Schema();
-            $result->setToSchema($original);
-            $plan->markAsExecuted($result);
-            new EditedSchemaMigrationListener()->onMigrationsVersionExecuted(new MigrationsVersionEventArgs($connection, $plan, new MigratorConfiguration()));
-            self::assertSame($original, $result->getToSchema());
-        } finally {
-            $connection->close();
-        }
-    }
-
-    #[Test]
-    public function targetWithoutExecutedResultFailsClosed(): void
-    {
-        $connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
-        try {
-            $migration = new Version20260914000001($connection, new NullLogger());
-            $migration->up(new Schema());
-            self::assertNotNull($migration->getEditedSchema());
-            $plan = new MigrationPlan(new Version($migration::class), $migration, 'up');
-            $this->expectException(LogicException::class);
-            new EditedSchemaMigrationListener()->onMigrationsVersionExecuted(new MigrationsVersionEventArgs($connection, $plan, new MigratorConfiguration()));
-        } finally {
-            $connection->close();
-        }
-    }
-
-    #[Test]
-    public function missingTargetFailsClosed(): void
-    {
-        $connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
-        try {
-            $migration = new Version20260914000001($connection, new NullLogger());
-            $plan = new MigrationPlan(new Version($migration::class), $migration, 'up');
-            $this->expectException(LogicException::class);
-            new EditedSchemaMigrationListener()->onMigrationsVersionExecuted(new MigrationsVersionEventArgs($connection, $plan, new MigratorConfiguration()));
-        } finally {
-            $connection->close();
-        }
-    }
-
     private function assertProductionAutoconfigurationInPrivateDatabase(): void
     {
         $this->withDatabaseUrl('sqlite:///:memory:', static function (): void {
@@ -147,18 +93,24 @@ final class EditedSchemaMigrationListenerTest extends KernelTestCase
             try {
                 self::assertTrue($connection->getParams()['memory'] ?? false);
                 $factory->getMetadataStorage()->ensureInitialized();
-                $class = Version20260914000001::class;
-                $migration = $factory->getMigrationFactory()->createVersion($class);
-                $plan = new MigrationPlan(new Version($class), $migration, 'up');
+                $before = $connection->fetchAllAssociative('SELECT type, name, sql FROM sqlite_master ORDER BY type, name');
+                $classes = [Version20260914000001::class, Version20260914000002::class, Version20260914000003::class];
+                $plans = [];
+                foreach ($classes as $class) {
+                    $migration = $factory->getMigrationFactory()->createVersion($class);
+                    self::assertInstanceOf($class, $migration);
+                    $plans[] = new MigrationPlan(new Version($class), $migration, 'up');
+                }
                 $configuration = new MigratorConfiguration()->setDryRun(true);
-                $factory->getMigrator()->migrate(new MigrationPlanList([$plan], 'up'), $configuration);
-                self::assertNotNull($configuration->getFromSchema());
-                self::assertTrue($configuration->getFromSchema()->hasTable('oper_permissions'));
-                self::assertFalse($connection->createSchemaManager()->tablesExist(['oper_permissions']));
-                self::assertInstanceOf(Version20260914000001::class, $migration);
-                $result = $plan->getResult();
-                self::assertNotNull($result);
-                self::assertNotSame($migration->getEditedSchema(), $result->getToSchema());
+                $sql = $factory->getMigrator()->migrate(new MigrationPlanList($plans, 'up'), $configuration);
+                self::assertCount(3, $sql);
+                self::assertSame($before, $connection->fetchAllAssociative('SELECT type, name, sql FROM sqlite_master ORDER BY type, name'));
+                self::assertSame(0, $connection->fetchOne('SELECT COUNT(*) FROM doctrine_migration_versions'));
+                self::assertFalse($connection->createSchemaManager()->tablesExist(['oper_permissions', 'oper_roles', 'oper_ircops']));
+                foreach ($plans as $plan) {
+                    self::assertNotNull($plan->getResult());
+                    self::assertNotEmpty($plan->getMigration()->getSql());
+                }
             } finally {
                 $connection->close();
             }

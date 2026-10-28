@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Migrations;
 
-use App\Bootstrap\Adapter\Out\Persistence\Migration\EditedSchemaMigration;
 use Doctrine\DBAL\Schema\Column;
 use Doctrine\DBAL\Schema\Index;
 use Doctrine\DBAL\Schema\Index\IndexType;
@@ -14,35 +13,15 @@ use Doctrine\DBAL\Schema\Table;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\Migrations\AbstractMigration;
 
-final class Version20260914000007 extends AbstractMigration implements EditedSchemaMigration
+final class Version20260914000007 extends AbstractMigration
 {
-    private ?Schema $editedSchema = null;
-
-    public function getEditedSchema(): ?Schema
-    {
-        return null === $this->editedSchema ? null : clone $this->editedSchema;
-    }
-
     public function getDescription(): string
     {
         return 'Create registered_channels table';
     }
 
-    public function preUp(Schema $schema): void
-    {
-        $this->editedSchema = null;
-        $schema->getTables();
-    }
-
-    public function preDown(Schema $schema): void
-    {
-        $this->editedSchema = null;
-        $schema->getTables();
-    }
-
     public function up(Schema $schema): void
     {
-        $editor = (clone $schema)->edit();
         $table = Table::editor()->setUnquotedName('registered_channels');
         $table->addColumn(Column::editor()->setUnquotedName('id')->setTypeName(Types::INTEGER)->setAutoincrement(true)->create());
         $table->addColumn(Column::editor()->setUnquotedName('name')->setTypeName(Types::STRING)->setLength(64)->create());
@@ -74,26 +53,14 @@ final class Version20260914000007 extends AbstractMigration implements EditedSch
         $table->addIndex(Index::editor()->setUnquotedName('idx_name_lower')->setType(IndexType::REGULAR)->setUnquotedColumnNames(...['name_lower'])->create());
         $table->addIndex(Index::editor()->setUnquotedName('idx_registered_channels_successor_nick_id')->setType(IndexType::REGULAR)->setUnquotedColumnNames(...['successor_nick_id'])->create());
         $table->addIndex(Index::editor()->setUnquotedName('idx_registered_channels_pending_deletion')->setType(IndexType::REGULAR)->setUnquotedColumnNames(...['status', 'pending_deletion_at'])->create());
-        $editor->addTable($table->create());
 
-        $target = $editor->create();
-        $this->editedSchema = clone $target;
-        $diff = $this->connection->createSchemaManager()->createComparator()->compareSchemas(clone $schema, $target);
-        foreach ($this->platform->getAlterSchemaSQL($diff) as $sql) {
+        foreach ($this->platform->getCreateTablesSQL([$table->create()]) as $sql) {
             $this->addSql($sql);
         }
     }
 
     public function down(Schema $schema): void
     {
-        $editor = (clone $schema)->edit();
-        $editor->dropTableByUnquotedName('registered_channels');
-
-        $target = $editor->create();
-        $this->editedSchema = clone $target;
-        $diff = $this->connection->createSchemaManager()->createComparator()->compareSchemas(clone $schema, $target);
-        foreach ($this->platform->getAlterSchemaSQL($diff) as $sql) {
-            $this->addSql($sql);
-        }
+        $this->addSql($this->platform->getDropTableSQL('registered_channels'));
     }
 }

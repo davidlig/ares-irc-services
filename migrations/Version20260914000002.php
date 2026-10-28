@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Migrations;
 
-use App\Bootstrap\Adapter\Out\Persistence\Migration\EditedSchemaMigration;
+use Doctrine\DBAL\Platforms\MariaDBPlatform;
+use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
+use Doctrine\DBAL\Platforms\SQLitePlatform;
 use Doctrine\DBAL\Schema\Column;
 use Doctrine\DBAL\Schema\ForeignKeyConstraint;
 use Doctrine\DBAL\Schema\Index;
@@ -15,7 +17,9 @@ use Doctrine\DBAL\Schema\Table;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\Migrations\AbstractMigration;
 
-final class Version20260914000002 extends AbstractMigration implements EditedSchemaMigration
+use function strtolower;
+
+final class Version20260914000002 extends AbstractMigration
 {
     private const array PROTECTED_ROLES = [
         ['ADMIN', 'Administrator role with full access'],
@@ -23,33 +27,13 @@ final class Version20260914000002 extends AbstractMigration implements EditedSch
         ['PREOPER', 'Pre-operator role with limited access'],
     ];
 
-    private ?Schema $editedSchema = null;
-
-    public function getEditedSchema(): ?Schema
-    {
-        return null === $this->editedSchema ? null : clone $this->editedSchema;
-    }
-
     public function getDescription(): string
     {
         return 'Create oper_roles and oper_role_permissions tables and seed the protected roles';
     }
 
-    public function preUp(Schema $schema): void
-    {
-        $this->editedSchema = null;
-        $schema->getTables();
-    }
-
-    public function preDown(Schema $schema): void
-    {
-        $this->editedSchema = null;
-        $schema->getTables();
-    }
-
     public function up(Schema $schema): void
     {
-        $editor = (clone $schema)->edit();
         $roles = Table::editor()->setUnquotedName('oper_roles');
         $roles->addColumn(Column::editor()->setUnquotedName('id')->setTypeName(Types::INTEGER)->setAutoincrement(true)->create());
         $roles->addColumn(Column::editor()->setUnquotedName('name')->setTypeName(Types::STRING)->setLength(32)->create());
@@ -60,7 +44,6 @@ final class Version20260914000002 extends AbstractMigration implements EditedSch
         $roles->addColumn(Column::editor()->setUnquotedName('operclass')->setTypeName(Types::STRING)->setLength(255)->setNotNull(false)->create());
         $roles->addPrimaryKeyConstraint(PrimaryKeyConstraint::editor()->setUnquotedName('primary')->setUnquotedColumnNames(...['id'])->create());
         $roles->addIndex(Index::editor()->setUnquotedName('uniq_role_name')->setType(IndexType::UNIQUE)->setUnquotedColumnNames(...['name'])->create());
-        $editor->addTable($roles->create());
         $rolePermissions = Table::editor()->setUnquotedName('oper_role_permissions');
         $rolePermissions->addColumn(Column::editor()->setUnquotedName('role_id')->setTypeName(Types::INTEGER)->create());
         $rolePermissions->addColumn(Column::editor()->setUnquotedName('permission_id')->setTypeName(Types::INTEGER)->create());
@@ -69,12 +52,8 @@ final class Version20260914000002 extends AbstractMigration implements EditedSch
         $rolePermissions->addForeignKeyConstraint(ForeignKeyConstraint::editor()->setUnquotedName('FK_47D48116FED90CCA')->setUnquotedReferencingColumnNames(...['permission_id'])->setUnquotedReferencedTableName('oper_permissions')->setUnquotedReferencedColumnNames(...['id'])->create());
         $rolePermissions->addIndex(Index::editor()->setUnquotedName('IDX_47D48116D60322AC')->setType(IndexType::REGULAR)->setUnquotedColumnNames(...['role_id'])->create());
         $rolePermissions->addIndex(Index::editor()->setUnquotedName('IDX_47D48116FED90CCA')->setType(IndexType::REGULAR)->setUnquotedColumnNames(...['permission_id'])->create());
-        $editor->addTable($rolePermissions->create());
 
-        $target = $editor->create();
-        $this->editedSchema = clone $target;
-        $diff = $this->connection->createSchemaManager()->createComparator()->compareSchemas(clone $schema, $target);
-        foreach ($this->platform->getAlterSchemaSQL($diff) as $sql) {
+        foreach ($this->platform->getCreateTablesSQL([$roles->create(), $rolePermissions->create()]) as $sql) {
             $this->addSql($sql);
         }
         foreach (self::PROTECTED_ROLES as [$name, $description]) {
@@ -84,15 +63,15 @@ final class Version20260914000002 extends AbstractMigration implements EditedSch
 
     public function down(Schema $schema): void
     {
-        $editor = (clone $schema)->edit();
-        $editor->dropTableByUnquotedName('oper_role_permissions');
-        $editor->dropTableByUnquotedName('oper_roles');
-
-        $target = $editor->create();
-        $this->editedSchema = clone $target;
-        $diff = $this->connection->createSchemaManager()->createComparator()->compareSchemas(clone $schema, $target);
-        foreach ($this->platform->getAlterSchemaSQL($diff) as $sql) {
-            $this->addSql($sql);
+        if (!$this->platform instanceof SQLitePlatform) {
+            foreach (['FK_47D48116D60322AC', 'FK_47D48116FED90CCA'] as $foreignKey) {
+                $name = $this->platform instanceof PostgreSQLPlatform ? strtolower($foreignKey) : $this->platform->quoteIdentifier($foreignKey);
+                $this->addSql($this->platform->getDropForeignKeySQL($name, 'oper_role_permissions'));
+            }
+        }
+        $tables = $this->platform instanceof MariaDBPlatform ? ['oper_roles', 'oper_role_permissions'] : ['oper_role_permissions', 'oper_roles'];
+        foreach ($tables as $table) {
+            $this->addSql($this->platform->getDropTableSQL($table));
         }
     }
 }

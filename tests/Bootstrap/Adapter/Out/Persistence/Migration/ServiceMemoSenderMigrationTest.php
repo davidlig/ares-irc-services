@@ -41,19 +41,20 @@ final class ServiceMemoSenderMigrationTest extends TestCase
     public function migrationRollbackRefusesToDeleteServiceAuthoredMemos(): void
     {
         $connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
-        $connection->executeStatement('CREATE TABLE memos (id INTEGER PRIMARY KEY, sender_nick_id INTEGER NOT NULL, message TEXT NOT NULL)');
-        $connection->executeStatement("INSERT INTO memos (id, sender_nick_id, message) VALUES (1, 7, 'human')");
+        $connection->executeStatement('CREATE TABLE memos (id INTEGER PRIMARY KEY, target_nick_id INTEGER DEFAULT NULL, target_channel_id INTEGER DEFAULT NULL, sender_nick_id INTEGER NOT NULL, message TEXT NOT NULL, created_at DATETIME NOT NULL, read_at DATETIME DEFAULT NULL)');
+        $connection->executeStatement("INSERT INTO memos (id, sender_nick_id, message, created_at) VALUES (1, 7, 'human', '2026-10-26 10:00:00')");
         $migration = new Version20261027000001($connection, new NullLogger());
         $schema = $connection->createSchemaManager()->introspectSchema();
         $migration->up($schema);
         foreach ($migration->getSql() as $query) {
             $connection->executeStatement($query->getStatement());
         }
-        $connection->executeStatement("INSERT INTO memos (sender_nick_id, sender_name, message) VALUES (NULL, 'ChannelBot', 'service')");
+        $connection->executeStatement("INSERT INTO memos (sender_nick_id, sender_name, message, created_at) VALUES (NULL, 'ChannelBot', 'service', '2026-10-27 10:00:00')");
 
         $rollback = new Version20261027000001($connection, new NullLogger());
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Cannot remove service memo sender support');
+        $rollback->preDown($connection->createSchemaManager()->introspectSchema());
         $rollback->down($connection->createSchemaManager()->introspectSchema());
     }
 }

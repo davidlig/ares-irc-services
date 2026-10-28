@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\Bootstrap\Adapter\Out\Persistence\Migration;
 
-use App\Bootstrap\Adapter\Out\Persistence\Migration\EditedSchemaMigrationListener;
-use Doctrine\Common\EventManager;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\Deprecations\Deprecation;
@@ -14,8 +12,6 @@ use Doctrine\Migrations\Configuration\Configuration;
 use Doctrine\Migrations\Configuration\Connection\ExistingConnection;
 use Doctrine\Migrations\Configuration\Migration\ExistingConfiguration;
 use Doctrine\Migrations\DependencyFactory;
-use Doctrine\Migrations\EventDispatcher;
-use Doctrine\Migrations\Events;
 use Doctrine\Migrations\Metadata\MigrationPlan;
 use Doctrine\Migrations\Metadata\MigrationPlanList;
 use Doctrine\Migrations\MigratorConfiguration;
@@ -27,16 +23,17 @@ use ReflectionProperty;
 
 use function array_reverse;
 use function basename;
+use function count;
 use function dirname;
 use function glob;
 use function is_a;
 
 /** Migrations are outside the production coverage filter; exercise their executor explicitly. */
 #[CoversNothing]
-final class MigrationEditorEquivalenceTest extends TestCase
+final class MigrationExecutionEquivalenceTest extends TestCase
 {
     #[Test]
-    public function allTwentyEightMigrationsUseActualExecutorAndDryRunWithoutDeprecatedEditorApis(): void
+    public function allHistoricalMigrationsUseActualExecutorAndDryRunWithoutDeprecatedApis(): void
     {
         $connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
         $this->factory($connection)->getMetadataStorage()->ensureInitialized();
@@ -78,7 +75,7 @@ final class MigrationEditorEquivalenceTest extends TestCase
     }
 
     #[Test]
-    public function combinedFreshInstallDryRunPropagatesEachEditedSchemaWithoutWriting(): void
+    public function combinedFreshInstallPlansSameSqlAsExecutionWithoutWriting(): void
     {
         $connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
         try {
@@ -96,10 +93,6 @@ final class MigrationEditorEquivalenceTest extends TestCase
             $sql = $factory->getMigrator()->migrate(new MigrationPlanList($plans, 'up'), $configuration);
             self::assertCount(35, $sql);
             self::assertSame($before, $connection->fetchAllAssociative("SELECT type, name, sql FROM sqlite_master WHERE name NOT LIKE 'sqlite_%' ORDER BY type, name"));
-            $schema = $configuration->getFromSchema();
-            self::assertNotNull($schema);
-            self::assertTrue($schema->hasTable('udb_staged_records'));
-            self::assertSame(31, $schema->getTable('udb_staged_transfers')->getColumn('txid')->getLength());
             $downPlans = [];
             foreach (array_reverse($paths) as $path) {
                 $class = 'App\\Migrations\\' . basename($path, '.php');
@@ -107,10 +100,8 @@ final class MigrationEditorEquivalenceTest extends TestCase
             }
             $down = $factory->getMigrator()->migrate(new MigrationPlanList($downPlans, 'down'), $configuration);
             self::assertCount(35, $down);
-            $restoredSchema = $configuration->getFromSchema();
-            self::assertNotNull($restoredSchema);
-            self::assertFalse($restoredSchema->hasTable('udb_records'));
             self::assertSame($before, $connection->fetchAllAssociative("SELECT type, name, sql FROM sqlite_master WHERE name NOT LIKE 'sqlite_%' ORDER BY type, name"));
+            $expectedPlans = ['up' => $plans, 'down' => $downPlans];
             // The identical complete plan also installs and removes a fresh physical database.
             foreach (['up', 'down'] as $direction) {
                 $actualPaths = 'up' === $direction ? $paths : array_reverse($paths);
@@ -120,7 +111,19 @@ final class MigrationEditorEquivalenceTest extends TestCase
                     $actualPlans[] = new MigrationPlan(new Version($class), $factory->getMigrationFactory()->createVersion($class), $direction);
                 }
                 self::assertCount(35, $factory->getMigrator()->migrate(new MigrationPlanList($actualPlans, $direction), new MigratorConfiguration()));
+                foreach ($actualPlans as $position => $actualPlan) {
+                    $expectedQueries = $expectedPlans[$direction][$position]->getMigration()->getSql();
+                    $actualQueries = $actualPlan->getMigration()->getSql();
+                    self::assertCount(count($expectedQueries), $actualQueries);
+                    foreach ($expectedQueries as $index => $query) {
+                        self::assertSame($query->getStatement(), $actualQueries[$index]->getStatement());
+                        self::assertSame($query->getParameters(), $actualQueries[$index]->getParameters());
+                        self::assertSame($query->getTypes(), $actualQueries[$index]->getTypes());
+                    }
+                }
                 if ('up' === $direction) {
+                    self::assertTrue($connection->createSchemaManager()->tablesExist(['udb_staged_records']));
+                    self::assertSame(31, $connection->createSchemaManager()->listTableColumns('udb_staged_transfers')['txid']->getLength());
                     self::assertSame(3, $connection->fetchOne('SELECT COUNT(*) FROM oper_roles'));
                     self::assertSame(1, $connection->fetchOne('SELECT COUNT(*) FROM udb_authority_state'));
                 }
@@ -134,9 +137,6 @@ final class MigrationEditorEquivalenceTest extends TestCase
     private function factory(Connection $connection): DependencyFactory
     {
         $factory = DependencyFactory::fromConnection(new ExistingConfiguration(new Configuration()), new ExistingConnection($connection));
-        $events = new EventManager();
-        $events->addEventListener([Events::onMigrationsVersionExecuted], new EditedSchemaMigrationListener());
-        $factory->setService(EventDispatcher::class, new EventDispatcher($connection, $events));
 
         return $factory;
     }

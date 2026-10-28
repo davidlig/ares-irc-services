@@ -6,7 +6,6 @@ namespace App\Tests\NickServ\Adapter\Out\Persistence\Doctrine;
 
 use App\Migrations\Version20261021000001;
 use Doctrine\DBAL\DriverManager;
-use Doctrine\DBAL\Schema\Schema;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -25,24 +24,20 @@ final class RescueCredentialMigrationTest extends TestCase
         $schema = $connection->createSchemaManager()->introspectSchema();
         $migration = new Version20261021000001($connection, new NullLogger());
         self::assertNotSame('', $migration->getDescription());
-        self::assertNull($migration->getEditedSchema());
         $migration->preUp($schema);
         $migration->up($schema);
         self::assertFalse($schema->getTable('registered_nicks')->hasColumn('token'));
-        $target = $migration->getEditedSchema();
-        self::assertInstanceOf(Schema::class, $target);
-        self::assertSame(64, $target->getTable('registered_nicks')->getColumn('token')->getLength());
-        self::assertNotSame($target, $migration->getEditedSchema());
         foreach ($migration->getSql() as $query) {
             self::assertSame([], $query->getParameters());
             self::assertSame([], $query->getTypes());
             $connection->executeStatement($query->getStatement());
         }
+        $target = $connection->createSchemaManager()->introspectSchema();
+        self::assertSame(64, $target->getTable('registered_nicks')->getColumn('token')->getLength());
         self::assertSame([['id' => 1, 'nickname_lower' => 'existing', 'token' => null]], $connection->fetchAllAssociative('SELECT * FROM registered_nicks'));
         self::assertNotFalse($connection->fetchOne("SELECT name FROM sqlite_master WHERE name = 'idx_registered_nicks_list_pattern'"));
         $rollback = new Version20261021000001($connection, new NullLogger());
         $rollback->preDown($target);
-        self::assertNull($rollback->getEditedSchema());
         $rollback->down($target);
         foreach ($rollback->getSql() as $query) {
             self::assertSame([], $query->getParameters());
