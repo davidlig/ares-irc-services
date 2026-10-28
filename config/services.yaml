@@ -230,6 +230,7 @@ services:
     alias: App\ChanServ\Adapter\Out\Persistence\Doctrine\DoctrineRegistrationPolicyRepository
   App\ChanServ\Application\UseCase\ReviewRegistration\ReviewRegistrationHandler:
     arguments:
+      $maxChannelsPerNick: "%chanserv.max_channels_per_nick%"
       $rejectionCooldownHours: "%chanserv.reject_cooldown_hours%"
   App\NickServ\Application\UseCase\RegistrationMode\RegistrationModeHandlerInterface:
     alias: App\NickServ\Application\UseCase\RegistrationMode\RegistrationModeHandler
@@ -1363,6 +1364,13 @@ services:
   # SET Command & Handlers
   App\ChanServ\Adapter\In\Irc\Command\SetCommand:
     tags: ["chanserv.command"]
+
+  App\ChanServ\Application\Port\Out\IdentifiedRequesterSession:
+    alias: App\ChanServ\Adapter\Out\NickServ\NickServIdentifiedRequesterSession
+
+  App\ChanServ\Application\UseCase\RegisterChannel\RegisterChannelHandler:
+    arguments:
+      $maxChannelsPerNick: "%chanserv.max_channels_per_nick%"
 
   App\ChanServ\Application\UseCase\TransferFounder\TransferChannelFounderHandler:
     arguments:

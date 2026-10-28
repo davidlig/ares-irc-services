@@ -7,16 +7,48 @@ namespace App\Tests\ChanServ\Adapter\Out\Persistence\Doctrine;
 use App\ChanServ\Adapter\Out\Persistence\Doctrine\ChannelAccessDoctrineRepository;
 use App\ChanServ\Application\Port\Out\ChannelAccessRepositoryInterface;
 use App\ChanServ\Domain\Entity\ChannelAccess;
+use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
+
+use function array_map;
 
 #[CoversClass(ChannelAccessDoctrineRepository::class)]
 #[Group('integration')]
 final class ChannelAccessDoctrineRepositoryTest extends DoctrineIntegrationTestCase
 {
     private ChannelAccessRepositoryInterface $repository;
+
+    #[Test]
+    public function establishedAccessFiltersUnacceptedChannelsButPreservesMissingReferenceCompatibility(): void
+    {
+        $at = new DateTimeImmutable('-1 day');
+        $channels = [
+            RegisteredChannel::register($at, '#active', 8, 'active'),
+            RegisteredChannel::register($at, '#suspended', 8, 'suspended'),
+            RegisteredChannel::register($at, '#deleting', 8, 'deleting'),
+            RegisteredChannel::createPendingRegistration($at, '#pending', 8, 'pending'),
+            RegisteredChannel::createPendingRegistration($at, '#rejected', 8, 'rejected'),
+        ];
+        $channels[1]->suspend('test');
+        $channels[2]->markPendingDeletion($at);
+        $channels[4]->rejectRegistration('test', 99, 'Reviewer', $at, null);
+        foreach ($channels as $index => $channel) {
+            $this->entityManager->persist($channel);
+            $this->entityManager->flush();
+            $this->repository->save(new ChannelAccess($channel->getId(), 7, ($index + 1) * 50));
+        }
+        $this->repository->save(new ChannelAccess(9999, 7, 75));
+        $this->entityManager->clear();
+        $found = $this->repository->findEstablishedByNick(7);
+        self::assertSame([150, 100, 75, 50], array_map(static fn (ChannelAccess $entry): int => $entry->getLevel(), $found));
+        self::assertSame(4, $this->entityManager->getUnitOfWork()->size());
+        self::assertCount(6, $this->repository->findByNick(7));
+        self::assertSame([], $this->repository->findEstablishedByNick(999));
+    }
 
     #[Test]
     public function savePersistsAccess(): void

@@ -596,8 +596,8 @@ drop:
   help: |-
     Kayıtlı bir kanalı veritabanından siler.
     FORCE, silinmeyi bekleyen kanalı kalıcı olarak siler.
-    DROP yetkisi olan bir IRCop reddedilmiş kaydı da FORCE ile
-    veya FORCE olmadan hemen serbest bırakabilir. FORCE ayrıca DROP_FORCE gerektirir.
+    DROP yetkisi olan bir IRCop, bekleyen ve reddedilmiş kayıt isteklerini
+    FORCE ile veya FORCE olmadan hemen serbest bırakabilir.
   registration_restricted: "\x0304✗\x03 Bu kayıt isteği %date% tarihine kadar kısıtlı."
   force:
     short: "Silinmeyi bekleyen kanalı kalıcı olarak siler."

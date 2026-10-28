@@ -605,8 +605,8 @@ drop:
   help: |-
     Supprime un salon enregistré de la base de données.
     FORCE supprime définitivement un salon en attente de suppression.
-    Un IRCop ayant DROP peut aussi libérer immédiatement un
-    enregistrement refusé, avec ou sans FORCE. FORCE exige aussi DROP_FORCE.
+    Un IRCop ayant la permission DROP peut aussi libérer immédiatement
+    les demandes d’enregistrement en attente et refusées, avec ou sans FORCE.
   registration_restricted: "\x0304✗\x03 Cette demande d’enregistrement est bloquée jusqu’au %date%."
   force:
     short: "Supprime définitivement un salon en attente de suppression."

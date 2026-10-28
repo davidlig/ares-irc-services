@@ -22,11 +22,11 @@ final class NickChannelAssociationQueryServiceTest extends TestCase
     public function returnsEmptyArrayWhenNoChannelsOrAccessEntriesFound(): void
     {
         $accessRepo = $this->createMock(ChannelAccessRepositoryInterface::class);
-        $accessRepo->expects(self::once())->method('findByNick')->with(123)->willReturn([]);
+        $accessRepo->expects(self::once())->method('findEstablishedByNick')->with(123)->willReturn([]);
 
         $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
-        $channelRepo->expects(self::once())->method('findByFounderNickId')->with(123)->willReturn([]);
-        $channelRepo->expects(self::once())->method('findBySuccessorNickId')->with(123)->willReturn([]);
+        $channelRepo->expects(self::once())->method('findEstablishedByFounderNickId')->with(123)->willReturn([]);
+        $channelRepo->expects(self::once())->method('findEstablishedBySuccessorNickId')->with(123)->willReturn([]);
 
         $query = new NickChannelAssociationQueryService($accessRepo, $channelRepo);
 
@@ -74,9 +74,9 @@ final class NickChannelAssociationQueryServiceTest extends TestCase
         $channel4->method('getId')->willReturn(4);
         $channel4->method('getName')->willReturn('#access-channel');
 
-        $accessRepo->expects(self::once())->method('findByNick')->with(42)->willReturn([$access1, $access4, $access5]);
-        $channelRepo->expects(self::once())->method('findByFounderNickId')->with(42)->willReturn([$founder1, $founder2]);
-        $channelRepo->expects(self::once())->method('findBySuccessorNickId')->with(42)->willReturn([$successor2, $successor3]);
+        $accessRepo->expects(self::once())->method('findEstablishedByNick')->with(42)->willReturn([$access1, $access4, $access5]);
+        $channelRepo->expects(self::once())->method('findEstablishedByFounderNickId')->with(42)->willReturn([$founder1, $founder2]);
+        $channelRepo->expects(self::once())->method('findEstablishedBySuccessorNickId')->with(42)->willReturn([$successor2, $successor3]);
         $channelRepo->expects(self::once())->method('findByIds')->with([4, 5])->willReturn([$channel4]);
 
         $query = new NickChannelAssociationQueryService($accessRepo, $channelRepo);

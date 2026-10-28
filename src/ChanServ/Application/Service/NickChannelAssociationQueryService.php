@@ -21,9 +21,9 @@ final readonly class NickChannelAssociationQueryService implements NickChannelAs
 
     public function findForNick(int $nickId): array
     {
-        $accessEntries = $this->accessRepository->findByNick($nickId);
-        $founderChannels = $this->channelRepository->findByFounderNickId($nickId);
-        $successorChannels = $this->channelRepository->findBySuccessorNickId($nickId);
+        $accessEntries = $this->accessRepository->findEstablishedByNick($nickId);
+        $founderChannels = $this->channelRepository->findEstablishedByFounderNickId($nickId);
+        $successorChannels = $this->channelRepository->findEstablishedBySuccessorNickId($nickId);
 
         /** @var array<int, array{name: string, type: 'founder'|'successor'|'access', level: ?int}> $channels */
         $channels = [];

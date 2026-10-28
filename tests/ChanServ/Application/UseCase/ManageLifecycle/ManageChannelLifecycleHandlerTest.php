@@ -107,9 +107,6 @@ final class ManageChannelLifecycleHandlerTest extends TestCase
                 [$this->command(ChannelLifecycleAction::Suspend, reason: 'policy', duration: '0'), ChannelLifecycleOutcome::NotRegistered],
                 [$this->command(ChannelLifecycleAction::Unsuspend), ChannelLifecycleOutcome::NotRegistered],
             ];
-            if ($request->isPendingRegistration()) {
-                $commands[] = [$this->command(ChannelLifecycleAction::Drop), ChannelLifecycleOutcome::NotRegistered];
-            }
             foreach ($commands as [$command, $expected]) {
                 $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
                 $channels->method('findByChannelName')->willReturn($request);

@@ -52,9 +52,6 @@ final readonly class ManageChannelLifecycleHandler implements ManageChannelLifec
         if (null === $channel) {
             return new ChannelLifecycleResult(ChannelLifecycleOutcome::NotRegistered);
         }
-        if ($channel->isPendingRegistration()) {
-            return new ChannelLifecycleResult(ChannelLifecycleOutcome::NotRegistered);
-        }
         if ($channel->isRejectedRegistration()) {
             $restrictedUntil = $channel->getRegistrationRestrictedUntil();
             if (null !== $restrictedUntil && $command->occurredAt < $restrictedUntil && !$command->releaseRejectedRegistration) {
@@ -72,8 +69,8 @@ final readonly class ManageChannelLifecycleHandler implements ManageChannelLifec
         if ($channel->isPendingDeletion() && !$command->force) {
             return new ChannelLifecycleResult(ChannelLifecycleOutcome::PendingDeletion);
         }
-        if ($command->force) {
-            $this->dropService->hardDropChannel($channel, $command->occurredAt, 'manual-force', $command->actorNickname);
+        if ($command->force || $channel->isPendingRegistration()) {
+            $this->dropService->hardDropChannel($channel, $command->occurredAt, $command->force ? 'manual-force' : 'manual', $command->actorNickname);
 
             return new ChannelLifecycleResult(ChannelLifecycleOutcome::ForceDropped);
         }

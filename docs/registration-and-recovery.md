@@ -152,3 +152,31 @@ REGISTER and ordinary SET EMAIL before workflow side effects. SASET EMAIL explic
 bypasses it. ChanServ SET EMAIL applies the same policy unless `chanserv.level_founder`
 is granted, and still permits clearing the contact. VERIFY, RESEND and RECOVER retain
 access to stored addresses: blocking a domain does not retroactively disable recovery.
+
+## ChanServ approval, quotas and cancellation
+
+In APPROVAL mode, REGISTER creates a request, not an approved channel. Pending and
+rejected registrations do not appear in NickServ INFO's established channel
+associations. Approval makes the founder association visible under the existing
+INFO privacy rules. These associations are filtered by dedicated persistence
+queries; generic ownership and cleanup queries retain their complete state view.
+
+ChanServ LIST also excludes pending and rejected requests from both its total and
+its pages. Its matching, ordering, permissions and visibility of other states are
+unchanged. Authorized reviewers can still inspect pending requests with CREG PENDING.
+
+`CHANSERV_MAX_CHANNELS_PER_NICK` applies to ordinary requesters both at submission
+and approval. Rejected registrations never count; the request being accepted does
+not count against itself. Other lifecycle states retain their existing counting
+policy. Centrally recognized IRCop requesters, including Root, are exempt; an IRCop
+reviewer does not exempt an ordinary requester. Acceptance still requires an active,
+identified requester with the existing channel-rank eligibility. The requester's
+operator exemption uses the authenticated NickServ session, not the reviewer's
+identity or an unchecked operator flag. Offline requesters remain ineligible.
+
+An operator with DROP can permanently cancel a pending or rejected registration
+using `DROP <#channel>`, with or without FORCE. Explicit FORCE additionally requires
+DROP_FORCE. The reply describes the actual permanent removal,
+not a grace period. Ordinary registered-channel DROP and RESTORE retain their
+existing grace-period behavior. Cancellation keeps existing DROP audit/cleanup
+policies and adds no channel HISTORY action.

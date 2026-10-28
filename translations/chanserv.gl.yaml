@@ -599,7 +599,7 @@ drop:
     Elimina unha canle rexistrada da base de datos.
     FORCE elimina permanentemente unha canle pendente de eliminación.
     Un IRCop co permiso DROP tamén pode liberar inmediatamente
-    un rexistro rexeitado, con FORCE ou sen el. FORCE require tamén DROP_FORCE.
+    solicitudes de rexistro pendentes e rexeitadas, con FORCE ou sen el.
   registration_restricted: "\x0304✗\x03 Esta solicitude de rexistro está restrinxida ata %date%."
   force:
     short: "Elimina permanentemente unha canle pendente de eliminación."

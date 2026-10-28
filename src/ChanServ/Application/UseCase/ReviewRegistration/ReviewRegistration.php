@@ -16,5 +16,9 @@ final readonly class ReviewRegistration
         public DateTimeImmutable $occurredAt,
         public ?string $rejectionReason = null,
         public bool $requesterHasRequiredChannelRank = false,
+        public ?string $requesterUid = null,
+        public ?string $requesterNickname = null,
+        public bool $requesterIdentified = false,
+        public bool $requesterIrcOperator = false,
     ) {}
 }

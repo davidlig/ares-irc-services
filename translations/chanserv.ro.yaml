@@ -600,8 +600,8 @@ drop:
   help: |-
     Șterge un canal înregistrat din baza de date.
     FORCE șterge definitiv un canal aflat în așteptarea ștergerii.
-    Un IRCop cu permisiunea DROP poate elibera imediat și o
-    înregistrare respinsă, cu sau fără FORCE. FORCE necesită și DROP_FORCE.
+    Un IRCop cu permisiunea DROP poate elibera imediat și
+    cererile de înregistrare în așteptare și respinse, cu sau fără FORCE.
   registration_restricted: "\x0304✗\x03 Această cerere de înregistrare este restricționată până la %date%."
   force:
     short: "Șterge definitiv un canal aflat în așteptarea ștergerii."

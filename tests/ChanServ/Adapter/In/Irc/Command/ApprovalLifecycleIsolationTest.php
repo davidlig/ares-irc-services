@@ -30,11 +30,11 @@ use App\OperServ\Application\Port\Out\OperatorRoleAccess;
 use App\OperServ\Application\Security\OperatorPermissionPolicy;
 use App\OperServ\Application\Security\RootAuthorizationPolicy;
 use App\Shared\Application\Port\EventBusInterface;
+use App\Tests\Shared\DoctrineIntegrationTestCase;
 use DateTimeImmutable;
 use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use ReflectionNamedType;
 use ReflectionProperty;
@@ -46,7 +46,7 @@ use function interface_exists;
 use function serialize;
 
 #[CoversClass(ManageChannelLifecycleHandler::class)]
-final class ApprovalLifecycleIsolationTest extends TestCase
+final class ApprovalLifecycleIsolationTest extends DoctrineIntegrationTestCase
 {
     #[Test]
     public function rootCannotSuspendAndUnsuspendPendingOrRejectedRequests(): void
@@ -65,15 +65,20 @@ final class ApprovalLifecycleIsolationTest extends TestCase
     }
 
     #[Test]
-    public function pendingDropDoesNotThrowOrActivateTheRequest(): void
+    public function pendingDropRequestsPermanentCancellationWithoutActivatingTheRequest(): void
     {
         $channel = RegisteredChannel::createPendingRegistration(new DateTimeImmutable(), '#probe', 7, 'description');
+        $this->entityManager->persist($channel);
+        $this->entityManager->flush();
+        $drop = $this->createMock(ChanDropService::class);
+        $drop->expects(self::once())->method('hardDropChannel')->with($channel, self::isInstanceOf(DateTimeImmutable::class), 'manual', 'Root');
+        $drop->expects(self::never())->method('softDropChannel');
         $before = serialize($channel);
-        [$messages, $saved] = $this->route($channel, ['DROP #probe']);
+        [$messages, $saved] = $this->route($channel, ['DROP #probe'], $drop);
 
         self::assertSame($before, serialize($channel));
         self::assertSame([], $saved);
-        self::assertSame(['error.channel_not_registered'], $messages);
+        self::assertSame(['drop.force_success'], $messages);
     }
 
     #[Test]
@@ -101,7 +106,7 @@ final class ApprovalLifecycleIsolationTest extends TestCase
      *
      * @return array{list<string>, list<string>}
      */
-    private function route(RegisteredChannel $channel, array $commands): array
+    private function route(RegisteredChannel $channel, array $commands, ?ChanDropService $dropOverride = null): array
     {
         $repository = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $repository->method('findByChannelName')->willReturn($channel);
@@ -109,7 +114,7 @@ final class ApprovalLifecycleIsolationTest extends TestCase
         $repository->method('save')->willReturnCallback(static function (RegisteredChannel $savedChannel) use (&$saved): void {
             $saved[] = serialize($savedChannel);
         });
-        $drop = $this->construct(ChanDropService::class, ['channelRepository' => $repository]);
+        $drop = $dropOverride ?? $this->construct(ChanDropService::class, ['channelRepository' => $repository]);
         $lifecycle = new ManageChannelLifecycleHandler(
             $repository,
             $drop,

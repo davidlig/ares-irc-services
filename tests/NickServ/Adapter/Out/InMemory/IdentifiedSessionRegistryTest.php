@@ -13,6 +13,20 @@ use PHPUnit\Framework\TestCase;
 final class IdentifiedSessionRegistryTest extends TestCase
 {
     #[Test]
+    public function identifiesTheExactSessionWithMultipleConnectionsAndCaseInsensitiveAccount(): void
+    {
+        $registry = new IdentifiedSessionRegistry();
+        self::assertFalse($registry->isIdentifiedAs('unknown', 'Requester'));
+        $registry->register('first', 'Requester');
+        $registry->register('second', 'Requester');
+        self::assertTrue($registry->isIdentifiedAs('second', 'REQUESTER'));
+        self::assertTrue($registry->isIdentifiedAs('first', 'requester'));
+        self::assertFalse($registry->isIdentifiedAs('second', 'Other'));
+        $registry->remove('second');
+        self::assertFalse($registry->isIdentifiedAs('second', 'Requester'));
+    }
+
+    #[Test]
     public function findNickReturnsNullInitially(): void
     {
         $registry = new IdentifiedSessionRegistry();

@@ -38,6 +38,13 @@ final class IdentifiedSessionRegistry implements IdentifiedSessionQuery, Identif
         $this->logger?->debug('IdentifiedSessionRegistry: registered session', ['uid' => $uid, 'nick' => $registeredNick, 'total' => count($this->sessions)]);
     }
 
+    public function isIdentifiedAs(string $uid, string $registeredNickname): bool
+    {
+        $registered = $this->findNick($uid);
+
+        return null !== $registered && strtolower($registered) === strtolower($registeredNickname);
+    }
+
     /** Returns the registered nick for the UID, or null if not tracked. */
     public function findNick(string $uid): ?string
     {

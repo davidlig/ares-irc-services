@@ -8,8 +8,10 @@ use App\ChanServ\Application\Model\ChanAccountView;
 use App\ChanServ\Application\Port\Out\ChannelAkickRepositoryInterface;
 use App\ChanServ\Application\Port\Out\ChannelHistoryRepositoryInterface;
 use App\ChanServ\Application\Port\Out\ChannelLevelRepositoryInterface;
+use App\ChanServ\Application\Port\Out\ChanServOperatorAccess;
 use App\ChanServ\Application\Port\Out\ChanTransactionBoundary;
 use App\ChanServ\Application\Port\Out\ChanUserAccountPort;
+use App\ChanServ\Application\Port\Out\IdentifiedRequesterSession;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\PublishedEvent\ChannelRegisteredEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelRegistrationDecisionEvent;
@@ -70,6 +72,8 @@ final class ReviewRegistrationHandlerTest extends TestCase
             new ChannelHistoryService($this->createStub(ChannelHistoryRepositoryInterface::class)),
             $accounts,
             $this->createStub(ChanTransactionBoundary::class),
+            operatorAccess: $this->createStub(ChanServOperatorAccess::class),
+            requesterSessions: $this->createStub(IdentifiedRequesterSession::class),
         );
 
         self::assertSame(ReviewRegistrationOutcome::ChannelNotOnNetwork, $handler->handle(new ReviewRegistration('#test', false, 9, 'Operator', $at))->outcome);
@@ -96,6 +100,8 @@ final class ReviewRegistrationHandlerTest extends TestCase
             $this->createStub(ChanUserAccountPort::class),
             $transaction,
             rejectionCooldownHours: 0,
+            operatorAccess: $this->createStub(ChanServOperatorAccess::class),
+            requesterSessions: $this->createStub(IdentifiedRequesterSession::class),
         );
 
         self::assertSame(ReviewRegistrationOutcome::Rejected, $handler->handle(new ReviewRegistration('#test', true, 9, 'Operator', $at, 'Reason'))->outcome);
@@ -111,6 +117,8 @@ final class ReviewRegistrationHandlerTest extends TestCase
             $this->createStub(ChanUserAccountPort::class),
             $this->createStub(ChanTransactionBoundary::class),
             rejectionCooldownHours: -1,
+            operatorAccess: $this->createStub(ChanServOperatorAccess::class),
+            requesterSessions: $this->createStub(IdentifiedRequesterSession::class),
         );
     }
 
@@ -134,6 +142,8 @@ final class ReviewRegistrationHandlerTest extends TestCase
             new ChannelHistoryService($this->createStub(ChannelHistoryRepositoryInterface::class)),
             $accounts,
             $this->createStub(ChanTransactionBoundary::class),
+            operatorAccess: $this->createStub(ChanServOperatorAccess::class),
+            requesterSessions: $this->createStub(IdentifiedRequesterSession::class),
         );
 
         $result = $handler->handle(new ReviewRegistration('#test', true, 9, 'ApprovingOper', $at, requesterHasRequiredChannelRank: true));
@@ -167,7 +177,16 @@ final class ReviewRegistrationHandlerTest extends TestCase
         $accounts->expects(self::once())->method('findAccountById')->with(7)->willReturn(new ChanAccountView(7, 'Requester', 'en'));
         $transaction = $this->createMock(ChanTransactionBoundary::class);
         $transaction->expects(self::once())->method('transactional')->willReturnCallback(static fn (callable $operation): mixed => $operation());
-        $handler = new ReviewRegistrationHandler($channels, new ChannelRegistrationActivator($levels, $akicks), $events, new ChannelHistoryService($history), $accounts, $transaction);
+        $handler = new ReviewRegistrationHandler(
+            $channels,
+            new ChannelRegistrationActivator($levels, $akicks),
+            $events,
+            new ChannelHistoryService($history),
+            $accounts,
+            $transaction,
+            operatorAccess: $this->createStub(ChanServOperatorAccess::class),
+            requesterSessions: $this->createStub(IdentifiedRequesterSession::class),
+        );
         $result = $handler->handle(new ReviewRegistration('#test', true, 9, 'ApprovingOper', $at, requesterHasRequiredChannelRank: true));
 
         self::assertSame(ReviewRegistrationOutcome::Accepted, $result->outcome);
@@ -202,6 +221,8 @@ final class ReviewRegistrationHandlerTest extends TestCase
             $this->createStub(ChanUserAccountPort::class),
             $transaction,
             rejectionCooldownHours: 24,
+            operatorAccess: $this->createStub(ChanServOperatorAccess::class),
+            requesterSessions: $this->createStub(IdentifiedRequesterSession::class),
         );
         $result = $handler->handle(new ReviewRegistration('#test', false, 9, 'ApprovingOper', $at, 'Needs a public topic'));
 
@@ -234,6 +255,8 @@ final class ReviewRegistrationHandlerTest extends TestCase
             new ChannelHistoryService($this->createStub(ChannelHistoryRepositoryInterface::class)),
             $accounts,
             $transaction,
+            operatorAccess: $this->createStub(ChanServOperatorAccess::class),
+            requesterSessions: $this->createStub(IdentifiedRequesterSession::class),
         );
 
         $result = $handler->handle(new ReviewRegistration('#test', true, 9, 'ApprovingOper', $at));
@@ -270,6 +293,8 @@ final class ReviewRegistrationHandlerTest extends TestCase
             $accounts,
             $transaction,
             maxChannelsPerNick: 3,
+            operatorAccess: $this->createStub(ChanServOperatorAccess::class),
+            requesterSessions: $this->createStub(IdentifiedRequesterSession::class),
         );
 
         $result = $handler->handle(new ReviewRegistration('#test', true, 9, 'ApprovingOper', $at, requesterHasRequiredChannelRank: true));
@@ -292,6 +317,8 @@ final class ReviewRegistrationHandlerTest extends TestCase
             new ChannelHistoryService($this->createStub(ChannelHistoryRepositoryInterface::class)),
             $this->createStub(ChanUserAccountPort::class),
             $this->createStub(ChanTransactionBoundary::class),
+            operatorAccess: $this->createStub(ChanServOperatorAccess::class),
+            requesterSessions: $this->createStub(IdentifiedRequesterSession::class),
         );
 
         self::assertSame(ReviewRegistrationOutcome::NotPending, $handler->handle(new ReviewRegistration('#test', true, 9, 'Operator', new DateTimeImmutable()))->outcome);
@@ -326,6 +353,8 @@ final class ReviewRegistrationHandlerTest extends TestCase
             $accounts,
             $transaction,
             maxChannelsPerNick: 3,
+            operatorAccess: $this->createStub(ChanServOperatorAccess::class),
+            requesterSessions: $this->createStub(IdentifiedRequesterSession::class),
         );
 
         $result = $handler->handle(new ReviewRegistration('#test', true, 9, 'ApprovingOper', $at, requesterHasRequiredChannelRank: true));

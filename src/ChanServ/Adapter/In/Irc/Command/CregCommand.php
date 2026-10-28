@@ -161,6 +161,10 @@ final readonly class CregCommand implements ChanServCommandInterface, IrcopAudit
             occurredAt: new DateTimeImmutable(),
             rejectionReason: $reason,
             requesterHasRequiredChannelRank: $requesterHasRequiredChannelRank,
+            requesterUid: $requester?->uid,
+            requesterNickname: $requester?->nick,
+            requesterIdentified: $requester->isIdentified ?? false,
+            requesterIrcOperator: $requester->isOper ?? false,
         ));
         if (ReviewRegistrationOutcome::NotPending === $result->outcome) {
             $context->reply('creg.not_pending', ['%channel%' => $channelName]);

@@ -10,8 +10,10 @@ use App\ChanServ\Application\Model\ChanAccountView;
 use App\ChanServ\Application\Port\Out\ChannelAkickRepositoryInterface;
 use App\ChanServ\Application\Port\Out\ChannelHistoryRepositoryInterface;
 use App\ChanServ\Application\Port\Out\ChannelLevelRepositoryInterface;
+use App\ChanServ\Application\Port\Out\ChanServOperatorAccess;
 use App\ChanServ\Application\Port\Out\ChanTransactionBoundary;
 use App\ChanServ\Application\Port\Out\ChanUserAccountPort;
+use App\ChanServ\Application\Port\Out\IdentifiedRequesterSession;
 use App\ChanServ\Application\PublishedEvent\ChannelRegistrationDecisionEvent;
 use App\ChanServ\Application\Service\ChannelHistoryService;
 use App\ChanServ\Application\Service\ChannelRegistrationActivator;
@@ -196,6 +198,8 @@ final class RegistrationDecisionMemoRoutingTest extends DoctrineIntegrationTestC
             new ChannelHistoryService($this->createStub(ChannelHistoryRepositoryInterface::class)),
             $channelAccounts,
             $transaction,
+            operatorAccess: $this->createStub(ChanServOperatorAccess::class),
+            requesterSessions: $this->createStub(IdentifiedRequesterSession::class),
         );
 
         foreach ([true, false] as $accepted) {

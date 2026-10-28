@@ -241,7 +241,7 @@ final class DropCommandTest extends TestCase
 
         $command->execute($this->createContext($this->createSender(), null, ['#test'], $messages));
 
-        self::assertContains('drop.success', $messages);
+        self::assertContains('drop.force_success', $messages);
     }
 
     #[Test]
@@ -285,7 +285,7 @@ final class DropCommandTest extends TestCase
 
             $command->execute($this->createContext($this->createSender(), null, ['#test'], $messages));
 
-            self::assertContains('drop.success', $messages);
+            self::assertContains('drop.force_success', $messages);
         }
     }
 

@@ -593,7 +593,7 @@ drop:
     Usuwa zarejestrowany kanał z bazy danych.
     FORCE trwale usuwa kanał oczekujący na usunięcie.
     IRCop z uprawnieniem DROP może też natychmiast zwolnić
-    odrzuconą rejestrację, z FORCE lub bez. FORCE wymaga dodatkowo DROP_FORCE.
+    oczekujące i odrzucone wnioski o rejestrację, z FORCE lub bez.
   registration_restricted: "\x0304✗\x03 Ta prośba o rejestrację jest zablokowana do %date%."
   force:
     short: "Trwale usuwa kanał oczekujący na usunięcie."

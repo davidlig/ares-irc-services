@@ -9,6 +9,8 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbBlockStateRepositoryInterf
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 
+use function array_filter;
+
 final readonly class UdbBlockStateDoctrineRepository implements UdbBlockStateRepositoryInterface
 {
     public function __construct(
@@ -17,22 +19,14 @@ final readonly class UdbBlockStateDoctrineRepository implements UdbBlockStateRep
 
     public function all(): array
     {
-        /** @var array<mixed> $states */
+        /** @var array<string, mixed> $states */
         $states = $this->em
-            ->createQuery('SELECT s FROM App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbBlockState s')
+            ->createQuery('SELECT s FROM App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbBlockState s INDEX BY s.block')
             ->getResult();
 
         $this->em->clear();
 
-        /** @var array<string, UdbBlockState> $byBlock */
-        $byBlock = [];
-        foreach ($states as $state) {
-            if ($state instanceof UdbBlockState) {
-                $byBlock[$state->getBlock()] = $state;
-            }
-        }
-
-        return $byBlock;
+        return array_filter($states, static fn (mixed $state): bool => $state instanceof UdbBlockState);
     }
 
     public function upsert(

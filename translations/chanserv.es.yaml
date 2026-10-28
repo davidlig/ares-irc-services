@@ -598,7 +598,7 @@ drop:
     Elimina un canal registrado de la base de datos.
     FORCE elimina permanentemente un canal pendiente de eliminación.
     Un IRCop con permiso DROP también puede liberar inmediatamente
-    una solicitud rechazada, con o sin FORCE. FORCE requiere además DROP_FORCE.
+    una solicitud pendiente de registro y rechazada, con o sin FORCE.
   registration_restricted: "\x0304✗\x03 Esta solicitud de registro está restringida hasta %date%."
   force:
     short: "Elimina permanentemente un canal pendiente de eliminación."

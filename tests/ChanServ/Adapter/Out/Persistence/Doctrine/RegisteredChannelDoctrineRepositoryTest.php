@@ -60,8 +60,8 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
         $connection->method('getDatabasePlatform')->willReturn($platform);
         $connection->expects(self::once())->method('fetchOne')
             ->with(
-                'SELECT COUNT(c.id) FROM registered_channels c WHERE ' . $equality . ' = :exact AND ' . $expression . " LIKE :pattern ESCAPE '!'",
-                ['pattern' => '#name!!!%!_', 'exact' => '#name!%_'],
+                'SELECT COUNT(c.id) FROM registered_channels c WHERE ' . $equality . ' = :exact AND ' . $expression . " LIKE :pattern ESCAPE '!' AND c.status NOT IN (:registrationPending, :registrationRejected)",
+                ['pattern' => '#name!!!%!_', 'exact' => '#name!%_', 'registrationPending' => 'pending', 'registrationRejected' => 'rejected'],
             )
             ->willReturn('2');
         $em = $this->createStub(EntityManagerInterface::class);
@@ -98,7 +98,7 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
         $entity = RegisteredChannel::register(new DateTimeImmutable('2026-09-27'), '#native', 1, 'Test');
         $query = $this->createMock(NativeQuery::class);
         $query->expects(self::once())->method('setParameters')
-            ->with(['pattern' => '#na%'])->willReturnSelf();
+            ->with(['pattern' => '#na%', 'registrationPending' => 'pending', 'registrationRejected' => 'rejected'])->willReturnSelf();
         $query->expects(self::once())->method('getResult')->willReturn(['unexpected', $entity]);
         $em = $this->createMock(EntityManagerInterface::class);
         $em->method('getConnection')->willReturn($connection);
@@ -137,6 +137,43 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
                 self::assertSame(array_slice($legacy, max(0, $offset), max(0, $limit)), $actual, $pattern);
             }
         }
+    }
+
+    #[Test]
+    public function associationReadsFilterRequestsBeforeHydrationWithoutChangingGenericOwnershipReads(): void
+    {
+        $at = new DateTimeImmutable('-1 day');
+        $active = RegisteredChannel::register($at, '#owner-a', 7, 'active');
+        $suspended = RegisteredChannel::register($at, '#owner-b', 7, 'suspended');
+        $suspended->suspend('test');
+        $deleting = RegisteredChannel::register($at, '#owner-c', 7, 'deleting');
+        $deleting->markPendingDeletion($at);
+        $pending = RegisteredChannel::createPendingRegistration($at, '#owner-d', 7, 'pending');
+        $rejected = RegisteredChannel::createPendingRegistration($at, '#owner-e', 7, 'rejected');
+        $rejected->rejectRegistration('test', 99, 'Reviewer', $at, null);
+        foreach ([$active, $suspended, $deleting, $pending, $rejected] as $channel) {
+            $this->repository->save($channel);
+        }
+        $successor = RegisteredChannel::register($at, '#successor-a', 8, 'successor');
+        $successor->assignSuccessor(7);
+        $successorPending = RegisteredChannel::createPendingRegistration($at, '#successor-b', 8, 'pending');
+        $successorPending->assignSuccessor(7);
+        $successorRejected = RegisteredChannel::createPendingRegistration($at, '#successor-c', 8, 'rejected');
+        $successorRejected->assignSuccessor(7);
+        $successorRejected->rejectRegistration('test', 99, 'Reviewer', $at, null);
+        foreach ([$successor, $successorPending, $successorRejected] as $channel) {
+            $this->repository->save($channel);
+        }
+        $this->entityManager->clear();
+        self::assertSame(['#owner-a', '#owner-b', '#owner-c'], array_map(static fn (RegisteredChannel $channel): string => $channel->getName(), $this->repository->findEstablishedByFounderNickId(7)));
+        self::assertSame(3, $this->entityManager->getUnitOfWork()->size());
+        $this->entityManager->clear();
+        self::assertSame(['#successor-a'], array_map(static fn (RegisteredChannel $channel): string => $channel->getName(), $this->repository->findEstablishedBySuccessorNickId(7)));
+        self::assertSame(1, $this->entityManager->getUnitOfWork()->size());
+        self::assertCount(5, $this->repository->findByFounderNickId(7));
+        self::assertCount(3, $this->repository->findBySuccessorNickId(7));
+        self::assertSame([], $this->repository->findEstablishedByFounderNickId(999));
+        self::assertSame([], $this->repository->findEstablishedBySuccessorNickId(999));
     }
 
     #[Test]
@@ -184,6 +221,11 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
         $channels[1]->suspend('Test suspension');
         $channels[2]->markPendingDeletion(new DateTimeImmutable());
         $channels[3] = RegisteredChannel::createForbidden(new DateTimeImmutable(), '#davi', 'Test forbidden');
+        $pending = RegisteredChannel::createPendingRegistration(new DateTimeImmutable(), '#davipending', 1, 'pending');
+        $rejected = RegisteredChannel::createPendingRegistration(new DateTimeImmutable(), '#davirejected', 1, 'rejected');
+        $rejected->rejectRegistration('test', 99, 'Reviewer', new DateTimeImmutable(), null);
+        $channels[] = $pending;
+        $channels[] = $rejected;
         foreach ($channels as $channel) {
             $this->entityManager->persist($channel);
         }

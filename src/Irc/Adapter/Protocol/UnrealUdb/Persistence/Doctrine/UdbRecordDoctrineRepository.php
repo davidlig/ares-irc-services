@@ -14,6 +14,7 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\EntityManagerInterface;
 use UnexpectedValueException;
 
+use function array_column;
 use function str_starts_with;
 use function substr;
 
@@ -97,10 +98,7 @@ final readonly class UdbRecordDoctrineRepository implements UdbRecordRepositoryI
     public function seedBlock(string $block, array $records): void
     {
         $this->em->wrapInTransaction(function () use ($block, $records): void {
-            $existing = [];
-            foreach ($this->blockIdentities($block) as $identity => $id) {
-                $existing[$identity] = $id;
-            }
+            $existing = $this->blockIdentities($block);
 
             foreach ($records as $path => $value) {
                 if (!$value instanceof UdbValue) {
@@ -193,11 +191,6 @@ final readonly class UdbRecordDoctrineRepository implements UdbRecordRepositoryI
             ->setParameter('block', $block)
             ->getArrayResult();
 
-        $identities = [];
-        foreach ($rows as $row) {
-            $identities[$row['identityPath']] = $row['id'];
-        }
-
-        return $identities;
+        return array_column($rows, 'id', 'identityPath');
     }
 }
