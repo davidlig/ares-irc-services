@@ -140,6 +140,7 @@ use function serialize;
 use function str_starts_with;
 
 #[CoversClass(ChanServService::class)]
+#[CoversClass(ManageChannelLifecycleHandler::class)]
 #[CoversClass(ReviewRegistrationHandler::class)]
 #[CoversClass(NickServIdentifiedRequesterSession::class)]
 #[CoversClass(IdentifiedSessionRegistry::class)]
@@ -242,7 +243,9 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
     public static function pendingCancellationCases(): array
     {
         return [
-            [false, ['chanserv.drop'], 'error.channel_not_registered', false],
+            [false, ['chanserv.drop'], 'drop.force_success', true],
+            [false, [], 'error.permission_denied', false],
+            [false, ['chanserv.drop.force'], 'error.permission_denied', false],
             [true, [], 'error.permission_denied', false],
             [true, ['chanserv.drop'], 'error.permission_denied', false],
             [true, ['chanserv.drop.force'], 'error.permission_denied', false],
@@ -253,7 +256,7 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
     /** @param list<string> $permissions */
     #[Test]
     #[DataProvider('pendingCancellationCases')]
-    public function pendingForceCancellationPreservesPermissionsAndOnlyDeletesItsTarget(bool $force, array $permissions, string $expected, bool $deleted): void
+    public function pendingCancellationPreservesPermissionsAndOnlyDeletesItsTarget(bool $force, array $permissions, string $expected, bool $deleted): void
     {
         $repository = new RegisteredChannelDoctrineRepository($this->entityManager);
         $other = RegisteredChannel::register(new DateTimeImmutable('-1 day'), '#untouched', 10, 'approved');
@@ -300,7 +303,7 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
             if ($deleted) {
                 self::assertNotNull($observed->outcome->auditData);
                 self::assertSame('#private', $observed->outcome->auditData->target);
-                self::assertSame(['force' => true], $observed->outcome->auditData->extra);
+                self::assertSame($force ? ['force' => true] : [], $observed->outcome->auditData->extra);
             } else {
                 self::assertNull($observed->outcome->auditData);
             }
@@ -310,6 +313,35 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
         self::assertNotNull($repository->findByChannelName('#untouched'));
         if ($deleted) {
             self::assertNull($target);
+            $mode = $this->createStub(RegistrationModeQuery::class);
+            $mode->method('current')->willReturn(RegistrationMode::Approval);
+            $register = new RegisterChannelHandler(
+                $repository,
+                new ChannelRegistrationActivator($this->createStub(ChannelLevelRepositoryInterface::class), $this->createStub(ChannelAkickRepositoryInterface::class)),
+                $this->createStub(ChannelRegisterThrottlePort::class),
+                $this->createStub(EventBusInterface::class),
+                $this->createStub(ChanServOperatorAccess::class),
+                $boundary,
+                registrationMode: $mode,
+            );
+            $messages = new ArrayObject();
+            $this->service(
+                $repository,
+                'Other',
+                true,
+                false,
+                12,
+                false,
+                $messages,
+                $this->createStub(ReviewRegistrationHandlerInterface::class),
+                $drop,
+                $register,
+            )->dispatch('REGISTER #private new-request', $this->sender('Other', true, false));
+            self::assertSame(['register.awaiting_approval'], iterator_to_array($messages));
+            $fresh = new RegisteredChannelDoctrineRepository($this->entityManager)->findByChannelName('#private');
+            self::assertNotNull($fresh);
+            self::assertTrue($fresh->isPendingRegistration());
+            self::assertSame(12, $fresh->getFounderNickId());
         } else {
             self::assertNotNull($target);
             self::assertTrue($target->isPendingRegistration());
@@ -774,7 +806,7 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
         self::assertNull($repository->findByChannelName('#private'));
         self::assertSame(['register.awaiting_approval'], $run('REGISTER #private description', true));
         self::assertStringNotContainsString('#private', $this->nickInfo($repository, 'RequesterOper'));
-        self::assertSame(['drop.force_success'], $run('DROP #private FORCE'));
+        self::assertSame(['drop.force_success'], $run('DROP #private'));
         self::assertNull($repository->findByChannelName('#private'));
         self::assertCount(0, $memos->findByTargetNick($requesterId));
         self::assertSame(['register.awaiting_approval'], $run('REGISTER #private description', true));

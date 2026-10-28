@@ -584,9 +584,8 @@ drop:
   help: |-
     Deletes a registered channel from the database.
     FORCE permanently deletes a channel that is pending deletion.
-    An IRCop with DROP permission can also immediately release a
-    rejected registration, with or without FORCE. FORCE additionally requires DROP_FORCE.
-    FORCE also permanently cancels a pending registration request.
+    An IRCop with DROP permission can also immediately release
+    pending and rejected registration requests, with or without FORCE.
   registration_restricted: "\x0304✗\x03 This registration request is restricted until %date%."
   force:
     short: "Permanently deletes a channel that is pending deletion."

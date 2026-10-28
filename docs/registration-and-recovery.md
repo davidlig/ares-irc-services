@@ -169,10 +169,9 @@ identified requester with the existing channel-rank eligibility. The requester's
 operator exemption uses the authenticated NickServ session, not the reviewer's
 identity or an unchecked operator flag. Offline requesters remain ineligible.
 
-An operator with DROP and DROP_FORCE can permanently cancel a pending request using
-`DROP <#channel> FORCE`. Plain DROP does not cancel pending requests. Authorized
-DROP of a rejected registration releases it permanently, with or without FORCE;
-FORCE still requires DROP_FORCE. The reply describes the actual permanent removal,
+An operator with DROP can permanently cancel a pending or rejected registration
+using `DROP <#channel>`, with or without FORCE. Explicit FORCE additionally requires
+DROP_FORCE. The reply describes the actual permanent removal,
 not a grace period. Ordinary registered-channel DROP and RESTORE retain their
 existing grace-period behavior. Cancellation keeps existing DROP audit/cleanup
 policies and adds no channel HISTORY action.

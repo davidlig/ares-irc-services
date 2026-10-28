@@ -597,9 +597,8 @@ drop:
   help: |-
     Erregistratutako kanal bat datu-basetik ezabatzen du.
     FORCE aukerak ezabatzeko zain dagoen kanala behin betiko ezabatzen du.
-    DROP baimena duen IRCop batek ukatutako erregistro bat berehala
-    askatu dezake, FORCE erabilita edo gabe. FORCE aukerak DROP_FORCE ere behar du.
-    FORCE aukerak zain dagoen erregistro-eskaera ere behin betiko ezeztatzen du.
+    DROP baimena duen IRCop batek zain dauden eta ukatutako erregistro-eskaerak
+    berehala askatu ditzake, FORCE erabilita edo gabe.
   registration_restricted: "\x0304✗\x03 Erregistro-eskaera hau %date% arte mugatuta dago."
   force:
     short: "Ezabatzeko zain dagoen kanala behin betiko ezabatzen du."
