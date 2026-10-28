@@ -87,7 +87,7 @@ final readonly class RegisterChannelHandler implements RegisterChannelHandlerInt
             $ownedChannels = $this->channelRepository->findByFounderNickId($command->accountId);
             $registeredCount = count(array_filter(
                 $ownedChannels,
-                fn (RegisteredChannel $owned): bool => null === $expiredRejectedChannel || $owned->getId() !== $expiredRejectedChannel->getId(),
+                fn (RegisteredChannel $owned): bool => !$owned->isRejectedRegistration() && (null === $expiredRejectedChannel || $owned->getId() !== $expiredRejectedChannel->getId()),
             ));
             if ($registeredCount >= $this->maxChannelsPerNick) {
                 return RegisterChannelResult::founderLimitExceeded($this->maxChannelsPerNick);

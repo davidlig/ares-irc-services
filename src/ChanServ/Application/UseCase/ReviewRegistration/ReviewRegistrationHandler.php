@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Application\UseCase\ReviewRegistration;
 
+use App\ChanServ\Application\Port\Out\ChanServOperatorAccess;
 use App\ChanServ\Application\Port\Out\ChanTransactionBoundary;
 use App\ChanServ\Application\Port\Out\ChanUserAccountPort;
+use App\ChanServ\Application\Port\Out\IdentifiedRequesterSession;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\PublishedEvent\ChannelRegisteredEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelRegistrationDecisionEvent;
@@ -27,6 +29,8 @@ final readonly class ReviewRegistrationHandler implements ReviewRegistrationHand
         private ChannelHistoryService $history,
         private ChanUserAccountPort $accounts,
         private ChanTransactionBoundary $transactionBoundary,
+        private ChanServOperatorAccess $operatorAccess,
+        private IdentifiedRequesterSession $requesterSessions,
         private int $maxChannelsPerNick = 3,
         private int $rejectionCooldownHours = 24,
     ) {
@@ -56,11 +60,20 @@ final readonly class ReviewRegistrationHandler implements ReviewRegistrationHand
             if (!$command->requesterHasRequiredChannelRank) {
                 return new ReviewRegistrationResult(ReviewRegistrationOutcome::RequesterIneligible);
             }
+            $privileged = null !== $command->requesterUid && null !== $command->requesterNickname
+                && $command->requesterIdentified
+                && $this->requesterSessions->isIdentifiedAs($command->requesterUid, $requester->nickname)
+                && $this->operatorAccess->isIrcop(
+                    $command->requesterNickname,
+                    $requesterId,
+                    $command->requesterIdentified,
+                    $command->requesterIrcOperator,
+                );
             $registeredCount = count(array_filter(
                 $this->channels->findByFounderNickId($requesterId),
-                static fn ($owned): bool => $owned->getId() !== $channel->getId(),
+                static fn ($owned): bool => !$owned->isRejectedRegistration() && $owned->getId() !== $channel->getId(),
             ));
-            if ($registeredCount >= $this->maxChannelsPerNick) {
+            if (!$privileged && $registeredCount >= $this->maxChannelsPerNick) {
                 return new ReviewRegistrationResult(ReviewRegistrationOutcome::FounderLimitExceeded);
             }
         }

@@ -7,5 +7,7 @@ namespace App\NickServ\Application\Port\In;
 /** Public read boundary for currently identified NickServ sessions. */
 interface IdentifiedSessionQuery
 {
+    public function isIdentifiedAs(string $uid, string $registeredNickname): bool;
+
     public function findUidByNick(string $registeredNick): ?string;
 }

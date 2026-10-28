@@ -152,3 +152,27 @@ REGISTER and ordinary SET EMAIL before workflow side effects. SASET EMAIL explic
 bypasses it. ChanServ SET EMAIL applies the same policy unless `chanserv.level_founder`
 is granted, and still permits clearing the contact. VERIFY, RESEND and RECOVER retain
 access to stored addresses: blocking a domain does not retroactively disable recovery.
+
+## ChanServ approval, quotas and cancellation
+
+In APPROVAL mode, REGISTER creates a request, not an approved channel. Pending and
+rejected registrations do not appear in NickServ INFO's established channel
+associations. Approval makes the founder association visible under the existing
+INFO privacy rules.
+
+`CHANSERV_MAX_CHANNELS_PER_NICK` applies to ordinary requesters both at submission
+and approval. Rejected registrations never count; the request being accepted does
+not count against itself. Other lifecycle states retain their existing counting
+policy. Centrally recognized IRCop requesters, including Root, are exempt; an IRCop
+reviewer does not exempt an ordinary requester. Acceptance still requires an active,
+identified requester with the existing channel-rank eligibility. The requester's
+operator exemption uses the authenticated NickServ session, not the reviewer's
+identity or an unchecked operator flag. Offline requesters remain ineligible.
+
+An operator with DROP and DROP_FORCE can permanently cancel a pending request using
+`DROP <#channel> FORCE`. Plain DROP does not cancel pending requests. Authorized
+DROP of a rejected registration releases it permanently, with or without FORCE;
+FORCE still requires DROP_FORCE. The reply describes the actual permanent removal,
+not a grace period. Ordinary registered-channel DROP and RESTORE retain their
+existing grace-period behavior. Cancellation keeps existing DROP audit/cleanup
+policies and adds no channel HISTORY action.

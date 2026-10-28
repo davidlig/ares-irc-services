@@ -606,6 +606,7 @@ drop:
     FORCE verwijdert een kanaal dat wordt verwijderd definitief.
     Een IRCop met DROP-recht kan een afgewezen registratie ook
     direct vrijgeven, met of zonder FORCE. FORCE vereist ook DROP_FORCE.
+    FORCE annuleert ook een openstaand registratieverzoek definitief.
   registration_restricted: "\x0304✗\x03 Deze registratieaanvraag is beperkt tot %date%."
   force:
     short: "Verwijdert een kanaal dat op verwijdering wacht definitief."

@@ -598,6 +598,7 @@ drop:
     FORCE löscht einen zur Löschung vorgemerkten Channel endgültig.
     Ein IRCop mit DROP-Berechtigung kann auch eine abgelehnte
     Registrierung sofort mit oder ohne FORCE freigeben. FORCE erfordert zusätzlich DROP_FORCE.
+    FORCE entfernt auch eine ausstehende Registrierungsanfrage endgültig.
   registration_restricted: "\x0304✗\x03 Diese Registrierungsanfrage ist bis %date% gesperrt."
   force:
     short: "Löscht einen zur Löschung vorgemerkten Channel endgültig."

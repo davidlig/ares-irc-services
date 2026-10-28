@@ -599,6 +599,7 @@ drop:
     FORCE elimina permanentemente um canal pendente de eliminação.
     Um IRCop com a permissão DROP também pode libertar imediatamente
     um registo rejeitado, com ou sem FORCE. FORCE também requer DROP_FORCE.
+    FORCE também cancela definitivamente um pedido de registo pendente.
   registration_restricted: "\x0304✗\x03 Este pedido de registo está restringido até %date%."
   force:
     short: "Elimina permanentemente um canal pendente de eliminação."

@@ -145,7 +145,7 @@ final class DropCommand implements ChanServCommandInterface, IrcopAuditableComma
 
             return CommandOutcome::rejected();
         }
-        $context->reply($force ? 'drop.force_success' : 'drop.success', ['%channel%' => $channelName]);
+        $context->reply(ChannelLifecycleOutcome::ForceDropped === $result->outcome ? 'drop.force_success' : 'drop.success', ['%channel%' => $channelName]);
 
         return CommandOutcome::success(new IrcopAuditData(target: $channelName, extra: $force ? ['force' => true] : []));
     }

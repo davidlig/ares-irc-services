@@ -52,7 +52,7 @@ final readonly class ManageChannelLifecycleHandler implements ManageChannelLifec
         if (null === $channel) {
             return new ChannelLifecycleResult(ChannelLifecycleOutcome::NotRegistered);
         }
-        if ($channel->isPendingRegistration()) {
+        if ($channel->isPendingRegistration() && !$command->force) {
             return new ChannelLifecycleResult(ChannelLifecycleOutcome::NotRegistered);
         }
         if ($channel->isRejectedRegistration()) {
