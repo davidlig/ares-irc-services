@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Irc\Adapter\In\Event;
 
 use App\Irc\Adapter\In\Event\CommandExecutedAuditSubscriber;
+use App\Irc\Application\Port\In\Command\AuditableCommandInterface;
 use App\Irc\Application\Port\In\Command\CommandOutcome as PublishedCommandOutcome;
 use App\Irc\Application\Port\In\Command\IrcopAuditableCommandInterface as PublishedIrcopAuditableCommandInterface;
 use App\Irc\Application\Port\In\Command\IrcopAuditData as PublishedIrcopAuditData;
@@ -65,6 +66,22 @@ final class CommandExecutedAuditSubscriberTest extends TestCase
             $auditable,
             'operserv.kill',
             PublishedCommandOutcome::success(new PublishedIrcopAuditData('Trouble')),
+        ));
+    }
+
+    #[Test]
+    public function classifiesIdentifiedNonprivilegedOperationAsUserAction(): void
+    {
+        $audit = $this->createMock(CommandAuditRecorder::class);
+        $audit->expects(self::once())->method('record')->with(self::callback(
+            static fn (CommandAuditRecord $record): bool => CommandAuditCategory::UserAction === $record->category
+                && 'IDENTIFIED' === $record->permission && '#channel' === $record->target,
+        ));
+        $command = new class implements AuditableCommandInterface {};
+        new CommandExecutedAuditSubscriber($audit)->onPublishedCommandExecuted($this->publishedEvent(
+            $command,
+            'IDENTIFIED',
+            PublishedCommandOutcome::success(new PublishedIrcopAuditData('#channel')),
         ));
     }
 

@@ -94,7 +94,12 @@ final readonly class ChanServDebugNotifier implements ChanAuditSink, ServiceDebu
         $value = $extra['value'] ?? null;
         $isFounderAction = !empty($extra['founder_action']);
 
-        $translationKey = 'debug.action_message';
+        $registrationKey = match ('REGISTER' === $command ? ($extra['outcome'] ?? null) : null) {
+            'registered' => 'debug.registration_completed',
+            'awaiting_approval' => 'debug.registration_pending',
+            default => null,
+        };
+        $translationKey = $registrationKey ?? 'debug.action_message';
         $messageParams = [
             '%operator%' => $coloredOperator,
             '%command%' => $coloredCommand,
@@ -133,7 +138,7 @@ final readonly class ChanServDebugNotifier implements ChanAuditSink, ServiceDebu
         $message = $this->translator->trans(
             $translationKey,
             $messageParams,
-            'common',
+            null === $registrationKey ? 'common' : 'chanserv',
             $this->defaultLanguage,
         );
 

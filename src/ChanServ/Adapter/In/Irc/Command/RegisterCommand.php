@@ -11,6 +11,9 @@ use App\ChanServ\Application\UseCase\RegisterChannel\RegisterChannelHandlerInter
 use App\ChanServ\Application\UseCase\RegisterChannel\RegisterChannelOutcome;
 use App\ChanServ\Application\UseCase\RegisterChannel\RegisterChannelResult;
 use App\Irc\Application\Port\In\ChannelView;
+use App\Irc\Application\Port\In\Command\AuditableCommandInterface;
+use App\Irc\Application\Port\In\Command\CommandOutcome;
+use App\Irc\Application\Port\In\Command\IrcopAuditData;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use DateTimeImmutable;
@@ -21,7 +24,7 @@ use function in_array;
 use function max;
 
 /** REGISTER <#channel> <description>. */
-final readonly class RegisterCommand implements ChanServCommandInterface
+final readonly class RegisterCommand implements ChanServCommandInterface, AuditableCommandInterface
 {
     use ChanServArgumentDefinitionSupport;
 
@@ -100,13 +103,13 @@ final readonly class RegisterCommand implements ChanServCommandInterface
         return false;
     }
 
-    public function execute(ChanServContext $context): void
+    public function execute(ChanServContext $context): CommandOutcome
     {
         $channelName = $context->getChannelNameArg(0);
         if (null === $channelName) {
             $context->reply('error.invalid_channel');
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $channelView = $context->getChannelView($channelName);
@@ -114,7 +117,7 @@ final readonly class RegisterCommand implements ChanServCommandInterface
         if (null === $sender) {
             $context->reply('error.not_identified');
 
-            return;
+            return CommandOutcome::rejected();
         }
         $occurredAt = new DateTimeImmutable();
         $result = $this->handler->handle(new RegisterChannel(
@@ -130,6 +133,12 @@ final readonly class RegisterCommand implements ChanServCommandInterface
         ));
 
         $this->present($context, $channelName, $result, $occurredAt);
+
+        return match ($result->outcome) {
+            RegisterChannelOutcome::Registered => CommandOutcome::success(new IrcopAuditData($channelName, extra: ['outcome' => 'registered'])),
+            RegisterChannelOutcome::AwaitingApproval => CommandOutcome::success(new IrcopAuditData($channelName, extra: ['outcome' => 'awaiting_approval'])),
+            default => CommandOutcome::rejected(),
+        };
     }
 
     private function present(ChanServContext $context, string $channelName, RegisterChannelResult $result, DateTimeImmutable $occurredAt): void

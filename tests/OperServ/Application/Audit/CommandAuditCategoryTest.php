@@ -16,6 +16,7 @@ final class CommandAuditCategoryTest extends TestCase
     /** @return iterable<array{CommandAuditCategory, string}> */
     public static function categoryProvider(): iterable
     {
+        yield [CommandAuditCategory::UserAction, 'user_action'];
         yield [CommandAuditCategory::OperatorAction, 'operator_action'];
         yield [CommandAuditCategory::RootAdministration, 'root_administration'];
         yield [CommandAuditCategory::ResourceOverride, 'resource_override'];

@@ -721,6 +721,8 @@ unforbid:
 
 # --- DEBUG -----------------------------------------------------------------
 debug:
+  registration_completed: "Ο χρήστης %operator% καταχώρισε το κανάλι %target%"
+  registration_pending: "Ο χρήστης %operator% υπέβαλε αίτημα καταχώρισης για το κανάλι %target%"
   founder_action: "Ενέργεια ιδρυτή-επιπέδου"
 
 # --- HISTORY ---

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\In\Event;
 
-use App\Irc\Application\Port\In\Command\IrcopAuditableCommandInterface as PublishedIrcopAuditableCommandInterface;
+use App\Irc\Application\Port\In\Command\AuditableCommandInterface as PublishedAuditableCommandInterface;
 use App\Irc\Application\PublishedEvent\CommandExecutedEvent as PublishedCommandExecutedEvent;
 use App\OperServ\Application\Port\In\Audit\CommandAuditCategory;
 use App\OperServ\Application\Port\In\Audit\CommandAuditRecord;
@@ -28,7 +28,7 @@ final readonly class CommandExecutedAuditSubscriber implements EventSubscriberIn
 
     public function onPublishedCommandExecuted(PublishedCommandExecutedEvent $event): void
     {
-        if (!$event->command instanceof PublishedIrcopAuditableCommandInterface
+        if (!$event->command instanceof PublishedAuditableCommandInterface
             || null === $event->permission
             || null === $event->outcome
             || !$event->outcome->success
@@ -62,9 +62,11 @@ final readonly class CommandExecutedAuditSubscriber implements EventSubscriberIn
         ?string $reason,
         array $metadata,
     ): void {
-        $category = OperatorAuthorizationAttribute::ROOT === $permission
-            ? CommandAuditCategory::RootAdministration
-            : CommandAuditCategory::OperatorAction;
+        $category = match ($permission) {
+            'IDENTIFIED' => CommandAuditCategory::UserAction,
+            OperatorAuthorizationAttribute::ROOT => CommandAuditCategory::RootAdministration,
+            default => CommandAuditCategory::OperatorAction,
+        };
 
         $this->audit->record(new CommandAuditRecord(
             category: $category,

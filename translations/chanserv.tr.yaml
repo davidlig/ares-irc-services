@@ -698,6 +698,8 @@ unforbid:
 
 # --- DEBUG -----------------------------------------------------------------
 debug:
+  registration_completed: "%operator%, %target% kanalını kaydetti"
+  registration_pending: "%operator%, %target% kanalı için kayıt isteği gönderdi"
   founder_action: "Seviye-kurucu eylemi"
 
 # --- HISTORY ---
