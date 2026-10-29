@@ -17,6 +17,9 @@ use App\NickServ\Domain\ValueObject\RegistrationMode;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentValidator;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\Fragment;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 
 use function strtolower;
 use function strtoupper;
@@ -101,7 +104,7 @@ final readonly class RegmodeCommand implements NickServCommandInterface, IrcopAu
 
         $validation = CommandArgumentValidator::validate($this->getArgumentDefinition(), $context->args);
         if (null !== $validation->syntaxKey) {
-            $context->reply('error.syntax', ['syntax' => $context->trans($validation->syntaxKey)]);
+            $context->replySyntax($validation->syntaxKey);
 
             return CommandOutcome::rejected();
         }
@@ -117,11 +120,15 @@ final readonly class RegmodeCommand implements NickServCommandInterface, IrcopAu
         );
         $result = $this->handler->handle(new RegistrationModeInput($authorized, $mode));
         if (!$result->authorized || null === $result->mode) {
-            $context->reply('error.permission_denied');
+            $context->replyCommonError('error.permission_denied');
 
             return CommandOutcome::rejected();
         }
-        $context->reply($result->changed ? 'regmode.changed' : 'regmode.status', ['mode' => $result->mode->value]);
+        $context->reply(
+            $result->changed ? 'regmode.changed' : 'regmode.status',
+            ['mode' => new Fragment($result->mode->value, Component::Emphasis)],
+            $result->changed ? Role::Success : Role::Information,
+        );
 
         return CommandOutcome::success($result->changed ? new IrcopAuditData(
             target: 'network',

@@ -19,10 +19,15 @@ use App\NickServ\Application\UseCase\RegistrationMode\RegistrationModeHandlerInt
 use App\NickServ\Application\UseCase\RegistrationMode\RegistrationModeInput;
 use App\NickServ\Application\UseCase\RegistrationMode\RegistrationModeResult;
 use App\NickServ\Domain\ValueObject\RegistrationMode;
+use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Stringable;
+use Symfony\Component\Translation\Loader\ArrayLoader;
+use Symfony\Component\Translation\Translator;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function implode;
@@ -103,6 +108,71 @@ final class RegmodeCommandTest extends TestCase
         self::assertSame('network', $outcome->auditData->target);
         self::assertSame(['option' => 'REGMODE', 'value' => 'EMAIL'], $outcome->auditData->extra);
         self::assertSame(['regmode.changed [%mode%: EMAIL]'], $messages);
+    }
+
+    #[Test]
+    public function changeAndStatusSelectDistinctPresentationRoles(): void
+    {
+        $access = $this->createStub(NickServOperatorAccess::class);
+        $access->method('hasPermission')->willReturn(true);
+        $handler = $this->createStub(RegistrationModeHandlerInterface::class);
+        $handler->method('handle')->willReturnOnConsecutiveCalls(
+            new RegistrationModeResult(true, RegistrationMode::Token),
+            new RegistrationModeResult(true, RegistrationMode::Email, true),
+        );
+        $translator = new Translator('en');
+        $translator->addLoader('array', new ArrayLoader());
+        $translator->addResource('array', [
+            'regmode.status' => 'Current mode: %mode%.',
+            'regmode.changed' => 'Changed mode: %mode%.',
+        ], 'en', 'nickserv');
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void { $messages[] = $message; });
+        $renderer = new IrcRenderer(new FixedStyleProvider(PresentationStyle::default()));
+        $sender = new SenderView('UID1', 'Oper', 'ident', 'host', 'cloak', 'ip');
+        $command = new RegmodeCommand($handler, $access);
+        foreach (['STATUS', 'EMAIL'] as $arg) {
+            $context = new NickServContext($sender, null, 'REGMODE', [$arg], $notifier, $translator, 'en', 'UTC', 'NOTICE', new NickServCommandRegistry([]), new PendingVerificationRegistry(), new RecoveryTokenRegistry(), $this->createServiceNicks(), $renderer);
+            $command->execute($context);
+        }
+        self::assertSame(["\x0310ℹ\x03\x0F Current mode: \x02TOKEN\x03\x0F.", "\x0303✔\x03\x0F Changed mode: \x02EMAIL\x03\x0F."], $messages);
+    }
+
+    #[Test]
+    public function authorizationDenialUsesErrorPresentation(): void
+    {
+        $access = $this->createStub(NickServOperatorAccess::class);
+        $handler = $this->createStub(RegistrationModeHandlerInterface::class);
+        $handler->method('handle')->willReturn(new RegistrationModeResult(false));
+        $translator = new Translator('en');
+        $translator->addLoader('array', new ArrayLoader());
+        $translator->addResource('array', ['presentation.error.permission_denied' => 'Permission denied'], 'en', 'common');
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void { $messages[] = $message; });
+        $renderer = new IrcRenderer(new FixedStyleProvider(PresentationStyle::default()));
+        $sender = new SenderView('UID1', 'Oper', 'ident', 'host', 'cloak', 'ip');
+        $context = new NickServContext($sender, null, 'REGMODE', ['EMAIL'], $notifier, $translator, 'en', 'UTC', 'NOTICE', new NickServCommandRegistry([]), new PendingVerificationRegistry(), new RecoveryTokenRegistry(), $this->createServiceNicks(), $renderer);
+        self::assertFalse(new RegmodeCommand($handler, $access)->execute($context)->success);
+        self::assertSame(["\x0304✗\x03\x0F Permission denied"], $messages);
+    }
+
+    #[Test]
+    public function invalidSyntaxUsesErrorRoleAndCommandFragment(): void
+    {
+        $translator = new Translator('en');
+        $translator->addLoader('array', new ArrayLoader());
+        $translator->addResource('array', ['presentation.error.syntax' => 'Usage: %syntax%'], 'en', 'common');
+        $translator->addResource('array', ['regmode.syntax' => 'REGMODE <mode>'], 'en', 'nickserv');
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void { $messages[] = $message; });
+        $renderer = new IrcRenderer(new FixedStyleProvider(PresentationStyle::default()));
+        $sender = new SenderView('UID1', 'Oper', 'ident', 'host', 'cloak', 'ip');
+        $context = new NickServContext($sender, null, 'REGMODE', [], $notifier, $translator, 'en', 'UTC', 'NOTICE', new NickServCommandRegistry([]), new PendingVerificationRegistry(), new RecoveryTokenRegistry(), $this->createServiceNicks(), $renderer);
+        self::assertFalse(new RegmodeCommand($this->createStub(RegistrationModeHandlerInterface::class), $this->createStub(NickServOperatorAccess::class))->execute($context)->success);
+        self::assertSame(["\x0304✗\x03\x0F Usage: \x02\x0303REGMODE <mode>\x03\x0F"], $messages);
     }
 
     /**

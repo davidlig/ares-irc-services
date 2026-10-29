@@ -17,6 +17,9 @@ use App\NickServ\Adapter\Out\InMemory\RecoveryTokenRegistry;
 use App\NickServ\Application\UseCase\Register\RegisterNick;
 use App\NickServ\Application\UseCase\Register\RegisterNickHandlerInterface;
 use App\NickServ\Application\UseCase\Register\RegisterNickResult;
+use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -25,6 +28,7 @@ use Symfony\Component\Translation\Translator;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function dirname;
+use function str_starts_with;
 
 #[CoversClass(RegisterCommand::class)]
 final class RegisterCommandTest extends TestCase
@@ -177,6 +181,65 @@ final class RegisterCommandTest extends TestCase
         self::assertSame(['rescue.issued'], $messages);
     }
 
+    #[Test]
+    public function registerErrorsUseStyledFragmentsWithSpanishCatalog(): void
+    {
+        $handler = $this->createStub(RegisterNickHandlerInterface::class);
+        $handler->method('handle')->willReturnOnConsecutiveCalls(RegisterNickResult::alreadyRegistered('Alice'), RegisterNickResult::invalidEmail(), RegisterNickResult::alreadyPending('Alice'));
+        $translator = new Translator('es');
+        $translator->addLoader('yaml', new IrcYamlTranslationLoader());
+        $translator->addResource('yaml', dirname(__DIR__, 6) . '/translations/nickserv.es.yaml', 'es', 'nickserv');
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void { $messages[] = $message; });
+        $renderer = new IrcRenderer(new FixedStyleProvider(PresentationStyle::default()));
+        $context = new NickServContext(new SenderView('UID1', 'Alice', 'i', 'h', 'c', 'ip'), null, 'REGISTER', ['password'], $notifier, $translator, 'es', 'UTC', 'NOTICE', new NickServCommandRegistry([]), new PendingVerificationRegistry(), new RecoveryTokenRegistry(), new ServiceNicknameRegistry([$this->nicknameProvider()]), $renderer);
+        $command = new RegisterCommand($handler, 3600);
+        $command->execute($context);
+        $command->execute($context);
+        $command->execute($context);
+        self::assertSame(["\x0304✗\x03\x0F El apodo \x02Alice\x03\x0F ya está registrado.", "\x0304✗\x03\x0F La dirección de correo electrónico no es válida.", "\x0310ℹ\x03\x0F El registro de \x02Alice\x03\x0F está pendiente. Usa \x02\x0303VERIFY <token>\x03\x0F. Si el token se envió por correo y hay una dirección válida asociada, puedes solicitar otro con \x02\x0303RESEND\x03\x0F."], $messages);
+    }
+
+    #[Test]
+    public function pendingRegistrationRendersNestedCommandsAndContinuationRows(): void
+    {
+        $handler = $this->createStub(RegisterNickHandlerInterface::class);
+        $handler->method('handle')->willReturn(RegisterNickResult::verificationRequired('a@example.test'));
+        $translator = new Translator('es');
+        $translator->addLoader('yaml', new IrcYamlTranslationLoader());
+        $translator->addResource('yaml', dirname(__DIR__, 6) . '/translations/nickserv.es.yaml', 'es', 'nickserv');
+        $translator->addResource('yaml', dirname(__DIR__, 6) . '/translations/common.es.yaml', 'es', 'common');
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('getNick')->willReturn('CustomNick');
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void { $messages[] = $message; });
+        $renderer = new IrcRenderer(new FixedStyleProvider(PresentationStyle::default()));
+        $context = new NickServContext(new SenderView('UID1', 'Alice', 'i', 'h', 'c', 'ip'), null, 'REGISTER', ['password'], $notifier, $translator, 'es', 'UTC', 'NOTICE', new NickServCommandRegistry([]), new PendingVerificationRegistry(), new RecoveryTokenRegistry(), new ServiceNicknameRegistry([$this->nicknameProvider()]), $renderer);
+        new RegisterCommand($handler, 3600)->execute($context);
+        self::assertSame(["\x0310ℹ\x03\x0F Se ha enviado un token de verificación a \x02a@example.test\x03\x0F.\n  Ejecuta /msg CustomNick \x02\x0303VERIFY <token>\x03\x0F para completar el registro.\n  ¿No te llega? Revisa spam o usa /msg CustomNick \x02\x0303RESEND\x03\x0F\n  El token expirará en \x021 hora\x03\x0F."], $messages);
+    }
+
+    #[Test]
+    public function pendingRegistrationWithoutRendererDoesNotLeakTemplateSlots(): void
+    {
+        $handler = $this->createStub(RegisterNickHandlerInterface::class);
+        $handler->method('handle')->willReturn(RegisterNickResult::verificationRequired('a@example.test'));
+        $translator = new Translator('es');
+        $translator->addLoader('yaml', new IrcYamlTranslationLoader());
+        $translator->addResource('yaml', dirname(__DIR__, 6) . '/translations/nickserv.es.yaml', 'es', 'nickserv');
+        $translator->addResource('yaml', dirname(__DIR__, 6) . '/translations/common.es.yaml', 'es', 'common');
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('getNick')->willReturn('CustomNick');
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void { $messages[] = $message; });
+        $context = new NickServContext(new SenderView('UID1', 'Alice', 'i', 'h', 'c', 'ip'), null, 'REGISTER', ['password'], $notifier, $translator, 'es', 'UTC', 'NOTICE', new NickServCommandRegistry([]), new PendingVerificationRegistry(), new RecoveryTokenRegistry(), new ServiceNicknameRegistry([$this->nicknameProvider()]));
+        new RegisterCommand($handler, 3600)->execute($context);
+        self::assertStringNotContainsString('%email%', $messages[0]);
+        self::assertStringContainsString('a@example.test', $messages[0]);
+        self::assertStringContainsString('/msg CustomNick VERIFY <token>', $messages[0]);
+    }
+
     /** @param list<mixed> $messages
      * @param list<string> $args
      */
@@ -191,6 +254,9 @@ final class RegisterCommandTest extends TestCase
         if (null === $translator) {
             $translator = $this->createStub(TranslatorInterface::class);
             $translator->method('trans')->willReturnCallback(static function (string $key, array $params) use (&$messages, $captureParams): string {
+                if (str_starts_with($key, 'register.pending_line_')) {
+                    return $key;
+                }
                 $unitTranslations = [
                     'duration.unit.hour.singular' => 'hora',
                     'duration.unit.minute.plural' => 'minutos',

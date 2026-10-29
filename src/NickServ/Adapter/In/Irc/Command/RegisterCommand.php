@@ -13,6 +13,9 @@ use App\NickServ\Application\UseCase\Register\RegisterNickOutcome;
 use App\NickServ\Application\UseCase\Register\RegisterNickResult;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\Fragment;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 
 use function ceil;
 
@@ -114,48 +117,66 @@ final readonly class RegisterCommand implements NickServCommandInterface
     {
         switch ($result->outcome) {
             case RegisterNickOutcome::TokenVerificationRequired:
-                $context->reply('rescue.issued', ['token' => $result->token]);
+                $context->replyRescueToken('rescue.issued', $result->token, null);
                 break;
             case RegisterNickOutcome::TemporarilyUnavailable:
-                $context->reply('register.token_unavailable');
+                $context->reply('register.token_unavailable', [], Role::Error);
                 break;
             case RegisterNickOutcome::VerificationRequired:
+                $duration = $context->formatDuration($this->verificationTokenTtlSeconds);
+                $email = $result->email ?? '';
                 $context->reply('register.pending', [
-                    'email' => $result->email,
-                    'duration' => $context->formatDuration($this->verificationTokenTtlSeconds),
-                ]);
+                    'email' => $email,
+                    'duration' => $duration,
+                    'first' => $context->localizedFragment('register.pending_line_1', Component::Text, [
+                        'email' => new Fragment($email, Component::Emphasis),
+                    ]),
+                    'second' => $context->localizedFragment('register.pending_line_2', Component::IndentedRow, [
+                        'verify' => new Fragment('VERIFY <token>', Component::Command),
+                    ]),
+                    'third' => $context->localizedFragment('register.pending_line_3', Component::IndentedRow, [
+                        'resend' => new Fragment('RESEND', Component::Command),
+                    ]),
+                    'fourth' => $context->localizedFragment('register.pending_line_4', Component::IndentedRow, [
+                        'duration' => new Fragment($duration, Component::Emphasis),
+                    ]),
+                ], Role::Information);
                 break;
             case RegisterNickOutcome::Throttled:
                 $context->reply('register.throttled', [
-                    'minutes' => (string) (int) ceil($result->retryAfterSeconds / 60),
-                ]);
+                    'minutes' => new Fragment((string) (int) ceil($result->retryAfterSeconds / 60), Component::Emphasis),
+                ], Role::Error);
                 break;
             case RegisterNickOutcome::GuestPrefixForbidden:
-                $context->reply('register.guest_prefix_forbidden', ['prefix' => $result->guestPrefix]);
+                $context->reply('register.guest_prefix_forbidden', ['prefix' => new Fragment($result->guestPrefix ?? '', Component::Emphasis)], Role::Error);
                 break;
             case RegisterNickOutcome::BlockedEmailDomain:
-                $context->reply('error.email_domain_blocked');
+                $context->replyCommonError('error.email_domain_blocked');
                 break;
             case RegisterNickOutcome::InvalidEmail:
-                $context->reply('register.invalid_email');
+                $context->reply('register.invalid_email', [], Role::Error);
                 break;
             case RegisterNickOutcome::EmailAlreadyUsed:
-                $context->reply('register.email_already_used', ['email' => $result->email]);
+                $context->reply('register.email_already_used', ['email' => new Fragment($result->email ?? '', Component::Emphasis)], Role::Error);
                 break;
             case RegisterNickOutcome::AlreadyPending:
-                $context->reply('register.already_pending', ['nickname' => $result->nickname]);
+                $context->reply('register.already_pending', [
+                    'nickname' => new Fragment($result->nickname ?? '', Component::Emphasis),
+                    'verify' => new Fragment('VERIFY <token>', Component::Command),
+                    'resend' => new Fragment('RESEND', Component::Command),
+                ], Role::Information);
                 break;
             case RegisterNickOutcome::Forbidden:
-                $context->reply('register.forbidden', ['nickname' => $result->nickname]);
+                $context->reply('register.forbidden', ['nickname' => new Fragment($result->nickname ?? '', Component::Emphasis)], Role::Error);
                 break;
             case RegisterNickOutcome::PendingDeletion:
-                $context->reply('register.pending_deletion', ['nickname' => $result->nickname]);
+                $context->reply('register.pending_deletion', ['nickname' => new Fragment($result->nickname ?? '', Component::Emphasis)], Role::Error);
                 break;
             case RegisterNickOutcome::AlreadyRegistered:
-                $context->reply('register.already_registered', ['nickname' => $result->nickname]);
+                $context->reply('register.already_registered', ['nickname' => new Fragment($result->nickname ?? '', Component::Emphasis)], Role::Error);
                 break;
             case RegisterNickOutcome::MailDeliveryFailed:
-                $context->reply('error.mail_failed');
+                $context->replyCommonError('error.mail_failed');
                 break;
         }
     }

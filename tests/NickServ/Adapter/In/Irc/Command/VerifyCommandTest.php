@@ -16,10 +16,15 @@ use App\NickServ\Adapter\Out\InMemory\RecoveryTokenRegistry;
 use App\NickServ\Application\UseCase\Verify\VerifyNick;
 use App\NickServ\Application\UseCase\Verify\VerifyNickHandlerInterface;
 use App\NickServ\Application\UseCase\Verify\VerifyNickResult;
+use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Translation\Loader\ArrayLoader;
+use Symfony\Component\Translation\Translator;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function base64_encode;
@@ -166,6 +171,31 @@ final class VerifyCommandTest extends TestCase
         $command->execute($this->createContext($sender, $calls, ['tok123'], notifier: $notifier));
 
         self::assertSame(['verify.success_native', 'identify.native_authentication'], $calls);
+    }
+
+    #[Test]
+    public function verificationSuccessAndRejectionHaveDifferentPresentationRoles(): void
+    {
+        $handler = $this->createStub(VerifyNickHandlerInterface::class);
+        $handler->method('handle')->willReturnOnConsecutiveCalls(VerifyNickResult::success('Alice'), VerifyNickResult::invalidToken(), VerifyNickResult::credentialConfirmed(), VerifyNickResult::lockedOut(60));
+        $translator = new Translator('en');
+        $translator->addLoader('array', new ArrayLoader());
+        $translator->addResource('array', ['verify.success' => 'Verified %nickname%', 'verify.invalid_token' => 'Invalid token', 'rescue.confirmed' => 'Confirmed', 'rescue.locked_out' => 'Wait %seconds%'], 'en', 'nickserv');
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void { $messages[] = $message; });
+        $provider = $this->createStub(ServiceNicknameProviderInterface::class);
+        $provider->method('getServiceKey')->willReturn('nickserv');
+        $provider->method('getNickname')->willReturn('NickServ');
+        $renderer = new IrcRenderer(new FixedStyleProvider(PresentationStyle::default()));
+        $sender = new SenderView('UID1', 'Alice', 'ident', 'host', 'cloak', '*');
+        $context = new NickServContext($sender, null, 'VERIFY', ['token'], $notifier, $translator, 'en', 'UTC', 'NOTICE', new NickServCommandRegistry([]), new PendingVerificationRegistry(), new RecoveryTokenRegistry(), new ServiceNicknameRegistry([$provider]), $renderer);
+        $command = new VerifyCommand($handler, verificationTokenTtlSeconds: 3600);
+        $command->execute($context);
+        $command->execute($context);
+        $command->execute($context);
+        $command->execute($context);
+        self::assertSame(["\x0303✔\x03\x0F Verified \x02Alice\x03\x0F", "\x0304✗\x03\x0F Invalid token", "\x0303✔\x03\x0F Confirmed", "\x0304✗\x03\x0F Wait \x0260\x03\x0F"], $messages);
     }
 
     /**
