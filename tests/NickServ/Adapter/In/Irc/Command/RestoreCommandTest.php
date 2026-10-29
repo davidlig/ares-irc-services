@@ -17,10 +17,15 @@ use App\NickServ\Application\Security\NickServPermission;
 use App\NickServ\Application\UseCase\Restore\RestoreNick;
 use App\NickServ\Application\UseCase\Restore\RestoreNickHandlerInterface;
 use App\NickServ\Application\UseCase\Restore\RestoreNickResult;
+use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Stringable;
+use Symfony\Component\Translation\Loader\ArrayLoader;
+use Symfony\Component\Translation\Translator;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function implode;
@@ -110,6 +115,26 @@ final class RestoreCommandTest extends TestCase
 
         self::assertFalse($outcome->success);
         self::assertSame(['restore.not_pending_deletion [%nickname%: TargetNick]'], $messages);
+    }
+
+    #[Test]
+    public function successAndRejectedRestoreHaveExplicitDistinctStyles(): void
+    {
+        $handler = $this->createStub(RestoreNickHandlerInterface::class);
+        $handler->method('handle')->willReturnOnConsecutiveCalls(RestoreNickResult::success('Target'), RestoreNickResult::notPendingDeletion('Target'));
+        $translator = new Translator('en');
+        $translator->addLoader('array', new ArrayLoader());
+        $translator->addResource('array', ['restore.success' => 'Restored %nickname%', 'restore.not_pending_deletion' => 'Not pending: %nickname%'], 'en', 'nickserv');
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void { $messages[] = $message; });
+        $renderer = new IrcRenderer(new FixedStyleProvider(PresentationStyle::default()));
+        $sender = new SenderView('UID1', 'Oper', 'ident', 'host', 'cloak', 'ip');
+        $context = new NickServContext($sender, null, 'RESTORE', ['Target'], $notifier, $translator, 'en', 'UTC', 'NOTICE', new NickServCommandRegistry([]), new PendingVerificationRegistry(), new RecoveryTokenRegistry(), $this->createServiceNicks(), $renderer);
+        $command = new RestoreCommand($handler);
+        $command->execute($context);
+        $command->execute($context);
+        self::assertSame(["\x0303✔\x03\x0F Restored \x02Target\x03\x0F", "\x0304✗\x03\x0F Not pending: \x02Target\x03\x0F"], $messages);
     }
 
     /**

@@ -19,6 +19,7 @@ use App\NickServ\Application\UseCase\Identify\IdentifyNickOutcome;
 use App\NickServ\Application\UseCase\Identify\IdentifyNickResult;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 
 use function ceil;
 use function strcasecmp;
@@ -113,7 +114,7 @@ final readonly class IdentifyCommand implements NickServCommandInterface
         }
 
         if ($this->usesNativeAuthentication()) {
-            $context->reply('identify.native_authentication');
+            $context->replyNativeAuthentication();
 
             return null;
         }
@@ -148,33 +149,33 @@ final readonly class IdentifyCommand implements NickServCommandInterface
                 $this->handleSuccess($context, $result, $sender, $result->requireNickname());
                 break;
             case IdentifyNickOutcome::AlreadyIdentified:
-                $context->reply('identify.already_identified', ['nickname' => $result->nickname]);
+                $context->replyEmphasized('identify.already_identified', ['nickname' => $result->nickname], Role::Information, ['nickname']);
                 break;
             case IdentifyNickOutcome::LockedOut:
-                $context->reply('identify.locked_out', [
+                $context->replyEmphasized('identify.locked_out', [
                     'minutes' => (string) (int) ceil($result->retryAfterSeconds / 60),
-                ]);
+                ], Role::Error, ['minutes']);
                 break;
             case IdentifyNickOutcome::NotRegistered:
-                $context->reply('error.nick_not_registered', ['nickname' => $result->nickname]);
+                $context->replyMissingNick('error.nick_not_registered', $result->nickname ?? '');
                 break;
             case IdentifyNickOutcome::Pending:
-                $context->reply('identify.pending', ['nickname' => $result->nickname]);
+                $context->replyIdentifyPending($result->nickname);
                 break;
             case IdentifyNickOutcome::Suspended:
-                $context->reply('identify.suspended', [
+                $context->replyEmphasized('identify.suspended', [
                     'nickname' => $result->nickname,
                     'reason' => $result->reason ?? '',
-                ]);
+                ], Role::Error, ['nickname']);
                 break;
             case IdentifyNickOutcome::Forbidden:
-                $context->reply('identify.forbidden', ['nickname' => $result->nickname]);
+                $context->replyEmphasized('identify.forbidden', ['nickname' => $result->nickname], Role::Error, ['nickname']);
                 break;
             case IdentifyNickOutcome::PendingDeletion:
-                $context->reply('identify.pending_deletion', ['nickname' => $result->nickname]);
+                $context->replyEmphasized('identify.pending_deletion', ['nickname' => $result->nickname], Role::Error, ['nickname']);
                 break;
             case IdentifyNickOutcome::InvalidCredentials:
-                $context->reply('identify.invalid_credentials');
+                $context->replyEmphasized('identify.invalid_credentials', [], Role::Error, []);
                 break;
         }
     }
@@ -189,7 +190,7 @@ final readonly class IdentifyCommand implements NickServCommandInterface
                 $result->accountLanguage ?? '',
             );
             $context->getNotifier()->killUser($currentHolder->uid, $killReason);
-            $context->reply('identify.ghost_released', ['nickname' => $nickname]);
+            $context->replyEmphasized('identify.ghost_released', ['nickname' => $nickname], Role::Information, ['nickname']);
         }
 
         if (0 !== strcasecmp($sender->nick, $nickname) || $this->pendingRegistry->peek($sender->uid)) {
@@ -202,6 +203,6 @@ final readonly class IdentifyCommand implements NickServCommandInterface
             $context->getNotifier()->setUserVhost($sender->uid, $result->displayVhost, $sender->serverSid);
         }
 
-        $context->reply('identify.success', ['nickname' => $nickname]);
+        $context->replyEmphasized('identify.success', ['nickname' => $nickname], Role::Success, ['nickname']);
     }
 }
