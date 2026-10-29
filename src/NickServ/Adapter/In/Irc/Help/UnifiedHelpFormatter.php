@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\NickServ\Adapter\In\Irc\Help;
 
+use App\NickServ\Adapter\In\Irc\HelpFormatterContextAdapter;
+
 use function array_map;
 use function explode;
 use function implode;
@@ -221,7 +223,10 @@ final readonly class UnifiedHelpFormatter
             return [];
         }
 
-        $lines = [' ', $header, $this->addBotMessagePrefix($context, $example)];
+        $firstExample = 'identify.native_example' === $exampleKey && $context instanceof HelpFormatterContextAdapter && $context->usesHelpPresentation()
+            ? $context->renderNativeExample($example)
+            : $this->addBotMessagePrefix($context, $example);
+        $lines = [' ', $header, $firstExample];
         for ($index = 0;; ++$index) {
             $additionalExampleKey = $exampleKey . 's.' . $index;
             $additionalExample = $context->trans($additionalExampleKey);
@@ -248,6 +253,10 @@ final readonly class UnifiedHelpFormatter
         $prefixPlaceholder = '%command_prefix%';
         if (!str_contains($example, $prefixPlaceholder)) {
             return $example;
+        }
+
+        if ($context instanceof HelpFormatterContextAdapter && $context->usesHelpPresentation()) {
+            return $context->renderExample($example);
         }
 
         $example = str_replace($prefixPlaceholder, '/msg ' . $context->getBotName() . ' ', $example);

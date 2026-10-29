@@ -8,9 +8,16 @@ use App\NickServ\Adapter\In\Irc\Help\HelpableCommandInterface;
 use App\NickServ\Adapter\In\Irc\Help\HelpFormatterContextInterface;
 use App\NickServ\Application\Port\Out\NickServOperatorAccess;
 use App\NickServ\Application\Security\NickServPermission;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\Fragment;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 
+use function is_string;
+use function str_replace;
 use function str_starts_with;
+use function strlen;
 use function strtolower;
+use function substr;
 
 /**
  * Adapter that exposes HelpFormatterContextInterface from NickServContext.
@@ -49,7 +56,101 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
      */
     public function trans(string $key, array $params = []): string
     {
-        return $this->context->trans($key, $params);
+        if (!$this->context->hasHelpPresentation()) {
+            return $this->context->trans($key, $params);
+        }
+
+        $inline = [
+            'identify.help' => 1, 'identify.native_help' => 2, 'set.language.help' => 14, 'set.private.help' => 2,
+            'set.msg.help' => 4, 'set.vhost.help' => 1, 'regmode.help' => 3,
+        ];
+        if (isset($inline[$key])) {
+            for ($i = 0; $i < $inline[$key]; ++$i) {
+                $fragmentKey = 'help_fragments.' . str_replace('.', '_', $key) . '_' . $i;
+                $fragmentComponent = match ($key) {
+                    'identify.native_help' => Component::Command,
+                    'set.language.help' => Component::IndentedEmphasis,
+                    'regmode.help' => Component::BulletedRow,
+                    default => Component::Emphasis,
+                };
+                $params['emphasis_' . $i] = new Fragment($this->context->trans($fragmentKey), $fragmentComponent);
+            }
+
+            return $this->context->formatHelp(Component::Text, $key, $params);
+        }
+
+        if ('suspend.help' === $key) {
+            for ($i = 0; $i < 4; ++$i) {
+                $params['emphasis_' . $i] = new Fragment($this->context->trans('help_fragments.suspend_help_' . $i), Component::Command);
+            }
+
+            return $this->context->formatHelp(Component::Text, $key, $params);
+        }
+
+        if ('help.set_timezone.region_unknown' === $key) {
+            if (isset($params['syntax']) && is_string($params['syntax'])) {
+                $params['syntax'] = new Fragment($params['syntax'], Component::Command);
+            }
+
+            return $this->context->formatHelpRole(Role::Error, $key, $params);
+        }
+        if ('help.header' === $key) {
+            return $this->context->formatHelp(Component::Header, $key, $params) . ' ' . $this->context->helpSeparator();
+        }
+        if ('help.footer' === $key) {
+            return $this->context->helpSeparator();
+        }
+        $component = match ($key) {
+            'help.general_header', 'help.options_header', 'help.examples_header', 'help.ircop_header', 'help.set_timezone.region_header' => Component::Section,
+            'help.group_header', 'help.subgroup_header' => Component::Group,
+            'help.command_line', 'help.subcommand_line' => Component::CommandRow,
+            'help.general_footer', 'help.set_sub_footer' => Component::Navigation,
+            'help.syntax_label', 'help.set_timezone.index_label' => Component::Syntax,
+            default => null,
+        };
+        if (null === $component) {
+            return $this->context->trans($key, $params);
+        }
+        if (isset($params['command']) && is_string($params['command']) && Component::CommandRow === $component) {
+            $params['command'] = new Fragment($params['command'], Component::Command);
+        }
+        if (isset($params['syntax']) && is_string($params['syntax'])) {
+            $params['syntax'] = new Fragment($params['syntax'], Component::Command);
+        }
+
+        return $this->context->formatHelp($component, $key, $params);
+    }
+
+    public function renderExpiration(int $days): string
+    {
+        $duration = $this->context->trans('help.intro_expiration_duration', ['days' => $days]);
+
+        return $this->context->formatHelp(Component::ExpirationNotice, 'help.intro_expiration', [
+            'label' => $this->context->trans('help.intro_expiration_label'),
+            'duration' => new Fragment($duration, Component::Expiration),
+        ]);
+    }
+
+    public function usesHelpPresentation(): bool
+    {
+        return $this->context->hasHelpPresentation();
+    }
+
+    public function renderExample(string $example): string
+    {
+        $command = substr($example, strlen('%command_prefix%'));
+
+        return $this->context->formatHelpTemplate(Component::Example, '%prefix%%command%', [
+            'prefix' => '/msg ' . $this->getBotName() . ' ',
+            'command' => new Fragment($command, Component::Command),
+        ]);
+    }
+
+    public function renderNativeExample(string $example): string
+    {
+        return $this->context->formatHelpTemplate(Component::Example, '%command%', [
+            'command' => new Fragment($example, Component::Command),
+        ]);
     }
 
     public function getBotName(): string
