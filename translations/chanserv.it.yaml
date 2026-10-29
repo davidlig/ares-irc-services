@@ -478,6 +478,20 @@ devoice:
   help: "Rimuove la modalità voice nel canale."
   done: "\x0303✔\x03 \x02%nickname%\x02 è stato devoicato."
 
+# --- UNBAN -----------------------------------------------------------------
+unban:
+  syntax: "UNBAN <#channel>"
+  example: "%command_prefix%\x02\x0303UNBAN #channel\x03\x0F"
+  short: "Rimuovi i ban che ti riguardano."
+  help: |-
+    Rimuove tutti i ban ordinari del canale corrispondenti alla tua identità attuale, inclusi caratteri jolly e maschere IP/CIDR, secondo l’IRCd.
+    Richiede identificazione e il livello UNBAN configurabile (predefinito 200). Il fondatore mantiene l’accesso; non occorre essere nel canale né esserne operatore.
+    I ban estesi restano invariati. Non accetta nickname o maschere come argomento. L’azione non viene registrata nella HISTORY del canale.
+  done: "Rimossi %count% ban che ti riguardano in %channel%."
+  no_matches: "Nessun ban ordinario corrisponde alla tua identità in %channel%; nessuna modifica."
+  unavailable: "Impossibile determinare i ban corrispondenti alla tua identità; nessuna modifica."
+  not_on_network: "Il canale %channel% non è presente sulla rete."
+
 # --- INVITE ----------------------------------------------------------------
 invite:
   syntax: "INVITE <#canale>"

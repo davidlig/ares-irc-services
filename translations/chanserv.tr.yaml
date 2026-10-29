@@ -473,6 +473,20 @@ devoice:
   help: "Kanaldaki voice modunu kaldırın."
   done: "\x0303✔\x03 \x02%nickname%\x02 adlı kullanıcının voice'u alındı."
 
+# --- UNBAN -----------------------------------------------------------------
+unban:
+  syntax: "UNBAN <#channel>"
+  example: "%command_prefix%\x02\x0303UNBAN #channel\x03\x0F"
+  short: "Sizi etkileyen yasakları kaldırır."
+  help: |-
+    IRCd kurallarına göre mevcut kimliğinizle eşleşen tüm normal kanal yasaklarını, joker karakterler ve IP/CIDR maskeleri dahil kaldırır.
+    Kimlik doğrulaması ve yapılandırılabilir UNBAN seviyesi (varsayılan 200) gereklidir. Kurucu erişimini korur; kanalda bulunmak veya operatör olmak gerekmez.
+    Genişletilmiş yasaklar değişmez. Argüman olarak rumuz veya maske kabul etmez. İşlem kanal HISTORY kaydına eklenmez.
+  done: "%channel% kanalında sizi etkileyen %count% yasak kaldırıldı."
+  no_matches: "%channel% kanalında kimliğinizle eşleşen normal yasak yok; hiçbir şey değiştirilmedi."
+  unavailable: "Eşleşen yasaklarınız belirlenemedi; hiçbir şey değiştirilmedi."
+  not_on_network: "%channel% kanalı ağda bulunmuyor."
+
 # --- INVITE ----------------------------------------------------------------
 invite:
   syntax: "INVITE <#channel>"

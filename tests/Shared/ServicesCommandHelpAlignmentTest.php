@@ -142,7 +142,7 @@ final class ServicesCommandHelpAlignmentTest extends TestCase
         }
 
         self::assertSame([], $missingKeys, sprintf('Missing translation keys found: %s', implode(', ', $missingKeys)));
-        self::assertSame(73, $totalCommands, 'Expected exactly 73 registered service commands across all 4 services.');
+        self::assertSame(74, $totalCommands, 'Expected exactly 74 registered service commands across all 4 services.');
     }
 
     #[Test]
@@ -201,7 +201,7 @@ final class ServicesCommandHelpAlignmentTest extends TestCase
                 }
             }
         }
-        self::assertSame(73, $total);
+        self::assertSame(74, $total);
     }
 
     #[Test]

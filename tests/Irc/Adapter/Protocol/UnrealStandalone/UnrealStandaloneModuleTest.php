@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Tests\Irc\Adapter\Protocol\UnrealStandalone;
 
 use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
+use App\Irc\Adapter\Protocol\ChannelBanMatcherProvider;
+use App\Irc\Adapter\Protocol\UnrealStandalone\UnrealStandaloneChannelBanMatcher;
 use App\Irc\Adapter\Protocol\UnrealStandalone\UnrealStandaloneChannelModeSupport;
 use App\Irc\Adapter\Protocol\UnrealStandalone\UnrealStandaloneModule;
 use App\Irc\Adapter\Protocol\UnrealStandalone\UnrealStandaloneNickReservation;
@@ -16,6 +18,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
+
+use function class_implements;
 
 #[CoversClass(UnrealStandaloneModule::class)]
 final class UnrealStandaloneModuleTest extends TestCase
@@ -75,6 +79,13 @@ final class UnrealStandaloneModuleTest extends TestCase
         $module = $this->createModule();
 
         self::assertInstanceOf(UnrealStandaloneUserModeSupport::class, $module->getUserModeSupport());
+    }
+
+    public function testProvidesOrdinaryBanMatcher(): void
+    {
+        $module = $this->createModule();
+        self::assertContains(ChannelBanMatcherProvider::class, class_implements($module));
+        self::assertInstanceOf(UnrealStandaloneChannelBanMatcher::class, $module->getChannelBanMatcher());
     }
 
     private function createModule(): UnrealStandaloneModule

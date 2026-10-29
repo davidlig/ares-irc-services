@@ -479,6 +479,20 @@ devoice:
   help: "Retirer le mode voice dans le canal."
   done: "\x0303✔\x03 \x02%nickname%\x02 a été dévoicé."
 
+# --- UNBAN -----------------------------------------------------------------
+unban:
+  syntax: "UNBAN <#channel>"
+  example: "%command_prefix%\x02\x0303UNBAN #channel\x03\x0F"
+  short: "Retirer les bannissements qui vous affectent."
+  help: |-
+    Retire tous les bannissements ordinaires du canal correspondant à votre identité actuelle, y compris les jokers et les masques IP/CIDR, selon l’IRCd.
+    L’identification et le niveau UNBAN configurable (200 par défaut) sont requis. Le fondateur conserve son accès ; ni présence ni statut d’opérateur dans le canal ne sont nécessaires.
+    Les bannissements étendus restent inchangés. Aucun pseudo ou masque n’est accepté en argument. L’action n’est pas enregistrée dans l’HISTORY du canal.
+  done: "%count% bannissement(s) vous affectant retiré(s) de %channel%."
+  no_matches: "Aucun bannissement ordinaire ne correspond à votre identité dans %channel% ; rien n’a changé."
+  unavailable: "Impossible de déterminer vos bannissements correspondants ; rien n’a changé."
+  not_on_network: "Le canal %channel% n’est pas sur le réseau."
+
 # --- INVITE ----------------------------------------------------------------
 invite:
   syntax: "INVITE <#canal>"

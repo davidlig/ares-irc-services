@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\Protocol\UnrealUdb;
 
+use App\Irc\Adapter\Protocol\ChannelBanMatcher;
+use App\Irc\Adapter\Protocol\ChannelBanMatcherProvider;
 use App\Irc\Adapter\Protocol\ProtocolHandlerInterface;
 use App\Irc\Adapter\Protocol\RawCommandInterception;
 use App\Irc\Adapter\Protocol\RawCommandInterceptorInterface;
@@ -19,7 +21,7 @@ use App\Irc\Application\Port\In\UserModeSupportInterface;
 /**
  * UnrealUdb protocol module: handler, service actions, mode support, nick reservation, and RAW interception.
  */
-final readonly class UnrealUdbModule implements ProtocolRuntimeModuleInterface, NativeNicknameAuthenticationInterface, NickChangePreservesIdentificationInterface, RawCommandInterceptorInterface, OperatorOnlyModeManagedByOptions
+final readonly class UnrealUdbModule implements ProtocolRuntimeModuleInterface, ChannelBanMatcherProvider, NativeNicknameAuthenticationInterface, NickChangePreservesIdentificationInterface, RawCommandInterceptorInterface, OperatorOnlyModeManagedByOptions
 {
     public const string PROTOCOL_NAME = 'unrealudb';
 
@@ -65,5 +67,10 @@ final readonly class UnrealUdbModule implements ProtocolRuntimeModuleInterface, 
     public function intercept(array $arguments): RawCommandInterception
     {
         return $this->rawCommandInterceptor->intercept($arguments);
+    }
+
+    public function getChannelBanMatcher(): ChannelBanMatcher
+    {
+        return new UnrealUdbChannelBanMatcher();
     }
 }

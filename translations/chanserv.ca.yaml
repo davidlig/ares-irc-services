@@ -474,6 +474,20 @@ devoice:
   help: "Treure el mode de veu al canal."
   done: "\x0303✔\x03 A \x02%nickname%\x02 se li ha tret la veu."
 
+# --- UNBAN -----------------------------------------------------------------
+unban:
+  syntax: "UNBAN <#channel>"
+  example: "%command_prefix%\x02\x0303UNBAN #channel\x03\x0F"
+  short: "Retirar els bans que t’afecten."
+  help: |-
+    Retira tots els bans ordinaris del canal que coincideixen amb la teva identitat actual, inclosos comodins i màscares IP/CIDR, segons l’IRCd.
+    Cal identificació i el nivell UNBAN configurable (200 per defecte). El fundador conserva l’accés; no cal ser membre ni operador del canal.
+    Els bans estesos no canvien. No accepta cap sobrenom ni màscara com a argument. L’acció no es registra a l’HISTORY del canal.
+  done: "S’han retirat %count% ban(s) que t’afecten a %channel%."
+  no_matches: "Cap ban ordinari coincideix amb la teva identitat a %channel%; no s’ha canviat res."
+  unavailable: "No s’han pogut determinar els bans que et corresponen; no s’ha canviat res."
+  not_on_network: "El canal %channel% no és a la xarxa."
+
 # --- INVITE ----------------------------------------------------------------
 invite:
   syntax: "INVITE <#channel>"

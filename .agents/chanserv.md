@@ -25,7 +25,7 @@ change is deliberately specified and tested.
 - LEVELS accepts values from `-1` through `499`. Removing/resetting an override restores its
   default; it does not materialize defaults in persistence.
 - Defaults are: `AUTOADMIN=400`, `AUTOOP=300`, `AUTOHALFOP=200`, `AUTOVOICE=100`, `SET=499`,
-  `ADMINDEADMIN=400`, `OPDEOP=300`, `HALFOPDEHALFOP=200`, `VOICEDEVOICE=100`, `INVITE=200`,
+  `ADMINDEADMIN=400`, `OPDEOP=300`, `HALFOPDEHALFOP=200`, `VOICEDEVOICE=100`, `INVITE=200`, `UNBAN=200`,
   `ACCESSLIST=400`, `ACCESSCHANGE=499`, `MEMOREAD=200`, `MEMOCHANGE=300`, `AKICK=450`, and
   `NOJOIN=-1`.
 - Desired automatic rank is the highest supported rank whose threshold is met, in this order:

@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace App\Tests\Irc\Adapter\Protocol\UnrealUdb;
 
 use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
+use App\Irc\Adapter\Protocol\ChannelBanMatcherProvider;
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbBlockStateRepositoryInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbRecordMutationStoreInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbRecordRepositoryInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionCoordinator;
+use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbChannelBanMatcher;
 use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbChannelModeSupport;
 use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbModule;
 use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbNickReservation;
@@ -137,6 +139,13 @@ final class UnrealUdbModuleTest extends TestCase
 
         self::assertSame('DB INS', $module->intercept(['DB', '*', 'INS', 'S::propagator', 'hub.example'])->operation);
         self::assertSame('DB DEL', $module->intercept(['DB', '*', 'DEL', 'N::nick'])->operation);
+    }
+
+    public function testProvidesOrdinaryBanMatcher(): void
+    {
+        $module = $this->createModule();
+        self::assertContains(ChannelBanMatcherProvider::class, class_implements($module));
+        self::assertInstanceOf(UnrealUdbChannelBanMatcher::class, $module->getChannelBanMatcher());
     }
 
     private function createModule(): UnrealUdbModule

@@ -79,7 +79,7 @@ final class ChannelAccessPolicyTest extends TestCase
         $expected = [
             'AUTOADMIN' => 400, 'AUTOOP' => 300, 'AUTOHALFOP' => 200, 'AUTOVOICE' => 100,
             'SET' => 499, 'ADMINDEADMIN' => 400, 'OPDEOP' => 300, 'HALFOPDEHALFOP' => 200,
-            'VOICEDEVOICE' => 100, 'INVITE' => 200, 'ACCESSLIST' => 400, 'ACCESSCHANGE' => 499,
+            'VOICEDEVOICE' => 100, 'INVITE' => 200, 'UNBAN' => 200, 'ACCESSLIST' => 400, 'ACCESSCHANGE' => 499,
             'MEMOREAD' => 200, 'MEMOCHANGE' => 300, 'AKICK' => 450, 'NOJOIN' => -1,
         ];
         $levels = ChannelLevelSet::defaults();

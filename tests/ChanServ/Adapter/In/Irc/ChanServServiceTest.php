@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\ChanServ\Adapter\In\Irc;
 
 use App\Bootstrap\Adapter\Out\Translation\IrcYamlTranslationLoader;
+use App\ChanServ\Adapter\In\Event\ChanServHistorySubscriber;
 use App\ChanServ\Adapter\In\Irc\ChanAuthorizationCheckerInterface as AuthorizationCheckerInterface;
 use App\ChanServ\Adapter\In\Irc\ChanAuthorizationContextInterface as AuthorizationContextInterface;
 use App\ChanServ\Adapter\In\Irc\ChanServCommandInterface;
@@ -15,14 +16,24 @@ use App\ChanServ\Adapter\In\Irc\ChanServService;
 use App\ChanServ\Adapter\In\Irc\ChanServUserPresentationPreferences;
 use App\ChanServ\Adapter\In\Irc\Command\AccessCommand;
 use App\ChanServ\Adapter\In\Irc\Command\ListCommand;
+use App\ChanServ\Adapter\In\Irc\Command\UnbanCommand;
 use App\ChanServ\Application\Model\ChanAccountView;
+use App\ChanServ\Application\Model\ChannelBanSnapshot;
+use App\ChanServ\Application\Port\Out\ChannelAccessRepositoryInterface;
+use App\ChanServ\Application\Port\Out\ChannelBanActions;
+use App\ChanServ\Application\Port\Out\ChannelBanNetworkQuery;
+use App\ChanServ\Application\Port\Out\ChannelHistoryRepositoryInterface;
+use App\ChanServ\Application\Port\Out\ChannelLevelRepositoryInterface;
 use App\ChanServ\Application\Port\Out\ChanUserAccountPort;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\Security\ChanServPermission;
+use App\ChanServ\Application\Service\ChannelHistoryService;
+use App\ChanServ\Application\Service\ChanServAccessHelper;
 use App\ChanServ\Application\UseCase\List\ListRegisteredChannels;
 use App\ChanServ\Application\UseCase\List\ListRegisteredChannelsHandlerInterface;
 use App\ChanServ\Application\UseCase\List\ListRegisteredChannelsResult;
 use App\ChanServ\Application\UseCase\ManageAccess\ManageChannelAccessHandlerInterface;
+use App\ChanServ\Application\UseCase\Unban\UnbanChannelHandler;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\Exception\ChannelAlreadyRegisteredException;
 use App\ChanServ\Domain\Exception\ChannelNotRegisteredException;
@@ -48,6 +59,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\Translation\Translator;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -3554,6 +3566,68 @@ final class ChanServServiceTest extends TestCase
         self::assertSame('#test', $record->target);
         self::assertSame('ident@host', $record->targetHost);
         self::assertSame('!!invalid-base64!!', $record->targetIp);
+    }
+
+    #[Test]
+    public function routesUnbanWithIdentificationAndStrictSelfOnlyArguments(): void
+    {
+        $account = $this->createStub(ChanUserAccountPort::class);
+        $account->method('findAccountByNick')->willReturn(new ChanAccountView(1, 'Alice', 'en'));
+        $channel = $this->createStub(RegisteredChannel::class);
+        $channel->method('isFounder')->willReturn(true);
+        $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channels->method('findByChannelName')->willReturn($channel);
+        $network = $this->createMock(ChannelBanNetworkQuery::class);
+        $network->expects(self::exactly(2))->method('findMatchingBans')->with('#test', '001AAA')->willReturnOnConsecutiveCalls(
+            new ChannelBanSnapshot(true, ['*!*@host', 'Alice!*@*'], 123),
+            new ChannelBanSnapshot(true, [], 123),
+        );
+        $actions = $this->createMock(ChannelBanActions::class);
+        $actions->expects(self::once())->method('removeBans')->with('#test', ['*!*@host', 'Alice!*@*'], 123);
+        $handler = new UnbanChannelHandler(
+            $channels,
+            new ChanServAccessHelper($this->createStub(ChannelAccessRepositoryInterface::class), $this->createStub(ChannelLevelRepositoryInterface::class)),
+            $network,
+            $actions,
+        );
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $uid, string $message) use (&$messages): void { $messages[] = $message; });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $key): string => $key);
+        $modeSupport = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
+        $modeSupport->method('getSupport')->willReturn($this->createStub(ChannelModeSupportInterface::class));
+        $authorization = $this->createStub(AuthorizationCheckerInterface::class);
+        $authorization->method('isGranted')->willReturnCallback(static fn (string $permission, ChanServContext $context): bool => 'IDENTIFIED' === $permission && $context->isSenderIdentified());
+        $events = $this->createMock(EventBusInterface::class);
+        $history = $this->createMock(ChannelHistoryRepositoryInterface::class);
+        $history->expects(self::never())->method('save');
+        $dispatcher = new EventDispatcher();
+        $dispatcher->addSubscriber(new ChanServHistorySubscriber(new ChannelHistoryService($history), $account));
+        $events->expects(self::exactly(4))->method('dispatch')->with(self::isInstanceOf(CommandExecutedEvent::class))->willReturnCallback(static function (object $event) use ($dispatcher): void { $dispatcher->dispatch($event); });
+        $service = $this->createChanServService(
+            new ChanServCommandRegistry([new UnbanCommand($handler)]),
+            $channels,
+            $account,
+            $notifier,
+            $this->createPreferences(),
+            $translator,
+            $this->createStub(ChannelLookupPort::class),
+            $modeSupport,
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
+            authorizationChecker: $authorization,
+            eventDispatcher: $events,
+        );
+        $unidentified = new SenderView('001AAA', 'Alice', 'i', 'h', 'c', '*');
+        $identified = new SenderView('001AAA', 'Alice', 'i', 'h', 'c', '*', true);
+        $service->dispatch('UNBAN #test', $unidentified);
+        $service->dispatch('UNBAN', $identified);
+        $service->dispatch('UNBAN #test Bob', $identified);
+        $service->dispatch('UNBAN #test *!*@*', $identified);
+        $service->dispatch('UNBAN #test', $identified);
+        $service->dispatch('UNBAN #test', $identified);
+        self::assertSame(['error.not_identified', 'error.syntax', 'error.syntax', 'error.syntax', 'unban.done', 'unban.no_matches'], $messages);
     }
 
     private function createServiceNicks(): ServiceNicknameRegistry

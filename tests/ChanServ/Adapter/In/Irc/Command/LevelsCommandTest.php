@@ -34,8 +34,12 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function array_filter;
+use function array_values;
 use function count;
+use function implode;
 use function is_string;
+use function json_encode;
 use function str_contains;
 
 #[CoversTrait(ChanServArgumentDefinitionSupport::class)]
@@ -727,6 +731,55 @@ final class LevelsCommandTest extends TestCase
         ));
 
         self::assertFalse($cmd->allowsForbiddenChannel());
+    }
+
+    #[Test]
+    public function unbanUsesExistingLevelStorageAndResetDefaults(): void
+    {
+        $channel = $this->createStub(RegisteredChannel::class);
+        $channel->method('getId')->willReturn(1);
+        $channel->method('isFounder')->willReturn(true);
+        $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channels->method('findByChannelName')->willReturn($channel);
+        $state = new class {
+            /** @var array<string, ChannelLevel> */
+            public array $stored = [];
+
+            /** @var list<string> */
+            public array $messages = [];
+        };
+        $levels = $this->createMock(ChannelLevelRepositoryInterface::class);
+        $levels->method('listByChannel')->willReturnCallback(static function () use ($state): array { return array_values($state->stored); });
+        $levels->method('findByChannelAndKey')->willReturnCallback(static function (int $id, string $key) use ($state): ?ChannelLevel { return $state->stored[$key] ?? null; });
+        $levels->expects(self::once())->method('save')->willReturnCallback(static function (ChannelLevel $level) use ($state): void { $state->stored[$level->getLevelKey()] = $level; });
+        $levels->expects(self::once())->method('removeAllForChannel')->with(1)->willReturnCallback(static function () use ($state): void { $state->stored = []; });
+        $state->messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $uid, string $message) use ($state): void { $state->messages[] = $message; });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $key, array $parameters): string => $key . ' ' . json_encode($parameters));
+        $command = new LevelsCommand(new ManageChannelLevelsHandler($channels, $levels, $this->historyService()));
+        $sender = new SenderView('001AAA', 'Alice', 'i', 'h', 'c', '*', true);
+        $account = new ChanAccountView(1, 'Alice', 'en');
+        $command->execute($this->createContext($sender, $account, ['#test', 'LIST'], $notifier, $translator));
+        self::assertStringContainsString('UNBAN', implode(' ', $state->messages));
+        self::assertUnbanLevelListed($state->messages, 200);
+        $command->execute($this->createContext($sender, $account, ['#test', 'SET', 'UNBAN', '300'], $notifier, $translator));
+        self::assertSame(300, $state->stored['UNBAN']->getValue());
+        $state->messages = [];
+        $command->execute($this->createContext($sender, $account, ['#test', 'LIST'], $notifier, $translator));
+        self::assertUnbanLevelListed($state->messages, 300);
+        $command->execute($this->createContext($sender, $account, ['#test', 'RESET'], $notifier, $translator));
+        self::assertSame([], $state->stored);
+        $state->messages = [];
+        $command->execute($this->createContext($sender, $account, ['#test', 'LIST'], $notifier, $translator));
+        self::assertUnbanLevelListed($state->messages, 200);
+    }
+
+    /** @param list<string> $messages */
+    private static function assertUnbanLevelListed(array $messages, int $value): void
+    {
+        self::assertNotEmpty(array_filter($messages, static fn (string $message): bool => str_contains($message, 'UNBAN') && str_contains($message, (string) $value)));
     }
 
     /** @param array<string> $args */
