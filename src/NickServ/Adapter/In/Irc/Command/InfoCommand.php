@@ -14,6 +14,11 @@ use App\NickServ\Application\UseCase\Info\InfoNickResult;
 use App\NickServ\Domain\ValueObject\NickStatus;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\Fragment;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
+
+use function substr;
 
 final readonly class InfoCommand implements NickServCommandInterface
 {
@@ -109,120 +114,130 @@ final readonly class InfoCommand implements NickServCommandInterface
     private function present(NickServContext $context, InfoNickResult $result): void
     {
         match ($result->outcome) {
-            InfoNickOutcome::NotRegistered => $context->reply('error.nick_not_registered', ['nickname' => $result->nickname]),
+            InfoNickOutcome::NotRegistered => $context->replyMissingNick('error.nick_not_registered', $result->nickname),
             InfoNickOutcome::Forbidden => $this->presentForbidden($context, $result),
             InfoNickOutcome::PendingDeletion => $this->presentPendingDeletion($context, $result),
-            InfoNickOutcome::Private => $context->reply('info.private', ['nickname' => $result->nickname]),
+            InfoNickOutcome::Private => $context->reply('info.private', ['nickname' => new Fragment($result->nickname, Component::Emphasis)], Role::Error),
             InfoNickOutcome::Visible => $this->presentVisible($context, $result),
         };
     }
 
     private function presentForbidden(NickServContext $context, InfoNickResult $result): void
     {
-        $context->reply('info.header', ['nickname' => $result->nickname]);
-        $context->reply('info.status', ['status' => $context->trans('info.status_forbidden')]);
+        $context->replyComponent(Component::TableHeader, 'info.header', ['nickname' => new Fragment($result->nickname, Component::Status)]);
+        $context->replyComponent(Component::IndentedRow, 'info.status', ['status' => new Fragment($context->trans('info.status_forbidden'), Component::Danger)], ['label' => ['info.label_status', Component::Label]]);
         if (null !== $result->reason) {
-            $context->reply('info.reason', ['reason' => $result->reason]);
+            $context->replyComponent(Component::IndentedRow, 'info.reason', ['reason' => $result->reason], ['label' => ['info.label_reason', Component::Label]]);
         }
-        $context->reply('reply.separator');
+        $context->replySeparator();
     }
 
     private function presentPendingDeletion(NickServContext $context, InfoNickResult $result): void
     {
-        $context->reply('info.header', ['nickname' => $result->nickname]);
-        $context->reply('info.status', ['status' => $context->trans('info.status_pending_deletion')]);
+        $context->replyComponent(Component::TableHeader, 'info.header', ['nickname' => new Fragment($result->nickname, Component::Status)]);
+        $context->replyComponent(Component::IndentedRow, 'info.status', ['status' => new Fragment($context->trans('info.status_pending_deletion'), Component::Status)], ['label' => ['info.label_status', Component::Label]]);
         if (null !== $result->pendingDeletionAt) {
-            $context->reply('info.pending_deletion_at', ['date' => $context->formatDate($result->pendingDeletionAt)]);
+            $this->replyInfoRow($context, 'info.pending_deletion_at', ['date' => $context->formatDate($result->pendingDeletionAt)]);
         }
         if (null !== $result->deletionExpiresAt) {
-            $context->reply('info.pending_deletion_until', ['date' => $context->formatDate($result->deletionExpiresAt)]);
+            $this->replyInfoRow($context, 'info.pending_deletion_until', ['date' => $context->formatDate($result->deletionExpiresAt)]);
         }
-        $context->reply('info.pending_deletion_notice');
-        $context->reply('reply.separator');
+        $context->replyComponent(Component::IndentedRow, 'info.pending_deletion_notice', [], ['notice' => ['info.value_pending_deletion_notice', Component::Status]]);
+        $context->replySeparator();
     }
 
     private function presentVisible(NickServContext $context, InfoNickResult $result): void
     {
-        $context->reply('info.header', ['nickname' => $result->nickname]);
+        $context->replyComponent(Component::TableHeader, 'info.header', ['nickname' => new Fragment($result->nickname, Component::Status)]);
 
         $statusKey = NickStatus::Suspended === $result->status ? 'info.status_suspended' : 'info.status_registered';
-        $context->reply('info.status', ['status' => $context->trans($statusKey)]);
+        $context->replyComponent(Component::IndentedRow, 'info.status', ['status' => new Fragment($context->trans($statusKey), NickStatus::Suspended === $result->status ? Component::Danger : Component::Positive)], ['label' => ['info.label_status', Component::Label]]);
 
         if (NickStatus::Suspended === $result->status && null !== $result->suspendedReason) {
-            $context->reply('info.reason', ['reason' => $result->suspendedReason]);
+            $context->replyComponent(Component::IndentedRow, 'info.reason', ['reason' => $result->suspendedReason], ['label' => ['info.label_reason', Component::Label]]);
         }
 
         if (NickStatus::Suspended === $result->status) {
             if (null !== $result->suspendedUntil) {
-                $context->reply('info.suspended_until', ['date' => $context->formatDate($result->suspendedUntil)]);
+                $this->replyInfoRow($context, 'info.suspended_until', ['date' => $context->formatDate($result->suspendedUntil)]);
             } else {
-                $context->reply('info.suspended_permanent');
+                $this->replyInfoRow($context, 'info.suspended_permanent');
             }
         }
 
         if (null !== $result->registeredAt) {
-            $context->reply('info.registered_at', [
+            $this->replyInfoRow($context, 'info.registered_at', [
                 'date' => $context->formatDate($result->registeredAt),
             ]);
         }
 
         if ($result->lastSeenOnline) {
-            $context->reply('info.last_seen_online');
+            $context->replyComponent(Component::IndentedRow, 'info.last_seen_online', [], [
+                'label' => ['info.label_last_seen_online', Component::Label],
+                'online' => ['info.value_last_seen_online', Component::Online],
+            ]);
         } elseif (null !== $result->lastSeenAt) {
-            $context->reply('info.last_seen_at', [
+            $this->replyInfoRow($context, 'info.last_seen_at', [
                 'date' => $context->formatDate($result->lastSeenAt),
             ]);
         } else {
-            $context->reply('info.last_seen_never');
+            $this->replyInfoRow($context, 'info.last_seen_never');
         }
 
         if (null !== $result->lastQuitMessage) {
-            $context->reply('info.last_quit', ['message' => $result->lastQuitMessage]);
+            $this->replyInfoRow($context, 'info.last_quit', ['message' => $result->lastQuitMessage]);
         }
 
         if (null !== $result->lastConnectIp || null !== $result->lastConnectHost) {
-            $context->reply('info.last_connect', [
+            $this->replyInfoRow($context, 'info.last_connect', [
                 'ip' => $result->lastConnectIp ?? '*',
                 'host' => $result->lastConnectHost ?? '*',
             ]);
         }
 
         if (null !== $result->language) {
-            $context->reply('info.language', ['language' => $result->language]);
+            $this->replyInfoRow($context, 'info.language', ['language' => $result->language]);
         }
 
         if ($result->isOwnerIdentified && null !== $result->email) {
-            $context->reply('info.email', ['email' => $result->email]);
+            $this->replyInfoRow($context, 'info.email', ['email' => $result->email]);
         }
 
         if ('' !== $result->displayVhost) {
-            $context->reply('info.vhost', ['vhost' => $result->displayVhost]);
+            $this->replyInfoRow($context, 'info.vhost', ['vhost' => $result->displayVhost]);
         }
 
         if ($result->isNoExpire) {
-            $context->reply('info.no_expire');
+            $this->replyInfoRow($context, 'info.no_expire');
         }
 
         if ($result->isOwnerIdentified && [] !== $result->channels) {
-            $context->reply('info.channels_header');
+            $context->replyComponent(Component::Muted, 'info.channels_header');
             foreach ($result->channels as $channel) {
                 if ('access' === $channel->type) {
-                    $context->reply('info.channels_entry_access', [
+                    $context->replyComponent(Component::IndentedRow, 'info.channels_entry_access', [
                         'channel' => $channel->name,
                         'level' => $channel->level,
                     ]);
                 } elseif ('founder' === $channel->type) {
-                    $context->reply('info.channels_entry_founder', [
+                    $context->replyComponent(Component::IndentedRow, 'info.channels_entry_founder', [
                         'channel' => $channel->name,
-                    ]);
+                    ], ['role' => ['info.channels_role_founder', Component::Positive]]);
                 } elseif ('successor' === $channel->type) {
-                    $context->reply('info.channels_entry_successor', [
+                    $context->replyComponent(Component::IndentedRow, 'info.channels_entry_successor', [
                         'channel' => $channel->name,
-                    ]);
+                    ], ['role' => ['info.channels_role_successor', Component::Positive]]);
                 }
             }
         }
 
-        $context->reply('reply.separator');
+        $context->replySeparator();
+    }
+
+    /** @param array<string, mixed> $params */
+    private function replyInfoRow(NickServContext $context, string $key, array $params = []): void
+    {
+        $labelKey = 'info.label_' . substr($key, 5);
+        $context->replyComponent(Component::IndentedRow, $key, $params, ['label' => [$labelKey, Component::Label]]);
     }
 }

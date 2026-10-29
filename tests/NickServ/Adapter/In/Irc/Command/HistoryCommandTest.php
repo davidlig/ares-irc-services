@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Adapter\In\Irc\Command;
 
+use App\Bootstrap\Adapter\Out\Translation\IrcYamlTranslationLoader;
 use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
 use App\Irc\Application\Port\In\ServiceNicknameRegistry;
@@ -20,14 +21,20 @@ use App\NickServ\Application\UseCase\History\HistoryNickAction;
 use App\NickServ\Application\UseCase\History\HistoryNickHandlerInterface;
 use App\NickServ\Application\UseCase\History\HistoryNickResult;
 use App\NickServ\Application\UseCase\History\NickHistoryEntryView;
+use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Stringable;
+use Symfony\Component\Translation\Loader\ArrayLoader;
+use Symfony\Component\Translation\Translator;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function base64_encode;
+use function dirname;
 use function implode;
 use function inet_pton;
 use function is_scalar;
@@ -347,6 +354,46 @@ final class HistoryCommandTest extends TestCase
         $messages = [];
         $command->execute($this->createContext($sender, $messages, ['Target', 'clear']));
         self::assertSame(['history.del.invalid_id [%id%: abc]'], $messages);
+    }
+
+    #[Test]
+    public function historyViewUsesStructuredHeaderActionAndNavigation(): void
+    {
+        $handler = $this->createStub(HistoryNickHandlerInterface::class);
+        $handler->method('handle')->willReturn(HistoryNickResult::viewSuccess('Alice', [new NickHistoryEntryView(1, new DateTimeImmutable('2026-01-01 UTC'), 'NOTE', 'Oper', null, true, '%nickname%')], 1, 1, 2, 1, 2, false));
+        $translator = new Translator('es');
+        $translator->addLoader('yaml', new IrcYamlTranslationLoader());
+        $translator->addResource('yaml', dirname(__DIR__, 6) . '/translations/nickserv.es.yaml', 'es', 'nickserv');
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void { $messages[] = $message; });
+        $renderer = new IrcRenderer(new FixedStyleProvider(PresentationStyle::default()));
+        $context = new NickServContext(new SenderView('UID1', 'Oper', 'i', 'h', 'c', 'ip'), null, 'HISTORY', ['Alice', 'VIEW'], $notifier, $translator, 'es', 'UTC', 'NOTICE', new NickServCommandRegistry([]), new PendingVerificationRegistry(), new RecoveryTokenRegistry(), $this->createServiceNicks(), $renderer);
+        new HistoryCommand($handler, $this->clock())->execute($context);
+        self::assertStringContainsString("\x0307Alice\x03\x0F", $messages[0]);
+        self::assertStringContainsString("\x0303NOTE\x03\x0F", $messages[1]);
+        self::assertStringContainsString('%nickname%', $messages[1]);
+        self::assertStringContainsString("\x02\x0303HISTORY Alice VIEW 2\x03\x0F", $messages[2]);
+    }
+
+    #[Test]
+    public function deleteOutcomesApplyExplicitRolesAndEmphasizeIds(): void
+    {
+        $handler = $this->createStub(HistoryNickHandlerInterface::class);
+        $handler->method('handle')->willReturn(HistoryNickResult::delSuccess('Target', 42));
+        $translator = new Translator('en');
+        $translator->addLoader('array', new ArrayLoader());
+        $translator->addResource('array', ['history.del.success' => 'Deleted %id%', 'history.del.invalid_id' => 'Invalid %id%'], 'en', 'common');
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void { $messages[] = $message; });
+        $renderer = new IrcRenderer(new FixedStyleProvider(PresentationStyle::default()));
+        $sender = new SenderView('UID1', 'Oper', 'ident', 'host', 'cloak', 'ip');
+        $context = new NickServContext($sender, null, 'HISTORY', ['Target', 'DEL', '42'], $notifier, $translator, 'en', 'UTC', 'NOTICE', new NickServCommandRegistry([]), new PendingVerificationRegistry(), new RecoveryTokenRegistry(), $this->createServiceNicks(), $renderer);
+        new HistoryCommand($handler, $this->clock())->execute($context);
+        $context = new NickServContext($sender, null, 'HISTORY', ['Target', 'DEL', '0'], $notifier, $translator, 'en', 'UTC', 'NOTICE', new NickServCommandRegistry([]), new PendingVerificationRegistry(), new RecoveryTokenRegistry(), $this->createServiceNicks(), $renderer);
+        new HistoryCommand($handler, $this->clock())->execute($context);
+        self::assertSame(["\x0303✔\x03\x0F Deleted \x0242\x03\x0F", "\x0304✗\x03\x0F Invalid \x020\x03\x0F"], $messages);
     }
 
     /**

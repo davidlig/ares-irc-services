@@ -18,6 +18,9 @@ use App\NickServ\Domain\ValueObject\NickStatus;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentValidator;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\Fragment;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 
 use function ceil;
 use function filter_var;
@@ -128,10 +131,10 @@ final readonly class ListCommand implements NickServCommandInterface, IrcopAudit
 
     private function present(NickServContext $context, ListNickAccountsResult $result): void
     {
-        $context->reply('list.header');
+        $context->replyComponent(Component::TableHeader, 'list.header');
 
         if ([] === $result->entries && 0 === $result->total) {
-            $context->reply('list.empty', ['pattern' => $result->pattern]);
+            $context->reply('list.empty', ['pattern' => new Fragment($result->pattern, Component::Emphasis)], Role::Information);
         } elseif ([] !== $result->entries) {
             foreach ($result->entries as $entry) {
                 $this->presentEntry($context, $entry);
@@ -139,7 +142,7 @@ final readonly class ListCommand implements NickServCommandInterface, IrcopAudit
         }
 
         $pages = (int) ceil($result->total / $result->pageSize);
-        $context->reply('list.page', [
+        $context->replyComponent(Component::Row, 'list.page', [
             'page' => $result->page,
             'pages' => $pages,
             'total' => $result->total,
@@ -156,7 +159,7 @@ final readonly class ListCommand implements NickServCommandInterface, IrcopAudit
             NickStatus::Forbidden => 'list.status_forbidden',
         };
 
-        $context->reply('list.row', [
+        $context->replyComponent(Component::Row, 'list.row', [
             'nickname' => $entry->nickname,
             'registered' => $context->formatDate($entry->registeredAt),
             'last_seen' => $context->formatDate($entry->lastSeenAt),
@@ -167,7 +170,7 @@ final readonly class ListCommand implements NickServCommandInterface, IrcopAudit
 
     private function rejectSyntax(NickServContext $context): CommandOutcome
     {
-        $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
+        $context->replySyntax($this->getSyntaxKey());
 
         return CommandOutcome::rejected();
     }
