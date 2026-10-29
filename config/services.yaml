@@ -160,7 +160,11 @@ services:
 
   App\:
     resource: "../src/"
-    exclude: "../src/Shared/Adapter/In/Irc/CommandArgument/"
+    exclude:
+      - "../src/Shared/Adapter/In/Irc/CommandArgument/"
+      - "../src/Shared/Adapter/In/Irc/Presentation/Appearance.php"
+      - "../src/Shared/Adapter/In/Irc/Presentation/Fragment.php"
+      - "../src/Shared/Adapter/In/Irc/Presentation/PresentationStyle.php"
 
   # One YAML loader for both Symfony aliases; only !irc values decode IRC escapes.
   translation.loader.yml:
@@ -2477,3 +2481,10 @@ services:
 
   App\MemoServ\Application\UseCase\NotifyChannelRegistration\NotifyChannelRegistrationDecisionHandlerInterface:
     alias: App\MemoServ\Application\UseCase\NotifyChannelRegistration\NotifyChannelRegistrationDecisionHandler
+
+  App\Shared\Adapter\In\Irc\Presentation\PresentationStyle:
+    factory:
+      ['App\Shared\Adapter\In\Irc\Presentation\PresentationStyle', "default"]
+
+  App\Shared\Adapter\In\Irc\Presentation\StyleProvider:
+    alias: App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider

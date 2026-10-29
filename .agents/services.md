@@ -126,19 +126,45 @@ Argument syntax:
 - `[arg]` optional;
 - `{A|B|C}` required choice.
 
-HELP formatting belongs to IRC presentation, not Application. Keep color markup and marker glyphs in
-the existing localized HELP translation values; do not add a helper class or hardcode markers or
-color-selection calls in command PHP. Pass dynamic values through translation placeholders, keep
-descriptions in the client's default foreground, and cover all 14 locale catalogs. Follow
-[.agents/irc-help-style.md](irc-help-style.md) for the canonical palette and reset rules.
+IRC presentation belongs to adapters, never Application. Commands select a semantic `Role`
+for each response outcome; never infer a role from translated text or a command name. Use the
+shared IRC renderer and presentation-free localized templates. Colors, decorative markers,
+emphasis and spacing belong to the active style, not translations or command PHP.
 
-## 5. HELP presentation
+## 5. IRC replies and HELP presentation
 
-Use `.agents/irc-help-style.md` for HELP colors, markers, emphasis, and resets. Keep each service's
-formatter, group metadata, translations, and command-visibility policy inside that service. Do not
-add a style/helper class: localized HELP values own color markup and marker glyphs, with dynamic
-values supplied through placeholders. Keep descriptions in the client's default foreground and
-add HELP regression coverage across all 14 locale catalogs.
+The narrowly shared `Shared/Adapter/In/Irc/Presentation` library owns mechanics only:
+`PresentationStyle` defines appearance, `StyleProvider` selects it, and `IrcRenderer` renders
+roles, components and `Fragment` parameters. The composition root injects the provider; commands
+must not select styles. Do not add `.env` settings, administrative commands or persistence as part
+of this contract. Those are separate future features.
+
+```php
+$context->reply('register.success', ['nickname' => new Fragment($nickname, Component::Emphasis)], role: Role::Success);
+// A different branch of the same command explicitly chooses Role::Error or Role::Warning.
+```
+
+Translate complete sentences, then interpolate structured fragments once. Nested fragments carry only
+their explicit parameter map; user-provided text is not recursively interpolated. Keep natural parameter
+order in each locale; do not build sentences from English-ordered pieces. A command reference has
+plain `/msg <configured bot> ` followed by a Command fragment. Never search translated prose to
+guess emphasis or add controls to translations. User-provided values are not translation templates.
+
+HELP uses Header, Section, Group, CommandRow, Navigation, Syntax, Example, Separator and Expiration
+components. Neutral bold uses Emphasis, actionable syntax uses Command. Keep each service's
+formatter, groups, command registry, visibility, Root access and expiration policy inside the service.
+Shared components must not acquire those policies. See `irc-help-style.md` for visual grammar.
+
+Migration is staged: legacy colored keys/call paths remain explicitly unmigrated until converted;
+never feed a legacy colored template to the new renderer and count it as migrated. Spanish HELP
+must be validated before changing the other 13 locales. Do not remove legacy support prematurely.
+
+For each new or modified command:
+- choose roles per outcome and structured fragments, with no concrete colors or marker literals;
+- keep localized templates presentation-free and preserve placeholders and copyable commands;
+- test real routing, different outcomes, fragments/resets and the configured transport/bot name;
+- preserve authorization, HISTORY and service-owned HELP visibility;
+- review every affected locale, respecting the Spanish-first HELP gate.
 
 ## 6. Bots
 

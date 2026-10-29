@@ -1,8 +1,8 @@
 # IRC HELP Style
 
 Apply the self-contained visual grammar below to HELP in NickServ, ChanServ, MemoServ,
-OperServ, and future services. This contract covers existing `HELP`, `HELP <command>`, and
-`HELP <command> <subcommand>` output only; leave other service replies unchanged.
+OperServ, and future services. This visual grammar covers `HELP`, `HELP <command>`, and
+`HELP <command> <subcommand>`. Ordinary replies use semantic roles in the same presentation engine.
 
 ## Canonical visual grammar
 
@@ -38,27 +38,30 @@ Use this spacing in every bot service, including new services:
   `help.general_footer` → one blank output row → expiration notice → closing separator. The
   notice is directly before the separator, with no blank row between them.
 
-## Translation-owned controls and expiration
+## Style-owned controls and expiration
 
-- Keep colors, emphasis, and marker glyphs in existing localized translation values, not PHP.
-  Supply dynamic values through placeholders; do not add a style/helper class or private palette.
-- Reset each fragment before default prose: colored/bold fragments use `\x03\x0F`; uncolored bold
-  headings close with `\x02`. The bold control `\x02` is not mIRC color `02`.
+- Keep translations free of colors, decorative markers and presentation controls. The shared
+  renderer applies the selected style to semantic components and fragments. Commands never own
+  private palettes. Explicitly unmigrated locales retain their legacy path until staged approval.
+- The renderer resets each styled fragment with `\x03\x0F` before default prose and reapplies
+  the enclosing appearance when needed. Legacy uncolored bold headings may close with `\x02`;
+  that control is not mIRC color `02`. Do not embed either reset scheme in migrated translations.
 - In HELP error and feedback messages, keep the transport prefix `/msg <bot>` in the default
   foreground and color/bold only the actionable `HELP` command and its arguments. If the command
   reference ends the message, do not append a terminal period after it.
-- Use the shared `common.unknown_command` key for unknown-command errors in every service,
+- Use the shared `common.presentation.unknown_command` key for unknown-command errors in every service,
   including HELP. Color `✗` red (`04`) and `%command%` green (`03`), resetting each fragment
   before default prose. Keep `/msg %bot% ` in the default foreground and color only `HELP` green.
-- Use the shared `common.unknown_help_option` key when HELP receives an unknown sub-option in
+- Use the shared `common.presentation.unknown_help_option` key when HELP receives an unknown sub-option in
   any service. Use one consistent message: red `✗`, green option and parent command, and a
   default-color `/msg %bot% ` prefix followed by green `HELP <command>`; do not end with a period.
   Retain the period after the unknown-command sentence, but do not add punctuation after `HELP`.
-  The Spanish value is `"\x0304✗\x03\x0F Comando desconocido \x0303%command%\x03\x0F. Usa /msg %bot% \x0303HELP\x03\x0F"`.
+  Localized prose uses placeholders for command fragments; the renderer supplies the visual roles.
 - NickServ and ChanServ show their existing expiration notice only when expiration is configured.
   Keep `⚠` red (`04`), then reset. Wrap the **complete localized duration**, including its unit,
-  as `\x1F\x0304%days% days\x03\x1F` (translate `days`). Both color and underline end before
-  the remaining prose. The NOTE label and all surrounding prose remain uncolored.
+  with an Expiration fragment (translate the entire duration, including `days`). Both color and
+  underline end before the remaining prose. ExpirationNotice owns the red marker; the NOTE label
+  and all surrounding prose remain uncolored.
 - Red `04` is restricted to NickServ `help.warning_marker` / `help.intro_expiration`, ChanServ
   `help.intro_expiration`, and the shared `common.unknown_command` marker (plus NickServ's
   `help.error_marker`).
@@ -73,14 +76,13 @@ Use this spacing in every bot service, including new services:
 - Keep each displayed explanatory HELP text line at or below **80 visible characters**; aim for 75–80 characters and wrap at word boundaries. Measure after excluding IRC formatting control bytes, but count visible spaces, punctuation, and placeholders as written.
 - Break long explanations into separate displayed lines instead of leaving one dense paragraph. Preserve the intended wording and paragraph order; do not introduce line breaks that change command syntax or examples.
 - Do not encode line breaks inside HELP translation values with the literal YAML escape `\n`. Use physical multiline YAML source instead, and verify the parsed translation contains the intended newline.
-- Color-bearing multiline HELP strings use `!irc |-` literal blocks. The Bootstrap translation
-  loader decodes only `\x02`, `\x03`, and `\x0F` (case-insensitively) in explicitly tagged
-  strings before parameter interpolation. Write displayed newlines and indentation physically;
-  do not use `\n`, `\x0A`, or `\x20` for layout. Preserve the existing decoded content and
-  choose block chomping to retain its terminal-newline behavior. Plain multiline text uses
-  untagged literal blocks; single-line color-bearing strings remain double-quoted. Do not
-  globally decode escapes or alter the intentional CTCP literal-escape behavior.
-- Render every command-example line with exactly two leading spaces. Translation values must not carry outer indentation; the service formatter owns this display margin. For command examples with multiple lines, keep the first single-line example in `example` and put each additional single-line example in a sibling `examples` YAML sequence. Mark the insertion point with `%command_prefix%` before command text; the service formatter replaces it with the uncolored `/msg <configured bot> ` prefix and applies the two-space margin. Keep IRC color escapes double-quoted. In MemoServ, the margin precedes the localized marker, which remains before the generated prefix. During staged locale rollouts, do not change legacy translations that still contain a literal prefix.
+- Multiline migrated text uses plain literal YAML blocks and physical newlines. Keep the legacy
+  `!irc` loader only for explicitly unmigrated values; do not expand its decoding scope or alter
+  intentional CTCP escapes. Match existing terminal-newline behavior.
+- Example content uses `example`/`examples` and `%command_prefix%` as before. The Example component
+  owns the two-space margin; the transport prefix remains uncolored and command syntax is a Command
+  fragment. Localized example labels stay in their original order. No indentation or markers in
+  migrated example values; preserve the legacy path for locales awaiting validation.
 - Keep the 80-character display-line limit scoped to HELP; do not reflow unrelated
   service replies merely because they are long. The YAML multiline representation rule
   in `AGENTS.md` applies to every bot-service translation key.
@@ -105,3 +107,27 @@ For every HELP change, verify:
 - displayed explanatory HELP lines stay within 80 visible characters, and intended line breaks survive YAML parsing without escaped `\n` sequences.
 
 See [services.md](services.md) for command and service completion checklists.
+
+## Shared component ownership and extension
+
+Use `IrcRenderer::component()` with the component enum and localized text. For example:
+
+```php
+$renderer->component(Component::Group, $context->trans('help.groups.registration'));
+$renderer->component(Component::Example, '/msg %bot% %command%', [
+    '%bot%' => $configuredBot,
+    '%command%' => new Fragment('HELP SET', Component::Command),
+]);
+```
+
+`PresentationStyle` owns appearance, `StyleProvider` owns selection, and the renderer owns resets.
+The default style follows the table above; alternate styles reuse the same content and components.
+All output lines end their active formatting. Fragment boundaries restore the enclosing appearance.
+Do not add configuration sources until separately authorized. Never centralize service visibility,
+permission checks, grouping or expiration policy in this library.
+
+For ordinary data output, use TableHeader/DecoratedHeader, Row/IndentedRow, and value fragments
+such as Label, Status, Online, Selected/Unselected and DetailValue. MarkedExample supplies a
+style-owned example marker when the service's existing grammar needs one; BulletedRow and
+IndentedEmphasis preserve inline label layout without catalog-owned decoration. These components
+express appearance only, never service visibility, authorization or business decisions.
