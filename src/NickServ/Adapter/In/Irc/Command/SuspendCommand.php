@@ -19,6 +19,8 @@ use App\NickServ\Application\UseCase\Suspend\SuspendNickResult;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentValidator;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 
 use function array_slice;
 use function base64_decode;
@@ -109,7 +111,7 @@ final readonly class SuspendCommand implements NickServCommandInterface, IrcopAu
 
         $validation = CommandArgumentValidator::validate($this->getArgumentDefinition(), $context->args);
         if (null !== $validation->syntaxKey) {
-            $context->reply('error.syntax', ['syntax' => $context->trans($validation->syntaxKey)]);
+            $context->replySyntax($validation->syntaxKey);
 
             return CommandOutcome::rejected();
         }
@@ -140,7 +142,16 @@ final readonly class SuspendCommand implements NickServCommandInterface, IrcopAu
         };
 
         if (null !== $errorKey) {
-            $context->reply($errorKey, ['%nickname%' => $result->targetNickname]);
+            if ('error.nick_not_registered' === $errorKey) {
+                $context->replyMissingNick($errorKey, $result->targetNickname);
+            } elseif ('suspend.invalid_duration' === $errorKey) {
+                $context->replyWithLocalizedFragments($errorKey, ['%nickname%' => $result->targetNickname], Role::Error, [
+                    'duration_format' => ['suspend.invalid_duration_format', Component::Command],
+                    'permanent' => ['suspend.invalid_duration_permanent', Component::Command],
+                ]);
+            } else {
+                $context->replyEmphasized($errorKey, ['%nickname%' => $result->targetNickname], Role::Error, ['nickname']);
+            }
 
             return CommandOutcome::rejected();
         }
@@ -148,10 +159,10 @@ final readonly class SuspendCommand implements NickServCommandInterface, IrcopAu
         $duration = null === $result->expiresAt
             ? $context->trans('label.permanent_inline')
             : $context->formatDate($result->expiresAt);
-        $context->reply('suspend.success', [
+        $context->replyEmphasized('suspend.success', [
             '%nickname%' => $result->targetNickname,
             '%duration%' => $duration,
-        ]);
+        ], Role::Success, ['duration', 'nickname']);
 
         return CommandOutcome::success(new IrcopAuditData(
             target: $result->targetNickname,

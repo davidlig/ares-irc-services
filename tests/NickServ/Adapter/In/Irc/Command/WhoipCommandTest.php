@@ -19,6 +19,11 @@ use App\NickServ\Application\Port\Out\NickServOperatorAccess;
 use App\NickServ\Application\Security\NickServPermission;
 use App\NickServ\Application\UseCase\Whoip\FindNicknamesByLastConnectIp;
 use App\NickServ\Application\UseCase\Whoip\FindNicknamesByLastConnectIpHandlerInterface;
+use App\Shared\Adapter\In\Irc\Presentation\Appearance;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -26,6 +31,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Component\Translation\Translator;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function dirname;
 use function explode;
 use function implode;
 use function is_string;
@@ -35,6 +41,27 @@ use function trim;
 #[CoversClass(WhoipCommand::class)]
 final class WhoipCommandTest extends TestCase
 {
+    #[Test]
+    public function whoipUsesHeaderAndRowComponents(): void
+    {
+        $handler = $this->createStub(FindNicknamesByLastConnectIpHandlerInterface::class);
+        $handler->method('handle')->willReturn(['Alice']);
+        $translator = new Translator('es');
+        $translator->addLoader('yaml', new IrcYamlTranslationLoader());
+        $translator->addResource('yaml', dirname(__DIR__, 6) . '/translations/nickserv.es.yaml', 'es', 'nickserv');
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void { $messages[] = $message; });
+        $style = new PresentationStyle([
+            Component::TableHeader->value => new Appearance(prefix: 'HEAD '),
+            Component::Row->value => new Appearance(prefix: 'ROW '),
+        ]);
+        $renderer = new IrcRenderer(new FixedStyleProvider($style));
+        $context = new NickServContext($this->sender(), null, 'WHOIP', ['192.0.2.10'], $notifier, $translator, 'es', 'UTC', 'NOTICE', new NickServCommandRegistry([]), new PendingVerificationRegistry(), new RecoveryTokenRegistry(), new ServiceNicknameRegistry([]), $renderer);
+        new WhoipCommand($handler)->execute($context);
+        self::assertSame(['HEAD Apodos coincidentes:', 'ROW Alice'], $messages);
+    }
+
     #[Test]
     public function exposesIrcopWhoipMetadata(): void
     {

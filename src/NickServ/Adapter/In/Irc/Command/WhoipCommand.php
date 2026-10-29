@@ -15,6 +15,8 @@ use App\NickServ\Application\UseCase\Whoip\FindNicknamesByLastConnectIpHandlerIn
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentValidator;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 
 use function count;
 use function inet_ntop;
@@ -108,11 +110,11 @@ final readonly class WhoipCommand implements NickServCommandInterface, IrcopAudi
 
         $nicknames = $this->handler->handle(new FindNicknamesByLastConnectIp($ip));
         if ([] === $nicknames) {
-            $context->reply('whoip.empty');
+            $context->reply('whoip.empty', [], Role::Information);
         } else {
-            $context->reply('whoip.header');
+            $context->replyComponent(Component::TableHeader, 'whoip.header');
             foreach ($nicknames as $nickname) {
-                $context->replyRaw($nickname);
+                $context->replyRawComponent(Component::Row, $nickname);
             }
         }
 
@@ -125,7 +127,7 @@ final readonly class WhoipCommand implements NickServCommandInterface, IrcopAudi
 
     private function rejectSyntax(NickServContext $context): CommandOutcome
     {
-        $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
+        $context->replySyntax($this->getSyntaxKey());
 
         return CommandOutcome::rejected();
     }

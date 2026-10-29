@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Adapter\In\Irc\Command;
 
+use App\Bootstrap\Adapter\Out\Translation\IrcYamlTranslationLoader;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
@@ -19,15 +20,20 @@ use App\NickServ\Application\Security\NickServPermission;
 use App\NickServ\Application\UseCase\Userip\GetUserip;
 use App\NickServ\Application\UseCase\Userip\GetUseripHandlerInterface;
 use App\NickServ\Application\UseCase\Userip\GetUseripResult;
+use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Stringable;
+use Symfony\Component\Translation\Translator;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function base64_encode;
 use function bin2hex;
+use function dirname;
 use function implode;
 use function inet_pton;
 use function is_scalar;
@@ -192,6 +198,25 @@ final class UseripCommandTest extends TestCase
         $outcome = $command->execute($this->createContext($sender, $messages, ['EightByteNick']));
 
         self::assertTrue($outcome->success);
+    }
+
+    #[Test]
+    public function useripUsesSemanticFragmentsWithoutDuplicatedFormatting(): void
+    {
+        $handler = $this->createStub(GetUseripHandlerInterface::class);
+        $handler->method('handle')->willReturn(GetUseripResult::success('Alice', '192.0.2.1', 'example.test'));
+        $lookup = $this->createStub(NetworkUserLookupPort::class);
+        $lookup->method('findByNick')->willReturn(new SenderView('UID2', 'Alice', 'i', 'example.test', 'c', '*'));
+        $translator = new Translator('es');
+        $translator->addLoader('yaml', new IrcYamlTranslationLoader());
+        $translator->addResource('yaml', dirname(__DIR__, 6) . '/translations/nickserv.es.yaml', 'es', 'nickserv');
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void { $messages[] = $message; });
+        $renderer = new IrcRenderer(new FixedStyleProvider(PresentationStyle::default()));
+        $context = new NickServContext(new SenderView('UID1', 'Oper', 'i', 'h', 'c', 'ip'), null, 'USERIP', ['Alice'], $notifier, $translator, 'es', 'UTC', 'NOTICE', new NickServCommandRegistry([]), new PendingVerificationRegistry(), new RecoveryTokenRegistry(), $this->createServiceNicks(), $renderer);
+        new UseripCommand($handler, $lookup, $this->clock())->execute($context);
+        self::assertSame(["\x0310ℹ\x03\x0F Apodo: \x02Alice\x03\x0F | IP: \x0307192.0.2.1\x03\x0F | Host: \x0307example.test\x03\x0F"], $messages);
     }
 
     private function clock(): Clock
