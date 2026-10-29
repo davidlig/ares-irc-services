@@ -24,16 +24,16 @@ unknown_help_option: "\x0304✗\x03\x0F Opțiune de ajutor necunoscută \x0303%o
 
 # --- ERROR -----------------------------------------------------------------
 error:
-  email_domain_blocked: "\x0304✗\x03 Acest domeniu email este blocat administrativ."
-  syntax: "\x0304✗\x03 Sintaxă incorectă. Utilizare: \x02%syntax%\x02"
-  oper_only: "\x0304✗\x03 Această comandă este rezervată operatorilor IRC."
-  not_identified: "\x0304✗\x03 Nu ești identificat. Folosește /msg %nickserv% \x0303IDENTIFY <poreclă> <parolă>\x03"
-  permission_denied: "\x0304✗\x03 Permisiune refuzată. Nu aveți acces la această comandă."
-  mail_failed: "\x0304✗\x03 E-mailul nu a putut fi trimis. Verificați adresa sau încercați mai târziu."
-  channel_not_registered: "\x0304✗\x03 Canalul \x02%channel%\x02 nu este înregistrat."
-  nick_not_registered: "\x0304✗\x03 Porecla \x02%nickname%\x02 nu este înregistrată."
-  insufficient_access: "\x0304✗\x03 Acces insuficient pentru \x02%operation%\x02 pe canalul \x02%channel%\x02."
-  nick_not_online: "\x0304✗\x03 Porecla \x02%nickname%\x02 nu este conectată."
+  email_domain_blocked: "Acest domeniu email este blocat administrativ."
+  syntax: "Sintaxă incorectă. Utilizare: %syntax%"
+  oper_only: "Această comandă este rezervată operatorilor IRC."
+  not_identified: "Nu ești identificat. Folosește /msg %nickserv% IDENTIFY <poreclă> <parolă>"
+  permission_denied: "Permisiune refuzată. Nu aveți acces la această comandă."
+  mail_failed: "E-mailul nu a putut fi trimis. Verificați adresa sau încercați mai târziu."
+  channel_not_registered: "Canalul %channel% nu este înregistrat."
+  nick_not_registered: "Porecla %nickname% nu este înregistrată."
+  insufficient_access: "Acces insuficient pentru %operation% pe canalul %channel%."
+  nick_not_online: "Porecla %nickname% nu este conectată."
 
 # --- DURATION --------------------------------------------------------------
 duration:
@@ -96,11 +96,11 @@ debug:
 history:
   unknown_operator: "(necunoscut)"
   del:
-    success: "\x0303✔\x03 Intrarea din istoric \x02%id%\x02 a fost ștearsă."
-    not_found: "\x0304✗\x03 Intrarea din istoric \x02%id%\x02 nu a fost găsită."
-    invalid_id: "\x0304✗\x03 ID de intrare invalid: \x02%id%\x02."
+    success: "Intrarea din istoric %id% a fost ștearsă."
+    not_found: "Intrarea din istoric %id% nu a fost găsită."
+    invalid_id: "ID de intrare invalid: %id%."
   view:
-    extra: "  Extra \x0307→\x03 %extra%"
+    extra: "Extra %extra%"
   message:
     unsuspend: "Suspendare anulată"
   extra:
@@ -127,3 +127,19 @@ label:
   unknown_creator: "necunoscut"
   permanent: "Permanent"
   permanent_inline: "permanentă"
+
+# --- PRESENTATION-FREE MIGRATED REPLIES ---
+presentation:
+  unknown_command: "Comandă necunoscută %command%. Folosește /msg %bot% %help%"
+  unknown_help_option: "Opțiune de ajutor necunoscută %option% pentru %command%. Folosește /msg %bot% %help% %command%"
+  error.email_domain_blocked: "Acest domeniu email este blocat administrativ."
+  error.syntax: "Sintaxă incorectă. Utilizare: %syntax%"
+  error.oper_only: "Această comandă este rezervată operatorilor IRC."
+  error.not_identified: "Nu ești identificat. Folosește /msg %nickserv% %identify%"
+  error.permission_denied: "Permisiune refuzată. Nu aveți acces la această comandă."
+  error.mail_failed: "E-mailul nu a putut fi trimis. Verificați adresa sau încercați mai târziu."
+  error.channel_not_registered: "Canalul %channel% nu este înregistrat."
+  error.nick_not_registered: "Porecla %nickname% nu este înregistrată."
+  error.insufficient_access: "Acces insuficient pentru %operation% pe canalul %channel%."
+  error.nick_not_online: "Porecla %nickname% nu este conectată."
+  identify: "IDENTIFY <poreclă> <parolă>"

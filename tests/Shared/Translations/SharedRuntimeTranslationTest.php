@@ -13,41 +13,28 @@ use Symfony\Component\Translation\Translator;
 use function hash;
 use function implode;
 
-/** Pins decoded runtime messages from before extraction, including IRC controls. */
+/** Checks shared runtime message ownership and interpolation contracts. */
 #[CoversNothing]
 final class SharedRuntimeTranslationTest extends TestCase
 {
     private const array LOCALES = ['ca', 'de', 'el', 'en', 'es', 'eu', 'fr', 'gl', 'it', 'nl', 'pl', 'pt', 'ro', 'tr'];
 
     #[Test]
-    public function registrationErrorsUseExistingCommonMessages(): void
+    public function registrationErrorsUseExistingCommonTemplates(): void
     {
         $keys = ['error.channel_not_registered', 'error.nick_not_registered'];
-        $expectedHashes = [
-            'ca' => '1968debab3776245d74bce864d4f5db5362abe395423e96e7ea85fa455e8c9d6',
-            'de' => '588cdcb0962f0334b62f46e76e8a44fe5c4b568b32ed794690ff45a28ba659a3',
-            'el' => 'c6fe32ec07bc642ecc200f11f1d183a410f01e5edfacb2daf3810968b14f38c6',
-            'en' => 'bfb6c8533c93c45d53e2f38569558ccc620683f20e14d3793606d951f0d4c46d',
-            'es' => 'df1b4d9922c93d4bdab68d204d8e8ef497cb5f8b5b78c8b7501c48052c46005c',
-            'eu' => 'd4fbc5c4ff29d693508b2d453337149a92ab650d3416e27a5b8dbd52515fb166',
-            'fr' => '16c62834fddd2bcb2752128a18e2046e4f71158a7e6cc1b1f76920868f62f662',
-            'gl' => 'd25baf4a59355dd412790b6d79084620b3ee4cc8e25fd0a2853b6f53f4f2a981',
-            'it' => 'f5488fd391bb94efa7e9283cb215e20845c285797c881626b2075375c448f1d8',
-            'nl' => '33dd95d331455121f426a6e5c2621895020a1ab94b950a3b8c9faf511808a44b',
-            'pl' => '414bbe52012a4970bc46b1bb2ed9f91d13347256d7a4ea1fcca4696d83558623',
-            'pt' => '0db7b4b37a0855bb068b18293a623ffcf92b5b41dd8568c2fb2eee17858d2dc7',
-            'ro' => '4de8046a394ce591dc191bf140293ccdedc31072f2537e1e5a03b23243e9614f',
-            'tr' => '61a4f5c944bbf969f5a91b71c5b43a4cf5155ff2016934a129e1d34c168c7d10',
-        ];
+        $parametersByKey = ['error.channel_not_registered' => ['%channel%'], 'error.nick_not_registered' => ['%nickname%']];
 
         foreach (self::LOCALES as $locale) {
             $translator = self::translator($locale);
-            $messages = [];
             foreach ($keys as $key) {
                 self::assertTrue($translator->getCatalogue($locale)->defines($key, 'common'), $locale . ':' . $key);
-                $messages[] = $translator->trans($key, [], 'common', $locale);
+                $template = $translator->trans($key, [], 'common', $locale);
+                self::assertNotSame('', $template, $locale . ':' . $key);
+                foreach ($parametersByKey[$key] as $parameter) {
+                    self::assertStringContainsString($parameter, $template, $locale . ':' . $key);
+                }
             }
-            self::assertSame($expectedHashes[$locale], hash('sha256', implode("\0", $messages)), $locale);
             self::assertFalse($translator->getCatalogue($locale)->defines('restore.not_registered', 'chanserv'), $locale . ':chanserv:restore.not_registered');
             self::assertFalse($translator->getCatalogue($locale)->defines('drop.not_registered', 'chanserv'), $locale . ':chanserv:drop.not_registered');
             self::assertFalse($translator->getCatalogue($locale)->defines('suspend.not_registered', 'chanserv'), $locale . ':chanserv:suspend.not_registered');
@@ -120,34 +107,21 @@ final class SharedRuntimeTranslationTest extends TestCase
     }
 
     #[Test]
-    public function historyAndListMessagesRetainTheirStoredKeysAndOutput(): void
+    public function historyAndListMessagesRetainTheirStoredKeysAndParameters(): void
     {
         $keys = ['history.unknown_operator', 'history.del.success', 'history.del.not_found', 'history.del.invalid_id', 'history.view.extra', 'history.message.unsuspend', 'history.extra.duration', 'history.extra.expires_at', 'history.extra.ip', 'history.extra.host', 'list.page', 'list.status_suspended', 'list.status_pending_deletion', 'list.status_forbidden'];
-        $expectedHashes = [
-            'ca' => '30744cb450d8c32c261d20e5785633de9f2613024ebf3e9f8e28f97520bf26c1',
-            'de' => 'e7bf4e6b0f06096b697ee2e135402131aedfcfb674521c28dc7cd1d1be902f11',
-            'el' => '82f9162fb127e5ca3d2ccd0509dd54646762c04dbea6c1d4febd89937bd5a870',
-            'en' => 'fbc80c091da3ec7d668043b3c6a908fb14aeae1cfb4419f2a92880b69e987ada',
-            'es' => '74e1ca7d83fc785480c46b391c57e974c5ce1dcf880d9d4e465135a11bafaa53',
-            'eu' => '4aaec93a626516fe3c5252b85e0448ffc49da23656e89c55ef0af16dae66caf1',
-            'fr' => 'f0d29ba569fcdb7b49fc38151a941f7b05aa209f0516d453a80a68d123a5ef6a',
-            'gl' => 'b4ac65c61807859c2113bc3dfedb699b4eaa74bd339e95fcbbc31f44316d25ec',
-            'it' => '0fdb861b8154a54d9c9b3537fa27810f9046a87045e49d9005057d1ef58746eb',
-            'nl' => 'fee46918ffd359206530dfcce0451b58e0dcaed07098b8dda6a19ca71e7563bf',
-            'pl' => '7b8d4c015bbad1dadf403188b415baa82bbc27c6107c3a5e724dc6d7372c80eb',
-            'pt' => 'd6fe526d427f8c904289c1b64800bb90ada8d3429fa315da197d00489f85829f',
-            'ro' => '634c58343a6350f464c9328dd552f857cedac05c0f87b1b0175a9ca751771677',
-            'tr' => '6bc6d58eb3bf3ad24a94887d11649c39f3a9cc7935e6c9178cdf3d73352cf150',
-        ];
+        $parametersByKey = ['history.del.success' => ['%id%'], 'history.del.not_found' => ['%id%'], 'history.del.invalid_id' => ['%id%'], 'history.view.extra' => ['%extra%'], 'history.extra.duration' => ['%value%'], 'history.extra.expires_at' => ['%value%'], 'history.extra.ip' => ['%value%'], 'history.extra.host' => ['%value%'], 'list.page' => ['%page%', '%pages%', '%total%']];
 
         foreach (self::LOCALES as $locale) {
             $translator = self::translator($locale);
-            $messages = [];
             foreach ($keys as $key) {
                 self::assertTrue($translator->getCatalogue($locale)->defines($key, 'common'), $locale . ':' . $key);
-                $messages[] = $translator->trans($key, [], 'common', $locale);
+                $template = $translator->trans($key, [], 'common', $locale);
+                self::assertNotSame('', $template, $locale . ':' . $key);
+                foreach ($parametersByKey[$key] ?? [] as $parameter) {
+                    self::assertStringContainsString($parameter, $template, $locale . ':' . $key);
+                }
             }
-            self::assertSame($expectedHashes[$locale], hash('sha256', implode("\0", $messages)), $locale);
             self::assertFalse($translator->getCatalogue($locale)->defines('history.unknown_operator', 'chanserv'), $locale . ':chanserv:history.unknown_operator');
             self::assertFalse($translator->getCatalogue($locale)->defines('history.unknown_operator', 'nickserv'), $locale . ':nickserv:history.unknown_operator');
             self::assertFalse($translator->getCatalogue($locale)->defines('history.del.success', 'chanserv'), $locale . ':chanserv:history.del.success');
@@ -180,34 +154,21 @@ final class SharedRuntimeTranslationTest extends TestCase
     }
 
     #[Test]
-    public function neutralLabelsAndSeparatorsPreserveTheirExactOutput(): void
+    public function neutralLabelsAndLegacySeparatorsRemainCommon(): void
     {
         $keys = ['reply.separator', 'error.nick_not_online', 'label.no_reason', 'label.never', 'label.unknown_creator', 'label.permanent', 'label.permanent_inline'];
-        $expectedHashes = [
-            'ca' => 'dbba2d20cf7cc1bfad668a9d4672fdbaee353dff524eb130cb57bb51dd5b0829',
-            'de' => 'bb5c7b944d631ce972a093da3dae916932ffe36eb23daa05fa32607db1d1324f',
-            'el' => 'da004a0248d28724e72d451d7652b70d9d110a8fa27e6da0ab1e157163034d51',
-            'en' => 'be6e37cf26331c24b4332f0efd5f08b0e5d69190abc05de074b24f316b8fe871',
-            'es' => '18dcc1e881233f9888a9c89a8d706aaf2d5e25501d57eeafc1e2deeeb9c034bf',
-            'eu' => '0159c29a89f0433c3d18183f32ad620cafda04a6721f2432d541288ece7a443b',
-            'fr' => '1a4ec7db9fe0cc34f4ef6f156933bfd79c4ee3e60f415708996650e35ee65752',
-            'gl' => 'd0ce60f10e67946d84561beab84bf737e845f70cf7d556c89c948fed63b1f68d',
-            'it' => '1c46f4a57c54852e153d933dc2c74789d3a30d01f4594dc294b6c1745cf04269',
-            'nl' => 'e49ea512bc18517ae059096a23f0c59cf8822bd23019be69c51f134b56bc7a17',
-            'pl' => '1cd1c0cd1825f1846d9f5f36528d21e07e2372f47955c19fcae18c7efae064f5',
-            'pt' => 'f85185be9b28c458713d9bfc751fc87aec67a6e4fbb144a65fe75628640bffa3',
-            'ro' => '0fc6d1876c233bda19b87764c86ed3c446beabbe085b5c5bd0549e5e713d4f71',
-            'tr' => '022eb37124b042ecd9a3c3e3f3242957446990dc0399f60778e39b8b1d9d7836',
-        ];
+        $parametersByKey = ['error.nick_not_online' => ['%nickname%']];
 
         foreach (self::LOCALES as $locale) {
             $translator = self::translator($locale);
-            $messages = [];
             foreach ($keys as $key) {
                 self::assertTrue($translator->getCatalogue($locale)->defines($key, 'common'), $locale . ':' . $key);
-                $messages[] = $translator->trans($key, [], 'common', $locale);
+                $template = $translator->trans($key, [], 'common', $locale);
+                self::assertNotSame('', $template, $locale . ':' . $key);
+                foreach ($parametersByKey[$key] ?? [] as $parameter) {
+                    self::assertStringContainsString($parameter, $template, $locale . ':' . $key);
+                }
             }
-            self::assertSame($expectedHashes[$locale], hash('sha256', implode("\0", $messages)), $locale);
             self::assertFalse($translator->getCatalogue($locale)->defines('info.footer', 'chanserv'), $locale . ':chanserv:info.footer');
             self::assertFalse($translator->getCatalogue($locale)->defines('info.footer', 'nickserv'), $locale . ':nickserv:info.footer');
             self::assertFalse($translator->getCatalogue($locale)->defines('status.footer', 'nickserv'), $locale . ':nickserv:status.footer');

@@ -24,16 +24,16 @@ unknown_help_option: "\x0304✗\x03\x0F Nieznana opcja pomocy \x0303%option%\x03
 
 # --- ERROR -----------------------------------------------------------------
 error:
-  email_domain_blocked: "\x0304✗\x03 Ta domena email jest zablokowana administracyjnie."
-  syntax: "\x0304✗\x03 Nieprawidłowa składnia. Użycie: \x02%syntax%\x02"
-  oper_only: "\x0304✗\x03 Ta komenda jest dostępna tylko dla Operatorów IRC."
-  not_identified: "\x0304✗\x03 Nie jesteś zidentyfikowany. Użyj /msg %nickserv% \x0303IDENTIFY <pseudonim> <hasło>\x03"
-  permission_denied: "\x0304✗\x03 Odmowa dostępu. Nie masz uprawnień do tej komendy."
-  mail_failed: "\x0304✗\x03 Nie można wysłać wiadomości e-mail. Sprawdź adres lub spróbuj później."
-  channel_not_registered: "\x0304✗\x03 Kanał \x02%channel%\x02 nie jest zarejestrowany."
-  nick_not_registered: "\x0304✗\x03 Nick \x02%nickname%\x02 nie jest zarejestrowany."
-  insufficient_access: "\x0304✗\x03 Niewystarczający dostęp do \x02%operation%\x02 na kanale \x02%channel%\x02."
-  nick_not_online: "\x0304✗\x03 Nick \x02%nickname%\x02 nie jest połączony."
+  email_domain_blocked: "Ta domena email jest zablokowana administracyjnie."
+  syntax: "Nieprawidłowa składnia. Użycie: %syntax%"
+  oper_only: "Ta komenda jest dostępna tylko dla Operatorów IRC."
+  not_identified: "Nie jesteś zidentyfikowany. Użyj /msg %nickserv% IDENTIFY <pseudonim> <hasło>"
+  permission_denied: "Odmowa dostępu. Nie masz uprawnień do tej komendy."
+  mail_failed: "Nie można wysłać wiadomości e-mail. Sprawdź adres lub spróbuj później."
+  channel_not_registered: "Kanał %channel% nie jest zarejestrowany."
+  nick_not_registered: "Nick %nickname% nie jest zarejestrowany."
+  insufficient_access: "Niewystarczający dostęp do %operation% na kanale %channel%."
+  nick_not_online: "Nick %nickname% nie jest połączony."
 
 # --- DURATION --------------------------------------------------------------
 duration:
@@ -94,11 +94,11 @@ debug:
 history:
   unknown_operator: "(nieznany)"
   del:
-    success: "\x0303✔\x03 Wpis historii \x02%id%\x02 usunięty."
-    not_found: "\x0304✗\x03 Wpis historii \x02%id%\x02 nie znaleziony."
-    invalid_id: "\x0304✗\x03 Nieprawidłowe ID wpisu: \x02%id%\x02."
+    success: "Wpis historii %id% usunięty."
+    not_found: "Wpis historii %id% nie znaleziony."
+    invalid_id: "Nieprawidłowe ID wpisu: %id%."
   view:
-    extra: "  Dodatkowo \x0307→\x03 %extra%"
+    extra: "Dodatkowo %extra%"
   message:
     unsuspend: "Zawieszenie zniesione"
   extra:
@@ -125,3 +125,19 @@ label:
   unknown_creator: "nieznany"
   permanent: "Stałe"
   permanent_inline: "stałe"
+
+# --- PRESENTATION-FREE MIGRATED REPLIES ---
+presentation:
+  unknown_command: "Nieznane polecenie %command%. Użyj /msg %bot% %help%"
+  unknown_help_option: "Nieznana opcja pomocy %option% dla %command%. Użyj /msg %bot% %help% %command%"
+  error.email_domain_blocked: "Ta domena email jest zablokowana administracyjnie."
+  error.syntax: "Nieprawidłowa składnia. Użycie: %syntax%"
+  error.oper_only: "Ta komenda jest dostępna tylko dla Operatorów IRC."
+  error.not_identified: "Nie jesteś zidentyfikowany. Użyj /msg %nickserv% %identify%"
+  error.permission_denied: "Odmowa dostępu. Nie masz uprawnień do tej komendy."
+  error.mail_failed: "Nie można wysłać wiadomości e-mail. Sprawdź adres lub spróbuj później."
+  error.channel_not_registered: "Kanał %channel% nie jest zarejestrowany."
+  error.nick_not_registered: "Nick %nickname% nie jest zarejestrowany."
+  error.insufficient_access: "Niewystarczający dostęp do %operation% na kanale %channel%."
+  error.nick_not_online: "Nick %nickname% nie jest połączony."
+  identify: "IDENTIFY <pseudonim> <hasło>"

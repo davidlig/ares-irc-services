@@ -24,17 +24,17 @@ unknown_help_option: "\x0304✗\x03\x0F Opción de ayuda \x0303%option%\x03\x0F 
 
 # --- ERROR -----------------------------------------------------------------
 error:
-  email_domain_blocked: "\x0304✗\x03 Este dominio de correo está bloqueado administrativamente."
-  syntax: "\x0304✗\x03 Sintaxis incorrecta. Uso: \x02%syntax%\x02"
-  oper_only: "\x0304✗\x03 Este comando está restringido a Operadores IRC."
-  not_identified: "\x0304✗\x03 No estás identificado. Usa /msg %nickserv% \x0303IDENTIFY <apodo> <contraseña>\x03"
-  permission_denied: "\x0304✗\x03 Permiso denegado. No tienes acceso a este comando."
-  mail_failed: "\x0304✗\x03 No se pudo enviar el correo. Comprueba tu dirección o inténtalo más tarde."
-  channel_not_registered: "\x0304✗\x03 El canal \x02%channel%\x02 no está registrado."
-  nick_not_registered: "\x0304✗\x03 El apodo \x02%nickname%\x02 no está registrado."
-  insufficient_access: "\x0304✗\x03 Acceso insuficiente para \x02%operation%\x02 en el canal \x02%channel%\x02."
+  email_domain_blocked: "Este dominio de correo está bloqueado administrativamente."
+  syntax: "Sintaxis incorrecta. Uso: %syntax%"
+  oper_only: "Este comando está restringido a Operadores IRC."
+  not_identified: "No estás identificado. Usa /msg %nickserv% IDENTIFY <apodo> <contraseña>"
+  permission_denied: "Permiso denegado. No tienes acceso a este comando."
+  mail_failed: "No se pudo enviar el correo. Comprueba tu dirección o inténtalo más tarde."
+  channel_not_registered: "El canal %channel% no está registrado."
+  nick_not_registered: "El apodo %nickname% no está registrado."
+  insufficient_access: "Acceso insuficiente para %operation% en el canal %channel%."
 
-  nick_not_online: "\x0304✗\x03 El apodo \x02%nickname%\x02 no está conectado."
+  nick_not_online: "El apodo %nickname% no está conectado."
 
 # --- DURATION --------------------------------------------------------------
 duration:
@@ -97,11 +97,11 @@ debug:
 history:
   unknown_operator: "(desconocido)"
   del:
-    success: "\x0303✔\x03 Entrada de historial \x02%id%\x02 eliminada."
-    not_found: "\x0304✗\x03 Entrada de historial \x02%id%\x02 no encontrada."
-    invalid_id: "\x0304✗\x03 ID de entrada inválido: \x02%id%\x02."
+    success: "Entrada de historial %id% eliminada."
+    not_found: "Entrada de historial %id% no encontrada."
+    invalid_id: "ID de entrada inválido: %id%."
   view:
-    extra: "  Extra \x0307→\x03 %extra%"
+    extra: "Extra %extra%"
   message:
     unsuspend: "Levantada la suspensión"
   extra:
@@ -128,3 +128,19 @@ label:
   unknown_creator: "desconocido"
   permanent: "Permanente"
   permanent_inline: "permanente"
+
+# --- PRESENTATION-FREE MIGRATED REPLIES ---
+presentation:
+  unknown_command: "Comando desconocido %command%. Usa /msg %bot% %help%"
+  unknown_help_option: "Opción de ayuda %option% desconocida para %command%. Usa /msg %bot% %help% %command%"
+  error.email_domain_blocked: "Este dominio de correo está bloqueado administrativamente."
+  error.syntax: "Sintaxis incorrecta. Uso: %syntax%"
+  error.oper_only: "Este comando está restringido a Operadores IRC."
+  error.not_identified: "No estás identificado. Usa /msg %nickserv% %identify%"
+  error.permission_denied: "Permiso denegado. No tienes acceso a este comando."
+  error.mail_failed: "No se pudo enviar el correo. Comprueba tu dirección o inténtalo más tarde."
+  error.channel_not_registered: "El canal %channel% no está registrado."
+  error.nick_not_registered: "El apodo %nickname% no está registrado."
+  error.insufficient_access: "Acceso insuficiente para %operation% en el canal %channel%."
+  error.nick_not_online: "El apodo %nickname% no está conectado."
+  identify: "IDENTIFY <apodo> <contraseña>"

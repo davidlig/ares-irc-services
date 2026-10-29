@@ -24,16 +24,16 @@ unknown_help_option: "\x0304✗\x03\x0F Άγνωστη επιλογή βοήθε
 
 # --- ERROR -----------------------------------------------------------------
 error:
-  email_domain_blocked: "\x0304✗\x03 Αυτός ο τομέας email έχει αποκλειστεί από τη διαχείριση."
-  syntax: "\x0304✗\x03 Λανθασμένη σύνταξη. Χρήση: \x02%syntax%\x02"
-  oper_only: "\x0304✗\x03 Αυτή η εντολή περιορίζεται σε IRC Operators."
-  not_identified: "\x0304✗\x03 Δεν έχετε ταυτοποιηθεί. Χρησιμοποιήστε /msg %nickserv% \x0303IDENTIFY <ψευδώνυμο> <κωδικός>\x03"
-  permission_denied: "\x0304✗\x03 Άρνηση πρόσβασης. Δεν έχετε πρόσβαση σε αυτήν την εντολή."
-  mail_failed: "\x0304✗\x03 Το email δεν μπόρεσε να σταλεί. Ελέγξτε τη διεύθυνσή σας ή δοκιμάστε αργότερα."
-  channel_not_registered: "\x0304✗\x03 Το κανάλι \x02%channel%\x02 δεν είναι καταχωρημένο."
-  nick_not_registered: "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι καταχωρημένο."
-  insufficient_access: "\x0304✗\x03 Ανεπαρκής πρόσβαση για \x02%operation%\x02 στο κανάλι \x02%channel%\x02."
-  nick_not_online: "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι συνδεδεμένο."
+  email_domain_blocked: "Αυτός ο τομέας email έχει αποκλειστεί από τη διαχείριση."
+  syntax: "Λανθασμένη σύνταξη. Χρήση: %syntax%"
+  oper_only: "Αυτή η εντολή περιορίζεται σε IRC Operators."
+  not_identified: "Δεν έχετε ταυτοποιηθεί. Χρησιμοποιήστε /msg %nickserv% IDENTIFY <ψευδώνυμο> <κωδικός>"
+  permission_denied: "Άρνηση πρόσβασης. Δεν έχετε πρόσβαση σε αυτήν την εντολή."
+  mail_failed: "Το email δεν μπόρεσε να σταλεί. Ελέγξτε τη διεύθυνσή σας ή δοκιμάστε αργότερα."
+  channel_not_registered: "Το κανάλι %channel% δεν είναι καταχωρημένο."
+  nick_not_registered: "Το ψευδώνυμο %nickname% δεν είναι καταχωρημένο."
+  insufficient_access: "Ανεπαρκής πρόσβαση για %operation% στο κανάλι %channel%."
+  nick_not_online: "Το ψευδώνυμο %nickname% δεν είναι συνδεδεμένο."
 
 # --- DURATION --------------------------------------------------------------
 duration:
@@ -96,11 +96,11 @@ debug:
 history:
   unknown_operator: "(άγνωστος)"
   del:
-    success: "\x0303✔\x03 Η καταχώρηση ιστορικού \x02%id%\x02 διαγράφηκε."
-    not_found: "\x0304✗\x03 Η καταχώρηση ιστορικού \x02%id%\x02 δεν βρέθηκε."
-    invalid_id: "\x0304✗\x03 Μη έγκυρο ID καταχώρησης: \x02%id%\x02."
+    success: "Η καταχώρηση ιστορικού %id% διαγράφηκε."
+    not_found: "Η καταχώρηση ιστορικού %id% δεν βρέθηκε."
+    invalid_id: "Μη έγκυρο ID καταχώρησης: %id%."
   view:
-    extra: "  Επιπλέον \x0307→\x03 %extra%"
+    extra: "Επιπλέον %extra%"
   message:
     unsuspend: "Άρση αναστολής"
   extra:
@@ -127,3 +127,19 @@ label:
   unknown_creator: "άγνωστος"
   permanent: "Μόνιμη"
   permanent_inline: "μόνιμη"
+
+# --- PRESENTATION-FREE MIGRATED REPLIES ---
+presentation:
+  unknown_command: "Άγνωστη εντολή %command%. Χρησιμοποιήστε /msg %bot% %help%"
+  unknown_help_option: "Άγνωστη επιλογή βοήθειας %option% για την %command%. Χρησιμοποιήστε /msg %bot% %help% %command%"
+  error.email_domain_blocked: "Αυτός ο τομέας email έχει αποκλειστεί από τη διαχείριση."
+  error.syntax: "Λανθασμένη σύνταξη. Χρήση: %syntax%"
+  error.oper_only: "Αυτή η εντολή περιορίζεται σε IRC Operators."
+  error.not_identified: "Δεν έχετε ταυτοποιηθεί. Χρησιμοποιήστε /msg %nickserv% %identify%"
+  error.permission_denied: "Άρνηση πρόσβασης. Δεν έχετε πρόσβαση σε αυτήν την εντολή."
+  error.mail_failed: "Το email δεν μπόρεσε να σταλεί. Ελέγξτε τη διεύθυνσή σας ή δοκιμάστε αργότερα."
+  error.channel_not_registered: "Το κανάλι %channel% δεν είναι καταχωρημένο."
+  error.nick_not_registered: "Το ψευδώνυμο %nickname% δεν είναι καταχωρημένο."
+  error.insufficient_access: "Ανεπαρκής πρόσβαση για %operation% στο κανάλι %channel%."
+  error.nick_not_online: "Το ψευδώνυμο %nickname% δεν είναι συνδεδεμένο."
+  identify: "IDENTIFY <ψευδώνυμο> <κωδικός>"

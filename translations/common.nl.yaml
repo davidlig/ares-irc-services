@@ -24,16 +24,16 @@ unknown_help_option: "\x0304✗\x03\x0F Onbekende helpoptie \x0303%option%\x03\x
 
 # --- ERROR -----------------------------------------------------------------
 error:
-  email_domain_blocked: "\x0304✗\x03 Dit e-maildomein is administratief geblokkeerd."
-  syntax: "\x0304✗\x03 Onjuiste syntax. Gebruik: \x02%syntax%\x02"
-  oper_only: "\x0304✗\x03 Dit commando is voorbehouden aan IRC Operators."
-  not_identified: "\x0304✗\x03 Je bent niet geïdentificeerd. Gebruik /msg %nickserv% \x0303IDENTIFY <bijnaam> <wachtwoord>\x03"
-  permission_denied: "\x0304✗\x03 Toegang geweigerd. U heeft geen toegang tot dit commando."
-  mail_failed: "\x0304✗\x03 De e-mail kon niet worden verzonden. Controleer uw adres of probeer het later opnieuw."
-  channel_not_registered: "\x0304✗\x03 Kanaal \x02%channel%\x02 is niet geregistreerd."
-  nick_not_registered: "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is niet geregistreerd."
-  insufficient_access: "\x0304✗\x03 Onvoldoende toegang voor \x02%operation%\x02 op kanaal \x02%channel%\x02."
-  nick_not_online: "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is niet verbonden."
+  email_domain_blocked: "Dit e-maildomein is administratief geblokkeerd."
+  syntax: "Onjuiste syntax. Gebruik: %syntax%"
+  oper_only: "Dit commando is voorbehouden aan IRC Operators."
+  not_identified: "Je bent niet geïdentificeerd. Gebruik /msg %nickserv% IDENTIFY <bijnaam> <wachtwoord>"
+  permission_denied: "Toegang geweigerd. U heeft geen toegang tot dit commando."
+  mail_failed: "De e-mail kon niet worden verzonden. Controleer uw adres of probeer het later opnieuw."
+  channel_not_registered: "Kanaal %channel% is niet geregistreerd."
+  nick_not_registered: "Bijnaam %nickname% is niet geregistreerd."
+  insufficient_access: "Onvoldoende toegang voor %operation% op kanaal %channel%."
+  nick_not_online: "Bijnaam %nickname% is niet verbonden."
 
 # --- DURATION --------------------------------------------------------------
 duration:
@@ -96,11 +96,11 @@ debug:
 history:
   unknown_operator: "(onbekend)"
   del:
-    success: "\x0303✔\x03 Geschiedenisvermelding \x02%id%\x02 verwijderd."
-    not_found: "\x0304✗\x03 Geschiedenisvermelding \x02%id%\x02 niet gevonden."
-    invalid_id: "\x0304✗\x03 Ongeldige vermeldings-ID: \x02%id%\x02."
+    success: "Geschiedenisvermelding %id% verwijderd."
+    not_found: "Geschiedenisvermelding %id% niet gevonden."
+    invalid_id: "Ongeldige vermeldings-ID: %id%."
   view:
-    extra: "  Extra \x0307→\x03 %extra%"
+    extra: "Extra %extra%"
   message:
     unsuspend: "Schorsing opgeheven"
   extra:
@@ -127,3 +127,19 @@ label:
   unknown_creator: "onbekend"
   permanent: "Permanent"
   permanent_inline: "permanent"
+
+# --- PRESENTATION-FREE MIGRATED REPLIES ---
+presentation:
+  unknown_command: "Onbekend commando %command%. Gebruik /msg %bot% %help%"
+  unknown_help_option: "Onbekende helpoptie %option% voor %command%. Gebruik /msg %bot% %help% %command%"
+  error.email_domain_blocked: "Dit e-maildomein is administratief geblokkeerd."
+  error.syntax: "Onjuiste syntax. Gebruik: %syntax%"
+  error.oper_only: "Dit commando is voorbehouden aan IRC Operators."
+  error.not_identified: "Je bent niet geïdentificeerd. Gebruik /msg %nickserv% %identify%"
+  error.permission_denied: "Toegang geweigerd. U heeft geen toegang tot dit commando."
+  error.mail_failed: "De e-mail kon niet worden verzonden. Controleer uw adres of probeer het later opnieuw."
+  error.channel_not_registered: "Kanaal %channel% is niet geregistreerd."
+  error.nick_not_registered: "Bijnaam %nickname% is niet geregistreerd."
+  error.insufficient_access: "Onvoldoende toegang voor %operation% op kanaal %channel%."
+  error.nick_not_online: "Bijnaam %nickname% is niet verbonden."
+  identify: "IDENTIFY <bijnaam> <wachtwoord>"

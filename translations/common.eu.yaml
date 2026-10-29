@@ -24,16 +24,16 @@ unknown_help_option: "\x0304✗\x03\x0F Laguntza aukera \x0303%option%\x03\x0F e
 
 # --- ERROR -----------------------------------------------------------------
 error:
-  email_domain_blocked: "\x0304✗\x03 Posta-domeinu hau administrazioak blokeatu du."
-  syntax: "\x0304✗\x03 Sintaxi okerra. Erabilera: \x02%syntax%\x02"
-  oper_only: "\x0304✗\x03 Komando hau IRC Operadoreentzat mugatuta dago."
-  not_identified: "\x0304✗\x03 Ez zaude identifikatuta. Erabili /msg %nickserv% \x0303IDENTIFY <ezizena> <pasahitza>\x03"
-  permission_denied: "\x0304✗\x03 Baimena ukatuta. Ez duzu komando honetarako sarbiderik."
-  mail_failed: "\x0304✗\x03 Ezin izan da posta elektronikoa bidali. Egiaztatu zure helbidea edo saiatu berriro geroago."
-  channel_not_registered: "\x0304✗\x03 \x02%channel%\x02 kanala ez dago erregistratuta."
-  nick_not_registered: "\x0304✗\x03 \x02%nickname%\x02 ezizena ez dago erregistratuta."
-  insufficient_access: "\x0304✗\x03 Ez duzu nahikoa sarbide \x02%operation%\x02 egiteko \x02%channel%\x02 kanalean."
-  nick_not_online: "\x0304✗\x03 \x02%nickname%\x02 ezizena ez dago konektatuta."
+  email_domain_blocked: "Posta-domeinu hau administrazioak blokeatu du."
+  syntax: "Sintaxi okerra. Erabilera: %syntax%"
+  oper_only: "Komando hau IRC Operadoreentzat mugatuta dago."
+  not_identified: "Ez zaude identifikatuta. Erabili /msg %nickserv% IDENTIFY <ezizena> <pasahitza>"
+  permission_denied: "Baimena ukatuta. Ez duzu komando honetarako sarbiderik."
+  mail_failed: "Ezin izan da posta elektronikoa bidali. Egiaztatu zure helbidea edo saiatu berriro geroago."
+  channel_not_registered: "%channel% kanala ez dago erregistratuta."
+  nick_not_registered: "%nickname% ezizena ez dago erregistratuta."
+  insufficient_access: "Ez duzu nahikoa sarbide %operation% egiteko %channel% kanalean."
+  nick_not_online: "%nickname% ezizena ez dago konektatuta."
 
 # --- DURATION --------------------------------------------------------------
 duration:
@@ -96,11 +96,11 @@ debug:
 history:
   unknown_operator: "(ezezaguna)"
   del:
-    success: "\x0303✔\x03 \x02%id%\x02 historia sarrera ezabatu da."
-    not_found: "\x0304✗\x03 \x02%id%\x02 historia sarrera ez da aurkitu."
-    invalid_id: "\x0304✗\x03 Sarrera ID baliogabea: \x02%id%\x02."
+    success: "%id% historia sarrera ezabatu da."
+    not_found: "%id% historia sarrera ez da aurkitu."
+    invalid_id: "Sarrera ID baliogabea: %id%."
   view:
-    extra: "  Gehigarria \x0307→\x03 %extra%"
+    extra: "Gehigarria %extra%"
   message:
     unsuspend: "Etenaldia kendua"
   extra:
@@ -127,3 +127,19 @@ label:
   unknown_creator: "ezezaguna"
   permanent: "Iraunkorra"
   permanent_inline: "iraunkorra"
+
+# --- PRESENTATION-FREE MIGRATED REPLIES ---
+presentation:
+  unknown_command: "Komando ezezaguna %command%. Erabili /msg %bot% %help%"
+  unknown_help_option: "Laguntza aukera %option% ezezaguna %command%rentzat. Erabili /msg %bot% %help% %command%"
+  error.email_domain_blocked: "Posta-domeinu hau administrazioak blokeatu du."
+  error.syntax: "Sintaxi okerra. Erabilera: %syntax%"
+  error.oper_only: "Komando hau IRC Operadoreentzat mugatuta dago."
+  error.not_identified: "Ez zaude identifikatuta. Erabili /msg %nickserv% %identify%"
+  error.permission_denied: "Baimena ukatuta. Ez duzu komando honetarako sarbiderik."
+  error.mail_failed: "Ezin izan da posta elektronikoa bidali. Egiaztatu zure helbidea edo saiatu berriro geroago."
+  error.channel_not_registered: "%channel% kanala ez dago erregistratuta."
+  error.nick_not_registered: "%nickname% ezizena ez dago erregistratuta."
+  error.insufficient_access: "Ez duzu nahikoa sarbide %operation% egiteko %channel% kanalean."
+  error.nick_not_online: "%nickname% ezizena ez dago konektatuta."
+  identify: "IDENTIFY <ezizena> <pasahitza>"

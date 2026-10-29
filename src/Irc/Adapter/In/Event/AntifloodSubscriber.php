@@ -15,6 +15,10 @@ use App\Irc\Application\Port\Out\ServiceUserPreferences;
 use App\NickServ\Application\Port\In\NickAccountQuery;
 use App\OperServ\Application\Port\In\OperatorActor;
 use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\Fragment;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -36,12 +40,6 @@ use function in_array;
  */
 final readonly class AntifloodSubscriber implements EventSubscriberInterface
 {
-    private const string COLOR_RED = "\x0304";
-
-    private const string COLOR_BLUE = "\x0302";
-
-    private const string COLOR_RESET = "\x03";
-
     public function __construct(
         private AntifloodRegistry $registry,
         private ClientKeyResolver $clientKeyResolver,
@@ -58,6 +56,7 @@ final readonly class AntifloodSubscriber implements EventSubscriberInterface
         private int $maxMessages,
         private int $windowSeconds,
         private int $cooldownSeconds,
+        private IrcRenderer $renderer,
         private LoggerInterface $logger = new NullLogger(),
     ) {}
 
@@ -117,7 +116,7 @@ final readonly class AntifloodSubscriber implements EventSubscriberInterface
             if (!$this->registry->isNotified($clientKey)) {
                 $serviceUid = $listener->getServiceUid() ?? $listener->getServiceName();
                 $messageType = $this->messageTypeResolver->prefersPrivateMessages($sender->nick) ? 'PRIVMSG' : 'NOTICE';
-                $notice = $this->translator->trans('antiflood.blocked', ['%seconds%' => (string) $remaining], 'common');
+                $notice = $this->renderer->reply(Role::Warning, $this->translator->trans('antiflood.blocked', [], 'common'), ['%seconds%' => (string) $remaining]);
                 $this->sendNotice->sendMessage($serviceUid, $sender->uid, $notice, $messageType);
                 $this->registry->markNotified($clientKey);
                 $this->logToDebugChannel($sender, $remaining);
@@ -155,21 +154,21 @@ final readonly class AntifloodSubscriber implements EventSubscriberInterface
             return;
         }
 
-        $coloredNick = self::COLOR_BLUE . $sender->nick . self::COLOR_RESET;
-        $coloredCommand = self::COLOR_RED . 'ANTIFLOOD' . self::COLOR_RESET;
-        $coloredHost = self::COLOR_BLUE . $this->clientKeyResolver->getClientDescription($sender) . self::COLOR_RESET;
+        $coloredNick = new Fragment($sender->nick, Component::Actor);
+        $coloredCommand = new Fragment('ANTIFLOOD', Component::ModeChange);
+        $coloredHost = new Fragment($this->clientKeyResolver->getClientDescription($sender), Component::Actor);
 
-        $message = $this->translator->trans(
+        $message = $this->renderer->component(Component::Text, $this->translator->trans(
             'antiflood.debug_channel',
-            [
-                '%nick%' => $coloredNick,
-                '%command%' => $coloredCommand,
-                '%host%' => $coloredHost,
-                '%seconds%' => (string) $remaining,
-            ],
+            [],
             'common',
             $this->defaultLanguage,
-        );
+        ), [
+            '%nick%' => $coloredNick,
+            '%command%' => $coloredCommand,
+            '%host%' => $coloredHost,
+            '%seconds%' => (string) $remaining,
+        ]);
 
         $this->debugNotifier->notify($message);
     }
