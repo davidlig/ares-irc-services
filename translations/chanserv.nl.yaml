@@ -480,6 +480,20 @@ devoice:
   help: "Verwijder voice-modus in het kanaal."
   done: "\x0303✔\x03 \x02%nickname%\x02 is gedevoiced."
 
+# --- UNBAN -----------------------------------------------------------------
+unban:
+  syntax: "UNBAN <#channel>"
+  example: "%command_prefix%\x02\x0303UNBAN #channel\x03\x0F"
+  short: "Verwijder bans die jou treffen."
+  help: |-
+    Verwijdert alle gewone kanaalbans die volgens de IRCd overeenkomen met je huidige identiteit, inclusief jokertekens en IP/CIDR-maskers.
+    Identificatie en het instelbare UNBAN-niveau (standaard 200) zijn vereist. De oprichter behoudt toegang; kanaallidmaatschap en operatorstatus zijn niet vereist.
+    Uitgebreide bans blijven ongewijzigd. Een nickname of masker als argument is niet toegestaan. De actie wordt niet in de kanaal-HISTORY opgeslagen.
+  done: "%count% ban(s) die jou treffen verwijderd uit %channel%."
+  no_matches: "Geen gewone bans komen overeen met je identiteit in %channel%; niets gewijzigd."
+  unavailable: "Je overeenkomende bans konden niet worden bepaald; niets gewijzigd."
+  not_on_network: "Kanaal %channel% is niet op het netwerk aanwezig."
+
 # --- INVITE ----------------------------------------------------------------
 invite:
   syntax: "INVITE <#kanaal>"

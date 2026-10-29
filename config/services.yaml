@@ -340,6 +340,12 @@ services:
   App\ChanServ\Application\Port\Out\ChannelMlockStorage:
     alias: App\ChanServ\Adapter\Out\Persistence\DoctrineChannelMlockStorage
 
+  App\ChanServ\Application\Port\Out\ChannelBanNetworkQuery:
+    alias: App\ChanServ\Adapter\Out\Network\IrcChannelBanNetworkQuery
+
+  App\ChanServ\Application\Port\Out\ChannelBanActions:
+    alias: App\ChanServ\Adapter\Out\Network\IrcChannelBanActions
+
   App\ChanServ\Application\Port\Out\ChannelRankNetworkQuery:
     alias: App\ChanServ\Adapter\Out\Network\IrcChannelRankNetworkQuery
 
@@ -982,6 +988,9 @@ services:
   App\Irc\Application\Port\In\BurstCompletePort:
     class: App\Irc\Adapter\ServiceBridge\CoreBurstCompleteAdapter
 
+  App\Irc\Application\Port\In\ChannelBanMatchQuery:
+    class: App\Irc\Adapter\ServiceBridge\CoreChannelBanMatchQuery
+
   App\Irc\Application\Port\In\ChannelLookupPort:
     class: App\Irc\Adapter\ServiceBridge\CoreChannelLookupAdapter
 
@@ -1435,6 +1444,9 @@ services:
     tags: ["chanserv.command"]
 
   App\ChanServ\Adapter\In\Irc\Command\LevelsCommand:
+    tags: ["chanserv.command"]
+
+  App\ChanServ\Adapter\In\Irc\Command\UnbanCommand:
     tags: ["chanserv.command"]
 
   App\ChanServ\Adapter\In\Irc\Command\InviteCommand:

@@ -20,7 +20,7 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
     private const array HELP_GROUPS = [
         ['group_key' => 'help.group.registration_info', 'commands' => ['REGISTER', 'INFO', 'STATUS', 'SET'], 'admin' => false, 'subgroup' => false],
         ['group_key' => 'help.group.access_levels', 'commands' => ['ACCESS', 'DELACCESS', 'AKICK', 'LEVELS'], 'admin' => false, 'subgroup' => false],
-        ['group_key' => 'help.group.ranks_entry', 'commands' => ['OP', 'DEOP', 'VOICE', 'DEVOICE', 'ADMIN', 'DEADMIN', 'HALFOP', 'DEHALFOP', 'INVITE'], 'admin' => false, 'subgroup' => false],
+        ['group_key' => 'help.group.ranks_entry', 'commands' => ['OP', 'DEOP', 'VOICE', 'DEVOICE', 'ADMIN', 'DEADMIN', 'HALFOP', 'DEHALFOP', 'INVITE', 'UNBAN'], 'admin' => false, 'subgroup' => false],
         ['group_key' => 'help.ircop_group.channel_operations', 'commands' => ['CLEARUSERS', 'CLEARACCESS', 'IRCOPONLY'], 'admin' => true, 'subgroup' => true],
         ['group_key' => 'help.ircop_group.channel_management', 'commands' => ['NOEXPIRE'], 'admin' => true, 'subgroup' => true],
         ['group_key' => 'help.ircop_group.deletion', 'commands' => ['DROP', 'RESTORE'], 'admin' => true, 'subgroup' => true],

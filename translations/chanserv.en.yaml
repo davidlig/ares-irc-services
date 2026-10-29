@@ -462,6 +462,20 @@ devoice:
   help: "Remove voice mode in the channel."
   done: "\x0303✔\x03 \x02%nickname%\x02 has been devoiced."
 
+# --- UNBAN -----------------------------------------------------------------
+unban:
+  syntax: "UNBAN <#channel>"
+  example: "%command_prefix%\x02\x0303UNBAN #channel\x03\x0F"
+  short: "Remove bans affecting you."
+  help: |-
+    Remove all ordinary channel bans matching your current identity, including wildcards and IP/CIDR masks, according to the IRCd.
+    Identification and the configurable UNBAN level (default 200) are required. The founder retains access; channel membership and operator status are not required.
+    Extended bans are unchanged. No nickname or mask argument is accepted. The action is not recorded in channel HISTORY.
+  done: "Removed %count% ban(s) affecting you in %channel%."
+  no_matches: "No ordinary bans match your identity in %channel%; nothing was changed."
+  unavailable: "Your matching bans could not be determined; nothing was changed."
+  not_on_network: "Channel %channel% is not on the network."
+
 # --- INVITE ----------------------------------------------------------------
 invite:
   syntax: "INVITE <#channel>"
