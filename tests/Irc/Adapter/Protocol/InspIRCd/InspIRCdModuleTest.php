@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Tests\Irc\Adapter\Protocol\InspIRCd;
 
 use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
+use App\Irc\Adapter\Protocol\ChannelBanMatcherProvider;
+use App\Irc\Adapter\Protocol\InspIRCd\InspIRCdChannelBanMatcher;
 use App\Irc\Adapter\Protocol\InspIRCd\InspIRCdChannelModeSupport;
 use App\Irc\Adapter\Protocol\InspIRCd\InspIRCdChannelModeSupportFactory;
 use App\Irc\Adapter\Protocol\InspIRCd\InspIRCdModule;
@@ -17,6 +19,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
+
+use function class_implements;
 
 #[CoversClass(InspIRCdModule::class)]
 final class InspIRCdModuleTest extends TestCase
@@ -102,6 +106,17 @@ final class InspIRCdModuleTest extends TestCase
         self::assertFalse($module->getChannelModeSupport()->hasPermanentChannelMode());
         self::assertFalse($module->getChannelModeSupport()->hasOwner());
         self::assertSame(['v', 'o'], $module->getChannelModeSupport()->getSupportedPrefixModes());
+    }
+
+    public function testProvidesOrdinaryBanMatcher(): void
+    {
+        $module = $this->createModule();
+        self::assertContains(ChannelBanMatcherProvider::class, class_implements($module));
+        self::assertInstanceOf(InspIRCdChannelBanMatcher::class, $module->getChannelBanMatcher());
+        $module->updateBanCaseMapping('rfc1459');
+        self::assertNotNull($module->getChannelBanMatcher());
+        $module->updateBanCaseMapping('unsupported');
+        self::assertNull($module->getChannelBanMatcher());
     }
 
     protected function setUp(): void

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\Protocol\UnrealStandalone;
 
+use App\Irc\Adapter\Protocol\ChannelBanMatcher;
+use App\Irc\Adapter\Protocol\ChannelBanMatcherProvider;
 use App\Irc\Adapter\Protocol\ProtocolHandlerInterface;
 use App\Irc\Adapter\Runtime\ProtocolRuntimeModuleInterface;
 use App\Irc\Application\Port\In\ChannelModeSupportInterface;
@@ -14,7 +16,7 @@ use App\Irc\Application\Port\In\UserModeSupportInterface;
 /**
  * UnrealIRCd protocol module: handler, service actions, mode support, and nick reservation.
  */
-final readonly class UnrealStandaloneModule implements ProtocolRuntimeModuleInterface
+final readonly class UnrealStandaloneModule implements ProtocolRuntimeModuleInterface, ChannelBanMatcherProvider
 {
     public const string PROTOCOL_NAME = 'unreal';
 
@@ -54,5 +56,10 @@ final readonly class UnrealStandaloneModule implements ProtocolRuntimeModuleInte
     public function getUserModeSupport(): UserModeSupportInterface
     {
         return $this->userModeSupport;
+    }
+
+    public function getChannelBanMatcher(): ChannelBanMatcher
+    {
+        return new UnrealStandaloneChannelBanMatcher();
     }
 }
