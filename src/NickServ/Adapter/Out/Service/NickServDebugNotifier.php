@@ -11,16 +11,18 @@ use App\NickServ\Adapter\Out\InMemory\IdentifiedSessionRegistry;
 use App\NickServ\Application\Port\Out\NickAuditSink;
 use App\NickServ\Application\Port\Out\NickServOperatorAccess;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\Fragment;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use Symfony\Contracts\Translation\TranslatableInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
+
+use function in_array;
+use function str_contains;
+use function strtr;
 
 final readonly class NickServDebugNotifier implements NickAuditSink, ServiceDebugNotifierInterface
 {
-    private const string COLOR_BLUE = "\x0302";
-
-    private const string COLOR_RED = "\x0304";
-
-    private const string COLOR_RESET = "\x03";
-
     private const string PASSWORD_OPTION = 'PASSWORD';
 
     public function __construct(
@@ -32,6 +34,7 @@ final readonly class NickServDebugNotifier implements NickAuditSink, ServiceDebu
         private TranslatorInterface $translator,
         private string $defaultLanguage,
         private ?string $debugChannel,
+        private IrcRenderer $renderer,
     ) {}
 
     public function getUserLookup(): NetworkUserLookupPort
@@ -111,9 +114,9 @@ final readonly class NickServDebugNotifier implements NickAuditSink, ServiceDebu
         ?string $reason,
         array $extra,
     ): void {
-        $coloredOperator = self::COLOR_BLUE . $operator . self::COLOR_RESET;
-        $coloredCommand = self::COLOR_RED . $command . self::COLOR_RESET;
-        $coloredTarget = self::COLOR_BLUE . $target . self::COLOR_RESET;
+        $coloredOperator = new Fragment($operator, Component::Actor);
+        $coloredCommand = new Fragment($command, Component::ModeChange);
+        $coloredTarget = new Fragment($target, Component::Actor);
 
         $duration = $extra['duration'] ?? null;
         $option = $extra['option'] ?? null;
@@ -121,12 +124,12 @@ final readonly class NickServDebugNotifier implements NickAuditSink, ServiceDebu
 
         $formattedReason = '';
         if (null !== $reason && '' !== $reason) {
-            $formattedReason = $this->translator->trans(
+            $formattedReason = new Fragment($this->translator->trans(
                 'debug.prefix_reason',
-                ['%reason%' => $reason],
+                [],
                 'common',
                 $this->defaultLanguage,
-            );
+            ), parameters: ['%reason%' => $reason]);
         }
 
         $translationKey = 'debug.action_message';
@@ -157,13 +160,25 @@ final readonly class NickServDebugNotifier implements NickAuditSink, ServiceDebu
             $translationKey = 'debug.action_duration';
         }
 
-        $message = $this->translator->trans(
-            $translationKey,
-            $messageParams,
-            'common',
-            $this->defaultLanguage,
-        );
+        $message = $this->render($translationKey, 'common', $messageParams);
 
         $this->notify($message);
+    }
+
+    /** @param array<string, mixed> $parameters */
+    private function render(string $key, string $domain, array $parameters): string
+    {
+        $template = $this->translator->trans($key, [], $domain, $this->defaultLanguage);
+        foreach ($parameters as $name => $value) {
+            if ($value instanceof Fragment && in_array($name, ['%operator%', '%command%', '%target%', '%reason%'], true)) {
+                continue;
+            }
+            if ($value instanceof TranslatableInterface) {
+                $value = $value->trans($this->translator, $this->defaultLanguage);
+            }
+            $parameters[$name] = str_contains($template, $name) ? strtr($name, [$name => $value]) : '';
+        }
+
+        return $this->renderer->component(Component::Text, $template, $parameters);
     }
 }

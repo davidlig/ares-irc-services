@@ -12,18 +12,82 @@ use App\NickServ\Adapter\Out\Service\NickServDebugNotifier;
 use App\NickServ\Application\Port\Out\NickServOperatorAccess;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Domain\Entity\RegisteredNick;
+use App\Shared\Adapter\In\Irc\Presentation\Appearance;
+use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Translation\Translator;
+use Symfony\Contracts\Translation\TranslatableInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function array_map;
 use function hash;
+use function restore_error_handler;
 use function serialize;
+use function set_error_handler;
+use function str_replace;
 
 #[CoversClass(NickServDebugNotifier::class)]
 final class NickServDebugNotifierTest extends TestCase
 {
+    #[Test]
+    public function debugUsesInjectedStyleWithoutRecursiveInterpolation(): void
+    {
+        $transport = $this->createMock(NickServNotifierInterface::class);
+        $transport->expects(self::once())->method('sendMessage')->with('#opers', "\x0305%command%\x03\x0F / \x0306SET\x03\x0F / \x0305Target\x03\x0F / Reason: %command%", 'NOTICE');
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => 'debug.prefix_reason' === $id ? 'Reason: %reason%' : '%operator% / %command% / %target% / %reason%');
+        $style = new PresentationStyle([
+            'actor' => new Appearance('05'),
+            'mode_change' => new Appearance('06'),
+        ]);
+        $renderer = new IrcRenderer(new FixedStyleProvider($style));
+        $debug = $this->createNotifier(notifier: $transport, translator: $translator, renderer: $renderer);
+        $debug->log('%command%', 'SET', 'Target', reason: '%command%');
+    }
+
+    #[Test]
+    public function translatableDebugParameterKeepsLiteralPlaceholderText(): void
+    {
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturn('%option% %unused%');
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::once())->method('sendMessage')->with('#debug', '%unused% %unused%', 'NOTICE');
+        $debug = $this->createNotifier(notifier: $notifier, translator: $translator, debugChannel: '#debug');
+        $value = new class implements TranslatableInterface {
+            public function trans(TranslatorInterface $translator, ?string $locale = null): string
+            {
+                return '%unused%';
+            }
+        };
+        $debug->log('Admin', 'SET', 'Target', extra: ['option' => $value]);
+    }
+
+    #[Test]
+    public function nonScalarDebugParameterRetainsTranslatorConversion(): void
+    {
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturn('%option%');
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::once())->method('sendMessage')->with(self::anything(), 'Array', 'NOTICE');
+        $debug = $this->createNotifier(notifier: $notifier, translator: $translator, debugChannel: '#debug');
+        $warnings = [];
+        set_error_handler(static function (int $severity, string $message) use (&$warnings): bool {
+            $warnings[] = [$severity, $message];
+
+            return true;
+        });
+        try {
+            $debug->log('Admin', 'SET', 'Target', extra: ['option' => ['x']]);
+        } finally {
+            restore_error_handler();
+        }
+        self::assertSame([[E_WARNING, 'Array to string conversion']], $warnings);
+    }
+
     #[Test]
     public function getServiceNameReturnsNickserv(): void
     {
@@ -145,18 +209,7 @@ final class NickServDebugNotifierTest extends TestCase
         $translator = $this->createMock(TranslatorInterface::class);
         $translator->expects(self::atLeastOnce())
             ->method('trans')
-            ->willReturnCallback(static function (string $id, array $params, string $domain, string $locale): string {
-                if ('debug.action_with_option' === $id) {
-                    self::assertIsString($params['%operator%']);
-                    self::assertIsString($params['%command%']);
-                    self::assertIsString($params['%target%']);
-                    self::assertIsString($params['%option%']);
-
-                    return $params['%operator%'] . ' ' . $params['%command%'] . ' ' . $params['%target%'] . ' ' . $params['%option%'];
-                }
-
-                return '';
-            });
+            ->willReturnCallback(static fn (string $id): string => 'debug.action_with_option' === $id ? '%operator% %command% %target% %option%' : '');
 
         $notifier = $this->createMock(NickServNotifierInterface::class);
         $notifier->expects(self::once())
@@ -186,16 +239,7 @@ final class NickServDebugNotifierTest extends TestCase
         $translator = $this->createMock(TranslatorInterface::class);
         $translator->expects(self::atLeastOnce())
             ->method('trans')
-            ->willReturnCallback(static function (string $id, array $params, string $domain, string $locale): string {
-                if ('debug.action_with_value' === $id) {
-                    self::assertIsString($params['%option%']);
-                    self::assertIsString($params['%value%']);
-
-                    return $params['%option%'] . '=' . $params['%value%'];
-                }
-
-                return '';
-            });
+            ->willReturnCallback(static fn (string $id): string => 'debug.action_with_value' === $id ? '%option%=%value%' : '');
 
         $notifier = $this->createMock(NickServNotifierInterface::class);
         $notifier->expects(self::once())
@@ -224,18 +268,7 @@ final class NickServDebugNotifierTest extends TestCase
         $translator = $this->createMock(TranslatorInterface::class);
         $translator->expects(self::atLeastOnce())
             ->method('trans')
-            ->willReturnCallback(static function (string $id, array $params, string $domain, string $locale): string {
-                if ('debug.action_with_option' === $id) {
-                    self::assertIsString($params['%operator%']);
-                    self::assertIsString($params['%command%']);
-                    self::assertIsString($params['%target%']);
-                    self::assertIsString($params['%option%']);
-
-                    return $params['%operator%'] . ' ' . $params['%command%'] . ' ' . $params['%target%'] . ' Option=' . $params['%option%'];
-                }
-
-                return '';
-            });
+            ->willReturnCallback(static fn (string $id): string => 'debug.action_with_option' === $id ? '%operator% %command% %target% Option=%option%' : '');
 
         $notifier = $this->createMock(NickServNotifierInterface::class);
         $notifier->expects(self::once())
@@ -264,19 +297,8 @@ final class NickServDebugNotifierTest extends TestCase
         $translator = $this->createMock(TranslatorInterface::class);
         $translator->expects(self::atLeastOnce())
             ->method('trans')
-            ->willReturnCallback(static function (string $id, array $params, string $domain, string $locale): string {
-                if ('debug.action_duration' === $id) {
-                    self::assertIsString($params['%duration%']);
-
-                    return 'dur=' . $params['%duration%'];
-                }
-                if ('debug.prefix_reason' === $id) {
-                    self::assertIsString($params['%reason%']);
-
-                    return 'r=' . $params['%reason%'];
-                }
-
-                return '';
+            ->willReturnCallback(static fn (string $id): string => match ($id) {
+                'debug.action_duration' => 'dur=%duration%', 'debug.prefix_reason' => 'r=%reason%', default => ''
             });
 
         $notifier = $this->createMock(NickServNotifierInterface::class);
@@ -431,7 +453,7 @@ final class NickServDebugNotifierTest extends TestCase
             foreach ($cases as [$command, $reason, $extra]) {
                 $debug->log('Admin', $command, 'Target', null, null, $reason, $extra);
             }
-            self::assertSame($hash, hash('sha256', serialize($messages)), $locale);
+            self::assertSame($hash, hash('sha256', serialize(array_map(static fn (array $entry): array => [$entry[0], str_replace("\x03\x0F", "\x03", $entry[1]), $entry[2]], $messages))), $locale);
         }
     }
 
@@ -444,6 +466,7 @@ final class NickServDebugNotifierTest extends TestCase
         ?NetworkUserLookupPort $userLookup = null,
         ?IdentifiedSessionRegistry $identifiedRegistry = null,
         string $language = 'en',
+        ?IrcRenderer $renderer = null,
     ): NickServDebugNotifier {
         return new NickServDebugNotifier(
             $notifier ?? $this->createStub(NickServNotifierInterface::class),
@@ -454,6 +477,12 @@ final class NickServDebugNotifierTest extends TestCase
             $translator ?? $this->createStub(TranslatorInterface::class),
             $language,
             $debugChannel,
+            $renderer ?? $this->renderer(),
         );
+    }
+
+    private function renderer(): IrcRenderer
+    {
+        return new IrcRenderer(new FixedStyleProvider(PresentationStyle::default()));
     }
 }

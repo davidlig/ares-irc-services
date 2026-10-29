@@ -32,12 +32,16 @@ use App\NickServ\Application\UseCase\Set\SetNickSettingHandlerInterface;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
 use App\Shared\Application\Port\EventBusInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use Symfony\Component\Translation\Loader\ArrayLoader;
 use Symfony\Component\Translation\Translator;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -192,8 +196,63 @@ final class NickServServiceTest extends TestCase
         foreach (['common', 'nickserv'] as $domain) {
             $translator->addResource('yaml', __DIR__ . '/../../../../../translations/' . $domain . '.en.yaml', 'en', $domain);
         }
+        $translator->addLoader('array', new ArrayLoader());
+        $translator->addResource('array', ['presentation.unknown_command' => 'Unknown %command%. Use /msg %bot% %help%'], 'en', 'common');
+        $expected = "\x0304✗\x03\x0F Unknown \x02\x0303UNKNOWN\x03\x0F. Use /msg NickServ \x02\x0303HELP\x03\x0F";
+        $pendingRegistry = new PendingVerificationRegistry();
+        $recoveryRegistry = new RecoveryTokenRegistry();
+        $logger = $this->createStub(LoggerInterface::class);
+        $messageTypeResolver = new UserMessageTypeResolver($nickRepository);
+
+        $registry = new NickServCommandRegistry([]);
+
+        $notifier->method('getNick')->willReturn('NickServ');
+
+        $notifier->expects(self::once())
+            ->method('sendMessage')
+            ->with($sender->uid, $expected, 'NOTICE');
+
+        $service = new NickServService(
+            $authorizationContext,
+            $authorizationChecker,
+            $registry,
+            $nickRepository,
+            new UserLanguageResolver($this->createStub(RegisteredNickRepositoryInterface::class), new SessionLanguageRegistry(), 'en'),
+            $notifier,
+            $messageTypeResolver,
+            $translator,
+            $pendingRegistry,
+            $recoveryRegistry,
+            $this->createServiceNicks(),
+            $this->createStub(EventBusInterface::class),
+            'en',
+            'UTC',
+            $logger,
+            new IrcRenderer(
+                new FixedStyleProvider(PresentationStyle::default()),
+            ),
+        );
+
+        $service->dispatch('UNKNOWN arg', $sender);
+    }
+
+    #[Test]
+    public function repliesUnknownCommandWithoutRendererUsingLegacyTranslation(): void
+    {
+        $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', '127.0.0.1', true, false, '001', 'cloak');
+
+        $authorizationContext = $this->createStub(AuthorizationContextInterface::class);
+        $authorizationChecker = $this->createStub(AuthorizationCheckerInterface::class);
+        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $translator = new Translator('en');
+        $translator->addLoader('yaml', new IrcYamlTranslationLoader());
+        foreach (['common', 'nickserv'] as $domain) {
+            $translator->addResource('yaml', __DIR__ . '/../../../../../translations/' . $domain . '.en.yaml', 'en', $domain);
+        }
+        $translator->addLoader('array', new ArrayLoader());
+        $translator->addResource('array', ['presentation.unknown_command' => 'Unknown %command%. Use /msg %bot% %help%'], 'en', 'common');
         $expected = $translator->trans('unknown_command', ['%command%' => 'UNKNOWN', '%bot%' => 'NickServ'], 'common', 'en');
-        self::assertNotSame('unknown_command', $expected);
         $pendingRegistry = new PendingVerificationRegistry();
         $recoveryRegistry = new RecoveryTokenRegistry();
         $logger = $this->createStub(LoggerInterface::class);
