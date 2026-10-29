@@ -479,6 +479,20 @@ devoice:
   help: "Retrageți modul voice pe canal."
   done: "\x0303✔\x03 Lui \x02%nickname%\x02 i s-a retras voice-ul."
 
+# --- UNBAN -----------------------------------------------------------------
+unban:
+  syntax: "UNBAN <#channel>"
+  example: "%command_prefix%\x02\x0303UNBAN #channel\x03\x0F"
+  short: "Elimină banurile care te afectează."
+  help: |-
+    Elimină toate banurile obișnuite ale canalului care corespund identității tale actuale, inclusiv metacaractere și măști IP/CIDR, conform IRCd.
+    Necesită identificare și nivelul UNBAN configurabil (implicit 200). Fondatorul își păstrează accesul; prezența pe canal și statutul de operator nu sunt necesare.
+    Banurile extinse rămân neschimbate. Nu acceptă pseudonim sau mască drept argument. Acțiunea nu este înregistrată în HISTORY al canalului.
+  done: "Au fost eliminate %count% banuri care te afectează pe %channel%."
+  no_matches: "Niciun ban obișnuit nu corespunde identității tale pe %channel%; nu s-a modificat nimic."
+  unavailable: "Nu s-au putut determina banurile corespunzătoare; nu s-a modificat nimic."
+  not_on_network: "Canalul %channel% nu este prezent în rețea."
+
 # --- INVITE ----------------------------------------------------------------
 invite:
   syntax: "INVITE <#canal>"

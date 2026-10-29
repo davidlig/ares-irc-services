@@ -473,6 +473,20 @@ devoice:
   help: "Kendu voice modua kanalean."
   done: "\x0303✔\x03 \x02%nickname%\x02(r)i voice kendu zaio."
 
+# --- UNBAN -----------------------------------------------------------------
+unban:
+  syntax: "UNBAN <#channel>"
+  example: "%command_prefix%\x02\x0303UNBAN #channel\x03\x0F"
+  short: "Zuri eragiten dizuten debekuak kendu."
+  help: |-
+    Zure uneko identitatearekin bat datozen kanaleko debeku arrunt guztiak kentzen ditu, komodinak eta IP/CIDR maskarak barne, IRCd-ren arabera.
+    Identifikazioa eta UNBAN maila konfiguragarria behar dira (lehenetsia 200). Sortzaileak sarbidea mantentzen du; ez da kanaleko kide edo operadore izan behar.
+    Debeku hedatuak ez dira aldatzen. Ez du ezizenik edo maskararik onartzen argumentu gisa. Ekintza ez da kanalaren HISTORY-n erregistratzen.
+  done: "Zuri eragiten dizuten %count% debeku kendu dira %channel% kanalean."
+  no_matches: "Ez dago zure identitatearekin bat datorren debeku arruntik %channel% kanalean; ez da ezer aldatu."
+  unavailable: "Ezin izan dira zure debeku egokiak zehaztu; ez da ezer aldatu."
+  not_on_network: "%channel% kanala ez dago sarean."
+
 # --- INVITE ----------------------------------------------------------------
 invite:
   syntax: "INVITE <#kanala>"
