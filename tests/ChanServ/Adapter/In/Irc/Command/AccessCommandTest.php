@@ -78,7 +78,7 @@ final class AccessCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['notachannel', 'LIST'], $notifier, $translator));
 
-        self::assertSame(['error.invalid_channel'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F error.invalid_channel"], $messages);
     }
 
     #[Test]
@@ -104,7 +104,7 @@ final class AccessCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, null, ['#test', 'LIST'], $notifier, $translator));
 
-        self::assertSame(['error.not_identified'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F presentation.error.not_identified"], $messages);
     }
 
     #[Test]
@@ -146,12 +146,17 @@ final class AccessCommandTest extends TestCase
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ([] !== $params ? json_encode($params) : ''));
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => match ($id) {
+            'access.list.empty' => 'Empty %channel%',
+            'access.list.header' => 'Access %channel%',
+            'access.list.entry' => '#%index%: %nickname% (%level%)',
+            default => $id,
+        });
 
         $cmd = $this->createCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'LIST'], $notifier, $translator));
 
-        self::assertSame(['access.list.empty{"%bot%":"","%nickserv%":"NickServ","%chanserv%":"ChanServ","%memoserv%":"MemoServ","%operserv%":"OperServ","%channel%":"#test"}'], $messages);
+        self::assertSame(["\x0310ℹ\x03\x0F Empty \x02#test\x03\x0F"], $messages);
     }
 
     #[Test]
@@ -176,15 +181,20 @@ final class AccessCommandTest extends TestCase
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ([] !== $params ? json_encode($params) : ''));
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => match ($id) {
+            'access.list.empty' => 'Empty %channel%',
+            'access.list.header' => 'Access %channel%',
+            'access.list.entry' => '#%index%: %nickname% (%level%)',
+            default => $id,
+        });
 
         $cmd = $this->createCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'LIST'], $notifier, $translator));
 
         self::assertSame([
-            'access.list.header{"%bot%":"","%nickserv%":"NickServ","%chanserv%":"ChanServ","%memoserv%":"MemoServ","%operserv%":"OperServ","%channel%":"#test"}',
-            'access.list.entry{"%bot%":"","%nickserv%":"NickServ","%chanserv%":"ChanServ","%memoserv%":"MemoServ","%operserv%":"OperServ","%index%":"1","%nickname%":"NickTen","%level%":"100"}',
-            'access.list.entry{"%bot%":"","%nickserv%":"NickServ","%chanserv%":"ChanServ","%memoserv%":"MemoServ","%operserv%":"OperServ","%index%":"2","%nickname%":"NickTwenty","%level%":"50"}',
+            "\x0303Access \x03\x0F\x02#test\x03\x0F",
+            '  #1: NickTen (100)',
+            '  #2: NickTwenty (50)',
         ], $messages);
     }
 
@@ -281,7 +291,7 @@ final class AccessCommandTest extends TestCase
             $translator,
         ));
 
-        self::assertSame(['error.not_identified'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F presentation.error.not_identified"], $messages);
     }
 
     #[Test]
@@ -315,7 +325,7 @@ final class AccessCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', 'OtherNick', '100'], $notifier, $translator));
 
-        self::assertSame(['access.add.done'], $messages);
+        self::assertSame(["\x0303✔\x03\x0F access.add.done"], $messages);
         self::assertInstanceOf(ChannelAccess::class, $saved);
         self::assertSame(1, $saved->getChannelId());
         self::assertSame(2, $saved->getNickId());
@@ -412,7 +422,7 @@ final class AccessCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', '', '100'], $notifier, $translator));
 
-        self::assertSame(['error.syntax'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F presentation.error.syntax"], $messages);
     }
 
     #[Test]
@@ -430,16 +440,19 @@ final class AccessCommandTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(
             static function (string $id, array $parameters = []): string {
+                if ('presentation.error.syntax' === $id) {
+                    return 'error.syntax|%syntax%';
+                }
                 $syntax = $parameters['%syntax%'] ?? null;
 
-                return 'error.syntax' === $id && is_string($syntax) ? $id . '|' . $syntax : $id;
+                return "\x0304✗\x03\x0F presentation.error.syntax" === $id && is_string($syntax) ? $id . '|' . $syntax : $id;
             }
         );
 
         $command = new AccessCommand($handler);
         $command->execute($this->createContext($sender, $account, ['#test', 'ADD', 'TargetNick'], $notifier, $translator));
 
-        self::assertSame(['error.syntax|access.add.syntax'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F error.syntax|\x02\x0303access.add.syntax\x03\x0F"], $messages);
     }
 
     #[Test]
@@ -462,7 +475,7 @@ final class AccessCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', 'SomeNick', '0'], $notifier, $translator));
 
-        self::assertSame(['access.level_range'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F access.level_range"], $messages);
     }
 
     #[Test]
@@ -486,7 +499,7 @@ final class AccessCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', 'Unregistered', '100'], $notifier, $translator));
 
-        self::assertSame(['error.nick_not_registered'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F presentation.error.nick_not_registered"], $messages);
     }
 
     #[Test]
@@ -514,7 +527,7 @@ final class AccessCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', 'Founder', '100'], $notifier, $translator));
 
-        self::assertSame(['access.founder_not_in_list'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F access.founder_not_in_list"], $messages);
     }
 
     #[Test]
@@ -559,7 +572,7 @@ final class AccessCommandTest extends TestCase
             $translator,
         ));
 
-        self::assertSame(['access.cannot_manage_level'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F access.cannot_manage_level"], $messages);
     }
 
     #[Test]
@@ -593,7 +606,7 @@ final class AccessCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'DEL', 'OtherNick'], $notifier, $translator));
 
-        self::assertSame(['access.del.done'], $messages);
+        self::assertSame(["\x0303✔\x03\x0F access.del.done"], $messages);
         self::assertSame($existing, $removed);
     }
 
@@ -617,7 +630,7 @@ final class AccessCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'DEL', '   '], $notifier, $translator));
 
-        self::assertSame(['error.syntax'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F presentation.error.syntax"], $messages);
     }
 
     #[Test]
@@ -644,7 +657,7 @@ final class AccessCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'DEL', 'OtherNick'], $notifier, $translator));
 
-        self::assertSame(['access.del.not_in_list'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F access.del.not_in_list"], $messages);
     }
 
     #[Test]
@@ -681,7 +694,7 @@ final class AccessCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', 'OtherNick', '100'], $notifier, $translator));
 
-        self::assertSame(['access.cannot_manage_level'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F access.cannot_manage_level"], $messages);
     }
 
     #[Test]
@@ -716,7 +729,7 @@ final class AccessCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', 'OtherNick', '75'], $notifier, $translator));
 
-        self::assertSame(['access.add.done'], $messages);
+        self::assertSame(["\x0303✔\x03\x0F access.add.done"], $messages);
         self::assertSame($existing, $saved);
         self::assertSame(75, $existing->getLevel());
     }
@@ -746,7 +759,7 @@ final class AccessCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', 'NewNick', '10'], $notifier, $translator));
 
-        self::assertSame(['access.max_entries'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F access.max_entries"], $messages);
     }
 
     #[Test]
@@ -783,7 +796,7 @@ final class AccessCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'DEL', 'OtherNick'], $notifier, $translator));
 
-        self::assertSame(['access.cannot_manage_level'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F access.cannot_manage_level"], $messages);
     }
 
     #[Test]
@@ -807,7 +820,7 @@ final class AccessCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'DEL', 'Unregistered'], $notifier, $translator));
 
-        self::assertSame(['error.nick_not_registered'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F presentation.error.nick_not_registered"], $messages);
     }
 
     #[Test]
@@ -845,7 +858,7 @@ final class AccessCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', 'TargetNick', '100'], $notifier, $translator));
 
-        self::assertSame(['access.cannot_manage_level'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F access.cannot_manage_level"], $messages);
     }
 
     #[Test]
@@ -953,7 +966,7 @@ final class AccessCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', 'OtherNick', '100'], $notifier, $translator, true));
 
-        self::assertSame(['access.add.done'], $messages);
+        self::assertSame(["\x0303✔\x03\x0F access.add.done"], $messages);
         self::assertInstanceOf(ChannelAccess::class, $saved);
     }
 
@@ -988,7 +1001,7 @@ final class AccessCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'DEL', 'OtherNick'], $notifier, $translator, true));
 
-        self::assertSame(['access.del.done'], $messages);
+        self::assertSame(["\x0303✔\x03\x0F access.del.done"], $messages);
         self::assertSame($existing, $removed);
     }
 
@@ -1015,7 +1028,7 @@ final class AccessCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', 'Founder', '100'], $notifier, $translator, true));
 
-        self::assertSame(['access.founder_not_in_list'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F access.founder_not_in_list"], $messages);
     }
 
     #[Test]
@@ -1043,7 +1056,7 @@ final class AccessCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', 'NewNick', '10'], $notifier, $translator, true));
 
-        self::assertSame(['access.max_entries'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F access.max_entries"], $messages);
     }
 
     /**

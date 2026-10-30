@@ -7,6 +7,9 @@ namespace App\ChanServ\Adapter\In\Irc\Command;
 use App\ChanServ\Adapter\In\Irc\ChanServContext;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentValidator;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\Fragment;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 
 use function array_values;
 
@@ -43,7 +46,7 @@ trait ChanServArgumentDefinitionSupport
             return false;
         }
 
-        $context->reply('error.syntax', ['syntax' => $context->trans($syntaxKey)]);
+        $context->reply('presentation.error.syntax', ['syntax' => new Fragment($context->trans($syntaxKey), Component::Command)], Role::Error);
 
         return false;
     }
