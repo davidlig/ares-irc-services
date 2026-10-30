@@ -19,7 +19,7 @@
 # --- REGISTER --------------------------------------------------------------
 register:
   token_unavailable: !irc |-
-    \x0304✗\x03 Înregistrarea este în așteptare, dar tokenul nu a putut fi livrat.
+    Înregistrarea este în așteptare, dar tokenul nu a putut fi livrat.
     Așteaptă expirarea înainte de a te înregistra din nou.
   syntax: "REGISTER <parolă> [email]"
   short: "Înregistrați-vă porecla la servicii."
@@ -30,22 +30,26 @@ register:
     Păstrează-l într-un loc sigur.
     Durata de expirare %duration% se aplică doar înainte de verificare.
     Domeniile email blocate administrativ nu sunt permise.
-  example: "%command_prefix%\x02\x0303REGISTER Parolă$Sigură_123\x03\x0F"
+  example: "%command_prefix%REGISTER Parolă$Sigură_123"
   examples:
-    - "%command_prefix%\x02\x0303REGISTER Parolă$Sigură_123 utilizator@exemplu.ro\x03\x0F"
-  pending: !irc |-
-    \x0307→\x03 A fost trimis un token de verificare la \x02%email%\x02.
-      Rulează /msg %bot% \x0303VERIFY <token>\x03 pentru a finaliza înregistrarea.
-      Nu l-ai primit? Verifică spamul sau folosește /msg %bot% \x0303RESEND\x03
-      Tokenul expiră în \x02%duration%\x02.
-  already_registered: "\x0304✗\x03 Porecla \x02%nickname%\x02 este deja înregistrată."
-  already_pending: "\x0307→\x03 Înregistrarea pentru \x02%nickname%\x02 este în așteptare. Folosește \x0303VERIFY <token>\x03. Dacă tokenul a fost trimis prin e-mail și există o adresă validă asociată, poți solicita altul cu \x0303RESEND\x03."
-  forbidden: "\x0304✗\x03 Porecla \x02%nickname%\x02 nu poate fi înregistrată în această rețea."
-  pending_deletion: "\x0304✗\x03 Porecla \x02%nickname%\x02 este în așteptare de ștergere și nu poate fi înregistrată."
-  invalid_email: "\x0304✗\x03 Adresa de e-mail furnizată nu este validă."
-  email_already_used: "\x0304✗\x03 E-mailul \x02%email%\x02 este deja folosit de o altă poreclă. Folosiți o adresă diferită."
-  throttled: "\x0304✗\x03 Trebuie să așteptați \x02%minutes%\x02 minut(e) înainte de a încerca să vă înregistrați din nou."
-  guest_prefix_forbidden: "\x0304✗\x03 Nu puteți înregistra o poreclă care începe cu \x02%prefix%\x02."
+    - "%command_prefix%REGISTER Parolă$Sigură_123 utilizator@exemplu.ro"
+  pending: |-
+    %first%
+    %second%
+    %third%
+    %fourth%
+  pending_line_1: "A fost trimis un token de verificare la %email%."
+  pending_line_2: "Rulează /msg %bot% %verify% pentru a finaliza înregistrarea."
+  pending_line_3: "Nu l-ai primit? Verifică spamul sau folosește /msg %bot% %resend%"
+  pending_line_4: "Tokenul expiră în %duration%."
+  already_registered: "Porecla %nickname% este deja înregistrată."
+  already_pending: "Înregistrarea pentru %nickname% este în așteptare. Folosește %verify%. Dacă tokenul a fost trimis prin e-mail și există o adresă validă asociată, poți solicita altul cu %resend%."
+  forbidden: "Porecla %nickname% nu poate fi înregistrată în această rețea."
+  pending_deletion: "Porecla %nickname% este în așteptare de ștergere și nu poate fi înregistrată."
+  invalid_email: "Adresa de e-mail furnizată nu este validă."
+  email_already_used: "E-mailul %email% este deja folosit de o altă poreclă. Folosiți o adresă diferită."
+  throttled: "Trebuie să așteptați %minutes% minut(e) înainte de a încerca să vă înregistrați din nou."
+  guest_prefix_forbidden: "Nu puteți înregistra o poreclă care începe cu %prefix%."
 
 # --- VERIFY ----------------------------------------------------------------
 verify:
@@ -55,15 +59,15 @@ verify:
     După verificare, tokenul devine tokenul tău permanent de recuperare.
     Păstrează-l în siguranță: îl poți folosi pentru a-ți recupera porecla.
     Durata de expirare %duration% se aplică doar înainte de verificare.
-  example: "%command_prefix%\x02\x0303VERIFY <token_primit>\x03\x0F"
-  success: "\x0303✔\x03 Porecla \x02%nickname%\x02 a fost înregistrată cu succes și acum sunteți identificat."
-  success_native: "\x0303✔\x03 Porecla \x02%nickname%\x02 a fost înregistrată cu succes. Folosiți autentificarea nativă afișată mai jos."
-  invalid_token: "\x0304✗\x03 Tokenul de salvare este invalid."
-  no_pending: "\x0304✗\x03 Nu aveți nicio înregistrare în așteptare de verificat."
+  example: "%command_prefix%VERIFY <token_primit>"
+  success: "Porecla %nickname% a fost înregistrată cu succes și acum sunteți identificat."
+  success_native: "Porecla %nickname% a fost înregistrată cu succes. Folosiți autentificarea nativă afișată mai jos."
+  invalid_token: "Tokenul de salvare este invalid."
+  no_pending: "Nu aveți nicio înregistrare în așteptare de verificat."
 
 # --- RESEND ----------------------------------------------------------------
 resend:
-  disabled: "\x0307ℹ\x03 \x0303RESEND\x03 este dezactivat când REGMODE este TOKEN."
+  disabled: "%resend% este dezactivat când REGMODE este TOKEN."
   syntax: "RESEND"
   short: "Retrimiteți tokenul de verificare la e-mailul dumneavoastră."
   help: |-
@@ -74,17 +78,20 @@ resend:
     doar înainte de verificare.
     Cu RESEND, vei primi un token nou prin e-mail.
     Termenul înregistrării în așteptare se prelungește cu %duration%.
-  example: "%command_prefix%\x02\x0303RESEND\x03\x0F"
-  success: "\x0307→\x03 Tokenul de verificare a fost retrimis la \x02%email%\x02."
-  no_pending: "\x0304✗\x03 Nu aveți nicio înregistrare în așteptare de verificat."
-  throttled: "\x0304✗\x03 Trebuie să așteptați \x02%minutes%\x02 minut(e) înainte de a solicita alt e-mail de verificare."
+  example: "%command_prefix%RESEND"
+  success: "Tokenul de verificare a fost retrimis la %email%."
+  no_pending: "Nu aveți nicio înregistrare în așteptare de verificat."
+  throttled: "Trebuie să așteptați %minutes% minut(e) înainte de a solicita alt e-mail de verificare."
 
 # --- RECOVER ---------------------------------------------------------------
 recover:
-  no_email: "\x0304✗\x03 Nu este setat niciun e-mail pentru porecla \x02%nickname%\x02. Recuperarea nu este disponibilă."
-  email_sent: "\x0307→\x03 Un token de recuperare a fost trimis la \x02%email_hint%\x02. Verificați inboxul (și folderul de spam)."
-  pending_deletion: "\x0304✗\x03 Porecla \x02%nickname%\x02 așteaptă ștergerea și nu poate fi recuperată."
-  instructions: "\x0307ℹ\x03 EMAIL: \x0303RECOVER %nickname%\x03 solicită un token provizoriu prin email. TOKEN: furnizează tokenul confirmat. \x0303RECOVER %nickname% <token>\x03 acceptă tokenul valid din email sau tokenul confirmat. Cel din email îl înlocuiește pe cel stocat doar după validare. Folosirea celui stocat oferă înlocuire opțională prin \x0303VERIFY\x03; ignoră mesajul pentru a-l păstra."
+  no_email: "Nu este setat niciun e-mail pentru porecla %nickname%. Recuperarea nu este disponibilă."
+  email_sent: "Un token de recuperare a fost trimis la %email_hint%. Verificați inboxul (și folderul de spam)."
+  pending_deletion: "Porecla %nickname% așteaptă ștergerea și nu poate fi recuperată."
+  instructions: "EMAIL: %command_0% solicită un token provizoriu prin email. TOKEN: furnizează tokenul confirmat. %command_1% acceptă tokenul valid din email sau tokenul confirmat. Cel din email îl înlocuiește pe cel stocat doar după validare. Folosirea celui stocat oferă înlocuire opțională prin %command_2%; ignoră mesajul pentru a-l păstra."
+  instructions_command_0: "RECOVER %nickname%"
+  instructions_command_1: "RECOVER %nickname% <token>"
+  instructions_command_2: "VERIFY"
   syntax: "RECOVER <poreclă> [token]"
   short: "Recuperați-vă porecla dacă v-ați pierdut parola."
   help: |-
@@ -94,48 +101,57 @@ recover:
     pe cel salvat doar după verificare.
     După folosirea tokenului salvat, VERIFY oferă opțional un înlocuitor; ignoră
     mesajul dacă dorești să-l păstrezi pe cel actual.
-  example: "%command_prefix%\x02\x0303RECOVER Utilizator\x03\x0F"
+  example: "%command_prefix%RECOVER Utilizator"
   examples:
-    - "%command_prefix%\x02\x0303RECOVER Utilizator <token_primit>\x03\x0F"
-  pending: "\x0307→\x03 Înregistrarea pentru \x02%nickname%\x02 este în așteptare. Folosește \x0303VERIFY <token>\x03. \x0303RESEND\x03 este disponibil doar cu REGMODE EMAIL și o adresă validă asociată."
-  suspended: "\x0304✗\x03 Porecla \x02%nickname%\x02 este suspendată. Motiv: %reason%"
-  forbidden: "\x0304✗\x03 Porecla \x02%nickname%\x02 nu poate fi folosită în această rețea."
-  throttled: "\x0304✗\x03 Prea multe tokenuri incorecte. Încearcă din nou peste \x02%minutes%\x02 minut(e)."
-  invalid_token: "\x0304✗\x03 Tokenul de salvare este invalid."
-  success_identify: "\x0303✔\x03 Parolă resetată. Identificați-vă acum: \x0303%identify_cmd%\x03"
-  success_then_change: "Apoi schimbați-vă parola: \x0303/msg %bot% SET PASSWORD <parolă_nouă>\x03"
+    - "%command_prefix%RECOVER Utilizator <token_primit>"
+  pending: "Înregistrarea pentru %nickname% este în așteptare. Folosește %command_0%. %command_1% este disponibil doar cu REGMODE EMAIL și o adresă validă asociată."
+  pending_command_0: "VERIFY <token>"
+  pending_command_1: "RESEND"
+  suspended: "Porecla %nickname% este suspendată. Motiv: %reason%"
+  forbidden: "Porecla %nickname% nu poate fi folosită în această rețea."
+  throttled: "Prea multe tokenuri incorecte. Încearcă din nou peste %minutes% minut(e)."
+  invalid_token: "Tokenul de salvare este invalid."
+  success_identify: "Parolă resetată. Identificați-vă acum: %identify_cmd%"
+  success_then_change: "Apoi schimbați-vă parola: /msg %bot% %command_0%"
+  success_then_change_command_0: "SET PASSWORD <parolă_nouă>"
 
 # --- IDENTIFY --------------------------------------------------------------
 identify:
   syntax: "IDENTIFY <poreclă> <parolă>"
   short: "Identificați-vă ca proprietar al unei porecle."
-  help: !irc |-
+  help: |-
     Autentifică sesiunea dumneavoastră cu %nickserv% folosind porecla și parola.
-    După o identificare reușită veți primi modul înregistrat \x02+r\x02
+    După o identificare reușită veți primi modul înregistrat %emphasis_0%
     și, dacă foloseați o poreclă de oaspete, porecla dumneavoastră înregistrată va
     fi restaurată.
-  example: "%command_prefix%\x02\x0303IDENTIFY Utilizator <parolă>\x03\x0F"
+  example: "%command_prefix%IDENTIFY Utilizator <parolă>"
   native_syntax: "/NICK <poreclă>:<parolă> | /NICK <poreclă>!<parolă>"
   native_short: "Afișează sintaxa nativă de autentificare a pseudonimului."
   native_help: |-
     Acest protocol autentifică conturile prin schimbarea pseudonimului.
-    Folosește /NICK <poreclă>:<parolă> sau, dacă pseudonimul este ocupat, /NICK <poreclă>!<parolă>.
-  native_example: "\x02\x0303/NICK Utilizator:<parolă>\x03\x0F"
+    Folosește %emphasis_0% sau, dacă pseudonimul este ocupat, %emphasis_1%.
+  native_example: "/NICK Utilizator:<parolă>"
   native_examples:
-    - "%command_prefix%\x02\x0303/NICK Utilizator!<parolă>\x03\x0F"
-  native_authentication: "\x0307ℹ\x03 Acest protocol gestionează autentificarea prin schimbarea pseudonimului. Folosește \x0303/NICK <poreclă>:<parolă>\x03 sau, dacă pseudonimul este ocupat, \x0303/NICK <poreclă>!<parolă>\x03."
-  success: "\x0303✔\x03 Sunteți acum identificat ca \x02%nickname%\x02."
-  already_identified: "\x0307ℹ\x03 Sunteți deja identificat ca \x02%nickname%\x02."
-  invalid_credentials: "\x0304✗\x03 Parolă incorectă. Vă rugăm să încercați din nou."
-  locked_out: "\x0304✗\x03 Prea multe încercări eșuate. Încercați din nou peste \x02%minutes%\x02 minut(e)."
-  ghost_released: "\x0307⚡\x03 Sesiunea fantomă care deținea \x02%nickname%\x02 a fost deconectată."
+    - "%command_prefix%/NICK Utilizator!<parolă>"
+  native_authentication: "Acest protocol gestionează autentificarea prin schimbarea pseudonimului. Folosește %command_0% sau, dacă pseudonimul este ocupat, %command_1%."
+  native_authentication_command_0: "/NICK <poreclă>:<parolă>"
+  native_authentication_command_1: "/NICK <poreclă>!<parolă>"
+  success: "Sunteți acum identificat ca %nickname%."
+  already_identified: "Sunteți deja identificat ca %nickname%."
+  invalid_credentials: "Parolă incorectă. Vă rugăm să încercați din nou."
+  locked_out: "Prea multe încercări eșuate. Încercați din nou peste %minutes% minut(e)."
+  ghost_released: "Sesiunea fantomă care deținea %nickname% a fost deconectată."
   kill_reason: "Porecla %nickname% revendicată de %source% (proprietarul înregistrat s-a identificat)"
-  pending: !irc |-
-    \x0304✗\x03 Porecla \x02%nickname%\x02 este în așteptarea verificării e-mailului.
-      Executați \x0303/msg %bot% VERIFY <token>\x03 sau \x0303/msg %bot% RESEND\x03.
-  suspended: "\x0304✗\x03 Porecla \x02%nickname%\x02 este suspendată. Motiv: %reason%"
-  forbidden: "\x0304✗\x03 Porecla \x02%nickname%\x02 nu poate fi folosită în această rețea."
-  pending_deletion: "\x0304✗\x03 Porecla \x02%nickname%\x02 este în așteptare de ștergere și nu poate fi folosită."
+  pending: |-
+    %first%
+    %second%
+  pending_line_1: "Porecla %nickname% este în așteptarea verificării e-mailului."
+  pending_line_2: "Executați /msg %bot% %command_0% sau /msg %bot% %command_1%."
+  pending_command_0: "VERIFY <token>"
+  pending_command_1: "RESEND"
+  suspended: "Porecla %nickname% este suspendată. Motiv: %reason%"
+  forbidden: "Porecla %nickname% nu poate fi folosită în această rețea."
+  pending_deletion: "Porecla %nickname% este în așteptare de ștergere și nu poate fi folosită."
 
 # --- STATUS ----------------------------------------------------------------
 status:
@@ -144,25 +160,35 @@ status:
   help: |-
     Afișează starea curentă a unei porecle: înregistrată, în așteptarea verificării,
     suspendată etc.
-  example: "%command_prefix%\x02\x0303STATUS Utilizator\x03\x0F"
-  header: "\x02Starea poreclei \x0307%nickname%\x03\x02"
+  example: "%command_prefix%STATUS Utilizator"
+  header: "Starea poreclei %nickname%"
   unregistered: "  Stare            : Neînregistrată"
-  not_registered_offline: "  Stare            : \x0315Neînregistrată\x03"
-  pending: "  Stare            : \x0307În așteptarea verificării\x03"
+  not_registered_offline: "  Stare            : %state%"
+  value_not_registered_offline: "Neînregistrată"
+  pending: "  Stare            : %state%"
+  value_pending: "În așteptarea verificării"
   pending_expires: "  Expiră în        : %minutes% minut(e)"
   pending_expires_at: "  Expiră la        : %date%"
-  not_connected: "  Stare            : \x0315Neconectat\x03"
-  not_identified: "  Stare            : \x0307Neidentificat\x03"
-  identified: "  Stare            : \x0303Identificat\x03"
-  suspended: "  Stare            : \x0304Suspendat\x03"
+  not_connected: "  Stare            : %state%"
+  value_not_connected: "Neconectat"
+  not_identified: "  Stare            : %state%"
+  value_not_identified: "Neidentificat"
+  identified: "  Stare            : %state%"
+  value_identified: "Identificat"
+  suspended: "  Stare            : %state%"
+  value_suspended: "Suspendat"
   suspended_reason: "  Motiv            : %reason%"
   suspended_until: "  Se termină la    : %date%"
   suspended_permanent: "  Se termină la    : Permanent"
-  forbidden: "  Stare            : \x0304Interzis\x03"
+  forbidden: "  Stare            : %state%"
+  value_forbidden: "Interzis"
   forbidden_reason: "  Motiv            : %reason%"
-  pending_deletion: "  \x0314Stare\x03          : \x0307În așteptare ștergere\x03"
-  pending_deletion_at: "  \x0314Șters\x03           : %date%"
+  pending_deletion: "  %label%          : %state%"
+  value_pending_deletion: "În așteptare ștergere"
+  label_pending_deletion: "Stare"
+  pending_deletion_at: "  %label%           : %date%"
 
+  label_pending_deletion_at: "Șters"
 # --- INFO ------------------------------------------------------------------
 info:
   syntax: "INFO <poreclă>"
@@ -173,36 +199,56 @@ info:
 
     E-mailul este vizibil doar proprietarului identificat. Pentru porecle private,
     informațiile sunt vizibile doar proprietarului și operatorilor IRC.
-  example: "%command_prefix%\x02\x0303INFO Utilizator\x03\x0F"
-  private: "\x0304✗\x03 Informațiile poreclei \x02%nickname%\x02 sunt private."
-  header: "\x02Informații pentru porecla \x0307%nickname%\x03\x02"
-  status: "  \x0314Stare\x03                   : %status%"
-  status_registered: "\x0303Înregistrat\x03"
-  status_suspended: "\x0304Suspendat\x03"
-  status_forbidden: "\x0304Interzis\x03"
-  status_pending_deletion: "\x0307În așteptare ștergere\x03"
-  reason: "  \x0314Motiv\x03                   : %reason%"
-  suspended_until: "  \x0314Se termină la\x03           : %date%"
-  suspended_permanent: "  \x0314Se termină la\x03           : Permanent"
-  registered_at: "  \x0314Înregistrat\x03             : %date%"
-  last_seen_online: "  \x0314Ultima vizualizare\x03      : \x0303● ONLINE ACUM\x03"
-  last_seen_at: "  \x0314Ultima vizualizare\x03      : %date%"
-  last_seen_never: "  \x0314Ultima vizualizare\x03      : Niciodată"
-  last_quit: "  \x0314Ultimul mesaj quit\x03      : %message%"
-  last_connect: "  \x0314Ultima conectare de la\x03  : %ip% (%host%)"
-  language: "  \x0314Limbă\x03                   : %language%"
-  email: "  \x0314E-mail\x03                  : %email%"
-  vhost: "  \x0314VHost\x03                   : %vhost%"
-  no_expire: "  \x0314Nu expiră niciodată\x03     : Da"
-  pending_deletion_at: "  \x0314Șters\x03                  : %date%"
-  pending_deletion_until: "  \x0314Ștergere definitivă\x03    : %date%"
-  pending_deletion_notice: "  \x0307Această poreclă este în așteptare de ștergere și nu poate fi înregistrată.\x03"
-  channels_header: !irc |-
-    \x0314
-    Canale cu acces:\x03
-  channels_entry_founder: "  %channel% (\x0303Fondator\x03)"
-  channels_entry_successor: "  %channel% (\x0303Succesor\x03)"
-  channels_entry_access: "  %channel% (%level%)"
+  example: "%command_prefix%INFO Utilizator"
+  private: "Informațiile poreclei %nickname% sunt private."
+  header: "Informații pentru porecla %nickname%"
+  status: "%label%                   : %status%"
+  label_status: "Stare"
+  status_registered: "Înregistrat"
+  status_suspended: "Suspendat"
+  status_forbidden: "Interzis"
+  status_pending_deletion: "În așteptare ștergere"
+  reason: "%label%                   : %reason%"
+  label_reason: "Motiv"
+  suspended_until: "%label%           : %date%"
+  label_suspended_until: "Se termină la"
+  suspended_permanent: "%label%           : Permanent"
+  label_suspended_permanent: "Se termină la"
+  registered_at: "%label%             : %date%"
+  label_registered_at: "Înregistrat"
+  last_seen_online: "%label%      : %online%"
+  label_last_seen_online: "Ultima vizualizare"
+  value_last_seen_online: "ONLINE ACUM"
+  last_seen_at: "%label%      : %date%"
+  label_last_seen_at: "Ultima vizualizare"
+  last_seen_never: "%label%      : Niciodată"
+  label_last_seen_never: "Ultima vizualizare"
+  last_quit: "%label%      : %message%"
+  label_last_quit: "Ultimul mesaj quit"
+  last_connect: "%label%  : %ip% (%host%)"
+  label_last_connect: "Ultima conectare de la"
+  language: "%label%                   : %language%"
+  label_language: "Limbă"
+  email: "%label%                  : %email%"
+  label_email: "E-mail"
+  vhost: "%label%                   : %vhost%"
+  label_vhost: "VHost"
+  no_expire: "%label%     : Da"
+  label_no_expire: "Nu expiră niciodată"
+  pending_deletion_at: "%label%                  : %date%"
+  label_pending_deletion_at: "Șters"
+  pending_deletion_until: "%label%    : %date%"
+  label_pending_deletion_until: "Ștergere definitivă"
+  pending_deletion_notice: "%notice%"
+  value_pending_deletion_notice: "Această poreclă este în așteptare de ștergere și nu poate fi înregistrată."
+  channels_header: |-
+
+    Canale cu acces:
+  channels_entry_founder: "%channel% (%role%)"
+  channels_role_founder: "Fondator"
+  channels_entry_successor: "%channel% (%role%)"
+  channels_role_successor: "Succesor"
+  channels_entry_access: "%channel% (%level%)"
 
 # --- SET -------------------------------------------------------------------
 set:
@@ -211,10 +257,10 @@ set:
   help: |-
     Modifică setările poreclei tale. Trebuie să fii identificat pentru a schimba
     aceste opțiuni.
-  example: "%command_prefix%\x02\x0303SET LANGUAGE es\x03\x0F"
+  example: "%command_prefix%SET LANGUAGE es"
   examples:
-    - "%command_prefix%\x02\x0303SET TIMEZONE Europe/Madrid\x03\x0F"
-  unknown_option: "\x0304✗\x03 Opțiune necunoscută \x02%option%\x02. Opțiuni disponibile: %options%."
+    - "%command_prefix%SET TIMEZONE Europe/Madrid"
+  unknown_option: "Opțiune necunoscută %option%. Opțiuni disponibile: %options%."
 
   # --- SET PASSWORD --------------------------------------------------------
   password:
@@ -224,52 +270,59 @@ set:
       Schimbă parola pentru porecla dumneavoastră. Noua parolă intră în
       vigoare imediat. Alegeți o parolă puternică de cel puțin 6 caractere
       pe care să nu o folosiți la alte servicii.
-    example: "%command_prefix%\x02\x0303SET PASSWORD Parolă$Sigură_123\x03\x0F"
-    success: "\x0303✔\x03 Parola dumneavoastră a fost actualizată cu succes."
+    example: "%command_prefix%SET PASSWORD Parolă$Sigură_123"
+    success: "Parola dumneavoastră a fost actualizată cu succes."
 
   # --- SET EMAIL -----------------------------------------------------------
   email:
-    token_required: "\x0304✗\x03 Folosește \x0303SET EMAIL <email> <token>\x03 cu tokenul de salvare confirmat."
+    token_required: "Folosește %value% cu tokenul de salvare confirmat."
+    token_required_value: "SET EMAIL <email> <token>"
     syntax: "SET EMAIL <email> <token>"
     short: "Schimbă adresa de e-mail folosind tokenul de recuperare confirmat."
     help: |-
       SET EMAIL schimbă adresa de contact după validarea tokenului de recuperare, fără
       a-l consuma. Verifică formatul și unicitatea; nu trimite e-mail de confirmare.
       Domeniile email blocate administrativ nu sunt permise.
-    example: "%command_prefix%\x02\x0303SET EMAIL utilizator@exemplu.ro <token_confirmado>\x03\x0F"
-    success: "\x0303✔\x03 E-mailul dumneavoastră a fost actualizat la \x02%email%\x02."
-    pending_sent: !irc |-
-      \x0307→\x03 Un token de confirmare a fost trimis la \x02%current_email%\x02.
-        Pentru a confirma schimbarea la \x02%new_email%\x02 executați:
-        \x0303/msg %bot% SET EMAIL %new_email% <token>\x03
-        Tokenul expiră într-o oră.
-    invalid_token: "\x0304✗\x03 Tokenul este invalid sau a expirat. Solicitați unul nou cu \x0303SET EMAIL <e-mail_nou>\x03."
+    example: "%command_prefix%SET EMAIL utilizator@exemplu.ro <token_confirmado>"
+    success: "E-mailul dumneavoastră a fost actualizat la %email%."
+    pending_sent: |-
+      %first%
+      %second%
+      %third%
+      %fourth%
+    pending_line_1: "Un token de confirmare a fost trimis la %current_email%."
+    pending_line_2: "Pentru a confirma schimbarea la %new_email% executați:"
+    pending_line_3: "/msg %bot% %command%"
+    pending_line_4: "Tokenul expiră într-o oră."
+    pending_command: "SET EMAIL %new_email% <token>"
+    invalid_token: "Tokenul este invalid sau a expirat. Solicitați unul nou cu %value%."
+    invalid_token_value: "SET EMAIL <e-mail_nou>"
 
   # --- SET LANGUAGE --------------------------------------------------------
   language:
     syntax: "SET LANGUAGE <cod>"
     short: "Schimbați limba pe care serviciile o folosesc pentru a comunica cu dumneavoastră."
-    help: !irc |-
+    help: |-
       Schimbă limba pe care %nickserv% și celelalte servicii o folosesc când vă
       vorbesc.
       Limbi disponibile:
-        \x02ca\x02 (catalană)
-        \x02de\x02 (germană)
-        \x02el\x02 (greacă)
-        \x02en\x02 (engleză)
-        \x02es\x02 (spaniolă)
-        \x02eu\x02 (bască)
-        \x02fr\x02 (franceză)
-        \x02gl\x02 (galiciană)
-        \x02it\x02 (italiană)
-        \x02nl\x02 (olandeză)
-        \x02pl\x02 (poloneză)
-        \x02pt\x02 (portugheză)
-        \x02ro\x02 (română)
-        \x02tr\x02 (turcă)
-    example: "%command_prefix%\x02\x0303SET LANGUAGE es\x03\x0F"
-    success: "\x0303✔\x03 Limba a fost schimbată în \x02%language%\x02."
-    invalid: "\x0304✗\x03 Limbă nesuportată. Limbi disponibile: %languages%."
+      %emphasis_0% (catalană)
+      %emphasis_1% (germană)
+      %emphasis_2% (greacă)
+      %emphasis_3% (engleză)
+      %emphasis_4% (spaniolă)
+      %emphasis_5% (bască)
+      %emphasis_6% (franceză)
+      %emphasis_7% (galiciană)
+      %emphasis_8% (italiană)
+      %emphasis_9% (olandeză)
+      %emphasis_10% (poloneză)
+      %emphasis_11% (portugheză)
+      %emphasis_12% (română)
+      %emphasis_13% (turcă)
+    example: "%command_prefix%SET LANGUAGE es"
+    success: "Limba a fost schimbată în %language%."
+    invalid: "Limbă nesuportată. Limbi disponibile: %languages%."
 
   # --- SET TIMEZONE --------------------------------------------------------
   timezone:
@@ -279,63 +332,67 @@ set:
       Setează fusul orar folosit de %nickserv% pentru afișarea datelor. Consultă HELP
       SET
       TIMEZONE pentru regiuni. Folosește OFF pentru eliminare.
-    example: "%command_prefix%\x02\x0303SET TIMEZONE Europe/Madrid\x03\x0F"
+    example: "%command_prefix%SET TIMEZONE Europe/Madrid"
     examples:
-      - "%command_prefix%\x02\x0303SET TIMEZONE OFF\x03\x0F"
-    success: "\x0303✔\x03 Fusul orar a fost setat la \x02%timezone%\x02. Datele vor fi afișate în acest fus orar."
-    cleared: "\x0303✔\x03 Fusul orar a fost șters. Datele vor folosi valoarea implicită a rețelei."
-    invalid: "\x0304✗\x03 Fus orar invalid \x02%timezone%\x02. Folosiți un identificator valid (de ex. UTC, Europe/București)."
+      - "%command_prefix%SET TIMEZONE OFF"
+    success: "Fusul orar a fost setat la %timezone%. Datele vor fi afișate în acest fus orar."
+    cleared: "Fusul orar a fost șters. Datele vor folosi valoarea implicită a rețelei."
+    invalid: "Fus orar invalid %timezone%. Folosiți un identificator valid (de ex. UTC, Europe/București)."
 
   # --- SET PRIVATE ---------------------------------------------------------
   private:
     syntax: "SET PRIVATE {ON|OFF}"
     short: "Afișează sau ascunde informațiile poreclei tale."
-    help: !irc |-
+    help: |-
       Controlează vizibilitatea informațiilor poreclei dumneavoastră în comanda INFO.
-      Cu \x02PRIVATE ON\x02 doar dumneavoastră și operatorii IRC puteți vizualiza detaliile.
-      Cu \x02PRIVATE OFF\x02 informațiile dumneavoastră sunt publice pentru toată lumea.
-    example: "%command_prefix%\x02\x0303SET PRIVATE ON\x03\x0F"
+      Cu %emphasis_0% doar dumneavoastră și operatorii IRC puteți vizualiza detaliile.
+      Cu %emphasis_1% informațiile dumneavoastră sunt publice pentru toată lumea.
+    example: "%command_prefix%SET PRIVATE ON"
     examples:
-      - "%command_prefix%\x02\x0303SET PRIVATE OFF\x03\x0F"
-    on: "\x0303✔\x03 Informațiile poreclei dumneavoastră sunt acum \x02private\x02."
-    off: "\x0303✔\x03 Informațiile poreclei dumneavoastră sunt acum \x02publice\x02."
+      - "%command_prefix%SET PRIVATE OFF"
+    on: "Informațiile poreclei dumneavoastră sunt acum %value%."
+    on_value: "private"
+    off: "Informațiile poreclei dumneavoastră sunt acum %value%."
+    off_value: "publice"
 
   # --- SET MSG -------------------------------------------------------------
   msg:
     syntax: "SET MSG {ON|OFF}"
     short: "Schimbă modul în care serviciile îți trimit mesaje."
-    help: !irc |-
+    help: |-
       Controlează cum %nickserv% și celelalte servicii îți trimit mesaje.
-      Cu \x02MSG ON\x02, răspunsurile sunt trimise ca \x02PRIVMSG\x02.
-      Cu \x02MSG OFF\x02, răspunsurile sunt trimise ca \x02NOTICE\x02.
-    example: "%command_prefix%\x02\x0303SET MSG ON\x03\x0F"
+      Cu %emphasis_0%, răspunsurile sunt trimise ca %emphasis_1%.
+      Cu %emphasis_2%, răspunsurile sunt trimise ca %emphasis_3%.
+    example: "%command_prefix%SET MSG ON"
     examples:
-      - "%command_prefix%\x02\x0303SET MSG OFF\x03\x0F"
-    on: "\x0303✔\x03 Mesajele serviciilor vor fi trimise acum ca \x02PRIVMSG\x02."
-    off: "\x0303✔\x03 Mesajele serviciilor vor fi trimise acum ca \x02NOTICE\x02."
+      - "%command_prefix%SET MSG OFF"
+    on: "Mesajele serviciilor vor fi trimise acum ca %value%."
+    on_value: "PRIVMSG"
+    off: "Mesajele serviciilor vor fi trimise acum ca %value%."
+    off_value: "NOTICE"
 
   # --- SET VHOST -----------------------------------------------------------
   vhost:
     syntax: "SET VHOST [vhost]"
     short: "Setează sau elimină gazda virtuală."
-    help: !irc |-
+    help: |-
       Setează un nume de gazdă personalizat, vizibil altor utilizatori când ești
       identificat.
 
-      Pentru eliminare, rulează \x02SET VHOST\x02 fără valoare.
+      Pentru eliminare, rulează %emphasis_0% fără valoare.
 
       Sunt permise litere (a-z, A-Z), cifre, cratime și puncte. Fiecare segment
       trebuie
       să înceapă și să se termine cu o literă sau cifră. Numele poate avea maximum
       48 de caractere și trebuie să fie unic pentru fiecare poreclă.
-    example: "%command_prefix%\x02\x0303SET VHOST user.exemplu.ro\x03\x0F"
+    example: "%command_prefix%SET VHOST user.exemplu.ro"
     examples:
-      - "%command_prefix%\x02\x0303SET VHOST\x03\x0F"
-    success: "\x0303✔\x03 Gazda dumneavoastră virtuală a fost setată la \x02%vhost%\x02."
-    cleared: "\x0303✔\x03 Gazda dumneavoastră virtuală a fost ștearsă."
-    invalid: "\x0304✗\x03 Vhost invalid. Doar litere, cifre, cratimă și punct (nu la începutul/sfârșitul blocului); max 48 de caractere."
-    taken: "\x0304✗\x03 Acel vhost este deja folosit de o altă poreclă."
-    forced: "\x0304✗\x03 Vhostul dumneavoastră este configurat automat și nu poate fi schimbat cu SET VHOST."
+      - "%command_prefix%SET VHOST"
+    success: "Gazda dumneavoastră virtuală a fost setată la %vhost%."
+    cleared: "Gazda dumneavoastră virtuală a fost ștearsă."
+    invalid: "Vhost invalid. Doar litere, cifre, cratimă și punct (nu la începutul/sfârșitul blocului); max 48 de caractere."
+    taken: "Acel vhost este deja folosit de o altă poreclă."
+    forced: "Vhostul dumneavoastră este configurat automat și nu poate fi schimbat cu SET VHOST."
 
 # --- SASET -----------------------------------------------------------------
 saset:
@@ -344,18 +401,18 @@ saset:
   help: |-
     Permite unui IRCop să schimbe setările altei porecle înregistrate. Poreclele
     Root, IRCop și ale serviciilor nu sunt acceptate.
-  example: "%command_prefix%\x02\x0303SASET Utilizator PRIVATE ON\x03\x0F"
+  example: "%command_prefix%SASET Utilizator PRIVATE ON"
   examples:
-    - "%command_prefix%\x02\x0303SASET Utilizator TIMEZONE OFF\x03\x0F"
-  unknown_option: "\x0304✗\x03 Opțiune necunoscută \x02%option%\x02. Opțiuni disponibile: %options%."
-  cannot_modify_oper: "\x0304✗\x03 Nu se poate modifica o poreclă de operator IRC."
+    - "%command_prefix%SASET Utilizator TIMEZONE OFF"
+  unknown_option: "Opțiune necunoscută %option%. Opțiuni disponibile: %options%."
+  cannot_modify_oper: "Nu se poate modifica o poreclă de operator IRC."
 
   # --- SASET PASSWORD ------------------------------------------------------
   password:
     syntax: "SASET <poreclă> PASSWORD <parolă_nouă>"
     short: "Schimbă parola unei porecle."
     help: "Schimbă imediat parola altei porecle."
-    example: "%command_prefix%\x02\x0303SASET Utilizator PASSWORD ClaveSegura123\x03\x0F"
+    example: "%command_prefix%SASET Utilizator PASSWORD ClaveSegura123"
 
   # --- SASET EMAIL ---------------------------------------------------------
   email:
@@ -365,32 +422,32 @@ saset:
       Schimbă imediat e-mailul altei porecle. Nu este necesar tokenul de recuperare și
       nu se trimite un e-mail de confirmare.
       BADMAIL nu restricționează această schimbare administrativă de email.
-    example: "%command_prefix%\x02\x0303SASET Utilizator EMAIL utilizator@exemplu.ro\x03\x0F"
+    example: "%command_prefix%SASET Utilizator EMAIL utilizator@exemplu.ro"
 
   # --- SASET LANGUAGE ------------------------------------------------------
   language:
     syntax: "SASET <poreclă> LANGUAGE <cod>"
     short: "Schimbă limba unei porecle."
     help: "Schimbă limba altei porecle. Sunt disponibile en (engleză) și es (spaniolă)."
-    example: "%command_prefix%\x02\x0303SASET Utilizator LANGUAGE es\x03\x0F"
+    example: "%command_prefix%SASET Utilizator LANGUAGE es"
 
   # --- SASET TIMEZONE ------------------------------------------------------
   timezone:
     syntax: "SASET <poreclă> TIMEZONE {<fus_orar>|OFF}"
     short: "Schimbă fusul orar al unei porecle."
     help: "Setează sau elimină fusul orar al altei porecle. Folosește OFF pentru eliminare."
-    example: "%command_prefix%\x02\x0303SASET Utilizator TIMEZONE Europe/Madrid\x03\x0F"
+    example: "%command_prefix%SASET Utilizator TIMEZONE Europe/Madrid"
     examples:
-      - "%command_prefix%\x02\x0303SASET Utilizator TIMEZONE OFF\x03\x0F"
+      - "%command_prefix%SASET Utilizator TIMEZONE OFF"
 
   # --- SASET PRIVATE -------------------------------------------------------
   private:
     syntax: "SASET <poreclă> PRIVATE {ON|OFF}"
     short: "Schimbă confidențialitatea unei porecle."
     help: "Activează sau dezactivează confidențialitatea informațiilor altei porecle."
-    example: "%command_prefix%\x02\x0303SASET Utilizator PRIVATE ON\x03\x0F"
+    example: "%command_prefix%SASET Utilizator PRIVATE ON"
     examples:
-      - "%command_prefix%\x02\x0303SASET Utilizator PRIVATE OFF\x03\x0F"
+      - "%command_prefix%SASET Utilizator PRIVATE OFF"
 
   # --- SASET MSG -----------------------------------------------------------
   msg:
@@ -399,9 +456,9 @@ saset:
     help: |-
       Stabilește dacă altă poreclă primește răspunsurile ca PRIVMSG (ON) sau NOTICE
       (OFF).
-    example: "%command_prefix%\x02\x0303SASET Utilizator MSG ON\x03\x0F"
+    example: "%command_prefix%SASET Utilizator MSG ON"
     examples:
-      - "%command_prefix%\x02\x0303SASET Utilizator MSG OFF\x03\x0F"
+      - "%command_prefix%SASET Utilizator MSG OFF"
 
   # --- SASET VHOST ---------------------------------------------------------
   vhost:
@@ -410,9 +467,9 @@ saset:
     help: |-
       Setează sau elimină gazda virtuală a altei porecle. Rulează SASET <poreclă>
       VHOST fără valoare pentru eliminare.
-    example: "%command_prefix%\x02\x0303SASET Utilizator VHOST user.exemplu.ro\x03\x0F"
+    example: "%command_prefix%SASET Utilizator VHOST user.exemplu.ro"
     examples:
-      - "%command_prefix%\x02\x0303SASET Utilizator VHOST\x03\x0F"
+      - "%command_prefix%SASET Utilizator VHOST"
 
 # --- HELP ------------------------------------------------------------------
 help:
@@ -421,36 +478,37 @@ help:
   help: |-
     Afișează ajutorul general %nickserv% sau informații detaliate
     pentru o comandă specifică.
-  examples_header: "\x02 ■ Exemple:\x02"
-  example: "%command_prefix%\x02\x0303HELP\x03\x0F"
+  examples_header: "Exemple:"
+  example: "%command_prefix%HELP"
   examples:
-    - "%command_prefix%\x02\x0303HELP SET\x03\x0F"
-    - "%command_prefix%\x02\x0303HELP SET EMAIL\x03\x0F"
-    - "%command_prefix%\x02\x0303HELP SET TIMEZONE Europe\x03\x0F"
+    - "%command_prefix%HELP SET"
+    - "%command_prefix%HELP SET EMAIL"
+    - "%command_prefix%HELP SET TIMEZONE Europe"
   header_title: "%bot%"
-  header: "\x02\x0307🤖 %title%\x03\x0F \x0314─────────────────────────────\x03\x0F"
-  navigation_marker: "\x0310›\x03\x0F"
-  info_marker: "\x0310ℹ\x03\x0F"
-  error_marker: "\x0304✗\x03\x0F"
-  warning_marker: "\x0304⚠\x03\x0F"
+  header: "%title%"
+  navigation_marker: ""
+  info_marker: ""
+  error_marker: ""
+  warning_marker: ""
   intro: |-
     Înregistrează și protejează porecla ta pentru a împiedica folosirea de către
     alți utilizatori. Gestionează securitatea contului, personalizează preferințele
     și recuperează accesul când ai nevoie.
-  intro_expiration: "%marker% %label%: Poreclele nefolosite mai mult de \x1F\x0304%days% zile\x03\x1F sunt eliminate automat."
+  intro_expiration: "%label%: Poreclele nefolosite mai mult de %duration% sunt eliminate automat."
+  intro_expiration_duration: "%days% zile"
   intro_expiration_label: "NOTĂ"
-  general_header: "\x02 ■ Comenzi disponibile:\x02"
-  command_line: "    %marker% \x02\x0303%command%\x03\x0F%description%"
-  subcommand_line: "    %marker% \x02\x0303%command%\x03\x0F%description%"
-  options_header: "\x02 ■ Opțiuni:\x02"
+  general_header: "Comenzi disponibile:"
+  command_line: "%command%%description%"
+  subcommand_line: "%command%%description%"
+  options_header: "Opțiuni:"
   general_syntax: "HELP <comandă>"
-  general_footer: "%marker% Folosește /msg %bot% \x02\x0303%syntax%\x03\x0F pentru mai multe informații."
+  general_footer: "Folosește /msg %bot% %syntax% pentru mai multe informații."
   set_sub_syntax: "HELP %command% <opțiune>"
-  set_sub_footer: "%marker% Folosește /msg %bot% \x02\x0303%syntax%\x03\x0F pentru mai multe informații."
-  syntax_label: "Sintaxă: \x02\x0303%syntax%\x03\x0F"
-  footer: "\x0314─────────────────────────────\x03\x0F"
-  group_header: "\x0310  ◆ %group%\x03\x0F"
-  subgroup_header: "\x0310  ◆ %group%\x03\x0F"
+  set_sub_footer: "Folosește /msg %bot% %syntax% pentru mai multe informații."
+  syntax_label: "Sintaxă: %syntax%"
+  footer: ""
+  group_header: "%group%"
+  subgroup_header: "%group%"
   group:
     registration_auth: "Înregistrare și autentificare"
     account_security: "Cont și securitate"
@@ -459,21 +517,22 @@ help:
     account_management: "Gestionarea conturilor"
     suspensions_bans: "Suspendări și interdicții"
     deletion: "Ștergere și restaurare"
-  ircop_header: "\x02 ■ Comenzi disponibile pentru IRCops:\x02"
+  ircop_header: "Comenzi disponibile pentru IRCops:"
   set_timezone:
-    index_label: "Regiuni (folosiți \x02\x0303%syntax%\x03\x0F pentru listă):"
+    index_label: "Regiuni (folosiți %syntax% pentru listă):"
     index_syntax: "HELP SET TIMEZONE <regiune>"
-    region_header: "\x02 ■ Fusuri orare pentru %region%:\x02"
-    region_unknown: "%marker% Regiune necunoscută. Folosiți \x02\x0303%syntax%\x03\x0F pentru index."
+    region_header: "Fusuri orare pentru %region%:"
+    region_unknown: "Regiune necunoscută. Folosiți %syntax% pentru index."
     region_syntax: "HELP SET TIMEZONE"
 
 # --- NICK PROTECTION -------------------------------------------------------
 protection:
-  nick_in_use: "\x0304⚠\x03 Porecla \x02%nickname%\x02 este înregistrată. Veți fi redenumit dacă nu vă identificați."
-  renamed_to: !irc |-
-    \x0307→\x03 Ați fost redenumit în \x02%guest_nick%\x02. Pentru a vă recupera porecla:
-    \x0303/msg %bot% IDENTIFY %nickname% <parolă>\x03
-  nick_forbidden: "\x0304✗\x03 Porecla \x02%nickname%\x02 este interzisă: %reason%"
+  nick_in_use: "Porecla %nickname% este înregistrată. Veți fi redenumit dacă nu vă identificați."
+  renamed_to: |-
+    Ați fost redenumit în %guest_nick%. Pentru a vă recupera porecla:
+    /msg %bot% %identify%
+  renamed_command: "IDENTIFY %nickname% <parolă>"
+  nick_forbidden: "Porecla %nickname% este interzisă: %reason%"
 
 # --- USERIP ----------------------------------------------------------------
 userip:
@@ -482,8 +541,8 @@ userip:
   help: |-
     Afișează adresa IP și numele gazdei reale ale unei porecle.
     Folosește responsabil aceste informații sensibile.
-  example: "%command_prefix%\x02\x0303USERIP Utilizator\x03\x0F"
-  result: "\x0307ℹ\x03 Poreclă: \x02%nickname%\x02 | IP: \x0307%ip%\x03 | Host: \x0307%host%\x03"
+  example: "%command_prefix%USERIP Utilizator"
+  result: "Poreclă: %nickname% | IP: %ip% | Host: %host%"
 
 # --- WHOIP -----------------------------------------------------------------
 whoip:
@@ -492,7 +551,7 @@ whoip:
   help: |-
     Afișează poreclele înregistrate a căror ultimă conexiune identificată a folosit
     această adresă IP. Adresa salvată poate fi învechită.
-  example: "%command_prefix%\x02\x0303WHOIP 192.0.2.10\x03\x0F"
+  example: "%command_prefix%WHOIP 192.0.2.10"
   empty: "Nu există nickname-uri înregistrate care să corespundă acestei adrese IP."
   header: "Nickname-uri corespunzătoare:"
 
@@ -504,16 +563,18 @@ suspend:
     Împiedică proprietarul să se identifice. Durata poate fi indicată în zile (d),
     ore (h), minute (m) sau 0 pentru suspendare permanentă. Operatorii IRC și
     utilizatorii Root nu pot fi suspendați.
-  example: "%command_prefix%\x02\x0303SUSPEND UtilizatorRău 7d Spam en #ayuda\x03\x0F"
+  example: "%command_prefix%SUSPEND UtilizatorRău 7d Spam en #ayuda"
   examples:
-    - "%command_prefix%\x02\x0303SUSPEND Problematic 0 Evitarea interdicției\x03\x0F"
-  success: "\x0303✔\x03 Porecla \x02%nickname%\x02 a fost suspendată până la \x02%duration%\x02."
-  already_suspended: "\x0304✗\x03 Porecla \x02%nickname%\x02 este deja suspendată."
-  forbidden: "\x0304✗\x03 Porecla \x02%nickname%\x02 este interzisă și nu poate fi suspendată."
-  cannot_suspend_oper: "\x0304✗\x03 Nu se poate suspenda operatorul IRC \x02%nickname%\x02."
-  cannot_suspend_root: "\x0304✗\x03 Nu se poate suspenda utilizatorul root \x02%nickname%\x02."
-  cannot_suspend_service: "\x0304✗\x03 Nu se poate suspenda porecla de serviciu \x02%nickname%\x02."
-  invalid_duration: "\x0304✗\x03 Durată invalidă. Folosiți: \x0303<z><h><m>\x03 (de ex. 7d, 12h, 30m) sau \x03030\x03 pentru permanentă."
+    - "%command_prefix%SUSPEND Problematic 0 Evitarea interdicției"
+  success: "Porecla %nickname% a fost suspendată până la %duration%."
+  already_suspended: "Porecla %nickname% este deja suspendată."
+  forbidden: "Porecla %nickname% este interzisă și nu poate fi suspendată."
+  cannot_suspend_oper: "Nu se poate suspenda operatorul IRC %nickname%."
+  cannot_suspend_root: "Nu se poate suspenda utilizatorul root %nickname%."
+  cannot_suspend_service: "Nu se poate suspenda porecla de serviciu %nickname%."
+  invalid_duration: "Durată invalidă. Folosiți: %duration_format% (de ex. 7d, 12h, 30m) sau %permanent% pentru permanentă."
+  invalid_duration_format: "<z><h><m>"
+  invalid_duration_permanent: "0"
 
 # --- UNSUSPEND -------------------------------------------------------------
 unsuspend:
@@ -522,9 +583,9 @@ unsuspend:
   help: |-
     Elimină o suspendare activă, astfel încât proprietarul să se poată identifica
     din nou.
-  example: "%command_prefix%\x02\x0303UNSUSPEND Utilizator\x03\x0F"
-  success: "\x0303✔\x03 Suspendarea a fost ridicată pentru \x02%nickname%\x02."
-  not_suspended: "\x0304✗\x03 Porecla \x02%nickname%\x02 nu este suspendată."
+  example: "%command_prefix%UNSUSPEND Utilizator"
+  success: "Suspendarea a fost ridicată pentru %nickname%."
+  not_suspended: "Porecla %nickname% nu este suspendată."
 
 # --- RENAME ----------------------------------------------------------------
 rename:
@@ -534,11 +595,11 @@ rename:
     Forțează o poreclă conectată să treacă la un nume aleatoriu cu un prefix
     stabilit
     de rețea.
-  example: "%command_prefix%\x02\x0303RENAME Problematic\x03\x0F"
-  cannot_rename_root: "\x0304✗\x03 Nu se poate redenumi utilizatorul root \x02%nickname%\x02."
-  cannot_rename_oper: "\x0304✗\x03 Nu se poate redenumi operatorul IRC \x02%nickname%\x02."
-  cannot_rename_service: "\x0304✗\x03 Nu se poate redenumi porecla de serviciu \x02%nickname%\x02."
-  success: "\x0303✓\x03 Porecla \x02%nickname%\x02 a fost redenumită în \x02%new_nick%\x02."
+  example: "%command_prefix%RENAME Problematic"
+  cannot_rename_root: "Nu se poate redenumi utilizatorul root %nickname%."
+  cannot_rename_oper: "Nu se poate redenumi operatorul IRC %nickname%."
+  cannot_rename_service: "Nu se poate redenumi porecla de serviciu %nickname%."
+  success: "Porecla %nickname% a fost redenumită în %new_nick%."
 
 # --- DROP ------------------------------------------------------------------
 drop:
@@ -550,18 +611,18 @@ drop:
     poreclele Root, IRCop, ale serviciilor sau propria ta poreclă.
   force:
     short: "Șterge definitiv o poreclă aflată în așteptarea ștergerii."
-  example: "%command_prefix%\x02\x0303DROP ContVechi\x03\x0F"
+  example: "%command_prefix%DROP ContVechi"
   examples:
-    - "%command_prefix%\x02\x0303DROP ContVechi FORCE\x03\x0F"
-  suspended: "\x0304✗\x03 Porecla \x02%nickname%\x02 este suspendată. Anulați mai întâi suspendarea."
-  forbidden: "\x0304✗\x03 Porecla \x02%nickname%\x02 este interzisă."
-  cannot_drop_root: "\x0304✗\x03 Nu se poate elimina utilizatorul root \x02%nickname%\x02."
-  cannot_drop_oper: "\x0304✗\x03 Nu se poate elimina operatorul IRC \x02%nickname%\x02."
-  cannot_drop_self: "\x0304✗\x03 Nu vă puteți elimina propria poreclă."
-  success: "\x0303✓\x03 Porecla \x02%nickname%\x02 a fost marcată pentru ștergere și poate fi restaurată în perioada de grație."
-  force_success: "\x0303✓\x03 Porecla \x02%nickname%\x02 a fost ștearsă definitiv."
-  pending_deletion: "\x0304✗\x03 Porecla \x02%nickname%\x02 este deja în așteptare de ștergere. Folosiți DROP <poreclă> FORCE pentru a o șterge definitiv."
-  cannot_drop_service: "\x0304✗\x03 Nu se poate elimina porecla de serviciu \x02%nickname%\x02."
+    - "%command_prefix%DROP ContVechi FORCE"
+  suspended: "Porecla %nickname% este suspendată. Anulați mai întâi suspendarea."
+  forbidden: "Porecla %nickname% este interzisă."
+  cannot_drop_root: "Nu se poate elimina utilizatorul root %nickname%."
+  cannot_drop_oper: "Nu se poate elimina operatorul IRC %nickname%."
+  cannot_drop_self: "Nu vă puteți elimina propria poreclă."
+  success: "Porecla %nickname% a fost marcată pentru ștergere și poate fi restaurată în perioada de grație."
+  force_success: "Porecla %nickname% a fost ștearsă definitiv."
+  pending_deletion: "Porecla %nickname% este deja în așteptare de ștergere. Folosiți DROP <poreclă> FORCE pentru a o șterge definitiv."
+  cannot_drop_service: "Nu se poate elimina porecla de serviciu %nickname%."
 
 # --- RESTORE ---------------------------------------------------------------
 restore:
@@ -570,9 +631,9 @@ restore:
   help: |-
     Restaurează o poreclă aflată în așteptarea ștergerii, cât timp este în perioada
     de grație.
-  example: "%command_prefix%\x02\x0303RESTORE ContVechi\x03\x0F"
-  success: "\x0303✓\x03 Porecla \x02%nickname%\x02 a fost restaurată."
-  not_pending_deletion: "\x0304✗\x03 Porecla \x02%nickname%\x02 nu este în așteptare de ștergere."
+  example: "%command_prefix%RESTORE ContVechi"
+  success: "Porecla %nickname% a fost restaurată."
+  not_pending_deletion: "Porecla %nickname% nu este în așteptare de ștergere."
 
 # --- FORBID ----------------------------------------------------------------
 forbid:
@@ -584,22 +645,22 @@ forbid:
     mutat
     la o poreclă aleatorie. Poreclele Root, IRCop și ale serviciilor nu pot fi
     interzise.
-  example: "%command_prefix%\x02\x0303FORBID UtilizatorRău Încălcări repetate ale politicii\x03\x0F"
-  success: "\x0303✔\x03 Porecla \x02%nickname%\x02 a fost interzisă."
-  updated: "\x0303✔\x03 Motivul interzicerii pentru \x02%nickname%\x02 a fost actualizat."
-  reason_required: "\x0304✗\x03 Trebuie să furnizați un motiv pentru interdicție."
-  cannot_forbid_root: "\x0304✗\x03 Nu se poate interzice utilizatorul root \x02%nickname%\x02."
-  cannot_forbid_oper: "\x0304✗\x03 Nu se poate interzice operatorul IRC \x02%nickname%\x02."
-  cannot_forbid_service: "\x0304✗\x03 Nu se poate interzice porecla de serviciu \x02%nickname%\x02."
+  example: "%command_prefix%FORBID UtilizatorRău Încălcări repetate ale politicii"
+  success: "Porecla %nickname% a fost interzisă."
+  updated: "Motivul interzicerii pentru %nickname% a fost actualizat."
+  reason_required: "Trebuie să furnizați un motiv pentru interdicție."
+  cannot_forbid_root: "Nu se poate interzice utilizatorul root %nickname%."
+  cannot_forbid_oper: "Nu se poate interzice operatorul IRC %nickname%."
+  cannot_forbid_service: "Nu se poate interzice porecla de serviciu %nickname%."
 
 # --- UNFORBID --------------------------------------------------------------
 unforbid:
   syntax: "UNFORBID <poreclă>"
   short: "Eliminați interdicția unei porecle."
   help: "Elimină interdicția, permițând folosirea din nou a poreclei."
-  example: "%command_prefix%\x02\x0303UNFORBID PoreclăInterzisă\x03\x0F"
-  success: "\x0303✔\x03 Porecla \x02%nickname%\x02 nu mai este interzisă."
-  not_forbidden: "\x0304✗\x03 Porecla \x02%nickname%\x02 nu este interzisă."
+  example: "%command_prefix%UNFORBID PoreclăInterzisă"
+  success: "Porecla %nickname% nu mai este interzisă."
+  not_forbidden: "Porecla %nickname% nu este interzisă."
 
 # --- FORBIDVHOST -----------------------------------------------------------
 forbidvhost:
@@ -610,10 +671,10 @@ forbidvhost:
     SET
     VHOST. * reprezintă orice secvență, iar ? un singur caracter. Necesită drepturi
     IRCop.
-  example: "%command_prefix%\x02\x0303FORBIDVHOST ADD *.pirata.com\x03\x0F"
+  example: "%command_prefix%FORBIDVHOST ADD *.pirata.com"
   examples:
-    - "%command_prefix%\x02\x0303FORBIDVHOST LIST\x03\x0F"
-  unknown_sub: "\x0304✗\x03 Subcomandă necunoscută \x02%sub%\x02. Folosiți ADD, DEL sau LIST."
+    - "%command_prefix%FORBIDVHOST LIST"
+  unknown_sub: "Subcomandă necunoscută %sub%. Folosiți ADD, DEL sau LIST."
 
   # --- FORBIDVHOST ADD -----------------------------------------------------
   add:
@@ -623,29 +684,29 @@ forbidvhost:
       Adaugă un tipar în listă. Utilizatorii nu vor putea seta VHost-uri care
       corespund
       prin SET VHOST. * reprezintă orice secvență, iar ? un singur caracter.
-    example: "%command_prefix%\x02\x0303FORBIDVHOST ADD *.pirata.com\x03\x0F"
-    done: "\x0303✓\x03 Model de vhost interzis adăugat: \x02%pattern%\x02"
-    already_exists: "\x0304✗\x03 Modelul \x02%pattern%\x02 există deja."
-    invalid: "\x0304✗\x03 Format de model vhost invalid."
+    example: "%command_prefix%FORBIDVHOST ADD *.pirata.com"
+    done: "Model de vhost interzis adăugat: %pattern%"
+    already_exists: "Modelul %pattern% există deja."
+    invalid: "Format de model vhost invalid."
 
   # --- FORBIDVHOST DEL -----------------------------------------------------
   del:
     syntax: "FORBIDVHOST DEL <model>"
     short: "Eliminați un model de vhost interzis."
     help: "Elimină un tipar din lista VHost-urilor interzise."
-    example: "%command_prefix%\x02\x0303FORBIDVHOST DEL *.pirata.com\x03\x0F"
-    done: "\x0303✓\x03 Model de vhost interzis eliminat: \x02%pattern%\x02"
-    not_found: "\x0304✗\x03 Modelul \x02%pattern%\x02 nu a fost găsit."
+    example: "%command_prefix%FORBIDVHOST DEL *.pirata.com"
+    done: "Model de vhost interzis eliminat: %pattern%"
+    not_found: "Modelul %pattern% nu a fost găsit."
 
   # --- FORBIDVHOST LIST ----------------------------------------------------
   list:
     short: "Listați toate modelele de vhost interzise."
     syntax: "FORBIDVHOST LIST"
     help: "Afișează toate tiparele VHost interzise."
-    example: "%command_prefix%\x02\x0303FORBIDVHOST LIST\x03\x0F"
-    header: "\x0307ℹ\x03 Modele de vhost interzise (\x02%count%\x02):"
-    entry: "  %index%. \x0304%pattern%\x03 — de %nickname% (%date%)"
-    empty: "\x0307ℹ\x03 Nu există modele de vhost interzise."
+    example: "%command_prefix%FORBIDVHOST LIST"
+    header: "Modele de vhost interzise (%count%):"
+    entry: "%index%. %pattern% — de %nickname% (%date%)"
+    empty: "Nu există modele de vhost interzise."
 
 # --- HISTORY ---
 history:
@@ -655,25 +716,25 @@ history:
     Consultă și gestionează istoricul acțiunilor unei porecle. Suspendările și
     schimbările parolei, e-mailului ori recuperării sunt înregistrate automat.
     VIEW afișează trei intrări pe pagină; ALL afișează istoricul complet.
-  example: "%command_prefix%\x02\x0303HISTORY Utilizator VIEW\x03\x0F"
+  example: "%command_prefix%HISTORY Utilizator VIEW"
   examples:
-    - "%command_prefix%\x02\x0303HISTORY Utilizator VIEW ALL\x03\x0F"
-    - "%command_prefix%\x02\x0303HISTORY Utilizator ADD Notă manuală\x03\x0F"
+    - "%command_prefix%HISTORY Utilizator VIEW ALL"
+    - "%command_prefix%HISTORY Utilizator ADD Notă manuală"
 
   # --- HISTORY ADD ---------------------------------------------------------
   add:
     syntax: "HISTORY <poreclă> ADD <mesaj>"
     short: "Adăugați o intrare manuală în istoric."
     help: "Adaugă manual o intrare în istoricul poreclei."
-    example: "%command_prefix%\x02\x0303HISTORY Utilizator ADD Raportat pentru spam\x03\x0F"
-    success: "\x0303✔\x03 Intrare în istoric adăugată pentru \x02%nickname%\x02."
+    example: "%command_prefix%HISTORY Utilizator ADD Raportat pentru spam"
+    success: "Intrare în istoric adăugată pentru %nickname%."
 
   # --- HISTORY DEL ---------------------------------------------------------
   del:
     syntax: "HISTORY <poreclă> DEL <id>"
     short: "Ștergeți o intrare din istoric după ID."
     help: "Șterge o intrare specifică din istoric după ID."
-    example: "%command_prefix%\x02\x0303HISTORY Utilizator DEL 42\x03\x0F"
+    example: "%command_prefix%HISTORY Utilizator DEL 42"
 
   # --- HISTORY VIEW --------------------------------------------------------
   view:
@@ -682,22 +743,24 @@ history:
     help: |-
       Afișează istoricul acțiunilor poreclei. Implicit, arată trei intrări pe pagină.
       Folosește ALL pentru a le vedea pe toate.
-    example: "%command_prefix%\x02\x0303HISTORY Utilizator VIEW\x03\x0F"
+    example: "%command_prefix%HISTORY Utilizator VIEW"
     examples:
-      - "%command_prefix%\x02\x0303HISTORY Utilizator VIEW 2\x03\x0F"
-      - "%command_prefix%\x02\x0303HISTORY Utilizator VIEW ALL\x03\x0F"
-    header: "\x02Istoric pentru \x0307%nickname%\x03\x02 (se afișează %start%-%end% din %total%):"
-    entry: "#%id% [%date%] \x0303%action%\x03 de %operator% — %message%"
-    no_entries: "\x0307ℹ\x03 Nu s-au găsit intrări în istoric pentru \x02%nickname%\x02."
-    page_hint: "Folosiți \x0303HISTORY %nickname% VIEW %next_page%\x03 pentru mai multe intrări."
+      - "%command_prefix%HISTORY Utilizator VIEW 2"
+      - "%command_prefix%HISTORY Utilizator VIEW ALL"
+    header: "%heading% (se afișează %start%-%end% din %total%):"
+    header_title: "Istoric pentru %nickname%"
+    entry: "#%id% [%date%] %action% de %operator% — %message%"
+    no_entries: "Nu s-au găsit intrări în istoric pentru %nickname%."
+    page_hint: "Folosiți %command% pentru mai multe intrări."
+    page_hint_command: "HISTORY %nickname% VIEW %next_page%"
 
   # --- HISTORY CLEAR -------------------------------------------------------
   clear:
     syntax: "HISTORY <poreclă> CLEAR"
     short: "Ștergeți toate intrările din istoricul unei porecle."
     help: "Șterge ireversibil toate intrările din istoricul poreclei."
-    example: "%command_prefix%\x02\x0303HISTORY Utilizator CLEAR\x03\x0F"
-    success: "\x0303✔\x03 S-au șters \x02%count%\x02 intrări din istoricul poreclei \x02%nickname%\x02."
+    example: "%command_prefix%HISTORY Utilizator CLEAR"
+    success: "S-au șters %count% intrări din istoricul poreclei %nickname%."
 
 # --- HISTORY MESSAGES ---
 history.message:
@@ -726,13 +789,13 @@ noexpire:
   help: |-
     Controlează expirarea poreclei din cauza inactivității.
     ON previne expirarea, iar OFF aplică regulile normale.
-  example: "%command_prefix%\x02\x0303NOEXPIRE Utilizator ON\x03\x0F"
+  example: "%command_prefix%NOEXPIRE Utilizator ON"
   examples:
-    - "%command_prefix%\x02\x0303NOEXPIRE Utilizator OFF\x03\x0F"
-  success_on: "\x0303✔\x03 Porecla \x02%nickname%\x02 este acum protejată împotriva expirării."
-  success_off: "\x0303✔\x03 Porecla \x02%nickname%\x02 va expira acum normal."
-  forbidden: "\x0304✗\x03 Porecla \x02%nickname%\x02 este interzisă."
-  suspended: "\x0304✗\x03 Porecla \x02%nickname%\x02 este suspendată."
+    - "%command_prefix%NOEXPIRE Utilizator OFF"
+  success_on: "Porecla %nickname% este acum protejată împotriva expirării."
+  success_off: "Porecla %nickname% va expira acum normal."
+  forbidden: "Porecla %nickname% este interzisă."
+  suspended: "Porecla %nickname% este suspendată."
 
 # --- LIST ------------------------------------------------------------------
 list:
@@ -741,9 +804,9 @@ list:
   help: |-
     Listează poreclele înregistrate care corespund tiparului. * reprezintă orice
     secvență de caractere; pagina opțională începe de la 1.
-  example: "%command_prefix%\x02\x0303LIST Utilizator*\x03\x0F"
+  example: "%command_prefix%LIST Utilizator*"
   examples:
-    - "%command_prefix%\x02\x0303LIST Utilizator* 2\x03\x0F"
+    - "%command_prefix%LIST Utilizator* 2"
   header: "Poreclă | Înregistrare | Ultima conexiune | IP | Stare"
   row: "%nickname% | %registered% | %last_seen% | %ip% | %status%"
   empty: "Nicio poreclă nu corespunde modelului %pattern%."
@@ -754,45 +817,81 @@ list:
 regmode:
   syntax: "REGMODE {EMAIL|TOKEN|STATUS}"
   short: "Gestionează modul de înregistrare al rețelei."
-  help: !irc |-
+  help: |-
     Configurează modul de înregistrare pentru conturile noi.
 
-    • \x02EMAIL:\x02 Trimite tokenul de verificare la adresa de e-mail a utilizatorului.
-    • \x02TOKEN:\x02 Oferă tokenul de verificare direct prin IRC.
-    • \x02STATUS:\x02 Afișează modul curent fără a-l modifica.
+    %emphasis_0% Trimite tokenul de verificare la adresa de e-mail a utilizatorului.
+    %emphasis_1% Oferă tokenul de verificare direct prin IRC.
+    %emphasis_2% Afișează modul curent fără a-l modifica.
 
     Înregistrările în așteptare păstrează modul folosit la inițiere.
 
     În modul TOKEN, comanda RESEND rămâne dezactivată pentru toți utilizatorii.
-  example: "%command_prefix%\x02\x0303REGMODE STATUS\x03\x0F"
+  example: "%command_prefix%REGMODE STATUS"
   examples:
-    - "%command_prefix%\x02\x0303REGMODE EMAIL\x03\x0F"
-    - "%command_prefix%\x02\x0303REGMODE TOKEN\x03\x0F"
-  status: "\x0307ℹ\x03 Modul actual de înregistrare: \x02%mode%\x02."
-  changed: "\x0303✔\x03 Modul de înregistrare a fost schimbat în \x02%mode%\x02."
+    - "%command_prefix%REGMODE EMAIL"
+    - "%command_prefix%REGMODE TOKEN"
+  status: "Modul actual de înregistrare: %mode%."
+  changed: "Modul de înregistrare a fost schimbat în %mode%."
 
 # --- RESCUE ----------------------------------------------------------------
 rescue:
-  issued: !irc |-
-    Token de salvare: \x0303%token%\x03
+  issued: |-
+    Token de salvare: %token_display%
 
     Păstrează acest token într-un loc sigur. Vei avea nevoie de el pentru a-ți recupera pseudonimul dacă îți uiți parola.
 
-    Pentru a-l confirma, folosește: /msg %bot% \x0303VERIFY %token%\x03
+    Pentru a-l confirma, folosește: /msg %bot% %verify%
 
-    \x0304⚠\x03 IMPORTANT: Numai ultimul token generat este valid. După confirmare, nu va mai fi afișat. Nu îl divulga nimănui.
-  confirmed: "\x0303✔\x03 Tokenul de salvare a fost confirmat. Păstrează-l în siguranță."
-  unavailable: "\x0304✗\x03 Autentifică-te și confirmă tokenul de salvare cu \x0303VERIFY\x03 înainte de această operație."
-  locked_out: "\x0304✗\x03 Prea multe tokenuri incorecte. Încearcă din nou peste \x02%seconds%\x02 secunde."
-  throttled: "\x0304✗\x03 Prea multe tokenuri incorecte. Încearcă din nou peste \x02%minutes%\x02 minut(e)."
-  replaced: "\x0303✔\x03 Tokenul de recuperare a fost înlocuit cu tokenul din email pe care l-ai validat. Păstrează-l în siguranță."
-  optional_replacement: !irc |-
-    \x0307→\x03 Token nou de recuperare opțional: \x0303%token%\x03
+    %warning%
+  issued_warning: "IMPORTANT: Numai ultimul token generat este valid. După confirmare, nu va mai fi afișat. Nu îl divulga nimănui."
+  confirmed: "Tokenul de salvare a fost confirmat. Păstrează-l în siguranță."
+  unavailable: "Autentifică-te și confirmă tokenul de salvare cu %command_0% înainte de această operație."
+  unavailable_command_0: "VERIFY"
+  locked_out: "Prea multe tokenuri incorecte. Încearcă din nou peste %seconds% secunde."
+  throttled: "Prea multe tokenuri incorecte. Încearcă din nou peste %minutes% minut(e)."
+  replaced: "Tokenul de recuperare a fost înlocuit cu tokenul din email pe care l-ai validat. Păstrează-l în siguranță."
+  optional_replacement: |-
+    Token nou de recuperare opțional: %token_display%
 
-    Pentru a înlocui tokenul de recuperare actual, folosește: /msg %bot% \x0303VERIFY %token%\x03
+    Pentru a înlocui tokenul de recuperare actual, folosește: /msg %bot% %verify%
 
     Tokenul actual rămâne valid până la confirmare.
 
     Dacă nu dorești schimbarea, ignoră acest mesaj.
-  replacement_unavailable: "\x0307ℹ\x03 Parola a fost resetată, dar nu s-a putut emite un token nou. Tokenul actual rămâne valid."
-  temporarily_unavailable: "\x0304✗\x03 Livrarea tokenului de recuperare este temporar indisponibilă. Încearcă mai târziu."
+  replacement_unavailable: "Parola a fost resetată, dar nu s-a putut emite un token nou. Tokenul actual rămâne valid."
+  temporarily_unavailable: "Livrarea tokenului de recuperare este temporar indisponibilă. Încearcă mai târziu."
+
+# --- HELP FRAGMENTS ---------------------------------------------------------
+help_fragments:
+  identify_help_0: "+r"
+  set_language_help_0: "ca"
+  set_language_help_1: "de"
+  set_language_help_2: "el"
+  set_language_help_3: "en"
+  set_language_help_4: "es"
+  set_language_help_5: "eu"
+  set_language_help_6: "fr"
+  set_language_help_7: "gl"
+  set_language_help_8: "it"
+  set_language_help_9: "nl"
+  set_language_help_10: "pl"
+  set_language_help_11: "pt"
+  set_language_help_12: "ro"
+  set_language_help_13: "tr"
+  set_private_help_0: "PRIVATE ON"
+  set_private_help_1: "PRIVATE OFF"
+  set_msg_help_0: "MSG ON"
+  set_msg_help_1: "PRIVMSG"
+  set_msg_help_2: "MSG OFF"
+  set_msg_help_3: "NOTICE"
+  set_vhost_help_0: "SET VHOST"
+  regmode_help_0: "EMAIL:"
+  regmode_help_1: "TOKEN:"
+  regmode_help_2: "STATUS:"
+  identify_native_help_0: "/NICK <poreclă>:<parolă>"
+  identify_native_help_1: "/NICK <poreclă>!<parolă>"
+  suspend_help_0: "%d"
+  suspend_help_1: "%h"
+  suspend_help_2: "%m"
+  suspend_help_3: "0"
