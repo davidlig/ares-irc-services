@@ -15,6 +15,8 @@ use App\OperServ\Application\UseCase\ManageIrcop\ManageIrcopResult;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentValidator;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 use DateTimeImmutable;
 
 use function count;
@@ -125,25 +127,35 @@ final readonly class IrcopCommand implements OperServCommandInterface
 
     private function syntax(OperServContext $c, string $syntaxKey = 'ircop.syntax'): void
     {
-        $c->reply('error.syntax', ['%syntax%' => $c->trans($syntaxKey)]);
+        $c->replyError('error.syntax', ['%syntax%' => $c->trans($syntaxKey)]);
     }
 
     private function present(OperServContext $c, string $sub, ManageIrcopResult $r): void
     {
         match ($r->outcome) {
-            IrcopOutcome::Added => $c->reply('ircop.add.done', ['%nickname%' => $r->nickname, '%role%' => $r->role]),IrcopOutcome::RoleChanged => $c->reply('ircop.role_changed', ['%nickname%' => $r->nickname, '%old%' => $r->oldRole, '%new%' => $r->role]),IrcopOutcome::Deleted => $c->reply('ircop.del.done', ['%nickname%' => $r->nickname]),IrcopOutcome::NickNotRegistered => $c->reply('error.nick_not_registered', ['%nickname%' => $r->nickname]),IrcopOutcome::NickNotActive => $c->reply('ircop.add.nick_not_active', ['%nickname%' => $r->nickname]),IrcopOutcome::RoleNotFound => $c->reply('ircop.unknown_role', ['%role%' => $r->role, '%bot%' => $c->getBotName()]),IrcopOutcome::AlreadyAssigned => $c->reply('ircop.already_admin', ['%nickname%' => $r->nickname, '%role%' => $r->role]),IrcopOutcome::NotAssigned => $c->reply('ircop.not_admin', ['%nickname%' => $r->nickname]),IrcopOutcome::InvalidRequest => $this->syntax($c),IrcopOutcome::UnknownAction => $c->reply('ircop.unknown_sub', ['%sub%' => $sub]),IrcopOutcome::Listed => $this->list($c, $r)
+            IrcopOutcome::Added => $c->reply('ircop.add.done', ['%nickname%' => $c->emphasize((string) $r->nickname), '%role%' => $c->emphasize((string) $r->role)], Role::Success),
+            IrcopOutcome::RoleChanged => $c->reply('ircop.role_changed', ['%nickname%' => $c->emphasize((string) $r->nickname), '%old%' => $r->oldRole, '%new%' => $r->role], Role::Success),
+            IrcopOutcome::Deleted => $c->reply('ircop.del.done', ['%nickname%' => $c->emphasize((string) $r->nickname)], Role::Success),
+            IrcopOutcome::NickNotRegistered => $c->replyError('error.nick_not_registered', ['%nickname%' => $c->emphasize((string) $r->nickname)]),
+            IrcopOutcome::NickNotActive => $c->reply('ircop.add.nick_not_active', ['%nickname%' => $c->emphasize((string) $r->nickname)], Role::Error),
+            IrcopOutcome::RoleNotFound => $c->reply('ircop.unknown_role', ['%role%' => $c->emphasize((string) $r->role), '%bot%' => $c->getBotName(), '%role_list%' => $c->commandFragment('ROLE LIST')], Role::Error),
+            IrcopOutcome::AlreadyAssigned => $c->reply('ircop.already_admin', ['%nickname%' => $c->emphasize((string) $r->nickname), '%role%' => $c->emphasize((string) $r->role)], Role::Error),
+            IrcopOutcome::NotAssigned => $c->reply('ircop.not_admin', ['%nickname%' => $c->emphasize((string) $r->nickname)], Role::Error),
+            IrcopOutcome::InvalidRequest => $this->syntax($c),
+            IrcopOutcome::UnknownAction => $c->reply('ircop.unknown_sub', ['%sub%' => $c->emphasize($sub)], Role::Error),
+            IrcopOutcome::Listed => $this->list($c, $r)
         };
     }
 
     private function list(OperServContext $c, ManageIrcopResult $r): void
     {
         if ([] === $r->entries) {
-            $c->reply('ircop.list.empty');
+            $c->reply('ircop.list.empty', [], Role::Information);
 
             return;
-        }$c->reply('ircop.list.header');
+        }$c->replyComponent(Component::DecoratedHeader, 'ircop.list.header');
         foreach ($r->entries as $e) {
-            $c->replyRaw(sprintf('  %-20s %-10s %s', $e->nickname, $e->role, $c->formatDate($e->addedAt)));
+            $c->replyRaw($c->renderComponent(Component::IndentedRow, sprintf('%-20s %-10s %s', $e->nickname, $e->role, $c->formatDate($e->addedAt))));
         }
     }
 }

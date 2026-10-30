@@ -19,6 +19,9 @@ use App\OperServ\Application\UseCase\ManageMotd\ManageMotdOutcome;
 use App\OperServ\Application\UseCase\ManageMotd\ManageMotdResult;
 use App\OperServ\Application\UseCase\ManageMotd\MotdAction;
 use App\OperServ\Application\UseCase\ManageMotd\MotdListEntry;
+use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -36,6 +39,19 @@ use function array_slice;
 #[CoversClass(MotdListEntry::class)]
 final class MotdCommandTest extends TestCase
 {
+    #[Test]
+    public function selectsRolesForAddedAndInvalidMotdOutcomes(): void
+    {
+        $notifier = new RecordingMotdCommandNotifier();
+        $renderer = new IrcRenderer(new FixedStyleProvider(new PresentationStyle(markers: ['success' => '+', 'error' => '!'])));
+        new MotdCommand(new RecordingMotdCommandHandler(new ManageMotdResult(ManageMotdOutcome::Added, id: 3)))
+            ->execute($this->context(['ADD', 'NickServ', 'NOTICE', '1h', 'hello'], $notifier, renderer: $renderer));
+        new MotdCommand(new RecordingMotdCommandHandler(new ManageMotdResult(ManageMotdOutcome::InvalidMessageType)))
+            ->execute($this->context(['ADD', 'NickServ', 'INVALID', '1h', 'hello'], $notifier, renderer: $renderer));
+
+        self::assertSame(['+ motd.add.done', '! motd.add.invalid_type'], $notifier->messages);
+    }
+
     #[Test]
     public function exposesCommandMetadata(): void
     {
@@ -176,7 +192,7 @@ final class MotdCommandTest extends TestCase
     }
 
     /** @param list<string> $arguments */
-    private function context(array $arguments, ?RecordingMotdCommandNotifier $notifier = null, bool $withoutSender = false): OperServContext
+    private function context(array $arguments, ?RecordingMotdCommandNotifier $notifier = null, bool $withoutSender = false, ?IrcRenderer $renderer = null): OperServContext
     {
         $notifier ??= new RecordingMotdCommandNotifier();
 
@@ -193,6 +209,7 @@ final class MotdCommandTest extends TestCase
             new OperServCommandRegistry([]),
             new ServiceNicknameRegistry([]),
             $this->createStub(OperatorAuthorizationQuery::class),
+            $renderer,
         );
     }
 }

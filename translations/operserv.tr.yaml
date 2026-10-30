@@ -18,40 +18,44 @@
 
 # --- ERROR -----------------------------------------------------------------
 error:
-  root_only: "\x0304✗\x03 Bu komut yalnızca ağ root yöneticileri içindir."
+  root_only: "Bu komut yalnızca ağ root yöneticileri içindir."
 
 # --- HELP ------------------------------------------------------------------
 help:
   syntax: "HELP [komut] [seçenek]"
   short: "Komutları listeleyin veya bir komut için yardım gösterin."
-  help: !irc |-
-    Argüman olmadan tüm komutları listeler. Tam yardım için \x0303HELP <komut>\x03, alt
-    seçenekler için \x0303HELP <komut> <seçenek>\x03 kullanın.
-  example: "%command_prefix%\x02\x0303HELP KILL\x03\x0F"
+  help: |-
+    Argüman olmadan tüm komutları listeler. Tam yardım için %help_command%, alt
+    seçenekler için %help_option_command% kullanın.
+  example: "%command_prefix%HELP KILL"
   header_title: "%bot%"
-  header: "\x02\x0307🤖 %title%\x03\x0F \x0314%separator%\x03\x0F"
+  header: "%title%"
   intro: |-
     Ağ operatörlerini ve izinlerini yönetmeyi, erişim kısıtlamaları uygulamayı ve
     kullanıcıların bağlantısını kesmeyi sağlar. Ayrıca genel duyurular göndermeye ve
     ağın karşılama mesajlarını yönetmeye yarar.
-  general_header: "\x02 ■ Kullanılabilir komutlar:\x02"
-  command_line: "    \x0310›\x03\x0F \x02\x0303%command%\x03\x0F%description%"
-  subcommand_line: "    \x0310›\x03\x0F \x02\x0303%command%\x03\x0F%description%"
-  options_header: "\x02 ■ Seçenekler:\x02"
-  examples_header: "\x02 ■ Örnekler:\x02"
-  general_footer: "\x0310ℹ\x03\x0F Daha fazla bilgi için /msg %bot% \x02\x0303HELP <komut>\x03\x0F kullanın."
-  set_sub_footer: "\x0310ℹ\x03\x0F Daha fazla bilgi için /msg %bot% \x02\x0303HELP %command% <seçenek>\x03\x0F kullanın."
-  syntax_label: "Sözdizimi: \x02\x0303%syntax%\x03\x0F"
-  footer: "\x0314─────────────────────────────\x03\x0F"
-  intro_expiration: "\x0307⚠\x03\x0F NOT: %days% günden uzun süre kullanılmayan takma adlar otomatik olarak silinir."
-  group_header: "\x0310  ◆ %group%\x03\x0F"
-  subgroup_header: "\x0310  ◆ %group%\x03\x0F"
+  general_header: "Kullanılabilir komutlar:"
+  command_line: "%command%%description%"
+  subcommand_line: "%command%%description%"
+  options_header: "Seçenekler:"
+  examples_header: "Örnekler:"
+  general_help_command: "HELP <komut>"
+  option_help_command: "HELP %command% <seçenek>"
+  detail_help_command: "HELP <komut>"
+  detail_help_option_command: "HELP <komut> <seçenek>"
+  general_footer: "Daha fazla bilgi için /msg %bot% %help_command% kullanın."
+  set_sub_footer: "Daha fazla bilgi için /msg %bot% %help_command% kullanın."
+  syntax_label: "Sözdizimi: %syntax%"
+  footer: ""
+  intro_expiration: "NOT: %days% günden uzun süre kullanılmayan takma adlar otomatik olarak silinir."
+  group_header: "%group%"
+  subgroup_header: "%group%"
   group:
     operators_roles: "Operatörler ve roller"
     network_security: "Ağ güvenliği"
     communication: "İletişim"
     low_level: "Düşük seviye"
-  ircop_header: "\x02 ■ IRC operatörleri için kullanılabilir komutlar:\x02"
+  ircop_header: "IRC operatörleri için kullanılabilir komutlar:"
 
 # --- IRCOP -----------------------------------------------------------------
 ircop:
@@ -63,14 +67,14 @@ ircop:
     DEL bir operatörü kaldırır. LIST tüm operatörleri gösterir.
     Mevcut rolleri görmek için ROLE LIST kullanın.
     Bu komut yalnızca hizmetlerde yapılandırılmış Root kullanıcıları içindir.
-  example: "%command_prefix%\x02\x0303IRCOP ADD Ana OPER\x03\x0F"
+  example: "%command_prefix%IRCOP ADD Ana OPER"
   examples:
-    - "%command_prefix%\x02\x0303IRCOP LIST\x03\x0F"
-  unknown_sub: "\x0304✗\x03 Bilinmeyen alt komut \x02%sub%\x02. ADD, DEL veya LIST kullanın."
-  unknown_role: "\x0304✗\x03 \x02%role%\x02 rolü mevcut değil. Kullanılabilir rolleri görmek için /msg %bot% \x0303ROLE LIST\x03 kullanın."
-  already_admin: "\x0304✗\x03 \x02%nickname%\x02 zaten bir IRC operatörüdür (rol: %role%)."
-  not_admin: "\x0304✗\x03 \x02%nickname%\x02 bir IRC operatörü değil."
-  role_changed: "\x0303✓\x03 \x02%nickname%\x02 için rol %old% yerine %new% olarak değiştirildi."
+    - "%command_prefix%IRCOP LIST"
+  unknown_sub: "Bilinmeyen alt komut %sub%. ADD, DEL veya LIST kullanın."
+  unknown_role: "%role% rolü mevcut değil. Kullanılabilir rolleri görmek için /msg %bot% %role_list% kullanın."
+  already_admin: "%nickname% zaten bir IRC operatörüdür (rol: %role%)."
+  not_admin: "%nickname% bir IRC operatörü değil."
+  role_changed: "%nickname% için rol %old% yerine %new% olarak değiştirildi."
 
   # --- IRCOP ADD -----------------------------------------------------------
   add:
@@ -80,9 +84,9 @@ ircop:
       Kayıtlı bir rumuzu ağ IRC operatörü olarak ekler.
       Mevcut rolleri görmek için ROLE LIST kullanın.
       Bu komut yalnızca Root kullanıcıları içindir.
-    example: "%command_prefix%\x02\x0303IRCOP ADD Ana OPER\x03\x0F"
-    done: "\x0303✓\x03 \x02%nickname%\x02, \x02%role%\x02 olarak eklendi."
-    nick_not_active: "\x0304✗\x03 \x02%nickname%\x02 rumuzu etkin bir kayıtlı rumuz değil."
+    example: "%command_prefix%IRCOP ADD Ana OPER"
+    done: "%nickname%, %role% olarak eklendi."
+    nick_not_active: "%nickname% rumuzu etkin bir kayıtlı rumuz değil."
 
   # --- IRCOP DEL -----------------------------------------------------------
   del:
@@ -91,8 +95,8 @@ ircop:
     help: |-
       Listeden bir ağ IRC operatörünü kaldırır.
       Bu komut yalnızca Root kullanıcıları içindir.
-    example: "%command_prefix%\x02\x0303IRCOP DEL Ana\x03\x0F"
-    done: "\x0303✓\x03 \x02%nickname%\x02 IRC operatörlerinden kaldırıldı."
+    example: "%command_prefix%IRCOP DEL Ana"
+    done: "%nickname% IRC operatörlerinden kaldırıldı."
 
   # --- IRCOP LIST ----------------------------------------------------------
   list:
@@ -101,8 +105,8 @@ ircop:
     help: |-
       Tüm ağ IRC operatörlerini rolleri ve kayıt tarihleriyle listeler.
       Bu komut yalnızca Root kullanıcıları içindir.
-    example: "%command_prefix%\x02\x0303IRCOP LIST\x03\x0F"
-    header: "\x0307---\x03 \x02Ağ IRC Operatörleri\x02 \x0307---\x03"
+    example: "%command_prefix%IRCOP LIST"
+    header: "Ağ IRC Operatörleri"
     empty: "IRC operatörü bulunmamaktadır."
 
 # --- ROLE ------------------------------------------------------------------
@@ -111,34 +115,34 @@ role:
   operclass:
     syntax: "ROLE OPERCLASS {LIST|VIEW <rol>|SET <rol> [operclass]}"
     short: "UnrealIRCd operatör sınıfını yapılandırır."
-    help: !irc |-
+    help: |-
       Bir rolün operclass değerini görüntüler ve yapılandırır.
 
-      \x02 ■ Seçenekler:\x02
-          \x0310›\x03\x0F \x02\x0303LIST      \x03\x0FAğdaki kullanılabilir operclass değerlerini gösterir.
-          \x0310›\x03\x0F \x02\x0303VIEW      \x03\x0FRolün operclass değerini ve kullanılabilir olanları gösterir.
-          \x0310›\x03\x0F \x02\x0303SET       \x03\x0FKimlik doğrulanırken IRCOP için operclass atar.
+      %options_header%
+      %option_LIST%Ağdaki kullanılabilir operclass değerlerini gösterir.
+      %option_VIEW%Rolün operclass değerini ve kullanılabilir olanları gösterir.
+      %option_SET%Kimlik doğrulanırken IRCOP için operclass atar.
 
       Silmek için değeri boş bırakın.
 
       Yalnızca UnrealIRCd protokollerinde kullanılabilir.
-    example: "%command_prefix%\x02\x0303ROLE OPERCLASS LIST\x03\x0F"
+    example: "%command_prefix%ROLE OPERCLASS LIST"
     examples:
-      - "%command_prefix%\x02\x0303ROLE OPERCLASS VIEW DESTEK\x03\x0F"
-      - "%command_prefix%\x02\x0303ROLE OPERCLASS SET DESTEK services-admin\x03\x0F"
-      - "%command_prefix%\x02\x0303ROLE OPERCLASS SET DESTEK\x03\x0F"
+      - "%command_prefix%ROLE OPERCLASS VIEW DESTEK"
+      - "%command_prefix%ROLE OPERCLASS SET DESTEK services-admin"
+      - "%command_prefix%ROLE OPERCLASS SET DESTEK"
     list:
-      header: "\x0307---\x03 \x02Agdaki Kullanilabilir Operclass'lar\x02 \x0307---\x03"
+      header: "Agdaki Kullanilabilir Operclass'lar"
       empty: "Agda kullanilabilir operclass yok."
-      not_supported: "\x0304✗\x03 Gecerli protokol kullanilabilir operclass'lari listelemeyi desteklemiyor."
+      not_supported: "Gecerli protokol kullanilabilir operclass'lari listelemeyi desteklemiyor."
     view:
       empty: "%role% rolunun operclass degeri yok."
-      line: "  Operclass: \x0303%operclass%\x03"
-      available: "  Kullanilabilir operclass'lar: \x0310%available%\x03"
+      line: "Operclass: %operclass%"
+      available: "Kullanilabilir operclass'lar: %available%"
     set:
-      done: "\x0303✓\x03 %role% rolü için operclass yapılandırıldı."
-      cleared: "\x0303✓\x03 %role% rolünün operclass değeri silindi."
-      not_available: "\x0304✗\x03 \x02%operclass%\x02 operclass'i agda mevcut degil. Mevcut operclass'lar: %available%."
+      done: "%role% rolü için operclass yapılandırıldı."
+      cleared: "%role% rolünün operclass değeri silindi."
+      not_available: "%operclass% operclass'i agda mevcut degil. Mevcut operclass'lar: %available%."
   syntax: "ROLE {ADD <ad> [açıklama]|DEL <ad>|LIST|PERMS {{ADD|DEL} <rol> <izin>|{LIST|CLEAR} <rol>}|MODES {VIEW <rol>|SET <rol> [modlar]}|VHOST {VIEW <rol>|SET <rol> [sanal_host]}}"
   short: "Operatör rollerini, izinlerini ve yapılandırmalarını yönetir."
   help: |-
@@ -152,14 +156,14 @@ role:
 
     ADMIN, OPER ve PREOPER rolleri korumalıdır ve silinemez.
     Yalnızca Root kullanıcıları kullanabilir.
-  example: "%command_prefix%\x02\x0303ROLE LIST\x03\x0F"
+  example: "%command_prefix%ROLE LIST"
   examples:
-    - "%command_prefix%\x02\x0303ROLE ADD DESTEK Destek operatörleri\x03\x0F"
-  unknown_sub: "\x0304✗\x03 Bilinmeyen alt komut \x02%sub%\x02. ADD, DEL, LIST, PERMS, MODES veya VHOST kullanın."
-  unknown_sub_operclass: "\x0304✗\x03 Bilinmeyen alt komut \x02%sub%\x02. ADD, DEL, LIST, PERMS, MODES, VHOST veya OPERCLASS kullanın."
-  not_found: "\x0304✗\x03 \x02%role%\x02 rolü mevcut değil."
-  already_exists: "\x0304✗\x03 \x02%role%\x02 rolü zaten mevcut."
-  protected: "\x0304✗\x03 \x02%role%\x02 rolü korumalıdır ve silinemez."
+    - "%command_prefix%ROLE ADD DESTEK Destek operatörleri"
+  unknown_sub: "Bilinmeyen alt komut %sub%. ADD, DEL, LIST, PERMS, MODES veya VHOST kullanın."
+  unknown_sub_operclass: "Bilinmeyen alt komut %sub%. ADD, DEL, LIST, PERMS, MODES, VHOST veya OPERCLASS kullanın."
+  not_found: "%role% rolü mevcut değil."
+  already_exists: "%role% rolü zaten mevcut."
+  protected: "%role% rolü korumalıdır ve silinemez."
 
   # --- ROLE ADD ------------------------------------------------------------
   add:
@@ -168,8 +172,8 @@ role:
     help: |-
       Yeni bir özel rol oluşturur. Açıklama isteğe bağlıdır.
       Bu komut yalnızca Root kullanıcıları içindir.
-    example: "%command_prefix%\x02\x0303ROLE ADD DESTEK Destek operatörleri\x03\x0F"
-    done: "\x0303✓\x03 \x02%role%\x02 rolü oluşturuldu."
+    example: "%command_prefix%ROLE ADD DESTEK Destek operatörleri"
+    done: "%role% rolü oluşturuldu."
 
   # --- ROLE DEL ------------------------------------------------------------
   del:
@@ -180,8 +184,8 @@ role:
       silinemez. Rolde atanmış operatörler varsa,
       önce onları yeniden atamanız gerekir.
       Bu komut yalnızca Root kullanıcıları içindir.
-    example: "%command_prefix%\x02\x0303ROLE DEL DESTEK\x03\x0F"
-    done: "\x0303✓\x03 \x02%role%\x02 rolü silindi."
+    example: "%command_prefix%ROLE DEL DESTEK"
+    done: "%role% rolü silindi."
 
   # --- ROLE LIST -----------------------------------------------------------
   list:
@@ -190,87 +194,87 @@ role:
     help: |-
       Tüm rolleri listeler. Korumalı roller [PROTECTED] ile işaretlenir.
       Bu komut yalnızca Root kullanıcıları içindir.
-    example: "%command_prefix%\x02\x0303ROLE LIST\x03\x0F"
-    header: "\x0307---\x03 \x02Operatör Rolleri\x02 \x0307---\x03"
+    example: "%command_prefix%ROLE LIST"
+    header: "Operatör Rolleri"
     empty: "Operatör rolü bulunmamaktadır."
 
   # --- ROLE PERMS ----------------------------------------------------------
   perms:
     syntax: "ROLE PERMS {{ADD|DEL} <rol> <izin>|{LIST|CLEAR} <rol>}"
     short: "Rolün izinlerini yönetir."
-    help: !irc |-
+    help: |-
       Bir role atanmış izinleri yönetir.
 
-      \x02 ■ Seçenekler:\x02
-          \x0310›\x03\x0F \x02\x0303LIST      \x03\x0FTüm kullanılabilir izinleri ve role atanmış olanları gösterir.
-          \x0310›\x03\x0F \x02\x0303ADD       \x03\x0FRole izin atar.
-          \x0310›\x03\x0F \x02\x0303DEL       \x03\x0FRolden izin kaldırır (korumalı roller hariç).
-          \x0310›\x03\x0F \x02\x0303CLEAR     \x03\x0FRoldeki tüm izinleri kaldırır.
+      %options_header%
+      %option_LIST%Tüm kullanılabilir izinleri ve role atanmış olanları gösterir.
+      %option_ADD%Role izin atar.
+      %option_DEL%Rolden izin kaldırır (korumalı roller hariç).
+      %option_CLEAR%Roldeki tüm izinleri kaldırır.
 
-      ✓ izin atandığını, ✗ kullanılabilir olduğunu belirtir.
+      %assigned_status% izin atandığını, %unassigned_status% kullanılabilir olduğunu belirtir.
 
       Tüm kullanılabilir izinleri aynı anda eklemek için ALL kullanın.
       Bu komut yalnızca Root kullanıcılarına açıktır.
-    example: "%command_prefix%\x02\x0303ROLE PERMS LIST DESTEK\x03\x0F"
+    example: "%command_prefix%ROLE PERMS LIST DESTEK"
     examples:
-      - "%command_prefix%\x02\x0303ROLE PERMS ADD DESTEK operserv.gline\x03\x0F"
-      - "%command_prefix%\x02\x0303ROLE PERMS ADD DESTEK ALL\x03\x0F"
-      - "%command_prefix%\x02\x0303ROLE PERMS DEL DESTEK operserv.gline\x03\x0F"
-      - "%command_prefix%\x02\x0303ROLE PERMS CLEAR DESTEK\x03\x0F"
-    not_found: "\x0304✗\x03 \x02%perm%\x02 izni mevcut değil."
-    already_has: "\x0304✗\x03 \x02%role%\x02 rolü zaten \x02%perm%\x02 iznine sahip."
-    does_not_have: "\x0304✗\x03 \x02%role%\x02 rolü \x02%perm%\x02 iznine sahip değil."
+      - "%command_prefix%ROLE PERMS ADD DESTEK operserv.gline"
+      - "%command_prefix%ROLE PERMS ADD DESTEK ALL"
+      - "%command_prefix%ROLE PERMS DEL DESTEK operserv.gline"
+      - "%command_prefix%ROLE PERMS CLEAR DESTEK"
+    not_found: "%perm% izni mevcut değil."
+    already_has: "%role% rolü zaten %perm% iznine sahip."
+    does_not_have: "%role% rolü %perm% iznine sahip değil."
     list:
-      header: "\x0303\x02%role%\x02 rolünün izin listesi\x03"
+      header: "%role% rolünün izin listesi"
       columns: "Atandı | İzin anahtarı | Açıklama"
       row: "%assigned% | %permission% | %description%"
-      assigned: "\x0303✓\x03\x0F"
-      unassigned: "\x0304✗\x03\x0F"
+      assigned: ""
+      unassigned: ""
     add:
-      done: "\x0303✓\x03 \x02%perm%\x02 izni \x02%role%\x02 rolüne eklendi."
-      all_done: "\x0303✓\x03 \x02%role%\x02 rolüne \x02%count%\x02 izin eklendi."
+      done: "%perm% izni %role% rolüne eklendi."
+      all_done: "%role% rolüne %count% izin eklendi."
     del:
-      done: "\x0303✓\x03 \x02%perm%\x02 izni \x02%role%\x02 rolünden kaldırıldı."
+      done: "%perm% izni %role% rolünden kaldırıldı."
     clear:
-      done: "\x0303✓\x03 \x02%role%\x02 rolünden \x02%count%\x02 izin kaldırıldı."
-      empty: "\x0304✗\x03 \x02%role%\x02 rolüne atanmış izin yok."
+      done: "%role% rolünden %count% izin kaldırıldı."
+      empty: "%role% rolüne atanmış izin yok."
 
   # --- ROLE MODES ----------------------------------------------------------
   modes:
     syntax: "ROLE MODES {VIEW <rol>|SET <rol> [modlar]}"
     short: "Rolün kullanıcı modlarını yapılandırır."
-    help: !irc |-
+    help: |-
       Bir role atanmış IRCOP kullanıcı modlarını yönetir.
 
-      \x02 ■ Seçenekler:\x02
-          \x0310›\x03\x0F \x02\x0303VIEW      \x03\x0FRolün mevcut modlarını gösterir.
-          \x0310›\x03\x0F \x02\x0303SET       \x03\x0FIRCOP modlarını ayarlar.
+      %options_header%
+      %option_VIEW%Rolün mevcut modlarını gösterir.
+      %option_SET%IRCOP modlarını ayarlar.
 
       Tüm modları kaldırmak için boş bırakın.
 
       Bu roldeki kullanıcılara kimlik doğrularken bu modlar verilir.
       IRCD’ye göre kullanılabilir modlar
       Bu komut yalnızca Root kullanıcılarına açıktır.
-    example: "%command_prefix%\x02\x0303ROLE MODES VIEW OPER\x03\x0F"
+    example: "%command_prefix%ROLE MODES VIEW OPER"
     examples:
-      - "%command_prefix%\x02\x0303ROLE MODES SET OPER oH\x03\x0F"
-      - "%command_prefix%\x02\x0303ROLE MODES SET OPER\x03\x0F"
+      - "%command_prefix%ROLE MODES SET OPER oH"
+      - "%command_prefix%ROLE MODES SET OPER"
     view:
-      header: "\x0307---\x03 \x02%role% için Modlar\x02 \x0307---\x03"
-      empty: "\x02%role%\x02 rolüne atanmış mod yok."
-      line: "  Modlar: \x0303%modes%\x03"
+      header: "%role% için Modlar"
+      empty: "%role% rolüne atanmış mod yok."
+      line: "Modlar: %modes%"
     set:
-      done: "\x0303✓\x03 \x02%role%\x02 rolü için modlar \x02%modes%\x02 olarak ayarlandı."
-      cleared: "\x0303✓\x03 \x02%role%\x02 rolünden tüm modlar kaldırıldı."
-      invalid_mode: "\x0304✗\x03 \x02%mode%\x02 modu geçerli bir IRCOP modu değil."
-      invalid_modes: "\x0304✗\x03 Geçersiz modlar: %invalid%. Geçerli modlar: %valid%."
-      no_irc_user_modes: "\x0304✗\x03 Mevcut IRCD'de yapılandırılmış IRCOP modu yok."
+      done: "%role% rolü için modlar %modes% olarak ayarlandı."
+      cleared: "%role% rolünden tüm modlar kaldırıldı."
+      invalid_mode: "%mode% modu geçerli bir IRCOP modu değil."
+      invalid_modes: "Geçersiz modlar: %invalid%. Geçerli modlar: %valid%."
+      no_irc_user_modes: "Mevcut IRCD'de yapılandırılmış IRCOP modu yok."
 
   # --- ROLE VHOST ----------------------------------------------------------
   vhost:
     syntax: "ROLE VHOST {VIEW <rol>|SET <rol> [sanal_host]}"
     short: "Rolün sanal ana bilgisayar kalıbını yapılandırır."
-    help: !irc |-
+    help: |-
       Kimlik doğrularken rol operatörlerine kişisel hostlarının yerine verilecek sanal
       hostu yapılandırır.
 
@@ -279,9 +283,9 @@ role:
 
       _davidlig_ + admin.ares → davidlig.admin.ares
 
-      \x02 ■ Seçenekler:\x02
-          \x0310›\x03\x0F \x02\x0303VIEW      \x03\x0FBir rol için yapılandırılmış kalıbı gösterir.
-          \x0310›\x03\x0F \x02\x0303SET       \x03\x0FBir rolün kalıbını ayarlar veya siler.
+      %options_header%
+      %option_VIEW%Bir rol için yapılandırılmış kalıbı gösterir.
+      %option_SET%Bir rolün kalıbını ayarlar veya siler.
 
       Kalıpta yalnızca harf, rakam, tire ve nokta kullanılabilir. En az bir nokta
       içermeli; tire veya noktayla başlayıp bitmemeli ve art arda nokta içermemelidir.
@@ -289,19 +293,20 @@ role:
       Zorunlu hostu kaldırmak için kalıp belirtmeden SET kullanın.
 
       Yalnızca Root kullanıcıları kullanabilir.
-    example: "%command_prefix%\x02\x0303ROLE VHOST VIEW OPER\x03\x0F"
+    example: "%command_prefix%ROLE VHOST VIEW OPER"
     examples:
-      - "%command_prefix%\x02\x0303ROLE VHOST SET OPER admin.ares\x03\x0F"
-      - "%command_prefix%\x02\x0303ROLE VHOST SET OPER\x03\x0F"
+      - "%command_prefix%ROLE VHOST SET OPER admin.ares"
+      - "%command_prefix%ROLE VHOST SET OPER"
     view:
-      header: "\x0307---\x03 \x02%role% için Zorunlu vhost\x02 \x0307---\x03"
-      empty: "\x02%role%\x02 rolü için zorunlu vhost kalıbı ayarlanmamış."
-      line: "  Kalıp: \x0303%pattern%\x03"
-      example: "  Örnek: \x02rumuz\x02.%pattern%"
+      header: "%role% için Zorunlu vhost"
+      empty: "%role% rolü için zorunlu vhost kalıbı ayarlanmamış."
+      line: "Kalıp: %pattern%"
+      example: "Örnek: %example_nickname%.%pattern%"
+      example_nickname: "rumuz"
     set:
-      done: "\x0303✓\x03 \x02%role%\x02 rolü için zorunlu vhost kalıbı ayarlandı."
-      cleared: "\x0303✓\x03 \x02%role%\x02 rolünden zorunlu vhost kalıbı kaldırıldı."
-      invalid: "\x0304✗\x03 Geçersiz vhost kalıbı. Geçerli karakterler: a-z, A-Z, 0-9, - ve .. En az bir nokta olmalı, - veya . ile başlayamaz/bitemez veya .. içeremez."
+      done: "%role% rolü için zorunlu vhost kalıbı ayarlandı."
+      cleared: "%role% rolünden zorunlu vhost kalıbı kaldırıldı."
+      invalid: "Geçersiz vhost kalıbı. Geçerli karakterler: a-z, A-Z, 0-9, - ve .. En az bir nokta olmalı, - veya . ile başlayamaz/bitemez veya .. içeremez."
 
 # --- KILL ------------------------------------------------------------------
 kill:
@@ -310,10 +315,10 @@ kill:
   help: |-
     Bir kullanıcının IRC ağındaki bağlantısını keser.
     IRCop ve Root kullanıcıları KILL edilemez.
-  example: "%command_prefix%\x02\x0303KILL BadUser Kanallarda taşkınlık\x03\x0F"
-  protected_root: "\x0304✗\x03 Root kullanıcı \x02%nickname%\x02 kill'lenemez."
-  protected_ircop: "\x0304✗\x03 IRC operatörü \x02%nickname%\x02 kill'lenemez."
-  done: "\x0303✓\x03 \x02%nickname%\x02 kullanıcısı kill'lendi (%reason%)."
+  example: "%command_prefix%KILL BadUser Kanallarda taşkınlık"
+  protected_root: "Root kullanıcı %nickname% kill'lenemez."
+  protected_ircop: "IRC operatörü %nickname% kill'lenemez."
+  done: "%nickname% kullanıcısı kill'lendi (%reason%)."
 
 # --- GLINE -----------------------------------------------------------------
 gline:
@@ -327,19 +332,19 @@ gline:
 
     Süre biçimi: 0 = süresiz veya d, h, m soneki (ör. 7d, 12h, 30m).
     Root veya IRCop kullanıcılarıyla eşleşen G-line kayıtları reddedilir.
-  example: "%command_prefix%\x02\x0303GLINE ADD *@192.168.1.* 7d Spam kötüye kullanımı\x03\x0F"
+  example: "%command_prefix%GLINE ADD *@192.168.1.* 7d Spam kötüye kullanımı"
   examples:
-    - "%command_prefix%\x02\x0303GLINE ADD *@192.168.1.* 0 Sürekli kötüye kullanım\x03\x0F"
-    - "%command_prefix%\x02\x0303GLINE LIST *@192.168.*\x03\x0F"
-  unknown_sub: "\x0304✗\x03 Bilinmeyen alt komut \x02%sub%\x02. ADD, DEL veya LIST kullanın."
-  invalid_mask: "\x0304✗\x03 Geçersiz maske formatı. user@host formatında olmalıdır (örn., *@192.168.*)."
-  global_mask: "\x0304✗\x03 G-line maskesi \x02%mask%\x02 çok geniş. Genel maskeler kullanılamaz."
-  dangerous_mask: "\x0304✗\x03 G-line maskesi \x02%mask%\x02 çok geniş. Host kısmı en az 4 alfanümerik karakter içermelidir."
-  protected_user: "\x0304✗\x03 Korumalı kullanıcı \x02%nickname%\x02 G-line ile engellenemez."
-  invalid_expiry: "\x0304✗\x03 Geçersiz süre formatı. Kalıcı için 0 veya 7g, 12s, 30d gibi bir değer kullanın."
-  already_exists: "\x0304✗\x03 \x02%mask%\x02 için G-line zaten mevcut."
-  max_entries: "\x0304✗\x03 Maksimum G-line sayısına (%max%) ulaşıldı."
-  not_found: "\x0304✗\x03 G-line \x02%mask%\x02 bulunamadı."
+    - "%command_prefix%GLINE ADD *@192.168.1.* 0 Sürekli kötüye kullanım"
+    - "%command_prefix%GLINE LIST *@192.168.*"
+  unknown_sub: "Bilinmeyen alt komut %sub%. ADD, DEL veya LIST kullanın."
+  invalid_mask: "Geçersiz maske formatı. user@host formatında olmalıdır (örn., *@192.168.*)."
+  global_mask: "G-line maskesi %mask% çok geniş. Genel maskeler kullanılamaz."
+  dangerous_mask: "G-line maskesi %mask% çok geniş. Host kısmı en az 4 alfanümerik karakter içermelidir."
+  protected_user: "Korumalı kullanıcı %nickname% G-line ile engellenemez."
+  invalid_expiry: "Geçersiz süre formatı. Kalıcı için 0 veya 7g, 12s, 30d gibi bir değer kullanın."
+  already_exists: "%mask% için G-line zaten mevcut."
+  max_entries: "Maksimum G-line sayısına (%max%) ulaşıldı."
+  not_found: "G-line %mask% bulunamadı."
 
   # --- GLINE ADD -----------------------------------------------------------
   add:
@@ -350,10 +355,10 @@ gline:
       Maske kullanıcı@host biçiminde olmalıdır.
       Süre: 0 = süresiz veya d, h, m soneki (ör. 7d, 12h, 30m).
       Root veya IRCop kullanıcılarıyla eşleşen G-line kayıtları reddedilir.
-    example: "%command_prefix%\x02\x0303GLINE ADD *@192.168.1.* 7d Spam kötüye kullanımı\x03\x0F"
+    example: "%command_prefix%GLINE ADD *@192.168.1.* 7d Spam kötüye kullanımı"
     examples:
-      - "%command_prefix%\x02\x0303GLINE ADD *@192.168.1.* 0 Sürekli kötüye kullanım\x03\x0F"
-    done: "\x0303✓\x03 G-line eklendi: \x02%mask%\x02 (%duration%) - %reason%"
+      - "%command_prefix%GLINE ADD *@192.168.1.* 0 Sürekli kötüye kullanım"
+    done: "G-line eklendi: %mask% (%duration%) - %reason%"
 
   # --- GLINE DEL -----------------------------------------------------------
   del:
@@ -362,10 +367,10 @@ gline:
     help: |-
       Listeden bir G-line kaydını siler.
       Maskeyi veya LIST çıktısındaki kayıt numarasını belirtebilirsiniz.
-    example: "%command_prefix%\x02\x0303GLINE DEL *@192.168.1.*\x03\x0F"
+    example: "%command_prefix%GLINE DEL *@192.168.1.*"
     examples:
-      - "%command_prefix%\x02\x0303GLINE DEL 2\x03\x0F"
-    done: "\x0303✓\x03 G-line \x02%mask%\x02 kaldırıldı."
+      - "%command_prefix%GLINE DEL 2"
+    done: "G-line %mask% kaldırıldı."
 
   # --- GLINE LIST ----------------------------------------------------------
   list:
@@ -374,12 +379,12 @@ gline:
     help: |-
       Tüm G-line kayıtlarını listeler. İsteğe bağlı olarak maske kalıbına göre
       filtreler.
-    example: "%command_prefix%\x02\x0303GLINE LIST\x03\x0F"
+    example: "%command_prefix%GLINE LIST"
     examples:
-      - "%command_prefix%\x02\x0303GLINE LIST *@192.168.*\x03\x0F"
-    header: "\x0307---\x03 \x02G-line'lar (%count%) \x0307---\x03"
+      - "%command_prefix%GLINE LIST *@192.168.*"
+    header: "G-line'lar (%count%)"
     empty: "G-line bulunmamaktadır."
-    entry: "\x0310%index%.\x03 \x02%mask%\x02 - %reason% (\x0314%nickname%\x03, bitiş: %expiration%)"
+    entry: "%index%. %mask% - %reason% (%nickname%, bitiş: %expiration%)"
 
 # --- GLOBAL ----------------------------------------------------------------
 global:
@@ -397,14 +402,14 @@ global:
 
     Takma ad kayıtlı veya kullanımda olmamalıdır. İstemcinin bağlantısı gönderimden
     sonra kesilir ve takma adı 24 saat boyunca engellenir.
-  example: "%command_prefix%\x02\x0303GLOBAL %operserv% PRIVMSG 10 dakika içinde bakım\x03\x0F"
+  example: "%command_prefix%GLOBAL %operserv% PRIVMSG 10 dakika içinde bakım"
   examples:
-    - "%command_prefix%\x02\x0303GLOBAL Duyurular!oper@services.ares NOTICE Ağ yeniden başlatılacak\x03\x0F"
-  mask_invalid: "\x0304✗\x03 Geçersiz maske formatı: %error%"
-  nick_connected: "\x0304✗\x03 \x02%nickname%\x02 rumuzu şu anda bağlı."
-  nick_registered: "\x0304✗\x03 \x02%nickname%\x02 rumuzu kayıtlı."
-  type_invalid: "\x0304✗\x03 Mesaj türü PRIVMSG veya NOTICE olmalıdır."
-  done: "\x0303✓\x03 Genel mesaj \x02%nickname%\x02 adresinden %count% kullanıcıya gönderildi."
+    - "%command_prefix%GLOBAL Duyurular!oper@services.ares NOTICE Ağ yeniden başlatılacak"
+  mask_invalid: "Geçersiz maske formatı: %error%"
+  nick_connected: "%nickname% rumuzu şu anda bağlı."
+  nick_registered: "%nickname% rumuzu kayıtlı."
+  type_invalid: "Mesaj türü PRIVMSG veya NOTICE olmalıdır."
+  done: "Genel mesaj %nickname% adresinden %count% kullanıcıya gönderildi."
 
 # --- RAW -------------------------------------------------------------------
 raw:
@@ -413,20 +418,20 @@ raw:
   help: |-
     Belirtilen satırı doğrudan bağlantı IRCd soketine gönderir.
     Son derece dikkatli kullanın. Geçersiz protokol satırları ağı kilitleyebilir.
-  example: "%command_prefix%\x02\x0303RAW :services.ares NOTICE * :Planlı bakım\x03\x0F"
-  empty: "\x0304✗\x03 Göndermek için boş olmayan bir satır belirtmelisiniz."
-  too_long: "\x0304✗\x03 Satır çok uzun. Maksimum 510 karakter."
-  not_connected: "\x0304✗\x03 IRCd'ye bağlı değil."
-  done: "\x0303✓\x03 Ham satır gönderildi."
+  example: "%command_prefix%RAW :services.ares NOTICE * :Planlı bakım"
+  empty: "Göndermek için boş olmayan bir satır belirtmelisiniz."
+  too_long: "Satır çok uzun. Maksimum 510 karakter."
+  not_connected: "IRCd'ye bağlı değil."
+  done: "Ham satır gönderildi."
   protocol:
-    syntax: "\x0304✗\x03 Etkin protokol RAW komutunun sözdizimini reddetti."
-    done: "\x0303✓\x03 Protokol tarafından yönetilen RAW komutu yürütüldü."
-    target: "\x0304✗\x03 Etkin protokol %target% hedefini reddetti."
-    unsupported: "\x0304✗\x03 Etkin protokol bu RAW komutunu desteklemiyor."
-    invalid_resource_type: "\x0304✗\x03 Bilinmeyen protokol kaynak türü: %resource_type%."
-    invalid_resource: "\x0304✗\x03 Geçersiz protokol kaynağı: %resource%."
-    invalid_value: "\x0304✗\x03 Protokol kaynağı için geçersiz değer: %resource%."
-    error: "\x0304✗\x03 Etkin protokol RAW komutunu yürütemedi."
+    syntax: "Etkin protokol RAW komutunun sözdizimini reddetti."
+    done: "Protokol tarafından yönetilen RAW komutu yürütüldü."
+    target: "Etkin protokol %target% hedefini reddetti."
+    unsupported: "Etkin protokol bu RAW komutunu desteklemiyor."
+    invalid_resource_type: "Bilinmeyen protokol kaynak türü: %resource_type%."
+    invalid_resource: "Geçersiz protokol kaynağı: %resource%."
+    invalid_value: "Protokol kaynağı için geçersiz değer: %resource%."
+    error: "Etkin protokol RAW komutunu yürütemedi."
 
 # --- DEBUG -----------------------------------------------------------------
 debug:
@@ -438,43 +443,43 @@ motd:
   short: "Bağlantıda kullanıcılara gönderilen MOTD mesajlarını yönetin."
   syntax: "MOTD {ADD <hedef> {PRIVMSG|NOTICE} <süre> <mesaj>|DEL <id>|LIST|CLEAN}"
   help: "Kullanıcı ağa bağlandığında gönderilen günün mesajı (MOTD) kayıtlarını yönetir."
-  example: "%command_prefix%\x02\x0303MOTD LIST\x03\x0F"
-  unknown_sub: "\x0304✗\x03 Bilinmeyen alt komut. Kullanın: \x02ADD\x02, \x02DEL\x02, \x02LIST\x02, \x02CLEAN\x02"
+  example: "%command_prefix%MOTD LIST"
+  unknown_sub: "Bilinmeyen alt komut. Kullanın: %add%, %del%, %list%, %clean%"
 
   # --- MOTD ADD ------------------------------------------------------------
   add:
     syntax: "MOTD ADD {service|nick!ident@vhost} {PRIVMSG|NOTICE} <süre> <mesaj>"
-    syntax_hint: "\x0304✗\x03 Kullanım: \x02%syntax%\x02"
+    syntax_hint: "Kullanım: %syntax%"
     short: "Bir MOTD girişi ekleyin."
     help: "Her kullanıcı ağa bağlandığında gönderilecek yeni bir MOTD mesajı ekler."
-    example: "%command_prefix%\x02\x0303MOTD ADD %operserv% NOTICE 24h Bu gece bakım\x03\x0F"
+    example: "%command_prefix%MOTD ADD %operserv% NOTICE 24h Bu gece bakım"
     examples:
-      - "%command_prefix%\x02\x0303MOTD ADD %operserv% PRIVMSG 0 Hoş geldiniz a la red\x03\x0F"
-    done: "\x0303✓\x03 MOTD girişi #%id% eklendi."
-    invalid_type: "\x0304✗\x03 Geçersiz mesaj türü. \x02PRIVMSG\x02 veya \x02NOTICE\x02 olmalıdır."
-    invalid_expiry: "\x0304✗\x03 Geçersiz sona erme biçimi. Şunu kullanın: \x02<sayı><s|m|h|d>\x02 veya süresiz için \x020\x02 (ör. 30s, 5m, 24h, 7d)."
+      - "%command_prefix%MOTD ADD %operserv% PRIVMSG 0 Hoş geldiniz a la red"
+    done: "MOTD girişi #%id% eklendi."
+    invalid_type: "Geçersiz mesaj türü. PRIVMSG veya NOTICE olmalıdır."
+    invalid_expiry: "Geçersiz sona erme biçimi. Şunu kullanın: <sayı><s|m|h|d> veya süresiz için 0 (ör. 30s, 5m, 24h, 7d)."
 
   # --- MOTD DEL ------------------------------------------------------------
   del:
     syntax: "MOTD DEL <id>"
-    syntax_hint: "\x0304✗\x03 Kullanım: \x02%syntax%\x02"
+    syntax_hint: "Kullanım: %syntax%"
     short: "Bir MOTD girişini silin."
     help: "Bir MOTD kaydını kimliğine göre siler."
-    example: "%command_prefix%\x02\x0303MOTD DEL 12\x03\x0F"
-    done: "\x0303✓\x03 MOTD girişi #%id% silindi."
-    not_found: "\x0304✗\x03 MOTD girişi bulunamadı."
+    example: "%command_prefix%MOTD DEL 12"
+    done: "MOTD girişi #%id% silindi."
+    not_found: "MOTD girişi bulunamadı."
 
   # --- MOTD LIST -----------------------------------------------------------
   list:
     syntax: "MOTD LIST"
     short: "Tüm MOTD girişlerini listeleyin."
     help: "Yapılandırılmış tüm MOTD kayıtlarını listeler."
-    example: "%command_prefix%\x02\x0303MOTD LIST\x03\x0F"
+    example: "%command_prefix%MOTD LIST"
     empty: "Yapılandırılmış MOTD girişi yok."
     header: "MOTD girişleri:"
-    status_enabled: "\x0303etkin\x03"
-    status_disabled: "\x0304devre dışı\x03"
-    expired: "\x0304süresi dolmuş\x03"
+    status_enabled: "etkin"
+    status_disabled: "devre dışı"
+    expired: "süresi dolmuş"
     no_bot: "(bot yok)"
     shown_count: "%count% kez gösterildi"
 
@@ -483,9 +488,9 @@ motd:
     syntax: "MOTD CLEAN"
     short: "Süresi dolmuş tüm MOTD girişlerini kaldırın."
     help: "Süresi dolmuş tüm MOTD kayıtlarını siler."
-    example: "%command_prefix%\x02\x0303MOTD CLEAN\x03\x0F"
-    done: "\x0303✓\x03 %count% süresi dolmuş MOTD girişi kaldırıldı."
-    none: "\x0303✓\x03 Kaldırılacak süresi dolmuş MOTD girişi yok."
+    example: "%command_prefix%MOTD CLEAN"
+    done: "%count% süresi dolmuş MOTD girişi kaldırıldı."
+    none: "Kaldırılacak süresi dolmuş MOTD girişi yok."
   debug:
     finalized: "MOTD mesajı #%id% sona erdi: [%type%] %message% | %date% | %shown_count%"
 
@@ -495,7 +500,7 @@ badmail:
   short: "Engellenen e-posta alan adlarını yönet."
   help: |-
     Engellenen e-posta alan adlarını yönet.
-  example: "%command_prefix%\x02\x0303BADMAIL LIST *\x03\x0f"
+  example: "%command_prefix%BADMAIL LIST *"
   add:
     syntax: "BADMAIL ADD <alan_adı> <gerekçe>"
     short: "Bir alan adını engelle."
@@ -503,14 +508,14 @@ badmail:
       ASCII veya punycode alan adlarını kabul eder; adres veya kalıp kabul
       etmez. Gerekçe zorunludur. Engel tam eşleşir, alt alan adlarını
       kapsamaz.
-    example: "%command_prefix%\x02\x0303BADMAIL ADD example.org abuse\x03\x0f"
+    example: "%command_prefix%BADMAIL ADD example.org abuse"
   del:
     syntax: "BADMAIL DEL {numara|ALL}"
     short: "Alan adı engellerini kaldır."
     help: |-
       Kalıcı bir kimliği veya ALL ile tüm kayıtları siler. Diğer kimlikler
       değişmez.
-    example: "%command_prefix%\x02\x0303BADMAIL DEL 1\x03\x0f"
+    example: "%command_prefix%BADMAIL DEL 1"
   list:
     syntax: "BADMAIL LIST <kalıp> [sayfa]"
     short: "Engellenen alan adlarını listele."
@@ -518,14 +523,14 @@ badmail:
       Kalıp zorunludur. Yalnızca * herhangi bir diziyi eşleştiren joker
       karakterdir. Büyük ve küçük harf ayrımı yapılmaz. İsteğe bağlı sayfa
       1’den başlar. Filtreleme ve sayfalama kimlikleri korur.
-    example: "%command_prefix%\x02\x0303BADMAIL LIST *.org 2\x03\x0f"
+    example: "%command_prefix%BADMAIL LIST *.org 2"
   invalid_domain: "Geçersiz alan adı. Sonda nokta olmadan ASCII veya punycode kullanın."
   invalid_reason: "Boş olmayan, tek satırlık bir yönetim gerekçesi gereklidir."
   duplicate: "Bu alan adı zaten engellenmiş."
   not_found: "Bu kimliğe sahip engellenmiş alan adı yok."
-  added: "\x0303✓\x03 \x02%domain%\x02 alan adı engellendi."
-  deleted: "\x0303✓\x03 \x02%id%\x02 alan adı engeli kaldırıldı."
-  cleared: "\x0303✓\x03 \x02%total%\x02 alan adı engeli kaldırıldı."
+  added: "%domain% alan adı engellendi."
+  deleted: "%id% alan adı engeli kaldırıldı."
+  cleared: "%total% alan adı engeli kaldırıldı."
   empty: "Eşleşen engellenmiş alan adı yok."
   header: "ID | Alan adı | Gerekçe"
   page: "Sayfa %page%/%pages%, eşleşen %total% alan adı."

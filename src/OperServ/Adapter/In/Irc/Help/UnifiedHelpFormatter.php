@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\OperServ\Adapter\In\Irc\Help;
 
+use App\OperServ\Adapter\In\Irc\OperServHelpFormatterContextAdapter;
+
 use function array_map;
 use function explode;
 use function implode;
@@ -217,6 +219,9 @@ final readonly class UnifiedHelpFormatter
 
     private function addBotMessagePrefix(HelpFormatterContextInterface $context, string $example): string
     {
+        if ($context instanceof OperServHelpFormatterContextAdapter) {
+            return $context->renderExample($example);
+        }
         $prefixPlaceholder = '%command_prefix%';
         if (!str_contains($example, $prefixPlaceholder)) {
             return $example;

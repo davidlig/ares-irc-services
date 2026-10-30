@@ -18,6 +18,9 @@ use App\OperServ\Adapter\In\Irc\OperServNotifierInterface;
 use App\OperServ\Application\Port\In\Audit\CommandAuditRecord;
 use App\OperServ\Application\Port\In\CommandAuditRecorder;
 use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
+use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -29,6 +32,35 @@ use function str_repeat;
 #[CoversClass(RawCommand::class)]
 final class RawCommandTest extends TestCase
 {
+    #[Test]
+    public function presentsSuccessAndFailureAsDifferentRoles(): void
+    {
+        $messages = [];
+        $notifier = $this->createStub(OperServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $uid, string $message, string $type) use (&$messages): void {
+            $messages[] = $message;
+        });
+        $context = new OperServContext(
+            new SenderView('UID', 'Oper', 'i', 'h', 'c', 'ip'),
+            null,
+            'RAW',
+            ['opaque'],
+            $notifier,
+            new RawCommandTranslation(),
+            'en',
+            'UTC',
+            'NOTICE',
+            new OperServCommandRegistry([]),
+            new ServiceNicknameRegistry([]),
+            $this->createStub(OperatorAuthorizationQuery::class),
+            new IrcRenderer(new FixedStyleProvider(new PresentationStyle(markers: ['success' => '+', 'error' => '!']))),
+        );
+        $this->command(RawCommandExecutionResult::executed('ACTION', true))->execute($context);
+        $this->command(RawCommandExecutionResult::rejected(RawCommandExecutionOutcome::Unsupported))->execute($context);
+
+        self::assertSame(['+ raw.protocol.done', '! raw.protocol.unsupported'], $messages);
+    }
+
     #[Test]
     public function exposesOperOnlyPermissionAndHelpMetadata(): void
     {

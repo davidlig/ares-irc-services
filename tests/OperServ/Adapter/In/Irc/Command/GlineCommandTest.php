@@ -18,6 +18,10 @@ use App\OperServ\Application\UseCase\ManageGline\ManageGline;
 use App\OperServ\Application\UseCase\ManageGline\ManageGlineHandlerInterface;
 use App\OperServ\Application\UseCase\ManageGline\ManageGlineOutcome;
 use App\OperServ\Application\UseCase\ManageGline\ManageGlineResult;
+use App\Shared\Adapter\In\Irc\Presentation\Appearance;
+use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -34,6 +38,48 @@ use function array_map;
 #[CoversClass(GlineListEntry::class)]
 final class GlineCommandTest extends TestCase
 {
+    #[Test]
+    public function presentsGlineSuccessAndFailureWithDistinctRoles(): void
+    {
+        $notifier = new RecordingGlineCommandNotifier();
+        $renderer = new IrcRenderer(new FixedStyleProvider(new PresentationStyle(markers: ['success' => '+', 'error' => '!'])));
+        new GlineCommand(new RecordingGlineCommandHandler(new ManageGlineResult(ManageGlineOutcome::Deleted, mask: '*@example.org')))->execute($this->context(['DEL', '*@example.org'], $notifier, renderer: $renderer));
+        new GlineCommand(new RecordingGlineCommandHandler(new ManageGlineResult(ManageGlineOutcome::InvalidMask)))->execute($this->context(['DEL', '*@example.org'], $notifier, renderer: $renderer));
+        self::assertSame(['+ gline.del.done', '! gline.invalid_mask'], $notifier->messages);
+    }
+
+    #[Test]
+    public function listEntriesRenderSemanticFragmentsWithoutEmbeddingColorsInCommands(): void
+    {
+        $messages = [];
+        $notifier = $this->createStub(OperServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void { $messages[] = $message; });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $key): string => 'gline.list.entry' === $key ? '%index% %mask% %nickname%' : $key);
+        $renderer = new IrcRenderer(new FixedStyleProvider(new PresentationStyle(components: [
+            'danger' => new Appearance(prefix: '[danger]', suffix: '[/danger]'),
+            'muted' => new Appearance(prefix: '[muted]', suffix: '[/muted]'),
+        ])));
+        $context = new OperServContext(
+            new SenderView('UID', 'Oper', 'i', 'h', 'c', 'ip'),
+            null,
+            'GLINE',
+            ['LIST'],
+            $notifier,
+            $translator,
+            'en',
+            'UTC',
+            'NOTICE',
+            new OperServCommandRegistry([]),
+            new ServiceNicknameRegistry([]),
+            $this->createStub(OperatorAuthorizationQuery::class),
+            $renderer
+        );
+        $result = new ManageGlineResult(ManageGlineOutcome::Listed, entries: [new GlineListEntry('*@host', 'reason', 'Nick', null)]);
+        new GlineCommand(new RecordingGlineCommandHandler($result))->execute($context);
+        self::assertSame('[muted]1[/muted] [danger]*@host[/danger] [muted]Nick[/muted]', $messages[1]);
+    }
+
     #[Test]
     public function exposesCommandMetadata(): void
     {
@@ -175,7 +221,7 @@ final class GlineCommandTest extends TestCase
     }
 
     /** @param list<string> $arguments */
-    private function context(array $arguments, ?RecordingGlineCommandNotifier $notifier = null, bool $withoutSender = false): OperServContext
+    private function context(array $arguments, ?RecordingGlineCommandNotifier $notifier = null, bool $withoutSender = false, ?IrcRenderer $renderer = null): OperServContext
     {
         $notifier ??= new RecordingGlineCommandNotifier();
 
@@ -192,6 +238,7 @@ final class GlineCommandTest extends TestCase
             new OperServCommandRegistry([]),
             new ServiceNicknameRegistry([]),
             $this->createStub(OperatorAuthorizationQuery::class),
+            $renderer,
         );
     }
 }

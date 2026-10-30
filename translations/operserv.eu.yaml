@@ -18,40 +18,44 @@
 
 # --- ERROR -----------------------------------------------------------------
 error:
-  root_only: "\x0304✗\x03 Komando hau sareko root administratzaileentzat mugatuta dago."
+  root_only: "Komando hau sareko root administratzaileentzat mugatuta dago."
 
 # --- HELP ------------------------------------------------------------------
 help:
   syntax: "HELP [komandoa] [aukera]"
   short: "Zerrendatu komandoak edo erakutsi komando baten laguntza."
-  help: !irc |-
-    Argumenturik gabe komando guztiak zerrendatzen ditu. Erabili \x0303HELP <komandoa>\x03
-    laguntza osorako, edo \x0303HELP <komandoa> <aukera>\x03 azpi-aukertarako.
-  example: "%command_prefix%\x02\x0303HELP KILL\x03\x0F"
+  help: |-
+    Argumenturik gabe komando guztiak zerrendatzen ditu. Erabili %help_command%
+    laguntza osorako, edo %help_option_command% azpi-aukertarako.
+  example: "%command_prefix%HELP KILL"
   header_title: "%bot%"
-  header: "\x02\x0307🤖 %title%\x03\x0F \x0314%separator%\x03\x0F"
+  header: "%title%"
   intro: |-
     Sareko operadoreak eta haien baimenak kudeatzeko, sarbide-murrizketak
     aplikatzeko eta erabiltzaileak deskonektatzeko aukera ematen du. Sareko
     komunikatu orokorrak bidali eta ongietorri-mezuak ere kudea ditzake.
-  general_header: "\x02 ■ Komando erabilgarriak:\x02"
-  command_line: "    \x0310›\x03\x0F \x02\x0303%command%\x03\x0F%description%"
-  subcommand_line: "    \x0310›\x03\x0F \x02\x0303%command%\x03\x0F%description%"
-  options_header: "\x02 ■ Aukerak:\x02"
-  examples_header: "\x02 ■ Adibideak:\x02"
-  general_footer: "\x0310ℹ\x03\x0F Erabili /msg %bot% \x02\x0303HELP <komandoa>\x03\x0F informazio gehiago lortzeko."
-  set_sub_footer: "\x0310ℹ\x03\x0F Erabili /msg %bot% \x02\x0303HELP %command% <aukera>\x03\x0F informazio gehiago lortzeko."
-  syntax_label: "Sintaxia: \x02\x0303%syntax%\x03\x0F"
-  footer: "\x0314─────────────────────────────\x03\x0F"
-  intro_expiration: "\x0307⚠\x03\x0F OHARRA: %days% egun baino gehiagoz erabiltzen ez diren ezizenak automatikoki ezabatuko dira."
-  group_header: "\x0310  ◆ %group%\x03\x0F"
-  subgroup_header: "\x0310  ◆ %group%\x03\x0F"
+  general_header: "Komando erabilgarriak:"
+  command_line: "%command%%description%"
+  subcommand_line: "%command%%description%"
+  options_header: "Aukerak:"
+  examples_header: "Adibideak:"
+  general_help_command: "HELP <komandoa>"
+  option_help_command: "HELP %command% <aukera>"
+  detail_help_command: "HELP <komandoa>"
+  detail_help_option_command: "HELP <komandoa> <aukera>"
+  general_footer: "Erabili /msg %bot% %help_command% informazio gehiago lortzeko."
+  set_sub_footer: "Erabili /msg %bot% %help_command% informazio gehiago lortzeko."
+  syntax_label: "Sintaxia: %syntax%"
+  footer: ""
+  intro_expiration: "OHARRA: %days% egun baino gehiagoz erabiltzen ez diren ezizenak automatikoki ezabatuko dira."
+  group_header: "%group%"
+  subgroup_header: "%group%"
   group:
     operators_roles: "Operadoreak eta rolak"
     network_security: "Sareko segurtasuna"
     communication: "Komunikazioa"
     low_level: "Behe-maila"
-  ircop_header: "\x02 ■ IRC operadoreentzako komando erabilgarriak:\x02"
+  ircop_header: "IRC operadoreentzako komando erabilgarriak:"
 
 # --- IRCOP -----------------------------------------------------------------
 ircop:
@@ -63,14 +67,14 @@ ircop:
     DELek operadore bat kentzen du. LISTek operadore guztiak erakusten ditu.
     Erabili ROLE LIST rolak ikusteko.
     Komando hau zerbitzuetan konfiguratutako Root erabiltzaileentzat mugatuta dago.
-  example: "%command_prefix%\x02\x0303IRCOP ADD Ane OPER\x03\x0F"
+  example: "%command_prefix%IRCOP ADD Ane OPER"
   examples:
-    - "%command_prefix%\x02\x0303IRCOP LIST\x03\x0F"
-  unknown_sub: "\x0304✗\x03 Azpikomando ezezaguna \x02%sub%\x02. Erabili ADD, DEL edo LIST."
-  unknown_role: "\x0304✗\x03 \x02%role%\x02 rola ez da existitzen. Erabili \x0303/msg %bot% ROLE LIST\x03 rolak ikusteko."
-  already_admin: "\x0304✗\x03 \x02%nickname%\x02 jada IRC operadorea da (rola: %role%)."
-  not_admin: "\x0304✗\x03 \x02%nickname%\x02 ez da IRC operadorea."
-  role_changed: "\x0303✓\x03 \x02%nickname%\x02(r)en rola aldatu da: %old% → %new%."
+    - "%command_prefix%IRCOP LIST"
+  unknown_sub: "Azpikomando ezezaguna %sub%. Erabili ADD, DEL edo LIST."
+  unknown_role: "%role% rola ez da existitzen. Erabili /msg %bot% %role_list% rolak ikusteko."
+  already_admin: "%nickname% jada IRC operadorea da (rola: %role%)."
+  not_admin: "%nickname% ez da IRC operadorea."
+  role_changed: "%nickname%(r)en rola aldatu da: %old% → %new%."
 
   # --- IRCOP ADD -----------------------------------------------------------
   add:
@@ -80,9 +84,9 @@ ircop:
       Ezizen erregistratu bat sareko IRC operadore gisa gehitzen du.
       Erabili ROLE LIST rolak ikusteko.
       Komando hau Root erabiltzaileentzat mugatuta dago.
-    example: "%command_prefix%\x02\x0303IRCOP ADD Ane OPER\x03\x0F"
-    done: "\x0303✓\x03 \x02%nickname%\x02 \x02%role%\x02 gisa gehitu da."
-    nick_not_active: "\x0304✗\x03 \x02%nickname%\x02 ezizena ez da ezizen erregistratu aktibo bat."
+    example: "%command_prefix%IRCOP ADD Ane OPER"
+    done: "%nickname% %role% gisa gehitu da."
+    nick_not_active: "%nickname% ezizena ez da ezizen erregistratu aktibo bat."
 
   # --- IRCOP DEL -----------------------------------------------------------
   del:
@@ -91,8 +95,8 @@ ircop:
     help: |-
       Sareko IRC operadore bat zerrendatik kentzen du.
       Komando hau Root erabiltzaileentzat mugatuta dago.
-    example: "%command_prefix%\x02\x0303IRCOP DEL Ane\x03\x0F"
-    done: "\x0303✓\x03 \x02%nickname%\x02 IRC operadoreetatik kendu da."
+    example: "%command_prefix%IRCOP DEL Ane"
+    done: "%nickname% IRC operadoreetatik kendu da."
 
   # --- IRCOP LIST ----------------------------------------------------------
   list:
@@ -102,8 +106,8 @@ ircop:
       Sareko IRC operadore guztiak bere rolekin eta erregistro datarekin zerrendatzen
       ditu.
       Komando hau Root erabiltzaileentzat mugatuta dago.
-    example: "%command_prefix%\x02\x0303IRCOP LIST\x03\x0F"
-    header: "\x0307---\x03 \x02Sareko IRC Operadoreak\x02 \x0307---\x03"
+    example: "%command_prefix%IRCOP LIST"
+    header: "Sareko IRC Operadoreak"
     empty: "Ez dago IRC operadorerik."
 
 # --- ROLE ------------------------------------------------------------------
@@ -112,34 +116,34 @@ role:
   operclass:
     syntax: "ROLE OPERCLASS {LIST|VIEW <rola>|SET <rola> [operclass]}"
     short: "UnrealIRCd-eko operadore-klasea konfiguratzen du."
-    help: !irc |-
+    help: |-
       Rol baten operclass-a kontsultatu eta konfiguratzen du.
 
-      \x02 ■ Aukerak:\x02
-          \x0310›\x03\x0F \x02\x0303LIST      \x03\x0FSareko operclass erabilgarriak erakusten ditu.
-          \x0310›\x03\x0F \x02\x0303VIEW      \x03\x0FRolaren operclass-a eta erabilgarriak erakusten ditu.
-          \x0310›\x03\x0F \x02\x0303SET       \x03\x0FIRCOPei identifikatzean operclass-a esleitzen die.
+      %options_header%
+      %option_LIST%Sareko operclass erabilgarriak erakusten ditu.
+      %option_VIEW%Rolaren operclass-a eta erabilgarriak erakusten ditu.
+      %option_SET%IRCOPei identifikatzean operclass-a esleitzen die.
 
       Utzi balioa hutsik kentzeko.
 
       UnrealIRCd protokoloetan soilik dago erabilgarri.
-    example: "%command_prefix%\x02\x0303ROLE OPERCLASS LIST\x03\x0F"
+    example: "%command_prefix%ROLE OPERCLASS LIST"
     examples:
-      - "%command_prefix%\x02\x0303ROLE OPERCLASS VIEW LAGUNTZA\x03\x0F"
-      - "%command_prefix%\x02\x0303ROLE OPERCLASS SET LAGUNTZA services-admin\x03\x0F"
-      - "%command_prefix%\x02\x0303ROLE OPERCLASS SET LAGUNTZA\x03\x0F"
+      - "%command_prefix%ROLE OPERCLASS VIEW LAGUNTZA"
+      - "%command_prefix%ROLE OPERCLASS SET LAGUNTZA services-admin"
+      - "%command_prefix%ROLE OPERCLASS SET LAGUNTZA"
     list:
-      header: "\x0307---\x03 \x02Sarean Erabilgarri Dauden Operclass-ak\x02 \x0307---\x03"
+      header: "Sarean Erabilgarri Dauden Operclass-ak"
       empty: "Ez dago operclass-ik erabilgarri sarean."
-      not_supported: "\x0304✗\x03 Uneko protokoloak ez du onartzen erabilgarri dauden operclass-ak zerrendatzea."
+      not_supported: "Uneko protokoloak ez du onartzen erabilgarri dauden operclass-ak zerrendatzea."
     view:
       empty: "%role% rolak ez du operclass-ik."
-      line: "  Operclass: \x0303%operclass%\x03"
-      available: "  Erabilgarri dauden operclass-ak: \x0310%available%\x03"
+      line: "Operclass: %operclass%"
+      available: "Erabilgarri dauden operclass-ak: %available%"
     set:
-      done: "\x0303✓\x03 Operclass-a ezarri zaio %role% rolari."
-      cleared: "\x0303✓\x03 Operclass-a kendu zaio %role% rolari."
-      not_available: "\x0304✗\x03 \x02%operclass%\x02 operclass ez dago erabilgarri sarean. Erabilgarri daudenak: %available%."
+      done: "Operclass-a ezarri zaio %role% rolari."
+      cleared: "Operclass-a kendu zaio %role% rolari."
+      not_available: "%operclass% operclass ez dago erabilgarri sarean. Erabilgarri daudenak: %available%."
   syntax: "ROLE {ADD <izena> [deskribapena]|DEL <izena>|LIST|PERMS {{ADD|DEL} <rola> <baimena>|{LIST|CLEAR} <rola>}|MODES {VIEW <rola>|SET <rola> [moduak]}|VHOST {VIEW <rola>|SET <rola> [vhost]}}"
   short: "Kudeatu operadore rolak."
   help: |-
@@ -157,14 +161,14 @@ role:
     VHOSTek rol baten behartutako vhost eredua kudeatzen du, OPERCLASSek Unreal operclass kudeatzen du.
     Babestutako rolak (ADMIN, OPER, PREOPER) ezin dira ezabatu.
     Komando hau Root erabiltzaileentzat mugatuta dago.
-  example: "%command_prefix%\x02\x0303ROLE LIST\x03\x0F"
+  example: "%command_prefix%ROLE LIST"
   examples:
-    - "%command_prefix%\x02\x0303ROLE ADD LAGUNTZA Laguntza-operadoreak\x03\x0F"
-  unknown_sub: "\x0304✗\x03 Azpikomando ezezaguna \x02%sub%\x02. Erabili ADD, DEL, LIST, PERMS, MODES edo VHOST."
-  unknown_sub_operclass: "\x0304✗\x03 Azpikomando ezezaguna \x02%sub%\x02. Erabili ADD, DEL, LIST, PERMS, MODES, VHOST edo OPERCLASS."
-  not_found: "\x0304✗\x03 \x02%role%\x02 rola ez da existitzen."
-  already_exists: "\x0304✗\x03 \x02%role%\x02 rola jada existitzen da."
-  protected: "\x0304✗\x03 \x02%role%\x02 rola babestuta dago eta ezin da ezabatu."
+    - "%command_prefix%ROLE ADD LAGUNTZA Laguntza-operadoreak"
+  unknown_sub: "Azpikomando ezezaguna %sub%. Erabili ADD, DEL, LIST, PERMS, MODES edo VHOST."
+  unknown_sub_operclass: "Azpikomando ezezaguna %sub%. Erabili ADD, DEL, LIST, PERMS, MODES, VHOST edo OPERCLASS."
+  not_found: "%role% rola ez da existitzen."
+  already_exists: "%role% rola jada existitzen da."
+  protected: "%role% rola babestuta dago eta ezin da ezabatu."
 
   # --- ROLE ADD ------------------------------------------------------------
   add:
@@ -173,8 +177,8 @@ role:
     help: |-
       Rol pertsonalizatu berri bat sortzen du. Deskribapena aukerakoa da.
       Komando hau Root erabiltzaileentzat mugatuta dago.
-    example: "%command_prefix%\x02\x0303ROLE ADD LAGUNTZA Laguntza-operadoreak\x03\x0F"
-    done: "\x0303✓\x03 \x02%role%\x02 rola sortu da."
+    example: "%command_prefix%ROLE ADD LAGUNTZA Laguntza-operadoreak"
+    done: "%role% rola sortu da."
 
   # --- ROLE DEL ------------------------------------------------------------
   del:
@@ -185,8 +189,8 @@ role:
       ezin dira ezabatu. Rolak operadoreak esleituta baditu,
       lehenik berresleitu behar dituzu.
       Komando hau Root erabiltzaileentzat mugatuta dago.
-    example: "%command_prefix%\x02\x0303ROLE DEL LAGUNTZA\x03\x0F"
-    done: "\x0303✓\x03 \x02%role%\x02 rola ezabatu da."
+    example: "%command_prefix%ROLE DEL LAGUNTZA"
+    done: "%role% rola ezabatu da."
 
   # --- ROLE LIST -----------------------------------------------------------
   list:
@@ -195,85 +199,85 @@ role:
     help: |-
       Rol guztiak zerrendatzen ditu. Babestutako rolak [PROTECTED] markarekin daude.
       Komando hau Root erabiltzaileentzat mugatuta dago.
-    example: "%command_prefix%\x02\x0303ROLE LIST\x03\x0F"
-    header: "\x0307---\x03 \x02Operadore Rolak\x02 \x0307---\x03"
+    example: "%command_prefix%ROLE LIST"
+    header: "Operadore Rolak"
     empty: "Ez dago operadore rolik."
 
   # --- ROLE PERMS ----------------------------------------------------------
   perms:
     syntax: "ROLE PERMS {{ADD|DEL} <rola> <baimena>|{LIST|CLEAR} <rola>}"
     short: "Kudeatu rol baten baimenak."
-    help: !irc |-
+    help: |-
       Rol bati esleitutako baimenak kudeatzen ditu.
 
-      \x02 ■ Aukerak:\x02
-          \x0310›\x03\x0F \x02\x0303LIST      \x03\x0FRolaren baimen guztiak erakusten ditu.
-          \x0310›\x03\x0F \x02\x0303ADD       \x03\x0FBaimen bat esleitzen dio rolari.
-          \x0310›\x03\x0F \x02\x0303DEL       \x03\x0FBaimen bat kentzen dio rolari (ez babestutako roletarako).
-          \x0310›\x03\x0F \x02\x0303CLEAR     \x03\x0FRolaren baimen guztiak kentzen ditu.
+      %options_header%
+      %option_LIST%Rolaren baimen guztiak erakusten ditu.
+      %option_ADD%Baimen bat esleitzen dio rolari.
+      %option_DEL%Baimen bat kentzen dio rolari (ez babestutako roletarako).
+      %option_CLEAR%Rolaren baimen guztiak kentzen ditu.
 
       Erabili ALL eskuragarri dauden baimen guztiak batera gehitzeko.
       Komando hau Root erabiltzaileentzat mugatuta dago.
-    example: "%command_prefix%\x02\x0303ROLE PERMS LIST LAGUNTZA\x03\x0F"
+    example: "%command_prefix%ROLE PERMS LIST LAGUNTZA"
     examples:
-      - "%command_prefix%\x02\x0303ROLE PERMS ADD LAGUNTZA operserv.gline\x03\x0F"
-      - "%command_prefix%\x02\x0303ROLE PERMS ADD LAGUNTZA ALL\x03\x0F"
-      - "%command_prefix%\x02\x0303ROLE PERMS DEL LAGUNTZA operserv.gline\x03\x0F"
-      - "%command_prefix%\x02\x0303ROLE PERMS CLEAR LAGUNTZA\x03\x0F"
-    not_found: "\x0304✗\x03 \x02%perm%\x02 baimena ez da existitzen."
-    already_has: "\x0304✗\x03 \x02%role%\x02 rolak jada \x02%perm%\x02 baimena du."
-    does_not_have: "\x0304✗\x03 \x02%role%\x02 rolak ez du \x02%perm%\x02 baimenik."
+      - "%command_prefix%ROLE PERMS ADD LAGUNTZA operserv.gline"
+      - "%command_prefix%ROLE PERMS ADD LAGUNTZA ALL"
+      - "%command_prefix%ROLE PERMS DEL LAGUNTZA operserv.gline"
+      - "%command_prefix%ROLE PERMS CLEAR LAGUNTZA"
+    not_found: "%perm% baimena ez da existitzen."
+    already_has: "%role% rolak jada %perm% baimena du."
+    does_not_have: "%role% rolak ez du %perm% baimenik."
     list:
-      header: "\x0303%role%\x02 rolaren baimen-zerrenda\x02\x03"
+      header: "%role% rolaren baimen-zerrenda"
       columns: "Esleituta | Baimen-gakoa | Deskribapena"
       row: "%assigned% | %permission% | %description%"
-      assigned: "\x0303✓\x03\x0F"
-      unassigned: "\x0304✗\x03\x0F"
+      assigned: ""
+      unassigned: ""
     add:
-      done: "\x0303✓\x03 \x02%perm%\x02 baimena gehitu zaio \x02%role%\x02 rolari."
-      all_done: "\x0303✓\x03 \x02%count%\x02 baimen gehitu zaizkio \x02%role%\x02 rolari."
+      done: "%perm% baimena gehitu zaio %role% rolari."
+      all_done: "%count% baimen gehitu zaizkio %role% rolari."
     del:
-      done: "\x0303✓\x03 \x02%perm%\x02 baimena kendu zaio \x02%role%\x02 rolari."
+      done: "%perm% baimena kendu zaio %role% rolari."
     clear:
-      done: "\x0303✓\x03 \x02%count%\x02 baimen kendu zaizkio \x02%role%\x02 rolari."
-      empty: "\x0304✗\x03 \x02%role%\x02 rolak ez du baimenik esleituta."
+      done: "%count% baimen kendu zaizkio %role% rolari."
+      empty: "%role% rolak ez du baimenik esleituta."
 
   # --- ROLE MODES ----------------------------------------------------------
   modes:
     syntax: "ROLE MODES {VIEW <rola>|SET <rola> [moduak]}"
     short: "Kudeatu rolerako IRCOP erabiltzaile moduak."
-    help: !irc |-
+    help: |-
       Rol bati esleitutako IRCOP erabiltzaile-moduak kudeatzen ditu.
 
-      \x02 ■ Aukerak:\x02
-          \x0310›\x03\x0F \x02\x0303VIEW      \x03\x0FRolaren uneko moduak erakusten ditu.
-          \x0310›\x03\x0F \x02\x0303SET       \x03\x0FIRCOP moduak ezartzen ditu.
+      %options_header%
+      %option_VIEW%Rolaren uneko moduak erakusten ditu.
+      %option_SET%IRCOP moduak ezartzen ditu.
 
       Utzi moduak hutsik guztiak kentzeko.
 
       Rol hau duten erabiltzaileek identifikatzean jasoko dituzte moduak.
       IRCd bakoitzeko moduak
       Komando hau Root erabiltzaileentzat mugatuta dago.
-    example: "%command_prefix%\x02\x0303ROLE MODES VIEW OPER\x03\x0F"
+    example: "%command_prefix%ROLE MODES VIEW OPER"
     examples:
-      - "%command_prefix%\x02\x0303ROLE MODES SET OPER oH\x03\x0F"
-      - "%command_prefix%\x02\x0303ROLE MODES SET OPER\x03\x0F"
+      - "%command_prefix%ROLE MODES SET OPER oH"
+      - "%command_prefix%ROLE MODES SET OPER"
     view:
-      header: "\x0307---\x03 \x02%role% rolaren moduak\x02 \x0307---\x03"
-      empty: "\x02%role%\x02 rolak ez du modurik esleituta."
-      line: "  Moduak: \x0303%modes%\x03"
+      header: "%role% rolaren moduak"
+      empty: "%role% rolak ez du modurik esleituta."
+      line: "Moduak: %modes%"
     set:
-      done: "\x0303✓\x03 \x02%modes%\x02 moduak ezarri dira \x02%role%\x02 rolerako."
-      cleared: "\x0303✓\x03 \x02%role%\x02 rolaren modu guztiak kendu dira."
-      invalid_mode: "\x0304✗\x03 \x02%mode%\x02 modua ez da IRCOP modu baliozkoa."
-      invalid_modes: "\x0304✗\x03 Modu baliogabeak: %invalid%. Modu baliozkoak: %valid%."
-      no_irc_user_modes: "\x0304✗\x03 Uneko IRCdk ez du IRCOP modurik konfiguratuta."
+      done: "%modes% moduak ezarri dira %role% rolerako."
+      cleared: "%role% rolaren modu guztiak kendu dira."
+      invalid_mode: "%mode% modua ez da IRCOP modu baliozkoa."
+      invalid_modes: "Modu baliogabeak: %invalid%. Modu baliozkoak: %valid%."
+      no_irc_user_modes: "Uneko IRCdk ez du IRCOP modurik konfiguratuta."
 
   # --- ROLE VHOST ----------------------------------------------------------
   vhost:
     syntax: "ROLE VHOST {VIEW <rola>|SET <rola> [vhost]}"
     short: "Kudeatu rol baten behartutako vhost eredua."
-    help: !irc |-
+    help: |-
       Rol bateko operadoreei identifikatzean ematen zaien ostalari birtuala
       konfiguratzen du, haien ostalari pertsonala ordeztuz.
 
@@ -282,9 +286,9 @@ role:
 
       _davidlig_ + admin.ares → davidlig.admin.ares
 
-      \x02 ■ Aukerak:\x02
-          \x0310›\x03\x0F \x02\x0303VIEW      \x03\x0FRol baten eredua erakusten du.
-          \x0310›\x03\x0F \x02\x0303SET       \x03\x0FRol baten eredua ezarri edo kentzen du.
+      %options_header%
+      %option_VIEW%Rol baten eredua erakusten du.
+      %option_SET%Rol baten eredua ezarri edo kentzen du.
 
       Ereduak letrak, zenbakiak, marratxoak eta puntuak soilik onartzen ditu.
       Gutxienez puntu bat behar du; ezin da marratxo edo puntuz hasi/amaitu,
@@ -293,19 +297,20 @@ role:
       Erabili SET eredurik gabe behartutako host-a kentzeko.
 
       Root erabiltzaileentzat soilik.
-    example: "%command_prefix%\x02\x0303ROLE VHOST VIEW OPER\x03\x0F"
+    example: "%command_prefix%ROLE VHOST VIEW OPER"
     examples:
-      - "%command_prefix%\x02\x0303ROLE VHOST SET OPER admin.ares\x03\x0F"
-      - "%command_prefix%\x02\x0303ROLE VHOST SET OPER\x03\x0F"
+      - "%command_prefix%ROLE VHOST SET OPER admin.ares"
+      - "%command_prefix%ROLE VHOST SET OPER"
     view:
-      header: "\x0307---\x03 \x02%role% rolaren behartutako vhost-a\x02 \x0307---\x03"
-      empty: "\x02%role%\x02 rolak ez du behartutako vhost eredurik ezarrita."
-      line: "  Eredua: \x0303%pattern%\x03"
-      example: "  Adibidea: \x02ezizena\x02.%pattern%"
+      header: "%role% rolaren behartutako vhost-a"
+      empty: "%role% rolak ez du behartutako vhost eredurik ezarrita."
+      line: "Eredua: %pattern%"
+      example: "Adibidea: %example_nickname%.%pattern%"
+      example_nickname: "ezizena"
     set:
-      done: "\x0303✓\x03 \x02%role%\x02 rolerako behartutako vhost eredua ezarri da."
-      cleared: "\x0303✓\x03 \x02%role%\x02 rolaren behartutako vhost eredua kendu da."
-      invalid: "\x0304✗\x03 Vhost eredu baliogabea. Karaktere baliozkoak: a-z, A-Z, 0-9, - eta .. Gutxienez puntu bat eduki behar du, ezin da - edo .-z hasi/amaitu ezta .. eduki ere."
+      done: "%role% rolerako behartutako vhost eredua ezarri da."
+      cleared: "%role% rolaren behartutako vhost eredua kendu da."
+      invalid: "Vhost eredu baliogabea. Karaktere baliozkoak: a-z, A-Z, 0-9, - eta .. Gutxienez puntu bat eduki behar du, ezin da - edo .-z hasi/amaitu ezta .. eduki ere."
 
 # --- KILL ------------------------------------------------------------------
 kill:
@@ -318,10 +323,10 @@ kill:
 
     Sintaxia: KILL <ezizena> <arrazoia>
     Adibidea: KILL ErabiltzaileGaiztoa Flood egiten kanaletan
-  example: "%command_prefix%\x02\x0303KILL BadUser Flooding en canales\x03\x0F"
-  protected_root: "\x0304✗\x03 Ezin da Root erabiltzaile \x02%nickname%\x02 kill bidez deskonektatu."
-  protected_ircop: "\x0304✗\x03 Ezin da IRC operadore \x02%nickname%\x02 kill bidez deskonektatu."
-  done: "\x0303✓\x03 \x02%nickname%\x02 erabiltzailea kill bidez deskonektatu da (%reason%)."
+  example: "%command_prefix%KILL BadUser Flooding en canales"
+  protected_root: "Ezin da Root erabiltzaile %nickname% kill bidez deskonektatu."
+  protected_ircop: "Ezin da IRC operadore %nickname% kill bidez deskonektatu."
+  done: "%nickname% erabiltzailea kill bidez deskonektatu da (%reason%)."
 
 # --- GLINE -----------------------------------------------------------------
 gline:
@@ -337,19 +342,19 @@ gline:
     30m).
     Root edo IRCop erabiltzaileekin bat datozen GLINEak baztertzen dira.
     Komando honek operserv.gline baimena behar du.
-  example: "%command_prefix%\x02\x0303GLINE ADD *@192.168.1.* 7d Spam gehiegikeria\x03\x0F"
+  example: "%command_prefix%GLINE ADD *@192.168.1.* 7d Spam gehiegikeria"
   examples:
-    - "%command_prefix%\x02\x0303GLINE ADD *@192.168.1.* 0 Etengabeko gehiegikeria\x03\x0F"
-    - "%command_prefix%\x02\x0303GLINE LIST *@192.168.*\x03\x0F"
-  unknown_sub: "\x0304✗\x03 Azpikomando ezezaguna \x02%sub%\x02. Erabili ADD, DEL edo LIST."
-  invalid_mask: "\x0304✗\x03 Maskara formatu baliogabea. Formatua user@host izan behar du (adib., *@192.168.*)."
-  global_mask: "\x0304✗\x03 \x02%mask%\x02 G-line maskara zabalegia da. Maskara globalak ez dira onartzen."
-  dangerous_mask: "\x0304✗\x03 \x02%mask%\x02 G-line maskara zabalegia da. Ostalari zatiak gutxienez 4 karaktere alfanumeriko behar ditu."
-  protected_user: "\x0304✗\x03 Ezin da babestutako \x02%nickname%\x02 erabiltzailea G-line bidez debekatu."
-  invalid_expiry: "\x0304✗\x03 Iraungitze formatu baliogabea. Erabili 0 iraunkorrerako, edo balio bat nola 7d, 12o, 30m."
-  already_exists: "\x0304✗\x03 \x02%mask%\x02 maskararen G-linea jada existitzen da."
-  max_entries: "\x0304✗\x03 G-lineen gehieneko kopurua (%max%) iritsi da."
-  not_found: "\x0304✗\x03 \x02%mask%\x02 G-linea ez da aurkitu."
+    - "%command_prefix%GLINE ADD *@192.168.1.* 0 Etengabeko gehiegikeria"
+    - "%command_prefix%GLINE LIST *@192.168.*"
+  unknown_sub: "Azpikomando ezezaguna %sub%. Erabili ADD, DEL edo LIST."
+  invalid_mask: "Maskara formatu baliogabea. Formatua user@host izan behar du (adib., *@192.168.*)."
+  global_mask: "%mask% G-line maskara zabalegia da. Maskara globalak ez dira onartzen."
+  dangerous_mask: "%mask% G-line maskara zabalegia da. Ostalari zatiak gutxienez 4 karaktere alfanumeriko behar ditu."
+  protected_user: "Ezin da babestutako %nickname% erabiltzailea G-line bidez debekatu."
+  invalid_expiry: "Iraungitze formatu baliogabea. Erabili 0 iraunkorrerako, edo balio bat nola 7d, 12o, 30m."
+  already_exists: "%mask% maskararen G-linea jada existitzen da."
+  max_entries: "G-lineen gehieneko kopurua (%max%) iritsi da."
+  not_found: "%mask% G-linea ez da aurkitu."
 
   # --- GLINE ADD -----------------------------------------------------------
   add:
@@ -361,10 +366,10 @@ gline:
       Iraungitzea: 0=iraunkorra, edo erabili d, o, m atzizkia (adib., 7d, 12o, 30m).
       Root edo IRCop erabiltzaileekin bat datozen GLINEak baztertzen dira.
       Komando honek operserv.gline baimena behar du.
-    example: "%command_prefix%\x02\x0303GLINE ADD *@192.168.1.* 7d Spam gehiegikeria\x03\x0F"
+    example: "%command_prefix%GLINE ADD *@192.168.1.* 7d Spam gehiegikeria"
     examples:
-      - "%command_prefix%\x02\x0303GLINE ADD *@192.168.1.* 0 Etengabeko gehiegikeria\x03\x0F"
-    done: "\x0303✓\x03 G-linea gehitu da: \x02%mask%\x02 (%duration%) - %reason%"
+      - "%command_prefix%GLINE ADD *@192.168.1.* 0 Etengabeko gehiegikeria"
+    done: "G-linea gehitu da: %mask% (%duration%) - %reason%"
 
   # --- GLINE DEL -----------------------------------------------------------
   del:
@@ -374,10 +379,10 @@ gline:
       G-line bat zerrendatik kentzen du.
       Maskara edo LISTeko sarrera zenbakia zehaztu dezakezu.
       Komando honek operserv.gline baimena behar du.
-    example: "%command_prefix%\x02\x0303GLINE DEL *@192.168.1.*\x03\x0F"
+    example: "%command_prefix%GLINE DEL *@192.168.1.*"
     examples:
-      - "%command_prefix%\x02\x0303GLINE DEL 2\x03\x0F"
-    done: "\x0303✓\x03 \x02%mask%\x02 G-linea kendu da."
+      - "%command_prefix%GLINE DEL 2"
+    done: "%mask% G-linea kendu da."
 
   # --- GLINE LIST ----------------------------------------------------------
   list:
@@ -386,12 +391,12 @@ gline:
     help: |-
       G-line guztiak zerrendatzen ditu. Aukeran maskara ereduarekin iragazi.
       Komando honek operserv.gline baimena behar du.
-    example: "%command_prefix%\x02\x0303GLINE LIST\x03\x0F"
+    example: "%command_prefix%GLINE LIST"
     examples:
-      - "%command_prefix%\x02\x0303GLINE LIST *@192.168.*\x03\x0F"
-    header: "\x0307---\x03 \x02G-lineak (%count%) \x0307---\x03"
+      - "%command_prefix%GLINE LIST *@192.168.*"
+    header: "G-lineak (%count%)"
     empty: "Ez dago G-linearik."
-    entry: "\x0310%index%.\x03 \x02%mask%\x02 - %reason% (\x0314%nickname%\x03, iraungitzea: %expiration%)"
+    entry: "%index%. %mask% - %reason% (%nickname%, iraungitzea: %expiration%)"
 
 # --- GLOBAL ----------------------------------------------------------------
 global:
@@ -416,14 +421,14 @@ global:
 
     PRIVMSGek mezu pribatu gisa bidaltzen du, NOTICEk ohar gisa.
     Komando honek operserv.global baimena behar du.
-  example: "%command_prefix%\x02\x0303GLOBAL %operserv% PRIVMSG Mantentze-lanak 10 minutu barru\x03\x0F"
+  example: "%command_prefix%GLOBAL %operserv% PRIVMSG Mantentze-lanak 10 minutu barru"
   examples:
-    - "%command_prefix%\x02\x0303GLOBAL Avisos!oper@services.ares NOTICE Sarea berrabiaraziko da\x03\x0F"
-  mask_invalid: "\x0304✗\x03 Maskara formatu baliogabea: %error%"
-  nick_connected: "\x0304✗\x03 \x02%nickname%\x02 ezizena unean konektatuta dago."
-  nick_registered: "\x0304✗\x03 \x02%nickname%\x02 ezizena erregistratuta dago."
-  type_invalid: "\x0304✗\x03 Mezu motak PRIVMSG edo NOTICE izan behar du."
-  done: "\x0303✓\x03 Mezu globala \x02%nickname%\x02-(e)tik bidali zaie %count% erabiltzaileri."
+    - "%command_prefix%GLOBAL Avisos!oper@services.ares NOTICE Sarea berrabiaraziko da"
+  mask_invalid: "Maskara formatu baliogabea: %error%"
+  nick_connected: "%nickname% ezizena unean konektatuta dago."
+  nick_registered: "%nickname% ezizena erregistratuta dago."
+  type_invalid: "Mezu motak PRIVMSG edo NOTICE izan behar du."
+  done: "Mezu globala %nickname%-(e)tik bidali zaie %count% erabiltzaileri."
 
 # --- RAW -------------------------------------------------------------------
 raw:
@@ -433,20 +438,20 @@ raw:
     Emandako lerroa zuzenean goiko IRCd socket-era bidaltzen du.
     Muturreko kontuz erabili. Protokolo lerro baliogabeek sarea kraskatu dezakete.
     Komando honek operserv.raw baimena behar du.
-  example: "%command_prefix%\x02\x0303RAW :services.ares NOTICE * :Programatutako mantentze-lanak\x03\x0F"
-  empty: "\x0304✗\x03 Hutsik ez dagoen lerro bat zehaztu behar duzu bidaltzeko."
-  too_long: "\x0304✗\x03 Lerroa luzeegia da. Gehienez 510 karaktere."
-  not_connected: "\x0304✗\x03 Ez dago IRCd-ra konektatuta."
-  done: "\x0303✓\x03 Lerro gordina bidali da."
+  example: "%command_prefix%RAW :services.ares NOTICE * :Programatutako mantentze-lanak"
+  empty: "Hutsik ez dagoen lerro bat zehaztu behar duzu bidaltzeko."
+  too_long: "Lerroa luzeegia da. Gehienez 510 karaktere."
+  not_connected: "Ez dago IRCd-ra konektatuta."
+  done: "Lerro gordina bidali da."
   protocol:
-    syntax: "\x0304✗\x03 Protokolo aktiboak RAW komandoaren sintaxia baztertu du."
-    done: "\x0303✓\x03 Protokoloak kudeatutako RAW komandoa exekutatu da."
-    target: "\x0304✗\x03 Protokolo aktiboak %target% helburua baztertu du."
-    unsupported: "\x0304✗\x03 Protokolo aktiboak ez du RAW komando hau onartzen."
-    invalid_resource_type: "\x0304✗\x03 Protokolo-baliabide mota ezezaguna: %resource_type%."
-    invalid_resource: "\x0304✗\x03 Protokolo-baliabide baliogabea: %resource%."
-    invalid_value: "\x0304✗\x03 Protokolo-baliabidearen balio baliogabea: %resource%."
-    error: "\x0304✗\x03 Protokolo aktiboak ezin izan du RAW komandoa exekutatu."
+    syntax: "Protokolo aktiboak RAW komandoaren sintaxia baztertu du."
+    done: "Protokoloak kudeatutako RAW komandoa exekutatu da."
+    target: "Protokolo aktiboak %target% helburua baztertu du."
+    unsupported: "Protokolo aktiboak ez du RAW komando hau onartzen."
+    invalid_resource_type: "Protokolo-baliabide mota ezezaguna: %resource_type%."
+    invalid_resource: "Protokolo-baliabide baliogabea: %resource%."
+    invalid_value: "Protokolo-baliabidearen balio baliogabea: %resource%."
+    error: "Protokolo aktiboak ezin izan du RAW komandoa exekutatu."
 
 # --- DEBUG -----------------------------------------------------------------
 debug:
@@ -461,36 +466,36 @@ motd:
     Kudeatu Eguneko Mezua sarrerak, erabiltzaileei sarera konektatzean bidaltzen
     zaizkienak.
 
-  example: "%command_prefix%\x02\x0303MOTD LIST\x03\x0F"
-  unknown_sub: "\x0304✗\x03 Azpikomando ezezaguna. Erabili: \x02ADD\x02, \x02DEL\x02, \x02LIST\x02, \x02CLEAN\x02"
+  example: "%command_prefix%MOTD LIST"
+  unknown_sub: "Azpikomando ezezaguna. Erabili: %add%, %del%, %list%, %clean%"
 
   # --- MOTD ADD ------------------------------------------------------------
   add:
     syntax: "MOTD ADD {zerbitzua|nick!ident@vhost} {PRIVMSG|NOTICE} <iraungitzea> <mezua>"
-    syntax_hint: "\x0304✗\x03 Erabilera: \x02%syntax%\x02"
+    syntax_hint: "Erabilera: %syntax%"
     short: "Gehitu MOTD sarrera bat."
     help: |-
       MOTD mezu berri bat gehitzen du, erabiltzaile bakoitzari sarera konektatzean
       bidaliko zaiona.
 
-    example: "%command_prefix%\x02\x0303MOTD ADD %operserv% NOTICE 24h Mantenimiento esta noche\x03\x0F"
+    example: "%command_prefix%MOTD ADD %operserv% NOTICE 24h Mantenimiento esta noche"
     examples:
-      - "%command_prefix%\x02\x0303MOTD ADD %operserv% PRIVMSG 0 Ongi etorri a la red\x03\x0F"
-    done: "\x0303✓\x03 #%id% MOTD sarrera gehitu da."
-    invalid_type: "\x0304✗\x03 Mezu mota baliogabea. \x02PRIVMSG\x02 edo \x02NOTICE\x02 izan behar du."
-    invalid_expiry: "\x0304✗\x03 Iraungitze-formatu baliogabea. Erabili: \x02<zenbakia><s|m|h|d>\x02 edo \x020\x02 mugagabea izateko (adib., 30s, 5m, 24h, 7d)."
+      - "%command_prefix%MOTD ADD %operserv% PRIVMSG 0 Ongi etorri a la red"
+    done: "#%id% MOTD sarrera gehitu da."
+    invalid_type: "Mezu mota baliogabea. PRIVMSG edo NOTICE izan behar du."
+    invalid_expiry: "Iraungitze-formatu baliogabea. Erabili: <zenbakia><s|m|h|d> edo 0 mugagabea izateko (adib., 30s, 5m, 24h, 7d)."
 
   # --- MOTD DEL ------------------------------------------------------------
   del:
     syntax: "MOTD DEL <ida>"
-    syntax_hint: "\x0304✗\x03 Erabilera: \x02%syntax%\x02"
+    syntax_hint: "Erabilera: %syntax%"
     short: "Ezabatu MOTD sarrera bat."
     help: |-
       MOTD sarrera bat ezabatzen du bere IDaren arabera.
 
-    example: "%command_prefix%\x02\x0303MOTD DEL 12\x03\x0F"
-    done: "\x0303✓\x03 #%id% MOTD sarrera ezabatu da."
-    not_found: "\x0304✗\x03 MOTD sarrera ez da aurkitu."
+    example: "%command_prefix%MOTD DEL 12"
+    done: "#%id% MOTD sarrera ezabatu da."
+    not_found: "MOTD sarrera ez da aurkitu."
 
   # --- MOTD LIST -----------------------------------------------------------
   list:
@@ -499,12 +504,12 @@ motd:
     help: |-
       Konfiguratutako MOTD sarrera guztiak zerrendatzen ditu.
 
-    example: "%command_prefix%\x02\x0303MOTD LIST\x03\x0F"
+    example: "%command_prefix%MOTD LIST"
     empty: "Ez dago MOTD sarrerarik konfiguratuta."
     header: "MOTD sarrerak:"
-    status_enabled: "\x0303gaituta\x03"
-    status_disabled: "\x0304desgaituta\x03"
-    expired: "\x0304iraungia\x03"
+    status_enabled: "gaituta"
+    status_disabled: "desgaituta"
+    expired: "iraungia"
     no_bot: "(botik ez)"
     shown_count: "%count% aldiz erakutsia"
 
@@ -515,9 +520,9 @@ motd:
     help: |-
       Bere iraungitze denbora igaro den MOTD sarrera guztiak kentzen ditu.
 
-    example: "%command_prefix%\x02\x0303MOTD CLEAN\x03\x0F"
-    done: "\x0303✓\x03 %count% iraungitako MOTD sarrera kendu dira."
-    none: "\x0303✓\x03 Ez dago kentzeko iraungitako MOTD sarrerarik."
+    example: "%command_prefix%MOTD CLEAN"
+    done: "%count% iraungitako MOTD sarrera kendu dira."
+    none: "Ez dago kentzeko iraungitako MOTD sarrerarik."
   debug:
     finalized: "#%id% MOTD mezua amaitu da: [%type%] %message% | %date% | %shown_count%"
 
@@ -527,7 +532,7 @@ badmail:
   short: "Blokeatutako posta-domeinuak kudeatu."
   help: |-
     Blokeatutako posta-domeinuak kudeatu.
-  example: "%command_prefix%\x02\x0303BADMAIL LIST *\x03\x0f"
+  example: "%command_prefix%BADMAIL LIST *"
   add:
     syntax: "BADMAIL ADD <domeinua> <arrazoia>"
     short: "Domeinu bat blokeatu."
@@ -535,14 +540,14 @@ badmail:
       ASCII edo punycode domeinuak onartzen ditu, ez helbideak edo ereduak.
       Arrazoia derrigorrezkoa da. Blokeoa zehatza da eta ez ditu
       azpidomeinuak hartzen.
-    example: "%command_prefix%\x02\x0303BADMAIL ADD example.org abuse\x03\x0f"
+    example: "%command_prefix%BADMAIL ADD example.org abuse"
   del:
     syntax: "BADMAIL DEL {zenbakia|ALL}"
     short: "Domeinuen blokeoak kendu."
     help: |-
       Ezabatu identifikatzaile iraunkor bat edo sarrera guztiak ALL
       erabiliz. Beste identifikatzaileak ez dira aldatzen.
-    example: "%command_prefix%\x02\x0303BADMAIL DEL 1\x03\x0f"
+    example: "%command_prefix%BADMAIL DEL 1"
   list:
     syntax: "BADMAIL LIST <eredua> [orria]"
     short: "Blokeatutako domeinuak zerrendatu."
@@ -551,14 +556,14 @@ badmail:
       sekuentziarekin bat dator. Ez ditu maiuskulak bereizten. Aukerako
       orria 1ean hasten da. Identifikatzaileak mantentzen dira iragaztean
       eta orrialdekatzean.
-    example: "%command_prefix%\x02\x0303BADMAIL LIST *.org 2\x03\x0f"
+    example: "%command_prefix%BADMAIL LIST *.org 2"
   invalid_domain: "Domeinu baliogabea. Erabili ASCII edo punycode, amaierako punturik gabe."
   invalid_reason: "Lerro bakarreko administrazio-arrazoi ez hutsa behar da."
   duplicate: "Domeinu hau dagoeneko blokeatuta dago."
   not_found: "Ez dago identifikatzaile hori duen domeinu blokeaturik."
-  added: "\x0303✓\x03 \x02%domain%\x02 domeinua blokeatu da."
-  deleted: "\x0303✓\x03 \x02%id%\x02 domeinu-blokeoa kendu da."
-  cleared: "\x0303✓\x03 \x02%total%\x02 domeinu-blokeo kendu dira."
+  added: "%domain% domeinua blokeatu da."
+  deleted: "%id% domeinu-blokeoa kendu da."
+  cleared: "%total% domeinu-blokeo kendu dira."
   empty: "Ez dago bat datorren domeinu blokeaturik."
   header: "ID | Domeinua | Arrazoia"
   page: "%page%/%pages% orria, bat datozen %total% domeinu."

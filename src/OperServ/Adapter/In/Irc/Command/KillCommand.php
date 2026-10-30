@@ -13,6 +13,7 @@ use App\OperServ\Application\UseCase\Kill\KillNetworkUserOutcome;
 use App\OperServ\Application\UseCase\Kill\KillNetworkUserResult;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 use DateTimeImmutable;
 
 use function array_slice;
@@ -111,12 +112,12 @@ final readonly class KillCommand implements OperServCommandInterface
     {
         match ($result->outcome) {
             KillNetworkUserOutcome::Killed => $context->reply('kill.done', [
-                'nickname' => $result->targetNickname,
+                'nickname' => $context->emphasize($result->targetNickname),
                 'reason' => $result->reason,
-            ]),
-            KillNetworkUserOutcome::NotOnline => $context->reply('error.nick_not_online', ['nickname' => $result->targetNickname]),
-            KillNetworkUserOutcome::ProtectedRoot => $context->reply('kill.protected_root', ['nickname' => $result->targetNickname]),
-            KillNetworkUserOutcome::ProtectedIrcOperator => $context->reply('kill.protected_ircop', ['nickname' => $result->targetNickname]),
+            ], Role::Success),
+            KillNetworkUserOutcome::NotOnline => $context->replyError('error.nick_not_online', ['nickname' => $result->targetNickname]),
+            KillNetworkUserOutcome::ProtectedRoot => $context->reply('kill.protected_root', ['nickname' => $context->emphasize($result->targetNickname)], Role::Error),
+            KillNetworkUserOutcome::ProtectedIrcOperator => $context->reply('kill.protected_ircop', ['nickname' => $context->emphasize($result->targetNickname)], Role::Error),
             KillNetworkUserOutcome::NetworkUnavailable => null,
         };
     }

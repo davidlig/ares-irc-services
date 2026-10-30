@@ -19,6 +19,10 @@ use App\OperServ\Application\UseCase\ManageIrcop\IrcopOutcome;
 use App\OperServ\Application\UseCase\ManageIrcop\ManageIrcop;
 use App\OperServ\Application\UseCase\ManageIrcop\ManageIrcopHandlerInterface;
 use App\OperServ\Application\UseCase\ManageIrcop\ManageIrcopResult;
+use App\Shared\Adapter\In\Irc\Presentation\Appearance;
+use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -34,6 +38,45 @@ use function array_column;
 #[CoversClass(IrcopListEntry::class)]
 final class IrcopCommandTest extends TestCase
 {
+    #[Test]
+    public function stylesRoleErrorsWithoutColoringTheBotPrefix(): void
+    {
+        $messages = [];
+        $types = [];
+        $notifier = $this->createStub(OperServNotifierInterface::class);
+        $notifier->method('getNick')->willReturn('CustomOper');
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message, string $type) use (&$messages, &$types): void {
+            $messages[] = $message;
+            $types[] = $type;
+        });
+        $translation = $this->createStub(TranslatorInterface::class);
+        $translation->method('trans')->willReturn('Role %role% missing; /msg %bot% %role_list%');
+        $renderer = new IrcRenderer(new FixedStyleProvider(new PresentationStyle(
+            components: ['emphasis' => new Appearance(prefix: '[', suffix: ']'), 'command' => new Appearance(prefix: '<', suffix: '>')],
+            markers: ['error' => '!'],
+        )));
+        $handler = $this->createStub(ManageIrcopHandlerInterface::class);
+        $handler->method('handle')->willReturn(new ManageIrcopResult(IrcopOutcome::RoleNotFound, 'Target', 'BAD'));
+        $context = new OperServContext(
+            new SenderView('UID', 'Oper', 'i', 'h', 'c', 'ip'),
+            null,
+            'IRCOP',
+            ['ADD', 'Target', 'BAD'],
+            $notifier,
+            $translation,
+            'en',
+            'UTC',
+            'PRIVMSG',
+            new OperServCommandRegistry([]),
+            new ServiceNicknameRegistry([]),
+            $this->createStub(OperatorAuthorizationQuery::class),
+            $renderer,
+        );
+        new IrcopCommand($handler)->execute($context);
+        self::assertSame(['! Role [BAD] missing; /msg CustomOper <ROLE LIST>'], $messages);
+        self::assertSame(['PRIVMSG'], $types);
+    }
+
     #[Test]
     public function exposesRootOnlyCommandMetadata(): void
     {

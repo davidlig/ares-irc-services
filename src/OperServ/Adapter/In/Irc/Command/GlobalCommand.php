@@ -14,6 +14,7 @@ use App\OperServ\Application\UseCase\Global\SendGlobalMessageOutcome;
 use App\OperServ\Application\UseCase\Global\SendGlobalMessageResult;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 use DateTimeImmutable;
 
 use function array_slice;
@@ -118,13 +119,13 @@ final readonly class GlobalCommand implements OperServCommandInterface
     {
         match ($result->outcome) {
             SendGlobalMessageOutcome::Sent => $context->reply('global.done', [
-                'nickname' => $result->senderNickname,
+                'nickname' => $context->emphasize($result->senderNickname),
                 'count' => (string) $result->recipientCount,
-            ]),
-            SendGlobalMessageOutcome::InvalidMessageType => $context->reply('global.type_invalid'),
-            SendGlobalMessageOutcome::InvalidMask => $context->reply('global.mask_invalid', ['error' => $result->maskError]),
-            SendGlobalMessageOutcome::NicknameConnected => $context->reply('global.nick_connected', ['nickname' => $result->senderNickname]),
-            SendGlobalMessageOutcome::NicknameRegistered => $context->reply('global.nick_registered', ['nickname' => $result->senderNickname]),
+            ], Role::Success),
+            SendGlobalMessageOutcome::InvalidMessageType => $context->reply('global.type_invalid', [], Role::Error),
+            SendGlobalMessageOutcome::InvalidMask => $context->reply('global.mask_invalid', ['error' => $result->maskError], Role::Error),
+            SendGlobalMessageOutcome::NicknameConnected => $context->reply('global.nick_connected', ['nickname' => $context->emphasize($result->senderNickname)], Role::Error),
+            SendGlobalMessageOutcome::NicknameRegistered => $context->reply('global.nick_registered', ['nickname' => $context->emphasize($result->senderNickname)], Role::Error),
             SendGlobalMessageOutcome::NetworkUnavailable => null,
         };
     }

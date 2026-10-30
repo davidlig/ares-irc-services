@@ -12,11 +12,16 @@ use App\OperServ\Adapter\In\Irc\Help\UnifiedHelpFormatter;
 use App\OperServ\Adapter\In\Irc\OperServCommandInterface;
 use App\OperServ\Adapter\In\Irc\OperServCommandRegistry;
 use App\OperServ\Adapter\In\Irc\OperServContext;
+use App\OperServ\Adapter\In\Irc\OperServHelpFormatterContextAdapter;
 use App\OperServ\Adapter\In\Irc\OperServNotifierInterface;
 use App\OperServ\Application\Port\In\AuthorizationDecision;
 use App\OperServ\Application\Port\In\AuthorizationGrant;
 use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\Presentation\Appearance;
+use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
 use App\Tests\Shared\Translations\TranslationCatalog;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -29,6 +34,7 @@ use function dirname;
 use function explode;
 use function file_get_contents;
 use function implode;
+use function in_array;
 use function is_array;
 use function is_scalar;
 use function is_string;
@@ -38,8 +44,85 @@ use function strtr;
 use function substr_count;
 
 #[CoversClass(HelpCommand::class)]
+#[CoversClass(UnifiedHelpFormatter::class)]
+#[CoversClass(OperServHelpFormatterContextAdapter::class)]
+#[CoversClass(OperServContext::class)]
 final class HelpCommandTest extends TestCase
 {
+    #[Test]
+    public function spanishHelpUsesSelectedStyleForStructuredSections(): void
+    {
+        $notifier = new HelpNotifier();
+        $renderer = new IrcRenderer(new FixedStyleProvider(new PresentationStyle(components: [
+            'header' => new Appearance(prefix: '[HEADER] '),
+            'section' => new Appearance(prefix: '[SECTION] '),
+        ])));
+        $context = $this->context([], [new HelpFixtureCommand('ROLE')], $notifier, $this->authorization(true), new HelpTranslation($this->translationEntries('es')), 'es', $renderer);
+        new HelpCommand(new UnifiedHelpFormatter())->execute($context);
+        self::assertStringContainsString('[HEADER] OperServ', $notifier->messages[0]);
+        self::assertStringContainsString('[SECTION] Comandos disponibles:', $notifier->messages[0]);
+    }
+
+    #[Test]
+    public function spanishRoleOptionsUseStructuredRowsAndLeaveNoTemplateSlots(): void
+    {
+        $notifier = new HelpNotifier();
+        $renderer = new IrcRenderer(new FixedStyleProvider(new PresentationStyle(components: [
+            'section' => new Appearance(prefix: '[SECTION] '),
+            'command_row' => new Appearance(prefix: '[ROW] '),
+            'command' => new Appearance(prefix: '[COMMAND] '),
+        ])));
+        $target = new HelpFixtureCommand('ROLE', subcommands: [[
+            'name' => 'PERMS', 'desc_key' => 'role.perms.short', 'help_key' => 'role.perms.help',
+            'syntax_key' => 'role.perms.syntax', 'example_key' => 'role.perms.example',
+        ]]);
+        $context = $this->context(['ROLE', 'PERMS'], [$target], $notifier, $this->authorization(true), new HelpTranslation($this->translationEntries('es')), 'es', $renderer);
+        new HelpCommand(new UnifiedHelpFormatter())->execute($context);
+        self::assertStringContainsString('[SECTION] Opciones:', $notifier->messages[0]);
+        self::assertStringContainsString('[ROW] [COMMAND] LIST', $notifier->messages[0]);
+        self::assertStringNotContainsString('%option_', $notifier->messages[0]);
+    }
+
+    #[Test]
+    public function englishRoleOptionsUseStructuredRowsAndLeaveNoTemplateSlots(): void
+    {
+        $notifier = new HelpNotifier();
+        $renderer = new IrcRenderer(new FixedStyleProvider(new PresentationStyle(components: [
+            'section' => new Appearance(prefix: '[SECTION] '),
+            'command_row' => new Appearance(prefix: '[ROW] '),
+            'command' => new Appearance(prefix: '[COMMAND] '),
+        ])));
+        $target = new HelpFixtureCommand('ROLE', subcommands: [[
+            'name' => 'PERMS', 'desc_key' => 'role.perms.short', 'help_key' => 'role.perms.help',
+            'syntax_key' => 'role.perms.syntax', 'example_key' => 'role.perms.example',
+        ]]);
+        $context = $this->context(['ROLE', 'PERMS'], [$target], $notifier, $this->authorization(true), new HelpTranslation($this->translationEntries('en')), 'en', $renderer);
+        new HelpCommand(new UnifiedHelpFormatter())->execute($context);
+        self::assertStringContainsString('[SECTION] Options:', $notifier->messages[0]);
+        self::assertStringContainsString('[ROW] [COMMAND] LIST', $notifier->messages[0]);
+        self::assertStringNotContainsString('%option_', $notifier->messages[0]);
+    }
+
+    #[Test]
+    public function englishHelpUsesLocalizedNavigationAndDefaultRoleStatusMarkers(): void
+    {
+        $translation = new HelpTranslation($this->translationEntries('en'));
+        $notifier = new HelpNotifier();
+        $target = new HelpFixtureCommand('ROLE', subcommands: [[
+            'name' => 'PERMS', 'desc_key' => 'role.perms.short', 'help_key' => 'role.perms.help',
+            'syntax_key' => 'role.perms.syntax', 'example_key' => 'role.perms.example',
+        ]]);
+        new HelpCommand(new UnifiedHelpFormatter())->execute($this->context([], [$target], $notifier, $this->authorization(true), $translation));
+        self::assertStringContainsString('HELP <command>', $notifier->messages[0]);
+        self::assertStringNotContainsString('<comando>', $notifier->messages[0]);
+        $notifier = new HelpNotifier();
+        new HelpCommand(new UnifiedHelpFormatter())->execute($this->context(['ROLE', 'PERMS'], [$target], $notifier, $this->authorization(true), $translation));
+        self::assertStringContainsString('✓', $notifier->messages[0]);
+        self::assertStringContainsString('✗', $notifier->messages[0]);
+        self::assertStringContainsString('/msg OperServ ', $notifier->messages[0]);
+        self::assertStringNotContainsString('%assigned_status%', $notifier->messages[0]);
+    }
+
     #[Test]
     public function exposesPublicHelpMetadata(): void
     {
@@ -80,19 +163,10 @@ final class HelpCommandTest extends TestCase
             $this->context([], [$help, $visible], $notifier, $this->authorization(true)),
         );
 
-        self::assertSame([implode("\n", [
-            'help.header',
-            ' ',
-            'help.intro',
-            ' ',
-            ' ',
-            'help.general_header',
-            'help.command_line',
-            ' ',
-            ' ',
-            'help.general_footer',
-            'help.footer',
-        ])], $notifier->messages);
+        self::assertCount(1, $notifier->messages);
+        self::assertStringContainsString('help.general_header', $notifier->messages[0]);
+        self::assertStringContainsString('help.general_footer', $notifier->messages[0]);
+        self::assertStringContainsString('─────────────────────────────', $notifier->messages[0]);
     }
 
     #[Test]
@@ -254,12 +328,13 @@ final class HelpCommandTest extends TestCase
             $notifier,
             $this->authorization(true),
             $translation,
+            'es',
         ));
 
         $rendered = $notifier->messages[0];
         self::assertStringContainsString("Sintaxis: \x02\x0303KILL <apodo> <razón>\x03\x0F", $rendered);
-        self::assertStringContainsString('■ Ejemplos:', $rendered);
-        self::assertStringContainsString("\n \n\x02 ■ Ejemplos:", $rendered);
+        self::assertStringContainsString('Ejemplos:', $rendered);
+        self::assertStringContainsString("\n \n ■ \x02Ejemplos:", $rendered);
         self::assertStringContainsString("/msg OperServ \x02\x0303KILL BadUser Flooding en canales\x03\x0F", $rendered);
         self::assertSame(1, substr_count($rendered, 'Sintaxis:'));
     }
@@ -277,12 +352,13 @@ final class HelpCommandTest extends TestCase
             $notifier,
             $this->authorization(true),
             $translation,
+            'es',
         ));
 
         self::assertCount(1, $notifier->messages);
         $generalHelp = $notifier->messages[0];
         self::assertSame(
-            "\x02\x0307🤖 OperServ\x03\x0F \x0314" . str_repeat('─', 29) . "\x03\x0F",
+            "🤖 \x02\x0307OperServ\x03\x0F \x0314" . str_repeat('─', 29) . "\x03\x0F",
             explode("\n", $generalHelp)[0],
         );
         self::assertStringContainsString(
@@ -291,7 +367,7 @@ final class HelpCommandTest extends TestCase
         );
 
         $notifier = new HelpNotifier();
-        $command->execute($this->context(['MISSING'], [], $notifier, $this->authorization(true), $translation));
+        $command->execute($this->context(['MISSING'], [], $notifier, $this->authorization(true), $translation, 'es'));
         $error = implode("\n", $notifier->messages);
         self::assertSame(
             "\x0304✗\x03\x0F Comando desconocido \x0303MISSING\x03\x0F. Usa /msg OperServ \x0303HELP\x03\x0F",
@@ -314,6 +390,8 @@ final class HelpCommandTest extends TestCase
         HelpNotifier $notifier,
         OperatorAuthorizationQuery $authorization,
         ?HelpTranslation $translation = null,
+        string $language = 'en',
+        ?IrcRenderer $renderer = null,
     ): OperServContext {
         return new OperServContext(
             new SenderView('001AAA', 'Oper', 'ident', 'host', 'cloak', 'ip', true, true),
@@ -322,12 +400,13 @@ final class HelpCommandTest extends TestCase
             $arguments,
             $notifier,
             $translation ?? new HelpTranslation(),
-            'en',
+            $language,
             'UTC',
             'NOTICE',
             new OperServCommandRegistry($commands),
             new ServiceNicknameRegistry([]),
             $authorization,
+            $renderer,
         );
     }
 
@@ -486,7 +565,7 @@ final class HelpTranslation implements TranslatorInterface
     /** @param array<string, mixed> $parameters */
     public function trans(string $id, array $parameters = [], ?string $domain = null, ?string $locale = null): string
     {
-        if ('help.footer' === $id && null !== $this->failure) {
+        if (in_array($id, ['help.general_footer', 'help.syntax_label'], true) && null !== $this->failure) {
             throw $this->failure;
         }
         $replacements = [];

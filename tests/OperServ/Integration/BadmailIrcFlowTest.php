@@ -24,6 +24,9 @@ use App\OperServ\Application\Port\In\CommandAuditRecorder;
 use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
 use App\OperServ\Application\Security\OperServPermission;
 use App\OperServ\Application\UseCase\Badmail\ManageBadmailHandler;
+use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -138,7 +141,7 @@ final class BadmailIrcFlowTest extends DoctrineIntegrationTestCase
             $this->messages = [];
             $service->dispatch($input, $sender);
             $syntax = $translator->trans($syntaxKey, [], 'operserv');
-            self::assertSame([$translator->trans('error.syntax', ['%syntax%' => $syntax], 'common')], $this->messages, $locale . ': ' . $input);
+            self::assertSame(["\x0304✗\x03\x0F " . str_replace('%syntax%', "\x02\x0303" . $syntax . "\x03\x0F", $translator->trans('presentation.error.syntax', [], 'common'))], $this->messages, $locale . ': ' . $input);
             self::assertSame($before, $this->entityManager->getConnection()->fetchAllAssociative('SELECT * FROM operserv_badmail'));
             self::assertSame($auditBefore, $this->auditRecords);
         }
@@ -150,7 +153,7 @@ final class BadmailIrcFlowTest extends DoctrineIntegrationTestCase
         ] as $input => $errorKey) {
             $this->messages = [];
             $service->dispatch($input, $sender);
-            self::assertSame([$translator->trans($errorKey, [], 'operserv')], $this->messages);
+            self::assertSame(["\x0304✗\x03\x0F " . $translator->trans($errorKey, [], 'operserv')], $this->messages);
             self::assertSame($before, $this->entityManager->getConnection()->fetchAllAssociative('SELECT * FROM operserv_badmail'));
             self::assertSame($auditBefore, $this->auditRecords);
         }
@@ -165,7 +168,7 @@ final class BadmailIrcFlowTest extends DoctrineIntegrationTestCase
         $sender = new SenderView('U1', 'Operator', 'i', 'host', 'cloak', '*', true, true);
         $reason = 'Stored multiword reason.';
         $service->dispatch('BADMAIL ADD EXAMPLE.ORG ' . $reason, $sender);
-        self::assertSame(["\x0303✓\x03 " . str_replace('%domain%', "\x02example.org\x02", $added)], $this->messages);
+        self::assertSame(["\x0303✔\x03\x0F " . str_replace('%domain%', "\x02example.org\x03\x0F", $added)], $this->messages);
         $entry = $this->entityManager->getConnection()->fetchAssociative('SELECT * FROM operserv_badmail');
         self::assertIsArray($entry);
         self::assertSame('example.org', $entry['domain']);
@@ -177,7 +180,7 @@ final class BadmailIrcFlowTest extends DoctrineIntegrationTestCase
             $this->messages = [];
             $service->dispatch($input, $sender);
             self::assertSame([
-                $translator->trans('badmail.header', [], 'operserv'),
+                "\x02" . $translator->trans('badmail.header', [], 'operserv') . "\x03\x0F",
                 $id . ' | example.org | ' . $reason,
                 $translator->trans('badmail.page', ['%page%' => 1, '%pages%' => 1, '%total%' => 1], 'operserv'),
             ], $this->messages);
@@ -186,13 +189,13 @@ final class BadmailIrcFlowTest extends DoctrineIntegrationTestCase
 
         $this->messages = [];
         $service->dispatch('BADMAIL DEL ' . $id, $sender);
-        self::assertSame(["\x0303✓\x03 " . str_replace('%id%', "\x02" . $id . "\x02", $deleted)], $this->messages);
+        self::assertSame(["\x0303✔\x03\x0F " . str_replace('%id%', "\x02" . $id . "\x03\x0F", $deleted)], $this->messages);
         self::assertSame(0, $this->entityManager->getConnection()->fetchOne('SELECT COUNT(*) FROM operserv_badmail'));
         $service->dispatch('BADMAIL ADD other.org Another reason', $sender);
         $service->dispatch('BADMAIL ADD third.org Third reason', $sender);
         $this->messages = [];
         $service->dispatch('BADMAIL DEL ALL', $sender);
-        self::assertSame(["\x0303✓\x03 " . str_replace('%total%', "\x022\x02", $cleared)], $this->messages);
+        self::assertSame(["\x0303✔\x03\x0F " . str_replace('%total%', "\x022\x03\x0F", $cleared)], $this->messages);
         self::assertSame(0, $this->entityManager->getConnection()->fetchOne('SELECT COUNT(*) FROM operserv_badmail'));
         self::assertCount(8, $this->auditRecords);
         self::assertSame($reason, $this->auditRecords[0]->reason);
@@ -304,6 +307,6 @@ final class BadmailIrcFlowTest extends DoctrineIntegrationTestCase
         $languages = $this->createStub(UserLanguageQuery::class);
         $languages->method('resolveFromAccount')->willReturn($locale);
 
-        return new OperServService(new OperServCommandRegistry([$command]), $accounts, $languages, $this->createStub(UserMessagePreferenceQuery::class), $this->notifier(), $translator ?? $this->translator(), new ServiceNicknameRegistry([]), $this->authorization());
+        return new OperServService(new OperServCommandRegistry([$command]), $accounts, $languages, $this->createStub(UserMessagePreferenceQuery::class), $this->notifier(), $translator ?? $this->translator(), new ServiceNicknameRegistry([]), $this->authorization(), renderer: null === $translator ? null : new IrcRenderer(new FixedStyleProvider(PresentationStyle::default())));
     }
 }

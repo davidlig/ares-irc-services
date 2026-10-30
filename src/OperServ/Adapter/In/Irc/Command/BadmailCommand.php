@@ -14,6 +14,8 @@ use App\OperServ\Application\UseCase\Badmail\ManageBadmailHandler;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentValidator;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 use DateTimeImmutable;
 
 use function array_slice;
@@ -139,25 +141,29 @@ final readonly class BadmailCommand implements OperServCommandInterface
             default => null,
         };
         if (null !== $error) {
-            $context->reply($error);
+            if (BadmailOutcome::Denied === $result->outcome) {
+                $context->replyError($error);
+            } else {
+                $context->reply($error, [], Role::Error);
+            }
 
             return;
         }
         if (BadmailOutcome::Listed === $result->outcome) {
-            $context->reply('badmail.header');
+            $context->replyComponent(Component::TableHeader, 'badmail.header');
             foreach ($result->entries as $entry) {
-                $context->reply('badmail.row', ['id' => $entry->id, 'domain' => $entry->domain, 'reason' => $entry->reason]);
+                $context->replyComponent(Component::Row, 'badmail.row', ['id' => $entry->id, 'domain' => $entry->domain, 'reason' => $entry->reason]);
             }
             if (0 === $result->total) {
-                $context->reply('badmail.empty');
+                $context->reply('badmail.empty', [], Role::Information);
             }
-            $context->reply('badmail.page', ['page' => $result->page, 'pages' => (int) ceil($result->total / $result->pageSize), 'total' => $result->total]);
+            $context->replyComponent(Component::Row, 'badmail.page', ['page' => $result->page, 'pages' => (int) ceil($result->total / $result->pageSize), 'total' => $result->total]);
         } else {
             $context->reply(match ($result->outcome) {
                 BadmailOutcome::Added => 'badmail.added',
                 BadmailOutcome::Deleted => 'badmail.deleted',
                 default => 'badmail.cleared',
-            }, ['domain' => $result->domain, 'id' => $input->id, 'total' => $result->total]);
+            }, ['domain' => $context->emphasize($result->domain ?? ''), 'id' => $context->emphasize((string) $input->id), 'total' => $context->emphasize((string) $result->total)], Role::Success);
         }
     }
 
@@ -169,7 +175,7 @@ final readonly class BadmailCommand implements OperServCommandInterface
 
     private function syntax(OperServContext $context, string $syntaxKey): void
     {
-        $context->reply('error.syntax', ['syntax' => $context->trans($syntaxKey)]);
+        $context->replyError('error.syntax', ['syntax' => $context->trans($syntaxKey)]);
     }
 
     /** @param list<string> $args */
