@@ -397,6 +397,25 @@ set:
     taken: "Dieser VHost wird bereits von einem anderen Nickname verwendet."
     forced: "Ihr VHost wird automatisch konfiguriert und kann nicht mit SET VHOST geändert werden."
 
+# --- SAREGISTER ------------------------------------------------------------
+saregister:
+  syntax: "SAREGISTER <nickname> <Passwort> [email]"
+  short: "Einen Nickname administrativ registrieren."
+  help: |-
+    Syntax: SAREGISTER <nickname> <Passwort> [email]
+
+    Registriert einen Nickname sofort administrativ, ohne dass eine
+    Client-Verifizierung oder Drosselungslimits erforderlich sind.
+
+    Im TOKEN-Modus wird das Rettungstoken einmalig dem Operator angezeigt.
+    Im EMAIL-Modus wird das Rettungstoken an die angegebene E-Mail-Adresse gesendet.
+  example: "%command_prefix%SAREGISTER Alice Passwort123"
+  examples:
+    - "%command_prefix%SAREGISTER Bob Passwort456 bob@example.de"
+  success_token: "Nickname %nickname% wurde registriert. Rettungstoken: %token%"
+  success_email: "Nickname %nickname% wurde registriert. Rettungstoken an %email% gesendet."
+  invalid_nickname: "Ungültiger Nickname %nickname%."
+
 # --- SASET -----------------------------------------------------------------
 saset:
   syntax: "SASET <Nickname> {PASSWORD <neues_Passwort>|EMAIL <neue_E-Mail>|LANGUAGE <Code>|TIMEZONE {<Zeitzone>|OFF}|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [VHost]}"
@@ -842,25 +861,6 @@ regmode:
     - "%command_prefix%REGMODE TOKEN"
   status: "Aktueller Registrierungsmodus: %mode%."
   changed: "Registrierungsmodus auf %mode% geändert."
-
-# --- SAREGISTER ------------------------------------------------------------
-saregister:
-  syntax: "SAREGISTER <nickname> <Passwort> [email]"
-  short: "Einen Nickname administrativ registrieren."
-  help: |-
-    Syntax: SAREGISTER <nickname> <Passwort> [email]
-
-    Registriert einen Nickname sofort administrativ, ohne dass eine
-    Client-Verifizierung oder Drosselungslimits erforderlich sind.
-
-    Im TOKEN-Modus wird das Rettungstoken einmalig dem Operator angezeigt.
-    Im EMAIL-Modus wird das Rettungstoken an die angegebene E-Mail-Adresse gesendet.
-  example: "%command_prefix%SAREGISTER Alice Passwort123"
-  examples:
-    - "%command_prefix%SAREGISTER Bob Passwort456 bob@example.de"
-  success_token: "Nickname %nickname% wurde registriert. Rettungstoken: %token%"
-  success_email: "Nickname %nickname% wurde registriert. Rettungstoken an %email% gesendet."
-  invalid_nickname: "Ungültiger Nickname %nickname%."
 
 # --- RESCUE ----------------------------------------------------------------
 rescue:

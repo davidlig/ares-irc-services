@@ -389,6 +389,25 @@ set:
     taken: "Ese vhost ya está en uso por otro apodo."
     forced: "Tu vhost está configurado automáticamente y no puede cambiarse con SET VHOST."
 
+# --- SAREGISTER ------------------------------------------------------------
+saregister:
+  syntax: "SAREGISTER <apodo> <contraseña> [email]"
+  short: "Registrar administrativamente un apodo."
+  help: |-
+    Sintaxis: SAREGISTER <apodo> <contraseña> [email]
+
+    Registra administrativamente un apodo de forma inmediata sin requerir
+    verificación del cliente ni límites de frecuencia.
+
+    En modo TOKEN, el código de rescate se muestra una vez al operador.
+    En modo EMAIL, el código de rescate se envía a la dirección de correo indicada.
+  example: "%command_prefix%SAREGISTER Alice Contraseña123"
+  examples:
+    - "%command_prefix%SAREGISTER Bob Contraseña456 bob@ejemplo.com"
+  success_token: "El apodo %nickname% ha sido registrado. Código de rescate: %token%"
+  success_email: "El apodo %nickname% ha sido registrado. Código de rescate enviado a %email%."
+  invalid_nickname: "Apodo no válido %nickname%."
+
 # --- SASET (IRCop) --------------------------------------------------------------
 saset:
   syntax: "SASET <apodo> {PASSWORD <nueva_contraseña>|EMAIL <nuevo_email>|LANGUAGE <código>|TIMEZONE {<zona>|OFF}|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
@@ -831,25 +850,6 @@ regmode:
     - "%command_prefix%REGMODE TOKEN"
   status: "Modo de registro actual: %mode%."
   changed: "Modo de registro cambiado a %mode%."
-
-# --- SAREGISTER ------------------------------------------------------------
-saregister:
-  syntax: "SAREGISTER <apodo> <contraseña> [email]"
-  short: "Registrar administrativamente un apodo."
-  help: |-
-    Sintaxis: SAREGISTER <apodo> <contraseña> [email]
-
-    Registra administrativamente un apodo de forma inmediata sin requerir
-    verificación del cliente ni límites de frecuencia.
-
-    En modo TOKEN, el código de rescate se muestra una vez al operador.
-    En modo EMAIL, el código de rescate se envía a la dirección de correo indicada.
-  example: "%command_prefix%SAREGISTER Alice Contraseña123"
-  examples:
-    - "%command_prefix%SAREGISTER Bob Contraseña456 bob@ejemplo.com"
-  success_token: "El apodo %nickname% ha sido registrado. Código de rescate: %token%"
-  success_email: "El apodo %nickname% ha sido registrado. Código de rescate enviado a %email%."
-  invalid_nickname: "Apodo no válido %nickname%."
 
 # --- Unified rescue credential -----------------------------------------------
 rescue:

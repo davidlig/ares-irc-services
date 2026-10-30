@@ -394,6 +394,25 @@ set:
     taken: "Acel vhost este deja folosit de o altă poreclă."
     forced: "Vhostul dumneavoastră este configurat automat și nu poate fi schimbat cu SET VHOST."
 
+# --- SAREGISTER ------------------------------------------------------------
+saregister:
+  syntax: "SAREGISTER <poreclă> <parolă> [email]"
+  short: "Înregistrează administrativ o poreclă."
+  help: |-
+    Sintaxă: SAREGISTER <poreclă> <parolă> [email]
+
+    Înregistrează administrativ o poreclă imediat, fără a necesita
+    verificarea clientului sau limite de frecvență.
+
+    În modul TOKEN, tokenul de salvare este afișat o singură dată operatorului.
+    În modul EMAIL, tokenul de salvare este trimis la adresa de e-mail specificată.
+  example: "%command_prefix%SAREGISTER Alice Parolă123"
+  examples:
+    - "%command_prefix%SAREGISTER Bob Parolă456 bob@exemplu.ro"
+  success_token: "Porecla %nickname% a fost înregistrată. Token de salvare: %token%"
+  success_email: "Porecla %nickname% a fost înregistrată. Token de salvare trimis la %email%."
+  invalid_nickname: "Poreclă nevalidă %nickname%."
+
 # --- SASET -----------------------------------------------------------------
 saset:
   syntax: "SASET <poreclă> {PASSWORD <parolă_nouă>|EMAIL <e-mail_nou>|LANGUAGE <cod>|TIMEZONE {<fus_orar>|OFF}|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
@@ -834,25 +853,6 @@ regmode:
     - "%command_prefix%REGMODE TOKEN"
   status: "Modul actual de înregistrare: %mode%."
   changed: "Modul de înregistrare a fost schimbat în %mode%."
-
-# --- SAREGISTER ------------------------------------------------------------
-saregister:
-  syntax: "SAREGISTER <poreclă> <parolă> [email]"
-  short: "Înregistrează administrativ o poreclă."
-  help: |-
-    Sintaxă: SAREGISTER <poreclă> <parolă> [email]
-
-    Înregistrează administrativ o poreclă imediat, fără a necesita
-    verificarea clientului sau limite de frecvență.
-
-    În modul TOKEN, tokenul de salvare este afișat o singură dată operatorului.
-    În modul EMAIL, tokenul de salvare este trimis la adresa de e-mail specificată.
-  example: "%command_prefix%SAREGISTER Alice Parolă123"
-  examples:
-    - "%command_prefix%SAREGISTER Bob Parolă456 bob@exemplu.ro"
-  success_token: "Porecla %nickname% a fost înregistrată. Token de salvare: %token%"
-  success_email: "Porecla %nickname% a fost înregistrată. Token de salvare trimis la %email%."
-  invalid_nickname: "Poreclă nevalidă %nickname%."
 
 # --- RESCUE ----------------------------------------------------------------
 rescue:

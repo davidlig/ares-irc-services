@@ -389,6 +389,25 @@ set:
     taken: "That vhost is already in use by another nickname."
     forced: "Your vhost is configured automatically and cannot be changed with SET VHOST."
 
+# --- SAREGISTER ------------------------------------------------------------
+saregister:
+  syntax: "SAREGISTER <nickname> <password> [email]"
+  short: "Administratively register a nickname."
+  help: |-
+    Syntax: SAREGISTER <nickname> <password> [email]
+
+    Administratively registers a nickname immediately without requiring
+    client verification or throttle limits.
+
+    In TOKEN mode, the rescue token is displayed once to the operator.
+    In EMAIL mode, the rescue token is sent to the specified email address.
+  example: "%command_prefix%SAREGISTER Alice SecretPass123"
+  examples:
+    - "%command_prefix%SAREGISTER Bob SecretPass456 bob@example.com"
+  success_token: "Nickname %nickname% has been registered. Rescue token: %token%"
+  success_email: "Nickname %nickname% has been registered. Rescue token sent to %email%."
+  invalid_nickname: "Invalid nickname %nickname%."
+
 # --- SASET -----------------------------------------------------------------
 saset:
   syntax: "SASET <nickname> {PASSWORD <new_password>|EMAIL <new_email>|LANGUAGE <code>|TIMEZONE {<timezone>|OFF}|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
@@ -824,25 +843,6 @@ regmode:
     - "%command_prefix%REGMODE TOKEN"
   status: "Current registration mode: %mode%."
   changed: "Registration mode changed to %mode%."
-
-# --- SAREGISTER ------------------------------------------------------------
-saregister:
-  syntax: "SAREGISTER <nickname> <password> [email]"
-  short: "Administratively register a nickname."
-  help: |-
-    Syntax: SAREGISTER <nickname> <password> [email]
-
-    Administratively registers a nickname immediately without requiring
-    client verification or throttle limits.
-
-    In TOKEN mode, the rescue token is displayed once to the operator.
-    In EMAIL mode, the rescue token is sent to the specified email address.
-  example: "%command_prefix%SAREGISTER Alice SecretPass123"
-  examples:
-    - "%command_prefix%SAREGISTER Bob SecretPass456 bob@example.com"
-  success_token: "Nickname %nickname% has been registered. Rescue token: %token%"
-  success_email: "Nickname %nickname% has been registered. Rescue token sent to %email%."
-  invalid_nickname: "Invalid nickname %nickname%."
 
 # --- RESCUE ----------------------------------------------------------------
 rescue:

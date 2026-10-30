@@ -40,6 +40,9 @@ final readonly class NickServPermission
     /** IRCop permission to forbid and allow vhost patterns. */
     public const string FORBIDVHOST = 'nickserv.forbidvhost';
 
+    /** IRCop permission to administratively register nicknames. */
+    public const string SAREGISTER = 'nickserv.saregister';
+
     /** IRCop permission to modify another user's settings. */
     public const string SASET = 'nickserv.saset';
 
@@ -54,9 +57,6 @@ final readonly class NickServPermission
 
     /** IRCop permission to change the network registration policy. */
     public const string REGMODE = 'nickserv.regmode';
-
-    /** IRCop permission to administratively register nicknames. */
-    public const string SAREGISTER = 'nickserv.saregister';
 
     private function __construct() {}
 
@@ -73,12 +73,12 @@ final readonly class NickServPermission
             self::RESTORE,
             self::FORBID,
             self::FORBIDVHOST,
+            self::SAREGISTER,
             self::SASET,
             self::NOEXPIRE,
             self::HISTORY,
             self::LIST,
             self::REGMODE,
-            self::SAREGISTER,
         ];
     }
 }

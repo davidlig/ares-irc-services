@@ -388,6 +388,25 @@ set:
     taken: "Bu vhost zaten başka bir rumuz tarafından kullanılıyor."
     forced: "Vhost'unuz otomatik olarak yapılandırılmıştır ve SET VHOST ile değiştirilemez."
 
+# --- SAREGISTER ------------------------------------------------------------
+saregister:
+  syntax: "SAREGISTER <nickname> <şifre> [email]"
+  short: "Bir rumuzu yönetimsel olarak kaydedin."
+  help: |-
+    Sözdizimi: SAREGISTER <nickname> <şifre> [email]
+
+    İstemci doğrulaması veya hız sınırları gerekmeden bir rumuzu
+    hemen yönetimsel olarak kaydeder.
+
+    TOKEN modunda kurtarma belirteci operatöre yalnızca bir kez gösterilir.
+    EMAIL modunda kurtarma belirteci belirtilen e-posta adresine gönderilir.
+  example: "%command_prefix%SAREGISTER Alice Şifre123"
+  examples:
+    - "%command_prefix%SAREGISTER Bob Şifre456 bob@ornek.tr"
+  success_token: "%nickname% rumuzu kaydedildi. Kurtarma belirteci: %token%"
+  success_email: "%nickname% rumuzu kaydedildi. Kurtarma belirteci %email% adresine gönderildi."
+  invalid_nickname: "Geçersiz rumuz %nickname%."
+
 # --- SASET -----------------------------------------------------------------
 saset:
   syntax: "SASET <rumuz> {PASSWORD <yeni_şifre>|EMAIL <yeni_e-posta>|LANGUAGE <kod>|TIMEZONE {<zaman_dilimi>|OFF}|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
@@ -824,25 +843,6 @@ regmode:
     - "%command_prefix%REGMODE TOKEN"
   status: "Geçerli kayıt kipi: %mode%."
   changed: "Kayıt kipi %mode% olarak değiştirildi."
-
-# --- SAREGISTER ------------------------------------------------------------
-saregister:
-  syntax: "SAREGISTER <nickname> <şifre> [email]"
-  short: "Bir rumuzu yönetimsel olarak kaydedin."
-  help: |-
-    Sözdizimi: SAREGISTER <nickname> <şifre> [email]
-
-    İstemci doğrulaması veya hız sınırları gerekmeden bir rumuzu
-    hemen yönetimsel olarak kaydeder.
-
-    TOKEN modunda kurtarma belirteci operatöre yalnızca bir kez gösterilir.
-    EMAIL modunda kurtarma belirteci belirtilen e-posta adresine gönderilir.
-  example: "%command_prefix%SAREGISTER Alice Şifre123"
-  examples:
-    - "%command_prefix%SAREGISTER Bob Şifre456 bob@ornek.tr"
-  success_token: "%nickname% rumuzu kaydedildi. Kurtarma belirteci: %token%"
-  success_email: "%nickname% rumuzu kaydedildi. Kurtarma belirteci %email% adresine gönderildi."
-  invalid_nickname: "Geçersiz rumuz %nickname%."
 
 # --- RESCUE ----------------------------------------------------------------
 rescue:

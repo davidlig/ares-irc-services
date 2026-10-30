@@ -390,6 +390,25 @@ set:
     taken: "Ese vhost xa está en uso por outro alcume."
     forced: "O seu vhost está configurado automaticamente e non se pode cambiar con SET VHOST."
 
+# --- SAREGISTER ------------------------------------------------------------
+saregister:
+  syntax: "SAREGISTER <alcume> <contrasinal> [email]"
+  short: "Rexistrar administrativamente un alcume."
+  help: |-
+    Sintaxe: SAREGISTER <alcume> <contrasinal> [email]
+
+    Rexistra administrativamente un alcume de xeito inmediato sen requirir
+    verificación do cliente nin límites de frecuencia.
+
+    En modo TOKEN, o código de rescate móstrase unha vez ao operador.
+    En modo EMAIL, o código de rescate envíase ao enderezo de correo indicado.
+  example: "%command_prefix%SAREGISTER Alice Contrasinal123"
+  examples:
+    - "%command_prefix%SAREGISTER Bob Contrasinal456 bob@exemplo.gal"
+  success_token: "O alcume %nickname% foi rexistrado. Código de rescate: %token%"
+  success_email: "O alcume %nickname% foi rexistrado. Código de rescate enviado a %email%."
+  invalid_nickname: "Alcume non válido %nickname%."
+
 # --- SASET -----------------------------------------------------------------
 saset:
   syntax: "SASET <alcume> {PASSWORD <novo_contrasinal>|EMAIL <novo_correo>|LANGUAGE <código>|TIMEZONE {<fuso_horario>|OFF}|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
@@ -829,25 +848,6 @@ regmode:
     - "%command_prefix%REGMODE TOKEN"
   status: "Modo de rexistro actual: %mode%."
   changed: "Modo de rexistro cambiado a %mode%."
-
-# --- SAREGISTER ------------------------------------------------------------
-saregister:
-  syntax: "SAREGISTER <alcume> <contrasinal> [email]"
-  short: "Rexistrar administrativamente un alcume."
-  help: |-
-    Sintaxe: SAREGISTER <alcume> <contrasinal> [email]
-
-    Rexistra administrativamente un alcume de xeito inmediato sen requirir
-    verificación do cliente nin límites de frecuencia.
-
-    En modo TOKEN, o código de rescate móstrase unha vez ao operador.
-    En modo EMAIL, o código de rescate envíase ao enderezo de correo indicado.
-  example: "%command_prefix%SAREGISTER Alice Contrasinal123"
-  examples:
-    - "%command_prefix%SAREGISTER Bob Contrasinal456 bob@exemplo.gal"
-  success_token: "O alcume %nickname% foi rexistrado. Código de rescate: %token%"
-  success_email: "O alcume %nickname% foi rexistrado. Código de rescate enviado a %email%."
-  invalid_nickname: "Alcume non válido %nickname%."
 
 # --- RESCUE ----------------------------------------------------------------
 rescue:
