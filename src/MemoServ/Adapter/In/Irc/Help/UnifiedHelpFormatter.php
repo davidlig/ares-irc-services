@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\MemoServ\Adapter\In\Irc\Help;
 
+use App\MemoServ\Adapter\In\Irc\HelpFormatterContextAdapter;
+
 use function is_array;
 use function ltrim;
 use function method_exists;
@@ -188,6 +190,9 @@ final readonly class UnifiedHelpFormatter
 
     private function addBotMessagePrefix(HelpFormatterContextInterface $context, string $example): string
     {
+        if ($context instanceof HelpFormatterContextAdapter) {
+            return $context->renderExample($example);
+        }
         $prefixPlaceholder = '%command_prefix%';
         if (!str_contains($example, $prefixPlaceholder)) {
             return $example;

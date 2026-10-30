@@ -16,18 +16,15 @@ use Stringable;
 
 use function array_column;
 use function array_filter;
-use function array_push;
 use function array_slice;
 use function array_values;
 use function dirname;
 use function explode;
-use function implode;
 use function in_array;
 use function is_array;
 use function is_scalar;
 use function is_string;
 use function preg_match;
-use function preg_match_all;
 use function strtolower;
 use function strtr;
 use function trim;
@@ -295,153 +292,6 @@ final class UnifiedHelpFormatterTest extends TestCase
         self::assertNotContains('send.example', $commandLines);
         self::assertNotContains('help.examples_header', $subcommandLines);
         self::assertNotContains('send.email.example', $subcommandLines);
-    }
-
-    #[Test]
-    public function rendersCanonicalColorsFromAllMemoServTranslationCatalogs(): void
-    {
-        foreach (['ca', 'de', 'el', 'en', 'es', 'eu', 'fr', 'gl', 'it', 'nl', 'pl', 'pt', 'ro', 'tr'] as $locale) {
-            $catalog = $this->requireStringKeyedArray(
-                TranslationCatalog::parseFile(dirname(__DIR__, 6) . '/translations/memoserv.' . $locale . '.yaml'),
-                $locale . ' catalog must parse as a mapping',
-            );
-
-            $helpTranslations = $catalog['help'] ?? null;
-            self::assertIsArray($helpTranslations, $locale);
-            self::assertSame('%bot%', $helpTranslations['header_title'] ?? null, $locale);
-            self::assertArrayHasKey('header', $helpTranslations, $locale);
-            foreach ($this->flattenStrings($helpTranslations) as $translation) {
-                preg_match_all('/\x03(\d{1,2})/', $translation, $matches);
-                foreach ($matches[1] as $color) {
-                    self::assertContains($color, ['03', '07', '10', '14'], $locale . ' uses non-canonical HELP color ' . $color);
-                }
-            }
-
-            foreach (['general_header', 'options_header', 'ircop_header'] as $section) {
-                self::assertIsString($helpTranslations[$section]);
-                self::assertStringStartsWith("\x02 ■ ", $helpTranslations[$section], $locale);
-                self::assertStringEndsWith("\x02", $helpTranslations[$section], $locale);
-                self::assertStringNotContainsString("\x03", $helpTranslations[$section], $locale);
-            }
-            foreach (['group_header', 'subgroup_header'] as $group) {
-                self::assertSame("\x0310  ◆ %group%\x03\x0F", $helpTranslations[$group], $locale);
-            }
-            foreach (['command_line', 'subcommand_line'] as $row) {
-                self::assertSame("    \x0310›\x03\x0F \x02\x0303%command%\x03\x0F%description%", $helpTranslations[$row], $locale);
-            }
-
-            $command = new MemoServHelpableCommand('IGNORE', 1, [[
-                'name' => 'ADD',
-                'desc_key' => 'ignore.add.short',
-                'help_key' => 'ignore.add.help',
-                'syntax_key' => 'ignore.add.syntax',
-                'example_key' => 'ignore.add.example',
-            ]]);
-            $context = new MemoServHelpFormatterContext(
-                commands: [$command],
-                visibleCommands: ['IGNORE'],
-                helpGroups: [[
-                    'group_key' => 'help.group.messages',
-                    'commands' => ['IGNORE'],
-                    'admin' => false,
-                    'subgroup' => false,
-                ]],
-                translations: $catalog,
-            );
-            $formatter = new UnifiedHelpFormatter();
-            $lines = [...$formatter->renderGeneralHelp($context), ...$formatter->renderCommandHelp($context, $command)];
-
-            foreach ($lines as $renderedReply) {
-                self::assertDoesNotMatchRegularExpression('/%[^%]+%/', $renderedReply, $locale);
-            }
-
-            self::assertStringContainsString("\x02\x0307🤖 MemoServ\x03\x0F", $context->renderedTranslations[1], $locale);
-            self::assertStringContainsString("\x0314─────────────────────────────\x03\x0F", $context->renderedTranslations[1], $locale);
-
-            $commandRow = $this->renderedReplyFor($context, 'help.command_line');
-            self::assertMatchesRegularExpression('/^    \x0310›\x03\x0F \x02\x0303IGNORE\s+\x03\x0F.+/u', $commandRow, $locale);
-
-            $generalFooter = $this->renderedReplyFor($context, 'help.general_footer');
-            self::assertMatchesRegularExpression('/\x0310ℹ\x03\x0F.*\/msg MemoServ \x02\x0303HELP.*\x03\x0F/u', $generalFooter, $locale);
-
-            $subcommandFooter = $this->renderedReplyFor($context, 'help.set_sub_footer');
-            self::assertMatchesRegularExpression('/\x0310ℹ\x03\x0F.*\/msg MemoServ \x02\x0303HELP IGNORE <[^>]+>\x03\x0F/u', $subcommandFooter, $locale);
-
-            $syntax = $this->renderedReplyFor($context, 'help.syntax_label');
-            self::assertMatchesRegularExpression('/^[^\x02\x03]+ \x02\x0303.+\x03\x0F$/u', $syntax, $locale);
-
-            if ('es' === $locale) {
-                $example = implode("\n", $lines);
-                self::assertStringContainsString("/msg MemoServ \x02\x0303IGNORE ADD Ana\x03\x0F", $example);
-                self::assertStringContainsString("/msg MemoServ \x02\x0303IGNORE DEL #ayuda Ana\x03\x0F", $example);
-            }
-
-            $subcommandLines = $formatter->renderSubCommandHelp($context, 'IGNORE', [
-                'name' => 'ADD',
-                'help_key' => 'ignore.add.help',
-                'syntax_key' => 'ignore.add.syntax',
-                'example_key' => 'ignore.add.example',
-            ]);
-            $subcommandHeader = null;
-            foreach ($context->translationRequests as $index => $reply) {
-                if ('help.header' === $reply['key'] && 'HELP IGNORE ADD' === $reply['params']['title']) {
-                    $subcommandHeader = $context->renderedTranslations[$index];
-                    break;
-                }
-            }
-            self::assertIsString($subcommandHeader, $locale);
-            if ('es' === $locale) {
-                $subcommandExample = implode("\n", $subcommandLines);
-                self::assertStringContainsString("/msg MemoServ \x02\x0303IGNORE ADD Ana\x03\x0F", $subcommandExample);
-            }
-            self::assertStringContainsString("\x02\x0307🤖 HELP IGNORE ADD\x03\x0F", $subcommandHeader, $locale);
-        }
-    }
-
-    /**
-     * @param array<array-key, mixed> $values
-     *
-     * @return list<string>
-     */
-    private function flattenStrings(array $values): array
-    {
-        $strings = [];
-        foreach ($values as $value) {
-            if (is_array($value)) {
-                array_push($strings, ...$this->flattenStrings($value));
-            } elseif (is_string($value)) {
-                $strings[] = $value;
-            }
-        }
-
-        return $strings;
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function requireStringKeyedArray(mixed $value, string $message): array
-    {
-        self::assertIsArray($value, $message);
-
-        $entries = [];
-        foreach ($value as $key => $entry) {
-            self::assertIsString($key, $message);
-            $entries[$key] = $entry;
-        }
-
-        return $entries;
-    }
-
-    private function renderedReplyFor(MemoServHelpFormatterContext $context, string $key): string
-    {
-        foreach ($context->translationRequests as $index => $reply) {
-            if ($key === $reply['key']) {
-                return $context->renderedTranslations[$index];
-            }
-        }
-
-        self::fail('No reply found for ' . $key);
     }
 }
 

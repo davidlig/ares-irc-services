@@ -5,11 +5,15 @@ declare(strict_types=1);
 namespace App\Tests\MemoServ\Adapter\In\Event;
 
 use App\MemoServ\Adapter\In\Event\MemoServNickIdentifiedNoticeSubscriber;
+use App\MemoServ\Adapter\In\Irc\MemoNoticePresenter;
 use App\MemoServ\Adapter\In\Irc\MemoServNotifierInterface;
 use App\MemoServ\Application\Port\Out\MemoRepositoryInterface;
 use App\MemoServ\Application\Port\Out\MemoUserAccountPort;
 use App\MemoServ\Application\UseCase\GetPendingNickNotice\GetPendingNickNoticeHandler;
 use App\NickServ\Application\PublishedEvent\NickIdentifiedEvent;
+use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -18,6 +22,23 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 #[CoversClass(MemoServNickIdentifiedNoticeSubscriber::class)]
 final class MemoServNickIdentifiedNoticeSubscriberTest extends TestCase
 {
+    #[Test]
+    public function sendsTheRenderedNoticeInTheRecipientLanguage(): void
+    {
+        $repository = $this->createStub(MemoRepositoryInterface::class);
+        $repository->method('countUnreadByTargetNick')->willReturn(3);
+        $accounts = $this->createStub(MemoUserAccountPort::class);
+        $accounts->method('getLanguage')->willReturn('es');
+        $notifier = $this->createMock(MemoServNotifierInterface::class);
+        $notifier->method('getNick')->willReturn('MemoServ');
+        $notifier->expects(self::once())->method('sendNotice')->with('001ABC', 'i 3 /msg MemoServ LIST');
+        $translator = $this->createMock(TranslatorInterface::class);
+        $translator->expects(self::once())->method('trans')->with('notify.nick_pending', [], 'memoserv', 'es')->willReturn('%count% /msg %bot% %list%');
+        $presenter = new MemoNoticePresenter($translator, new IrcRenderer(new FixedStyleProvider(new PresentationStyle(markers: ['information' => 'i']))));
+        new MemoServNickIdentifiedNoticeSubscriber(new GetPendingNickNoticeHandler($repository, $accounts), $notifier, $translator, $presenter)
+            ->onNickIdentified(new NickIdentifiedEvent(10, 'Nick', '001ABC'));
+    }
+
     #[Test]
     public function subscribesToNickIdentifiedEvent(): void
     {
@@ -61,7 +82,7 @@ final class MemoServNickIdentifiedNoticeSubscriberTest extends TestCase
         $translator = $this->createMock(TranslatorInterface::class);
         $translator->expects(self::once())
             ->method('trans')
-            ->with('notify.nick_pending', ['%count%' => 3, '%bot%' => 'MemoServ'], 'memoserv', 'es')
+            ->with('notify.nick_pending', ['%count%' => 3, '%bot%' => 'MemoServ', '%list%' => 'LIST'], 'memoserv', 'es')
             ->willReturn('Tienes 3 memos pendientes');
 
         $subscriber = new MemoServNickIdentifiedNoticeSubscriber(

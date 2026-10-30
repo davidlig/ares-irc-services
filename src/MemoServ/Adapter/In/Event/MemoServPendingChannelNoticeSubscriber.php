@@ -7,6 +7,7 @@ namespace App\MemoServ\Adapter\In\Event;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\ServiceUidRegistry;
 use App\Irc\Application\PublishedEvent\UserJoinedChannelEvent;
+use App\MemoServ\Adapter\In\Irc\MemoNoticePresenter;
 use App\MemoServ\Adapter\In\Irc\MemoServNotifierInterface;
 use App\MemoServ\Application\UseCase\GetPendingChannelNotice\GetPendingChannelNotice;
 use App\MemoServ\Application\UseCase\GetPendingChannelNotice\GetPendingChannelNoticeHandler;
@@ -27,6 +28,7 @@ final readonly class MemoServPendingChannelNoticeSubscriber implements EventSubs
         private TranslatorInterface $translator,
         private ServiceUidRegistry $uidRegistry,
         private string $defaultLanguage = 'en',
+        private ?MemoNoticePresenter $presenter = null,
     ) {}
 
     public static function getSubscribedEvents(): array
@@ -58,11 +60,14 @@ final readonly class MemoServPendingChannelNoticeSubscriber implements EventSubs
         }
 
         $language = '' !== $result->language ? $result->language : $this->defaultLanguage;
-        $message = $this->translator->trans('notify.channel_pending', [
-            '%channel%' => $result->channelName,
-            '%count%' => $result->unreadCount,
-            '%bot%' => $this->notifier->getNick(),
-        ], 'memoserv', $language);
+        $message = null === $this->presenter
+            ? $this->translator->trans('notify.channel_pending', [
+                '%channel%' => $result->channelName,
+                '%count%' => $result->unreadCount,
+                '%bot%' => $this->notifier->getNick(),
+                '%list%' => 'LIST ' . $result->channelName,
+            ], 'memoserv', $language)
+            : $this->presenter->channel($result->unreadCount, $result->channelName, $this->notifier->getNick(), $language);
         $this->notifier->sendNotice($result->uid, $message);
     }
 }

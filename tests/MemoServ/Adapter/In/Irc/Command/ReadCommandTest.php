@@ -15,6 +15,10 @@ use App\MemoServ\Application\Model\MemoAccountView;
 use App\MemoServ\Application\UseCase\Read\ReadMemo;
 use App\MemoServ\Application\UseCase\Read\ReadMemoHandlerInterface;
 use App\MemoServ\Application\UseCase\Read\ReadMemoResult;
+use App\Shared\Adapter\In\Irc\Presentation\Appearance;
+use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -25,10 +29,49 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 use function implode;
 use function is_scalar;
 use function ksort;
+use function str_repeat;
 
 #[CoversClass(ReadCommand::class)]
 final class ReadCommandTest extends TestCase
 {
+    #[Test]
+    public function rendersReadHeaderAndSeparatorWithoutChangingTheMessage(): void
+    {
+        $sent = [];
+        $notifier = $this->createStub(MemoServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $uid, string $message) use (&$sent): void {
+            $sent[] = $message;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $key): string => match ($key) {
+            'read.header' => 'From %from% #%index%',
+            'read.footer' => '%separator% %date%',
+            default => $key,
+        });
+        $handler = $this->createStub(ReadMemoHandlerInterface::class);
+        $handler->method('handle')->willReturn(ReadMemoResult::success(1, 'Bob', 'raw %date%', new DateTimeImmutable('2026-09-06 12:00:00 UTC')));
+        $renderer = new IrcRenderer(new FixedStyleProvider(new PresentationStyle(components: ['table_header' => new Appearance(prefix: 'H ')], separator: '=')));
+        $context = new MemoServContext(
+            new SenderView('UID', 'Nick', 'i', 'h', 'c', 'ip'),
+            new MemoAccountView(1, 'Nick', 'en'),
+            'READ',
+            ['1'],
+            $notifier,
+            $translator,
+            'en',
+            'UTC',
+            'NOTICE',
+            new MemoServCommandRegistry([]),
+            $this->createServiceNicks(),
+            $renderer
+        );
+        new ReadCommand($handler)->execute($context);
+
+        self::assertSame('H From Bob #1', $sent[0]);
+        self::assertSame(' raw %date%', $sent[1]);
+        self::assertSame(str_repeat('=', 29) . ' 06/09/2026 12:00 UTC', $sent[2]);
+    }
+
     #[Test]
     public function exposesMetadata(): void
     {

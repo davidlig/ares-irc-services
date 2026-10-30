@@ -15,6 +15,9 @@ use App\MemoServ\Application\Model\MemoAccountView;
 use App\MemoServ\Application\UseCase\Disable\DisableMemos;
 use App\MemoServ\Application\UseCase\Disable\DisableMemosHandlerInterface;
 use App\MemoServ\Application\UseCase\Disable\DisableMemosResult;
+use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -28,6 +31,39 @@ use function ksort;
 #[CoversClass(DisableCommand::class)]
 final class DisableCommandTest extends TestCase
 {
+    #[Test]
+    public function distinguishesChangedAndAlreadyConfiguredOutcomes(): void
+    {
+        $sent = [];
+        $notifier = $this->createStub(MemoServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $uid, string $message, string $type) use (&$sent): void {
+            $sent[] = $message;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $key): string => $key);
+        $handler = $this->createStub(DisableMemosHandlerInterface::class);
+        $handler->method('handle')->willReturnOnConsecutiveCalls(DisableMemosResult::disabledNick(), DisableMemosResult::alreadyDisabledNick());
+        $context = new MemoServContext(
+            new SenderView('UID', 'Nick', 'i', 'h', 'c', 'ip'),
+            new MemoAccountView(1, 'Nick', 'en'),
+            'DISABLE',
+            [],
+            $notifier,
+            $translator,
+            'en',
+            'UTC',
+            'NOTICE',
+            new MemoServCommandRegistry([]),
+            $this->createServiceNicks(),
+            new IrcRenderer(new FixedStyleProvider(new PresentationStyle(markers: ['success' => '+', 'information' => 'i']))),
+        );
+        $command = new DisableCommand($handler);
+        $command->execute($context);
+        $command->execute($context);
+
+        self::assertSame(['+ disable.disabled_nick', 'i disable.already_disabled_nick'], $sent);
+    }
+
     #[Test]
     public function exposesMetadata(): void
     {

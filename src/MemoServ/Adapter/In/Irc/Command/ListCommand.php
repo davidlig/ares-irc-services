@@ -11,10 +11,12 @@ use App\MemoServ\Application\UseCase\List\ListMemosHandlerInterface;
 use App\MemoServ\Application\UseCase\List\ListMemosOutcome;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\Fragment;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 
 use function mb_strlen;
 use function mb_substr;
-use function sprintf;
 use function str_replace;
 use function str_starts_with;
 
@@ -26,14 +28,6 @@ use function str_starts_with;
 final readonly class ListCommand implements MemoServCommandInterface
 {
     private const int PREVIEW_MAX_LENGTH = 50;
-
-    /** IRC red */
-    private const string RED = "\x0304";
-
-    /** IRC blue (sender nick) */
-    private const string BLUE = "\x0302";
-
-    private const string RESET = "\x03";
 
     public function __construct(
         private ListMemosHandlerInterface $listMemosHandler,
@@ -103,7 +97,7 @@ final readonly class ListCommand implements MemoServCommandInterface
     {
         $senderAccount = $context->senderAccount;
         if (null === $senderAccount || null === $context->sender) {
-            $context->reply('error.not_identified');
+            $context->replyError('error.not_identified');
 
             return null;
         }
@@ -120,28 +114,34 @@ final readonly class ListCommand implements MemoServCommandInterface
 
         switch ($result->outcome) {
             case ListMemosOutcome::ChannelNotRegistered:
-                $context->reply('error.channel_not_registered', ['channel' => $result->channelName ?? '']);
+                $context->replyError('error.channel_not_registered', ['channel' => $result->channelName ?? '']);
                 break;
 
             case ListMemosOutcome::AccessDenied:
-                $context->reply('error.insufficient_access', [
+                $context->replyError('error.insufficient_access', [
                     'operation' => 'LIST',
                     'channel' => $result->channelName ?? $targetChannel ?? '',
                 ]);
                 break;
 
             case ListMemosOutcome::Empty:
-                $context->reply('list.empty', ['target' => $result->targetLabel]);
+                $context->reply('list.empty', ['target' => $context->emphasize($result->targetLabel)], Role::Information);
                 break;
 
             case ListMemosOutcome::Success:
-                $context->reply('list.header', ['target' => $result->targetLabel]);
+                $context->replyComponent(Component::TableHeader, 'list.header', ['target' => $result->targetLabel]);
                 foreach ($result->items as $item) {
-                    $unreadMark = $item->isRead ? '' : self::RED . '*' . self::RESET . ' ';
+                    $unreadMark = $item->isRead ? '' : $context->renderComponent(Component::Unread, ' ');
                     $dateStr = $context->formatDate($item->createdAt);
-                    $context->replyRaw(sprintf('  %s#%d ' . self::BLUE . '%s' . self::RESET . ' (%s): %s', $unreadMark, $item->index, $item->senderDisplay, $dateStr, self::preview($item->message)));
+                    $context->replyRaw($context->renderComponent(Component::Row, '  %unread%#%index% %sender% (%date%): %message%', [
+                        '%unread%' => $unreadMark,
+                        '%index%' => (string) $item->index,
+                        '%sender%' => new Fragment($item->senderDisplay, Component::Emphasis),
+                        '%date%' => $dateStr,
+                        '%message%' => self::preview($item->message),
+                    ]));
                 }
-                $context->reply('reply.separator');
+                $context->replySeparator();
                 break;
         }
 

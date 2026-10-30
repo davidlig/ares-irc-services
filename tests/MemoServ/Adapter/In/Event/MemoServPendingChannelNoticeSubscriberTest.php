@@ -10,6 +10,7 @@ use App\Irc\Application\Port\In\ServiceUidProviderInterface;
 use App\Irc\Application\Port\In\ServiceUidRegistry;
 use App\Irc\Application\PublishedEvent\UserJoinedChannelEvent;
 use App\MemoServ\Adapter\In\Event\MemoServPendingChannelNoticeSubscriber;
+use App\MemoServ\Adapter\In\Irc\MemoNoticePresenter;
 use App\MemoServ\Adapter\In\Irc\MemoServNotifierInterface;
 use App\MemoServ\Application\Model\MemoAccountView;
 use App\MemoServ\Application\Model\MemoChannelView;
@@ -18,6 +19,9 @@ use App\MemoServ\Application\Port\Out\MemoRepositoryInterface;
 use App\MemoServ\Application\Port\Out\MemoSettingsRepositoryInterface;
 use App\MemoServ\Application\Port\Out\MemoUserAccountPort;
 use App\MemoServ\Application\UseCase\GetPendingChannelNotice\GetPendingChannelNoticeHandler;
+use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -27,6 +31,30 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 final class MemoServPendingChannelNoticeSubscriberTest extends TestCase
 {
     public const string MEMOSERV_UID = '001MEMO';
+
+    #[Test]
+    public function rendersPendingChannelNoticeWithFallbackLocale(): void
+    {
+        $channels = $this->createStub(MemoChannelPort::class);
+        $channels->method('findChannelByName')->willReturn(new MemoChannelView(5, '#Test'));
+        $channels->method('canReadChannelMemos')->willReturn(true);
+        $accounts = $this->createStub(MemoUserAccountPort::class);
+        $accounts->method('findAccountByNick')->willReturn(new MemoAccountView(10, 'TestUser', ''));
+        $repository = $this->createStub(MemoRepositoryInterface::class);
+        $repository->method('countUnreadByTargetChannel')->willReturn(2);
+        $settings = $this->createStub(MemoSettingsRepositoryInterface::class);
+        $settings->method('isEnabledForChannel')->willReturn(true);
+        $lookup = $this->createStub(NetworkUserLookupPort::class);
+        $lookup->method('findByUid')->willReturn($this->sender());
+        $notifier = $this->createMock(MemoServNotifierInterface::class);
+        $notifier->method('getNick')->willReturn('MemoServ');
+        $notifier->expects(self::once())->method('sendNotice')->with('001USER', 'i #TeSt 2 /msg MemoServ LIST #TeSt');
+        $translator = $this->createMock(TranslatorInterface::class);
+        $translator->expects(self::once())->method('trans')->with('notify.channel_pending', [], 'memoserv', 'es')->willReturn('%channel% %count% /msg %bot% %list%');
+        $presenter = new MemoNoticePresenter($translator, new IrcRenderer(new FixedStyleProvider(new PresentationStyle(markers: ['information' => 'i']))));
+        $subscriber = $this->subscriber($channels, $accounts, $repository, $settings, $notifier, $lookup, $translator, 'es', $presenter);
+        $subscriber->onUserJoinedChannel(new UserJoinedChannelEvent('001USER', '#TeSt'));
+    }
 
     #[Test]
     public function subscribesToThePublishedJoinEventAfterEntryMessage(): void
@@ -122,7 +150,7 @@ final class MemoServPendingChannelNoticeSubscriberTest extends TestCase
         $translator = $this->createMock(TranslatorInterface::class);
         $translator->expects(self::once())->method('trans')->with(
             'notify.channel_pending',
-            ['%channel%' => '#TeSt', '%count%' => 2, '%bot%' => 'MemoServ'],
+            ['%channel%' => '#TeSt', '%count%' => 2, '%bot%' => 'MemoServ', '%list%' => 'LIST #TeSt'],
             'memoserv',
             'es',
         )->willReturn('Two pending memos');
@@ -150,6 +178,7 @@ final class MemoServPendingChannelNoticeSubscriberTest extends TestCase
         NetworkUserLookupPort $userLookup,
         TranslatorInterface $translator,
         string $defaultLanguage = 'en',
+        ?MemoNoticePresenter $presenter = null,
     ): MemoServPendingChannelNoticeSubscriber {
         return new MemoServPendingChannelNoticeSubscriber(
             new GetPendingChannelNoticeHandler(
@@ -163,6 +192,7 @@ final class MemoServPendingChannelNoticeSubscriberTest extends TestCase
             $translator,
             $this->uidRegistry(),
             $defaultLanguage,
+            $presenter,
         );
     }
 

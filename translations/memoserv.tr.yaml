@@ -23,17 +23,17 @@ send:
   help: |-
     Kayıtlı bir takma ada veya kanala mesaj gönderir. Alıcının mesaj hizmeti
     etkinleştirilmiş olmalıdır (ENABLE).
-  example: "\x0310›\x03\x0F %command_prefix%\x02\x0303SEND Ana Merhaba, notu kontrol edebilir misin?\x03\x0F"
+  example: "%command_prefix%SEND Ana Merhaba, notu kontrol edebilir misin?"
   examples:
-    - "\x0310›\x03\x0F %command_prefix%\x02\x0303SEND #yardım Kanal için duyuru\x03\x0F"
-  sent_nick: "\x0303✔\x03 Mesaj \x02%nickname%\x02 adlı kullanıcıya gönderildi."
-  sent_channel: "\x0303✔\x03 Mesaj \x02%channel%\x02 kanalına gönderildi."
-  throttled: "\x0304✗\x03 Başka bir mesaj göndermeden önce \x02%seconds%\x02 saniye beklemelisiniz."
-  limit_reached: "\x0304✗\x03 \x02%target%\x02 için mesaj sınırına ulaşıldı."
-  ignored: "\x0304✗\x03 Bu hedefe mesaj gönderemezsiniz, yoksayma listesindesiniz."
-  cannot_send_to_self: "\x0304✗\x03 Kendinize mesaj gönderemezsiniz."
-  message_too_long: "\x0304✗\x03 Mesaj çok uzun. Maksimum \x02%max%\x02 karakter."
-  service_disabled_for_target: "\x0304✗\x03 \x02%target%\x02 için mesaj hizmeti devre dışı."
+    - "%command_prefix%SEND #yardım Kanal için duyuru"
+  sent_nick: "Mesaj %nickname% adlı kullanıcıya gönderildi."
+  sent_channel: "Mesaj %channel% kanalına gönderildi."
+  throttled: "Başka bir mesaj göndermeden önce %seconds% saniye beklemelisiniz."
+  limit_reached: "%target% için mesaj sınırına ulaşıldı."
+  ignored: "Bu hedefe mesaj gönderemezsiniz, yoksayma listesindesiniz."
+  cannot_send_to_self: "Kendinize mesaj gönderemezsiniz."
+  message_too_long: "Mesaj çok uzun. Maksimum %max% karakter."
+  service_disabled_for_target: "%target% için mesaj hizmeti devre dışı."
 
 # --- READ ------------------------------------------------------------------
 read:
@@ -42,12 +42,12 @@ read:
   help: |-
     Belirtilen numaralı mesajı okur. #kanal olmadan takma ad gelen kutunuzdan okur.
     #kanal ile MEMOREAD düzeyi gerekir.
-  example: "\x0310›\x03\x0F %command_prefix%\x02\x0303READ 1\x03\x0F"
+  example: "%command_prefix%READ 1"
   examples:
-    - "\x0310›\x03\x0F %command_prefix%\x02\x0303READ #yardım 2\x03\x0F"
-  header: "\x02\x0307Mesaj #%index%\x03, gönderen: \x02%from%\x02:\x0F"
-  footer: "\x0314─────────────────────────────\x03 \x0314%date%\x03"
-  not_found: "\x0304✗\x03 #%index% numaralı mesaj bulunamadı."
+    - "%command_prefix%READ #yardım 2"
+  header: "Mesaj #%index%, gönderen: %from%:"
+  footer: "%separator% %date%"
+  not_found: "#%index% numaralı mesaj bulunamadı."
 
 # --- LIST ------------------------------------------------------------------
 list:
@@ -57,22 +57,22 @@ list:
     Mesajlarınızı veya kanalın mesajlarını listeler. Okunmamışlar kırmızı yıldız
     ve önizlemeyle (en fazla 50 karakter) gösterilir. #kanal yoksa gelen kutunuz;
     #kanal varsa MEMOREAD gerekir.
-  example: "\x0310›\x03\x0F %command_prefix%\x02\x0303LIST\x03\x0F"
+  example: "%command_prefix%LIST"
   examples:
-    - "\x0310›\x03\x0F %command_prefix%\x02\x0303LIST #yardım\x03\x0F"
-  header: "\x02\x0307%target% için mesajlar\x03:\x0F"
-  empty: "\x0307ℹ\x03 \x02%target%\x02 için mesaj yok."
+    - "%command_prefix%LIST #yardım"
+  header: "%target% için mesajlar:"
+  empty: "%target% için mesaj yok."
 
 # --- DEL -------------------------------------------------------------------
 del:
   syntax: "DEL [#channel] <numara>"
   short: "Numarasına göre bir mesajı silin."
   help: "Verilen numaradaki mesajı siler. Kanallar için MEMOCHANGE seviyesi gerektirir."
-  example: "\x0310›\x03\x0F %command_prefix%\x02\x0303DEL 1\x03\x0F"
+  example: "%command_prefix%DEL 1"
   examples:
-    - "\x0310›\x03\x0F %command_prefix%\x02\x0303DEL #yardım 2\x03\x0F"
-  deleted: "\x0303✔\x03 #%index% numaralı mesaj silindi."
-  not_found: "\x0304✗\x03 #%index% numaralı mesaj bulunamadı."
+    - "%command_prefix%DEL #yardım 2"
+  deleted: "#%index% numaralı mesaj silindi."
+  not_found: "#%index% numaralı mesaj bulunamadı."
 
 # --- IGNORE ----------------------------------------------------------------
 ignore:
@@ -81,10 +81,10 @@ ignore:
   help: |-
     Hesabınızdan veya kayıtlı bir kanaldan mesaj almak istemediğiniz takma adları
     yönetir. Kanal listesini değiştirmek için MEMOCHANGE izni gerekir.
-  example: "\x0310›\x03\x0F %command_prefix%\x02\x0303IGNORE ADD Ana\x03\x0F"
+  example: "%command_prefix%IGNORE ADD Ana"
   examples:
-    - "\x0310›\x03\x0F %command_prefix%\x02\x0303IGNORE DEL #yardım Ana\x03\x0F"
-    - "\x0310›\x03\x0F %command_prefix%\x02\x0303IGNORE LIST #yardım\x03\x0F"
+    - "%command_prefix%IGNORE DEL #yardım Ana"
+    - "%command_prefix%IGNORE LIST #yardım"
 
   # --- IGNORE ADD ----------------------------------------------------------
   add:
@@ -93,35 +93,35 @@ ignore:
     help: |-
       Bu rumuzdan gelen mesajlar gelen kutunuz (veya kanalın) için kabul
       edilmeyecektir.
-    example: "\x0310›\x03\x0F %command_prefix%\x02\x0303IGNORE ADD Ana\x03\x0F"
+    example: "%command_prefix%IGNORE ADD Ana"
     examples:
-      - "\x0310›\x03\x0F %command_prefix%\x02\x0303IGNORE ADD #yardım Ana\x03\x0F"
+      - "%command_prefix%IGNORE ADD #yardım Ana"
 
   # --- IGNORE DEL ----------------------------------------------------------
   del:
     syntax: "IGNORE DEL [#channel] <nickname>"
     short: "Listeden bir takma adı siler."
     help: "Rumuzu yoksayma listesinden kaldırır."
-    example: "\x0310›\x03\x0F %command_prefix%\x02\x0303IGNORE DEL Ana\x03\x0F"
+    example: "%command_prefix%IGNORE DEL Ana"
     examples:
-      - "\x0310›\x03\x0F %command_prefix%\x02\x0303IGNORE DEL #yardım Ana\x03\x0F"
+      - "%command_prefix%IGNORE DEL #yardım Ana"
 
   # --- IGNORE LIST ---------------------------------------------------------
   list:
     syntax: "IGNORE LIST [#channel]"
     short: "Yoksayılan takma adları gösterir."
     help: "Mesajlar için sizin (veya kanalın) yoksaydığı rumuzların listesini gösterir."
-    example: "\x0310›\x03\x0F %command_prefix%\x02\x0303IGNORE LIST\x03\x0F"
+    example: "%command_prefix%IGNORE LIST"
     examples:
-      - "\x0310›\x03\x0F %command_prefix%\x02\x0303IGNORE LIST #yardım\x03\x0F"
-  added: "\x0303✔\x03 \x02%nickname%\x02 yoksayma listesine eklendi."
-  removed: "\x0303✔\x03 \x02%nickname%\x02 yoksayma listesinden kaldırıldı."
-  already_ignored: "\x0304✗\x03 \x02%nickname%\x02 zaten yoksayma listesinde."
-  not_ignored: "\x0304✗\x03 \x02%nickname%\x02 yoksayma listesinde değil."
-  limit_reached_nick: "\x0304✗\x03 Rumuzunuz için yoksayma listesi sınırına ulaşıldı (maks \x02%limit%\x02)."
-  limit_reached_channel: "\x0304✗\x03 \x02%channel%\x02 için yoksayma listesi sınırına ulaşıldı (maks \x02%limit%\x02)."
-  list_empty: "\x0307ℹ\x03 Yoksayma listesi boş."
-  list_header: "\x02\x0307Yoksayma listesi:\x03\x0F"
+      - "%command_prefix%IGNORE LIST #yardım"
+  added: "%nickname% yoksayma listesine eklendi."
+  removed: "%nickname% yoksayma listesinden kaldırıldı."
+  already_ignored: "%nickname% zaten yoksayma listesinde."
+  not_ignored: "%nickname% yoksayma listesinde değil."
+  limit_reached_nick: "Rumuzunuz için yoksayma listesi sınırına ulaşıldı (maks %limit%)."
+  limit_reached_channel: "%channel% için yoksayma listesi sınırına ulaşıldı (maks %limit%)."
+  list_empty: "Yoksayma listesi boş."
+  list_header: "Yoksayma listesi:"
 
 # --- ENABLE ----------------------------------------------------------------
 enable:
@@ -130,14 +130,14 @@ enable:
   help: |-
     Takma adınız için mesaj almayı etkinleştirir; kanallarda bunu yalnızca kurucu
     etkinleştirebilir.
-  example: "\x0310›\x03\x0F %command_prefix%\x02\x0303ENABLE\x03\x0F"
+  example: "%command_prefix%ENABLE"
   examples:
-    - "\x0310›\x03\x0F %command_prefix%\x02\x0303ENABLE #yardım\x03\x0F"
-  enabled_nick: "\x0303✔\x03 Rumuzunuz için mesaj hizmeti etkinleştirildi."
-  enabled_channel: "\x0303✔\x03 \x02%channel%\x02 kanalı için mesaj hizmeti etkinleştirildi."
-  already_enabled_nick: "\x0307ℹ\x03 Rumuzunuz için mesaj hizmeti zaten etkin."
-  already_enabled_channel: "\x0307ℹ\x03 \x02%channel%\x02 için mesaj hizmeti zaten etkin."
-  founder_only: "\x0304✗\x03 \x02%channel%\x02 için mesajları yalnızca kanal kurucusu etkinleştirebilir."
+    - "%command_prefix%ENABLE #yardım"
+  enabled_nick: "Rumuzunuz için mesaj hizmeti etkinleştirildi."
+  enabled_channel: "%channel% kanalı için mesaj hizmeti etkinleştirildi."
+  already_enabled_nick: "Rumuzunuz için mesaj hizmeti zaten etkin."
+  already_enabled_channel: "%channel% için mesaj hizmeti zaten etkin."
+  founder_only: "%channel% için mesajları yalnızca kanal kurucusu etkinleştirebilir."
 
 # --- DISABLE ---------------------------------------------------------------
 disable:
@@ -146,49 +146,51 @@ disable:
   help: |-
     Takma adınız veya kanal için mesaj almayı devre dışı bırakır. Kanallarda bunu
     yalnızca kurucu devre dışı bırakabilir.
-  example: "\x0310›\x03\x0F %command_prefix%\x02\x0303DISABLE\x03\x0F"
+  example: "%command_prefix%DISABLE"
   examples:
-    - "\x0310›\x03\x0F %command_prefix%\x02\x0303DISABLE #yardım\x03\x0F"
-  disabled_nick: "\x0303✔\x03 Rumuzunuz için mesaj hizmeti devre dışı bırakıldı."
-  disabled_channel: "\x0303✔\x03 \x02%channel%\x02 kanalı için mesaj hizmeti devre dışı bırakıldı."
-  already_disabled_nick: "\x0307ℹ\x03 Rumuzunuz için mesaj hizmeti zaten devre dışı."
-  already_disabled_channel: "\x0307ℹ\x03 \x02%channel%\x02 için mesaj hizmeti zaten devre dışı."
-  founder_only: "\x0304✗\x03 \x02%channel%\x02 için mesajları yalnızca kanal kurucusu devre dışı bırakabilir."
+    - "%command_prefix%DISABLE #yardım"
+  disabled_nick: "Rumuzunuz için mesaj hizmeti devre dışı bırakıldı."
+  disabled_channel: "%channel% kanalı için mesaj hizmeti devre dışı bırakıldı."
+  already_disabled_nick: "Rumuzunuz için mesaj hizmeti zaten devre dışı."
+  already_disabled_channel: "%channel% için mesaj hizmeti zaten devre dışı."
+  founder_only: "%channel% için mesajları yalnızca kanal kurucusu devre dışı bırakabilir."
 
 # --- HELP ------------------------------------------------------------------
 help:
   syntax: "HELP [komut] [seçenek]"
   short: "Komutları listeleyin veya bir komut için yardım gösterin."
   help: "Komut listesini veya bir komut ya da seçeneğin ayrıntılı yardımını gösterir."
-  example: "\x0310›\x03\x0F %command_prefix%\x02\x0303HELP\x03\x0F"
+  example: "%command_prefix%HELP"
   examples:
-    - "\x0310›\x03\x0F %command_prefix%\x02\x0303HELP IGNORE ADD\x03\x0F"
+    - "%command_prefix%HELP IGNORE ADD"
   header_title: "%bot%"
-  header: "\x02\x0307🤖 %title%\x03\x0F \x0314─────────────────────────────\x03\x0F"
+  header: "%title%"
   intro: |-
     Kayıtlı kullanıcılar arasında mesaj gönderip almayı ve kanallara duyuru
     göndermeyi sağlar. Alıcı çevrimdışı olsa bile mesajlar daha sonra okunmak üzere
     saklanır.
-  general_header: "\x02 ■ Kullanılabilir komutlar:\x02"
-  command_line: "    \x0310›\x03\x0F \x02\x0303%command%\x03\x0F%description%"
-  subcommand_line: "    \x0310›\x03\x0F \x02\x0303%command%\x03\x0F%description%"
-  options_header: "\x02 ■ Seçenekler:\x02"
-  examples_header: "\x02 ■ Örnekler:\x02"
-  general_footer: "\x0310ℹ\x03\x0F Daha fazla bilgi için /msg %bot% \x02\x0303HELP <komut>\x03\x0F kullanın."
-  set_sub_footer: "\x0310ℹ\x03\x0F Daha fazla bilgi için /msg %bot% \x02\x0303HELP %command% <seçenek>\x03\x0F kullanın."
-  syntax_label: "Sözdizimi: \x02\x0303%syntax%\x03\x0F"
-  footer: "\x0314─────────────────────────────\x03\x0F"
-  group_header: "\x0310  ◆ %group%\x03\x0F"
-  subgroup_header: "\x0310  ◆ %group%\x03\x0F"
+  general_header: "Kullanılabilir komutlar:"
+  command_line: "%command%%description%"
+  subcommand_line: "%command%%description%"
+  options_header: "Seçenekler:"
+  examples_header: "Örnekler:"
+  general_help_command: "HELP <komut>"
+  option_help_command: "HELP %command% <seçenek>"
+  general_footer: "Daha fazla bilgi için /msg %bot% %help_command% kullanın."
+  set_sub_footer: "Daha fazla bilgi için /msg %bot% %help_command% kullanın."
+  syntax_label: "Sözdizimi: %syntax%"
+  footer: ""
+  group_header: "%group%"
+  subgroup_header: "%group%"
   group:
     messages: "Mesajlar"
     preferences: "Tercihler"
-  ircop_header: "\x02 ■ IRC operatörleri için kullanılabilir komutlar:\x02"
+  ircop_header: "IRC operatörleri için kullanılabilir komutlar:"
 
 # --- NOTIFY ----------------------------------------------------------------
 notify:
-  nick_pending: "Okunmayı bekleyen \x02%count%\x02 mesajınız var. Listelemek için: /msg %bot% \x0303LIST\x03"
-  channel_pending: "\x02%channel%\x02 kanalında okunmayı bekleyen \x02%count%\x02 mesaj var. Mesajları görüntülemek için /msg %bot% \x0303LIST %channel%\x03"
+  nick_pending: "Okunmayı bekleyen %count% mesajınız var. Listelemek için: /msg %bot% %list%"
+  channel_pending: "%channel% kanalında okunmayı bekleyen %count% mesaj var. Mesajları görüntülemek için /msg %bot% %list%"
 
 # --- CHANNEL REGISTRATION DECISIONS ---
 registration_decision:

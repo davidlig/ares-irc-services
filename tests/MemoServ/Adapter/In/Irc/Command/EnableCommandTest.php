@@ -15,6 +15,9 @@ use App\MemoServ\Application\Model\MemoAccountView;
 use App\MemoServ\Application\UseCase\Enable\EnableMemos;
 use App\MemoServ\Application\UseCase\Enable\EnableMemosHandlerInterface;
 use App\MemoServ\Application\UseCase\Enable\EnableMemosResult;
+use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -28,6 +31,39 @@ use function ksort;
 #[CoversClass(EnableCommand::class)]
 final class EnableCommandTest extends TestCase
 {
+    #[Test]
+    public function distinguishesChangedAndAlreadyConfiguredOutcomes(): void
+    {
+        $sent = [];
+        $notifier = $this->createStub(MemoServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $uid, string $message, string $type) use (&$sent): void {
+            $sent[] = $message;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $key): string => $key);
+        $handler = $this->createStub(EnableMemosHandlerInterface::class);
+        $handler->method('handle')->willReturnOnConsecutiveCalls(EnableMemosResult::enabledNick(), EnableMemosResult::alreadyEnabledNick());
+        $context = new MemoServContext(
+            new SenderView('UID', 'Nick', 'i', 'h', 'c', 'ip'),
+            new MemoAccountView(1, 'Nick', 'en'),
+            'ENABLE',
+            [],
+            $notifier,
+            $translator,
+            'en',
+            'UTC',
+            'NOTICE',
+            new MemoServCommandRegistry([]),
+            $this->createServiceNicks(),
+            new IrcRenderer(new FixedStyleProvider(new PresentationStyle(markers: ['success' => '+', 'information' => 'i']))),
+        );
+        $command = new EnableCommand($handler);
+        $command->execute($context);
+        $command->execute($context);
+
+        self::assertSame(['+ enable.enabled_nick', 'i enable.already_enabled_nick'], $sent);
+    }
+
     #[Test]
     public function exposesMetadata(): void
     {
