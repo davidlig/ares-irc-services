@@ -6,6 +6,7 @@ namespace App\Tests\ChanServ\Adapter\In\Irc;
 
 use App\ChanServ\Adapter\In\Irc\ChanServCommandRegistry;
 use App\ChanServ\Adapter\In\Irc\ChanServContext;
+use App\ChanServ\Adapter\In\Irc\ChanServDetailPresenter;
 use App\ChanServ\Adapter\In\Irc\ChanServNotifierInterface;
 use App\ChanServ\Application\Model\ChanAccountView;
 use App\Irc\Adapter\Protocol\NullChannelModeSupport;
@@ -16,8 +17,15 @@ use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
 use App\Irc\Application\Port\In\ServiceNicknameRegistry;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
+use App\Shared\Adapter\In\Irc\Presentation\Fragment;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 use DateTime;
 use DateTimeZone;
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -29,6 +37,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 use function is_string;
 
 #[CoversClass(ChanServContext::class)]
+#[CoversClass(ChanServDetailPresenter::class)]
 final class ChanServContextTest extends TestCase
 {
     #[Test]
@@ -373,6 +382,82 @@ final class ChanServContextTest extends TestCase
     }
 
     #[Test]
+    public function rendersLocalizedComponentsWithStructuredFragments(): void
+    {
+        $translator = new Translator('es');
+        $translator->addLoader('array', new ArrayLoader());
+        $translator->addResource('array', ['help.line' => 'Usa %command%'], 'es', 'chanserv');
+        $context = $this->createContext(
+            new SenderView('UID1', 'Nick', 'i', 'h', 'c', 'ip'),
+            $this->createStub(ChanServNotifierInterface::class),
+            $translator,
+            language: 'es',
+        );
+
+        self::assertSame("Usa \x02\x0303HELP\x03\x0F", $context->renderComponent(
+            Component::Text,
+            'help.line',
+            ['command' => new Fragment('HELP', Component::Command)],
+        ));
+        self::assertSame("  /msg \x02\x0303HELP\x03\x0F", $context->renderTextComponent(
+            Component::Example,
+            '/msg %command%',
+            ['command' => new Fragment('HELP', Component::Command)],
+        ));
+        self::assertSame("\x0314───\x03\x0F", $context->renderSeparator(3));
+    }
+
+    #[Test]
+    public function sendsRoleReplyWithScalarParametersAndSelectedStyle(): void
+    {
+        $translator = new Translator('en');
+        $translator->addLoader('array', new ArrayLoader());
+        $translator->addResource('array', ['notice' => '%name% has %count% entries, ratio %ratio%, enabled %enabled%, missing %missing%.'], 'en', 'chanserv');
+        $sent = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $uid, string $message, string $type) use (&$sent): void {
+            $sent[] = [$uid, $message, $type];
+        });
+        $sender = new SenderView('UID1', 'Nick', 'i', 'h', 'c', 'ip');
+        $params = ['name' => 'Nick', 'count' => 3, 'ratio' => 1.5, 'enabled' => true, 'missing' => null];
+        $default = $this->createContext($sender, $notifier, $translator);
+        $default->reply('notice', $params, Role::Success);
+        self::assertSame([['UID1', "\x0303✔\x03\x0F Nick has 3 entries, ratio 1.5, enabled 1, missing .", 'NOTICE']], $sent);
+        $renderer = new IrcRenderer(new FixedStyleProvider(new PresentationStyle(markers: [Role::Success->value => 'OK'])));
+        $custom = $this->createContext($sender, $notifier, $translator, renderer: $renderer);
+        self::assertSame('OK Nick has 3 entries, ratio 1.5, enabled 1, missing .', $custom->renderReply(Role::Success, 'notice', $params));
+    }
+
+    #[Test]
+    public function rejectsNestedPresentationParametersWithoutSending(): void
+    {
+        $notifier = $this->createMock(ChanServNotifierInterface::class);
+        $notifier->expects(self::never())->method('sendMessage');
+        $translator = new Translator('en');
+        $translator->addLoader('array', new ArrayLoader());
+        $translator->addResource('array', ['notice' => 'Channel %channel%'], 'en', 'chanserv');
+        $context = $this->createContext(new SenderView('UID1', 'Nick', 'i', 'h', 'c', 'ip'), $notifier, $translator);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('IRC presentation parameters must be scalar or fragments.');
+        $context->reply('notice', ['channel' => ['#channel']], Role::Information);
+    }
+
+    #[Test]
+    public function detailPresenterRendersLocalizedStateWithItsSemanticStyle(): void
+    {
+        $translator = new Translator('en');
+        $translator->addLoader('array', new ArrayLoader());
+        $translator->addResource('array', [
+            'status.pending_label' => 'Status',
+            'status.pending' => '%label%%padding%: %state%',
+            'status.pending_value' => 'Approval pending',
+        ], 'en', 'chanserv');
+        $context = $this->createContext(null, $this->createStub(ChanServNotifierInterface::class), $translator);
+        self::assertSame("  \x0314Status\x03\x0F                  : \x0307Approval pending\x03\x0F", new ChanServDetailPresenter()->row($context, 'status.pending', [], Component::Status));
+    }
+
+    #[Test]
     public function transWrapsParametersWithPercentSigns(): void
     {
         $notifier = $this->createStub(ChanServNotifierInterface::class);
@@ -675,6 +760,7 @@ final class ChanServContextTest extends TestCase
         ?ChannelModeSupportInterface $modeSupport = null,
         ?ChanAccountView $senderAccount = null,
         string $language = 'en',
+        ?IrcRenderer $renderer = null,
     ): ChanServContext {
         return new ChanServContext(
             $sender,
@@ -691,6 +777,7 @@ final class ChanServContextTest extends TestCase
             $modeSupport ?? new NullChannelModeSupport(),
             $this->createStub(NetworkUserLookupPort::class),
             $this->createServiceNicks(),
+            renderer: $renderer,
         );
     }
 }

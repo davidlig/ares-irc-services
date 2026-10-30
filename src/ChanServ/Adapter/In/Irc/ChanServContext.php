@@ -12,12 +12,23 @@ use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\OperServ\Application\Port\In\IrcopAuthorizationSubject;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
+use App\Shared\Adapter\In\Irc\Presentation\Fragment;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
+use InvalidArgumentException;
 use Symfony\Component\Translation\TranslatorBagInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function is_bool;
+use function is_float;
+use function is_int;
+use function is_string;
 use function str_starts_with;
 use function trim;
 
@@ -41,6 +52,7 @@ final readonly class ChanServContext implements IrcopAuthorizationSubject
         private NetworkUserLookupPort $userLookup,
         private ServiceNicknameRegistry $serviceNicks,
         public bool $isLevelFounder = false,
+        private ?IrcRenderer $renderer = null,
     ) {}
 
     public function getSender(): ?SenderView
@@ -76,9 +88,46 @@ final readonly class ChanServContext implements IrcopAuthorizationSubject
     /**
      * @param array<string, mixed> $params
      */
-    public function reply(string $key, array $params = []): void
+    public function reply(string $key, array $params = [], ?Role $role = null): void
     {
-        $this->sendRaw($this->trans($key, $params));
+        if (null === $role) {
+            $this->sendRaw($this->trans($key, $params));
+
+            return;
+        }
+
+        $this->sendRaw($this->renderReply($role, $key, $params));
+    }
+
+    /** @param array<string, mixed> $params */
+    public function renderReply(Role $role, string $key, array $params = []): string
+    {
+        $renderer = $this->renderer ?? new IrcRenderer(new FixedStyleProvider(PresentationStyle::default()));
+
+        return $renderer->reply($role, $this->translateWithCommonFallback($key, []), $this->presentationParams($params));
+    }
+
+    /** @param array<string, mixed> $params */
+    public function renderComponent(Component $component, string $key, array $params = []): string
+    {
+        $renderer = $this->renderer ?? new IrcRenderer(new FixedStyleProvider(PresentationStyle::default()));
+
+        return $renderer->component($component, $this->translateWithCommonFallback($key, []), $this->presentationParams($params));
+    }
+
+    /** @param array<string, mixed> $params */
+    public function renderTextComponent(Component $component, string $template, array $params = []): string
+    {
+        $renderer = $this->renderer ?? new IrcRenderer(new FixedStyleProvider(PresentationStyle::default()));
+
+        return $renderer->component($component, $template, $this->presentationParams($params));
+    }
+
+    public function renderSeparator(int $width): string
+    {
+        $renderer = $this->renderer ?? new IrcRenderer(new FixedStyleProvider(PresentationStyle::default()));
+
+        return $renderer->separator($width);
     }
 
     public function replyRaw(string $message): void
@@ -167,6 +216,28 @@ final readonly class ChanServContext implements IrcopAuthorizationSubject
         }
 
         return $wrapped;
+    }
+
+    /**
+     * @param array<string, mixed> $params
+     *
+     * @return array<string, string|Fragment>
+     */
+    private function presentationParams(array $params): array
+    {
+        $values = $this->wrapParams($params);
+        $result = [];
+        foreach ($values as $key => $value) {
+            if ($value instanceof Fragment || is_string($value)) {
+                $result[$key] = $value;
+            } elseif (is_int($value) || is_float($value) || is_bool($value) || null === $value) {
+                $result[$key] = (string) $value;
+            } else {
+                throw new InvalidArgumentException('IRC presentation parameters must be scalar or fragments.');
+            }
+        }
+
+        return $result;
     }
 
     /** @param array<string, mixed> $params */
