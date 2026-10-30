@@ -66,16 +66,20 @@ list:
 
 # --- DEL ----------------------------------------------------------------------
 del:
-  syntax: "DEL [#kanaal] <nummer>"
+  syntax: "DEL [#kanaal] {nummer|ALL}"
   short: "Verwijder een bericht op nummer."
   help: |-
-    Verwijdert het bericht met het opgegeven nummer. Voor kanalen is
-    MEMOCHANGE-niveau vereist.
-  example: "%command_prefix%DEL 1"
+    Verwijdert een bericht op nummer of leegt de inbox met ALL. Voor kanalen is
+    het toegangsniveau MEMOCHANGE vereist.
+  example: "%command_prefix%DEL ALL"
   examples:
+    - "%command_prefix%DEL 1"
     - "%command_prefix%DEL #hulp 2"
+    - "%command_prefix%DEL #hulp ALL"
   deleted: "Bericht #%index% verwijderd."
   not_found: "Bericht #%index% niet gevonden."
+  all_deleted: "Alle berichten in deze inbox zijn verwijderd."
+  none_to_delete: "Er zijn geen berichten om te verwijderen."
 
 # --- IGNORE -------------------------------------------------------------------
 ignore:
@@ -193,6 +197,8 @@ help:
 
 # --- NOTIFY -------------------------------------------------------------------
 notify:
+  nick_received: "Je hebt een nieuwe memo van %sender% ontvangen. Lees deze met /msg %bot% %list%"
+  channel_received: "Er is een nieuwe memo van %sender% voor %channel%. Lees deze met /msg %bot% %list%"
   nick_pending: "Je hebt %count% ongelezen bericht(en). Toon de berichten: /msg %bot% %list%"
   channel_pending: "Kanaal %channel% heeft %count% ongelezen bericht(en). Bekijk berichten met /msg %bot% %list%"
 

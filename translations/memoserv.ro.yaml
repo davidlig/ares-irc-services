@@ -65,14 +65,20 @@ list:
 
 # --- DEL ----------------------------------------------------------------------
 del:
-  syntax: "DEL [#canal] <număr>"
+  syntax: "DEL [#canal] {număr|ALL}"
   short: "Ștergeți un mesaj după număr."
-  help: "Șterge mesajul cu numărul specificat. Pentru canale necesită nivel MEMOCHANGE."
-  example: "%command_prefix%DEL 1"
+  help: |-
+    Șterge un mesaj după număr sau golește căsuța cu ALL. Pentru canale este
+    necesar nivelul MEMOCHANGE.
+  example: "%command_prefix%DEL ALL"
   examples:
+    - "%command_prefix%DEL 1"
     - "%command_prefix%DEL #ayuda 2"
+    - "%command_prefix%DEL #ayuda ALL"
   deleted: "Mesajul #%index% a fost șters."
   not_found: "Mesajul #%index% nu a fost găsit."
+  all_deleted: "Toate mesajele din această căsuță au fost șterse."
+  none_to_delete: "Nu există mesaje de șters."
 
 # --- IGNORE -------------------------------------------------------------------
 ignore:
@@ -193,6 +199,8 @@ help:
 
 # --- NOTIFY -------------------------------------------------------------------
 notify:
+  nick_received: "Ai primit un mesaj nou de la %sender%. Citește-l cu /msg %bot% %list%"
+  channel_received: "A sosit un mesaj nou de la %sender% pentru %channel%. Citește-l cu /msg %bot% %list%"
   nick_pending: "Ai %count% mesaj(e) necitit(e). Listează mesajele: /msg %bot% %list%"
   channel_pending: "Canalul %channel% are %count% mesaj(e) necitit(e). Verifică mesajele cu /msg %bot% %list%"
 

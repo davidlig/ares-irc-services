@@ -53,14 +53,20 @@ list:
 
 # --- DEL ----------------------------------------------------------------------
 del:
-  syntax: "DEL [#canal] <número>"
+  syntax: "DEL [#canal] {número|ALL}"
   short: "Elimina un mensaje por número."
-  help: "Elimina el mensaje con el número indicado. En canales requiere nivel MEMOCHANGE."
-  example: "%command_prefix%DEL 1"
+  help: |-
+    Elimina un mensaje por número o usa ALL para vaciar la bandeja. En canales
+    requiere el nivel MEMOCHANGE.
+  example: "%command_prefix%DEL ALL"
   examples:
+    - "%command_prefix%DEL 1"
     - "%command_prefix%DEL #ayuda 2"
+    - "%command_prefix%DEL #ayuda ALL"
   deleted: "Mensaje #%index% eliminado."
   not_found: "Mensaje #%index% no encontrado."
+  all_deleted: "Se han eliminado todos los mensajes de esta bandeja."
+  none_to_delete: "No hay mensajes que eliminar."
 
 # --- IGNORE -------------------------------------------------------------------
 ignore:
@@ -176,6 +182,8 @@ help:
 
 # --- NOTIFY -------------------------------------------------------------------
 notify:
+  nick_received: "Has recibido un nuevo mensaje de %sender%. Léelo con /msg %bot% %list%"
+  channel_received: "Ha llegado un nuevo mensaje de %sender% para %channel%. Léelo con /msg %bot% %list%"
   nick_pending: "Tienes %count% mensaje(s) pendiente(s) de leer. Para listar los mensajes: /msg %bot% %list%"
   channel_pending: "El canal %channel% tiene %count% mensaje(s) pendiente(s) de leer. Revisa los mensajes con /msg %bot% %list%"
 

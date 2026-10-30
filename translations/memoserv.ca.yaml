@@ -65,16 +65,20 @@ list:
 
 # --- DEL ----------------------------------------------------------------------
 del:
-  syntax: "DEL [#channel] <number>"
+  syntax: "DEL [#channel] {number|ALL}"
   short: "Esborrar un missatge per número."
   help: |-
-    Esborra el missatge amb el número indicat. Per als
-    canals, cal tenir el nivell MEMOCHANGE.
-  example: "%command_prefix%DEL 1"
+    Elimina un missatge pel número o utilitza ALL per buidar la bústia. En
+    canals requereix el nivell MEMOCHANGE.
+  example: "%command_prefix%DEL ALL"
   examples:
+    - "%command_prefix%DEL 1"
     - "%command_prefix%DEL #ajuda 2"
+    - "%command_prefix%DEL #ajuda ALL"
   deleted: "Missatge #%index% esborrat."
   not_found: "Missatge #%index% no trobat."
+  all_deleted: "S’han eliminat tots els missatges d’aquesta bústia."
+  none_to_delete: "No hi ha missatges per eliminar."
 
 # --- IGNORE -------------------------------------------------------------------
 ignore:
@@ -192,6 +196,8 @@ help:
 
 # --- NOTIFY -------------------------------------------------------------------
 notify:
+  nick_received: "Has rebut un missatge nou de %sender%. Llegeix-lo amb /msg %bot% %list%"
+  channel_received: "Ha arribat un missatge nou de %sender% per a %channel%. Llegeix-lo amb /msg %bot% %list%"
   nick_pending: "Tens %count% missatge(s) pendent(s) de llegir. Per llistar els missatges: /msg %bot% %list%"
   channel_pending: "El canal %channel% té %count% missatge(s) pendent(s) de llegir. Consulta els missatges amb /msg %bot% %list%"
 

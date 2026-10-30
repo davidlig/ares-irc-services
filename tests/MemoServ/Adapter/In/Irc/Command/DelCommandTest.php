@@ -24,6 +24,7 @@ use PHPUnit\Framework\TestCase;
 use Stringable;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function count;
 use function implode;
 use function is_scalar;
 use function ksort;
@@ -208,6 +209,33 @@ final class DelCommandTest extends TestCase
         $command->execute($context);
 
         self::assertSame(['error.insufficient_access [%channel%: #Ares, %operation%: DEL]'], $replies);
+    }
+
+    #[Test]
+    public function acceptsMixedCaseAllForPersonalAndChannelInboxes(): void
+    {
+        foreach ([['aLl'], ['#room', 'ALL']] as $args) {
+            $handler = $this->createMock(DelMemoHandlerInterface::class);
+            $handler->expects(self::once())->method('handle')->with(self::callback(static fn (DelMemo $input): bool => $input->all && 1 === $input->senderNickId && $input->channelName === (2 === count($args) ? '#room' : null)))->willReturn(DelMemoResult::allDeleted());
+            $replies = [];
+            new DelCommand($handler)->execute($this->createContext(new SenderView('UID', 'Nick', 'i', 'h', 'c', 'ip'), new MemoAccountView(1, 'Nick', 'en'), $args, $replies));
+            self::assertSame(['del.all_deleted'], $replies);
+        }
+    }
+
+    #[Test]
+    public function reportsEmptyInboxAsInformation(): void
+    {
+        $handler = $this->createStub(DelMemoHandlerInterface::class);
+        $handler->method('handle')->willReturn(DelMemoResult::empty());
+        $sent = [];
+        $notifier = $this->createStub(MemoServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $uid, string $message) use (&$sent): void { $sent[] = $message; });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnArgument(0);
+        $context = new MemoServContext(new SenderView('UID', 'Nick', 'i', 'h', 'c', 'ip'), new MemoAccountView(1, 'Nick', 'en'), 'DEL', ['ALL'], $notifier, $translator, 'en', 'UTC', 'NOTICE', new MemoServCommandRegistry([]), $this->createServiceNicks(), new IrcRenderer(new FixedStyleProvider(new PresentationStyle(markers: ['information' => 'i', 'success' => '+', 'error' => '!']))));
+        new DelCommand($handler)->execute($context);
+        self::assertSame(['i del.none_to_delete'], $sent);
     }
 
     private function createServiceNicks(): ServiceNicknameRegistry

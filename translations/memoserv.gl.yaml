@@ -65,14 +65,20 @@ list:
 
 # --- DEL ----------------------------------------------------------------------
 del:
-  syntax: "DEL [#canle] <número>"
+  syntax: "DEL [#canle] {número|ALL}"
   short: "Eliminar unha mensaxe polo número."
-  help: "Elimina a mensaxe co número indicado. Para canles require nivel MEMOCHANGE."
-  example: "%command_prefix%DEL 1"
+  help: |-
+    Elimina unha mensaxe polo seu número ou usa ALL para baleirar a caixa. Nas
+    canles require o nivel MEMOCHANGE.
+  example: "%command_prefix%DEL ALL"
   examples:
+    - "%command_prefix%DEL 1"
     - "%command_prefix%DEL #axuda 2"
+    - "%command_prefix%DEL #axuda ALL"
   deleted: "Mensaxe nº%index% eliminada."
   not_found: "Mensaxe nº%index% non atopada."
+  all_deleted: "Elimináronse todas as mensaxes desta caixa."
+  none_to_delete: "Non hai mensaxes para eliminar."
 
 # --- IGNORE -------------------------------------------------------------------
 ignore:
@@ -190,6 +196,8 @@ help:
 
 # --- NOTIFY -------------------------------------------------------------------
 notify:
+  nick_received: "Recibiches unha nova mensaxe de %sender%. Lea con /msg %bot% %list%"
+  channel_received: "Chegou unha nova mensaxe de %sender% para %channel%. Lea con /msg %bot% %list%"
   nick_pending: "Tes %count% mensaxe(s) pendente(s) de ler. Para listalas: /msg %bot% %list%"
   channel_pending: "A canle %channel% ten %count% mensaxe(s) pendente(s) de ler. Consulta as mensaxes con /msg %bot% %list%"
 

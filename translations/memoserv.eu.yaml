@@ -65,14 +65,20 @@ list:
 
 # --- DEL ----------------------------------------------------------------------
 del:
-  syntax: "DEL [#kanala] <zenbakia>"
+  syntax: "DEL [#kanala] {zenbakia|ALL}"
   short: "Ezabatu mezu bat zenbakiaren arabera."
-  help: "Emandako zenbakiko mezua ezabatzen du. Kanalentzat MEMOCHANGE maila behar du."
-  example: "%command_prefix%DEL 1"
+  help: |-
+    Mezu bat zenbakiaren arabera ezabatzen du; ALL aukerak sarrera ontzia husten
+    du. Kanaletan MEMOCHANGE maila behar da.
+  example: "%command_prefix%DEL ALL"
   examples:
+    - "%command_prefix%DEL 1"
     - "%command_prefix%DEL #laguntza 2"
+    - "%command_prefix%DEL #laguntza ALL"
   deleted: "#%index% mezua ezabatu da."
   not_found: "#%index% mezua ez da aurkitu."
+  all_deleted: "Sarrera ontzi honetako mezu guztiak ezabatu dira."
+  none_to_delete: "Ez dago ezabatzeko mezurik."
 
 # --- IGNORE -------------------------------------------------------------------
 ignore:
@@ -186,6 +192,8 @@ help:
 
 # --- NOTIFY -------------------------------------------------------------------
 notify:
+  nick_received: "%sender% erabiltzailearen mezu berri bat jaso duzu. Irakurtzeko: /msg %bot% %list%"
+  channel_received: "%sender% erabiltzailearen mezu berri bat iritsi da %channel% kanalerako. Irakurtzeko: /msg %bot% %list%"
   nick_pending: "%count% mezu irakurtzeke dituzu. Zerrendatzeko: /msg %bot% %list%"
   channel_pending: "%channel% kanalak %count% mezu irakurtzeke ditu. Erabili /msg %bot% %list%"
 

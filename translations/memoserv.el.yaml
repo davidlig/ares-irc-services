@@ -65,16 +65,20 @@ list:
 
 # --- DEL ----------------------------------------------------------------------
 del:
-  syntax: "DEL [#channel] <number>"
+  syntax: "DEL [#channel] {number|ALL}"
   short: "Διαγραφή μηνύματος με αριθμό."
   help: |-
-    Διαγράφει το μήνυμα με τον δοσμένο αριθμό. Για κανάλια απαιτεί επίπεδο
-    MEMOCHANGE.
-  example: "%command_prefix%DEL 1"
+    Διαγράφει ένα μήνυμα με τον αριθμό του ή αδειάζει τη θυρίδα με ALL. Για
+    κανάλια απαιτείται το επίπεδο MEMOCHANGE.
+  example: "%command_prefix%DEL ALL"
   examples:
+    - "%command_prefix%DEL 1"
     - "%command_prefix%DEL #βοήθεια 2"
+    - "%command_prefix%DEL #βοήθεια ALL"
   deleted: "Το μήνυμα #%index% διαγράφηκε."
   not_found: "Το μήνυμα #%index% δεν βρέθηκε."
+  all_deleted: "Διαγράφηκαν όλα τα μηνύματα αυτής της θυρίδας."
+  none_to_delete: "Δεν υπάρχουν μηνύματα για διαγραφή."
 
 # --- IGNORE -------------------------------------------------------------------
 ignore:
@@ -191,6 +195,8 @@ help:
 
 # --- NOTIFY -------------------------------------------------------------------
 notify:
+  nick_received: "Έλαβες νέο μήνυμα από τον χρήστη %sender%. Διάβασέ το με /msg %bot% %list%"
+  channel_received: "Έφτασε νέο μήνυμα από τον χρήστη %sender% για το %channel%. Διάβασέ το με /msg %bot% %list%"
   nick_pending: "Έχετε %count% μη αναγνωσμένο(α) μήνυμα(τα). Για λίστα: /msg %bot% %list%"
   channel_pending: "Το κανάλι %channel% έχει %count% μη αναγνωσμένο(α) μήνυμα(τα). Ελέγξτε τα μηνύματα με /msg %bot% %list%"
 
