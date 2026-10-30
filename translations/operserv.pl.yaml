@@ -16,11 +16,11 @@
 # Przykłady HELP: example/examples i %command_prefix%.
 # Prezenter dodaje /msg bez koloru i margines dwóch spacji.
 
-# --- ERROR -----------------------------------------------------------------
+# --- ERROR --------------------------------------------------------------------
 error:
   root_only: "Ta komenda jest dostępna tylko dla administratorów root sieci."
 
-# --- HELP ------------------------------------------------------------------
+# --- HELP ---------------------------------------------------------------------
 help:
   syntax: "HELP [komenda] [opcja]"
   short: "Lista komend lub pomoc dla komendy."
@@ -57,7 +57,7 @@ help:
     low_level: "Niski poziom"
   ircop_header: "Dostępne komendy dla operatorów IRC:"
 
-# --- IRCOP -----------------------------------------------------------------
+# --- IRCOP --------------------------------------------------------------------
 ircop:
   syntax: "IRCOP {ADD <nick> <rola>|DEL <nick>|LIST}"
   short: "Zarządzaj operatorami IRC sieci."
@@ -110,7 +110,7 @@ ircop:
     header: "Operatorzy IRC Sieci"
     empty: "Brak operatorów IRC."
 
-# --- ROLE ------------------------------------------------------------------
+# --- ROLE ---------------------------------------------------------------------
 role:
   # --- ROLE OPERCLASS ------------------------------------------------------
   operclass:
@@ -311,7 +311,7 @@ role:
       cleared: "Usunięto wymuszony wzorzec vhost z roli %role%."
       invalid: "Nieprawidłowy wzorzec vhost. Dozwolone znaki: a-z, A-Z, 0-9, - i .. Musi mieć co najmniej jedną kropkę, nie może zaczynać/kończyć się - lub . ani mieć .."
 
-# --- KILL ------------------------------------------------------------------
+# --- KILL ---------------------------------------------------------------------
 kill:
   syntax: "KILL <nick> <powód>"
   short: "Wymuś rozłączenie użytkownika z sieci."
@@ -323,7 +323,7 @@ kill:
   protected_ircop: "Nie można zabić operatora IRC %nickname%."
   done: "Użytkownik %nickname% został zabity (%reason%)."
 
-# --- GLINE -----------------------------------------------------------------
+# --- GLINE --------------------------------------------------------------------
 gline:
   syntax: "GLINE {ADD <maska> <wygaśnięcie> <powód>|DEL {<maska>|<numer>}|LIST [maska]}"
   short: "Zarządzaj globalnymi G-line'ami w sieci."
@@ -387,7 +387,49 @@ gline:
     empty: "Brak G-line'ów."
     entry: "%index%. %mask% - %reason% (%nickname%, wygasa: %expiration%)"
 
-# --- GLOBAL ----------------------------------------------------------------
+# --- BADMAIL ------------------------------------------------------------------
+badmail:
+  syntax: "BADMAIL {ADD <domena> <powód>|DEL {numer|ALL}|LIST <wzorzec> [strona]}"
+  short: "Zarządzaj zablokowanymi domenami email."
+  help: |-
+    Zarządzaj zablokowanymi domenami email.
+  example: "%command_prefix%BADMAIL LIST *"
+  add:
+    syntax: "BADMAIL ADD <domena> <powód>"
+    short: "Zablokuj domenę."
+    help: |-
+      Akceptuje domeny ASCII lub punycode, nie adresy ani wzorce. Wymagany
+      jest powód. Blokada jest dokładna i nie obejmuje subdomen.
+    example: "%command_prefix%BADMAIL ADD example.org abuse"
+  del:
+    syntax: "BADMAIL DEL {numer|ALL}"
+    short: "Usuń blokady domen."
+    help: |-
+      Usuń stały identyfikator lub wszystkie wpisy za pomocą ALL. Inne
+      identyfikatory pozostają bez zmian.
+    example: "%command_prefix%BADMAIL DEL 1"
+  list:
+    syntax: "BADMAIL LIST <wzorzec> [strona]"
+    short: "Wyświetl zablokowane domeny."
+    help: |-
+      Wzorzec jest wymagany. Tylko * jest symbolem wieloznacznym dla
+      dowolnego ciągu. Wielkość liter nie ma znaczenia. Opcjonalna strona
+      zaczyna się od 1. Filtrowanie i stronicowanie zachowują
+      identyfikatory.
+    example: "%command_prefix%BADMAIL LIST *.org 2"
+  invalid_domain: "Nieprawidłowa domena. Użyj ASCII lub punycode bez końcowej kropki."
+  invalid_reason: "Wymagany jest niepusty powód administracyjny w jednym wierszu."
+  duplicate: "Ta domena jest już zablokowana."
+  not_found: "Nie ma zablokowanej domeny o tym identyfikatorze."
+  added: "Zablokowano domenę %domain%."
+  deleted: "Usunięto blokadę %id%."
+  cleared: "Usunięto %total% zablokowanych domen."
+  empty: "Brak pasujących zablokowanych domen."
+  header: "ID | Domena | Powód"
+  page: "Strona %page%/%pages%, %total% pasujących domen."
+  row: "%id% | %domain% | %reason%"
+
+# --- GLOBAL -------------------------------------------------------------------
 global:
   syntax: "GLOBAL {serwis|nick!ident@vhost} {PRIVMSG|NOTICE} <wiadomość>"
   short: "Wyślij globalną wiadomość do wszystkich połączonych użytkowników."
@@ -411,35 +453,7 @@ global:
   type_invalid: "Typ wiadomości musi być PRIVMSG lub NOTICE."
   done: "Globalna wiadomość wysłana z %nickname% do %count% użytkowników."
 
-# --- RAW -------------------------------------------------------------------
-raw:
-  syntax: "RAW <linia>"
-  short: "Wyślij surową linię protokołu do IRCd."
-  help: |-
-    Wysyła wskazaną linię bezpośrednio do gniazda połączonego IRCd.
-    Używaj z najwyższą ostrożnością. Nieprawidłowe linie protokołu mogą zablokować
-    sieć.
-  example: "%command_prefix%RAW :services.ares NOTICE * :Zaplanowana konserwacja"
-  empty: "Musisz podać niepustą linię do wysłania."
-  too_long: "Linia jest za długa. Maksymalnie 510 znaków."
-  not_connected: "Brak połączenia z IRCd."
-  done: "Surowa linia wysłana."
-  protocol:
-    syntax: "Aktywny protokół odrzucił składnię komendy RAW."
-    done: "Wykonano komendę RAW obsługiwaną przez protokół."
-    target: "Aktywny protokół odrzucił cel %target%."
-    unsupported: "Aktywny protokół nie obsługuje tej komendy RAW."
-    invalid_resource_type: "Nieznany typ zasobu protokołu: %resource_type%."
-    invalid_resource: "Nieprawidłowy zasób protokołu: %resource%."
-    invalid_value: "Nieprawidłowa wartość zasobu protokołu: %resource%."
-    error: "Aktywny protokół nie mógł wykonać komendy RAW."
-
-# --- DEBUG -----------------------------------------------------------------
-debug:
-  action_global: "%operator% wykonuje komendę GLOBAL z nickiem %target% przez %type% do %count% użytkowników. Wiadomość: %message%"
-  prefix_message: "Wiadomość: %reason%"
-
-# --- MOTD ------------------------------------------------------------------
+# --- MOTD ---------------------------------------------------------------------
 motd:
   short: "Zarządzaj wiadomościami MOTD wysyłanymi użytkownikom przy połączeniu."
   syntax: "MOTD {ADD <cel> {PRIVMSG|NOTICE} <wygaśnięcie> <wiadomość>|DEL <id>|LIST|CLEAN}"
@@ -497,44 +511,30 @@ motd:
   debug:
     finalized: "Wiadomość MOTD #%id% zakończyła się: [%type%] %message% | %date% | %shown_count%"
 
-# --- BADMAIL ---------------------------------------------------------------
-badmail:
-  syntax: "BADMAIL {ADD <domena> <powód>|DEL {numer|ALL}|LIST <wzorzec> [strona]}"
-  short: "Zarządzaj zablokowanymi domenami email."
+# --- RAW ----------------------------------------------------------------------
+raw:
+  syntax: "RAW <linia>"
+  short: "Wyślij surową linię protokołu do IRCd."
   help: |-
-    Zarządzaj zablokowanymi domenami email.
-  example: "%command_prefix%BADMAIL LIST *"
-  add:
-    syntax: "BADMAIL ADD <domena> <powód>"
-    short: "Zablokuj domenę."
-    help: |-
-      Akceptuje domeny ASCII lub punycode, nie adresy ani wzorce. Wymagany
-      jest powód. Blokada jest dokładna i nie obejmuje subdomen.
-    example: "%command_prefix%BADMAIL ADD example.org abuse"
-  del:
-    syntax: "BADMAIL DEL {numer|ALL}"
-    short: "Usuń blokady domen."
-    help: |-
-      Usuń stały identyfikator lub wszystkie wpisy za pomocą ALL. Inne
-      identyfikatory pozostają bez zmian.
-    example: "%command_prefix%BADMAIL DEL 1"
-  list:
-    syntax: "BADMAIL LIST <wzorzec> [strona]"
-    short: "Wyświetl zablokowane domeny."
-    help: |-
-      Wzorzec jest wymagany. Tylko * jest symbolem wieloznacznym dla
-      dowolnego ciągu. Wielkość liter nie ma znaczenia. Opcjonalna strona
-      zaczyna się od 1. Filtrowanie i stronicowanie zachowują
-      identyfikatory.
-    example: "%command_prefix%BADMAIL LIST *.org 2"
-  invalid_domain: "Nieprawidłowa domena. Użyj ASCII lub punycode bez końcowej kropki."
-  invalid_reason: "Wymagany jest niepusty powód administracyjny w jednym wierszu."
-  duplicate: "Ta domena jest już zablokowana."
-  not_found: "Nie ma zablokowanej domeny o tym identyfikatorze."
-  added: "Zablokowano domenę %domain%."
-  deleted: "Usunięto blokadę %id%."
-  cleared: "Usunięto %total% zablokowanych domen."
-  empty: "Brak pasujących zablokowanych domen."
-  header: "ID | Domena | Powód"
-  page: "Strona %page%/%pages%, %total% pasujących domen."
-  row: "%id% | %domain% | %reason%"
+    Wysyła wskazaną linię bezpośrednio do gniazda połączonego IRCd.
+    Używaj z najwyższą ostrożnością. Nieprawidłowe linie protokołu mogą zablokować
+    sieć.
+  example: "%command_prefix%RAW :services.ares NOTICE * :Zaplanowana konserwacja"
+  empty: "Musisz podać niepustą linię do wysłania."
+  too_long: "Linia jest za długa. Maksymalnie 510 znaków."
+  not_connected: "Brak połączenia z IRCd."
+  done: "Surowa linia wysłana."
+  protocol:
+    syntax: "Aktywny protokół odrzucił składnię komendy RAW."
+    done: "Wykonano komendę RAW obsługiwaną przez protokół."
+    target: "Aktywny protokół odrzucił cel %target%."
+    unsupported: "Aktywny protokół nie obsługuje tej komendy RAW."
+    invalid_resource_type: "Nieznany typ zasobu protokołu: %resource_type%."
+    invalid_resource: "Nieprawidłowy zasób protokołu: %resource%."
+    invalid_value: "Nieprawidłowa wartość zasobu protokołu: %resource%."
+    error: "Aktywny protokół nie mógł wykonać komendy RAW."
+
+# --- DEBUG --------------------------------------------------------------------
+debug:
+  action_global: "%operator% wykonuje komendę GLOBAL z nickiem %target% przez %type% do %count% użytkowników. Wiadomość: %message%"
+  prefix_message: "Wiadomość: %reason%"

@@ -16,11 +16,11 @@
 # HELP adibideak: example/examples eta %command_prefix%.
 # Aurkezleak kolorerik gabeko /msg eta bi zuriuneko marjina gehitzen ditu.
 
-# --- ERROR -----------------------------------------------------------------
+# --- ERROR --------------------------------------------------------------------
 error:
   root_only: "Komando hau sareko root administratzaileentzat mugatuta dago."
 
-# --- HELP ------------------------------------------------------------------
+# --- HELP ---------------------------------------------------------------------
 help:
   syntax: "HELP [komandoa] [aukera]"
   short: "Zerrendatu komandoak edo erakutsi komando baten laguntza."
@@ -57,7 +57,7 @@ help:
     low_level: "Behe-maila"
   ircop_header: "IRC operadoreentzako komando erabilgarriak:"
 
-# --- IRCOP -----------------------------------------------------------------
+# --- IRCOP --------------------------------------------------------------------
 ircop:
   syntax: "IRCOP {ADD <ezizena> <rola>|DEL <ezizena>|LIST}"
   short: "Kudeatu sareko IRC operadoreak."
@@ -110,7 +110,7 @@ ircop:
     header: "Sareko IRC Operadoreak"
     empty: "Ez dago IRC operadorerik."
 
-# --- ROLE ------------------------------------------------------------------
+# --- ROLE ---------------------------------------------------------------------
 role:
   # --- ROLE OPERCLASS ------------------------------------------------------
   operclass:
@@ -312,7 +312,7 @@ role:
       cleared: "%role% rolaren behartutako vhost eredua kendu da."
       invalid: "Vhost eredu baliogabea. Karaktere baliozkoak: a-z, A-Z, 0-9, - eta .. Gutxienez puntu bat eduki behar du, ezin da - edo .-z hasi/amaitu ezta .. eduki ere."
 
-# --- KILL ------------------------------------------------------------------
+# --- KILL ---------------------------------------------------------------------
 kill:
   syntax: "KILL <ezizena> <arrazoia>"
   short: "Behartu erabiltzaile bat saretik deskonektatzera."
@@ -328,7 +328,7 @@ kill:
   protected_ircop: "Ezin da IRC operadore %nickname% kill bidez deskonektatu."
   done: "%nickname% erabiltzailea kill bidez deskonektatu da (%reason%)."
 
-# --- GLINE -----------------------------------------------------------------
+# --- GLINE --------------------------------------------------------------------
 gline:
   syntax: "GLINE {ADD <maskara> <iraungitzea> <arrazoia>|DEL {<maskara>|<zenbakia>}|LIST [maskara]}"
   short: "Kudeatu sare osoko G-lineak."
@@ -398,7 +398,50 @@ gline:
     empty: "Ez dago G-linearik."
     entry: "%index%. %mask% - %reason% (%nickname%, iraungitzea: %expiration%)"
 
-# --- GLOBAL ----------------------------------------------------------------
+# --- BADMAIL ------------------------------------------------------------------
+badmail:
+  syntax: "BADMAIL {ADD <domeinua> <arrazoia>|DEL {zenbakia|ALL}|LIST <eredua> [orria]}"
+  short: "Blokeatutako posta-domeinuak kudeatu."
+  help: |-
+    Blokeatutako posta-domeinuak kudeatu.
+  example: "%command_prefix%BADMAIL LIST *"
+  add:
+    syntax: "BADMAIL ADD <domeinua> <arrazoia>"
+    short: "Domeinu bat blokeatu."
+    help: |-
+      ASCII edo punycode domeinuak onartzen ditu, ez helbideak edo ereduak.
+      Arrazoia derrigorrezkoa da. Blokeoa zehatza da eta ez ditu
+      azpidomeinuak hartzen.
+    example: "%command_prefix%BADMAIL ADD example.org abuse"
+  del:
+    syntax: "BADMAIL DEL {zenbakia|ALL}"
+    short: "Domeinuen blokeoak kendu."
+    help: |-
+      Ezabatu identifikatzaile iraunkor bat edo sarrera guztiak ALL
+      erabiliz. Beste identifikatzaileak ez dira aldatzen.
+    example: "%command_prefix%BADMAIL DEL 1"
+  list:
+    syntax: "BADMAIL LIST <eredua> [orria]"
+    short: "Blokeatutako domeinuak zerrendatu."
+    help: |-
+      Eredua derrigorrezkoa da. * da komodin bakarra eta edozein
+      sekuentziarekin bat dator. Ez ditu maiuskulak bereizten. Aukerako
+      orria 1ean hasten da. Identifikatzaileak mantentzen dira iragaztean
+      eta orrialdekatzean.
+    example: "%command_prefix%BADMAIL LIST *.org 2"
+  invalid_domain: "Domeinu baliogabea. Erabili ASCII edo punycode, amaierako punturik gabe."
+  invalid_reason: "Lerro bakarreko administrazio-arrazoi ez hutsa behar da."
+  duplicate: "Domeinu hau dagoeneko blokeatuta dago."
+  not_found: "Ez dago identifikatzaile hori duen domeinu blokeaturik."
+  added: "%domain% domeinua blokeatu da."
+  deleted: "%id% domeinu-blokeoa kendu da."
+  cleared: "%total% domeinu-blokeo kendu dira."
+  empty: "Ez dago bat datorren domeinu blokeaturik."
+  header: "ID | Domeinua | Arrazoia"
+  page: "%page%/%pages% orria, bat datozen %total% domeinu."
+  row: "%id% | %domain% | %reason%"
+
+# --- GLOBAL -------------------------------------------------------------------
 global:
   syntax: "GLOBAL {zerbitzua|nick!ident@vhost} {PRIVMSG|NOTICE} <mezua>"
   short: "Bidali mezu global bat konektatutako erabiltzaile guztiei."
@@ -430,35 +473,7 @@ global:
   type_invalid: "Mezu motak PRIVMSG edo NOTICE izan behar du."
   done: "Mezu globala %nickname%-(e)tik bidali zaie %count% erabiltzaileri."
 
-# --- RAW -------------------------------------------------------------------
-raw:
-  syntax: "RAW <lerroa>"
-  short: "Bidali protokolo lerro gordin bat IRCd-ra."
-  help: |-
-    Emandako lerroa zuzenean goiko IRCd socket-era bidaltzen du.
-    Muturreko kontuz erabili. Protokolo lerro baliogabeek sarea kraskatu dezakete.
-    Komando honek operserv.raw baimena behar du.
-  example: "%command_prefix%RAW :services.ares NOTICE * :Programatutako mantentze-lanak"
-  empty: "Hutsik ez dagoen lerro bat zehaztu behar duzu bidaltzeko."
-  too_long: "Lerroa luzeegia da. Gehienez 510 karaktere."
-  not_connected: "Ez dago IRCd-ra konektatuta."
-  done: "Lerro gordina bidali da."
-  protocol:
-    syntax: "Protokolo aktiboak RAW komandoaren sintaxia baztertu du."
-    done: "Protokoloak kudeatutako RAW komandoa exekutatu da."
-    target: "Protokolo aktiboak %target% helburua baztertu du."
-    unsupported: "Protokolo aktiboak ez du RAW komando hau onartzen."
-    invalid_resource_type: "Protokolo-baliabide mota ezezaguna: %resource_type%."
-    invalid_resource: "Protokolo-baliabide baliogabea: %resource%."
-    invalid_value: "Protokolo-baliabidearen balio baliogabea: %resource%."
-    error: "Protokolo aktiboak ezin izan du RAW komandoa exekutatu."
-
-# --- DEBUG -----------------------------------------------------------------
-debug:
-  action_global: "%operator%(e)k GLOBAL komandoa exekutatzen du %target% ezizenarekin %type% bidez %count% erabiltzaileri. Mezua: %message%"
-  prefix_message: "Mezua: %reason%"
-
-# --- MOTD ------------------------------------------------------------------
+# --- MOTD ---------------------------------------------------------------------
 motd:
   short: "Kudeatu konexio MOTD mezuak, erabiltzaileei konektatzean bidaliak."
   syntax: "MOTD {ADD <helburua> {PRIVMSG|NOTICE} <iraungitzea> <mezua>|DEL <id>|LIST|CLEAN}"
@@ -526,45 +541,30 @@ motd:
   debug:
     finalized: "#%id% MOTD mezua amaitu da: [%type%] %message% | %date% | %shown_count%"
 
-# --- BADMAIL ---------------------------------------------------------------
-badmail:
-  syntax: "BADMAIL {ADD <domeinua> <arrazoia>|DEL {zenbakia|ALL}|LIST <eredua> [orria]}"
-  short: "Blokeatutako posta-domeinuak kudeatu."
+# --- RAW ----------------------------------------------------------------------
+raw:
+  syntax: "RAW <lerroa>"
+  short: "Bidali protokolo lerro gordin bat IRCd-ra."
   help: |-
-    Blokeatutako posta-domeinuak kudeatu.
-  example: "%command_prefix%BADMAIL LIST *"
-  add:
-    syntax: "BADMAIL ADD <domeinua> <arrazoia>"
-    short: "Domeinu bat blokeatu."
-    help: |-
-      ASCII edo punycode domeinuak onartzen ditu, ez helbideak edo ereduak.
-      Arrazoia derrigorrezkoa da. Blokeoa zehatza da eta ez ditu
-      azpidomeinuak hartzen.
-    example: "%command_prefix%BADMAIL ADD example.org abuse"
-  del:
-    syntax: "BADMAIL DEL {zenbakia|ALL}"
-    short: "Domeinuen blokeoak kendu."
-    help: |-
-      Ezabatu identifikatzaile iraunkor bat edo sarrera guztiak ALL
-      erabiliz. Beste identifikatzaileak ez dira aldatzen.
-    example: "%command_prefix%BADMAIL DEL 1"
-  list:
-    syntax: "BADMAIL LIST <eredua> [orria]"
-    short: "Blokeatutako domeinuak zerrendatu."
-    help: |-
-      Eredua derrigorrezkoa da. * da komodin bakarra eta edozein
-      sekuentziarekin bat dator. Ez ditu maiuskulak bereizten. Aukerako
-      orria 1ean hasten da. Identifikatzaileak mantentzen dira iragaztean
-      eta orrialdekatzean.
-    example: "%command_prefix%BADMAIL LIST *.org 2"
-  invalid_domain: "Domeinu baliogabea. Erabili ASCII edo punycode, amaierako punturik gabe."
-  invalid_reason: "Lerro bakarreko administrazio-arrazoi ez hutsa behar da."
-  duplicate: "Domeinu hau dagoeneko blokeatuta dago."
-  not_found: "Ez dago identifikatzaile hori duen domeinu blokeaturik."
-  added: "%domain% domeinua blokeatu da."
-  deleted: "%id% domeinu-blokeoa kendu da."
-  cleared: "%total% domeinu-blokeo kendu dira."
-  empty: "Ez dago bat datorren domeinu blokeaturik."
-  header: "ID | Domeinua | Arrazoia"
-  page: "%page%/%pages% orria, bat datozen %total% domeinu."
-  row: "%id% | %domain% | %reason%"
+    Emandako lerroa zuzenean goiko IRCd socket-era bidaltzen du.
+    Muturreko kontuz erabili. Protokolo lerro baliogabeek sarea kraskatu dezakete.
+    Komando honek operserv.raw baimena behar du.
+  example: "%command_prefix%RAW :services.ares NOTICE * :Programatutako mantentze-lanak"
+  empty: "Hutsik ez dagoen lerro bat zehaztu behar duzu bidaltzeko."
+  too_long: "Lerroa luzeegia da. Gehienez 510 karaktere."
+  not_connected: "Ez dago IRCd-ra konektatuta."
+  done: "Lerro gordina bidali da."
+  protocol:
+    syntax: "Protokolo aktiboak RAW komandoaren sintaxia baztertu du."
+    done: "Protokoloak kudeatutako RAW komandoa exekutatu da."
+    target: "Protokolo aktiboak %target% helburua baztertu du."
+    unsupported: "Protokolo aktiboak ez du RAW komando hau onartzen."
+    invalid_resource_type: "Protokolo-baliabide mota ezezaguna: %resource_type%."
+    invalid_resource: "Protokolo-baliabide baliogabea: %resource%."
+    invalid_value: "Protokolo-baliabidearen balio baliogabea: %resource%."
+    error: "Protokolo aktiboak ezin izan du RAW komandoa exekutatu."
+
+# --- DEBUG --------------------------------------------------------------------
+debug:
+  action_global: "%operator%(e)k GLOBAL komandoa exekutatzen du %target% ezizenarekin %type% bidez %count% erabiltzaileri. Mezua: %message%"
+  prefix_message: "Mezua: %reason%"

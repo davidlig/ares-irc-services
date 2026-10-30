@@ -4,11 +4,11 @@
 # Translations contain localized text and interpolation parameters only.
 # The presentation engine owns IRC styling and example prefixes.
 
-# --- ERROR -----------------------------------------------------------------
+# --- ERROR --------------------------------------------------------------------
 error:
   root_only: "Este comando está restringido a administradores root de la red."
 
-# --- HELP --------------------------------------------------------------------
+# --- HELP ---------------------------------------------------------------------
 help:
   syntax: "HELP [comando] [opción]"
   short: "Listar comandos o mostrar ayuda de un comando."
@@ -98,7 +98,7 @@ ircop:
     header: "Operadores de Red"
     empty: "No hay operadores de red."
 
-# --- ROLE --------------------------------------------------------------------
+# --- ROLE ---------------------------------------------------------------------
 role:
   # --- ROLE OPERCLASS ------------------------------------------------------
   operclass:
@@ -308,7 +308,7 @@ role:
       cleared: "Eliminado el patrón de vhost forzado del rol %role%."
       invalid: "Patrón de vhost inválido. Caracteres válidos: a-z, A-Z, 0-9, - y .. Debe tener al menos un punto, no puede empezar/terminar con - o . o tener .."
 
-# --- KILL --------------------------------------------------------------------
+# --- KILL ---------------------------------------------------------------------
 kill:
   syntax: "KILL <apodo> <razón>"
   short: "Desconecta forzosamente a un usuario de la red."
@@ -384,6 +384,48 @@ gline:
     empty: "No hay G-lines."
     entry: "%index%. %mask% - %reason% (%nickname%, expira: %expiration%)"
 
+# --- BADMAIL ------------------------------------------------------------------
+badmail:
+  syntax: "BADMAIL {ADD <dominio> <razón>|DEL {número|ALL}|LIST <patrón> [página]}"
+  short: "Administrar dominios de correo bloqueados."
+  help: |-
+    Administrar dominios de correo bloqueados.
+  example: "%command_prefix%BADMAIL LIST *"
+  add:
+    syntax: "BADMAIL ADD <dominio> <razón>"
+    short: "Bloquear un dominio."
+    help: |-
+      Acepta dominios ASCII o punycode, no direcciones ni patrones. La
+      razón es obligatoria. El bloqueo es exacto y no incluye subdominios.
+    example: "%command_prefix%BADMAIL ADD example.org abuse"
+  del:
+    syntax: "BADMAIL DEL {número|ALL}"
+    short: "Eliminar dominios bloqueados."
+    help: |-
+      Elimina un identificador permanente o todas las entradas con ALL. Los
+      demás identificadores no cambian.
+    example: "%command_prefix%BADMAIL DEL 1"
+  list:
+    syntax: "BADMAIL LIST <patrón> [página]"
+    short: "Listar dominios bloqueados."
+    help: |-
+      El patrón es obligatorio. Solo * es un comodín y coincide con
+      cualquier secuencia. No distingue mayúsculas. La página opcional
+      empieza en 1. El filtro y las páginas conservan los identificadores
+      permanentes.
+    example: "%command_prefix%BADMAIL LIST *.org 2"
+  invalid_domain: "Dominio inválido. Usa ASCII o punycode, sin punto final."
+  invalid_reason: "Se requiere una razón administrativa no vacía y de una sola línea."
+  duplicate: "Este dominio ya está bloqueado."
+  not_found: "No existe un dominio bloqueado con ese identificador."
+  added: "Dominio %domain% bloqueado."
+  deleted: "Dominio bloqueado %id% eliminado."
+  cleared: "Se han eliminado %total% dominios bloqueados."
+  empty: "Ningún dominio bloqueado coincide."
+  header: "ID | Dominio | Razón"
+  page: "Página %page%/%pages%, %total% dominios coincidentes."
+  row: "%id% | %domain% | %reason%"
+
 # --- GLOBAL -------------------------------------------------------------------
 global:
   syntax: "GLOBAL {servicio|apodo!ident@vhost} {PRIVMSG|NOTICE} <mensaje>"
@@ -408,35 +450,7 @@ global:
   type_invalid: "El tipo de mensaje debe ser PRIVMSG o NOTICE."
   done: "Mensaje global enviado desde %nickname% a %count% usuarios."
 
-# --- RAW ---------------------------------------------------------------------
-raw:
-  syntax: "RAW <línea>"
-  short: "Envía una línea de protocolo cruda al IRCd."
-  help: |-
-    Envía la línea indicada directamente al socket del IRCd de enlace.
-    Úsalo con extrema precaución. Líneas de protocolo inválidas pueden bloquear la
-    red.
-  example: "%command_prefix%RAW :services.ares NOTICE * :Mantenimiento programado"
-  empty: "Debes especificar una línea no vacía para enviar."
-  too_long: "La línea es demasiado larga. Máximo 510 caracteres."
-  not_connected: "No conectado al IRCd."
-  done: "Línea cruda enviada."
-  protocol:
-    syntax: "El protocolo activo rechazó la sintaxis del comando RAW."
-    done: "Comando RAW gestionado por el protocolo ejecutado."
-    target: "El protocolo activo rechazó el destino %target%."
-    unsupported: "El protocolo activo no admite este comando RAW."
-    invalid_resource_type: "Tipo de recurso de protocolo desconocido: %resource_type%."
-    invalid_resource: "Recurso de protocolo no válido: %resource%."
-    invalid_value: "Valor no válido para el recurso de protocolo: %resource%."
-    error: "El protocolo activo no pudo ejecutar el comando RAW."
-
-# --- DEBUG -------------------------------------------------------------------
-debug:
-  action_global: "%operator% ejecuta el comando GLOBAL con el apodo %target% mediante %type% a %count% usuarios. Mensaje: %message%"
-  prefix_message: "Mensaje: %reason%"
-
-# --- MOTD ----------------------------------------------------------------------
+# --- MOTD ---------------------------------------------------------------------
 motd:
   short: "Gestiona mensajes MOTD que se envían a usuarios al conectar."
   syntax: "MOTD {ADD <destino> {PRIVMSG|NOTICE} <expiración> <mensaje>|DEL <id>|LIST|CLEAN}"
@@ -496,44 +510,30 @@ motd:
   debug:
     finalized: "El mensaje #%id% MOTD ha finalizado: [%type%] %message% | %date% | %shown_count%"
 
-# --- BADMAIL ---------------------------------------------------------------
-badmail:
-  syntax: "BADMAIL {ADD <dominio> <razón>|DEL {número|ALL}|LIST <patrón> [página]}"
-  short: "Administrar dominios de correo bloqueados."
+# --- RAW ----------------------------------------------------------------------
+raw:
+  syntax: "RAW <línea>"
+  short: "Envía una línea de protocolo cruda al IRCd."
   help: |-
-    Administrar dominios de correo bloqueados.
-  example: "%command_prefix%BADMAIL LIST *"
-  add:
-    syntax: "BADMAIL ADD <dominio> <razón>"
-    short: "Bloquear un dominio."
-    help: |-
-      Acepta dominios ASCII o punycode, no direcciones ni patrones. La
-      razón es obligatoria. El bloqueo es exacto y no incluye subdominios.
-    example: "%command_prefix%BADMAIL ADD example.org abuse"
-  del:
-    syntax: "BADMAIL DEL {número|ALL}"
-    short: "Eliminar dominios bloqueados."
-    help: |-
-      Elimina un identificador permanente o todas las entradas con ALL. Los
-      demás identificadores no cambian.
-    example: "%command_prefix%BADMAIL DEL 1"
-  list:
-    syntax: "BADMAIL LIST <patrón> [página]"
-    short: "Listar dominios bloqueados."
-    help: |-
-      El patrón es obligatorio. Solo * es un comodín y coincide con
-      cualquier secuencia. No distingue mayúsculas. La página opcional
-      empieza en 1. El filtro y las páginas conservan los identificadores
-      permanentes.
-    example: "%command_prefix%BADMAIL LIST *.org 2"
-  invalid_domain: "Dominio inválido. Usa ASCII o punycode, sin punto final."
-  invalid_reason: "Se requiere una razón administrativa no vacía y de una sola línea."
-  duplicate: "Este dominio ya está bloqueado."
-  not_found: "No existe un dominio bloqueado con ese identificador."
-  added: "Dominio %domain% bloqueado."
-  deleted: "Dominio bloqueado %id% eliminado."
-  cleared: "Se han eliminado %total% dominios bloqueados."
-  empty: "Ningún dominio bloqueado coincide."
-  header: "ID | Dominio | Razón"
-  page: "Página %page%/%pages%, %total% dominios coincidentes."
-  row: "%id% | %domain% | %reason%"
+    Envía la línea indicada directamente al socket del IRCd de enlace.
+    Úsalo con extrema precaución. Líneas de protocolo inválidas pueden bloquear la
+    red.
+  example: "%command_prefix%RAW :services.ares NOTICE * :Mantenimiento programado"
+  empty: "Debes especificar una línea no vacía para enviar."
+  too_long: "La línea es demasiado larga. Máximo 510 caracteres."
+  not_connected: "No conectado al IRCd."
+  done: "Línea cruda enviada."
+  protocol:
+    syntax: "El protocolo activo rechazó la sintaxis del comando RAW."
+    done: "Comando RAW gestionado por el protocolo ejecutado."
+    target: "El protocolo activo rechazó el destino %target%."
+    unsupported: "El protocolo activo no admite este comando RAW."
+    invalid_resource_type: "Tipo de recurso de protocolo desconocido: %resource_type%."
+    invalid_resource: "Recurso de protocolo no válido: %resource%."
+    invalid_value: "Valor no válido para el recurso de protocolo: %resource%."
+    error: "El protocolo activo no pudo ejecutar el comando RAW."
+
+# --- DEBUG --------------------------------------------------------------------
+debug:
+  action_global: "%operator% ejecuta el comando GLOBAL con el apodo %target% mediante %type% a %count% usuarios. Mensaje: %message%"
+  prefix_message: "Mensaje: %reason%"

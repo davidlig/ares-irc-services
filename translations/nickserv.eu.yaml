@@ -16,7 +16,7 @@
 # HELP adibideak: example/examples eta %command_prefix%.
 # Aurkezleak kolorerik gabeko /msg eta bi zuriuneko marjina gehitzen ditu.
 
-# --- REGISTER --------------------------------------------------------------
+# --- REGISTER -----------------------------------------------------------------
 register:
   token_unavailable: !irc |-
     Erregistroa zain dago, baina ezin izan da tokena bidali.
@@ -50,69 +50,7 @@ register:
   throttled: "%minutes% minutu itxaron behar duzu berriro erregistratzen saiatu aurretik."
   guest_prefix_forbidden: "Ezin duzu %prefix% aurrizkiarekin hasten den ezizenik erregistratu."
 
-# --- VERIFY ----------------------------------------------------------------
-verify:
-  syntax: "VERIFY <token>"
-  short: "Erregistroa edo erreskate-tokena berresten du."
-  help: |-
-    Balioztatu ondoren, token hau berreskuratze-token iraunkorra izango da.
-    Gorde leku seguruan: ezizena berreskuratzeko erabil dezakezu.
-    %duration%ko iraungitzea balioztatu aurretik bakarrik aplikatzen da.
-  example: "%command_prefix%VERIFY <jasotako_tokena>"
-  success: "%nickname% ezizena arrakastaz erregistratu da eta orain identifikatuta zaude."
-  success_native: "%nickname% ezizena behar bezala erregistratu da. Erabili behean agertzen den jatorrizko autentifikazioa."
-  invalid_token: "Erreskate-tokena baliogabea da."
-  no_pending: "Ez duzu egiaztatzeko zain dagoen erregistrorik."
-
-# --- RESEND ----------------------------------------------------------------
-resend:
-  disabled: "Ezin duzu beste tokenik eskatu %resend% erabiliz, erregistro honek tokena zuzenean txatez bidaltzen duelako."
-  syntax: "RESEND"
-  short: "Berbidali egiaztapen tokena zure posta elektronikora."
-  help: |-
-    RESEND erabilgarri dago egiaztapen-tokena postaz bidali bada soilik.
-    Balioztatu ondoren, token hau berreskuratze-token iraunkorra izango da.
-    Gorde leku seguruan, ezizena berreskuratzeko erabil dezakezu.
-    %duration%ko iraungitzea balioztatu aurretik bakarrik aplikatzen da.
-    RESEND erabilita token berria jasoko duzu postaz.
-    Zain dagoen erregistroaren epea %duration%z berrituko da.
-  example: "%command_prefix%RESEND"
-  success: "Egiaztapen tokena %email% helbidera berbidali da."
-  no_pending: "Ez duzu egiaztatzeko zain dagoen erregistrorik."
-  throttled: "%minutes% minutu itxaron behar duzu beste egiaztapen posta elektroniko bat eskatu aurretik."
-
-# --- RECOVER ---------------------------------------------------------------
-recover:
-  no_email: "Ez dago posta elektronikorik ezarrita %nickname% ezizenarentzat. Berreskurapena ez dago erabilgarri."
-  email_sent: "Berreskuratze token bat bidali da %email_hint% helbidera. Egiaztatu sarrera-ontzia (eta spam karpeta)."
-  pending_deletion: "%nickname% ezizena ezabatzeko zain dago eta ezin da berreskuratu."
-  instructions: "EMAIL: %command_0% komandoak behin-behineko tokena eskatzen du postaz. TOKEN: eman berretsitako tokena. %command_1% komandoak posta-token balioduna edo berretsitakoa onartzen du. Postakoak gordetakoa balioztatu ondoren bakarrik ordezten du. Gordetakoak aukerako ordezkapena eskaintzen du %command_2% bidez; ez ikusi egin mezua mantentzeko."
-  instructions_command_0: "RECOVER %nickname%"
-  instructions_command_1: "RECOVER %nickname% <token>"
-  instructions_command_2: "VERIFY"
-  syntax: "RECOVER <ezizena> [tokena]"
-  short: "Berreskuratu zure ezizena pasahitza galdu baduzu."
-  help: |-
-    EMAIL: RECOVER <nickname> komandoak behin-behineko tokena eskatzen du postaz.
-    TOKEN: eman berretsitako tokena. RECOVER <nickname> <token> komandoak
-    posta-token balioduna edo berretsitakoa onartzen du. Postakoak gordetakoa
-    balioztatu ondoren bakarrik ordezten du. Gordetakoak aukerako ordezkapena
-    eskaintzen du VERIFY bidez; ez ikusi egin mezua mantentzeko.
-  example: "%command_prefix%RECOVER Erabiltzailea"
-  examples:
-    - "%command_prefix%RECOVER Erabiltzailea <jasotako_tokena>"
-  pending: "%nickname% ezizenaren erregistroa zain dago. Erabili %command_0%. %command_1% erabilgarri dago REGMODE EMAIL denean eta baliozko posta-helbidea esleituta dagoenean bakarrik."
-  pending_command_0: "VERIFY <token>"
-  pending_command_1: "RESEND"
-  suspended: "%nickname% ezizena etenda dago. Arrazoia: %reason%"
-  forbidden: "%nickname% ezizena ezin da sare honetan erabili."
-  throttled: "Token oker gehiegi. Saiatu berriro %minutes% minutu barru."
-  invalid_token: "Erreskate-tokena baliogabea da."
-  success_identify: "Pasahitza berrezarrita. Identifikatu orain: %identify_cmd%"
-  success_then_change: "Ondoren aldatu zure pasahitza: /msg %bot% %command_0%"
-  success_then_change_command_0: "SET PASSWORD <pasahitz_berria>"
-
-# --- IDENTIFY --------------------------------------------------------------
+# --- IDENTIFY -----------------------------------------------------------------
 identify:
   syntax: "IDENTIFY <ezizena> <pasahitza>"
   short: "Identifikatu zeure burua ezizen baten jabe gisa."
@@ -151,104 +89,69 @@ identify:
   forbidden: "%nickname% ezizena ezin da sare honetan erabili."
   pending_deletion: "%nickname% ezizena ezabatzearen zain dago eta ezin da erabili."
 
-# --- STATUS ----------------------------------------------------------------
-status:
-  syntax: "STATUS <ezizena>"
-  short: "Erakutsi ezizen baten erregistro egoera."
+# --- VERIFY -------------------------------------------------------------------
+verify:
+  syntax: "VERIFY <token>"
+  short: "Erregistroa edo erreskate-tokena berresten du."
   help: |-
-    Ezizen baten uneko egoera erakusten du: erregistratua, egiaztapena zain,
-    etenda, edo debekatua.
-  example: "%command_prefix%STATUS Erabiltzailea"
-  header: "%nickname% ezizenaren egoera"
-  unregistered: "  Egoera          : Erregistratu gabe"
-  not_registered_offline: "  Egoera          : %state%"
-  value_not_registered_offline: "Erregistratu gabe"
-  pending: "  Egoera          : %state%"
-  value_pending: "Egiaztapena zain"
-  pending_expires: "  Iraungitzea      : %minutes% minutu"
-  pending_expires_at: "  Iraungitzea      : %date%"
-  not_connected: "  Egoera          : %state%"
-  value_not_connected: "Konektatu gabe"
-  not_identified: "  Egoera          : %state%"
-  value_not_identified: "Identifikatu gabe"
-  identified: "  Egoera          : %state%"
-  value_identified: "Identifikatua"
-  suspended: "  Egoera          : %state%"
-  value_suspended: "Etenda"
-  suspended_reason: "  Arrazoia          : %reason%"
-  suspended_until: "  Amaiera         : %date%"
-  suspended_permanent: "  Amaiera         : Iraunkorra"
-  forbidden: "  Egoera          : %state%"
-  value_forbidden: "Debekatua"
-  forbidden_reason: "  Arrazoia          : %reason%"
-  pending_deletion: "  %label%          : %state%"
-  value_pending_deletion: "Ezabatzearen zain"
-  label_pending_deletion: "Egoera"
-  pending_deletion_at: "  %label%       : %date%"
+    Balioztatu ondoren, token hau berreskuratze-token iraunkorra izango da.
+    Gorde leku seguruan: ezizena berreskuratzeko erabil dezakezu.
+    %duration%ko iraungitzea balioztatu aurretik bakarrik aplikatzen da.
+  example: "%command_prefix%VERIFY <jasotako_tokena>"
+  success: "%nickname% ezizena arrakastaz erregistratu da eta orain identifikatuta zaude."
+  success_native: "%nickname% ezizena behar bezala erregistratu da. Erabili behean agertzen den jatorrizko autentifikazioa."
+  invalid_token: "Erreskate-tokena baliogabea da."
+  no_pending: "Ez duzu egiaztatzeko zain dagoen erregistrorik."
 
-  label_pending_deletion_at: "Ezabatuta"
-# --- INFO ------------------------------------------------------------------
-info:
-  syntax: "INFO <ezizena>"
-  short: "Erakutsi erregistratutako ezizen bati buruzko informazioa."
+# --- RESEND -------------------------------------------------------------------
+resend:
+  disabled: "Ezin duzu beste tokenik eskatu %resend% erabiliz, erregistro honek tokena zuzenean txatez bidaltzen duelako."
+  syntax: "RESEND"
+  short: "Berbidali egiaztapen tokena zure posta elektronikora."
   help: |-
-    Ezizen baten erregistro xehetasunak erakusten ditu: erregistro data,
-    konexio egoera, azken irteera mezua, eta posta elektronikoko helbidea.
-    Posta jabeak identifikatuta daudenean soilik ikus dezake.
-    PRIVATE ON dagoenean jabeak eta IRC Operadoreek soilik
-    ikus dezakete informazioa.
-  example: "%command_prefix%INFO Erabiltzailea"
-  private: "%nickname% ezizenaren informazioa pribatua da."
-  header: "%nickname% ezizenaren informazioa"
-  status: "%label%             : %status%"
-  label_status: "Egoera"
-  status_registered: "Erregistratua"
-  status_suspended: "Etenda"
-  status_forbidden: "Debekatua"
-  status_pending_deletion: "Ezabatzearen zain"
-  reason: "%label%           : %reason%"
-  label_reason: "Arrazoia"
-  suspended_until: "%label%            : %date%"
-  label_suspended_until: "Amaiera"
-  suspended_permanent: "%label%            : Iraunkorra"
-  label_suspended_permanent: "Amaiera"
-  registered_at: "%label%      : %date%"
-  label_registered_at: "Erregistratua"
-  last_seen_online: "%label%     : %online%"
-  label_last_seen_online: "Azken konexioa"
-  value_last_seen_online: "ORAIN ONLINE"
-  last_seen_at: "%label%     : %date%"
-  label_last_seen_at: "Azken konexioa"
-  last_seen_never: "%label%     : Inoiz ez"
-  label_last_seen_never: "Azken konexioa"
-  last_quit: "%label%      : %message%"
-  label_last_quit: "Azken irteera"
-  last_connect: "%label%     : %ip% (%host%)"
-  label_last_connect: "Azken konexioa"
-  language: "%label%          : %language%"
-  label_language: "Hizkuntza"
-  email: "%label%              : %email%"
-  label_email: "Posta"
-  vhost: "%label%              : %vhost%"
-  label_vhost: "VHost"
-  no_expire: "%label%  : Bai"
-  label_no_expire: "Iraungitzen ez da"
-  pending_deletion_at: "%label%              : %date%"
-  label_pending_deletion_at: "Ezabatuta"
-  pending_deletion_until: "%label%           : %date%"
-  label_pending_deletion_until: "Behin betiko"
-  pending_deletion_notice: "%notice%"
-  value_pending_deletion_notice: "Izen hau ezabatzearen zain dago eta ezin da erregistratu."
-  channels_header: |-
+    RESEND erabilgarri dago egiaztapen-tokena postaz bidali bada soilik.
+    Balioztatu ondoren, token hau berreskuratze-token iraunkorra izango da.
+    Gorde leku seguruan, ezizena berreskuratzeko erabil dezakezu.
+    %duration%ko iraungitzea balioztatu aurretik bakarrik aplikatzen da.
+    RESEND erabilita token berria jasoko duzu postaz.
+    Zain dagoen erregistroaren epea %duration%z berrituko da.
+  example: "%command_prefix%RESEND"
+  success: "Egiaztapen tokena %email% helbidera berbidali da."
+  no_pending: "Ez duzu egiaztatzeko zain dagoen erregistrorik."
+  throttled: "%minutes% minutu itxaron behar duzu beste egiaztapen posta elektroniko bat eskatu aurretik."
 
-    Sarbidea duten kanalak:
-  channels_entry_founder: "%channel% (%role%)"
-  channels_role_founder: "Sortzailea"
-  channels_entry_successor: "%channel% (%role%)"
-  channels_role_successor: "Ondorengoa"
-  channels_entry_access: "%channel% (%level%)"
+# --- RECOVER ------------------------------------------------------------------
+recover:
+  no_email: "Ez dago posta elektronikorik ezarrita %nickname% ezizenarentzat. Berreskurapena ez dago erabilgarri."
+  email_sent: "Berreskuratze token bat bidali da %email_hint% helbidera. Egiaztatu sarrera-ontzia (eta spam karpeta)."
+  pending_deletion: "%nickname% ezizena ezabatzeko zain dago eta ezin da berreskuratu."
+  instructions: "EMAIL: %command_0% komandoak behin-behineko tokena eskatzen du postaz. TOKEN: eman berretsitako tokena. %command_1% komandoak posta-token balioduna edo berretsitakoa onartzen du. Postakoak gordetakoa balioztatu ondoren bakarrik ordezten du. Gordetakoak aukerako ordezkapena eskaintzen du %command_2% bidez; ez ikusi egin mezua mantentzeko."
+  instructions_command_0: "RECOVER %nickname%"
+  instructions_command_1: "RECOVER %nickname% <token>"
+  instructions_command_2: "VERIFY"
+  syntax: "RECOVER <ezizena> [tokena]"
+  short: "Berreskuratu zure ezizena pasahitza galdu baduzu."
+  help: |-
+    EMAIL: RECOVER <nickname> komandoak behin-behineko tokena eskatzen du postaz.
+    TOKEN: eman berretsitako tokena. RECOVER <nickname> <token> komandoak
+    posta-token balioduna edo berretsitakoa onartzen du. Postakoak gordetakoa
+    balioztatu ondoren bakarrik ordezten du. Gordetakoak aukerako ordezkapena
+    eskaintzen du VERIFY bidez; ez ikusi egin mezua mantentzeko.
+  example: "%command_prefix%RECOVER Erabiltzailea"
+  examples:
+    - "%command_prefix%RECOVER Erabiltzailea <jasotako_tokena>"
+  pending: "%nickname% ezizenaren erregistroa zain dago. Erabili %command_0%. %command_1% erabilgarri dago REGMODE EMAIL denean eta baliozko posta-helbidea esleituta dagoenean bakarrik."
+  pending_command_0: "VERIFY <token>"
+  pending_command_1: "RESEND"
+  suspended: "%nickname% ezizena etenda dago. Arrazoia: %reason%"
+  forbidden: "%nickname% ezizena ezin da sare honetan erabili."
+  throttled: "Token oker gehiegi. Saiatu berriro %minutes% minutu barru."
+  invalid_token: "Erreskate-tokena baliogabea da."
+  success_identify: "Pasahitza berrezarrita. Identifikatu orain: %identify_cmd%"
+  success_then_change: "Ondoren aldatu zure pasahitza: /msg %bot% %command_0%"
+  success_then_change_command_0: "SET PASSWORD <pasahitz_berria>"
 
-# --- SET -------------------------------------------------------------------
+# --- SET ----------------------------------------------------------------------
 set:
   syntax: "SET {PASSWORD <pasahitz_berria>|EMAIL <email> <token>|LANGUAGE <kodea>|TIMEZONE <ordu-zona>|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost-a]}"
   short: "Aldatu zure ezizenaren aukerak."
@@ -394,7 +297,303 @@ set:
     taken: "Vhost hori jada beste ezizen batek erabiltzen du."
     forced: "Zure vhost-a automatikoki konfiguratuta dago eta ezin da SET VHOST bidez aldatu."
 
-# --- SAREGISTER ------------------------------------------------------------
+# --- INFO ---------------------------------------------------------------------
+info:
+  syntax: "INFO <ezizena>"
+  short: "Erakutsi erregistratutako ezizen bati buruzko informazioa."
+  help: |-
+    Ezizen baten erregistro xehetasunak erakusten ditu: erregistro data,
+    konexio egoera, azken irteera mezua, eta posta elektronikoko helbidea.
+    Posta jabeak identifikatuta daudenean soilik ikus dezake.
+    PRIVATE ON dagoenean jabeak eta IRC Operadoreek soilik
+    ikus dezakete informazioa.
+  example: "%command_prefix%INFO Erabiltzailea"
+  private: "%nickname% ezizenaren informazioa pribatua da."
+  header: "%nickname% ezizenaren informazioa"
+  status: "%label%             : %status%"
+  label_status: "Egoera"
+  status_registered: "Erregistratua"
+  status_suspended: "Etenda"
+  status_forbidden: "Debekatua"
+  status_pending_deletion: "Ezabatzearen zain"
+  reason: "%label%           : %reason%"
+  label_reason: "Arrazoia"
+  suspended_until: "%label%            : %date%"
+  label_suspended_until: "Amaiera"
+  suspended_permanent: "%label%            : Iraunkorra"
+  label_suspended_permanent: "Amaiera"
+  registered_at: "%label%      : %date%"
+  label_registered_at: "Erregistratua"
+  last_seen_online: "%label%     : %online%"
+  label_last_seen_online: "Azken konexioa"
+  value_last_seen_online: "ORAIN ONLINE"
+  last_seen_at: "%label%     : %date%"
+  label_last_seen_at: "Azken konexioa"
+  last_seen_never: "%label%     : Inoiz ez"
+  label_last_seen_never: "Azken konexioa"
+  last_quit: "%label%      : %message%"
+  label_last_quit: "Azken irteera"
+  last_connect: "%label%     : %ip% (%host%)"
+  label_last_connect: "Azken konexioa"
+  language: "%label%          : %language%"
+  label_language: "Hizkuntza"
+  email: "%label%              : %email%"
+  label_email: "Posta"
+  vhost: "%label%              : %vhost%"
+  label_vhost: "VHost"
+  no_expire: "%label%  : Bai"
+  label_no_expire: "Iraungitzen ez da"
+  pending_deletion_at: "%label%              : %date%"
+  label_pending_deletion_at: "Ezabatuta"
+  pending_deletion_until: "%label%           : %date%"
+  label_pending_deletion_until: "Behin betiko"
+  pending_deletion_notice: "%notice%"
+  value_pending_deletion_notice: "Izen hau ezabatzearen zain dago eta ezin da erregistratu."
+  channels_header: |-
+
+    Sarbidea duten kanalak:
+  channels_entry_founder: "%channel% (%role%)"
+  channels_role_founder: "Sortzailea"
+  channels_entry_successor: "%channel% (%role%)"
+  channels_role_successor: "Ondorengoa"
+  channels_entry_access: "%channel% (%level%)"
+
+# --- STATUS -------------------------------------------------------------------
+status:
+  syntax: "STATUS <ezizena>"
+  short: "Erakutsi ezizen baten erregistro egoera."
+  help: |-
+    Ezizen baten uneko egoera erakusten du: erregistratua, egiaztapena zain,
+    etenda, edo debekatua.
+  example: "%command_prefix%STATUS Erabiltzailea"
+  header: "%nickname% ezizenaren egoera"
+  unregistered: "  Egoera          : Erregistratu gabe"
+  not_registered_offline: "  Egoera          : %state%"
+  value_not_registered_offline: "Erregistratu gabe"
+  pending: "  Egoera          : %state%"
+  value_pending: "Egiaztapena zain"
+  pending_expires: "  Iraungitzea      : %minutes% minutu"
+  pending_expires_at: "  Iraungitzea      : %date%"
+  not_connected: "  Egoera          : %state%"
+  value_not_connected: "Konektatu gabe"
+  not_identified: "  Egoera          : %state%"
+  value_not_identified: "Identifikatu gabe"
+  identified: "  Egoera          : %state%"
+  value_identified: "Identifikatua"
+  suspended: "  Egoera          : %state%"
+  value_suspended: "Etenda"
+  suspended_reason: "  Arrazoia          : %reason%"
+  suspended_until: "  Amaiera         : %date%"
+  suspended_permanent: "  Amaiera         : Iraunkorra"
+  forbidden: "  Egoera          : %state%"
+  value_forbidden: "Debekatua"
+  forbidden_reason: "  Arrazoia          : %reason%"
+  pending_deletion: "  %label%          : %state%"
+  value_pending_deletion: "Ezabatzearen zain"
+  label_pending_deletion: "Egoera"
+  pending_deletion_at: "  %label%       : %date%"
+
+  label_pending_deletion_at: "Ezabatuta"
+
+# --- HELP ---------------------------------------------------------------------
+help:
+  syntax: "HELP [komandoa]"
+  short: "Erakutsi %nickserv% komandoentzako laguntza."
+  help: |-
+    %nickserv% laguntza orokorra edo komando zehatz baten
+    informazio zehatza erakusten du.
+  examples_header: "Adibideak:"
+  example: "%command_prefix%HELP"
+  examples:
+    - "%command_prefix%HELP SET"
+    - "%command_prefix%HELP SET EMAIL"
+    - "%command_prefix%HELP SET TIMEZONE Europe"
+  header_title: "%bot%"
+  header: "%title%"
+  navigation_marker: ""
+  info_marker: ""
+  error_marker: ""
+  warning_marker: ""
+  intro: |-
+    Zure ezizena erregistratu eta babesteko aukera ematen du, beste erabiltzaileek
+    erabil ez dezaten. Kudeatu zure kontuaren segurtasuna, pertsonalizatu zure
+    hobespenak eta berreskuratu sarbidea behar duzunean.
+  intro_expiration: "%label%: %duration% baino gehiagoz erabiltzen ez diren ezizenak automatikoki ezabatuko dira."
+  intro_expiration_duration: "%days% egun"
+  intro_expiration_label: "OHARRA"
+  general_header: "Komando erabilgarriak:"
+  command_line: "%command%%description%"
+  subcommand_line: "%command%%description%"
+  options_header: "Aukerak:"
+  general_syntax: "HELP <komandoa>"
+  general_footer: "Erabili /msg %bot% %syntax% informazio gehiago lortzeko."
+  set_sub_syntax: "HELP %command% <aukera>"
+  set_sub_footer: "Erabili /msg %bot% %syntax% informazio gehiago lortzeko."
+  syntax_label: "Sintaxia: %syntax%"
+  footer: ""
+  group_header: "%group%"
+  subgroup_header: "%group%"
+  group:
+    registration_auth: "Erregistroa eta autentifikazioa"
+    account_security: "Kontua eta segurtasuna"
+  ircop_group:
+    lookup: "Bilaketa eta ikerketa"
+    account_management: "Kontuen kudeaketa"
+    suspensions_bans: "Etenak eta debekuak"
+    deletion: "Ezabaketa eta leheneratzea"
+  ircop_header: "IRC operadoreentzako komando erabilgarriak:"
+  set_timezone:
+    index_label: "Eskualdeak (erabili %syntax% zerrendarako):"
+    index_syntax: "HELP SET TIMEZONE <eskualdea>"
+    region_header: "%region% eskualdeko ordu-zonak:"
+    region_unknown: "Eskualde ezezaguna. Erabili %syntax% indizerako."
+    region_syntax: "HELP SET TIMEZONE"
+
+# --- NICK PROTECTION ----------------------------------------------------------
+protection:
+  nick_in_use: "%nickname% ezizena erregistratuta dago. Izena aldatuko zaizu identifikatzen ez bazara."
+  renamed_to: |-
+    %guest_nick% izenera aldatu zara. Zure ezizena berreskuratzeko:
+    /msg %bot% %identify%
+  renamed_command: "IDENTIFY %nickname% <pasahitza>"
+  nick_forbidden: "%nickname% ezizena debekatua dago: %reason%"
+
+# --- USERIP (IRCop) -----------------------------------------------------------
+userip:
+  syntax: "USERIP <ezizena>"
+  short: "Lortu ezizenaren benetako IP helbidea eta ostalari izena."
+  help: |-
+    Ezizen baten benetako IP helbidea eta ostalari-izena erakusten ditu.
+    Erabili arduraz: informazio sentikorra da.
+  example: "%command_prefix%USERIP Erabiltzailea"
+  result: "Ezizena: %nickname% | IPa: %ip% | Ostalaria: %host%"
+
+# --- WHOIP (IRCop) ------------------------------------------------------------
+whoip:
+  syntax: "WHOIP <ip>"
+  short: "Bilatu ezizenak azken identifikatutako konexioaren IP helbidearen arabera."
+  help: |-
+    Azken identifikatutako konexioan IP helbide hau erabili zuten ezizen
+    erregistratuak erakusten ditu. Gordetako helbidea zaharkituta egon daiteke.
+  example: "%command_prefix%WHOIP 192.0.2.10"
+  empty: "Ez da IP honekin bat datorren ezizen erregistraturik aurkitu."
+  header: "Bat datozen ezizenak:"
+
+# --- LIST (IRCop) -------------------------------------------------------------
+list:
+  syntax: "LIST <eredua> [orria]"
+  short: "Eredu batekin bat datozen goitizen erregistratuak zerrendatzen ditu."
+  help: |-
+    Ereduarekin bat datozen ezizen erregistratuak zerrendatzen ditu. * komodinak
+    karaktere-segida oro adierazten du; aukerako orria 1etik hasten da.
+  example: "%command_prefix%LIST Erabiltzailea*"
+  examples:
+    - "%command_prefix%LIST Erabiltzailea* 2"
+  header: "Goitizena | Erregistroa | Azken konexioa | IPa | Egoera"
+  row: "%nickname% | %registered% | %last_seen% | %ip% | %status%"
+  empty: "Ez dago %pattern% ereduarekin bat datorren goitizenik."
+  status_pending: "Zain"
+  status_registered: "Erregistratuta"
+
+# --- HISTORY ---
+history:
+  syntax: "HISTORY <ezizena> {ADD <mezua>|DEL <ida>|VIEW [PAGE|ALL]|CLEAR}"
+  short: "Ikusi edo kudeatu ezizenaren ekintza historia."
+  help: |-
+    Ezizen baten ekintza historia kudeatzen du.
+    'nickserv.history' baimena duten IRCopek soilik erabil dezakete komando hau.
+
+    Automatikoki grabatutako ekintzak:
+      SUSPEND, UNSUSPEND, SET PASSWORD, SET EMAIL, SASET PASSWORD,
+      SASET EMAIL, RECOVER
+
+    Sintaxia: HISTORY <ezizena> ADD <mezua>
+            HISTORY <ezizena> DEL <ida>
+            HISTORY <ezizena> VIEW [ORRIA|ALL]
+            HISTORY <ezizena> CLEAR
+
+    Adibideak:
+      HISTORY EzizenBat VIEW
+      HISTORY EzizenBat ADD Erabiltzaile honi buruzko oharra
+      HISTORY EzizenBat VIEW 2
+      HISTORY EzizenBat VIEW ALL
+      HISTORY EzizenBat DEL 123
+      HISTORY EzizenBat CLEAR
+
+    Erabili VIEW historia ikusteko (3 sarrera erakusten ditu lehenetsiz).
+    Erabili VIEW PAGE 2 hurrengo orria ikusteko.
+    Erabili VIEW ALL historia osoa ikusteko.
+    Erabili ADD eskuzko sarrera bat gehitzeko.
+    Erabili DEL ID zehatz baten sarrera ezabatzeko.
+    Erabili CLEAR historia sarrera guztiak ezabatzeko.
+  example: "%command_prefix%HISTORY Erabiltzailea VIEW"
+  examples:
+    - "%command_prefix%HISTORY Erabiltzailea VIEW ALL"
+    - "%command_prefix%HISTORY Erabiltzailea ADD Nota manual"
+
+  # --- HISTORY ADD ---------------------------------------------------------
+  add:
+    syntax: "HISTORY <ezizena> ADD <mezua>"
+    short: "Gehitu eskuzko historia sarrera bat."
+    help: "Eskuzko sarrera bat gehitzen dio ezizenaren historiari."
+    example: "%command_prefix%HISTORY Erabiltzailea ADD Reportado por spam"
+    success: "Historia sarrera gehitu da %nickname% ezizenarentzat."
+
+  # --- HISTORY DEL ---------------------------------------------------------
+  del:
+    syntax: "HISTORY <ezizena> DEL <ida>"
+    short: "Ezabatu historia sarrera bat IDaren arabera."
+    help: "Historiako sarrera zehatz bat ezabatzen du, IDa erabiliz."
+    example: "%command_prefix%HISTORY Erabiltzailea DEL 42"
+
+  # --- HISTORY VIEW --------------------------------------------------------
+  view:
+    syntax: "HISTORY <ezizena> VIEW [ORRIA|ALL]"
+    short: "Ikusi ezizenaren ekintza historia."
+    help: |-
+      Ezizenaren ekintzen historia erakusten du. Lehenespenez hiru sarrera
+      erakusten ditu orrialdeko. Erabili ALL denak ikusteko.
+    example: "%command_prefix%HISTORY Erabiltzailea VIEW"
+    examples:
+      - "%command_prefix%HISTORY Erabiltzailea VIEW 2"
+      - "%command_prefix%HISTORY Erabiltzailea VIEW ALL"
+    header: "%heading% (%total%etik %start%-%end% erakusten):"
+    header_title: "%nickname% ezizenaren historia"
+    entry: "#%id% [%date%] %action% by %operator% — %message%"
+    no_entries: "Ez da historia sarrerarik aurkitu %nickname% ezizenarentzat."
+    page_hint: "Erabili %command% sarrera gehiagotarako."
+    page_hint_command: "HISTORY %nickname% VIEW %next_page%"
+
+  # --- HISTORY CLEAR -------------------------------------------------------
+  clear:
+    syntax: "HISTORY <ezizena> CLEAR"
+    short: "Ezabatu ezizen baten historia sarrera guztiak."
+    help: "Ezizenaren historiako sarrera guztiak modu itzulezinean ezabatzen ditu."
+    example: "%command_prefix%HISTORY Erabiltzailea CLEAR"
+    success: "%count% historia sarrera garbitu dira %nickname% ezizenarentzat."
+
+# --- HISTORY MESSAGES ---
+history.message:
+  verify: "Kontua aktibatu da"
+  resend: "Egiaztapen-mezua berriz bidali da"
+  noexpire_on: "Iraungitze-babesa aktibatu da"
+  noexpire_off: "Iraungitze-babesa desaktibatu da"
+  userip: "USERIP kontsulta"
+  history_clear: "Historia ezabatu da"
+  password_changed_owner: "Pasahitza jabeak aldatua"
+  password_changed_operator: "Pasahitza operadoreak aldatua"
+  email_changed_owner: "Posta %old_email%-(e)tik %new_email%-(e)ra aldatua"
+  email_changed_operator: "Posta %new_email%-(e)ra aldatua operadoreak"
+  recover: "Pasahitza posta tokenaren bidez berrezarria"
+  saregister: "Kontua administratiboki erregistratua"
+
+# --- HISTORY EXTRA FIELDS ---
+history.extra:
+  old_email: "Posta zaharra: %value%"
+  new_email: "Posta berria: %value%"
+  method: "Metodoa: %value%"
+
+# --- SAREGISTER (IRCop) -------------------------------------------------------
 saregister:
   syntax: "SAREGISTER <ezizena> <pasahitza> [email]"
   short: "Ezizen bat administratiboki erregistratu."
@@ -413,7 +612,7 @@ saregister:
   success_email: "%nickname% ezizena erregistratu da. Erreskate-tokena %email% helbidera bidali da."
   invalid_nickname: "%nickname% ezizena ez da baliozkoa."
 
-# --- SASET -----------------------------------------------------------------
+# --- SASET (IRCop) ------------------------------------------------------------
 saset:
   syntax: "SASET <ezizen> {PASSWORD <pasahitz_berria>|EMAIL <posta_berria>|LANGUAGE <kodea>|TIMEZONE {<ordu_zona>|OFF}|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
   short: "Beste ezizen baten ezarpenak aldatu."
@@ -527,91 +726,56 @@ saset:
     examples:
       - "%command_prefix%SASET Erabiltzailea VHOST"
 
-# --- HELP ------------------------------------------------------------------
-help:
-  syntax: "HELP [komandoa]"
-  short: "Erakutsi %nickserv% komandoentzako laguntza."
+# --- RENAME (IRCop) -----------------------------------------------------------
+rename:
+  syntax: "RENAME <ezizena>"
+  short: "Behartu konektatutako ezizen bat ausazko ezizen batera izenaz aldatzea."
   help: |-
-    %nickserv% laguntza orokorra edo komando zehatz baten
-    informazio zehatza erakusten du.
-  examples_header: "Adibideak:"
-  example: "%command_prefix%HELP"
+    Konektatutako ezizen bat sareak zehaztutako aurrizkia duen ausazko izen
+    batera aldatzera behartzen du.
+  example: "%command_prefix%RENAME ArazoSortzailea"
+  cannot_rename_root: "Ezin da root erabiltzaile %nickname% izenaz aldatu."
+  cannot_rename_oper: "Ezin da IRC operadore %nickname% izenaz aldatu."
+  cannot_rename_service: "Ezin da zerbitzu ezizen %nickname% izenaz aldatu."
+  success: "%nickname% ezizena %new_nick% izenera aldatu da."
+
+# --- NOEXPIRE (IRCop) ---------------------------------------------------------
+noexpire:
+  syntax: "NOEXPIRE <ezizena> {ON|OFF}"
+  short: "Ezarri edo kendu iraungitze babesa ezizen batentzat."
+  help: |-
+    Ezizena jarduerarik ezagatik iraungitzen den kontrolatzen du.
+    ONek iraungitzea saihesten du; OFFek ohiko arauak aplikatzen ditu.
+  example: "%command_prefix%NOEXPIRE Erabiltzailea ON"
   examples:
-    - "%command_prefix%HELP SET"
-    - "%command_prefix%HELP SET EMAIL"
-    - "%command_prefix%HELP SET TIMEZONE Europe"
-  header_title: "%bot%"
-  header: "%title%"
-  navigation_marker: ""
-  info_marker: ""
-  error_marker: ""
-  warning_marker: ""
-  intro: |-
-    Zure ezizena erregistratu eta babesteko aukera ematen du, beste erabiltzaileek
-    erabil ez dezaten. Kudeatu zure kontuaren segurtasuna, pertsonalizatu zure
-    hobespenak eta berreskuratu sarbidea behar duzunean.
-  intro_expiration: "%label%: %duration% baino gehiagoz erabiltzen ez diren ezizenak automatikoki ezabatuko dira."
-  intro_expiration_duration: "%days% egun"
-  intro_expiration_label: "OHARRA"
-  general_header: "Komando erabilgarriak:"
-  command_line: "%command%%description%"
-  subcommand_line: "%command%%description%"
-  options_header: "Aukerak:"
-  general_syntax: "HELP <komandoa>"
-  general_footer: "Erabili /msg %bot% %syntax% informazio gehiago lortzeko."
-  set_sub_syntax: "HELP %command% <aukera>"
-  set_sub_footer: "Erabili /msg %bot% %syntax% informazio gehiago lortzeko."
-  syntax_label: "Sintaxia: %syntax%"
-  footer: ""
-  group_header: "%group%"
-  subgroup_header: "%group%"
-  group:
-    registration_auth: "Erregistroa eta autentifikazioa"
-    account_security: "Kontua eta segurtasuna"
-  ircop_group:
-    lookup: "Bilaketa eta ikerketa"
-    account_management: "Kontuen kudeaketa"
-    suspensions_bans: "Etenak eta debekuak"
-    deletion: "Ezabaketa eta leheneratzea"
-  ircop_header: "IRC operadoreentzako komando erabilgarriak:"
-  set_timezone:
-    index_label: "Eskualdeak (erabili %syntax% zerrendarako):"
-    index_syntax: "HELP SET TIMEZONE <eskualdea>"
-    region_header: "%region% eskualdeko ordu-zonak:"
-    region_unknown: "Eskualde ezezaguna. Erabili %syntax% indizerako."
-    region_syntax: "HELP SET TIMEZONE"
+    - "%command_prefix%NOEXPIRE Erabiltzailea OFF"
+  success_on: "%nickname% ezizena iraungitzetik babestuta dago orain."
+  success_off: "%nickname% ezizena normal iraungiko da orain."
+  forbidden: "%nickname% ezizena debekatua dago."
+  suspended: "%nickname% ezizena etenda dago."
 
-# --- NICK PROTECTION -------------------------------------------------------
-protection:
-  nick_in_use: "%nickname% ezizena erregistratuta dago. Izena aldatuko zaizu identifikatzen ez bazara."
-  renamed_to: |-
-    %guest_nick% izenera aldatu zara. Zure ezizena berreskuratzeko:
-    /msg %bot% %identify%
-  renamed_command: "IDENTIFY %nickname% <pasahitza>"
-  nick_forbidden: "%nickname% ezizena debekatua dago: %reason%"
-
-# --- USERIP ----------------------------------------------------------------
-userip:
-  syntax: "USERIP <ezizena>"
-  short: "Lortu ezizenaren benetako IP helbidea eta ostalari izena."
+# --- REGMODE (IRCop) ----------------------------------------------------------
+regmode:
+  syntax: "REGMODE {EMAIL|TOKEN|STATUS}"
+  short: "Sareko erregistro modua kudeatu."
   help: |-
-    Ezizen baten benetako IP helbidea eta ostalari-izena erakusten ditu.
-    Erabili arduraz: informazio sentikorra da.
-  example: "%command_prefix%USERIP Erabiltzailea"
-  result: "Ezizena: %nickname% | IPa: %ip% | Ostalaria: %host%"
+    Kontu berrien erregistro-modua konfiguratzen du.
 
-# --- WHOIP -----------------------------------------------------------------
-whoip:
-  syntax: "WHOIP <ip>"
-  short: "Bilatu ezizenak azken identifikatutako konexioaren IP helbidearen arabera."
-  help: |-
-    Azken identifikatutako konexioan IP helbide hau erabili zuten ezizen
-    erregistratuak erakusten ditu. Gordetako helbidea zaharkituta egon daiteke.
-  example: "%command_prefix%WHOIP 192.0.2.10"
-  empty: "Ez da IP honekin bat datorren ezizen erregistraturik aurkitu."
-  header: "Bat datozen ezizenak:"
+    %emphasis_0% Egiaztapen-tokena erabiltzailearen posta-helbidera bidaltzen du.
+    %emphasis_1% Egiaztapen-tokena zuzenean IRC bidez ematen du.
+    %emphasis_2% Uneko erregistro-modua erakusten du, aldatu gabe.
 
-# --- SUSPEND ---------------------------------------------------------------
+    Zain dauden erregistroek hasierako modua mantentzen dute.
+
+    TOKEN moduan, RESEND desgaituta dago erabiltzaile guztientzat.
+  example: "%command_prefix%REGMODE STATUS"
+  examples:
+    - "%command_prefix%REGMODE EMAIL"
+    - "%command_prefix%REGMODE TOKEN"
+  status: "Uneko erregistro modua: %mode%."
+  changed: "Erregistro modua %mode% modura aldatu da."
+
+# --- SUSPEND (IRCop) ----------------------------------------------------------
 suspend:
   syntax: "SUSPEND <ezizena> <iraupena> <arrazoia>"
   short: "Etten du ezizen bat."
@@ -632,7 +796,7 @@ suspend:
   invalid_duration_format: "<d><o><m>"
   invalid_duration_permanent: "0"
 
-# --- UNSUSPEND -------------------------------------------------------------
+# --- UNSUSPEND (IRCop) --------------------------------------------------------
 unsuspend:
   syntax: "UNSUSPEND <ezizena>"
   short: "Kendu ezizen baten etenaldia."
@@ -646,62 +810,7 @@ unsuspend:
   success: "%nickname% ezizenaren etenaldia kendu da."
   not_suspended: "%nickname% ezizena ez dago etenda."
 
-# --- RENAME ----------------------------------------------------------------
-rename:
-  syntax: "RENAME <ezizena>"
-  short: "Behartu konektatutako ezizen bat ausazko ezizen batera izenaz aldatzea."
-  help: |-
-    Konektatutako ezizen bat sareak zehaztutako aurrizkia duen ausazko izen
-    batera aldatzera behartzen du.
-  example: "%command_prefix%RENAME ArazoSortzailea"
-  cannot_rename_root: "Ezin da root erabiltzaile %nickname% izenaz aldatu."
-  cannot_rename_oper: "Ezin da IRC operadore %nickname% izenaz aldatu."
-  cannot_rename_service: "Ezin da zerbitzu ezizen %nickname% izenaz aldatu."
-  success: "%nickname% ezizena %new_nick% izenera aldatu da."
-
-# --- DROP ------------------------------------------------------------------
-drop:
-  syntax: "DROP <ezizena> [FORCE]"
-  short: "Ezabatu erregistratutako ezizen bat."
-  help: |-
-    Erregistratutako ezizen bat datu-basetik ezabatzen du.
-    Ekintza hau ezin da desegin.
-
-    Erabiltzailea online badago, Guest- ezizen batera aldatuko zaio izena.
-    Root erabiltzaileak eta IRC operadoreak ezin dira ezabatu.
-    Ezin duzu zure ezizena ezabatu.
-
-    Komando honek IRCop baimena behar du: nickserv.drop
-
-    Sintaxia: DROP <ezizena>
-    Adibidea: DROP KontuZaharra
-  force:
-    short: "Ezabatu ezabatzeko zain dagoen ezizena behin betiko."
-  example: "%command_prefix%DROP KontuZaharra"
-  examples:
-    - "%command_prefix%DROP KontuZaharra FORCE"
-  suspended: "%nickname% ezizena etenda dago. Kendu etenaldia lehenik."
-  forbidden: "%nickname% ezizena debekatua dago."
-  cannot_drop_root: "Ezin da root erabiltzaile %nickname% ezabatu."
-  cannot_drop_oper: "Ezin da IRC operadore %nickname% ezabatu."
-  cannot_drop_self: "Ezin duzu zure ezizena ezabatu."
-  success: "%nickname% ezizena ezabatzeko markatua izan da eta grazia aldian berreskura daiteke."
-  force_success: "%nickname% ezizena behin betiko ezabatu da."
-  pending_deletion: "%nickname% ezizena jada ezabatzearen zain dago. Erabili DROP <ezizena> FORCE behin betiko ezabatzeko."
-  cannot_drop_service: "Ezin da zerbitzu ezizen %nickname% ezabatu."
-
-# --- RESTORE ---------------------------------------------------------------
-restore:
-  syntax: "RESTORE <ezizena>"
-  short: "Ezabatzearen zain dagoen ezizena berreskuratu."
-  help: |-
-    Eskuz ezabatutako eta oraindik grazia epearen barruan dagoen ezizena
-    berreskuratzen du. IRCop baimena behar du: nickserv.restore.
-  example: "%command_prefix%RESTORE KontuZaharra"
-  success: "%nickname% ezizena berreskuratu da."
-  not_pending_deletion: "%nickname% ezizena ez dago ezabatzearen zain."
-
-# --- FORBID ----------------------------------------------------------------
+# --- FORBID (IRCop) -----------------------------------------------------------
 forbid:
   syntax: "FORBID <ezizena> <arrazoia>"
   short: "Betirako blokeatu ezizen bat erabilia izatea."
@@ -726,7 +835,7 @@ forbid:
   cannot_forbid_oper: "Ezin da IRC operadore %nickname% debekatu."
   cannot_forbid_service: "Ezin da zerbitzu ezizen %nickname% debekatu."
 
-# --- UNFORBID --------------------------------------------------------------
+# --- UNFORBID (IRCop) ---------------------------------------------------------
 unforbid:
   syntax: "UNFORBID <ezizena>"
   short: "Kendu ezizen debekua."
@@ -741,7 +850,7 @@ unforbid:
   success: "%nickname% ezizena jada ez dago debekatuta."
   not_forbidden: "%nickname% ezizena ez dago debekatuta."
 
-# --- FORBIDVHOST -----------------------------------------------------------
+# --- FORBIDVHOST (IRCop) ------------------------------------------------------
 forbidvhost:
   syntax: "FORBIDVHOST {ADD <eredua>|DEL <eredua>|LIST}"
   short: "Kudeatu debekatutako vhost ereduak."
@@ -786,157 +895,49 @@ forbidvhost:
     entry: "%index%. %pattern% — %nickname%-(e)k (%date%)"
     empty: "Ez dago debekatutako vhost eredurik."
 
-# --- HISTORY ---
-history:
-  syntax: "HISTORY <ezizena> {ADD <mezua>|DEL <ida>|VIEW [PAGE|ALL]|CLEAR}"
-  short: "Ikusi edo kudeatu ezizenaren ekintza historia."
+# --- DROP (IRCop) -------------------------------------------------------------
+drop:
+  syntax: "DROP <ezizena> [FORCE]"
+  short: "Ezabatu erregistratutako ezizen bat."
   help: |-
-    Ezizen baten ekintza historia kudeatzen du.
-    'nickserv.history' baimena duten IRCopek soilik erabil dezakete komando hau.
+    Erregistratutako ezizen bat datu-basetik ezabatzen du.
+    Ekintza hau ezin da desegin.
 
-    Automatikoki grabatutako ekintzak:
-      SUSPEND, UNSUSPEND, SET PASSWORD, SET EMAIL, SASET PASSWORD,
-      SASET EMAIL, RECOVER
+    Erabiltzailea online badago, Guest- ezizen batera aldatuko zaio izena.
+    Root erabiltzaileak eta IRC operadoreak ezin dira ezabatu.
+    Ezin duzu zure ezizena ezabatu.
 
-    Sintaxia: HISTORY <ezizena> ADD <mezua>
-            HISTORY <ezizena> DEL <ida>
-            HISTORY <ezizena> VIEW [ORRIA|ALL]
-            HISTORY <ezizena> CLEAR
+    Komando honek IRCop baimena behar du: nickserv.drop
 
-    Adibideak:
-      HISTORY EzizenBat VIEW
-      HISTORY EzizenBat ADD Erabiltzaile honi buruzko oharra
-      HISTORY EzizenBat VIEW 2
-      HISTORY EzizenBat VIEW ALL
-      HISTORY EzizenBat DEL 123
-      HISTORY EzizenBat CLEAR
-
-    Erabili VIEW historia ikusteko (3 sarrera erakusten ditu lehenetsiz).
-    Erabili VIEW PAGE 2 hurrengo orria ikusteko.
-    Erabili VIEW ALL historia osoa ikusteko.
-    Erabili ADD eskuzko sarrera bat gehitzeko.
-    Erabili DEL ID zehatz baten sarrera ezabatzeko.
-    Erabili CLEAR historia sarrera guztiak ezabatzeko.
-  example: "%command_prefix%HISTORY Erabiltzailea VIEW"
+    Sintaxia: DROP <ezizena>
+    Adibidea: DROP KontuZaharra
+  force:
+    short: "Ezabatu ezabatzeko zain dagoen ezizena behin betiko."
+  example: "%command_prefix%DROP KontuZaharra"
   examples:
-    - "%command_prefix%HISTORY Erabiltzailea VIEW ALL"
-    - "%command_prefix%HISTORY Erabiltzailea ADD Nota manual"
-
-  # --- HISTORY ADD ---------------------------------------------------------
-  add:
-    syntax: "HISTORY <ezizena> ADD <mezua>"
-    short: "Gehitu eskuzko historia sarrera bat."
-    help: "Eskuzko sarrera bat gehitzen dio ezizenaren historiari."
-    example: "%command_prefix%HISTORY Erabiltzailea ADD Reportado por spam"
-    success: "Historia sarrera gehitu da %nickname% ezizenarentzat."
-
-  # --- HISTORY DEL ---------------------------------------------------------
-  del:
-    syntax: "HISTORY <ezizena> DEL <ida>"
-    short: "Ezabatu historia sarrera bat IDaren arabera."
-    help: "Historiako sarrera zehatz bat ezabatzen du, IDa erabiliz."
-    example: "%command_prefix%HISTORY Erabiltzailea DEL 42"
-
-  # --- HISTORY VIEW --------------------------------------------------------
-  view:
-    syntax: "HISTORY <ezizena> VIEW [ORRIA|ALL]"
-    short: "Ikusi ezizenaren ekintza historia."
-    help: |-
-      Ezizenaren ekintzen historia erakusten du. Lehenespenez hiru sarrera
-      erakusten ditu orrialdeko. Erabili ALL denak ikusteko.
-    example: "%command_prefix%HISTORY Erabiltzailea VIEW"
-    examples:
-      - "%command_prefix%HISTORY Erabiltzailea VIEW 2"
-      - "%command_prefix%HISTORY Erabiltzailea VIEW ALL"
-    header: "%heading% (%total%etik %start%-%end% erakusten):"
-    header_title: "%nickname% ezizenaren historia"
-    entry: "#%id% [%date%] %action% by %operator% — %message%"
-    no_entries: "Ez da historia sarrerarik aurkitu %nickname% ezizenarentzat."
-    page_hint: "Erabili %command% sarrera gehiagotarako."
-    page_hint_command: "HISTORY %nickname% VIEW %next_page%"
-
-  # --- HISTORY CLEAR -------------------------------------------------------
-  clear:
-    syntax: "HISTORY <ezizena> CLEAR"
-    short: "Ezabatu ezizen baten historia sarrera guztiak."
-    help: "Ezizenaren historiako sarrera guztiak modu itzulezinean ezabatzen ditu."
-    example: "%command_prefix%HISTORY Erabiltzailea CLEAR"
-    success: "%count% historia sarrera garbitu dira %nickname% ezizenarentzat."
-
-# --- HISTORY MESSAGES ---
-history.message:
-  verify: "Kontua aktibatu da"
-  resend: "Egiaztapen-mezua berriz bidali da"
-  noexpire_on: "Iraungitze-babesa aktibatu da"
-  noexpire_off: "Iraungitze-babesa desaktibatu da"
-  userip: "USERIP kontsulta"
-  history_clear: "Historia ezabatu da"
-  password_changed_owner: "Pasahitza jabeak aldatua"
-  password_changed_operator: "Pasahitza operadoreak aldatua"
-  email_changed_owner: "Posta %old_email%-(e)tik %new_email%-(e)ra aldatua"
-  email_changed_operator: "Posta %new_email%-(e)ra aldatua operadoreak"
-  recover: "Pasahitza posta tokenaren bidez berrezarria"
-  saregister: "Kontua administratiboki erregistratua"
-
-# --- HISTORY EXTRA FIELDS ---
-history.extra:
-  old_email: "Posta zaharra: %value%"
-  new_email: "Posta berria: %value%"
-  method: "Metodoa: %value%"
-
-# --- NOEXPIRE --------------------------------------------------------------
-noexpire:
-  syntax: "NOEXPIRE <ezizena> {ON|OFF}"
-  short: "Ezarri edo kendu iraungitze babesa ezizen batentzat."
-  help: |-
-    Ezizena jarduerarik ezagatik iraungitzen den kontrolatzen du.
-    ONek iraungitzea saihesten du; OFFek ohiko arauak aplikatzen ditu.
-  example: "%command_prefix%NOEXPIRE Erabiltzailea ON"
-  examples:
-    - "%command_prefix%NOEXPIRE Erabiltzailea OFF"
-  success_on: "%nickname% ezizena iraungitzetik babestuta dago orain."
-  success_off: "%nickname% ezizena normal iraungiko da orain."
+    - "%command_prefix%DROP KontuZaharra FORCE"
+  suspended: "%nickname% ezizena etenda dago. Kendu etenaldia lehenik."
   forbidden: "%nickname% ezizena debekatua dago."
-  suspended: "%nickname% ezizena etenda dago."
+  cannot_drop_root: "Ezin da root erabiltzaile %nickname% ezabatu."
+  cannot_drop_oper: "Ezin da IRC operadore %nickname% ezabatu."
+  cannot_drop_self: "Ezin duzu zure ezizena ezabatu."
+  success: "%nickname% ezizena ezabatzeko markatua izan da eta grazia aldian berreskura daiteke."
+  force_success: "%nickname% ezizena behin betiko ezabatu da."
+  pending_deletion: "%nickname% ezizena jada ezabatzearen zain dago. Erabili DROP <ezizena> FORCE behin betiko ezabatzeko."
+  cannot_drop_service: "Ezin da zerbitzu ezizen %nickname% ezabatu."
 
-# --- LIST ------------------------------------------------------------------
-list:
-  syntax: "LIST <eredua> [orria]"
-  short: "Eredu batekin bat datozen goitizen erregistratuak zerrendatzen ditu."
+# --- RESTORE (IRCop) ----------------------------------------------------------
+restore:
+  syntax: "RESTORE <ezizena>"
+  short: "Ezabatzearen zain dagoen ezizena berreskuratu."
   help: |-
-    Ereduarekin bat datozen ezizen erregistratuak zerrendatzen ditu. * komodinak
-    karaktere-segida oro adierazten du; aukerako orria 1etik hasten da.
-  example: "%command_prefix%LIST Erabiltzailea*"
-  examples:
-    - "%command_prefix%LIST Erabiltzailea* 2"
-  header: "Goitizena | Erregistroa | Azken konexioa | IPa | Egoera"
-  row: "%nickname% | %registered% | %last_seen% | %ip% | %status%"
-  empty: "Ez dago %pattern% ereduarekin bat datorren goitizenik."
-  status_pending: "Zain"
-  status_registered: "Erregistratuta"
+    Eskuz ezabatutako eta oraindik grazia epearen barruan dagoen ezizena
+    berreskuratzen du. IRCop baimena behar du: nickserv.restore.
+  example: "%command_prefix%RESTORE KontuZaharra"
+  success: "%nickname% ezizena berreskuratu da."
+  not_pending_deletion: "%nickname% ezizena ez dago ezabatzearen zain."
 
-# --- REGMODE ---------------------------------------------------------------
-regmode:
-  syntax: "REGMODE {EMAIL|TOKEN|STATUS}"
-  short: "Sareko erregistro modua kudeatu."
-  help: |-
-    Kontu berrien erregistro-modua konfiguratzen du.
-
-    %emphasis_0% Egiaztapen-tokena erabiltzailearen posta-helbidera bidaltzen du.
-    %emphasis_1% Egiaztapen-tokena zuzenean IRC bidez ematen du.
-    %emphasis_2% Uneko erregistro-modua erakusten du, aldatu gabe.
-
-    Zain dauden erregistroek hasierako modua mantentzen dute.
-
-    TOKEN moduan, RESEND desgaituta dago erabiltzaile guztientzat.
-  example: "%command_prefix%REGMODE STATUS"
-  examples:
-    - "%command_prefix%REGMODE EMAIL"
-    - "%command_prefix%REGMODE TOKEN"
-  status: "Uneko erregistro modua: %mode%."
-  changed: "Erregistro modua %mode% modura aldatu da."
-
-# --- RESCUE ----------------------------------------------------------------
+# --- RESCUE -------------------------------------------------------------------
 rescue:
   issued: |-
     Erreskate-tokena: %token_display%
@@ -964,7 +965,7 @@ rescue:
   replacement_unavailable: "Pasahitza berrezarri da, baina ezin izan da token berririk eman. Oraingo tokenak balio du oraindik."
   temporarily_unavailable: "Berreskuratze-tokenaren bidalketa ez dago une honetan erabilgarri. Saiatu geroago."
 
-# --- HELP FRAGMENTS ---------------------------------------------------------
+# --- HELP FRAGMENTS -----------------------------------------------------------
 help_fragments:
   identify_help_0: "+r"
   set_language_help_0: "ca"

@@ -16,7 +16,7 @@
 # Exemples HELP: example/examples i %command_prefix%.
 # El presentador afegeix /msg sense color i un marge de dos espais.
 
-# --- SEND ------------------------------------------------------------------
+# --- SEND ---------------------------------------------------------------------
 send:
   syntax: "SEND {nickname|#channel} <message>"
   short: "Enviar un missatge a un sobrenom o canal."
@@ -35,7 +35,7 @@ send:
   message_too_long: "Missatge massa llarg. El màxim és %max% caràcters."
   service_disabled_for_target: "El servei de missatges està desactivat per a %target%."
 
-# --- READ ------------------------------------------------------------------
+# --- READ ---------------------------------------------------------------------
 read:
   syntax: "READ [#channel] <number>"
   short: "Llegir un missatge per número."
@@ -49,7 +49,7 @@ read:
   footer: "%separator% %date%"
   not_found: "Missatge #%index% no trobat."
 
-# --- LIST ------------------------------------------------------------------
+# --- LIST ---------------------------------------------------------------------
 list:
   syntax: "LIST [#channel]"
   short: "Llistar missatges (no llegits marcats amb * vermell)."
@@ -63,7 +63,7 @@ list:
   header: "Missatges per a %target%:"
   empty: "No hi ha missatges per a %target%."
 
-# --- DEL -------------------------------------------------------------------
+# --- DEL ----------------------------------------------------------------------
 del:
   syntax: "DEL [#channel] <number>"
   short: "Esborrar un missatge per número."
@@ -76,7 +76,7 @@ del:
   deleted: "Missatge #%index% esborrat."
   not_found: "Missatge #%index% no trobat."
 
-# --- IGNORE ----------------------------------------------------------------
+# --- IGNORE -------------------------------------------------------------------
 ignore:
   syntax: "IGNORE {ADD [#channel] <nickname>|DEL [#channel] <nickname>|LIST [#channel]}"
   short: "Gestionar la llista d'ignorats per a missatges."
@@ -126,7 +126,7 @@ ignore:
   list_empty: "La llista d'ignorats és buida."
   list_header: "Llista d'ignorats:"
 
-# --- ENABLE ----------------------------------------------------------------
+# --- ENABLE -------------------------------------------------------------------
 enable:
   syntax: "ENABLE [#channel]"
   short: "Activar la recepció de missatges."
@@ -142,7 +142,7 @@ enable:
   already_enabled_channel: "El servei de missatges ja està activat per a %channel%."
   founder_only: "Només el fundador del canal pot activar els missatges per a %channel%."
 
-# --- DISABLE ---------------------------------------------------------------
+# --- DISABLE ------------------------------------------------------------------
 disable:
   syntax: "DISABLE [#channel]"
   short: "Desactivar la recepció de missatges."
@@ -158,7 +158,7 @@ disable:
   already_disabled_channel: "El servei de missatges ja està desactivat per a %channel%."
   founder_only: "Només el fundador del canal pot desactivar els missatges per a %channel%."
 
-# --- HELP ------------------------------------------------------------------
+# --- HELP ---------------------------------------------------------------------
 help:
   syntax: "HELP [ordre] [opció]"
   short: "Llistar les ordres o mostrar l'ajuda d'una ordre."
@@ -190,12 +190,12 @@ help:
     preferences: "Preferències"
   ircop_header: "Comandes disponibles per als IRCops:"
 
-# --- NOTIFY ----------------------------------------------------------------
+# --- NOTIFY -------------------------------------------------------------------
 notify:
   nick_pending: "Tens %count% missatge(s) pendent(s) de llegir. Per llistar els missatges: /msg %bot% %list%"
   channel_pending: "El canal %channel% té %count% missatge(s) pendent(s) de llegir. Consulta els missatges amb /msg %bot% %list%"
 
-# --- CHANNEL REGISTRATION DECISIONS ---
+# --- CHANNEL REGISTRATION DECISIONS -------------------------------------------
 registration_decision:
   accepted: "La teva sol·licitud de registre de %channel% ha estat acceptada."
   rejected: "La teva sol·licitud de registre de %channel% ha estat rebutjada."

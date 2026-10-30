@@ -16,7 +16,7 @@
 # Exemplos HELP: example/examples e %command_prefix%.
 # O apresentador acrescenta /msg sem cor e uma margem de dois espaços.
 
-# --- REGISTER --------------------------------------------------------------
+# --- REGISTER -----------------------------------------------------------------
 register:
   token_unavailable: !irc |-
     O registo está pendente, mas não foi possível entregar o token.
@@ -50,70 +50,7 @@ register:
   throttled: "Deve aguardar %minutes% minuto(s) antes de tentar registar novamente."
   guest_prefix_forbidden: "Não pode registar um nick que começa com %prefix%."
 
-# --- VERIFY ----------------------------------------------------------------
-verify:
-  syntax: "VERIFY <token>"
-  short: "Confirma um registo ou token de recuperação."
-  help: |-
-    Depois de validado, este token será o seu token de recuperação permanente.
-    Guarde-o num local seguro: poderá utilizá-lo para recuperar o nickname.
-    A validade de %duration% aplica-se apenas antes da validação.
-  example: "%command_prefix%VERIFY <token_recebido>"
-  success: "O nickname %nickname% foi registado com sucesso e agora está identificado."
-  success_native: "O nickname %nickname% foi registado com sucesso. Use a autenticação nativa indicada abaixo."
-  invalid_token: "O token de recuperação é inválido."
-  no_pending: "Não tem nenhum registo pendente para verificar."
-
-# --- RESEND ----------------------------------------------------------------
-resend:
-  disabled: "Não pode pedir outro token com %resend% porque este registo entrega o token diretamente por chat."
-  syntax: "RESEND"
-  short: "Reenviar o token de verificação para o seu email."
-  help: |-
-    RESEND só está disponível se o token de verificação tiver sido enviado por
-    email.
-    Depois de validado, este será o seu token de recuperação permanente.
-    Guarde-o num local seguro: poderá utilizá-lo para recuperar o nickname.
-    A validade de %duration% aplica-se apenas antes da validação.
-    Ao usar RESEND, receberá um novo token por email.
-    O prazo do registo pendente será renovado por %duration%.
-  example: "%command_prefix%RESEND"
-  success: "Token de verificação reenviado para %email%."
-  no_pending: "Não tem nenhum registo pendente para verificar."
-  throttled: "Deve aguardar %minutes% minuto(s) antes de solicitar outro email de verificação."
-
-# --- RECOVER ---------------------------------------------------------------
-recover:
-  no_email: "Não está definido nenhum email para o nickname %nickname%. A recuperação não está disponível."
-  email_sent: "Um token de recuperação foi enviado para %email_hint%. Verifique a sua caixa de entrada (e a pasta de spam)."
-  pending_deletion: "O apelido %nickname% está pendente de eliminação e não pode ser recuperado."
-  instructions: "EMAIL: %command_0% solicita um token provisório por email. TOKEN: forneça o token confirmado. %command_1% aceita o token válido do email ou o confirmado. O do email substitui o guardado apenas após validação. Usar o guardado oferece uma substituição opcional com %command_2%; ignore a mensagem para o manter."
-  instructions_command_0: "RECOVER %nickname%"
-  instructions_command_1: "RECOVER %nickname% <token>"
-  instructions_command_2: "VERIFY"
-  syntax: "RECOVER <nickname> [token]"
-  short: "Recupere o seu nickname se perdeu a sua palavra-passe."
-  help: |-
-    Sem token, peça por email um token provisório.
-    Também pode fornecer um token de recuperação válido; se for provisório,
-    substitui o token guardado apenas depois de validado. Ao usar o token guardado,
-    é oferecida uma substituição opcional com VERIFY; ignore a mensagem se quiser
-    manter o atual.
-  example: "%command_prefix%RECOVER Utilizador"
-  examples:
-    - "%command_prefix%RECOVER Utilizador <token_recebido>"
-  pending: "O registo de %nickname% está pendente. Use %command_0%. Se o token foi enviado por email e existe um endereço válido associado, pode pedir outro com %command_1%."
-  pending_command_0: "VERIFY <token>"
-  pending_command_1: "RESEND"
-  suspended: "O nickname %nickname% está suspenso. Motivo: %reason%"
-  forbidden: "O nickname %nickname% não pode ser usado nesta rede."
-  throttled: "Demasiados tokens inválidos. Tente novamente em %minutes% minuto(s)."
-  invalid_token: "O token de recuperação é inválido."
-  success_identify: "Palavra-passe redefinida. Identifique-se agora: %identify_cmd%"
-  success_then_change: "Depois altere a palavra-passe: /msg %bot% %command_0%"
-  success_then_change_command_0: "SET PASSWORD <nova_palavra-passe>"
-
-# --- IDENTIFY --------------------------------------------------------------
+# --- IDENTIFY -----------------------------------------------------------------
 identify:
   syntax: "IDENTIFY <nickname> <palavra-passe>"
   short: "Identifique-se como proprietário de um nickname."
@@ -150,104 +87,70 @@ identify:
   forbidden: "O nickname %nickname% não pode ser usado nesta rede."
   pending_deletion: "O nickname %nickname% está pendente de eliminação e não pode ser usado."
 
-# --- STATUS ----------------------------------------------------------------
-status:
-  syntax: "STATUS <nickname>"
-  short: "Mostrar o estado de registo de um nickname."
+# --- VERIFY -------------------------------------------------------------------
+verify:
+  syntax: "VERIFY <token>"
+  short: "Confirma um registo ou token de recuperação."
   help: |-
-    Mostra o estado atual de um nickname: se está registado, à espera de
-    verificação, suspenso, etc.
-  example: "%command_prefix%STATUS Utilizador"
-  header: "Estado do nick %nickname%"
-  unregistered: "  Estado          : Não registado"
-  not_registered_offline: "  Estado          : %state%"
-  value_not_registered_offline: "Não registado"
-  pending: "  Estado          : %state%"
-  value_pending: "Pendente de verificação"
-  pending_expires: "  Expira em       : %minutes% minuto(s)"
-  pending_expires_at: "  Expira em       : %date%"
-  not_connected: "  Estado          : %state%"
-  value_not_connected: "Não ligado"
-  not_identified: "  Estado          : %state%"
-  value_not_identified: "Não identificado"
-  identified: "  Estado          : %state%"
-  value_identified: "Identificado"
-  suspended: "  Estado          : %state%"
-  value_suspended: "Suspenso"
-  suspended_reason: "  Motivo          : %reason%"
-  suspended_until: "  Termina em      : %date%"
-  suspended_permanent: "  Termina em      : Permanente"
-  forbidden: "  Estado          : %state%"
-  value_forbidden: "Proibido"
-  forbidden_reason: "  Motivo          : %reason%"
-  pending_deletion: "  %label%          : %state%"
-  value_pending_deletion: "Pendente de eliminação"
-  label_pending_deletion: "Estado"
-  pending_deletion_at: "  %label%       : %date%"
+    Depois de validado, este token será o seu token de recuperação permanente.
+    Guarde-o num local seguro: poderá utilizá-lo para recuperar o nickname.
+    A validade de %duration% aplica-se apenas antes da validação.
+  example: "%command_prefix%VERIFY <token_recebido>"
+  success: "O nickname %nickname% foi registado com sucesso e agora está identificado."
+  success_native: "O nickname %nickname% foi registado com sucesso. Use a autenticação nativa indicada abaixo."
+  invalid_token: "O token de recuperação é inválido."
+  no_pending: "Não tem nenhum registo pendente para verificar."
 
-  label_pending_deletion_at: "Eliminado"
-# --- INFO ------------------------------------------------------------------
-info:
-  syntax: "INFO <nickname>"
-  short: "Mostrar informações sobre um nickname registado."
+# --- RESEND -------------------------------------------------------------------
+resend:
+  disabled: "Não pode pedir outro token com %resend% porque este registo entrega o token diretamente por chat."
+  syntax: "RESEND"
+  short: "Reenviar o token de verificação para o seu email."
   help: |-
-    Mostra os dados de registo de um nickname: data de registo, estado da ligação,
-    última mensagem de saída e endereço de email.
+    RESEND só está disponível se o token de verificação tiver sido enviado por
+    email.
+    Depois de validado, este será o seu token de recuperação permanente.
+    Guarde-o num local seguro: poderá utilizá-lo para recuperar o nickname.
+    A validade de %duration% aplica-se apenas antes da validação.
+    Ao usar RESEND, receberá um novo token por email.
+    O prazo do registo pendente será renovado por %duration%.
+  example: "%command_prefix%RESEND"
+  success: "Token de verificação reenviado para %email%."
+  no_pending: "Não tem nenhum registo pendente para verificar."
+  throttled: "Deve aguardar %minutes% minuto(s) antes de solicitar outro email de verificação."
 
-    O email só é visível para o proprietário identificado. Se o nickname for
-    privado, apenas o proprietário e os Operadores IRC podem ver a informação.
-  example: "%command_prefix%INFO Utilizador"
-  private: "As informações do nickname %nickname% são privadas."
-  header: "Informações do nickname %nickname%"
-  status: "%label%            : %status%"
-  label_status: "Estado"
-  status_registered: "Registado"
-  status_suspended: "Suspenso"
-  status_forbidden: "Proibido"
-  status_pending_deletion: "Pendente de eliminação"
-  reason: "%label%                 : %reason%"
-  label_reason: "Motivo"
-  suspended_until: "%label%        : %date%"
-  label_suspended_until: "Termina em"
-  suspended_permanent: "%label%        : Permanente"
-  label_suspended_permanent: "Termina em"
-  registered_at: "%label%         : %date%"
-  label_registered_at: "Registado"
-  last_seen_online: "%label%        : %online%"
-  label_last_seen_online: "Última vez"
-  value_last_seen_online: "ONLINE AGORA"
-  last_seen_at: "%label%        : %date%"
-  label_last_seen_at: "Última vez"
-  last_seen_never: "%label%        : Nunca"
-  label_last_seen_never: "Última vez"
-  last_quit: "%label%  : %message%"
-  label_last_quit: "Última msg saída"
-  last_connect: "%label%     : %ip% (%host%)"
-  label_last_connect: "Última vez de"
-  language: "%label%            : %language%"
-  label_language: "Idioma"
-  email: "%label%             : %email%"
-  label_email: "Email"
-  vhost: "%label%             : %vhost%"
-  label_vhost: "VHost"
-  no_expire: "%label%           : Sim"
-  label_no_expire: "Nunca expira"
-  pending_deletion_at: "%label%              : %date%"
-  label_pending_deletion_at: "Eliminado"
-  pending_deletion_until: "%label%       : %date%"
-  label_pending_deletion_until: "Elim. definitiva"
-  pending_deletion_notice: "%notice%"
-  value_pending_deletion_notice: "Este nickname está pendente de eliminação e não pode ser registado."
-  channels_header: |-
+# --- RECOVER ------------------------------------------------------------------
+recover:
+  no_email: "Não está definido nenhum email para o nickname %nickname%. A recuperação não está disponível."
+  email_sent: "Um token de recuperação foi enviado para %email_hint%. Verifique a sua caixa de entrada (e a pasta de spam)."
+  pending_deletion: "O apelido %nickname% está pendente de eliminação e não pode ser recuperado."
+  instructions: "EMAIL: %command_0% solicita um token provisório por email. TOKEN: forneça o token confirmado. %command_1% aceita o token válido do email ou o confirmado. O do email substitui o guardado apenas após validação. Usar o guardado oferece uma substituição opcional com %command_2%; ignore a mensagem para o manter."
+  instructions_command_0: "RECOVER %nickname%"
+  instructions_command_1: "RECOVER %nickname% <token>"
+  instructions_command_2: "VERIFY"
+  syntax: "RECOVER <nickname> [token]"
+  short: "Recupere o seu nickname se perdeu a sua palavra-passe."
+  help: |-
+    Sem token, peça por email um token provisório.
+    Também pode fornecer um token de recuperação válido; se for provisório,
+    substitui o token guardado apenas depois de validado. Ao usar o token guardado,
+    é oferecida uma substituição opcional com VERIFY; ignore a mensagem se quiser
+    manter o atual.
+  example: "%command_prefix%RECOVER Utilizador"
+  examples:
+    - "%command_prefix%RECOVER Utilizador <token_recebido>"
+  pending: "O registo de %nickname% está pendente. Use %command_0%. Se o token foi enviado por email e existe um endereço válido associado, pode pedir outro com %command_1%."
+  pending_command_0: "VERIFY <token>"
+  pending_command_1: "RESEND"
+  suspended: "O nickname %nickname% está suspenso. Motivo: %reason%"
+  forbidden: "O nickname %nickname% não pode ser usado nesta rede."
+  throttled: "Demasiados tokens inválidos. Tente novamente em %minutes% minuto(s)."
+  invalid_token: "O token de recuperação é inválido."
+  success_identify: "Palavra-passe redefinida. Identifique-se agora: %identify_cmd%"
+  success_then_change: "Depois altere a palavra-passe: /msg %bot% %command_0%"
+  success_then_change_command_0: "SET PASSWORD <nova_palavra-passe>"
 
-    Canais com acesso:
-  channels_entry_founder: "%channel% (%role%)"
-  channels_role_founder: "Fundador"
-  channels_entry_successor: "%channel% (%role%)"
-  channels_role_successor: "Sucessor"
-  channels_entry_access: "%channel% (%level%)"
-
-# --- SET -------------------------------------------------------------------
+# --- SET ----------------------------------------------------------------------
 set:
   syntax: "SET {PASSWORD <nova_palavra-passe>|EMAIL <email> <token>|LANGUAGE <código>|TIMEZONE <fuso_horário>|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
   short: "Alterar as opções do seu nickname."
@@ -390,103 +293,105 @@ set:
     taken: "Esse vhost já está em uso por outro nickname."
     forced: "O seu vhost é configurado automaticamente e não pode ser alterado com SET VHOST."
 
-# --- SAREGISTER ------------------------------------------------------------
-saregister:
-  syntax: "SAREGISTER <nickname> <palavra-passe> [email]"
-  short: "Registar administrativamente um nickname."
+# --- INFO ---------------------------------------------------------------------
+info:
+  syntax: "INFO <nickname>"
+  short: "Mostrar informações sobre um nickname registado."
   help: |-
-    Sintaxe: SAREGISTER <nickname> <palavra-passe> [email]
+    Mostra os dados de registo de um nickname: data de registo, estado da ligação,
+    última mensagem de saída e endereço de email.
 
-    Regista administrativamente um nickname de forma imediata sem exigir
-    verificação do cliente nem limites de frequência.
+    O email só é visível para o proprietário identificado. Se o nickname for
+    privado, apenas o proprietário e os Operadores IRC podem ver a informação.
+  example: "%command_prefix%INFO Utilizador"
+  private: "As informações do nickname %nickname% são privadas."
+  header: "Informações do nickname %nickname%"
+  status: "%label%            : %status%"
+  label_status: "Estado"
+  status_registered: "Registado"
+  status_suspended: "Suspenso"
+  status_forbidden: "Proibido"
+  status_pending_deletion: "Pendente de eliminação"
+  reason: "%label%                 : %reason%"
+  label_reason: "Motivo"
+  suspended_until: "%label%        : %date%"
+  label_suspended_until: "Termina em"
+  suspended_permanent: "%label%        : Permanente"
+  label_suspended_permanent: "Termina em"
+  registered_at: "%label%         : %date%"
+  label_registered_at: "Registado"
+  last_seen_online: "%label%        : %online%"
+  label_last_seen_online: "Última vez"
+  value_last_seen_online: "ONLINE AGORA"
+  last_seen_at: "%label%        : %date%"
+  label_last_seen_at: "Última vez"
+  last_seen_never: "%label%        : Nunca"
+  label_last_seen_never: "Última vez"
+  last_quit: "%label%  : %message%"
+  label_last_quit: "Última msg saída"
+  last_connect: "%label%     : %ip% (%host%)"
+  label_last_connect: "Última vez de"
+  language: "%label%            : %language%"
+  label_language: "Idioma"
+  email: "%label%             : %email%"
+  label_email: "Email"
+  vhost: "%label%             : %vhost%"
+  label_vhost: "VHost"
+  no_expire: "%label%           : Sim"
+  label_no_expire: "Nunca expira"
+  pending_deletion_at: "%label%              : %date%"
+  label_pending_deletion_at: "Eliminado"
+  pending_deletion_until: "%label%       : %date%"
+  label_pending_deletion_until: "Elim. definitiva"
+  pending_deletion_notice: "%notice%"
+  value_pending_deletion_notice: "Este nickname está pendente de eliminação e não pode ser registado."
+  channels_header: |-
 
-    No modo TOKEN, o token de recuperação é apresentado uma vez ao operador.
-    No modo EMAIL, o token de recuperação é enviado para o endereço de email indicado.
-  example: "%command_prefix%SAREGISTER Alice PalavraPasse123"
-  examples:
-    - "%command_prefix%SAREGISTER Bob PalavraPasse456 bob@exemplo.pt"
-  success_token: "O nickname %nickname% foi registado. Token de recuperação: %token%"
-  success_email: "O nickname %nickname% foi registado. Token de recuperação enviado para %email%."
-  invalid_nickname: "Nickname inválido %nickname%."
+    Canais com acesso:
+  channels_entry_founder: "%channel% (%role%)"
+  channels_role_founder: "Fundador"
+  channels_entry_successor: "%channel% (%role%)"
+  channels_role_successor: "Sucessor"
+  channels_entry_access: "%channel% (%level%)"
 
-# --- SASET -----------------------------------------------------------------
-saset:
-  syntax: "SASET <nickname> {PASSWORD <nova_palavra-passe>|EMAIL <novo_email>|LANGUAGE <código>|TIMEZONE {<fuso_horário>|OFF}|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
-  short: "Modificar as configurações de outro nickname."
+# --- STATUS -------------------------------------------------------------------
+status:
+  syntax: "STATUS <nickname>"
+  short: "Mostrar o estado de registo de um nickname."
   help: |-
-    Permite a um IRCop alterar as definições de outro nickname registado. Não
-    admite nicknames Root, IRCop ou de serviços.
-  example: "%command_prefix%SASET Utilizador PRIVATE ON"
-  examples:
-    - "%command_prefix%SASET Utilizador TIMEZONE OFF"
-  unknown_option: "Opção desconhecida %option%. Opções disponíveis: %options%."
-  cannot_modify_oper: "Não é possível modificar um nickname de Operador de IRC."
+    Mostra o estado atual de um nickname: se está registado, à espera de
+    verificação, suspenso, etc.
+  example: "%command_prefix%STATUS Utilizador"
+  header: "Estado do nick %nickname%"
+  unregistered: "  Estado          : Não registado"
+  not_registered_offline: "  Estado          : %state%"
+  value_not_registered_offline: "Não registado"
+  pending: "  Estado          : %state%"
+  value_pending: "Pendente de verificação"
+  pending_expires: "  Expira em       : %minutes% minuto(s)"
+  pending_expires_at: "  Expira em       : %date%"
+  not_connected: "  Estado          : %state%"
+  value_not_connected: "Não ligado"
+  not_identified: "  Estado          : %state%"
+  value_not_identified: "Não identificado"
+  identified: "  Estado          : %state%"
+  value_identified: "Identificado"
+  suspended: "  Estado          : %state%"
+  value_suspended: "Suspenso"
+  suspended_reason: "  Motivo          : %reason%"
+  suspended_until: "  Termina em      : %date%"
+  suspended_permanent: "  Termina em      : Permanente"
+  forbidden: "  Estado          : %state%"
+  value_forbidden: "Proibido"
+  forbidden_reason: "  Motivo          : %reason%"
+  pending_deletion: "  %label%          : %state%"
+  value_pending_deletion: "Pendente de eliminação"
+  label_pending_deletion: "Estado"
+  pending_deletion_at: "  %label%       : %date%"
 
-  # --- SASET PASSWORD ------------------------------------------------------
-  password:
-    syntax: "SASET <nickname> PASSWORD <nova_palavra-passe>"
-    short: "Alterar a palavra-passe de um nickname."
-    help: "Altera a palavra-passe de outro nickname. A alteração é imediata."
-    example: "%command_prefix%SASET Utilizador PASSWORD ClaveSegura123"
+  label_pending_deletion_at: "Eliminado"
 
-  # --- SASET EMAIL ---------------------------------------------------------
-  email:
-    syntax: "SASET <nickname> EMAIL <novo_email>"
-    short: "Alterar o email de um nickname."
-    help: |-
-      Altera o email de outro nickname. A alteração é imediata e não requer o token
-      de recuperação nem envia um email de confirmação.
-      BADMAIL não restringe esta alteração administrativa de email.
-    example: "%command_prefix%SASET Utilizador EMAIL utilizador@exemplo.com"
-
-  # --- SASET LANGUAGE ------------------------------------------------------
-  language:
-    syntax: "SASET <nickname> LANGUAGE <código>"
-    short: "Alterar o idioma de um nickname."
-    help: |-
-      Altera o idioma de outro nickname. Estão disponíveis en (inglês) e pt
-      (português).
-    example: "%command_prefix%SASET Utilizador LANGUAGE es"
-
-  # --- SASET TIMEZONE ------------------------------------------------------
-  timezone:
-    syntax: "SASET <nickname> TIMEZONE {<fuso_horário>|OFF}"
-    short: "Alterar o fuso horário de um nickname."
-    help: "Define ou remove o fuso horário de outro nickname. Use OFF para o remover."
-    example: "%command_prefix%SASET Utilizador TIMEZONE Europe/Madrid"
-    examples:
-      - "%command_prefix%SASET Utilizador TIMEZONE OFF"
-
-  # --- SASET PRIVATE -------------------------------------------------------
-  private:
-    syntax: "SASET <nickname> PRIVATE {ON|OFF}"
-    short: "Alterar a privacidade de um nickname."
-    help: "Ativa ou desativa a privacidade das informações de outro nickname."
-    example: "%command_prefix%SASET Utilizador PRIVATE ON"
-    examples:
-      - "%command_prefix%SASET Utilizador PRIVATE OFF"
-
-  # --- SASET MSG -----------------------------------------------------------
-  msg:
-    syntax: "SASET <nickname> MSG {ON|OFF}"
-    short: "Alterar a preferência de mensagens de um nickname."
-    help: "Define se outro nickname recebe respostas como PRIVMSG (ON) ou NOTICE (OFF)."
-    example: "%command_prefix%SASET Utilizador MSG ON"
-    examples:
-      - "%command_prefix%SASET Utilizador MSG OFF"
-
-  # --- SASET VHOST ---------------------------------------------------------
-  vhost:
-    syntax: "SASET <nickname> VHOST [vhost]"
-    short: "Alterar o host virtual de um nickname."
-    help: |-
-      Define ou remove o host virtual de outro nickname. Para o remover, execute
-      SASET <nickname> VHOST sem valor.
-    example: "%command_prefix%SASET Utilizador VHOST utilizador.exemplo.org"
-    examples:
-      - "%command_prefix%SASET Utilizador VHOST"
-
-# --- HELP ------------------------------------------------------------------
+# --- HELP ---------------------------------------------------------------------
 help:
   syntax: "HELP [comando]"
   short: "Mostrar ajuda para os comandos %nickserv%."
@@ -540,7 +445,7 @@ help:
     region_unknown: "Região desconhecida. Use %syntax% para o índice."
     region_syntax: "HELP SET TIMEZONE"
 
-# --- NICK PROTECTION -------------------------------------------------------
+# --- NICK PROTECTION ----------------------------------------------------------
 protection:
   nick_in_use: "O nick %nickname% está registado. Será renomeado se não se identificar."
   renamed_to: |-
@@ -549,7 +454,7 @@ protection:
   renamed_command: "IDENTIFY %nickname% <palavra-passe>"
   nick_forbidden: "O nickname %nickname% está proibido: %reason%"
 
-# --- USERIP ----------------------------------------------------------------
+# --- USERIP (IRCop) -----------------------------------------------------------
 userip:
   syntax: "USERIP <nickname>"
   short: "Obter o endereço IP real e hostname do nickname."
@@ -559,7 +464,7 @@ userip:
   example: "%command_prefix%USERIP Utilizador"
   result: "Nickname: %nickname% | IP: %ip% | Host: %host%"
 
-# --- WHOIP -----------------------------------------------------------------
+# --- WHOIP (IRCop) ------------------------------------------------------------
 whoip:
   syntax: "WHOIP <ip>"
   short: "Procura nicknames pelo IP da última ligação identificada."
@@ -570,156 +475,21 @@ whoip:
   empty: "Não há nicknames registados correspondentes a este endereço IP."
   header: "Nicknames correspondentes:"
 
-# --- SUSPEND ---------------------------------------------------------------
-suspend:
-  syntax: "SUSPEND <nickname> <duração> <motivo>"
-  short: "Suspender um nickname."
+# --- LIST (IRCop) -------------------------------------------------------------
+list:
+  syntax: "LIST <padrão> [página]"
+  short: "Lista alcunhas registadas que correspondem a um padrão."
   help: |-
-    Impede o proprietário de se identificar. A duração pode ser indicada em dias
-    (d), horas (h), minutos (m) ou 0 para uma suspensão permanente. Não é possível
-    suspender Operadores IRC nem utilizadores Root.
-  example: "%command_prefix%SUSPEND UtilizadorInadequado 7d Spam en #ajuda"
+    Lista os nicknames registados que correspondem ao padrão. O carácter *
+    corresponde a qualquer sequência de caracteres; a página opcional começa em 1.
+  example: "%command_prefix%LIST Utilizador*"
   examples:
-    - "%command_prefix%SUSPEND Problemático 0 Evasão do banimento"
-  success: "O nickname %nickname% foi suspenso até %duration%."
-  already_suspended: "O nickname %nickname% já está suspenso."
-  forbidden: "O nickname %nickname% está proibido e não pode ser suspenso."
-  cannot_suspend_oper: "Não é possível suspender o operador de IRC %nickname%."
-  cannot_suspend_root: "Não é possível suspender o utilizador root %nickname%."
-  cannot_suspend_service: "Não é possível suspender o nickname de serviço %nickname%."
-  invalid_duration: "Duração inválida. Use: %duration_format% (ex: 7d, 12h, 30m) ou %permanent% para permanente."
-  invalid_duration_format: "<d><h><m>"
-  invalid_duration_permanent: "0"
-
-# --- UNSUSPEND -------------------------------------------------------------
-unsuspend:
-  syntax: "UNSUSPEND <nickname>"
-  short: "Remover a suspensão de um nickname."
-  help: |-
-    Remove uma suspensão ativa para que o proprietário se possa voltar a
-    identificar.
-  example: "%command_prefix%UNSUSPEND Utilizador"
-  success: "A suspensão foi levantada de %nickname%."
-  not_suspended: "O nickname %nickname% não está suspenso."
-
-# --- RENAME ----------------------------------------------------------------
-rename:
-  syntax: "RENAME <nickname>"
-  short: "Forçar renomeação de um nickname ligado para um nickname aleatório."
-  help: |-
-    Obriga um nickname ligado a mudar para um nome aleatório com um prefixo
-    definido pela rede.
-  example: "%command_prefix%RENAME Problemático"
-  cannot_rename_root: "Não é possível renomear o utilizador root %nickname%."
-  cannot_rename_oper: "Não é possível renomear o operador de IRC %nickname%."
-  cannot_rename_service: "Não é possível renomear o nickname de serviço %nickname%."
-  success: "O nickname %nickname% foi renomeado para %new_nick%."
-
-# --- DROP ------------------------------------------------------------------
-drop:
-  syntax: "DROP <nickname> [FORCE]"
-  short: "Remover um nickname registado."
-  help: |-
-    Marca um nickname registado para eliminação durante o período de tolerância;
-    pode ser restaurado com RESTORE. Adicione FORCE para o eliminar definitivamente.
-    Não é possível eliminar utilizadores Root, IRCops ou serviços, nem o seu próprio
-    nickname.
-  force:
-    short: "Elimina permanentemente um nickname pendente de eliminação."
-  example: "%command_prefix%DROP ContaAntiga"
-  examples:
-    - "%command_prefix%DROP ContaAntiga FORCE"
-  suspended: "O nickname %nickname% está suspenso. Remova a suspensão primeiro."
-  forbidden: "O nickname %nickname% está proibido."
-  cannot_drop_root: "Não é possível remover o utilizador root %nickname%."
-  cannot_drop_oper: "Não é possível remover o operador de IRC %nickname%."
-  cannot_drop_self: "Não pode remover o seu próprio nickname."
-  success: "O nickname %nickname% foi marcado para eliminação e pode ser restaurado durante o período de carência."
-  force_success: "O nickname %nickname% foi eliminado permanentemente."
-  pending_deletion: "O nickname %nickname% já está pendente de eliminação. Use DROP <nickname> FORCE para eliminá-lo permanentemente."
-  cannot_drop_service: "Não é possível remover o nickname de serviço %nickname%."
-
-# --- RESTORE ---------------------------------------------------------------
-restore:
-  syntax: "RESTORE <nickname>"
-  short: "Restaurar um nickname pendente de eliminação."
-  help: |-
-    Restaura um nickname pendente de eliminação enquanto estiver no período de
-    tolerância.
-  example: "%command_prefix%RESTORE ContaAntiga"
-  success: "O nickname %nickname% foi restaurado."
-  not_pending_deletion: "O nickname %nickname% não está pendente de eliminação."
-
-# --- FORBID ----------------------------------------------------------------
-forbid:
-  syntax: "FORBID <nickname> <motivo>"
-  short: "Bloquear permanentemente um nickname de ser usado."
-  help: |-
-    Proíbe permanentemente um nickname para que ninguém o possa registar ou usar.
-    Se estiver registado, é eliminado; se estiver ligado, é obrigado a mudar para
-    um nickname aleatório. Não é possível proibir utilizadores Root, IRCops ou
-    serviços.
-  example: "%command_prefix%FORBID UtilizadorInadequado Violaciones repetidas de política"
-  success: "O nickname %nickname% foi proibido."
-  updated: "O motivo de proibição de %nickname% foi atualizado."
-  reason_required: "Deve fornecer um motivo para a proibição."
-  cannot_forbid_root: "Não é possível proibir o utilizador root %nickname%."
-  cannot_forbid_oper: "Não é possível proibir o operador de IRC %nickname%."
-  cannot_forbid_service: "Não é possível proibir o nickname de serviço %nickname%."
-
-# --- UNFORBID --------------------------------------------------------------
-unforbid:
-  syntax: "UNFORBID <nickname>"
-  short: "Remover uma proibição de nickname."
-  help: "Remove a proibição para que o nickname possa voltar a ser utilizado."
-  example: "%command_prefix%UNFORBID NicknameProibido"
-  success: "O nickname %nickname% já não está proibido."
-  not_forbidden: "O nickname %nickname% não está proibido."
-
-# --- FORBIDVHOST -----------------------------------------------------------
-forbidvhost:
-  syntax: "FORBIDVHOST {ADD <padrão>|DEL <padrão>|LIST}"
-  short: "Gerir padrões de vhost proibidos."
-  help: |-
-    Gere os padrões que impedem a definição de vhosts correspondentes a SET VHOST.
-    O carácter * corresponde a qualquer sequência e ? a um carácter. Requer
-    privilégios de Operador IRC.
-  example: "%command_prefix%FORBIDVHOST ADD *.pirata.com"
-  examples:
-    - "%command_prefix%FORBIDVHOST LIST"
-  unknown_sub: "Subcomando desconhecido %sub%. Use ADD, DEL ou LIST."
-
-  # --- FORBIDVHOST ADD -----------------------------------------------------
-  add:
-    syntax: "FORBIDVHOST ADD <padrão>"
-    short: "Adicionar um padrão de vhost proibido."
-    help: |-
-      Adiciona um padrão à lista. Os utilizadores não poderão definir vhosts
-      correspondentes através de SET VHOST. * corresponde a qualquer sequência e ?
-      a um carácter.
-    example: "%command_prefix%FORBIDVHOST ADD *.pirata.com"
-    done: "Padrão de vhost proibido adicionado: %pattern%"
-    already_exists: "O padrão %pattern% já existe."
-    invalid: "Formato de padrão de vhost inválido."
-
-  # --- FORBIDVHOST DEL -----------------------------------------------------
-  del:
-    syntax: "FORBIDVHOST DEL <padrão>"
-    short: "Remover um padrão de vhost proibido."
-    help: "Remove um padrão da lista de vhosts proibidos."
-    example: "%command_prefix%FORBIDVHOST DEL *.pirata.com"
-    done: "Padrão de vhost proibido removido: %pattern%"
-    not_found: "Padrão %pattern% não encontrado."
-
-  # --- FORBIDVHOST LIST ----------------------------------------------------
-  list:
-    short: "Listar todos os padrões de vhost proibidos."
-    syntax: "FORBIDVHOST LIST"
-    help: "Mostra todos os padrões de vhost proibidos."
-    example: "%command_prefix%FORBIDVHOST LIST"
-    header: "Padrões de vhost proibidos (%count%):"
-    entry: "%index%. %pattern% — por %nickname% (%date%)"
-    empty: "Nenhum padrão de vhost proibido."
+    - "%command_prefix%LIST Utilizador* 2"
+  header: "Alcunha | Registo | Última ligação | IP | Estado"
+  row: "%nickname% | %registered% | %last_seen% | %ip% | %status%"
+  empty: "Nenhuma alcunha corresponde ao padrão %pattern%."
+  status_pending: "Pendente"
+  status_registered: "Registado"
 
 # --- HISTORY ---
 history:
@@ -796,7 +566,116 @@ history.extra:
   new_email: "Novo email: %value%"
   method: "Método: %value%"
 
-# --- NOEXPIRE --------------------------------------------------------------
+# --- SAREGISTER (IRCop) -------------------------------------------------------
+saregister:
+  syntax: "SAREGISTER <nickname> <palavra-passe> [email]"
+  short: "Registar administrativamente um nickname."
+  help: |-
+    Sintaxe: SAREGISTER <nickname> <palavra-passe> [email]
+
+    Regista administrativamente um nickname de forma imediata sem exigir
+    verificação do cliente nem limites de frequência.
+
+    No modo TOKEN, o token de recuperação é apresentado uma vez ao operador.
+    No modo EMAIL, o token de recuperação é enviado para o endereço de email indicado.
+  example: "%command_prefix%SAREGISTER Alice PalavraPasse123"
+  examples:
+    - "%command_prefix%SAREGISTER Bob PalavraPasse456 bob@exemplo.pt"
+  success_token: "O nickname %nickname% foi registado. Token de recuperação: %token%"
+  success_email: "O nickname %nickname% foi registado. Token de recuperação enviado para %email%."
+  invalid_nickname: "Nickname inválido %nickname%."
+
+# --- SASET (IRCop) ------------------------------------------------------------
+saset:
+  syntax: "SASET <nickname> {PASSWORD <nova_palavra-passe>|EMAIL <novo_email>|LANGUAGE <código>|TIMEZONE {<fuso_horário>|OFF}|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
+  short: "Modificar as configurações de outro nickname."
+  help: |-
+    Permite a um IRCop alterar as definições de outro nickname registado. Não
+    admite nicknames Root, IRCop ou de serviços.
+  example: "%command_prefix%SASET Utilizador PRIVATE ON"
+  examples:
+    - "%command_prefix%SASET Utilizador TIMEZONE OFF"
+  unknown_option: "Opção desconhecida %option%. Opções disponíveis: %options%."
+  cannot_modify_oper: "Não é possível modificar um nickname de Operador de IRC."
+
+  # --- SASET PASSWORD ------------------------------------------------------
+  password:
+    syntax: "SASET <nickname> PASSWORD <nova_palavra-passe>"
+    short: "Alterar a palavra-passe de um nickname."
+    help: "Altera a palavra-passe de outro nickname. A alteração é imediata."
+    example: "%command_prefix%SASET Utilizador PASSWORD ClaveSegura123"
+
+  # --- SASET EMAIL ---------------------------------------------------------
+  email:
+    syntax: "SASET <nickname> EMAIL <novo_email>"
+    short: "Alterar o email de um nickname."
+    help: |-
+      Altera o email de outro nickname. A alteração é imediata e não requer o token
+      de recuperação nem envia um email de confirmação.
+      BADMAIL não restringe esta alteração administrativa de email.
+    example: "%command_prefix%SASET Utilizador EMAIL utilizador@exemplo.com"
+
+  # --- SASET LANGUAGE ------------------------------------------------------
+  language:
+    syntax: "SASET <nickname> LANGUAGE <código>"
+    short: "Alterar o idioma de um nickname."
+    help: |-
+      Altera o idioma de outro nickname. Estão disponíveis en (inglês) e pt
+      (português).
+    example: "%command_prefix%SASET Utilizador LANGUAGE es"
+
+  # --- SASET TIMEZONE ------------------------------------------------------
+  timezone:
+    syntax: "SASET <nickname> TIMEZONE {<fuso_horário>|OFF}"
+    short: "Alterar o fuso horário de um nickname."
+    help: "Define ou remove o fuso horário de outro nickname. Use OFF para o remover."
+    example: "%command_prefix%SASET Utilizador TIMEZONE Europe/Madrid"
+    examples:
+      - "%command_prefix%SASET Utilizador TIMEZONE OFF"
+
+  # --- SASET PRIVATE -------------------------------------------------------
+  private:
+    syntax: "SASET <nickname> PRIVATE {ON|OFF}"
+    short: "Alterar a privacidade de um nickname."
+    help: "Ativa ou desativa a privacidade das informações de outro nickname."
+    example: "%command_prefix%SASET Utilizador PRIVATE ON"
+    examples:
+      - "%command_prefix%SASET Utilizador PRIVATE OFF"
+
+  # --- SASET MSG -----------------------------------------------------------
+  msg:
+    syntax: "SASET <nickname> MSG {ON|OFF}"
+    short: "Alterar a preferência de mensagens de um nickname."
+    help: "Define se outro nickname recebe respostas como PRIVMSG (ON) ou NOTICE (OFF)."
+    example: "%command_prefix%SASET Utilizador MSG ON"
+    examples:
+      - "%command_prefix%SASET Utilizador MSG OFF"
+
+  # --- SASET VHOST ---------------------------------------------------------
+  vhost:
+    syntax: "SASET <nickname> VHOST [vhost]"
+    short: "Alterar o host virtual de um nickname."
+    help: |-
+      Define ou remove o host virtual de outro nickname. Para o remover, execute
+      SASET <nickname> VHOST sem valor.
+    example: "%command_prefix%SASET Utilizador VHOST utilizador.exemplo.org"
+    examples:
+      - "%command_prefix%SASET Utilizador VHOST"
+
+# --- RENAME (IRCop) -----------------------------------------------------------
+rename:
+  syntax: "RENAME <nickname>"
+  short: "Forçar renomeação de um nickname ligado para um nickname aleatório."
+  help: |-
+    Obriga um nickname ligado a mudar para um nome aleatório com um prefixo
+    definido pela rede.
+  example: "%command_prefix%RENAME Problemático"
+  cannot_rename_root: "Não é possível renomear o utilizador root %nickname%."
+  cannot_rename_oper: "Não é possível renomear o operador de IRC %nickname%."
+  cannot_rename_service: "Não é possível renomear o nickname de serviço %nickname%."
+  success: "O nickname %nickname% foi renomeado para %new_nick%."
+
+# --- NOEXPIRE (IRCop) ---------------------------------------------------------
 noexpire:
   syntax: "NOEXPIRE <nickname> {ON|OFF}"
   short: "Definir ou remover proteção de expiração para um nickname."
@@ -811,23 +690,7 @@ noexpire:
   forbidden: "O nickname %nickname% está proibido."
   suspended: "O nickname %nickname% está suspenso."
 
-# --- LIST ------------------------------------------------------------------
-list:
-  syntax: "LIST <padrão> [página]"
-  short: "Lista alcunhas registadas que correspondem a um padrão."
-  help: |-
-    Lista os nicknames registados que correspondem ao padrão. O carácter *
-    corresponde a qualquer sequência de caracteres; a página opcional começa em 1.
-  example: "%command_prefix%LIST Utilizador*"
-  examples:
-    - "%command_prefix%LIST Utilizador* 2"
-  header: "Alcunha | Registo | Última ligação | IP | Estado"
-  row: "%nickname% | %registered% | %last_seen% | %ip% | %status%"
-  empty: "Nenhuma alcunha corresponde ao padrão %pattern%."
-  status_pending: "Pendente"
-  status_registered: "Registado"
-
-# --- REGMODE ---------------------------------------------------------------
+# --- REGMODE (IRCop) ----------------------------------------------------------
 regmode:
   syntax: "REGMODE {EMAIL|TOKEN|STATUS}"
   short: "Gerir o modo de registo da rede."
@@ -848,7 +711,145 @@ regmode:
   status: "Modo de registo atual: %mode%."
   changed: "Modo de registo alterado para %mode%."
 
-# --- RESCUE ----------------------------------------------------------------
+# --- SUSPEND (IRCop) ----------------------------------------------------------
+suspend:
+  syntax: "SUSPEND <nickname> <duração> <motivo>"
+  short: "Suspender um nickname."
+  help: |-
+    Impede o proprietário de se identificar. A duração pode ser indicada em dias
+    (d), horas (h), minutos (m) ou 0 para uma suspensão permanente. Não é possível
+    suspender Operadores IRC nem utilizadores Root.
+  example: "%command_prefix%SUSPEND UtilizadorInadequado 7d Spam en #ajuda"
+  examples:
+    - "%command_prefix%SUSPEND Problemático 0 Evasão do banimento"
+  success: "O nickname %nickname% foi suspenso até %duration%."
+  already_suspended: "O nickname %nickname% já está suspenso."
+  forbidden: "O nickname %nickname% está proibido e não pode ser suspenso."
+  cannot_suspend_oper: "Não é possível suspender o operador de IRC %nickname%."
+  cannot_suspend_root: "Não é possível suspender o utilizador root %nickname%."
+  cannot_suspend_service: "Não é possível suspender o nickname de serviço %nickname%."
+  invalid_duration: "Duração inválida. Use: %duration_format% (ex: 7d, 12h, 30m) ou %permanent% para permanente."
+  invalid_duration_format: "<d><h><m>"
+  invalid_duration_permanent: "0"
+
+# --- UNSUSPEND (IRCop) --------------------------------------------------------
+unsuspend:
+  syntax: "UNSUSPEND <nickname>"
+  short: "Remover a suspensão de um nickname."
+  help: |-
+    Remove uma suspensão ativa para que o proprietário se possa voltar a
+    identificar.
+  example: "%command_prefix%UNSUSPEND Utilizador"
+  success: "A suspensão foi levantada de %nickname%."
+  not_suspended: "O nickname %nickname% não está suspenso."
+
+# --- FORBID (IRCop) -----------------------------------------------------------
+forbid:
+  syntax: "FORBID <nickname> <motivo>"
+  short: "Bloquear permanentemente um nickname de ser usado."
+  help: |-
+    Proíbe permanentemente um nickname para que ninguém o possa registar ou usar.
+    Se estiver registado, é eliminado; se estiver ligado, é obrigado a mudar para
+    um nickname aleatório. Não é possível proibir utilizadores Root, IRCops ou
+    serviços.
+  example: "%command_prefix%FORBID UtilizadorInadequado Violaciones repetidas de política"
+  success: "O nickname %nickname% foi proibido."
+  updated: "O motivo de proibição de %nickname% foi atualizado."
+  reason_required: "Deve fornecer um motivo para a proibição."
+  cannot_forbid_root: "Não é possível proibir o utilizador root %nickname%."
+  cannot_forbid_oper: "Não é possível proibir o operador de IRC %nickname%."
+  cannot_forbid_service: "Não é possível proibir o nickname de serviço %nickname%."
+
+# --- UNFORBID (IRCop) ---------------------------------------------------------
+unforbid:
+  syntax: "UNFORBID <nickname>"
+  short: "Remover uma proibição de nickname."
+  help: "Remove a proibição para que o nickname possa voltar a ser utilizado."
+  example: "%command_prefix%UNFORBID NicknameProibido"
+  success: "O nickname %nickname% já não está proibido."
+  not_forbidden: "O nickname %nickname% não está proibido."
+
+# --- FORBIDVHOST (IRCop) ------------------------------------------------------
+forbidvhost:
+  syntax: "FORBIDVHOST {ADD <padrão>|DEL <padrão>|LIST}"
+  short: "Gerir padrões de vhost proibidos."
+  help: |-
+    Gere os padrões que impedem a definição de vhosts correspondentes a SET VHOST.
+    O carácter * corresponde a qualquer sequência e ? a um carácter. Requer
+    privilégios de Operador IRC.
+  example: "%command_prefix%FORBIDVHOST ADD *.pirata.com"
+  examples:
+    - "%command_prefix%FORBIDVHOST LIST"
+  unknown_sub: "Subcomando desconhecido %sub%. Use ADD, DEL ou LIST."
+
+  # --- FORBIDVHOST ADD -----------------------------------------------------
+  add:
+    syntax: "FORBIDVHOST ADD <padrão>"
+    short: "Adicionar um padrão de vhost proibido."
+    help: |-
+      Adiciona um padrão à lista. Os utilizadores não poderão definir vhosts
+      correspondentes através de SET VHOST. * corresponde a qualquer sequência e ?
+      a um carácter.
+    example: "%command_prefix%FORBIDVHOST ADD *.pirata.com"
+    done: "Padrão de vhost proibido adicionado: %pattern%"
+    already_exists: "O padrão %pattern% já existe."
+    invalid: "Formato de padrão de vhost inválido."
+
+  # --- FORBIDVHOST DEL -----------------------------------------------------
+  del:
+    syntax: "FORBIDVHOST DEL <padrão>"
+    short: "Remover um padrão de vhost proibido."
+    help: "Remove um padrão da lista de vhosts proibidos."
+    example: "%command_prefix%FORBIDVHOST DEL *.pirata.com"
+    done: "Padrão de vhost proibido removido: %pattern%"
+    not_found: "Padrão %pattern% não encontrado."
+
+  # --- FORBIDVHOST LIST ----------------------------------------------------
+  list:
+    short: "Listar todos os padrões de vhost proibidos."
+    syntax: "FORBIDVHOST LIST"
+    help: "Mostra todos os padrões de vhost proibidos."
+    example: "%command_prefix%FORBIDVHOST LIST"
+    header: "Padrões de vhost proibidos (%count%):"
+    entry: "%index%. %pattern% — por %nickname% (%date%)"
+    empty: "Nenhum padrão de vhost proibido."
+
+# --- DROP (IRCop) -------------------------------------------------------------
+drop:
+  syntax: "DROP <nickname> [FORCE]"
+  short: "Remover um nickname registado."
+  help: |-
+    Marca um nickname registado para eliminação durante o período de tolerância;
+    pode ser restaurado com RESTORE. Adicione FORCE para o eliminar definitivamente.
+    Não é possível eliminar utilizadores Root, IRCops ou serviços, nem o seu próprio
+    nickname.
+  force:
+    short: "Elimina permanentemente um nickname pendente de eliminação."
+  example: "%command_prefix%DROP ContaAntiga"
+  examples:
+    - "%command_prefix%DROP ContaAntiga FORCE"
+  suspended: "O nickname %nickname% está suspenso. Remova a suspensão primeiro."
+  forbidden: "O nickname %nickname% está proibido."
+  cannot_drop_root: "Não é possível remover o utilizador root %nickname%."
+  cannot_drop_oper: "Não é possível remover o operador de IRC %nickname%."
+  cannot_drop_self: "Não pode remover o seu próprio nickname."
+  success: "O nickname %nickname% foi marcado para eliminação e pode ser restaurado durante o período de carência."
+  force_success: "O nickname %nickname% foi eliminado permanentemente."
+  pending_deletion: "O nickname %nickname% já está pendente de eliminação. Use DROP <nickname> FORCE para eliminá-lo permanentemente."
+  cannot_drop_service: "Não é possível remover o nickname de serviço %nickname%."
+
+# --- RESTORE (IRCop) ----------------------------------------------------------
+restore:
+  syntax: "RESTORE <nickname>"
+  short: "Restaurar um nickname pendente de eliminação."
+  help: |-
+    Restaura um nickname pendente de eliminação enquanto estiver no período de
+    tolerância.
+  example: "%command_prefix%RESTORE ContaAntiga"
+  success: "O nickname %nickname% foi restaurado."
+  not_pending_deletion: "O nickname %nickname% não está pendente de eliminação."
+
+# --- RESCUE -------------------------------------------------------------------
 rescue:
   issued: |-
     Token de recuperação: %token_display%
@@ -876,7 +877,7 @@ rescue:
   replacement_unavailable: "A palavra-passe foi reposta, mas não foi possível emitir um novo token. O token atual continua válido."
   temporarily_unavailable: "A entrega do token de recuperação está temporariamente indisponível. Tente mais tarde."
 
-# --- HELP FRAGMENTS ---------------------------------------------------------
+# --- HELP FRAGMENTS -----------------------------------------------------------
 help_fragments:
   identify_help_0: "+r"
   set_language_help_0: "ca"

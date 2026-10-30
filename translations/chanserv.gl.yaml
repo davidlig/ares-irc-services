@@ -16,13 +16,13 @@
 # Exemplos HELP: example/examples e %command_prefix%.
 # O presentador engade /msg sen cor e unha marxe de dous espazos.
 
-# --- ERROR -----------------------------------------------------------------
+# --- ERROR --------------------------------------------------------------------
 error:
   invalid_channel: "Nome de canle non válido. Use %example%."
   invalid_channel_example: "#canle"
   generic: "Produciuse un erro. Tenteo de novo."
 
-# --- REGISTER --------------------------------------------------------------
+# --- REGISTER -----------------------------------------------------------------
 register:
   syntax: "REGISTER <#canle> <descrición>"
   example: "%command_prefix%REGISTER #canle Proxecto comunitario"
@@ -43,102 +43,7 @@ register:
   restricted_indefinite: "As novas solicitudes para %channel% están bloqueadas indefinidamente."
   restricted_until: "As novas solicitudes para %channel% están bloqueadas ata %date%"
 
-# --- SAREGISTER ------------------------------------------------------------
-saregister:
-  syntax: "SAREGISTER <#canle> <alcume> <descrición>"
-  short: "Rexistrar administrativamente unha canle."
-  help: |-
-    Sintaxe: SAREGISTER <#canle> <alcume> <descrición>
-
-    Rexistra administrativamente unha canle de xeito inmediato para o alcume
-    especificado como fundador sen requirir presenza, verificación nin límites de frecuencia.
-  example: "%command_prefix%SAREGISTER #canle Alicia Canle comunitaria"
-  success: "A canle %channel% foi rexistrada para %founder%."
-
-# --- REGMODE ---------------------------------------------------------------
-regmode:
-  syntax: "REGMODE {DIRECT|APPROVAL|STATUS}"
-  example: "%command_prefix%REGMODE APPROVAL"
-  short: "Establecer ou consultar o modo de rexistro das canles."
-  help: |-
-    Establece DIRECT ou APPROVAL, ou consulta STATUS.
-    DIRECT é o modo predeterminado e mantén o rexistro inmediato.
-  status: "O modo de rexistro da canle é %mode%."
-  changed: "O modo de rexistro da canle agora é %mode%."
-
-# --- CREG ------------------------------------------------------------------
-creg:
-  syntax: "CREG {PENDING [page]|ACCEPT <#channel>|REJECT <#channel> <razón>}"
-  pending.syntax: "CREG PENDING [page]"
-  pending.example: "%command_prefix%CREG PENDING"
-  pending.short: "Lista as solicitudes pendentes nunha páxina limitada."
-  pending.help: "Lista as solicitudes pendentes nunha páxina limitada."
-  accept.syntax: "CREG ACCEPT <#channel>"
-  accept.example: "%command_prefix%CREG ACCEPT #channel"
-  accept.short: "Aprobar unha solicitude de rexistro de canle."
-  accept.help: "Volver validar a solicitude e activar o rexistro pendente."
-  reject.syntax: "CREG REJECT <#channel> <razón>"
-  reject.example: "%command_prefix%CREG REJECT #channel Precisa un tema público"
-  reject.short: "Rexeitar unha solicitude de rexistro de canle."
-  reject.help: "Rexeita unha solicitude cun razón obrigatorio e unha restrición."
-  example: "%command_prefix%CREG PENDING"
-  short: "Revisar as solicitudes de rexistro de canles."
-  help: |-
-    Lista as solicitudes pendentes ou acepta ou rexeita unha.
-    Os rexeitamentos requiren un motivo. Só ACCEPT rexistra a canle.
-  pending_header: "Rexistros pendentes (páxina %page%)"
-  pending_item: "%channel% — solicitante %requester%, enviada o %submitted%: %description%"
-  accepted: "O rexistro de %channel% foi aprobado."
-  rejected: "O rexistro de %channel% foi rexeitado."
-  not_pending: "%channel% non ten ningunha solicitude de rexistro pendente."
-  channel_not_on_network: "A canle %channel% non está na rede."
-  founder_limit: "A persoa solicitante alcanzou o límite de rexistro de canles."
-  requester_inactive: "A conta solicitante xa non está activa."
-  requester_ineligible: "A persoa solicitante debe ter agora estado de operador na canle."
-
-# --- STATUS ----------------------------------------------------------------
-status:
-  syntax: "STATUS <#channel>"
-  example: "%command_prefix%STATUS #channel"
-  header: "Estado da canle %channel%"
-  short: "Amosar o estado do rexistro da canle."
-  help: |-
-    Amosa se unha canle non está rexistrada, agarda aprobación,
-    foi rexeitada ou está rexistrada.
-    Os detalles do rexeitamento só son visibles para a persoa solicitante
-    e para IRCops autorizados.
-  unregistered: "%label%%padding%: Sen rexistrar"
-  unregistered_label: "Estado"
-  pending: "%label%%padding%: %state%"
-  pending_label: "Estado"
-  pending_value: "Pendente de aprobación"
-  registered: "%label%%padding%: %state%"
-  registered_label: "Estado"
-  registered_value: "Rexistrada"
-  suspended: "%label%%padding%: %state%"
-  suspended_label: "Estado"
-  suspended_value: "Suspendida"
-  forbidden: "%label%%padding%: %state%"
-  forbidden_label: "Estado"
-  forbidden_value: "Prohibida"
-  pending_deletion: "%label%%padding%: %state%"
-  pending_deletion_label: "Estado"
-  pending_deletion_value: "Pendente de eliminación"
-  rejected_private: "%label%%padding%: %state%"
-  rejected_private_label: "Estado"
-  rejected_private_value: "Rexistro rexeitado"
-  rejected: "%label%%padding%: %state%"
-  rejected_label: "Estado"
-  rejected_value: "Rexistro rexeitado"
-  rejection_reason: "%label%%padding%: %reason%"
-  rejection_reason_label: "Razón"
-  rejection_audit: "%label%%padding%: %operator% o %date%"
-  rejection_audit_label: "Rexeitada por"
-  restriction_until: "%label%%padding%: %date%"
-  restriction_until_label: "Dispoñible a partir do"
-  footer: ""
-
-# --- INFO ------------------------------------------------------------------
+# --- INFO ---------------------------------------------------------------------
 info:
   syntax: "INFO <#canle>"
   example: "%command_prefix%INFO #canle"
@@ -195,73 +100,7 @@ info:
   pending_deletion_until_label: "Elim. definitiva"
   pending_deletion_notice: "Esta canle está conxelada e non pode ser rexistrada."
 
-# --- HELP ------------------------------------------------------------------
-help:
-  examples_header: "Exemplos:"
-  syntax: "HELP [comando] [opción]"
-  example: "%command_prefix%HELP"
-  examples:
-    - "%command_prefix%HELP SET"
-    - "%command_prefix%HELP SET EMAIL"
-  short: "Listar comandos ou mostrar axuda dun comando."
-  help: "Amosa os comandos dispoñibles e a axuda detallada das súas opcións."
-  header_title: "%bot%"
-  header: "%title% %separator%"
-  intro: |-
-    Permite rexistrar e xestionar canles, configurar as súas opcións e controlar
-    quen pode acceder a elas. Xestiona os niveis de acceso e os privilexios
-    daspersoas usuarias para manter a canle baixo o control das persoas
-    responsables.
-  general_header: "Comandos dispoñibles:"
-  command_line: "%command%%description%"
-  subcommand_line: "%command%%description%"
-  options_header: "Opcións:"
-  general_footer: "Usa /msg %bot% %help% para obter máis información."
-  general_footer_command: "HELP <comando>"
-  set_sub_footer: "Usa /msg %bot% %help% para obter máis información."
-  set_sub_footer_command: "HELP %command% <opción>"
-  syntax_label: "Sintaxe: %syntax%"
-  footer: ""
-  intro_expiration: "NOTA: As canles que non se utilicen durante máis de %period% eliminaranse automaticamente."
-  intro_expiration_period: "%days% días"
-  group_header: "%group%"
-  subgroup_header: "%group%"
-  group:
-    registration_info: "Rexistro e información"
-    access_levels: "Acceso e niveis"
-    ranks_entry: "Rangos e entrada"
-  ircop_group:
-    channel_operations: "Operacións da canle"
-    channel_management: "Xestión da canle"
-    deletion: "Eliminación e restauración"
-    restrictions: "Restricións"
-    lookup: "Consulta e investigación"
-    registration_approval: "Aprobación do rexistro"
-  ircop_header: "Comandos dispoñibles para IRCops:"
-
-# --- OP --------------------------------------------------------------------
-op:
-  syntax: "OP <#canle> <alcume>"
-  example: "%command_prefix%OP #canle Alicia"
-  short: "Conceder o modo de operador de canle."
-  help: "Conceder o modo de operador de canle."
-  done: "A %nickname% foille concedido o estado de operador de canle."
-  user_not_on_channel: "O alcume %nickname% non está na rede."
-  notice_grant: "%from% concede %mode% a %to%"
-
-# --- DEOP ------------------------------------------------------------------
-deop:
-  syntax: "DEOP <#canle> <alcume>"
-  example: "%command_prefix%DEOP #canle Alicia"
-  short: "Retirar o modo de operador de canle."
-  help: "Retirar o modo de operador de canle."
-  done: "A %nickname% foille retirado o modo de operador."
-
-# --- SECURE ----------------------------------------------------------------
-secure:
-  requires_min_level: "Con SECURE activado, %nickname% debe ter polo menos nivel %level% para recibir %mode%."
-
-# --- SET -------------------------------------------------------------------
+# --- SET ----------------------------------------------------------------------
 set:
   syntax: "SET <#canle> {FOUNDER <alcume> [token]|SUCCESSOR [alcume]|DESC <descrición>|URL [url]|EMAIL [correo]|ENTRYMSG [mensaxe]|TOPICLOCK {ON|OFF}|MLOCK {ON|OFF}|PRIVATE {ON|OFF}|SECURE {ON|OFF}}"
   example: "%command_prefix%SET #canle DESC Unha canle comunitaria"
@@ -416,7 +255,49 @@ set:
     notice_on: "%nickname% activa o modo SECURE."
     notice_off: "%nickname% desactiva o modo SECURE."
 
-# --- ACCESS ----------------------------------------------------------------
+# --- STATUS -------------------------------------------------------------------
+status:
+  syntax: "STATUS <#channel>"
+  example: "%command_prefix%STATUS #channel"
+  header: "Estado da canle %channel%"
+  short: "Amosar o estado do rexistro da canle."
+  help: |-
+    Amosa se unha canle non está rexistrada, agarda aprobación,
+    foi rexeitada ou está rexistrada.
+    Os detalles do rexeitamento só son visibles para a persoa solicitante
+    e para IRCops autorizados.
+  unregistered: "%label%%padding%: Sen rexistrar"
+  unregistered_label: "Estado"
+  pending: "%label%%padding%: %state%"
+  pending_label: "Estado"
+  pending_value: "Pendente de aprobación"
+  registered: "%label%%padding%: %state%"
+  registered_label: "Estado"
+  registered_value: "Rexistrada"
+  suspended: "%label%%padding%: %state%"
+  suspended_label: "Estado"
+  suspended_value: "Suspendida"
+  forbidden: "%label%%padding%: %state%"
+  forbidden_label: "Estado"
+  forbidden_value: "Prohibida"
+  pending_deletion: "%label%%padding%: %state%"
+  pending_deletion_label: "Estado"
+  pending_deletion_value: "Pendente de eliminación"
+  rejected_private: "%label%%padding%: %state%"
+  rejected_private_label: "Estado"
+  rejected_private_value: "Rexistro rexeitado"
+  rejected: "%label%%padding%: %state%"
+  rejected_label: "Estado"
+  rejected_value: "Rexistro rexeitado"
+  rejection_reason: "%label%%padding%: %reason%"
+  rejection_reason_label: "Razón"
+  rejection_audit: "%label%%padding%: %operator% o %date%"
+  rejection_audit_label: "Rexeitada por"
+  restriction_until: "%label%%padding%: %date%"
+  restriction_until_label: "Dispoñible a partir do"
+  footer: ""
+
+# --- ACCESS -------------------------------------------------------------------
 access:
   syntax: "ACCESS <#canle> {ADD <alcume> <nivel>|DEL <alcume>|LIST}"
   example: "%command_prefix%ACCESS #canle LIST"
@@ -460,7 +341,7 @@ access:
     done: "%nickname% eliminado da lista de acceso."
     notice_channel: "%from% elimina %to% da lista de acceso"
 
-# --- DELACCESS -------------------------------------------------------------
+# --- DELACCESS ----------------------------------------------------------------
 delaccess:
   syntax: "DELACCESS <#canle>"
   example: "%command_prefix%DELACCESS #canle"
@@ -473,123 +354,7 @@ delaccess:
   founder_not_in_access: "Vostede é o fundador de %channel% e non está na lista de acceso."
   notice_channel: "%nickname% elimina o seu acceso da canle"
 
-# --- LEVELS ----------------------------------------------------------------
-levels:
-  syntax: "LEVELS <#canle> {LIST|SET <nivel> <valor>|RESET}"
-  example: "%command_prefix%LEVELS #canle LIST"
-  examples:
-    - "%command_prefix%LEVELS #canle SET OPDEOP 50"
-    - "%command_prefix%LEVELS #canle RESET"
-  short: "Configurar os niveis da canle."
-  help: |-
-    Configura os niveis mínimos de acceso para as accións da canle. Só a persoa
-    fundadora pode cambiar ou restablecer os niveis.
-  unknown_sub: "Subcomando descoñecido %sub%. Use LIST, SET ou RESET."
-  unknown_key: "Clave de nivel descoñecida %key% ou non soportada por este IRCd."
-  value_range: "O valor de nivel debe estar entre %min% e %max%."
-
-  # --- LEVELS LIST ---------------------------------------------------------
-  list:
-    syntax: "LEVELS <#canle> LIST"
-    example: "%command_prefix%LEVELS #canle LIST"
-    short: "Listar os requisitos de nivel."
-    help: "Mostra cada clave de nivel e o seu valor (predeterminado se non está definido)."
-    header: "Niveis de %channel%"
-
-  # --- LEVELS SET ----------------------------------------------------------
-  set:
-    syntax: "LEVELS <#canle> SET <nivel> <valor>"
-    example: "%command_prefix%LEVELS #canle SET OPDEOP 50"
-    short: "Establecer un requisito de nivel."
-    help: "Valor -1 a 499. Só fundador."
-    done: "%key% establecido en %value%."
-
-  # --- LEVELS RESET --------------------------------------------------------
-  reset:
-    syntax: "LEVELS <#canle> RESET"
-    example: "%command_prefix%LEVELS #canle RESET"
-    short: "Restablecer todos os niveis aos valores predeterminados."
-    help: "Elimina todas as modificacións. Só fundador."
-    done: "Todos os niveis restablecidos aos valores predeterminados."
-
-# --- VOICE -----------------------------------------------------------------
-voice:
-  syntax: "VOICE <#canle> <alcume>"
-  example: "%command_prefix%VOICE #canle Alicia"
-  short: "Conceder o modo voice na canle."
-  help: "Conceder o modo voice na canle."
-  done: "A %nickname% foille concedido voice."
-  user_not_on_channel: "O alcume %nickname% non está na rede."
-  notice_grant: "%from% concede %mode% a %to%"
-
-# --- DEVOICE ---------------------------------------------------------------
-devoice:
-  syntax: "DEVOICE <#canle> <alcume>"
-  example: "%command_prefix%DEVOICE #canle Alicia"
-  short: "Retirar o modo voice na canle."
-  help: "Retirar o modo voice na canle."
-  done: "A %nickname% foille retirado voice."
-
-# --- UNBAN -----------------------------------------------------------------
-unban:
-  syntax: "UNBAN <#canle>"
-  example: "%command_prefix%UNBAN #canle"
-  short: "Retirar os vetos que che afectan."
-  help: "Retira todos os vetos da canle que coincidan coa túa identidade actual, incluídos comodíns e máscaras IP/CIDR."
-  done: "Retiráronse %count% veto(s) que che afectan en %channel%"
-  notice_channel: "%nickname% utilizou UNBAN."
-  no_matches: "Ningún veto coincide coa túa identidade en %channel%"
-  unavailable: "Non se puideron determinar os teus vetos coincidentes; non se cambiou nada."
-  not_on_network: "A canle %channel% non está na rede."
-
-# --- INVITE ----------------------------------------------------------------
-invite:
-  syntax: "INVITE <#canle>"
-  example: "%command_prefix%INVITE #canle"
-  short: "Convidarse a si mesmo á canle."
-  help: "Convidarse a si mesmo á canle."
-  done: "Foi convidado a %channel%."
-  notice_channel: "%nickname% convídase a si mesmo á canle."
-
-# --- ADMIN -----------------------------------------------------------------
-admin:
-  syntax: "ADMIN <#canle> <alcume>"
-  example: "%command_prefix%ADMIN #canle Alicia"
-  short: "Conceder o modo de administrador de canle."
-  help: "Concede o modo de administrador de canle. Só se o IRCd soporta +a."
-  done: "A %nickname% foille concedido administrador de canle."
-  user_not_on_channel: "O alcume %nickname% non está na rede."
-  notice_grant: "%from% concede %mode% a %to%"
-  not_supported: "Esta rede non soporta o modo de administrador de canle (+a)."
-
-# --- DEADMIN ---------------------------------------------------------------
-deadmin:
-  syntax: "DEADMIN <#canle> <alcume>"
-  example: "%command_prefix%DEADMIN #canle Alicia"
-  short: "Retirar o modo de administrador de canle."
-  help: "Retirar o modo de administrador de canle."
-  done: "A %nickname% foille retirado administrador."
-
-# --- HALFOP ----------------------------------------------------------------
-halfop:
-  syntax: "HALFOP <#canle> <alcume>"
-  example: "%command_prefix%HALFOP #canle Alicia"
-  short: "Conceder o modo de semioperador na canle."
-  help: "Concede o modo de semioperador na canle. Só se o IRCd soporta +h."
-  done: "A %nickname% foille concedido halfop."
-  user_not_on_channel: "O alcume %nickname% non está na rede."
-  notice_grant: "%from% concede %mode% a %to%"
-  not_supported: "Esta rede non soporta o modo halfop (+h)."
-
-# --- DEHALFOP --------------------------------------------------------------
-dehalfop:
-  syntax: "DEHALFOP <#canle> <alcume>"
-  example: "%command_prefix%DEHALFOP #canle Alicia"
-  short: "Retirar o modo de semioperador na canle."
-  help: "Retirar o modo de semioperador na canle."
-  done: "A %nickname% foille retirado halfop."
-
-# --- AKICK -----------------------------------------------------------------
+# --- AKICK --------------------------------------------------------------------
 akick:
   syntax: "AKICK <#canle> {ADD <máscara> [caducidade] [motivo]|DEL {<máscara>|<número>}|LIST}"
   example: "%command_prefix%AKICK #canle ADD *!*@* 0"
@@ -647,18 +412,249 @@ akick:
     empty: "A canle %channel% non ten entradas AKICK."
     entry: "#%index% %mask% %reason% (por %nickname%, caduca: %expiration%)"
 
-# --- RESTORE ---------------------------------------------------------------
-restore:
-  syntax: "RESTORE <#canle>"
-  example: "%command_prefix%RESTORE #canle"
-  short: "Restaurar un canal pendente de eliminación."
+# --- LEVELS -------------------------------------------------------------------
+levels:
+  syntax: "LEVELS <#canle> {LIST|SET <nivel> <valor>|RESET}"
+  example: "%command_prefix%LEVELS #canle LIST"
+  examples:
+    - "%command_prefix%LEVELS #canle SET OPDEOP 50"
+    - "%command_prefix%LEVELS #canle RESET"
+  short: "Configurar os niveis da canle."
   help: |-
-    Restaura unha canle eliminada manualmente que aínda estea dentro do período
-    de graza.
-  success: "O canal %channel% foi restaurado."
-  not_pending_deletion: "O canal %channel% non está pendente de eliminación."
+    Configura os niveis mínimos de acceso para as accións da canle. Só a persoa
+    fundadora pode cambiar ou restablecer os niveis.
+  unknown_sub: "Subcomando descoñecido %sub%. Use LIST, SET ou RESET."
+  unknown_key: "Clave de nivel descoñecida %key% ou non soportada por este IRCd."
+  value_range: "O valor de nivel debe estar entre %min% e %max%."
 
-# --- DROP ------------------------------------------------------------------
+  # --- LEVELS LIST ---------------------------------------------------------
+  list:
+    syntax: "LEVELS <#canle> LIST"
+    example: "%command_prefix%LEVELS #canle LIST"
+    short: "Listar os requisitos de nivel."
+    help: "Mostra cada clave de nivel e o seu valor (predeterminado se non está definido)."
+    header: "Niveis de %channel%"
+
+  # --- LEVELS SET ----------------------------------------------------------
+  set:
+    syntax: "LEVELS <#canle> SET <nivel> <valor>"
+    example: "%command_prefix%LEVELS #canle SET OPDEOP 50"
+    short: "Establecer un requisito de nivel."
+    help: "Valor -1 a 499. Só fundador."
+    done: "%key% establecido en %value%."
+
+  # --- LEVELS RESET --------------------------------------------------------
+  reset:
+    syntax: "LEVELS <#canle> RESET"
+    example: "%command_prefix%LEVELS #canle RESET"
+    short: "Restablecer todos os niveis aos valores predeterminados."
+    help: "Elimina todas as modificacións. Só fundador."
+    done: "Todos os niveis restablecidos aos valores predeterminados."
+
+# --- INVITE -------------------------------------------------------------------
+invite:
+  syntax: "INVITE <#canle>"
+  example: "%command_prefix%INVITE #canle"
+  short: "Convidarse a si mesmo á canle."
+  help: "Convidarse a si mesmo á canle."
+  done: "Foi convidado a %channel%."
+  notice_channel: "%nickname% convídase a si mesmo á canle."
+
+# --- UNBAN --------------------------------------------------------------------
+unban:
+  syntax: "UNBAN <#canle>"
+  example: "%command_prefix%UNBAN #canle"
+  short: "Retirar os vetos que che afectan."
+  help: "Retira todos os vetos da canle que coincidan coa túa identidade actual, incluídos comodíns e máscaras IP/CIDR."
+  done: "Retiráronse %count% veto(s) que che afectan en %channel%"
+  notice_channel: "%nickname% utilizou UNBAN."
+  no_matches: "Ningún veto coincide coa túa identidade en %channel%"
+  unavailable: "Non se puideron determinar os teus vetos coincidentes; non se cambiou nada."
+  not_on_network: "A canle %channel% non está na rede."
+
+# --- ADMIN --------------------------------------------------------------------
+admin:
+  syntax: "ADMIN <#canle> <alcume>"
+  example: "%command_prefix%ADMIN #canle Alicia"
+  short: "Conceder o modo de administrador de canle."
+  help: "Concede o modo de administrador de canle. Só se o IRCd soporta +a."
+  done: "A %nickname% foille concedido administrador de canle."
+  user_not_on_channel: "O alcume %nickname% non está na rede."
+  notice_grant: "%from% concede %mode% a %to%"
+  not_supported: "Esta rede non soporta o modo de administrador de canle (+a)."
+
+# --- DEADMIN ------------------------------------------------------------------
+deadmin:
+  syntax: "DEADMIN <#canle> <alcume>"
+  example: "%command_prefix%DEADMIN #canle Alicia"
+  short: "Retirar o modo de administrador de canle."
+  help: "Retirar o modo de administrador de canle."
+  done: "A %nickname% foille retirado administrador."
+
+# --- OP -----------------------------------------------------------------------
+op:
+  syntax: "OP <#canle> <alcume>"
+  example: "%command_prefix%OP #canle Alicia"
+  short: "Conceder o modo de operador de canle."
+  help: "Conceder o modo de operador de canle."
+  done: "A %nickname% foille concedido o estado de operador de canle."
+  user_not_on_channel: "O alcume %nickname% non está na rede."
+  notice_grant: "%from% concede %mode% a %to%"
+
+# --- DEOP ---------------------------------------------------------------------
+deop:
+  syntax: "DEOP <#canle> <alcume>"
+  example: "%command_prefix%DEOP #canle Alicia"
+  short: "Retirar o modo de operador de canle."
+  help: "Retirar o modo de operador de canle."
+  done: "A %nickname% foille retirado o modo de operador."
+
+# --- HALFOP -------------------------------------------------------------------
+halfop:
+  syntax: "HALFOP <#canle> <alcume>"
+  example: "%command_prefix%HALFOP #canle Alicia"
+  short: "Conceder o modo de semioperador na canle."
+  help: "Concede o modo de semioperador na canle. Só se o IRCd soporta +h."
+  done: "A %nickname% foille concedido halfop."
+  user_not_on_channel: "O alcume %nickname% non está na rede."
+  notice_grant: "%from% concede %mode% a %to%"
+  not_supported: "Esta rede non soporta o modo halfop (+h)."
+
+# --- DEHALFOP -----------------------------------------------------------------
+dehalfop:
+  syntax: "DEHALFOP <#canle> <alcume>"
+  example: "%command_prefix%DEHALFOP #canle Alicia"
+  short: "Retirar o modo de semioperador na canle."
+  help: "Retirar o modo de semioperador na canle."
+  done: "A %nickname% foille retirado halfop."
+
+# --- VOICE --------------------------------------------------------------------
+voice:
+  syntax: "VOICE <#canle> <alcume>"
+  example: "%command_prefix%VOICE #canle Alicia"
+  short: "Conceder o modo voice na canle."
+  help: "Conceder o modo voice na canle."
+  done: "A %nickname% foille concedido voice."
+  user_not_on_channel: "O alcume %nickname% non está na rede."
+  notice_grant: "%from% concede %mode% a %to%"
+
+# --- DEVOICE ------------------------------------------------------------------
+devoice:
+  syntax: "DEVOICE <#canle> <alcume>"
+  example: "%command_prefix%DEVOICE #canle Alicia"
+  short: "Retirar o modo voice na canle."
+  help: "Retirar o modo voice na canle."
+  done: "A %nickname% foille retirado voice."
+
+# --- HELP ---------------------------------------------------------------------
+help:
+  examples_header: "Exemplos:"
+  syntax: "HELP [comando] [opción]"
+  example: "%command_prefix%HELP"
+  examples:
+    - "%command_prefix%HELP SET"
+    - "%command_prefix%HELP SET EMAIL"
+  short: "Listar comandos ou mostrar axuda dun comando."
+  help: "Amosa os comandos dispoñibles e a axuda detallada das súas opcións."
+  header_title: "%bot%"
+  header: "%title% %separator%"
+  intro: |-
+    Permite rexistrar e xestionar canles, configurar as súas opcións e controlar
+    quen pode acceder a elas. Xestiona os niveis de acceso e os privilexios
+    daspersoas usuarias para manter a canle baixo o control das persoas
+    responsables.
+  general_header: "Comandos dispoñibles:"
+  command_line: "%command%%description%"
+  subcommand_line: "%command%%description%"
+  options_header: "Opcións:"
+  general_footer: "Usa /msg %bot% %help% para obter máis información."
+  general_footer_command: "HELP <comando>"
+  set_sub_footer: "Usa /msg %bot% %help% para obter máis información."
+  set_sub_footer_command: "HELP %command% <opción>"
+  syntax_label: "Sintaxe: %syntax%"
+  footer: ""
+  intro_expiration: "NOTA: As canles que non se utilicen durante máis de %period% eliminaranse automaticamente."
+  intro_expiration_period: "%days% días"
+  group_header: "%group%"
+  subgroup_header: "%group%"
+  group:
+    registration_info: "Rexistro e información"
+    access_levels: "Acceso e niveis"
+    ranks_entry: "Rangos e entrada"
+  ircop_group:
+    channel_operations: "Operacións da canle"
+    channel_management: "Xestión da canle"
+    deletion: "Eliminación e restauración"
+    restrictions: "Restricións"
+    lookup: "Consulta e investigación"
+    registration_approval: "Aprobación do rexistro"
+  ircop_header: "Comandos dispoñibles para IRCops:"
+
+# --- CLEARUSERS (IRCop) -------------------------------------------------------
+clearusers:
+  syntax: "CLEARUSERS <#canle> [motivo]"
+  example: "%command_prefix%CLEARUSERS #canle"
+  examples:
+    - "%command_prefix%CLEARUSERS #canle flooding"
+  short: "Expulsar todos os usuarios dunha canle."
+  help: |-
+    Expulsa todas as persoas usuarias da canle. É exclusivo de IRCop; se non se
+    indica un motivo, úsase un predeterminado.
+  not_on_network: "A canle %channel% non está actualmente na rede."
+  empty: "A canle %channel% non ten usuarios que expulsar."
+  success: "Expulsado(s) %count% usuario(s) de %channel%."
+  default_reason: "Comando CLEARUSERS"
+
+# --- CLEARACCESS (IRCop) ------------------------------------------------------
+clearaccess:
+  syntax: "CLEARACCESS <#canle>"
+  example: "%command_prefix%CLEARACCESS #canle"
+  short: "Limpar toda a lista de acceso dunha canle."
+  help: "Elimina todas as entradas de acceso da canle. Esta acción é irreversible."
+  success: "Limpadas %count% entradas de acceso de %channel%."
+  empty: "A canle %channel% non ten entradas de acceso."
+
+# --- IRCOPONLY (IRCop) --------------------------------------------------------
+ircoponly:
+  syntax: "IRCOPONLY <#canle> {ON|OFF}"
+  example: "%command_prefix%IRCOPONLY #canle ON"
+  examples:
+    - "%command_prefix%IRCOPONLY #canle OFF"
+  short: "Restrinxir unha canle aos operadores IRC."
+  help: |-
+    Só as persoas operadoras IRC autorizadas poden permanecer na canle. %bot%
+    encárgase de aplicar esta restrición.
+  on: "IRCOPONLY activado en %channel%."
+  off: "IRCOPONLY desactivado en %channel%."
+
+# --- SAREGISTER (IRCop) -------------------------------------------------------
+saregister:
+  syntax: "SAREGISTER <#canle> <alcume> <descrición>"
+  short: "Rexistrar administrativamente unha canle."
+  help: |-
+    Sintaxe: SAREGISTER <#canle> <alcume> <descrición>
+
+    Rexistra administrativamente unha canle de xeito inmediato para o alcume
+    especificado como fundador sen requirir presenza, verificación nin límites de frecuencia.
+  example: "%command_prefix%SAREGISTER #canle Alicia Canle comunitaria"
+  success: "A canle %channel% foi rexistrada para %founder%."
+
+# --- NOEXPIRE (IRCop) ---------------------------------------------------------
+noexpire:
+  syntax: "NOEXPIRE <#canle> {ON|OFF}"
+  example: "%command_prefix%NOEXPIRE #Importante ON"
+  examples:
+    - "%command_prefix%NOEXPIRE #Importante OFF"
+  short: "Establecer ou eliminar a protección contra caducidade dunha canle."
+  help: |-
+    Controla se a canle caduca por inactividade.
+    ON evita a caducidade e OFF aplica as regras habituais.
+  success_on: "A canle %channel% está agora protexida contra a caducidade."
+  success_off: "A canle %channel% caducará normalmente agora."
+  forbidden: "A canle %channel% está prohibida."
+  suspended: "A canle %channel% está suspendida."
+
+# --- DROP (IRCop) -------------------------------------------------------------
 drop:
   syntax: "DROP <#canle> [FORCE]"
   example: "%command_prefix%DROP #canle"
@@ -679,7 +675,18 @@ drop:
   invalid_channel: "Nome de canle non válido. Use %example%."
   pending_deletion_reason: "A canle %channel% está en proceso de eliminación. Máis información: /msg %bot% \x0303INFO %channel%\x03"
 
-# --- SUSPEND ---------------------------------------------------------------
+# --- RESTORE (IRCop) ----------------------------------------------------------
+restore:
+  syntax: "RESTORE <#canle>"
+  example: "%command_prefix%RESTORE #canle"
+  short: "Restaurar un canal pendente de eliminación."
+  help: |-
+    Restaura unha canle eliminada manualmente que aínda estea dentro do período
+    de graza.
+  success: "O canal %channel% foi restaurado."
+  not_pending_deletion: "O canal %channel% non está pendente de eliminación."
+
+# --- SUSPEND (IRCop) ----------------------------------------------------------
 suspend:
   syntax: "SUSPEND <#canle> <duración> <motivo>"
   example: "%command_prefix%SUSPEND #canle 7d Incumprimento das normas"
@@ -697,7 +704,7 @@ suspend:
   channel_suspended: "A canle %channel% está suspendida e non se pode usar."
   notice_channel: "A canle foi suspendida. Motivo: %reason%"
 
-# --- UNSUSPEND -------------------------------------------------------------
+# --- UNSUSPEND (IRCop) --------------------------------------------------------
 unsuspend:
   syntax: "UNSUSPEND <#canle>"
   example: "%command_prefix%UNSUSPEND #canle"
@@ -709,43 +716,7 @@ unsuspend:
   not_suspended: "A canle %channel% non está suspendida."
   reason_expired: "suspensión caducada"
 
-# --- NOJOIN ----------------------------------------------------------------
-nojoin:
-  reason: "Restrición de nivel NOJOIN"
-
-# --- DEBUG CHANNEL ---------------------------------------------------------
-debug_channel:
-  kick_reason: "Non está autorizado para entrar nesta canle."
-
-# --- IRCOPONLY -------------------------------------------------------------
-ircoponly:
-  syntax: "IRCOPONLY <#canle> {ON|OFF}"
-  example: "%command_prefix%IRCOPONLY #canle ON"
-  examples:
-    - "%command_prefix%IRCOPONLY #canle OFF"
-  short: "Restrinxir unha canle aos operadores IRC."
-  help: |-
-    Só as persoas operadoras IRC autorizadas poden permanecer na canle. %bot%
-    encárgase de aplicar esta restrición.
-  on: "IRCOPONLY activado en %channel%."
-  off: "IRCOPONLY desactivado en %channel%."
-
-# --- NOEXPIRE --------------------------------------------------------------
-noexpire:
-  syntax: "NOEXPIRE <#canle> {ON|OFF}"
-  example: "%command_prefix%NOEXPIRE #Importante ON"
-  examples:
-    - "%command_prefix%NOEXPIRE #Importante OFF"
-  short: "Establecer ou eliminar a protección contra caducidade dunha canle."
-  help: |-
-    Controla se a canle caduca por inactividade.
-    ON evita a caducidade e OFF aplica as regras habituais.
-  success_on: "A canle %channel% está agora protexida contra a caducidade."
-  success_off: "A canle %channel% caducará normalmente agora."
-  forbidden: "A canle %channel% está prohibida."
-  suspended: "A canle %channel% está suspendida."
-
-# --- FORBID ----------------------------------------------------------------
+# --- FORBID (IRCop) -----------------------------------------------------------
 forbid:
   syntax: "FORBID <#canle> <motivo>"
   example: "%command_prefix%FORBID #canle Incumprimento das normas"
@@ -759,7 +730,7 @@ forbid:
   updated: "O motivo de prohibición da canle %channel% foi actualizado."
   channel_forbidden: "A canle %channel% está prohibida e non se pode usar."
 
-# --- UNFORBID --------------------------------------------------------------
+# --- UNFORBID (IRCop) ---------------------------------------------------------
 unforbid:
   syntax: "UNFORBID <#canle>"
   example: "%command_prefix%UNFORBID #canle"
@@ -767,12 +738,6 @@ unforbid:
   help: "Retira a prohibición dunha canle para que se poida rexistrar de novo."
   success: "A canle %channel% xa non está prohibida."
   not_forbidden: "A canle %channel% non está prohibida."
-
-# --- DEBUG -----------------------------------------------------------------
-debug:
-  registration_completed: "%operator% rexistrou a canle %target%"
-  registration_pending: "%operator% solicitou o rexistro da canle %target%"
-  founder_action: "Acción de nivel-fundador"
 
 # --- HISTORY ---
 history:
@@ -873,35 +838,7 @@ history.extra:
   level: "Nivel: %value%"
   mask: "Máscara: %value%"
 
-# --- LEVEL FOUNDER ---------------------------------------------------------
-level_founder:
-  short: "Permite realizar operacións que requiren o nivel fundador da canle."
-
-# --- CLEARACCESS -----------------------------------------------------------
-clearaccess:
-  syntax: "CLEARACCESS <#canle>"
-  example: "%command_prefix%CLEARACCESS #canle"
-  short: "Limpar toda a lista de acceso dunha canle."
-  help: "Elimina todas as entradas de acceso da canle. Esta acción é irreversible."
-  success: "Limpadas %count% entradas de acceso de %channel%."
-  empty: "A canle %channel% non ten entradas de acceso."
-
-# --- CLEARUSERS ------------------------------------------------------------
-clearusers:
-  syntax: "CLEARUSERS <#canle> [motivo]"
-  example: "%command_prefix%CLEARUSERS #canle"
-  examples:
-    - "%command_prefix%CLEARUSERS #canle flooding"
-  short: "Expulsar todos os usuarios dunha canle."
-  help: |-
-    Expulsa todas as persoas usuarias da canle. É exclusivo de IRCop; se non se
-    indica un motivo, úsase un predeterminado.
-  not_on_network: "A canle %channel% non está actualmente na rede."
-  empty: "A canle %channel% non ten usuarios que expulsar."
-  success: "Expulsado(s) %count% usuario(s) de %channel%."
-  default_reason: "Comando CLEARUSERS"
-
-# --- LIST ------------------------------------------------------------------
+# --- LIST (IRCop) -------------------------------------------------------------
 list:
   syntax: "LIST <patrón> [páxina]"
   example: "%command_prefix%LIST #*"
@@ -918,3 +855,66 @@ list:
   status_active: "Activa"
   status_pending_registration: "Agardando aprobación"
   status_rejected_registration: "Rexistro rexeitado"
+
+# --- REGMODE (IRCop) ----------------------------------------------------------
+regmode:
+  syntax: "REGMODE {DIRECT|APPROVAL|STATUS}"
+  example: "%command_prefix%REGMODE APPROVAL"
+  short: "Establecer ou consultar o modo de rexistro das canles."
+  help: |-
+    Establece DIRECT ou APPROVAL, ou consulta STATUS.
+    DIRECT é o modo predeterminado e mantén o rexistro inmediato.
+  status: "O modo de rexistro da canle é %mode%."
+  changed: "O modo de rexistro da canle agora é %mode%."
+
+# --- CREG (IRCop) -------------------------------------------------------------
+creg:
+  syntax: "CREG {PENDING [page]|ACCEPT <#channel>|REJECT <#channel> <razón>}"
+  pending.syntax: "CREG PENDING [page]"
+  pending.example: "%command_prefix%CREG PENDING"
+  pending.short: "Lista as solicitudes pendentes nunha páxina limitada."
+  pending.help: "Lista as solicitudes pendentes nunha páxina limitada."
+  accept.syntax: "CREG ACCEPT <#channel>"
+  accept.example: "%command_prefix%CREG ACCEPT #channel"
+  accept.short: "Aprobar unha solicitude de rexistro de canle."
+  accept.help: "Volver validar a solicitude e activar o rexistro pendente."
+  reject.syntax: "CREG REJECT <#channel> <razón>"
+  reject.example: "%command_prefix%CREG REJECT #channel Precisa un tema público"
+  reject.short: "Rexeitar unha solicitude de rexistro de canle."
+  reject.help: "Rexeita unha solicitude cun razón obrigatorio e unha restrición."
+  example: "%command_prefix%CREG PENDING"
+  short: "Revisar as solicitudes de rexistro de canles."
+  help: |-
+    Lista as solicitudes pendentes ou acepta ou rexeita unha.
+    Os rexeitamentos requiren un motivo. Só ACCEPT rexistra a canle.
+  pending_header: "Rexistros pendentes (páxina %page%)"
+  pending_item: "%channel% — solicitante %requester%, enviada o %submitted%: %description%"
+  accepted: "O rexistro de %channel% foi aprobado."
+  rejected: "O rexistro de %channel% foi rexeitado."
+  not_pending: "%channel% non ten ningunha solicitude de rexistro pendente."
+  channel_not_on_network: "A canle %channel% non está na rede."
+  founder_limit: "A persoa solicitante alcanzou o límite de rexistro de canles."
+  requester_inactive: "A conta solicitante xa non está activa."
+  requester_ineligible: "A persoa solicitante debe ter agora estado de operador na canle."
+
+# --- SECURE -------------------------------------------------------------------
+secure:
+  requires_min_level: "Con SECURE activado, %nickname% debe ter polo menos nivel %level% para recibir %mode%."
+
+# --- NOJOIN -------------------------------------------------------------------
+nojoin:
+  reason: "Restrición de nivel NOJOIN"
+
+# --- DEBUG CHANNEL ------------------------------------------------------------
+debug_channel:
+  kick_reason: "Non está autorizado para entrar nesta canle."
+
+# --- DEBUG --------------------------------------------------------------------
+debug:
+  registration_completed: "%operator% rexistrou a canle %target%"
+  registration_pending: "%operator% solicitou o rexistro da canle %target%"
+  founder_action: "Acción de nivel-fundador"
+
+# --- LEVEL FOUNDER ------------------------------------------------------------
+level_founder:
+  short: "Permite realizar operacións que requiren o nivel fundador da canle."

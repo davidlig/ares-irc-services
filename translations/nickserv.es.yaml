@@ -16,7 +16,7 @@
 # Ejemplos HELP: example/examples y %command_prefix%.
 # El presentador añade /msg sin color y un margen de dos espacios.
 
-# --- REGISTER ---------------------------------------------------------------
+# --- REGISTER -----------------------------------------------------------------
 register:
   token_unavailable: !irc |-
     El registro está pendiente, pero no se pudo entregar su token.
@@ -51,69 +51,7 @@ register:
   throttled: "Debes esperar %minutes% minuto(s) antes de intentar registrar de nuevo."
   guest_prefix_forbidden: "No puedes registrar un apodo que empiece por %prefix%."
 
-# --- VERIFY -----------------------------------------------------------------
-verify:
-  syntax: "VERIFY <token>"
-  short: "Confirma un registro o token de rescate."
-  help: |-
-    Una vez validado, este token será tu token de recuperación permanente.
-    Guárdalo en un lugar seguro: podrás utilizarlo para recuperar tu apodo.
-    La caducidad de %duration% solo se aplica antes de validarlo.
-  example: "%command_prefix%VERIFY <token_recibido>"
-  success: "El apodo %nickname% ha sido registrado y ya estás identificado."
-  success_native: "El apodo %nickname% ha sido registrado correctamente. Usa la autenticación nativa que se muestra a continuación."
-  invalid_token: "El token de rescate no es válido."
-  no_pending: "No tienes ningún registro pendiente de verificación."
-
-# --- RESEND -----------------------------------------------------------------
-resend:
-  disabled: "No puedes solicitar otro token con %resend% porque este registro entrega el token directamente por el chat."
-  syntax: "RESEND"
-  short: "Reenvía el token de verificación a tu correo."
-  help: |-
-    RESEND solo está disponible si el token de verificación se envió por correo.
-    Una vez validado, este token será tu token de recuperación permanente.
-    Guárdalo en un lugar seguro: podrás utilizarlo para recuperar tu apodo.
-    La caducidad de %duration% solo se aplica antes de validarlo.
-    Al usar RESEND, recibirás un nuevo token por correo.
-    El plazo del registro pendiente se renovará por %duration%.
-  example: "%command_prefix%RESEND"
-  success: "Token de verificación reenviado a %email%."
-  no_pending: "No tienes ningún registro pendiente de verificación."
-  throttled: "Debes esperar %minutes% minuto(s) antes de solicitar otro correo de verificación."
-
-# --- RECOVER -----------------------------------------------------------------
-recover:
-  no_email: "No hay email configurado para el apodo %nickname%. La recuperación no está disponible."
-  email_sent: "Se ha enviado un token de recuperación a %email_hint%. Revisa tu bandeja (y la de spam)."
-  pending_deletion: "El apodo %nickname% está pendiente de eliminación y no puede recuperarse."
-  instructions: "EMAIL: %command_0% solicita un token provisional por correo. TOKEN: proporciona tu token de recuperación confirmado. %command_1% acepta el token válido del correo o el confirmado. El del correo sustituye al guardado solo tras validarlo. Al usar el guardado se ofrece un reemplazo opcional con %command_2%; ignora ese mensaje si quieres conservar el actual."
-  instructions_command_0: "RECOVER %nickname%"
-  instructions_command_1: "RECOVER %nickname% <token>"
-  instructions_command_2: "VERIFY"
-  syntax: "RECOVER <apodo> [token]"
-  short: "Recupera tu apodo si has perdido la contraseña."
-  help: |-
-    Sin token, solicita por correo un token provisional.
-    También puedes proporcionar un token de recuperación válido; si es
-    provisional, sustituye al guardado solo después de validarlo.
-    Al usar el token guardado se ofrece un reemplazo opcional
-    con VERIFY; ignora ese mensaje si quieres conservar el actual.
-  example: "%command_prefix%RECOVER Usuario"
-  examples:
-    - "%command_prefix%RECOVER Usuario <token_recibido>"
-  pending: "El registro de %nickname% está pendiente. Usa %command_0%. Si el token se envió por correo y hay una dirección válida asociada, puedes solicitar otro con %command_1%."
-  pending_command_0: "VERIFY <token>"
-  pending_command_1: "RESEND"
-  suspended: "El apodo %nickname% está suspendido. Razón: %reason%"
-  forbidden: "El apodo %nickname% no puede usarse en esta red."
-  throttled: "Demasiados tokens incorrectos. Inténtalo de nuevo en %minutes% minuto(s)."
-  invalid_token: "El token de rescate no es válido."
-  success_identify: "Contraseña restablecida. Identifícate ahora: %identify_cmd%"
-  success_then_change: "Luego cambia tu contraseña: /msg %bot% %command_0%"
-  success_then_change_command_0: "SET PASSWORD <nueva_contraseña>"
-
-# --- IDENTIFY ---------------------------------------------------------------
+# --- IDENTIFY -----------------------------------------------------------------
 identify:
   syntax: "IDENTIFY <apodo> <contraseña>"
   short: "Acredita tu identidad como dueño de un apodo."
@@ -150,105 +88,69 @@ identify:
   forbidden: "El apodo %nickname% no puede ser utilizado en esta red."
   pending_deletion: "El apodo %nickname% está pendiente de eliminación y no puede ser usado."
 
-# --- STATUS -----------------------------------------------------------------
-status:
-  syntax: "STATUS <apodo>"
-  short: "Muestra el estado de registro de un apodo."
+# --- VERIFY -------------------------------------------------------------------
+verify:
+  syntax: "VERIFY <token>"
+  short: "Confirma un registro o token de rescate."
   help: |-
-    Muestra el estado actual de un apodo: si está registrado,
-    pendiente de verificación, suspendido, etc.
-  example: "%command_prefix%STATUS Usuario"
-  header: "Estado del apodo %nickname%"
-  unregistered: "  Estado          : Sin registrar"
-  not_registered_offline: "  Estado          : %state%"
-  value_not_registered_offline: "No registrado"
-  pending: "  Estado          : %state%"
-  value_pending: "Pendiente de validación"
-  pending_expires: "  Expira en       : %minutes% minuto(s)"
-  pending_expires_at: "  Expira a las    : %date%"
-  not_connected: "  Estado          : %state%"
-  value_not_connected: "No conectado"
-  not_identified: "  Estado          : %state%"
-  value_not_identified: "No identificado"
-  identified: "  Estado          : %state%"
-  value_identified: "Identificado"
-  suspended: "  Estado          : %state%"
-  value_suspended: "Suspendido"
-  suspended_reason: "  Razón           : %reason%"
-  suspended_until: "  Fecha fin       : %date%"
-  suspended_permanent: "  Fecha fin       : Permanente"
-  forbidden: "  Estado          : %state%"
-  value_forbidden: "Prohibido"
-  forbidden_reason: "  Razón           : %reason%"
-  pending_deletion: "  %label%          : %state%"
-  value_pending_deletion: "Pendiente de eliminación"
-  label_pending_deletion: "Estado"
-  pending_deletion_at: "  %label%       : %date%"
+    Una vez validado, este token será tu token de recuperación permanente.
+    Guárdalo en un lugar seguro: podrás utilizarlo para recuperar tu apodo.
+    La caducidad de %duration% solo se aplica antes de validarlo.
+  example: "%command_prefix%VERIFY <token_recibido>"
+  success: "El apodo %nickname% ha sido registrado y ya estás identificado."
+  success_native: "El apodo %nickname% ha sido registrado correctamente. Usa la autenticación nativa que se muestra a continuación."
+  invalid_token: "El token de rescate no es válido."
+  no_pending: "No tienes ningún registro pendiente de verificación."
 
-  label_pending_deletion_at: "Eliminado"
-# --- INFO -------------------------------------------------------------------
-info:
-  syntax: "INFO <apodo>"
-  short: "Muestra la información de un apodo registrado."
+# --- RESEND -------------------------------------------------------------------
+resend:
+  disabled: "No puedes solicitar otro token con %resend% porque este registro entrega el token directamente por el chat."
+  syntax: "RESEND"
+  short: "Reenvía el token de verificación a tu correo."
   help: |-
-    Muestra los datos de registro de un apodo: fecha de alta, estado de
-    conexión, último mensaje de salida y correo electrónico.
+    RESEND solo está disponible si el token de verificación se envió por correo.
+    Una vez validado, este token será tu token de recuperación permanente.
+    Guárdalo en un lugar seguro: podrás utilizarlo para recuperar tu apodo.
+    La caducidad de %duration% solo se aplica antes de validarlo.
+    Al usar RESEND, recibirás un nuevo token por correo.
+    El plazo del registro pendiente se renovará por %duration%.
+  example: "%command_prefix%RESEND"
+  success: "Token de verificación reenviado a %email%."
+  no_pending: "No tienes ningún registro pendiente de verificación."
+  throttled: "Debes esperar %minutes% minuto(s) antes de solicitar otro correo de verificación."
 
-    El correo solo es visible para el propietario identificado.
-    Si el apodo es privado, solo su propietario y los Operadores IRC pueden
-    ver la información.
-  example: "%command_prefix%INFO Usuario"
-  private: "La información del apodo %nickname% es privada."
-  header: "Información del apodo %nickname%"
-  status: "%label%                 : %status%"
-  label_status: "Estado"
-  status_registered: "Registrado"
-  status_suspended: "Suspendido"
-  status_forbidden: "Prohibido"
-  status_pending_deletion: "Pendiente de eliminación"
-  reason: "%label%                  : %reason%"
-  label_reason: "Razón"
-  suspended_until: "%label%              : %date%"
-  label_suspended_until: "Fecha fin"
-  suspended_permanent: "%label%              : Permanente"
-  label_suspended_permanent: "Fecha fin"
-  registered_at: "%label%         : %date%"
-  label_registered_at: "Fecha registro"
-  last_seen_online: "%label%        : %online%"
-  label_last_seen_online: "Última conexión"
-  value_last_seen_online: "CONECTADO AHORA"
-  last_seen_at: "%label%        : %date%"
-  label_last_seen_at: "Última conexión"
-  last_seen_never: "%label%        : Nunca"
-  label_last_seen_never: "Última conexión"
-  last_quit: "%label%         : %message%"
-  label_last_quit: "Último mensaje"
-  last_connect: "%label%  : %ip% (%host%)"
-  label_last_connect: "Última conexión desde"
-  language: "%label%                 : %language%"
-  label_language: "Idioma"
-  email: "%label%                 : %email%"
-  label_email: "Correo"
-  vhost: "%label%                  : %vhost%"
-  label_vhost: "VHost"
-  no_expire: "%label%           : Sí"
-  label_no_expire: "Nunca expira"
-  pending_deletion_at: "%label%              : %date%"
-  label_pending_deletion_at: "Eliminado"
-  pending_deletion_until: "%label%       : %date%"
-  label_pending_deletion_until: "Elim. definitiva"
-  pending_deletion_notice: "%notice%"
-  value_pending_deletion_notice: "Este apodo está pendiente de eliminación y no puede ser registrado."
-  channels_header: |-
+# --- RECOVER ------------------------------------------------------------------
+recover:
+  no_email: "No hay email configurado para el apodo %nickname%. La recuperación no está disponible."
+  email_sent: "Se ha enviado un token de recuperación a %email_hint%. Revisa tu bandeja (y la de spam)."
+  pending_deletion: "El apodo %nickname% está pendiente de eliminación y no puede recuperarse."
+  instructions: "EMAIL: %command_0% solicita un token provisional por correo. TOKEN: proporciona tu token de recuperación confirmado. %command_1% acepta el token válido del correo o el confirmado. El del correo sustituye al guardado solo tras validarlo. Al usar el guardado se ofrece un reemplazo opcional con %command_2%; ignora ese mensaje si quieres conservar el actual."
+  instructions_command_0: "RECOVER %nickname%"
+  instructions_command_1: "RECOVER %nickname% <token>"
+  instructions_command_2: "VERIFY"
+  syntax: "RECOVER <apodo> [token]"
+  short: "Recupera tu apodo si has perdido la contraseña."
+  help: |-
+    Sin token, solicita por correo un token provisional.
+    También puedes proporcionar un token de recuperación válido; si es
+    provisional, sustituye al guardado solo después de validarlo.
+    Al usar el token guardado se ofrece un reemplazo opcional
+    con VERIFY; ignora ese mensaje si quieres conservar el actual.
+  example: "%command_prefix%RECOVER Usuario"
+  examples:
+    - "%command_prefix%RECOVER Usuario <token_recibido>"
+  pending: "El registro de %nickname% está pendiente. Usa %command_0%. Si el token se envió por correo y hay una dirección válida asociada, puedes solicitar otro con %command_1%."
+  pending_command_0: "VERIFY <token>"
+  pending_command_1: "RESEND"
+  suspended: "El apodo %nickname% está suspendido. Razón: %reason%"
+  forbidden: "El apodo %nickname% no puede usarse en esta red."
+  throttled: "Demasiados tokens incorrectos. Inténtalo de nuevo en %minutes% minuto(s)."
+  invalid_token: "El token de rescate no es válido."
+  success_identify: "Contraseña restablecida. Identifícate ahora: %identify_cmd%"
+  success_then_change: "Luego cambia tu contraseña: /msg %bot% %command_0%"
+  success_then_change_command_0: "SET PASSWORD <nueva_contraseña>"
 
-    Canales con acceso:
-  channels_entry_founder: "%channel% (%role%)"
-  channels_role_founder: "Fundador"
-  channels_entry_successor: "%channel% (%role%)"
-  channels_role_successor: "Sucesor"
-  channels_entry_access: "%channel% (%level%)"
-
-# --- SET --------------------------------------------------------------------
+# --- SET ----------------------------------------------------------------------
 set:
   syntax: "SET {PASSWORD <nueva_contraseña>|EMAIL <email> <token>|LANGUAGE <código>|TIMEZONE <zona>|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
   short: "Cambiar opciones de tu apodo."
@@ -389,103 +291,106 @@ set:
     taken: "Ese vhost ya está en uso por otro apodo."
     forced: "Tu vhost está configurado automáticamente y no puede cambiarse con SET VHOST."
 
-# --- SAREGISTER ------------------------------------------------------------
-saregister:
-  syntax: "SAREGISTER <apodo> <contraseña> [email]"
-  short: "Registrar administrativamente un apodo."
+# --- INFO ---------------------------------------------------------------------
+info:
+  syntax: "INFO <apodo>"
+  short: "Muestra la información de un apodo registrado."
   help: |-
-    Sintaxis: SAREGISTER <apodo> <contraseña> [email]
+    Muestra los datos de registro de un apodo: fecha de alta, estado de
+    conexión, último mensaje de salida y correo electrónico.
 
-    Registra administrativamente un apodo de forma inmediata sin requerir
-    verificación del cliente ni límites de frecuencia.
+    El correo solo es visible para el propietario identificado.
+    Si el apodo es privado, solo su propietario y los Operadores IRC pueden
+    ver la información.
+  example: "%command_prefix%INFO Usuario"
+  private: "La información del apodo %nickname% es privada."
+  header: "Información del apodo %nickname%"
+  status: "%label%                 : %status%"
+  label_status: "Estado"
+  status_registered: "Registrado"
+  status_suspended: "Suspendido"
+  status_forbidden: "Prohibido"
+  status_pending_deletion: "Pendiente de eliminación"
+  reason: "%label%                  : %reason%"
+  label_reason: "Razón"
+  suspended_until: "%label%              : %date%"
+  label_suspended_until: "Fecha fin"
+  suspended_permanent: "%label%              : Permanente"
+  label_suspended_permanent: "Fecha fin"
+  registered_at: "%label%         : %date%"
+  label_registered_at: "Fecha registro"
+  last_seen_online: "%label%        : %online%"
+  label_last_seen_online: "Última conexión"
+  value_last_seen_online: "CONECTADO AHORA"
+  last_seen_at: "%label%        : %date%"
+  label_last_seen_at: "Última conexión"
+  last_seen_never: "%label%        : Nunca"
+  label_last_seen_never: "Última conexión"
+  last_quit: "%label%         : %message%"
+  label_last_quit: "Último mensaje"
+  last_connect: "%label%  : %ip% (%host%)"
+  label_last_connect: "Última conexión desde"
+  language: "%label%                 : %language%"
+  label_language: "Idioma"
+  email: "%label%                 : %email%"
+  label_email: "Correo"
+  vhost: "%label%                  : %vhost%"
+  label_vhost: "VHost"
+  no_expire: "%label%           : Sí"
+  label_no_expire: "Nunca expira"
+  pending_deletion_at: "%label%              : %date%"
+  label_pending_deletion_at: "Eliminado"
+  pending_deletion_until: "%label%       : %date%"
+  label_pending_deletion_until: "Elim. definitiva"
+  pending_deletion_notice: "%notice%"
+  value_pending_deletion_notice: "Este apodo está pendiente de eliminación y no puede ser registrado."
+  channels_header: |-
 
-    En modo TOKEN, el código de rescate se muestra una vez al operador.
-    En modo EMAIL, el código de rescate se envía a la dirección de correo indicada.
-  example: "%command_prefix%SAREGISTER Alice Contraseña123"
-  examples:
-    - "%command_prefix%SAREGISTER Bob Contraseña456 bob@ejemplo.com"
-  success_token: "El apodo %nickname% ha sido registrado. Código de rescate: %token%"
-  success_email: "El apodo %nickname% ha sido registrado. Código de rescate enviado a %email%."
-  invalid_nickname: "Apodo no válido %nickname%."
+    Canales con acceso:
+  channels_entry_founder: "%channel% (%role%)"
+  channels_role_founder: "Fundador"
+  channels_entry_successor: "%channel% (%role%)"
+  channels_role_successor: "Sucesor"
+  channels_entry_access: "%channel% (%level%)"
 
-# --- SASET (IRCop) --------------------------------------------------------------
-saset:
-  syntax: "SASET <apodo> {PASSWORD <nueva_contraseña>|EMAIL <nuevo_email>|LANGUAGE <código>|TIMEZONE {<zona>|OFF}|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
-  short: "Modifica la configuración de otro apodo."
+# --- STATUS -------------------------------------------------------------------
+status:
+  syntax: "STATUS <apodo>"
+  short: "Muestra el estado de registro de un apodo."
   help: |-
-    Permite a un IRCop cambiar la configuración de otro apodo registrado. No
-    admite apodos de Root, IRCop ni servicios.
-  example: "%command_prefix%SASET Usuario PRIVATE ON"
-  examples:
-    - "%command_prefix%SASET Usuario TIMEZONE OFF"
-  unknown_option: "Opción desconocida %option%. Opciones disponibles: %options%."
-  cannot_modify_oper: "No puedes modificar un apodo de Operador IRC."
+    Muestra el estado actual de un apodo: si está registrado,
+    pendiente de verificación, suspendido, etc.
+  example: "%command_prefix%STATUS Usuario"
+  header: "Estado del apodo %nickname%"
+  unregistered: "  Estado          : Sin registrar"
+  not_registered_offline: "  Estado          : %state%"
+  value_not_registered_offline: "No registrado"
+  pending: "  Estado          : %state%"
+  value_pending: "Pendiente de validación"
+  pending_expires: "  Expira en       : %minutes% minuto(s)"
+  pending_expires_at: "  Expira a las    : %date%"
+  not_connected: "  Estado          : %state%"
+  value_not_connected: "No conectado"
+  not_identified: "  Estado          : %state%"
+  value_not_identified: "No identificado"
+  identified: "  Estado          : %state%"
+  value_identified: "Identificado"
+  suspended: "  Estado          : %state%"
+  value_suspended: "Suspendido"
+  suspended_reason: "  Razón           : %reason%"
+  suspended_until: "  Fecha fin       : %date%"
+  suspended_permanent: "  Fecha fin       : Permanente"
+  forbidden: "  Estado          : %state%"
+  value_forbidden: "Prohibido"
+  forbidden_reason: "  Razón           : %reason%"
+  pending_deletion: "  %label%          : %state%"
+  value_pending_deletion: "Pendiente de eliminación"
+  label_pending_deletion: "Estado"
+  pending_deletion_at: "  %label%       : %date%"
 
-  # --- SASET PASSWORD ------------------------------------------------------
-  password:
-    syntax: "SASET <apodo> PASSWORD <nueva_contraseña>"
-    short: "Cambia la contraseña de un apodo."
-    help: "Cambia la contraseña de otro apodo. El cambio es inmediato."
-    example: "%command_prefix%SASET Usuario PASSWORD ClaveSegura123"
+  label_pending_deletion_at: "Eliminado"
 
-  # --- SASET EMAIL ---------------------------------------------------------
-  email:
-    syntax: "SASET <apodo> EMAIL <nuevo_email>"
-    short: "Cambia el correo de un apodo."
-    help: |-
-      Cambia el correo electrónico de otro apodo. El cambio es inmediato y no
-      requiere el token de rescate ni envía un correo de confirmación.
-      BADMAIL no restringe este cambio administrativo de correo.
-    example: "%command_prefix%SASET Usuario EMAIL usuario@ejemplo.com"
-
-  # --- SASET LANGUAGE ------------------------------------------------------
-  language:
-    syntax: "SASET <apodo> LANGUAGE <código>"
-    short: "Cambia el idioma de un apodo."
-    help: |-
-      Cambia el idioma de otro apodo. En este comando están disponibles en (inglés)
-      y es (español).
-    example: "%command_prefix%SASET Usuario LANGUAGE es"
-
-  # --- SASET TIMEZONE ------------------------------------------------------
-  timezone:
-    syntax: "SASET <apodo> TIMEZONE {<zona>|OFF}"
-    short: "Cambia la zona horaria de un apodo."
-    help: "Establece o quita la zona horaria de otro apodo. Usa OFF para quitarla."
-    example: "%command_prefix%SASET Usuario TIMEZONE Europe/Madrid"
-    examples:
-      - "%command_prefix%SASET Usuario TIMEZONE OFF"
-
-  # --- SASET PRIVATE -------------------------------------------------------
-  private:
-    syntax: "SASET <apodo> PRIVATE {ON|OFF}"
-    short: "Cambia la privacidad de un apodo."
-    help: "Activa o desactiva la privacidad de la información de otro apodo."
-    example: "%command_prefix%SASET Usuario PRIVATE ON"
-    examples:
-      - "%command_prefix%SASET Usuario PRIVATE OFF"
-
-  # --- SASET MSG -----------------------------------------------------------
-  msg:
-    syntax: "SASET <apodo> MSG {ON|OFF}"
-    short: "Cambia la preferencia de mensajes de un apodo."
-    help: "Establece si otro apodo recibe respuestas como PRIVMSG (ON) o NOTICE (OFF)."
-    example: "%command_prefix%SASET Usuario MSG ON"
-    examples:
-      - "%command_prefix%SASET Usuario MSG OFF"
-
-  # --- SASET VHOST ---------------------------------------------------------
-  vhost:
-    syntax: "SASET <apodo> VHOST [vhost]"
-    short: "Cambia el host virtual de un apodo."
-    help: |-
-      Establece o quita el host virtual de otro apodo. Ejecuta SASET <apodo> VHOST
-      sin valor para quitarlo.
-    example: "%command_prefix%SASET Usuario VHOST usuario.ejemplo.org"
-    examples:
-      - "%command_prefix%SASET Usuario VHOST"
-
-# --- HELP -------------------------------------------------------------------
+# --- HELP ---------------------------------------------------------------------
 help:
   syntax: "HELP [comando]"
   short: "Muestra la ayuda de los comandos de %nickserv%."
@@ -540,7 +445,7 @@ help:
     region_unknown: "Región desconocida. Usa %syntax% para ver el índice."
     region_syntax: "HELP SET TIMEZONE"
 
-# --- Nick Protection --------------------------------------------------------
+# --- NICK PROTECTION ----------------------------------------------------------
 protection:
   nick_in_use: "El apodo %nickname% está registrado. Serás renombrado si no te identificas."
   renamed_to: |-
@@ -549,8 +454,7 @@ protection:
   renamed_command: "IDENTIFY %nickname% <contraseña>"
   nick_forbidden: "El apodo %nickname% está prohibido: %reason%"
 
-# --- IRCop Commands ---------------------------------------------------------
-# --- USERIP ----------------------------------------------------------------
+# --- USERIP (IRCop) -----------------------------------------------------------
 userip:
   syntax: "USERIP <apodo>"
   short: "Obtiene la dirección IP/Host real del apodo."
@@ -560,7 +464,7 @@ userip:
   example: "%command_prefix%USERIP Usuario"
   result: "Apodo: %nickname% | IP: %ip% | Host: %host%"
 
-# --- WHOIP -----------------------------------------------------------------
+# --- WHOIP (IRCop) ------------------------------------------------------------
 whoip:
   syntax: "WHOIP <ip>"
   short: "Busca apodos por la IP de su última conexión identificada."
@@ -571,156 +475,21 @@ whoip:
   empty: "No hay apodos registrados que coincidan con esta dirección IP."
   header: "Apodos coincidentes:"
 
-# --- SUSPEND (IRCop) ---------------------------------------------------------
-suspend:
-  syntax: "SUSPEND <apodo> <duración> <razón>"
-  short: "Suspende un apodo."
+# --- LIST (IRCop) -------------------------------------------------------------
+list:
+  syntax: "LIST <patrón> [página]"
+  short: "Lista apodos registrados que coinciden con un patrón."
   help: |-
-    Impide que el propietario se identifique. La duración puede expresarse en días
-    (d), horas (h), minutos (m) o 0 para una suspensión permanente. No se puede
-    suspender a operadores IRC ni a usuarios Root.
-  example: "%command_prefix%SUSPEND MalUsuario 7d Spam en #ayuda"
+    Lista los apodos registrados que coinciden con el patrón. El comodín *
+    coincide con cualquier secuencia de caracteres; la página opcional empieza en 1.
+  example: "%command_prefix%LIST Usuario*"
   examples:
-    - "%command_prefix%SUSPEND Problematico 0 Evasión de prohibición"
-  success: "El apodo %nickname% ha sido suspendido hasta %duration%."
-  already_suspended: "El apodo %nickname% ya está suspendido."
-  forbidden: "El apodo %nickname% está prohibido y no puede suspenderse."
-  cannot_suspend_oper: "No se puede suspender al operador IRC %nickname%."
-  cannot_suspend_root: "No se puede suspender al usuario root %nickname%."
-  cannot_suspend_service: "No se puede suspender el apodo de servicio %nickname%."
-  invalid_duration: "Duración inválida. Usa: %duration_format% (ej: 7d, 12h, 30m) o %permanent% para permanente."
-  invalid_duration_format: "<d><h><m>"
-  invalid_duration_permanent: "0"
-
-# --- UNSUSPEND (IRCop) -------------------------------------------------------
-unsuspend:
-  syntax: "UNSUSPEND <apodo>"
-  short: "Quita la suspensión de un apodo."
-  help: |-
-    Quita una suspensión activa para que el propietario pueda volver a
-    identificarse.
-  example: "%command_prefix%UNSUSPEND Usuario"
-  success: "Se ha levantado la suspensión de %nickname%."
-  not_suspended: "El apodo %nickname% no está suspendido."
-
-# --- RENAME (IRCop) -----------------------------------------------------------
-rename:
-  syntax: "RENAME <apodo>"
-  short: "Fuerza el cambio de apodo de un apodo conectado a uno aleatorio."
-  help: |-
-    Fuerza a un apodo conectado a cambiar a un nombre aleatorio con un
-    prefijo definido por la red.
-  example: "%command_prefix%RENAME Problematico"
-  cannot_rename_root: "No se puede renombrar al usuario root %nickname%."
-  cannot_rename_oper: "No se puede renombrar al IRC operator %nickname%."
-  cannot_rename_service: "No se puede renombrar el apodo de servicio %nickname%."
-  success: "El apodo %nickname% ha sido nombrado a %new_nick%."
-
-# --- DROP (IRCop) --------------------------------------------------------------
-drop:
-  syntax: "DROP <apodo> [FORCE]"
-  short: "Elimina un apodo registrado."
-  help: |-
-    Marca un apodo registrado para eliminarlo durante el periodo de gracia; puede
-    restaurarse con RESTORE. Añade FORCE para eliminarlo permanentemente. Los
-    usuarios Root, IRCops y servicios, así como tu propio apodo, no se pueden
-    eliminar.
-  force:
-    short: "Elimina permanentemente un apodo pendiente de eliminación."
-  example: "%command_prefix%DROP CuentaAntigua"
-  examples:
-    - "%command_prefix%DROP CuentaAntigua FORCE"
-  suspended: "El apodo %nickname% está suspendido. Desuspende primero."
-  forbidden: "El apodo %nickname% está prohibido."
-  cannot_drop_root: "No se puede eliminar al usuario root %nickname%."
-  cannot_drop_oper: "No se puede eliminar al IRC operator %nickname%."
-  cannot_drop_self: "No puedes eliminar tu propio apodo."
-  success: "El apodo %nickname% ha sido marcado para eliminación y puede ser restaurado durante el periodo de gracia."
-  force_success: "El apodo %nickname% ha sido eliminado permanentemente."
-  pending_deletion: "El apodo %nickname% ya está pendiente de eliminación. Usa DROP <apodo> FORCE para eliminarlo permanentemente."
-  cannot_drop_service: "No se puede eliminar el apodo de servicio %nickname%."
-
-# --- RESTORE (IRCop) -----------------------------------------------------------
-restore:
-  syntax: "RESTORE <apodo>"
-  short: "Restaurar un apodo pendiente de eliminación."
-  help: |-
-    Restaura un apodo pendiente de eliminación mientras siga dentro del periodo de
-    gracia.
-  example: "%command_prefix%RESTORE CuentaAntigua"
-  success: "El apodo %nickname% ha sido restaurado."
-  not_pending_deletion: "El apodo %nickname% no está pendiente de eliminación."
-
-# --- FORBID (IRCop) --------------------------------------------------------------
-forbid:
-  syntax: "FORBID <apodo> <razón>"
-  short: "Prohíbe permanentemente el uso de un apodo."
-  help: |-
-    Prohíbe permanentemente un apodo para que nadie pueda registrarlo ni usarlo.
-    Si está registrado se elimina; si está conectado, se le fuerza a cambiar a un
-    apodo aleatorio. No se puede prohibir a usuarios Root, IRCops ni servicios.
-  example: "%command_prefix%FORBID MalUsuario Violaciones repetidas de política"
-  success: "El apodo %nickname% ha sido prohibido."
-  updated: "Se ha actualizado la razón de prohibición para %nickname%."
-  reason_required: "Debes proporcionar una razón para la prohibición."
-  cannot_forbid_root: "No se puede prohibir al usuario root %nickname%."
-  cannot_forbid_oper: "No se puede prohibir al IRC operator %nickname%."
-  cannot_forbid_service: "No se puede prohibir el apodo de servicio %nickname%."
-
-# --- UNFORBID (IRCop) ------------------------------------------------------------
-unforbid:
-  syntax: "UNFORBID <apodo>"
-  short: "Elimina la prohibición de un apodo."
-  help: "Elimina la prohibición para que el apodo pueda volver a usarse."
-  example: "%command_prefix%UNFORBID ApodoProhibido"
-  success: "El apodo %nickname% ya no está prohibido."
-  not_forbidden: "El apodo %nickname% no está prohibido."
-
-# --- FORBIDVHOST (IRCop) ---------------------------------------------------------
-forbidvhost:
-  syntax: "FORBIDVHOST {ADD <patrón>|DEL <patrón>|LIST}"
-  short: "Gestiona vhosts prohibidos."
-  help: |-
-    Gestiona los patrones que impiden establecer vhosts coincidentes con SET
-    VHOST. El comodín * coincide con cualquier secuencia y ? con un carácter.
-    Requiere privilegios de Operador de IRC.
-  example: "%command_prefix%FORBIDVHOST ADD *.pirata.com"
-  examples:
-    - "%command_prefix%FORBIDVHOST LIST"
-
-  unknown_sub: "Subcomando desconocido %sub%. Usa ADD, DEL o LIST."
-
-  # --- FORBIDVHOST ADD -----------------------------------------------------
-  add:
-    syntax: "FORBIDVHOST ADD <patrón>"
-    short: "Agregar un patrón de vhost prohibido."
-    help: |-
-      Agrega un patrón a la lista. Los usuarios no podrán establecer vhosts
-      coincidentes mediante SET VHOST. * coincide con cualquier secuencia y ? con un
-      carácter.
-    example: "%command_prefix%FORBIDVHOST ADD *.pirata.com"
-    done: "Patrón de vhost prohibido agregado: %pattern%"
-    already_exists: "El patrón %pattern% ya existe."
-    invalid: "Formato de patrón de vhost inválido."
-
-  # --- FORBIDVHOST DEL -----------------------------------------------------
-  del:
-    syntax: "FORBIDVHOST DEL <patrón>"
-    short: "Eliminar un patrón de vhost prohibido."
-    help: "Elimina un patrón de la lista de vhosts prohibidos."
-    example: "%command_prefix%FORBIDVHOST DEL *.pirata.com"
-    done: "Patrón de vhost prohibido eliminado: %pattern%"
-    not_found: "Patrón %pattern% no encontrado."
-
-  # --- FORBIDVHOST LIST ----------------------------------------------------
-  list:
-    short: "Listar todos los patrones de vhost prohibidos."
-    syntax: "FORBIDVHOST LIST"
-    help: "Muestra todos los patrones de vhost prohibidos."
-    example: "%command_prefix%FORBIDVHOST LIST"
-    header: "Patrones de vhost prohibidos (%count%):"
-    entry: "%index%. %pattern% — por %nickname% (%date%)"
-    empty: "No hay patrones de vhost prohibidos."
+    - "%command_prefix%LIST Usuario* 2"
+  header: "Apodo | Registro | Última conexión | IP | Estado"
+  row: "%nickname% | %registered% | %last_seen% | %ip% | %status%"
+  empty: "Ningún apodo coincide con el patrón %pattern%."
+  status_pending: "Pendiente"
+  status_registered: "Registrado"
 
 # --- HISTORY ---
 history:
@@ -797,6 +566,115 @@ history.extra:
   new_email: "Email nuevo: %value%"
   method: "Método: %value%"
 
+# --- SAREGISTER (IRCop) -------------------------------------------------------
+saregister:
+  syntax: "SAREGISTER <apodo> <contraseña> [email]"
+  short: "Registrar administrativamente un apodo."
+  help: |-
+    Sintaxis: SAREGISTER <apodo> <contraseña> [email]
+
+    Registra administrativamente un apodo de forma inmediata sin requerir
+    verificación del cliente ni límites de frecuencia.
+
+    En modo TOKEN, el código de rescate se muestra una vez al operador.
+    En modo EMAIL, el código de rescate se envía a la dirección de correo indicada.
+  example: "%command_prefix%SAREGISTER Alice Contraseña123"
+  examples:
+    - "%command_prefix%SAREGISTER Bob Contraseña456 bob@ejemplo.com"
+  success_token: "El apodo %nickname% ha sido registrado. Código de rescate: %token%"
+  success_email: "El apodo %nickname% ha sido registrado. Código de rescate enviado a %email%."
+  invalid_nickname: "Apodo no válido %nickname%."
+
+# --- SASET (IRCop) ------------------------------------------------------------
+saset:
+  syntax: "SASET <apodo> {PASSWORD <nueva_contraseña>|EMAIL <nuevo_email>|LANGUAGE <código>|TIMEZONE {<zona>|OFF}|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
+  short: "Modifica la configuración de otro apodo."
+  help: |-
+    Permite a un IRCop cambiar la configuración de otro apodo registrado. No
+    admite apodos de Root, IRCop ni servicios.
+  example: "%command_prefix%SASET Usuario PRIVATE ON"
+  examples:
+    - "%command_prefix%SASET Usuario TIMEZONE OFF"
+  unknown_option: "Opción desconocida %option%. Opciones disponibles: %options%."
+  cannot_modify_oper: "No puedes modificar un apodo de Operador IRC."
+
+  # --- SASET PASSWORD ------------------------------------------------------
+  password:
+    syntax: "SASET <apodo> PASSWORD <nueva_contraseña>"
+    short: "Cambia la contraseña de un apodo."
+    help: "Cambia la contraseña de otro apodo. El cambio es inmediato."
+    example: "%command_prefix%SASET Usuario PASSWORD ClaveSegura123"
+
+  # --- SASET EMAIL ---------------------------------------------------------
+  email:
+    syntax: "SASET <apodo> EMAIL <nuevo_email>"
+    short: "Cambia el correo de un apodo."
+    help: |-
+      Cambia el correo electrónico de otro apodo. El cambio es inmediato y no
+      requiere el token de rescate ni envía un correo de confirmación.
+      BADMAIL no restringe este cambio administrativo de correo.
+    example: "%command_prefix%SASET Usuario EMAIL usuario@ejemplo.com"
+
+  # --- SASET LANGUAGE ------------------------------------------------------
+  language:
+    syntax: "SASET <apodo> LANGUAGE <código>"
+    short: "Cambia el idioma de un apodo."
+    help: |-
+      Cambia el idioma de otro apodo. En este comando están disponibles en (inglés)
+      y es (español).
+    example: "%command_prefix%SASET Usuario LANGUAGE es"
+
+  # --- SASET TIMEZONE ------------------------------------------------------
+  timezone:
+    syntax: "SASET <apodo> TIMEZONE {<zona>|OFF}"
+    short: "Cambia la zona horaria de un apodo."
+    help: "Establece o quita la zona horaria de otro apodo. Usa OFF para quitarla."
+    example: "%command_prefix%SASET Usuario TIMEZONE Europe/Madrid"
+    examples:
+      - "%command_prefix%SASET Usuario TIMEZONE OFF"
+
+  # --- SASET PRIVATE -------------------------------------------------------
+  private:
+    syntax: "SASET <apodo> PRIVATE {ON|OFF}"
+    short: "Cambia la privacidad de un apodo."
+    help: "Activa o desactiva la privacidad de la información de otro apodo."
+    example: "%command_prefix%SASET Usuario PRIVATE ON"
+    examples:
+      - "%command_prefix%SASET Usuario PRIVATE OFF"
+
+  # --- SASET MSG -----------------------------------------------------------
+  msg:
+    syntax: "SASET <apodo> MSG {ON|OFF}"
+    short: "Cambia la preferencia de mensajes de un apodo."
+    help: "Establece si otro apodo recibe respuestas como PRIVMSG (ON) o NOTICE (OFF)."
+    example: "%command_prefix%SASET Usuario MSG ON"
+    examples:
+      - "%command_prefix%SASET Usuario MSG OFF"
+
+  # --- SASET VHOST ---------------------------------------------------------
+  vhost:
+    syntax: "SASET <apodo> VHOST [vhost]"
+    short: "Cambia el host virtual de un apodo."
+    help: |-
+      Establece o quita el host virtual de otro apodo. Ejecuta SASET <apodo> VHOST
+      sin valor para quitarlo.
+    example: "%command_prefix%SASET Usuario VHOST usuario.ejemplo.org"
+    examples:
+      - "%command_prefix%SASET Usuario VHOST"
+
+# --- RENAME (IRCop) -----------------------------------------------------------
+rename:
+  syntax: "RENAME <apodo>"
+  short: "Fuerza el cambio de apodo de un apodo conectado a uno aleatorio."
+  help: |-
+    Fuerza a un apodo conectado a cambiar a un nombre aleatorio con un
+    prefijo definido por la red.
+  example: "%command_prefix%RENAME Problematico"
+  cannot_rename_root: "No se puede renombrar al usuario root %nickname%."
+  cannot_rename_oper: "No se puede renombrar al IRC operator %nickname%."
+  cannot_rename_service: "No se puede renombrar el apodo de servicio %nickname%."
+  success: "El apodo %nickname% ha sido nombrado a %new_nick%."
+
 # --- NOEXPIRE (IRCop) ---------------------------------------------------------
 noexpire:
   syntax: "NOEXPIRE <apodo> {ON|OFF}"
@@ -812,24 +690,7 @@ noexpire:
   forbidden: "El apodo %nickname% está prohibido."
   suspended: "El apodo %nickname% está suspendido."
 
-# --- LIST (IRCOP) ------------------------------------------------------------
-list:
-  syntax: "LIST <patrón> [página]"
-  short: "Lista apodos registrados que coinciden con un patrón."
-  help: |-
-    Lista los apodos registrados que coinciden con el patrón. El comodín *
-    coincide con cualquier secuencia de caracteres; la página opcional empieza en 1.
-  example: "%command_prefix%LIST Usuario*"
-  examples:
-    - "%command_prefix%LIST Usuario* 2"
-  header: "Apodo | Registro | Última conexión | IP | Estado"
-  row: "%nickname% | %registered% | %last_seen% | %ip% | %status%"
-  empty: "Ningún apodo coincide con el patrón %pattern%."
-  status_pending: "Pendiente"
-  status_registered: "Registrado"
-# --- DEBUG -------------------------------------------------------------------
-
-# --- REGMODE ---------------------------------------------------------------
+# --- REGMODE (IRCop) ----------------------------------------------------------
 regmode:
   syntax: "REGMODE {EMAIL|TOKEN|STATUS}"
   short: "Administrar el modo de registro de la red."
@@ -851,7 +712,145 @@ regmode:
   status: "Modo de registro actual: %mode%."
   changed: "Modo de registro cambiado a %mode%."
 
-# --- Unified rescue credential -----------------------------------------------
+# --- SUSPEND (IRCop) ----------------------------------------------------------
+suspend:
+  syntax: "SUSPEND <apodo> <duración> <razón>"
+  short: "Suspende un apodo."
+  help: |-
+    Impide que el propietario se identifique. La duración puede expresarse en días
+    (d), horas (h), minutos (m) o 0 para una suspensión permanente. No se puede
+    suspender a operadores IRC ni a usuarios Root.
+  example: "%command_prefix%SUSPEND MalUsuario 7d Spam en #ayuda"
+  examples:
+    - "%command_prefix%SUSPEND Problematico 0 Evasión de prohibición"
+  success: "El apodo %nickname% ha sido suspendido hasta %duration%."
+  already_suspended: "El apodo %nickname% ya está suspendido."
+  forbidden: "El apodo %nickname% está prohibido y no puede suspenderse."
+  cannot_suspend_oper: "No se puede suspender al operador IRC %nickname%."
+  cannot_suspend_root: "No se puede suspender al usuario root %nickname%."
+  cannot_suspend_service: "No se puede suspender el apodo de servicio %nickname%."
+  invalid_duration: "Duración inválida. Usa: %duration_format% (ej: 7d, 12h, 30m) o %permanent% para permanente."
+  invalid_duration_format: "<d><h><m>"
+  invalid_duration_permanent: "0"
+
+# --- UNSUSPEND (IRCop) --------------------------------------------------------
+unsuspend:
+  syntax: "UNSUSPEND <apodo>"
+  short: "Quita la suspensión de un apodo."
+  help: |-
+    Quita una suspensión activa para que el propietario pueda volver a
+    identificarse.
+  example: "%command_prefix%UNSUSPEND Usuario"
+  success: "Se ha levantado la suspensión de %nickname%."
+  not_suspended: "El apodo %nickname% no está suspendido."
+
+# --- FORBID (IRCop) -----------------------------------------------------------
+forbid:
+  syntax: "FORBID <apodo> <razón>"
+  short: "Prohíbe permanentemente el uso de un apodo."
+  help: |-
+    Prohíbe permanentemente un apodo para que nadie pueda registrarlo ni usarlo.
+    Si está registrado se elimina; si está conectado, se le fuerza a cambiar a un
+    apodo aleatorio. No se puede prohibir a usuarios Root, IRCops ni servicios.
+  example: "%command_prefix%FORBID MalUsuario Violaciones repetidas de política"
+  success: "El apodo %nickname% ha sido prohibido."
+  updated: "Se ha actualizado la razón de prohibición para %nickname%."
+  reason_required: "Debes proporcionar una razón para la prohibición."
+  cannot_forbid_root: "No se puede prohibir al usuario root %nickname%."
+  cannot_forbid_oper: "No se puede prohibir al IRC operator %nickname%."
+  cannot_forbid_service: "No se puede prohibir el apodo de servicio %nickname%."
+
+# --- UNFORBID (IRCop) ---------------------------------------------------------
+unforbid:
+  syntax: "UNFORBID <apodo>"
+  short: "Elimina la prohibición de un apodo."
+  help: "Elimina la prohibición para que el apodo pueda volver a usarse."
+  example: "%command_prefix%UNFORBID ApodoProhibido"
+  success: "El apodo %nickname% ya no está prohibido."
+  not_forbidden: "El apodo %nickname% no está prohibido."
+
+# --- FORBIDVHOST (IRCop) ------------------------------------------------------
+forbidvhost:
+  syntax: "FORBIDVHOST {ADD <patrón>|DEL <patrón>|LIST}"
+  short: "Gestiona vhosts prohibidos."
+  help: |-
+    Gestiona los patrones que impiden establecer vhosts coincidentes con SET
+    VHOST. El comodín * coincide con cualquier secuencia y ? con un carácter.
+    Requiere privilegios de Operador de IRC.
+  example: "%command_prefix%FORBIDVHOST ADD *.pirata.com"
+  examples:
+    - "%command_prefix%FORBIDVHOST LIST"
+
+  unknown_sub: "Subcomando desconocido %sub%. Usa ADD, DEL o LIST."
+
+  # --- FORBIDVHOST ADD -----------------------------------------------------
+  add:
+    syntax: "FORBIDVHOST ADD <patrón>"
+    short: "Agregar un patrón de vhost prohibido."
+    help: |-
+      Agrega un patrón a la lista. Los usuarios no podrán establecer vhosts
+      coincidentes mediante SET VHOST. * coincide con cualquier secuencia y ? con un
+      carácter.
+    example: "%command_prefix%FORBIDVHOST ADD *.pirata.com"
+    done: "Patrón de vhost prohibido agregado: %pattern%"
+    already_exists: "El patrón %pattern% ya existe."
+    invalid: "Formato de patrón de vhost inválido."
+
+  # --- FORBIDVHOST DEL -----------------------------------------------------
+  del:
+    syntax: "FORBIDVHOST DEL <patrón>"
+    short: "Eliminar un patrón de vhost prohibido."
+    help: "Elimina un patrón de la lista de vhosts prohibidos."
+    example: "%command_prefix%FORBIDVHOST DEL *.pirata.com"
+    done: "Patrón de vhost prohibido eliminado: %pattern%"
+    not_found: "Patrón %pattern% no encontrado."
+
+  # --- FORBIDVHOST LIST ----------------------------------------------------
+  list:
+    short: "Listar todos los patrones de vhost prohibidos."
+    syntax: "FORBIDVHOST LIST"
+    help: "Muestra todos los patrones de vhost prohibidos."
+    example: "%command_prefix%FORBIDVHOST LIST"
+    header: "Patrones de vhost prohibidos (%count%):"
+    entry: "%index%. %pattern% — por %nickname% (%date%)"
+    empty: "No hay patrones de vhost prohibidos."
+
+# --- DROP (IRCop) -------------------------------------------------------------
+drop:
+  syntax: "DROP <apodo> [FORCE]"
+  short: "Elimina un apodo registrado."
+  help: |-
+    Marca un apodo registrado para eliminarlo durante el periodo de gracia; puede
+    restaurarse con RESTORE. Añade FORCE para eliminarlo permanentemente. Los
+    usuarios Root, IRCops y servicios, así como tu propio apodo, no se pueden
+    eliminar.
+  force:
+    short: "Elimina permanentemente un apodo pendiente de eliminación."
+  example: "%command_prefix%DROP CuentaAntigua"
+  examples:
+    - "%command_prefix%DROP CuentaAntigua FORCE"
+  suspended: "El apodo %nickname% está suspendido. Desuspende primero."
+  forbidden: "El apodo %nickname% está prohibido."
+  cannot_drop_root: "No se puede eliminar al usuario root %nickname%."
+  cannot_drop_oper: "No se puede eliminar al IRC operator %nickname%."
+  cannot_drop_self: "No puedes eliminar tu propio apodo."
+  success: "El apodo %nickname% ha sido marcado para eliminación y puede ser restaurado durante el periodo de gracia."
+  force_success: "El apodo %nickname% ha sido eliminado permanentemente."
+  pending_deletion: "El apodo %nickname% ya está pendiente de eliminación. Usa DROP <apodo> FORCE para eliminarlo permanentemente."
+  cannot_drop_service: "No se puede eliminar el apodo de servicio %nickname%."
+
+# --- RESTORE (IRCop) ----------------------------------------------------------
+restore:
+  syntax: "RESTORE <apodo>"
+  short: "Restaurar un apodo pendiente de eliminación."
+  help: |-
+    Restaura un apodo pendiente de eliminación mientras siga dentro del periodo de
+    gracia.
+  example: "%command_prefix%RESTORE CuentaAntigua"
+  success: "El apodo %nickname% ha sido restaurado."
+  not_pending_deletion: "El apodo %nickname% no está pendiente de eliminación."
+
+# --- RESCUE -------------------------------------------------------------------
 rescue:
   issued: |-
     Token de rescate: %token_display%
@@ -880,7 +879,7 @@ rescue:
   replacement_unavailable: "Tu contraseña se ha restablecido, pero no se pudo emitir un token nuevo. Tu token de recuperación actual sigue siendo válido."
   temporarily_unavailable: "La entrega del token de recuperación no está disponible temporalmente. Inténtalo más tarde."
 
-# --- HELP FRAGMENTS ---------------------------------------------------------
+# --- HELP FRAGMENTS -----------------------------------------------------------
 help_fragments:
   identify_help_0: "+r"
   set_language_help_0: "ca"

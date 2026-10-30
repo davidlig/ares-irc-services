@@ -4,7 +4,7 @@
 # Translations contain localized text and interpolation parameters only.
 # The presentation engine owns IRC styling and example prefixes.
 
-# --- SEND ------------------------------------------------------------------
+# --- SEND ---------------------------------------------------------------------
 send:
   syntax: "SEND {apodo|#canal} <mensaje>"
   short: "Envía un mensaje a un apodo o canal."
@@ -23,7 +23,7 @@ send:
   message_too_long: "Mensaje demasiado largo. El máximo es %max% caracteres."
   service_disabled_for_target: "El servicio de mensajes está desactivado para %target%."
 
-# --- READ ------------------------------------------------------------------
+# --- READ ---------------------------------------------------------------------
 read:
   syntax: "READ [#canal] <número>"
   short: "Lee un mensaje por número."
@@ -37,7 +37,7 @@ read:
   footer: "%separator% %date%"
   not_found: "Mensaje #%index% no encontrado."
 
-# --- LIST ------------------------------------------------------------------
+# --- LIST ---------------------------------------------------------------------
 list:
   syntax: "LIST [#canal]"
   short: "Lista mensajes (no leídos con * rojo)."
@@ -51,7 +51,7 @@ list:
   header: "Mensajes para %target%:"
   empty: "No hay mensajes para %target%."
 
-# --- DEL -------------------------------------------------------------------
+# --- DEL ----------------------------------------------------------------------
 del:
   syntax: "DEL [#canal] <número>"
   short: "Elimina un mensaje por número."
@@ -62,7 +62,7 @@ del:
   deleted: "Mensaje #%index% eliminado."
   not_found: "Mensaje #%index% no encontrado."
 
-# --- IGNORE ----------------------------------------------------------------
+# --- IGNORE -------------------------------------------------------------------
 ignore:
   syntax: "IGNORE {ADD [#canal] <apodo>|DEL [#canal] <apodo>|LIST [#canal]}"
   short: "Gestiona la lista de ignorados para mensajes."
@@ -110,7 +110,7 @@ ignore:
   list_empty: "La lista de ignorados está vacía."
   list_header: "Lista de ignorados:"
 
-# --- ENABLE ----------------------------------------------------------------
+# --- ENABLE -------------------------------------------------------------------
 enable:
   syntax: "ENABLE [#canal]"
   short: "Activa la recepción de mensajes."
@@ -126,7 +126,7 @@ enable:
   already_enabled_channel: "El servicio de mensajes ya está activado para %channel%."
   founder_only: "Solo el fundador del canal puede activar mensajes para %channel%."
 
-# --- DISABLE ---------------------------------------------------------------
+# --- DISABLE ------------------------------------------------------------------
 disable:
   syntax: "DISABLE [#canal]"
   short: "Desactiva la recepción de mensajes."
@@ -142,7 +142,7 @@ disable:
   already_disabled_channel: "El servicio de mensajes ya está desactivado para %channel%."
   founder_only: "Solo el fundador del canal puede desactivar mensajes para %channel%."
 
-# --- HELP ------------------------------------------------------------------
+# --- HELP ---------------------------------------------------------------------
 help:
   syntax: "HELP [comando] [opción]"
   short: "Lista comandos o muestra ayuda de un comando."
@@ -174,12 +174,12 @@ help:
     preferences: "Preferencias"
   ircop_header: "Comandos disponibles para IRCops:"
 
-# --- NOTIFY ----------------------------------------------------------------
+# --- NOTIFY -------------------------------------------------------------------
 notify:
   nick_pending: "Tienes %count% mensaje(s) pendiente(s) de leer. Para listar los mensajes: /msg %bot% %list%"
   channel_pending: "El canal %channel% tiene %count% mensaje(s) pendiente(s) de leer. Revisa los mensajes con /msg %bot% %list%"
 
-# --- CHANNEL REGISTRATION DECISIONS ---
+# --- CHANNEL REGISTRATION DECISIONS -------------------------------------------
 registration_decision:
   accepted: "Tu solicitud de registro de %channel% fue aceptada."
   rejected: "Tu solicitud de registro de %channel% fue rechazada."

@@ -16,7 +16,7 @@
 # Exemplos HELP: example/examples e %command_prefix%.
 # O apresentador acrescenta /msg sem cor e uma margem de dois espaços.
 
-# --- SEND ------------------------------------------------------------------
+# --- SEND ---------------------------------------------------------------------
 send:
   syntax: "SEND {nickname|#canal} <mensagem>"
   short: "Enviar uma mensagem para um nickname ou canal."
@@ -35,7 +35,7 @@ send:
   message_too_long: "Mensagem demasiado longa. O máximo é %max% caracteres."
   service_disabled_for_target: "O serviço de mensagens está desativado para %target%."
 
-# --- READ ------------------------------------------------------------------
+# --- READ ---------------------------------------------------------------------
 read:
   syntax: "READ [#canal] <número>"
   short: "Ler uma mensagem por número."
@@ -49,7 +49,7 @@ read:
   footer: "%separator% %date%"
   not_found: "Mensagem #%index% não encontrada."
 
-# --- LIST ------------------------------------------------------------------
+# --- LIST ---------------------------------------------------------------------
 list:
   syntax: "LIST [#canal]"
   short: "Listar mensagens (não lidas marcadas com * vermelho)."
@@ -63,7 +63,7 @@ list:
   header: "Mensagens para %target%:"
   empty: "Nenhuma mensagem para %target%."
 
-# --- DEL -------------------------------------------------------------------
+# --- DEL ----------------------------------------------------------------------
 del:
   syntax: "DEL [#canal] <número>"
   short: "Eliminar uma mensagem por número."
@@ -74,7 +74,7 @@ del:
   deleted: "Mensagem #%index% eliminada."
   not_found: "Mensagem #%index% não encontrada."
 
-# --- IGNORE ----------------------------------------------------------------
+# --- IGNORE -------------------------------------------------------------------
 ignore:
   syntax: "IGNORE {ADD [#canal] <nickname>|DEL [#canal] <nickname>|LIST [#canal]}"
   short: "Gerir lista de ignorados para mensagens."
@@ -124,7 +124,7 @@ ignore:
   list_empty: "A lista de ignorados está vazia."
   list_header: "Lista de ignorados:"
 
-# --- ENABLE ----------------------------------------------------------------
+# --- ENABLE -------------------------------------------------------------------
 enable:
   syntax: "ENABLE [#canal]"
   short: "Ativar receção de mensagens."
@@ -140,7 +140,7 @@ enable:
   already_enabled_channel: "O serviço de mensagens já está ativado para %channel%."
   founder_only: "Apenas o fundador do canal pode ativar mensagens para %channel%."
 
-# --- DISABLE ---------------------------------------------------------------
+# --- DISABLE ------------------------------------------------------------------
 disable:
   syntax: "DISABLE [#canal]"
   short: "Desativar receção de mensagens."
@@ -156,7 +156,7 @@ disable:
   already_disabled_channel: "O serviço de mensagens já está desativado para %channel%."
   founder_only: "Apenas o fundador do canal pode desativar mensagens para %channel%."
 
-# --- HELP ------------------------------------------------------------------
+# --- HELP ---------------------------------------------------------------------
 help:
   syntax: "HELP [comando] [opção]"
   short: "Listar comandos ou mostrar ajuda de um comando."
@@ -188,12 +188,12 @@ help:
     preferences: "Preferências"
   ircop_header: "Comandos disponíveis para IRCops:"
 
-# --- NOTIFY ----------------------------------------------------------------
+# --- NOTIFY -------------------------------------------------------------------
 notify:
   nick_pending: "Tem %count% mensagem(ns) por ler. Para listar as mensagens: /msg %bot% %list%"
   channel_pending: "O canal %channel% tem %count% mensagem(ns) por ler. Consulte-as com /msg %bot% %list%"
 
-# --- CHANNEL REGISTRATION DECISIONS ---
+# --- CHANNEL REGISTRATION DECISIONS -------------------------------------------
 registration_decision:
   accepted: "O teu pedido de registo de %channel% foi aprovado."
   rejected: "O teu pedido de registo de %channel% foi rejeitado."

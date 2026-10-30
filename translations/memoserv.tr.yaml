@@ -16,7 +16,7 @@
 # HELP örnekleri: example/examples ve %command_prefix%.
 # Sunum katmanı renksiz /msg ve iki boşlukluk kenar payı ekler.
 
-# --- SEND ------------------------------------------------------------------
+# --- SEND ---------------------------------------------------------------------
 send:
   syntax: "SEND {nickname|#channel} <mesaj>"
   short: "Bir rumuza veya kanala mesaj gönderin."
@@ -35,7 +35,7 @@ send:
   message_too_long: "Mesaj çok uzun. Maksimum %max% karakter."
   service_disabled_for_target: "%target% için mesaj hizmeti devre dışı."
 
-# --- READ ------------------------------------------------------------------
+# --- READ ---------------------------------------------------------------------
 read:
   syntax: "READ [#channel] <numara>"
   short: "Numarasına göre bir mesajı okuyun."
@@ -49,7 +49,7 @@ read:
   footer: "%separator% %date%"
   not_found: "#%index% numaralı mesaj bulunamadı."
 
-# --- LIST ------------------------------------------------------------------
+# --- LIST ---------------------------------------------------------------------
 list:
   syntax: "LIST [#channel]"
   short: "Mesajları listeleyin (okunmamış olanlar kırmızı * ile işaretlenir)."
@@ -63,7 +63,7 @@ list:
   header: "%target% için mesajlar:"
   empty: "%target% için mesaj yok."
 
-# --- DEL -------------------------------------------------------------------
+# --- DEL ----------------------------------------------------------------------
 del:
   syntax: "DEL [#channel] <numara>"
   short: "Numarasına göre bir mesajı silin."
@@ -74,7 +74,7 @@ del:
   deleted: "#%index% numaralı mesaj silindi."
   not_found: "#%index% numaralı mesaj bulunamadı."
 
-# --- IGNORE ----------------------------------------------------------------
+# --- IGNORE -------------------------------------------------------------------
 ignore:
   syntax: "IGNORE {ADD [#channel] <nickname>|DEL [#channel] <nickname>|LIST [#channel]}"
   short: "Mesajlar için yoksayma listesini yönetin."
@@ -123,7 +123,7 @@ ignore:
   list_empty: "Yoksayma listesi boş."
   list_header: "Yoksayma listesi:"
 
-# --- ENABLE ----------------------------------------------------------------
+# --- ENABLE -------------------------------------------------------------------
 enable:
   syntax: "ENABLE [#channel]"
   short: "Mesaj almayı etkinleştirin."
@@ -139,7 +139,7 @@ enable:
   already_enabled_channel: "%channel% için mesaj hizmeti zaten etkin."
   founder_only: "%channel% için mesajları yalnızca kanal kurucusu etkinleştirebilir."
 
-# --- DISABLE ---------------------------------------------------------------
+# --- DISABLE ------------------------------------------------------------------
 disable:
   syntax: "DISABLE [#channel]"
   short: "Mesaj almayı devre dışı bırakın."
@@ -155,7 +155,7 @@ disable:
   already_disabled_channel: "%channel% için mesaj hizmeti zaten devre dışı."
   founder_only: "%channel% için mesajları yalnızca kanal kurucusu devre dışı bırakabilir."
 
-# --- HELP ------------------------------------------------------------------
+# --- HELP ---------------------------------------------------------------------
 help:
   syntax: "HELP [komut] [seçenek]"
   short: "Komutları listeleyin veya bir komut için yardım gösterin."
@@ -187,12 +187,12 @@ help:
     preferences: "Tercihler"
   ircop_header: "IRC operatörleri için kullanılabilir komutlar:"
 
-# --- NOTIFY ----------------------------------------------------------------
+# --- NOTIFY -------------------------------------------------------------------
 notify:
   nick_pending: "Okunmayı bekleyen %count% mesajınız var. Listelemek için: /msg %bot% %list%"
   channel_pending: "%channel% kanalında okunmayı bekleyen %count% mesaj var. Mesajları görüntülemek için /msg %bot% %list%"
 
-# --- CHANNEL REGISTRATION DECISIONS ---
+# --- CHANNEL REGISTRATION DECISIONS -------------------------------------------
 registration_decision:
   accepted: "%channel% kayıt isteğin kabul edildi."
   rejected: "%channel% kayıt isteğin reddedildi."
