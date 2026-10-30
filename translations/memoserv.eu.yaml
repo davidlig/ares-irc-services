@@ -192,6 +192,8 @@ help:
 
 # --- NOTIFY -------------------------------------------------------------------
 notify:
+  nick_received: "%sender% erabiltzailearen mezu berri bat jaso duzu. Irakurtzeko: /msg %bot% %list%"
+  channel_received: "%sender% erabiltzailearen mezu berri bat iritsi da %channel% kanalerako. Irakurtzeko: /msg %bot% %list%"
   nick_pending: "%count% mezu irakurtzeke dituzu. Zerrendatzeko: /msg %bot% %list%"
   channel_pending: "%channel% kanalak %count% mezu irakurtzeke ditu. Erabili /msg %bot% %list%"
 

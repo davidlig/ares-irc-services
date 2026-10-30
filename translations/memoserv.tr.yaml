@@ -195,6 +195,8 @@ help:
 
 # --- NOTIFY -------------------------------------------------------------------
 notify:
+  nick_received: "%sender% size yeni bir not gönderdi. Okumak için: /msg %bot% %list%"
+  channel_received: "%channel% için %sender% tarafından yeni bir not gönderildi. Okumak için: /msg %bot% %list%"
   nick_pending: "Okunmayı bekleyen %count% mesajınız var. Listelemek için: /msg %bot% %list%"
   channel_pending: "%channel% kanalında okunmayı bekleyen %count% mesaj var. Mesajları görüntülemek için /msg %bot% %list%"
 

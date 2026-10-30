@@ -195,6 +195,8 @@ help:
 
 # --- NOTIFY -------------------------------------------------------------------
 notify:
+  nick_received: "You received a new memo from %sender%. Read it with /msg %bot% %list%"
+  channel_received: "A new memo from %sender% has arrived for %channel%. Read it with /msg %bot% %list%"
   nick_pending: "You have %count% unread message(s). To list them: /msg %bot% %list%"
   channel_pending: "Channel %channel% has %count% unread message(s). Read them with /msg %bot% %list%"
 

@@ -196,6 +196,8 @@ help:
 
 # --- NOTIFY -------------------------------------------------------------------
 notify:
+  nick_received: "Recebeste uma nova mensagem de %sender%. Lê-a com /msg %bot% %list%"
+  channel_received: "Chegou uma nova mensagem de %sender% para %channel%. Lê-a com /msg %bot% %list%"
   nick_pending: "Tem %count% mensagem(ns) por ler. Para listar as mensagens: /msg %bot% %list%"
   channel_pending: "O canal %channel% tem %count% mensagem(ns) por ler. Consulte-as com /msg %bot% %list%"
 

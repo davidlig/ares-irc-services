@@ -198,6 +198,8 @@ help:
 
 # --- NOTIFY -------------------------------------------------------------------
 notify:
+  nick_received: "Vous avez reçu un nouveau mémo de %sender%. Lisez-le avec /msg %bot% %list%"
+  channel_received: "Un nouveau mémo de %sender% est arrivé pour %channel%. Lisez-le avec /msg %bot% %list%"
   nick_pending: "Vous avez %count% message(s) en attente de lecture. Pour les afficher : /msg %bot% %list%"
   channel_pending: "Le salon %channel% a %count% message(s) en attente de lecture. Consultez-les avec /msg %bot% %list%"
 

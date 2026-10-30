@@ -8,6 +8,9 @@ use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\MemoServ\Adapter\In\Irc\MemoNoticePresenter;
 use App\MemoServ\Adapter\In\Irc\MemoServCommandInterface;
 use App\MemoServ\Adapter\In\Irc\MemoServContext;
+use App\MemoServ\Application\UseCase\GetPendingChannelNotice\GetPendingChannelNotice;
+use App\MemoServ\Application\UseCase\GetPendingChannelNotice\GetPendingChannelNoticeHandler;
+use App\MemoServ\Application\UseCase\GetPendingChannelNotice\GetPendingChannelNoticeOutcome;
 use App\MemoServ\Application\UseCase\Send\SendMemo;
 use App\MemoServ\Application\UseCase\Send\SendMemoHandlerInterface;
 use App\MemoServ\Application\UseCase\Send\SendMemoOutcome;
@@ -15,6 +18,9 @@ use App\MemoServ\Domain\Entity\Memo;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentValidator;
+use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
 use App\Shared\Adapter\In\Irc\Presentation\Role;
 use DateTimeImmutable;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -32,6 +38,7 @@ final readonly class SendCommand implements MemoServCommandInterface
         private SendMemoHandlerInterface $sendMemoHandler,
         private NetworkUserLookupPort $userLookup,
         private TranslatorInterface $translator,
+        private GetPendingChannelNoticeHandler $getPendingChannelNotice,
         private ?MemoNoticePresenter $presenter = null,
     ) {}
 
@@ -132,23 +139,35 @@ final readonly class SendCommand implements MemoServCommandInterface
             case SendMemoOutcome::SentToNick:
                 $targetName = $result->targetName ?? $targetArg;
                 $context->reply('send.sent_nick', ['nickname' => $context->emphasize($targetName)], Role::Success);
-                if (null !== $result->unreadCount && $result->unreadCount > 0) {
-                    $recipientView = $this->userLookup->findByNick($targetName);
-                    if (null !== $recipientView) {
-                        $notice = null === $this->presenter
-                            ? $this->translator->trans('notify.nick_pending', [
-                                '%count%' => $result->unreadCount,
-                                '%bot%' => $context->getNotifier()->getNick(),
-                                '%list%' => 'LIST',
-                            ], 'memoserv', $result->recipientLanguage ?? 'en')
-                            : $this->presenter->nick($result->unreadCount, $context->getNotifier()->getNick(), $result->recipientLanguage ?? 'en');
-                        $context->getNotifier()->sendNotice($recipientView->uid, $notice);
-                    }
+                $recipientView = $this->userLookup->findByNick($targetName);
+                if (null !== $recipientView) {
+                    $context->getNotifier()->sendNotice($recipientView->uid, $this->noticePresenter()->nickReceived(
+                        $context->sender->nick,
+                        $context->getNotifier()->getNick(),
+                        $result->recipientLanguage ?? 'en',
+                    ));
                 }
                 break;
 
             case SendMemoOutcome::SentToChannel:
-                $context->reply('send.sent_channel', ['channel' => $context->emphasize($result->targetName ?? $targetArg)], Role::Success);
+                $channelName = $result->targetName ?? $targetArg;
+                $context->reply('send.sent_channel', ['channel' => $context->emphasize($channelName)], Role::Success);
+                foreach ($this->userLookup->listConnectedUids() as $uid) {
+                    $user = $this->userLookup->findByUid($uid);
+                    if (null === $user) {
+                        continue;
+                    }
+                    $notice = $this->getPendingChannelNotice->handle(new GetPendingChannelNotice($uid, $user->nick, $user->isIdentified, $channelName));
+                    if (GetPendingChannelNoticeOutcome::PendingMemos !== $notice->outcome) {
+                        continue;
+                    }
+                    $context->getNotifier()->sendNotice($uid, $this->noticePresenter()->channelReceived(
+                        $context->sender->nick,
+                        $channelName,
+                        $context->getNotifier()->getNick(),
+                        '' !== $notice->language ? $notice->language : 'en',
+                    ));
+                }
                 break;
 
             case SendMemoOutcome::Throttled:
@@ -177,5 +196,10 @@ final readonly class SendCommand implements MemoServCommandInterface
         }
 
         return null;
+    }
+
+    private function noticePresenter(): MemoNoticePresenter
+    {
+        return $this->presenter ?? new MemoNoticePresenter($this->translator, new IrcRenderer(new FixedStyleProvider(PresentationStyle::default())));
     }
 }

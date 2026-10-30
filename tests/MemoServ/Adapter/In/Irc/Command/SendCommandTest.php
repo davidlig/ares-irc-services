@@ -14,6 +14,12 @@ use App\MemoServ\Adapter\In\Irc\MemoServCommandRegistry;
 use App\MemoServ\Adapter\In\Irc\MemoServContext;
 use App\MemoServ\Adapter\In\Irc\MemoServNotifierInterface;
 use App\MemoServ\Application\Model\MemoAccountView;
+use App\MemoServ\Application\Model\MemoChannelView;
+use App\MemoServ\Application\Port\Out\MemoChannelPort;
+use App\MemoServ\Application\Port\Out\MemoRepositoryInterface;
+use App\MemoServ\Application\Port\Out\MemoSettingsRepositoryInterface;
+use App\MemoServ\Application\Port\Out\MemoUserAccountPort;
+use App\MemoServ\Application\UseCase\GetPendingChannelNotice\GetPendingChannelNoticeHandler;
 use App\MemoServ\Application\UseCase\Send\SendMemo;
 use App\MemoServ\Application\UseCase\Send\SendMemoHandlerInterface;
 use App\MemoServ\Application\UseCase\Send\SendMemoResult;
@@ -48,12 +54,12 @@ final class SendCommandTest extends TestCase
         $lookup->method('findByNick')->willReturn(new SenderView('REC', 'Bob', 'i', 'h', 'c', 'ip'));
         $notifier = $this->createMock(MemoServNotifierInterface::class);
         $notifier->method('getNick')->willReturn('MemoServ');
-        $notifier->expects(self::once())->method('sendNotice')->with('REC', 'i 2 /msg MemoServ LIST');
+        $notifier->expects(self::once())->method('sendNotice')->with('REC', 'i Nick /msg MemoServ LIST');
         $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $key): string => 'notify.nick_pending' === $key ? '%count% /msg %bot% %list%' : $key);
+        $translator->method('trans')->willReturnCallback(static fn (string $key): string => 'notify.nick_received' === $key ? '%sender% /msg %bot% %list%' : $key);
         $presenter = new MemoNoticePresenter($translator, new IrcRenderer(new FixedStyleProvider(new PresentationStyle(markers: ['information' => 'i']))));
         $context = $this->createContext($sender, $account, ['Bob', 'hello'], notifier: $notifier, translator: $translator);
-        new SendCommand($handler, $lookup, $translator, $presenter)->execute($context);
+        $this->command($handler, $lookup, $translator, $presenter)->execute($context);
     }
 
     #[Test]
@@ -93,7 +99,7 @@ final class SendCommandTest extends TestCase
             SendMemoResult::sentToNick(2, 'Bob', 0, 'en'),
             SendMemoResult::throttled(3),
         );
-        $command = new SendCommand($handler, $this->createStub(NetworkUserLookupPort::class), $translator);
+        $command = $this->command($handler, $this->createStub(NetworkUserLookupPort::class), $translator);
         $command->execute($context);
         $command->execute($context);
 
@@ -106,7 +112,7 @@ final class SendCommandTest extends TestCase
     #[Test]
     public function exposesMetadata(): void
     {
-        $command = new SendCommand(
+        $command = $this->command(
             $this->createStub(SendMemoHandlerInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
             $this->createStub(TranslatorInterface::class),
@@ -129,7 +135,7 @@ final class SendCommandTest extends TestCase
     public function repliesNotIdentifiedWhenSenderOrAccountNull(): void
     {
         $sender = new SenderView('001ABC', 'TestUser', 'ident', 'host', 'cloak', 'ip');
-        $command = new SendCommand(
+        $command = $this->command(
             $this->createStub(SendMemoHandlerInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
             $this->createStub(TranslatorInterface::class),
@@ -154,7 +160,7 @@ final class SendCommandTest extends TestCase
         $sender = new SenderView('001ABC', 'TestUser', 'ident', 'host', 'cloak', 'ip');
         $account = new MemoAccountView(1, 'TestUser', 'en');
 
-        $command = new SendCommand(
+        $command = $this->command(
             $this->createStub(SendMemoHandlerInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
             $this->createStub(TranslatorInterface::class),
@@ -173,7 +179,7 @@ final class SendCommandTest extends TestCase
         $sender = new SenderView('001ABC', 'TestUser', 'ident', 'host', 'cloak', 'ip');
         $account = new MemoAccountView(1, 'TestUser', 'en');
 
-        $command = new SendCommand(
+        $command = $this->command(
             $this->createStub(SendMemoHandlerInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
             $this->createStub(TranslatorInterface::class),
@@ -220,7 +226,7 @@ final class SendCommandTest extends TestCase
         $translator->expects(self::exactly(2))
             ->method('trans')
             ->willReturnCallback(static function (string $id, array $params = []): string {
-                if ('notify.nick_pending' === $id) {
+                if ('notify.nick_received' === $id) {
                     return 'Nouveau mémo';
                 }
 
@@ -234,9 +240,9 @@ final class SendCommandTest extends TestCase
             ->with('001ABC', self::anything(), 'NOTICE');
         $notifier->expects(self::once())
             ->method('sendNotice')
-            ->with('001REC', 'Nouveau mémo');
+            ->with('001REC', self::stringContains('Nouveau mémo'));
 
-        $command = new SendCommand($handler, $userLookup, $translator);
+        $command = $this->command($handler, $userLookup, $translator);
 
         $context = $this->createContext($sender, $account, ['Recipient', 'Hello', 'world'], notifier: $notifier, translator: $translator);
         $command->execute($context);
@@ -259,10 +265,10 @@ final class SendCommandTest extends TestCase
             ));
 
         $userLookup = $this->createMock(NetworkUserLookupPort::class);
-        $userLookup->expects(self::never())->method('findByNick');
+        $userLookup->expects(self::once())->method('findByNick')->with('Recipient')->willReturn(null);
 
         $replies = [];
-        $command = new SendCommand($handler, $userLookup, $this->createStub(TranslatorInterface::class));
+        $command = $this->command($handler, $userLookup, $this->createStub(TranslatorInterface::class));
         $context = $this->createContext($sender, $account, ['Recipient', 'Hello'], $replies);
         $command->execute($context);
 
@@ -281,7 +287,7 @@ final class SendCommandTest extends TestCase
             ->willReturn(SendMemoResult::sentToChannel('#channel'));
 
         $replies = [];
-        $command = new SendCommand($handler, $this->createStub(NetworkUserLookupPort::class), $this->createStub(TranslatorInterface::class));
+        $command = $this->command($handler, $this->createStub(NetworkUserLookupPort::class), $this->createStub(TranslatorInterface::class));
         $context = $this->createContext($sender, $account, ['#channel', 'Announcement'], $replies);
         $command->execute($context);
 
@@ -326,12 +332,47 @@ final class SendCommandTest extends TestCase
             $handler->expects(self::once())->method('handle')->willReturn($result);
 
             $replies = [];
-            $command = new SendCommand($handler, $this->createStub(NetworkUserLookupPort::class), $this->createStub(TranslatorInterface::class));
+            $command = $this->command($handler, $this->createStub(NetworkUserLookupPort::class), $this->createStub(TranslatorInterface::class));
             $context = $this->createContext($sender, $account, ['target', 'msg'], $replies);
             $command->execute($context);
 
             self::assertSame([$expectedReply], $replies);
         }
+    }
+
+    #[Test]
+    public function notifiesOnlyConnectedIdentifiedChannelReadersInTheirLanguage(): void
+    {
+        $handler = $this->createStub(SendMemoHandlerInterface::class);
+        $handler->method('handle')->willReturn(SendMemoResult::sentToChannel('#room'));
+        $lookup = $this->createStub(NetworkUserLookupPort::class);
+        $lookup->method('listConnectedUids')->willReturn(['reader', 'denied', 'guest', 'gone', 'unknown', 'other-reader']);
+        $lookup->method('findByUid')->willReturnCallback(static fn (string $uid): ?SenderView => 'gone' === $uid ? null : new SenderView($uid, $uid, 'i', 'h', 'c', 'ip', 'guest' !== $uid));
+        $channel = $this->createStub(MemoChannelPort::class);
+        $channel->method('findChannelByName')->willReturn(new MemoChannelView(5, '#room'));
+        $channel->method('canReadChannelMemos')->willReturnCallback(static fn (int $channelId, int $nickId): bool => 2 === $nickId);
+        $accounts = $this->createStub(MemoUserAccountPort::class);
+        $accounts->method('findAccountByNick')->willReturnCallback(static fn (string $nick): ?MemoAccountView => 'unknown' === $nick ? null : new MemoAccountView('denied' === $nick ? 3 : 2, $nick, 'fr'));
+        $repository = $this->createStub(MemoRepositoryInterface::class);
+        $repository->method('countUnreadByTargetChannel')->willReturn(1);
+        $settings = $this->createStub(MemoSettingsRepositoryInterface::class);
+        $settings->method('isEnabledForChannel')->willReturn(true);
+        $query = new GetPendingChannelNoticeHandler($channel, $accounts, $repository, $settings);
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $key, array $params, ?string $domain, ?string $locale): string => 'notify.channel_received' === $key ? $locale . ' %sender% %channel%' : $key);
+        $notices = [];
+        $notifier = $this->createStub(MemoServNotifierInterface::class);
+        $notifier->method('getNick')->willReturn('MemoServ');
+        $notifier->method('sendNotice')->willReturnCallback(static function (string $uid, string $text) use (&$notices): void { $notices[$uid] = $text; });
+        $presenter = new MemoNoticePresenter($translator, new IrcRenderer(new FixedStyleProvider(new PresentationStyle(markers: ['information' => 'i']))));
+        $context = $this->createContext(new SenderView('sender', 'Alice', 'i', 'h', 'c', 'ip', true), new MemoAccountView(1, 'Alice', 'en'), ['#room', 'hello'], notifier: $notifier, translator: $translator);
+        new SendCommand($handler, $lookup, $translator, $query, $presenter)->execute($context);
+        self::assertSame(['reader' => 'i fr Alice #room', 'other-reader' => 'i fr Alice #room'], $notices);
+    }
+
+    private function command(SendMemoHandlerInterface $handler, NetworkUserLookupPort $lookup, TranslatorInterface $translator, ?MemoNoticePresenter $presenter = null): SendCommand
+    {
+        return new SendCommand($handler, $lookup, $translator, new GetPendingChannelNoticeHandler($this->createStub(MemoChannelPort::class), $this->createStub(MemoUserAccountPort::class), $this->createStub(MemoRepositoryInterface::class), $this->createStub(MemoSettingsRepositoryInterface::class)), $presenter);
     }
 
     private function createServiceNicks(): ServiceNicknameRegistry

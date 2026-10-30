@@ -195,6 +195,8 @@ help:
 
 # --- NOTIFY -------------------------------------------------------------------
 notify:
+  nick_received: "Έλαβες νέο μήνυμα από τον χρήστη %sender%. Διάβασέ το με /msg %bot% %list%"
+  channel_received: "Έφτασε νέο μήνυμα από τον χρήστη %sender% για το %channel%. Διάβασέ το με /msg %bot% %list%"
   nick_pending: "Έχετε %count% μη αναγνωσμένο(α) μήνυμα(τα). Για λίστα: /msg %bot% %list%"
   channel_pending: "Το κανάλι %channel% έχει %count% μη αναγνωσμένο(α) μήνυμα(τα). Ελέγξτε τα μηνύματα με /msg %bot% %list%"
 

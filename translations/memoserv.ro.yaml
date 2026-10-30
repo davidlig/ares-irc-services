@@ -199,6 +199,8 @@ help:
 
 # --- NOTIFY -------------------------------------------------------------------
 notify:
+  nick_received: "Ai primit un mesaj nou de la %sender%. Citește-l cu /msg %bot% %list%"
+  channel_received: "A sosit un mesaj nou de la %sender% pentru %channel%. Citește-l cu /msg %bot% %list%"
   nick_pending: "Ai %count% mesaj(e) necitit(e). Listează mesajele: /msg %bot% %list%"
   channel_pending: "Canalul %channel% are %count% mesaj(e) necitit(e). Verifică mesajele cu /msg %bot% %list%"
 

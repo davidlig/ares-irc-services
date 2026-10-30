@@ -197,6 +197,8 @@ help:
 
 # --- NOTIFY -------------------------------------------------------------------
 notify:
+  nick_received: "Hai ricevuto un nuovo memo da %sender%. Leggilo con /msg %bot% %list%"
+  channel_received: "È arrivato un nuovo memo da %sender% per %channel%. Leggilo con /msg %bot% %list%"
   nick_pending: "Hai %count% messaggio/i da leggere. Per elencarli: /msg %bot% %list%"
   channel_pending: "Il canale %channel% ha %count% messaggio/i da leggere. Consultali con /msg %bot% %list%"
 

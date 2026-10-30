@@ -18,6 +18,23 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 final class MemoNoticePresenterTest extends TestCase
 {
     #[Test]
+    public function rendersLiveReceiptsWithSenderAndChannelFragments(): void
+    {
+        $translator = $this->createMock(TranslatorInterface::class);
+        $translator->expects(self::exactly(2))->method('trans')->willReturnCallback(static fn (string $key, array $parameters, ?string $domain, ?string $locale): string => match ($key . ':' . $locale) {
+            'notify.nick_received:es' => '%sender%: /msg %bot% %list%',
+            'notify.channel_received:fr' => '%sender% %channel%: /msg %bot% %list%',
+            default => 'unexpected',
+        });
+        $presenter = new MemoNoticePresenter($translator, new IrcRenderer(new FixedStyleProvider(new PresentationStyle(
+            components: ['emphasis' => new Appearance(bold: true)],
+            markers: ['information' => 'i'],
+        ))));
+        self::assertSame("i \x02Alice\x03\x0F: /msg MemoBot LIST", $presenter->nickReceived('Alice', 'MemoBot', 'es'));
+        self::assertSame("i \x02Alice\x03\x0F \x02#%sender%\x03\x0F: /msg MemoBot LIST #%sender%", $presenter->channelReceived('Alice', '#%sender%', 'MemoBot', 'fr'));
+    }
+
+    #[Test]
     public function localizesAndRendersNickAndChannelNoticesWithoutReinterpolatingData(): void
     {
         $translator = $this->createMock(TranslatorInterface::class);
