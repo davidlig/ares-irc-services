@@ -80,7 +80,7 @@ final class CregCommandTest extends TestCase
         $audit->onPublishedCommandExecuted(new CommandExecutedEvent($command, 'chanserv', 'Operator', 'CREG', ChanServPermission::REGISTRATION_REVIEW, $outcome));
 
         self::assertTrue($outcome->success);
-        self::assertSame([$accepted ? 'creg.accepted' : 'creg.rejected'], iterator_to_array($messages));
+        self::assertSame(["\x0303✔\x03\x0F " . ($accepted ? 'creg.accepted' : 'creg.rejected')], iterator_to_array($messages));
     }
 
     #[Test]
@@ -121,7 +121,7 @@ final class CregCommandTest extends TestCase
 
         $command->execute($context);
 
-        self::assertSame(['creg.pending_header', 'creg.pending_item'], iterator_to_array($messages));
+        self::assertSame(["\x0314creg.pending_header\x03\x0F", '  creg.pending_item'], iterator_to_array($messages));
     }
 
     #[Test]
@@ -137,7 +137,7 @@ final class CregCommandTest extends TestCase
 
         $outcome = $command->execute($context);
 
-        self::assertSame(['creg.accepted'], iterator_to_array($messages));
+        self::assertSame(["\x0303✔\x03\x0F creg.accepted"], iterator_to_array($messages));
         self::assertTrue($outcome->success);
     }
 
@@ -152,7 +152,7 @@ final class CregCommandTest extends TestCase
         [$command, $context, $messages] = $this->context(['ACCEPT', '#test'], $this->channelRepository($pending), $accounts, $review, true, prefixLetters: ['v']);
 
         self::assertFalse($command->execute($context)->success);
-        self::assertSame(['creg.requester_ineligible'], iterator_to_array($messages));
+        self::assertSame(["\x0304✗\x03\x0F creg.requester_ineligible"], iterator_to_array($messages));
     }
 
     #[Test]
@@ -166,7 +166,7 @@ final class CregCommandTest extends TestCase
         [$command, $context, $messages] = $this->context(['REJECT', '#test', '   '], $channels, $accounts, $review);
 
         self::assertFalse($command->execute($context)->success);
-        self::assertSame(['error.syntax'], iterator_to_array($messages));
+        self::assertSame(["\x0304✗\x03\x0F presentation.error.syntax"], iterator_to_array($messages));
     }
 
     #[Test]
@@ -178,7 +178,7 @@ final class CregCommandTest extends TestCase
         [$command, $context, $messages] = $this->context(['REJECT', '#test', 'Reason'], $this->channelRepository($pending), $this->createStub(ChanUserAccountPort::class), $review, withOperatorAccount: false);
 
         self::assertFalse($command->execute($context)->success);
-        self::assertSame(['error.invalid_channel'], iterator_to_array($messages));
+        self::assertSame(["\x0304✗\x03\x0F error.invalid_channel"], iterator_to_array($messages));
     }
 
     #[Test]
@@ -193,7 +193,7 @@ final class CregCommandTest extends TestCase
 
         $outcome = $command->execute($context);
 
-        self::assertSame(['creg.rejected'], iterator_to_array($messages));
+        self::assertSame(["\x0303✔\x03\x0F creg.rejected"], iterator_to_array($messages));
         self::assertTrue($outcome->success);
     }
 
@@ -214,7 +214,7 @@ final class CregCommandTest extends TestCase
             [$command, $context, $messages] = $this->context(['ACCEPT', '#test'], $channels, $this->createStub(ChanUserAccountPort::class), $review);
 
             self::assertFalse($command->execute($context)->success);
-            self::assertSame([$message], iterator_to_array($messages));
+            self::assertSame(["\x0304✗\x03\x0F " . $message], iterator_to_array($messages));
         }
     }
 
@@ -236,7 +236,7 @@ final class CregCommandTest extends TestCase
         );
 
         self::assertFalse($command->execute($context)->success);
-        self::assertSame(['creg.requester_ineligible'], iterator_to_array($messages));
+        self::assertSame(["\x0304✗\x03\x0F creg.requester_ineligible"], iterator_to_array($messages));
     }
 
     private function channelRepository(RegisteredChannel $pending): RegisteredChannelRepositoryInterface

@@ -17,6 +17,9 @@ use App\Irc\Application\Port\In\Command\IrcopAuditableCommandInterface;
 use App\Irc\Application\Port\In\Command\IrcopAuditData;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\Fragment;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 use DateTimeImmutable;
 
 use function array_slice;
@@ -124,14 +127,14 @@ final readonly class CregCommand implements ChanServCommandInterface, IrcopAudit
         if ('PENDING' === $action) {
             $page = max(1, (int) ($context->args[1] ?? 1));
             $pending = $this->pending->page($page);
-            $context->reply('creg.pending_header', ['%page%' => (string) $page]);
+            $context->replyRaw($context->renderComponent(Component::Muted, 'creg.pending_header', ['%page%' => (string) $page]));
             foreach ($pending as $item) {
-                $context->reply('creg.pending_item', [
+                $context->replyRaw($context->renderComponent(Component::IndentedRow, 'creg.pending_item', [
                     '%channel%' => $item->channelName,
                     '%requester%' => $item->requesterNickname ?? (string) $item->requesterAccountId,
                     '%submitted%' => $context->formatDate($item->submittedAt),
                     '%description%' => $item->description,
-                ]);
+                ]));
             }
 
             return CommandOutcome::success();
@@ -140,7 +143,7 @@ final readonly class CregCommand implements ChanServCommandInterface, IrcopAudit
         $channelName = $context->getChannelNameArg(1);
         $operator = $context->sender;
         if (null === $channelName || null === $operator || null === $context->senderAccount) {
-            $context->reply('error.invalid_channel');
+            $context->reply('error.invalid_channel', ['%example%' => new Fragment($context->trans('error.invalid_channel_example'), Component::Emphasis)], Role::Error);
 
             return CommandOutcome::rejected();
         }
@@ -167,33 +170,33 @@ final readonly class CregCommand implements ChanServCommandInterface, IrcopAudit
             requesterIrcOperator: $requester->isOper ?? false,
         ));
         if (ReviewRegistrationOutcome::NotPending === $result->outcome) {
-            $context->reply('creg.not_pending', ['%channel%' => $channelName]);
+            $context->reply('creg.not_pending', ['%channel%' => new Fragment($channelName, Component::Emphasis)], Role::Error);
 
             return CommandOutcome::rejected();
         }
         if (ReviewRegistrationOutcome::ChannelNotOnNetwork === $result->outcome) {
-            $context->reply('creg.channel_not_on_network', ['%channel%' => $channelName]);
+            $context->reply('creg.channel_not_on_network', ['%channel%' => new Fragment($channelName, Component::Emphasis)], Role::Error);
 
             return CommandOutcome::rejected();
         }
         if (ReviewRegistrationOutcome::FounderLimitExceeded === $result->outcome) {
-            $context->reply('creg.founder_limit');
+            $context->reply('creg.founder_limit', role: Role::Error);
 
             return CommandOutcome::rejected();
         }
         if (ReviewRegistrationOutcome::RequesterInactive === $result->outcome) {
-            $context->reply('creg.requester_inactive');
+            $context->reply('creg.requester_inactive', role: Role::Error);
 
             return CommandOutcome::rejected();
         }
         if (ReviewRegistrationOutcome::RequesterIneligible === $result->outcome) {
-            $context->reply('creg.requester_ineligible');
+            $context->reply('creg.requester_ineligible', role: Role::Error);
 
             return CommandOutcome::rejected();
         }
 
         $accepted = ReviewRegistrationOutcome::Accepted === $result->outcome;
-        $context->reply($accepted ? 'creg.accepted' : 'creg.rejected', ['%channel%' => $channelName]);
+        $context->reply($accepted ? 'creg.accepted' : 'creg.rejected', ['%channel%' => new Fragment($channelName, Component::Emphasis)], Role::Success);
 
         return CommandOutcome::success(new IrcopAuditData(
             target: $channelName,

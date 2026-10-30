@@ -16,6 +16,9 @@ use App\Irc\Application\Port\In\Command\CommandOutcome;
 use App\Irc\Application\Port\In\Command\IrcopAuditData;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\Fragment;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 use DateTimeImmutable;
 
 use function array_slice;
@@ -107,7 +110,7 @@ final readonly class RegisterCommand implements ChanServCommandInterface, Audita
     {
         $channelName = $context->getChannelNameArg(0);
         if (null === $channelName) {
-            $context->reply('error.invalid_channel');
+            $context->reply('error.invalid_channel', ['%example%' => new Fragment($context->trans('error.invalid_channel_example'), Component::Emphasis)], Role::Error);
 
             return CommandOutcome::rejected();
         }
@@ -115,7 +118,7 @@ final readonly class RegisterCommand implements ChanServCommandInterface, Audita
         $channelView = $context->getChannelView($channelName);
         $sender = $context->sender;
         if (null === $sender) {
-            $context->reply('error.not_identified');
+            $context->reply('presentation.error.not_identified', ['%identify%' => new Fragment($context->trans('presentation.identify'), Component::Command)], Role::Error);
 
             return CommandOutcome::rejected();
         }
@@ -144,22 +147,23 @@ final readonly class RegisterCommand implements ChanServCommandInterface, Audita
     private function present(ChanServContext $context, string $channelName, RegisterChannelResult $result, DateTimeImmutable $occurredAt): void
     {
         match ($result->outcome) {
-            RegisterChannelOutcome::Registered => $context->reply('register.success', ['%channel%' => $channelName]),
-            RegisterChannelOutcome::AwaitingApproval => $context->reply('register.awaiting_approval', ['%channel%' => $channelName]),
+            RegisterChannelOutcome::Registered => $context->reply('register.success', ['%channel%' => new Fragment($channelName, Component::Emphasis)], Role::Success),
+            RegisterChannelOutcome::AwaitingApproval => $context->reply('register.awaiting_approval', ['%channel%' => new Fragment($channelName, Component::Emphasis)], Role::Success),
             RegisterChannelOutcome::RegistrationRestricted => $context->reply(
                 null === $result->restrictedUntil ? 'register.restricted_indefinite' : 'register.restricted_until',
                 [
-                    '%channel%' => $channelName,
+                    '%channel%' => new Fragment($channelName, Component::Emphasis),
                     '%date%' => $context->formatDate($result->restrictedUntil),
                     '%remaining_seconds%' => (string) (null === $result->restrictedUntil ? 0 : max(0, $result->restrictedUntil->getTimestamp() - $occurredAt->getTimestamp())),
                 ],
+                Role::Error,
             ),
-            RegisterChannelOutcome::NotIdentified => $context->reply('error.not_identified'),
-            RegisterChannelOutcome::PendingDeletion => $context->reply('register.pending_deletion', ['%channel%' => $channelName]),
-            RegisterChannelOutcome::ChannelNotOnNetwork => $context->reply('register.channel_not_on_network', ['%channel%' => $channelName]),
-            RegisterChannelOutcome::InsufficientChannelRank => $context->reply('register.insufficient_channel_rank', ['%channel%' => $channelName]),
-            RegisterChannelOutcome::Throttled => $context->reply('register.throttled', ['minutes' => (string) $result->remainingMinutes]),
-            RegisterChannelOutcome::FounderLimitExceeded => $context->reply('register.limit_exceeded', ['%max%' => (string) $result->maximumChannels]),
+            RegisterChannelOutcome::NotIdentified => $context->reply('presentation.error.not_identified', ['%identify%' => new Fragment($context->trans('presentation.identify'), Component::Command)], Role::Error),
+            RegisterChannelOutcome::PendingDeletion => $context->reply('register.pending_deletion', ['%channel%' => new Fragment($channelName, Component::Emphasis)], Role::Error),
+            RegisterChannelOutcome::ChannelNotOnNetwork => $context->reply('register.channel_not_on_network', ['%channel%' => new Fragment($channelName, Component::Emphasis)], Role::Error),
+            RegisterChannelOutcome::InsufficientChannelRank => $context->reply('register.insufficient_channel_rank', ['%channel%' => new Fragment($channelName, Component::Emphasis)], Role::Error),
+            RegisterChannelOutcome::Throttled => $context->reply('register.throttled', ['minutes' => new Fragment((string) $result->remainingMinutes, Component::Emphasis)], Role::Warning),
+            RegisterChannelOutcome::FounderLimitExceeded => $context->reply('register.limit_exceeded', ['%max%' => (string) $result->maximumChannels], Role::Error),
         };
     }
 

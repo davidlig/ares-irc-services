@@ -74,7 +74,7 @@ final class RegmodeCommandTest extends TestCase
 
         $outcome = $command->execute($context);
 
-        self::assertSame(['regmode.status'], iterator_to_array($messages));
+        self::assertSame(["\x0310ℹ\x03\x0F regmode.status"], iterator_to_array($messages));
         self::assertSame(['mode' => 'APPROVAL'], $outcome->auditData?->extra);
     }
 
@@ -88,7 +88,7 @@ final class RegmodeCommandTest extends TestCase
 
             $outcome = $command->execute($context);
 
-            self::assertSame(['regmode.changed'], iterator_to_array($messages));
+            self::assertSame(["\x0303✔\x03\x0F regmode.changed"], iterator_to_array($messages));
             self::assertSame(['previous' => 'DIRECT', 'mode' => $mode->value], $outcome->auditData?->extra);
         }
     }
@@ -101,7 +101,7 @@ final class RegmodeCommandTest extends TestCase
         $handler->expects(self::never())->method('current');
         [$command, $context, $messages] = $this->commandContext($handler, ['OTHER']);
         self::assertFalse($command->execute($context)->success);
-        self::assertSame(['error.syntax'], iterator_to_array($messages));
+        self::assertSame(["\x0304✗\x03\x0F presentation.error.syntax"], iterator_to_array($messages));
 
         [$command, $context, $messages] = $this->commandContext($handler, ['DIRECT'], true);
         self::assertFalse($command->execute($context)->success);
@@ -165,9 +165,9 @@ final class RegmodeCommandTest extends TestCase
         $service->dispatch('CREG PENDING', $roleOper);
 
         self::assertSame([
-            'error.permission_denied', 'error.permission_denied',
-            'regmode.status', 'creg.pending_header',
-            'regmode.status', 'creg.pending_header',
+            "\x0304✗\x03\x0F presentation.error.permission_denied", "\x0304✗\x03\x0F presentation.error.permission_denied",
+            "\x0310ℹ\x03\x0F regmode.status", "\x0314creg.pending_header\x03\x0F",
+            "\x0310ℹ\x03\x0F regmode.status", "\x0314creg.pending_header\x03\x0F",
         ], $messages);
     }
 
@@ -192,7 +192,7 @@ final class RegmodeCommandTest extends TestCase
         $deniedAccess->method('hasAnyPermission')->willReturn(false);
         $deniedAccess->method('hasPermission')->willReturn(false);
         new HelpCommand(new UnifiedHelpFormatter(), $deniedAccess)->execute($deniedContext);
-        self::assertSame(['unknown_command'], iterator_to_array($deniedMessages));
+        self::assertSame(["\x0304✗\x03\x0F presentation.unknown_command"], iterator_to_array($deniedMessages));
     }
 
     /** @param list<string> $arguments

@@ -14,6 +14,9 @@ use App\Irc\Application\Port\In\Command\IrcopAuditableCommandInterface;
 use App\Irc\Application\Port\In\Command\IrcopAuditData;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\Fragment;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 
 use function strtoupper;
 
@@ -96,19 +99,19 @@ final readonly class RegmodeCommand implements ChanServCommandInterface, IrcopAu
         $mode = strtoupper($context->args[0] ?? '');
         if ('STATUS' === $mode) {
             $current = $this->handler->current();
-            $context->reply('regmode.status', ['%mode%' => $current->value]);
+            $context->reply('regmode.status', ['%mode%' => new Fragment($current->value, Component::Emphasis)], Role::Information);
 
             return CommandOutcome::success(new IrcopAuditData(target: 'registration-mode', extra: ['mode' => $current->value]));
         }
 
         $newMode = RegistrationMode::tryFrom($mode);
         if (null === $newMode) {
-            $context->reply('error.syntax', ['syntax' => $context->trans('regmode.syntax')]);
+            $context->reply('presentation.error.syntax', ['syntax' => new Fragment($context->trans('regmode.syntax'), Component::Command)], Role::Error);
 
             return CommandOutcome::rejected();
         }
         $previous = $this->handler->change($newMode, $context->sender->nick);
-        $context->reply('regmode.changed', ['%mode%' => $newMode->value]);
+        $context->reply('regmode.changed', ['%mode%' => new Fragment($newMode->value, Component::Emphasis)], Role::Success);
 
         return CommandOutcome::success(new IrcopAuditData(target: 'registration-mode', extra: ['previous' => $previous->value, 'mode' => $newMode->value]));
     }

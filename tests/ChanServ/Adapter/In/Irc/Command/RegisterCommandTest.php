@@ -41,7 +41,9 @@ use ReflectionProperty;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function strcasecmp;
+use function strrpos;
 use function strtolower;
+use function substr;
 
 #[CoversClass(RegisterCommand::class)]
 #[CoversClass(RegisterChannel::class)]
@@ -81,7 +83,7 @@ final class RegisterCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $levelRepo, $throttle, $this->createStub(EventBusInterface::class), $this->createNonRootRegistry(), 3, 0);
         $cmd->execute($this->createContext($sender, $account, ['notachannel', 'desc'], $notifier, $translator, $channelLookup));
 
-        self::assertSame(['error.invalid_channel'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F error.invalid_channel"], $messages);
     }
 
     #[Test]
@@ -92,7 +94,7 @@ final class RegisterCommandTest extends TestCase
         $notifier = $this->createMock(ChanServNotifierInterface::class);
         $notifier->expects(self::never())->method('sendMessage');
         $translator = $this->createMock(TranslatorInterface::class);
-        $translator->expects(self::once())->method('trans')->with('error.not_identified')->willReturn('error.not_identified');
+        $translator->expects(self::exactly(2))->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         new RegisterCommand($handler)->execute($this->createContext(
             null,
@@ -123,11 +125,8 @@ final class RegisterCommandTest extends TestCase
             $messages[] = $message;
         });
         $translator = $this->createStub(TranslatorInterface::class);
-        $translationParameters = [];
-        $translator->method('trans')->willReturnCallback(static function (string $key, array $parameters) use (&$translationParameters): string {
-            $translationParameters = $parameters;
-
-            return $key;
+        $translator->method('trans')->willReturnCallback(static function (string $key, array $parameters): string {
+            return 'register.restricted_until' === $key ? $key . '|%remaining_seconds%' : $key;
         });
         $channelLookup = $this->createStub(ChannelLookupPort::class);
         $channelLookup->method('findByChannelName')->willReturn($this->channelViewWithSenderPrefix('#test', 'UID1', ['o']));
@@ -143,9 +142,8 @@ final class RegisterCommandTest extends TestCase
 
         self::assertCount(1, $messages);
         self::assertStringContainsString('register.restricted_until', $messages[0]);
-        self::assertArrayHasKey('%remaining_seconds%', $translationParameters);
-        self::assertIsString($translationParameters['%remaining_seconds%']);
-        $remainingSeconds = (int) $translationParameters['%remaining_seconds%'];
+        self::assertMatchesRegularExpression('/\\|[0-9]+$/', $messages[0]);
+        $remainingSeconds = (int) substr($messages[0], strrpos($messages[0], '|') + 1);
         self::assertGreaterThanOrEqual(0, $remainingSeconds);
         self::assertLessThanOrEqual(3600, $remainingSeconds);
     }
@@ -173,7 +171,7 @@ final class RegisterCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $levelRepo, $throttle, $this->createStub(EventBusInterface::class), $this->createNonRootRegistry(), 3, 0);
         $cmd->execute($this->createContext($sender, $account, ['#test', 'Desc'], $notifier, $translator, $channelLookup));
 
-        self::assertSame(['register.channel_not_on_network'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F register.channel_not_on_network"], $messages);
     }
 
     #[Test]
@@ -200,7 +198,7 @@ final class RegisterCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $levelRepo, $throttle, $this->createStub(EventBusInterface::class), $this->createNonRootRegistry(), 3, 0);
         $cmd->execute($this->createContext($sender, $account, ['#test', 'Desc'], $notifier, $translator, $channelLookup));
 
-        self::assertSame(['register.insufficient_channel_rank'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F register.insufficient_channel_rank"], $messages);
     }
 
     #[Test]
@@ -227,7 +225,7 @@ final class RegisterCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $levelRepo, $throttle, $this->createStub(EventBusInterface::class), $this->createNonRootRegistry(), 3, 0);
         $cmd->execute($this->createContext($sender, $account, ['#test', 'Desc'], $notifier, $translator, $channelLookup));
 
-        self::assertSame(['register.insufficient_channel_rank'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F register.insufficient_channel_rank"], $messages);
     }
 
     #[Test]
@@ -259,7 +257,7 @@ final class RegisterCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $levelRepo, $throttle, $this->createStub(EventBusInterface::class), $this->createNonRootRegistry(), 3, 0);
         $cmd->execute($this->createContext($sender, $account, ['#test', 'Desc'], $notifier, $translator, $channelLookup));
 
-        self::assertSame(['register.success'], $messages);
+        self::assertSame(["\x0303✔\x03\x0F register.success"], $messages);
     }
 
     #[Test]
@@ -302,7 +300,7 @@ final class RegisterCommandTest extends TestCase
         );
         $cmd->execute($this->createContext($sender, $account, ['#test', 'Desc'], $notifier, $translator, $channelLookup));
 
-        self::assertSame(['register.success'], $messages);
+        self::assertSame(["\x0303✔\x03\x0F register.success"], $messages);
     }
 
     #[Test]
@@ -342,7 +340,7 @@ final class RegisterCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $levelRepo, $throttle, $this->createStub(EventBusInterface::class), $this->createNonRootRegistry(), 3, 0);
         $cmd->execute($this->createContext($sender, $account, ['#test', 'Desc'], $notifier, $translator, $channelLookup));
 
-        self::assertSame(['register.success'], $messages);
+        self::assertSame(["\x0303✔\x03\x0F register.success"], $messages);
     }
 
     #[Test]
@@ -367,7 +365,7 @@ final class RegisterCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $levelRepo, $throttle, $this->createStub(EventBusInterface::class), $this->createNonRootRegistry(), 3, 0);
         $cmd->execute($this->createContext($sender, null, ['#test', 'Desc'], $notifier, $translator, $channelLookup));
 
-        self::assertSame(['error.not_identified'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F presentation.error.not_identified"], $messages);
     }
 
     #[Test]
@@ -395,7 +393,7 @@ final class RegisterCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $levelRepo, $throttle, $this->createStub(EventBusInterface::class), $this->createNonRootRegistry(), 3, 3600);
         $cmd->execute($this->createContext($sender, $account, ['#test', 'Desc'], $notifier, $translator, $channelLookup));
 
-        self::assertSame(['register.throttled'], $messages);
+        self::assertSame(["\x0307⚠\x03\x0F register.throttled"], $messages);
     }
 
     #[Test]
@@ -423,7 +421,7 @@ final class RegisterCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $levelRepo, $throttle, $this->createStub(EventBusInterface::class), $this->createNonRootRegistry(), 3, 0);
         $cmd->execute($this->createContext($sender, $account, ['#test', 'Desc'], $notifier, $translator, $channelLookup));
 
-        self::assertSame(['register.limit_exceeded'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F register.limit_exceeded"], $messages);
     }
 
     #[Test]
@@ -462,7 +460,7 @@ final class RegisterCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $levelRepo, $throttle, $this->createStub(EventBusInterface::class), $this->createNonRootRegistry(), 3, 0);
         $cmd->execute($this->createContext($sender, $account, ['#test', 'My desc'], $notifier, $translator, $channelLookup));
 
-        self::assertSame(['register.success'], $messages);
+        self::assertSame(["\x0303✔\x03\x0F register.success"], $messages);
     }
 
     #[Test]
@@ -562,7 +560,7 @@ final class RegisterCommandTest extends TestCase
 
         $cmd->execute($this->createContext($sender, $account, ['#test', 'Desc'], $notifier, $translator, $this->createStub(ChannelLookupPort::class)));
 
-        self::assertSame(['register.pending_deletion'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F register.pending_deletion"], $messages);
     }
 
     #[Test]
@@ -594,7 +592,7 @@ final class RegisterCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $levelRepo, $throttle, $this->createStub(EventBusInterface::class), $this->createNonRootRegistry(), 3, 0);
         $cmd->execute($this->createContext($sender, $account, ['#test', 'Desc'], $notifier, $translator, $channelLookup));
 
-        self::assertSame(['register.success'], $messages);
+        self::assertSame(["\x0303✔\x03\x0F register.success"], $messages);
     }
 
     #[Test]
@@ -650,7 +648,7 @@ final class RegisterCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $levelRepo, $throttle, $this->createStub(EventBusInterface::class), $this->createNonRootRegistry(), 3, 3600);
         $cmd->execute($this->createContext($sender, $account, ['#test', 'Desc'], $notifier, $translator, $channelLookup));
 
-        self::assertSame(['register.success'], $messages);
+        self::assertSame(["\x0303✔\x03\x0F register.success"], $messages);
     }
 
     #[Test]
@@ -683,7 +681,7 @@ final class RegisterCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $levelRepo, $throttle, $this->createStub(EventBusInterface::class), $this->createNonRootRegistry(), 3, 0);
         $cmd->execute($this->createContext($sender, $account, ['#test', 'Desc'], $notifier, $translator, $channelLookup));
 
-        self::assertSame(['register.success'], $messages);
+        self::assertSame(["\x0303✔\x03\x0F register.success"], $messages);
     }
 
     #[Test]
@@ -917,7 +915,7 @@ final class RegisterCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $levelRepo, $throttle, $this->createStub(EventBusInterface::class), $this->createNonRootRegistry(), 3, 3600);
         $cmd->execute($this->createContext($sender, $account, ['#test', 'Desc'], $notifier, $translator, $channelLookup));
 
-        self::assertSame(['register.success'], $messages);
+        self::assertSame(["\x0303✔\x03\x0F register.success"], $messages);
     }
 
     #[Test]
@@ -955,7 +953,7 @@ final class RegisterCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $levelRepo, $throttle, $this->createStub(EventBusInterface::class), $operatorAccess, 3, 3600);
         $cmd->execute($this->createContext($sender, $account, ['#test', 'Desc'], $notifier, $translator, $channelLookup));
 
-        self::assertSame(['register.success'], $messages);
+        self::assertSame(["\x0303✔\x03\x0F register.success"], $messages);
     }
 
     #[Test]
@@ -988,7 +986,7 @@ final class RegisterCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $levelRepo, $throttle, $this->createStub(EventBusInterface::class), $this->createNonRootRegistry(), 3, 0);
         $cmd->execute($this->createContext($sender, $account, ['#test', 'Desc'], $notifier, $translator, $channelLookup));
 
-        self::assertSame(['register.success'], $messages);
+        self::assertSame(["\x0303✔\x03\x0F register.success"], $messages);
     }
 
     #[Test]
@@ -1021,7 +1019,7 @@ final class RegisterCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $levelRepo, $throttle, $this->createStub(EventBusInterface::class), $this->createRootRegistryFor('RootAdmin'), 3, 0);
         $cmd->execute($this->createContext($sender, $account, ['#test', 'Desc'], $notifier, $translator, $channelLookup));
 
-        self::assertSame(['register.success'], $messages);
+        self::assertSame(["\x0303✔\x03\x0F register.success"], $messages);
     }
 
     #[Test]
@@ -1053,7 +1051,7 @@ final class RegisterCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $levelRepo, $throttle, $this->createStub(EventBusInterface::class), $this->createNonRootRegistry(), 3, 0);
         $cmd->execute($this->createContext($sender, $account, ['#test', 'Desc'], $notifier, $translator, $channelLookup));
 
-        self::assertSame(['register.success'], $messages);
+        self::assertSame(["\x0303✔\x03\x0F register.success"], $messages);
         self::assertNull($throttle->getLastRegistrationAt(10));
     }
 
@@ -1086,7 +1084,7 @@ final class RegisterCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $levelRepo, $throttle, $this->createStub(EventBusInterface::class), $this->createRootRegistryFor('RootAdmin'), 3, 0);
         $cmd->execute($this->createContext($sender, $account, ['#test', 'Desc'], $notifier, $translator, $channelLookup));
 
-        self::assertSame(['register.success'], $messages);
+        self::assertSame(["\x0303✔\x03\x0F register.success"], $messages);
         self::assertNull($throttle->getLastRegistrationAt(10));
     }
 
@@ -1114,7 +1112,7 @@ final class RegisterCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $levelRepo, $throttle, $this->createStub(EventBusInterface::class), $this->createNonRootRegistry(), 3, 3600);
         $cmd->execute($this->createContext($sender, $account, ['#test', 'Desc'], $notifier, $translator, $channelLookup));
 
-        self::assertSame(['register.throttled'], $messages);
+        self::assertSame(["\x0307⚠\x03\x0F register.throttled"], $messages);
     }
 
     #[Test]
@@ -1142,7 +1140,7 @@ final class RegisterCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $levelRepo, $throttle, $this->createStub(EventBusInterface::class), $this->createNonRootRegistry(), 3, 0);
         $cmd->execute($this->createContext($sender, $account, ['#test', 'Desc'], $notifier, $translator, $channelLookup));
 
-        self::assertSame(['register.limit_exceeded'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F register.limit_exceeded"], $messages);
     }
 
     /**
