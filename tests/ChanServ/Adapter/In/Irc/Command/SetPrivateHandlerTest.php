@@ -54,7 +54,7 @@ final class SetPrivateHandlerTest extends TestCase
 
         $this->handler($repository)->handle($this->context($notifier, $translator, 'maybe'), $channel, 'maybe');
 
-        self::assertSame(['error.syntax'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F presentation.error.syntax"], $messages);
     }
 
     #[Test]
@@ -77,7 +77,7 @@ final class SetPrivateHandlerTest extends TestCase
         self::assertTrue($channel->isPrivate());
         $handler->handle($this->context($notifier, $translator, 'off'), $channel, 'OFF');
         self::assertFalse($channel->isPrivate());
-        self::assertSame(['set.private.on', 'set.private.off'], $messages);
+        self::assertSame(["\x0303✔\x03\x0F set.private.on", "\x0303✔\x03\x0F set.private.off"], $messages);
     }
 
     #[Test]

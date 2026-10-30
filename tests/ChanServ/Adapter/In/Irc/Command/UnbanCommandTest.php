@@ -19,6 +19,10 @@ use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
 use App\Irc\Application\Port\In\ServiceNicknameRegistry;
+use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -68,10 +72,10 @@ final class UnbanCommandTest extends TestCase
     /** @return iterable<string, array{UnbanChannelOutcome, string, bool}> */
     public static function outcomes(): iterable
     {
-        yield 'removed' => [UnbanChannelOutcome::Removed, 'unban.done', true];
-        yield 'empty' => [UnbanChannelOutcome::NoMatches, 'unban.no_matches', true];
-        yield 'unavailable' => [UnbanChannelOutcome::Unavailable, 'unban.unavailable', false];
-        yield 'absent' => [UnbanChannelOutcome::ChannelNotOnNetwork, 'unban.not_on_network', false];
+        yield 'removed' => [UnbanChannelOutcome::Removed, "\x0303✔\x03\x0F unban.done", true];
+        yield 'empty' => [UnbanChannelOutcome::NoMatches, "\x0310ℹ\x03\x0F unban.no_matches", true];
+        yield 'unavailable' => [UnbanChannelOutcome::Unavailable, "\x0304✗\x03\x0F unban.unavailable", false];
+        yield 'absent' => [UnbanChannelOutcome::ChannelNotOnNetwork, "\x0304✗\x03\x0F unban.not_on_network", false];
     }
 
     #[DataProvider('outcomes')]
@@ -83,6 +87,50 @@ final class UnbanCommandTest extends TestCase
         $notifier->expects(self::once())->method('sendMessage')->with('001AAA', $message, 'NOTICE');
         $command = new UnbanCommand($handler);
         self::assertSame($success, $command->execute($this->createContext(new SenderView('001AAA', 'Alice', 'i', 'h', 'c', '*', true), new ChanAccountView(1, 'Alice', 'en'), ['#test'], $notifier, $this->translator()))->success);
+    }
+
+    public function testInvalidChannelUsesLocalizedEmphasizedExample(): void
+    {
+        $handler = $this->createMock(UnbanChannelHandlerInterface::class);
+        $handler->expects(self::never())->method('handle');
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $key): string => match ($key) {
+            'error.invalid_channel' => 'Nombre no válido. Usa %example%.',
+            'error.invalid_channel_example' => '#canal',
+            default => $key,
+        });
+        $notifier = $this->createMock(ChanServNotifierInterface::class);
+        $notifier->expects(self::once())->method('sendMessage')->with('001AAA', "\x0304✗\x03\x0F Nombre no válido. Usa \x02#canal\x03\x0F.", 'NOTICE');
+        $context = $this->createContext(new SenderView('001AAA', 'Alice', 'i', 'h', 'c', '*', true), new ChanAccountView(1, 'Alice', 'en'), ['invalid'], $notifier, $translator);
+
+        self::assertFalse(new UnbanCommand($handler)->execute($context)->success);
+    }
+
+    public function testLocalizedTemplateInterpolatesParametersWithoutReparsing(): void
+    {
+        $handler = $this->createStub(UnbanChannelHandlerInterface::class);
+        $handler->method('handle')->willReturn(new UnbanChannelResult(UnbanChannelOutcome::Removed, 2));
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturn('Canal %channel%: retirados %count%');
+        $notifier = $this->createMock(ChanServNotifierInterface::class);
+        $notifier->expects(self::once())->method('sendMessage')->with('001AAA', "\x0303✔\x03\x0F Canal #%count%: retirados 2", 'NOTICE');
+        $context = $this->createContext(new SenderView('001AAA', 'Alice', 'i', 'h', 'c', '*', true), new ChanAccountView(1, 'Alice', 'en'), ['#%count%'], $notifier, $translator);
+
+        self::assertTrue(new UnbanCommand($handler)->execute($context)->success);
+    }
+
+    public function testInjectedStyleControlsTheSameLocalizedResponse(): void
+    {
+        $handler = $this->createStub(UnbanChannelHandlerInterface::class);
+        $handler->method('handle')->willReturn(new UnbanChannelResult(UnbanChannelOutcome::Removed, 1));
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturn('Removed %count% from %channel%');
+        $notifier = $this->createMock(ChanServNotifierInterface::class);
+        $notifier->expects(self::once())->method('sendMessage')->with('001AAA', 'OK Removed 1 from #test', 'NOTICE');
+        $renderer = new IrcRenderer(new FixedStyleProvider(new PresentationStyle(markers: [Role::Success->value => 'OK'])));
+        $context = $this->createContext(new SenderView('001AAA', 'Alice', 'i', 'h', 'c', '*', true), new ChanAccountView(1, 'Alice', 'en'), ['#test'], $notifier, $translator, $renderer);
+
+        self::assertTrue(new UnbanCommand($handler)->execute($context)->success);
     }
 
     private function translator(): TranslatorInterface
@@ -100,6 +148,7 @@ final class UnbanCommandTest extends TestCase
         array $args,
         ChanServNotifierInterface $notifier,
         TranslatorInterface $translator,
+        ?IrcRenderer $renderer = null,
     ): ChanServContext {
         return new ChanServContext(
             $sender,
@@ -116,6 +165,7 @@ final class UnbanCommandTest extends TestCase
             new NullChannelModeSupport(),
             $this->createStub(NetworkUserLookupPort::class),
             $this->createServiceNicks(),
+            renderer: $renderer,
         );
     }
 

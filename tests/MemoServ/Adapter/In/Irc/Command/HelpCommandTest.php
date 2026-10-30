@@ -9,6 +9,7 @@ use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
 use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\MemoServ\Adapter\In\Irc\Command\HelpCommand;
 use App\MemoServ\Adapter\In\Irc\Help\UnifiedHelpFormatter;
+use App\MemoServ\Adapter\In\Irc\HelpFormatterContextAdapter;
 use App\MemoServ\Adapter\In\Irc\MemoServCommandInterface;
 use App\MemoServ\Adapter\In\Irc\MemoServCommandRegistry;
 use App\MemoServ\Adapter\In\Irc\MemoServContext;
@@ -16,6 +17,11 @@ use App\MemoServ\Adapter\In\Irc\MemoServNotifierInterface;
 use App\MemoServ\Application\Model\MemoAccountView;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\Presentation\Appearance;
+use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
+use App\Tests\Shared\Translations\TranslationCatalog;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -30,12 +36,109 @@ use function dirname;
 use function explode;
 use function file_get_contents;
 use function implode;
+use function in_array;
+use function is_array;
 use function is_scalar;
+use function is_string;
 use function ksort;
+use function str_replace;
+use function strtr;
 
 #[CoversClass(HelpCommand::class)]
+#[CoversClass(UnifiedHelpFormatter::class)]
+#[CoversClass(HelpFormatterContextAdapter::class)]
+#[CoversClass(MemoServContext::class)]
 final class HelpCommandTest extends TestCase
 {
+    #[Test]
+    public function spanishHelpUsesSelectedStyleForStructuredSections(): void
+    {
+        $translation = $this->createStub(TranslatorInterface::class);
+        $translation->method('trans')->willReturnCallback(static fn (string $id): string => match ($id) {
+            'help.header_title' => 'MemoServ',
+            'help.header' => '%title%',
+            'help.general_header' => 'Comandos disponibles:',
+            default => $id,
+        });
+        $renderer = new IrcRenderer(new FixedStyleProvider(new PresentationStyle(components: [
+            'header' => new Appearance(prefix: '[HEADER] '),
+            'section' => new Appearance(prefix: '[SECTION] '),
+        ])));
+        $replies = [];
+        $context = $this->createContext(new SenderView('UID', 'Nick', 'i', 'h', 'c', 'ip'), null, [], $replies, [], $translation, language: 'es', renderer: $renderer);
+        new HelpCommand(new UnifiedHelpFormatter())->execute($context);
+        self::assertStringContainsString('[HEADER] MemoServ', $replies[0]);
+        self::assertStringContainsString('[SECTION] Comandos disponibles:', $replies[0]);
+    }
+
+    #[Test]
+    public function spanishExamplesUseTheSelectedMarkerAndKeepTheBotPrefixCopyable(): void
+    {
+        $catalog = TranslationCatalog::parseFile(dirname(__DIR__, 6) . '/translations/memoserv.es.yaml');
+        $entries = [];
+        $flatten = static function (array $values, string $prefix = '') use (&$flatten, &$entries): void {
+            foreach ($values as $key => $value) {
+                $path = '' === $prefix ? (string) $key : $prefix . '.' . $key;
+                if (is_array($value)) {
+                    $flatten($value, $path);
+                } elseif (is_string($value)) {
+                    $entries[$path] = $value;
+                }
+            }
+        };
+        $flatten($catalog);
+        $translation = $this->createStub(TranslatorInterface::class);
+        $translation->method('trans')->willReturnCallback(static function (string $id, array $params = []) use ($entries): string {
+            $mapped = str_replace('dummy.', 'send.', $id);
+
+            return strtr($entries[$mapped] ?? $id, $params);
+        });
+        $renderer = new IrcRenderer(new FixedStyleProvider(new PresentationStyle(components: [
+            'marked_example' => new Appearance(prefix: '  > '),
+            'command' => new Appearance(prefix: '[', suffix: ']'),
+        ])));
+        $replies = [];
+        $context = $this->createContext(new SenderView('UID', 'Nick', 'i', 'h', 'c', 'ip'), null, ['SEND'], $replies, [$this->createDummyCommand('SEND')], $translation, language: 'es', renderer: $renderer);
+        new HelpCommand(new UnifiedHelpFormatter())->execute($context);
+        self::assertStringContainsString('  > /msg MemoServ [SEND Ana Hola, ¿puedes revisar el memo?]', $replies[0]);
+        self::assertStringContainsString('  > /msg MemoServ [SEND #ayuda Aviso para el canal]', $replies[0]);
+        self::assertStringNotContainsString('%command_prefix%', $replies[0]);
+    }
+
+    #[Test]
+    public function englishExamplesUseTheSelectedMarkerAndKeepTheBotPrefixCopyable(): void
+    {
+        $catalog = TranslationCatalog::parseFile(dirname(__DIR__, 6) . '/translations/memoserv.en.yaml');
+        $entries = [];
+        $flatten = static function (array $values, string $prefix = '') use (&$flatten, &$entries): void {
+            foreach ($values as $key => $value) {
+                $path = '' === $prefix ? (string) $key : $prefix . '.' . $key;
+                if (is_array($value)) {
+                    $flatten($value, $path);
+                } elseif (is_string($value)) {
+                    $entries[$path] = $value;
+                }
+            }
+        };
+        $flatten($catalog);
+        $translation = $this->createStub(TranslatorInterface::class);
+        $translation->method('trans')->willReturnCallback(static function (string $id, array $params = []) use ($entries): string {
+            $mapped = str_replace('dummy.', 'send.', $id);
+
+            return strtr($entries[$mapped] ?? $id, $params);
+        });
+        $renderer = new IrcRenderer(new FixedStyleProvider(new PresentationStyle(components: [
+            'marked_example' => new Appearance(prefix: '  > '),
+            'command' => new Appearance(prefix: '[', suffix: ']'),
+        ])));
+        $replies = [];
+        $context = $this->createContext(new SenderView('UID', 'Nick', 'i', 'h', 'c', 'ip'), null, ['SEND'], $replies, [$this->createDummyCommand('SEND')], $translation, language: 'en', renderer: $renderer);
+        new HelpCommand(new UnifiedHelpFormatter())->execute($context);
+        self::assertStringContainsString('  > /msg MemoServ [SEND Ana Hi, can you check the memo?]', $replies[0]);
+        self::assertStringContainsString('  > /msg MemoServ [SEND #help Notice for the channel]', $replies[0]);
+        self::assertStringNotContainsString('%command_prefix%', $replies[0]);
+    }
+
     #[Test]
     public function exposesMetadata(): void
     {
@@ -69,7 +172,7 @@ final class HelpCommandTest extends TestCase
 
         self::assertCount(1, $replies);
         self::assertStringContainsString('help.header_title', $replies[0]);
-        self::assertSame('help.footer', array_last(explode("\n", $replies[0])));
+        self::assertStringContainsString('─────────────────────────────', array_last(explode("\n", $replies[0])));
     }
 
     #[Test]
@@ -174,7 +277,7 @@ final class HelpCommandTest extends TestCase
         $failure = new RuntimeException('Translation failed at the final footer.');
         $translation = $this->createStub(TranslatorInterface::class);
         $translation->method('trans')->willReturnCallback(static function (string $key) use ($failure): string {
-            if ('help.footer' === $key) {
+            if (in_array($key, ['help.general_footer', 'help.syntax_label'], true)) {
                 throw $failure;
             }
 
@@ -282,6 +385,8 @@ final class HelpCommandTest extends TestCase
         iterable $commands = [],
         ?TranslatorInterface $translation = null,
         ?RuntimeException $sendFailure = null,
+        string $language = 'en',
+        ?IrcRenderer $renderer = null,
     ): MemoServContext {
         $notifier = $this->createStub(MemoServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$replies, $sendFailure): void {
@@ -314,11 +419,12 @@ final class HelpCommandTest extends TestCase
             args: $args,
             notifier: $notifier,
             translator: $translation ?? $translator,
-            language: 'en',
+            language: $language,
             timezone: 'UTC',
             messageType: 'NOTICE',
             registry: new MemoServCommandRegistry($commands),
             serviceNicks: $this->createServiceNicks(),
+            renderer: $renderer,
         );
     }
 

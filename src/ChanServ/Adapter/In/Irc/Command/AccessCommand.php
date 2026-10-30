@@ -14,6 +14,9 @@ use App\ChanServ\Application\UseCase\ManageAccess\ManageChannelAccessResult;
 use App\ChanServ\Domain\Entity\ChannelAccess;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\Fragment;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 use DateTimeImmutable;
 
 use function base64_decode;
@@ -123,7 +126,7 @@ final readonly class AccessCommand implements ChanServCommandInterface
     {
         $channelName = $context->getChannelNameArg(0);
         if (null === $channelName) {
-            $context->reply('error.invalid_channel');
+            $context->reply('error.invalid_channel', ['%example%' => new Fragment($context->trans('error.invalid_channel_example'), Component::Emphasis)], Role::Error);
 
             return;
         }
@@ -165,34 +168,34 @@ final readonly class AccessCommand implements ChanServCommandInterface
     private function present(ChanServContext $context, string $channelName, string $subcommand, string $performedBy, ManageChannelAccessResult $result): void
     {
         match ($result->outcome) {
-            ManageChannelAccessOutcome::ActorNotAuthenticated => $context->reply('error.not_identified'),
-            ManageChannelAccessOutcome::UnknownAction => $context->reply('access.unknown_sub', ['%sub%' => $subcommand]),
-            ManageChannelAccessOutcome::InvalidRequest => $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]),
+            ManageChannelAccessOutcome::ActorNotAuthenticated => $context->reply('presentation.error.not_identified', ['%identify%' => new Fragment($context->trans('presentation.identify'), Component::Command)], Role::Error),
+            ManageChannelAccessOutcome::UnknownAction => $context->reply('access.unknown_sub', ['%sub%' => new Fragment($subcommand, Component::Emphasis)], Role::Error),
+            ManageChannelAccessOutcome::InvalidRequest => $context->reply('presentation.error.syntax', ['syntax' => new Fragment($context->trans($this->getSyntaxKey()), Component::Command)], Role::Error),
             ManageChannelAccessOutcome::InvalidLevel => $context->reply('access.level_range', [
                 '%min%' => (string) ChannelAccess::LEVEL_MIN,
                 '%max%' => (string) ChannelAccess::LEVEL_MAX,
-            ]),
-            ManageChannelAccessOutcome::ListEmpty => $context->reply('access.list.empty', ['%channel%' => $channelName]),
+            ], Role::Error),
+            ManageChannelAccessOutcome::ListEmpty => $context->reply('access.list.empty', ['%channel%' => new Fragment($channelName, Component::Emphasis)], Role::Information),
             ManageChannelAccessOutcome::Listed => $this->presentList($context, $channelName, $result),
             ManageChannelAccessOutcome::Added => $this->presentAdded($context, $channelName, $performedBy, $result),
             ManageChannelAccessOutcome::Deleted => $this->presentDeleted($context, $channelName, $performedBy, $result),
-            ManageChannelAccessOutcome::TargetNotRegistered => $context->reply('error.nick_not_registered', ['%nickname%' => (string) $result->targetNickname]),
-            ManageChannelAccessOutcome::FounderNotAllowed => $context->reply('access.founder_not_in_list'),
-            ManageChannelAccessOutcome::LimitReached => $context->reply('access.max_entries', ['%max%' => (string) ChannelAccess::MAX_ENTRIES_PER_CHANNEL]),
-            ManageChannelAccessOutcome::CannotManageLevel => $context->reply('access.cannot_manage_level'),
-            ManageChannelAccessOutcome::EntryNotFound => $context->reply('access.del.not_in_list', ['%nickname%' => (string) $result->targetNickname]),
+            ManageChannelAccessOutcome::TargetNotRegistered => $context->reply('presentation.error.nick_not_registered', ['%nickname%' => new Fragment((string) $result->targetNickname, Component::Emphasis)], Role::Error),
+            ManageChannelAccessOutcome::FounderNotAllowed => $context->reply('access.founder_not_in_list', role: Role::Error),
+            ManageChannelAccessOutcome::LimitReached => $context->reply('access.max_entries', ['%max%' => (string) ChannelAccess::MAX_ENTRIES_PER_CHANNEL], Role::Error),
+            ManageChannelAccessOutcome::CannotManageLevel => $context->reply('access.cannot_manage_level', role: Role::Error),
+            ManageChannelAccessOutcome::EntryNotFound => $context->reply('access.del.not_in_list', ['%nickname%' => new Fragment((string) $result->targetNickname, Component::Emphasis)], Role::Error),
         };
     }
 
     private function presentList(ChanServContext $context, string $channelName, ManageChannelAccessResult $result): void
     {
-        $context->reply('access.list.header', ['%channel%' => $channelName]);
+        $context->replyRaw($context->renderComponent(Component::Positive, 'access.list.header', ['%channel%' => new Fragment($channelName, Component::Emphasis)]));
         foreach ($result->entries as $index => $entry) {
-            $context->reply('access.list.entry', [
+            $context->replyRaw($context->renderComponent(Component::IndentedRow, 'access.list.entry', [
                 '%index%' => (string) ($index + 1),
                 '%nickname%' => $entry->nickname,
                 '%level%' => (string) $entry->level,
-            ]);
+            ]));
         }
     }
 
@@ -200,21 +203,21 @@ final readonly class AccessCommand implements ChanServCommandInterface
     {
         $nickname = (string) $result->targetNickname;
         $level = (string) $result->level;
-        $context->reply('access.add.done', ['%nickname%' => $nickname, '%level%' => $level]);
-        $context->getNotifier()->sendNoticeToChannel($channelName, $context->trans('access.add.notice_channel', [
-            '%from%' => $performedBy,
-            '%to%' => $nickname,
-            '%level%' => $level,
+        $context->reply('access.add.done', ['%nickname%' => new Fragment($nickname, Component::Emphasis), '%level%' => $level], Role::Success);
+        $context->getNotifier()->sendNoticeToChannel($channelName, $context->renderReply(Role::Success, 'access.add.notice_channel', [
+            '%from%' => new Fragment($performedBy, Component::Actor),
+            '%to%' => new Fragment($nickname, Component::Target),
+            '%level%' => new Fragment($level, Component::ModeChange),
         ]));
     }
 
     private function presentDeleted(ChanServContext $context, string $channelName, string $performedBy, ManageChannelAccessResult $result): void
     {
         $nickname = (string) $result->targetNickname;
-        $context->reply('access.del.done', ['%nickname%' => $nickname]);
-        $context->getNotifier()->sendNoticeToChannel($channelName, $context->trans('access.del.notice_channel', [
-            '%from%' => $performedBy,
-            '%to%' => $nickname,
+        $context->reply('access.del.done', ['%nickname%' => new Fragment($nickname, Component::Emphasis)], Role::Success);
+        $context->getNotifier()->sendNoticeToChannel($channelName, $context->renderReply(Role::Success, 'access.del.notice_channel', [
+            '%from%' => new Fragment($performedBy, Component::Actor),
+            '%to%' => new Fragment($nickname, Component::Target),
         ]));
     }
 

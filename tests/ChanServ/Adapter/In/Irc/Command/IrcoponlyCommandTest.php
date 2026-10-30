@@ -66,7 +66,7 @@ final class IrcoponlyCommandTest extends TestCase
         self::assertFalse($command->execute($this->context(null, ['#ops', 'ON'], $messages))->success);
         self::assertFalse($command->execute($this->context($this->sender(), ['bad', 'ON'], $messages))->success);
         self::assertFalse($command->execute($this->context($this->sender(), ['#ops', 'INVALID'], $messages))->success);
-        self::assertSame(['error.invalid_channel', 'error.syntax'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F error.invalid_channel", "\x0304✗\x03\x0F presentation.error.syntax"], $messages);
     }
 
     #[Test]
@@ -83,7 +83,7 @@ final class IrcoponlyCommandTest extends TestCase
         $messages = [];
         $on = $command->execute($this->context($this->sender(), ['#ops', 'on'], $messages));
         $off = $command->execute($this->context($this->sender(), ['#ops', 'OFF'], $messages));
-        self::assertSame(['ircoponly.on', 'ircoponly.off'], $messages);
+        self::assertSame(["\x0303✔\x03\x0F ircoponly.on", "\x0303✔\x03\x0F ircoponly.off"], $messages);
         self::assertTrue($on->success);
         self::assertTrue($off->success);
         self::assertInstanceOf(IrcopAuditData::class, $on->auditData);
@@ -101,7 +101,7 @@ final class IrcoponlyCommandTest extends TestCase
         $messages = [];
         self::assertFalse($command->execute($this->context($this->sender(), ['#ops', 'ON'], $messages))->success);
         self::assertFalse($command->execute($this->context($this->sender(), ['#ops', 'OFF'], $messages))->success);
-        self::assertSame(['error.channel_not_registered', 'forbid.channel_forbidden'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F presentation.error.channel_not_registered", "\x0304✗\x03\x0F forbid.channel_forbidden"], $messages);
     }
 
     private function sender(): SenderView

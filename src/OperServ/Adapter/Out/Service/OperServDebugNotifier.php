@@ -11,16 +11,18 @@ use App\NickServ\Application\Port\In\NickAccountQuery;
 use App\OperServ\Adapter\In\Irc\OperServNotifierInterface;
 use App\OperServ\Application\Port\In\OperatorActor;
 use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\Fragment;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use Symfony\Contracts\Translation\TranslatableInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
+
+use function in_array;
+use function str_contains;
+use function strtr;
 
 final readonly class OperServDebugNotifier implements ServiceDebugNotifierInterface
 {
-    private const string COLOR_BLUE = "\x0302";
-
-    private const string COLOR_RED = "\x0304";
-
-    private const string COLOR_RESET = "\x03";
-
     public function __construct(
         private ChannelServiceActionsPort $channelActions,
         private NetworkUserLookupPort $userLookup,
@@ -30,6 +32,7 @@ final readonly class OperServDebugNotifier implements ServiceDebugNotifierInterf
         private TranslatorInterface $translator,
         private string $defaultLanguage,
         private ?string $debugChannel,
+        private IrcRenderer $renderer,
     ) {}
 
     public function getUserLookup(): NetworkUserLookupPort
@@ -112,9 +115,9 @@ final readonly class OperServDebugNotifier implements ServiceDebugNotifierInterf
         ?string $reason,
         array $extra,
     ): void {
-        $coloredOperator = self::COLOR_BLUE . $operator . self::COLOR_RESET;
-        $coloredCommand = self::COLOR_RED . $command . self::COLOR_RESET;
-        $coloredTarget = self::COLOR_BLUE . $target . self::COLOR_RESET;
+        $coloredOperator = new Fragment($operator, Component::Actor);
+        $coloredCommand = new Fragment($command, Component::ModeChange);
+        $coloredTarget = new Fragment($target, Component::Actor);
 
         $duration = $extra['duration'] ?? null;
 
@@ -128,23 +131,18 @@ final readonly class OperServDebugNotifier implements ServiceDebugNotifierInterf
                 '%message%' => $reason ?? '',
             ];
 
-            $message = $this->translator->trans(
-                'debug.action_global',
-                $messageParams,
-                'operserv',
-                $this->defaultLanguage,
-            );
+            $message = $this->render('debug.action_global', 'operserv', $messageParams);
         } else {
             $formattedReason = '';
             if (null !== $reason && '' !== $reason) {
                 $reasonType = $extra['reasonType'] ?? 'reason';
                 $prefixKey = 'reason' === $reasonType ? 'debug.prefix_reason' : 'debug.prefix_message';
-                $formattedReason = $this->translator->trans(
+                $formattedReason = new Fragment($this->translator->trans(
                     $prefixKey,
-                    ['%reason%' => $reason],
+                    [],
                     'reason' === $reasonType ? 'common' : 'operserv',
                     $this->defaultLanguage,
-                );
+                ), parameters: ['%reason%' => $reason]);
             }
 
             $messageParams = [
@@ -162,14 +160,26 @@ final readonly class OperServDebugNotifier implements ServiceDebugNotifierInterf
                 $messageParams['%duration%'] = $duration;
             }
 
-            $message = $this->translator->trans(
-                $translationKey,
-                $messageParams,
-                'common',
-                $this->defaultLanguage,
-            );
+            $message = $this->render($translationKey, 'common', $messageParams);
         }
 
         $this->notify($message);
+    }
+
+    /** @param array<string, mixed> $parameters */
+    private function render(string $key, string $domain, array $parameters): string
+    {
+        $template = $this->translator->trans($key, [], $domain, $this->defaultLanguage);
+        foreach ($parameters as $name => $value) {
+            if ($value instanceof Fragment && in_array($name, ['%operator%', '%command%', '%target%', '%reason%'], true)) {
+                continue;
+            }
+            if ($value instanceof TranslatableInterface) {
+                $value = $value->trans($this->translator, $this->defaultLanguage);
+            }
+            $parameters[$name] = str_contains($template, $name) ? strtr($name, [$name => $value]) : '';
+        }
+
+        return $this->renderer->component(Component::Text, $template, $parameters);
     }
 }

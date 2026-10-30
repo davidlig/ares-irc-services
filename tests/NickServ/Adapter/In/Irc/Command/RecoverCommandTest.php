@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Adapter\In\Irc\Command;
 
+use App\Bootstrap\Adapter\Out\Translation\IrcYamlTranslationLoader;
 use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
 use App\Irc\Application\Port\In\ServiceNicknameRegistry;
@@ -18,19 +19,25 @@ use App\NickServ\Application\Port\Out\NicknameAuthenticationModeQuery;
 use App\NickServ\Application\UseCase\Recover\RecoverNick;
 use App\NickServ\Application\UseCase\Recover\RecoverNickHandlerInterface;
 use App\NickServ\Application\UseCase\Recover\RecoverNickResult;
+use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Stringable;
+use Symfony\Component\Translation\Translator;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function array_key_last;
 use function base64_encode;
+use function dirname;
 use function implode;
 use function inet_pton;
 use function is_scalar;
 use function ksort;
+use function substr_count;
 
 #[CoversClass(RecoverCommand::class)]
 final class RecoverCommandTest extends TestCase
@@ -132,6 +139,46 @@ final class RecoverCommandTest extends TestCase
             'recover.success_then_change',
             'rescue.optional_replacement [%token%: replacement-token]',
         ], $messages);
+    }
+
+    #[Test]
+    public function recoverySecretInstructionsPreserveLiteralTokensAndBotName(): void
+    {
+        $handler = $this->createStub(RecoverNickHandlerInterface::class);
+        $handler->method('handle')->willReturn(RecoverNickResult::passwordReset('Alice', 'temp%bot%secret', 'rescue%bot%token'));
+        $translator = new Translator('es');
+        $translator->addLoader('yaml', new IrcYamlTranslationLoader());
+        $translator->addResource('yaml', dirname(__DIR__, 6) . '/translations/nickserv.es.yaml', 'es', 'nickserv');
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('getNick')->willReturn('CustomNick');
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void { $messages[] = $message; });
+        $renderer = new IrcRenderer(new FixedStyleProvider(PresentationStyle::default()));
+        $context = new NickServContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), null, 'RECOVER', ['Alice', 'token'], $notifier, $translator, 'es', 'UTC', 'NOTICE', new NickServCommandRegistry([]), new PendingVerificationRegistry(), new RecoveryTokenRegistry(), $this->createServiceNicks(), $renderer);
+        new RecoverCommand($handler, $this->authenticationMode())->execute($context);
+        self::assertStringContainsString('temp%bot%secret', $messages[0]);
+        self::assertStringContainsString('/msg CustomNick ', $messages[1]);
+        self::assertSame(2, substr_count($messages[2], 'rescue%bot%token'));
+        self::assertStringNotContainsString('%token_display%', $messages[2]);
+    }
+
+    #[Test]
+    public function recoveryInstructionsRenderLocalizedCommandFragments(): void
+    {
+        $handler = $this->createStub(RecoverNickHandlerInterface::class);
+        $handler->method('handle')->willReturn(RecoverNickResult::instructions('Alice'));
+        $translator = new Translator('es');
+        $translator->addLoader('yaml', new IrcYamlTranslationLoader());
+        $translator->addResource('yaml', dirname(__DIR__, 6) . '/translations/nickserv.es.yaml', 'es', 'nickserv');
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void { $messages[] = $message; });
+        $renderer = new IrcRenderer(new FixedStyleProvider(PresentationStyle::default()));
+        $context = new NickServContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), null, 'RECOVER', ['Alice'], $notifier, $translator, 'es', 'UTC', 'NOTICE', new NickServCommandRegistry([]), new PendingVerificationRegistry(), new RecoveryTokenRegistry(), $this->createServiceNicks(), $renderer);
+        new RecoverCommand($handler, $this->authenticationMode())->execute($context);
+        self::assertStringStartsWith("\x0310ℹ\x03\x0F ", $messages[0]);
+        self::assertStringContainsString("\x02\x0303RECOVER Alice <token>\x03\x0F", $messages[0]);
+        self::assertStringContainsString("\x02\x0303VERIFY\x03\x0F", $messages[0]);
     }
 
     /**

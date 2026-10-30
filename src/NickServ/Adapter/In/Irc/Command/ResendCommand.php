@@ -11,6 +11,9 @@ use App\NickServ\Application\UseCase\Resend\ResendVerificationHandlerInterface;
 use App\NickServ\Application\UseCase\Resend\ResendVerificationOutcome;
 use App\NickServ\Application\UseCase\Resend\ResendVerificationResult;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\Fragment;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 
 use function base64_decode;
 use function ceil;
@@ -127,21 +130,21 @@ final readonly class ResendCommand implements NickServCommandInterface
     {
         switch ($result->outcome) {
             case ResendVerificationOutcome::Disabled:
-                $context->reply('resend.disabled');
+                $context->reply('resend.disabled', ['resend' => new Fragment('RESEND', Component::Command)], Role::Information);
                 break;
             case ResendVerificationOutcome::Success:
-                $context->reply('resend.success', ['email' => $result->email ?? '']);
+                $context->reply('resend.success', ['email' => new Fragment($result->email ?? '', Component::Emphasis)], Role::Success);
                 break;
             case ResendVerificationOutcome::NoPending:
-                $context->reply('resend.no_pending');
+                $context->reply('resend.no_pending', [], Role::Error);
                 break;
             case ResendVerificationOutcome::Throttled:
                 $context->reply('resend.throttled', [
-                    'minutes' => (string) (int) ceil($result->retryAfterSeconds / 60),
-                ]);
+                    'minutes' => new Fragment((string) (int) ceil($result->retryAfterSeconds / 60), Component::Emphasis),
+                ], Role::Error);
                 break;
             case ResendVerificationOutcome::MailDeliveryFailed:
-                $context->reply('error.mail_failed');
+                $context->replyCommonError('error.mail_failed');
                 break;
         }
     }

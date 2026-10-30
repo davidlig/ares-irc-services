@@ -15,6 +15,9 @@ use App\MemoServ\Application\Model\MemoAccountView;
 use App\MemoServ\Application\UseCase\Del\DelMemo;
 use App\MemoServ\Application\UseCase\Del\DelMemoHandlerInterface;
 use App\MemoServ\Application\UseCase\Del\DelMemoResult;
+use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -28,6 +31,39 @@ use function ksort;
 #[CoversClass(DelCommand::class)]
 final class DelCommandTest extends TestCase
 {
+    #[Test]
+    public function distinguishesDeletedAndNotFoundOutcomes(): void
+    {
+        $sent = [];
+        $notifier = $this->createStub(MemoServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $uid, string $message, string $type) use (&$sent): void {
+            $sent[] = $message;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $key): string => $key . ' %index%');
+        $handler = $this->createStub(DelMemoHandlerInterface::class);
+        $handler->method('handle')->willReturnOnConsecutiveCalls(DelMemoResult::deleted(2), DelMemoResult::notFound(2));
+        $context = new MemoServContext(
+            new SenderView('UID', 'Nick', 'i', 'h', 'c', 'ip'),
+            new MemoAccountView(1, 'Nick', 'en'),
+            'DEL',
+            ['2'],
+            $notifier,
+            $translator,
+            'en',
+            'UTC',
+            'NOTICE',
+            new MemoServCommandRegistry([]),
+            $this->createServiceNicks(),
+            new IrcRenderer(new FixedStyleProvider(new PresentationStyle(markers: ['success' => '+', 'error' => '!']))),
+        );
+        $command = new DelCommand($handler);
+        $command->execute($context);
+        $command->execute($context);
+
+        self::assertSame(['+ del.deleted 2', '! del.not_found 2'], $sent);
+    }
+
     #[Test]
     public function exposesMetadata(): void
     {

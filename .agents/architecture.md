@@ -234,3 +234,11 @@ Before completion verify:
 the four service inbound adapters. It owns no service policies, HELP presentation, translations,
 I/O or use cases. Service commands own their definitions. Domain and Application must not import
 this adapter layer. Deptrac enforces the dedicated `Service Command Arguments` boundary.
+
+## IRC presentation boundary
+
+`Shared/Adapter/In/Irc/Presentation` is a narrowly sanctioned outer-layer library for context-neutral
+rendering mechanics. Service adapters may depend on its roles, components, styles, provider and
+fragments; Domain and Application must not. `Bootstrap` selects the active provider. The library owns
+no translation catalog, command registry, service grouping, visibility, authorization or transport.
+Keep those policies in their owning service and keep the separate `IRC Presentation` Deptrac layer.

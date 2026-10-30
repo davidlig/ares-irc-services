@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Adapter\In\Irc\Command;
 
+use App\Bootstrap\Adapter\Out\Translation\IrcYamlTranslationLoader;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
@@ -19,11 +20,19 @@ use App\NickServ\Application\UseCase\Info\InfoNick;
 use App\NickServ\Application\UseCase\Info\InfoNickHandlerInterface;
 use App\NickServ\Application\UseCase\Info\InfoNickResult;
 use App\NickServ\Domain\ValueObject\NickStatus;
+use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Translation\Loader\ArrayLoader;
+use Symfony\Component\Translation\Translator;
 use Symfony\Contracts\Translation\TranslatorInterface;
+
+use function dirname;
+use function str_repeat;
 
 #[CoversClass(InfoCommand::class)]
 final class InfoCommandTest extends TestCase
@@ -288,6 +297,111 @@ final class InfoCommandTest extends TestCase
             'info.language',
             'reply.separator',
         ], $messages2);
+    }
+
+    #[Test]
+    public function infoRowsKeepRawUserContentAndRenderSemanticFragments(): void
+    {
+        $handler = $this->createStub(InfoNickHandlerInterface::class);
+        $handler->method('handle')->willReturn(InfoNickResult::forbidden('Alice', '%nickname%'));
+        $translator = new Translator('en');
+        $translator->addLoader('array', new ArrayLoader());
+        $translator->addResource('array', ['info.header' => 'Information for %nickname%', 'info.status' => '%label%: %status%', 'info.label_status' => 'Status', 'info.status_forbidden' => 'Forbidden', 'info.reason' => '%label%: %reason%', 'info.label_reason' => 'Reason'], 'en', 'nickserv');
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void { $messages[] = $message; });
+        $renderer = new IrcRenderer(new FixedStyleProvider(PresentationStyle::default()));
+        $context = new NickServContext(new SenderView('UID1', 'Sender', 'ident', 'host', 'cloak', 'ip'), null, 'INFO', ['Alice'], $notifier, $translator, 'en', 'UTC', 'NOTICE', new NickServCommandRegistry([]), new PendingVerificationRegistry(), new RecoveryTokenRegistry(), new ServiceNicknameRegistry([$this->nicknameProvider()]), $renderer);
+        new InfoCommand($handler, $this->createStub(NetworkUserLookupPort::class))->execute($context);
+        self::assertSame(["\x02Information for \x03\x0F\x0307Alice\x03\x0F", "  \x0314Status\x03\x0F: \x0304Forbidden\x03\x0F", "  \x0314Reason\x03\x0F: %nickname%", "\x0314" . str_repeat('─', 29) . "\x03\x0F"], $messages);
+    }
+
+    #[Test]
+    public function privateInfoUsesErrorRoleWithoutLeakingFormatting(): void
+    {
+        $handler = $this->createStub(InfoNickHandlerInterface::class);
+        $handler->method('handle')->willReturn(InfoNickResult::private('Alice'));
+        $translator = new Translator('es');
+        $translator->addLoader('yaml', new IrcYamlTranslationLoader());
+        $translator->addResource('yaml', dirname(__DIR__, 6) . '/translations/nickserv.es.yaml', 'es', 'nickserv');
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void { $messages[] = $message; });
+        $renderer = new IrcRenderer(new FixedStyleProvider(PresentationStyle::default()));
+        $context = new NickServContext(new SenderView('UID1', 'Sender', 'ident', 'host', 'cloak', 'ip'), null, 'INFO', ['Alice'], $notifier, $translator, 'es', 'UTC', 'NOTICE', new NickServCommandRegistry([]), new PendingVerificationRegistry(), new RecoveryTokenRegistry(), new ServiceNicknameRegistry([$this->nicknameProvider()]), $renderer);
+        new InfoCommand($handler, $this->createStub(NetworkUserLookupPort::class))->execute($context);
+        self::assertSame(["\x0304✗\x03\x0F La información del apodo \x02Alice\x03\x0F es privada."], $messages);
+    }
+
+    #[Test]
+    public function unknownNickUsesErrorRoleAndEmphasizedName(): void
+    {
+        $handler = $this->createStub(InfoNickHandlerInterface::class);
+        $handler->method('handle')->willReturn(InfoNickResult::notRegistered('Alice'));
+        $translator = new Translator('en');
+        $translator->addLoader('array', new ArrayLoader());
+        $translator->addResource('array', ['presentation.error.nick_not_registered' => 'Nickname %nickname% is not registered.'], 'en', 'common');
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void { $messages[] = $message; });
+        $renderer = new IrcRenderer(new FixedStyleProvider(PresentationStyle::default()));
+        $context = new NickServContext(new SenderView('UID1', 'Sender', 'ident', 'host', 'cloak', 'ip'), null, 'INFO', ['Alice'], $notifier, $translator, 'en', 'UTC', 'NOTICE', new NickServCommandRegistry([]), new PendingVerificationRegistry(), new RecoveryTokenRegistry(), new ServiceNicknameRegistry([$this->nicknameProvider()]), $renderer);
+        new InfoCommand($handler, $this->createStub(NetworkUserLookupPort::class))->execute($context);
+        self::assertSame(["\x0304✗\x03\x0F Nickname \x02Alice\x03\x0F is not registered."], $messages);
+    }
+
+    #[Test]
+    public function visibleInfoRendersLocalizedRowLabelsWithoutFormattingLeakage(): void
+    {
+        $handler = $this->createStub(InfoNickHandlerInterface::class);
+        $handler->method('handle')->willReturnOnConsecutiveCalls(InfoNickResult::visible('Alice', NickStatus::Registered, null, null, null, false, null, null, null, null, 'es', null, '', false, false), InfoNickResult::visible('Alice', NickStatus::Registered, null, null, null, true, null, null, null, null, 'es', null, '', false, false));
+        $translator = new Translator('es');
+        $translator->addLoader('yaml', new IrcYamlTranslationLoader());
+        $translator->addResource('yaml', dirname(__DIR__, 6) . '/translations/nickserv.es.yaml', 'es', 'nickserv');
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void { $messages[] = $message; });
+        $renderer = new IrcRenderer(new FixedStyleProvider(PresentationStyle::default()));
+        $context = new NickServContext(new SenderView('UID1', 'Sender', 'ident', 'host', 'cloak', 'ip'), null, 'INFO', ['Alice'], $notifier, $translator, 'es', 'UTC', 'NOTICE', new NickServCommandRegistry([]), new PendingVerificationRegistry(), new RecoveryTokenRegistry(), new ServiceNicknameRegistry([$this->nicknameProvider()]), $renderer);
+        new InfoCommand($handler, $this->createStub(NetworkUserLookupPort::class))->execute($context);
+        self::assertContains("  \x0314Última conexión\x03\x0F        : Nunca", $messages);
+        self::assertContains("  \x0314Idioma\x03\x0F                 : es", $messages);
+        new InfoCommand($handler, $this->createStub(NetworkUserLookupPort::class))->execute($context);
+        self::assertContains("  \x0314Última conexión\x03\x0F        : \x0303●\x03\x0F \x0303CONECTADO AHORA\x03\x0F", $messages);
+    }
+
+    #[Test]
+    public function pendingInfoNoticeUsesStatusComponent(): void
+    {
+        $handler = $this->createStub(InfoNickHandlerInterface::class);
+        $handler->method('handle')->willReturn(InfoNickResult::pendingDeletion('Alice'));
+        $translator = new Translator('es');
+        $translator->addLoader('yaml', new IrcYamlTranslationLoader());
+        $translator->addResource('yaml', dirname(__DIR__, 6) . '/translations/nickserv.es.yaml', 'es', 'nickserv');
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void { $messages[] = $message; });
+        $renderer = new IrcRenderer(new FixedStyleProvider(PresentationStyle::default()));
+        $context = new NickServContext(new SenderView('UID1', 'Sender', 'ident', 'host', 'cloak', 'ip'), null, 'INFO', ['Alice'], $notifier, $translator, 'es', 'UTC', 'NOTICE', new NickServCommandRegistry([]), new PendingVerificationRegistry(), new RecoveryTokenRegistry(), new ServiceNicknameRegistry([$this->nicknameProvider()]), $renderer);
+        new InfoCommand($handler, $this->createStub(NetworkUserLookupPort::class))->execute($context);
+        self::assertContains("  \x0307Este apodo está pendiente de eliminación y no puede ser registrado.\x03\x0F", $messages);
+    }
+
+    #[Test]
+    public function associatedChannelsUseStyledLocalizedRoles(): void
+    {
+        $handler = $this->createStub(InfoNickHandlerInterface::class);
+        $handler->method('handle')->willReturn(InfoNickResult::visible('Alice', NickStatus::Registered, null, null, null, false, null, null, null, null, 'es', null, '', false, true, [new AssociatedChannel('#founder', 'founder', null)]));
+        $translator = new Translator('es');
+        $translator->addLoader('yaml', new IrcYamlTranslationLoader());
+        $translator->addResource('yaml', dirname(__DIR__, 6) . '/translations/nickserv.es.yaml', 'es', 'nickserv');
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void { $messages[] = $message; });
+        $renderer = new IrcRenderer(new FixedStyleProvider(PresentationStyle::default()));
+        $context = new NickServContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), null, 'INFO', ['Alice'], $notifier, $translator, 'es', 'UTC', 'NOTICE', new NickServCommandRegistry([]), new PendingVerificationRegistry(), new RecoveryTokenRegistry(), new ServiceNicknameRegistry([$this->nicknameProvider()]), $renderer);
+        new InfoCommand($handler, $this->createStub(NetworkUserLookupPort::class))->execute($context);
+        self::assertContains("  #founder (\x0303Fundador\x03\x0F)", $messages);
     }
 
     protected function setUp(): void

@@ -14,6 +14,11 @@ use App\MemoServ\Adapter\In\Irc\MemoServContext;
 use App\MemoServ\Adapter\In\Irc\MemoServNotifierInterface;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\Presentation\Appearance;
+use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -21,10 +26,53 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function array_fill;
 use function iterator_to_array;
+use function strtr;
 
 #[CoversClass(HelpFormatterContextAdapter::class)]
 final class HelpFormatterContextAdapterTest extends TestCase
 {
+    #[Test]
+    public function rendersStructuredHelpAndExamplesWithTheSelectedStyle(): void
+    {
+        $notifier = $this->createStub(MemoServNotifierInterface::class);
+        $notifier->method('getNick')->willReturn('CustomMemo');
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static function (string $id, array $params): string {
+            $templates = [
+                'help.general_header' => 'Commands', 'help.group_header' => '%group%',
+                'help.command_line' => '%command%: %description%', 'help.syntax_label' => 'Syntax %syntax%',
+                'help.general_footer' => 'Use %help_command%', 'help.set_sub_footer' => 'Use %help_command%',
+                'help.general_help_command' => 'HELP <command>', 'help.option_help_command' => 'HELP %command% <option>',
+            ];
+
+            return strtr($templates[$id] ?? $id, $params);
+        });
+        $renderer = new IrcRenderer(new FixedStyleProvider(new PresentationStyle(components: [
+            'section' => new Appearance(prefix: 'S:'), 'group' => new Appearance(prefix: 'G:'),
+            'command_row' => new Appearance(prefix: 'R:'), 'command' => new Appearance(prefix: '[', suffix: ']'),
+            'syntax' => new Appearance(prefix: 'Y:'), 'navigation' => new Appearance(prefix: 'N:'),
+            'marked_example' => new Appearance(prefix: '> '),
+        ])));
+        $context = new MemoServContext(null, null, 'HELP', [], $notifier, $translator, 'en', 'UTC', 'NOTICE', new MemoServCommandRegistry([]), $this->createServiceNicks(), $renderer);
+        $adapter = new HelpFormatterContextAdapter($context);
+        self::assertSame('S:Commands', $adapter->trans('help.general_header'));
+        self::assertSame('G:Messages', $adapter->trans('help.group_header', ['group' => 'Messages']));
+        self::assertSame('R:[SEND]: Message', $adapter->trans('help.command_line', ['command' => 'SEND', 'description' => 'Message']));
+        self::assertSame('Y:Syntax [SEND <nick>]', $adapter->trans('help.syntax_label', ['syntax' => 'SEND <nick>']));
+        self::assertSame('N:Use [HELP <command>]', $adapter->trans('help.general_footer'));
+        self::assertSame('N:Use [HELP IGNORE <option>]', $adapter->trans('help.set_sub_footer', ['command' => 'IGNORE']));
+        self::assertSame('> /msg CustomMemo [SEND Bob hi]', $adapter->renderExample('%command_prefix%SEND Bob hi'));
+        self::assertSame('legacy text', $adapter->renderExample('legacy text'));
+        self::assertStringContainsString('Help', $adapter->trans('help.header', ['title' => 'Help']));
+        self::assertNotSame('', $adapter->trans('help.footer'));
+        try {
+            $adapter->trans('help.command_line', ['command' => ['invalid']]);
+            self::fail('A non-text HELP parameter must be rejected.');
+        } catch (InvalidArgumentException $exception) {
+            self::assertSame('HELP parameters must be text.', $exception->getMessage());
+        }
+    }
+
     #[Test]
     public function replyDelegatesToContext(): void
     {

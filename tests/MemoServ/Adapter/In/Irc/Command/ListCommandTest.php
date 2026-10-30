@@ -16,6 +16,10 @@ use App\MemoServ\Application\Model\MemoListItem;
 use App\MemoServ\Application\UseCase\List\ListMemos;
 use App\MemoServ\Application\UseCase\List\ListMemosHandlerInterface;
 use App\MemoServ\Application\UseCase\List\ListMemosResult;
+use App\Shared\Adapter\In\Irc\Presentation\Appearance;
+use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -31,6 +35,46 @@ use function str_repeat;
 #[CoversClass(ListCommand::class)]
 final class ListCommandTest extends TestCase
 {
+    #[Test]
+    public function rendersListComponentsWithoutFormattingUserContent(): void
+    {
+        $messages = [];
+        $notifier = $this->createStub(MemoServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $uid, string $message) use (&$messages): void {
+            $messages[] = $message;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $key): string => 'list.header' === $key ? 'For %target%' : $key);
+        $renderer = new IrcRenderer(new FixedStyleProvider(new PresentationStyle(
+            components: ['table_header' => new Appearance(prefix: 'H '), 'unread' => new Appearance(prefix: '*')],
+            separator: '=',
+        )));
+        $handler = $this->createStub(ListMemosHandlerInterface::class);
+        $handler->method('handle')->willReturn(ListMemosResult::success('#chan', [
+            new MemoListItem(index: 1, senderDisplay: 'Bob', createdAt: new DateTimeImmutable('2026-09-06 12:00:00 UTC'), message: 'raw %target%', isRead: false),
+        ]));
+        $context = new MemoServContext(
+            new SenderView('UID', 'Nick', 'i', 'h', 'c', 'ip'),
+            new MemoAccountView(1, 'Nick', 'en'),
+            'LIST',
+            ['#chan'],
+            $notifier,
+            $translator,
+            'en',
+            'UTC',
+            'NOTICE',
+            new MemoServCommandRegistry([]),
+            $this->createServiceNicks(),
+            $renderer
+        );
+        new ListCommand($handler)->execute($context);
+
+        self::assertSame('H For #chan', $messages[0]);
+        self::assertStringContainsString('*', $messages[1]);
+        self::assertStringContainsString('raw %target%', $messages[1]);
+        self::assertSame(str_repeat('=', 29), $messages[2]);
+    }
+
     #[Test]
     public function exposesMetadata(): void
     {

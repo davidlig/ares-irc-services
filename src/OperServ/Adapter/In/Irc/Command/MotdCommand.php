@@ -16,6 +16,8 @@ use App\OperServ\Application\UseCase\ManageMotd\MotdListEntry;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentValidator;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 use DateTimeImmutable;
 
 use function array_slice;
@@ -116,7 +118,7 @@ final readonly class MotdCommand implements OperServCommandInterface
             $hint = 'ADD' === strtoupper($context->args[0] ?? '')
                 ? 'motd.add.syntax_hint'
                 : 'motd.del.syntax_hint';
-            $context->reply($hint, ['%syntax%' => $context->trans($syntaxKey)]);
+            $context->reply($hint, ['%syntax%' => $context->commandFragment($context->trans($syntaxKey))], Role::Error);
 
             return;
         }
@@ -151,23 +153,23 @@ final readonly class MotdCommand implements OperServCommandInterface
     private function present(OperServContext $context, MotdAction $action, string $subcommand, ManageMotdResult $result): void
     {
         match ($result->outcome) {
-            ManageMotdOutcome::UnknownAction => $context->reply('motd.unknown_sub'),
-            ManageMotdOutcome::InvalidAddRequest => $context->reply('motd.add.syntax_hint', ['%syntax%' => $context->trans('motd.add.syntax')]),
-            ManageMotdOutcome::InvalidMessageType => $context->reply('motd.add.invalid_type'),
-            ManageMotdOutcome::InvalidExpiry => $context->reply('motd.add.invalid_expiry'),
-            ManageMotdOutcome::InvalidId, ManageMotdOutcome::NotFound => $context->reply('motd.del.not_found'),
-            ManageMotdOutcome::ListEmpty => $context->reply('motd.list.empty'),
-            ManageMotdOutcome::CleanEmpty => $context->reply('motd.clean.none'),
-            ManageMotdOutcome::Added => $context->reply('motd.add.done', ['%id%' => (string) $result->id]),
-            ManageMotdOutcome::Deleted => $context->reply('motd.del.done', ['%id%' => (string) $result->id]),
+            ManageMotdOutcome::UnknownAction => $context->reply('motd.unknown_sub', ['add' => $context->commandFragment('ADD'), 'del' => $context->commandFragment('DEL'), 'list' => $context->commandFragment('LIST'), 'clean' => $context->commandFragment('CLEAN')], Role::Error),
+            ManageMotdOutcome::InvalidAddRequest => $context->reply('motd.add.syntax_hint', ['%syntax%' => $context->commandFragment($context->trans('motd.add.syntax'))], Role::Error),
+            ManageMotdOutcome::InvalidMessageType => $context->reply('motd.add.invalid_type', [], Role::Error),
+            ManageMotdOutcome::InvalidExpiry => $context->reply('motd.add.invalid_expiry', [], Role::Error),
+            ManageMotdOutcome::InvalidId, ManageMotdOutcome::NotFound => $context->reply('motd.del.not_found', [], Role::Error),
+            ManageMotdOutcome::ListEmpty => $context->reply('motd.list.empty', [], Role::Information),
+            ManageMotdOutcome::CleanEmpty => $context->reply('motd.clean.none', [], Role::Information),
+            ManageMotdOutcome::Added => $context->reply('motd.add.done', ['%id%' => (string) $result->id], Role::Success),
+            ManageMotdOutcome::Deleted => $context->reply('motd.del.done', ['%id%' => (string) $result->id], Role::Success),
             ManageMotdOutcome::Listed => $this->presentList($context, $result),
-            ManageMotdOutcome::Cleaned => $context->reply('motd.clean.done', ['%count%' => (string) $result->removedCount]),
+            ManageMotdOutcome::Cleaned => $context->reply('motd.clean.done', ['%count%' => (string) $result->removedCount], Role::Success),
         };
     }
 
     private function presentList(OperServContext $context, ManageMotdResult $result): void
     {
-        $context->reply('motd.list.header');
+        $context->replyComponent(Component::TableHeader, 'motd.list.header');
         foreach ($result->entries as $entry) {
             $this->presentEntry($context, $entry);
         }
@@ -176,12 +178,14 @@ final readonly class MotdCommand implements OperServCommandInterface
     private function presentEntry(OperServContext $context, MotdListEntry $entry): void
     {
         $status = $entry->expired
-            ? $context->trans('motd.list.expired')
-            : ($entry->enabled ? $context->trans('motd.list.status_enabled') : $context->trans('motd.list.status_disabled'));
+            ? $context->renderComponent(Component::Danger, $context->trans('motd.list.expired'))
+            : ($entry->enabled
+                ? $context->renderComponent(Component::Positive, $context->trans('motd.list.status_enabled'))
+                : $context->renderComponent(Component::Danger, $context->trans('motd.list.status_disabled')));
         $botNickname = '' !== $entry->botNickname ? $entry->botNickname : $context->trans('motd.list.no_bot');
         $expiresAt = null === $entry->expiresAt ? $context->trans('label.never') : $context->formatDate($entry->expiresAt);
 
-        $context->replyRaw(sprintf(
+        $context->replyRaw($context->renderComponent(Component::Row, sprintf(
             '#%d [%s] %s → %s | %s | %s | %s',
             $entry->id,
             match ($entry->delivery) {
@@ -193,6 +197,6 @@ final readonly class MotdCommand implements OperServCommandInterface
             $status,
             $expiresAt,
             $context->trans('motd.list.shown_count', ['%count%' => (string) $entry->shownCount]),
-        ));
+        )));
     }
 }

@@ -256,6 +256,18 @@ Read `.agents/services.md`. For ChanServ policy work also read `.agents/chanserv
 For HELP copy, line wrapping, and IRC presentation colors, also read
 `.agents/irc-help-style.md`.
 
+### IRC presentation engine
+
+Commands explicitly choose `Role::Success`, `Role::Error`, `Role::Warning` or
+`Role::Information` for each response outcome. Translations contain text and parameters only.
+Styles own appearance; `StyleProvider` independently selects a `PresentationStyle`; the shared
+adapter `IrcRenderer` interpolates `Fragment` values once and owns formatting resets. Never infer
+meaning from translated text, wrap already-colored catalogs, or move concrete colors into commands.
+Keep Domain/Application free of this machinery. HELP uses structured components while grouping,
+visibility and business policy stay service-owned. See `.agents/services.md` for canonical examples
+and `.agents/irc-help-style.md` for grammar and extension points. During staged migration, legacy
+paths are explicitly pending rather than examples for new code. No new runtime settings are implied.
+
 ### HISTORY policy for commands and options
 
 Before adding a NickServ or ChanServ command, option, or subcommand, ask the user whether
@@ -274,8 +286,9 @@ These examples illustrate decision granularity; preserve policies already explic
 
 When translation work is explicitly staged for review in one locale, modify only the approved
 preview locale(s) and wait for the user's explicit validation before translating the remaining
-locales. For the current Spanish-first HELP preview, edit Spanish (`es`) only; keep the other 13
-locale catalogs unchanged until the user validates the Spanish preview. Until then, report
+locales. For the current Spanish-first HELP preview, edit Spanish (`es`) only; keep HELP content in the other 13
+locale catalogs unchanged until the user validates the Spanish preview. Ordinary reply migration
+may proceed independently in all locales. Until then, report
 all-locale translation checks and rollout as pending rather than complete.
 
 ### Multiline translation catalog values
@@ -283,13 +296,10 @@ all-locale translation checks and rollout as pending rather than complete.
 For Symfony YAML translation catalogs, represent intended line breaks with physical YAML
 multiline structure; do not encode line breaks as the escaped `\n` sequence. Use literal block
 scalars for plain text whose line breaks must survive parsing; choose the chomping indicator
-(`|-` when no trailing newline belongs to the value) to preserve parsed content. Multiline
-IRC-formatted messages use explicitly tagged literal blocks (`!irc |-`), loaded through the
-Bootstrap IRC YAML translation loader. That loader decodes only `\x02`, `\x03`, and `\x0F`
-(case-insensitively), once and before parameter interpolation; other escape text and untagged
-values remain unchanged. Use physical newlines and real spaces inside these blocks, not `\n`,
-`\x0A`, or `\x20`. Single-line IRC strings requiring YAML escape decoding remain double-quoted.
-Preserve intentional literal CTCP escapes and mail-body terminal newlines; do not tag or globally decode those values.
+(`|-` when no trailing newline belongs to the value) to preserve parsed content. Migrated IRC messages contain only localized text and parameters; presentation controls,
+colors and decorative markers belong to `Shared/Adapter/In/Irc/Presentation` styles and components.
+The existing Bootstrap `!irc` loader remains compatibility support for explicitly unmigrated
+values only. Do not globally decode escapes or change literal CTCP data and mail-body newlines.
 Prefer double quotes, but allow Prettier-selected quoting only when parsed values and IRC
 escape semantics remain unchanged; retain double quotes wherever YAML escape decoding is required.
 Use identical English technical section comments at equivalent structural positions across
@@ -301,10 +311,10 @@ put each remaining command in a single-line entry under a sibling `examples` YAM
 service formatter renders entries separately, replaces `%command_prefix%` with the uncolored
 `/msg <configured bot> ` prefix, and applies exactly two leading spaces to each rendered example.
 Do not include outer indentation in translation values. Keep the placeholder immediately before the
-command text and preserve the IRC colors in the translation. In MemoServ, the two-space margin
+command text; supply command emphasis through structured presentation fragments. In MemoServ, the two-space margin
 precedes the localized marker, which stays before the generated prefix. Existing locale values with
 a literal prefix are not double-prefixed or re-indented during a staged migration. This avoids quoted multiline
-examples and `\x20` indentation escapes. Tagged literal blocks preserve display indentation
+examples and `\x20` indentation escapes. Legacy tagged literal blocks preserve display indentation
 as real spaces relative to the YAML block indentation. After changing multiline formatting, parse the catalog and
 verify decoded line breaks, placeholders, and IRC controls are preserved. This applies to every
 key in bot-service catalogs, not only `help.*` values.

@@ -162,7 +162,7 @@ final class DropCommandTest extends TestCase
 
         $cmd->execute($context);
 
-        self::assertContains('drop.invalid_channel', $messages);
+        self::assertContains("\x0304✗\x03\x0F drop.invalid_channel", $messages);
     }
 
     #[Test]
@@ -179,7 +179,7 @@ final class DropCommandTest extends TestCase
 
         $cmd->execute($context);
 
-        self::assertContains('error.channel_not_registered', $messages);
+        self::assertContains("\x0304✗\x03\x0F presentation.error.channel_not_registered", $messages);
     }
 
     #[Test]
@@ -201,7 +201,7 @@ final class DropCommandTest extends TestCase
 
         $outcome = $cmd->execute($context);
 
-        self::assertContains('drop.success', $messages);
+        self::assertContains("\x0303✔\x03\x0F drop.success", $messages);
 
         $auditData = $outcome->auditData;
         self::assertInstanceOf(IrcopAuditData::class, $auditData);
@@ -222,7 +222,7 @@ final class DropCommandTest extends TestCase
         $messages = [];
         $this->createCommandWith($repo, $dropService)->execute($this->createContext($sender, null, ['#test'], $messages, channelRepository: $repo));
 
-        self::assertContains('drop.pending_deletion', $messages);
+        self::assertContains("\x0304✗\x03\x0F drop.pending_deletion", $messages);
     }
 
     #[Test]
@@ -241,7 +241,7 @@ final class DropCommandTest extends TestCase
 
         $command->execute($this->createContext($this->createSender(), null, ['#test'], $messages));
 
-        self::assertContains('drop.force_success', $messages);
+        self::assertContains("\x0303✔\x03\x0F drop.force_success", $messages);
     }
 
     #[Test]
@@ -262,7 +262,7 @@ final class DropCommandTest extends TestCase
             $this->createContext($this->createSender(), null, ['#test', 'FORCE'], $messages),
         );
 
-        self::assertContains('drop.force_success', $messages);
+        self::assertContains("\x0303✔\x03\x0F drop.force_success", $messages);
     }
 
     #[Test]
@@ -285,7 +285,7 @@ final class DropCommandTest extends TestCase
 
             $command->execute($this->createContext($this->createSender(), null, ['#test'], $messages));
 
-            self::assertContains('drop.force_success', $messages);
+            self::assertContains("\x0303✔\x03\x0F drop.force_success", $messages);
         }
     }
 
@@ -305,7 +305,7 @@ final class DropCommandTest extends TestCase
         $messages = [];
         $this->createCommandWith($repo, $dropService, $authorization)->execute($this->createContext($sender, null, ['#test', 'force'], $messages, channelRepository: $repo));
 
-        self::assertContains('error.permission_denied', $messages);
+        self::assertContains("\x0304✗\x03\x0F presentation.error.permission_denied", $messages);
     }
 
     #[Test]
@@ -326,7 +326,7 @@ final class DropCommandTest extends TestCase
         $context = $this->createContext($sender, null, ['#test', 'force'], $messages, channelRepository: $repo);
         $outcome = $cmd->execute($context);
 
-        self::assertContains('drop.force_success', $messages);
+        self::assertContains("\x0303✔\x03\x0F drop.force_success", $messages);
         self::assertTrue($outcome->auditData?->extra['force']);
     }
 

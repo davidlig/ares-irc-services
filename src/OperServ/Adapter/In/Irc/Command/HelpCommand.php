@@ -85,7 +85,7 @@ final readonly class HelpCommand implements OperServCommandInterface
     public function execute(OperServContext $context): void
     {
         if (null !== $context->sender && !$context->isAuthorized(null)) {
-            $context->reply('error.oper_only');
+            $context->replyError('error.oper_only');
 
             return;
         }
@@ -93,7 +93,7 @@ final readonly class HelpCommand implements OperServCommandInterface
         $formatterContext = new OperServHelpFormatterContextAdapter($context);
         if (empty($context->args)) {
             $lines = $this->formatter->renderGeneralHelp($formatterContext);
-            $lines[] = $context->trans('help.footer');
+            $lines[] = $formatterContext->trans('help.footer');
             $context->replyRaw(implode("\n", $lines));
 
             return;
@@ -102,7 +102,7 @@ final readonly class HelpCommand implements OperServCommandInterface
         $commandName = strtoupper($context->args[0]);
         $command = $context->commandRegistry()->find($commandName);
         if (null === $command || !$this->canView($context, $command)) {
-            $context->reply('unknown_command', ['command' => $commandName]);
+            $context->replyError('unknown_command', ['command' => $context->commandFragment($commandName)]);
 
             return;
         }
@@ -117,9 +117,9 @@ final readonly class HelpCommand implements OperServCommandInterface
         }
 
         if (isset($context->args[1]) && [] !== $command->getSubCommandHelp()) {
-            $context->reply('unknown_help_option', [
-                'command' => $command->getName(),
-                'option' => strtoupper($context->args[1]),
+            $context->replyError('unknown_help_option', [
+                'command' => $context->commandFragment($command->getName()),
+                'option' => $context->commandFragment(strtoupper($context->args[1])),
             ]);
 
             return;

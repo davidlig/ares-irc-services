@@ -12,6 +12,8 @@ use App\MemoServ\Application\UseCase\Read\ReadMemoOutcome;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentValidator;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 use DateTimeImmutable;
 
 use function str_starts_with;
@@ -90,14 +92,14 @@ final readonly class ReadCommand implements MemoServCommandInterface
     {
         $senderAccount = $context->senderAccount;
         if (null === $senderAccount || null === $context->sender) {
-            $context->reply('error.not_identified');
+            $context->replyError('error.not_identified');
 
             return null;
         }
 
         $validation = CommandArgumentValidator::validate($this->getArgumentDefinition(), $context->args);
         if (!$validation->isValid()) {
-            $context->reply('error.syntax', ['syntax' => $context->trans($validation->syntaxKey ?? $this->getSyntaxKey())]);
+            $context->replyError('error.syntax', ['syntax' => $context->trans($validation->syntaxKey ?? $this->getSyntaxKey())]);
 
             return null;
         }
@@ -118,21 +120,21 @@ final readonly class ReadCommand implements MemoServCommandInterface
 
         switch ($result->outcome) {
             case ReadMemoOutcome::Success:
-                $context->reply('read.header', ['index' => $result->index, 'from' => $result->from ?? '']);
+                $context->replyComponent(Component::TableHeader, 'read.header', ['index' => $result->index, 'from' => $result->from ?? '']);
                 $context->replyRaw(' ' . ($result->message ?? ''));
-                $context->reply('read.footer', ['date' => $context->formatDate($result->createdAt)]);
+                $context->replyComponent(Component::Row, 'read.footer', ['date' => $context->renderComponent(Component::Separator, $context->formatDate($result->createdAt)), 'separator' => $context->separator()]);
                 break;
 
             case ReadMemoOutcome::NotFound:
-                $context->reply('read.not_found', ['index' => $result->index]);
+                $context->reply('read.not_found', ['index' => $result->index], Role::Error);
                 break;
 
             case ReadMemoOutcome::ChannelNotRegistered:
-                $context->reply('error.channel_not_registered', ['channel' => $targetChannel ?? '']);
+                $context->replyError('error.channel_not_registered', ['channel' => $targetChannel ?? '']);
                 break;
 
             case ReadMemoOutcome::AccessDenied:
-                $context->reply('error.insufficient_access', [
+                $context->replyError('error.insufficient_access', [
                     'operation' => 'READ',
                     'channel' => $result->channelName ?? $targetChannel ?? '',
                 ]);

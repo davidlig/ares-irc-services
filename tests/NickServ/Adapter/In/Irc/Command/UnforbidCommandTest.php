@@ -16,10 +16,15 @@ use App\NickServ\Adapter\Out\InMemory\PendingVerificationRegistry;
 use App\NickServ\Adapter\Out\InMemory\RecoveryTokenRegistry;
 use App\NickServ\Application\Security\NickServPermission;
 use App\NickServ\Application\Service\ForbiddenNickService;
+use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\Translation\Loader\ArrayLoader;
+use Symfony\Component\Translation\Translator;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(UnforbidCommand::class)]
@@ -178,6 +183,25 @@ final class UnforbidCommandTest extends TestCase
         $auditData = $outcome->auditData;
         self::assertInstanceOf(IrcopAuditData::class, $auditData);
         self::assertSame('BadNick', $auditData->target);
+    }
+
+    #[Test]
+    public function reportsUnforbidOutcomesWithExplicitRoles(): void
+    {
+        $service = $this->createStub(ForbiddenNickService::class);
+        $service->method('unforbid')->willReturnOnConsecutiveCalls(false, true);
+        $command = new UnforbidCommand($service, $this->createStub(LoggerInterface::class));
+        $translator = new Translator('en');
+        $translator->addLoader('array', new ArrayLoader());
+        $translator->addResource('array', ['unforbid.not_forbidden' => 'Not forbidden: %nickname%', 'unforbid.success' => 'Unforbidden: %nickname%'], 'en', 'nickserv');
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void { $messages[] = $message; });
+        $renderer = new IrcRenderer(new FixedStyleProvider(PresentationStyle::default()));
+        $context = new NickServContext($this->createSender(), null, 'UNFORBID', ['Target'], $notifier, $translator, 'en', 'UTC', 'NOTICE', new NickServCommandRegistry([]), new PendingVerificationRegistry(), new RecoveryTokenRegistry(), $this->createServiceNicks(), $renderer);
+        $command->execute($context);
+        $command->execute($context);
+        self::assertSame(["\x0304✗\x03\x0F Not forbidden: \x02Target\x03\x0F", "\x0303✔\x03\x0F Unforbidden: \x02Target\x03\x0F"], $messages);
     }
 
     private function createCommand(): UnforbidCommand

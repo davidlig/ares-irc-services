@@ -16,6 +16,7 @@ use App\NickServ\Application\UseCase\Unsuspend\UnsuspendNickHandler;
 use App\NickServ\Application\UseCase\Unsuspend\UnsuspendNickOutcome;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 
 use function base64_decode;
 use function inet_ntop;
@@ -115,12 +116,16 @@ final readonly class UnsuspendCommand implements NickServCommandInterface, Ircop
             UnsuspendNickOutcome::Unsuspended => null,
         };
         if (null !== $errorKey) {
-            $context->reply($errorKey, ['%nickname%' => $result->targetNickname]);
+            if ('error.nick_not_registered' === $errorKey) {
+                $context->replyMissingNick($errorKey, $result->targetNickname);
+            } else {
+                $context->replyEmphasized($errorKey, ['%nickname%' => $result->targetNickname], Role::Error, ['nickname']);
+            }
 
             return CommandOutcome::rejected();
         }
 
-        $context->reply('unsuspend.success', ['%nickname%' => $result->targetNickname]);
+        $context->replyEmphasized('unsuspend.success', ['%nickname%' => $result->targetNickname], Role::Success, ['nickname']);
 
         return CommandOutcome::success(new IrcopAuditData(target: $result->targetNickname));
     }

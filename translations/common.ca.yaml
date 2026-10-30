@@ -24,16 +24,16 @@ unknown_help_option: "\x0304✗\x03\x0F Opció \x0303%option%\x03\x0F no reconeg
 
 # --- ERROR -----------------------------------------------------------------
 error:
-  email_domain_blocked: "\x0304✗\x03 Aquest domini de correu està bloquejat administrativament."
-  syntax: "\x0304✗\x03 Sintaxi incorrecta. Ús: \x02%syntax%\x02"
-  oper_only: "\x0304✗\x03 Aquesta ordre està restringida als operadors d'IRC."
-  not_identified: "\x0304✗\x03 No t'has identificat. Fes servir /msg %nickserv% \x0303IDENTIFY <sobrenom> <contrasenya>\x03"
-  permission_denied: "\x0304✗\x03 Permís denegat. No teniu accés a aquesta ordre."
-  mail_failed: "\x0304✗\x03 No s'ha pogut enviar el correu electrònic. Comproveu la vostra adreça o torneu-ho a provar més tard."
-  channel_not_registered: "\x0304✗\x03 El canal \x02%channel%\x02 no està registrat."
-  nick_not_registered: "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no està registrat."
-  insufficient_access: "\x0304✗\x03 Accés insuficient per a \x02%operation%\x02 al canal \x02%channel%\x02."
-  nick_not_online: "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no està connectat."
+  email_domain_blocked: "Aquest domini de correu està bloquejat administrativament."
+  syntax: "Sintaxi incorrecta. Ús: %syntax%"
+  oper_only: "Aquesta ordre està restringida als operadors d'IRC."
+  not_identified: "No t'has identificat. Fes servir /msg %nickserv% IDENTIFY <sobrenom> <contrasenya>"
+  permission_denied: "Permís denegat. No teniu accés a aquesta ordre."
+  mail_failed: "No s'ha pogut enviar el correu electrònic. Comproveu la vostra adreça o torneu-ho a provar més tard."
+  channel_not_registered: "El canal %channel% no està registrat."
+  nick_not_registered: "El sobrenom %nickname% no està registrat."
+  insufficient_access: "Accés insuficient per a %operation% al canal %channel%."
+  nick_not_online: "El sobrenom %nickname% no està connectat."
 
 # --- DURATION --------------------------------------------------------------
 duration:
@@ -97,11 +97,11 @@ debug:
 history:
   unknown_operator: "(desconegut)"
   del:
-    success: "\x0303✔\x03 Entrada d'historial \x02%id%\x02 esborrada."
-    not_found: "\x0304✗\x03 Entrada d'historial \x02%id%\x02 no trobada."
-    invalid_id: "\x0304✗\x03 ID d'entrada no vàlid: \x02%id%\x02."
+    success: "Entrada d'historial %id% esborrada."
+    not_found: "Entrada d'historial %id% no trobada."
+    invalid_id: "ID d'entrada no vàlid: %id%."
   view:
-    extra: "  Extra \x0307→\x03 %extra%"
+    extra: "Extra %extra%"
   message:
     unsuspend: "Suspensió aixecada"
   extra:
@@ -128,3 +128,19 @@ label:
   unknown_creator: "desconegut"
   permanent: "Permanent"
   permanent_inline: "permanent"
+
+# --- PRESENTATION-FREE MIGRATED REPLIES ---
+presentation:
+  unknown_command: "Ordre desconeguda %command%. Fes servir /msg %bot% %help%"
+  unknown_help_option: "Opció %option% no reconeguda per %command%. Usa /msg %bot% %help% %command%"
+  error.email_domain_blocked: "Aquest domini de correu està bloquejat administrativament."
+  error.syntax: "Sintaxi incorrecta. Ús: %syntax%"
+  error.oper_only: "Aquesta ordre està restringida als operadors d'IRC."
+  error.not_identified: "No t'has identificat. Fes servir /msg %nickserv% %identify%"
+  error.permission_denied: "Permís denegat. No teniu accés a aquesta ordre."
+  error.mail_failed: "No s'ha pogut enviar el correu electrònic. Comproveu la vostra adreça o torneu-ho a provar més tard."
+  error.channel_not_registered: "El canal %channel% no està registrat."
+  error.nick_not_registered: "El sobrenom %nickname% no està registrat."
+  error.insufficient_access: "Accés insuficient per a %operation% al canal %channel%."
+  error.nick_not_online: "El sobrenom %nickname% no està connectat."
+  identify: "IDENTIFY <sobrenom> <contrasenya>"

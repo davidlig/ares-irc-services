@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\MemoServ\Adapter\In\Irc\Command;
 
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
+use App\MemoServ\Adapter\In\Irc\MemoNoticePresenter;
 use App\MemoServ\Adapter\In\Irc\MemoServCommandInterface;
 use App\MemoServ\Adapter\In\Irc\MemoServContext;
 use App\MemoServ\Application\UseCase\Send\SendMemo;
@@ -14,6 +15,7 @@ use App\MemoServ\Domain\Entity\Memo;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentValidator;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 use DateTimeImmutable;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -30,6 +32,7 @@ final readonly class SendCommand implements MemoServCommandInterface
         private SendMemoHandlerInterface $sendMemoHandler,
         private NetworkUserLookupPort $userLookup,
         private TranslatorInterface $translator,
+        private ?MemoNoticePresenter $presenter = null,
     ) {}
 
     public function getName(): string
@@ -96,14 +99,14 @@ final readonly class SendCommand implements MemoServCommandInterface
     {
         $senderAccount = $context->senderAccount;
         if (null === $senderAccount || null === $context->sender) {
-            $context->reply('error.not_identified');
+            $context->replyError('error.not_identified');
 
             return null;
         }
 
         $validation = CommandArgumentValidator::validate($this->getArgumentDefinition(), $context->args);
         if (!$validation->isValid()) {
-            $context->reply('error.syntax', ['syntax' => $context->trans($validation->syntaxKey ?? $this->getSyntaxKey())]);
+            $context->replyError('error.syntax', ['syntax' => $context->trans($validation->syntaxKey ?? $this->getSyntaxKey())]);
 
             return null;
         }
@@ -112,7 +115,7 @@ final readonly class SendCommand implements MemoServCommandInterface
         $message = implode(' ', array_slice($context->args, 1));
 
         if (mb_strlen($message) > Memo::MESSAGE_MAX_LENGTH) {
-            $context->reply('send.message_too_long', ['max' => Memo::MESSAGE_MAX_LENGTH]);
+            $context->reply('send.message_too_long', ['max' => $context->emphasize((string) Memo::MESSAGE_MAX_LENGTH)], Role::Error);
 
             return null;
         }
@@ -128,47 +131,48 @@ final readonly class SendCommand implements MemoServCommandInterface
         switch ($result->outcome) {
             case SendMemoOutcome::SentToNick:
                 $targetName = $result->targetName ?? $targetArg;
-                $context->reply('send.sent_nick', ['nick' => $targetName]);
+                $context->reply('send.sent_nick', ['nickname' => $context->emphasize($targetName)], Role::Success);
                 if (null !== $result->unreadCount && $result->unreadCount > 0) {
                     $recipientView = $this->userLookup->findByNick($targetName);
                     if (null !== $recipientView) {
-                        $notice = $this->translator->trans(
-                            'notify.nick_pending',
-                            ['%count%' => $result->unreadCount, '%bot%' => $context->getNotifier()->getNick()],
-                            'memoserv',
-                            $result->recipientLanguage ?? 'en',
-                        );
+                        $notice = null === $this->presenter
+                            ? $this->translator->trans('notify.nick_pending', [
+                                '%count%' => $result->unreadCount,
+                                '%bot%' => $context->getNotifier()->getNick(),
+                                '%list%' => 'LIST',
+                            ], 'memoserv', $result->recipientLanguage ?? 'en')
+                            : $this->presenter->nick($result->unreadCount, $context->getNotifier()->getNick(), $result->recipientLanguage ?? 'en');
                         $context->getNotifier()->sendNotice($recipientView->uid, $notice);
                     }
                 }
                 break;
 
             case SendMemoOutcome::SentToChannel:
-                $context->reply('send.sent_channel', ['channel' => $result->targetName ?? $targetArg]);
+                $context->reply('send.sent_channel', ['channel' => $context->emphasize($result->targetName ?? $targetArg)], Role::Success);
                 break;
 
             case SendMemoOutcome::Throttled:
-                $context->reply('send.throttled', ['seconds' => $result->cooldownRemainingSeconds]);
+                $context->reply('send.throttled', ['seconds' => $context->emphasize((string) $result->cooldownRemainingSeconds)], Role::Warning);
                 break;
 
             case SendMemoOutcome::CannotSendToSelf:
-                $context->reply('send.cannot_send_to_self');
+                $context->reply('send.cannot_send_to_self', [], Role::Error);
                 break;
 
             case SendMemoOutcome::NickNotRegistered:
-                $context->reply('error.nick_not_registered', ['nick' => $result->targetName ?? $targetArg]);
+                $context->replyError('error.nick_not_registered', ['nick' => $result->targetName ?? $targetArg]);
                 break;
 
             case SendMemoOutcome::ChannelNotRegistered:
-                $context->reply('error.channel_not_registered', ['channel' => $result->targetName ?? $targetArg]);
+                $context->replyError('error.channel_not_registered', ['channel' => $result->targetName ?? $targetArg]);
                 break;
 
             case SendMemoOutcome::Ignored:
-                $context->reply('send.ignored');
+                $context->reply('send.ignored', [], Role::Error);
                 break;
 
             case SendMemoOutcome::LimitReached:
-                $context->reply('send.limit_reached', ['target' => $result->targetName ?? $targetArg]);
+                $context->reply('send.limit_reached', ['target' => $context->emphasize($result->targetName ?? $targetArg)], Role::Error);
                 break;
         }
 

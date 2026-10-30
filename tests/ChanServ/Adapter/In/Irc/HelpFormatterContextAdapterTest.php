@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Tests\ChanServ\Adapter\In\Irc;
 
+use App\Bootstrap\Adapter\Out\Translation\IrcYamlTranslationLoader;
 use App\ChanServ\Adapter\In\Irc\ChanServCommandInterface;
 use App\ChanServ\Adapter\In\Irc\ChanServCommandRegistry;
 use App\ChanServ\Adapter\In\Irc\ChanServContext;
 use App\ChanServ\Adapter\In\Irc\ChanServNotifierInterface;
 use App\ChanServ\Adapter\In\Irc\Command\ListCommand;
+use App\ChanServ\Adapter\In\Irc\Help\UnifiedHelpFormatter;
 use App\ChanServ\Adapter\In\Irc\HelpFormatterContextAdapter;
 use App\ChanServ\Application\Model\ChanAccountView;
 use App\ChanServ\Application\Port\Out\ChanServOperatorAccess;
@@ -21,14 +23,27 @@ use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
 use App\Irc\Application\Port\In\ServiceNicknameRegistry;
+use App\Shared\Adapter\In\Irc\Presentation\Appearance;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Translation\Loader\ArrayLoader;
+use Symfony\Component\Translation\Translator;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function array_key_last;
+use function dirname;
 use function iterator_to_array;
+use function str_repeat;
 
 #[CoversClass(HelpFormatterContextAdapter::class)]
+#[CoversClass(UnifiedHelpFormatter::class)]
+#[CoversClass(ChanServContext::class)]
 final class HelpFormatterContextAdapterTest extends TestCase
 {
     #[Test]
@@ -76,6 +91,99 @@ final class HelpFormatterContextAdapterTest extends TestCase
         $adapter = $this->createAdapter($context);
 
         self::assertSame('help.key', $adapter->trans('help.key'));
+    }
+
+    #[Test]
+    public function spanishHelpUsesComponentsAndTheConfiguredBotPrefix(): void
+    {
+        $translator = new Translator('es');
+        $translator->addLoader('array', new ArrayLoader());
+        $translator->addResource('array', [
+            'help.header' => '%title% %separator%',
+            'help.group_header' => '%group%',
+            'help.command_line' => '%command%%description%',
+        ], 'es', 'chanserv');
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('getNick')->willReturn('Canales');
+        $context = $this->createContext($notifier, $translator, new ChanServCommandRegistry([]), language: 'es');
+        $adapter = $this->createAdapter($context);
+
+        self::assertSame("  ◆ \x0310Registro\x03\x0F", $adapter->trans('help.group_header', ['group' => 'Registro']));
+        self::assertSame("    \x0310›\x03\x0F \x02\x0303REGISTER    \x03\x0FDescripción", $adapter->trans('help.command_line', ['command' => 'REGISTER    ', 'description' => 'Descripción']));
+        self::assertSame("  /msg Canales \x02\x0303HELP SET\x03\x0F", $adapter->renderExample('%command_prefix%HELP SET'));
+
+        $alternate = new IrcRenderer(new FixedStyleProvider(new PresentationStyle([
+            Component::Group->value => new Appearance(prefix: '> '),
+            Component::Command->value => new Appearance('04'),
+            Component::Example->value => new Appearance(prefix: 'EX '),
+        ])));
+        $alternateContext = $this->createContext($notifier, $translator, new ChanServCommandRegistry([]), language: 'es', renderer: $alternate);
+        $alternateAdapter = $this->createAdapter($alternateContext);
+        self::assertSame('> Registro', $alternateAdapter->trans('help.group_header', ['group' => 'Registro']));
+        self::assertSame('Titulo ----', $alternateAdapter->trans('help.header', ['title' => 'Titulo', 'separator' => '────']));
+        self::assertSame("EX /msg Canales \x0304HELP SET\x03\x0F", $alternateAdapter->renderExample('%command_prefix%HELP SET'));
+    }
+
+    #[Test]
+    public function englishCatalogUsesAlternateStyleWithoutChangingLocalizedText(): void
+    {
+        $translator = new Translator('en');
+        $translator->addLoader('irc', new IrcYamlTranslationLoader());
+        $translator->addResource('irc', dirname(__DIR__, 5) . '/translations/chanserv.en.yaml', 'en', 'chanserv');
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('getNick')->willReturn('Channels');
+        $renderer = new IrcRenderer(new FixedStyleProvider(new PresentationStyle([
+            Component::Group->value => new Appearance(prefix: '> '),
+            Component::Command->value => new Appearance('04'),
+            Component::Example->value => new Appearance(prefix: 'EX '),
+        ])));
+        $adapter = $this->createAdapter($this->createContext($notifier, $translator, new ChanServCommandRegistry([]), language: 'en', renderer: $renderer));
+        self::assertSame('> Registration and information', $adapter->trans('help.group_header', ['group' => $adapter->trans('help.group.registration_info')]));
+        self::assertSame("Syntax: \x0304HELP [command] [option]\x03\x0F", $adapter->trans('help.syntax_label', ['syntax' => $adapter->trans('help.syntax')]));
+        self::assertSame("EX /msg Channels \x0304HELP SET EMAIL\x03\x0F", $adapter->renderExample($adapter->trans('help.examples.1')));
+        self::assertSame("Use /msg Channels \x0304HELP <command>\x03\x0F for more information.", $adapter->trans('help.general_footer', ['bot' => 'Channels']));
+    }
+
+    #[Test]
+    public function rejectsNonStringSyntaxWithoutSending(): void
+    {
+        $notifier = $this->createMock(ChanServNotifierInterface::class);
+        $notifier->expects(self::never())->method('sendMessage');
+        $translator = new Translator('en');
+        $translator->addLoader('array', new ArrayLoader());
+        $translator->addResource('array', ['help.syntax_label' => 'Syntax: %syntax%'], 'en', 'chanserv');
+        $adapter = $this->createAdapter($this->createContext($notifier, $translator, new ChanServCommandRegistry([])));
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('HELP presentation parameter must be a string: syntax');
+        $adapter->trans('help.syntax_label', ['syntax' => ['HELP']]);
+    }
+
+    #[Test]
+    public function formatsRealCommandHelpWithNavigationAndExamples(): void
+    {
+        $translator = new Translator('en');
+        $translator->addLoader('irc', new IrcYamlTranslationLoader());
+        $translator->addResource('irc', dirname(__DIR__, 5) . '/translations/chanserv.en.yaml', 'en', 'chanserv');
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('getNick')->willReturn('Channels');
+        $adapter = $this->createAdapter($this->createContext($notifier, $translator, new ChanServCommandRegistry([])));
+        $command = $this->createStub(ChanServCommandInterface::class);
+        $command->method('getName')->willReturn('SET');
+        $command->method('getHelpKey')->willReturn('set.help');
+        $command->method('getSyntaxKey')->willReturn('set.syntax');
+        $command->method('getExampleKey')->willReturn('set.example');
+        $command->method('getSubCommandHelp')->willReturn([[
+            'name' => 'EMAIL', 'desc_key' => 'set.email.short', 'help_key' => 'set.email.help',
+            'syntax_key' => 'set.email.syntax', 'example_key' => 'set.email.example',
+        ]]);
+        $lines = new UnifiedHelpFormatter()->renderCommandHelp($adapter, $command);
+        self::assertContains(" ■ \x02Options:\x03\x0F", $lines);
+        self::assertContains("\x0310ℹ\x03\x0F Use /msg Channels \x02\x0303HELP SET <option>\x03\x0F for more information.", $lines);
+        self::assertContains("  /msg Channels \x02\x0303SET #channel DESC A community channel\x03\x0F", $lines);
+        self::assertSame("\x0314" . str_repeat('─', 29) . "\x03\x0F", $lines[array_key_last($lines)]);
+        self::assertSame('en', $adapter->getLanguage());
+        self::assertSame('/msg OtherBot HELP', $adapter->renderExample('/msg OtherBot HELP'));
     }
 
     #[Test]
@@ -1273,6 +1381,8 @@ final class HelpFormatterContextAdapterTest extends TestCase
         ?NetworkUserLookupPort $userLookup = null,
         ?SenderView $sender = null,
         ?ChanAccountView $account = null,
+        string $language = 'en',
+        ?IrcRenderer $renderer = null,
     ): ChanServContext {
         return new ChanServContext(
             $sender ?? new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
@@ -1281,7 +1391,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
             [],
             $notifier,
             $translator,
-            'en',
+            $language,
             'UTC',
             'NOTICE',
             $registry,
@@ -1289,6 +1399,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
             $channelModeSupport ?? new NullChannelModeSupport(),
             $userLookup ?? $this->createStub(NetworkUserLookupPort::class),
             $this->createServiceNicks(),
+            renderer: $renderer,
         );
     }
 

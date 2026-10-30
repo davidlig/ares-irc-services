@@ -15,6 +15,7 @@ use App\NickServ\Application\UseCase\Forbid\ForbidNickHandler;
 use App\NickServ\Application\UseCase\Forbid\ForbidNickOutcome;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 
 use function array_slice;
 use function implode;
@@ -104,7 +105,7 @@ final class ForbidCommand implements NickServCommandInterface, IrcopAuditableCom
         $reason = trim(implode(' ', array_slice($context->args, 1)));
 
         if ('' === $reason) {
-            $context->reply('forbid.reason_required');
+            $context->replyEmphasized('forbid.reason_required', [], Role::Error, []);
 
             return CommandOutcome::rejected();
         }
@@ -113,23 +114,23 @@ final class ForbidCommand implements NickServCommandInterface, IrcopAuditableCom
 
         return match ($result->outcome) {
             ForbidNickOutcome::Forbidden => $this->replySuccess($context, $result->targetNickname, $result->reason),
-            ForbidNickOutcome::ReasonUpdated => $this->replyRejected($context, 'forbid.updated', $result->targetNickname),
+            ForbidNickOutcome::ReasonUpdated => $this->replyRejected($context, 'forbid.updated', $result->targetNickname, Role::Success),
             ForbidNickOutcome::TargetIsRoot => $this->replyRejected($context, 'forbid.cannot_forbid_root', $result->targetNickname),
             ForbidNickOutcome::TargetIsIrcop => $this->replyRejected($context, 'forbid.cannot_forbid_oper', $result->targetNickname),
             ForbidNickOutcome::TargetIsService => $this->replyRejected($context, 'forbid.cannot_forbid_service', $result->targetNickname),
         };
     }
 
-    private function replyRejected(NickServContext $context, string $key, string $nickname): CommandOutcome
+    private function replyRejected(NickServContext $context, string $key, string $nickname, Role $role = Role::Error): CommandOutcome
     {
-        $context->reply($key, ['%nickname%' => $nickname]);
+        $context->replyEmphasized($key, ['%nickname%' => $nickname], $role, ['nickname']);
 
         return CommandOutcome::rejected();
     }
 
     private function replySuccess(NickServContext $context, string $nickname, string $reason): CommandOutcome
     {
-        $context->reply('forbid.success', ['%nickname%' => $nickname]);
+        $context->replyEmphasized('forbid.success', ['%nickname%' => $nickname], Role::Success, ['nickname']);
 
         return CommandOutcome::success(new IrcopAuditData(target: $nickname, reason: $reason));
     }

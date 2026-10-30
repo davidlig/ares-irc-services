@@ -13,6 +13,9 @@ use App\NickServ\Application\Security\NickServPermission;
 use App\NickServ\Application\Service\ForbiddenNickService;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\Fragment;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 use Psr\Log\LoggerInterface;
 
 final class UnforbidCommand implements NickServCommandInterface, IrcopAuditableCommandInterface
@@ -98,7 +101,7 @@ final class UnforbidCommand implements NickServCommandInterface, IrcopAuditableC
         $success = $this->forbiddenService->unforbid($targetNick);
 
         if (!$success) {
-            $context->reply('unforbid.not_forbidden', ['%nickname%' => $targetNick]);
+            $context->reply('unforbid.not_forbidden', ['%nickname%' => new Fragment($targetNick, Component::Emphasis)], Role::Error);
 
             return CommandOutcome::rejected();
         }
@@ -108,7 +111,7 @@ final class UnforbidCommand implements NickServCommandInterface, IrcopAuditableC
             'nickname' => $targetNick,
         ]);
 
-        $context->reply('unforbid.success', ['%nickname%' => $targetNick]);
+        $context->reply('unforbid.success', ['%nickname%' => new Fragment($targetNick, Component::Emphasis)], Role::Success);
 
         return CommandOutcome::success(new IrcopAuditData(target: $targetNick));
     }

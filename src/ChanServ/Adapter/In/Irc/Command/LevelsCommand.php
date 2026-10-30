@@ -17,6 +17,9 @@ use App\ChanServ\Domain\Exception\InsufficientAccessException;
 use App\Irc\Application\Port\In\ChannelModeSupportInterface;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\Fragment;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 use DateTimeImmutable;
 
 use function in_array;
@@ -166,7 +169,7 @@ final readonly class LevelsCommand implements ChanServCommandInterface
         }
         $channelName = $context->getChannelNameArg(0);
         if (null === $channelName) {
-            $context->reply('error.invalid_channel');
+            $context->reply('error.invalid_channel', ['%example%' => new Fragment($context->trans('error.invalid_channel_example'), Component::Emphasis)], Role::Error);
 
             return;
         }
@@ -223,33 +226,33 @@ final readonly class LevelsCommand implements ChanServCommandInterface
             case ManageChannelLevelsOutcome::ChannelNotRegistered:
                 throw ChannelNotRegisteredException::forChannel($channelName);
             case ManageChannelLevelsOutcome::ActorNotAuthenticated:
-                $context->reply('error.not_identified');
+                $context->reply('presentation.error.not_identified', ['%identify%' => new Fragment($context->trans('presentation.identify'), Component::Command)], Role::Error);
                 break;
             case ManageChannelLevelsOutcome::AccessDenied:
                 throw InsufficientAccessException::forOperation($channelName, 'LEVELS');
             case ManageChannelLevelsOutcome::UnknownAction:
-                $context->reply('levels.unknown_sub', ['%sub%' => $subcommand]);
+                $context->reply('levels.unknown_sub', ['%sub%' => new Fragment($subcommand, Component::Emphasis)], Role::Error);
                 break;
             case ManageChannelLevelsOutcome::Listed:
-                $context->reply('levels.list.header', ['%channel%' => $channelName]);
+                $context->replyRaw($context->renderComponent(Component::Positive, 'levels.list.header', ['%channel%' => $channelName]));
                 foreach ($result->levels as $key => $value) {
-                    $context->replyRaw(sprintf('  %s %s', $key, $value));
+                    $context->replyRaw($context->renderTextComponent(Component::IndentedRow, sprintf('%s %s', $key, $value)));
                 }
                 break;
             case ManageChannelLevelsOutcome::LevelSet:
-                $context->reply('levels.set.done', ['%key%' => $result->levelKey ?? '', '%value%' => (string) $result->value]);
+                $context->reply('levels.set.done', ['%key%' => new Fragment($result->levelKey ?? '', Component::Emphasis), '%value%' => (string) $result->value], Role::Success);
                 break;
             case ManageChannelLevelsOutcome::LevelsReset:
-                $context->reply('levels.reset.done');
+                $context->reply('levels.reset.done', role: Role::Success);
                 break;
             case ManageChannelLevelsOutcome::UnknownLevel:
-                $context->reply('levels.unknown_key', ['%key%' => $result->levelKey ?? '']);
+                $context->reply('levels.unknown_key', ['%key%' => new Fragment($result->levelKey ?? '', Component::Emphasis)], Role::Error);
                 break;
             case ManageChannelLevelsOutcome::ValueOutOfRange:
                 $context->reply('levels.value_range', [
                     '%min%' => (string) ChannelLevel::LEVEL_MIN,
                     '%max%' => (string) ChannelLevel::LEVEL_MAX,
-                ]);
+                ], Role::Error);
                 break;
         }
     }

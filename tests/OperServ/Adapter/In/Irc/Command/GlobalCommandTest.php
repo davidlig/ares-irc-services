@@ -24,6 +24,9 @@ use App\OperServ\Application\UseCase\Global\SendGlobalMessage;
 use App\OperServ\Application\UseCase\Global\SendGlobalMessageHandler;
 use App\OperServ\Application\UseCase\Global\SendGlobalMessageResult;
 use App\OperServ\Domain\ValueObject\GlobalMessageMask;
+use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -31,6 +34,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function array_values;
 use function serialize;
 use function str_starts_with;
 
@@ -40,6 +44,37 @@ use function str_starts_with;
 #[CoversClass(SendGlobalMessageResult::class)]
 final class GlobalCommandTest extends TestCase
 {
+    #[Test]
+    public function rendersSuccessAndInvalidDeliveryWithDifferentRoles(): void
+    {
+        $sent = [];
+        $notifier = $this->createStub(OperServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $uid, string $message, string $type) use (&$sent): void {
+            $sent[] = $message;
+        });
+        $renderer = new IrcRenderer(new FixedStyleProvider(new PresentationStyle(markers: ['success' => '+', 'error' => '!'])));
+        $makeContext = fn (string ...$args): OperServContext => new OperServContext(
+            new SenderView('UID', 'Oper', 'i', 'h', 'c', 'ip'),
+            null,
+            'GLOBAL',
+            array_values($args),
+            $notifier,
+            new GlobalCommandTranslation(),
+            'en',
+            'UTC',
+            'NOTICE',
+            new OperServCommandRegistry([]),
+            new ServiceNicknameRegistry([]),
+            $this->createStub(OperatorAuthorizationQuery::class),
+            $renderer,
+        );
+        $command = new GlobalCommand($this->handler(new GlobalCommandNetwork(new GlobalCommandTrace(), ['GlobalServ' => 'UID2'], 1)));
+        $command->execute($makeContext('GlobalServ', 'NOTICE', 'hello'));
+        $command->execute($makeContext('GlobalServ', 'INVALID', 'hello'));
+
+        self::assertSame(['+ global.done', '! global.type_invalid'], $sent);
+    }
+
     #[Test]
     public function exposesPermissionAndHelpMetadata(): void
     {

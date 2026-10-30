@@ -7,16 +7,18 @@ namespace App\ChanServ\Adapter\Out\Service;
 use App\ChanServ\Adapter\In\Irc\ChanServNotifierInterface;
 use App\ChanServ\Application\Port\Out\ChanAuditSink;
 use App\Irc\Application\Port\In\ServiceDebugNotifierInterface;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\Fragment;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use Symfony\Contracts\Translation\TranslatableInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
+
+use function in_array;
+use function str_contains;
+use function strtr;
 
 final readonly class ChanServDebugNotifier implements ChanAuditSink, ServiceDebugNotifierInterface
 {
-    private const string COLOR_BLUE = "\x0302";
-
-    private const string COLOR_RED = "\x0304";
-
-    private const string COLOR_RESET = "\x03";
-
     private const string PASSWORD_OPTION = 'PASSWORD';
 
     public function __construct(
@@ -24,6 +26,7 @@ final readonly class ChanServDebugNotifier implements ChanAuditSink, ServiceDebu
         private TranslatorInterface $translator,
         private string $defaultLanguage,
         private ?string $debugChannel,
+        private IrcRenderer $renderer,
     ) {}
 
     public function getServiceName(): string
@@ -80,15 +83,15 @@ final readonly class ChanServDebugNotifier implements ChanAuditSink, ServiceDebu
             return;
         }
 
-        $coloredOperator = self::COLOR_BLUE . $operator . self::COLOR_RESET;
+        $coloredOperator = new Fragment($operator, Component::Actor);
         $decision = $extra['decision'] ?? null;
         $decisionLabel = match (true) {
             'CREG' === $command && 'accepted' === $decision => ' ACCEPT',
             'CREG' === $command && 'rejected' === $decision => ' REJECT',
             default => '',
         };
-        $coloredCommand = self::COLOR_RED . $command . $decisionLabel . self::COLOR_RESET;
-        $coloredTarget = self::COLOR_BLUE . $target . self::COLOR_RESET;
+        $coloredCommand = new Fragment($command . $decisionLabel, Component::ModeChange);
+        $coloredTarget = new Fragment($target, Component::Actor);
 
         $option = $extra['option'] ?? null;
         $value = $extra['value'] ?? null;
@@ -120,28 +123,35 @@ final readonly class ChanServDebugNotifier implements ChanAuditSink, ServiceDebu
                 $translationKey = 'debug.action_with_option';
             }
         } elseif ($isFounderAction) {
-            $messageParams['%reason%'] = $this->translator->trans(
-                'debug.prefix_reason',
-                ['%reason%' => $this->translator->trans('debug.founder_action', [], 'chanserv', $this->defaultLanguage)],
-                'common',
-                $this->defaultLanguage,
-            );
+            $messageParams['%reason%'] = new Fragment($this->translator->trans('debug.prefix_reason', [], 'common', $this->defaultLanguage), parameters: ['%reason%' => $this->translator->trans('debug.founder_action', [], 'chanserv', $this->defaultLanguage)]);
         } elseif (null !== $reason && '' !== $reason) {
-            $messageParams['%reason%'] = $this->translator->trans(
+            $messageParams['%reason%'] = new Fragment($this->translator->trans(
                 'debug.prefix_reason',
-                ['%reason%' => $reason],
+                [],
                 'common',
                 $this->defaultLanguage,
-            );
+            ), parameters: ['%reason%' => $reason]);
         }
 
-        $message = $this->translator->trans(
-            $translationKey,
-            $messageParams,
-            null === $registrationKey ? 'common' : 'chanserv',
-            $this->defaultLanguage,
-        );
+        $message = $this->render($translationKey, null === $registrationKey ? 'common' : 'chanserv', $messageParams);
 
         $this->notify($message);
+    }
+
+    /** @param array<string, mixed> $parameters */
+    private function render(string $key, string $domain, array $parameters): string
+    {
+        $template = $this->translator->trans($key, [], $domain, $this->defaultLanguage);
+        foreach ($parameters as $name => $value) {
+            if ($value instanceof Fragment && in_array($name, ['%operator%', '%command%', '%target%', '%reason%'], true)) {
+                continue;
+            }
+            if ($value instanceof TranslatableInterface) {
+                $value = $value->trans($this->translator, $this->defaultLanguage);
+            }
+            $parameters[$name] = str_contains($template, $name) ? strtr($name, [$name => $value]) : '';
+        }
+
+        return $this->renderer->component(Component::Text, $template, $parameters);
     }
 }

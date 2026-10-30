@@ -22,6 +22,9 @@ use App\OperServ\Application\Port\In\AuthorizationDecision;
 use App\OperServ\Application\Port\In\AuthorizationGrant;
 use App\OperServ\Application\Port\In\OperatorActor;
 use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
+use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -107,6 +110,7 @@ final class AntifloodSubscriberTest extends TestCase
             5,
             10,
             60,
+            $this->renderer(),
             new NullLogger(),
         );
 
@@ -137,6 +141,7 @@ final class AntifloodSubscriberTest extends TestCase
             3,
             3600,
             60,
+            $this->renderer(),
             new NullLogger(),
         );
 
@@ -161,7 +166,7 @@ final class AntifloodSubscriberTest extends TestCase
         );
 
         $sendNotice = $this->createMock(SendNoticePort::class);
-        $sendNotice->expects(self::once())->method('sendMessage')->with('002AAAAAA', '002AAAAAB', 'Slow down!', 'NOTICE');
+        $sendNotice->expects(self::once())->method('sendMessage')->with('002AAAAAA', '002AAAAAB', '! Slow down!', 'NOTICE');
 
         $notifier = $this->createMock(ServiceDebugNotifierInterface::class);
         $notifier->expects(self::once())->method('notify');
@@ -182,6 +187,7 @@ final class AntifloodSubscriberTest extends TestCase
             2,
             3600,
             60,
+            $this->renderer(),
             new NullLogger(),
         );
 
@@ -234,6 +240,7 @@ final class AntifloodSubscriberTest extends TestCase
             1,
             3600,
             60,
+            $this->renderer(),
             new NullLogger(),
         );
 
@@ -274,6 +281,7 @@ final class AntifloodSubscriberTest extends TestCase
             1,
             3600,
             60,
+            $this->renderer(),
             new NullLogger(),
         );
 
@@ -319,6 +327,7 @@ final class AntifloodSubscriberTest extends TestCase
             1,
             3600,
             60,
+            $this->renderer(),
             new NullLogger(),
         );
 
@@ -371,6 +380,7 @@ final class AntifloodSubscriberTest extends TestCase
             1,
             3600,
             60,
+            $this->renderer(),
             new NullLogger(),
         );
 
@@ -425,6 +435,7 @@ final class AntifloodSubscriberTest extends TestCase
             1,
             3600,
             60,
+            $this->renderer(),
             new NullLogger(),
         );
 
@@ -459,6 +470,7 @@ final class AntifloodSubscriberTest extends TestCase
             5,
             10,
             60,
+            $this->renderer(),
             new NullLogger(),
         );
 
@@ -569,6 +581,7 @@ final class AntifloodSubscriberTest extends TestCase
             $maxMessages,
             $windowSeconds,
             $cooldownSeconds,
+            $this->renderer(),
             new NullLogger(),
         );
     }
@@ -598,5 +611,10 @@ final class AntifloodSubscriberTest extends TestCase
         );
 
         return new MessageReceivedEvent($message);
+    }
+
+    private function renderer(): IrcRenderer
+    {
+        return new IrcRenderer(new FixedStyleProvider(new PresentationStyle(markers: ['warning' => '!'])));
     }
 }

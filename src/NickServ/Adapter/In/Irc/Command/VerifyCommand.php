@@ -14,6 +14,9 @@ use App\NickServ\Application\UseCase\Verify\VerifyNickOutcome;
 use App\NickServ\Application\UseCase\Verify\VerifyNickResult;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\Fragment;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 
 use function base64_decode;
 use function inet_ntop;
@@ -134,28 +137,28 @@ final readonly class VerifyCommand implements NickServCommandInterface
     {
         switch ($result->outcome) {
             case VerifyNickOutcome::CredentialConfirmed:
-                $context->reply('rescue.confirmed');
+                $context->reply('rescue.confirmed', [], Role::Success);
                 break;
             case VerifyNickOutcome::LockedOut:
-                $context->reply('rescue.locked_out', ['seconds' => (string) $result->retryAfterSeconds]);
+                $context->reply('rescue.locked_out', ['seconds' => new Fragment((string) $result->retryAfterSeconds, Component::Emphasis)], Role::Error);
                 break;
             case VerifyNickOutcome::Success:
                 if (null !== $context->sender && null !== $result->nickname) {
                     $context->getNotifier()->setUserAccount($context->sender->uid, $result->nickname);
-                    $context->reply('verify.success', ['nickname' => $result->nickname]);
+                    $context->reply('verify.success', ['nickname' => new Fragment($result->nickname, Component::Emphasis)], Role::Success);
                 }
                 break;
             case VerifyNickOutcome::SuccessNativeAuthenticationRequired:
                 if (null !== $result->nickname) {
-                    $context->reply('verify.success_native', ['nickname' => $result->nickname]);
-                    $context->reply('identify.native_authentication');
+                    $context->reply('verify.success_native', ['nickname' => new Fragment($result->nickname, Component::Emphasis)], Role::Success);
+                    $context->replyNativeAuthentication();
                 }
                 break;
             case VerifyNickOutcome::NoPending:
-                $context->reply('verify.no_pending');
+                $context->reply('verify.no_pending', [], Role::Error);
                 break;
             case VerifyNickOutcome::InvalidToken:
-                $context->reply('verify.invalid_token');
+                $context->reply('verify.invalid_token', [], Role::Error);
                 break;
         }
     }

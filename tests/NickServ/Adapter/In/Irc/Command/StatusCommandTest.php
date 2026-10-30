@@ -17,11 +17,18 @@ use App\NickServ\Adapter\Out\InMemory\RecoveryTokenRegistry;
 use App\NickServ\Application\UseCase\Status\StatusNick;
 use App\NickServ\Application\UseCase\Status\StatusNickHandlerInterface;
 use App\NickServ\Application\UseCase\Status\StatusNickResult;
+use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Translation\Loader\ArrayLoader;
+use Symfony\Component\Translation\Translator;
 use Symfony\Contracts\Translation\TranslatorInterface;
+
+use function str_repeat;
 
 #[CoversClass(StatusCommand::class)]
 final class StatusCommandTest extends TestCase
@@ -229,6 +236,23 @@ final class StatusCommandTest extends TestCase
             'status.pending_deletion',
             'reply.separator',
         ], $messages);
+    }
+
+    #[Test]
+    public function statusRendersLocalizedRowsAndSemanticFragmentsWithoutOutcomeMarkers(): void
+    {
+        $handler = $this->createStub(StatusNickHandlerInterface::class);
+        $handler->method('handle')->willReturn(StatusNickResult::pending('Alice'));
+        $translator = new Translator('en');
+        $translator->addLoader('array', new ArrayLoader());
+        $translator->addResource('array', ['status.header' => 'Status of %nickname%', 'status.pending' => '  Status: %state%', 'status.value_pending' => 'Pending'], 'en', 'nickserv');
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void { $messages[] = $message; });
+        $renderer = new IrcRenderer(new FixedStyleProvider(PresentationStyle::default()));
+        $context = new NickServContext(new SenderView('UID1', 'Sender', 'ident', 'host', 'cloak', 'ip'), null, 'STATUS', ['Alice'], $notifier, $translator, 'en', 'UTC', 'NOTICE', new NickServCommandRegistry([]), new PendingVerificationRegistry(), new RecoveryTokenRegistry(), new ServiceNicknameRegistry([$this->nicknameProvider()]), $renderer);
+        new StatusCommand($handler, $this->createStub(NetworkUserLookupPort::class))->execute($context);
+        self::assertSame(["\x02Status of \x03\x0F\x0307Alice\x03\x0F", "  Status: \x0307Pending\x03\x0F", "\x0314" . str_repeat('─', 29) . "\x03\x0F"], $messages);
     }
 
     protected function setUp(): void

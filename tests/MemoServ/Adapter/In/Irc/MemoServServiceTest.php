@@ -22,6 +22,10 @@ use App\MemoServ\Application\Port\Out\MemoUserAccountPort;
 use App\MemoServ\Domain\Exception\MemoDisabledException;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\Presentation\Appearance;
+use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
 use App\Shared\Application\Port\EventBusInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -47,6 +51,34 @@ final class MemoServContextHolder
 #[CoversClass(MemoServService::class)]
 final class MemoServServiceTest extends TestCase
 {
+    #[Test]
+    public function rendersUnknownCommandWithSemanticFragments(): void
+    {
+        $messages = [];
+        $notifier = $this->createStub(MemoServNotifierInterface::class);
+        $notifier->method('getNick')->willReturn('MemoServ');
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $uid, string $message, string $type) use (&$messages): void {
+            $messages[] = [$uid, $message, $type];
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturn('Unknown %command%; /msg %bot% %help%');
+        $renderer = new IrcRenderer(new FixedStyleProvider(new PresentationStyle(
+            components: ['command' => new Appearance(bold: true)],
+            markers: ['error' => '!'],
+        )));
+        $this->createMemoServService(
+            new MemoServCommandRegistry([]),
+            $this->createStub(MemoUserAccountPort::class),
+            $notifier,
+            $this->createMessageTypeResolver(),
+            $translator,
+            $this->createServiceNicks(),
+            renderer: $renderer,
+        )->dispatch('missing', new SenderView('UID', 'Nick', 'i', 'h', 'c', 'ip'));
+
+        self::assertSame([['UID', "! Unknown \x02MISSING\x03\x0F; /msg MemoServ \x02HELP\x03\x0F", 'NOTICE']], $messages);
+    }
+
     #[Test]
     public function dispatchesToExistingCommandHandler(): void
     {
@@ -921,6 +953,7 @@ final class MemoServServiceTest extends TestCase
         ?MemoAuthorizationContextInterface $authContext = null,
         ?MemoAuthorizationCheckerInterface $authChecker = null,
         ?EventBusInterface $eventDispatcher = null,
+        ?IrcRenderer $renderer = null,
     ): MemoServService {
         $languageResolver = $this->createStub(MemoServUserPresentationPreferences::class);
         $languageResolver->method('languageFor')->willReturn('en');
@@ -945,6 +978,7 @@ final class MemoServServiceTest extends TestCase
             $defaultLanguage,
             $defaultTimezone,
             $logger ?? $this->createStub(LoggerInterface::class),
+            renderer: $renderer,
         );
     }
 

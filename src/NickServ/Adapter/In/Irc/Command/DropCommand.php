@@ -18,6 +18,9 @@ use App\NickServ\Application\UseCase\Drop\DropNickOutcome;
 use App\NickServ\Application\UseCase\Drop\DropNickResult;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\Fragment;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 use Psr\Log\LoggerInterface;
 
 use function sprintf;
@@ -126,49 +129,49 @@ final readonly class DropCommand implements NickServCommandInterface, IrcopAudit
     {
         switch ($result->outcome) {
             case DropNickOutcome::CannotDropSelf:
-                $context->reply('drop.cannot_drop_self');
+                $context->reply('drop.cannot_drop_self', [], Role::Error);
 
                 return CommandOutcome::rejected();
             case DropNickOutcome::NotRegistered:
-                $context->reply('error.nick_not_registered', ['%nickname%' => $result->nickname ?? '']);
+                $context->replyMissingNick('error.nick_not_registered', $result->nickname ?? '');
 
                 return CommandOutcome::rejected();
             case DropNickOutcome::PendingDeletion:
-                $context->reply('drop.pending_deletion', ['%nickname%' => $result->nickname ?? '']);
+                $context->reply('drop.pending_deletion', ['%nickname%' => new Fragment($result->nickname ?? '', Component::Emphasis)], Role::Error);
 
                 return CommandOutcome::rejected();
             case DropNickOutcome::ForcePermissionDenied:
-                $context->reply('error.permission_denied');
+                $context->replyCommonError('error.permission_denied');
 
                 return CommandOutcome::rejected();
             case DropNickOutcome::Suspended:
-                $context->reply('drop.suspended', ['%nickname%' => $result->nickname ?? '']);
+                $context->reply('drop.suspended', ['%nickname%' => new Fragment($result->nickname ?? '', Component::Emphasis)], Role::Error);
 
                 return CommandOutcome::rejected();
             case DropNickOutcome::Forbidden:
-                $context->reply('drop.forbidden', ['%nickname%' => $result->nickname ?? '']);
+                $context->reply('drop.forbidden', ['%nickname%' => new Fragment($result->nickname ?? '', Component::Emphasis)], Role::Error);
 
                 return CommandOutcome::rejected();
             case DropNickOutcome::CannotDropRoot:
-                $context->reply('drop.cannot_drop_root', ['%nickname%' => $result->nickname ?? '']);
+                $context->reply('drop.cannot_drop_root', ['%nickname%' => new Fragment($result->nickname ?? '', Component::Emphasis)], Role::Error);
 
                 return CommandOutcome::rejected();
             case DropNickOutcome::CannotDropOper:
-                $context->reply('drop.cannot_drop_oper', ['%nickname%' => $result->nickname ?? '']);
+                $context->reply('drop.cannot_drop_oper', ['%nickname%' => new Fragment($result->nickname ?? '', Component::Emphasis)], Role::Error);
 
                 return CommandOutcome::rejected();
             case DropNickOutcome::CannotDropService:
-                $context->reply('drop.cannot_drop_service', ['%nickname%' => $result->nickname ?? '']);
+                $context->reply('drop.cannot_drop_service', ['%nickname%' => new Fragment($result->nickname ?? '', Component::Emphasis)], Role::Error);
 
                 return CommandOutcome::rejected();
             case DropNickOutcome::SoftDropSuccess:
                 $this->logger->info(sprintf('NickServ DROP: %s soft-dropped by %s', $result->nickname ?? '', $context->sender->nick ?? ''));
-                $context->reply('drop.success', ['%nickname%' => $result->nickname ?? '']);
+                $context->reply('drop.success', ['%nickname%' => new Fragment($result->nickname ?? '', Component::Emphasis)], Role::Success);
 
                 return CommandOutcome::success(new IrcopAuditData(target: $result->nickname ?? ''));
             case DropNickOutcome::HardDropSuccess:
                 $this->logger->info(sprintf('NickServ DROP: %s hard-dropped by %s', $result->nickname ?? '', $context->sender->nick ?? ''));
-                $context->reply('drop.force_success', ['%nickname%' => $result->nickname ?? '']);
+                $context->reply('drop.force_success', ['%nickname%' => new Fragment($result->nickname ?? '', Component::Emphasis)], Role::Success);
 
                 return CommandOutcome::success(new IrcopAuditData(target: $result->nickname ?? '', extra: ['force' => true]));
         }

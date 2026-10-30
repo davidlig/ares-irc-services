@@ -82,7 +82,7 @@ final class ClearChannelCommandsTest extends TestCase
 
         $messages = [];
         self::assertFalse(new ClearaccessCommand($access)->execute($this->context($this->sender(), ['invalid'], $messages))->success);
-        self::assertSame(['error.invalid_channel'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F error.invalid_channel"], $messages);
 
         $users = $this->createMock(ClearChannelUsersHandlerInterface::class);
         $users->expects(self::never())->method('handle');
@@ -90,7 +90,7 @@ final class ClearChannelCommandsTest extends TestCase
 
         $messages = [];
         self::assertFalse(new ClearusersCommand($users)->execute($this->context($this->sender(), ['invalid'], $messages))->success);
-        self::assertSame(['error.invalid_channel'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F error.invalid_channel"], $messages);
     }
 
     #[Test]
@@ -106,13 +106,13 @@ final class ClearChannelCommandsTest extends TestCase
 
         $messages = [];
         self::assertFalse($command->execute($this->context($this->sender(), ['#channel'], $messages))->success);
-        self::assertSame(['error.channel_not_registered'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F presentation.error.channel_not_registered"], $messages);
         $messages = [];
         self::assertFalse($command->execute($this->context($this->sender(), ['#channel'], $messages))->success);
-        self::assertSame(['clearaccess.empty'], $messages);
+        self::assertSame(["\x0310ℹ\x03\x0F clearaccess.empty"], $messages);
         $messages = [];
         $outcome = $command->execute($this->context($this->sender(), ['#channel'], $messages));
-        self::assertSame(['clearaccess.success'], $messages);
+        self::assertSame(["\x0303✔\x03\x0F clearaccess.success"], $messages);
         self::assertInstanceOf(IrcopAuditData::class, $outcome->auditData);
         self::assertSame(['count' => 3], $outcome->auditData->extra);
     }
@@ -130,7 +130,7 @@ final class ClearChannelCommandsTest extends TestCase
         );
         $command = new ClearusersCommand($handler);
 
-        foreach (['error.channel_not_registered', 'clearusers.not_on_network', 'clearusers.empty'] as $expected) {
+        foreach (["\x0304✗\x03\x0F presentation.error.channel_not_registered", "\x0304✗\x03\x0F clearusers.not_on_network", "\x0310ℹ\x03\x0F clearusers.empty"] as $expected) {
             $messages = [];
             self::assertFalse($command->execute($this->context($this->sender(), ['#channel'], $messages))->success);
             self::assertSame([$expected], $messages);
@@ -138,7 +138,7 @@ final class ClearChannelCommandsTest extends TestCase
 
         $messages = [];
         $outcome = $command->execute($this->context($this->sender(), ['#channel', 'custom', 'reason'], $messages));
-        self::assertSame(['clearusers.success'], $messages);
+        self::assertSame(["\x0303✔\x03\x0F clearusers.success"], $messages);
         self::assertInstanceOf(IrcopAuditData::class, $outcome->auditData);
         self::assertSame('custom reason', $outcome->auditData->reason);
         self::assertSame(['kicked_count' => 2], $outcome->auditData->extra);

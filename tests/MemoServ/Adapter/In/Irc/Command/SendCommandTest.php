@@ -9,6 +9,7 @@ use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
 use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\MemoServ\Adapter\In\Irc\Command\SendCommand;
+use App\MemoServ\Adapter\In\Irc\MemoNoticePresenter;
 use App\MemoServ\Adapter\In\Irc\MemoServCommandRegistry;
 use App\MemoServ\Adapter\In\Irc\MemoServContext;
 use App\MemoServ\Adapter\In\Irc\MemoServNotifierInterface;
@@ -17,6 +18,10 @@ use App\MemoServ\Application\UseCase\Send\SendMemo;
 use App\MemoServ\Application\UseCase\Send\SendMemoHandlerInterface;
 use App\MemoServ\Application\UseCase\Send\SendMemoResult;
 use App\MemoServ\Domain\Entity\Memo;
+use App\Shared\Adapter\In\Irc\Presentation\Appearance;
+use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -32,6 +37,72 @@ use function str_repeat;
 #[CoversClass(SendCommand::class)]
 final class SendCommandTest extends TestCase
 {
+    #[Test]
+    public function sendsRenderedPendingNoticeInRecipientsLanguage(): void
+    {
+        $sender = new SenderView('UID', 'Nick', 'i', 'h', 'c', 'ip');
+        $account = new MemoAccountView(1, 'Nick', 'en');
+        $handler = $this->createStub(SendMemoHandlerInterface::class);
+        $handler->method('handle')->willReturn(SendMemoResult::sentToNick(2, 'Bob', 2, 'fr'));
+        $lookup = $this->createStub(NetworkUserLookupPort::class);
+        $lookup->method('findByNick')->willReturn(new SenderView('REC', 'Bob', 'i', 'h', 'c', 'ip'));
+        $notifier = $this->createMock(MemoServNotifierInterface::class);
+        $notifier->method('getNick')->willReturn('MemoServ');
+        $notifier->expects(self::once())->method('sendNotice')->with('REC', 'i 2 /msg MemoServ LIST');
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $key): string => 'notify.nick_pending' === $key ? '%count% /msg %bot% %list%' : $key);
+        $presenter = new MemoNoticePresenter($translator, new IrcRenderer(new FixedStyleProvider(new PresentationStyle(markers: ['information' => 'i']))));
+        $context = $this->createContext($sender, $account, ['Bob', 'hello'], notifier: $notifier, translator: $translator);
+        new SendCommand($handler, $lookup, $translator, $presenter)->execute($context);
+    }
+
+    #[Test]
+    public function rendersDifferentSendOutcomesWithTheSameLocalizedCommand(): void
+    {
+        $sent = [];
+        $notifier = $this->createStub(MemoServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $uid, string $message, string $type) use (&$sent): void {
+            $sent[] = [$uid, $message, $type];
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $key): string => match ($key) {
+            'send.sent_nick' => 'To %nickname%, delivered',
+            'send.throttled' => 'Wait %seconds%',
+            default => $key,
+        });
+        $renderer = new IrcRenderer(new FixedStyleProvider(new PresentationStyle(
+            components: ['emphasis' => new Appearance(bold: true)],
+            markers: ['success' => '+', 'warning' => '!'],
+        )));
+        $context = new MemoServContext(
+            new SenderView('UID', 'Sender', 'i', 'h', 'c', 'ip'),
+            new MemoAccountView(1, 'Sender', 'en'),
+            'SEND',
+            ['Bob', 'hello'],
+            $notifier,
+            $translator,
+            'en',
+            'UTC',
+            'PRIVMSG',
+            new MemoServCommandRegistry([]),
+            $this->createServiceNicks(),
+            $renderer,
+        );
+        $handler = $this->createStub(SendMemoHandlerInterface::class);
+        $handler->method('handle')->willReturnOnConsecutiveCalls(
+            SendMemoResult::sentToNick(2, 'Bob', 0, 'en'),
+            SendMemoResult::throttled(3),
+        );
+        $command = new SendCommand($handler, $this->createStub(NetworkUserLookupPort::class), $translator);
+        $command->execute($context);
+        $command->execute($context);
+
+        self::assertSame([
+            ['UID', "+ To \x02Bob\x03\x0F, delivered", 'PRIVMSG'],
+            ['UID', "! Wait \x023\x03\x0F", 'PRIVMSG'],
+        ], $sent);
+    }
+
     #[Test]
     public function exposesMetadata(): void
     {
@@ -195,7 +266,7 @@ final class SendCommandTest extends TestCase
         $context = $this->createContext($sender, $account, ['Recipient', 'Hello'], $replies);
         $command->execute($context);
 
-        self::assertSame(['send.sent_nick [%nick%: Recipient]'], $replies);
+        self::assertSame(['send.sent_nick [%nickname%: Recipient]'], $replies);
     }
 
     #[Test]

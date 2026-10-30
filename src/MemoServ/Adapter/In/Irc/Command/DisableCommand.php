@@ -11,6 +11,7 @@ use App\MemoServ\Application\UseCase\Disable\DisableMemosHandlerInterface;
 use App\MemoServ\Application\UseCase\Disable\DisableMemosOutcome;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 
 use function str_starts_with;
 
@@ -88,7 +89,7 @@ final readonly class DisableCommand implements MemoServCommandInterface
     {
         $senderAccount = $context->senderAccount;
         if (null === $senderAccount || null === $context->sender) {
-            $context->reply('error.not_identified');
+            $context->replyError('error.not_identified');
 
             return null;
         }
@@ -104,27 +105,27 @@ final readonly class DisableCommand implements MemoServCommandInterface
 
         switch ($result->outcome) {
             case DisableMemosOutcome::DisabledNick:
-                $context->reply('disable.disabled_nick');
+                $context->reply('disable.disabled_nick', [], Role::Success);
                 break;
 
             case DisableMemosOutcome::AlreadyDisabledNick:
-                $context->reply('disable.already_disabled_nick');
+                $context->reply('disable.already_disabled_nick', [], Role::Information);
                 break;
 
             case DisableMemosOutcome::DisabledChannel:
-                $context->reply('disable.disabled_channel', ['channel' => $result->channelName ?? '']);
+                $context->reply('disable.disabled_channel', ['channel' => $context->emphasize($result->channelName ?? '')], Role::Success);
                 break;
 
             case DisableMemosOutcome::AlreadyDisabledChannel:
-                $context->reply('disable.already_disabled_channel', ['channel' => $result->channelName ?? '']);
+                $context->reply('disable.already_disabled_channel', ['channel' => $context->emphasize($result->channelName ?? '')], Role::Information);
                 break;
 
             case DisableMemosOutcome::ChannelNotRegistered:
-                $context->reply('error.channel_not_registered', ['channel' => $result->channelName ?? '']);
+                $context->replyError('error.channel_not_registered', ['channel' => $result->channelName ?? '']);
                 break;
 
             case DisableMemosOutcome::FounderOnly:
-                $context->reply('disable.founder_only', ['channel' => $result->channelName ?? '']);
+                $context->reply('disable.founder_only', ['channel' => $context->emphasize($result->channelName ?? '')], Role::Error);
                 break;
         }
 

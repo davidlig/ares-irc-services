@@ -15,6 +15,9 @@ use App\Irc\Application\Port\In\SendNoticePort;
 use App\Irc\Application\Port\In\ServiceUidProviderInterface;
 use App\Irc\Application\Port\In\ServiceUidRegistry;
 use App\Irc\Application\PublishedEvent\UserJoinedChannelEvent;
+use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -64,7 +67,7 @@ final class ChanServEntryMsgSubscriberTest extends TestCase
         $this->notifier
             ->expects(self::once())
             ->method('sendNotice')
-            ->with('001CHAN', '001ABCD', "[\x0303#test\x03] Welcome to #test!");
+            ->with('001CHAN', '001ABCD', "[\x0303#test\x03\x0F] Welcome to #test!");
 
         $this->subscriber->onUserJoinedChannel($event);
     }
@@ -162,7 +165,7 @@ final class ChanServEntryMsgSubscriberTest extends TestCase
         $this->notifier
             ->expects(self::once())
             ->method('sendNotice')
-            ->with('001CHAN', '001ABCD', "[\x0303#test\x03] Welcome to #test! Enjoy your stay :)");
+            ->with('001CHAN', '001ABCD', "[\x0303#test\x03\x0F] Welcome to #test! Enjoy your stay :)");
 
         $this->subscriber->onUserJoinedChannel($event);
     }
@@ -200,7 +203,7 @@ final class ChanServEntryMsgSubscriberTest extends TestCase
         $this->notifier
             ->expects(self::once())
             ->method('sendNotice')
-            ->with('001CHAN', '001ABCD', "[\x0303#test\x03] Welcome operator!");
+            ->with('001CHAN', '001ABCD', "[\x0303#test\x03\x0F] Welcome operator!");
 
         $this->subscriber->onUserJoinedChannel($event);
     }
@@ -275,7 +278,7 @@ final class ChanServEntryMsgSubscriberTest extends TestCase
         $this->subscriber = new ChanServEntryMsgSubscriber(
             new DeliverChannelEntryMessageHandler(
                 $this->channelRepository,
-                new IrcChannelEntryMessageDelivery($this->notifier, $uidRegistry),
+                new IrcChannelEntryMessageDelivery($this->notifier, $uidRegistry, new IrcRenderer(new FixedStyleProvider(PresentationStyle::default()))),
                 new ServiceRegistryChanServNetworkIdentity($uidRegistry),
             ),
         );

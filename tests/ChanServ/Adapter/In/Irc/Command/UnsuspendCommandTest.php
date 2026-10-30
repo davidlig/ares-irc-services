@@ -157,7 +157,7 @@ final class UnsuspendCommandTest extends TestCase
 
         $cmd->execute($context);
 
-        self::assertContains('error.invalid_channel', $messages);
+        self::assertContains("\x0304✗\x03\x0F error.invalid_channel", $messages);
     }
 
     #[Test]
@@ -177,7 +177,7 @@ final class UnsuspendCommandTest extends TestCase
 
         $cmd->execute($context);
 
-        self::assertContains('error.channel_not_registered', $messages);
+        self::assertContains("\x0304✗\x03\x0F presentation.error.channel_not_registered", $messages);
     }
 
     #[Test]
@@ -199,7 +199,7 @@ final class UnsuspendCommandTest extends TestCase
 
         $cmd->execute($context);
 
-        self::assertContains('unsuspend.not_suspended', $messages);
+        self::assertContains("\x0304✗\x03\x0F unsuspend.not_suspended", $messages);
     }
 
     #[Test]
@@ -227,7 +227,7 @@ final class UnsuspendCommandTest extends TestCase
         $cmd->execute($context);
 
         self::assertFalse($channel->isSuspended());
-        self::assertContains('unsuspend.success', $messages);
+        self::assertContains("\x0303✔\x03\x0F unsuspend.success", $messages);
     }
 
     #[Test]

@@ -13,6 +13,8 @@ use App\NickServ\Application\UseCase\Status\StatusNickOutcome;
 use App\NickServ\Application\UseCase\Status\StatusNickResult;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\Fragment;
 
 final readonly class StatusCommand implements NickServCommandInterface
 {
@@ -104,63 +106,66 @@ final readonly class StatusCommand implements NickServCommandInterface
 
     private function present(NickServContext $context, StatusNickResult $result): void
     {
-        $context->reply('status.header', ['nickname' => $result->nickname]);
+        $context->replyComponent(Component::TableHeader, 'status.header', ['nickname' => new Fragment($result->nickname, Component::Status)]);
 
         match ($result->outcome) {
-            StatusNickOutcome::UnregisteredOffline => $context->reply('status.not_registered_offline'),
-            StatusNickOutcome::UnregisteredOnline => $context->reply('status.unregistered'),
+            StatusNickOutcome::UnregisteredOffline => $context->replyComponent(Component::Row, 'status.not_registered_offline', [], ['state' => ['status.value_not_registered_offline', Component::Muted]]),
+            StatusNickOutcome::UnregisteredOnline => $context->replyComponent(Component::Row, 'status.unregistered'),
             StatusNickOutcome::Pending => $this->presentPending($context, $result),
-            StatusNickOutcome::RegisteredNotConnected => $context->reply('status.not_connected'),
-            StatusNickOutcome::RegisteredNotIdentified => $context->reply('status.not_identified'),
-            StatusNickOutcome::RegisteredIdentified => $context->reply('status.identified'),
+            StatusNickOutcome::RegisteredNotConnected => $context->replyComponent(Component::Row, 'status.not_connected', [], ['state' => ['status.value_not_connected', Component::Muted]]),
+            StatusNickOutcome::RegisteredNotIdentified => $context->replyComponent(Component::Row, 'status.not_identified', [], ['state' => ['status.value_not_identified', Component::Status]]),
+            StatusNickOutcome::RegisteredIdentified => $context->replyComponent(Component::Row, 'status.identified', [], ['state' => ['status.value_identified', Component::Positive]]),
             StatusNickOutcome::Suspended => $this->presentSuspended($context, $result),
             StatusNickOutcome::Forbidden => $this->presentForbidden($context, $result),
             StatusNickOutcome::PendingDeletion => $this->presentPendingDeletion($context, $result),
         };
 
-        $context->reply('reply.separator');
+        $context->replySeparator();
     }
 
     private function presentPending(NickServContext $context, StatusNickResult $result): void
     {
-        $context->reply('status.pending');
+        $context->replyComponent(Component::Row, 'status.pending', [], ['state' => ['status.value_pending', Component::Status]]);
 
         if (null !== $result->expiresAt) {
-            $context->reply('status.pending_expires', ['minutes' => (string) $result->expiresInMinutes]);
-            $context->reply('status.pending_expires_at', ['date' => $context->formatDate($result->expiresAt)]);
+            $context->replyComponent(Component::Row, 'status.pending_expires', ['minutes' => (string) $result->expiresInMinutes]);
+            $context->replyComponent(Component::Row, 'status.pending_expires_at', ['date' => $context->formatDate($result->expiresAt)]);
         }
     }
 
     private function presentSuspended(NickServContext $context, StatusNickResult $result): void
     {
-        $context->reply('status.suspended');
+        $context->replyComponent(Component::Row, 'status.suspended', [], ['state' => ['status.value_suspended', Component::Danger]]);
 
         if (null !== $result->reason) {
-            $context->reply('status.suspended_reason', ['reason' => $result->reason]);
+            $context->replyComponent(Component::Row, 'status.suspended_reason', ['reason' => $result->reason]);
         }
 
         if (null !== $result->suspendedUntil) {
-            $context->reply('status.suspended_until', ['date' => $context->formatDate($result->suspendedUntil)]);
+            $context->replyComponent(Component::Row, 'status.suspended_until', ['date' => $context->formatDate($result->suspendedUntil)]);
         } else {
-            $context->reply('status.suspended_permanent');
+            $context->replyComponent(Component::Row, 'status.suspended_permanent');
         }
     }
 
     private function presentForbidden(NickServContext $context, StatusNickResult $result): void
     {
-        $context->reply('status.forbidden');
+        $context->replyComponent(Component::Row, 'status.forbidden', [], ['state' => ['status.value_forbidden', Component::Danger]]);
 
         if (null !== $result->reason) {
-            $context->reply('status.forbidden_reason', ['reason' => $result->reason]);
+            $context->replyComponent(Component::Row, 'status.forbidden_reason', ['reason' => $result->reason]);
         }
     }
 
     private function presentPendingDeletion(NickServContext $context, StatusNickResult $result): void
     {
-        $context->reply('status.pending_deletion');
+        $context->replyComponent(Component::Row, 'status.pending_deletion', [], [
+            'label' => ['status.label_pending_deletion', Component::Label],
+            'state' => ['status.value_pending_deletion', Component::Status],
+        ]);
 
         if (null !== $result->pendingDeletionAt) {
-            $context->reply('status.pending_deletion_at', ['date' => $context->formatDate($result->pendingDeletionAt)]);
+            $context->replyComponent(Component::Row, 'status.pending_deletion_at', ['date' => $context->formatDate($result->pendingDeletionAt)], ['label' => ['status.label_pending_deletion_at', Component::Label]]);
         }
     }
 }

@@ -11,6 +11,10 @@ use App\Irc\Application\PublishedEvent\CommandExecutedEvent;
 use App\MemoServ\Application\Port\Out\MemoUserAccountPort;
 use App\MemoServ\Domain\Exception\MemoDisabledException;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentValidator;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\Fragment;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 use App\Shared\Application\Port\EventBusInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -46,6 +50,7 @@ final readonly class MemoServService
         private string $defaultLanguage = 'en',
         private string $defaultTimezone = 'UTC',
         private LoggerInterface $logger = new NullLogger(),
+        private ?IrcRenderer $renderer = null,
     ) {}
 
     /**
@@ -68,11 +73,14 @@ final readonly class MemoServService
 
         if (null === $handler) {
             $messageType = $this->messageTypeResolver->prefersPrivateMessages($sender->nick) ? 'PRIVMSG' : 'NOTICE';
-            $this->notifier->sendMessage(
-                $sender->uid,
-                $this->translator->trans('unknown_command', ['%command%' => $cmdName, '%bot%' => $this->notifier->getNick()], 'common', $this->defaultLanguage),
-                $messageType
-            );
+            $message = null === $this->renderer
+                ? $this->translator->trans('unknown_command', ['%command%' => $cmdName, '%bot%' => $this->notifier->getNick()], 'common', $this->defaultLanguage)
+                : $this->renderer->reply(Role::Error, $this->translator->trans('presentation.unknown_command', [], 'common', $this->defaultLanguage), [
+                    '%command%' => new Fragment($cmdName, Component::Command),
+                    '%bot%' => $this->notifier->getNick(),
+                    '%help%' => new Fragment('HELP', Component::Command),
+                ]);
+            $this->notifier->sendMessage($sender->uid, $message, $messageType);
 
             return;
         }
@@ -94,6 +102,7 @@ final readonly class MemoServService
             messageType: $messageType,
             registry: $this->commandRegistry,
             serviceNicks: $this->serviceNicks,
+            renderer: $this->renderer,
         );
 
         $this->authorizationContext->setCurrentUser($sender->uid, $sender->isIdentified, $sender->isOper);
@@ -105,14 +114,14 @@ final readonly class MemoServService
         try {
             $requiredPermission = $handler->getRequiredPermission();
             if (null !== $requiredPermission && !$this->authorizationChecker->isGranted($requiredPermission, $context)) {
-                $context->reply('IDENTIFIED' === $requiredPermission ? 'error.not_identified' : 'error.permission_denied');
+                $context->replyError('IDENTIFIED' === $requiredPermission ? 'error.not_identified' : 'error.permission_denied');
 
                 return;
             }
 
             $validation = CommandArgumentValidator::validatePrefix($handler->getArgumentDefinition(), $context->args);
             if (null !== $validation->syntaxKey) {
-                $context->reply('error.syntax', [
+                $context->replyError('error.syntax', [
                     'syntax' => $context->trans($validation->syntaxKey),
                 ]);
 
@@ -136,7 +145,7 @@ final readonly class MemoServService
                 outcome: $result instanceof CommandOutcome ? $result : null,
             ));
         } catch (MemoDisabledException $e) {
-            $context->reply('send.service_disabled_for_target', ['target' => $e->target]);
+            $context->reply('send.service_disabled_for_target', ['target' => $context->emphasize($e->target)], Role::Error);
         } catch (Throwable $e) {
             $this->logger->error('MemoServ dispatch error: ' . $e->getMessage(), [
                 'exception' => $e,

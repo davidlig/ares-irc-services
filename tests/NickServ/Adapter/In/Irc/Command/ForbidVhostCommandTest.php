@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Adapter\In\Irc\Command;
 
+use App\Bootstrap\Adapter\Out\Translation\IrcYamlTranslationLoader;
 use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
 use App\Irc\Application\Port\In\ServiceNicknameRegistry;
@@ -26,12 +27,19 @@ use App\NickServ\Application\UseCase\ForbidVhost\ManageForbiddenVhostOutcome;
 use App\NickServ\Application\UseCase\ForbidVhost\ManageForbiddenVhostResult;
 use App\NickServ\Domain\Entity\ForbiddenVhost;
 use App\NickServ\Domain\Entity\RegisteredNick;
+use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
+use Symfony\Component\Translation\Translator;
 use Symfony\Contracts\Translation\TranslatorInterface;
+
+use function dirname;
+use function substr_count;
 
 use const DATE_ATOM;
 
@@ -454,6 +462,25 @@ final class ForbidVhostCommandTest extends TestCase
         $auditData = $outcome->auditData;
         self::assertNotNull($auditData);
         self::assertSame('pirated.com', $auditData->target);
+    }
+
+    #[Test]
+    public function listUsesOneStyledPatternFragment(): void
+    {
+        $forbidden = ForbiddenVhost::create('pirated.com', 1, new DateTimeImmutable('2026-01-01 UTC'));
+        $repository = $this->createStub(ForbiddenVhostRepositoryInterface::class);
+        $repository->method('findAll')->willReturn([$forbidden]);
+        $translator = new Translator('es');
+        $translator->addLoader('yaml', new IrcYamlTranslationLoader());
+        $translator->addResource('yaml', dirname(__DIR__, 6) . '/translations/nickserv.es.yaml', 'es', 'nickserv');
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void { $messages[] = $message; });
+        $renderer = new IrcRenderer(new FixedStyleProvider(PresentationStyle::default()));
+        $context = new NickServContext(new SenderView('UID1', 'Oper', 'i', 'h', 'c', 'ip'), null, 'FORBIDVHOST', ['LIST'], $notifier, $translator, 'es', 'UTC', 'NOTICE', new NickServCommandRegistry([]), new PendingVerificationRegistry(), new RecoveryTokenRegistry(), $this->createServiceNicks(), $renderer);
+        $this->createCommandFor($repository)->execute($context);
+        self::assertStringContainsString("  1. \x0304pirated.com\x03\x0F", $messages[1]);
+        self::assertSame(1, substr_count($messages[1], "\x0304"));
     }
 
     private function createCommand(): ForbidVhostCommand

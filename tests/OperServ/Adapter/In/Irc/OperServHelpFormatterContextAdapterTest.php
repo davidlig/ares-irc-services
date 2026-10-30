@@ -17,6 +17,11 @@ use App\OperServ\Application\Port\In\AuthorizationDecision;
 use App\OperServ\Application\Port\In\AuthorizationGrant;
 use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\Presentation\Appearance;
+use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -25,11 +30,56 @@ use Symfony\Component\Translation\Translator;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function iterator_to_array;
+use function strtr;
 
 #[CoversClass(OperServHelpFormatterContextAdapter::class)]
 #[CoversClass(OperServContext::class)]
 final class OperServHelpFormatterContextAdapterTest extends TestCase
 {
+    #[Test]
+    public function rendersStructuredHelpNavigationExamplesAndRoleOptions(): void
+    {
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static function (string $id, array $params): string {
+            $templates = [
+                'help.general_header' => 'Commands', 'help.options_header' => 'Options', 'help.group_header' => '%group%',
+                'help.command_line' => '%command%: %description%', 'help.syntax_label' => 'Syntax %syntax%',
+                'help.general_footer' => 'Use %help_command%', 'help.set_sub_footer' => 'Use %help_command%',
+                'help.general_help_command' => 'HELP <command>', 'help.option_help_command' => 'HELP %command% <option>',
+                'help.detail_help_command' => 'HELP <command>', 'help.detail_help_option_command' => 'HELP <command> <option>',
+                'help.help' => '%help_command% / %help_option_command%',
+                'role.perms.help' => '%options_header% %option_LIST% %assigned_status% %unassigned_status%',
+            ];
+
+            return strtr($templates[$id] ?? $id, $params);
+        });
+        $renderer = new IrcRenderer(new FixedStyleProvider(new PresentationStyle(components: [
+            'section' => new Appearance(prefix: 'S:'), 'group' => new Appearance(prefix: 'G:'),
+            'command_row' => new Appearance(prefix: 'R:'), 'command' => new Appearance(prefix: '[', suffix: ']'),
+            'syntax' => new Appearance(prefix: 'Y:'), 'navigation' => new Appearance(prefix: 'N:'),
+            'example' => new Appearance(prefix: '> '), 'selected' => new Appearance(prefix: '+'), 'unselected' => new Appearance(prefix: '-'),
+        ])));
+        $adapter = new OperServHelpFormatterContextAdapter($this->context(translator: $translator, renderer: $renderer));
+        self::assertSame('S:Commands', $adapter->trans('help.general_header'));
+        self::assertSame('G:Roles', $adapter->trans('help.group_header', ['group' => 'Roles']));
+        self::assertSame('R:[ROLE]: Manage', $adapter->trans('help.command_line', ['command' => 'ROLE', 'description' => 'Manage']));
+        self::assertSame('Y:Syntax [ROLE LIST]', $adapter->trans('help.syntax_label', ['syntax' => 'ROLE LIST']));
+        self::assertSame('N:Use [HELP <command>]', $adapter->trans('help.general_footer'));
+        self::assertSame('N:Use [HELP ROLE <option>]', $adapter->trans('help.set_sub_footer', ['command' => 'ROLE']));
+        self::assertSame('[HELP <command>] / [HELP <command> <option>]', $adapter->trans('help.help'));
+        self::assertSame('S:Options R:[LIST      ] + -', $adapter->trans('role.perms.help'));
+        self::assertSame('> /msg OperServ [ROLE LIST]', $adapter->renderExample('%command_prefix%ROLE LIST'));
+        self::assertSame('legacy text', $adapter->renderExample('legacy text'));
+        self::assertStringContainsString('Help', $adapter->trans('help.header', ['title' => 'Help']));
+        self::assertNotSame('', $adapter->trans('help.footer'));
+        try {
+            $adapter->trans('help.command_line', ['command' => ['invalid']]);
+            self::fail('A non-text HELP parameter must be rejected.');
+        } catch (InvalidArgumentException $exception) {
+            self::assertSame('HELP parameters must be text.', $exception->getMessage());
+        }
+    }
+
     #[Test]
     public function delegatesOutputTranslationAndCommandEnumeration(): void
     {
@@ -120,6 +170,7 @@ final class OperServHelpFormatterContextAdapterTest extends TestCase
         ?FormatterNotifier $notifier = null,
         ?TranslatorInterface $translator = null,
         ?OperatorAuthorizationQuery $authorization = null,
+        ?IrcRenderer $renderer = null,
     ): OperServContext {
         return new OperServContext(
             new SenderView('001AAA', 'Oper', 'ident', 'host', 'cloak', 'ip', true, true),
@@ -134,6 +185,7 @@ final class OperServHelpFormatterContextAdapterTest extends TestCase
             new OperServCommandRegistry($commands),
             new ServiceNicknameRegistry([]),
             $authorization ?? $this->createStub(OperatorAuthorizationQuery::class),
+            $renderer,
         );
     }
 }

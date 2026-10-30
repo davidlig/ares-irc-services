@@ -9,9 +9,14 @@ use App\NickServ\Application\UseCase\Set\SetNickSettingOption;
 use App\NickServ\Application\UseCase\Set\SetNickSettingOutcome;
 use App\NickServ\Application\UseCase\Set\SetNickSettingResult;
 use App\NickServ\Domain\Entity\RegisteredNick;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\Fragment;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 
 use function ceil;
 use function implode;
+use function in_array;
+use function is_string;
 use function strtolower;
 
 final class SetNickSettingPresentation
@@ -21,10 +26,7 @@ final class SetNickSettingPresentation
         return match ($result->outcome) {
             SetNickSettingOutcome::Changed => self::presentChanged($context, $result),
             SetNickSettingOutcome::SessionLanguageChanged => self::reply($context, 'set.language.success', ['language' => $result->value]),
-            SetNickSettingOutcome::EmailConfirmationSent => self::reply($context, 'set.email.pending_sent', [
-                'current_email' => $result->currentEmail,
-                'new_email' => $result->newEmail,
-            ]),
+            SetNickSettingOutcome::EmailConfirmationSent => self::presentEmailConfirmation($context, $result),
             SetNickSettingOutcome::TargetNotRegistered, SetNickSettingOutcome::NoCurrentEmail => self::reject($context, 'error.not_identified'),
             SetNickSettingOutcome::TargetIsRoot,
             SetNickSettingOutcome::TargetIsIrcop,
@@ -50,6 +52,28 @@ final class SetNickSettingPresentation
         };
     }
 
+    private static function presentEmailConfirmation(NickServContext $context, SetNickSettingResult $result): bool
+    {
+        $current = $result->currentEmail ?? '';
+        $new = $result->newEmail ?? '';
+        $context->reply('set.email.pending_sent', [
+            'current_email' => $current,
+            'new_email' => $new,
+            'first' => $context->localizedFragment('set.email.pending_line_1', Component::Text, [
+                'current_email' => new Fragment($current, Component::Emphasis),
+            ]),
+            'second' => $context->localizedFragment('set.email.pending_line_2', Component::IndentedRow, [
+                'new_email' => new Fragment($new, Component::Emphasis),
+            ]),
+            'third' => $context->localizedFragment('set.email.pending_line_3', Component::IndentedRow, [
+                'command' => $context->localizedFragment('set.email.pending_command', Component::Command, ['new_email' => $new]),
+            ]),
+            'fourth' => $context->localizedFragment('set.email.pending_line_4', Component::IndentedRow),
+        ], Role::Information);
+
+        return true;
+    }
+
     private static function presentChanged(NickServContext $context, SetNickSettingResult $result): bool
     {
         return match ($result->option) {
@@ -70,7 +94,11 @@ final class SetNickSettingPresentation
     /** @param array<string, mixed> $params */
     private static function reply(NickServContext $context, string $key, array $params = []): bool
     {
-        $context->reply($key, $params);
+        if (in_array($key, ['set.private.on', 'set.private.off', 'set.msg.on', 'set.msg.off'], true)) {
+            $context->replyWithLocalizedFragment($key, $params, Role::Success, $key . '_value', Component::Emphasis);
+        } else {
+            $context->replyEmphasized($key, $params, Role::Success, ['email', 'language', 'timezone', 'vhost']);
+        }
 
         return true;
     }
@@ -78,7 +106,19 @@ final class SetNickSettingPresentation
     /** @param array<string, mixed> $params */
     private static function reject(NickServContext $context, string $key, array $params = []): bool
     {
-        $context->reply($key, $params);
+        if ('rescue.unavailable' === $key) {
+            $context->replyRescueUnavailable();
+        } elseif (in_array($key, ['set.email.token_required', 'set.email.invalid_token'], true)) {
+            $context->replyWithLocalizedFragment($key, $params, Role::Error, $key . '_value', Component::Command);
+        } elseif ('error.syntax' === $key && isset($params['syntax']) && is_string($params['syntax'])) {
+            $context->replyCommonError($key, ['syntax' => new Fragment($params['syntax'], Component::Command)]);
+        } elseif ('error.not_identified' === $key) {
+            $context->replyNotIdentified();
+        } elseif (in_array($key, ['error.email_domain_blocked', 'error.mail_failed'], true)) {
+            $context->replyCommonError($key, $params);
+        } else {
+            $context->replyEmphasized($key, $params, Role::Error, ['email', 'timezone', 'minutes']);
+        }
 
         return false;
     }

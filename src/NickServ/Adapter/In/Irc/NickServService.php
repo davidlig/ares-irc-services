@@ -16,6 +16,10 @@ use App\NickServ\Application\Port\Out\AuthorizationCheckerInterface;
 use App\NickServ\Application\Port\Out\AuthorizationContextInterface;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentValidator;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\Fragment;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 use App\Shared\Application\Port\EventBusInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -55,6 +59,7 @@ final readonly class NickServService
         private string $defaultLanguage = 'en',
         private string $defaultTimezone = 'UTC',
         private LoggerInterface $logger = new NullLogger(),
+        private ?IrcRenderer $renderer = null,
     ) {}
 
     /**
@@ -102,6 +107,7 @@ final readonly class NickServService
             pendingVerificationRegistry: $this->pendingVerificationRegistry,
             recoveryTokenRegistry: $this->recoveryTokenRegistry,
             serviceNicks: $this->serviceNicks,
+            renderer: $this->renderer,
         );
 
         $this->authorizationContext->setCurrentUser($sender->uid, $sender->isIdentified, $sender->isOper);
@@ -121,11 +127,14 @@ final readonly class NickServService
     private function replyUnknownCommand(SenderView $sender, string $cmdName): void
     {
         $messageType = $this->messageTypeResolver->prefersPrivateMessages($sender->nick) ? 'PRIVMSG' : 'NOTICE';
-        $this->notifier->sendMessage(
-            $sender->uid,
-            $this->translator->trans('unknown_command', ['%command%' => $cmdName, '%bot%' => $this->notifier->getNick()], 'common', $this->defaultLanguage),
-            $messageType
-        );
+        $message = null === $this->renderer
+            ? $this->translator->trans('unknown_command', ['%command%' => $cmdName, '%bot%' => $this->notifier->getNick()], 'common', $this->defaultLanguage)
+            : $this->renderer->reply(Role::Error, $this->translator->trans('presentation.unknown_command', [], 'common', $this->defaultLanguage), [
+                '%command%' => new Fragment($cmdName, Component::Command),
+                '%bot%' => $this->notifier->getNick(),
+                '%help%' => new Fragment('HELP', Component::Command),
+            ]);
+        $this->notifier->sendMessage($sender->uid, $message, $messageType);
     }
 
     private function checkCommandPermissions(NickServContext $context, NickServCommandInterface $handler): ?string
@@ -133,9 +142,9 @@ final readonly class NickServService
         $requiredPermission = $handler->getRequiredPermission();
         if (null !== $requiredPermission && !$this->authorizationChecker->isGranted($requiredPermission, $context)) {
             if ('IDENTIFIED' === $requiredPermission) {
-                $context->reply('error.not_identified');
+                $context->replyNotIdentified();
             } else {
-                $context->reply('error.permission_denied');
+                $context->replyCommonError('error.permission_denied');
             }
 
             return 'denied';
@@ -151,15 +160,13 @@ final readonly class NickServService
     {
         $validation = CommandArgumentValidator::validatePrefix($handler->getArgumentDefinition(), $args);
         if (null !== $validation->syntaxKey) {
-            $context->reply('error.syntax', [
-                'syntax' => $context->trans($validation->syntaxKey),
-            ]);
+            $context->replySyntax($validation->syntaxKey);
 
             return;
         }
 
         if (null !== $context->senderAccount && $context->senderAccount->isPendingDeletion() && !in_array($handler->getName(), ['REGISTER', 'INFO', 'RESTORE', 'DROP'], true)) {
-            $context->reply('drop.pending_deletion', ['%nickname%' => $sender->nick]);
+            $context->reply('drop.pending_deletion', ['%nickname%' => new Fragment($sender->nick, Component::Emphasis)], Role::Error);
 
             return;
         }

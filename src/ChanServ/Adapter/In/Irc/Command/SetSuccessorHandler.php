@@ -10,6 +10,9 @@ use App\ChanServ\Application\UseCase\UpdateSetting\UpdateChannelSettingHandlerIn
 use App\ChanServ\Application\UseCase\UpdateSetting\UpdateChannelSettingOutcome;
 use App\ChanServ\Application\UseCase\UpdateSetting\UpdateChannelSettingResult;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\Fragment;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 
 final readonly class SetSuccessorHandler implements SetOptionHandlerInterface
 {
@@ -32,10 +35,10 @@ final readonly class SetSuccessorHandler implements SetOptionHandlerInterface
     {
         $nickname = $result->targetNickname ?? '';
         match ($result->outcome) {
-            UpdateChannelSettingOutcome::SuccessorNotFound => $context->reply('error.nick_not_registered', ['%nickname%' => $nickname]),
-            UpdateChannelSettingOutcome::SuccessorSuspended => $context->reply('set.successor.suspended', ['%nickname%' => $nickname]),
-            UpdateChannelSettingOutcome::SuccessorNotRegistered => $context->reply('set.successor.must_be_registered', ['%nickname%' => $nickname]),
-            UpdateChannelSettingOutcome::SuccessorIsFounder => $context->reply('set.successor.cannot_be_founder', ['%nickname%' => $nickname]),
+            UpdateChannelSettingOutcome::SuccessorNotFound => $context->reply('presentation.error.nick_not_registered', ['%nickname%' => new Fragment((string) $nickname, Component::Emphasis)], Role::Error),
+            UpdateChannelSettingOutcome::SuccessorSuspended => $context->reply('set.successor.suspended', ['%nickname%' => new Fragment($nickname, Component::Emphasis)], Role::Error),
+            UpdateChannelSettingOutcome::SuccessorNotRegistered => $context->reply('set.successor.must_be_registered', ['%nickname%' => new Fragment($nickname, Component::Emphasis)], Role::Error),
+            UpdateChannelSettingOutcome::SuccessorIsFounder => $context->reply('set.successor.cannot_be_founder', ['%nickname%' => new Fragment($nickname, Component::Emphasis)], Role::Error),
             UpdateChannelSettingOutcome::Cleared => $this->presentCleared($context, $channel),
             UpdateChannelSettingOutcome::Updated => $this->presentUpdated($context, $channel, $nickname),
             default => null,
@@ -44,22 +47,22 @@ final readonly class SetSuccessorHandler implements SetOptionHandlerInterface
 
     private function presentCleared(ChanServContext $context, RegisteredChannel $channel): void
     {
-        $context->reply('set.successor.cleared');
+        $context->reply('set.successor.cleared', role: Role::Success);
         $sender = $context->sender;
         if (null !== $sender) {
-            $notice = $context->trans('set.successor.notice_channel_cleared', ['%from%' => $sender->nick]);
+            $notice = $context->renderReply(Role::Success, 'set.successor.notice_channel_cleared', ['%from%' => new Fragment($sender->nick, Component::Actor)]);
             $context->getNotifier()->sendNoticeToChannel($channel->getName(), $notice);
         }
     }
 
     private function presentUpdated(ChanServContext $context, RegisteredChannel $channel, string $nickname): void
     {
-        $context->reply('set.successor.updated', ['%nickname%' => $nickname]);
+        $context->reply('set.successor.updated', ['%nickname%' => new Fragment($nickname, Component::Emphasis)], Role::Success);
         $sender = $context->sender;
         if (null !== $sender) {
-            $notice = $context->trans('set.successor.notice_channel', [
-                '%from%' => $sender->nick,
-                '%nickname%' => $nickname,
+            $notice = $context->renderReply(Role::Success, 'set.successor.notice_channel', [
+                '%from%' => new Fragment($sender->nick, Component::Actor),
+                '%nickname%' => new Fragment($nickname, Component::Emphasis),
             ]);
             $context->getNotifier()->sendNoticeToChannel($channel->getName(), $notice);
         }

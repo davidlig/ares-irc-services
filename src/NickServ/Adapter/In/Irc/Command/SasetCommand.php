@@ -17,6 +17,7 @@ use App\NickServ\Application\UseCase\Set\SetNickSettingOption;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentValidator;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 
 use function array_keys;
 use function array_map;
@@ -125,7 +126,7 @@ final readonly class SasetCommand implements NickServCommandInterface, IrcopAudi
 
         $validation = CommandArgumentValidator::validate($this->getArgumentDefinition(), $context->args);
         if (null !== $validation->syntaxKey) {
-            $context->reply('error.syntax', ['syntax' => $context->trans($validation->syntaxKey)]);
+            $context->replySyntax($validation->syntaxKey);
 
             return CommandOutcome::rejected();
         }
@@ -134,10 +135,10 @@ final readonly class SasetCommand implements NickServCommandInterface, IrcopAudi
         $rawOption = strtoupper($context->args[1]);
         $option = SetNickSettingOption::tryFrom($rawOption);
         if (null === $option) {
-            $context->reply('saset.unknown_option', [
+            $context->replyEmphasized('saset.unknown_option', [
                 'option' => $rawOption,
                 'options' => implode(', ', array_keys($this->getArgumentDefinition()->variants)),
-            ]);
+            ], Role::Error, ['option']);
 
             return CommandOutcome::rejected();
         }

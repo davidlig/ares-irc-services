@@ -15,6 +15,9 @@ use App\Irc\Application\Port\In\Command\IrcopAuditableCommandInterface;
 use App\Irc\Application\Port\In\Command\IrcopAuditData;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\Fragment;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 
 use function strtoupper;
 
@@ -116,7 +119,7 @@ final class NoexpireCommand implements ChanServCommandInterface, IrcopAuditableC
         $channelName = $context->getChannelNameArg(0);
 
         if (null === $channelName) {
-            $context->reply('error.invalid_channel');
+            $context->reply('error.invalid_channel', ['%example%' => new Fragment($context->trans('error.invalid_channel_example'), Component::Emphasis)], Role::Error);
 
             return CommandOutcome::rejected();
         }
@@ -134,17 +137,17 @@ final class NoexpireCommand implements ChanServCommandInterface, IrcopAuditableC
             $enabled ? ChannelLifecycleAction::EnableNoExpire : ChannelLifecycleAction::DisableNoExpire,
         ));
         if (ChannelLifecycleOutcome::NotRegistered === $result->outcome) {
-            $context->reply('error.channel_not_registered', ['%channel%' => $channelName]);
+            $context->reply('presentation.error.channel_not_registered', ['%channel%' => new Fragment((string) $channelName, Component::Emphasis)], Role::Error);
 
             return CommandOutcome::rejected();
         }
         if (ChannelLifecycleOutcome::ChannelForbidden === $result->outcome) {
-            $context->reply('noexpire.forbidden', ['%channel%' => $channelName]);
+            $context->reply('noexpire.forbidden', ['%channel%' => new Fragment($channelName, Component::Emphasis)], Role::Error);
 
             return CommandOutcome::rejected();
         }
         if (ChannelLifecycleOutcome::ChannelSuspended === $result->outcome) {
-            $context->reply('noexpire.suspended', ['%channel%' => $channelName]);
+            $context->reply('noexpire.suspended', ['%channel%' => new Fragment($channelName, Component::Emphasis)], Role::Error);
 
             return CommandOutcome::rejected();
         }
@@ -156,7 +159,8 @@ final class NoexpireCommand implements ChanServCommandInterface, IrcopAuditableC
 
         $context->reply(
             $enabled ? 'noexpire.success_on' : 'noexpire.success_off',
-            ['%channel%' => $channelName],
+            ['%channel%' => new Fragment($channelName, Component::Emphasis)],
+            Role::Success,
         );
 
         return CommandOutcome::success($auditData);

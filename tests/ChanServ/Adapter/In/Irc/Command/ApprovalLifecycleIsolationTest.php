@@ -60,7 +60,7 @@ final class ApprovalLifecycleIsolationTest extends DoctrineIntegrationTestCase
 
             self::assertSame($before, serialize($channel));
             self::assertSame([], $saved);
-            self::assertSame(['error.channel_not_registered', 'error.channel_not_registered'], $messages);
+            self::assertSame(["\x0304✗\x03\x0F presentation.error.channel_not_registered", "\x0304✗\x03\x0F presentation.error.channel_not_registered"], $messages);
         }
     }
 
@@ -78,7 +78,7 @@ final class ApprovalLifecycleIsolationTest extends DoctrineIntegrationTestCase
 
         self::assertSame($before, serialize($channel));
         self::assertSame([], $saved);
-        self::assertSame(['drop.force_success'], $messages);
+        self::assertSame(["\x0303✔\x03\x0F drop.force_success"], $messages);
     }
 
     #[Test]
@@ -90,7 +90,7 @@ final class ApprovalLifecycleIsolationTest extends DoctrineIntegrationTestCase
 
         self::assertSame('active', $channel->getStatus()->value);
         self::assertCount(2, $saved);
-        self::assertSame(['suspend.success', 'unsuspend.success'], $messages);
+        self::assertSame(["\x0303✔\x03\x0F suspend.success", "\x0303✔\x03\x0F unsuspend.success"], $messages);
     }
 
     private function rejectedChannel(): RegisteredChannel

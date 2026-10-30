@@ -19,6 +19,9 @@ use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
 use App\OperServ\Application\Port\Out\BadmailRepository;
 use App\OperServ\Application\UseCase\Badmail\ManageBadmailHandler;
 use App\OperServ\Domain\Entity\BadmailEntry;
+use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -28,6 +31,19 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 #[CoversClass(BadmailCommand::class)]
 final class BadmailCommandTest extends TestCase
 {
+    #[Test]
+    public function rendersBadmailSuccessAndValidationErrorsDifferently(): void
+    {
+        $repository = $this->createStub(BadmailRepository::class);
+        $repository->method('add')->willReturn(true);
+        $notifier = new RecordingBadmailNotifier();
+        $renderer = new IrcRenderer(new FixedStyleProvider(new PresentationStyle(markers: ['success' => '+', 'error' => '!'])));
+        $command = $this->command($this->createStub(CommandAuditRecorder::class), $repository);
+        $command->execute($this->context(['ADD', 'example.com', 'reason'], $notifier, $renderer));
+        $command->execute($this->context(['ADD', 'bad/domain', 'reason'], $notifier, $renderer));
+        self::assertSame(['+ badmail.added', '! badmail.invalid_domain'], $notifier->messages);
+    }
+
     /** @return iterable<string, array{list<string>, string}> */
     public static function invalidArguments(): iterable
     {
@@ -144,7 +160,7 @@ final class BadmailCommandTest extends TestCase
     }
 
     /** @param list<string> $arguments */
-    private function context(array $arguments, RecordingBadmailNotifier $notifier): OperServContext
+    private function context(array $arguments, RecordingBadmailNotifier $notifier, ?IrcRenderer $renderer = null): OperServContext
     {
         $authorization = $this->createStub(OperatorAuthorizationQuery::class);
         $authorization->method('permission')->willReturn(AuthorizationDecision::grantedBy(AuthorizationGrant::RootIdentity));
@@ -162,6 +178,7 @@ final class BadmailCommandTest extends TestCase
             new OperServCommandRegistry([]),
             new ServiceNicknameRegistry([]),
             $authorization,
+            $renderer,
         );
     }
 }

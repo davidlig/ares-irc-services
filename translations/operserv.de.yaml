@@ -18,41 +18,45 @@
 
 # --- ERROR -----------------------------------------------------------------
 error:
-  root_only: "\x0304✗\x03 Dieser Befehl ist Netzwerk-Root-Administratoren vorbehalten."
+  root_only: "Dieser Befehl ist Netzwerk-Root-Administratoren vorbehalten."
 
 # --- HELP ------------------------------------------------------------------
 help:
   syntax: "HELP [Befehl] [Option]"
   short: "Befehle auflisten oder Hilfe für einen Befehl anzeigen."
-  help: !irc |-
-    Ohne Argumente werden alle Befehle aufgelistet. Verwende \x0303HELP <Befehl>\x03 für
-    vollständige Hilfe oder \x0303HELP <Befehl> <Option>\x03 für SET-Unteroptionen.
-  example: "%command_prefix%\x02\x0303HELP KILL\x03\x0F"
+  help: |-
+    Ohne Argumente werden alle Befehle aufgelistet. Verwende %help_command% für
+    vollständige Hilfe oder %help_option_command% für SET-Unteroptionen.
+  example: "%command_prefix%HELP KILL"
   header_title: "%bot%"
-  header: "\x02\x0307🤖 %title%\x03\x0F \x0314%separator%\x03\x0F"
+  header: "%title%"
   intro: |-
     Verwaltet Netzwerk-Operatoren und Berechtigungen, setzt Zugriffsbeschränkungen
     durch und trennt Benutzer vom Netzwerk. Außerdem kannst du allgemeine
     Mitteilungen
     senden und Netzwerk-Willkommensnachrichten verwalten.
-  general_header: "\x02 ■ Verfügbare Befehle:\x02"
-  command_line: "    \x0310›\x03\x0F \x02\x0303%command%\x03\x0F%description%"
-  subcommand_line: "    \x0310›\x03\x0F \x02\x0303%command%\x03\x0F%description%"
-  options_header: "\x02 ■ Optionen:\x02"
-  examples_header: "\x02 ■ Beispiele:\x02"
-  general_footer: "\x0310ℹ\x03\x0F Verwende /msg %bot% \x02\x0303HELP <Befehl>\x03\x0F für weitere Informationen."
-  set_sub_footer: "\x0310ℹ\x03\x0F Verwende /msg %bot% \x02\x0303HELP %command% <Option>\x03\x0F für weitere Informationen."
-  syntax_label: "Syntax: \x02\x0303%syntax%\x03\x0F"
-  footer: "\x0314─────────────────────────────\x03\x0F"
-  intro_expiration: "\x0307⚠\x03\x0F HINWEIS: Nicknamen, die länger als %days% Tage ungenutzt bleiben, werden automatisch entfernt."
-  group_header: "\x0310  ◆ %group%\x03\x0F"
-  subgroup_header: "\x0310  ◆ %group%\x03\x0F"
+  general_header: "Verfügbare Befehle:"
+  command_line: "%command%%description%"
+  subcommand_line: "%command%%description%"
+  options_header: "Optionen:"
+  examples_header: "Beispiele:"
+  general_help_command: "HELP <Befehl>"
+  option_help_command: "HELP %command% <Option>"
+  detail_help_command: "HELP <Befehl>"
+  detail_help_option_command: "HELP <Befehl> <Option>"
+  general_footer: "Verwende /msg %bot% %help_command% für weitere Informationen."
+  set_sub_footer: "Verwende /msg %bot% %help_command% für weitere Informationen."
+  syntax_label: "Syntax: %syntax%"
+  footer: ""
+  intro_expiration: "HINWEIS: Nicknamen, die länger als %days% Tage ungenutzt bleiben, werden automatisch entfernt."
+  group_header: "%group%"
+  subgroup_header: "%group%"
   group:
     operators_roles: "Operatoren und Rollen"
     network_security: "Netzwerksicherheit"
     communication: "Kommunikation"
     low_level: "Niedrige Ebene"
-  ircop_header: "\x02 ■ Verfügbare Befehle für IRC-Operatoren:\x02"
+  ircop_header: "Verfügbare Befehle für IRC-Operatoren:"
 
 # --- IRCOP -----------------------------------------------------------------
 ircop:
@@ -65,14 +69,14 @@ ircop:
     Verwenden Sie ROLE LIST, um verfügbare Rollen zu sehen.
     Dieser Befehl ist Root-Benutzern vorbehalten, die in den Services konfiguriert
     sind.
-  example: "%command_prefix%\x02\x0303IRCOP ADD Ana OPER\x03\x0F"
+  example: "%command_prefix%IRCOP ADD Ana OPER"
   examples:
-    - "%command_prefix%\x02\x0303IRCOP LIST\x03\x0F"
-  unknown_sub: "\x0304✗\x03 Unbekannter Unterbefehl \x02%sub%\x02. Verwenden Sie ADD, DEL oder LIST."
-  unknown_role: "\x0304✗\x03 Rolle \x02%role%\x02 existiert nicht. Verwenden Sie \x0303/msg %bot% ROLE LIST\x03, um verfügbare Rollen zu sehen."
-  already_admin: "\x0304✗\x03 \x02%nickname%\x02 ist bereits ein IRC-Operator (Rolle: %role%)."
-  not_admin: "\x0304✗\x03 \x02%nickname%\x02 ist kein IRC-Operator."
-  role_changed: "\x0303✓\x03 Rolle für \x02%nickname%\x02 von %old% auf %new% geändert."
+    - "%command_prefix%IRCOP LIST"
+  unknown_sub: "Unbekannter Unterbefehl %sub%. Verwenden Sie ADD, DEL oder LIST."
+  unknown_role: "Rolle %role% existiert nicht. Verwenden Sie /msg %bot% %role_list%, um verfügbare Rollen zu sehen."
+  already_admin: "%nickname% ist bereits ein IRC-Operator (Rolle: %role%)."
+  not_admin: "%nickname% ist kein IRC-Operator."
+  role_changed: "Rolle für %nickname% von %old% auf %new% geändert."
 
   # --- IRCOP ADD -----------------------------------------------------------
   add:
@@ -82,9 +86,9 @@ ircop:
       Fügt einen registrierten Nickname als Netzwerk-IRC-Operator hinzu.
       Verwenden Sie ROLE LIST, um verfügbare Rollen zu sehen.
       Dieser Befehl ist Root-Benutzern vorbehalten.
-    example: "%command_prefix%\x02\x0303IRCOP ADD Ana OPER\x03\x0F"
-    done: "\x0303✓\x03 \x02%nickname%\x02 als \x02%role%\x02 hinzugefügt."
-    nick_not_active: "\x0304✗\x03 Nickname \x02%nickname%\x02 ist kein aktiver registrierter Nickname."
+    example: "%command_prefix%IRCOP ADD Ana OPER"
+    done: "%nickname% als %role% hinzugefügt."
+    nick_not_active: "Nickname %nickname% ist kein aktiver registrierter Nickname."
 
   # --- IRCOP DEL -----------------------------------------------------------
   del:
@@ -93,8 +97,8 @@ ircop:
     help: |-
       Entfernt einen Netzwerk-IRC-Operator aus der Liste.
       Dieser Befehl ist Root-Benutzern vorbehalten.
-    example: "%command_prefix%\x02\x0303IRCOP DEL Ana\x03\x0F"
-    done: "\x0303✓\x03 \x02%nickname%\x02 aus den IRC-Operatoren entfernt."
+    example: "%command_prefix%IRCOP DEL Ana"
+    done: "%nickname% aus den IRC-Operatoren entfernt."
 
   # --- IRCOP LIST ----------------------------------------------------------
   list:
@@ -103,8 +107,8 @@ ircop:
     help: |-
       Listet alle Netzwerk-IRC-Operatoren mit ihren Rollen und Registrierungsdatum.
       Dieser Befehl ist Root-Benutzern vorbehalten.
-    example: "%command_prefix%\x02\x0303IRCOP LIST\x03\x0F"
-    header: "\x0307---\x03 \x02Netzwerk-IRC-Operatoren\x02 \x0307---\x03"
+    example: "%command_prefix%IRCOP LIST"
+    header: "Netzwerk-IRC-Operatoren"
     empty: "Es gibt keine IRC-Operatoren."
 
 # --- ROLE ------------------------------------------------------------------
@@ -113,34 +117,34 @@ role:
   operclass:
     syntax: "ROLE OPERCLASS {LIST|VIEW <Rolle>|SET <Rolle> [operclass]}"
     short: "Konfiguriert die Operator-Klasse von UnrealIRCd."
-    help: !irc |-
+    help: |-
       Zeigt und konfiguriert die Operclass einer Rolle.
 
-      \x02 ■ Optionen:\x02
-          \x0310›\x03\x0F \x02\x0303LIST      \x03\x0FListet die verfügbaren Operclasses im Netzwerk auf.
-          \x0310›\x03\x0F \x02\x0303VIEW      \x03\x0FZeigt die Operclass der Rolle und verfügbare Klassen an.
-          \x0310›\x03\x0F \x02\x0303SET       \x03\x0FWeist IRCOPs beim Identifizieren eine Operclass zu.
+      %options_header%
+      %option_LIST%Listet die verfügbaren Operclasses im Netzwerk auf.
+      %option_VIEW%Zeigt die Operclass der Rolle und verfügbare Klassen an.
+      %option_SET%Weist IRCOPs beim Identifizieren eine Operclass zu.
 
       Lass den Wert weg, um ihn zu entfernen.
 
       Nur für UnrealIRCd-Protokolle verfügbar.
-    example: "%command_prefix%\x02\x0303ROLE OPERCLASS LIST\x03\x0F"
+    example: "%command_prefix%ROLE OPERCLASS LIST"
     examples:
-      - "%command_prefix%\x02\x0303ROLE OPERCLASS VIEW SOPORTE\x03\x0F"
-      - "%command_prefix%\x02\x0303ROLE OPERCLASS SET SOPORTE services-admin\x03\x0F"
-      - "%command_prefix%\x02\x0303ROLE OPERCLASS SET SOPORTE\x03\x0F"
+      - "%command_prefix%ROLE OPERCLASS VIEW SOPORTE"
+      - "%command_prefix%ROLE OPERCLASS SET SOPORTE services-admin"
+      - "%command_prefix%ROLE OPERCLASS SET SOPORTE"
     list:
-      header: "\x0307---\x03 \x02Verfugbare Operclasses im Netzwerk\x02 \x0307---\x03"
+      header: "Verfugbare Operclasses im Netzwerk"
       empty: "Keine Operclasses im Netzwerk verfugbar."
-      not_supported: "\x0304✗\x03 Das aktuelle Protokoll unterstutzt das Auflisten verfugbarer Operclasses nicht."
+      not_supported: "Das aktuelle Protokoll unterstutzt das Auflisten verfugbarer Operclasses nicht."
     view:
       empty: "Die Rolle %role% hat keine Operclass."
-      line: "  Operclass: \x0303%operclass%\x03"
-      available: "  Verfugbare Operclasses: \x0310%available%\x03"
+      line: "Operclass: %operclass%"
+      available: "Verfugbare Operclasses: %available%"
     set:
-      done: "\x0303✓\x03 Operclass für die Rolle %role% konfiguriert."
-      cleared: "\x0303✓\x03 Operclass der Rolle %role% entfernt."
-      not_available: "\x0304✗\x03 Die Operclass \x02%operclass%\x02 ist im Netzwerk nicht verfugbar. Verfugbare Operclasses: %available%."
+      done: "Operclass für die Rolle %role% konfiguriert."
+      cleared: "Operclass der Rolle %role% entfernt."
+      not_available: "Die Operclass %operclass% ist im Netzwerk nicht verfugbar. Verfugbare Operclasses: %available%."
   syntax: "ROLE {ADD <Name> [Beschreibung]|DEL <Name>|LIST|PERMS {{ADD|DEL} <Rolle> <Berechtigung>|{LIST|CLEAR} <Rolle>}|MODES {VIEW <Rolle>|SET <Rolle> [Modi]}|VHOST {VIEW <Rolle>|SET <Rolle> [VHost]}}"
   short: "Verwaltet Operator-Rollen, Berechtigungen und Einstellungen."
   help: |-
@@ -156,14 +160,14 @@ role:
     VHOST verwaltet das erzwungene VHost-Muster einer Rolle, OPERCLASS verwaltet die Unreal-Operclass.
     Geschützte Rollen (ADMIN, OPER, PREOPER) können nicht gelöscht werden.
     Dieser Befehl ist Root-Benutzern vorbehalten.
-  example: "%command_prefix%\x02\x0303ROLE LIST\x03\x0F"
+  example: "%command_prefix%ROLE LIST"
   examples:
-    - "%command_prefix%\x02\x0303ROLE ADD SOPORTE Support-Operatoren\x03\x0F"
-  unknown_sub: "\x0304✗\x03 Unbekannter Unterbefehl \x02%sub%\x02. Verwenden Sie ADD, DEL, LIST, PERMS, MODES oder VHOST."
-  unknown_sub_operclass: "\x0304✗\x03 Unbekannter Unterbefehl \x02%sub%\x02. Verwenden Sie ADD, DEL, LIST, PERMS, MODES, VHOST oder OPERCLASS."
-  not_found: "\x0304✗\x03 Rolle \x02%role%\x02 existiert nicht."
-  already_exists: "\x0304✗\x03 Rolle \x02%role%\x02 existiert bereits."
-  protected: "\x0304✗\x03 Rolle \x02%role%\x02 ist geschützt und kann nicht gelöscht werden."
+    - "%command_prefix%ROLE ADD SOPORTE Support-Operatoren"
+  unknown_sub: "Unbekannter Unterbefehl %sub%. Verwenden Sie ADD, DEL, LIST, PERMS, MODES oder VHOST."
+  unknown_sub_operclass: "Unbekannter Unterbefehl %sub%. Verwenden Sie ADD, DEL, LIST, PERMS, MODES, VHOST oder OPERCLASS."
+  not_found: "Rolle %role% existiert nicht."
+  already_exists: "Rolle %role% existiert bereits."
+  protected: "Rolle %role% ist geschützt und kann nicht gelöscht werden."
 
   # --- ROLE ADD ------------------------------------------------------------
   add:
@@ -172,8 +176,8 @@ role:
     help: |-
       Erstellt eine neue benutzerdefinierte Rolle. Beschreibung ist optional.
       Dieser Befehl ist Root-Benutzern vorbehalten.
-    example: "%command_prefix%\x02\x0303ROLE ADD SOPORTE Support-Operatoren\x03\x0F"
-    done: "\x0303✓\x03 Rolle \x02%role%\x02 erstellt."
+    example: "%command_prefix%ROLE ADD SOPORTE Support-Operatoren"
+    done: "Rolle %role% erstellt."
 
   # --- ROLE DEL ------------------------------------------------------------
   del:
@@ -184,8 +188,8 @@ role:
       können nicht gelöscht werden. Wenn der Rolle Operatoren zugewiesen sind,
       müssen diese zuerst neu zugewiesen werden.
       Dieser Befehl ist Root-Benutzern vorbehalten.
-    example: "%command_prefix%\x02\x0303ROLE DEL SOPORTE\x03\x0F"
-    done: "\x0303✓\x03 Rolle \x02%role%\x02 gelöscht."
+    example: "%command_prefix%ROLE DEL SOPORTE"
+    done: "Rolle %role% gelöscht."
 
   # --- ROLE LIST -----------------------------------------------------------
   list:
@@ -194,88 +198,88 @@ role:
     help: |-
       Listet alle Rollen auf. Geschützte Rollen sind mit [GESCHÜTZT] markiert.
       Dieser Befehl ist Root-Benutzern vorbehalten.
-    example: "%command_prefix%\x02\x0303ROLE LIST\x03\x0F"
-    header: "\x0307---\x03 \x02Operator-Rollen\x02 \x0307---\x03"
+    example: "%command_prefix%ROLE LIST"
+    header: "Operator-Rollen"
     empty: "Es gibt keine Operator-Rollen."
 
   # --- ROLE PERMS ----------------------------------------------------------
   perms:
     syntax: "ROLE PERMS {{ADD|DEL} <Rolle> <Berechtigung>|{LIST|CLEAR} <Rolle>}"
     short: "Verwaltet die Berechtigungen einer Rolle."
-    help: !irc |-
+    help: |-
       Verwaltet die einer Rolle zugewiesenen Berechtigungen.
 
-      \x02 ■ Optionen:\x02
-          \x0310›\x03\x0F \x02\x0303LIST      \x03\x0FZeigt alle verfügbaren Berechtigungen und markiert die
+      %options_header%
+      %option_LIST%Zeigt alle verfügbaren Berechtigungen und markiert die
                       zugewiesenen.
-          \x0310›\x03\x0F \x02\x0303ADD       \x03\x0FWeist eine Berechtigung zu.
-          \x0310›\x03\x0F \x02\x0303DEL       \x03\x0FEntfernt eine Berechtigung (nicht für geschützte Rollen).
-          \x0310›\x03\x0F \x02\x0303CLEAR     \x03\x0FEntfernt alle Berechtigungen.
+      %option_ADD%Weist eine Berechtigung zu.
+      %option_DEL%Entfernt eine Berechtigung (nicht für geschützte Rollen).
+      %option_CLEAR%Entfernt alle Berechtigungen.
 
-      ✓ bedeutet zugewiesen; ✗ bedeutet verfügbar.
+      %assigned_status% bedeutet zugewiesen; %unassigned_status% bedeutet verfügbar.
 
       Verwende ALL, um alle verfügbaren Berechtigungen auf einmal hinzuzufügen.
       Nur für Root-Benutzer.
-    example: "%command_prefix%\x02\x0303ROLE PERMS LIST SOPORTE\x03\x0F"
+    example: "%command_prefix%ROLE PERMS LIST SOPORTE"
     examples:
-      - "%command_prefix%\x02\x0303ROLE PERMS ADD SOPORTE operserv.gline\x03\x0F"
-      - "%command_prefix%\x02\x0303ROLE PERMS ADD SOPORTE ALL\x03\x0F"
-      - "%command_prefix%\x02\x0303ROLE PERMS DEL SOPORTE operserv.gline\x03\x0F"
-      - "%command_prefix%\x02\x0303ROLE PERMS CLEAR SOPORTE\x03\x0F"
-    not_found: "\x0304✗\x03 Berechtigung \x02%perm%\x02 existiert nicht."
-    already_has: "\x0304✗\x03 Rolle \x02%role%\x02 hat bereits die Berechtigung \x02%perm%\x02."
-    does_not_have: "\x0304✗\x03 Rolle \x02%role%\x02 hat die Berechtigung \x02%perm%\x02 nicht."
+      - "%command_prefix%ROLE PERMS ADD SOPORTE operserv.gline"
+      - "%command_prefix%ROLE PERMS ADD SOPORTE ALL"
+      - "%command_prefix%ROLE PERMS DEL SOPORTE operserv.gline"
+      - "%command_prefix%ROLE PERMS CLEAR SOPORTE"
+    not_found: "Berechtigung %perm% existiert nicht."
+    already_has: "Rolle %role% hat bereits die Berechtigung %perm%."
+    does_not_have: "Rolle %role% hat die Berechtigung %perm% nicht."
     list:
-      header: "\x0303Berechtigungsliste für \x02%role%\x02\x03"
+      header: "Berechtigungsliste für %role%"
       columns: "Zugewiesen | Berechtigungsschlüssel | Beschreibung"
       row: "%assigned% | %permission% | %description%"
-      assigned: "\x0303✓\x03\x0F"
-      unassigned: "\x0304✗\x03\x0F"
+      assigned: ""
+      unassigned: ""
     add:
-      done: "\x0303✓\x03 Berechtigung \x02%perm%\x02 zu Rolle \x02%role%\x02 hinzugefügt."
-      all_done: "\x0303✓\x03 \x02%count%\x02 Berechtigungen zu Rolle \x02%role%\x02 hinzugefügt."
+      done: "Berechtigung %perm% zu Rolle %role% hinzugefügt."
+      all_done: "%count% Berechtigungen zu Rolle %role% hinzugefügt."
     del:
-      done: "\x0303✓\x03 Berechtigung \x02%perm%\x02 von Rolle \x02%role%\x02 entfernt."
+      done: "Berechtigung %perm% von Rolle %role% entfernt."
     clear:
-      done: "\x0303✓\x03 \x02%count%\x02 Berechtigungen von Rolle \x02%role%\x02 entfernt."
-      empty: "\x0304✗\x03 Rolle \x02%role%\x02 hat keine Berechtigungen zugewiesen."
+      done: "%count% Berechtigungen von Rolle %role% entfernt."
+      empty: "Rolle %role% hat keine Berechtigungen zugewiesen."
 
   # --- ROLE MODES ----------------------------------------------------------
   modes:
     syntax: "ROLE MODES {VIEW <Rolle>|SET <Rolle> [Modi]}"
     short: "Konfiguriert die Benutzermodi einer Rolle."
-    help: !irc |-
+    help: |-
       Verwaltet die IRCOP-Benutzermodi einer Rolle.
 
-      \x02 ■ Optionen:\x02
-          \x0310›\x03\x0F \x02\x0303VIEW      \x03\x0FZeigt die aktuellen Modi der Rolle an.
-          \x0310›\x03\x0F \x02\x0303SET       \x03\x0FLegt IRCOP-Modi fest.
+      %options_header%
+      %option_VIEW%Zeigt die aktuellen Modi der Rolle an.
+      %option_SET%Legt IRCOP-Modi fest.
 
       Lass die Modi weg, um alle zu entfernen.
 
       Benutzer dieser Rolle erhalten die Modi beim Identifizieren.
       Verfügbare Modi nach IRCD
       Nur für Root-Benutzer.
-    example: "%command_prefix%\x02\x0303ROLE MODES VIEW OPER\x03\x0F"
+    example: "%command_prefix%ROLE MODES VIEW OPER"
     examples:
-      - "%command_prefix%\x02\x0303ROLE MODES SET OPER oH\x03\x0F"
-      - "%command_prefix%\x02\x0303ROLE MODES SET OPER\x03\x0F"
+      - "%command_prefix%ROLE MODES SET OPER oH"
+      - "%command_prefix%ROLE MODES SET OPER"
     view:
-      header: "\x0307---\x03 \x02Modes für %role%\x02 \x0307---\x03"
-      empty: "Die Rolle \x02%role%\x02 hat keine Modes zugewiesen."
-      line: "  Modes: \x0303%modes%\x03"
+      header: "Modes für %role%"
+      empty: "Die Rolle %role% hat keine Modes zugewiesen."
+      line: "Modes: %modes%"
     set:
-      done: "\x0303✓\x03 Modes \x02%modes%\x02 für Rolle \x02%role%\x02 gesetzt."
-      cleared: "\x0303✓\x03 Alle Modes von Rolle \x02%role%\x02 entfernt."
-      invalid_mode: "\x0304✗\x03 Der Mode \x02%mode%\x02 ist kein gültiger IRCOP-Mode."
-      invalid_modes: "\x0304✗\x03 Ungültige Modes: %invalid%. Gültige Modes: %valid%."
-      no_irc_user_modes: "\x0304✗\x03 Der aktuelle IRCD hat keine IRCOP-Modes konfiguriert."
+      done: "Modes %modes% für Rolle %role% gesetzt."
+      cleared: "Alle Modes von Rolle %role% entfernt."
+      invalid_mode: "Der Mode %mode% ist kein gültiger IRCOP-Mode."
+      invalid_modes: "Ungültige Modes: %invalid%. Gültige Modes: %valid%."
+      no_irc_user_modes: "Der aktuelle IRCD hat keine IRCOP-Modes konfiguriert."
 
   # --- ROLE VHOST ----------------------------------------------------------
   vhost:
     syntax: "ROLE VHOST {VIEW <Rolle>|SET <Rolle> [VHost]}"
     short: "Konfiguriert das virtuelle Hostmuster einer Rolle."
-    help: !irc |-
+    help: |-
       Legt den virtuellen Host fest, den Operatoren einer Rolle beim Identifizieren
       anstelle ihres persönlichen Hosts erhalten.
 
@@ -284,9 +288,9 @@ role:
 
       _davidlig_ + admin.ares → davidlig.admin.ares
 
-      \x02 ■ Optionen:\x02
-          \x0310›\x03\x0F \x02\x0303VIEW      \x03\x0FZeigt das Hostmuster einer Rolle an.
-          \x0310›\x03\x0F \x02\x0303SET       \x03\x0FLegt das Hostmuster fest oder entfernt es.
+      %options_header%
+      %option_VIEW%Zeigt das Hostmuster einer Rolle an.
+      %option_SET%Legt das Hostmuster fest oder entfernt es.
 
       Das Muster erlaubt Buchstaben, Ziffern, Bindestriche und Punkte. Es muss
       mindestens
@@ -296,19 +300,20 @@ role:
       Verwende SET ohne Muster, um den erzwungenen Host zu entfernen.
 
       Nur für Root-Benutzer.
-    example: "%command_prefix%\x02\x0303ROLE VHOST VIEW OPER\x03\x0F"
+    example: "%command_prefix%ROLE VHOST VIEW OPER"
     examples:
-      - "%command_prefix%\x02\x0303ROLE VHOST SET OPER admin.ares\x03\x0F"
-      - "%command_prefix%\x02\x0303ROLE VHOST SET OPER\x03\x0F"
+      - "%command_prefix%ROLE VHOST SET OPER admin.ares"
+      - "%command_prefix%ROLE VHOST SET OPER"
     view:
-      header: "\x0307---\x03 \x02Erzwungener VHost für %role%\x02 \x0307---\x03"
-      empty: "Die Rolle \x02%role%\x02 hat kein erzwungenes VHost-Muster gesetzt."
-      line: "  Muster: \x0303%pattern%\x03"
-      example: "  Beispiel: \x02nickname\x02.%pattern%"
+      header: "Erzwungener VHost für %role%"
+      empty: "Die Rolle %role% hat kein erzwungenes VHost-Muster gesetzt."
+      line: "Muster: %pattern%"
+      example: "Beispiel: %example_nickname%.%pattern%"
+      example_nickname: "nickname"
     set:
-      done: "\x0303✓\x03 Erzwungenes VHost-Muster für Rolle \x02%role%\x02 gesetzt."
-      cleared: "\x0303✓\x03 Erzwungenes VHost-Muster von Rolle \x02%role%\x02 entfernt."
-      invalid: "\x0304✗\x03 Ungültiges VHost-Muster. Gültige Zeichen: a-z, A-Z, 0-9, - und .. Muss mindestens einen Punkt haben, darf nicht mit - oder . beginnen/enden oder .. enthalten"
+      done: "Erzwungenes VHost-Muster für Rolle %role% gesetzt."
+      cleared: "Erzwungenes VHost-Muster von Rolle %role% entfernt."
+      invalid: "Ungültiges VHost-Muster. Gültige Zeichen: a-z, A-Z, 0-9, - und .. Muss mindestens einen Punkt haben, darf nicht mit - oder . beginnen/enden oder .. enthalten"
 
 # --- KILL ------------------------------------------------------------------
 kill:
@@ -317,10 +322,10 @@ kill:
   help: |-
     Trennt einen Benutzer vom IRC-Netzwerk.
     IRC-Operatoren und Root-Benutzer können nicht gekillt werden.
-  example: "%command_prefix%\x02\x0303KILL BadUser Flooding en canales\x03\x0F"
-  protected_root: "\x0304✗\x03 Root-Benutzer \x02%nickname%\x02 kann nicht gekillt werden."
-  protected_ircop: "\x0304✗\x03 IRC-Operator \x02%nickname%\x02 kann nicht gekillt werden."
-  done: "\x0303✓\x03 Benutzer \x02%nickname%\x02 wurde gekillt (%reason%)."
+  example: "%command_prefix%KILL BadUser Flooding en canales"
+  protected_root: "Root-Benutzer %nickname% kann nicht gekillt werden."
+  protected_ircop: "IRC-Operator %nickname% kann nicht gekillt werden."
+  done: "Benutzer %nickname% wurde gekillt (%reason%)."
 
 # --- GLINE -----------------------------------------------------------------
 gline:
@@ -334,19 +339,19 @@ gline:
 
     Ablaufzeit: 0 = dauerhaft oder Endung d, h, m (z. B. 7d, 12h, 30m).
     G-Lines, die auf Root oder IRC-Operatoren passen, werden abgelehnt.
-  example: "%command_prefix%\x02\x0303GLINE ADD *@192.168.1.* 7d Spam-Missbrauch\x03\x0F"
+  example: "%command_prefix%GLINE ADD *@192.168.1.* 7d Spam-Missbrauch"
   examples:
-    - "%command_prefix%\x02\x0303GLINE ADD *@192.168.1.* 0 Anhaltender Missbrauch\x03\x0F"
-    - "%command_prefix%\x02\x0303GLINE LIST *@192.168.*\x03\x0F"
-  unknown_sub: "\x0304✗\x03 Unbekannter Unterbefehl \x02%sub%\x02. Verwenden Sie ADD, DEL oder LIST."
-  invalid_mask: "\x0304✗\x03 Ungültiges Maskenformat. Muss im Format benutzer@host sein (z. B. *@192.168.*)."
-  global_mask: "\x0304✗\x03 G-Line-Maske \x02%mask%\x02 ist zu allgemein. Globale Masken sind nicht erlaubt."
-  dangerous_mask: "\x0304✗\x03 G-Line-Maske \x02%mask%\x02 ist zu allgemein. Der Host-Teil benötigt mindestens 4 alphanumerische Zeichen."
-  protected_user: "\x0304✗\x03 Geschützter Benutzer \x02%nickname%\x02 kann nicht mit G-Line belegt werden."
-  invalid_expiry: "\x0304✗\x03 Ungültiges Ablauf-Format. Verwenden Sie 0 für dauerhaft oder einen Wert wie 7d, 12h, 30m."
-  already_exists: "\x0304✗\x03 G-Line für \x02%mask%\x02 existiert bereits."
-  max_entries: "\x0304✗\x03 Maximale Anzahl von G-Lines (%max%) erreicht."
-  not_found: "\x0304✗\x03 G-Line \x02%mask%\x02 nicht gefunden."
+    - "%command_prefix%GLINE ADD *@192.168.1.* 0 Anhaltender Missbrauch"
+    - "%command_prefix%GLINE LIST *@192.168.*"
+  unknown_sub: "Unbekannter Unterbefehl %sub%. Verwenden Sie ADD, DEL oder LIST."
+  invalid_mask: "Ungültiges Maskenformat. Muss im Format benutzer@host sein (z. B. *@192.168.*)."
+  global_mask: "G-Line-Maske %mask% ist zu allgemein. Globale Masken sind nicht erlaubt."
+  dangerous_mask: "G-Line-Maske %mask% ist zu allgemein. Der Host-Teil benötigt mindestens 4 alphanumerische Zeichen."
+  protected_user: "Geschützter Benutzer %nickname% kann nicht mit G-Line belegt werden."
+  invalid_expiry: "Ungültiges Ablauf-Format. Verwenden Sie 0 für dauerhaft oder einen Wert wie 7d, 12h, 30m."
+  already_exists: "G-Line für %mask% existiert bereits."
+  max_entries: "Maximale Anzahl von G-Lines (%max%) erreicht."
+  not_found: "G-Line %mask% nicht gefunden."
 
   # --- GLINE ADD -----------------------------------------------------------
   add:
@@ -357,10 +362,10 @@ gline:
       Die Maske muss das Format Benutzer@Host haben.
       Ablaufzeit: 0 = dauerhaft oder Endung d, h, m (z. B. 7d, 12h, 30m).
       G-Lines, die auf Root oder IRC-Operatoren passen, werden abgelehnt.
-    example: "%command_prefix%\x02\x0303GLINE ADD *@192.168.1.* 7d Spam-Missbrauch\x03\x0F"
+    example: "%command_prefix%GLINE ADD *@192.168.1.* 7d Spam-Missbrauch"
     examples:
-      - "%command_prefix%\x02\x0303GLINE ADD *@192.168.1.* 0 Anhaltender Missbrauch\x03\x0F"
-    done: "\x0303✓\x03 G-Line hinzugefügt: \x02%mask%\x02 (%duration%) - %reason%"
+      - "%command_prefix%GLINE ADD *@192.168.1.* 0 Anhaltender Missbrauch"
+    done: "G-Line hinzugefügt: %mask% (%duration%) - %reason%"
 
   # --- GLINE DEL -----------------------------------------------------------
   del:
@@ -369,22 +374,22 @@ gline:
     help: |-
       Entfernt eine G-Line aus der Liste.
       Du kannst die Maske oder die Eintragsnummer aus LIST angeben.
-    example: "%command_prefix%\x02\x0303GLINE DEL *@192.168.1.*\x03\x0F"
+    example: "%command_prefix%GLINE DEL *@192.168.1.*"
     examples:
-      - "%command_prefix%\x02\x0303GLINE DEL 2\x03\x0F"
-    done: "\x0303✓\x03 G-Line \x02%mask%\x02 entfernt."
+      - "%command_prefix%GLINE DEL 2"
+    done: "G-Line %mask% entfernt."
 
   # --- GLINE LIST ----------------------------------------------------------
   list:
     syntax: "GLINE LIST [Maske]"
     short: "Alle G-Lines auflisten."
     help: "Listet alle G-Lines auf. Optional kann nach einem Maskenmuster gefiltert werden."
-    example: "%command_prefix%\x02\x0303GLINE LIST\x03\x0F"
+    example: "%command_prefix%GLINE LIST"
     examples:
-      - "%command_prefix%\x02\x0303GLINE LIST *@192.168.*\x03\x0F"
-    header: "\x0307---\x03 \x02G-Lines (%count%) \x0307---\x03"
+      - "%command_prefix%GLINE LIST *@192.168.*"
+    header: "G-Lines (%count%)"
     empty: "Es gibt keine G-Lines."
-    entry: "\x0310%index%.\x03 \x02%mask%\x02 - %reason% (\x0314%nickname%\x03, läuft ab: %expiration%)"
+    entry: "%index%. %mask% - %reason% (%nickname%, läuft ab: %expiration%)"
 
 # --- GLOBAL ----------------------------------------------------------------
 global:
@@ -401,14 +406,14 @@ global:
 
     Der Nickname darf weder registriert noch in Benutzung sein. Der Client wird nach
     dem Senden automatisch getrennt und der Nickname 24 Stunden lang gesperrt.
-  example: "%command_prefix%\x02\x0303GLOBAL %operserv% PRIVMSG Wartung in 10 Minuten\x03\x0F"
+  example: "%command_prefix%GLOBAL %operserv% PRIVMSG Wartung in 10 Minuten"
   examples:
-    - "%command_prefix%\x02\x0303GLOBAL Avisos!oper@services.ares NOTICE Das Netzwerk wird neu gestartet\x03\x0F"
-  mask_invalid: "\x0304✗\x03 Ungültiges Maskenformat: %error%"
-  nick_connected: "\x0304✗\x03 Nickname \x02%nickname%\x02 ist derzeit verbunden."
-  nick_registered: "\x0304✗\x03 Nickname \x02%nickname%\x02 ist registriert."
-  type_invalid: "\x0304✗\x03 Nachrichtentyp muss PRIVMSG oder NOTICE sein."
-  done: "\x0303✓\x03 Globale Nachricht von \x02%nickname%\x02 an %count% Benutzer gesendet."
+    - "%command_prefix%GLOBAL Avisos!oper@services.ares NOTICE Das Netzwerk wird neu gestartet"
+  mask_invalid: "Ungültiges Maskenformat: %error%"
+  nick_connected: "Nickname %nickname% ist derzeit verbunden."
+  nick_registered: "Nickname %nickname% ist registriert."
+  type_invalid: "Nachrichtentyp muss PRIVMSG oder NOTICE sein."
+  done: "Globale Nachricht von %nickname% an %count% Benutzer gesendet."
 
 # --- RAW -------------------------------------------------------------------
 raw:
@@ -418,20 +423,20 @@ raw:
     Sendet die angegebene Zeile direkt an den Socket des IRCd-Linkservers.
     Mit äußerster Vorsicht verwenden. Ungültige Protokollzeilen können das Netzwerk
     stören.
-  example: "%command_prefix%\x02\x0303RAW :services.ares NOTICE * :Geplante Wartung\x03\x0F"
-  empty: "\x0304✗\x03 Sie müssen eine nicht-leere Zeile zum Senden angeben."
-  too_long: "\x0304✗\x03 Zeile ist zu lang. Maximal 510 Zeichen."
-  not_connected: "\x0304✗\x03 Nicht mit IRCd verbunden."
-  done: "\x0303✓\x03 Rohe Zeile gesendet."
+  example: "%command_prefix%RAW :services.ares NOTICE * :Geplante Wartung"
+  empty: "Sie müssen eine nicht-leere Zeile zum Senden angeben."
+  too_long: "Zeile ist zu lang. Maximal 510 Zeichen."
+  not_connected: "Nicht mit IRCd verbunden."
+  done: "Rohe Zeile gesendet."
   protocol:
-    syntax: "\x0304✗\x03 Das aktive Protokoll hat die Syntax des RAW-Befehls abgelehnt."
-    done: "\x0303✓\x03 Protokolleigener RAW-Befehl ausgeführt."
-    target: "\x0304✗\x03 Das aktive Protokoll hat das Ziel %target% abgelehnt."
-    unsupported: "\x0304✗\x03 Das aktive Protokoll unterstützt diesen RAW-Befehl nicht."
-    invalid_resource_type: "\x0304✗\x03 Unbekannter Protokoll-Ressourcentyp: %resource_type%."
-    invalid_resource: "\x0304✗\x03 Ungültige Protokollressource: %resource%."
-    invalid_value: "\x0304✗\x03 Ungültiger Wert für Protokollressource: %resource%."
-    error: "\x0304✗\x03 Das aktive Protokoll konnte den RAW-Befehl nicht ausführen."
+    syntax: "Das aktive Protokoll hat die Syntax des RAW-Befehls abgelehnt."
+    done: "Protokolleigener RAW-Befehl ausgeführt."
+    target: "Das aktive Protokoll hat das Ziel %target% abgelehnt."
+    unsupported: "Das aktive Protokoll unterstützt diesen RAW-Befehl nicht."
+    invalid_resource_type: "Unbekannter Protokoll-Ressourcentyp: %resource_type%."
+    invalid_resource: "Ungültige Protokollressource: %resource%."
+    invalid_value: "Ungültiger Wert für Protokollressource: %resource%."
+    error: "Das aktive Protokoll konnte den RAW-Befehl nicht ausführen."
 
 # --- DEBUG -----------------------------------------------------------------
 debug:
@@ -445,45 +450,45 @@ motd:
   help: |-
     Verwaltet MOTD-Einträge (Nachricht des Tages), die beim Verbinden an Benutzer
     gesendet werden.
-  example: "%command_prefix%\x02\x0303MOTD LIST\x03\x0F"
-  unknown_sub: "\x0304✗\x03 Unbekannter Unterbefehl. Verwenden Sie: \x02ADD\x02, \x02DEL\x02, \x02LIST\x02, \x02CLEAN\x02"
+  example: "%command_prefix%MOTD LIST"
+  unknown_sub: "Unbekannter Unterbefehl. Verwenden Sie: %add%, %del%, %list%, %clean%"
 
   # --- MOTD ADD ------------------------------------------------------------
   add:
     syntax: "MOTD ADD {Service|nick!ident@vhost} {PRIVMSG|NOTICE} <Ablauf> <Nachricht>"
-    syntax_hint: "\x0304✗\x03 Verwendung: \x02%syntax%\x02"
+    syntax_hint: "Verwendung: %syntax%"
     short: "Einen MOTD-Eintrag hinzufügen."
     help: |-
       Fügt eine neue MOTD-Nachricht hinzu, die jedem Benutzer beim Verbinden
       gesendet wird.
-    example: "%command_prefix%\x02\x0303MOTD ADD %operserv% NOTICE 24h Wartung heute Nacht\x03\x0F"
+    example: "%command_prefix%MOTD ADD %operserv% NOTICE 24h Wartung heute Nacht"
     examples:
-      - "%command_prefix%\x02\x0303MOTD ADD %operserv% PRIVMSG 0 Willkommen a la red\x03\x0F"
-    done: "\x0303✓\x03 MOTD-Eintrag #%id% hinzugefügt."
-    invalid_type: "\x0304✗\x03 Ungültiger Nachrichtentyp. Muss \x02PRIVMSG\x02 oder \x02NOTICE\x02 sein."
-    invalid_expiry: "\x0304✗\x03 Ungültiges Ablaufzeitformat. Verwende \x02<Zahl><s|m|h|d>\x02 oder \x020\x02 für unbegrenzt (z. B. 30s, 5m, 24h, 7d)."
+      - "%command_prefix%MOTD ADD %operserv% PRIVMSG 0 Willkommen a la red"
+    done: "MOTD-Eintrag #%id% hinzugefügt."
+    invalid_type: "Ungültiger Nachrichtentyp. Muss PRIVMSG oder NOTICE sein."
+    invalid_expiry: "Ungültiges Ablaufzeitformat. Verwende <Zahl><s|m|h|d> oder 0 für unbegrenzt (z. B. 30s, 5m, 24h, 7d)."
 
   # --- MOTD DEL ------------------------------------------------------------
   del:
     syntax: "MOTD DEL <id>"
-    syntax_hint: "\x0304✗\x03 Verwendung: \x02%syntax%\x02"
+    syntax_hint: "Verwendung: %syntax%"
     short: "Einen MOTD-Eintrag löschen."
     help: "Löscht einen MOTD-Eintrag anhand seiner ID."
-    example: "%command_prefix%\x02\x0303MOTD DEL 12\x03\x0F"
-    done: "\x0303✓\x03 MOTD-Eintrag #%id% gelöscht."
-    not_found: "\x0304✗\x03 MOTD-Eintrag nicht gefunden."
+    example: "%command_prefix%MOTD DEL 12"
+    done: "MOTD-Eintrag #%id% gelöscht."
+    not_found: "MOTD-Eintrag nicht gefunden."
 
   # --- MOTD LIST -----------------------------------------------------------
   list:
     syntax: "MOTD LIST"
     short: "Alle MOTD-Einträge auflisten."
     help: "Listet alle konfigurierten MOTD-Einträge auf."
-    example: "%command_prefix%\x02\x0303MOTD LIST\x03\x0F"
+    example: "%command_prefix%MOTD LIST"
     empty: "Keine MOTD-Einträge konfiguriert."
     header: "MOTD-Einträge:"
-    status_enabled: "\x0303aktiviert\x03"
-    status_disabled: "\x0304deaktiviert\x03"
-    expired: "\x0304abgelaufen\x03"
+    status_enabled: "aktiviert"
+    status_disabled: "deaktiviert"
+    expired: "abgelaufen"
     no_bot: "(kein Bot)"
     shown_count: "%count% Mal angezeigt"
 
@@ -492,9 +497,9 @@ motd:
     syntax: "MOTD CLEAN"
     short: "Alle abgelaufenen MOTD-Einträge entfernen."
     help: "Löscht alle abgelaufenen MOTD-Einträge."
-    example: "%command_prefix%\x02\x0303MOTD CLEAN\x03\x0F"
-    done: "\x0303✓\x03 %count% abgelaufene MOTD-Einträge entfernt."
-    none: "\x0303✓\x03 Keine abgelaufenen MOTD-Einträge zum Entfernen."
+    example: "%command_prefix%MOTD CLEAN"
+    done: "%count% abgelaufene MOTD-Einträge entfernt."
+    none: "Keine abgelaufenen MOTD-Einträge zum Entfernen."
   debug:
     finalized: "MOTD-Nachricht #%id% wurde beendet: [%type%] %message% | %date% | %shown_count%"
 
@@ -504,7 +509,7 @@ badmail:
   short: "Gesperrte E-Mail-Domains verwalten."
   help: |-
     Gesperrte E-Mail-Domains verwalten.
-  example: "%command_prefix%\x02\x0303BADMAIL LIST *\x03\x0f"
+  example: "%command_prefix%BADMAIL LIST *"
   add:
     syntax: "BADMAIL ADD <Domain> <Begründung>"
     short: "Eine Domain sperren."
@@ -512,14 +517,14 @@ badmail:
       Akzeptiert ASCII- oder Punycode-Domains, keine Adressen oder Muster.
       Eine Begründung ist erforderlich. Die Sperre gilt exakt, nicht für
       Subdomains.
-    example: "%command_prefix%\x02\x0303BADMAIL ADD example.org abuse\x03\x0f"
+    example: "%command_prefix%BADMAIL ADD example.org abuse"
   del:
     syntax: "BADMAIL DEL {Nummer|ALL}"
     short: "Domainsperren entfernen."
     help: |-
       Eine dauerhafte Kennung oder mit ALL alle Einträge löschen. Andere
       Kennungen bleiben unverändert.
-    example: "%command_prefix%\x02\x0303BADMAIL DEL 1\x03\x0f"
+    example: "%command_prefix%BADMAIL DEL 1"
   list:
     syntax: "BADMAIL LIST <Muster> [Seite]"
     short: "Gesperrte Domains auflisten."
@@ -528,14 +533,14 @@ badmail:
       Zeichenfolgen. Groß- und Kleinschreibung wird ignoriert. Die optionale
       Seite beginnt bei 1. Kennungen bleiben beim Filtern und Blättern
       erhalten.
-    example: "%command_prefix%\x02\x0303BADMAIL LIST *.org 2\x03\x0f"
+    example: "%command_prefix%BADMAIL LIST *.org 2"
   invalid_domain: "Ungültige Domain. ASCII oder Punycode ohne abschließenden Punkt verwenden."
   invalid_reason: "Eine nicht leere, einzeilige administrative Begründung ist erforderlich."
   duplicate: "Diese Domain ist bereits gesperrt."
   not_found: "Keine gesperrte Domain mit dieser Kennung gefunden."
-  added: "\x0303✓\x03 Domain \x02%domain%\x02 gesperrt."
-  deleted: "\x0303✓\x03 Domainsperre \x02%id%\x02 entfernt."
-  cleared: "\x0303✓\x03 \x02%total%\x02 Domainsperren entfernt."
+  added: "Domain %domain% gesperrt."
+  deleted: "Domainsperre %id% entfernt."
+  cleared: "%total% Domainsperren entfernt."
   empty: "Keine passenden gesperrten Domains."
   header: "ID | Domain | Begründung"
   page: "Seite %page%/%pages%, %total% passende Domains."

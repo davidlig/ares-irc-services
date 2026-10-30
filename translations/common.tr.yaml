@@ -24,16 +24,16 @@ unknown_help_option: "\x0304✗\x03\x0F \x0303%command%\x03\x0F için bilinmeyen
 
 # --- ERROR -----------------------------------------------------------------
 error:
-  email_domain_blocked: "\x0304✗\x03 Bu e-posta alan adı yönetim tarafından engellenmiştir."
-  syntax: "\x0304✗\x03 Hatalı sözdizimi. Kullanım: \x02%syntax%\x02"
-  oper_only: "\x0304✗\x03 Bu komut yalnızca IRC Operatörleri içindir."
-  not_identified: "\x0304✗\x03 Kimliğiniz doğrulanmadı. /msg %nickserv% \x0303IDENTIFY <takma_ad> <parola>\x03 kullanın"
-  permission_denied: "\x0304✗\x03 Erişim reddedildi. Bu komuta erişim yetkiniz yok."
-  mail_failed: "\x0304✗\x03 E-posta gönderilemedi. Adresinizi kontrol edin veya daha sonra tekrar deneyin."
-  channel_not_registered: "\x0304✗\x03 \x02%channel%\x02 kanalı kayıtlı değil."
-  nick_not_registered: "\x0304✗\x03 \x02%nickname%\x02 rumuzu kayıtlı değil."
-  insufficient_access: "\x0304✗\x03 \x02%channel%\x02 kanalında \x02%operation%\x02 işlemi için yetersiz yetki."
-  nick_not_online: "\x0304✗\x03 \x02%nickname%\x02 rumuzu bağlı değil."
+  email_domain_blocked: "Bu e-posta alan adı yönetim tarafından engellenmiştir."
+  syntax: "Hatalı sözdizimi. Kullanım: %syntax%"
+  oper_only: "Bu komut yalnızca IRC Operatörleri içindir."
+  not_identified: "Kimliğiniz doğrulanmadı. /msg %nickserv% IDENTIFY <takma_ad> <parola> kullanın"
+  permission_denied: "Erişim reddedildi. Bu komuta erişim yetkiniz yok."
+  mail_failed: "E-posta gönderilemedi. Adresinizi kontrol edin veya daha sonra tekrar deneyin."
+  channel_not_registered: "%channel% kanalı kayıtlı değil."
+  nick_not_registered: "%nickname% rumuzu kayıtlı değil."
+  insufficient_access: "%channel% kanalında %operation% işlemi için yetersiz yetki."
+  nick_not_online: "%nickname% rumuzu bağlı değil."
 
 # --- DURATION --------------------------------------------------------------
 duration:
@@ -94,11 +94,11 @@ debug:
 history:
   unknown_operator: "(bilinmiyor)"
   del:
-    success: "\x0303✔\x03 Geçmiş girişi \x02%id%\x02 silindi."
-    not_found: "\x0304✗\x03 Geçmiş girişi \x02%id%\x02 bulunamadı."
-    invalid_id: "\x0304✗\x03 Geçersiz giriş ID'si: \x02%id%\x02."
+    success: "Geçmiş girişi %id% silindi."
+    not_found: "Geçmiş girişi %id% bulunamadı."
+    invalid_id: "Geçersiz giriş ID'si: %id%."
   view:
-    extra: "  Ekstra \x0307→\x03 %extra%"
+    extra: "Ekstra %extra%"
   message:
     unsuspend: "Askı kaldırıldı"
   extra:
@@ -125,3 +125,19 @@ label:
   unknown_creator: "bilinmiyor"
   permanent: "Kalıcı"
   permanent_inline: "kalıcı"
+
+# --- PRESENTATION-FREE MIGRATED REPLIES ---
+presentation:
+  unknown_command: "Bilinmeyen komut %command%. Şunu kullanın: /msg %bot% %help%"
+  unknown_help_option: "%command% için bilinmeyen yardım seçeneği %option%. Şunu kullanın: /msg %bot% %help% %command%"
+  error.email_domain_blocked: "Bu e-posta alan adı yönetim tarafından engellenmiştir."
+  error.syntax: "Hatalı sözdizimi. Kullanım: %syntax%"
+  error.oper_only: "Bu komut yalnızca IRC Operatörleri içindir."
+  error.not_identified: "Kimliğiniz doğrulanmadı. /msg %nickserv% %identify% kullanın"
+  error.permission_denied: "Erişim reddedildi. Bu komuta erişim yetkiniz yok."
+  error.mail_failed: "E-posta gönderilemedi. Adresinizi kontrol edin veya daha sonra tekrar deneyin."
+  error.channel_not_registered: "%channel% kanalı kayıtlı değil."
+  error.nick_not_registered: "%nickname% rumuzu kayıtlı değil."
+  error.insufficient_access: "%channel% kanalında %operation% işlemi için yetersiz yetki."
+  error.nick_not_online: "%nickname% rumuzu bağlı değil."
+  identify: "IDENTIFY <takma_ad> <parola>"

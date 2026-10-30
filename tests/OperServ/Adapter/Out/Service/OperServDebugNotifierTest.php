@@ -14,18 +14,65 @@ use App\OperServ\Application\Port\In\AuthorizationDecision;
 use App\OperServ\Application\Port\In\AuthorizationGrant;
 use App\OperServ\Application\Port\In\OperatorActor;
 use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
+use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Translation\Translator;
+use Symfony\Contracts\Translation\TranslatableInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function array_map;
 use function hash;
+use function restore_error_handler;
 use function serialize;
+use function set_error_handler;
+use function str_replace;
 
 #[CoversClass(OperServDebugNotifier::class)]
 final class OperServDebugNotifierTest extends TestCase
 {
+    #[Test]
+    public function translatableDebugParameterKeepsLiteralPlaceholderText(): void
+    {
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturn('%duration% %unused%');
+        $notifier = $this->createMock(OperServNotifierInterface::class);
+        $notifier->expects(self::once())->method('sendMessage')->with('#debug', '%unused% %unused%', 'NOTICE');
+        $debug = $this->createDebugNotifier(notifier: $notifier, translator: $translator, debugChannel: '#debug');
+        $value = new class implements TranslatableInterface {
+            public function trans(TranslatorInterface $translator, ?string $locale = null): string
+            {
+                return '%unused%';
+            }
+        };
+        $debug->log('Admin', 'SET', 'Target', extra: ['duration' => $value]);
+    }
+
+    #[Test]
+    public function nonScalarDebugParameterRetainsTranslatorConversion(): void
+    {
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturn('%duration%');
+        $notifier = $this->createMock(OperServNotifierInterface::class);
+        $notifier->expects(self::once())->method('sendMessage')->with(self::anything(), 'Array', 'NOTICE');
+        $debug = $this->createDebugNotifier(notifier: $notifier, translator: $translator, debugChannel: '#debug');
+        $warnings = [];
+        set_error_handler(static function (int $severity, string $message) use (&$warnings): bool {
+            $warnings[] = [$severity, $message];
+
+            return true;
+        });
+        try {
+            $debug->log('Admin', 'SET', 'Target', extra: ['duration' => ['x']]);
+        } finally {
+            restore_error_handler();
+        }
+        self::assertSame([[E_WARNING, 'Array to string conversion']], $warnings);
+    }
+
     #[Test]
     public function isConfiguredReturnsFalseWhenChannelIsNull(): void
     {
@@ -181,10 +228,7 @@ final class OperServDebugNotifierTest extends TestCase
 
         $translator = $this->createMock(TranslatorInterface::class);
         $translator->expects(self::once())->method('trans')
-            ->with('debug.action_global', self::callback(static fn (array $params) => isset($params['%type%'])
-                && 'PRIVMSG' === $params['%type%']
-                && '4' === $params['%count%']
-                && 'test message' === $params['%message%']));
+            ->with('debug.action_global', []);
 
         $debug = $this->createDebugNotifier(
             notifier: $notifier,
@@ -310,10 +354,7 @@ final class OperServDebugNotifierTest extends TestCase
         $translator->expects(self::atLeastOnce())->method('trans')
             ->willReturnCallback(static function (string $key, array $params = []): string {
                 if ('debug.action_duration' === $key) {
-                    self::assertArrayHasKey('%duration%', $params);
-                    self::assertIsString($params['%duration%']);
-
-                    return 'GLINE added with duration ' . $params['%duration%'];
+                    return 'GLINE added with duration %duration%';
                 }
 
                 return $key;
@@ -421,7 +462,7 @@ final class OperServDebugNotifierTest extends TestCase
             foreach ($cases as [$command, $reason, $extra]) {
                 $debug->log('Admin', $command, 'Target', null, null, $reason, $extra);
             }
-            self::assertSame($hash, hash('sha256', serialize($messages)), $locale);
+            self::assertSame($hash, hash('sha256', serialize(array_map(static fn (array $entry): array => [$entry[0], str_replace("\x03\x0F", "\x03", $entry[1]), $entry[2]], $messages))), $locale);
         }
     }
 
@@ -444,6 +485,7 @@ final class OperServDebugNotifierTest extends TestCase
             translator: $translator ?? $this->createStub(TranslatorInterface::class),
             defaultLanguage: $language,
             debugChannel: $debugChannel,
+            renderer: $this->renderer(),
         );
     }
 
@@ -453,5 +495,10 @@ final class OperServDebugNotifierTest extends TestCase
         $authorization->method('ircOperator')->willReturn(AuthorizationDecision::denied());
 
         return $authorization;
+    }
+
+    private function renderer(): IrcRenderer
+    {
+        return new IrcRenderer(new FixedStyleProvider(PresentationStyle::default()));
     }
 }

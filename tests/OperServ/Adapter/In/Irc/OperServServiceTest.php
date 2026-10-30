@@ -24,6 +24,10 @@ use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
 use App\OperServ\Application\UseCase\ManageGline\ManageGlineHandlerInterface;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\Presentation\Appearance;
+use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
 use DateTimeImmutable;
 use DateTimeZone;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -42,6 +46,21 @@ use function array_fill;
 #[CoversClass(GlineCommand::class)]
 final class OperServServiceTest extends TestCase
 {
+    #[Test]
+    public function rendersUnknownCommandWithSemanticFragments(): void
+    {
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturn('Unknown %command%; /msg %bot% %help%');
+        $renderer = new IrcRenderer(new FixedStyleProvider(new PresentationStyle(
+            components: ['command' => new Appearance(bold: true)],
+            markers: ['error' => '!'],
+        )));
+        $notifier = new RecordingOperServNotifier();
+        $this->service([], $notifier, prefersPrivate: true, translator: $translator, renderer: $renderer)->dispatch('missing', $this->sender());
+
+        self::assertSame([['001AAA', "! Unknown \x02MISSING\x03\x0F; /msg OperServ \x02HELP\x03\x0F", 'PRIVMSG']], $notifier->messages);
+    }
+
     #[Test]
     public function ignoresBlankInput(): void
     {
@@ -269,6 +288,7 @@ final class OperServServiceTest extends TestCase
         bool $prefersPrivate = false,
         ?TranslatorInterface $translator = null,
         string $language = 'en',
+        ?IrcRenderer $renderer = null,
     ): OperServService {
         $accounts = $this->createStub(NickAccountQuery::class);
         $accounts->method('findAccountByNick')->willReturn($account);
@@ -287,6 +307,7 @@ final class OperServServiceTest extends TestCase
             new ServiceNicknameRegistry([]),
             $authorization ?? $this->createStub(OperatorAuthorizationQuery::class),
             $language,
+            renderer: $renderer,
         );
     }
 

@@ -16,6 +16,9 @@ use App\NickServ\Application\UseCase\Recover\RecoverNickOutcome;
 use App\NickServ\Application\UseCase\Recover\RecoverNickResult;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\Fragment;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 use App\Shared\Application\EmailHintMasker;
 
 use function base64_decode;
@@ -130,59 +133,68 @@ final readonly class RecoverCommand implements NickServCommandInterface
     {
         switch ($result->outcome) {
             case RecoverNickOutcome::NotRegistered:
-                $context->reply('error.nick_not_registered', ['nickname' => $result->nickname ?? '']);
+                $context->replyMissingNick('error.nick_not_registered', $result->nickname ?? '');
                 break;
             case RecoverNickOutcome::Pending:
-                $context->reply('recover.pending', ['nickname' => $result->nickname ?? '']);
+                $context->replyWithLocalizedFragments('recover.pending', ['nickname' => new Fragment($result->nickname ?? '', Component::Emphasis)], Role::Information, [
+                    'command_0' => ['recover.pending_command_0', Component::Command],
+                    'command_1' => ['recover.pending_command_1', Component::Command],
+                ]);
                 break;
             case RecoverNickOutcome::Suspended:
-                $context->reply('recover.suspended', [
+                $context->replyEmphasized('recover.suspended', [
                     'nickname' => $result->nickname ?? '',
                     'reason' => $result->reason ?? '',
-                ]);
+                ], Role::Error, ['nickname']);
                 break;
             case RecoverNickOutcome::Forbidden:
-                $context->reply('recover.forbidden', ['nickname' => $result->nickname ?? '']);
+                $context->replyEmphasized('recover.forbidden', ['nickname' => $result->nickname ?? ''], Role::Error, ['nickname']);
                 break;
             case RecoverNickOutcome::Instructions:
-                $context->reply('recover.instructions', ['nickname' => $result->nickname ?? '']);
-                break;
-            case RecoverNickOutcome::CredentialUnavailable:
-                $context->reply('rescue.unavailable');
-                break;
-            case RecoverNickOutcome::PendingDeletion:
-                $context->reply('recover.pending_deletion', ['nickname' => $result->nickname ?? '']);
-                break;
-            case RecoverNickOutcome::Throttled:
-                $context->reply('recover.throttled', [
-                    'minutes' => (string) (int) ceil($result->retryAfterSeconds / 60),
+                $context->replyWithLocalizedFragments('recover.instructions', ['nickname' => $result->nickname ?? ''], Role::Information, [
+                    'command_0' => ['recover.instructions_command_0', Component::Command],
+                    'command_1' => ['recover.instructions_command_1', Component::Command],
+                    'command_2' => ['recover.instructions_command_2', Component::Command],
                 ]);
                 break;
+            case RecoverNickOutcome::CredentialUnavailable:
+                $context->replyRescueUnavailable();
+                break;
+            case RecoverNickOutcome::PendingDeletion:
+                $context->replyEmphasized('recover.pending_deletion', ['nickname' => $result->nickname ?? ''], Role::Error, ['nickname']);
+                break;
+            case RecoverNickOutcome::Throttled:
+                $context->replyEmphasized('recover.throttled', [
+                    'minutes' => (string) (int) ceil($result->retryAfterSeconds / 60),
+                ], Role::Error, ['minutes']);
+                break;
             case RecoverNickOutcome::InvalidToken:
-                $context->reply('recover.invalid_token', ['nickname' => $result->nickname ?? '']);
+                $context->replyEmphasized('recover.invalid_token', ['nickname' => $result->nickname ?? ''], Role::Error, []);
                 break;
             case RecoverNickOutcome::NoEmail:
-                $context->reply('recover.no_email', ['nickname' => $result->nickname ?? '']);
+                $context->replyEmphasized('recover.no_email', ['nickname' => $result->nickname ?? ''], Role::Error, ['nickname']);
                 break;
             case RecoverNickOutcome::MailDeliveryFailed:
-                $context->reply('error.mail_failed');
+                $context->replyCommonError('error.mail_failed');
                 break;
             case RecoverNickOutcome::TemporarilyUnavailable:
-                $context->reply('rescue.temporarily_unavailable');
+                $context->replyEmphasized('rescue.temporarily_unavailable', [], Role::Error, []);
                 break;
             case RecoverNickOutcome::TokenSent:
-                $context->reply('recover.email_sent', ['email_hint' => EmailHintMasker::mask($result->email ?? '')]);
+                $context->replyEmphasized('recover.email_sent', ['email_hint' => EmailHintMasker::mask($result->email ?? '')], Role::Information, ['email_hint']);
                 break;
             case RecoverNickOutcome::PasswordReset:
                 $identifyCmd = $this->passwordResetAuthenticationCommand($result);
-                $context->reply('recover.success_identify', ['identify_cmd' => $identifyCmd]);
-                $context->reply('recover.success_then_change');
+                $context->reply('recover.success_identify', ['identify_cmd' => new Fragment($identifyCmd, Component::Command)], Role::Success);
+                $context->replyComponent(Component::Text, 'recover.success_then_change', [], [
+                    'command_0' => ['recover.success_then_change_command_0', Component::Command],
+                ]);
                 if ($result->replacementUnavailable) {
-                    $context->reply('rescue.replacement_unavailable');
+                    $context->replyEmphasized('rescue.replacement_unavailable', [], Role::Warning, []);
                 } elseif ($result->tokenPromoted) {
-                    $context->reply('rescue.replaced', ['token' => $result->rescueToken]);
+                    $context->replyEmphasized('rescue.replaced', ['token' => $result->rescueToken], Role::Success, []);
                 } else {
-                    $context->reply('rescue.optional_replacement', ['token' => $result->rescueToken]);
+                    $context->replyRescueToken('rescue.optional_replacement', $result->rescueToken, Role::Information);
                 }
                 break;
         }

@@ -18,40 +18,44 @@
 
 # --- ERROR -----------------------------------------------------------------
 error:
-  root_only: "\x0304✗\x03 Dit commando is voorbehouden aan netwerk-rootbeheerders."
+  root_only: "Dit commando is voorbehouden aan netwerk-rootbeheerders."
 
 # --- HELP ------------------------------------------------------------------
 help:
   syntax: "HELP [commando] [optie]"
   short: "Toon commando's of hulp voor een commando."
-  help: !irc |-
-    Toont zonder argumenten alle commando’s. Gebruik \x0303HELP <commando>\x03 voor volledige
-    hulp, of \x0303HELP <commando> <optie>\x03 voor SET-subopties.
-  example: "%command_prefix%\x02\x0303HELP KILL\x03\x0F"
+  help: |-
+    Toont zonder argumenten alle commando’s. Gebruik %help_command% voor volledige
+    hulp, of %help_option_command% voor SET-subopties.
+  example: "%command_prefix%HELP KILL"
   header_title: "%bot%"
-  header: "\x02\x0307🤖 %title%\x03\x0F \x0314%separator%\x03\x0F"
+  header: "%title%"
   intro: |-
     Beheert netwerkoperators en hun rechten, past toegangsbeperkingen toe en
     verbreekt gebruikersverbindingen. Ook kun je algemene aankondigingen sturen en
     welkomstberichten voor het netwerk beheren.
-  general_header: "\x02 ■ Beschikbare opdrachten:\x02"
-  command_line: "    \x0310›\x03\x0F \x02\x0303%command%\x03\x0F%description%"
-  subcommand_line: "    \x0310›\x03\x0F \x02\x0303%command%\x03\x0F%description%"
-  options_header: "\x02 ■ Opties:\x02"
-  examples_header: "\x02 ■ Voorbeelden:\x02"
-  general_footer: "\x0310ℹ\x03\x0F Gebruik /msg %bot% \x02\x0303HELP <opdracht>\x03\x0F voor meer informatie."
-  set_sub_footer: "\x0310ℹ\x03\x0F Gebruik /msg %bot% \x02\x0303HELP %command% <optie>\x03\x0F voor meer informatie."
-  syntax_label: "Syntaxis: \x02\x0303%syntax%\x03\x0F"
-  footer: "\x0314─────────────────────────────\x03\x0F"
-  intro_expiration: "\x0307⚠\x03\x0F OPMERKING: Nicknamen die langer dan %days% dagen niet zijn gebruikt, worden automatisch verwijderd."
-  group_header: "\x0310  ◆ %group%\x03\x0F"
-  subgroup_header: "\x0310  ◆ %group%\x03\x0F"
+  general_header: "Beschikbare opdrachten:"
+  command_line: "%command%%description%"
+  subcommand_line: "%command%%description%"
+  options_header: "Opties:"
+  examples_header: "Voorbeelden:"
+  general_help_command: "HELP <opdracht>"
+  option_help_command: "HELP %command% <optie>"
+  detail_help_command: "HELP <commando>"
+  detail_help_option_command: "HELP <commando> <optie>"
+  general_footer: "Gebruik /msg %bot% %help_command% voor meer informatie."
+  set_sub_footer: "Gebruik /msg %bot% %help_command% voor meer informatie."
+  syntax_label: "Syntaxis: %syntax%"
+  footer: ""
+  intro_expiration: "OPMERKING: Nicknamen die langer dan %days% dagen niet zijn gebruikt, worden automatisch verwijderd."
+  group_header: "%group%"
+  subgroup_header: "%group%"
   group:
     operators_roles: "Operators en rollen"
     network_security: "Netwerkbeveiliging"
     communication: "Communicatie"
     low_level: "Laag niveau"
-  ircop_header: "\x02 ■ Beschikbare opdrachten voor IRC-operators:\x02"
+  ircop_header: "Beschikbare opdrachten voor IRC-operators:"
 
 # --- IRCOP -----------------------------------------------------------------
 ircop:
@@ -64,14 +68,14 @@ ircop:
     Gebruik ROLE LIST om beschikbare rollen te zien.
     Dit commando is voorbehouden aan Root-gebruikers die in de services zijn
     geconfigureerd.
-  example: "%command_prefix%\x02\x0303IRCOP ADD Ana OPER\x03\x0F"
+  example: "%command_prefix%IRCOP ADD Ana OPER"
   examples:
-    - "%command_prefix%\x02\x0303IRCOP LIST\x03\x0F"
-  unknown_sub: "\x0304✗\x03 Onbekende sub-opdracht \x02%sub%\x02. Gebruik ADD, DEL of LIST."
-  unknown_role: "\x0304✗\x03 Rol \x02%role%\x02 bestaat niet. Gebruik \x0303/msg %bot% ROLE LIST\x03 om beschikbare rollen te zien."
-  already_admin: "\x0304✗\x03 \x02%nickname%\x02 is al een IRC-operator (rol: %role%)."
-  not_admin: "\x0304✗\x03 \x02%nickname%\x02 is geen IRC-operator."
-  role_changed: "\x0303✓\x03 Rol gewijzigd voor \x02%nickname%\x02 van %old% naar %new%."
+    - "%command_prefix%IRCOP LIST"
+  unknown_sub: "Onbekende sub-opdracht %sub%. Gebruik ADD, DEL of LIST."
+  unknown_role: "Rol %role% bestaat niet. Gebruik /msg %bot% %role_list% om beschikbare rollen te zien."
+  already_admin: "%nickname% is al een IRC-operator (rol: %role%)."
+  not_admin: "%nickname% is geen IRC-operator."
+  role_changed: "Rol gewijzigd voor %nickname% van %old% naar %new%."
 
   # --- IRCOP ADD -----------------------------------------------------------
   add:
@@ -81,9 +85,9 @@ ircop:
       Voegt een geregistreerde bijnaam toe als netwerk IRC-operator.
       Gebruik ROLE LIST om beschikbare rollen te zien.
       Dit commando is voorbehouden aan Root-gebruikers.
-    example: "%command_prefix%\x02\x0303IRCOP ADD Ana OPER\x03\x0F"
-    done: "\x0303✓\x03 \x02%nickname%\x02 toegevoegd als \x02%role%\x02."
-    nick_not_active: "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is geen actieve geregistreerde bijnaam."
+    example: "%command_prefix%IRCOP ADD Ana OPER"
+    done: "%nickname% toegevoegd als %role%."
+    nick_not_active: "Bijnaam %nickname% is geen actieve geregistreerde bijnaam."
 
   # --- IRCOP DEL -----------------------------------------------------------
   del:
@@ -92,8 +96,8 @@ ircop:
     help: |-
       Verwijdert een netwerk IRC-operator uit de lijst.
       Dit commando is voorbehouden aan Root-gebruikers.
-    example: "%command_prefix%\x02\x0303IRCOP DEL Ana\x03\x0F"
-    done: "\x0303✓\x03 \x02%nickname%\x02 verwijderd uit IRC-operators."
+    example: "%command_prefix%IRCOP DEL Ana"
+    done: "%nickname% verwijderd uit IRC-operators."
 
   # --- IRCOP LIST ----------------------------------------------------------
   list:
@@ -102,8 +106,8 @@ ircop:
     help: |-
       Toont alle netwerk IRC-operators met hun rollen en registratiedatum.
       Dit commando is voorbehouden aan Root-gebruikers.
-    example: "%command_prefix%\x02\x0303IRCOP LIST\x03\x0F"
-    header: "\x0307---\x03 \x02Netwerk IRC Operators\x02 \x0307---\x03"
+    example: "%command_prefix%IRCOP LIST"
+    header: "Netwerk IRC Operators"
     empty: "Er zijn geen IRC-operators."
 
 # --- ROLE ------------------------------------------------------------------
@@ -112,34 +116,34 @@ role:
   operclass:
     syntax: "ROLE OPERCLASS {LIST|VIEW <rol>|SET <rol> [operclass]}"
     short: "Beheert de UnrealIRCd-operatorclass."
-    help: !irc |-
+    help: |-
       Bekijk en configureer de operclass van een rol.
 
-      \x02 ■ Opties:\x02
-          \x0310›\x03\x0F \x02\x0303LIST      \x03\x0FToont beschikbare operclasses op het netwerk.
-          \x0310›\x03\x0F \x02\x0303VIEW      \x03\x0FToont de operclass van de rol en de beschikbare opties.
-          \x0310›\x03\x0F \x02\x0303SET       \x03\x0FWijst IRCOPs bij identificatie een operclass toe.
+      %options_header%
+      %option_LIST%Toont beschikbare operclasses op het netwerk.
+      %option_VIEW%Toont de operclass van de rol en de beschikbare opties.
+      %option_SET%Wijst IRCOPs bij identificatie een operclass toe.
 
       Laat de waarde weg om deze te verwijderen.
 
       Alleen beschikbaar bij UnrealIRCd-protocollen.
-    example: "%command_prefix%\x02\x0303ROLE OPERCLASS LIST\x03\x0F"
+    example: "%command_prefix%ROLE OPERCLASS LIST"
     examples:
-      - "%command_prefix%\x02\x0303ROLE OPERCLASS VIEW SOPORTE\x03\x0F"
-      - "%command_prefix%\x02\x0303ROLE OPERCLASS SET SOPORTE services-admin\x03\x0F"
-      - "%command_prefix%\x02\x0303ROLE OPERCLASS SET SOPORTE\x03\x0F"
+      - "%command_prefix%ROLE OPERCLASS VIEW SOPORTE"
+      - "%command_prefix%ROLE OPERCLASS SET SOPORTE services-admin"
+      - "%command_prefix%ROLE OPERCLASS SET SOPORTE"
     list:
-      header: "\x0307---\x03 \x02Beschikbare Operclasses in het Netwerk\x02 \x0307---\x03"
+      header: "Beschikbare Operclasses in het Netwerk"
       empty: "Geen operclasses beschikbaar in het netwerk."
-      not_supported: "\x0304✗\x03 Het huidige protocol ondersteunt het weergeven van beschikbare operclasses niet."
+      not_supported: "Het huidige protocol ondersteunt het weergeven van beschikbare operclasses niet."
     view:
       empty: "Rol %role% heeft geen operclass."
-      line: "  Operclass: \x0303%operclass%\x03"
-      available: "  Beschikbare operclasses: \x0310%available%\x03"
+      line: "Operclass: %operclass%"
+      available: "Beschikbare operclasses: %available%"
     set:
-      done: "\x0303✓\x03 De operclass voor rol %role% is ingesteld."
-      cleared: "\x0303✓\x03 De operclass voor rol %role% is verwijderd."
-      not_available: "\x0304✗\x03 Operclass \x02%operclass%\x02 is niet beschikbaar in het netwerk. Beschikbare operclasses: %available%."
+      done: "De operclass voor rol %role% is ingesteld."
+      cleared: "De operclass voor rol %role% is verwijderd."
+      not_available: "Operclass %operclass% is niet beschikbaar in het netwerk. Beschikbare operclasses: %available%."
   syntax: "ROLE {ADD <naam> [beschrijving]|DEL <naam>|LIST|PERMS {{ADD|DEL} <rol> <permissie>|{LIST|CLEAR} <rol>}|MODES {VIEW <rol>|SET <rol> [modi]}|VHOST {VIEW <rol>|SET <rol> [vhost]}}"
   short: "Beheert operatorrollen, rechten en instellingen."
   help: |-
@@ -155,14 +159,14 @@ role:
     VHOST beheert het geforceerde vhost-patroon voor een rol, OPERCLASS beheert de Unreal-operclass.
     Beschermde rollen (ADMIN, OPER, PREOPER) kunnen niet worden verwijderd.
     Dit commando is voorbehouden aan Root-gebruikers.
-  example: "%command_prefix%\x02\x0303ROLE LIST\x03\x0F"
+  example: "%command_prefix%ROLE LIST"
   examples:
-    - "%command_prefix%\x02\x0303ROLE ADD SOPORTE Supportoperators\x03\x0F"
-  unknown_sub: "\x0304✗\x03 Onbekende subopdracht \x02%sub%\x02. Gebruik ADD, DEL, LIST, PERMS, MODES of VHOST."
-  unknown_sub_operclass: "\x0304✗\x03 Onbekende subopdracht \x02%sub%\x02. Gebruik ADD, DEL, LIST, PERMS, MODES, VHOST of OPERCLASS."
-  not_found: "\x0304✗\x03 Rol \x02%role%\x02 bestaat niet."
-  already_exists: "\x0304✗\x03 Rol \x02%role%\x02 bestaat al."
-  protected: "\x0304✗\x03 Rol \x02%role%\x02 is beschermd en kan niet worden verwijderd."
+    - "%command_prefix%ROLE ADD SOPORTE Supportoperators"
+  unknown_sub: "Onbekende subopdracht %sub%. Gebruik ADD, DEL, LIST, PERMS, MODES of VHOST."
+  unknown_sub_operclass: "Onbekende subopdracht %sub%. Gebruik ADD, DEL, LIST, PERMS, MODES, VHOST of OPERCLASS."
+  not_found: "Rol %role% bestaat niet."
+  already_exists: "Rol %role% bestaat al."
+  protected: "Rol %role% is beschermd en kan niet worden verwijderd."
 
   # --- ROLE ADD ------------------------------------------------------------
   add:
@@ -171,8 +175,8 @@ role:
     help: |-
       Maakt een nieuwe aangepaste rol aan. Beschrijving is optioneel.
       Dit commando is voorbehouden aan Root-gebruikers.
-    example: "%command_prefix%\x02\x0303ROLE ADD SOPORTE Supportoperators\x03\x0F"
-    done: "\x0303✓\x03 Rol \x02%role%\x02 aangemaakt."
+    example: "%command_prefix%ROLE ADD SOPORTE Supportoperators"
+    done: "Rol %role% aangemaakt."
 
   # --- ROLE DEL ------------------------------------------------------------
   del:
@@ -183,8 +187,8 @@ role:
       kunnen niet worden verwijderd. Als de rol operators toegewezen heeft,
       moet u deze eerst opnieuw toewijzen.
       Dit commando is voorbehouden aan Root-gebruikers.
-    example: "%command_prefix%\x02\x0303ROLE DEL SOPORTE\x03\x0F"
-    done: "\x0303✓\x03 Rol \x02%role%\x02 verwijderd."
+    example: "%command_prefix%ROLE DEL SOPORTE"
+    done: "Rol %role% verwijderd."
 
   # --- ROLE LIST -----------------------------------------------------------
   list:
@@ -193,87 +197,87 @@ role:
     help: |-
       Toont alle rollen. Beschermde rollen zijn gemarkeerd met [PROTECTED].
       Dit commando is voorbehouden aan Root-gebruikers.
-    example: "%command_prefix%\x02\x0303ROLE LIST\x03\x0F"
-    header: "\x0307---\x03 \x02Operatorrollen\x02 \x0307---\x03"
+    example: "%command_prefix%ROLE LIST"
+    header: "Operatorrollen"
     empty: "Er zijn geen operatorrollen."
 
   # --- ROLE PERMS ----------------------------------------------------------
   perms:
     syntax: "ROLE PERMS {{ADD|DEL} <rol> <permissie>|{LIST|CLEAR} <rol>}"
     short: "Beheert de rechten van een rol."
-    help: !irc |-
+    help: |-
       Beheert toegewezen rechten voor een rol.
 
-      \x02 ■ Opties:\x02
-          \x0310›\x03\x0F \x02\x0303LIST      \x03\x0FToont alle beschikbare rechten en welke zijn toegewezen.
-          \x0310›\x03\x0F \x02\x0303ADD       \x03\x0FWijst een recht toe.
-          \x0310›\x03\x0F \x02\x0303DEL       \x03\x0FVerwijdert een recht (niet voor beschermde rollen).
-          \x0310›\x03\x0F \x02\x0303CLEAR     \x03\x0FVerwijdert alle rechten.
+      %options_header%
+      %option_LIST%Toont alle beschikbare rechten en welke zijn toegewezen.
+      %option_ADD%Wijst een recht toe.
+      %option_DEL%Verwijdert een recht (niet voor beschermde rollen).
+      %option_CLEAR%Verwijdert alle rechten.
 
-      ✓ betekent toegewezen; ✗ betekent beschikbaar.
+      %assigned_status% betekent toegewezen; %unassigned_status% betekent beschikbaar.
 
       Gebruik ALL om alle beschikbare rechten tegelijk toe te voegen.
       Alleen voor Root-gebruikers.
-    example: "%command_prefix%\x02\x0303ROLE PERMS LIST SOPORTE\x03\x0F"
+    example: "%command_prefix%ROLE PERMS LIST SOPORTE"
     examples:
-      - "%command_prefix%\x02\x0303ROLE PERMS ADD SOPORTE operserv.gline\x03\x0F"
-      - "%command_prefix%\x02\x0303ROLE PERMS ADD SOPORTE ALL\x03\x0F"
-      - "%command_prefix%\x02\x0303ROLE PERMS DEL SOPORTE operserv.gline\x03\x0F"
-      - "%command_prefix%\x02\x0303ROLE PERMS CLEAR SOPORTE\x03\x0F"
-    not_found: "\x0304✗\x03 Permissie \x02%perm%\x02 bestaat niet."
-    already_has: "\x0304✗\x03 Rol \x02%role%\x02 heeft al permissie \x02%perm%\x02."
-    does_not_have: "\x0304✗\x03 Rol \x02%role%\x02 heeft permissie \x02%perm%\x02 niet."
+      - "%command_prefix%ROLE PERMS ADD SOPORTE operserv.gline"
+      - "%command_prefix%ROLE PERMS ADD SOPORTE ALL"
+      - "%command_prefix%ROLE PERMS DEL SOPORTE operserv.gline"
+      - "%command_prefix%ROLE PERMS CLEAR SOPORTE"
+    not_found: "Permissie %perm% bestaat niet."
+    already_has: "Rol %role% heeft al permissie %perm%."
+    does_not_have: "Rol %role% heeft permissie %perm% niet."
     list:
-      header: "\x0303Rechtenlijst voor \x02%role%\x02\x03"
+      header: "Rechtenlijst voor %role%"
       columns: "Toegewezen | Rechtssleutel | Beschrijving"
       row: "%assigned% | %permission% | %description%"
-      assigned: "\x0303✓\x03\x0F"
-      unassigned: "\x0304✗\x03\x0F"
+      assigned: ""
+      unassigned: ""
     add:
-      done: "\x0303✓\x03 Permissie \x02%perm%\x02 toegevoegd aan rol \x02%role%\x02."
-      all_done: "\x0303✓\x03 \x02%count%\x02 permissies toegevoegd aan rol \x02%role%\x02."
+      done: "Permissie %perm% toegevoegd aan rol %role%."
+      all_done: "%count% permissies toegevoegd aan rol %role%."
     del:
-      done: "\x0303✓\x03 Permissie \x02%perm%\x02 verwijderd uit rol \x02%role%\x02."
+      done: "Permissie %perm% verwijderd uit rol %role%."
     clear:
-      done: "\x0303✓\x03 \x02%count%\x02 permissies verwijderd uit rol \x02%role%\x02."
-      empty: "\x0304✗\x03 Rol \x02%role%\x02 heeft geen permissies toegewezen."
+      done: "%count% permissies verwijderd uit rol %role%."
+      empty: "Rol %role% heeft geen permissies toegewezen."
 
   # --- ROLE MODES ----------------------------------------------------------
   modes:
     syntax: "ROLE MODES {VIEW <rol>|SET <rol> [modi]}"
     short: "Configureert gebruikersmodi voor een rol."
-    help: !irc |-
+    help: |-
       Beheert IRCOP-gebruikersmodi die aan een rol zijn toegewezen.
 
-      \x02 ■ Opties:\x02
-          \x0310›\x03\x0F \x02\x0303VIEW      \x03\x0FToont de huidige modi van de rol.
-          \x0310›\x03\x0F \x02\x0303SET       \x03\x0FStelt IRCOP-modi in.
+      %options_header%
+      %option_VIEW%Toont de huidige modi van de rol.
+      %option_SET%Stelt IRCOP-modi in.
 
       Laat de modi weg om ze allemaal te verwijderen.
 
       Gebruikers met deze rol krijgen de modi bij identificatie.
       Beschikbare modi per IRCD
       Alleen voor Root-gebruikers.
-    example: "%command_prefix%\x02\x0303ROLE MODES VIEW OPER\x03\x0F"
+    example: "%command_prefix%ROLE MODES VIEW OPER"
     examples:
-      - "%command_prefix%\x02\x0303ROLE MODES SET OPER oH\x03\x0F"
-      - "%command_prefix%\x02\x0303ROLE MODES SET OPER\x03\x0F"
+      - "%command_prefix%ROLE MODES SET OPER oH"
+      - "%command_prefix%ROLE MODES SET OPER"
     view:
-      header: "\x0307---\x03 \x02Modi voor %role%\x02 \x0307---\x03"
-      empty: "De rol \x02%role%\x02 heeft geen modi toegewezen."
-      line: "  Modi: \x0303%modes%\x03"
+      header: "Modi voor %role%"
+      empty: "De rol %role% heeft geen modi toegewezen."
+      line: "Modi: %modes%"
     set:
-      done: "\x0303✓\x03 Modi \x02%modes%\x02 ingesteld voor rol \x02%role%\x02."
-      cleared: "\x0303✓\x03 Alle modi verwijderd uit rol \x02%role%\x02."
-      invalid_mode: "\x0304✗\x03 De modus \x02%mode%\x02 is geen geldige IRCOP-modus."
-      invalid_modes: "\x0304✗\x03 Ongeldige modi: %invalid%. Geldige modi: %valid%."
-      no_irc_user_modes: "\x0304✗\x03 De huidige IRCD heeft geen IRCOP-modi geconfigureerd."
+      done: "Modi %modes% ingesteld voor rol %role%."
+      cleared: "Alle modi verwijderd uit rol %role%."
+      invalid_mode: "De modus %mode% is geen geldige IRCOP-modus."
+      invalid_modes: "Ongeldige modi: %invalid%. Geldige modi: %valid%."
+      no_irc_user_modes: "De huidige IRCD heeft geen IRCOP-modi geconfigureerd."
 
   # --- ROLE VHOST ----------------------------------------------------------
   vhost:
     syntax: "ROLE VHOST {VIEW <rol>|SET <rol> [vhost]}"
     short: "Stelt het virtuele hostpatroon van een rol in."
-    help: !irc |-
+    help: |-
       Stelt de virtuele host in die operators van een rol bij identificatie krijgen,
       in plaats van hun persoonlijke host.
 
@@ -282,9 +286,9 @@ role:
 
       _davidlig_ + admin.ares → davidlig.admin.ares
 
-      \x02 ■ Opties:\x02
-          \x0310›\x03\x0F \x02\x0303VIEW      \x03\x0FToont het ingestelde patroon van een rol.
-          \x0310›\x03\x0F \x02\x0303SET       \x03\x0FStelt het patroon in of verwijdert het.
+      %options_header%
+      %option_VIEW%Toont het ingestelde patroon van een rol.
+      %option_SET%Stelt het patroon in of verwijdert het.
 
       Het patroon accepteert letters, cijfers, streepjes en punten. Het moet minstens
       één punt bevatten, mag niet beginnen of eindigen met een streepje of punt en mag
@@ -293,19 +297,20 @@ role:
       Gebruik SET zonder patroon om de geforceerde host te verwijderen.
 
       Alleen voor Root-gebruikers.
-    example: "%command_prefix%\x02\x0303ROLE VHOST VIEW OPER\x03\x0F"
+    example: "%command_prefix%ROLE VHOST VIEW OPER"
     examples:
-      - "%command_prefix%\x02\x0303ROLE VHOST SET OPER admin.ares\x03\x0F"
-      - "%command_prefix%\x02\x0303ROLE VHOST SET OPER\x03\x0F"
+      - "%command_prefix%ROLE VHOST SET OPER admin.ares"
+      - "%command_prefix%ROLE VHOST SET OPER"
     view:
-      header: "\x0307---\x03 \x02Geforceerde vhost voor %role%\x02 \x0307---\x03"
-      empty: "De rol \x02%role%\x02 heeft geen geforceerd vhost-patroon ingesteld."
-      line: "  Patroon: \x0303%pattern%\x03"
-      example: "  Voorbeeld: \x02bijnaam\x02.%pattern%"
+      header: "Geforceerde vhost voor %role%"
+      empty: "De rol %role% heeft geen geforceerd vhost-patroon ingesteld."
+      line: "Patroon: %pattern%"
+      example: "Voorbeeld: %example_nickname%.%pattern%"
+      example_nickname: "bijnaam"
     set:
-      done: "\x0303✓\x03 Geforceerd vhost-patroon ingesteld voor rol \x02%role%\x02."
-      cleared: "\x0303✓\x03 Geforceerd vhost-patroon verwijderd uit rol \x02%role%\x02."
-      invalid: "\x0304✗\x03 Ongeldig vhost-patroon. Geldige tekens: a-z, A-Z, 0-9, - en .. Moet ten minste één punt bevatten, mag niet beginnen/eindigen met - of . of .. hebben"
+      done: "Geforceerd vhost-patroon ingesteld voor rol %role%."
+      cleared: "Geforceerd vhost-patroon verwijderd uit rol %role%."
+      invalid: "Ongeldig vhost-patroon. Geldige tekens: a-z, A-Z, 0-9, - en .. Moet ten minste één punt bevatten, mag niet beginnen/eindigen met - of . of .. hebben"
 
 # --- KILL ------------------------------------------------------------------
 kill:
@@ -314,10 +319,10 @@ kill:
   help: |-
     Verbreekt de verbinding van een gebruiker met het IRC-netwerk.
     IRC-operators en Root-gebruikers kunnen niet gekilld worden.
-  example: "%command_prefix%\x02\x0303KILL BadUser Kanaaloverlast\x03\x0F"
-  protected_root: "\x0304✗\x03 Kan Root-gebruiker \x02%nickname%\x02 niet killen."
-  protected_ircop: "\x0304✗\x03 Kan IRC-operator \x02%nickname%\x02 niet killen."
-  done: "\x0303✓\x03 Gebruiker \x02%nickname%\x02 is gekilld (%reason%)."
+  example: "%command_prefix%KILL BadUser Kanaaloverlast"
+  protected_root: "Kan Root-gebruiker %nickname% niet killen."
+  protected_ircop: "Kan IRC-operator %nickname% niet killen."
+  done: "Gebruiker %nickname% is gekilld (%reason%)."
 
 # --- GLINE -----------------------------------------------------------------
 gline:
@@ -331,19 +336,19 @@ gline:
 
     Vervaltijd: 0 = permanent, of achtervoegsel d, h, m (bijv. 7d, 12h, 30m).
     G-lines die overeenkomen met Root- of IRC-operatorgebruikers worden geweigerd.
-  example: "%command_prefix%\x02\x0303GLINE ADD *@192.168.1.* 7d Spammisbruik\x03\x0F"
+  example: "%command_prefix%GLINE ADD *@192.168.1.* 7d Spammisbruik"
   examples:
-    - "%command_prefix%\x02\x0303GLINE ADD *@192.168.1.* 0 Aanhoudend misbruik\x03\x0F"
-    - "%command_prefix%\x02\x0303GLINE LIST *@192.168.*\x03\x0F"
-  unknown_sub: "\x0304✗\x03 Onbekende sub-opdracht \x02%sub%\x02. Gebruik ADD, DEL of LIST."
-  invalid_mask: "\x0304✗\x03 Ongeldig maskerformaat. Moet in formaat gebruiker@host zijn (bijv. *@192.168.*)."
-  global_mask: "\x0304✗\x03 G-line masker \x02%mask%\x02 is te breed. Globale maskers zijn niet toegestaan."
-  dangerous_mask: "\x0304✗\x03 G-line masker \x02%mask%\x02 is te breed. Het hostdeel heeft ten minste 4 alfanumerieke tekens nodig."
-  protected_user: "\x0304✗\x03 Kan beschermde gebruiker \x02%nickname%\x02 niet G-linen."
-  invalid_expiry: "\x0304✗\x03 Ongeldig verloopformaat. Gebruik 0 voor permanent, of een waarde zoals 7d, 12h, 30m."
-  already_exists: "\x0304✗\x03 G-line voor \x02%mask%\x02 bestaat al."
-  max_entries: "\x0304✗\x03 Maximaal aantal G-lines (%max%) bereikt."
-  not_found: "\x0304✗\x03 G-line \x02%mask%\x02 niet gevonden."
+    - "%command_prefix%GLINE ADD *@192.168.1.* 0 Aanhoudend misbruik"
+    - "%command_prefix%GLINE LIST *@192.168.*"
+  unknown_sub: "Onbekende sub-opdracht %sub%. Gebruik ADD, DEL of LIST."
+  invalid_mask: "Ongeldig maskerformaat. Moet in formaat gebruiker@host zijn (bijv. *@192.168.*)."
+  global_mask: "G-line masker %mask% is te breed. Globale maskers zijn niet toegestaan."
+  dangerous_mask: "G-line masker %mask% is te breed. Het hostdeel heeft ten minste 4 alfanumerieke tekens nodig."
+  protected_user: "Kan beschermde gebruiker %nickname% niet G-linen."
+  invalid_expiry: "Ongeldig verloopformaat. Gebruik 0 voor permanent, of een waarde zoals 7d, 12h, 30m."
+  already_exists: "G-line voor %mask% bestaat al."
+  max_entries: "Maximaal aantal G-lines (%max%) bereikt."
+  not_found: "G-line %mask% niet gevonden."
 
   # --- GLINE ADD -----------------------------------------------------------
   add:
@@ -354,10 +359,10 @@ gline:
       Het masker moet de vorm gebruiker@host hebben.
       Vervaltijd: 0 = permanent, of achtervoegsel d, h, m (bijv. 7d, 12h, 30m).
       G-lines die overeenkomen met Root- of IRC-operatorgebruikers worden geweigerd.
-    example: "%command_prefix%\x02\x0303GLINE ADD *@192.168.1.* 7d Spammisbruik\x03\x0F"
+    example: "%command_prefix%GLINE ADD *@192.168.1.* 7d Spammisbruik"
     examples:
-      - "%command_prefix%\x02\x0303GLINE ADD *@192.168.1.* 0 Aanhoudend misbruik\x03\x0F"
-    done: "\x0303✓\x03 G-line toegevoegd: \x02%mask%\x02 (%duration%) - %reason%"
+      - "%command_prefix%GLINE ADD *@192.168.1.* 0 Aanhoudend misbruik"
+    done: "G-line toegevoegd: %mask% (%duration%) - %reason%"
 
   # --- GLINE DEL -----------------------------------------------------------
   del:
@@ -366,22 +371,22 @@ gline:
     help: |-
       Verwijdert een G-line uit de lijst.
       Je kunt het masker of het vermeldingsnummer uit LIST opgeven.
-    example: "%command_prefix%\x02\x0303GLINE DEL *@192.168.1.*\x03\x0F"
+    example: "%command_prefix%GLINE DEL *@192.168.1.*"
     examples:
-      - "%command_prefix%\x02\x0303GLINE DEL 2\x03\x0F"
-    done: "\x0303✓\x03 G-line \x02%mask%\x02 verwijderd."
+      - "%command_prefix%GLINE DEL 2"
+    done: "G-line %mask% verwijderd."
 
   # --- GLINE LIST ----------------------------------------------------------
   list:
     syntax: "GLINE LIST [masker]"
     short: "Toon alle G-lines."
     help: "Toont alle G-lines. Optioneel filteren op maskerpatroon."
-    example: "%command_prefix%\x02\x0303GLINE LIST\x03\x0F"
+    example: "%command_prefix%GLINE LIST"
     examples:
-      - "%command_prefix%\x02\x0303GLINE LIST *@192.168.*\x03\x0F"
-    header: "\x0307---\x03 \x02G-lines (%count%) \x0307---\x03"
+      - "%command_prefix%GLINE LIST *@192.168.*"
+    header: "G-lines (%count%)"
     empty: "Er zijn geen G-lines."
-    entry: "\x0310%index%.\x03 \x02%mask%\x02 - %reason% (\x0314%nickname%\x03, verloopt: %expiration%)"
+    entry: "%index%. %mask% - %reason% (%nickname%, verloopt: %expiration%)"
 
 # --- GLOBAL ----------------------------------------------------------------
 global:
@@ -398,14 +403,14 @@ global:
 
     De bijnaam mag niet geregistreerd of in gebruik zijn. De client verbreekt na
     verzending automatisch de verbinding en de bijnaam wordt 24 uur geblokkeerd.
-  example: "%command_prefix%\x02\x0303GLOBAL %operserv% PRIVMSG Onderhoud over 10 minuten\x03\x0F"
+  example: "%command_prefix%GLOBAL %operserv% PRIVMSG Onderhoud over 10 minuten"
   examples:
-    - "%command_prefix%\x02\x0303GLOBAL Avisos!oper@services.ares NOTICE Het netwerk wordt herstart\x03\x0F"
-  mask_invalid: "\x0304✗\x03 Ongeldig maskerformaat: %error%"
-  nick_connected: "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is momenteel verbonden."
-  nick_registered: "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is geregistreerd."
-  type_invalid: "\x0304✗\x03 Berichttype moet PRIVMSG of NOTICE zijn."
-  done: "\x0303✓\x03 Globaal bericht verzonden van \x02%nickname%\x02 naar %count% gebruikers."
+    - "%command_prefix%GLOBAL Avisos!oper@services.ares NOTICE Het netwerk wordt herstart"
+  mask_invalid: "Ongeldig maskerformaat: %error%"
+  nick_connected: "Bijnaam %nickname% is momenteel verbonden."
+  nick_registered: "Bijnaam %nickname% is geregistreerd."
+  type_invalid: "Berichttype moet PRIVMSG of NOTICE zijn."
+  done: "Globaal bericht verzonden van %nickname% naar %count% gebruikers."
 
 # --- RAW -------------------------------------------------------------------
 raw:
@@ -415,20 +420,20 @@ raw:
     Stuurt de opgegeven regel rechtstreeks naar de socket van de uplink-IRCd.
     Gebruik dit uiterst voorzichtig. Ongeldige protocolregels kunnen het netwerk
     platleggen.
-  example: "%command_prefix%\x02\x0303RAW :services.ares NOTICE * :Gepland onderhoud\x03\x0F"
-  empty: "\x0304✗\x03 U moet een niet-lege regel opgeven om te verzenden."
-  too_long: "\x0304✗\x03 Regel is te lang. Maximum 510 tekens."
-  not_connected: "\x0304✗\x03 Niet verbonden met IRCd."
-  done: "\x0303✓\x03 Rauwe regel verzonden."
+  example: "%command_prefix%RAW :services.ares NOTICE * :Gepland onderhoud"
+  empty: "U moet een niet-lege regel opgeven om te verzenden."
+  too_long: "Regel is te lang. Maximum 510 tekens."
+  not_connected: "Niet verbonden met IRCd."
+  done: "Rauwe regel verzonden."
   protocol:
-    syntax: "\x0304✗\x03 Het actieve protocol heeft de syntaxis van het RAW-commando geweigerd."
-    done: "\x0303✓\x03 RAW-commando van het protocol uitgevoerd."
-    target: "\x0304✗\x03 Het actieve protocol heeft doel %target% geweigerd."
-    unsupported: "\x0304✗\x03 Het actieve protocol ondersteunt dit RAW-commando niet."
-    invalid_resource_type: "\x0304✗\x03 Onbekend protocolresourcetype: %resource_type%."
-    invalid_resource: "\x0304✗\x03 Ongeldige protocolresource: %resource%."
-    invalid_value: "\x0304✗\x03 Ongeldige waarde voor protocolresource: %resource%."
-    error: "\x0304✗\x03 Het actieve protocol kon het RAW-commando niet uitvoeren."
+    syntax: "Het actieve protocol heeft de syntaxis van het RAW-commando geweigerd."
+    done: "RAW-commando van het protocol uitgevoerd."
+    target: "Het actieve protocol heeft doel %target% geweigerd."
+    unsupported: "Het actieve protocol ondersteunt dit RAW-commando niet."
+    invalid_resource_type: "Onbekend protocolresourcetype: %resource_type%."
+    invalid_resource: "Ongeldige protocolresource: %resource%."
+    invalid_value: "Ongeldige waarde voor protocolresource: %resource%."
+    error: "Het actieve protocol kon het RAW-commando niet uitvoeren."
 
 # --- DEBUG -----------------------------------------------------------------
 debug:
@@ -443,45 +448,45 @@ motd:
     Beheert MOTD-vermeldingen (bericht van de dag) die bij verbinding naar
     gebruikers
     worden gestuurd.
-  example: "%command_prefix%\x02\x0303MOTD LIST\x03\x0F"
-  unknown_sub: "\x0304✗\x03 Onbekende subopdracht. Gebruik: \x02ADD\x02, \x02DEL\x02, \x02LIST\x02, \x02CLEAN\x02"
+  example: "%command_prefix%MOTD LIST"
+  unknown_sub: "Onbekende subopdracht. Gebruik: %add%, %del%, %list%, %clean%"
 
   # --- MOTD ADD ------------------------------------------------------------
   add:
     syntax: "MOTD ADD {service|nick!ident@vhost} {PRIVMSG|NOTICE} <verloop> <bericht>"
-    syntax_hint: "\x0304✗\x03 Gebruik: \x02%syntax%\x02"
+    syntax_hint: "Gebruik: %syntax%"
     short: "Voeg een MOTD-vermelding toe."
     help: |-
       Voegt een MOTD-bericht toe dat naar elke gebruiker wordt gestuurd bij
       verbinding.
-    example: "%command_prefix%\x02\x0303MOTD ADD %operserv% NOTICE 24h Onderhoud vanavond\x03\x0F"
+    example: "%command_prefix%MOTD ADD %operserv% NOTICE 24h Onderhoud vanavond"
     examples:
-      - "%command_prefix%\x02\x0303MOTD ADD %operserv% PRIVMSG 0 Welkom a la red\x03\x0F"
-    done: "\x0303✓\x03 MOTD-vermelding #%id% toegevoegd."
-    invalid_type: "\x0304✗\x03 Ongeldig berichttype. Moet \x02PRIVMSG\x02 of \x02NOTICE\x02 zijn."
-    invalid_expiry: "\x0304✗\x03 Ongeldige vervaldatum. Gebruik: \x02<getal><s|m|h|d>\x02 of \x020\x02 voor onbeperkt (bijv. 30s, 5m, 24h, 7d)."
+      - "%command_prefix%MOTD ADD %operserv% PRIVMSG 0 Welkom a la red"
+    done: "MOTD-vermelding #%id% toegevoegd."
+    invalid_type: "Ongeldig berichttype. Moet PRIVMSG of NOTICE zijn."
+    invalid_expiry: "Ongeldige vervaldatum. Gebruik: <getal><s|m|h|d> of 0 voor onbeperkt (bijv. 30s, 5m, 24h, 7d)."
 
   # --- MOTD DEL ------------------------------------------------------------
   del:
     syntax: "MOTD DEL <id>"
-    syntax_hint: "\x0304✗\x03 Gebruik: \x02%syntax%\x02"
+    syntax_hint: "Gebruik: %syntax%"
     short: "Verwijder een MOTD-vermelding."
     help: "Verwijdert een MOTD-vermelding op basis van ID."
-    example: "%command_prefix%\x02\x0303MOTD DEL 12\x03\x0F"
-    done: "\x0303✓\x03 MOTD-vermelding #%id% verwijderd."
-    not_found: "\x0304✗\x03 MOTD-vermelding niet gevonden."
+    example: "%command_prefix%MOTD DEL 12"
+    done: "MOTD-vermelding #%id% verwijderd."
+    not_found: "MOTD-vermelding niet gevonden."
 
   # --- MOTD LIST -----------------------------------------------------------
   list:
     syntax: "MOTD LIST"
     short: "Toon alle MOTD-vermeldingen."
     help: "Toont alle ingestelde MOTD-vermeldingen."
-    example: "%command_prefix%\x02\x0303MOTD LIST\x03\x0F"
+    example: "%command_prefix%MOTD LIST"
     empty: "Geen MOTD-vermeldingen geconfigureerd."
     header: "MOTD-vermeldingen:"
-    status_enabled: "\x0303ingeschakeld\x03"
-    status_disabled: "\x0304uitgeschakeld\x03"
-    expired: "\x0304verlopen\x03"
+    status_enabled: "ingeschakeld"
+    status_disabled: "uitgeschakeld"
+    expired: "verlopen"
     no_bot: "(geen bot)"
     shown_count: "%count% keer getoond"
 
@@ -490,9 +495,9 @@ motd:
     syntax: "MOTD CLEAN"
     short: "Verwijder alle verlopen MOTD-vermeldingen."
     help: "Verwijdert alle verlopen MOTD-vermeldingen."
-    example: "%command_prefix%\x02\x0303MOTD CLEAN\x03\x0F"
-    done: "\x0303✓\x03 %count% verlopen MOTD-vermeldingen verwijderd."
-    none: "\x0303✓\x03 Geen verlopen MOTD-vermeldingen om te verwijderen."
+    example: "%command_prefix%MOTD CLEAN"
+    done: "%count% verlopen MOTD-vermeldingen verwijderd."
+    none: "Geen verlopen MOTD-vermeldingen om te verwijderen."
   debug:
     finalized: "MOTD-bericht #%id% is beëindigd: [%type%] %message% | %date% | %shown_count%"
 
@@ -502,21 +507,21 @@ badmail:
   short: "Geblokkeerde e-maildomeinen beheren."
   help: |-
     Geblokkeerde e-maildomeinen beheren.
-  example: "%command_prefix%\x02\x0303BADMAIL LIST *\x03\x0f"
+  example: "%command_prefix%BADMAIL LIST *"
   add:
     syntax: "BADMAIL ADD <domein> <reden>"
     short: "Een domein blokkeren."
     help: |-
       Accepteert ASCII- of punycode-domeinen, geen adressen of patronen. Een
       reden is verplicht. De blokkade geldt exact, niet voor subdomeinen.
-    example: "%command_prefix%\x02\x0303BADMAIL ADD example.org abuse\x03\x0f"
+    example: "%command_prefix%BADMAIL ADD example.org abuse"
   del:
     syntax: "BADMAIL DEL {nummer|ALL}"
     short: "Domeinblokkades verwijderen."
     help: |-
       Verwijder een blijvend nummer of alle vermeldingen met ALL. Andere
       nummers veranderen niet.
-    example: "%command_prefix%\x02\x0303BADMAIL DEL 1\x03\x0f"
+    example: "%command_prefix%BADMAIL DEL 1"
   list:
     syntax: "BADMAIL LIST <patroon> [pagina]"
     short: "Geblokkeerde domeinen tonen."
@@ -524,14 +529,14 @@ badmail:
       Een patroon is verplicht. Alleen * is een joker voor elke tekenreeks.
       Hoofdletters worden genegeerd. De optionele pagina begint bij 1.
       Nummers blijven behouden bij filteren en pagineren.
-    example: "%command_prefix%\x02\x0303BADMAIL LIST *.org 2\x03\x0f"
+    example: "%command_prefix%BADMAIL LIST *.org 2"
   invalid_domain: "Ongeldig domein. Gebruik ASCII of punycode zonder afsluitende punt."
   invalid_reason: "Een niet-lege administratieve reden op één regel is verplicht."
   duplicate: "Dit domein is al geblokkeerd."
   not_found: "Geen geblokkeerd domein met dit nummer."
-  added: "\x0303✓\x03 Domein \x02%domain%\x02 geblokkeerd."
-  deleted: "\x0303✓\x03 Domeinblokkade \x02%id%\x02 verwijderd."
-  cleared: "\x0303✓\x03 \x02%total%\x02 domeinblokkades verwijderd."
+  added: "Domein %domain% geblokkeerd."
+  deleted: "Domeinblokkade %id% verwijderd."
+  cleared: "%total% domeinblokkades verwijderd."
   empty: "Geen overeenkomende geblokkeerde domeinen."
   header: "ID | Domein | Reden"
   page: "Pagina %page%/%pages%, %total% overeenkomende domeinen."

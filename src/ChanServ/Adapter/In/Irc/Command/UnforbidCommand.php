@@ -15,6 +15,9 @@ use App\Irc\Application\Port\In\Command\IrcopAuditableCommandInterface;
 use App\Irc\Application\Port\In\Command\IrcopAuditData;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\Fragment;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 
 final class UnforbidCommand implements ChanServCommandInterface, IrcopAuditableCommandInterface
 {
@@ -105,19 +108,19 @@ final class UnforbidCommand implements ChanServCommandInterface, IrcopAuditableC
         $channelName = $context->getChannelNameArg(0);
 
         if (null === $channelName) {
-            $context->reply('error.invalid_channel');
+            $context->reply('error.invalid_channel', ['%example%' => new Fragment($context->trans('error.invalid_channel_example'), Component::Emphasis)], Role::Error);
 
             return CommandOutcome::rejected();
         }
 
         $result = $this->handler->handle($this->lifecycleRequest($context, $channelName, ChannelLifecycleAction::Unforbid));
         if (ChannelLifecycleOutcome::NotForbidden === $result->outcome) {
-            $context->reply('unforbid.not_forbidden', ['%channel%' => $channelName]);
+            $context->reply('unforbid.not_forbidden', ['%channel%' => new Fragment($channelName, Component::Emphasis)], Role::Error);
 
             return CommandOutcome::rejected();
         }
 
-        $context->reply('unforbid.success', ['%channel%' => $channelName]);
+        $context->reply('unforbid.success', ['%channel%' => new Fragment($channelName, Component::Emphasis)], Role::Success);
 
         return CommandOutcome::success(new IrcopAuditData(target: $channelName));
     }

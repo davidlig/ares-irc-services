@@ -11,6 +11,7 @@ use App\OperServ\Application\Port\In\Audit\CommandAuditRecord;
 use App\OperServ\Application\Port\In\CommandAuditRecorder;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 use DateTimeImmutable;
 
 final readonly class RawCommand implements OperServCommandInterface
@@ -90,52 +91,52 @@ final readonly class RawCommand implements OperServCommandInterface
         switch ($result->outcome) {
             case RawCommandExecutionOutcome::Sent:
                 $this->recordAudit($context->sender->nick, $result->operation ?? 'UNKNOWN', 'irc');
-                $context->reply('raw.done');
+                $context->reply('raw.done', [], Role::Success);
 
                 return;
             case RawCommandExecutionOutcome::Intercepted:
                 $this->recordAudit($context->sender->nick, $result->operation ?? 'UNKNOWN', 'protocol');
-                $context->reply('raw.protocol.done');
+                $context->reply('raw.protocol.done', [], Role::Success);
 
                 return;
             case RawCommandExecutionOutcome::Empty:
-                $context->reply('raw.empty');
+                $context->reply('raw.empty', [], Role::Error);
 
                 return;
             case RawCommandExecutionOutcome::TooLong:
-                $context->reply('raw.too_long');
+                $context->reply('raw.too_long', [], Role::Error);
 
                 return;
             case RawCommandExecutionOutcome::Disconnected:
-                $context->reply('raw.not_connected');
+                $context->reply('raw.not_connected', [], Role::Error);
 
                 return;
             case RawCommandExecutionOutcome::TargetInvalid:
-                $context->reply('raw.protocol.target', ['target' => $result->resourceIdentifier ?? '']);
+                $context->reply('raw.protocol.target', ['target' => $result->resourceIdentifier ?? ''], Role::Error);
 
                 return;
             case RawCommandExecutionOutcome::SyntaxInvalid:
-                $context->reply('raw.protocol.syntax');
+                $context->reply('raw.protocol.syntax', [], Role::Error);
 
                 return;
             case RawCommandExecutionOutcome::Unsupported:
-                $context->reply('raw.protocol.unsupported');
+                $context->reply('raw.protocol.unsupported', [], Role::Error);
 
                 return;
             case RawCommandExecutionOutcome::ResourceTypeInvalid:
-                $context->reply('raw.protocol.invalid_resource_type', ['resource_type' => $result->resourceType ?? '']);
+                $context->reply('raw.protocol.invalid_resource_type', ['resource_type' => $result->resourceType ?? ''], Role::Error);
 
                 return;
             case RawCommandExecutionOutcome::ResourceIdentifierInvalid:
-                $context->reply('raw.protocol.invalid_resource', ['resource' => $result->resourceIdentifier ?? '']);
+                $context->reply('raw.protocol.invalid_resource', ['resource' => $result->resourceIdentifier ?? ''], Role::Error);
 
                 return;
             case RawCommandExecutionOutcome::ValueInvalid:
-                $context->reply('raw.protocol.invalid_value', ['resource' => $result->resourceIdentifier ?? '']);
+                $context->reply('raw.protocol.invalid_value', ['resource' => $result->resourceIdentifier ?? ''], Role::Error);
 
                 return;
             case RawCommandExecutionOutcome::Failed:
-                $context->reply('raw.protocol.error');
+                $context->reply('raw.protocol.error', [], Role::Error);
 
                 return;
         }

@@ -24,16 +24,16 @@ unknown_help_option: "\x0304✗\x03\x0F Unbekannte Hilfeoption \x0303%option%\x0
 
 # --- ERROR -----------------------------------------------------------------
 error:
-  email_domain_blocked: "\x0304✗\x03 Diese E-Mail-Domain ist administrativ gesperrt."
-  syntax: "\x0304✗\x03 Falsche Syntax. Verwendung: \x02%syntax%\x02"
-  oper_only: "\x0304✗\x03 Dieser Befehl ist IRC-Operatoren vorbehalten."
-  not_identified: "\x0304✗\x03 Du bist nicht identifiziert. Verwende /msg %nickserv% \x0303IDENTIFY <Nickname> <Passwort>\x03"
-  permission_denied: "\x0304✗\x03 Zugriff verweigert. Sie haben keinen Zugriff auf diesen Befehl."
-  mail_failed: "\x0304✗\x03 Die E-Mail konnte nicht gesendet werden. Überprüfen Sie Ihre Adresse oder versuchen Sie es später erneut."
-  channel_not_registered: "\x0304✗\x03 Channel \x02%channel%\x02 ist nicht registriert."
-  nick_not_registered: "\x0304✗\x03 Nickname \x02%nickname%\x02 ist nicht registriert."
-  insufficient_access: "\x0304✗\x03 Unzureichender Zugriff für \x02%operation%\x02 auf Channel \x02%channel%\x02."
-  nick_not_online: "\x0304✗\x03 Nickname \x02%nickname%\x02 ist nicht verbunden."
+  email_domain_blocked: "Diese E-Mail-Domain ist administrativ gesperrt."
+  syntax: "Falsche Syntax. Verwendung: %syntax%"
+  oper_only: "Dieser Befehl ist IRC-Operatoren vorbehalten."
+  not_identified: "Du bist nicht identifiziert. Verwende /msg %nickserv% IDENTIFY <Nickname> <Passwort>"
+  permission_denied: "Zugriff verweigert. Sie haben keinen Zugriff auf diesen Befehl."
+  mail_failed: "Die E-Mail konnte nicht gesendet werden. Überprüfen Sie Ihre Adresse oder versuchen Sie es später erneut."
+  channel_not_registered: "Channel %channel% ist nicht registriert."
+  nick_not_registered: "Nickname %nickname% ist nicht registriert."
+  insufficient_access: "Unzureichender Zugriff für %operation% auf Channel %channel%."
+  nick_not_online: "Nickname %nickname% ist nicht verbunden."
 
 # --- DURATION --------------------------------------------------------------
 duration:
@@ -96,11 +96,11 @@ debug:
 history:
   unknown_operator: "(unbekannt)"
   del:
-    success: "\x0303✔\x03 Verlaufseintrag \x02%id%\x02 gelöscht."
-    not_found: "\x0304✗\x03 Verlaufseintrag \x02%id%\x02 nicht gefunden."
-    invalid_id: "\x0304✗\x03 Ungültige Eintrags-ID: \x02%id%\x02."
+    success: "Verlaufseintrag %id% gelöscht."
+    not_found: "Verlaufseintrag %id% nicht gefunden."
+    invalid_id: "Ungültige Eintrags-ID: %id%."
   view:
-    extra: "  Extra \x0307→\x03 %extra%"
+    extra: "Extra %extra%"
   message:
     unsuspend: "Suspendierung aufgehoben"
   extra:
@@ -127,3 +127,19 @@ label:
   unknown_creator: "unbekannt"
   permanent: "Dauerhaft"
   permanent_inline: "dauerhaft"
+
+# --- PRESENTATION-FREE MIGRATED REPLIES ---
+presentation:
+  unknown_command: "Unbekannter Befehl %command%. Verwende /msg %bot% %help%"
+  unknown_help_option: "Unbekannte Hilfeoption %option% für %command%. Verwende /msg %bot% %help% %command%"
+  error.email_domain_blocked: "Diese E-Mail-Domain ist administrativ gesperrt."
+  error.syntax: "Falsche Syntax. Verwendung: %syntax%"
+  error.oper_only: "Dieser Befehl ist IRC-Operatoren vorbehalten."
+  error.not_identified: "Du bist nicht identifiziert. Verwende /msg %nickserv% %identify%"
+  error.permission_denied: "Zugriff verweigert. Sie haben keinen Zugriff auf diesen Befehl."
+  error.mail_failed: "Die E-Mail konnte nicht gesendet werden. Überprüfen Sie Ihre Adresse oder versuchen Sie es später erneut."
+  error.channel_not_registered: "Channel %channel% ist nicht registriert."
+  error.nick_not_registered: "Nickname %nickname% ist nicht registriert."
+  error.insufficient_access: "Unzureichender Zugriff für %operation% auf Channel %channel%."
+  error.nick_not_online: "Nickname %nickname% ist nicht verbunden."
+  identify: "IDENTIFY <Nickname> <Passwort>"

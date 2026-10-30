@@ -22,6 +22,12 @@ use App\OperServ\Application\Port\In\Audit\CommandAuditCategory;
 use App\OperServ\Application\Port\In\Audit\CommandAuditRecord;
 use App\OperServ\Application\Port\In\CommandAuditRecorder;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentValidator;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
+use App\Shared\Adapter\In\Irc\Presentation\Fragment;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 use App\Shared\Application\Port\EventBusInterface;
 use DateTimeImmutable;
 use Psr\Log\LoggerInterface;
@@ -69,6 +75,7 @@ final readonly class ChanServService
         private string $defaultLanguage = 'en',
         private string $defaultTimezone = 'UTC',
         private LoggerInterface $logger = new NullLogger(),
+        private ?IrcRenderer $renderer = null,
     ) {}
 
     /**
@@ -93,7 +100,15 @@ final readonly class ChanServService
             $messageType = $this->preferences->prefersPrivateMessages($sender->nick) ? 'PRIVMSG' : 'NOTICE';
             $this->notifier->sendMessage(
                 $sender->uid,
-                $this->translator->trans('unknown_command', ['%command%' => $cmdName, '%bot%' => $this->notifier->getNick()], 'common', $this->defaultLanguage),
+                ($this->renderer ?? new IrcRenderer(new FixedStyleProvider(PresentationStyle::default())))->reply(
+                    Role::Error,
+                    $this->translator->trans('presentation.unknown_command', [], 'common', $this->defaultLanguage),
+                    [
+                        '%command%' => new Fragment($cmdName, Component::Command),
+                        '%bot%' => $this->notifier->getNick(),
+                        '%help%' => new Fragment('HELP', Component::Command),
+                    ],
+                ),
                 $messageType
             );
 
@@ -129,6 +144,7 @@ final readonly class ChanServService
             channelModeSupport: $modeSupport,
             userLookup: $this->userLookup,
             serviceNicks: $this->serviceNicks,
+            renderer: $this->renderer,
         );
 
         $this->authorizationContext->setCurrentUser($sender->uid, $sender->isIdentified, $sender->isOper);
@@ -136,7 +152,11 @@ final readonly class ChanServService
         try {
             $requiredPermission = $handler->getRequiredPermission();
             if (null !== $requiredPermission && !$this->authorizationChecker->isGranted($requiredPermission, $context)) {
-                $context->reply('IDENTIFIED' === $requiredPermission ? 'error.not_identified' : 'error.permission_denied');
+                if ('IDENTIFIED' === $requiredPermission) {
+                    $context->reply('presentation.error.not_identified', ['%identify%' => new Fragment($context->trans('presentation.identify'), Component::Command)], Role::Error);
+                } else {
+                    $context->reply('presentation.error.permission_denied', role: Role::Error);
+                }
 
                 return;
             }
@@ -158,6 +178,7 @@ final readonly class ChanServService
                 channelModeSupport: $modeSupport,
                 userLookup: $this->userLookup,
                 serviceNicks: $this->serviceNicks,
+                renderer: $this->renderer,
                 isLevelFounder: $isLevelFounder,
             );
 
@@ -202,9 +223,9 @@ final readonly class ChanServService
     {
         $validation = CommandArgumentValidator::validatePrefix($handler->getArgumentDefinition(), array_values($context->args));
         if (!$validation->isValid()) {
-            $context->reply('error.syntax', [
-                'syntax' => $context->trans($validation->syntaxKey ?? $handler->getSyntaxKey()),
-            ]);
+            $context->reply('presentation.error.syntax', [
+                'syntax' => new Fragment($context->trans($validation->syntaxKey ?? $handler->getSyntaxKey()), Component::Command),
+            ], Role::Error);
 
             return 'syntax';
         }
@@ -235,7 +256,7 @@ final readonly class ChanServService
         if (null !== $channelName) {
             $channel = $this->channelRepository->findByChannelName($channelName);
             if (null !== $channel && $channel->isForbidden()) {
-                $context->reply('forbid.channel_forbidden', ['%channel%' => $channelName]);
+                $context->reply('forbid.channel_forbidden', ['%channel%' => new Fragment($channelName, Component::Emphasis)], Role::Error);
 
                 return true;
             }
@@ -254,7 +275,7 @@ final readonly class ChanServService
         if (null !== $channelName) {
             $channel = $this->channelRepository->findByChannelName($channelName);
             if (null !== $channel && $channel->isCurrentlySuspended(new DateTimeImmutable())) {
-                $context->reply('suspend.channel_suspended', ['%channel%' => $channelName]);
+                $context->reply('suspend.channel_suspended', ['%channel%' => new Fragment($channelName, Component::Emphasis)], Role::Error);
 
                 return true;
             }
@@ -272,7 +293,7 @@ final readonly class ChanServService
 
         $channel = $this->channelRepository->findByChannelName($channelName);
         if (null !== $channel && $channel->isPendingDeletion()) {
-            $context->reply('drop.pending_deletion', ['%channel%' => $channelName]);
+            $context->reply('drop.pending_deletion', ['%channel%' => new Fragment($channelName, Component::Emphasis)], Role::Error);
 
             return 'pending_deletion';
         }

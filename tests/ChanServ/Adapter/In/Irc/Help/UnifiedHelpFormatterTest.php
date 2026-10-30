@@ -8,7 +8,6 @@ use App\ChanServ\Adapter\In\Irc\Help\HelpableCommandInterface;
 use App\ChanServ\Adapter\In\Irc\Help\HelpFormatterContextInterface;
 use App\ChanServ\Adapter\In\Irc\Help\UnifiedHelpFormatter;
 use App\Tests\Shared\Translations\TranslationCatalog;
-use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -25,31 +24,18 @@ use function dirname;
 use function explode;
 use function implode;
 use function in_array;
-use function is_array;
-use function is_string;
-use function max;
 use function mb_strlen;
 use function preg_match;
-use function preg_match_all;
-use function sprintf;
 use function str_ends_with;
 use function str_pad;
 use function str_repeat;
-use function strpos;
 use function strtolower;
-use function strtr;
-use function substr;
-use function substr_count;
 use function trim;
-
-use const STR_PAD_LEFT;
 
 #[CoversClass(UnifiedHelpFormatter::class)]
 final class UnifiedHelpFormatterTest extends TestCase
 {
     private const array LOCALES = ['ca', 'de', 'el', 'en', 'es', 'eu', 'fr', 'gl', 'it', 'nl', 'pl', 'pt', 'ro', 'tr'];
-
-    private const array ALLOWED_HELP_COLORS = ['03', '07', '10', '14'];
 
     #[Test]
     public function rendersFilteredGeneralHelpAndSortedIrcopSection(): void
@@ -379,43 +365,9 @@ final class UnifiedHelpFormatterTest extends TestCase
             'params' => ['title' => 'HELP SET EMAIL', 'separator' => str_repeat('─', 23)],
         ], $context->translations[0]);
 
-        $expectedTemplate = "\x02\x0307🤖 %title%\x03\x0F \x0314%separator%\x03\x0F";
         foreach (self::LOCALES as $locale) {
             $help = $this->loadHelpCatalog($locale);
-            self::assertSame($expectedTemplate, $help['header'] ?? null, $locale);
-        }
-    }
-
-    #[Test]
-    public function allLocaleHelpTemplatesUseOnlyCanonicalStructuralColors(): void
-    {
-        foreach (self::LOCALES as $locale) {
-            $help = $this->loadHelpCatalog($locale);
-            $this->assertHelpColorsAllowed($help, $locale);
-
-            $introExpiration = $help['intro_expiration'] ?? null;
-            self::assertIsString($introExpiration, $locale);
-            self::assertStringStartsWith("\x0304⚠\x03\x0F ", $introExpiration, $locale);
-            self::assertMatchesRegularExpression('/\x1F\x0304%days% [^\x03]+\x03\x1F/u', $introExpiration, $locale);
-            self::assertSame(2, substr_count($introExpiration, "\x1F"), $locale . ': underline resets after the full duration');
-            foreach (['general_header', 'options_header', 'ircop_header'] as $section) {
-                self::assertIsString($help[$section]);
-                self::assertStringStartsWith("\x02 ■ ", $help[$section], $locale);
-                self::assertStringEndsWith("\x02", $help[$section], $locale);
-            }
-            foreach (['group_header', 'subgroup_header'] as $group) {
-                self::assertSame("\x0310  ◆ %group%\x03\x0F", $help[$group], $locale);
-            }
-            foreach (['command_line', 'subcommand_line'] as $row) {
-                self::assertSame("    \x0310›\x03\x0F \x02\x0303%command%\x03\x0F%description%", $help[$row], $locale);
-            }
-            foreach (['general_footer', 'set_sub_footer'] as $hint) {
-                self::assertIsString($help[$hint]);
-                self::assertStringStartsWith("\x0310ℹ\x03\x0F ", $help[$hint], $locale);
-                self::assertMatchesRegularExpression('/\x02\x0303HELP [^\x03]+\x03\x0F/u', $help[$hint], $locale);
-            }
-            preg_match_all('/\x03(?:[0-9]{1,2})?/', $introExpiration, $colorControls);
-            self::assertSame(["\x0304", "\x03", "\x0304", "\x03"], $colorControls[0], $locale . ': only the warning icon and full expiration duration are colored');
+            self::assertSame('%title% %separator%', $help['header'] ?? null, $locale);
         }
     }
 
@@ -448,52 +400,6 @@ final class UnifiedHelpFormatterTest extends TestCase
             self::assertIsString($list['short'] ?? null, $locale);
             self::assertDoesNotMatchRegularExpression('/\\([^)]*IRCops?[^)]*\\)\\.?$/iu', $list['short'], $locale);
         }
-    }
-
-    #[Test]
-    public function rendersCanonicalHelpColorsAndLeavesDescriptionsUncolored(): void
-    {
-        $help = $this->loadHelpCatalog('en');
-        $context = new ChanServHelpFormatterContext(
-            commands: [new ChanServHelpableCommand('VISIBLE', 1)],
-            visibleCommands: ['VISIBLE'],
-        );
-
-        $lines = new UnifiedHelpFormatter()->renderGeneralHelp($context);
-
-        $title = 'translated:help.header_title';
-        self::assertSame(
-            "\x02\x0307🤖 {$title}\x03\x0F \x0314" . str_repeat('─', max(0, 40 - 3 - mb_strlen($title))) . "\x03\x0F",
-            $this->renderReply($context->translations, $help, 'help.header'),
-        );
-        self::assertSame("\x02 ■ Available commands:\x02", $this->renderReply($context->translations, $help, 'help.general_header'));
-        self::assertSame("\x0310  ◆ translated:help.group.public\x03\x0F", $this->renderReply($context->translations, $help, 'help.group_header'));
-
-        $renderedCommand = $this->renderReply($context->translations, $help, 'help.command_line');
-        self::assertSame("    \x0310›\x03\x0F \x02\x0303VISIBLE     \x03\x0Ftranslated:visible.short", $renderedCommand);
-        $descriptionOffset = strpos($renderedCommand, 'translated:visible.short');
-        self::assertNotFalse($descriptionOffset);
-        self::assertSame('translated:visible.short', substr($renderedCommand, $descriptionOffset));
-
-        $setContext = new ChanServHelpFormatterContext();
-        $lines = new UnifiedHelpFormatter()->renderCommandHelp($setContext, new ChanServHelpableCommand('SET', 1, [[
-            'name' => 'EMAIL',
-            'desc_key' => 'set.email.short',
-            'help_key' => 'set.email.help', 'example_key' => 'set.email.example',
-            'syntax_key' => 'set.email.syntax',
-        ]]));
-        self::assertSame("\x02 ■ Options:\x02", $this->renderReply($setContext->translations, $help, 'help.options_header'));
-        self::assertSame("    \x0310›\x03\x0F \x02\x0303EMAIL     \x03\x0Ftranslated:set.email.short", $this->renderReply($setContext->translations, $help, 'help.subcommand_line'));
-
-        $introExpiration = $help['intro_expiration'] ?? null;
-        self::assertIsString($introExpiration);
-        self::assertSame("\x0304⚠\x03\x0F NOTE: Channels unused for more than \x1F\x030430 days\x03\x1F are automatically removed.", $this->renderTemplate($introExpiration, ['days' => '30']));
-
-        $common = TranslationCatalog::parseFile(dirname(__DIR__, 6) . '/translations/common.en.yaml');
-        $unknownCommand = $common['unknown_command'] ?? null;
-        self::assertIsString($unknownCommand);
-        self::assertSame("\x0304✗\x03\x0F Unknown command \x0303FUTURE\x03\x0F. Use /msg ChanServ \x0303HELP\x03\x0F", $this->renderTemplate($unknownCommand, ['command' => 'FUTURE', 'bot' => 'ChanServ']));
-        self::assertSame("\x0314─────────────────────────────\x03\x0F", $help['footer']);
     }
 
     #[Test]
@@ -546,68 +452,6 @@ final class UnifiedHelpFormatterTest extends TestCase
         }
 
         return $entries;
-    }
-
-    /**
-     * @param array<string|int, mixed> $values
-     */
-    private function assertHelpColorsAllowed(array $values, string $locale, string $path = 'help'): void
-    {
-        foreach ($values as $key => $value) {
-            $currentPath = $path . '.' . $key;
-            if (is_array($value)) {
-                $this->assertHelpColorsAllowed($value, $locale, $currentPath);
-                continue;
-            }
-            if (!is_string($value)) {
-                continue;
-            }
-
-            preg_match_all('/\x03([0-9]{1,2})/', $value, $matches);
-            foreach ($matches[1] as $color) {
-                $color = str_pad($color, 2, '0', STR_PAD_LEFT);
-                if ('04' === $color) {
-                    self::assertSame('help.intro_expiration', $currentPath, sprintf('%s uses red outside the expiration warning icon', $locale . ':' . $currentPath));
-
-                    continue;
-                }
-                self::assertContains($color, self::ALLOWED_HELP_COLORS, sprintf('%s contains forbidden structural color %s', $locale . ':' . $currentPath, $color));
-            }
-        }
-    }
-
-    /**
-     * @param list<array{key: string, params: array<string, mixed>}> $replies
-     * @param array<string, mixed>                                   $help
-     */
-    private function renderReply(array $replies, array $help, string $key): string
-    {
-        foreach ($replies as $reply) {
-            if ($key !== $reply['key']) {
-                continue;
-            }
-
-            $template = $help[substr($key, 5)] ?? null;
-            self::assertIsString($template, $key . ' translation must exist');
-
-            return $this->renderTemplate($template, $reply['params']);
-        }
-
-        throw new LogicException(sprintf('Formatter did not emit %s.', $key));
-    }
-
-    /**
-     * @param array<string, mixed> $params
-     */
-    private function renderTemplate(string $template, array $params): string
-    {
-        $replacements = [];
-        foreach ($params as $key => $value) {
-            self::assertIsScalar($value);
-            $replacements['%' . $key . '%'] = (string) $value;
-        }
-
-        return strtr($template, $replacements);
     }
 }
 

@@ -17,9 +17,11 @@ use App\NickServ\Application\UseCase\ForbidVhost\ManageForbiddenVhostOutcome;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentValidator;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\Fragment;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 
 use function count;
-use function sprintf;
 use function strtoupper;
 use function trim;
 
@@ -110,7 +112,7 @@ final class ForbidVhostCommand implements NickServCommandInterface, IrcopAuditab
 
         $validation = CommandArgumentValidator::validate($this->getArgumentDefinition(), $context->args);
         if (null !== $validation->syntaxKey) {
-            $context->reply('error.syntax', ['%syntax%' => $context->trans($validation->syntaxKey)]);
+            $context->replySyntax($validation->syntaxKey);
 
             return CommandOutcome::rejected();
         }
@@ -127,7 +129,7 @@ final class ForbidVhostCommand implements NickServCommandInterface, IrcopAuditab
 
     private function rejectUnknownSubcommand(NickServContext $context, string $sub): CommandOutcome
     {
-        $context->reply('forbidvhost.unknown_sub', ['%sub%' => $sub]);
+        $context->replyEmphasized('forbidvhost.unknown_sub', ['%sub%' => $sub], Role::Error, ['sub']);
 
         return CommandOutcome::rejected();
     }
@@ -138,7 +140,7 @@ final class ForbidVhostCommand implements NickServCommandInterface, IrcopAuditab
         $pattern = trim($context->args[1] ?? '');
 
         if ('' === $pattern) {
-            $context->reply('error.syntax', ['%syntax%' => $context->trans($syntaxKey)]);
+            $context->replySyntax($syntaxKey);
 
             return CommandOutcome::rejected();
         }
@@ -161,14 +163,14 @@ final class ForbidVhostCommand implements NickServCommandInterface, IrcopAuditab
     {
         $pattern = trim($context->args[1] ?? '');
         if ('' === $pattern) {
-            $context->reply('error.syntax', ['%syntax%' => $context->trans('forbidvhost.del.syntax')]);
+            $context->replySyntax('forbidvhost.del.syntax');
 
             return CommandOutcome::rejected();
         }
 
         $result = $this->handler->handle(new ManageForbiddenVhost(ForbiddenVhostAction::Delete, $pattern, null));
         if (ManageForbiddenVhostOutcome::NotFound === $result->outcome) {
-            $context->reply('forbidvhost.del.not_found', ['%pattern%' => $pattern]);
+            $context->replyEmphasized('forbidvhost.del.not_found', ['%pattern%' => $pattern], Role::Error, ['pattern']);
 
             return CommandOutcome::rejected();
         }
@@ -180,21 +182,21 @@ final class ForbidVhostCommand implements NickServCommandInterface, IrcopAuditab
     {
         $result = $this->handler->handle(new ManageForbiddenVhost(ForbiddenVhostAction::List, null, null));
         if (ManageForbiddenVhostOutcome::Empty === $result->outcome) {
-            $context->reply('forbidvhost.list.empty');
+            $context->replyEmphasized('forbidvhost.list.empty', [], Role::Information, []);
 
             return CommandOutcome::rejected();
         }
 
-        $context->reply('forbidvhost.list.header', ['%count%' => (string) count($result->entries)]);
+        $context->replyEmphasized('forbidvhost.list.header', ['%count%' => (string) count($result->entries)], Role::Information, ['count']);
 
         $num = 1;
         foreach ($result->entries as $forbidden) {
             $creatorName = $this->resolveCreatorName($forbidden->creatorNickId, $context);
             $createdAt = $context->formatDate($forbidden->createdAt);
 
-            $context->reply('forbidvhost.list.entry', [
+            $context->replyComponent(Component::IndentedRow, 'forbidvhost.list.entry', [
                 '%index%' => (string) $num,
-                '%pattern%' => sprintf("\x0304%s\x03", $forbidden->pattern),
+                '%pattern%' => new Fragment($forbidden->pattern, Component::Danger),
                 '%nickname%' => $creatorName,
                 '%date%' => $createdAt,
             ]);
@@ -206,14 +208,14 @@ final class ForbidVhostCommand implements NickServCommandInterface, IrcopAuditab
 
     private function replyPatternError(NickServContext $context, string $key, string $pattern): CommandOutcome
     {
-        $context->reply($key, ['%pattern%' => $pattern]);
+        $context->replyEmphasized($key, ['%pattern%' => $pattern], Role::Error, ['pattern']);
 
         return CommandOutcome::rejected();
     }
 
     private function replySuccess(NickServContext $context, string $key, string $pattern): CommandOutcome
     {
-        $context->reply($key, ['%pattern%' => $pattern]);
+        $context->replyEmphasized($key, ['%pattern%' => $pattern], Role::Success, ['pattern']);
 
         return CommandOutcome::success(new IrcopAuditData(target: $pattern));
     }

@@ -7,20 +7,66 @@ namespace App\Tests\ChanServ\Adapter\Out\Service;
 use App\Bootstrap\Adapter\Out\Translation\IrcYamlTranslationLoader;
 use App\ChanServ\Adapter\In\Irc\ChanServNotifierInterface;
 use App\ChanServ\Adapter\Out\Service\ChanServDebugNotifier;
+use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
 use Symfony\Component\Translation\Translator;
+use Symfony\Contracts\Translation\TranslatableInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function array_map;
 use function hash;
-use function is_string;
+use function restore_error_handler;
 use function serialize;
+use function set_error_handler;
+use function str_replace;
 
 #[CoversClass(ChanServDebugNotifier::class)]
 final class ChanServDebugNotifierTest extends TestCase
 {
+    #[Test]
+    public function translatableDebugParameterKeepsLiteralPlaceholderText(): void
+    {
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturn('%option% %unused%');
+        $notifier = $this->createMock(ChanServNotifierInterface::class);
+        $notifier->expects(self::once())->method('sendMessage')->with('#debug', '%unused% %unused%', 'NOTICE');
+        $debug = $this->createNotifier(chanNotifier: $notifier, translator: $translator, debugChannel: '#debug');
+        $value = new class implements TranslatableInterface {
+            public function trans(TranslatorInterface $translator, ?string $locale = null): string
+            {
+                return '%unused%';
+            }
+        };
+        $debug->log('Admin', 'SET', 'Target', extra: ['option' => $value]);
+    }
+
+    #[Test]
+    public function nonScalarDebugParameterRetainsTranslatorConversion(): void
+    {
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturn('%option%');
+        $notifier = $this->createMock(ChanServNotifierInterface::class);
+        $notifier->expects(self::once())->method('sendMessage')->with(self::anything(), 'Array', 'NOTICE');
+        $debug = $this->createNotifier(chanNotifier: $notifier, translator: $translator, debugChannel: '#debug');
+        $warnings = [];
+        set_error_handler(static function (int $severity, string $message) use (&$warnings): bool {
+            $warnings[] = [$severity, $message];
+
+            return true;
+        });
+        try {
+            $debug->log('Admin', 'SET', 'Target', extra: ['option' => ['x']]);
+        } finally {
+            restore_error_handler();
+        }
+        self::assertSame([[E_WARNING, 'Array to string conversion']], $warnings);
+    }
+
     #[Test]
     public function registrationNoticesUseConfiguredDebugLocaleInAllCatalogs(): void
     {
@@ -30,15 +76,15 @@ final class ChanServDebugNotifierTest extends TestCase
             $translator->addResource('irc', __DIR__ . '/../../../../../translations/chanserv.' . $locale . '.yaml', $locale, 'chanserv');
             foreach (['registered' => 'registration_completed', 'awaiting_approval' => 'registration_pending'] as $outcome => $key) {
                 $expected = $translator->trans('debug.' . $key, [
-                    '%operator%' => "\x0302Alice\x03", '%target%' => "\x0302#channel\x03",
+                    '%operator%' => "\x0302Alice\x03\x0F", '%target%' => "\x0302#channel\x03\x0F",
                 ], 'chanserv', $locale);
                 self::assertNotSame('debug.' . $key, $expected);
-                self::assertStringContainsString("\x0302Alice\x03", $expected);
-                self::assertStringContainsString("\x0302#channel\x03", $expected);
+                self::assertStringContainsString("\x0302Alice\x03\x0F", $expected);
+                self::assertStringContainsString("\x0302#channel\x03\x0F", $expected);
                 self::assertStringNotContainsString('%', $expected);
                 $notifier = $this->createMock(ChanServNotifierInterface::class);
                 $notifier->expects(self::once())->method('sendMessage')->with('#debug', $expected, 'NOTICE');
-                new ChanServDebugNotifier($notifier, $translator, $locale, '#debug')->log('Alice', 'REGISTER', '#channel', extra: ['outcome' => $outcome]);
+                new ChanServDebugNotifier($notifier, $translator, $locale, '#debug', $this->renderer())->log('Alice', 'REGISTER', '#channel', extra: ['outcome' => $outcome]);
             }
         }
     }
@@ -133,18 +179,8 @@ final class ChanServDebugNotifierTest extends TestCase
             },
         );
         $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static function (string $id, array $params = []): string {
-            if ('debug.action_message' === $id) {
-                return (is_string($params['%command%'] ?? null) ? $params['%command%'] : '') . ' '
-                    . (is_string($params['%operator%'] ?? null) ? $params['%operator%'] : '') . ' '
-                    . (is_string($params['%target%'] ?? null) ? $params['%target%'] : '') . ' '
-                    . (is_string($params['%reason%'] ?? null) ? $params['%reason%'] : '');
-            }
-            if ('debug.prefix_reason' === $id) {
-                return 'Reason: ' . (is_string($params['%reason%'] ?? null) ? $params['%reason%'] : '');
-            }
-
-            return $id;
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => match ($id) {
+            'debug.action_message' => '%command% %operator% %target% %reason%', 'debug.prefix_reason' => 'Reason: %reason%', default => $id
         });
         $notifier = $this->createNotifier($chanNotifier, $translator, '#ircops');
 
@@ -165,8 +201,8 @@ final class ChanServDebugNotifierTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = [], string $domain = '', string $locale = ''): string => match ($id) {
             'debug.founder_action' => 'Level-founder action',
-            'debug.prefix_reason' => 'Reason: ' . (isset($params['%reason%']) && is_string($params['%reason%']) ? $params['%reason%'] : ''),
-            'debug.action_message' => (isset($params['%operator%']) && is_string($params['%operator%']) ? $params['%operator%'] : '') . ' ' . (isset($params['%command%']) && is_string($params['%command%']) ? $params['%command%'] : '') . ' ' . (isset($params['%target%']) && is_string($params['%target%']) ? $params['%target%'] : '') . ' ' . (isset($params['%reason%']) && is_string($params['%reason%']) ? $params['%reason%'] : ''),
+            'debug.prefix_reason' => 'Reason: %reason%',
+            'debug.action_message' => '%operator% %command% %target% %reason%',
             default => $id,
         });
 
@@ -188,7 +224,7 @@ final class ChanServDebugNotifierTest extends TestCase
 
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = [], string $domain = '', string $locale = ''): string => match ($id) {
-            'debug.action_with_value' => (isset($params['%operator%']) && is_string($params['%operator%']) ? $params['%operator%'] : '') . ' SET ' . (isset($params['%target%']) && is_string($params['%target%']) ? $params['%target%'] : '') . ' Option: ' . (isset($params['%option%']) && is_string($params['%option%']) ? $params['%option%'] : '') . '=' . (isset($params['%value%']) && is_string($params['%value%']) ? $params['%value%'] : ''),
+            'debug.action_with_value' => '%operator% SET %target% Option: %option%=%value%',
             default => $id,
         });
 
@@ -210,7 +246,7 @@ final class ChanServDebugNotifierTest extends TestCase
 
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = [], string $domain = '', string $locale = ''): string => match ($id) {
-            'debug.action_with_option' => (isset($params['%operator%']) && is_string($params['%operator%']) ? $params['%operator%'] : '') . ' SUSPEND ' . (isset($params['%target%']) && is_string($params['%target%']) ? $params['%target%'] : '') . ' Option: ' . (isset($params['%option%']) && is_string($params['%option%']) ? $params['%option%'] : ''),
+            'debug.action_with_option' => '%operator% %command% %target% Option: %option%',
             default => $id,
         });
 
@@ -235,7 +271,7 @@ final class ChanServDebugNotifierTest extends TestCase
 
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = [], string $domain = '', string $locale = ''): string => match ($id) {
-            'debug.action_with_option' => (isset($params['%operator%']) && is_string($params['%operator%']) ? $params['%operator%'] : '') . ' SASET ' . (isset($params['%target%']) && is_string($params['%target%']) ? $params['%target%'] : '') . ' Option: ' . (isset($params['%option%']) && is_string($params['%option%']) ? $params['%option%'] : ''),
+            'debug.action_with_option' => '%operator% %command% %target% Option: %option%',
             default => $id,
         });
 
@@ -259,8 +295,8 @@ final class ChanServDebugNotifierTest extends TestCase
 
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = [], string $domain = '', string $locale = ''): string => match ($id) {
-            'debug.prefix_reason' => 'Reason: ' . (isset($params['%reason%']) && is_string($params['%reason%']) ? $params['%reason%'] : ''),
-            'debug.action_message' => (isset($params['%operator%']) && is_string($params['%operator%']) ? $params['%operator%'] : '') . ' ' . (isset($params['%command%']) && is_string($params['%command%']) ? $params['%command%'] : '') . ' ' . (isset($params['%target%']) && is_string($params['%target%']) ? $params['%target%'] : '') . ' ' . (isset($params['%reason%']) && is_string($params['%reason%']) ? $params['%reason%'] : ''),
+            'debug.prefix_reason' => 'Reason: %reason%',
+            'debug.action_message' => '%operator% %command% %target% %reason%',
             default => $id,
         });
 
@@ -342,7 +378,7 @@ final class ChanServDebugNotifierTest extends TestCase
             foreach ($cases as [$command, $reason, $extra]) {
                 $debug->log('Admin', $command, 'Target', null, null, $reason, $extra);
             }
-            self::assertSame($hash, hash('sha256', serialize($messages)), $locale);
+            self::assertSame($hash, hash('sha256', serialize(array_map(static fn (array $entry): array => [$entry[0], str_replace("\x03\x0F", "\x03", $entry[1]), $entry[2]], $messages))), $locale);
         }
     }
 
@@ -357,6 +393,12 @@ final class ChanServDebugNotifierTest extends TestCase
             $translator ?? $this->createStub(TranslatorInterface::class),
             $language,
             $debugChannel,
+            $this->renderer(),
         );
+    }
+
+    private function renderer(): IrcRenderer
+    {
+        return new IrcRenderer(new FixedStyleProvider(PresentationStyle::default()));
     }
 }

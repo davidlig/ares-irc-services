@@ -24,6 +24,9 @@ use App\OperServ\Application\Security\OperServPermission;
 use App\OperServ\Application\UseCase\Kill\KillNetworkUser;
 use App\OperServ\Application\UseCase\Kill\KillNetworkUserHandler;
 use App\OperServ\Application\UseCase\Kill\KillNetworkUserResult;
+use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -39,6 +42,35 @@ use function strtolower;
 #[CoversClass(KillNetworkUserResult::class)]
 final class KillCommandTest extends TestCase
 {
+    #[Test]
+    public function rendersKillSuccessAndProtectedUserAsDifferentRoles(): void
+    {
+        $messages = [];
+        $notifier = $this->createStub(OperServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $uid, string $message) use (&$messages): void { $messages[] = $message; });
+        $user = new NetworkUser('T', 'Target', 'ident', 'host', 'ip', false, false);
+        $renderer = new IrcRenderer(new FixedStyleProvider(new PresentationStyle(markers: ['success' => '+', 'error' => '!'])));
+        $context = new OperServContext(
+            new SenderView('UID', 'Oper', 'i', 'h', 'c', 'ip'),
+            null,
+            'KILL',
+            ['Target', 'reason'],
+            $notifier,
+            new KillCommandTranslation(),
+            'en',
+            'UTC',
+            'NOTICE',
+            new OperServCommandRegistry([]),
+            new ServiceNicknameRegistry([]),
+            $this->createStub(OperatorAuthorizationQuery::class),
+            $renderer
+        );
+        $users = new KillCommandUsers(['Target' => $user]);
+        new KillCommand($this->handler($users, new KillCommandRoots(), new KillCommandNetwork(new KillCommandTrace())))->execute($context);
+        new KillCommand($this->handler($users, new KillCommandRoots(['target']), new KillCommandNetwork(new KillCommandTrace())))->execute($context);
+        self::assertSame(['+ kill.done', '! kill.protected_root'], $messages);
+    }
+
     #[Test]
     public function exposesOperOnlyPermissionAndHelpMetadata(): void
     {

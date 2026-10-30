@@ -18,6 +18,9 @@ use App\Irc\Application\Port\In\Command\IrcopAuditableCommandInterface;
 use App\Irc\Application\Port\In\Command\IrcopAuditData;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\Fragment;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 use DateTimeImmutable;
 
 use function array_slice;
@@ -142,7 +145,7 @@ final readonly class HistoryCommand implements ChanServCommandInterface, IrcopAu
 
         $channelName = $context->getChannelNameArg(0);
         if (null === $channelName) {
-            $context->reply('error.invalid_channel');
+            $context->reply('error.invalid_channel', ['%example%' => new Fragment($context->trans('error.invalid_channel_example'), Component::Emphasis)], Role::Error);
 
             return CommandOutcome::rejected();
         }
@@ -153,7 +156,7 @@ final readonly class HistoryCommand implements ChanServCommandInterface, IrcopAu
 
         $action = $this->parseAction($context);
         if (null === $action) {
-            $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
+            $context->reply('presentation.error.syntax', ['syntax' => new Fragment($context->trans($this->getSyntaxKey()), Component::Command)], Role::Error);
 
             return CommandOutcome::rejected();
         }
@@ -167,7 +170,7 @@ final readonly class HistoryCommand implements ChanServCommandInterface, IrcopAu
         } elseif (ChannelHistoryAction::Delete === $action) {
             $entryId = (int) $context->args[2];
             if ($entryId <= 0) {
-                $context->reply('history.del.invalid_id', ['%id%' => $context->args[2]]);
+                $context->reply('history.del.invalid_id', ['%id%' => new Fragment($context->args[2], Component::Emphasis)], Role::Error);
 
                 return CommandOutcome::rejected();
             }
@@ -210,37 +213,37 @@ final readonly class HistoryCommand implements ChanServCommandInterface, IrcopAu
     private function present(ChanServContext $context, string $channelName, ?string $message, bool $showAll, ManageChannelHistoryResult $result): CommandOutcome
     {
         if (ManageChannelHistoryOutcome::ChannelNotRegistered === $result->outcome) {
-            $context->reply('error.channel_not_registered', ['%channel%' => $channelName]);
+            $context->reply('presentation.error.channel_not_registered', ['%channel%' => new Fragment((string) $channelName, Component::Emphasis)], Role::Error);
 
             return CommandOutcome::rejected();
         }
 
         if (ManageChannelHistoryOutcome::EntryNotFound === $result->outcome) {
-            $context->reply('history.del.not_found', ['%id%' => $result->affectedEntryId]);
+            $context->reply('history.del.not_found', ['%id%' => new Fragment((string) $result->affectedEntryId, Component::Emphasis)], Role::Error);
 
             return CommandOutcome::rejected();
         }
 
         if (ManageChannelHistoryOutcome::NoEntries === $result->outcome) {
-            $context->reply('history.view.no_entries', ['%channel%' => $channelName]);
+            $context->reply('history.view.no_entries', ['%channel%' => new Fragment($channelName, Component::Emphasis)], Role::Information);
 
             return CommandOutcome::rejected();
         }
 
         if (ManageChannelHistoryOutcome::Added === $result->outcome) {
-            $context->reply('history.add.success', ['%channel%' => $channelName]);
+            $context->reply('history.add.success', ['%channel%' => new Fragment($channelName, Component::Emphasis)], Role::Success);
 
             return CommandOutcome::success(new IrcopAuditData(target: $channelName, reason: $message));
         }
 
         if (ManageChannelHistoryOutcome::Deleted === $result->outcome) {
-            $context->reply('history.del.success', ['%id%' => $result->affectedEntryId]);
+            $context->reply('history.del.success', ['%id%' => new Fragment((string) $result->affectedEntryId, Component::Emphasis)], Role::Success);
 
             return CommandOutcome::success(new IrcopAuditData(target: $channelName, extra: ['entry_id' => $result->affectedEntryId]));
         }
 
         if (ManageChannelHistoryOutcome::Cleared === $result->outcome) {
-            $context->reply('history.clear.success', ['%count%' => $result->total, '%channel%' => $channelName]);
+            $context->reply('history.clear.success', ['%count%' => new Fragment((string) $result->total, Component::Emphasis), '%channel%' => new Fragment($channelName, Component::Emphasis)], Role::Success);
 
             return CommandOutcome::success(new IrcopAuditData(target: $channelName, extra: ['count' => $result->total]));
         }
@@ -252,22 +255,24 @@ final readonly class HistoryCommand implements ChanServCommandInterface, IrcopAu
 
     private function presentEntries(ChanServContext $context, string $channelName, bool $showAll, ManageChannelHistoryResult $result): void
     {
-        $context->reply('history.view.header', [
-            '%channel%' => $channelName,
+        $context->replyRaw($context->renderComponent(Component::Text, 'history.view.header', [
+            '%heading%' => new Fragment($context->trans('history.view.header_heading'), Component::Emphasis, ['%channel%' => new Fragment($channelName, Component::Status)]),
             '%start%' => $result->start,
             '%end%' => $result->end,
             '%total%' => $result->total,
-        ]);
+        ]));
 
         foreach ($result->entries as $entry) {
             $this->presentEntry($context, $entry);
         }
 
         if (!$showAll && $result->page < $result->totalPages) {
-            $context->reply('history.view.page_hint', [
-                '%channel%' => $channelName,
-                '%next_page%' => $result->page + 1,
-            ]);
+            $context->replyRaw($context->renderComponent(Component::Text, 'history.view.page_hint', [
+                '%command%' => new Fragment($context->trans('history.view.page_hint_command'), Component::Command, [
+                    '%channel%' => $channelName,
+                    '%next_page%' => (string) ($result->page + 1),
+                ]),
+            ]));
         }
     }
 
@@ -276,17 +281,17 @@ final readonly class HistoryCommand implements ChanServCommandInterface, IrcopAu
         $operator = $entry->operatorAccountMissing
             ? sprintf('%s %s', $entry->performedBy, $context->trans('history.unknown_operator'))
             : $entry->performedBy;
-        $context->reply('history.view.entry', [
+        $context->replyRaw($context->renderComponent(Component::Text, 'history.view.entry', [
             '%id%' => $entry->id,
             '%date%' => $context->formatDate($entry->performedAt),
-            '%action%' => $entry->action,
+            '%action%' => new Fragment($entry->action, Component::Positive),
             '%operator%' => $operator,
             '%message%' => $this->translateMessage($entry->message, $entry->extraData, $context),
-        ]);
+        ]));
 
         $formattedExtra = $this->formatExtraData($entry->extraData, $context);
         if ([] !== $entry->extraData && '' !== $formattedExtra) {
-            $context->reply('history.view.extra', ['%extra%' => $formattedExtra]);
+            $context->replyRaw($context->renderComponent(Component::IndentedRow, 'history.view.extra', ['%extra%' => new Fragment($formattedExtra, Component::DetailValue)]));
         }
     }
 

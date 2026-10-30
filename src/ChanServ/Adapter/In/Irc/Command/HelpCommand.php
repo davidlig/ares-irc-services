@@ -11,6 +11,9 @@ use App\ChanServ\Adapter\In\Irc\HelpFormatterContextAdapter;
 use App\ChanServ\Application\Port\Out\ChanServOperatorAccess;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\Fragment;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 
 use function array_find;
 use function implode;
@@ -122,14 +125,20 @@ final readonly class HelpCommand implements ChanServCommandInterface
         $handler = $context->getRegistry()->find($targetCmd);
 
         if (null === $handler) {
-            $context->reply('unknown_command', ['command' => $targetCmd]);
+            $context->reply('presentation.unknown_command', [
+                'command' => new Fragment($targetCmd, Component::Command),
+                'help' => new Fragment('HELP', Component::Command),
+            ], Role::Error);
 
             return;
         }
 
         $adapter = new HelpFormatterContextAdapter($context, $this->operatorAccess);
         if (!$adapter->canViewCommandInHelp($handler)) {
-            $context->reply('unknown_command', ['command' => $targetCmd]);
+            $context->reply('presentation.unknown_command', [
+                'command' => new Fragment($targetCmd, Component::Command),
+                'help' => new Fragment('HELP', Component::Command),
+            ], Role::Error);
 
             return;
         }
@@ -144,10 +153,11 @@ final readonly class HelpCommand implements ChanServCommandInterface
                 return;
             }
 
-            $context->reply('unknown_help_option', [
-                'command' => $handler->getName(),
-                'option' => strtoupper($context->args[1]),
-            ]);
+            $context->reply('presentation.unknown_help_option', [
+                'command' => new Fragment($handler->getName(), Component::Command),
+                'option' => new Fragment(strtoupper($context->args[1]), Component::Command),
+                'help' => new Fragment('HELP', Component::Command),
+            ], Role::Error);
 
             return;
         }
@@ -160,9 +170,8 @@ final readonly class HelpCommand implements ChanServCommandInterface
         $adapter = new HelpFormatterContextAdapter($context, $this->operatorAccess);
         $inactivityNotice = null;
         if ($this->inactivityExpiryDays > 0) {
-            $inactivityNotice = $context->trans('help.intro_expiration', [
-                'label' => $context->trans('help.intro_expiration_label'),
-                'days' => $this->inactivityExpiryDays,
+            $inactivityNotice = $context->renderComponent(Component::ExpirationNotice, 'help.intro_expiration', [
+                'period' => new Fragment($context->trans('help.intro_expiration_period', ['days' => $this->inactivityExpiryDays]), Component::Expiration),
             ]);
         }
         $lines = $this->formatter->renderGeneralHelp($adapter);

@@ -17,6 +17,9 @@ use App\Irc\Application\Port\In\Command\IrcopAuditableCommandInterface;
 use App\Irc\Application\Port\In\Command\IrcopAuditData;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\Fragment;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 
 use function ceil;
 use function filter_var;
@@ -132,21 +135,21 @@ final readonly class ListCommand implements ChanServCommandInterface, IrcopAudit
 
     private function present(ChanServContext $context, ListRegisteredChannelsResult $result): void
     {
-        $context->reply('list.header');
+        $context->replyRaw($context->renderComponent(Component::TableHeader, 'list.header'));
 
         if ([] === $result->entries && 0 === $result->total) {
-            $context->reply('list.empty', ['pattern' => $result->pattern]);
+            $context->reply('list.empty', ['pattern' => $result->pattern], Role::Information);
         } elseif ([] !== $result->entries) {
             foreach ($result->entries as $entry) {
                 $this->presentEntry($context, $entry);
             }
         }
 
-        $context->reply('list.page', [
+        $context->replyRaw($context->renderComponent(Component::Text, 'list.page', [
             'page' => $result->page,
             'pages' => (int) ceil($result->total / $result->pageSize),
             'total' => $result->total,
-        ]);
+        ]));
     }
 
     private function presentEntry(ChanServContext $context, ListedRegisteredChannel $entry): void
@@ -160,18 +163,18 @@ final readonly class ListCommand implements ChanServCommandInterface, IrcopAudit
             ChannelStatus::Rejected => 'list.status_rejected_registration',
         };
 
-        $context->reply('list.row', [
+        $context->replyRaw($context->renderComponent(Component::Row, 'list.row', [
             'channel' => $entry->channelName,
             'founder' => $entry->founderName ?? '—',
             'registered' => $context->formatDate($entry->registeredAt),
             'last_used' => $context->formatDate($entry->lastUsedAt),
             'status' => $context->trans($statusKey),
-        ]);
+        ]));
     }
 
     private function rejectSyntax(ChanServContext $context): CommandOutcome
     {
-        $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
+        $context->reply('presentation.error.syntax', ['syntax' => new Fragment($context->trans($this->getSyntaxKey()), Component::Command)], Role::Error);
 
         return CommandOutcome::rejected();
     }

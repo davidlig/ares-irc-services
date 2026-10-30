@@ -13,6 +13,8 @@ use App\MemoServ\Application\UseCase\Ignore\IgnoreMemoOutcome;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentValidator;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 
 use function str_starts_with;
 use function strtoupper;
@@ -102,14 +104,14 @@ final readonly class IgnoreCommand implements MemoServCommandInterface
     {
         $senderAccount = $context->senderAccount;
         if (null === $senderAccount || null === $context->sender) {
-            $context->reply('error.not_identified');
+            $context->replyError('error.not_identified');
 
             return null;
         }
 
         $validation = CommandArgumentValidator::validate($this->getArgumentDefinition(), $context->args);
         if (!$validation->isValid()) {
-            $context->reply('error.syntax', ['syntax' => $context->trans($validation->syntaxKey ?? $this->getSyntaxKey())]);
+            $context->replyError('error.syntax', ['syntax' => $context->trans($validation->syntaxKey ?? $this->getSyntaxKey())]);
 
             return null;
         }
@@ -140,45 +142,45 @@ final readonly class IgnoreCommand implements MemoServCommandInterface
             case IgnoreMemoOutcome::ListNick:
             case IgnoreMemoOutcome::ListChannel:
                 if ([] === $result->ignoredNicks) {
-                    $context->reply('ignore.list_empty');
+                    $context->reply('ignore.list_empty', [], Role::Information);
 
                     return null;
                 }
-                $context->reply('ignore.list_header');
+                $context->replyComponent(Component::TableHeader, 'ignore.list_header');
                 foreach ($result->ignoredNicks as $name) {
                     $context->replyRaw('  ' . $name);
                 }
-                $context->reply('reply.separator');
+                $context->replySeparator();
                 break;
 
             case IgnoreMemoOutcome::AddedNick:
             case IgnoreMemoOutcome::AddedChannel:
-                $context->reply('ignore.added', ['nickname' => $result->targetNick ?? '', 'nick' => $result->targetNick ?? '']);
+                $context->reply('ignore.added', ['nickname' => $context->emphasize($result->targetNick ?? ''), 'nick' => $context->emphasize($result->targetNick ?? '')], Role::Success);
                 break;
 
             case IgnoreMemoOutcome::DeletedNick:
             case IgnoreMemoOutcome::DeletedChannel:
-                $context->reply('ignore.removed', ['nickname' => $result->targetNick ?? '', 'nick' => $result->targetNick ?? '']);
+                $context->reply('ignore.removed', ['nickname' => $context->emphasize($result->targetNick ?? ''), 'nick' => $context->emphasize($result->targetNick ?? '')], Role::Success);
                 break;
 
             case IgnoreMemoOutcome::AlreadyIgnored:
-                $context->reply('ignore.already_ignored', ['nickname' => $result->targetNick ?? '', 'nick' => $result->targetNick ?? '']);
+                $context->reply('ignore.already_ignored', ['nickname' => $context->emphasize($result->targetNick ?? ''), 'nick' => $context->emphasize($result->targetNick ?? '')], Role::Error);
                 break;
 
             case IgnoreMemoOutcome::NotIgnored:
-                $context->reply('ignore.not_ignored', ['nickname' => $result->targetNick ?? '', 'nick' => $result->targetNick ?? '']);
+                $context->reply('ignore.not_ignored', ['nickname' => $context->emphasize($result->targetNick ?? ''), 'nick' => $context->emphasize($result->targetNick ?? '')], Role::Error);
                 break;
 
             case IgnoreMemoOutcome::NickNotRegistered:
-                $context->reply('error.nick_not_registered', ['nickname' => $result->targetNick ?? '', 'nick' => $result->targetNick ?? '']);
+                $context->replyError('error.nick_not_registered', ['nickname' => $result->targetNick ?? '', 'nick' => $result->targetNick ?? '']);
                 break;
 
             case IgnoreMemoOutcome::ChannelNotRegistered:
-                $context->reply('error.channel_not_registered', ['channel' => $result->channelName ?? '']);
+                $context->replyError('error.channel_not_registered', ['channel' => $result->channelName ?? '']);
                 break;
 
             case IgnoreMemoOutcome::AccessDenied:
-                $context->reply('error.insufficient_access', [
+                $context->replyError('error.insufficient_access', [
                     'operation' => 'IGNORE',
                     'channel' => $result->channelName ?? $targetChannel ?? '',
                 ]);
@@ -187,11 +189,11 @@ final readonly class IgnoreCommand implements MemoServCommandInterface
             case IgnoreMemoOutcome::LimitReached:
                 if (null !== $result->channelName) {
                     $context->reply('ignore.limit_reached_channel', [
-                        'limit' => $this->ignoreListLimitChannel,
-                        'channel' => $result->channelName,
-                    ]);
+                        'limit' => $context->emphasize((string) $this->ignoreListLimitChannel),
+                        'channel' => $context->emphasize($result->channelName),
+                    ], Role::Error);
                 } else {
-                    $context->reply('ignore.limit_reached_nick', ['limit' => $this->ignoreListLimitNick]);
+                    $context->reply('ignore.limit_reached_nick', ['limit' => $context->emphasize((string) $this->ignoreListLimitNick)], Role::Error);
                 }
                 break;
         }

@@ -9,6 +9,7 @@ use App\ChanServ\Application\UseCase\UpdateSetting\ChannelSetting;
 use App\ChanServ\Application\UseCase\UpdateSetting\UpdateChannelSettingHandlerInterface;
 use App\ChanServ\Application\UseCase\UpdateSetting\UpdateChannelSettingOutcome;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 
 final readonly class SetEmailHandler implements SetOptionHandlerInterface
 {
@@ -24,15 +25,15 @@ final readonly class SetEmailHandler implements SetOptionHandlerInterface
         }
         $result = $this->handler->handle($request);
         if (UpdateChannelSettingOutcome::BlockedEmailDomain === $result->outcome) {
-            $context->reply('error.email_domain_blocked');
+            $context->reply('presentation.error.email_domain_blocked', role: Role::Error);
 
             return;
         }
         if (UpdateChannelSettingOutcome::InvalidEmail === $result->outcome) {
-            $context->reply('set.email.invalid');
+            $context->reply('set.email.invalid', role: Role::Error);
 
             return;
         }
-        $context->reply(UpdateChannelSettingOutcome::Cleared === $result->outcome ? 'set.email.cleared' : 'set.email.updated');
+        $context->reply(UpdateChannelSettingOutcome::Cleared === $result->outcome ? 'set.email.cleared' : 'set.email.updated', role: Role::Success);
     }
 }

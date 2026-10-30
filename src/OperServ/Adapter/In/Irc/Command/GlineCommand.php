@@ -15,6 +15,8 @@ use App\OperServ\Application\UseCase\ManageGline\ManageGlineResult;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentValidator;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 use DateTimeImmutable;
 
 use function array_slice;
@@ -108,7 +110,7 @@ final readonly class GlineCommand implements OperServCommandInterface
 
         $validation = CommandArgumentValidator::validate($this->getArgumentDefinition(), $context->args);
         if ($validation->recognized && !$validation->isValid()) {
-            $context->reply('error.syntax', ['%syntax%' => $context->trans($validation->syntaxKey ?? $this->getSyntaxKey())]);
+            $context->replyError('error.syntax', ['%syntax%' => $context->trans($validation->syntaxKey ?? $this->getSyntaxKey())]);
 
             return;
         }
@@ -140,20 +142,20 @@ final readonly class GlineCommand implements OperServCommandInterface
     private function present(OperServContext $context, string $subcommand, GlineAction $action, ManageGlineResult $result): void
     {
         match ($result->outcome) {
-            ManageGlineOutcome::UnknownAction => $context->reply('gline.unknown_sub', ['%sub%' => $subcommand]),
-            ManageGlineOutcome::InvalidRequest => $context->reply('error.syntax', ['%syntax%' => $context->trans(GlineAction::Delete === $action ? 'gline.del.syntax' : 'gline.add.syntax')]),
-            ManageGlineOutcome::InvalidMask => $context->reply('gline.invalid_mask'),
-            ManageGlineOutcome::UserNotFound => $context->reply('error.nick_not_online', ['%nickname%' => (string) $result->mask]),
-            ManageGlineOutcome::GlobalMask => $context->reply('gline.global_mask', ['%mask%' => (string) $result->mask]),
-            ManageGlineOutcome::DangerousMask => $context->reply('gline.dangerous_mask', ['%mask%' => (string) $result->mask]),
-            ManageGlineOutcome::ProtectedUser => $context->reply('gline.protected_user', ['%nickname%' => (string) $result->protectedNickname]),
-            ManageGlineOutcome::InvalidExpiry => $context->reply('gline.invalid_expiry'),
-            ManageGlineOutcome::AlreadyExists => $context->reply('gline.already_exists', ['%mask%' => (string) $result->mask]),
-            ManageGlineOutcome::LimitReached => $context->reply('gline.max_entries', ['%max%' => (string) $result->limit]),
-            ManageGlineOutcome::NotFound => $context->reply('gline.not_found', ['%mask%' => (string) $result->mask]),
-            ManageGlineOutcome::ListEmpty => $context->reply('gline.list.empty'),
+            ManageGlineOutcome::UnknownAction => $context->reply('gline.unknown_sub', ['%sub%' => $context->emphasize($subcommand)], Role::Error),
+            ManageGlineOutcome::InvalidRequest => $context->replyError('error.syntax', ['%syntax%' => $context->trans(GlineAction::Delete === $action ? 'gline.del.syntax' : 'gline.add.syntax')]),
+            ManageGlineOutcome::InvalidMask => $context->reply('gline.invalid_mask', [], Role::Error),
+            ManageGlineOutcome::UserNotFound => $context->replyError('error.nick_not_online', ['%nickname%' => (string) $result->mask]),
+            ManageGlineOutcome::GlobalMask => $context->reply('gline.global_mask', ['%mask%' => $context->emphasize((string) $result->mask)], Role::Error),
+            ManageGlineOutcome::DangerousMask => $context->reply('gline.dangerous_mask', ['%mask%' => $context->emphasize((string) $result->mask)], Role::Error),
+            ManageGlineOutcome::ProtectedUser => $context->reply('gline.protected_user', ['%nickname%' => $context->emphasize((string) $result->protectedNickname)], Role::Error),
+            ManageGlineOutcome::InvalidExpiry => $context->reply('gline.invalid_expiry', [], Role::Error),
+            ManageGlineOutcome::AlreadyExists => $context->reply('gline.already_exists', ['%mask%' => $context->emphasize((string) $result->mask)], Role::Error),
+            ManageGlineOutcome::LimitReached => $context->reply('gline.max_entries', ['%max%' => (string) $result->limit], Role::Error),
+            ManageGlineOutcome::NotFound => $context->reply('gline.not_found', ['%mask%' => $context->emphasize((string) $result->mask)], Role::Error),
+            ManageGlineOutcome::ListEmpty => $context->reply('gline.list.empty', [], Role::Information),
             ManageGlineOutcome::Added => $this->presentAdded($context, $result),
-            ManageGlineOutcome::Deleted => $context->reply('gline.del.done', ['%mask%' => (string) $result->mask]),
+            ManageGlineOutcome::Deleted => $context->reply('gline.del.done', ['%mask%' => $context->emphasize((string) $result->mask)], Role::Success),
             ManageGlineOutcome::Listed => $this->presentList($context, $result),
         };
     }
@@ -162,15 +164,15 @@ final readonly class GlineCommand implements OperServCommandInterface
     {
         $duration = '0' === $result->expiry ? $context->trans('label.permanent_inline') : (string) $result->expiry;
         $context->reply('gline.add.done', [
-            '%mask%' => (string) $result->mask,
+            '%mask%' => $context->emphasize((string) $result->mask),
             '%duration%' => $duration,
             '%reason%' => (string) $result->reason,
-        ]);
+        ], Role::Success);
     }
 
     private function presentList(OperServContext $context, ManageGlineResult $result): void
     {
-        $context->reply('gline.list.header', ['%count%' => (string) count($result->entries)]);
+        $context->replyComponent(Component::DecoratedHeader, 'gline.list.header', ['%count%' => (string) count($result->entries)]);
         foreach ($result->entries as $index => $entry) {
             $this->presentEntry($context, $index, $entry);
         }
@@ -178,11 +180,11 @@ final readonly class GlineCommand implements OperServCommandInterface
 
     private function presentEntry(OperServContext $context, int $index, GlineListEntry $entry): void
     {
-        $context->reply('gline.list.entry', [
-            '%index%' => (string) ($index + 1),
-            '%mask%' => "\x0304{$entry->mask}\x03",
+        $context->replyComponent(Component::Row, 'gline.list.entry', [
+            '%index%' => $context->fragment((string) ($index + 1), Component::Muted),
+            '%mask%' => $context->danger($entry->mask),
             '%reason%' => $entry->reason ?? $context->trans('label.no_reason'),
-            '%nickname%' => $entry->creatorNickname ?? $context->trans('label.unknown_creator'),
+            '%nickname%' => $context->fragment($entry->creatorNickname ?? $context->trans('label.unknown_creator'), Component::Muted),
             '%expiration%' => null === $entry->expiresAt ? $context->trans('label.permanent') : $context->formatDate($entry->expiresAt),
         ]);
     }

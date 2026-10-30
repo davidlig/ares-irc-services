@@ -34,16 +34,10 @@ use function in_array;
 use function is_array;
 use function is_string;
 use function preg_match;
-use function preg_match_all;
-use function str_contains;
 use function str_ends_with;
 use function str_repeat;
-use function strlen;
 use function strtolower;
 use function strtoupper;
-use function substr;
-
-use const PREG_OFFSET_CAPTURE;
 
 #[CoversClass(UnifiedHelpFormatter::class)]
 #[UsesClass(CoreSendNoticeAdapter::class)]
@@ -53,8 +47,6 @@ use const PREG_OFFSET_CAPTURE;
 final class UnifiedHelpFormatterTest extends TestCase
 {
     private const array LOCALES = ['ca', 'de', 'el', 'en', 'es', 'eu', 'fr', 'gl', 'it', 'nl', 'pl', 'pt', 'ro', 'tr'];
-
-    private const array ALLOWED_COLORS = ['03', '07', '10', '14'];
 
     #[Test]
     public function keepsSpanishCommandExamplesIndependentOfMessageTransport(): void
@@ -417,118 +409,6 @@ final class UnifiedHelpFormatterTest extends TestCase
             ['key' => 'help.header', 'params' => ['title' => 'Áé🙂', 'separator' => str_repeat('─', 34)]],
             ['key' => 'help.header', 'params' => ['title' => str_repeat('X', 50), 'separator' => '']],
         ], $context->translationRequests);
-    }
-
-    #[Test]
-    public function operServCatalogsUseOnlyCanonicalHelpColorsAndKeepPlaceholderContracts(): void
-    {
-        $root = dirname(__DIR__, 6);
-        $colorRoles = [
-            'help.header' => ['07', '14'],
-            'help.general_header' => [],
-            'help.options_header' => [],
-            'help.command_line' => ['10', '03'],
-            'help.subcommand_line' => ['10', '03'],
-            'help.general_footer' => ['10', '03'],
-            'help.set_sub_footer' => ['10', '03'],
-            'help.syntax_label' => ['03'],
-            'help.group_header' => ['10'],
-            'help.subgroup_header' => ['10'],
-            'help.ircop_header' => [],
-            'help.intro_expiration' => ['07'],
-            'help.footer' => ['14'],
-        ];
-        $placeholderContracts = [
-            'help.header' => ['%title%', '%separator%'],
-            'help.command_line' => ['%command%', '%description%'],
-            'help.subcommand_line' => ['%command%', '%description%'],
-            'help.general_footer' => ['%bot%'],
-            'help.set_sub_footer' => ['%bot%', '%command%'],
-            'help.syntax_label' => ['%syntax%'],
-            'help.group_header' => ['%group%'],
-            'help.subgroup_header' => ['%group%'],
-        ];
-
-        foreach (self::LOCALES as $locale) {
-            $catalog = TranslationCatalog::parseFile($root . '/translations/operserv.' . $locale . '.yaml');
-            self::assertArrayHasKey('help', $catalog, $locale);
-            self::assertIsArray($catalog['help'], $locale);
-
-            $entries = [];
-            $flatten = static function (array $values, string $prefix) use (&$flatten, &$entries): void {
-                foreach ($values as $key => $value) {
-                    $path = $prefix . '.' . (string) $key;
-                    if (is_array($value)) {
-                        $flatten($value, $path);
-                    } elseif (is_string($value)) {
-                        $entries[$path] = $value;
-                    }
-                }
-            };
-            $flatten($catalog['help'], 'help');
-
-            foreach ($entries as $key => $value) {
-                preg_match_all('/\x03([0-9]{1,2})/', $value, $matches, PREG_OFFSET_CAPTURE);
-                foreach ($matches[1] as $index => [$color, $offset]) {
-                    self::assertSame(2, strlen($color), $locale . ': ' . $key . ' uses a two-digit mIRC color');
-                    self::assertContains($color, self::ALLOWED_COLORS, $locale . ': ' . $key . ' uses canonical colors only');
-
-                    $fragmentStart = $offset + 2;
-                    $nextColorOffset = $matches[0][$index + 1][1] ?? strlen($value);
-                    $fragment = substr($value, $fragmentStart, $nextColorOffset - $fragmentStart);
-                    self::assertTrue(
-                        str_contains($fragment, "\x0F") || 1 === preg_match('/\x03(?![0-9]{2})/', $fragment),
-                        $locale . ': ' . $key . ' resets each colored fragment',
-                    );
-                }
-            }
-
-            foreach ($colorRoles as $key => $colors) {
-                self::assertArrayHasKey($key, $entries, $locale);
-                preg_match_all('/\x03([0-9]{2})/', $entries[$key], $matches);
-                foreach ($colors as $color) {
-                    self::assertContains($color, $matches[1], $locale . ': ' . $key . ' uses its semantic palette role');
-                }
-            }
-
-            self::assertSame("\x02\x0307🤖 %title%\x03\x0F \x0314%separator%\x03\x0F", $entries['help.header'], $locale);
-            foreach (['general_header', 'options_header', 'ircop_header'] as $section) {
-                self::assertStringStartsWith("\x02 ■ ", $entries['help.' . $section], $locale);
-                self::assertStringEndsWith("\x02", $entries['help.' . $section], $locale);
-                self::assertStringNotContainsString("\x03", $entries['help.' . $section], $locale);
-            }
-            foreach (['group_header', 'subgroup_header'] as $group) {
-                self::assertSame("\x0310  ◆ %group%\x03\x0F", $entries['help.' . $group], $locale);
-            }
-            foreach (['command_line', 'subcommand_line'] as $row) {
-                self::assertSame("    \x0310›\x03\x0F \x02\x0303%command%\x03\x0F%description%", $entries['help.' . $row], $locale);
-            }
-            foreach (['general_footer', 'set_sub_footer'] as $hint) {
-                self::assertStringStartsWith("\x0310ℹ\x03\x0F ", $entries['help.' . $hint], $locale);
-                self::assertMatchesRegularExpression('/[^\x02\x03]*\/msg %bot% \x02\x0303HELP [^\x03]+\x03\x0F/u', $entries['help.' . $hint], $locale);
-            }
-
-            foreach ($placeholderContracts as $key => $placeholders) {
-                self::assertArrayHasKey($key, $entries, $locale);
-                foreach ($placeholders as $placeholder) {
-                    self::assertStringContainsString($placeholder, $entries[$key], $locale . ': ' . $key . ' retains ' . $placeholder);
-                }
-            }
-
-            self::assertStringContainsString(
-                "    \x0310›\x03\x0F \x02\x0303%command%\x03\x0F%description%",
-                $entries['help.command_line'],
-                $locale . ': command descriptions return to the default foreground',
-            );
-            $commonCatalog = TranslationCatalog::parseFile($root . '/translations/common.' . $locale . '.yaml');
-            $unknownCommand = $commonCatalog['unknown_command'] ?? null;
-            self::assertIsString($unknownCommand, $locale . ': common catalog defines unknown_command');
-            self::assertStringStartsWith("\x0304✗\x03\x0F ", $unknownCommand, $locale);
-            self::assertStringContainsString("\x0303%command%\x03\x0F", $unknownCommand, $locale);
-            self::assertStringContainsString("/msg %bot% \x0303HELP", $unknownCommand, $locale);
-            self::assertStringEndsWith("\x0303HELP\x03\x0F", $unknownCommand, $locale);
-            self::assertDoesNotMatchRegularExpression('/\x03\d{1,2}\/msg/', $unknownCommand, $locale);
-        }
     }
 }
 

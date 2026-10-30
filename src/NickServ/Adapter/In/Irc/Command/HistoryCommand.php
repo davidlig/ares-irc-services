@@ -19,6 +19,9 @@ use App\NickServ\Application\UseCase\History\HistoryNickResult;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentValidator;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\Fragment;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 use Stringable;
 
 use function array_slice;
@@ -126,7 +129,7 @@ final readonly class HistoryCommand implements NickServCommandInterface, IrcopAu
 
         $validation = CommandArgumentValidator::validate($this->getArgumentDefinition(), $context->args);
         if (null !== $validation->syntaxKey) {
-            $context->reply('error.syntax', ['syntax' => $context->trans($validation->syntaxKey)]);
+            $context->replySyntax($validation->syntaxKey);
 
             return CommandOutcome::rejected();
         }
@@ -135,7 +138,7 @@ final readonly class HistoryCommand implements NickServCommandInterface, IrcopAu
         $action = HistoryNickAction::tryFrom(strtoupper($context->args[1]));
 
         if (!$validation->recognized || null === $action) {
-            $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
+            $context->replySyntax($this->getSyntaxKey());
 
             return CommandOutcome::rejected();
         }
@@ -149,7 +152,7 @@ final readonly class HistoryCommand implements NickServCommandInterface, IrcopAu
             case HistoryNickAction::Add:
                 $message = trim(implode(' ', array_slice($context->args, 2)));
                 if ('' === $message) {
-                    $context->reply('error.syntax', ['syntax' => $context->trans('history.add.syntax')]);
+                    $context->replySyntax('history.add.syntax');
 
                     return CommandOutcome::rejected();
                 }
@@ -159,7 +162,7 @@ final readonly class HistoryCommand implements NickServCommandInterface, IrcopAu
                 $rawId = $context->args[2];
                 $entryId = (int) $rawId;
                 if ($entryId <= 0) {
-                    $context->reply('history.del.invalid_id', ['%id%' => $rawId]);
+                    $context->reply('history.del.invalid_id', ['%id%' => new Fragment($rawId, Component::Emphasis)], Role::Error);
 
                     return CommandOutcome::rejected();
                 }
@@ -207,12 +210,12 @@ final readonly class HistoryCommand implements NickServCommandInterface, IrcopAu
     {
         switch ($result->outcome) {
             case HistoryNickOutcome::NotRegistered:
-                $context->reply('error.nick_not_registered', ['%nickname%' => $result->targetNick ?? '']);
+                $context->replyMissingNick('error.nick_not_registered', $result->targetNick ?? '');
 
                 return CommandOutcome::rejected();
 
             case HistoryNickOutcome::AddSuccess:
-                $context->reply('history.add.success', ['%nickname%' => $result->targetNick ?? '']);
+                $context->replyEmphasized('history.add.success', ['%nickname%' => $result->targetNick ?? ''], Role::Success, ['nickname']);
 
                 return CommandOutcome::success(new IrcopAuditData(
                     target: $result->targetNick ?? '',
@@ -220,17 +223,17 @@ final readonly class HistoryCommand implements NickServCommandInterface, IrcopAu
                 ));
 
             case HistoryNickOutcome::DelInvalidId:
-                $context->reply('history.del.invalid_id', ['%id%' => $result->rawId ?? '']);
+                $context->reply('history.del.invalid_id', ['%id%' => new Fragment($result->rawId ?? '', Component::Emphasis)], Role::Error);
 
                 return CommandOutcome::rejected();
 
             case HistoryNickOutcome::DelNotFound:
-                $context->reply('history.del.not_found', ['%id%' => $result->entryId ?? 0]);
+                $context->reply('history.del.not_found', ['%id%' => new Fragment((string) ($result->entryId ?? 0), Component::Emphasis)], Role::Error);
 
                 return CommandOutcome::rejected();
 
             case HistoryNickOutcome::DelSuccess:
-                $context->reply('history.del.success', ['%id%' => $result->entryId ?? 0]);
+                $context->reply('history.del.success', ['%id%' => new Fragment((string) ($result->entryId ?? 0), Component::Emphasis)], Role::Success);
 
                 return CommandOutcome::success(new IrcopAuditData(
                     target: $result->targetNick ?? '',
@@ -238,10 +241,10 @@ final readonly class HistoryCommand implements NickServCommandInterface, IrcopAu
                 ));
 
             case HistoryNickOutcome::ClearSuccess:
-                $context->reply('history.clear.success', [
+                $context->replyEmphasized('history.clear.success', [
                     '%count%' => $result->deletedCount,
                     '%nickname%' => $result->targetNick ?? '',
-                ]);
+                ], Role::Success, ['count', 'nickname']);
 
                 return CommandOutcome::success(new IrcopAuditData(
                     target: $result->targetNick ?? '',
@@ -249,7 +252,7 @@ final readonly class HistoryCommand implements NickServCommandInterface, IrcopAu
                 ));
 
             case HistoryNickOutcome::ViewNoEntries:
-                $context->reply('history.view.no_entries', ['%nickname%' => $result->targetNick ?? '']);
+                $context->replyEmphasized('history.view.no_entries', ['%nickname%' => $result->targetNick ?? ''], Role::Information, ['nickname']);
 
                 return CommandOutcome::rejected();
 
@@ -262,21 +265,21 @@ final readonly class HistoryCommand implements NickServCommandInterface, IrcopAu
 
     private function presentView(NickServContext $context, HistoryNickResult $result): void
     {
-        $context->reply('history.view.header', [
-            '%nickname%' => $result->targetNick ?? '',
+        $context->replyComponentWithLocalizedFragments(Component::Text, 'history.view.header', [
+            '%nickname%' => new Fragment($result->targetNick ?? '', Component::Status),
             '%start%' => $result->start,
             '%end%' => $result->end,
             '%total%' => $result->total,
-        ]);
+        ], ['heading' => ['history.view.header_title', Component::TableHeader]]);
 
         foreach ($result->entries as $entry) {
             $operator = $this->formatOperator($entry->performedByNickId, $entry->performedBy, $entry->operatorExists, $context);
             $message = $this->translateMessage($entry->message, $entry->extraData, $context);
 
-            $context->reply('history.view.entry', [
+            $context->replyComponent(Component::Text, 'history.view.entry', [
                 '%id%' => $entry->id,
                 '%date%' => $context->formatDate($entry->performedAt),
-                '%action%' => $entry->action,
+                '%action%' => new Fragment($entry->action, Component::Positive),
                 '%operator%' => $operator,
                 '%message%' => $message,
             ]);
@@ -284,16 +287,16 @@ final readonly class HistoryCommand implements NickServCommandInterface, IrcopAu
             if (!empty($entry->extraData)) {
                 $formattedExtra = $this->formatExtraData($entry->extraData, $context);
                 if ('' !== $formattedExtra) {
-                    $context->reply('history.view.extra', ['%extra%' => $formattedExtra]);
+                    $context->replyComponent(Component::IndentedRow, 'history.view.extra', ['%extra%' => new Fragment($formattedExtra, Component::DetailValue)]);
                 }
             }
         }
 
         if (!$result->showAll && $result->page < $result->totalPages) {
-            $context->reply('history.view.page_hint', [
+            $context->replyComponentWithLocalizedFragments(Component::Text, 'history.view.page_hint', [
                 '%nickname%' => $result->targetNick ?? '',
                 '%next_page%' => $result->page + 1,
-            ]);
+            ], ['command' => ['history.view.page_hint_command', Component::Command]]);
         }
     }
 

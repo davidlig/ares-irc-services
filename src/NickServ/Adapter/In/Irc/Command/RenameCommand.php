@@ -17,6 +17,7 @@ use App\NickServ\Application\UseCase\Rename\RenameNickOutcome;
 use App\NickServ\Application\UseCase\Rename\RenameNickResult;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 use Psr\Log\LoggerInterface;
 
 final readonly class RenameCommand implements NickServCommandInterface, IrcopAuditableCommandInterface
@@ -119,19 +120,19 @@ final readonly class RenameCommand implements NickServCommandInterface, IrcopAud
     {
         switch ($result->outcome) {
             case RenameNickOutcome::NotOnline:
-                $context->reply('error.nick_not_online', ['nickname' => $result->targetNick]);
+                $context->replyMissingNick('error.nick_not_online', $result->targetNick ?? '');
 
                 return CommandOutcome::rejected();
             case RenameNickOutcome::CannotRenameRoot:
-                $context->reply('rename.cannot_rename_root', ['nickname' => $result->targetNick]);
+                $context->replyEmphasized('rename.cannot_rename_root', ['nickname' => $result->targetNick], Role::Error, ['nickname']);
 
                 return CommandOutcome::rejected();
             case RenameNickOutcome::CannotRenameOper:
-                $context->reply('rename.cannot_rename_oper', ['nickname' => $result->targetNick]);
+                $context->replyEmphasized('rename.cannot_rename_oper', ['nickname' => $result->targetNick], Role::Error, ['nickname']);
 
                 return CommandOutcome::rejected();
             case RenameNickOutcome::CannotRenameService:
-                $context->reply('rename.cannot_rename_service', ['nickname' => $result->targetNick]);
+                $context->replyEmphasized('rename.cannot_rename_service', ['nickname' => $result->targetNick], Role::Error, ['nickname']);
 
                 return CommandOutcome::rejected();
             case RenameNickOutcome::Success:
@@ -141,10 +142,10 @@ final readonly class RenameCommand implements NickServCommandInterface, IrcopAud
                     'target_uid' => $result->targetUid,
                 ]);
 
-                $context->reply('rename.success', [
+                $context->replyEmphasized('rename.success', [
                     'nickname' => $result->targetNick,
                     'new_nick' => $result->newNick,
-                ]);
+                ], Role::Success, ['new_nick', 'nickname']);
 
                 return CommandOutcome::success(new IrcopAuditData(
                     target: $result->targetNick ?? '',

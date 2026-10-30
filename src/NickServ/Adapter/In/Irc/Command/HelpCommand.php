@@ -137,20 +137,14 @@ final readonly class HelpCommand implements NickServCommandInterface
         $handler = $context->getRegistry()->find($targetCmd);
 
         if (null === $handler || ($handler->isOperOnly() && !$sender->isOper)) {
-            $context->reply('unknown_command', [
-                'command' => $targetCmd,
-                'marker' => $context->trans('help.error_marker'),
-            ]);
+            $context->replyUnknownHelpCommand($targetCmd);
 
             return;
         }
 
         $adapter = $this->createAdapter($context);
         if (!$adapter->canViewCommandInHelp($handler)) {
-            $context->reply('unknown_command', [
-                'command' => $targetCmd,
-                'marker' => $context->trans('help.error_marker'),
-            ]);
+            $context->replyUnknownHelpCommand($targetCmd);
 
             return;
         }
@@ -176,10 +170,7 @@ final readonly class HelpCommand implements NickServCommandInterface
                 return;
             }
 
-            $context->reply('unknown_help_option', [
-                'command' => $handler->getName(),
-                'option' => $subName,
-            ]);
+            $context->replyUnknownHelpOption($handler->getName(), $subName);
 
             return;
         }
@@ -192,11 +183,14 @@ final readonly class HelpCommand implements NickServCommandInterface
         $adapter = $this->createAdapter($context);
         $inactivityNotice = null;
         if ($this->inactivityExpiryDays > 0) {
-            $inactivityNotice = $context->trans('help.intro_expiration', [
-                'marker' => $context->trans('help.warning_marker'),
-                'label' => $context->trans('help.intro_expiration_label'),
-                'days' => $this->inactivityExpiryDays,
-            ]);
+            $inactivityNotice = $adapter->usesHelpPresentation()
+                ? $adapter->renderExpiration($this->inactivityExpiryDays)
+                : $context->trans('help.intro_expiration', [
+                    'marker' => $context->trans('help.warning_marker'),
+                    'label' => $context->trans('help.intro_expiration_label'),
+                    'days' => $this->inactivityExpiryDays,
+                    'duration' => $context->trans('help.intro_expiration_duration', ['days' => $this->inactivityExpiryDays]),
+                ]);
         }
         $lines = $this->formatter->renderGeneralHelp($adapter);
         if (null !== $inactivityNotice) {
@@ -224,12 +218,12 @@ final readonly class HelpCommand implements NickServCommandInterface
         $lines = [$this->formatter->renderHeader($adapter, 'HELP ' . $parentName . ' ' . $sub['name']), ' '];
         $lines[] = $context->trans($sub['help_key']);
         $lines[] = ' ';
-        $lines[] = $context->trans('help.syntax_label', [
+        $lines[] = $adapter->trans('help.syntax_label', [
             'syntax' => $context->trans($sub['syntax_key']),
         ]);
         $lines = [...$lines, ...$this->formatter->renderExamples($adapter, $sub['example_key'])];
         $lines[] = ' ';
-        $lines[] = $context->trans('help.set_timezone.index_label', [
+        $lines[] = $adapter->trans('help.set_timezone.index_label', [
             'syntax' => $context->trans('help.set_timezone.index_syntax'),
         ]);
         $regionsStr = implode(', ', $this->timezoneHelpProvider->getRegions());
@@ -274,7 +268,7 @@ final readonly class HelpCommand implements NickServCommandInterface
 
         if (null === $region) {
             $lines = [$this->formatter->renderHeader($adapter, 'HELP SET TIMEZONE ' . $regionArg), ' '];
-            $lines[] = $context->trans('help.set_timezone.region_unknown', [
+            $lines[] = $adapter->trans('help.set_timezone.region_unknown', [
                 'marker' => $context->trans('help.error_marker'),
                 'syntax' => $context->trans('help.set_timezone.region_syntax'),
             ]);
@@ -286,9 +280,9 @@ final readonly class HelpCommand implements NickServCommandInterface
         }
 
         $lines = [$this->formatter->renderHeader($adapter, 'HELP SET TIMEZONE ' . $region), ' '];
-        $lines[] = $context->trans('help.set_timezone.region_header', ['region' => $region]);
+        $lines[] = $adapter->trans('help.set_timezone.region_header', ['region' => $region]);
         $lines[] = ' ';
-        $lines[] = $context->trans('help.syntax_label', [
+        $lines[] = $adapter->trans('help.syntax_label', [
             'syntax' => $context->trans('set.timezone.syntax'),
         ]);
         $lines = [...$lines, ...$this->formatter->renderExamples($adapter, 'set.timezone.example')];

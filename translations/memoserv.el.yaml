@@ -23,17 +23,17 @@ send:
   help: |-
     Στέλνει ένα μήνυμα σε ένα καταχωρημένο ψευδώνυμο ή κανάλι. Ο παραλήπτης πρέπει
     να έχει ενεργοποιήσει την υπηρεσία μηνυμάτων (ENABLE).
-  example: "\x0310›\x03\x0F %command_prefix%\x02\x0303SEND Άννα Γεια, μπορείς να ελέγξεις το μήνυμα;\x03\x0F"
+  example: "%command_prefix%SEND Άννα Γεια, μπορείς να ελέγξεις το μήνυμα;"
   examples:
-    - "\x0310›\x03\x0F %command_prefix%\x02\x0303SEND #βοήθεια Ειδοποίηση για το κανάλι\x03\x0F"
-  sent_nick: "\x0303✔\x03 Μήνυμα στάλθηκε στο \x02%nickname%\x02."
-  sent_channel: "\x0303✔\x03 Μήνυμα στάλθηκε στο κανάλι \x02%channel%\x02."
-  throttled: "\x0304✗\x03 Πρέπει να περιμένετε \x02%seconds%\x02 δευτερόλεπτο(α) πριν στείλετε άλλο μήνυμα."
-  limit_reached: "\x0304✗\x03 Επιτεύχθηκε το όριο μηνυμάτων για \x02%target%\x02."
-  ignored: "\x0304✗\x03 Δεν μπορείτε να στείλετε μηνύματα σε αυτόν τον παραλήπτη, είστε στη λίστα αγνόησής του."
-  cannot_send_to_self: "\x0304✗\x03 Δεν μπορείτε να στείλετε μήνυμα στον εαυτό σας."
-  message_too_long: "\x0304✗\x03 Το μήνυμα είναι πολύ μεγάλο. Το μέγιστο είναι \x02%max%\x02 χαρακτήρες."
-  service_disabled_for_target: "\x0304✗\x03 Η υπηρεσία μηνυμάτων είναι απενεργοποιημένη για \x02%target%\x02."
+    - "%command_prefix%SEND #βοήθεια Ειδοποίηση για το κανάλι"
+  sent_nick: "Μήνυμα στάλθηκε στο %nickname%."
+  sent_channel: "Μήνυμα στάλθηκε στο κανάλι %channel%."
+  throttled: "Πρέπει να περιμένετε %seconds% δευτερόλεπτο(α) πριν στείλετε άλλο μήνυμα."
+  limit_reached: "Επιτεύχθηκε το όριο μηνυμάτων για %target%."
+  ignored: "Δεν μπορείτε να στείλετε μηνύματα σε αυτόν τον παραλήπτη, είστε στη λίστα αγνόησής του."
+  cannot_send_to_self: "Δεν μπορείτε να στείλετε μήνυμα στον εαυτό σας."
+  message_too_long: "Το μήνυμα είναι πολύ μεγάλο. Το μέγιστο είναι %max% χαρακτήρες."
+  service_disabled_for_target: "Η υπηρεσία μηνυμάτων είναι απενεργοποιημένη για %target%."
 
 # --- READ ------------------------------------------------------------------
 read:
@@ -42,12 +42,12 @@ read:
   help: |-
     Διαβάζει το μήνυμα με τον δοσμένο αριθμό. Χωρίς #channel, διαβάζει από τα
     εισερχόμενά σας. Με #channel, απαιτεί επίπεδο MEMOREAD.
-  example: "\x0310›\x03\x0F %command_prefix%\x02\x0303READ 1\x03\x0F"
+  example: "%command_prefix%READ 1"
   examples:
-    - "\x0310›\x03\x0F %command_prefix%\x02\x0303READ #βοήθεια 2\x03\x0F"
-  header: "\x02\x0307Μήνυμα #%index%\x03 από \x02%from%\x02:\x0F"
-  footer: "\x0314─────────────────────────────\x03 \x0314%date%\x03"
-  not_found: "\x0304✗\x03 Το μήνυμα #%index% δεν βρέθηκε."
+    - "%command_prefix%READ #βοήθεια 2"
+  header: "Μήνυμα #%index% από %from%:"
+  footer: "%separator% %date%"
+  not_found: "Το μήνυμα #%index% δεν βρέθηκε."
 
 # --- LIST ------------------------------------------------------------------
 list:
@@ -57,11 +57,11 @@ list:
     Εμφανίζει τα μηνύματά σας ή τα μηνύματα του καναλιού. Τα μη αναγνωσμένα μηνύματα
     εμφανίζονται με κόκκινο αστερίσκο και προεπισκόπηση (μέγιστο 50 χαρακτήρες).
     Χωρίς #channel = τα εισερχόμενά σας· με #channel απαιτεί MEMOREAD.
-  example: "\x0310›\x03\x0F %command_prefix%\x02\x0303LIST\x03\x0F"
+  example: "%command_prefix%LIST"
   examples:
-    - "\x0310›\x03\x0F %command_prefix%\x02\x0303LIST #βοήθεια\x03\x0F"
-  header: "\x02\x0307Μηνύματα για %target%\x03:\x0F"
-  empty: "\x0307ℹ\x03 Δεν υπάρχουν μηνύματα για \x02%target%\x02."
+    - "%command_prefix%LIST #βοήθεια"
+  header: "Μηνύματα για %target%:"
+  empty: "Δεν υπάρχουν μηνύματα για %target%."
 
 # --- DEL -------------------------------------------------------------------
 del:
@@ -70,11 +70,11 @@ del:
   help: |-
     Διαγράφει το μήνυμα με τον δοσμένο αριθμό. Για κανάλια απαιτεί επίπεδο
     MEMOCHANGE.
-  example: "\x0310›\x03\x0F %command_prefix%\x02\x0303DEL 1\x03\x0F"
+  example: "%command_prefix%DEL 1"
   examples:
-    - "\x0310›\x03\x0F %command_prefix%\x02\x0303DEL #βοήθεια 2\x03\x0F"
-  deleted: "\x0303✔\x03 Το μήνυμα #%index% διαγράφηκε."
-  not_found: "\x0304✗\x03 Το μήνυμα #%index% δεν βρέθηκε."
+    - "%command_prefix%DEL #βοήθεια 2"
+  deleted: "Το μήνυμα #%index% διαγράφηκε."
+  not_found: "Το μήνυμα #%index% δεν βρέθηκε."
 
 # --- IGNORE ----------------------------------------------------------------
 ignore:
@@ -83,10 +83,10 @@ ignore:
   help: |-
     ADD προσθέτει ένα ψευδώνυμο στη λίστα αγνόησής σας (ή του καναλιού)· DEL
     αφαιρεί· LIST εμφανίζει τη λίστα. Για κανάλια, ADD/DEL απαιτούν MEMOCHANGE.
-  example: "\x0310›\x03\x0F %command_prefix%\x02\x0303IGNORE ADD Ana\x03\x0F"
+  example: "%command_prefix%IGNORE ADD Ana"
   examples:
-    - "\x0310›\x03\x0F %command_prefix%\x02\x0303IGNORE DEL #βοήθεια Ana\x03\x0F"
-    - "\x0310›\x03\x0F %command_prefix%\x02\x0303IGNORE LIST #βοήθεια\x03\x0F"
+    - "%command_prefix%IGNORE DEL #βοήθεια Ana"
+    - "%command_prefix%IGNORE LIST #βοήθεια"
 
   # --- IGNORE ADD ----------------------------------------------------------
   add:
@@ -95,35 +95,35 @@ ignore:
     help: |-
       Τα μηνύματα από αυτό το ψευδώνυμο δεν θα γίνονται δεκτά στα εισερχόμενά σας (ή
       του καναλιού).
-    example: "\x0310›\x03\x0F %command_prefix%\x02\x0303IGNORE ADD Ana\x03\x0F"
+    example: "%command_prefix%IGNORE ADD Ana"
     examples:
-      - "\x0310›\x03\x0F %command_prefix%\x02\x0303IGNORE ADD #βοήθεια Ana\x03\x0F"
+      - "%command_prefix%IGNORE ADD #βοήθεια Ana"
 
   # --- IGNORE DEL ----------------------------------------------------------
   del:
     syntax: "IGNORE DEL [#channel] <nickname>"
     short: "Αφαίρεση ψευδωνύμου από τη λίστα αγνόησης."
     help: "Αφαιρεί το ψευδώνυμο από τη λίστα αγνόησης."
-    example: "\x0310›\x03\x0F %command_prefix%\x02\x0303IGNORE DEL Ana\x03\x0F"
+    example: "%command_prefix%IGNORE DEL Ana"
     examples:
-      - "\x0310›\x03\x0F %command_prefix%\x02\x0303IGNORE DEL #βοήθεια Ana\x03\x0F"
+      - "%command_prefix%IGNORE DEL #βοήθεια Ana"
 
   # --- IGNORE LIST ---------------------------------------------------------
   list:
     syntax: "IGNORE LIST [#channel]"
     short: "Λίστα ψευδωνύμων που αγνοούνται."
     help: "Εμφανίζει τη λίστα των ψευδωνύμων που εσείς (ή το κανάλι) αγνοείτε για μηνύματα."
-    example: "\x0310›\x03\x0F %command_prefix%\x02\x0303IGNORE LIST\x03\x0F"
+    example: "%command_prefix%IGNORE LIST"
     examples:
-      - "\x0310›\x03\x0F %command_prefix%\x02\x0303IGNORE LIST #βοήθεια\x03\x0F"
-  added: "\x0303✔\x03 Το \x02%nickname%\x02 προστέθηκε στη λίστα αγνόησης."
-  removed: "\x0303✔\x03 Το \x02%nickname%\x02 αφαιρέθηκε από τη λίστα αγνόησης."
-  already_ignored: "\x0304✗\x03 Το \x02%nickname%\x02 είναι ήδη στη λίστα αγνόησης."
-  not_ignored: "\x0304✗\x03 Το \x02%nickname%\x02 δεν είναι στη λίστα αγνόησης."
-  limit_reached_nick: "\x0304✗\x03 Επιτεύχθηκε το όριο λίστας αγνόησης για το ψευδώνυμό σας (μέγιστο \x02%limit%\x02)."
-  limit_reached_channel: "\x0304✗\x03 Επιτεύχθηκε το όριο λίστας αγνόησης για \x02%channel%\x02 (μέγιστο \x02%limit%\x02)."
-  list_empty: "\x0307ℹ\x03 Η λίστα αγνόησης είναι κενή."
-  list_header: "\x02\x0307Λίστα αγνόησης:\x03\x0F"
+      - "%command_prefix%IGNORE LIST #βοήθεια"
+  added: "Το %nickname% προστέθηκε στη λίστα αγνόησης."
+  removed: "Το %nickname% αφαιρέθηκε από τη λίστα αγνόησης."
+  already_ignored: "Το %nickname% είναι ήδη στη λίστα αγνόησης."
+  not_ignored: "Το %nickname% δεν είναι στη λίστα αγνόησης."
+  limit_reached_nick: "Επιτεύχθηκε το όριο λίστας αγνόησης για το ψευδώνυμό σας (μέγιστο %limit%)."
+  limit_reached_channel: "Επιτεύχθηκε το όριο λίστας αγνόησης για %channel% (μέγιστο %limit%)."
+  list_empty: "Η λίστα αγνόησης είναι κενή."
+  list_header: "Λίστα αγνόησης:"
 
 # --- ENABLE ----------------------------------------------------------------
 enable:
@@ -132,14 +132,14 @@ enable:
   help: |-
     Ενεργοποιεί τη λήψη μηνυμάτων για το ψευδώνυμό σας ή, για κανάλια, μόνο ο
     ιδρυτής μπορεί να ενεργοποιήσει.
-  example: "\x0310›\x03\x0F %command_prefix%\x02\x0303ENABLE\x03\x0F"
+  example: "%command_prefix%ENABLE"
   examples:
-    - "\x0310›\x03\x0F %command_prefix%\x02\x0303ENABLE #βοήθεια\x03\x0F"
-  enabled_nick: "\x0303✔\x03 Η υπηρεσία μηνυμάτων ενεργοποιήθηκε για το ψευδώνυμό σας."
-  enabled_channel: "\x0303✔\x03 Η υπηρεσία μηνυμάτων ενεργοποιήθηκε για το κανάλι \x02%channel%\x02."
-  already_enabled_nick: "\x0307ℹ\x03 Η υπηρεσία μηνυμάτων είναι ήδη ενεργοποιημένη για το ψευδώνυμό σας."
-  already_enabled_channel: "\x0307ℹ\x03 Η υπηρεσία μηνυμάτων είναι ήδη ενεργοποιημένη για \x02%channel%\x02."
-  founder_only: "\x0304✗\x03 Μόνο ο ιδρυτής του καναλιού μπορεί να ενεργοποιήσει τα μηνύματα για \x02%channel%\x02."
+    - "%command_prefix%ENABLE #βοήθεια"
+  enabled_nick: "Η υπηρεσία μηνυμάτων ενεργοποιήθηκε για το ψευδώνυμό σας."
+  enabled_channel: "Η υπηρεσία μηνυμάτων ενεργοποιήθηκε για το κανάλι %channel%."
+  already_enabled_nick: "Η υπηρεσία μηνυμάτων είναι ήδη ενεργοποιημένη για το ψευδώνυμό σας."
+  already_enabled_channel: "Η υπηρεσία μηνυμάτων είναι ήδη ενεργοποιημένη για %channel%."
+  founder_only: "Μόνο ο ιδρυτής του καναλιού μπορεί να ενεργοποιήσει τα μηνύματα για %channel%."
 
 # --- DISABLE ---------------------------------------------------------------
 disable:
@@ -148,49 +148,51 @@ disable:
   help: |-
     Απενεργοποιεί τη λήψη μηνυμάτων για το ψευδώνυμό σας ή το κανάλι. Για κανάλια,
     μόνο ο ιδρυτής μπορεί να απενεργοποιήσει.
-  example: "\x0310›\x03\x0F %command_prefix%\x02\x0303DISABLE\x03\x0F"
+  example: "%command_prefix%DISABLE"
   examples:
-    - "\x0310›\x03\x0F %command_prefix%\x02\x0303DISABLE #βοήθεια\x03\x0F"
-  disabled_nick: "\x0303✔\x03 Η υπηρεσία μηνυμάτων απενεργοποιήθηκε για το ψευδώνυμό σας."
-  disabled_channel: "\x0303✔\x03 Η υπηρεσία μηνυμάτων απενεργοποιήθηκε για το κανάλι \x02%channel%\x02."
-  already_disabled_nick: "\x0307ℹ\x03 Η υπηρεσία μηνυμάτων είναι ήδη απενεργοποιημένη για το ψευδώνυμό σας."
-  already_disabled_channel: "\x0307ℹ\x03 Η υπηρεσία μηνυμάτων είναι ήδη απενεργοποιημένη για \x02%channel%\x02."
-  founder_only: "\x0304✗\x03 Μόνο ο ιδρυτής του καναλιού μπορεί να απενεργοποιήσει τα μηνύματα για \x02%channel%\x02."
+    - "%command_prefix%DISABLE #βοήθεια"
+  disabled_nick: "Η υπηρεσία μηνυμάτων απενεργοποιήθηκε για το ψευδώνυμό σας."
+  disabled_channel: "Η υπηρεσία μηνυμάτων απενεργοποιήθηκε για το κανάλι %channel%."
+  already_disabled_nick: "Η υπηρεσία μηνυμάτων είναι ήδη απενεργοποιημένη για το ψευδώνυμό σας."
+  already_disabled_channel: "Η υπηρεσία μηνυμάτων είναι ήδη απενεργοποιημένη για %channel%."
+  founder_only: "Μόνο ο ιδρυτής του καναλιού μπορεί να απενεργοποιήσει τα μηνύματα για %channel%."
 
 # --- HELP ------------------------------------------------------------------
 help:
   syntax: "HELP [εντολή] [επιλογή]"
   short: "Λίστα εντολών ή βοήθεια για μια εντολή."
   help: "Εμφανίζει τη λίστα εντολών ή αναλυτική βοήθεια για μια εντολή ή επιλογή."
-  example: "\x0310›\x03\x0F %command_prefix%\x02\x0303HELP\x03\x0F"
+  example: "%command_prefix%HELP"
   examples:
-    - "\x0310›\x03\x0F %command_prefix%\x02\x0303HELP IGNORE ADD\x03\x0F"
+    - "%command_prefix%HELP IGNORE ADD"
   header_title: "%bot%"
-  header: "\x02\x0307🤖 %title%\x03\x0F \x0314─────────────────────────────\x03\x0F"
+  header: "%title%"
   intro: |-
     Επιτρέπει την αποστολή και λήψη μηνυμάτων μεταξύ καταχωρημένων χρηστών και την
     αποστολή ειδοποιήσεων σε κανάλια. Τα μηνύματα αποθηκεύονται για να τα διαβάσετε
     αργότερα, ακόμη και αν ο παραλήπτης δεν είναι συνδεδεμένος.
-  general_header: "\x02 ■ Διαθέσιμες εντολές:\x02"
-  command_line: "    \x0310›\x03\x0F \x02\x0303%command%\x03\x0F%description%"
-  subcommand_line: "    \x0310›\x03\x0F \x02\x0303%command%\x03\x0F%description%"
-  options_header: "\x02 ■ Επιλογές:\x02"
-  examples_header: "\x02 ■ Παραδείγματα:\x02"
-  general_footer: "\x0310ℹ\x03\x0F Χρησιμοποιήστε /msg %bot% \x02\x0303HELP <εντολή>\x03\x0F για περισσότερες πληροφορίες."
-  set_sub_footer: "\x0310ℹ\x03\x0F Χρησιμοποιήστε /msg %bot% \x02\x0303HELP %command% <επιλογή>\x03\x0F για περισσότερες πληροφορίες."
-  syntax_label: "Σύνταξη: \x02\x0303%syntax%\x03\x0F"
-  footer: "\x0314─────────────────────────────\x03\x0F"
-  group_header: "\x0310  ◆ %group%\x03\x0F"
-  subgroup_header: "\x0310  ◆ %group%\x03\x0F"
+  general_header: "Διαθέσιμες εντολές:"
+  command_line: "%command%%description%"
+  subcommand_line: "%command%%description%"
+  options_header: "Επιλογές:"
+  examples_header: "Παραδείγματα:"
+  general_help_command: "HELP <εντολή>"
+  option_help_command: "HELP %command% <επιλογή>"
+  general_footer: "Χρησιμοποιήστε /msg %bot% %help_command% για περισσότερες πληροφορίες."
+  set_sub_footer: "Χρησιμοποιήστε /msg %bot% %help_command% για περισσότερες πληροφορίες."
+  syntax_label: "Σύνταξη: %syntax%"
+  footer: ""
+  group_header: "%group%"
+  subgroup_header: "%group%"
   group:
     messages: "Μηνύματα"
     preferences: "Προτιμήσεις"
-  ircop_header: "\x02 ■ Διαθέσιμες εντολές για IRC operators:\x02"
+  ircop_header: "Διαθέσιμες εντολές για IRC operators:"
 
 # --- NOTIFY ----------------------------------------------------------------
 notify:
-  nick_pending: "Έχετε \x02%count%\x02 μη αναγνωσμένο(α) μήνυμα(τα). Για λίστα: /msg %bot% \x0303LIST\x03"
-  channel_pending: "Το κανάλι \x02%channel%\x02 έχει \x02%count%\x02 μη αναγνωσμένο(α) μήνυμα(τα). Ελέγξτε τα μηνύματα με /msg %bot% \x0303LIST %channel%\x03"
+  nick_pending: "Έχετε %count% μη αναγνωσμένο(α) μήνυμα(τα). Για λίστα: /msg %bot% %list%"
+  channel_pending: "Το κανάλι %channel% έχει %count% μη αναγνωσμένο(α) μήνυμα(τα). Ελέγξτε τα μηνύματα με /msg %bot% %list%"
 
 # --- CHANNEL REGISTRATION DECISIONS ---
 registration_decision:

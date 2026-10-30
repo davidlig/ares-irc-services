@@ -185,7 +185,7 @@ final class NoexpireCommandTest extends TestCase
 
         $outcome = $cmd->execute($context);
 
-        self::assertContains('error.invalid_channel', $messages);
+        self::assertContains("\x0304✗\x03\x0F error.invalid_channel", $messages);
         self::assertFalse($outcome->success);
     }
 
@@ -200,7 +200,7 @@ final class NoexpireCommandTest extends TestCase
         $cmd = $this->createCommandWith($channelRepository);
         $outcome = $cmd->execute($context);
 
-        self::assertContains('error.syntax', $messages);
+        self::assertContains("\x0304✗\x03\x0F presentation.error.syntax", $messages);
         self::assertFalse($outcome->success);
     }
 
@@ -216,7 +216,7 @@ final class NoexpireCommandTest extends TestCase
         $cmd = $this->createCommandWith($channelRepository);
         $outcome = $cmd->execute($context);
 
-        self::assertContains('error.channel_not_registered', $messages);
+        self::assertContains("\x0304✗\x03\x0F presentation.error.channel_not_registered", $messages);
         self::assertFalse($outcome->success);
     }
 
@@ -234,7 +234,7 @@ final class NoexpireCommandTest extends TestCase
         $cmd = $this->createCommandWith($channelRepository);
         $outcome = $cmd->execute($context);
 
-        self::assertContains('noexpire.forbidden', $messages);
+        self::assertContains("\x0304✗\x03\x0F noexpire.forbidden", $messages);
         self::assertFalse($outcome->success);
     }
 
@@ -253,7 +253,7 @@ final class NoexpireCommandTest extends TestCase
         $cmd = $this->createCommandWith($channelRepository);
         $outcome = $cmd->execute($context);
 
-        self::assertContains('noexpire.suspended', $messages);
+        self::assertContains("\x0304✗\x03\x0F noexpire.suspended", $messages);
         self::assertFalse($outcome->success);
     }
 
@@ -275,7 +275,7 @@ final class NoexpireCommandTest extends TestCase
         $outcome = $cmd->execute($context);
 
         self::assertTrue($channel->isNoExpire(), 'noExpire should be true after ON');
-        self::assertContains('noexpire.success_on', $messages);
+        self::assertContains("\x0303✔\x03\x0F noexpire.success_on", $messages);
 
         $audit = $outcome->auditData;
         self::assertInstanceOf(IrcopAuditData::class, $audit);
@@ -302,7 +302,7 @@ final class NoexpireCommandTest extends TestCase
         $outcome = $cmd->execute($context);
 
         self::assertFalse($channel->isNoExpire(), 'noExpire should be false after OFF');
-        self::assertContains('noexpire.success_off', $messages);
+        self::assertContains("\x0303✔\x03\x0F noexpire.success_off", $messages);
 
         $audit = $outcome->auditData;
         self::assertInstanceOf(IrcopAuditData::class, $audit);
@@ -326,7 +326,7 @@ final class NoexpireCommandTest extends TestCase
         $cmd->execute($context);
 
         self::assertTrue($channel->isNoExpire());
-        self::assertContains('noexpire.success_on', $messages);
+        self::assertContains("\x0303✔\x03\x0F noexpire.success_on", $messages);
     }
 
     #[Test]
@@ -346,7 +346,7 @@ final class NoexpireCommandTest extends TestCase
         $cmd->execute($context);
 
         self::assertFalse($channel->isNoExpire());
-        self::assertContains('noexpire.success_off', $messages);
+        self::assertContains("\x0303✔\x03\x0F noexpire.success_off", $messages);
     }
 
     private function createCommand(): NoexpireCommand

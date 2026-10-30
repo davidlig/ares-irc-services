@@ -14,6 +14,10 @@ use App\MemoServ\Adapter\In\Irc\MemoServNotifierInterface;
 use App\MemoServ\Application\Model\MemoAccountView;
 use App\MemoServ\Application\UseCase\Ignore\IgnoreMemoHandlerInterface;
 use App\MemoServ\Application\UseCase\Ignore\IgnoreMemoResult;
+use App\Shared\Adapter\In\Irc\Presentation\Appearance;
+use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -23,10 +27,74 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 use function implode;
 use function is_scalar;
 use function ksort;
+use function str_repeat;
 
 #[CoversClass(IgnoreCommand::class)]
 final class IgnoreCommandTest extends TestCase
 {
+    #[Test]
+    public function rendersIgnoreListHeaderAndSeparatorWithTheStyle(): void
+    {
+        $sent = [];
+        $notifier = $this->createStub(MemoServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $uid, string $message) use (&$sent): void { $sent[] = $message; });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $key): string => $key);
+        $handler = $this->createStub(IgnoreMemoHandlerInterface::class);
+        $handler->method('handle')->willReturn(IgnoreMemoResult::listNick(['Bob']));
+        $renderer = new IrcRenderer(new FixedStyleProvider(new PresentationStyle(components: ['table_header' => new Appearance(prefix: 'H ')], separator: '=')));
+        $context = new MemoServContext(
+            new SenderView('UID', 'Nick', 'i', 'h', 'c', 'ip'),
+            new MemoAccountView(1, 'Nick', 'en'),
+            'IGNORE',
+            ['LIST'],
+            $notifier,
+            $translator,
+            'en',
+            'UTC',
+            'NOTICE',
+            new MemoServCommandRegistry([]),
+            $this->createServiceNicks(),
+            $renderer
+        );
+        new IgnoreCommand($handler, 10, 20)->execute($context);
+
+        self::assertSame(['H ignore.list_header', '  Bob', str_repeat('=', 29)], $sent);
+    }
+
+    #[Test]
+    public function distinguishesAddedAndAlreadyIgnoredOutcomes(): void
+    {
+        $sent = [];
+        $notifier = $this->createStub(MemoServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $uid, string $message, string $type) use (&$sent): void {
+            $sent[] = $message;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $key): string => $key . ' %nickname%');
+        $handler = $this->createStub(IgnoreMemoHandlerInterface::class);
+        $handler->method('handle')->willReturnOnConsecutiveCalls(IgnoreMemoResult::addedNick('Bob'), IgnoreMemoResult::alreadyIgnored('Bob'));
+        $context = new MemoServContext(
+            new SenderView('UID', 'Nick', 'i', 'h', 'c', 'ip'),
+            new MemoAccountView(1, 'Nick', 'en'),
+            'IGNORE',
+            ['ADD', 'Bob'],
+            $notifier,
+            $translator,
+            'en',
+            'UTC',
+            'NOTICE',
+            new MemoServCommandRegistry([]),
+            $this->createServiceNicks(),
+            new IrcRenderer(new FixedStyleProvider(new PresentationStyle(markers: ['success' => '+', 'error' => '!']))),
+        );
+        $command = new IgnoreCommand($handler, 10, 20);
+        $command->execute($context);
+        $command->execute($context);
+
+        self::assertSame(['+ ignore.added Bob', '! ignore.already_ignored Bob'], $sent);
+    }
+
     #[Test]
     public function exposesMetadata(): void
     {

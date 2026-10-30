@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\MemoServ\Adapter\In\Event;
 
+use App\MemoServ\Adapter\In\Irc\MemoNoticePresenter;
 use App\MemoServ\Adapter\In\Irc\MemoServNotifierInterface;
 use App\MemoServ\Application\UseCase\GetPendingNickNotice\GetPendingNickNotice;
 use App\MemoServ\Application\UseCase\GetPendingNickNotice\GetPendingNickNoticeHandler;
@@ -21,6 +22,7 @@ final readonly class MemoServNickIdentifiedNoticeSubscriber implements EventSubs
         private GetPendingNickNoticeHandler $getPendingNickNotice,
         private MemoServNotifierInterface $notifier,
         private TranslatorInterface $translator,
+        private ?MemoNoticePresenter $presenter = null,
     ) {}
 
     public static function getSubscribedEvents(): array
@@ -37,7 +39,9 @@ final readonly class MemoServNickIdentifiedNoticeSubscriber implements EventSubs
             return;
         }
 
-        $message = $this->translator->trans('notify.nick_pending', ['%count%' => $result->unreadCount, '%bot%' => $this->notifier->getNick()], 'memoserv', $result->language);
+        $message = null === $this->presenter
+            ? $this->translator->trans('notify.nick_pending', ['%count%' => $result->unreadCount, '%bot%' => $this->notifier->getNick(), '%list%' => 'LIST'], 'memoserv', $result->language)
+            : $this->presenter->nick($result->unreadCount, $this->notifier->getNick(), $result->language);
         $this->notifier->sendNotice($result->uid, $message);
     }
 }

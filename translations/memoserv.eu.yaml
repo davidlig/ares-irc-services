@@ -23,17 +23,17 @@ send:
   help: |-
     Mezua bidaltzen dio ezizen erregistratu bati edo kanal bati. Hartzaileak
     mezu-zerbitzua gaituta eduki behar du (ENABLE).
-  example: "\x0310›\x03\x0F %command_prefix%\x02\x0303SEND Ane Kaixo, berrikus dezakezu memo hau?\x03\x0F"
+  example: "%command_prefix%SEND Ane Kaixo, berrikus dezakezu memo hau?"
   examples:
-    - "\x0310›\x03\x0F %command_prefix%\x02\x0303SEND #laguntza Kanalaren oharra\x03\x0F"
-  sent_nick: "\x0303✔\x03 Mezua \x02%nickname%\x02(r)i bidali zaio."
-  sent_channel: "\x0303✔\x03 Mezua \x02%channel%\x02 kanalera bidali da."
-  throttled: "\x0304✗\x03 \x02%seconds%\x02 segundo itxaron behar duzu beste mezu bat bidali aurretik."
-  limit_reached: "\x0304✗\x03 \x02%target%\x02(r)entzako mezu muga iritsi da."
-  ignored: "\x0304✗\x03 Ezin diozu mezu bidali helburu honi, bere baztertze zerrendan zaude."
-  cannot_send_to_self: "\x0304✗\x03 Ezin diozu mezu bat bidali zeure buruari."
-  message_too_long: "\x0304✗\x03 Mezua luzeegia da. Gehienez \x02%max%\x02 karaktere onartzen dira."
-  service_disabled_for_target: "\x0304✗\x03 Mezu zerbitzua desgaituta dago \x02%target%\x02(r)entzat."
+    - "%command_prefix%SEND #laguntza Kanalaren oharra"
+  sent_nick: "Mezua %nickname%(r)i bidali zaio."
+  sent_channel: "Mezua %channel% kanalera bidali da."
+  throttled: "%seconds% segundo itxaron behar duzu beste mezu bat bidali aurretik."
+  limit_reached: "%target%(r)entzako mezu muga iritsi da."
+  ignored: "Ezin diozu mezu bidali helburu honi, bere baztertze zerrendan zaude."
+  cannot_send_to_self: "Ezin diozu mezu bat bidali zeure buruari."
+  message_too_long: "Mezua luzeegia da. Gehienez %max% karaktere onartzen dira."
+  service_disabled_for_target: "Mezu zerbitzua desgaituta dago %target%(r)entzat."
 
 # --- READ ------------------------------------------------------------------
 read:
@@ -42,12 +42,12 @@ read:
   help: |-
     Emandako zenbakiko mezua irakurtzen du. #kanalik gabe, zure ezizenaren
     sarrera-ontzitik irakurtzen du; #kanalarekin, MEMOREAD maila behar da.
-  example: "\x0310›\x03\x0F %command_prefix%\x02\x0303READ 1\x03\x0F"
+  example: "%command_prefix%READ 1"
   examples:
-    - "\x0310›\x03\x0F %command_prefix%\x02\x0303READ #laguntza 2\x03\x0F"
-  header: "\x02\x0307#%index% mezua\x03 \x02%from%\x02(e)k bidalia:\x0F"
-  footer: "\x0314─────────────────────────────\x03 \x0314%date%\x03"
-  not_found: "\x0304✗\x03 #%index% mezua ez da aurkitu."
+    - "%command_prefix%READ #laguntza 2"
+  header: "#%index% mezua %from%(e)k bidalia:"
+  footer: "%separator% %date%"
+  not_found: "#%index% mezua ez da aurkitu."
 
 # --- LIST ------------------------------------------------------------------
 list:
@@ -57,22 +57,22 @@ list:
     Zure mezuak edo kanalekoak zerrendatzen ditu. Irakurri gabekoek izartxo
     gorria eta aurrebista dituzte (gehienez 50 karaktere). #kanalik gabe = zure
     sarrera-ontzia; #kanalarekin MEMOREAD behar da.
-  example: "\x0310›\x03\x0F %command_prefix%\x02\x0303LIST\x03\x0F"
+  example: "%command_prefix%LIST"
   examples:
-    - "\x0310›\x03\x0F %command_prefix%\x02\x0303LIST #laguntza\x03\x0F"
-  header: "\x02\x0307%target%(r)en mezuak\x03:\x0F"
-  empty: "\x0307ℹ\x03 Ez dago mezurik \x02%target%\x02(r)entzat."
+    - "%command_prefix%LIST #laguntza"
+  header: "%target%(r)en mezuak:"
+  empty: "Ez dago mezurik %target%(r)entzat."
 
 # --- DEL -------------------------------------------------------------------
 del:
   syntax: "DEL [#kanala] <zenbakia>"
   short: "Ezabatu mezu bat zenbakiaren arabera."
   help: "Emandako zenbakiko mezua ezabatzen du. Kanalentzat MEMOCHANGE maila behar du."
-  example: "\x0310›\x03\x0F %command_prefix%\x02\x0303DEL 1\x03\x0F"
+  example: "%command_prefix%DEL 1"
   examples:
-    - "\x0310›\x03\x0F %command_prefix%\x02\x0303DEL #laguntza 2\x03\x0F"
-  deleted: "\x0303✔\x03 #%index% mezua ezabatu da."
-  not_found: "\x0304✗\x03 #%index% mezua ez da aurkitu."
+    - "%command_prefix%DEL #laguntza 2"
+  deleted: "#%index% mezua ezabatu da."
+  not_found: "#%index% mezua ez da aurkitu."
 
 # --- IGNORE ----------------------------------------------------------------
 ignore:
@@ -82,59 +82,59 @@ ignore:
     Kudeatu mezurik jaso nahi ez duzun ezizenen zerrenda, zure kontuan zein
     erregistratutako kanal batean. Kanalaren zerrenda aldatzeko MEMOCHANGE baimena
     behar duzu.
-  example: "\x0310›\x03\x0F %command_prefix%\x02\x0303IGNORE ADD Ane\x03\x0F"
+  example: "%command_prefix%IGNORE ADD Ane"
   examples:
-    - "\x0310›\x03\x0F %command_prefix%\x02\x0303IGNORE DEL #laguntza Ane\x03\x0F"
-    - "\x0310›\x03\x0F %command_prefix%\x02\x0303IGNORE LIST #laguntza\x03\x0F"
+    - "%command_prefix%IGNORE DEL #laguntza Ane"
+    - "%command_prefix%IGNORE LIST #laguntza"
 
   # --- IGNORE ADD ----------------------------------------------------------
   add:
     syntax: "IGNORE ADD [#kanala] <ezizena>"
     short: "Gehitu ezizen bat baztertuen zerrendara."
     help: "Ezizen honen mezuak ez dira onartuko zure sarrera-ontzirako (edo kanalarenak)."
-    example: "\x0310›\x03\x0F %command_prefix%\x02\x0303IGNORE ADD Ane\x03\x0F"
+    example: "%command_prefix%IGNORE ADD Ane"
     examples:
-      - "\x0310›\x03\x0F %command_prefix%\x02\x0303IGNORE ADD #laguntza Ane\x03\x0F"
+      - "%command_prefix%IGNORE ADD #laguntza Ane"
 
   # --- IGNORE DEL ----------------------------------------------------------
   del:
     syntax: "IGNORE DEL [#kanala] <ezizena>"
     short: "Kendu ezizen bat zerrendatik."
     help: "Ezizena baztertze zerrendatik kentzen du."
-    example: "\x0310›\x03\x0F %command_prefix%\x02\x0303IGNORE DEL Ane\x03\x0F"
+    example: "%command_prefix%IGNORE DEL Ane"
     examples:
-      - "\x0310›\x03\x0F %command_prefix%\x02\x0303IGNORE DEL #laguntza Ane\x03\x0F"
+      - "%command_prefix%IGNORE DEL #laguntza Ane"
 
   # --- IGNORE LIST ---------------------------------------------------------
   list:
     syntax: "IGNORE LIST [#kanala]"
     short: "Erakutsi baztertutako ezizenak."
     help: "Zuk (edo kanalak) mezuetarako baztertzen dituzun ezizenen zerrenda erakusten du."
-    example: "\x0310›\x03\x0F %command_prefix%\x02\x0303IGNORE LIST\x03\x0F"
+    example: "%command_prefix%IGNORE LIST"
     examples:
-      - "\x0310›\x03\x0F %command_prefix%\x02\x0303IGNORE LIST #laguntza\x03\x0F"
-  added: "\x0303✔\x03 \x02%nickname%\x02 baztertze zerrendara gehitu da."
-  removed: "\x0303✔\x03 \x02%nickname%\x02 baztertze zerrendatik kendu da."
-  already_ignored: "\x0304✗\x03 \x02%nickname%\x02 jada baztertze zerrendan dago."
-  not_ignored: "\x0304✗\x03 \x02%nickname%\x02 ez dago baztertze zerrendan."
-  limit_reached_nick: "\x0304✗\x03 Zure ezizenarentzat baztertze zerrendaren muga iritsi da (gehienez \x02%limit%\x02)."
-  limit_reached_channel: "\x0304✗\x03 \x02%channel%\x02 kanalarentzat baztertze zerrendaren muga iritsi da (gehienez \x02%limit%\x02)."
-  list_empty: "\x0307ℹ\x03 Baztertze zerrenda hutsik dago."
-  list_header: "\x02\x0307Baztertze zerrenda:\x03\x0F"
+      - "%command_prefix%IGNORE LIST #laguntza"
+  added: "%nickname% baztertze zerrendara gehitu da."
+  removed: "%nickname% baztertze zerrendatik kendu da."
+  already_ignored: "%nickname% jada baztertze zerrendan dago."
+  not_ignored: "%nickname% ez dago baztertze zerrendan."
+  limit_reached_nick: "Zure ezizenarentzat baztertze zerrendaren muga iritsi da (gehienez %limit%)."
+  limit_reached_channel: "%channel% kanalarentzat baztertze zerrendaren muga iritsi da (gehienez %limit%)."
+  list_empty: "Baztertze zerrenda hutsik dago."
+  list_header: "Baztertze zerrenda:"
 
 # --- ENABLE ----------------------------------------------------------------
 enable:
   syntax: "ENABLE [#kanala]"
   short: "Gaitu mezuen harrera."
   help: "Gaitu mezuak zure ezizenarentzat; kanaletan, sortzaileak bakarrik gaitu dezake."
-  example: "\x0310›\x03\x0F %command_prefix%\x02\x0303ENABLE\x03\x0F"
+  example: "%command_prefix%ENABLE"
   examples:
-    - "\x0310›\x03\x0F %command_prefix%\x02\x0303ENABLE #laguntza\x03\x0F"
-  enabled_nick: "\x0303✔\x03 Mezu zerbitzua gaituta zure ezizenarentzat."
-  enabled_channel: "\x0303✔\x03 Mezu zerbitzua gaituta \x02%channel%\x02 kanalerako."
-  already_enabled_nick: "\x0307ℹ\x03 Mezu zerbitzua jada gaituta dago zure ezizenarentzat."
-  already_enabled_channel: "\x0307ℹ\x03 Mezu zerbitzua jada gaituta dago \x02%channel%\x02 kanalerako."
-  founder_only: "\x0304✗\x03 Kanal sortzaileak soilik gaitu ditzake mezuak \x02%channel%\x02 kanalerako."
+    - "%command_prefix%ENABLE #laguntza"
+  enabled_nick: "Mezu zerbitzua gaituta zure ezizenarentzat."
+  enabled_channel: "Mezu zerbitzua gaituta %channel% kanalerako."
+  already_enabled_nick: "Mezu zerbitzua jada gaituta dago zure ezizenarentzat."
+  already_enabled_channel: "Mezu zerbitzua jada gaituta dago %channel% kanalerako."
+  founder_only: "Kanal sortzaileak soilik gaitu ditzake mezuak %channel% kanalerako."
 
 # --- DISABLE ---------------------------------------------------------------
 disable:
@@ -143,49 +143,51 @@ disable:
   help: |-
     Desgaitu zure ezizen edo kanalerako mezuak. Kanaletan, sortzaileak bakarrik
     desgaitu dezake.
-  example: "\x0310›\x03\x0F %command_prefix%\x02\x0303DISABLE\x03\x0F"
+  example: "%command_prefix%DISABLE"
   examples:
-    - "\x0310›\x03\x0F %command_prefix%\x02\x0303DISABLE #laguntza\x03\x0F"
-  disabled_nick: "\x0303✔\x03 Mezu zerbitzua desgaituta zure ezizenarentzat."
-  disabled_channel: "\x0303✔\x03 Mezu zerbitzua desgaituta \x02%channel%\x02 kanalerako."
-  already_disabled_nick: "\x0307ℹ\x03 Mezu zerbitzua jada desgaituta dago zure ezizenarentzat."
-  already_disabled_channel: "\x0307ℹ\x03 Mezu zerbitzua jada desgaituta dago \x02%channel%\x02 kanalerako."
-  founder_only: "\x0304✗\x03 Kanal sortzaileak soilik desgaitu ditzake mezuak \x02%channel%\x02 kanalerako."
+    - "%command_prefix%DISABLE #laguntza"
+  disabled_nick: "Mezu zerbitzua desgaituta zure ezizenarentzat."
+  disabled_channel: "Mezu zerbitzua desgaituta %channel% kanalerako."
+  already_disabled_nick: "Mezu zerbitzua jada desgaituta dago zure ezizenarentzat."
+  already_disabled_channel: "Mezu zerbitzua jada desgaituta dago %channel% kanalerako."
+  founder_only: "Kanal sortzaileak soilik desgaitu ditzake mezuak %channel% kanalerako."
 
 # --- HELP ------------------------------------------------------------------
 help:
   syntax: "HELP [komandoa] [aukera]"
   short: "Zerrendatu komandoak edo erakutsi komando baten laguntza."
   help: "Erakutsi komandoen zerrenda edo komando edo aukera baten laguntza zehatza."
-  example: "\x0310›\x03\x0F %command_prefix%\x02\x0303HELP\x03\x0F"
+  example: "%command_prefix%HELP"
   examples:
-    - "\x0310›\x03\x0F %command_prefix%\x02\x0303HELP IGNORE ADD\x03\x0F"
+    - "%command_prefix%HELP IGNORE ADD"
   header_title: "%bot%"
-  header: "\x02\x0307🤖 %title%\x03\x0F \x0314─────────────────────────────\x03\x0F"
+  header: "%title%"
   intro: |-
     Erregistratutako erabiltzaileen artean mezuak bidali eta jasotzeko eta
     kanaletara oharrak bidaltzeko aukera ematen du. Mezuak geroago kontsultatzeko
     gordetzen dira, hartzailea konektatuta ez badago ere.
-  general_header: "\x02 ■ Komando erabilgarriak:\x02"
-  command_line: "    \x0310›\x03\x0F \x02\x0303%command%\x03\x0F%description%"
-  subcommand_line: "    \x0310›\x03\x0F \x02\x0303%command%\x03\x0F%description%"
-  options_header: "\x02 ■ Aukerak:\x02"
-  examples_header: "\x02 ■ Adibideak:\x02"
-  general_footer: "\x0310ℹ\x03\x0F Erabili /msg %bot% \x02\x0303HELP <komandoa>\x03\x0F informazio gehiago lortzeko."
-  set_sub_footer: "\x0310ℹ\x03\x0F Erabili /msg %bot% \x02\x0303HELP %command% <aukera>\x03\x0F informazio gehiago lortzeko."
-  syntax_label: "Sintaxia: \x02\x0303%syntax%\x03\x0F"
-  footer: "\x0314─────────────────────────────\x03\x0F"
-  group_header: "\x0310  ◆ %group%\x03\x0F"
-  subgroup_header: "\x0310  ◆ %group%\x03\x0F"
+  general_header: "Komando erabilgarriak:"
+  command_line: "%command%%description%"
+  subcommand_line: "%command%%description%"
+  options_header: "Aukerak:"
+  examples_header: "Adibideak:"
+  general_help_command: "HELP <komandoa>"
+  option_help_command: "HELP %command% <aukera>"
+  general_footer: "Erabili /msg %bot% %help_command% informazio gehiago lortzeko."
+  set_sub_footer: "Erabili /msg %bot% %help_command% informazio gehiago lortzeko."
+  syntax_label: "Sintaxia: %syntax%"
+  footer: ""
+  group_header: "%group%"
+  subgroup_header: "%group%"
   group:
     messages: "Mezuak"
     preferences: "Hobespenak"
-  ircop_header: "\x02 ■ IRC operadoreentzako komando erabilgarriak:\x02"
+  ircop_header: "IRC operadoreentzako komando erabilgarriak:"
 
 # --- NOTIFY ----------------------------------------------------------------
 notify:
-  nick_pending: "\x02%count%\x02 mezu irakurtzeke dituzu. Zerrendatzeko: /msg %bot% \x0303LIST\x03"
-  channel_pending: "\x02%channel%\x02 kanalak \x02%count%\x02 mezu irakurtzeke ditu. Erabili /msg %bot% \x0303LIST %channel%\x03"
+  nick_pending: "%count% mezu irakurtzeke dituzu. Zerrendatzeko: /msg %bot% %list%"
+  channel_pending: "%channel% kanalak %count% mezu irakurtzeke ditu. Erabili /msg %bot% %list%"
 
 # --- CHANNEL REGISTRATION DECISIONS ---
 registration_decision:

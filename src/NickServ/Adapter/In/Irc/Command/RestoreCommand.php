@@ -16,6 +16,9 @@ use App\NickServ\Application\UseCase\Restore\RestoreNickOutcome;
 use App\NickServ\Application\UseCase\Restore\RestoreNickResult;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\Fragment;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 
 final readonly class RestoreCommand implements NickServCommandInterface, IrcopAuditableCommandInterface
 {
@@ -107,15 +110,15 @@ final readonly class RestoreCommand implements NickServCommandInterface, IrcopAu
     {
         switch ($result->outcome) {
             case RestoreNickOutcome::NotRegistered:
-                $context->reply('error.nick_not_registered', ['%nickname%' => $result->nickname ?? '']);
+                $context->replyMissingNick('error.nick_not_registered', $result->nickname ?? '');
 
                 return CommandOutcome::rejected();
             case RestoreNickOutcome::NotPendingDeletion:
-                $context->reply('restore.not_pending_deletion', ['%nickname%' => $result->nickname ?? '']);
+                $context->reply('restore.not_pending_deletion', ['%nickname%' => new Fragment($result->nickname ?? '', Component::Emphasis)], Role::Error);
 
                 return CommandOutcome::rejected();
             case RestoreNickOutcome::Success:
-                $context->reply('restore.success', ['%nickname%' => $result->nickname ?? '']);
+                $context->reply('restore.success', ['%nickname%' => new Fragment($result->nickname ?? '', Component::Emphasis)], Role::Success);
 
                 return CommandOutcome::success(new IrcopAuditData(target: $result->nickname ?? ''));
         }

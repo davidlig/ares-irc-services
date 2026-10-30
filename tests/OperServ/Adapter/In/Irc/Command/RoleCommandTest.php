@@ -18,6 +18,10 @@ use App\OperServ\Application\UseCase\ManageRole\ManageRoleHandlerInterface;
 use App\OperServ\Application\UseCase\ManageRole\ManageRoleResult;
 use App\OperServ\Application\UseCase\ManageRole\RoleAction;
 use App\OperServ\Application\UseCase\ManageRole\RoleOutcome;
+use App\Shared\Adapter\In\Irc\Presentation\Appearance;
+use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -34,6 +38,64 @@ use function str_ends_with;
 #[CoversClass(OperatorRoleRecord::class)]
 final class RoleCommandTest extends TestCase
 {
+    #[Test]
+    public function distinguishesSuccessfulAndRejectedRoleChanges(): void
+    {
+        $notifier = new RecordingRoleNotifier();
+        $renderer = new IrcRenderer(new FixedStyleProvider(new PresentationStyle(markers: ['success' => '+', 'error' => '!'])));
+        foreach ([RoleOutcome::Added, RoleOutcome::AlreadyExists] as $outcome) {
+            $context = new OperServContext(
+                new SenderView('001AAA', 'RootOper', 'ident', 'host', 'cloak', 'ip', true, true),
+                null,
+                'ROLE',
+                ['ADD', 'ADMIN'],
+                $notifier,
+                new RecordingRoleTranslation(),
+                'en',
+                'UTC',
+                'NOTICE',
+                new OperServCommandRegistry([]),
+                new ServiceNicknameRegistry([]),
+                $this->createStub(OperatorAuthorizationQuery::class),
+                $renderer,
+            );
+            new RoleCommand(new RecordingManageRoleHandler(true, new ManageRoleResult($outcome, self::role())))->execute($context);
+        }
+        self::assertSame(['+ role.add.done', '! role.already_exists'], $notifier->messages);
+    }
+
+    #[Test]
+    public function permissionStatusesUseTheSelectedStyleWithoutChangingThePermissionRows(): void
+    {
+        $notifier = new RecordingRoleNotifier();
+        $translation = $this->createStub(TranslatorInterface::class);
+        $translation->method('trans')->willReturnCallback(static fn (string $id): string => 'role.perms.list.row' === $id
+            ? '%assigned% | %permission% | %description%' : $id);
+        $renderer = new IrcRenderer(new FixedStyleProvider(new PresentationStyle(components: [
+            'selected' => new Appearance(prefix: '[assigned]'),
+            'unselected' => new Appearance(prefix: '[available]'),
+        ])));
+        $context = new OperServContext(
+            new SenderView('001AAA', 'RootOper', 'ident', 'host', 'cloak', 'ip', true, true),
+            null,
+            'ROLE',
+            ['PERMS', 'LIST', 'ADMIN'],
+            $notifier,
+            $translation,
+            'en',
+            'UTC',
+            'NOTICE',
+            new OperServCommandRegistry([]),
+            new ServiceNicknameRegistry([]),
+            $this->createStub(OperatorAuthorizationQuery::class),
+            $renderer,
+        );
+        $result = new ManageRoleResult(RoleOutcome::PermissionsListed, self::role(), values: ['operserv.kill'], availableValues: ['chanserv.drop']);
+        new RoleCommand(new RecordingManageRoleHandler(true, $result))->execute($context);
+        self::assertSame('[available] | chanserv.drop | drop.short', $notifier->messages[2]);
+        self::assertSame('[assigned] | operserv.kill | kill.short', $notifier->messages[3]);
+    }
+
     /** @param list<string> $expectedSubcommands */
     #[Test]
     #[DataProvider('operclassCapabilities')]

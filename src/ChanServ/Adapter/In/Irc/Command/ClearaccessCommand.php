@@ -15,6 +15,9 @@ use App\Irc\Application\Port\In\Command\IrcopAuditableCommandInterface;
 use App\Irc\Application\Port\In\Command\IrcopAuditData;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\Fragment;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 use DateTimeImmutable;
 
 final class ClearaccessCommand implements ChanServCommandInterface, IrcopAuditableCommandInterface
@@ -103,7 +106,7 @@ final class ClearaccessCommand implements ChanServCommandInterface, IrcopAuditab
 
         $channelName = $context->getChannelNameArg(0);
         if (null === $channelName) {
-            $context->reply('error.invalid_channel');
+            $context->reply('error.invalid_channel', ['%example%' => new Fragment($context->trans('error.invalid_channel_example'), Component::Emphasis)], Role::Error);
 
             return CommandOutcome::rejected();
         }
@@ -114,17 +117,17 @@ final class ClearaccessCommand implements ChanServCommandInterface, IrcopAuditab
             occurredAt: new DateTimeImmutable(),
         ));
         if (ClearChannelAccessOutcome::ChannelNotRegistered === $result->outcome) {
-            $context->reply('error.channel_not_registered', ['%channel%' => $channelName]);
+            $context->reply('presentation.error.channel_not_registered', ['%channel%' => new Fragment((string) $channelName, Component::Emphasis)], Role::Error);
 
             return CommandOutcome::rejected();
         }
         if (ClearChannelAccessOutcome::AlreadyEmpty === $result->outcome) {
-            $context->reply('clearaccess.empty', ['%channel%' => $channelName]);
+            $context->reply('clearaccess.empty', ['%channel%' => new Fragment($channelName, Component::Emphasis)], Role::Information);
 
             return CommandOutcome::rejected();
         }
 
-        $context->reply('clearaccess.success', ['%channel%' => $channelName, '%count%' => $result->removedCount]);
+        $context->reply('clearaccess.success', ['%channel%' => new Fragment($channelName, Component::Emphasis), '%count%' => new Fragment((string) $result->removedCount, Component::Emphasis)], Role::Success);
 
         return CommandOutcome::success(new IrcopAuditData(target: $channelName, extra: ['count' => $result->removedCount]));
     }

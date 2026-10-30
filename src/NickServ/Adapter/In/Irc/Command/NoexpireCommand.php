@@ -18,6 +18,7 @@ use App\NickServ\Application\UseCase\Noexpire\SetNoexpireNickResult;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentValidator;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 
 use function strtoupper;
 
@@ -101,7 +102,7 @@ final readonly class NoexpireCommand implements NickServCommandInterface, IrcopA
 
         $validation = CommandArgumentValidator::validate($this->getArgumentDefinition(), $context->args);
         if (null !== $validation->syntaxKey) {
-            $context->reply('error.syntax', ['syntax' => $context->trans($validation->syntaxKey)]);
+            $context->replySyntax($validation->syntaxKey);
 
             return CommandOutcome::rejected();
         }
@@ -121,21 +122,23 @@ final readonly class NoexpireCommand implements NickServCommandInterface, IrcopA
     {
         switch ($result->outcome) {
             case SetNoexpireNickOutcome::NotRegistered:
-                $context->reply('error.nick_not_registered', ['%nickname%' => $result->nickname ?? '']);
+                $context->replyMissingNick('error.nick_not_registered', $result->nickname ?? '');
 
                 return CommandOutcome::rejected();
             case SetNoexpireNickOutcome::Forbidden:
-                $context->reply('noexpire.forbidden', ['%nickname%' => $result->nickname ?? '']);
+                $context->replyEmphasized('noexpire.forbidden', ['%nickname%' => $result->nickname ?? ''], Role::Error, ['nickname']);
 
                 return CommandOutcome::rejected();
             case SetNoexpireNickOutcome::Suspended:
-                $context->reply('noexpire.suspended', ['%nickname%' => $result->nickname ?? '']);
+                $context->replyEmphasized('noexpire.suspended', ['%nickname%' => $result->nickname ?? ''], Role::Error, ['nickname']);
 
                 return CommandOutcome::rejected();
             case SetNoexpireNickOutcome::Success:
-                $context->reply(
+                $context->replyEmphasized(
                     $result->noexpire ? 'noexpire.success_on' : 'noexpire.success_off',
                     ['%nickname%' => $result->nickname ?? ''],
+                    Role::Success,
+                    ['nickname'],
                 );
 
                 return CommandOutcome::success(new IrcopAuditData(

@@ -15,6 +15,9 @@ use App\Irc\Application\Port\In\Command\IrcopAuditableCommandInterface;
 use App\Irc\Application\Port\In\Command\IrcopAuditData;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\Fragment;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 use DateTimeImmutable;
 
 use function array_slice;
@@ -108,7 +111,7 @@ final class ClearusersCommand implements ChanServCommandInterface, IrcopAuditabl
 
         $channelName = $context->getChannelNameArg(0);
         if (null === $channelName) {
-            $context->reply('error.invalid_channel');
+            $context->reply('error.invalid_channel', ['%example%' => new Fragment($context->trans('error.invalid_channel_example'), Component::Emphasis)], Role::Error);
 
             return CommandOutcome::rejected();
         }
@@ -121,22 +124,22 @@ final class ClearusersCommand implements ChanServCommandInterface, IrcopAuditabl
             occurredAt: new DateTimeImmutable(),
         ));
         if (ClearChannelUsersOutcome::ChannelNotRegistered === $result->outcome) {
-            $context->reply('error.channel_not_registered', ['%channel%' => $channelName]);
+            $context->reply('presentation.error.channel_not_registered', ['%channel%' => new Fragment((string) $channelName, Component::Emphasis)], Role::Error);
 
             return CommandOutcome::rejected();
         }
         if (ClearChannelUsersOutcome::ChannelNotOnNetwork === $result->outcome) {
-            $context->reply('clearusers.not_on_network', ['%channel%' => $channelName]);
+            $context->reply('clearusers.not_on_network', ['%channel%' => new Fragment($channelName, Component::Emphasis)], Role::Error);
 
             return CommandOutcome::rejected();
         }
         if (ClearChannelUsersOutcome::AlreadyEmpty === $result->outcome) {
-            $context->reply('clearusers.empty', ['%channel%' => $channelName]);
+            $context->reply('clearusers.empty', ['%channel%' => new Fragment($channelName, Component::Emphasis)], Role::Information);
 
             return CommandOutcome::rejected();
         }
 
-        $context->reply('clearusers.success', ['%channel%' => $channelName, '%count%' => (string) $result->kickedCount]);
+        $context->reply('clearusers.success', ['%channel%' => new Fragment($channelName, Component::Emphasis), '%count%' => new Fragment((string) $result->kickedCount, Component::Emphasis)], Role::Success);
 
         return CommandOutcome::success(new IrcopAuditData(
             target: $channelName,

@@ -10,6 +10,9 @@ use App\ChanServ\Application\UseCase\ManageManualRank\ManageManualRankHandlerInt
 use App\ChanServ\Application\UseCase\ManageManualRank\ManageManualRankOutcome;
 use App\ChanServ\Application\UseCase\ManageManualRank\ManualRankOperation;
 use App\ChanServ\Domain\ValueObject\RankChangeAction;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\Fragment;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 
 use function strtolower;
 
@@ -27,7 +30,7 @@ trait ManualRankCommandPresentation
 
         $channelName = $context->getChannelNameArg(0);
         if (null === $channelName) {
-            $context->reply('error.invalid_channel');
+            $context->reply('error.invalid_channel', ['%example%' => new Fragment($context->trans('error.invalid_channel_example'), Component::Emphasis)], Role::Error);
 
             return;
         }
@@ -49,40 +52,41 @@ trait ManualRankCommandPresentation
 
         switch ($result->outcome) {
             case ManageManualRankOutcome::NotIdentified:
-                $context->reply('error.not_identified');
+                $context->reply('presentation.error.not_identified', ['%identify%' => new Fragment($context->trans('presentation.identify'), Component::Command)], Role::Error);
                 break;
             case ManageManualRankOutcome::RankNotSupported:
-                $context->reply($this->rankBase($operation) . '.not_supported');
+                $context->reply($this->rankBase($operation) . '.not_supported', role: Role::Error);
                 break;
             case ManageManualRankOutcome::TargetNickNotRegistered:
-                $context->reply('error.nick_not_registered', ['%nickname%' => $targetNickname]);
+                $context->reply('presentation.error.nick_not_registered', ['%nickname%' => new Fragment((string) $targetNickname, Component::Emphasis)], Role::Error);
                 break;
             case ManageManualRankOutcome::TargetNotOnChannel:
-                $context->reply($this->rankBase($operation) . '.user_not_on_channel', ['%nickname%' => $targetNickname]);
+                $context->reply($this->rankBase($operation) . '.user_not_on_channel', ['%nickname%' => new Fragment($targetNickname, Component::Emphasis)], Role::Error);
                 break;
             case ManageManualRankOutcome::SecureLevelRequired:
                 $context->reply('secure.requires_min_level', [
-                    '%nickname%' => $targetNickname,
-                    '%level%' => (string) $result->requiredLevel,
-                    '%mode%' => $this->displayMode($operation),
-                ]);
+                    '%nickname%' => new Fragment($targetNickname, Component::Emphasis),
+                    '%level%' => new Fragment((string) $result->requiredLevel, Component::Emphasis),
+                    '%mode%' => new Fragment($this->displayMode($operation), Component::Emphasis),
+                ], Role::Error);
                 break;
             case ManageManualRankOutcome::TargetAccessTooHigh:
-                $context->reply('error.insufficient_access', [
-                    '%operation%' => $operation->value,
-                    '%channel%' => $channelName,
-                ]);
+                $context->reply('presentation.error.insufficient_access', [
+                    '%operation%' => new Fragment($operation->value, Component::Emphasis),
+                    '%channel%' => new Fragment($channelName, Component::Emphasis),
+                ], Role::Error);
                 break;
             case ManageManualRankOutcome::Applied:
-                $context->getNotifier()->sendNoticeToChannel($channelName, $context->trans(
+                $context->getNotifier()->sendNoticeToChannel($channelName, $context->renderReply(
+                    Role::Success,
                     $this->rankBase($operation) . '.notice_grant',
                     [
-                        '%from%' => $context->sender->nick,
-                        '%to%' => $targetNickname,
-                        '%mode%' => $this->displayMode($operation),
+                        '%from%' => new Fragment($context->sender->nick, Component::Actor),
+                        '%to%' => new Fragment($targetNickname, Component::Target),
+                        '%mode%' => new Fragment($this->displayMode($operation), Component::ModeChange),
                     ],
                 ));
-                $context->reply(strtolower($operation->value) . '.done', ['%nickname%' => $targetNickname]);
+                $context->reply(strtolower($operation->value) . '.done', ['%nickname%' => new Fragment($targetNickname, Component::Emphasis)], Role::Success);
                 break;
         }
     }

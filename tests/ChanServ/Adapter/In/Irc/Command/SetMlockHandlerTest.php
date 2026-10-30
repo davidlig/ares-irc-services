@@ -51,7 +51,7 @@ final class SetMlockHandlerTest extends TestCase
         $handler = new SetMlockHandler($configureMlock, $resolver);
         $handler->handle($this->createContext($notifier, $translator), $channel, 'maybe');
 
-        self::assertSame(['error.syntax'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F presentation.error.syntax"], $messages);
     }
 
     #[Test]
@@ -98,7 +98,7 @@ final class SetMlockHandlerTest extends TestCase
         $handler = new SetMlockHandler($configureMlock, $resolver);
         $handler->handle($this->createContext($notifier, $translator, $lookup), $channel, ' ON ');
 
-        self::assertSame(['set.mlock.on'], $messages);
+        self::assertSame(["\x0303✔\x03\x0F set.mlock.on"], $messages);
         self::assertCount(1, $channelNotices);
     }
 
@@ -134,7 +134,7 @@ final class SetMlockHandlerTest extends TestCase
         $handler = new SetMlockHandler($configureMlock, $resolver);
         $handler->handle($this->createContext($notifier, $translator, $lookup, $support), $channel, 'on');
 
-        self::assertSame(['set.mlock.on'], $messages);
+        self::assertSame(["\x0303✔\x03\x0F set.mlock.on"], $messages);
     }
 
     #[Test]
@@ -162,7 +162,7 @@ final class SetMlockHandlerTest extends TestCase
         $handler = new SetMlockHandler($configureMlock, $resolver);
         $handler->handle($this->createContext($notifier, $translator), $channel, 'OFF');
 
-        self::assertSame(['set.mlock.off'], $messages);
+        self::assertSame(["\x0303✔\x03\x0F set.mlock.off"], $messages);
         self::assertCount(1, $channelNotices);
     }
 

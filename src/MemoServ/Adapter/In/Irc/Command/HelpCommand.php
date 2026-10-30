@@ -90,7 +90,7 @@ final readonly class HelpCommand implements MemoServCommandInterface
         if (empty($context->args)) {
             $adapter = new HelpFormatterContextAdapter($context);
             $lines = $this->formatter->renderGeneralHelp($adapter);
-            $lines[] = $context->trans('help.footer');
+            $lines[] = $adapter->trans('help.footer');
             $context->replyRaw(implode("\n", $lines));
 
             return null;
@@ -100,14 +100,14 @@ final readonly class HelpCommand implements MemoServCommandInterface
         $handler = $context->getRegistry()->find($targetCmd);
 
         if (null === $handler) {
-            $context->reply('unknown_command', ['command' => $targetCmd]);
+            $context->replyError('unknown_command', ['command' => $context->commandFragment($targetCmd)]);
 
             return null;
         }
 
         $adapter = new HelpFormatterContextAdapter($context);
         if (!$adapter->canViewCommandInHelp($handler)) {
-            $context->reply('unknown_command', ['command' => $targetCmd]);
+            $context->replyError('unknown_command', ['command' => $context->commandFragment($targetCmd)]);
 
             return null;
         }
@@ -122,9 +122,9 @@ final readonly class HelpCommand implements MemoServCommandInterface
                 return null;
             }
 
-            $context->reply('unknown_help_option', [
-                'command' => $handler->getName(),
-                'option' => $subName,
+            $context->replyError('unknown_help_option', [
+                'command' => $context->commandFragment($handler->getName()),
+                'option' => $context->commandFragment($subName),
             ]);
 
             return null;

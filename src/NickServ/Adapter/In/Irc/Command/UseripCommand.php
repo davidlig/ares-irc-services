@@ -18,6 +18,9 @@ use App\NickServ\Application\UseCase\Userip\GetUseripOutcome;
 use App\NickServ\Application\UseCase\Userip\GetUseripResult;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\Fragment;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 
 use function base64_decode;
 use function bin2hex;
@@ -124,7 +127,7 @@ final readonly class UseripCommand implements NickServCommandInterface, IrcopAud
     {
         switch ($result->outcome) {
             case GetUseripOutcome::NotOnline:
-                $context->reply('error.nick_not_online', ['%nickname%' => $result->nickname ?? '']);
+                $context->replyMissingNick('error.nick_not_online', $result->nickname ?? '');
 
                 return CommandOutcome::rejected();
 
@@ -136,10 +139,10 @@ final readonly class UseripCommand implements NickServCommandInterface, IrcopAud
                 );
 
                 $context->reply('userip.result', [
-                    '%nickname%' => $result->nickname ?? '',
-                    '%ip%' => $result->ip ?? '',
-                    '%host%' => $result->host ?? '',
-                ]);
+                    '%nickname%' => new Fragment($result->nickname ?? '', Component::Emphasis),
+                    '%ip%' => new Fragment($result->ip ?? '', Component::Status),
+                    '%host%' => new Fragment($result->host ?? '', Component::Status),
+                ], Role::Information);
 
                 return CommandOutcome::success($auditData);
         }

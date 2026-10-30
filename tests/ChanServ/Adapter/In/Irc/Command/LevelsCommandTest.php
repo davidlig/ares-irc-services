@@ -65,7 +65,7 @@ final class LevelsCommandTest extends TestCase
         $cmd = new LevelsCommand(new ManageChannelLevelsHandler($channelRepo, $levelRepo, $this->historyService()));
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), new ChanAccountView(1, 'User', 'en'), ['x', 'LIST'], $notifier, $translator));
 
-        self::assertSame(['error.invalid_channel'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F error.invalid_channel"], $messages);
     }
 
     #[Test]
@@ -99,7 +99,7 @@ final class LevelsCommandTest extends TestCase
         $cmd = new LevelsCommand(new ManageChannelLevelsHandler($channelRepo, $levelRepo, $this->historyService()));
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), null, ['#test', 'LIST'], $notifier, $translator));
 
-        self::assertSame(['error.not_identified'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F presentation.error.not_identified"], $messages);
     }
 
     #[Test]
@@ -158,7 +158,7 @@ final class LevelsCommandTest extends TestCase
         $cmd = new LevelsCommand(new ManageChannelLevelsHandler($channelRepo, $levelRepo, $this->historyService()));
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['#test', 'INVALID'], $notifier, $translator));
 
-        self::assertSame(['levels.unknown_sub'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F levels.unknown_sub"], $messages);
     }
 
     #[Test]
@@ -211,7 +211,7 @@ final class LevelsCommandTest extends TestCase
             $translator,
         ));
 
-        self::assertSame(['error.not_identified'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F presentation.error.not_identified"], $messages);
     }
 
     #[Test]
@@ -256,9 +256,7 @@ final class LevelsCommandTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static function (string $id, array $parameters = []): string {
             if ('levels.list.header' === $id) {
-                $channel = $parameters['%channel%'] ?? null;
-
-                return 'Niveles de ' . (is_string($channel) ? $channel : '');
+                return 'Niveles de %channel%';
             }
 
             return $id;
@@ -267,7 +265,7 @@ final class LevelsCommandTest extends TestCase
         $cmd = new LevelsCommand(new ManageChannelLevelsHandler($channelRepo, $levelRepo, $this->historyService()));
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['#test', 'LIST'], $notifier, $translator));
 
-        self::assertSame('Niveles de #test', $messages[0]);
+        self::assertSame("\x0303Niveles de #test\x03\x0F", $messages[0]);
         self::assertGreaterThan(1, count($messages));
     }
 
@@ -324,7 +322,7 @@ final class LevelsCommandTest extends TestCase
         $cmd = new LevelsCommand(new ManageChannelLevelsHandler($channelRepo, $levelRepo, $this->historyService()));
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['#test', 'SET', 'AUTOOP', ''], $notifier, $translator));
 
-        self::assertSame(['error.syntax'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F presentation.error.syntax"], $messages);
     }
 
     #[Test]
@@ -340,9 +338,12 @@ final class LevelsCommandTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(
             static function (string $id, array $parameters = []): string {
+                if ('presentation.error.syntax' === $id) {
+                    return 'error.syntax|%syntax%';
+                }
                 $syntax = $parameters['%syntax%'] ?? null;
 
-                return 'error.syntax' === $id && is_string($syntax) ? $id . '|' . $syntax : $id;
+                return "\x0304✗\x03\x0F presentation.error.syntax" === $id && is_string($syntax) ? $id . '|' . $syntax : $id;
             }
         );
 
@@ -354,7 +355,7 @@ final class LevelsCommandTest extends TestCase
             $translator,
         ));
 
-        self::assertSame(['error.syntax|levels.set.syntax'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F error.syntax|\x02\x0303levels.set.syntax\x03\x0F"], $messages);
     }
 
     #[Test]
@@ -378,7 +379,7 @@ final class LevelsCommandTest extends TestCase
         $cmd = new LevelsCommand(new ManageChannelLevelsHandler($channelRepo, $levelRepo, $this->historyService()));
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['#test', 'SET', 'UNKNOWNKEY', '100'], $notifier, $translator));
 
-        self::assertSame(['levels.unknown_key'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F levels.unknown_key"], $messages);
     }
 
     #[Test]
@@ -404,7 +405,7 @@ final class LevelsCommandTest extends TestCase
         $cmd = new LevelsCommand(new ManageChannelLevelsHandler($channelRepo, $levelRepo, $this->historyService()));
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['#test', 'SET', 'AUTOOP', '200'], $notifier, $translator));
 
-        self::assertSame(['levels.set.done'], $messages);
+        self::assertSame(["\x0303✔\x03\x0F levels.set.done"], $messages);
     }
 
     #[Test]
@@ -429,7 +430,7 @@ final class LevelsCommandTest extends TestCase
         $cmd = new LevelsCommand(new ManageChannelLevelsHandler($channelRepo, $levelRepo, $this->historyService()));
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['#test', 'RESET'], $notifier, $translator));
 
-        self::assertSame(['levels.reset.done'], $messages);
+        self::assertSame(["\x0303✔\x03\x0F levels.reset.done"], $messages);
     }
 
     #[Test]
@@ -453,7 +454,7 @@ final class LevelsCommandTest extends TestCase
         $cmd = new LevelsCommand(new ManageChannelLevelsHandler($channelRepo, $levelRepo, $this->historyService()));
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['#test', 'SET', 'AUTOOP', '-5'], $notifier, $translator));
 
-        self::assertSame(['levels.value_range'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F levels.value_range"], $messages);
     }
 
     #[Test]
@@ -477,7 +478,7 @@ final class LevelsCommandTest extends TestCase
         $cmd = new LevelsCommand(new ManageChannelLevelsHandler($channelRepo, $levelRepo, $this->historyService()));
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['#test', 'SET', 'AUTOOP', '9999'], $notifier, $translator));
 
-        self::assertSame(['levels.value_range'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F levels.value_range"], $messages);
     }
 
     #[Test]
@@ -505,7 +506,7 @@ final class LevelsCommandTest extends TestCase
         $cmd = new LevelsCommand(new ManageChannelLevelsHandler($channelRepo, $levelRepo, $this->historyService()));
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['#test', 'SET', 'AUTOOP', '250'], $notifier, $translator));
 
-        self::assertSame(['levels.set.done'], $messages);
+        self::assertSame(["\x0303✔\x03\x0F levels.set.done"], $messages);
     }
 
     #[Test]
@@ -530,7 +531,7 @@ final class LevelsCommandTest extends TestCase
         $cmd = new LevelsCommand(new ManageChannelLevelsHandler($channelRepo, $levelRepo, $this->historyService()));
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['#test', 'LIST'], $notifier, $translator));
 
-        self::assertSame('levels.list.header', $messages[0]);
+        self::assertSame("\x0303levels.list.header\x03\x0F", $messages[0]);
         foreach ($messages as $msg) {
             self::assertStringNotContainsString('AUTOADMIN', $msg);
             self::assertStringNotContainsString('ADMINDEADMIN', $msg);
@@ -567,7 +568,7 @@ final class LevelsCommandTest extends TestCase
         $cmd = new LevelsCommand(new ManageChannelLevelsHandler($channelRepo, $levelRepo, $this->historyService()));
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['#test', 'LIST'], $notifier, $translator));
 
-        self::assertSame('levels.list.header', $messages[0]);
+        self::assertSame("\x0303levels.list.header\x03\x0F", $messages[0]);
         $foundAutoop = false;
         $foundInvite = false;
         foreach ($messages as $msg) {

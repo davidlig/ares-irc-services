@@ -12,6 +12,7 @@ use App\MemoServ\Application\UseCase\Del\DelMemoOutcome;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentValidator;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 
 use function str_starts_with;
 
@@ -89,14 +90,14 @@ final readonly class DelCommand implements MemoServCommandInterface
     {
         $senderAccount = $context->senderAccount;
         if (null === $senderAccount || null === $context->sender) {
-            $context->reply('error.not_identified');
+            $context->replyError('error.not_identified');
 
             return null;
         }
 
         $validation = CommandArgumentValidator::validate($this->getArgumentDefinition(), $context->args);
         if (!$validation->isValid()) {
-            $context->reply('error.syntax', ['syntax' => $context->trans($validation->syntaxKey ?? $this->getSyntaxKey())]);
+            $context->replyError('error.syntax', ['syntax' => $context->trans($validation->syntaxKey ?? $this->getSyntaxKey())]);
 
             return null;
         }
@@ -116,19 +117,19 @@ final readonly class DelCommand implements MemoServCommandInterface
 
         switch ($result->outcome) {
             case DelMemoOutcome::Deleted:
-                $context->reply('del.deleted', ['index' => $result->index]);
+                $context->reply('del.deleted', ['index' => $result->index], Role::Success);
                 break;
 
             case DelMemoOutcome::NotFound:
-                $context->reply('del.not_found', ['index' => $result->index]);
+                $context->reply('del.not_found', ['index' => $result->index], Role::Error);
                 break;
 
             case DelMemoOutcome::ChannelNotRegistered:
-                $context->reply('error.channel_not_registered', ['channel' => $targetChannel ?? '']);
+                $context->replyError('error.channel_not_registered', ['channel' => $targetChannel ?? '']);
                 break;
 
             case DelMemoOutcome::AccessDenied:
-                $context->reply('error.insufficient_access', [
+                $context->replyError('error.insufficient_access', [
                     'operation' => 'DEL',
                     'channel' => $result->channelName ?? $targetChannel ?? '',
                 ]);

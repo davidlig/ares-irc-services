@@ -13,153 +13,23 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 use function array_column;
-use function array_diff;
 use function array_filter;
 use function array_map;
 use function array_search;
 use function array_slice;
-use function array_unique;
 use function array_values;
-use function array_walk_recursive;
-use function count;
 use function dirname;
 use function end;
 use function explode;
-use function file_get_contents;
 use function implode;
 use function in_array;
-use function is_array;
-use function is_string;
 use function preg_match;
-use function preg_match_all;
-use function serialize;
-use function str_contains;
 use function str_ends_with;
 use function strtolower;
-use function substr_count;
 
 #[CoversClass(UnifiedHelpFormatter::class)]
 final class UnifiedHelpFormatterTest extends TestCase
 {
-    #[Test]
-    public function nickServHelpCatalogsUseOnlyTheApprovedResetPalette(): void
-    {
-        $root = dirname(__DIR__, 6);
-        $locales = ['ca', 'de', 'el', 'en', 'es', 'eu', 'fr', 'gl', 'it', 'nl', 'pl', 'pt', 'ro', 'tr'];
-        $expectedColors = [
-            'header' => ['07', '14'],
-            'navigation_marker' => ['10'],
-            'info_marker' => ['10'],
-            'error_marker' => ['04'],
-            'warning_marker' => ['04'],
-            'intro_expiration' => ['04'],
-            'general_header' => [],
-            'command_line' => ['03'],
-            'subcommand_line' => ['03'],
-            'options_header' => [],
-            'examples_header' => [],
-            'general_footer' => ['03'],
-            'set_sub_footer' => ['03'],
-            'syntax_label' => ['03'],
-            'footer' => ['14'],
-            'group_header' => ['10'],
-            'subgroup_header' => ['10'],
-            'ircop_header' => [],
-            'set_timezone.index_label' => ['03'],
-            'set_timezone.region_header' => [],
-            'set_timezone.region_unknown' => ['03'],
-        ];
-
-        foreach ($locales as $locale) {
-            $catalog = TranslationCatalog::parseFile($root . '/translations/nickserv.' . $locale . '.yaml');
-            self::assertIsArray($catalog['help'] ?? null, $locale);
-            $help = $catalog['help'];
-            self::assertArrayNotHasKey('unknown_option', $help, $locale);
-
-            $commonCatalog = TranslationCatalog::parseFile($root . '/translations/common.' . $locale . '.yaml');
-            $unknownHelpOption = $commonCatalog['unknown_help_option'] ?? null;
-            self::assertIsString($unknownHelpOption, $locale);
-            preg_match_all('/\x03(\d{2})/', $unknownHelpOption, $commonColors);
-            self::assertSame(['04', '03', '03', '03'], $commonColors[1], $locale . ': common.unknown_help_option');
-            self::assertSame(4, substr_count($unknownHelpOption, "\x03") - count($commonColors[1]), $locale);
-
-            foreach ($expectedColors as $keyPath => $expected) {
-                $value = $help;
-                foreach (explode('.', $keyPath) as $part) {
-                    $value = is_array($value) ? ($value[$part] ?? null) : null;
-                }
-                self::assertIsString($value, $locale . ': help.' . $keyPath);
-                preg_match_all('/\x03(\d{2})/', $value, $matches);
-                self::assertSame($expected, $matches[1], $locale . ': help.' . $keyPath);
-                $resetCount = substr_count($value, "\x03") - count($matches[1]);
-                self::assertSame(
-                    count($matches[1]),
-                    $resetCount,
-                    $locale . ': each colored fragment must reset color and formatting',
-                );
-            }
-
-            self::assertIsString($help['header']);
-            self::assertStringStartsWith("\x02\x0307🤖 %title%\x03\x0F ", $help['header'], $locale);
-            foreach (['general_header', 'options_header', 'ircop_header'] as $section) {
-                self::assertIsString($help[$section]);
-                self::assertStringStartsWith("\x02 ■ ", $help[$section], $locale . ': ' . $section);
-                self::assertStringEndsWith("\x02", $help[$section], $locale . ': ' . $section);
-            }
-            foreach (['group_header', 'subgroup_header'] as $group) {
-                self::assertSame("\x0310  ◆ %group%\x03\x0F", $help[$group], $locale);
-            }
-            foreach (['command_line', 'subcommand_line'] as $row) {
-                self::assertSame("    %marker% \x02\x0303%command%\x03\x0F%description%", $help[$row], $locale);
-            }
-            self::assertIsString($help['intro_expiration']);
-            self::assertMatchesRegularExpression('/\x1F\x0304%days% [^\x03]+\x03\x1F/u', $help['intro_expiration'], $locale . ': full localized duration is red and underlined');
-            self::assertSame(2, substr_count($help['intro_expiration'], "\x1F"), $locale . ': underline cannot bleed into surrounding prose');
-
-            $helpText = serialize($help);
-            preg_match_all('/\x03(\d{2})/', $helpText, $allColors);
-            self::assertNotEmpty($allColors[1], $locale);
-            $colorResetCount = substr_count($helpText, "\x03") - count($allColors[1]);
-            self::assertSame(
-                count($allColors[1]),
-                $colorResetCount,
-                $locale . ': every HELP color must reset',
-            );
-            self::assertSame([], array_diff($allColors[1], ['03', '04', '07', '10', '14']), $locale);
-            self::assertCount(3, array_filter($allColors[1], static fn (string $color): bool => '04' === $color), $locale . ': red is reserved for the error marker, warning marker and expiration duration');
-
-            if ('es' === $locale) {
-                $examples = [];
-                array_walk_recursive($catalog, static function (mixed $value, int|string $key) use (&$examples): void {
-                    if (is_string($value) && ('example' === $key || str_ends_with((string) $key, '_example'))) {
-                        $examples[(string) $key] = $value;
-                    }
-                });
-                self::assertNotEmpty($examples, 'Spanish command examples must be present.');
-                foreach ($examples as $key => $example) {
-                    preg_match_all('/\x03(\d{2})/', $example, $matches);
-                    self::assertNotEmpty($matches[1], 'Each Spanish example must apply its command color: ' . $key);
-                    self::assertSame(['03'], array_values(array_unique($matches[1])), 'Examples use the approved command color: ' . $key);
-                    self::assertSame(
-                        count($matches[1]),
-                        substr_count($example, "\x03\x0F") + substr_count($example, "\x03\x1F"),
-                        'Every example command color must reset: ' . $key,
-                    );
-                    if (str_contains($example, '/msg ')) {
-                        self::assertDoesNotMatchRegularExpression('/\x02\x0303\/msg /', $example, 'Transport prefix must remain uncolored: ' . $key);
-                        self::assertMatchesRegularExpression('/\/msg [^ ]+ \x02\x0303[A-Z]+/', $example, 'Service command must be highlighted: ' . $key);
-                    }
-                }
-            }
-        }
-
-        $commandSource = file_get_contents($root . '/src/NickServ/Adapter/In/Irc/Command/HelpCommand.php');
-        self::assertIsString($commandSource);
-        foreach (['IrcHelpStyle', "\x03", '›', 'ℹ', '⚠', '✗', '◆'] as $presentationToken) {
-            self::assertStringNotContainsString($presentationToken, $commandSource);
-        }
-    }
-
     #[Test]
     public function nickServListShortDescriptionsOmitTheIrcopOnlyQualifierInEveryLocale(): void
     {
