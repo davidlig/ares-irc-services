@@ -523,14 +523,12 @@ devoice:
 # --- UNBAN -----------------------------------------------------------------
 unban:
   syntax: "UNBAN <#channel>"
-  example: "%command_prefix%UNBAN #channel"
+  example: "%command_prefix%UNBAN #canal"
   short: "Retirar els bans que t’afecten."
-  help: |-
-    Retira tots els bans ordinaris del canal que coincideixen amb la teva identitat actual, inclosos comodins i màscares IP/CIDR, segons l’IRCd.
-    Cal identificació i el nivell UNBAN configurable (200 per defecte). El fundador conserva l’accés; no cal ser membre ni operador del canal.
-    Els bans estesos no canvien. No accepta cap sobrenom ni màscara com a argument. L’acció no es registra a l’HISTORY del canal.
-  done: "S’han retirat %count% ban(s) que t’afecten a %channel%."
-  no_matches: "Cap ban ordinari coincideix amb la teva identitat a %channel%; no s’ha canviat res."
+  help: "Retira tots els bans del canal que coincideixen amb la teva identitat actual, inclosos comodins i màscares IP/CIDR."
+  done: "S’han retirat %count% ban(s) que t’afecten a %channel%"
+  notice_channel: "%nickname% ha utilitzat UNBAN."
+  no_matches: "Cap ban coincideix amb la teva identitat a %channel%"
   unavailable: "No s’han pogut determinar els bans que et corresponen; no s’ha canviat res."
   not_on_network: "El canal %channel% no és a la xarxa."
 

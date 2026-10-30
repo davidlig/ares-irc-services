@@ -517,15 +517,13 @@ devoice:
 
 # --- UNBAN -----------------------------------------------------------------
 unban:
-  syntax: "UNBAN <#channel>"
-  example: "%command_prefix%UNBAN #channel"
+  syntax: "UNBAN <#kanał>"
+  example: "%command_prefix%UNBAN #kanał"
   short: "Usuń bany dotyczące ciebie."
-  help: |-
-    Usuwa wszystkie zwykłe bany kanału pasujące do twojej bieżącej tożsamości, w tym symbole wieloznaczne i maski IP/CIDR, zgodnie z regułami IRCd.
-    Wymaga identyfikacji i konfigurowalnego poziomu UNBAN (domyślnie 200). Założyciel zachowuje dostęp; obecność na kanale ani status operatora nie są wymagane.
-    Rozszerzone bany pozostają bez zmian. Nie przyjmuje pseudonimu ani maski jako argumentu. Operacja nie jest zapisywana w HISTORY kanału.
-  done: "Usunięto %count% banów dotyczących ciebie na %channel%."
-  no_matches: "Żaden zwykły ban nie pasuje do twojej tożsamości na %channel%; nic nie zmieniono."
+  help: "Usuwa wszystkie bany kanału pasujące do twojej bieżącej tożsamości, w tym symbole wieloznaczne i maski IP/CIDR."
+  done: "Usunięto %count% banów dotyczących ciebie na %channel%"
+  notice_channel: "%nickname% użył UNBAN."
+  no_matches: "Żaden ban nie pasuje do twojej tożsamości na %channel%"
   unavailable: "Nie udało się ustalić pasujących banów; nic nie zmieniono."
   not_on_network: "Kanał %channel% nie istnieje w sieci."
 

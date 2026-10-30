@@ -521,15 +521,13 @@ devoice:
 
 # --- UNBAN -----------------------------------------------------------------
 unban:
-  syntax: "UNBAN <#channel>"
-  example: "%command_prefix%UNBAN #channel"
+  syntax: "UNBAN <#kanala>"
+  example: "%command_prefix%UNBAN #kanala"
   short: "Zuri eragiten dizuten debekuak kendu."
-  help: |-
-    Zure uneko identitatearekin bat datozen kanaleko debeku arrunt guztiak kentzen ditu, komodinak eta IP/CIDR maskarak barne, IRCd-ren arabera.
-    Identifikazioa eta UNBAN maila konfiguragarria behar dira (lehenetsia 200). Sortzaileak sarbidea mantentzen du; ez da kanaleko kide edo operadore izan behar.
-    Debeku hedatuak ez dira aldatzen. Ez du ezizenik edo maskararik onartzen argumentu gisa. Ekintza ez da kanalaren HISTORY-n erregistratzen.
-  done: "Zuri eragiten dizuten %count% debeku kendu dira %channel% kanalean."
-  no_matches: "Ez dago zure identitatearekin bat datorren debeku arruntik %channel% kanalean; ez da ezer aldatu."
+  help: "Zure uneko identitatearekin bat datozen kanaleko debeku guztiak kentzen ditu, komodinak eta IP/CIDR maskarak barne."
+  done: "Zuri eragiten dizuten %count% debeku kendu dira %channel% kanalean"
+  notice_channel: "%nickname%(e)k UNBAN erabili du."
+  no_matches: "Ez dago zure identitatearekin bat datorren debekurik %channel% kanalean"
   unavailable: "Ezin izan dira zure debeku egokiak zehaztu; ez da ezer aldatu."
   not_on_network: "%channel% kanala ez dago sarean."
 

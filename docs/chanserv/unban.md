@@ -2,7 +2,7 @@
 
 `UNBAN <#channel>` removes every ordinary channel ban that matches the current requester under the active IRCd's matching rules. It never accepts another nickname or mask.
 
-The requester must be identified and meet the channel's configurable UNBAN threshold (default 200). The identified founder retains implicit access. Neither channel membership nor operator status is required. The original stored matching masks are removed; unrelated bans, extended bans, exceptions and AKICK are unchanged. No matching bans means an informative reply without channel mutation. Executing UNBAN does not add channel HISTORY; LEVELS configuration retains its existing HISTORY policy.
+The requester must be identified and meet the channel's configurable UNBAN threshold (default 200). The identified founder retains implicit access. Neither channel membership nor operator status is required. The original stored matching masks are removed in batched mode changes (e.g. `-bb` up to 6 masks per command); unrelated bans, extended bans, exceptions and AKICK are unchanged. When matching bans are removed, a success NOTICE is broadcast to the channel announcing the requester's use of UNBAN. No matching bans means an informative reply without channel mutation. Executing UNBAN does not add channel HISTORY; LEVELS configuration retains its existing HISTORY policy.
 
 ## Protocol matching references
 

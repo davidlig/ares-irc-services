@@ -141,6 +141,13 @@ final readonly class UnbanCommand implements ChanServCommandInterface
         };
         $context->reply($key, ['%channel%' => $channelName, '%count%' => (string) $result->removedCount], $role);
 
+        if (UnbanChannelOutcome::Removed === $result->outcome) {
+            $notice = $context->renderReply(Role::Success, 'unban.notice_channel', [
+                '%nickname%' => new Fragment($sender->nick, Component::Actor),
+            ]);
+            $context->getNotifier()->sendNoticeToChannel($channelName, $notice);
+        }
+
         return in_array($result->outcome, [UnbanChannelOutcome::Removed, UnbanChannelOutcome::NoMatches], true) ? CommandOutcome::success() : CommandOutcome::rejected();
     }
 }
