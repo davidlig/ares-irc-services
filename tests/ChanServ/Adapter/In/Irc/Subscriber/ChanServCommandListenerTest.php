@@ -169,8 +169,8 @@ final class ChanServCommandListenerTest extends TestCase
         $this->translator
             ->expects(self::once())
             ->method('trans')
-            ->with('register.already_registered', ['%channel%' => '#test'], 'chanserv', 'es')
-            ->willReturn('El canal #test ya está registrado.');
+            ->with('register.already_registered', [], 'chanserv', 'es')
+            ->willReturn('El canal %channel% ya está registrado.');
 
         $exception = ChannelAlreadyRegisteredException::forChannel('#test');
         $command = $this->createThrowCommand('REGISTER', $exception);
@@ -179,7 +179,7 @@ final class ChanServCommandListenerTest extends TestCase
         $this->chanServNotifier
             ->expects(self::once())
             ->method('sendMessage')
-            ->with('001ABC', 'El canal #test ya está registrado.', 'NOTICE');
+            ->with('001ABC', "\x0304✗\x03\x0F El canal \x02#test\x03\x0F ya está registrado.", 'NOTICE');
         $this->logger->expects(self::never())->method('error');
 
         $listener->onCommand('001ABC', 'REGISTER #test');
@@ -195,8 +195,8 @@ final class ChanServCommandListenerTest extends TestCase
         $this->translator
             ->expects(self::once())
             ->method('trans')
-            ->with('error.channel_not_registered', ['%channel%' => '#mychan', '%bot%' => 'ChanServ'], 'common', 'en')
-            ->willReturn('Channel #mychan is not registered.');
+            ->with('presentation.error.channel_not_registered', [], 'common', 'en')
+            ->willReturn('Channel %channel% is not registered.');
 
         $exception = ChannelNotRegisteredException::forChannel('#mychan');
         $command = $this->createThrowCommand('ACCESS', $exception);
@@ -205,7 +205,7 @@ final class ChanServCommandListenerTest extends TestCase
         $this->chanServNotifier
             ->expects(self::once())
             ->method('sendMessage')
-            ->with('001ABC', 'Channel #mychan is not registered.', 'NOTICE');
+            ->with('001ABC', "\x0304✗\x03\x0F Channel \x02#mychan\x03\x0F is not registered.", 'NOTICE');
         $this->logger->expects(self::never())->method('error');
 
         $listener->onCommand('001ABC', 'ACCESS #mychan LIST');
@@ -223,8 +223,8 @@ final class ChanServCommandListenerTest extends TestCase
         $this->translator
             ->expects(self::once())
             ->method('trans')
-            ->with('error.channel_not_registered', ['%channel%' => '#mychan', '%bot%' => 'ChanServ'], 'common', 'es')
-            ->willReturn('El canal #mychan no está registrado.');
+            ->with('presentation.error.channel_not_registered', [], 'common', 'es')
+            ->willReturn('El canal %channel% no está registrado.');
 
         $exception = ChannelNotRegisteredException::forChannel('#mychan');
         $command = $this->createThrowCommand('ACCESS', $exception);
@@ -233,7 +233,7 @@ final class ChanServCommandListenerTest extends TestCase
         $this->chanServNotifier
             ->expects(self::once())
             ->method('sendMessage')
-            ->with('001ABC', 'El canal #mychan no está registrado.', 'NOTICE');
+            ->with('001ABC', "\x0304✗\x03\x0F El canal \x02#mychan\x03\x0F no está registrado.", 'NOTICE');
         $this->logger->expects(self::never())->method('error');
 
         $listener->onCommand('001ABC', 'ACCESS #mychan LIST');
@@ -250,12 +250,12 @@ final class ChanServCommandListenerTest extends TestCase
             ->expects(self::once())
             ->method('trans')
             ->with(
-                'error.insufficient_access',
-                ['%operation%' => 'OP', '%channel%' => '#mychan', '%bot%' => 'ChanServ'],
+                'presentation.error.insufficient_access',
+                [],
                 'common',
                 'en',
             )
-            ->willReturn('Insufficient access to OP on channel "#mychan".');
+            ->willReturn('Insufficient access to %operation% on channel "%channel%".');
 
         $exception = InsufficientAccessException::forOperation('#mychan', 'OP');
         $command = $this->createThrowCommand('OP', $exception);
@@ -264,7 +264,7 @@ final class ChanServCommandListenerTest extends TestCase
         $this->chanServNotifier
             ->expects(self::once())
             ->method('sendMessage')
-            ->with('001ABC', 'Insufficient access to OP on channel "#mychan".', 'NOTICE');
+            ->with('001ABC', "\x0304✗\x03\x0F Insufficient access to \x02OP\x03\x0F on channel \"\x02#mychan\x03\x0F\".", 'NOTICE');
         $this->logger->expects(self::never())->method('error');
 
         $listener->onCommand('001ABC', 'OP #mychan user');

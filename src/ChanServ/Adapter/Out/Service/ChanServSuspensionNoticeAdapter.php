@@ -6,6 +6,8 @@ namespace App\ChanServ\Adapter\Out\Service;
 
 use App\ChanServ\Adapter\In\Irc\ChanServNotifierInterface;
 use App\ChanServ\Application\Port\Out\ChannelSuspensionNotifier;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 final readonly class ChanServSuspensionNoticeAdapter implements ChannelSuspensionNotifier
@@ -13,6 +15,7 @@ final readonly class ChanServSuspensionNoticeAdapter implements ChannelSuspensio
     public function __construct(
         private ChanServNotifierInterface $notifier,
         private TranslatorInterface $translator,
+        private IrcRenderer $renderer,
         private string $defaultLanguage = 'en',
     ) {}
 
@@ -20,10 +23,10 @@ final readonly class ChanServSuspensionNoticeAdapter implements ChannelSuspensio
     {
         $message = $this->translator->trans(
             'suspend.notice_channel',
-            ['%reason%' => $reason ?? ''],
+            [],
             'chanserv',
             $this->defaultLanguage,
         );
-        $this->notifier->sendNoticeToChannel($channelName, $message);
+        $this->notifier->sendNoticeToChannel($channelName, $this->renderer->reply(Role::Warning, $message, ['%reason%' => $reason ?? '']));
     }
 }

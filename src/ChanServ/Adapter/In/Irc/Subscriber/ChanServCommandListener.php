@@ -14,6 +14,12 @@ use App\ChanServ\Domain\Exception\ChannelNotRegisteredException;
 use App\ChanServ\Domain\Exception\InsufficientAccessException;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\ServiceCommandListenerInterface;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
+use App\Shared\Adapter\In\Irc\Presentation\Fragment;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -35,6 +41,7 @@ final readonly class ChanServCommandListener implements ServiceCommandListenerIn
         private ChanUserAccountPort $accountPort,
         private string $defaultLanguage,
         private LoggerInterface $logger = new NullLogger(),
+        private ?IrcRenderer $renderer = null,
     ) {}
 
     public function getServiceName(): string
@@ -66,21 +73,24 @@ final readonly class ChanServCommandListener implements ServiceCommandListenerIn
         } catch (ChannelAlreadyRegisteredException $e) {
             $messageType = $this->messageTypeResolver->prefersPrivateMessages($sender->nick) ? 'PRIVMSG' : 'NOTICE';
             $language = $this->accountPort->findAccountByNick($sender->nick)->language ?? $this->defaultLanguage;
-            $message = $this->translator->trans('register.already_registered', ['%channel%' => $e->getChannelName()], 'chanserv', $language);
+            $message = $this->renderError('register.already_registered', $language, [
+                '%channel%' => new Fragment($e->getChannelName(), Component::Emphasis),
+            ], 'chanserv');
             $this->chanServNotifier->sendMessage($sender->uid, $message, $messageType);
         } catch (ChannelNotRegisteredException $e) {
             $messageType = $this->messageTypeResolver->prefersPrivateMessages($sender->nick) ? 'PRIVMSG' : 'NOTICE';
             $language = $this->accountPort->findAccountByNick($sender->nick)->language ?? $this->defaultLanguage;
-            $message = $this->translator->trans('error.channel_not_registered', ['%channel%' => $e->getChannelName(), '%bot%' => $this->chanServBot->getNick()], 'common', $language);
+            $message = $this->renderError('presentation.error.channel_not_registered', $language, [
+                '%channel%' => new Fragment($e->getChannelName(), Component::Emphasis),
+            ]);
             $this->chanServNotifier->sendMessage($sender->uid, $message, $messageType);
         } catch (InsufficientAccessException $e) {
             $messageType = $this->messageTypeResolver->prefersPrivateMessages($sender->nick) ? 'PRIVMSG' : 'NOTICE';
             $language = $this->accountPort->findAccountByNick($sender->nick)->language ?? $this->defaultLanguage;
-            $message = $this->translator->trans('error.insufficient_access', [
-                '%operation%' => $e->getOperation(),
-                '%channel%' => $e->getChannelName(),
-                '%bot%' => $this->chanServBot->getNick(),
-            ], 'common', $language);
+            $message = $this->renderError('presentation.error.insufficient_access', $language, [
+                '%operation%' => new Fragment($e->getOperation(), Component::Emphasis),
+                '%channel%' => new Fragment($e->getChannelName(), Component::Emphasis),
+            ]);
             $this->chanServNotifier->sendMessage($sender->uid, $message, $messageType);
         } catch (Throwable $e) {
             $this->logger->error('ChanServ dispatch error: ' . $e->getMessage(), [
@@ -88,5 +98,13 @@ final readonly class ChanServCommandListener implements ServiceCommandListenerIn
                 'sender' => $sender->uid,
             ]);
         }
+    }
+
+    /** @param array<string, string|Fragment> $params */
+    private function renderError(string $key, string $language, array $params, string $domain = 'common'): string
+    {
+        $renderer = $this->renderer ?? new IrcRenderer(new FixedStyleProvider(PresentationStyle::default()));
+
+        return $renderer->reply(Role::Error, $this->translator->trans($key, [], $domain, $language), $params);
     }
 }

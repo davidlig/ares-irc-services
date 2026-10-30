@@ -222,8 +222,7 @@ final class ChanServServiceTest extends TestCase
         foreach (['common', 'chanserv'] as $domain) {
             $translator->addResource('yaml', __DIR__ . '/../../../../../translations/' . $domain . '.en.yaml', 'en', $domain);
         }
-        $expected = $translator->trans('unknown_command', ['%command%' => 'UNKNOWN', '%bot%' => 'ChanServ'], 'common', 'en');
-        self::assertNotSame('unknown_command', $expected);
+        $expected = "\x0304✗\x03\x0F Unknown command \x02\x0303UNKNOWN\x03\x0F. Use /msg ChanServ \x02\x0303HELP\x03\x0F";
         $notifier->method('getNick')->willReturn('ChanServ');
         $notifier->expects(self::once())->method('sendMessage')->with($sender->uid, $expected, 'NOTICE');
 
@@ -365,10 +364,10 @@ final class ChanServServiceTest extends TestCase
 
         $translator = $this->createMock(TranslatorInterface::class);
         $translator->expects(self::atLeastOnce())->method('trans')->willReturnCallback(
-            static fn (string $id): string => 'error.permission_denied' === $id ? 'Permission denied' : $id
+            static fn (string $id): string => 'presentation.error.permission_denied' === $id ? 'Permission denied' : $id
         );
         $notifier = $this->createMock(ChanServNotifierInterface::class);
-        $notifier->expects(self::once())->method('sendMessage')->with($sender->uid, 'Permission denied', 'NOTICE');
+        $notifier->expects(self::once())->method('sendMessage')->with($sender->uid, "\x0304✗\x03\x0F Permission denied", 'NOTICE');
 
         $registry = new ChanServCommandRegistry([$permissionHandler]);
         $service = $this->createChanServService(
@@ -452,10 +451,10 @@ final class ChanServServiceTest extends TestCase
 
         $translator = $this->createMock(TranslatorInterface::class);
         $translator->expects(self::atLeastOnce())->method('trans')->willReturnCallback(
-            static fn (string $id): string => 'error.permission_denied' === $id ? 'Permission denied' : $id,
+            static fn (string $id): string => 'presentation.error.permission_denied' === $id ? 'Permission denied' : $id,
         );
         $notifier = $this->createMock(ChanServNotifierInterface::class);
-        $notifier->expects(self::once())->method('sendMessage')->with($sender->uid, 'Permission denied', 'NOTICE');
+        $notifier->expects(self::once())->method('sendMessage')->with($sender->uid, "\x0304✗\x03\x0F Permission denied", 'NOTICE');
 
         $service = $this->createChanServService(
             new ChanServCommandRegistry([new ListCommand($listHandler)]),
@@ -488,6 +487,9 @@ final class ChanServServiceTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(
             static function (string $id, array $parameters = []): string {
+                if ('presentation.error.syntax' === $id) {
+                    return 'error.syntax|%syntax%';
+                }
                 $syntax = $parameters['%syntax%'] ?? null;
 
                 return 'error.syntax' === $id && is_string($syntax) ? $id . '|' . $syntax : $id;
@@ -517,7 +519,7 @@ final class ChanServServiceTest extends TestCase
 
         $service->dispatch('ACCESS #test ADD TargetNick', $sender);
 
-        self::assertSame(['error.syntax|access.add.syntax'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F error.syntax|\x02\x0303access.add.syntax\x03\x0F"], $messages);
     }
 
     #[Test]
@@ -561,7 +563,7 @@ final class ChanServServiceTest extends TestCase
 
         $service->dispatch('ACCESS #test ADD TargetNick', $sender);
 
-        self::assertSame(['Channel is forbidden'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F Channel is forbidden"], $messages);
     }
 
     #[Test]
@@ -660,12 +662,12 @@ final class ChanServServiceTest extends TestCase
         $translator = $this->createMock(TranslatorInterface::class);
         $translator->expects(self::once())->method('trans')
             ->with('drop.pending_deletion', self::anything(), 'chanserv', 'en')
-            ->willReturn('Channel #test is pending deletion');
+            ->willReturn('Channel %channel% is pending deletion');
 
         $notifier = $this->createMock(ChanServNotifierInterface::class);
         $notifier->method('getNick')->willReturn('ChanServ');
         $notifier->expects(self::once())->method('sendMessage')
-            ->with($sender->uid, 'Channel #test is pending deletion', 'NOTICE');
+            ->with($sender->uid, "\x0304✗\x03\x0F Channel \x02#test\x03\x0F is pending deletion", 'NOTICE');
 
         $registry = new ChanServCommandRegistry([$handler]);
         $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
@@ -783,10 +785,10 @@ final class ChanServServiceTest extends TestCase
 
         $translator = $this->createMock(TranslatorInterface::class);
         $translator->expects(self::atLeastOnce())->method('trans')->willReturnCallback(
-            static fn (string $id): string => 'error.not_identified' === $id ? 'Not identified' : $id
+            static fn (string $id): string => 'presentation.error.not_identified' === $id ? 'Not identified' : $id
         );
         $notifier = $this->createMock(ChanServNotifierInterface::class);
-        $notifier->expects(self::once())->method('sendMessage')->with($sender->uid, 'Not identified', 'NOTICE');
+        $notifier->expects(self::once())->method('sendMessage')->with($sender->uid, "\x0304✗\x03\x0F Not identified", 'NOTICE');
 
         $registry = new ChanServCommandRegistry([$identifiedHandler]);
         $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
@@ -899,7 +901,7 @@ final class ChanServServiceTest extends TestCase
 
         $translator = $this->createMock(TranslatorInterface::class);
         $translator->expects(self::atLeastOnce())->method('trans')->willReturnCallback(
-            static fn (string $id, array $params = []): string => 'error.syntax' === $id ? 'Syntax: ' . (is_string($params['syntax'] ?? null) ? $params['syntax'] : '') : $id
+            static fn (string $id, array $params = []): string => 'presentation.error.syntax' === $id ? 'Syntax: %syntax%' : $id
         );
         $notifier = $this->createMock(ChanServNotifierInterface::class);
         $notifier->expects(self::once())->method('sendMessage')->with($sender->uid, self::stringContains('Syntax:'), 'NOTICE');
@@ -1881,7 +1883,7 @@ final class ChanServServiceTest extends TestCase
         $notifier = $this->createMock(ChanServNotifierInterface::class);
         $notifier->method('getNick')->willReturn('ChanServ');
         $notifier->expects(self::once())->method('sendMessage')
-            ->with($sender->uid, 'Channel #test is suspended', 'NOTICE');
+            ->with($sender->uid, "\x0304✗\x03\x0F Channel #test is suspended", 'NOTICE');
 
         $registry = new ChanServCommandRegistry([$handler]);
         $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
@@ -2350,7 +2352,7 @@ final class ChanServServiceTest extends TestCase
         $notifier = $this->createMock(ChanServNotifierInterface::class);
         $notifier->method('getNick')->willReturn('ChanServ');
         $notifier->expects(self::once())->method('sendMessage')
-            ->with($sender->uid, 'Channel #test is forbidden', 'NOTICE');
+            ->with($sender->uid, "\x0304✗\x03\x0F Channel #test is forbidden", 'NOTICE');
 
         $authorizationChecker = $this->createMock(AuthorizationCheckerInterface::class);
         $authorizationChecker->expects(self::once())
@@ -2486,7 +2488,7 @@ final class ChanServServiceTest extends TestCase
         $notifier = $this->createMock(ChanServNotifierInterface::class);
         $notifier->method('getNick')->willReturn('ChanServ');
         $notifier->expects(self::once())->method('sendMessage')
-            ->with($sender->uid, 'Channel #test is forbidden', 'NOTICE');
+            ->with($sender->uid, "\x0304✗\x03\x0F Channel #test is forbidden", 'NOTICE');
 
         $authorizationChecker = $this->createMock(AuthorizationCheckerInterface::class);
         $authorizationChecker->expects(self::once())
@@ -3627,7 +3629,7 @@ final class ChanServServiceTest extends TestCase
         $service->dispatch('UNBAN #test *!*@*', $identified);
         $service->dispatch('UNBAN #test', $identified);
         $service->dispatch('UNBAN #test', $identified);
-        self::assertSame(['error.not_identified', 'error.syntax', 'error.syntax', 'error.syntax', 'unban.done', 'unban.no_matches'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F presentation.error.not_identified", "\x0304✗\x03\x0F presentation.error.syntax", "\x0304✗\x03\x0F presentation.error.syntax", "\x0304✗\x03\x0F presentation.error.syntax", "\x0303✔\x03\x0F unban.done", "\x0310ℹ\x03\x0F unban.no_matches"], $messages);
     }
 
     private function createServiceNicks(): ServiceNicknameRegistry
