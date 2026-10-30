@@ -186,7 +186,7 @@ final class HistoryCommandTest extends TestCase
         $cmd = $this->createCommand();
         $cmd->execute($context);
 
-        self::assertContains('error.invalid_channel', $messages);
+        self::assertContains("\x0304✗\x03\x0F error.invalid_channel", $messages);
     }
 
     #[Test]
@@ -201,7 +201,7 @@ final class HistoryCommandTest extends TestCase
         $cmd = $this->createCommand();
         $cmd->execute($context);
 
-        self::assertContains('error.channel_not_registered', $messages);
+        self::assertContains("\x0304✗\x03\x0F presentation.error.channel_not_registered", $messages);
     }
 
     #[Test]
@@ -225,7 +225,7 @@ final class HistoryCommandTest extends TestCase
         );
         $cmd->execute($context);
 
-        self::assertContains('error.syntax', $messages);
+        self::assertContains("\x0304✗\x03\x0F presentation.error.syntax", $messages);
     }
 
     #[Test]
@@ -238,7 +238,7 @@ final class HistoryCommandTest extends TestCase
 
         new HistoryCommand($handler)->execute($context);
 
-        self::assertSame(['error.syntax'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F presentation.error.syntax"], $messages);
     }
 
     #[Test]
@@ -262,7 +262,7 @@ final class HistoryCommandTest extends TestCase
         );
         $cmd->execute($context);
 
-        self::assertContains('error.syntax', $messages);
+        self::assertContains("\x0304✗\x03\x0F presentation.error.syntax", $messages);
     }
 
     #[Test]
@@ -293,7 +293,7 @@ final class HistoryCommandTest extends TestCase
         );
         $outcome = $cmd->execute($context);
 
-        self::assertContains('history.add.success', $messages);
+        self::assertContains("\x0303✔\x03\x0F history.add.success", $messages);
         self::assertNotNull($savedHistory);
         self::assertSame(1, $savedHistory->getChannelId());
         self::assertSame('HISTORY_ADD', $savedHistory->getAction());
@@ -323,7 +323,7 @@ final class HistoryCommandTest extends TestCase
         $cmd = $this->createCommandWithRepos($channelRepo, $historyRepo);
         $outcome = $cmd->execute($context);
 
-        self::assertContains('error.syntax', $messages);
+        self::assertContains("\x0304✗\x03\x0F presentation.error.syntax", $messages);
     }
 
     #[Test]
@@ -341,7 +341,7 @@ final class HistoryCommandTest extends TestCase
         $cmd = $this->createCommandWithRepos($channelRepo, $historyRepo);
         $cmd->execute($context);
 
-        self::assertContains('history.del.invalid_id', $messages);
+        self::assertContains("\x0304✗\x03\x0F history.del.invalid_id", $messages);
     }
 
     #[Test]
@@ -360,7 +360,7 @@ final class HistoryCommandTest extends TestCase
         $cmd = $this->createCommandWithRepos($channelRepo, $historyRepo);
         $cmd->execute($context);
 
-        self::assertContains('history.del.not_found', $messages);
+        self::assertContains("\x0304✗\x03\x0F history.del.not_found", $messages);
     }
 
     #[Test]
@@ -388,7 +388,7 @@ final class HistoryCommandTest extends TestCase
         $cmd = $this->createCommandWithRepos($channelRepo, $historyRepo);
         $cmd->execute($context);
 
-        self::assertContains('history.del.not_found', $messages);
+        self::assertContains("\x0304✗\x03\x0F history.del.not_found", $messages);
     }
 
     #[Test]
@@ -418,7 +418,7 @@ final class HistoryCommandTest extends TestCase
         $cmd = $this->createCommandWithRepos($channelRepo, $historyRepo);
         $outcome = $cmd->execute($context);
 
-        self::assertContains('history.del.success', $messages);
+        self::assertContains("\x0303✔\x03\x0F history.del.success", $messages);
 
         $auditData = $outcome->auditData;
         self::assertInstanceOf(IrcopAuditData::class, $auditData);
@@ -442,7 +442,7 @@ final class HistoryCommandTest extends TestCase
         $cmd = $this->createCommandWithRepos($channelRepo, $historyRepo);
         $outcome = $cmd->execute($context);
 
-        self::assertContains('history.view.no_entries', $messages);
+        self::assertContains("\x0310ℹ\x03\x0F history.view.no_entries", $messages);
     }
 
     #[Test]
@@ -533,7 +533,15 @@ final class HistoryCommandTest extends TestCase
         $historyRepo->method('findByChannelId')->willReturn([]);
 
         $messages = [];
-        $context = $this->createContext(['#test', 'VIEW', '1'], $messages, channelRepo: $channelRepo, historyRepo: $historyRepo);
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => match ($id) {
+            'history.view.header' => '%heading% (%start%-%end%/%total%)',
+            'history.view.header_heading' => 'History for %channel%',
+            'history.view.page_hint' => 'Use %command% for more',
+            'history.view.page_hint_command' => 'HISTORY %channel% VIEW %next_page%',
+            default => $id,
+        });
+        $context = $this->createContext(['#test', 'VIEW', '1'], $messages, channelRepo: $channelRepo, historyRepo: $historyRepo, translatorOverride: $translator);
 
         $cmd = $this->buildCommand(
             $channelRepo,
@@ -544,7 +552,8 @@ final class HistoryCommandTest extends TestCase
         );
         $cmd->execute($context);
 
-        self::assertContains('history.view.page_hint', $messages);
+        self::assertContains("\x02History for \x03\x0F\x0307#test\x03\x0F (1-5/10)", $messages);
+        self::assertContains("Use \x02\x0303HISTORY #test VIEW 2\x03\x0F for more", $messages);
     }
 
     #[Test]
@@ -794,7 +803,7 @@ final class HistoryCommandTest extends TestCase
         $cmd = $this->createCommandWithRepos($channelRepo, $historyRepo);
         $outcome = $cmd->execute($context);
 
-        self::assertContains('history.clear.success', $messages);
+        self::assertContains("\x0303✔\x03\x0F history.clear.success", $messages);
 
         $auditData = $outcome->auditData;
         self::assertInstanceOf(IrcopAuditData::class, $auditData);
@@ -817,7 +826,7 @@ final class HistoryCommandTest extends TestCase
         $cmd = $this->createCommandWithRepos($channelRepo, $historyRepo);
         $cmd->execute($context);
 
-        self::assertContains('error.syntax', $messages);
+        self::assertContains("\x0304✗\x03\x0F presentation.error.syntax", $messages);
     }
 
     #[Test]
@@ -846,7 +855,7 @@ final class HistoryCommandTest extends TestCase
         );
         $cmd->execute($context);
 
-        self::assertContains('history.add.success', $messages);
+        self::assertContains("\x0303✔\x03\x0F history.add.success", $messages);
         self::assertNotNull($savedHistory);
         self::assertSame('*', $savedHistory->getExtraData()['ip']);
     }
@@ -877,7 +886,7 @@ final class HistoryCommandTest extends TestCase
         );
         $cmd->execute($context);
 
-        self::assertContains('history.add.success', $messages);
+        self::assertContains("\x0303✔\x03\x0F history.add.success", $messages);
         self::assertNotNull($savedHistory);
         self::assertSame('*', $savedHistory->getExtraData()['ip']);
     }
@@ -908,7 +917,7 @@ final class HistoryCommandTest extends TestCase
         );
         $cmd->execute($context);
 
-        self::assertContains('history.add.success', $messages);
+        self::assertContains("\x0303✔\x03\x0F history.add.success", $messages);
         self::assertNotNull($savedHistory);
         self::assertSame('invalid!base64', $savedHistory->getExtraData()['ip']);
     }
@@ -939,7 +948,7 @@ final class HistoryCommandTest extends TestCase
         );
         $cmd->execute($context);
 
-        self::assertContains('history.add.success', $messages);
+        self::assertContains("\x0303✔\x03\x0F history.add.success", $messages);
         self::assertNotNull($savedHistory);
         self::assertSame('AQID', $savedHistory->getExtraData()['ip']);
     }

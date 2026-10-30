@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Tests\ChanServ\Adapter\In\Irc\Command;
 
+use App\Bootstrap\Adapter\Out\Translation\IrcYamlTranslationLoader;
 use App\ChanServ\Adapter\In\Irc\ChanServCommandRegistry;
 use App\ChanServ\Adapter\In\Irc\ChanServContext;
+use App\ChanServ\Adapter\In\Irc\ChanServDetailPresenter;
 use App\ChanServ\Adapter\In\Irc\ChanServNotifierInterface;
 use App\ChanServ\Adapter\In\Irc\Command\InfoCommand;
 use App\ChanServ\Application\Model\ChanAccountView;
@@ -30,19 +32,43 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
+use Symfony\Component\Translation\Translator;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function array_filter;
 use function array_search;
+use function dirname;
 use function is_string;
 use function str_contains;
+use function str_ends_with;
 
 #[CoversClass(InfoCommand::class)]
+#[CoversClass(ChanServDetailPresenter::class)]
 #[CoversClass(ChannelInfoView::class)]
 #[CoversClass(ShowChannelInfo::class)]
 #[CoversClass(ShowChannelInfoHandler::class)]
 final class InfoCommandTest extends TestCase
 {
+    #[Test]
+    public function infoUsesLocalizedStyledLabelAndFounderFragment(): void
+    {
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channels->method('findByChannelName')->willReturn($channel);
+        $accounts = $this->createStub(ChanUserAccountPort::class);
+        $accounts->method('findAccountById')->willReturn(new ChanAccountView(1, 'FounderNick', 'en'));
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void { $messages[] = $message; });
+        $translator = new Translator('en');
+        $translator->addLoader('irc', new IrcYamlTranslationLoader());
+        $translator->addResource('irc', dirname(__DIR__, 6) . '/translations/chanserv.en.yaml', 'en', 'chanserv');
+        $this->createCommand($channels, $accounts)->execute($this->createContext(['#Test'], $notifier, $translator));
+
+        self::assertStringContainsString("\x0314Founder\x03\x0F", $messages[1]);
+        self::assertStringContainsString("\x02FounderNick\x03\x0F", $messages[1]);
+    }
+
     #[Test]
     public function replyInvalidChannelWhenFirstArgNotChannel(): void
     {
@@ -59,7 +85,7 @@ final class InfoCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $nickRepo);
         $cmd->execute($this->createContext(['notachannel'], $notifier, $translator));
 
-        self::assertSame(['error.invalid_channel'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F error.invalid_channel"], $messages);
     }
 
     #[Test]
@@ -295,6 +321,9 @@ final class InfoCommandTest extends TestCase
         });
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static function (string $id, array $parameters = []): string {
+            if (str_ends_with($id, '_label')) {
+                return $id;
+            }
             $options = $parameters['%options%'] ?? '';
 
             return $id . ':' . (is_string($options) ? $options : '');
@@ -321,6 +350,9 @@ final class InfoCommandTest extends TestCase
         });
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static function (string $id, array $parameters = []): string {
+            if (str_ends_with($id, '_label')) {
+                return $id;
+            }
             $options = $parameters['%options%'] ?? '';
 
             return $id . ':' . (is_string($options) ? $options : '');
@@ -349,7 +381,7 @@ final class InfoCommandTest extends TestCase
 
         $this->createCommand($channelRepo, $this->createStub(ChanUserAccountPort::class))->execute($this->createContext(['#Test'], $notifier, $translator));
 
-        self::assertSame(['info.private'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F info.private"], $messages);
     }
 
     #[Test]
@@ -414,7 +446,7 @@ final class InfoCommandTest extends TestCase
 
         $this->createCommand($channelRepo, $nickRepo, 7, $access)->execute($context);
 
-        self::assertSame(['info.private'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F info.private"], $messages);
     }
 
     #[Test]

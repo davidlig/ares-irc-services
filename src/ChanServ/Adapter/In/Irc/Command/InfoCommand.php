@@ -6,12 +6,16 @@ namespace App\ChanServ\Adapter\In\Irc\Command;
 
 use App\ChanServ\Adapter\In\Irc\ChanServCommandInterface;
 use App\ChanServ\Adapter\In\Irc\ChanServContext;
+use App\ChanServ\Adapter\In\Irc\ChanServDetailPresenter;
 use App\ChanServ\Application\UseCase\ShowInfo\ChannelInfoView;
 use App\ChanServ\Application\UseCase\ShowInfo\ShowChannelInfo;
 use App\ChanServ\Application\UseCase\ShowInfo\ShowChannelInfoHandlerInterface;
 use App\ChanServ\Domain\Exception\ChannelNotRegisteredException;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\Fragment;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 use DateTimeImmutable;
 
 use function implode;
@@ -104,7 +108,7 @@ final readonly class InfoCommand implements ChanServCommandInterface
     {
         $channelName = $context->getChannelNameArg(0);
         if (null === $channelName) {
-            $context->reply('error.invalid_channel');
+            $context->reply('error.invalid_channel', ['%example%' => new Fragment($context->trans('error.invalid_channel_example'), Component::Emphasis)], Role::Error);
 
             return;
         }
@@ -127,7 +131,7 @@ final readonly class InfoCommand implements ChanServCommandInterface
     private function present(ChanServContext $context, string $channelName, ChannelInfoView $info): void
     {
         if ($info->privateInfoDenied) {
-            $context->reply('info.private', ['%channel%' => $channelName]);
+            $context->reply('info.private', ['%channel%' => new Fragment($channelName, Component::Emphasis)], Role::Error);
 
             return;
         }
@@ -150,7 +154,7 @@ final readonly class InfoCommand implements ChanServCommandInterface
     private function presentForbidden(ChanServContext $context, string $channelName, ChannelInfoView $info): void
     {
         $this->presentHeader($context, $channelName);
-        $context->replyRaw($context->trans('info.forbidden_status'));
+        $context->replyRaw(new ChanServDetailPresenter()->row($context, 'info.forbidden_status', [], Component::Danger));
         $this->presentOptionalLine($context, 'info.forbidden_reason', '%reason%', $info->forbiddenReason);
         $this->presentFooter($context);
     }
@@ -158,10 +162,11 @@ final readonly class InfoCommand implements ChanServCommandInterface
     private function presentPendingDeletion(ChanServContext $context, string $channelName, ChannelInfoView $info): void
     {
         $this->presentHeader($context, $channelName);
-        $context->replyRaw($context->trans('info.pending_deletion_status'));
+        $context->replyRaw(new ChanServDetailPresenter()->row($context, 'info.pending_deletion_status', [], Component::Status));
         $this->presentOptionalDate($context, 'info.pending_deletion_at', $info->pendingDeletionAt);
         $this->presentOptionalDate($context, 'info.pending_deletion_until', $info->pendingDeletionUntil);
-        $context->replyRaw($context->trans('info.pending_deletion_notice'));
+        $notice = $context->trans('info.pending_deletion_notice');
+        $context->replyRaw('info.pending_deletion_notice' === $notice ? $notice : $context->renderTextComponent(Component::IndentedRow, '%notice%', ['%notice%' => new Fragment($notice, Component::Status)]));
         $this->presentFooter($context);
     }
 
@@ -172,7 +177,7 @@ final readonly class InfoCommand implements ChanServCommandInterface
         $this->presentHeader($context, $channelName);
         $this->presentSuspendedStatus($context, $info);
         $this->presentChannelIdentity($context, $info);
-        $context->replyRaw($context->trans('info.last_used', [
+        $context->replyRaw(new ChanServDetailPresenter()->row($context, 'info.last_used', [
             '%date%' => $context->formatDate($info->lastUsedAt),
         ]));
         $this->presentTopic($context, $info, $canShowTopic);
@@ -185,12 +190,12 @@ final readonly class InfoCommand implements ChanServCommandInterface
 
     private function presentHeader(ChanServContext $context, string $channelName): void
     {
-        $context->replyRaw($context->trans('info.header', ['%channel%' => $channelName]));
+        $context->replyRaw(new ChanServDetailPresenter()->header($context, 'info.header', $channelName));
     }
 
     private function presentFooter(ChanServContext $context): void
     {
-        $context->replyRaw($context->trans('reply.separator'));
+        $context->replyRaw('reply.separator' === $context->trans('reply.separator') ? 'reply.separator' : $context->renderSeparator(29));
     }
 
     private function presentSuspendedStatus(ChanServContext $context, ChannelInfoView $info): void
@@ -199,11 +204,11 @@ final readonly class InfoCommand implements ChanServCommandInterface
             return;
         }
 
-        $context->replyRaw($context->trans('info.suspended_status'));
+        $context->replyRaw(new ChanServDetailPresenter()->row($context, 'info.suspended_status', [], Component::Danger));
         $this->presentOptionalLine($context, 'info.suspended_reason', '%reason%', $info->suspendedReason);
 
         if (null === $info->suspendedUntil) {
-            $context->replyRaw($context->trans('info.suspended_permanent'));
+            $context->replyRaw(new ChanServDetailPresenter()->row($context, 'info.suspended_permanent', [], null));
 
             return;
         }
@@ -213,14 +218,14 @@ final readonly class InfoCommand implements ChanServCommandInterface
 
     private function presentChannelIdentity(ChanServContext $context, ChannelInfoView $info): void
     {
-        $context->replyRaw($context->trans('info.founder', ['%nickname%' => $info->founderName]));
+        $context->replyRaw(new ChanServDetailPresenter()->row($context, 'info.founder', ['%nickname%' => $info->founderName], fragments: ['%nickname%' => Component::Emphasis]));
         $this->presentOptionalLine($context, 'info.successor', '%nickname%', $info->successorName);
 
         if ('' !== $info->description) {
-            $context->replyRaw($context->trans('info.description', ['%desc%' => $info->description]));
+            $context->replyRaw(new ChanServDetailPresenter()->row($context, 'info.description', ['%desc%' => $info->description]));
         }
 
-        $context->replyRaw($context->trans('info.registered', ['%date%' => $context->formatDate($info->createdAt)]));
+        $context->replyRaw(new ChanServDetailPresenter()->row($context, 'info.registered', ['%date%' => $context->formatDate($info->createdAt)]));
     }
 
     private function presentTopic(ChanServContext $context, ChannelInfoView $info, bool $canShowTopic): void
@@ -229,7 +234,7 @@ final readonly class InfoCommand implements ChanServCommandInterface
             return;
         }
 
-        $context->replyRaw($context->trans('info.topic', ['%topic%' => $info->topic]));
+        $context->replyRaw(new ChanServDetailPresenter()->row($context, 'info.topic', ['%topic%' => $info->topic]));
         $this->presentOptionalLine($context, 'info.topic_set_by', '%nickname%', $info->lastTopicSetByNick);
     }
 
@@ -246,7 +251,7 @@ final readonly class InfoCommand implements ChanServCommandInterface
         }
 
         $modesDisplay = '' !== $info->mlock ? $info->mlock : $context->trans('set.mlock.no_modes');
-        $context->replyRaw($context->trans('info.mlock_modes', ['%modes%' => $modesDisplay]));
+        $context->replyRaw(new ChanServDetailPresenter()->row($context, 'info.mlock_modes', ['%modes%' => $modesDisplay]));
     }
 
     private function presentEnabledOptions(ChanServContext $context, ChannelInfoView $info): void
@@ -269,7 +274,7 @@ final readonly class InfoCommand implements ChanServCommandInterface
             return;
         }
 
-        $context->replyRaw($context->trans('info.options', ['%options%' => implode(', ', $enabledOptions)]));
+        $context->replyRaw(new ChanServDetailPresenter()->row($context, 'info.options', ['%options%' => implode(', ', $enabledOptions)]));
     }
 
     private function presentNoExpire(ChanServContext $context, ChannelInfoView $info): void
@@ -278,13 +283,13 @@ final readonly class InfoCommand implements ChanServCommandInterface
             return;
         }
 
-        $context->replyRaw($context->trans('info.no_expire'));
+        $context->replyRaw(new ChanServDetailPresenter()->row($context, 'info.no_expire', [], null));
     }
 
     private function presentOptionalDate(ChanServContext $context, string $key, ?DateTimeImmutable $date): void
     {
         if (null !== $date) {
-            $context->replyRaw($context->trans($key, ['%date%' => $context->formatDate($date)]));
+            $context->replyRaw(new ChanServDetailPresenter()->row($context, $key, ['%date%' => $context->formatDate($date)]));
         }
     }
 
@@ -294,7 +299,7 @@ final readonly class InfoCommand implements ChanServCommandInterface
             return;
         }
 
-        $context->replyRaw($context->trans($key, [$placeholder => $value]));
+        $context->replyRaw(new ChanServDetailPresenter()->row($context, $key, [$placeholder => $value], fragments: 'info.successor' === $key ? [$placeholder => Component::Emphasis] : []));
     }
 
     private function canShowTopic(ChanServContext $context, ChannelInfoView $info): bool

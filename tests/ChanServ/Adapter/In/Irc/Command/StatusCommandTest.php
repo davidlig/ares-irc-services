@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Tests\ChanServ\Adapter\In\Irc\Command;
 
+use App\Bootstrap\Adapter\Out\Translation\IrcYamlTranslationLoader;
 use App\ChanServ\Adapter\In\Irc\ChanServCommandRegistry;
 use App\ChanServ\Adapter\In\Irc\ChanServContext;
+use App\ChanServ\Adapter\In\Irc\ChanServDetailPresenter;
 use App\ChanServ\Adapter\In\Irc\ChanServNotifierInterface;
 use App\ChanServ\Adapter\In\Irc\Command\StatusCommand;
 use App\ChanServ\Application\Model\ChanAccountView;
@@ -27,11 +29,29 @@ use DateTimeZone;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Translation\Translator;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function dirname;
+
 #[CoversClass(StatusCommand::class)]
+#[CoversClass(ChanServDetailPresenter::class)]
 final class StatusCommandTest extends TestCase
 {
+    #[Test]
+    public function statusUsesLocalizedStructuredRows(): void
+    {
+        $translator = new Translator('en');
+        $translator->addLoader('irc', new IrcYamlTranslationLoader());
+        $translator->addResource('irc', dirname(__DIR__, 6) . '/translations/chanserv.en.yaml', 'en', 'chanserv');
+        $messages = $this->executeStatus(null, 10, translatorOverride: $translator);
+
+        self::assertStringContainsString("\x0314Status", $messages[1]);
+        self::assertStringContainsString('Not registered', $messages[1]);
+        self::assertStringStartsWith('  ', $messages[1]);
+        self::assertStringContainsString("\x0314Status\x03\x0F", $messages[1]);
+    }
+
     #[Test]
     public function requesterSeesAlignedRejectionWithoutOperatorAudit(): void
     {
@@ -140,8 +160,8 @@ final class StatusCommandTest extends TestCase
     #[Test]
     public function malformedChannelArgumentsAreRejectedBeforeRepositoryLookup(): void
     {
-        self::assertSame(['error.syntax'], $this->executeStatus(null, 10, commandArgs: []));
-        self::assertSame(['error.syntax'], $this->executeStatus(null, 10, commandArgs: ['not-a-channel']));
+        self::assertSame(["\x0304✗\x03\x0F presentation.error.syntax"], $this->executeStatus(null, 10, commandArgs: []));
+        self::assertSame(["\x0304✗\x03\x0F presentation.error.syntax"], $this->executeStatus(null, 10, commandArgs: ['not-a-channel']));
     }
 
     /**
@@ -157,6 +177,7 @@ final class StatusCommandTest extends TestCase
         ?array $commandArgs = null,
         string $actorNickname = 'Requester',
         bool $actorIsIrcop = false,
+        ?TranslatorInterface $translatorOverride = null,
     ): array {
         $repository = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $repository->method('findByChannelName')->willReturn($channel);
@@ -165,13 +186,17 @@ final class StatusCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void {
             $messages[] = $message;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
         $translationParameters = [];
-        $translator->method('trans')->willReturnCallback(static function (string $key, array $parameters) use (&$translationParameters): string {
-            $translationParameters[] = ['key' => $key, 'parameters' => $parameters];
+        if (null === $translatorOverride) {
+            $translator = $this->createStub(TranslatorInterface::class);
+            $translator->method('trans')->willReturnCallback(static function (string $key, array $parameters) use (&$translationParameters): string {
+                $translationParameters[] = ['key' => $key, 'parameters' => $parameters];
 
-            return $key;
-        });
+                return $key;
+            });
+        } else {
+            $translator = $translatorOverride;
+        }
         $context = new ChanServContext(
             new SenderView('UID1', $actorNickname, 'ident', 'host', 'cloak', '127.0.0.1', true, $actorIsIrcop),
             new ChanAccountView($requesterAccountId, 'Requester', 'en'),

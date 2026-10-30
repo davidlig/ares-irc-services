@@ -72,9 +72,9 @@ final class ListCommandTest extends TestCase
 
         self::assertTrue($outcome->success);
         self::assertSame([
-            'list.header',
-            'list.row [%channel%: #davidlig, %founder%: Davinia, %last_used%: 03/02/2026 05:05 CET, %registered%: 01/01/2026 13:00 CET, %status%: list.status_active]',
-            'list.page [%page%: 2, %pages%: 2, %total%: 11]',
+            "\x02list.header\x03\x0F",
+            'list.row [#davidlig, Davinia, 03/02/2026 05:05 CET, 01/01/2026 13:00 CET, list.status_active]',
+            'list.page [2, 2, 11]',
         ], $messages);
         self::assertNotNull($outcome->auditData);
         self::assertSame('*avi*', $outcome->auditData->target);
@@ -95,9 +95,9 @@ final class ListCommandTest extends TestCase
 
         self::assertTrue($outcome->success);
         self::assertSame([
-            'list.header',
-            'list.row [%channel%: #forbidden, %founder%: —, %last_used%: —, %registered%: —, %status%: list.status_forbidden]',
-            'list.page [%page%: 1, %pages%: 1, %total%: 1]',
+            "\x02list.header\x03\x0F",
+            'list.row [#forbidden, —, —, —, list.status_forbidden]',
+            'list.page [1, 1, 1]',
         ], $messages);
     }
 
@@ -111,7 +111,7 @@ final class ListCommandTest extends TestCase
         $outcome = new ListCommand($handler)->execute($this->createContext(['missing*', '3'], $messages));
 
         self::assertTrue($outcome->success);
-        self::assertSame(['list.header', 'list.page [%page%: 3, %pages%: 2, %total%: 10]'], $messages);
+        self::assertSame(["\x02list.header\x03\x0F", 'list.page [3, 2, 10]'], $messages);
     }
 
     #[Test]
@@ -123,7 +123,7 @@ final class ListCommandTest extends TestCase
 
         new ListCommand($handler)->execute($this->createContext(['missing*'], $messages));
 
-        self::assertSame(['list.header', 'list.empty [%pattern%: missing*]', 'list.page [%page%: 1, %pages%: 0, %total%: 0]'], $messages);
+        self::assertSame(["\x02list.header\x03\x0F", "\x0310ℹ\x03\x0F list.empty [missing*]", 'list.page [1, 0, 0]'], $messages);
     }
 
     #[Test]
@@ -151,7 +151,7 @@ final class ListCommandTest extends TestCase
 
             new ListCommand($handler)->execute($this->createContext(['*'], $messages));
 
-            self::assertStringContainsString('%status%: ' . $key, $messages[1]);
+            self::assertStringContainsString(', ' . $key, $messages[1]);
         }
     }
 
@@ -165,13 +165,13 @@ final class ListCommandTest extends TestCase
         $outcome = new ListCommand($handler)->execute($this->createContext(['*', 'second'], $messages));
 
         self::assertFalse($outcome->success);
-        self::assertSame(['error.syntax [%syntax%: list.syntax]'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F error.syntax [\x02\x0303list.syntax\x03\x0F]"], $messages);
 
         $messages = [];
         $outcome = new ListCommand($handler)->execute($this->createContext(['*', '2', 'extra'], $messages));
 
         self::assertFalse($outcome->success);
-        self::assertSame(['error.syntax [%syntax%: list.syntax]'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F error.syntax [\x02\x0303list.syntax\x03\x0F]"], $messages);
     }
 
     #[Test]
@@ -193,7 +193,7 @@ final class ListCommandTest extends TestCase
         $messages = [];
         $outcome = new ListCommand($handler)->execute($this->createContext([], $messages));
         self::assertFalse($outcome->success);
-        self::assertSame(['error.syntax [%syntax%: list.syntax]'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F error.syntax [\x02\x0303list.syntax\x03\x0F]"], $messages);
 
         $messages = [];
         $outcome = new ListCommand($handler)->execute($this->createContext(['*'], $messages, sender: false));
@@ -214,6 +214,18 @@ final class ListCommandTest extends TestCase
         $notifier->method('getNick')->willReturn('ChanServ');
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static function (string $id, array $params = []): string {
+            if ('presentation.error.syntax' === $id) {
+                return 'error.syntax [%syntax%]';
+            }
+            if ('list.row' === $id) {
+                return 'list.row [%channel%, %founder%, %last_used%, %registered%, %status%]';
+            }
+            if ('list.page' === $id) {
+                return 'list.page [%page%, %pages%, %total%]';
+            }
+            if ('list.empty' === $id) {
+                return 'list.empty [%pattern%]';
+            }
             unset($params['%bot%'], $params['%chanserv%']);
             if ([] === $params) {
                 return $id;
