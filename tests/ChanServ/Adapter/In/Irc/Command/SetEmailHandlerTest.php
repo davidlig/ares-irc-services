@@ -53,7 +53,7 @@ final class SetEmailHandlerTest extends TestCase
         $handler = $this->createHandler($channelRepo);
         $handler->handle($this->createContext($notifier, $translator), $channel, 'not-an-email');
 
-        self::assertSame(['set.email.invalid'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F set.email.invalid"], $messages);
     }
 
     #[Test]
@@ -74,7 +74,7 @@ final class SetEmailHandlerTest extends TestCase
         $handler = $this->createHandler($channelRepo);
         $handler->handle($this->createContext($notifier, $translator), $channel, '  chan@example.com  ');
 
-        self::assertSame(['set.email.updated'], $messages);
+        self::assertSame(["\x0303✔\x03\x0F set.email.updated"], $messages);
     }
 
     #[Test]
@@ -95,7 +95,7 @@ final class SetEmailHandlerTest extends TestCase
         $handler = $this->createHandler($channelRepo);
         $handler->handle($this->createContext($notifier, $translator), $channel, '   ');
 
-        self::assertSame(['set.email.cleared'], $messages);
+        self::assertSame(["\x0303✔\x03\x0F set.email.cleared"], $messages);
     }
 
     #[Test]
@@ -116,7 +116,7 @@ final class SetEmailHandlerTest extends TestCase
         $handler = $this->createHandler($channelRepo);
         $handler->handle($this->createContext($notifier, $translator), $channel, '');
 
-        self::assertSame(['set.email.cleared'], $messages);
+        self::assertSame(["\x0303✔\x03\x0F set.email.cleared"], $messages);
     }
 
     #[Test]
@@ -137,7 +137,7 @@ final class SetEmailHandlerTest extends TestCase
         $handler = $this->createHandler($channelRepo);
         $handler->handle($this->createContext($notifier, $translator), $channel, 'user+tag@sub.domain.example.com');
 
-        self::assertSame(['set.email.updated'], $messages);
+        self::assertSame(["\x0303✔\x03\x0F set.email.updated"], $messages);
     }
 
     #[Test]
@@ -178,7 +178,7 @@ final class SetEmailHandlerTest extends TestCase
             $context = $this->createContext($notifier, $translator, levelFounder: $levelFounder, ircop: $ircop);
             $this->createHandler($channels, $policy)->handle($context, $channel, 'user@blocked.org');
             self::assertSame($levelFounder ? 'user@blocked.org' : 'original@example.org', $channel->getEmail());
-            self::assertSame([$levelFounder ? 'set.email.updated' : 'error.email_domain_blocked'], $messages);
+            self::assertSame([$levelFounder ? "\x0303✔\x03\x0F set.email.updated" : "\x0304✗\x03\x0F presentation.error.email_domain_blocked"], $messages);
         }
     }
 

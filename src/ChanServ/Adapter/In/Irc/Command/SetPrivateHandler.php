@@ -8,6 +8,9 @@ use App\ChanServ\Adapter\In\Irc\ChanServContext;
 use App\ChanServ\Application\UseCase\UpdateSetting\ChannelSetting;
 use App\ChanServ\Application\UseCase\UpdateSetting\UpdateChannelSettingHandlerInterface;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\Fragment;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 
 use function strtoupper;
 use function trim;
@@ -22,7 +25,7 @@ final readonly class SetPrivateHandler implements SetOptionHandlerInterface
     {
         $normalized = strtoupper(trim($value));
         if ('ON' !== $normalized && 'OFF' !== $normalized) {
-            $context->reply('error.syntax', ['syntax' => $context->trans('set.private.syntax')]);
+            $context->reply('presentation.error.syntax', ['syntax' => new Fragment($context->trans('set.private.syntax'), Component::Command)], Role::Error);
 
             return;
         }
@@ -31,6 +34,6 @@ final readonly class SetPrivateHandler implements SetOptionHandlerInterface
             return;
         }
         $this->handler->handle($request);
-        $context->reply('ON' === $normalized ? 'set.private.on' : 'set.private.off');
+        $context->reply('ON' === $normalized ? 'set.private.on' : 'set.private.off', role: Role::Success);
     }
 }

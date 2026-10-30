@@ -83,7 +83,7 @@ final class SetCommandTest extends TestCase
         $cmd = $this->createSetCommand($channelRepo, $accessHelper);
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), new ChanAccountView(1, 'User', 'en'), ['x', 'DESC', 'd'], $notifier, $translator));
 
-        self::assertSame(['error.invalid_channel'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F error.invalid_channel"], $messages);
     }
 
     #[Test]
@@ -108,7 +108,7 @@ final class SetCommandTest extends TestCase
         $cmd = $this->createSetCommand($channelRepo, $accessHelper);
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), null, ['#test', 'DESC', 'd'], $notifier, $translator));
 
-        self::assertSame(['error.not_identified'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F presentation.error.not_identified"], $messages);
     }
 
     #[Test]
@@ -153,7 +153,7 @@ final class SetCommandTest extends TestCase
         $cmd = $this->createSetCommand($channelRepo, $accessHelper);
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['#test', 'UNKNOWN', 'v'], $notifier, $translator));
 
-        self::assertSame(['set.unknown_option'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F set.unknown_option"], $messages);
     }
 
     #[Test]
@@ -415,7 +415,7 @@ final class SetCommandTest extends TestCase
             $translator,
         ));
 
-        self::assertSame(['set.founder.token_required'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F set.founder.token_required"], $messages);
     }
 
     #[Test]
@@ -477,9 +477,12 @@ final class SetCommandTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(
             static function (string $id, array $parameters = []): string {
+                if ('presentation.error.syntax' === $id) {
+                    return 'error.syntax|%syntax%';
+                }
                 $syntax = $parameters['%syntax%'] ?? null;
 
-                return 'error.syntax' === $id && is_string($syntax) ? $id . '|' . $syntax : $id;
+                return "\x0304✗\x03\x0F presentation.error.syntax" === $id && is_string($syntax) ? $id . '|' . $syntax : $id;
             }
         );
 
@@ -492,7 +495,7 @@ final class SetCommandTest extends TestCase
             $translator,
         ));
 
-        self::assertSame(['error.syntax|set.desc.syntax'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F error.syntax|\x02\x0303set.desc.syntax\x03\x0F"], $messages);
     }
 
     #[Test]
@@ -517,9 +520,12 @@ final class SetCommandTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(
             static function (string $id, array $parameters = []): string {
+                if ('presentation.error.syntax' === $id) {
+                    return 'error.syntax|%syntax%';
+                }
                 $syntax = $parameters['%syntax%'] ?? null;
 
-                return 'error.syntax' === $id && is_string($syntax) ? $id . '|' . $syntax : $id;
+                return "\x0304✗\x03\x0F presentation.error.syntax" === $id && is_string($syntax) ? $id . '|' . $syntax : $id;
             }
         );
 
@@ -532,7 +538,7 @@ final class SetCommandTest extends TestCase
             $translator,
         ));
 
-        self::assertSame(['error.syntax|set.secure.syntax'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F error.syntax|\x02\x0303set.secure.syntax\x03\x0F"], $messages);
     }
 
     #[Test]
@@ -572,7 +578,7 @@ final class SetCommandTest extends TestCase
             $translator,
         ));
 
-        self::assertSame(['set.desc.updated'], $messages);
+        self::assertSame(["\x0303✔\x03\x0F set.desc.updated"], $messages);
     }
 
     #[Test]

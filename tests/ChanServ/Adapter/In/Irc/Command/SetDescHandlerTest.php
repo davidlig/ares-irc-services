@@ -51,7 +51,7 @@ final class SetDescHandlerTest extends TestCase
         $handler = $this->createHandler($channelRepo);
         $handler->handle($this->createContext($notifier, $translator, ''), $channel, '');
 
-        self::assertSame(['error.syntax'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F presentation.error.syntax"], $messages);
     }
 
     #[Test]
@@ -72,7 +72,7 @@ final class SetDescHandlerTest extends TestCase
         $handler = $this->createHandler($channelRepo);
         $handler->handle($this->createContext($notifier, $translator, 'New description'), $channel, 'New description');
 
-        self::assertSame(['set.desc.updated'], $messages);
+        self::assertSame(["\x0303✔\x03\x0F set.desc.updated"], $messages);
     }
 
     #[Test]

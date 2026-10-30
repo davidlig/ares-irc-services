@@ -9,6 +9,9 @@ use App\ChanServ\Application\UseCase\UpdateSetting\ChannelSetting;
 use App\ChanServ\Application\UseCase\UpdateSetting\UpdateChannelSettingHandlerInterface;
 use App\ChanServ\Application\UseCase\UpdateSetting\UpdateChannelSettingOutcome;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\Fragment;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 
 final readonly class SetDescHandler implements SetOptionHandlerInterface
 {
@@ -24,10 +27,10 @@ final readonly class SetDescHandler implements SetOptionHandlerInterface
         }
         $result = $this->handler->handle($request);
         if (UpdateChannelSettingOutcome::MissingValue === $result->outcome) {
-            $context->reply('error.syntax', ['syntax' => $context->trans('set.desc.syntax')]);
+            $context->reply('presentation.error.syntax', ['syntax' => new Fragment($context->trans('set.desc.syntax'), Component::Command)], Role::Error);
 
             return;
         }
-        $context->reply('set.desc.updated');
+        $context->reply('set.desc.updated', role: Role::Success);
     }
 }

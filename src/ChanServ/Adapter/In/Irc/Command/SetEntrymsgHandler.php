@@ -9,6 +9,7 @@ use App\ChanServ\Application\UseCase\UpdateSetting\ChannelSetting;
 use App\ChanServ\Application\UseCase\UpdateSetting\UpdateChannelSettingHandlerInterface;
 use App\ChanServ\Application\UseCase\UpdateSetting\UpdateChannelSettingOutcome;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 
 final readonly class SetEntrymsgHandler implements SetOptionHandlerInterface
 {
@@ -24,10 +25,10 @@ final readonly class SetEntrymsgHandler implements SetOptionHandlerInterface
         }
         $result = $this->handler->handle($request);
         if (UpdateChannelSettingOutcome::EntryMessageTooLong === $result->outcome) {
-            $context->reply('set.entrymsg.too_long', ['%max%' => (string) RegisteredChannel::ENTRYMSG_MAX_LENGTH]);
+            $context->reply('set.entrymsg.too_long', ['%max%' => (string) RegisteredChannel::ENTRYMSG_MAX_LENGTH], Role::Error);
 
             return;
         }
-        $context->reply('set.entrymsg.updated');
+        $context->reply('set.entrymsg.updated', role: Role::Success);
     }
 }

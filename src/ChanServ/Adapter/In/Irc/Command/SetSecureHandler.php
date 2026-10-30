@@ -8,6 +8,9 @@ use App\ChanServ\Adapter\In\Irc\ChanServContext;
 use App\ChanServ\Application\UseCase\ConfigureSecure\ConfigureChannelSecure;
 use App\ChanServ\Application\UseCase\ConfigureSecure\ConfigureChannelSecureHandlerInterface;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\Fragment;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 use DateTimeImmutable;
 
 use function strtoupper;
@@ -26,7 +29,7 @@ final readonly class SetSecureHandler implements SetOptionHandlerInterface
         }
         $normalized = strtoupper(trim($value));
         if ('ON' !== $normalized && 'OFF' !== $normalized) {
-            $context->reply('error.syntax', ['syntax' => $context->trans('set.secure.syntax')]);
+            $context->reply('presentation.error.syntax', ['syntax' => new Fragment($context->trans('set.secure.syntax'), Component::Command)], Role::Error);
 
             return;
         }
@@ -37,12 +40,12 @@ final readonly class SetSecureHandler implements SetOptionHandlerInterface
             $context->sender->nick,
             new DateTimeImmutable(),
         ));
-        $context->reply($on ? 'set.secure.on' : 'set.secure.off');
+        $context->reply($on ? 'set.secure.on' : 'set.secure.off', role: Role::Success);
 
         $nick = $context->sender->nick;
         if ('' !== $nick) {
             $key = $on ? 'set.secure.notice_on' : 'set.secure.notice_off';
-            $notice = $context->trans($key, ['%nickname%' => $nick]);
+            $notice = $context->renderReply(Role::Success, $key, ['%nickname%' => new Fragment($nick, Component::Actor)]);
             $context->getNotifier()->sendNoticeToChannel($channel->getName(), $notice);
         }
     }

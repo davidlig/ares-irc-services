@@ -9,6 +9,7 @@ use App\ChanServ\Application\UseCase\UpdateSetting\ChannelSetting;
 use App\ChanServ\Application\UseCase\UpdateSetting\UpdateChannelSettingHandlerInterface;
 use App\ChanServ\Application\UseCase\UpdateSetting\UpdateChannelSettingOutcome;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 
 final readonly class SetUrlHandler implements SetOptionHandlerInterface
 {
@@ -23,6 +24,6 @@ final readonly class SetUrlHandler implements SetOptionHandlerInterface
             return;
         }
         $result = $this->handler->handle($request);
-        $context->reply(UpdateChannelSettingOutcome::Cleared === $result->outcome ? 'set.url.cleared' : 'set.url.updated');
+        $context->reply(UpdateChannelSettingOutcome::Cleared === $result->outcome ? 'set.url.cleared' : 'set.url.updated', role: Role::Success);
     }
 }

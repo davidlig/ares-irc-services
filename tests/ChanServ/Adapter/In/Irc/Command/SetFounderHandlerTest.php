@@ -108,16 +108,16 @@ final class SetFounderHandlerTest extends TestCase
     public static function replyOutcomes(): iterable
     {
         yield 'missing target' => [new TransferChannelFounderResult(TransferFounderOutcome::MissingTarget), 'set.founder.syntax'];
-        yield 'unknown target' => [new TransferChannelFounderResult(TransferFounderOutcome::TargetNotFound, 'Nobody'), 'error.nick_not_registered'];
-        yield 'suspended target' => [new TransferChannelFounderResult(TransferFounderOutcome::TargetSuspended, 'Target'), 'set.founder.suspended'];
-        yield 'unregistered target' => [new TransferChannelFounderResult(TransferFounderOutcome::TargetNotRegistered, 'Target'), 'set.founder.must_be_registered'];
-        yield 'same founder' => [new TransferChannelFounderResult(TransferFounderOutcome::SameFounder), 'set.founder.cannot_be_self'];
-        yield 'successor' => [new TransferChannelFounderResult(TransferFounderOutcome::TargetIsSuccessor), 'set.founder.cannot_be_successor'];
-        yield 'limit' => [new TransferChannelFounderResult(TransferFounderOutcome::ChannelLimitReached, 'Target', maximumChannelsPerNick: 3), 'set.founder.limit_exceeded'];
-        yield 'missing token' => [new TransferChannelFounderResult(TransferFounderOutcome::TokenRequired), 'set.founder.token_required'];
-        yield 'unavailable' => [new TransferChannelFounderResult(TransferFounderOutcome::CredentialUnavailable), 'set.founder.token_unavailable'];
-        yield 'throttled' => [new TransferChannelFounderResult(TransferFounderOutcome::Throttled), 'set.founder.throttled'];
-        yield 'invalid token' => [new TransferChannelFounderResult(TransferFounderOutcome::InvalidToken), 'set.founder.invalid_token'];
+        yield 'unknown target' => [new TransferChannelFounderResult(TransferFounderOutcome::TargetNotFound, 'Nobody'), "\x0304✗\x03\x0F presentation.error.nick_not_registered"];
+        yield 'suspended target' => [new TransferChannelFounderResult(TransferFounderOutcome::TargetSuspended, 'Target'), "\x0304✗\x03\x0F set.founder.suspended"];
+        yield 'unregistered target' => [new TransferChannelFounderResult(TransferFounderOutcome::TargetNotRegistered, 'Target'), "\x0304✗\x03\x0F set.founder.must_be_registered"];
+        yield 'same founder' => [new TransferChannelFounderResult(TransferFounderOutcome::SameFounder), "\x0304✗\x03\x0F set.founder.cannot_be_self"];
+        yield 'successor' => [new TransferChannelFounderResult(TransferFounderOutcome::TargetIsSuccessor), "\x0304✗\x03\x0F set.founder.cannot_be_successor"];
+        yield 'limit' => [new TransferChannelFounderResult(TransferFounderOutcome::ChannelLimitReached, 'Target', maximumChannelsPerNick: 3), "\x0304✗\x03\x0F set.founder.limit_exceeded"];
+        yield 'missing token' => [new TransferChannelFounderResult(TransferFounderOutcome::TokenRequired), "\x0304✗\x03\x0F set.founder.token_required"];
+        yield 'unavailable' => [new TransferChannelFounderResult(TransferFounderOutcome::CredentialUnavailable), "\x0304✗\x03\x0F set.founder.token_unavailable"];
+        yield 'throttled' => [new TransferChannelFounderResult(TransferFounderOutcome::Throttled), "\x0304✗\x03\x0F set.founder.throttled"];
+        yield 'invalid token' => [new TransferChannelFounderResult(TransferFounderOutcome::InvalidToken), "\x0304✗\x03\x0F set.founder.invalid_token"];
         yield 'ignored' => [new TransferChannelFounderResult(TransferFounderOutcome::Ignored), null];
     }
 
@@ -152,14 +152,14 @@ final class SetFounderHandlerTest extends TestCase
         $application->method('handle')->willReturnCallback(static function () use (&$results): TransferChannelFounderResult {
             return array_shift($results) ?? throw new LogicException('Missing founder transfer result.');
         });
-        $translated = [];
+        $messages = [];
         $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static function (string $key, array $params) use (&$translated): string {
-            $translated[$key] = $params;
-
-            return $key;
+        $translator->method('trans')->willReturnCallback(static fn (string $key): string => match ($key) {
+            'set.founder.limit_exceeded' => '%nickname% %max%',
+            'set.founder.throttled' => '%minutes%',
+            default => $key,
         });
-        $notifier = $this->notifier();
+        $notifier = $this->notifier($messages);
         $handler = new SetFounderHandler($application);
         $context = $this->context($notifier, ['#test', 'FOUNDER', 'Target'], translator: $translator);
 
@@ -168,10 +168,11 @@ final class SetFounderHandlerTest extends TestCase
 
         $handler->handle($context, $this->createStub(RegisteredChannel::class), 'Target');
 
-        self::assertSame('Busy', $translated['set.founder.limit_exceeded']['%nickname%']);
-        self::assertSame('7', $translated['set.founder.limit_exceeded']['%max%']);
-        self::assertArrayHasKey('set.founder.token_required', $translated);
-        self::assertSame('2', $translated['set.founder.throttled']['%minutes%']);
+        self::assertSame([
+            "\x0304✗\x03\x0F \x02Busy\x03\x0F 7",
+            "\x0304✗\x03\x0F set.founder.token_required",
+            "\x0304✗\x03\x0F 2",
+        ], $messages);
     }
 
     #[Test]
@@ -191,8 +192,8 @@ final class SetFounderHandlerTest extends TestCase
             'NewFounder',
         );
 
-        self::assertSame(['set.founder.updated'], $messages);
-        self::assertSame([['#test', 'set.founder.notice_channel']], $notices);
+        self::assertSame(["\x0303✔\x03\x0F set.founder.updated"], $messages);
+        self::assertSame([['#test', "\x0303✔\x03\x0F set.founder.notice_channel"]], $notices);
     }
 
     /**

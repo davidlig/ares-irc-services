@@ -10,6 +10,9 @@ use App\ChanServ\Application\UseCase\ConfigureMlock\ConfigureChannelMlock;
 use App\ChanServ\Application\UseCase\ConfigureMlock\ConfigureChannelMlockHandlerInterface;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\ValueObject\ChannelModeLock;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\Fragment;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 use DateTimeImmutable;
 
 use function array_map;
@@ -31,7 +34,7 @@ final readonly class SetMlockHandler implements SetOptionHandlerInterface
         }
         $normalized = strtoupper(trim($value));
         if ('ON' !== $normalized && 'OFF' !== $normalized) {
-            $context->reply('error.syntax', ['syntax' => $context->trans('set.mlock.syntax')]);
+            $context->reply('presentation.error.syntax', ['syntax' => new Fragment($context->trans('set.mlock.syntax'), Component::Command)], Role::Error);
 
             return;
         }
@@ -53,19 +56,19 @@ final readonly class SetMlockHandler implements SetOptionHandlerInterface
             if ('' === $modesDisplay) {
                 $modesDisplay = $context->trans('set.mlock.no_modes');
             }
-            $context->reply('set.mlock.on', ['%modes%' => $modesDisplay]);
+            $context->reply('set.mlock.on', ['%modes%' => $modesDisplay], Role::Success);
         } else {
-            $context->reply('set.mlock.off');
+            $context->reply('set.mlock.off', role: Role::Success);
         }
 
         $nick = $context->sender->nick;
         if ('' !== $nick && $on) {
-            $context->getNotifier()->sendNoticeToChannel($channel->getName(), $context->trans('set.mlock.notice_on', [
-                '%nickname%' => $nick,
+            $context->getNotifier()->sendNoticeToChannel($channel->getName(), $context->renderReply(Role::Success, 'set.mlock.notice_on', [
+                '%nickname%' => new Fragment($nick, Component::Actor),
                 '%modes%' => $modesDisplay,
             ]));
         } elseif ('' !== $nick) {
-            $context->getNotifier()->sendNoticeToChannel($channel->getName(), $context->trans('set.mlock.notice_off', ['%nickname%' => $nick]));
+            $context->getNotifier()->sendNoticeToChannel($channel->getName(), $context->renderReply(Role::Success, 'set.mlock.notice_off', ['%nickname%' => new Fragment($nick, Component::Actor)]));
         }
     }
 

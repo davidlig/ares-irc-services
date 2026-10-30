@@ -41,7 +41,7 @@ final class SetSecureHandlerTest extends TestCase
         $handler = new SetSecureHandler($configureSecure);
         $handler->handle($this->createContext($notifier, $translator, 'yes'), $channel, 'yes');
 
-        self::assertSame(['error.syntax'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F presentation.error.syntax"], $messages);
     }
 
     #[Test]
@@ -85,7 +85,7 @@ final class SetSecureHandlerTest extends TestCase
         $handler = new SetSecureHandler($configureSecure);
         $handler->handle($this->createContext($notifier, $translator, 'on'), $channel, ' ON ');
 
-        self::assertSame(['set.secure.on'], $messages);
+        self::assertSame(["\x0303✔\x03\x0F set.secure.on"], $messages);
         self::assertCount(1, $channelNotices);
     }
 
@@ -113,7 +113,7 @@ final class SetSecureHandlerTest extends TestCase
         $handler = new SetSecureHandler($configureSecure);
         $handler->handle($this->createContext($notifier, $translator, 'off'), $channel, 'OFF');
 
-        self::assertSame(['set.secure.off'], $messages);
+        self::assertSame(["\x0303✔\x03\x0F set.secure.off"], $messages);
         self::assertCount(1, $channelNotices);
     }
 

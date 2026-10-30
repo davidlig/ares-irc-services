@@ -11,6 +11,9 @@ use App\ChanServ\Application\UseCase\TransferFounder\TransferChannelFounderHandl
 use App\ChanServ\Application\UseCase\TransferFounder\TransferChannelFounderResult;
 use App\ChanServ\Application\UseCase\TransferFounder\TransferFounderOutcome;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\Fragment;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 use DateTimeImmutable;
 
 use function base64_decode;
@@ -68,19 +71,19 @@ final readonly class SetFounderHandler implements SetOptionHandlerInterface
     ): void {
         match ($result->outcome) {
             TransferFounderOutcome::MissingTarget => $context->reply('set.founder.syntax'),
-            TransferFounderOutcome::TargetNotFound => $context->reply('error.nick_not_registered', ['%nickname%' => $result->targetNickname]),
-            TransferFounderOutcome::TargetSuspended => $context->reply('set.founder.suspended', ['%nickname%' => $result->targetNickname]),
-            TransferFounderOutcome::TargetNotRegistered => $context->reply('set.founder.must_be_registered', ['%nickname%' => $result->targetNickname]),
-            TransferFounderOutcome::SameFounder => $context->reply('set.founder.cannot_be_self'),
-            TransferFounderOutcome::TargetIsSuccessor => $context->reply('set.founder.cannot_be_successor'),
+            TransferFounderOutcome::TargetNotFound => $context->reply('presentation.error.nick_not_registered', ['%nickname%' => new Fragment((string) $result->targetNickname, Component::Emphasis)], Role::Error),
+            TransferFounderOutcome::TargetSuspended => $context->reply('set.founder.suspended', ['%nickname%' => new Fragment((string) $result->targetNickname, Component::Emphasis)], Role::Error),
+            TransferFounderOutcome::TargetNotRegistered => $context->reply('set.founder.must_be_registered', ['%nickname%' => new Fragment((string) $result->targetNickname, Component::Emphasis)], Role::Error),
+            TransferFounderOutcome::SameFounder => $context->reply('set.founder.cannot_be_self', role: Role::Error),
+            TransferFounderOutcome::TargetIsSuccessor => $context->reply('set.founder.cannot_be_successor', role: Role::Error),
             TransferFounderOutcome::ChannelLimitReached => $context->reply('set.founder.limit_exceeded', [
-                '%nickname%' => $result->targetNickname,
+                '%nickname%' => new Fragment((string) $result->targetNickname, Component::Emphasis),
                 '%max%' => (string) $result->maximumChannelsPerNick,
-            ]),
-            TransferFounderOutcome::TokenRequired => $context->reply('set.founder.token_required'),
-            TransferFounderOutcome::CredentialUnavailable => $context->reply('set.founder.token_unavailable'),
-            TransferFounderOutcome::Throttled => $context->reply('set.founder.throttled', ['%minutes%' => (string) (int) ceil($result->retryAfterSeconds / 60)]),
-            TransferFounderOutcome::InvalidToken => $context->reply('set.founder.invalid_token'),
+            ], Role::Error),
+            TransferFounderOutcome::TokenRequired => $context->reply('set.founder.token_required', role: Role::Error),
+            TransferFounderOutcome::CredentialUnavailable => $context->reply('set.founder.token_unavailable', role: Role::Error),
+            TransferFounderOutcome::Throttled => $context->reply('set.founder.throttled', ['%minutes%' => (string) (int) ceil($result->retryAfterSeconds / 60)], Role::Error),
+            TransferFounderOutcome::InvalidToken => $context->reply('set.founder.invalid_token', role: Role::Error),
             TransferFounderOutcome::Updated => $this->presentUpdated($context, $channel, $result, $actorNickname),
             TransferFounderOutcome::Ignored => null,
         };
@@ -92,10 +95,10 @@ final readonly class SetFounderHandler implements SetOptionHandlerInterface
         TransferChannelFounderResult $result,
         string $actorNickname,
     ): void {
-        $context->reply('set.founder.updated', ['%nickname%' => $result->targetNickname]);
-        $notice = $context->trans('set.founder.notice_channel', [
-            '%from%' => $actorNickname,
-            '%nickname%' => $result->targetNickname,
+        $context->reply('set.founder.updated', ['%nickname%' => new Fragment((string) $result->targetNickname, Component::Emphasis)], Role::Success);
+        $notice = $context->renderReply(Role::Success, 'set.founder.notice_channel', [
+            '%from%' => new Fragment($actorNickname, Component::Actor),
+            '%nickname%' => new Fragment((string) $result->targetNickname, Component::Emphasis),
         ]);
         $context->getNotifier()->sendNoticeToChannel($channel->getName(), $notice);
     }

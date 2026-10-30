@@ -65,7 +65,7 @@ final class SetSuccessorHandlerTest extends TestCase
         $handler = $this->createHandler($channelRepo, $nickRepo, $this->createStub(EventBusInterface::class));
         $handler->handle($this->createContext($notifier, $translator), $channel, '   ');
 
-        self::assertSame(['set.successor.cleared'], $messages);
+        self::assertSame(["\x0303✔\x03\x0F set.successor.cleared"], $messages);
         self::assertCount(1, $channelNotices);
     }
 
@@ -106,7 +106,7 @@ final class SetSuccessorHandlerTest extends TestCase
         $ctx = $this->createContext($notifier, $translator);
         $handler->handle($ctx, $channel, 'Nobody');
 
-        self::assertSame(['error.nick_not_registered'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F presentation.error.nick_not_registered"], $messages);
     }
 
     #[Test]
@@ -128,7 +128,7 @@ final class SetSuccessorHandlerTest extends TestCase
         $handler = $this->createHandler($channelRepo, $nickRepo, $this->createStub(EventBusInterface::class));
         $handler->handle($this->createContext($notifier, $translator), $channel, 'Suspended');
 
-        self::assertSame(['set.successor.suspended'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F set.successor.suspended"], $messages);
     }
 
     #[Test]
@@ -150,7 +150,7 @@ final class SetSuccessorHandlerTest extends TestCase
         $handler = $this->createHandler($channelRepo, $nickRepo, $this->createStub(EventBusInterface::class));
         $handler->handle($this->createContext($notifier, $translator), $channel, 'Pending');
 
-        self::assertSame(['set.successor.must_be_registered'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F set.successor.must_be_registered"], $messages);
     }
 
     #[Test]
@@ -173,7 +173,7 @@ final class SetSuccessorHandlerTest extends TestCase
         $handler = $this->createHandler($channelRepo, $nickRepo, $this->createStub(EventBusInterface::class));
         $handler->handle($this->createContext($notifier, $translator), $channel, 'FounderNick');
 
-        self::assertSame(['set.successor.cannot_be_founder'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F set.successor.cannot_be_founder"], $messages);
     }
 
     #[Test]
@@ -203,7 +203,7 @@ final class SetSuccessorHandlerTest extends TestCase
         $handler = $this->createHandler($channelRepo, $nickRepo, $this->createStub(EventBusInterface::class));
         $handler->handle($this->createContext($notifier, $translator), $channel, ' Successor ');
 
-        self::assertSame(['set.successor.updated'], $messages);
+        self::assertSame(["\x0303✔\x03\x0F set.successor.updated"], $messages);
         self::assertCount(1, $channelNotices);
     }
 

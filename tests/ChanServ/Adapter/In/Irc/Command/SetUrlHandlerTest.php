@@ -53,7 +53,7 @@ final class SetUrlHandlerTest extends TestCase
         $handler = $this->createHandler($repo);
         $handler->handle($this->createContext($notifier, $translator), $channel, '  https://example.com  ');
 
-        self::assertSame(['set.url.updated'], $messages);
+        self::assertSame(["\x0303✔\x03\x0F set.url.updated"], $messages);
     }
 
     #[Test]
@@ -74,7 +74,7 @@ final class SetUrlHandlerTest extends TestCase
         $handler = $this->createHandler($repo);
         $handler->handle($this->createContext($notifier, $translator), $channel, '   ');
 
-        self::assertSame(['set.url.cleared'], $messages);
+        self::assertSame(["\x0303✔\x03\x0F set.url.cleared"], $messages);
     }
 
     #[Test]

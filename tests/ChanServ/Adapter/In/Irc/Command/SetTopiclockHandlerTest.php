@@ -54,7 +54,7 @@ final class SetTopiclockHandlerTest extends TestCase
         $handler = $this->createHandler($channelRepo, $eventBus);
         $handler->handle($this->createContext($notifier, $translator, 'maybe'), $channel, 'maybe');
 
-        self::assertSame(['error.syntax'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F presentation.error.syntax"], $messages);
     }
 
     #[Test]
@@ -84,7 +84,7 @@ final class SetTopiclockHandlerTest extends TestCase
         $handler = $this->createHandler($channelRepo, $eventBus);
         $handler->handle($this->createContext($notifier, $translator, 'on'), $channel, ' on ');
 
-        self::assertSame(['set.topiclock.on'], $messages);
+        self::assertSame(["\x0303✔\x03\x0F set.topiclock.on"], $messages);
         self::assertCount(1, $channelNotices);
     }
 
@@ -115,7 +115,7 @@ final class SetTopiclockHandlerTest extends TestCase
         $handler = $this->createHandler($channelRepo, $eventBus);
         $handler->handle($this->createContext($notifier, $translator, 'off'), $channel, 'OFF');
 
-        self::assertSame(['set.topiclock.off'], $messages);
+        self::assertSame(["\x0303✔\x03\x0F set.topiclock.off"], $messages);
         self::assertCount(1, $channelNotices);
     }
 

@@ -58,7 +58,7 @@ final class SetEntrymsgHandlerTest extends TestCase
         $handler = $this->createHandler($channelRepo);
         $handler->handle($this->createContext($notifier, $translator), $channel, str_repeat('x', 300));
 
-        self::assertSame(['set.entrymsg.too_long'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F set.entrymsg.too_long"], $messages);
     }
 
     #[Test]
@@ -79,7 +79,7 @@ final class SetEntrymsgHandlerTest extends TestCase
         $handler = $this->createHandler($channelRepo);
         $handler->handle($this->createContext($notifier, $translator), $channel, 'Welcome!');
 
-        self::assertSame(['set.entrymsg.updated'], $messages);
+        self::assertSame(["\x0303✔\x03\x0F set.entrymsg.updated"], $messages);
     }
 
     #[Test]

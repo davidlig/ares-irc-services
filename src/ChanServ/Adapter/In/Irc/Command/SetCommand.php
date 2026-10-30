@@ -10,6 +10,9 @@ use App\ChanServ\Application\UseCase\ResolveSetting\ResolveChannelSetting;
 use App\ChanServ\Application\UseCase\ResolveSetting\ResolveChannelSettingHandlerInterface;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\Fragment;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 
 use function array_slice;
 use function implode;
@@ -213,14 +216,14 @@ final readonly class SetCommand implements ChanServCommandInterface
     {
         $channelName = $context->getChannelNameArg(0);
         if (null === $channelName) {
-            $context->reply('error.invalid_channel');
+            $context->reply('error.invalid_channel', ['%example%' => new Fragment($context->trans('error.invalid_channel_example'), Component::Emphasis)], Role::Error);
 
             return;
         }
 
         $senderAccount = $context->senderAccount;
         if (null === $senderAccount) {
-            $context->reply('error.not_identified');
+            $context->reply('presentation.error.not_identified', ['%identify%' => new Fragment($context->trans('presentation.identify'), Component::Command)], Role::Error);
 
             return;
         }
@@ -230,9 +233,9 @@ final readonly class SetCommand implements ChanServCommandInterface
 
         if (null === $handler) {
             $context->reply('set.unknown_option', [
-                '%option%' => $option,
+                '%option%' => new Fragment($option, Component::Emphasis),
                 '%options%' => implode(', ', self::SUPPORTED_OPTIONS),
-            ]);
+            ], Role::Error);
 
             return;
         }
