@@ -34,7 +34,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-use function is_string;
+use function str_ends_with;
 
 #[CoversClass(AdminCommand::class)]
 #[CoversClass(DeadminCommand::class)]
@@ -102,22 +102,22 @@ final class ManualRankCommandsTest extends TestCase
         $context = $this->context($this->sender(), $this->account(), ['invalid', 'Nick'], $messages);
 
         new AdminCommand($handler)->execute($context);
-        self::assertSame(['error.invalid_channel'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F error.invalid_channel"], $messages);
 
         $messages = [];
         new AdminCommand($handler)->execute($this->context($this->sender(), $this->account(), ['#channel'], $messages));
-        self::assertSame(['error.syntax'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F presentation.error.syntax"], $messages);
     }
 
     /** @return iterable<string, array{ManageManualRankOutcome, string, ManualRankOperation, ?int}> */
     public static function rejectedOutcomeProvider(): iterable
     {
-        yield 'not identified' => [ManageManualRankOutcome::NotIdentified, 'error.not_identified', ManualRankOperation::Admin, null];
-        yield 'rank unsupported' => [ManageManualRankOutcome::RankNotSupported, 'admin.not_supported', ManualRankOperation::Admin, null];
-        yield 'nick unregistered' => [ManageManualRankOutcome::TargetNickNotRegistered, 'error.nick_not_registered', ManualRankOperation::Admin, null];
-        yield 'not on channel' => [ManageManualRankOutcome::TargetNotOnChannel, 'admin.user_not_on_channel', ManualRankOperation::Admin, null];
-        yield 'secure level' => [ManageManualRankOutcome::SecureLevelRequired, 'secure.requires_min_level:+a', ManualRankOperation::Admin, 400];
-        yield 'access too high' => [ManageManualRankOutcome::TargetAccessTooHigh, 'error.insufficient_access', ManualRankOperation::Deadmin, null];
+        yield 'not identified' => [ManageManualRankOutcome::NotIdentified, "\x0304✗\x03\x0F presentation.error.not_identified", ManualRankOperation::Admin, null];
+        yield 'rank unsupported' => [ManageManualRankOutcome::RankNotSupported, "\x0304✗\x03\x0F admin.not_supported", ManualRankOperation::Admin, null];
+        yield 'nick unregistered' => [ManageManualRankOutcome::TargetNickNotRegistered, "\x0304✗\x03\x0F presentation.error.nick_not_registered", ManualRankOperation::Admin, null];
+        yield 'not on channel' => [ManageManualRankOutcome::TargetNotOnChannel, "\x0304✗\x03\x0F admin.user_not_on_channel", ManualRankOperation::Admin, null];
+        yield 'secure level' => [ManageManualRankOutcome::SecureLevelRequired, "\x0304✗\x03\x0F secure.requires_min_level:\x02+a\x03\x0F", ManualRankOperation::Admin, 400];
+        yield 'access too high' => [ManageManualRankOutcome::TargetAccessTooHigh, "\x0304✗\x03\x0F presentation.error.insufficient_access", ManualRankOperation::Deadmin, null];
     }
 
     /** @return iterable<string, array{class-string<ChanServCommandInterface>, string, string}> */
@@ -175,12 +175,12 @@ final class ManualRankCommandsTest extends TestCase
         self::assertSame(7, $captured->actorAccountId);
         self::assertTrue($captured->founderOverride);
         self::assertSame(ManualRankOperation::Voice, $captured->operation);
-        self::assertSame(['voice.notice_grant:+v', 'voice.done'], [$notices[0], $messages[0]]);
+        self::assertSame(["\x0303✔\x03\x0F voice.notice_grant:\x0302Actor\x03\x0F|\x0304+v\x03\x0F|\x0314Target\x03\x0F", "\x0303✔\x03\x0F voice.done"], [$notices[0], $messages[0]]);
 
         $messages = [];
         $notices = [];
         new DevoiceCommand($handler)->execute($this->context($this->sender(), $this->account(), ['#Channel', 'Target'], $messages, $notices));
-        self::assertSame(['voice.notice_grant:-v', 'devoice.done'], [$notices[0], $messages[0]]);
+        self::assertSame(["\x0303✔\x03\x0F voice.notice_grant:\x0302Actor\x03\x0F|\x0304-v\x03\x0F|\x0314Target\x03\x0F", "\x0303✔\x03\x0F devoice.done"], [$notices[0], $messages[0]]);
     }
 
     /** @param class-string<ChanServCommandInterface> $class */
@@ -201,7 +201,7 @@ final class ManualRankCommandsTest extends TestCase
             $notices,
         ));
 
-        self::assertSame($noticeKey . ':' . $displayMode, $notices[0]);
+        self::assertSame("\x0303✔\x03\x0F " . $noticeKey . ":\x0302Actor\x03\x0F|\x0304" . $displayMode . "\x03\x0F|\x0314Target\x03\x0F", $notices[0]);
     }
 
     private function sender(): SenderView
@@ -235,10 +235,12 @@ final class ManualRankCommandsTest extends TestCase
             $notices[] = $message;
         });
         $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static function (string $key, array $params = []): string {
-            $mode = $params['%mode%'] ?? null;
+        $translator->method('trans')->willReturnCallback(static function (string $key): string {
+            if (str_ends_with($key, '.notice_grant')) {
+                return $key . ':%from%|%mode%|%to%';
+            }
 
-            return $key . (is_string($mode) ? ':' . $mode : '');
+            return 'secure.requires_min_level' === $key ? $key . ':%mode%' : $key;
         });
         $serviceNick = $this->createStub(ServiceNicknameProviderInterface::class);
         $serviceNick->method('getServiceKey')->willReturn('chanserv');
