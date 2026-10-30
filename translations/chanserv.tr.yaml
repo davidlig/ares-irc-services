@@ -522,14 +522,12 @@ devoice:
 # --- UNBAN -----------------------------------------------------------------
 unban:
   syntax: "UNBAN <#channel>"
-  example: "%command_prefix%UNBAN #channel"
+  example: "%command_prefix%UNBAN #kanal"
   short: "Sizi etkileyen yasakları kaldırır."
-  help: |-
-    IRCd kurallarına göre mevcut kimliğinizle eşleşen tüm normal kanal yasaklarını, joker karakterler ve IP/CIDR maskeleri dahil kaldırır.
-    Kimlik doğrulaması ve yapılandırılabilir UNBAN seviyesi (varsayılan 200) gereklidir. Kurucu erişimini korur; kanalda bulunmak veya operatör olmak gerekmez.
-    Genişletilmiş yasaklar değişmez. Argüman olarak rumuz veya maske kabul etmez. İşlem kanal HISTORY kaydına eklenmez.
-  done: "%channel% kanalında sizi etkileyen %count% yasak kaldırıldı."
-  no_matches: "%channel% kanalında kimliğinizle eşleşen normal yasak yok; hiçbir şey değiştirilmedi."
+  help: "Mevcut kimliğinizle eşleşen tüm kanal yasaklarını, joker karakterler ve IP/CIDR maskeleri dahil kaldırır."
+  done: "%channel% kanalında sizi etkileyen %count% yasak kaldırıldı"
+  notice_channel: "%nickname% UNBAN kullandı."
+  no_matches: "%channel% kanalında kimliğinizle eşleşen yasak yok"
   unavailable: "Eşleşen yasaklarınız belirlenemedi; hiçbir şey değiştirilmedi."
   not_on_network: "%channel% kanalı ağda bulunmuyor."
 

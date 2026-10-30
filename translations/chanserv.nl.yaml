@@ -528,15 +528,13 @@ devoice:
 
 # --- UNBAN -----------------------------------------------------------------
 unban:
-  syntax: "UNBAN <#channel>"
-  example: "%command_prefix%UNBAN #channel"
+  syntax: "UNBAN <#kanaal>"
+  example: "%command_prefix%UNBAN #kanaal"
   short: "Verwijder bans die jou treffen."
-  help: |-
-    Verwijdert alle gewone kanaalbans die volgens de IRCd overeenkomen met je huidige identiteit, inclusief jokertekens en IP/CIDR-maskers.
-    Identificatie en het instelbare UNBAN-niveau (standaard 200) zijn vereist. De oprichter behoudt toegang; kanaallidmaatschap en operatorstatus zijn niet vereist.
-    Uitgebreide bans blijven ongewijzigd. Een nickname of masker als argument is niet toegestaan. De actie wordt niet in de kanaal-HISTORY opgeslagen.
-  done: "%count% ban(s) die jou treffen verwijderd uit %channel%."
-  no_matches: "Geen gewone bans komen overeen met je identiteit in %channel%; niets gewijzigd."
+  help: "Verwijdert alle kanaalbans die overeenkomen met je huidige identiteit, inclusief jokertekens en IP/CIDR-maskers."
+  done: "%count% ban(s) die jou treffen verwijderd uit %channel%"
+  notice_channel: "%nickname% heeft UNBAN gebruikt."
+  no_matches: "Geen bans komen overeen met je identiteit in %channel%"
   unavailable: "Je overeenkomende bans konden niet worden bepaald; niets gewijzigd."
   not_on_network: "Kanaal %channel% is niet op het netwerk aanwezig."
 

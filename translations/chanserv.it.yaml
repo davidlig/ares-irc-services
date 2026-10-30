@@ -526,15 +526,13 @@ devoice:
 
 # --- UNBAN -----------------------------------------------------------------
 unban:
-  syntax: "UNBAN <#channel>"
-  example: "%command_prefix%UNBAN #channel"
+  syntax: "UNBAN <#canale>"
+  example: "%command_prefix%UNBAN #canale"
   short: "Rimuovi i ban che ti riguardano."
-  help: |-
-    Rimuove tutti i ban ordinari del canale corrispondenti alla tua identità attuale, inclusi caratteri jolly e maschere IP/CIDR, secondo l’IRCd.
-    Richiede identificazione e il livello UNBAN configurabile (predefinito 200). Il fondatore mantiene l’accesso; non occorre essere nel canale né esserne operatore.
-    I ban estesi restano invariati. Non accetta nickname o maschere come argomento. L’azione non viene registrata nella HISTORY del canale.
-  done: "Rimossi %count% ban che ti riguardano in %channel%."
-  no_matches: "Nessun ban ordinario corrisponde alla tua identità in %channel%; nessuna modifica."
+  help: "Rimuove tutti i ban del canale corrispondenti alla tua identità attuale, inclusi caratteri jolly e maschere IP/CIDR."
+  done: "Rimossi %count% ban che ti riguardano in %channel%"
+  notice_channel: "%nickname% ha utilizzato UNBAN."
+  no_matches: "Nessun ban corrisponde alla tua identità in %channel%"
   unavailable: "Impossibile determinare i ban corrispondenti alla tua identità; nessuna modifica."
   not_on_network: "Il canale %channel% non è presente sulla rete."
 

@@ -3593,8 +3593,10 @@ final class ChanServServiceTest extends TestCase
             $actions,
         );
         $messages = [];
+        $channelNotices = [];
         $notifier = $this->createStub(ChanServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $uid, string $message) use (&$messages): void { $messages[] = $message; });
+        $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (string $channel, string $message) use (&$channelNotices): void { $channelNotices[] = [$channel, $message]; });
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $key): string => $key);
         $modeSupport = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
@@ -3630,6 +3632,7 @@ final class ChanServServiceTest extends TestCase
         $service->dispatch('UNBAN #test', $identified);
         $service->dispatch('UNBAN #test', $identified);
         self::assertSame(["\x0304✗\x03\x0F presentation.error.not_identified", "\x0304✗\x03\x0F presentation.error.syntax", "\x0304✗\x03\x0F presentation.error.syntax", "\x0304✗\x03\x0F presentation.error.syntax", "\x0303✔\x03\x0F unban.done", "\x0310ℹ\x03\x0F unban.no_matches"], $messages);
+        self::assertSame([['#test', "\x0303✔\x03\x0F unban.notice_channel"]], $channelNotices);
     }
 
     private function createServiceNicks(): ServiceNicknameRegistry

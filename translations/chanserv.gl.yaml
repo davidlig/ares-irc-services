@@ -520,15 +520,13 @@ devoice:
 
 # --- UNBAN -----------------------------------------------------------------
 unban:
-  syntax: "UNBAN <#channel>"
-  example: "%command_prefix%UNBAN #channel"
+  syntax: "UNBAN <#canle>"
+  example: "%command_prefix%UNBAN #canle"
   short: "Retirar os vetos que che afectan."
-  help: |-
-    Retira todos os vetos ordinarios da canle que coincidan coa túa identidade actual, incluídos comodíns e máscaras IP/CIDR, segundo o IRCd.
-    Require identificación e o nivel UNBAN configurable (200 por defecto). O fundador conserva o acceso; non precisas estar na canle nin ser operador.
-    Os vetos estendidos non cambian. Non acepta un alcume nin unha máscara como argumento. A acción non se rexistra no HISTORY da canle.
-  done: "Retiráronse %count% veto(s) que che afectan en %channel%."
-  no_matches: "Ningún veto ordinario coincide coa túa identidade en %channel%; non se cambiou nada."
+  help: "Retira todos os vetos da canle que coincidan coa túa identidade actual, incluídos comodíns e máscaras IP/CIDR."
+  done: "Retiráronse %count% veto(s) que che afectan en %channel%"
+  notice_channel: "%nickname% utilizou UNBAN."
+  no_matches: "Ningún veto coincide coa túa identidade en %channel%"
   unavailable: "Non se puideron determinar os teus vetos coincidentes; non se cambiou nada."
   not_on_network: "A canle %channel% non está na rede."
 

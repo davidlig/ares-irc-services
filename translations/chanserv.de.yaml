@@ -523,12 +523,10 @@ unban:
   syntax: "UNBAN <#channel>"
   example: "%command_prefix%UNBAN #channel"
   short: "Dich betreffende Bans entfernen."
-  help: |-
-    Entfernt alle normalen Kanal-Bans, die laut IRCd deiner aktuellen Identität entsprechen, einschließlich Platzhaltern und IP/CIDR-Masken.
-    Identifizierung und das konfigurierbare UNBAN-Level (Standard 200) sind erforderlich. Der Gründer behält Zugriff; Kanalmitgliedschaft und Operatorstatus sind nicht erforderlich.
-    Erweiterte Bans bleiben unverändert. Kein Nickname oder Maskenargument ist erlaubt. Die Aktion wird nicht in der Kanal-HISTORY gespeichert.
-  done: "%count% dich betreffende Ban(s) in %channel% entfernt."
-  no_matches: "Keine normalen Bans entsprechen deiner Identität in %channel%; nichts wurde geändert."
+  help: "Entfernt alle Kanal-Bans, die deiner aktuellen Identität entsprechen, einschließlich Platzhaltern und IP/CIDR-Masken."
+  done: "%count% dich betreffende Ban(s) in %channel% entfernt"
+  notice_channel: "%nickname% hat UNBAN verwendet."
+  no_matches: "Keine Bans entsprechen deiner Identität in %channel%"
   unavailable: "Deine passenden Bans konnten nicht ermittelt werden; nichts wurde geändert."
   not_on_network: "Kanal %channel% ist nicht im Netzwerk."
 

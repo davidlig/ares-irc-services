@@ -28,12 +28,24 @@ final class IrcChannelBanTest extends TestCase
         self::assertSame(['ALICE!*@*.example', '*!*@192.0.2.0/24'], $snapshot->masks);
         $calls = [];
         $actions = $this->createMock(ChannelServiceActionsPort::class);
-        $actions->expects(self::exactly(2))->method('setChannelModes')->willReturnCallback(static function (string $channel, string $modes, array $params, ?int $timestamp) use (&$calls): void { $calls[] = [$channel, $modes, $params, $timestamp]; });
+        $actions->expects(self::once())->method('setChannelModes')->willReturnCallback(static function (string $channel, string $modes, array $params, ?int $timestamp) use (&$calls): void { $calls[] = [$channel, $modes, $params, $timestamp]; });
         new IrcChannelBanActions($actions)->removeBans('#test', [], 123);
         new IrcChannelBanActions($actions)->removeBans('#test', $snapshot->masks, $snapshot->channelTimestamp);
         self::assertSame([
-            ['#test', '-b', ['ALICE!*@*.example'], 123],
-            ['#test', '-b', ['*!*@192.0.2.0/24'], 123],
+            ['#test', '-bb', ['ALICE!*@*.example', '*!*@192.0.2.0/24'], 123],
+        ], $calls);
+    }
+
+    public function testBatchesBansInChunksUpToMaximumPerCommand(): void
+    {
+        $calls = [];
+        $actions = $this->createMock(ChannelServiceActionsPort::class);
+        $actions->expects(self::exactly(2))->method('setChannelModes')->willReturnCallback(static function (string $channel, string $modes, array $params, ?int $timestamp) use (&$calls): void { $calls[] = [$channel, $modes, $params, $timestamp]; });
+        $masks = ['m1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7'];
+        new IrcChannelBanActions($actions)->removeBans('#channel', $masks, 456);
+        self::assertSame([
+            ['#channel', '-bbbbbb', ['m1', 'm2', 'm3', 'm4', 'm5', 'm6'], 456],
+            ['#channel', '-b', ['m7'], 456],
         ], $calls);
     }
 }
