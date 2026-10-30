@@ -82,3 +82,15 @@ founder_change_token_body: |
     /msg %bot% %command%
 
   Tokena ordubetean iraungitzen da. Zuk eskatu ez baduzu, mesedez ez ikusi egin mezu elektroniko honi.
+
+# --- SAREGISTER ------------------------------------------------------------
+saregister_token_subject: "%bot%: zure erreskate-tokena"
+saregister_token_body: |
+  Kaixo:
+
+  Sareko operadore batek "%nickname%" ezizena erregistratu du zuretzat.
+
+  Zure erreskate-tokena hau da: %token%
+
+  Gorde token hau leku seguru batean: zure ezizena berreskuratzeko erabil dezakezu pasahitza ahazten baduzu.
+    /msg %bot% RECOVER %nickname% %token%

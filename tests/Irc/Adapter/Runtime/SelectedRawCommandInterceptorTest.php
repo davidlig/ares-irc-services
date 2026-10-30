@@ -86,4 +86,9 @@ final class RawAwareRuntimeModule implements ProtocolRuntimeModuleInterface, Raw
     {
         throw new LogicException('Not needed by this test.');
     }
+
+    public function getMaxNickLength(): int
+    {
+        return 30;
+    }
 }

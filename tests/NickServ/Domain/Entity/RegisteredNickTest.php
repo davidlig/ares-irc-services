@@ -805,4 +805,47 @@ final class RegisteredNickTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $nick->renewPendingRegistration($now, $now);
     }
+
+    #[Test]
+    public function createActiveCreatesRegisteredAccountWithOptionalRescueToken(): void
+    {
+        $now = new DateTimeImmutable('2026-10-30T15:00:00Z');
+        $hash = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
+        $nick = RegisteredNick::createActive(
+            nickname: 'ActiveNick',
+            passwordHash: 'passhash',
+            email: 'user@example.com',
+            language: 'es',
+            registeredAt: $now,
+            rescueTokenHash: $hash,
+        );
+
+        self::assertTrue($nick->isRegistered());
+        self::assertFalse($nick->isPending());
+        self::assertNull($nick->getExpiresAt());
+        self::assertSame('ActiveNick', $nick->getNickname());
+        self::assertSame('activenick', $nick->getNicknameLower());
+        self::assertSame('passhash', $nick->getPasswordHash());
+        self::assertSame('user@example.com', $nick->getEmail());
+        self::assertSame('es', $nick->getLanguage());
+        self::assertSame($now, $nick->getRegisteredAt());
+        self::assertSame($hash, $nick->getRescueTokenHash());
+    }
+
+    #[Test]
+    public function createActiveAllowsNullEmail(): void
+    {
+        $now = new DateTimeImmutable('2026-10-30T15:00:00Z');
+        $nick = RegisteredNick::createActive(
+            nickname: 'NoEmailNick',
+            passwordHash: 'passhash',
+            email: null,
+            language: 'en',
+            registeredAt: $now,
+        );
+
+        self::assertTrue($nick->isRegistered());
+        self::assertNull($nick->getEmail());
+        self::assertNull($nick->getRescueTokenHash());
+    }
 }

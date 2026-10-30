@@ -769,6 +769,7 @@ history.message:
   email_changed_owner: "Correo electrónico cambiado de %old_email% a %new_email%"
   email_changed_operator: "Correo electrónico cambiado a %new_email% por un operador"
   recover: "Contrasinal restablecido mediante token por correo"
+  saregister: "Conta rexistrada administrativamente"
 
 # --- HISTORY EXTRA FIELDS ---
 history.extra:
@@ -828,6 +829,25 @@ regmode:
     - "%command_prefix%REGMODE TOKEN"
   status: "Modo de rexistro actual: %mode%."
   changed: "Modo de rexistro cambiado a %mode%."
+
+# --- SAREGISTER ------------------------------------------------------------
+saregister:
+  syntax: "SAREGISTER <alcume> <contrasinal> [email]"
+  short: "Rexistrar administrativamente un alcume."
+  help: |-
+    Sintaxe: SAREGISTER <alcume> <contrasinal> [email]
+
+    Rexistra administrativamente un alcume de xeito inmediato sen requirir
+    verificación do cliente nin límites de frecuencia.
+
+    En modo TOKEN, o código de rescate móstrase unha vez ao operador.
+    En modo EMAIL, o código de rescate envíase ao enderezo de correo indicado.
+  example: "%command_prefix%SAREGISTER Alice Contrasinal123"
+  examples:
+    - "%command_prefix%SAREGISTER Bob Contrasinal456 bob@exemplo.gal"
+  success_token: "O alcume %nickname% foi rexistrado. Código de rescate: %token%"
+  success_email: "O alcume %nickname% foi rexistrado. Código de rescate enviado a %email%."
+  invalid_nickname: "Alcume non válido %nickname%."
 
 # --- RESCUE ----------------------------------------------------------------
 rescue:

@@ -189,5 +189,15 @@ final class NickServCommandRedactorTest extends TestCase
             'SASET TestNick EMAIL user@example.com',
             'SASET TestNick EMAIL ******',
         ];
+
+        yield 'SAREGISTER with password only' => [
+            'SAREGISTER TargetNick mySecretPassword',
+            'SAREGISTER TargetNick ******',
+        ];
+
+        yield 'SAREGISTER with password and email' => [
+            'SAREGISTER TargetNick mySecretPassword target@example.com',
+            'SAREGISTER TargetNick ****** target@example.com',
+        ];
     }
 }

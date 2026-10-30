@@ -26,4 +26,9 @@ interface ProtocolModuleInterface
      * Returns null if the protocol does not support reservation.
      */
     public function getNickReservation(): ?ServiceNickReservationInterface;
+
+    /**
+     * Maximum allowed nickname length supported by this IRCd.
+     */
+    public function getMaxNickLength(): int;
 }

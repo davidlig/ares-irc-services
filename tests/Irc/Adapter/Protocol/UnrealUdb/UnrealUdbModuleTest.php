@@ -141,6 +141,14 @@ final class UnrealUdbModuleTest extends TestCase
         self::assertSame('DB DEL', $module->intercept(['DB', '*', 'DEL', 'N::nick'])->operation);
     }
 
+    #[Test]
+    public function getMaxNickLengthReturns30(): void
+    {
+        $module = $this->createModule();
+
+        self::assertSame(30, $module->getMaxNickLength());
+    }
+
     public function testProvidesOrdinaryBanMatcher(): void
     {
         $module = $this->createModule();

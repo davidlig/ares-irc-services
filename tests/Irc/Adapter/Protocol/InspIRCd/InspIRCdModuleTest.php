@@ -108,6 +108,18 @@ final class InspIRCdModuleTest extends TestCase
         self::assertSame(['v', 'o'], $module->getChannelModeSupport()->getSupportedPrefixModes());
     }
 
+    #[Test]
+    public function maxNickLengthDefaultsTo30AndCanBeUpdated(): void
+    {
+        $module = $this->createModule();
+
+        self::assertSame(30, $module->getMaxNickLength());
+
+        $module->updateMaxNickLength(32);
+
+        self::assertSame(32, $module->getMaxNickLength());
+    }
+
     public function testProvidesOrdinaryBanMatcher(): void
     {
         $module = $this->createModule();

@@ -140,6 +140,26 @@ final class IRCEventSubscriberTest extends TestCase
     }
 
     #[Test]
+    public function onIncomingMessageRedactsSaregisterPassword(): void
+    {
+        $message = new IRCMessage(
+            prefix: 'oper!user@host',
+            command: 'PRIVMSG',
+            params: ['NickServ'],
+            trailing: 'SAREGISTER Alice SyntheticSecretPass123 alice@example.com',
+        );
+        $event = new IncomingIrcMessageEvent($message);
+
+        $this->subscriber->onIncomingMessage($event);
+
+        $record = $this->record();
+        self::assertSame('SAREGISTER Alice ****** alice@example.com', $record->context['trailing']);
+        self::assertIsString($record->context['raw']);
+        self::assertStringContainsString('SAREGISTER Alice ****** alice@example.com', $record->context['raw']);
+        self::assertStringNotContainsString('SyntheticSecretPass123', $record->context['raw']);
+    }
+
+    #[Test]
     public function onIncomingMessageRedactsSensitiveSqueryCommands(): void
     {
         $message = new IRCMessage(

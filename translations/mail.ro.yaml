@@ -82,3 +82,15 @@ founder_change_token_body: |
     /msg %bot% %command%
 
   Tokenul expiră într-o oră. Dacă nu ați solicitat acest lucru, vă rugăm să ignorați acest e-mail.
+
+# --- SAREGISTER ------------------------------------------------------------
+saregister_token_subject: "%bot%: tokenul tău de salvare"
+saregister_token_body: |
+  Bună,
+
+  Porecla "%nickname%" a fost înregistrată pentru tine de către un operator de rețea.
+
+  Tokenul tău de salvare este: %token%
+
+  Păstrează acest token în siguranță: îl poți folosi pentru a-ți recupera porecla dacă uiți parola.
+    /msg %bot% RECOVER %nickname% %token%

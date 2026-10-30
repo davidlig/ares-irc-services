@@ -190,6 +190,21 @@ final class SensitiveDataRedactorTest extends TestCase
             'SASET TestNick EMAIL user@example.com',
             'SASET TestNick EMAIL ******',
         ];
+
+        yield 'SAREGISTER with password and email' => [
+            'SAREGISTER Alice SyntheticSecretPass999 alice@example.com',
+            'SAREGISTER Alice ****** alice@example.com',
+        ];
+
+        yield 'SAREGISTER without email' => [
+            'SAREGISTER Bob SyntheticSecretPass888',
+            'SAREGISTER Bob ******',
+        ];
+
+        yield 'mixed case SAREGISTER' => [
+            'saregister Alice SyntheticSecretPass777',
+            'saregister Alice ******',
+        ];
     }
 
     #[Test]

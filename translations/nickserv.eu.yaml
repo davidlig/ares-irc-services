@@ -857,6 +857,7 @@ history.message:
   email_changed_owner: "Posta %old_email%-(e)tik %new_email%-(e)ra aldatua"
   email_changed_operator: "Posta %new_email%-(e)ra aldatua operadoreak"
   recover: "Pasahitza posta tokenaren bidez berrezarria"
+  saregister: "Kontua administratiboki erregistratua"
 
 # --- HISTORY EXTRA FIELDS ---
 history.extra:
@@ -915,6 +916,25 @@ regmode:
     - "%command_prefix%REGMODE TOKEN"
   status: "Uneko erregistro modua: %mode%."
   changed: "Erregistro modua %mode% modura aldatu da."
+
+# --- SAREGISTER ------------------------------------------------------------
+saregister:
+  syntax: "SAREGISTER <ezizena> <pasahitza> [email]"
+  short: "Ezizen bat administratiboki erregistratu."
+  help: |-
+    Sintaxia: SAREGISTER <ezizena> <pasahitza> [email]
+
+    Ezizen bat administratiboki erregistratzen du berehala, bezeroaren
+    egiaztapenik edo maiztasun-mugarik eskatu gabe.
+
+    TOKEN moduan, erreskate-tokena behin erakusten zaio operadoreari.
+    EMAIL moduan, erreskate-tokena zehaztutako helbide elektronikora bidaltzen da.
+  example: "%command_prefix%SAREGISTER Alice Pasahitza123"
+  examples:
+    - "%command_prefix%SAREGISTER Bob Pasahitza456 bob@adibidea.eus"
+  success_token: "%nickname% ezizena erregistratu da. Erreskate-tokena: %token%"
+  success_email: "%nickname% ezizena erregistratu da. Erreskate-tokena %email% helbidera bidali da."
+  invalid_nickname: "%nickname% ezizena ez da baliozkoa."
 
 # --- RESCUE ----------------------------------------------------------------
 rescue:

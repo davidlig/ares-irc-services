@@ -82,3 +82,15 @@ founder_change_token_body: |
     /msg %bot% %command%
 
   O token caduca en 1 hora. Se non solicitou isto, ignore este correo.
+
+# --- SAREGISTER ------------------------------------------------------------
+saregister_token_subject: "%bot%: o teu código de rescate"
+saregister_token_body: |
+  Ola:
+
+  Un operador de rede rexistrou o alcume «%nickname%» para ti.
+
+  O teu código de rescate é: %token%
+
+  Garda este código nun lugar seguro: podes usalo para recuperar o teu alcume se esqueces o contrasinal.
+    /msg %bot% RECOVER %nickname% %token%

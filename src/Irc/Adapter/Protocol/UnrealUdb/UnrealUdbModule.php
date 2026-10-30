@@ -64,6 +64,11 @@ final readonly class UnrealUdbModule implements ProtocolRuntimeModuleInterface, 
         return $this->userModeSupport;
     }
 
+    public function getMaxNickLength(): int
+    {
+        return 30;
+    }
+
     public function intercept(array $arguments): RawCommandInterception
     {
         return $this->rawCommandInterceptor->intercept($arguments);

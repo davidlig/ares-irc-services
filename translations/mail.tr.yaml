@@ -82,3 +82,15 @@ founder_change_token_body: |
     /msg %bot% %command%
 
   Token 1 saat içinde sona erer. Bu isteği siz yapmadıysanız, lütfen bu e-postayı dikkate almayın.
+
+# --- SAREGISTER ------------------------------------------------------------
+saregister_token_subject: "%bot%: kurtarma belirteciniz"
+saregister_token_body: |
+  Merhaba,
+
+  "%nickname%" rumuzu bir ağ operatörü tarafından sizin adınıza kaydedildi.
+
+  Kurtarma belirteciniz: %token%
+
+  Bu belirteci güvenli bir yerde saklayın: Parolanızı unutursanız rumuzunuzu kurtarmak için kullanabilirsiniz.
+    /msg %bot% RECOVER %nickname% %token%

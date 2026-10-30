@@ -42,6 +42,18 @@ register:
   restricted_indefinite: "%channel% için yeni istekler süresiz olarak engellendi."
   restricted_until: "%channel% için yeni istekler %date% tarihine kadar engellendi"
 
+# --- SAREGISTER ------------------------------------------------------------
+saregister:
+  syntax: "SAREGISTER <#channel> <nickname> <açıklama>"
+  short: "Bir kanalı yönetimsel olarak kaydedin."
+  help: |-
+    Sözdizimi: SAREGISTER <#channel> <nickname> <açıklama>
+
+    Belirtilen takma ad için varlık, doğrulama veya hız sınırları gerekmeden
+    hemen kurucu olarak bir kanalı yönetimsel olarak kaydeder.
+  example: "%command_prefix%SAREGISTER #channel Alice Topluluk kanalı"
+  success: "%channel% kanalı %founder% adına kaydedildi."
+
 # --- REGMODE ---------------------------------------------------------------
 regmode:
   syntax: "REGMODE {DIRECT|APPROVAL|STATUS}"
@@ -844,6 +856,7 @@ history.message:
   access_del: "%target_nickname% için erişim kaldırıldı"
   akick_add: "AKICK eklendi: %mask%"
   akick_del: "AKICK kaldırıldı: %mask%"
+  saregister: "Kanal yönetimsel olarak kaydedildi"
 
 # --- HISTORY EXTRA FIELDS ---
 history.extra:

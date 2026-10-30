@@ -43,6 +43,18 @@ register:
   restricted_indefinite: "Cereri noi pentru %channel% sunt blocate pe termen nelimitat."
   restricted_until: "Cereri noi pentru %channel% sunt blocate până la %date%"
 
+# --- SAREGISTER ------------------------------------------------------------
+saregister:
+  syntax: "SAREGISTER <#canal> <poreclă> <descriere>"
+  short: "Înregistrați administrativ un canal."
+  help: |-
+    Sintaxă: SAREGISTER <#canal> <poreclă> <descriere>
+
+    Înregistrează administrativ un canal imediat pentru porecla
+    specificată ca fondator, fără a necesita prezență, verificare sau limite de frecvență.
+  example: "%command_prefix%SAREGISTER #canal Alice Canal comunitar"
+  success: "Canalul %channel% a fost înregistrat pentru %founder%."
+
 # --- REGMODE ---------------------------------------------------------------
 regmode:
   syntax: "REGMODE {DIRECT|APPROVAL|STATUS}"
@@ -847,6 +859,7 @@ history.message:
   access_del: "Acces eliminat pentru %target_nickname%"
   akick_add: "AKICK adăugat: %mask%"
   akick_del: "AKICK eliminat: %mask%"
+  saregister: "Canal înregistrat administrativ"
 
 # --- HISTORY EXTRA FIELDS ---
 history.extra:

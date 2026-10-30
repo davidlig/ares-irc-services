@@ -124,6 +124,33 @@ class RegisteredNick
     }
 
     /**
+     * Creates an immediately active registered nickname.
+     */
+    public static function createActive(
+        string $nickname,
+        string $passwordHash,
+        ?string $email,
+        string $language,
+        DateTimeImmutable $registeredAt,
+        ?string $rescueTokenHash = null,
+    ): self {
+        $nick = new self();
+        $nick->nickname = $nickname;
+        $nick->nicknameLower = strtolower($nickname);
+        $nick->status = NickStatus::Registered;
+        $nick->passwordHash = $passwordHash;
+        self::assertValidEmail($email);
+        $nick->email = $email;
+        $nick->language = self::normalizeLanguage($language);
+        $nick->registeredAt = $registeredAt;
+        if (null !== $rescueTokenHash) {
+            $nick->replaceRescueTokenHash($rescueTokenHash);
+        }
+
+        return $nick;
+    }
+
+    /**
      * Creates a permanently forbidden nick entry (no owner).
      */
     public static function createForbidden(

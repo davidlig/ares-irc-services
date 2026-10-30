@@ -43,6 +43,18 @@ register:
   restricted_indefinite: "Nieuwe aanvragen voor %channel% zijn onbeperkt geblokkeerd."
   restricted_until: "Nieuwe aanvragen voor %channel% zijn geblokkeerd tot %date%"
 
+# --- SAREGISTER ------------------------------------------------------------
+saregister:
+  syntax: "SAREGISTER <#kanaal> <bijnaam> <beschrijving>"
+  short: "Administratief een kanaal registreren."
+  help: |-
+    Syntaxis: SAREGISTER <#kanaal> <bijnaam> <beschrijving>
+
+    Registreert een kanaal onmiddellijk administratief voor de opgegeven bijnaam
+    als oprichter zonder aanwezigheid, verificatie of snelheidslimieten te vereisen.
+  example: "%command_prefix%SAREGISTER #kanaal Alice Gemeenschapskanaal"
+  success: "Kanaal %channel% is geregistreerd voor %founder%."
+
 # --- REGMODE ---------------------------------------------------------------
 regmode:
   syntax: "REGMODE {DIRECT|APPROVAL|STATUS}"
@@ -848,6 +860,7 @@ history.message:
   access_del: "Toegang verwijderd voor %target_nickname%"
   akick_add: "AKICK toegevoegd: %mask%"
   akick_del: "AKICK verwijderd: %mask%"
+  saregister: "Kanaal administratief geregistreerd"
 
 # --- HISTORY EXTRA FIELDS ---
 history.extra:

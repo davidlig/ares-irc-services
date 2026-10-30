@@ -41,6 +41,18 @@ register:
   limit_exceeded: "You have reached the maximum of %max% registered channels."
   throttled: "You must wait %minutes% minute(s) before registering another channel."
 
+# --- SAREGISTER ------------------------------------------------------------
+saregister:
+  syntax: "SAREGISTER <#channel> <nickname> <description>"
+  short: "Administratively register a channel."
+  help: |-
+    Syntax: SAREGISTER <#channel> <nickname> <description>
+
+    Administratively registers a channel immediately to the specified nickname
+    as founder without requiring presence, verification, or throttle limits.
+  example: "%command_prefix%SAREGISTER #channel Alice Community channel"
+  success: "Channel %channel% has been registered to %founder%."
+
 # --- REGMODE ---------------------------------------------------------------
 regmode:
   syntax: "REGMODE {DIRECT|APPROVAL|STATUS}"
@@ -829,6 +841,7 @@ history.message:
   access_del: "Access removed for %target_nickname%"
   akick_add: "AKICK added: %mask%"
   akick_del: "AKICK removed: %mask%"
+  saregister: "Channel administratively registered"
 
 # --- HISTORY EXTRA FIELDS ---
 history.extra:
