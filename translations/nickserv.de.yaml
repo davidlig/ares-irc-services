@@ -783,6 +783,7 @@ history.message:
   email_changed_owner: "E-Mail von %old_email% zu %new_email% geändert"
   email_changed_operator: "E-Mail zu %new_email% von Operator geändert"
   recover: "Passwort via E-Mail-Token zurückgesetzt"
+  saregister: "Konto administrativ registriert"
 
 # --- HISTORY EXTRA FIELDS ---
 history.extra:
@@ -841,6 +842,25 @@ regmode:
     - "%command_prefix%REGMODE TOKEN"
   status: "Aktueller Registrierungsmodus: %mode%."
   changed: "Registrierungsmodus auf %mode% geändert."
+
+# --- SAREGISTER ------------------------------------------------------------
+saregister:
+  syntax: "SAREGISTER <nickname> <Passwort> [email]"
+  short: "Einen Nickname administrativ registrieren."
+  help: |-
+    Syntax: SAREGISTER <nickname> <Passwort> [email]
+
+    Registriert einen Nickname sofort administrativ, ohne dass eine
+    Client-Verifizierung oder Drosselungslimits erforderlich sind.
+
+    Im TOKEN-Modus wird das Rettungstoken einmalig dem Operator angezeigt.
+    Im EMAIL-Modus wird das Rettungstoken an die angegebene E-Mail-Adresse gesendet.
+  example: "%command_prefix%SAREGISTER Alice Passwort123"
+  examples:
+    - "%command_prefix%SAREGISTER Bob Passwort456 bob@example.de"
+  success_token: "Nickname %nickname% wurde registriert. Rettungstoken: %token%"
+  success_email: "Nickname %nickname% wurde registriert. Rettungstoken an %email% gesendet."
+  invalid_nickname: "Ungültiger Nickname %nickname%."
 
 # --- RESCUE ----------------------------------------------------------------
 rescue:

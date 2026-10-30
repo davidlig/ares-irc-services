@@ -770,6 +770,7 @@ history.message:
   email_changed_owner: "E-mail gewijzigd van %old_email% naar %new_email%"
   email_changed_operator: "E-mail gewijzigd naar %new_email% door operator"
   recover: "Wachtwoord gereset via e-mailtoken"
+  saregister: "Account administratief geregistreerd"
 
 # --- HISTORY EXTRA FIELDS ---
 history.extra:
@@ -828,6 +829,25 @@ regmode:
     - "%command_prefix%REGMODE TOKEN"
   status: "Huidige registratiemodus: %mode%."
   changed: "Registratiemodus gewijzigd naar %mode%."
+
+# --- SAREGISTER ------------------------------------------------------------
+saregister:
+  syntax: "SAREGISTER <bijnaam> <wachtwoord> [email]"
+  short: "Een bijnaam administratief registreren."
+  help: |-
+    Syntaxis: SAREGISTER <bijnaam> <wachtwoord> [email]
+
+    Registreert een bijnaam onmiddellijk administratief zonder dat
+    clientverificatie of frequentielimieten vereist zijn.
+
+    In TOKEN-modus wordt het hersteltoken eenmalig aan de beheerder getoond.
+    In EMAIL-modus wordt het hersteltoken naar het opgegeven e-mailadres verzonden.
+  example: "%command_prefix%SAREGISTER Alice Wachtwoord123"
+  examples:
+    - "%command_prefix%SAREGISTER Bob Wachtwoord456 bob@voorbeeld.nl"
+  success_token: "Bijnaam %nickname% is geregistreerd. Hersteltoken: %token%"
+  success_email: "Bijnaam %nickname% is geregistreerd. Hersteltoken verzonden naar %email%."
+  invalid_nickname: "Ongeldige bijnaam %nickname%."
 
 # --- RESCUE ----------------------------------------------------------------
 rescue:

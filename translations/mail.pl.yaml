@@ -82,3 +82,15 @@ founder_change_token_body: |
     /msg %bot% %command%
 
   Token wygasa za 1 godzinę. Jeśli to nie Ty wysłałeś to żądanie, zignoruj tę wiadomość.
+
+# --- SAREGISTER ------------------------------------------------------------
+saregister_token_subject: "%bot%: Twój token ratunkowy"
+saregister_token_body: |
+  Witaj,
+
+  Nick "%nickname%" został dla Ciebie zarejestrowany przez operatora sieci.
+
+  Twój token ratunkowy to: %token%
+
+  Przechowuj ten token w bezpiecznym miejscu: możesz go użyć do odzyskania nicka w przypadku zapomnienia hasła.
+    /msg %bot% RECOVER %nickname% %token%

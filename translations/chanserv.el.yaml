@@ -43,6 +43,18 @@ register:
   restricted_indefinite: "Τα νέα αιτήματα εγγραφής για %channel% αποκλείονται επ’ αόριστον."
   restricted_until: "Τα νέα αιτήματα εγγραφής για %channel% αποκλείονται έως %date%"
 
+# --- SAREGISTER ------------------------------------------------------------
+saregister:
+  syntax: "SAREGISTER <#channel> <nickname> <description>"
+  short: "Διοικητική καταχώρηση καναλιού."
+  help: |-
+    Σύνταξη: SAREGISTER <#channel> <nickname> <description>
+
+    Καταχωρεί διοικητικά ένα κανάλι αμέσως στο καθορισμένο ψευδώνυμο
+    ως ιδρυτή χωρίς να απαιτείται παρουσία, επαλήθευση ή όρια ρυθμού.
+  example: "%command_prefix%SAREGISTER #channel Alice Κοινοτικό κανάλι"
+  success: "Το κανάλι %channel% καταχωρήθηκε για τον/την %founder%."
+
 # --- REGMODE ---------------------------------------------------------------
 regmode:
   syntax: "REGMODE {DIRECT|APPROVAL|STATUS}"
@@ -885,6 +897,7 @@ history.message:
   access_del: "Πρόσβαση αφαιρέθηκε για %target_nickname%"
   akick_add: "AKICK προστέθηκε: %mask%"
   akick_del: "AKICK αφαιρέθηκε: %mask%"
+  saregister: "Το κανάλι καταχωρήθηκε διοικητικά"
 
 # --- HISTORY EXTRA FIELDS ---
 history.extra:

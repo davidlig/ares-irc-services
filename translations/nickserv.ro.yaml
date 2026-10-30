@@ -775,6 +775,7 @@ history.message:
   email_changed_owner: "E-mail schimbat din %old_email% în %new_email%"
   email_changed_operator: "E-mail schimbat la %new_email% de operator"
   recover: "Parolă resetată prin token de e-mail"
+  saregister: "Cont înregistrat administrativ"
 
 # --- HISTORY EXTRA FIELDS ---
 history.extra:
@@ -833,6 +834,25 @@ regmode:
     - "%command_prefix%REGMODE TOKEN"
   status: "Modul actual de înregistrare: %mode%."
   changed: "Modul de înregistrare a fost schimbat în %mode%."
+
+# --- SAREGISTER ------------------------------------------------------------
+saregister:
+  syntax: "SAREGISTER <poreclă> <parolă> [email]"
+  short: "Înregistrează administrativ o poreclă."
+  help: |-
+    Sintaxă: SAREGISTER <poreclă> <parolă> [email]
+
+    Înregistrează administrativ o poreclă imediat, fără a necesita
+    verificarea clientului sau limite de frecvență.
+
+    În modul TOKEN, tokenul de salvare este afișat o singură dată operatorului.
+    În modul EMAIL, tokenul de salvare este trimis la adresa de e-mail specificată.
+  example: "%command_prefix%SAREGISTER Alice Parolă123"
+  examples:
+    - "%command_prefix%SAREGISTER Bob Parolă456 bob@exemplu.ro"
+  success_token: "Porecla %nickname% a fost înregistrată. Token de salvare: %token%"
+  success_email: "Porecla %nickname% a fost înregistrată. Token de salvare trimis la %email%."
+  invalid_nickname: "Poreclă nevalidă %nickname%."
 
 # --- RESCUE ----------------------------------------------------------------
 rescue:

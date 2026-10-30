@@ -82,3 +82,15 @@ founder_change_token_body: |
     /msg %bot% %command%
 
   El token expira en 1 hora. Si no heu sol·licitat això, ignoreu aquest correu.
+
+# --- SAREGISTER ------------------------------------------------------------
+saregister_token_subject: "%bot%: el teu codi de rescat"
+saregister_token_body: |
+  Hola:
+
+  Un operador de xarxa ha registrat el sobrenom «%nickname%» per a tu.
+
+  El teu codi de rescat és: %token%
+
+  Guarda aquest codi en un lloc segur: pots utilitzar-lo per recuperar el teu sobrenom si oblides la contrasenya.
+    /msg %bot% RECOVER %nickname% %token%

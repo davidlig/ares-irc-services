@@ -41,6 +41,7 @@ final class ChanServPermissionProviderTest extends TestCase
         self::assertContains(ChanServPermission::LIST, $permission->getPermissions());
         self::assertContains(ChanServPermission::REGMODE, $permission->getPermissions());
         self::assertContains(ChanServPermission::REGISTRATION_REVIEW, $permission->getPermissions());
+        self::assertContains(ChanServPermission::SAREGISTER, $permission->getPermissions());
     }
 
     #[Test]

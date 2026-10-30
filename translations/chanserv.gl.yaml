@@ -43,6 +43,18 @@ register:
   restricted_indefinite: "As novas solicitudes para %channel% están bloqueadas indefinidamente."
   restricted_until: "As novas solicitudes para %channel% están bloqueadas ata %date%"
 
+# --- SAREGISTER ------------------------------------------------------------
+saregister:
+  syntax: "SAREGISTER <#canle> <alcume> <descrición>"
+  short: "Rexistrar administrativamente unha canle."
+  help: |-
+    Sintaxe: SAREGISTER <#canle> <alcume> <descrición>
+
+    Rexistra administrativamente unha canle de xeito inmediato para o alcume
+    especificado como fundador sen requirir presenza, verificación nin límites de frecuencia.
+  example: "%command_prefix%SAREGISTER #canle Alicia Canle comunitaria"
+  success: "A canle %channel% foi rexistrada para %founder%."
+
 # --- REGMODE ---------------------------------------------------------------
 regmode:
   syntax: "REGMODE {DIRECT|APPROVAL|STATUS}"
@@ -846,6 +858,7 @@ history.message:
   access_del: "Acceso eliminado para %target_nickname%"
   akick_add: "AKICK engadida: %mask%"
   akick_del: "AKICK eliminada: %mask%"
+  saregister: "Canle rexistrada administrativamente"
 
 # --- HISTORY EXTRA FIELDS ---
 history.extra:

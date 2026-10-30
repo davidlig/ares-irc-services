@@ -82,3 +82,15 @@ founder_change_token_body: |
     /msg %bot% %command%
 
   Das Token läuft in 1 Stunde ab. Falls Sie dies nicht angefordert haben, ignorieren Sie bitte diese E-Mail.
+
+# --- SAREGISTER ------------------------------------------------------------
+saregister_token_subject: "%bot%: Dein Rettungstoken"
+saregister_token_body: |
+  Hallo,
+
+  der Nickname „%nickname%“ wurde von einem Netzwerk-Operator für dich registriert.
+
+  Dein Rettungstoken lautet: %token%
+
+  Bewahre dieses Token sicher auf: Du kannst es verwenden, um deinen Nickname wiederherzustellen, falls du dein Passwort vergisst.
+    /msg %bot% RECOVER %nickname% %token%

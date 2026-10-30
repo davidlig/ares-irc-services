@@ -770,6 +770,7 @@ history.message:
   email_changed_owner: "Email cambiado de %old_email% a %new_email%"
   email_changed_operator: "Email cambiado a %new_email% por un operador"
   recover: "Contraseña restablecida vía token de email"
+  saregister: "Cuenta registrada administrativamente"
 
 # --- HISTORY EXTRA FIELDS ---
 history.extra:
@@ -830,6 +831,25 @@ regmode:
     - "%command_prefix%REGMODE TOKEN"
   status: "Modo de registro actual: %mode%."
   changed: "Modo de registro cambiado a %mode%."
+
+# --- SAREGISTER ------------------------------------------------------------
+saregister:
+  syntax: "SAREGISTER <apodo> <contraseña> [email]"
+  short: "Registrar administrativamente un apodo."
+  help: |-
+    Sintaxis: SAREGISTER <apodo> <contraseña> [email]
+
+    Registra administrativamente un apodo de forma inmediata sin requerir
+    verificación del cliente ni límites de frecuencia.
+
+    En modo TOKEN, el código de rescate se muestra una vez al operador.
+    En modo EMAIL, el código de rescate se envía a la dirección de correo indicada.
+  example: "%command_prefix%SAREGISTER Alice Contraseña123"
+  examples:
+    - "%command_prefix%SAREGISTER Bob Contraseña456 bob@ejemplo.com"
+  success_token: "El apodo %nickname% ha sido registrado. Código de rescate: %token%"
+  success_email: "El apodo %nickname% ha sido registrado. Código de rescate enviado a %email%."
+  invalid_nickname: "Apodo no válido %nickname%."
 
 # --- Unified rescue credential -----------------------------------------------
 rescue:

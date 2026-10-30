@@ -774,6 +774,7 @@ history.message:
   email_changed_owner: "Correu canviat de %old_email% a %new_email%"
   email_changed_operator: "Correu canviat a %new_email% per l'operador"
   recover: "Contrasenya restablerta via token de correu"
+  saregister: "Compte registrat administrativament"
 
 # --- HISTORY EXTRA FIELDS ---
 history.extra:
@@ -833,6 +834,25 @@ regmode:
     - "%command_prefix%REGMODE TOKEN"
   status: "Mode de registre actual: %mode%."
   changed: "Mode de registre canviat a %mode%."
+
+# --- SAREGISTER ------------------------------------------------------------
+saregister:
+  syntax: "SAREGISTER <nickname> <contrasenya> [email]"
+  short: "Registrar administrativament un sobrenom."
+  help: |-
+    Sintaxi: SAREGISTER <nickname> <contrasenya> [email]
+
+    Registra administrativament un sobrenom immediatament sense requerir
+    verificació del client ni límits de freqüència.
+
+    En mode TOKEN, el codi de rescat es mostra una vegada a l'operador.
+    En mode EMAIL, el codi de rescat s'envia a l'adreça de correu indicada.
+  example: "%command_prefix%SAREGISTER Alice Contrasenya123"
+  examples:
+    - "%command_prefix%SAREGISTER Bob Contrasenya456 bob@exemple.cat"
+  success_token: "El sobrenom %nickname% ha estat registrat. Codi de rescat: %token%"
+  success_email: "El sobrenom %nickname% ha estat registrat. Codi de rescat enviat a %email%."
+  invalid_nickname: "Sobrenom no vàlid %nickname%."
 
 # --- RESCUE ----------------------------------------------------------------
 rescue:

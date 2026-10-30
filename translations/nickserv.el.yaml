@@ -913,6 +913,7 @@ history.message:
   email_changed_owner: "Το email άλλαξε από %old_email% σε %new_email%"
   email_changed_operator: "Το email άλλαξε σε %new_email% από operator"
   recover: "Επαναφορά κωδικού μέσω token email"
+  saregister: "Ο λογαριασμός καταχωρήθηκε διοικητικά"
 
 # --- HISTORY EXTRA FIELDS ---
 history.extra:
@@ -983,6 +984,25 @@ regmode:
     - "%command_prefix%REGMODE TOKEN"
   status: "Τρέχων τρόπος εγγραφής: %mode%."
   changed: "Ο τρόπος εγγραφής άλλαξε σε %mode%."
+
+# --- SAREGISTER ------------------------------------------------------------
+saregister:
+  syntax: "SAREGISTER <nickname> <κωδικός> [email]"
+  short: "Διοικητική καταχώριση ψευδωνύμου."
+  help: |-
+    Σύνταξη: SAREGISTER <nickname> <κωδικός> [email]
+
+    Καταχωρεί διοικητικά ένα ψευδώνυμο αμέσως χωρίς να απαιτείται
+    επαλήθευση πελάτη ή όρια συχνότητας.
+
+    Στη λειτουργία TOKEN, το διακριτικό διάσωσης εμφανίζεται μία φορά στον διαχειριστή.
+    Στη λειτουργία EMAIL, το διακριτικό διάσωσης αποστέλλεται στην καθορισμένη διεύθυνση email.
+  example: "%command_prefix%SAREGISTER Alice Κωδικός123"
+  examples:
+    - "%command_prefix%SAREGISTER Bob Κωδικός456 bob@example.gr"
+  success_token: "Το ψευδώνυμο %nickname% καταχωρήθηκε. Διακριτικό διάσωσης: %token%"
+  success_email: "Το ψευδώνυμο %nickname% καταχωρήθηκε. Το διακριτικό διάσωσης στάλθηκε στο %email%."
+  invalid_nickname: "Μη έγκυρο ψευδώνυμο %nickname%."
 
 # --- RESCUE ----------------------------------------------------------------
 rescue:

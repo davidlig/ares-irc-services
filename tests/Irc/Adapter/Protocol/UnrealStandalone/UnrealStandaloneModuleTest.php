@@ -81,6 +81,14 @@ final class UnrealStandaloneModuleTest extends TestCase
         self::assertInstanceOf(UnrealStandaloneUserModeSupport::class, $module->getUserModeSupport());
     }
 
+    #[Test]
+    public function getMaxNickLengthReturns30(): void
+    {
+        $module = $this->createModule();
+
+        self::assertSame(30, $module->getMaxNickLength());
+    }
+
     public function testProvidesOrdinaryBanMatcher(): void
     {
         $module = $this->createModule();

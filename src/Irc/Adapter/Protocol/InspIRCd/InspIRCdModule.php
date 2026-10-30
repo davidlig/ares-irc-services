@@ -30,6 +30,8 @@ final class InspIRCdModule implements ProtocolRuntimeModuleInterface, ChannelBan
 
     private string $banCaseMapping = 'ascii';
 
+    private int $maxNickLength = 30;
+
     public function __construct(
         private readonly InspIRCdProtocolHandler $handler,
         private readonly InspIRCdProtocolServiceActions $serviceActions,
@@ -68,6 +70,16 @@ final class InspIRCdModule implements ProtocolRuntimeModuleInterface, ChannelBan
     public function getUserModeSupport(): UserModeSupportInterface
     {
         return $this->userModeSupport;
+    }
+
+    public function getMaxNickLength(): int
+    {
+        return $this->maxNickLength;
+    }
+
+    public function updateMaxNickLength(int $maxNickLength): void
+    {
+        $this->maxNickLength = $maxNickLength;
     }
 
     /**

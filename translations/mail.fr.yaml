@@ -82,3 +82,15 @@ founder_change_token_body: |
     /msg %bot% %command%
 
   Le jeton expire dans 1 heure. Si vous n'avez pas fait cette demande, veuillez ignorer cet e-mail.
+
+# --- SAREGISTER ------------------------------------------------------------
+saregister_token_subject: "%bot% : votre jeton de secours"
+saregister_token_body: |
+  Bonjour,
+
+  Le pseudonyme « %nickname% » a été enregistré pour vous par un opérateur réseau.
+
+  Votre jeton de secours est : %token%
+
+  Conservez ce jeton en lieu sûr : vous pouvez l'utiliser pour récupérer votre pseudonyme si vous oubliez votre mot de passe.
+    /msg %bot% RECOVER %nickname% %token%

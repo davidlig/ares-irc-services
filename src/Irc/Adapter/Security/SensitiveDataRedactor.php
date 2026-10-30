@@ -87,6 +87,12 @@ final readonly class SensitiveDataRedactor
                 }
                 break;
 
+            case 'SAREGISTER':
+                if (isset($parts[2])) {
+                    $parts[2] = self::MASK;
+                }
+                break;
+
             case 'IDENTIFY':
                 $last = count($parts) - 1;
                 if ($last >= 1) {

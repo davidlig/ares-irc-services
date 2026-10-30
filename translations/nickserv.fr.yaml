@@ -783,6 +783,7 @@ history.message:
   email_changed_owner: "E-mail changé de %old_email% à %new_email%"
   email_changed_operator: "E-mail changé en %new_email% par l'opérateur"
   recover: "Mot de passe réinitialisé via jeton e-mail"
+  saregister: "Compte enregistré administrativement"
 
 # --- HISTORY EXTRA FIELDS ---
 history.extra:
@@ -842,6 +843,25 @@ regmode:
     - "%command_prefix%REGMODE TOKEN"
   status: "Mode d’inscription actuel : %mode%."
   changed: "Mode d’inscription modifié : %mode%."
+
+# --- SAREGISTER ------------------------------------------------------------
+saregister:
+  syntax: "SAREGISTER <surnom> <motdepasse> [email]"
+  short: "Enregistrer administrativement un pseudonyme."
+  help: |-
+    Syntaxe : SAREGISTER <surnom> <motdepasse> [email]
+
+    Enregistre administrativement un pseudonyme immédiatement sans nécessiter
+    de vérification du client ni de limites de fréquence.
+
+    En mode TOKEN, le jeton de secours est affiché une seule fois à l'opérateur.
+    En mode EMAIL, le jeton de secours est envoyé à l'adresse e-mail spécifiée.
+  example: "%command_prefix%SAREGISTER Alice MotDePasse123"
+  examples:
+    - "%command_prefix%SAREGISTER Bob MotDePasse456 bob@exemple.fr"
+  success_token: "Le pseudonyme %nickname% a été enregistré. Jeton de secours : %token%"
+  success_email: "Le pseudonyme %nickname% a été enregistré. Jeton de secours envoyé à %email%."
+  invalid_nickname: "Pseudonyme non valide %nickname%."
 
 # --- RESCUE ----------------------------------------------------------------
 rescue:

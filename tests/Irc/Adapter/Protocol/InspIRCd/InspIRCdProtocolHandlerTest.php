@@ -456,6 +456,32 @@ final class InspIRCdProtocolHandlerTest extends TestCase
     }
 
     #[Test]
+    public function handleCapabWithCapabilitiesUpdatesMaxNickLength(): void
+    {
+        $connectionHolder = new ActiveConnectionHolder();
+        $factory = new InspIRCdChannelModeSupportFactory();
+        $modeSupport = $factory->createDefault();
+
+        $handler = new InspIRCdProtocolHandler(
+            sid: '0A0',
+            connectionHolder: $connectionHolder,
+            modeSupportFactory: $factory,
+            logger: new NullLogger(),
+        );
+
+        $module = $this->createModuleWithHandler($handler, $connectionHolder, $modeSupport);
+        $connectionHolder->setProtocolModule($module);
+
+        $connection = $this->createStub(ConnectionInterface::class);
+
+        $this->sendRequiredCapab($handler, $connection, extraLines: [
+            'CAPAB CAPABILITIES :CASEMAPPING=ascii MAXNICK=32',
+        ]);
+
+        self::assertSame(32, $module->getMaxNickLength());
+    }
+
+    #[Test]
     public function handleCapabWithFullRanksUpdatesModuleCorrectly(): void
     {
         $connectionHolder = new ActiveConnectionHolder();

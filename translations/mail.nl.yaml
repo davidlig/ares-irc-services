@@ -82,3 +82,15 @@ founder_change_token_body: |
     /msg %bot% %command%
 
   De token verloopt binnen 1 uur. Als u dit niet heeft aangevraagd, negeer deze e-mail dan.
+
+# --- SAREGISTER ------------------------------------------------------------
+saregister_token_subject: "%bot%: je hersteltoken"
+saregister_token_body: |
+  Hallo,
+
+  De bijnaam "%nickname%" is voor jou geregistreerd door een netwerkbeheerder.
+
+  Je hersteltoken is: %token%
+
+  Bewaar dit token veilig: je kunt het gebruiken om je bijnaam te herstellen als je je wachtwoord vergeet.
+    /msg %bot% RECOVER %nickname% %token%

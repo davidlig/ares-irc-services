@@ -216,6 +216,9 @@ final class InspIRCdProtocolHandler implements ProtocolHandlerInterface
         if ($module instanceof InspIRCdModule) {
             $module->updateChannelModeSupport($newModeSupport);
             $module->updateBanCaseMapping($capab->getCapability('CASEMAPPING') ?? 'ascii');
+            if (null !== ($maxNick = $capab->getCapability('MAXNICK'))) {
+                $module->updateMaxNickLength((int) $maxNick);
+            }
             $this->logger->info('Updated InspIRCd channel mode support from remote CAPAB.', [
                 'prefixModes' => $newModeSupport->getSupportedPrefixModes(),
                 'hasPermanent' => $newModeSupport->hasPermanentChannelMode(),

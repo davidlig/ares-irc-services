@@ -58,6 +58,11 @@ final readonly class UnrealStandaloneModule implements ProtocolRuntimeModuleInte
         return $this->userModeSupport;
     }
 
+    public function getMaxNickLength(): int
+    {
+        return 30;
+    }
+
     public function getChannelBanMatcher(): ChannelBanMatcher
     {
         return new UnrealStandaloneChannelBanMatcher();

@@ -55,6 +55,9 @@ final readonly class NickServPermission
     /** IRCop permission to change the network registration policy. */
     public const string REGMODE = 'nickserv.regmode';
 
+    /** IRCop permission to administratively register nicknames. */
+    public const string SAREGISTER = 'nickserv.saregister';
+
     private function __construct() {}
 
     /** @return list<string> */
@@ -75,6 +78,7 @@ final readonly class NickServPermission
             self::HISTORY,
             self::LIST,
             self::REGMODE,
+            self::SAREGISTER,
         ];
     }
 }

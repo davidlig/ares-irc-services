@@ -43,6 +43,18 @@ register:
   restricted_indefinite: "Erregistro-eskaera berriak %channel% mugagabe blokeatuta daude."
   restricted_until: "Erregistro-eskaera berriak %channel% %date% arte blokeatuta daude"
 
+# --- SAREGISTER ------------------------------------------------------------
+saregister:
+  syntax: "SAREGISTER <#kanala> <ezizena> <deskribapena>"
+  short: "Kanal bat administratiboki erregistratu."
+  help: |-
+    Sintaxia: SAREGISTER <#kanala> <ezizena> <deskribapena>
+
+    Kanal bat administratiboki erregistratzen du berehala zehaztutako ezizenarentzat
+    sortzaile gisa, presentziarik, egiaztapenik edo maiztasun-mugarik eskatu gabe.
+  example: "%command_prefix%SAREGISTER #kanala Alice Komunitate-kanala"
+  success: "%channel% kanala %founder% erabiltzailearentzat erregistratu da."
+
 # --- REGMODE ---------------------------------------------------------------
 regmode:
   syntax: "REGMODE {DIRECT|APPROVAL|STATUS}"
@@ -843,6 +855,7 @@ history.message:
   access_del: "Sarbidea kendua %target_nickname%-(r)entzat"
   akick_add: "AKICK gehitua: %mask%"
   akick_del: "AKICK kendua: %mask%"
+  saregister: "Kanala administratiboki erregistratua"
 
 # --- HISTORY EXTRA FIELDS ---
 history.extra:

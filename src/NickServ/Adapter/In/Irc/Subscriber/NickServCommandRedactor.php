@@ -21,6 +21,7 @@ use function trim;
  *   SET PASSWORD <new_password>    → SET PASSWORD ******
  *   VERIFY <token>                  → VERIFY ******
  *   RECOVER <nick> <token>         → RECOVER <nick> ******
+ *   SAREGISTER <nick> <password> [email] → SAREGISTER <nick> ****** [email]
  */
 final readonly class NickServCommandRedactor
 {
@@ -37,6 +38,12 @@ final readonly class NickServCommandRedactor
                 if (isset($parts[1])) {
                     $parts[1] = self::MASK;
                 }
+                if (isset($parts[2])) {
+                    $parts[2] = self::MASK;
+                }
+                break;
+
+            case 'SAREGISTER':
                 if (isset($parts[2])) {
                     $parts[2] = self::MASK;
                 }

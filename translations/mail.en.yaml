@@ -82,3 +82,15 @@ founder_change_token_body: |
     /msg %bot% %command%
 
   The token expires in 1 hour. If you did not request this, please ignore this email.
+
+# --- SAREGISTER ------------------------------------------------------------
+saregister_token_subject: "%bot%: your rescue token"
+saregister_token_body: |
+  Hello,
+
+  The nickname "%nickname%" has been registered for you by a network operator.
+
+  Your rescue token is: %token%
+
+  Store this token safely: you can use it to recover your nickname if you forget your password.
+    /msg %bot% RECOVER %nickname% %token%
