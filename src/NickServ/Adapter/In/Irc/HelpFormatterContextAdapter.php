@@ -56,10 +56,6 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
      */
     public function trans(string $key, array $params = []): string
     {
-        if (!$this->context->hasHelpPresentation()) {
-            return $this->context->trans($key, $params);
-        }
-
         $inline = [
             'identify.help' => 1, 'identify.native_help' => 2, 'set.language.help' => 14, 'set.private.help' => 2,
             'set.msg.help' => 4, 'set.vhost.help' => 1, 'regmode.help' => 3,
@@ -73,7 +69,8 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
                     'regmode.help' => Component::BulletedRow,
                     default => Component::Emphasis,
                 };
-                $params['emphasis_' . $i] = new Fragment($this->context->trans($fragmentKey), $fragmentComponent);
+                $text = $this->context->trans($fragmentKey);
+                $params['emphasis_' . $i] = $this->context->hasHelpPresentation() ? new Fragment($text, $fragmentComponent) : $text;
             }
 
             return $this->context->formatHelp(Component::Text, $key, $params);
@@ -81,10 +78,15 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
 
         if ('suspend.help' === $key) {
             for ($i = 0; $i < 4; ++$i) {
-                $params['emphasis_' . $i] = new Fragment($this->context->trans('help_fragments.suspend_help_' . $i), Component::Command);
+                $text = $this->context->trans('help_fragments.suspend_help_' . $i);
+                $params['emphasis_' . $i] = $this->context->hasHelpPresentation() ? new Fragment($text, Component::Command) : $text;
             }
 
             return $this->context->formatHelp(Component::Text, $key, $params);
+        }
+
+        if (!$this->context->hasHelpPresentation()) {
+            return $this->context->trans($key, $params);
         }
 
         if ('help.set_timezone.region_unknown' === $key) {

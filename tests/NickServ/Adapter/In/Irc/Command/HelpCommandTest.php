@@ -45,7 +45,9 @@ use function fwrite;
 use function getenv;
 use function implode;
 use function is_scalar;
+use function str_contains;
 use function str_repeat;
+use function str_replace;
 use function strtr;
 
 #[CoversClass(HelpCommand::class)]
@@ -273,6 +275,7 @@ final class HelpCommandTest extends TestCase
                 $translation = match ($id) {
                     'help.intro_expiration_label' => 'NOTE',
                     'help.warning_marker' => "\x0304⚠\x03\x0F",
+                    'help.intro_expiration_duration' => '%days% days',
                     'help.intro_expiration' => "%marker% %label%: Nicknames unused for more than \x1F\x0304%days% days\x03\x1F are automatically removed.",
                     default => $id,
                 };
@@ -373,6 +376,7 @@ final class HelpCommandTest extends TestCase
                 '%marker%' => "\x0304⚠\x03\x0F",
                 '%label%' => 'NOTE',
                 '%days%' => 30,
+                '%duration%' => '30 days',
             ],
         ], $translations);
         $output = implode("\n", $messages);
@@ -1474,6 +1478,50 @@ final class HelpCommandTest extends TestCase
             self::assertStringContainsString('HELP SET TIMEZONE', $unknown, $language);
             if ('el' === $language) {
                 self::assertStringContainsString("\x02\x0303%d\x03\x0F", $adapter->trans('suspend.help'));
+            }
+        }
+    }
+
+    #[Test]
+    #[DataProvider('unstyledHelpCases')]
+    public function unstyledHelpResolvesLocalizedContent(string $language, ?string $key, int $fragments): void
+    {
+        $translator = new Translator($language);
+        $translator->addLoader('yaml', new IrcYamlTranslationLoader());
+        $translator->addResource('yaml', dirname(__DIR__, 6) . '/translations/nickserv.' . $language . '.yaml', $language, 'nickserv');
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('getNick')->willReturn('CustomNick');
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void { $messages[] = $message; });
+        $context = new NickServContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), null, 'HELP', [], $notifier, $translator, $language, 'UTC', 'NOTICE', new NickServCommandRegistry([]), new PendingVerificationRegistry(), new RecoveryTokenRegistry(), $this->createServiceNicks());
+        if (null === $key) {
+            $this->createHelpCommand(30)->execute($context);
+            $text = implode("\n", $messages);
+            self::assertStringContainsString($translator->trans('help.intro_expiration_duration', ['%days%' => 30], 'nickserv'), $text);
+            self::assertStringContainsString('CustomNick', $text);
+            self::assertStringNotContainsString('%duration%', $text);
+        } else {
+            $adapter = new HelpFormatterContextAdapter($context, $this->createStub(NickServOperatorAccess::class));
+            $text = $adapter->trans($key);
+            for ($i = 0; $i < $fragments; ++$i) {
+                if (str_contains($translator->trans($key, [], 'nickserv'), '%emphasis_' . $i . '%')) {
+                    self::assertStringContainsString($translator->trans('help_fragments.' . str_replace('.', '_', $key) . '_' . $i, [], 'nickserv'), $text);
+                }
+            }
+            self::assertStringNotContainsString('%emphasis_', $text);
+            self::assertStringNotContainsString('help_fragments.', $text);
+        }
+        self::assertStringNotContainsString("\x03", $text);
+        self::assertStringNotContainsString("\x02", $text);
+    }
+
+    /** @return iterable<string, array{string, ?string, int}> */
+    public static function unstyledHelpCases(): iterable
+    {
+        foreach (['en', 'es'] as $language) {
+            yield $language . ' expiration' => [$language, null, 0];
+            foreach (['identify.help' => 1, 'identify.native_help' => 2, 'set.language.help' => 14, 'set.private.help' => 2, 'set.msg.help' => 4, 'set.vhost.help' => 1, 'regmode.help' => 3, 'suspend.help' => 4] as $key => $fragments) {
+                yield $language . ' ' . $key => [$language, $key, $fragments];
             }
         }
     }

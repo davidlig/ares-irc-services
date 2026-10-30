@@ -189,6 +189,7 @@ final readonly class HelpCommand implements NickServCommandInterface
                     'marker' => $context->trans('help.warning_marker'),
                     'label' => $context->trans('help.intro_expiration_label'),
                     'days' => $this->inactivityExpiryDays,
+                    'duration' => $context->trans('help.intro_expiration_duration', ['days' => $this->inactivityExpiryDays]),
                 ]);
         }
         $lines = $this->formatter->renderGeneralHelp($adapter);
