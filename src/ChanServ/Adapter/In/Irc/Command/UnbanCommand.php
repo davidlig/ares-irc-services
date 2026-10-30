@@ -12,6 +12,9 @@ use App\ChanServ\Application\UseCase\Unban\UnbanChannelOutcome;
 use App\Irc\Application\Port\In\Command\CommandOutcome;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\Fragment;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 
 use function in_array;
 
@@ -103,19 +106,19 @@ final readonly class UnbanCommand implements ChanServCommandInterface
         }
         $channelName = $context->getChannelNameArg(0);
         if (null === $channelName) {
-            $context->reply('error.invalid_channel');
+            $context->reply('error.invalid_channel', ['%example%' => new Fragment($context->trans('error.invalid_channel_example'), Component::Emphasis)], Role::Error);
 
             return CommandOutcome::rejected();
         }
         $account = $context->senderAccount;
         if (null === $account || (null !== $context->sender && !$context->sender->isIdentified)) {
-            $context->reply('error.not_identified');
+            $context->reply('presentation.error.not_identified', ['%identify%' => new Fragment($context->trans('presentation.identify'), Component::Command)], Role::Error);
 
             return CommandOutcome::rejected();
         }
         $sender = $context->sender;
         if (null === $sender) {
-            $context->reply('error.generic');
+            $context->reply('error.generic', role: Role::Error);
 
             return CommandOutcome::rejected();
         }
@@ -131,7 +134,12 @@ final readonly class UnbanCommand implements ChanServCommandInterface
             UnbanChannelOutcome::ChannelNotOnNetwork => 'unban.not_on_network',
             UnbanChannelOutcome::Unavailable => 'unban.unavailable',
         };
-        $context->reply($key, ['%channel%' => $channelName, '%count%' => (string) $result->removedCount]);
+        $role = match ($result->outcome) {
+            UnbanChannelOutcome::Removed => Role::Success,
+            UnbanChannelOutcome::NoMatches => Role::Information,
+            UnbanChannelOutcome::ChannelNotOnNetwork, UnbanChannelOutcome::Unavailable => Role::Error,
+        };
+        $context->reply($key, ['%channel%' => $channelName, '%count%' => (string) $result->removedCount], $role);
 
         return in_array($result->outcome, [UnbanChannelOutcome::Removed, UnbanChannelOutcome::NoMatches], true) ? CommandOutcome::success() : CommandOutcome::rejected();
     }

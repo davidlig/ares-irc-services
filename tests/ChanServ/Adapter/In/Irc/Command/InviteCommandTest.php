@@ -56,7 +56,7 @@ final class InviteCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $accessHelper);
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), new ChanAccountView(1, 'User', 'en'), ['x'], $notifier, $translator));
 
-        self::assertSame(['error.invalid_channel'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F error.invalid_channel"], $messages);
     }
 
     #[Test]
@@ -80,7 +80,7 @@ final class InviteCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $accessHelper);
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), null, ['#test'], $notifier, $translator));
 
-        self::assertSame(['error.not_identified'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F presentation.error.not_identified"], $messages);
     }
 
     #[Test]
@@ -135,11 +135,11 @@ final class InviteCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $accessHelper);
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['#test'], $notifier, $translator));
 
-        self::assertSame(['invite.done'], $messages);
+        self::assertSame(["\x0303✔\x03\x0F invite.done"], $messages);
         self::assertCount(1, $invites);
         self::assertSame('#test', $invites[0][0]);
         self::assertSame('UID1', $invites[0][1]);
-        self::assertCount(1, $noticesToChannel);
+        self::assertSame([['#test', "\x0303✔\x03\x0F invite.notice_channel"]], $noticesToChannel);
     }
 
     #[Test]
