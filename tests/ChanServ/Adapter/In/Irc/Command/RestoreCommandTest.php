@@ -101,7 +101,7 @@ final class RestoreCommandTest extends TestCase
 
         $outcome = $command->execute($context);
 
-        self::assertContains('restore.success', $messages);
+        self::assertContains("\x0303✔\x03\x0F restore.success", $messages);
         $auditData = $outcome->auditData;
         self::assertInstanceOf(IrcopAuditData::class, $auditData);
         self::assertSame('#test', $auditData->target);
@@ -122,7 +122,7 @@ final class RestoreCommandTest extends TestCase
         $messages = [];
         $this->createCommandWith($repo, $dropService)->execute($this->createContext(['#test'], $messages));
 
-        self::assertContains('restore.not_pending_deletion', $messages);
+        self::assertContains("\x0304✗\x03\x0F restore.not_pending_deletion", $messages);
     }
 
     #[Test]
@@ -161,7 +161,7 @@ final class RestoreCommandTest extends TestCase
 
         $this->createCommandWith($this->createStub(RegisteredChannelRepositoryInterface::class), $this->createStub(ChanDropService::class))->execute($this->createContext(['notchannel'], $messages));
 
-        self::assertContains('error.invalid_channel', $messages);
+        self::assertContains("\x0304✗\x03\x0F error.invalid_channel", $messages);
     }
 
     #[Test]
@@ -173,7 +173,7 @@ final class RestoreCommandTest extends TestCase
 
         $this->createCommandWith($repo, $this->createStub(ChanDropService::class))->execute($this->createContext(['#test'], $messages));
 
-        self::assertContains('error.channel_not_registered', $messages);
+        self::assertContains("\x0304✗\x03\x0F presentation.error.channel_not_registered", $messages);
     }
 
     private function createCommand(): RestoreCommand

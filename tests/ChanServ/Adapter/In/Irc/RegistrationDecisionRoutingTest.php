@@ -120,6 +120,9 @@ use App\OperServ\Application\Security\OperatorAuthorizationService;
 use App\OperServ\Application\Security\OperatorPermissionPolicy;
 use App\OperServ\Application\Security\RootAuthorizationPolicy;
 use App\OperServ\Application\UseCase\RecordCommandAudit;
+use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
 use App\Shared\Application\Port\EventBusInterface;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
 use ArrayObject;
@@ -188,7 +191,7 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
                 $service = $this->service($requester, $nickname, $identified, $ircop, $accountId, $hasRole, $messages, $review, $dropService);
                 $service->dispatch('CREG ACCEPT #private', $this->sender($nickname, $identified, $ircop));
                 $service->dispatch('DROP #private', $this->sender($nickname, $identified, $ircop));
-                self::assertSame(['error.permission_denied', 'error.permission_denied'], $messages);
+                self::assertSame(["\x0304✗\x03\x0F presentation.error.permission_denied", "\x0304✗\x03\x0F presentation.error.permission_denied"], $messages);
                 self::assertTrue($requester->isRejectedRegistration());
             }
         }
@@ -231,11 +234,11 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
 
         $service->dispatch('DROP #private', $this->sender('Root', true, false));
         $service->dispatch('STATUS #private', $this->sender('Other', true, false));
-        self::assertSame(['drop.force_success', 'status.header', 'status.unregistered', 'status.footer'], $messages);
+        self::assertSame(["\x0303✔\x03\x0F drop.force_success", 'status.header', 'status.unregistered', 'status.footer'], $messages);
         $translator = new Translator('en');
         $translator->addLoader('yaml', new IrcYamlTranslationLoader());
         $translator->addResource('yaml', dirname(__DIR__, 5) . '/translations/chanserv.en.yaml', 'en', 'chanserv');
-        $rendered = $translator->trans($messages[0], ['%channel%' => '#private'], 'chanserv');
+        $rendered = $translator->trans('drop.force_success', ['%channel%' => '#private'], 'chanserv');
         self::assertStringContainsString('permanently', $rendered);
         self::assertStringNotContainsString('grace', $rendered);
         self::assertStringNotContainsString('restore', $rendered);
@@ -248,20 +251,20 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
             ->dispatch('REGISTER #private available-again', $this->sender('Other', true, false));
 
         self::assertNull($state->current);
-        self::assertSame(['register.success'], $messages);
+        self::assertSame(["\x0303✔\x03\x0F register.success"], $messages);
     }
 
     /** @return list<array{bool, list<string>, string, bool}> */
     public static function pendingCancellationCases(): array
     {
         return [
-            [false, ['chanserv.drop'], 'drop.force_success', true],
-            [false, [], 'error.permission_denied', false],
-            [false, ['chanserv.drop.force'], 'error.permission_denied', false],
-            [true, [], 'error.permission_denied', false],
-            [true, ['chanserv.drop'], 'error.permission_denied', false],
-            [true, ['chanserv.drop.force'], 'error.permission_denied', false],
-            [true, ['chanserv.drop', 'chanserv.drop.force'], 'drop.force_success', true],
+            [false, ['chanserv.drop'], "\x0303✔\x03\x0F drop.force_success", true],
+            [false, [], "\x0304✗\x03\x0F presentation.error.permission_denied", false],
+            [false, ['chanserv.drop.force'], "\x0304✗\x03\x0F presentation.error.permission_denied", false],
+            [true, [], "\x0304✗\x03\x0F presentation.error.permission_denied", false],
+            [true, ['chanserv.drop'], "\x0304✗\x03\x0F presentation.error.permission_denied", false],
+            [true, ['chanserv.drop.force'], "\x0304✗\x03\x0F presentation.error.permission_denied", false],
+            [true, ['chanserv.drop', 'chanserv.drop.force'], "\x0303✔\x03\x0F drop.force_success", true],
         ];
     }
 
@@ -349,7 +352,7 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
                 $drop,
                 $register,
             )->dispatch('REGISTER #private new-request', $this->sender('Other', true, false));
-            self::assertSame(['register.awaiting_approval'], iterator_to_array($messages));
+            self::assertSame(["\x0303✔\x03\x0F register.awaiting_approval"], iterator_to_array($messages));
             $fresh = new RegisteredChannelDoctrineRepository($this->entityManager)->findByChannelName('#private');
             self::assertNotNull($fresh);
             self::assertTrue($fresh->isPendingRegistration());
@@ -404,7 +407,7 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
                     $authorized = in_array('chanserv.drop', $permissions, true)
                         && (!$force || in_array('chanserv.drop.force', $permissions, true));
                     if (!$authorized) {
-                        self::assertSame(['error.permission_denied'], iterator_to_array($messages));
+                        self::assertSame(["\x0304✗\x03\x0F presentation.error.permission_denied"], iterator_to_array($messages));
                         self::assertSame(
                             $before,
                             hash('sha256', serialize($this->entityManager->getConnection()->fetchAllAssociative('SELECT * FROM registered_channels'))),
@@ -417,7 +420,7 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
                     }
 
                     self::assertNull($this->findChannel($repository));
-                    self::assertSame(['drop.force_success'], iterator_to_array($messages));
+                    self::assertSame(["\x0303✔\x03\x0F drop.force_success"], iterator_to_array($messages));
                     $messageBuffer = new ArrayObject();
                     $this->service(
                         $repository,
@@ -462,7 +465,7 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
                         $register,
                     )->dispatch('REGISTER #private available-again', $this->sender('Other', true, false));
 
-                    self::assertSame(['register.awaiting_approval'], iterator_to_array($messages));
+                    self::assertSame(["\x0303✔\x03\x0F register.awaiting_approval"], iterator_to_array($messages));
                     $freshRegistration = $this->findChannel($repository);
                     self::assertNotNull($freshRegistration);
                     self::assertTrue($freshRegistration->isPendingRegistration());
@@ -490,7 +493,7 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
                 $projectRoot = dirname(__DIR__, 5);
                 $translator->addResource('irc', $projectRoot . '/translations/chanserv.en.yaml', 'en', 'chanserv');
                 $translator->addResource('irc', $projectRoot . '/translations/common.en.yaml', 'en', 'common');
-                $debug = new ChanServDebugNotifier($notifier, $translator, 'en', $debugChannel);
+                $debug = new ChanServDebugNotifier($notifier, $translator, 'en', $debugChannel, new IrcRenderer(new FixedStyleProvider(PresentationStyle::default())));
                 $presenter = new ActiveConnectionCommandAuditPresenter(new ServiceDebugNotifierRegistry([$debug]));
                 /** @var ArrayObject<int, CommandAuditRecord> $records */
                 $records = new ArrayObject();
@@ -604,7 +607,7 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
             $translator->addResource('irc', dirname(__DIR__, 5) . '/translations/' . $domain . '.en.yaml', 'en', $domain);
         }
         $presenter = new ActiveConnectionCommandAuditPresenter(new ServiceDebugNotifierRegistry([
-            new ChanServDebugNotifier($notifier, $translator, 'en', $debugChannel),
+            new ChanServDebugNotifier($notifier, $translator, 'en', $debugChannel, new IrcRenderer(new FixedStyleProvider(PresentationStyle::default()))),
         ]));
         /** @var ArrayObject<int, CommandAuditRecord> $records */
         $records = new ArrayObject();
@@ -690,14 +693,14 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
             }
             self::assertSame($before, $this->entityManager->getConnection()->fetchAllAssociative('SELECT * FROM registered_channels'));
             $reply = match ($case) {
-                'syntax' => 'error.syntax',
-                'unidentified' => 'error.not_identified',
-                'restricted' => 'register.restricted_indefinite',
-                'pending-deletion' => 'drop.pending_deletion',
-                'quota' => 'register.limit_exceeded',
-                'rank' => 'register.insufficient_channel_rank',
-                'throttle' => 'register.throttled',
-                'missing-network' => 'register.channel_not_on_network',
+                'syntax' => "\x0304✗\x03\x0F presentation.error.syntax",
+                'unidentified' => "\x0304✗\x03\x0F presentation.error.not_identified",
+                'restricted' => "\x0304✗\x03\x0F register.restricted_indefinite",
+                'pending-deletion' => "\x0304✗\x03\x0F drop.pending_deletion",
+                'quota' => "\x0304✗\x03\x0F register.limit_exceeded",
+                'rank' => "\x0304✗\x03\x0F register.insufficient_channel_rank",
+                'throttle' => "\x0307⚠\x03\x0F register.throttled",
+                'missing-network' => "\x0304✗\x03\x0F register.channel_not_on_network",
                 default => null,
             };
             self::assertSame(null === $reply ? [] : [$reply], iterator_to_array($messages));
@@ -705,7 +708,7 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
             return;
         }
         $pending = RegistrationMode::Approval === $mode;
-        self::assertSame([$pending ? 'register.awaiting_approval' : 'register.success'], iterator_to_array($messages));
+        self::assertSame([$pending ? "\x0303✔\x03\x0F register.awaiting_approval" : "\x0303✔\x03\x0F register.success"], iterator_to_array($messages));
         self::assertCount(1, $executions);
         $execution = $executions[0];
         self::assertInstanceOf(CommandExecutedEvent::class, $execution);
@@ -735,7 +738,7 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
             self::assertNotNull($notice);
             self::assertSame('#ircops', $notice[0]);
             self::assertSame('NOTICE', $notice[2]);
-            $plain = preg_replace('/\x03(?:\d{1,2}(?:,\d{1,2})?)?/', '', $notice[1]);
+            $plain = preg_replace('/\x03(?:\d{1,2}(?:,\d{1,2})?)?|\x0F/', '', $notice[1]);
             self::assertSame($nick . ($pending ? ' submitted a registration request for #private' : ' registered channel #private'), $plain);
             self::assertStringNotContainsString('confidential-description', $notice[1]);
         }
@@ -744,16 +747,16 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
     /** @return iterable<string, array{string, bool, bool, int, int, int, string, string, string, string, bool}> */
     public static function requesterQuotas(): iterable
     {
-        yield 'rejected rows do not count' => ['Other', false, false, 2, 1, 2, '', 'register.awaiting_approval', 'creg.accepted', '', true];
-        yield 'ordinary cap remains with oper reviewer' => ['Other', false, false, 2, 2, 0, '', 'register.limit_exceeded', 'creg.founder_limit', '', true];
-        yield 'requester oper exemption with different reviewer' => ['RequesterOper', true, true, 2, 3, 0, '', 'register.awaiting_approval', 'creg.accepted', '', true];
-        yield 'root exemption without raw oper flag' => ['Root', false, false, 2, 3, 0, '', 'register.awaiting_approval', 'creg.accepted', '', true];
-        yield 'raw oper without assigned role is not exempt' => ['RawOper', true, false, 2, 2, 0, '', 'register.limit_exceeded', 'creg.founder_limit', '', true];
-        yield 'non-default larger maximum' => ['Other', false, false, 5, 3, 0, '', 'register.awaiting_approval', 'creg.accepted', '', true];
-        yield 'same nickname but different authenticated UID cannot exempt' => ['RequesterOper', true, true, 2, 3, 0, '', 'register.awaiting_approval', 'creg.founder_limit', 'different-session', true];
-        yield 'offline requester remains ineligible' => ['RequesterOper', true, true, 2, 3, 0, '', 'register.awaiting_approval', 'creg.requester_ineligible', '', false];
+        yield 'rejected rows do not count' => ['Other', false, false, 2, 1, 2, '', "\x0303✔\x03\x0F register.awaiting_approval", 'creg.accepted', '', true];
+        yield 'ordinary cap remains with oper reviewer' => ['Other', false, false, 2, 2, 0, '', "\x0304✗\x03\x0F register.limit_exceeded", 'creg.founder_limit', '', true];
+        yield 'requester oper exemption with different reviewer' => ['RequesterOper', true, true, 2, 3, 0, '', "\x0303✔\x03\x0F register.awaiting_approval", 'creg.accepted', '', true];
+        yield 'root exemption without raw oper flag' => ['Root', false, false, 2, 3, 0, '', "\x0303✔\x03\x0F register.awaiting_approval", 'creg.accepted', '', true];
+        yield 'raw oper without assigned role is not exempt' => ['RawOper', true, false, 2, 2, 0, '', "\x0304✗\x03\x0F register.limit_exceeded", 'creg.founder_limit', '', true];
+        yield 'non-default larger maximum' => ['Other', false, false, 5, 3, 0, '', "\x0303✔\x03\x0F register.awaiting_approval", 'creg.accepted', '', true];
+        yield 'same nickname but different authenticated UID cannot exempt' => ['RequesterOper', true, true, 2, 3, 0, '', "\x0303✔\x03\x0F register.awaiting_approval", 'creg.founder_limit', 'different-session', true];
+        yield 'offline requester remains ineligible' => ['RequesterOper', true, true, 2, 3, 0, '', "\x0303✔\x03\x0F register.awaiting_approval", 'creg.requester_ineligible', '', false];
         foreach (['pending', 'suspended', 'pending-deletion'] as $state) {
-            yield $state . ' still counts' => ['Other', false, false, 2, 1, 0, $state, 'register.limit_exceeded', 'creg.founder_limit', '', true];
+            yield $state . ' still counts' => ['Other', false, false, 2, 1, 0, $state, "\x0304✗\x03\x0F register.limit_exceeded", 'creg.founder_limit', '', true];
         }
     }
 
@@ -821,7 +824,7 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
         $this->service($repository, $nickname, true, $ircop, 10, $assignedRole, $messages, $review, $drop, $register, accountPort: $accounts, requester: $requester)
             ->dispatch('REGISTER #private request', $requester);
         self::assertSame([$registerReply], iterator_to_array($messages));
-        if ('register.awaiting_approval' !== $registerReply) {
+        if ("\x0303✔\x03\x0F register.awaiting_approval" !== $registerReply) {
             self::assertSame($before, $this->entityManager->getConnection()->fetchAllAssociative('SELECT * FROM registered_channels'));
             $repository->save(RegisteredChannel::createPendingRegistration($at, '#private', 10, 'previous request'));
         }
@@ -840,7 +843,7 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
             accountPort: $accounts,
             requester: $online ? $requester : null,
         )->dispatch('CREG ACCEPT #private', $this->sender('Reviewer', true, true));
-        self::assertSame([$acceptReply], iterator_to_array($messages));
+        self::assertSame([('creg.accepted' === $acceptReply ? "\x0303✔\x03\x0F " : "\x0304✗\x03\x0F ") . $acceptReply], iterator_to_array($messages));
         $this->entityManager->clear();
         $channel = $repository->findByChannelName('#private');
         self::assertNotNull($channel);
@@ -993,27 +996,27 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
             return iterator_to_array($messages);
         };
         self::assertContains('status.rejected', $run('STATUS #private'));
-        self::assertSame(['drop.force_success'], $run('DROP #private'));
+        self::assertSame(["\x0303✔\x03\x0F drop.force_success"], $run('DROP #private'));
         self::assertNull($repository->findByChannelName('#private'));
-        self::assertSame(['register.awaiting_approval'], $run('REGISTER #private description', true));
+        self::assertSame(["\x0303✔\x03\x0F register.awaiting_approval"], $run('REGISTER #private description', true));
         self::assertStringNotContainsString('#private', $this->nickInfo($repository, 'RequesterOper'));
-        self::assertSame(['drop.force_success'], $run('DROP #private'));
+        self::assertSame(["\x0303✔\x03\x0F drop.force_success"], $run('DROP #private'));
         self::assertNull($repository->findByChannelName('#private'));
         self::assertCount(0, $memos->findByTargetNick($requesterId));
-        self::assertSame(['register.awaiting_approval'], $run('REGISTER #private description', true));
+        self::assertSame(["\x0303✔\x03\x0F register.awaiting_approval"], $run('REGISTER #private description', true));
         $before = $this->entityManager->getConnection()->fetchAllAssociative('SELECT * FROM registered_channels');
-        self::assertSame(['error.syntax'], $run('CREG REJECT #private'));
+        self::assertSame(["\x0304✗\x03\x0F presentation.error.syntax"], $run('CREG REJECT #private'));
         self::assertSame($before, $this->entityManager->getConnection()->fetchAllAssociative('SELECT * FROM registered_channels'));
-        self::assertSame(['creg.rejected'], $run('CREG REJECT #private duplicate'));
+        self::assertSame(["\x0303✔\x03\x0F creg.rejected"], $run('CREG REJECT #private duplicate'));
         self::assertCount(1, $memos->findByTargetNick($requesterId));
         $rejectedRequest = new RegisteredChannelDoctrineRepository($this->entityManager)->findByChannelName('#private');
         self::assertNotNull($rejectedRequest);
         self::assertCount(0, $history->findByChannelId($rejectedRequest->getId()));
         self::assertStringNotContainsString('#private', $this->nickInfo($repository, 'RequesterOper'));
-        self::assertSame(['register.restricted_until'], $run('REGISTER #private description', true));
-        self::assertSame(['drop.force_success'], $run('DROP #private FORCE'));
-        self::assertSame(['register.awaiting_approval'], $run('REGISTER #private description', true));
-        self::assertSame(['creg.accepted'], $run('CREG ACCEPT #private'));
+        self::assertSame(["\x0304✗\x03\x0F register.restricted_until"], $run('REGISTER #private description', true));
+        self::assertSame(["\x0303✔\x03\x0F drop.force_success"], $run('DROP #private FORCE'));
+        self::assertSame(["\x0303✔\x03\x0F register.awaiting_approval"], $run('REGISTER #private description', true));
+        self::assertSame(["\x0303✔\x03\x0F creg.accepted"], $run('CREG ACCEPT #private'));
         $accepted = new RegisteredChannelDoctrineRepository($this->entityManager)->findByChannelName('#private');
         self::assertNotNull($accepted);
         self::assertFalse($accepted->isPendingRegistration());
@@ -1032,7 +1035,7 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
         self::assertNotNull($acceptOutcome->auditData);
         self::assertSame('#private', $acceptOutcome->auditData->target);
         self::assertSame(['decision' => 'accepted'], $acceptOutcome->auditData->extra);
-        self::assertSame(['drop.force_success'], $run('DROP #private FORCE'));
+        self::assertSame(["\x0303✔\x03\x0F drop.force_success"], $run('DROP #private FORCE'));
         self::assertNull($repository->findByChannelName('#private'));
         self::assertCount(0, $history->findByChannelId($acceptedId));
         self::assertCount(0, $levels->listByChannel($acceptedId));
@@ -1110,7 +1113,7 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
         $service->dispatch('LIST ' . $pattern . ' ' . $page, $this->sender('Reviewer', true, true));
         if (!$granted) {
             self::assertNull($observed->outcome);
-            self::assertSame([$translator->trans('error.permission_denied', [], 'common')], iterator_to_array($messages));
+            self::assertSame(["\x0304✗\x03\x0F " . $translator->trans('presentation.error.permission_denied', [], 'common')], iterator_to_array($messages));
         } else {
             self::assertNotNull($observed->outcome);
             self::assertTrue($observed->outcome->success);

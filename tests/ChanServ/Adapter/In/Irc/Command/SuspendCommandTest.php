@@ -150,7 +150,7 @@ final class SuspendCommandTest extends TestCase
         $cmd = $this->createCommand();
         $cmd->execute($context);
 
-        self::assertContains('error.invalid_channel', $messages);
+        self::assertContains("\x0304✗\x03\x0F error.invalid_channel", $messages);
     }
 
     #[Test]
@@ -164,7 +164,7 @@ final class SuspendCommandTest extends TestCase
         $cmd = $this->createCommand();
         $cmd->execute($context);
 
-        self::assertContains('error.syntax', $messages);
+        self::assertContains("\x0304✗\x03\x0F presentation.error.syntax", $messages);
     }
 
     #[Test]
@@ -175,7 +175,7 @@ final class SuspendCommandTest extends TestCase
 
         $this->createCommand()->execute($context);
 
-        self::assertContains('error.syntax', $messages);
+        self::assertContains("\x0304✗\x03\x0F presentation.error.syntax", $messages);
     }
 
     #[Test]
@@ -197,7 +197,7 @@ final class SuspendCommandTest extends TestCase
 
         $cmd->execute($context);
 
-        self::assertContains('error.channel_not_registered', $messages);
+        self::assertContains("\x0304✗\x03\x0F presentation.error.channel_not_registered", $messages);
     }
 
     #[Test]
@@ -221,7 +221,7 @@ final class SuspendCommandTest extends TestCase
 
         $cmd->execute($context);
 
-        self::assertContains('suspend.already_suspended', $messages);
+        self::assertContains("\x0304✗\x03\x0F suspend.already_suspended", $messages);
     }
 
     #[Test]
@@ -244,7 +244,7 @@ final class SuspendCommandTest extends TestCase
 
         $cmd->execute($context);
 
-        self::assertContains('suspend.invalid_duration', $messages);
+        self::assertContains("\x0304✗\x03\x0F suspend.invalid_duration", $messages);
     }
 
     #[Test]
@@ -282,7 +282,7 @@ final class SuspendCommandTest extends TestCase
 
         $cmd->execute($context);
 
-        self::assertContains('suspend.success', $messages);
+        self::assertContains("\x0303✔\x03\x0F suspend.success", $messages);
         self::assertTrue($channel->isSuspended());
         self::assertCount(1, $dispatchedEvents);
         self::assertInstanceOf(ChannelSuspendedEvent::class, $dispatchedEvents[0]);
@@ -317,7 +317,7 @@ final class SuspendCommandTest extends TestCase
 
         $cmd->execute($context);
 
-        self::assertContains('suspend.success', $messages);
+        self::assertContains("\x0303✔\x03\x0F suspend.success", $messages);
         self::assertTrue($channel->isSuspended());
         self::assertNotNull($channel->getSuspendedUntil());
     }
@@ -389,7 +389,7 @@ final class SuspendCommandTest extends TestCase
         );
         $cmd->execute($context);
 
-        self::assertContains('suspend.success', $messages);
+        self::assertContains("\x0303✔\x03\x0F suspend.success", $messages);
         self::assertTrue($channel->isSuspended());
         self::assertNotNull($channel->getSuspendedUntil());
     }
@@ -417,7 +417,7 @@ final class SuspendCommandTest extends TestCase
         );
         $cmd->execute($context);
 
-        self::assertContains('suspend.success', $messages);
+        self::assertContains("\x0303✔\x03\x0F suspend.success", $messages);
         self::assertTrue($channel->isSuspended());
         self::assertNotNull($channel->getSuspendedUntil());
     }
@@ -454,7 +454,7 @@ final class SuspendCommandTest extends TestCase
         );
         $cmd->execute($context);
 
-        self::assertContains('suspend.success', $messages);
+        self::assertContains("\x0303✔\x03\x0F suspend.success", $messages);
         self::assertCount(1, $dispatchedEvents);
         self::assertInstanceOf(ChannelSuspendedEvent::class, $dispatchedEvents[0]);
         self::assertSame('*', $dispatchedEvents[0]->performedByIp);

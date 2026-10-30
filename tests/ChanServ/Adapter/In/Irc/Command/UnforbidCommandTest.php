@@ -166,7 +166,7 @@ final class UnforbidCommandTest extends TestCase
 
         $cmd->execute($context);
 
-        self::assertContains('error.invalid_channel', $messages);
+        self::assertContains("\x0304✗\x03\x0F error.invalid_channel", $messages);
     }
 
     #[Test]
@@ -184,7 +184,7 @@ final class UnforbidCommandTest extends TestCase
 
         $cmd->execute($context);
 
-        self::assertContains('unforbid.success', $messages);
+        self::assertContains("\x0303✔\x03\x0F unforbid.success", $messages);
     }
 
     #[Test]
@@ -202,7 +202,7 @@ final class UnforbidCommandTest extends TestCase
 
         $cmd->execute($context);
 
-        self::assertContains('unforbid.not_forbidden', $messages);
+        self::assertContains("\x0304✗\x03\x0F unforbid.not_forbidden", $messages);
     }
 
     #[Test]

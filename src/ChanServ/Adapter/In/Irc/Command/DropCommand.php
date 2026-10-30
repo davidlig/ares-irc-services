@@ -16,6 +16,9 @@ use App\Irc\Application\Port\In\Command\IrcopAuditableCommandInterface;
 use App\Irc\Application\Port\In\Command\IrcopAuditData;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\Fragment;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 
 use function strcasecmp;
 
@@ -117,13 +120,13 @@ final class DropCommand implements ChanServCommandInterface, IrcopAuditableComma
 
         $channelName = $context->getChannelNameArg(0);
         if (null === $channelName) {
-            $context->reply('drop.invalid_channel');
+            $context->reply('drop.invalid_channel', ['%example%' => new Fragment($context->trans('error.invalid_channel_example'), Component::Emphasis)], Role::Error);
 
             return CommandOutcome::rejected();
         }
         $force = isset($context->args[1]) && 0 === strcasecmp($context->args[1], 'force');
         if ($force && (null === $this->authorizationChecker || !$this->authorizationChecker->isGranted(ChanServPermission::DROP_FORCE, $context))) {
-            $context->reply('error.permission_denied');
+            $context->reply('presentation.error.permission_denied', role: Role::Error);
 
             return CommandOutcome::rejected();
         }
@@ -136,16 +139,16 @@ final class DropCommand implements ChanServCommandInterface, IrcopAuditableComma
             releaseRejectedRegistration: true,
         ));
         if (ChannelLifecycleOutcome::NotRegistered === $result->outcome) {
-            $context->reply('error.channel_not_registered', ['%channel%' => $channelName]);
+            $context->reply('presentation.error.channel_not_registered', ['%channel%' => new Fragment((string) $channelName, Component::Emphasis)], Role::Error);
 
             return CommandOutcome::rejected();
         }
         if (ChannelLifecycleOutcome::PendingDeletion === $result->outcome) {
-            $context->reply('drop.pending_deletion', ['%channel%' => $channelName]);
+            $context->reply('drop.pending_deletion', ['%channel%' => new Fragment($channelName, Component::Emphasis)], Role::Error);
 
             return CommandOutcome::rejected();
         }
-        $context->reply(ChannelLifecycleOutcome::ForceDropped === $result->outcome ? 'drop.force_success' : 'drop.success', ['%channel%' => $channelName]);
+        $context->reply(ChannelLifecycleOutcome::ForceDropped === $result->outcome ? 'drop.force_success' : 'drop.success', ['%channel%' => new Fragment($channelName, Component::Emphasis)], Role::Success);
 
         return CommandOutcome::success(new IrcopAuditData(target: $channelName, extra: $force ? ['force' => true] : []));
     }
