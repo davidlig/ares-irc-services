@@ -50,7 +50,7 @@ final class DelaccessCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $accessRepo, $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), new ChanAccountView(1, 'User', 'en'), ['notachannel'], $notifier, $translator));
 
-        self::assertSame(['error.invalid_channel'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F error.invalid_channel"], $messages);
     }
 
     #[Test]
@@ -71,7 +71,7 @@ final class DelaccessCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $accessRepo, $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), null, ['#test'], $notifier, $translator));
 
-        self::assertSame(['error.not_identified'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F presentation.error.not_identified"], $messages);
     }
 
     #[Test]
@@ -115,7 +115,7 @@ final class DelaccessCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $accessRepo, $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['#test'], $notifier, $translator));
 
-        self::assertSame(['delaccess.founder_not_in_access'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F delaccess.founder_not_in_access"], $messages);
     }
 
     #[Test]
@@ -140,7 +140,7 @@ final class DelaccessCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $accessRepo, $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['#test'], $notifier, $translator));
 
-        self::assertSame(['delaccess.not_in_list'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F delaccess.not_in_list"], $messages);
     }
 
     #[Test]
@@ -171,9 +171,10 @@ final class DelaccessCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $accessRepo, $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['#test'], $notifier, $translator));
 
-        self::assertSame(['delaccess.done'], $messages);
+        self::assertSame(["\x0303✔\x03\x0F delaccess.done"], $messages);
         self::assertCount(1, $noticesToChannel);
         self::assertSame('#test', $noticesToChannel[0][0]);
+        self::assertSame("\x0303✔\x03\x0F delaccess.notice_channel", $noticesToChannel[0][1]);
     }
 
     #[Test]
@@ -254,7 +255,7 @@ final class DelaccessCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $accessRepo, $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['#test'], $notifier, $translator));
 
-        self::assertSame(['error.channel_not_registered'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F presentation.error.channel_not_registered"], $messages);
     }
 
     #[Test]
@@ -308,7 +309,7 @@ final class DelaccessCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $accessRepo, $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['#test'], $notifier, $translator));
 
-        self::assertSame(['delaccess.not_in_list'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F delaccess.not_in_list"], $messages);
     }
 
     #[Test]
@@ -330,7 +331,7 @@ final class DelaccessCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $accessRepo, $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext(new SenderView('UID1', 'Founder', 'i', 'h', 'c', 'ip'), $founderAccount, ['#test'], $notifier, $translator));
 
-        self::assertSame(['delaccess.founder_not_in_access'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F delaccess.founder_not_in_access"], $messages);
     }
 
     #[Test]

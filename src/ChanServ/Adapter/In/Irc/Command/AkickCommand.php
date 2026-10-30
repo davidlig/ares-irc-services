@@ -15,6 +15,9 @@ use App\ChanServ\Application\UseCase\ManageAkick\ManageChannelAkickResult;
 use App\ChanServ\Domain\Policy\AkickAdditionPolicy;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\Fragment;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 use App\Shared\Application\Time\RelativeExpiryParser;
 use DateTimeImmutable;
 
@@ -134,7 +137,7 @@ final readonly class AkickCommand implements ChanServCommandInterface
     {
         $channelName = $context->getChannelNameArg(0);
         if (null === $channelName) {
-            $context->reply('error.invalid_channel');
+            $context->reply('error.invalid_channel', ['%example%' => new Fragment($context->trans('error.invalid_channel_example'), Component::Emphasis)], Role::Error);
 
             return;
         }
@@ -220,47 +223,47 @@ final readonly class AkickCommand implements ChanServCommandInterface
         ManageChannelAkickResult $result,
     ): void {
         match ($result->outcome) {
-            ManageChannelAkickOutcome::ActorNotAuthenticated => $context->reply('error.not_identified'),
+            ManageChannelAkickOutcome::ActorNotAuthenticated => $context->reply('presentation.error.not_identified', ['%identify%' => new Fragment($context->trans('presentation.identify'), Component::Command)], Role::Error),
             ManageChannelAkickOutcome::MissingSender => null,
-            ManageChannelAkickOutcome::InvalidRequest => $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]),
-            ManageChannelAkickOutcome::UnknownAction => $context->reply('akick.unknown_sub', ['%sub%' => $subcommand]),
-            ManageChannelAkickOutcome::InvalidMask => $context->reply('akick.invalid_mask'),
-            ManageChannelAkickOutcome::DangerousMask => $context->reply('akick.dangerous_mask', ['%mask%' => $result->mask ?? '']),
-            ManageChannelAkickOutcome::ProtectedUser => $context->reply('akick.protected_user', ['%nickname%' => $result->protectedNickname ?? '']),
-            ManageChannelAkickOutcome::DuplicateActive => $context->reply('akick.add.already_exists', ['%mask%' => $result->mask ?? '']),
-            ManageChannelAkickOutcome::LimitReached => $context->reply('akick.max_entries', ['%max%' => (string) AkickAdditionPolicy::MAX_ENTRIES]),
-            ManageChannelAkickOutcome::ListEmpty => $context->reply('akick.list.empty', ['%channel%' => $channelName]),
+            ManageChannelAkickOutcome::InvalidRequest => $context->reply('presentation.error.syntax', ['syntax' => new Fragment($context->trans($this->getSyntaxKey()), Component::Command)], Role::Error),
+            ManageChannelAkickOutcome::UnknownAction => $context->reply('akick.unknown_sub', ['%sub%' => new Fragment($subcommand, Component::Emphasis)], Role::Error),
+            ManageChannelAkickOutcome::InvalidMask => $context->reply('akick.invalid_mask', role: Role::Error),
+            ManageChannelAkickOutcome::DangerousMask => $context->reply('akick.dangerous_mask', ['%mask%' => new Fragment($result->mask ?? '', Component::Emphasis)], Role::Error),
+            ManageChannelAkickOutcome::ProtectedUser => $context->reply('akick.protected_user', ['%nickname%' => new Fragment($result->protectedNickname ?? '', Component::Emphasis)], Role::Error),
+            ManageChannelAkickOutcome::DuplicateActive => $context->reply('akick.add.already_exists', ['%mask%' => new Fragment($result->mask ?? '', Component::Emphasis)], Role::Error),
+            ManageChannelAkickOutcome::LimitReached => $context->reply('akick.max_entries', ['%max%' => (string) AkickAdditionPolicy::MAX_ENTRIES], Role::Error),
+            ManageChannelAkickOutcome::ListEmpty => $context->reply('akick.list.empty', ['%channel%' => new Fragment($channelName, Component::Emphasis)], Role::Information),
             ManageChannelAkickOutcome::Listed => $this->presentList($context, $channelName, $result->entries),
             ManageChannelAkickOutcome::Added => $this->presentAdded($context, $channelName, $performedBy, $result),
             ManageChannelAkickOutcome::Deleted => $this->presentDeleted($context, $channelName, $performedBy, $result),
-            ManageChannelAkickOutcome::EntryNotFound => $context->reply('akick.del.not_found', ['%mask%' => $result->mask ?? '']),
+            ManageChannelAkickOutcome::EntryNotFound => $context->reply('akick.del.not_found', ['%mask%' => new Fragment($result->mask ?? '', Component::Emphasis)], Role::Error),
         };
     }
 
     /** @param list<ChannelAkickEntryView> $entries */
     private function presentList(ChanServContext $context, string $channelName, array $entries): void
     {
-        $context->reply('akick.list.header', ['%channel%' => $channelName]);
+        $context->replyRaw($context->renderComponent(Component::Positive, 'akick.list.header', ['%channel%' => new Fragment($channelName, Component::Emphasis)]));
         foreach ($entries as $index => $entry) {
-            $context->reply('akick.list.entry', [
+            $context->replyRaw($context->renderComponent(Component::IndentedRow, 'akick.list.entry', [
                 '%index%' => (string) ($index + 1),
-                '%mask%' => sprintf("\x0304%s\x03", $entry->mask),
+                '%mask%' => new Fragment($entry->mask, Component::Danger),
                 '%reason%' => $entry->reason ?? $context->trans('label.no_reason'),
                 '%nickname%' => $entry->creatorNickname ?? $context->trans('label.unknown_creator'),
                 '%expiration%' => null === $entry->expiresAt
                     ? $context->trans('label.never')
                     : $context->formatDate($entry->expiresAt),
-            ]);
+            ]));
         }
     }
 
     private function presentAdded(ChanServContext $context, string $channelName, ?string $performedBy, ManageChannelAkickResult $result): void
     {
         $mask = $result->mask ?? '';
-        $context->reply('akick.add.done', ['%mask%' => $mask]);
-        $notice = $context->trans('akick.add.notice_channel', [
-            '%from%' => $performedBy ?? '',
-            '%mask%' => $mask,
+        $context->reply('akick.add.done', ['%mask%' => new Fragment($mask, Component::Emphasis)], Role::Success);
+        $notice = $context->renderReply(Role::Success, 'akick.add.notice_channel', [
+            '%from%' => new Fragment($performedBy ?? '', Component::Actor),
+            '%mask%' => new Fragment($mask, Component::Emphasis),
             '%reason%' => null === $result->reason ? $context->trans('label.no_reason') : $result->reason,
         ]);
         $context->getNotifier()->sendNoticeToChannel($channelName, $notice);
@@ -269,10 +272,10 @@ final readonly class AkickCommand implements ChanServCommandInterface
     private function presentDeleted(ChanServContext $context, string $channelName, ?string $performedBy, ManageChannelAkickResult $result): void
     {
         $mask = $result->mask ?? '';
-        $context->reply('akick.del.done', ['%mask%' => $mask]);
-        $notice = $context->trans('akick.del.notice_channel', [
-            '%from%' => $performedBy ?? '',
-            '%mask%' => $mask,
+        $context->reply('akick.del.done', ['%mask%' => new Fragment($mask, Component::Emphasis)], Role::Success);
+        $notice = $context->renderReply(Role::Success, 'akick.del.notice_channel', [
+            '%from%' => new Fragment($performedBy ?? '', Component::Actor),
+            '%mask%' => new Fragment($mask, Component::Emphasis),
         ]);
         $context->getNotifier()->sendNoticeToChannel($channelName, $notice);
     }

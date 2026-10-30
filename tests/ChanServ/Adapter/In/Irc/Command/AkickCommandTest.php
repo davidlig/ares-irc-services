@@ -105,7 +105,7 @@ final class AkickCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class), $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['notachannel', 'LIST'], $notifier, $translator));
 
-        self::assertSame(['error.invalid_channel'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F error.invalid_channel"], $messages);
     }
 
     #[Test]
@@ -127,7 +127,13 @@ final class AkickCommandTest extends TestCase
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ([] !== $params ? json_encode($params) : ''));
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => match ($id) {
+            'akick.list.empty' => 'akick.list.empty %channel%',
+            'akick.dangerous_mask' => 'akick.dangerous_mask %mask%',
+            'akick.protected_user' => 'akick.protected_user %nickname%',
+            'akick.list.entry' => 'akick.list.entry %index% %mask% %reason% %nickname% %expiration%',
+            default => $id . ([] !== $params ? json_encode($params) : ''),
+        });
 
         $cmd = $this->createCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class), $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'LIST'], $notifier, $translator));
@@ -151,7 +157,13 @@ final class AkickCommandTest extends TestCase
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ([] !== $params ? json_encode($params) : ''));
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => match ($id) {
+            'akick.list.empty' => 'akick.list.empty %channel%',
+            'akick.dangerous_mask' => 'akick.dangerous_mask %mask%',
+            'akick.protected_user' => 'akick.protected_user %nickname%',
+            'akick.list.entry' => 'akick.list.entry %index% %mask% %reason% %nickname% %expiration%',
+            default => $id . ([] !== $params ? json_encode($params) : ''),
+        });
 
         $cmd = $this->createCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class), $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'INVALID'], $notifier, $translator));
@@ -193,7 +205,7 @@ final class AkickCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class), $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', '*!*@*.isp.com', '0', 'Spammer'], $notifier, $translator));
 
-        self::assertSame(['akick.add.done'], $messages);
+        self::assertSame(["\x0303✔\x03\x0F akick.add.done"], $messages);
         self::assertNotNull($saved);
         self::assertSame('*!*@*.isp.com', $saved->getMask());
         self::assertSame('Spammer', $saved->getReason());
@@ -293,7 +305,13 @@ final class AkickCommandTest extends TestCase
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ([] !== $params ? json_encode($params) : ''));
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => match ($id) {
+            'akick.list.empty' => 'akick.list.empty %channel%',
+            'akick.dangerous_mask' => 'akick.dangerous_mask %mask%',
+            'akick.protected_user' => 'akick.protected_user %nickname%',
+            'akick.list.entry' => 'akick.list.entry %index% %mask% %reason% %nickname% %expiration%',
+            default => $id . ([] !== $params ? json_encode($params) : ''),
+        });
 
         $cmd = $this->createCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class), $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', '*!*@*.isp.com'], $notifier, $translator));
@@ -350,7 +368,7 @@ final class AkickCommandTest extends TestCase
         self::assertNotNull($saved, 'New AKICK should be saved');
         self::assertSame('*!*@*.isp.com', $saved->getMask());
         self::assertSame('New reason', $saved->getReason());
-        self::assertSame(['akick.add.done'], $messages);
+        self::assertSame(["\x0303✔\x03\x0F akick.add.done"], $messages);
     }
 
     #[Test]
@@ -373,7 +391,13 @@ final class AkickCommandTest extends TestCase
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ([] !== $params ? json_encode($params) : ''));
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => match ($id) {
+            'akick.list.empty' => 'akick.list.empty %channel%',
+            'akick.dangerous_mask' => 'akick.dangerous_mask %mask%',
+            'akick.protected_user' => 'akick.protected_user %nickname%',
+            'akick.list.entry' => 'akick.list.entry %index% %mask% %reason% %nickname% %expiration%',
+            default => $id . ([] !== $params ? json_encode($params) : ''),
+        });
 
         $cmd = $this->createCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class), $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', '*!*@*.isp.com'], $notifier, $translator));
@@ -405,7 +429,7 @@ final class AkickCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class), $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', 'invalid-mask'], $notifier, $translator));
 
-        self::assertSame(['akick.invalid_mask'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F akick.invalid_mask"], $messages);
     }
 
     #[Test]
@@ -426,7 +450,13 @@ final class AkickCommandTest extends TestCase
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ([] !== $params ? json_encode($params) : ''));
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => match ($id) {
+            'akick.list.empty' => 'akick.list.empty %channel%',
+            'akick.dangerous_mask' => 'akick.dangerous_mask %mask%',
+            'akick.protected_user' => 'akick.protected_user %nickname%',
+            'akick.list.entry' => 'akick.list.entry %index% %mask% %reason% %nickname% %expiration%',
+            default => $id . ([] !== $params ? json_encode($params) : ''),
+        });
 
         $cmd = $this->createCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class), $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', '*!*@*'], $notifier, $translator));
@@ -471,7 +501,7 @@ final class AkickCommandTest extends TestCase
         $cmd->execute($this->createContext($sender, $account, ['#test', 'DEL', '*!*@*.isp.com'], $notifier, $translator));
 
         self::assertTrue($removed);
-        self::assertSame(['akick.del.done'], $messages);
+        self::assertSame(["\x0303✔\x03\x0F akick.del.done"], $messages);
     }
 
     #[Test]
@@ -509,7 +539,7 @@ final class AkickCommandTest extends TestCase
         $cmd->execute($this->createContext($sender, $account, ['#test', 'DEL', '1'], $notifier, $translator));
 
         self::assertTrue($removed);
-        self::assertSame(['akick.del.done'], $messages);
+        self::assertSame(["\x0303✔\x03\x0F akick.del.done"], $messages);
     }
 
     #[Test]
@@ -532,7 +562,13 @@ final class AkickCommandTest extends TestCase
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ([] !== $params ? json_encode($params) : ''));
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => match ($id) {
+            'akick.list.empty' => 'akick.list.empty %channel%',
+            'akick.dangerous_mask' => 'akick.dangerous_mask %mask%',
+            'akick.protected_user' => 'akick.protected_user %nickname%',
+            'akick.list.entry' => 'akick.list.entry %index% %mask% %reason% %nickname% %expiration%',
+            default => $id . ([] !== $params ? json_encode($params) : ''),
+        });
 
         $cmd = $this->createCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class), $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'DEL', '*!*@*.isp.com'], $notifier, $translator));
@@ -564,7 +600,13 @@ final class AkickCommandTest extends TestCase
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ([] !== $params ? json_encode($params) : ''));
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => match ($id) {
+            'akick.list.empty' => 'akick.list.empty %channel%',
+            'akick.dangerous_mask' => 'akick.dangerous_mask %mask%',
+            'akick.protected_user' => 'akick.protected_user %nickname%',
+            'akick.list.entry' => 'akick.list.entry %index% %mask% %reason% %nickname% %expiration%',
+            default => $id . ([] !== $params ? json_encode($params) : ''),
+        });
 
         $cmd = $this->createCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class), $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'DEL', '999'], $notifier, $translator));
@@ -608,7 +650,13 @@ final class AkickCommandTest extends TestCase
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ([] !== $params ? json_encode($params) : ''));
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => match ($id) {
+            'akick.list.empty' => 'akick.list.empty %channel%',
+            'akick.dangerous_mask' => 'akick.dangerous_mask %mask%',
+            'akick.protected_user' => 'akick.protected_user %nickname%',
+            'akick.list.entry' => 'akick.list.entry %index% %mask% %reason% %nickname% %expiration%',
+            default => $id . ([] !== $params ? json_encode($params) : ''),
+        });
 
         $cmd = $this->createCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class), $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'LIST'], $notifier, $translator));
@@ -617,7 +665,7 @@ final class AkickCommandTest extends TestCase
         self::assertStringContainsString('akick.list.header', $messages[0]);
         self::assertStringContainsString('*!*@one.com', $messages[1]);
         self::assertStringContainsString('*!*@two.com', $messages[2]);
-        self::assertStringContainsString('"%index%":"1"', $messages[1], 'Entry should contain index 1');
+        self::assertStringContainsString('akick.list.entry 1 ', $messages[1], 'Entry should contain index 1');
     }
 
     #[Test]
@@ -638,7 +686,7 @@ final class AkickCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class), $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, null, ['#test', 'ADD', '*!*@*.isp.com'], $notifier, $translator));
 
-        self::assertSame(['error.not_identified'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F presentation.error.not_identified"], $messages);
     }
 
     #[Test]
@@ -655,13 +703,19 @@ final class AkickCommandTest extends TestCase
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ([] !== $params ? json_encode($params) : ''));
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => match ($id) {
+            'akick.list.empty' => 'akick.list.empty %channel%',
+            'akick.dangerous_mask' => 'akick.dangerous_mask %mask%',
+            'akick.protected_user' => 'akick.protected_user %nickname%',
+            'akick.list.entry' => 'akick.list.entry %index% %mask% %reason% %nickname% %expiration%',
+            default => $id . ([] !== $params ? json_encode($params) : ''),
+        });
 
         $cmd = $this->createCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class), $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD'], $notifier, $translator));
 
         self::assertCount(1, $messages);
-        self::assertStringContainsString('error.syntax', $messages[0]);
+        self::assertStringContainsString("\x0304✗\x03\x0F presentation.error.syntax", $messages[0]);
     }
 
     #[Test]
@@ -677,9 +731,12 @@ final class AkickCommandTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(
             static function (string $id, array $parameters = []): string {
+                if ('presentation.error.syntax' === $id) {
+                    return 'error.syntax|%syntax%';
+                }
                 $syntax = $parameters['%syntax%'] ?? null;
 
-                return 'error.syntax' === $id && is_string($syntax) ? $id . '|' . $syntax : $id;
+                return "\x0304✗\x03\x0F presentation.error.syntax" === $id && is_string($syntax) ? $id . '|' . $syntax : $id;
             }
         );
 
@@ -692,7 +749,7 @@ final class AkickCommandTest extends TestCase
             $translator,
         ));
 
-        self::assertSame(['error.syntax|akick.add.syntax'], $messages);
+        self::assertSame(["\x0304✗\x03\x0F error.syntax|\x02\x0303akick.add.syntax\x03\x0F"], $messages);
     }
 
     #[Test]
@@ -709,13 +766,19 @@ final class AkickCommandTest extends TestCase
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ([] !== $params ? json_encode($params) : ''));
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => match ($id) {
+            'akick.list.empty' => 'akick.list.empty %channel%',
+            'akick.dangerous_mask' => 'akick.dangerous_mask %mask%',
+            'akick.protected_user' => 'akick.protected_user %nickname%',
+            'akick.list.entry' => 'akick.list.entry %index% %mask% %reason% %nickname% %expiration%',
+            default => $id . ([] !== $params ? json_encode($params) : ''),
+        });
 
         $cmd = $this->createCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class), $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'DEL'], $notifier, $translator));
 
         self::assertCount(1, $messages);
-        self::assertStringContainsString('error.syntax', $messages[0]);
+        self::assertStringContainsString("\x0304✗\x03\x0F presentation.error.syntax", $messages[0]);
     }
 
     #[Test]
@@ -751,7 +814,7 @@ final class AkickCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class), $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', '*!*@*.isp.com', '0', 'Spammer'], $notifier, $translator));
 
-        self::assertSame(['akick.add.done'], $messages);
+        self::assertSame(["\x0303✔\x03\x0F akick.add.done"], $messages);
         self::assertNotNull($saved);
         self::assertSame('*!*@*.isp.com', $saved->getMask());
         self::assertSame('Spammer', $saved->getReason());
@@ -791,7 +854,7 @@ final class AkickCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class), $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', '*!*@*.isp.com', '   '], $notifier, $translator));
 
-        self::assertSame(['akick.add.done'], $messages);
+        self::assertSame(["\x0303✔\x03\x0F akick.add.done"], $messages);
         self::assertNotNull($saved);
         self::assertNull($saved->getReason());
     }
@@ -829,13 +892,19 @@ final class AkickCommandTest extends TestCase
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ([] !== $params ? json_encode($params) : ''));
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => match ($id) {
+            'akick.list.empty' => 'akick.list.empty %channel%',
+            'akick.dangerous_mask' => 'akick.dangerous_mask %mask%',
+            'akick.protected_user' => 'akick.protected_user %nickname%',
+            'akick.list.entry' => 'akick.list.entry %index% %mask% %reason% %nickname% %expiration%',
+            default => $id . ([] !== $params ? json_encode($params) : ''),
+        });
 
         $cmd = $this->createCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class), $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', '   '], $notifier, $translator));
 
         self::assertCount(1, $messages);
-        self::assertStringContainsString('error.syntax', $messages[0]);
+        self::assertStringContainsString("\x0304✗\x03\x0F presentation.error.syntax", $messages[0]);
     }
 
     #[Test]
@@ -852,13 +921,19 @@ final class AkickCommandTest extends TestCase
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ([] !== $params ? json_encode($params) : ''));
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => match ($id) {
+            'akick.list.empty' => 'akick.list.empty %channel%',
+            'akick.dangerous_mask' => 'akick.dangerous_mask %mask%',
+            'akick.protected_user' => 'akick.protected_user %nickname%',
+            'akick.list.entry' => 'akick.list.entry %index% %mask% %reason% %nickname% %expiration%',
+            default => $id . ([] !== $params ? json_encode($params) : ''),
+        });
 
         $cmd = $this->createCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class), $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'DEL', '   '], $notifier, $translator));
 
         self::assertCount(1, $messages);
-        self::assertStringContainsString('error.syntax', $messages[0]);
+        self::assertStringContainsString("\x0304✗\x03\x0F presentation.error.syntax", $messages[0]);
     }
 
     #[Test]
@@ -882,7 +957,13 @@ final class AkickCommandTest extends TestCase
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ([] !== $params ? json_encode($params) : ''));
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => match ($id) {
+            'akick.list.empty' => 'akick.list.empty %channel%',
+            'akick.dangerous_mask' => 'akick.dangerous_mask %mask%',
+            'akick.protected_user' => 'akick.protected_user %nickname%',
+            'akick.list.entry' => 'akick.list.entry %index% %mask% %reason% %nickname% %expiration%',
+            default => $id . ([] !== $params ? json_encode($params) : ''),
+        });
 
         $cmd = $this->createCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class), $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'DEL', '0'], $notifier, $translator));
@@ -921,7 +1002,13 @@ final class AkickCommandTest extends TestCase
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ([] !== $params ? json_encode($params) : ''));
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => match ($id) {
+            'akick.list.empty' => 'akick.list.empty %channel%',
+            'akick.dangerous_mask' => 'akick.dangerous_mask %mask%',
+            'akick.protected_user' => 'akick.protected_user %nickname%',
+            'akick.list.entry' => 'akick.list.entry %index% %mask% %reason% %nickname% %expiration%',
+            default => $id . ([] !== $params ? json_encode($params) : ''),
+        });
 
         $cmd = $this->createCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class), $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'LIST'], $notifier, $translator));
@@ -960,7 +1047,13 @@ final class AkickCommandTest extends TestCase
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ([] !== $params ? json_encode($params) : ''));
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => match ($id) {
+            'akick.list.empty' => 'akick.list.empty %channel%',
+            'akick.dangerous_mask' => 'akick.dangerous_mask %mask%',
+            'akick.protected_user' => 'akick.protected_user %nickname%',
+            'akick.list.entry' => 'akick.list.entry %index% %mask% %reason% %nickname% %expiration%',
+            default => $id . ([] !== $params ? json_encode($params) : ''),
+        });
 
         $cmd = $this->createCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class), $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'LIST'], $notifier, $translator));
@@ -997,7 +1090,13 @@ final class AkickCommandTest extends TestCase
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ([] !== $params ? json_encode($params) : ''));
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => match ($id) {
+            'akick.list.empty' => 'akick.list.empty %channel%',
+            'akick.dangerous_mask' => 'akick.dangerous_mask %mask%',
+            'akick.protected_user' => 'akick.protected_user %nickname%',
+            'akick.list.entry' => 'akick.list.entry %index% %mask% %reason% %nickname% %expiration%',
+            default => $id . ([] !== $params ? json_encode($params) : ''),
+        });
 
         $cmd = $this->createCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class), $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'LIST'], $notifier, $translator));
@@ -1100,7 +1199,7 @@ final class AkickCommandTest extends TestCase
         $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', '*!*@*.isp.com', 'invalid', 'Reason'], $notifier, $translator));
 
         self::assertCount(1, $messages);
-        self::assertStringContainsString('error.syntax', $messages[0]);
+        self::assertStringContainsString("\x0304✗\x03\x0F presentation.error.syntax", $messages[0]);
     }
 
     #[Test]
@@ -1129,7 +1228,7 @@ final class AkickCommandTest extends TestCase
         $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', '*!*@*.isp.com', 'Spam', 'bot', 'detected'], $notifier, $translator));
 
         self::assertCount(1, $messages);
-        self::assertStringContainsString('error.syntax', $messages[0]);
+        self::assertStringContainsString("\x0304✗\x03\x0F presentation.error.syntax", $messages[0]);
     }
 
     #[Test]
@@ -1560,7 +1659,7 @@ final class AkickCommandTest extends TestCase
         self::assertCount(1, $kicks);
         self::assertSame('UID2', $kicks[0]['uid']);
         self::assertSame('Spam', $kicks[0]['reason']);
-        self::assertSame('akick.add.done', $messages[0]);
+        self::assertSame("\x0303✔\x03\x0F akick.add.done", $messages[0]);
     }
 
     #[Test]
@@ -1668,7 +1767,13 @@ final class AkickCommandTest extends TestCase
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ([] !== $params ? json_encode($params) : ''));
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => match ($id) {
+            'akick.list.empty' => 'akick.list.empty %channel%',
+            'akick.dangerous_mask' => 'akick.dangerous_mask %mask%',
+            'akick.protected_user' => 'akick.protected_user %nickname%',
+            'akick.list.entry' => 'akick.list.entry %index% %mask% %reason% %nickname% %expiration%',
+            default => $id . ([] !== $params ? json_encode($params) : ''),
+        });
 
         $cmd = $this->createCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class), $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', 'Founder!*@*'], $notifier, $translator));
@@ -1704,7 +1809,13 @@ final class AkickCommandTest extends TestCase
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ([] !== $params ? json_encode($params) : ''));
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => match ($id) {
+            'akick.list.empty' => 'akick.list.empty %channel%',
+            'akick.dangerous_mask' => 'akick.dangerous_mask %mask%',
+            'akick.protected_user' => 'akick.protected_user %nickname%',
+            'akick.list.entry' => 'akick.list.entry %index% %mask% %reason% %nickname% %expiration%',
+            default => $id . ([] !== $params ? json_encode($params) : ''),
+        });
 
         $cmd = $this->createCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class), $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', '*Alice*!*@*.isp.com'], $notifier, $translator));
@@ -1748,7 +1859,13 @@ final class AkickCommandTest extends TestCase
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ([] !== $params ? json_encode($params) : ''));
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => match ($id) {
+            'akick.list.empty' => 'akick.list.empty %channel%',
+            'akick.dangerous_mask' => 'akick.dangerous_mask %mask%',
+            'akick.protected_user' => 'akick.protected_user %nickname%',
+            'akick.list.entry' => 'akick.list.entry %index% %mask% %reason% %nickname% %expiration%',
+            default => $id . ([] !== $params ? json_encode($params) : ''),
+        });
 
         $cmd = $this->createCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class), $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', 'Bob!*@isp.com'], $notifier, $translator));
@@ -1787,7 +1904,13 @@ final class AkickCommandTest extends TestCase
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ([] !== $params ? json_encode($params) : ''));
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => match ($id) {
+            'akick.list.empty' => 'akick.list.empty %channel%',
+            'akick.dangerous_mask' => 'akick.dangerous_mask %mask%',
+            'akick.protected_user' => 'akick.protected_user %nickname%',
+            'akick.list.entry' => 'akick.list.entry %index% %mask% %reason% %nickname% %expiration%',
+            default => $id . ([] !== $params ? json_encode($params) : ''),
+        });
 
         $cmd = $this->createCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class), $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', 'Charley!*@*'], $notifier, $translator));
@@ -1835,7 +1958,7 @@ final class AkickCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class), $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', '*!*@*.isp.com', '0', 'Spammer'], $notifier, $translator));
 
-        self::assertSame(['akick.add.done'], $messages);
+        self::assertSame(["\x0303✔\x03\x0F akick.add.done"], $messages);
         self::assertNotNull($saved);
         self::assertSame('*!*@*.isp.com', $saved->getMask());
     }
@@ -1878,7 +2001,7 @@ final class AkickCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class), $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', 'SpammerBot!*@*.evil.com', '0', 'Bad bot'], $notifier, $translator));
 
-        self::assertSame(['akick.add.done'], $messages);
+        self::assertSame(["\x0303✔\x03\x0F akick.add.done"], $messages);
         self::assertNotNull($saved);
         self::assertSame('SpammerBot!*@*.evil.com', $saved->getMask());
         self::assertSame('Bad bot', $saved->getReason());
@@ -1916,7 +2039,7 @@ final class AkickCommandTest extends TestCase
         $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', '*!*@*.isp.com', 'NotAnExpiry'], $notifier, $translator));
 
         self::assertCount(1, $messages);
-        self::assertStringContainsString('error.syntax', $messages[0]);
+        self::assertStringContainsString("\x0304✗\x03\x0F presentation.error.syntax", $messages[0]);
     }
 
     #[Test]
@@ -1955,7 +2078,13 @@ final class AkickCommandTest extends TestCase
         });
 
         $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ([] !== $params ? json_encode($params) : ''));
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => match ($id) {
+            'akick.list.empty' => 'akick.list.empty %channel%',
+            'akick.dangerous_mask' => 'akick.dangerous_mask %mask%',
+            'akick.protected_user' => 'akick.protected_user %nickname%',
+            'akick.list.entry' => 'akick.list.entry %index% %mask% %reason% %nickname% %expiration%',
+            default => $id . ([] !== $params ? json_encode($params) : ''),
+        });
 
         $channelView = new ChannelView('#test', '+nt', null, 0, []);
         $channelLookup = $this->createStub(ChannelLookupPort::class);
@@ -2034,7 +2163,13 @@ final class AkickCommandTest extends TestCase
         });
 
         $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ([] !== $params ? json_encode($params) : ''));
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => match ($id) {
+            'akick.list.empty' => 'akick.list.empty %channel%',
+            'akick.dangerous_mask' => 'akick.dangerous_mask %mask%',
+            'akick.protected_user' => 'akick.protected_user %nickname%',
+            'akick.list.entry' => 'akick.list.entry %index% %mask% %reason% %nickname% %expiration%',
+            default => $id . ([] !== $params ? json_encode($params) : ''),
+        });
 
         $channelLookup = $this->createStub(ChannelLookupPort::class);
         $channelLookup->method('findByChannelName')->willReturn(null);
@@ -2117,7 +2252,13 @@ final class AkickCommandTest extends TestCase
         });
 
         $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ([] !== $params ? json_encode($params) : ''));
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => match ($id) {
+            'akick.list.empty' => 'akick.list.empty %channel%',
+            'akick.dangerous_mask' => 'akick.dangerous_mask %mask%',
+            'akick.protected_user' => 'akick.protected_user %nickname%',
+            'akick.list.entry' => 'akick.list.entry %index% %mask% %reason% %nickname% %expiration%',
+            default => $id . ([] !== $params ? json_encode($params) : ''),
+        });
 
         $channelView = new ChannelView('#test', '+nt', null, 2, [
             ['uid' => 'UID2', 'roleLetter' => ''],
@@ -2206,7 +2347,13 @@ final class AkickCommandTest extends TestCase
         });
 
         $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ([] !== $params ? json_encode($params) : ''));
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => match ($id) {
+            'akick.list.empty' => 'akick.list.empty %channel%',
+            'akick.dangerous_mask' => 'akick.dangerous_mask %mask%',
+            'akick.protected_user' => 'akick.protected_user %nickname%',
+            'akick.list.entry' => 'akick.list.entry %index% %mask% %reason% %nickname% %expiration%',
+            default => $id . ([] !== $params ? json_encode($params) : ''),
+        });
 
         $channelView = new ChannelView('#test', '+nt', null, 2, [
             ['uid' => 'UID2', 'roleLetter' => ''],

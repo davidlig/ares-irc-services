@@ -12,6 +12,9 @@ use App\ChanServ\Application\UseCase\RemoveOwnAccess\RemoveOwnChannelAccessOutco
 use App\Irc\Application\Port\In\Command\CommandOutcome;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\Fragment;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 use DateTimeImmutable;
 
 use function base64_decode;
@@ -98,13 +101,13 @@ final readonly class DelaccessCommand implements ChanServCommandInterface
     {
         $channelName = $context->getChannelNameArg(0);
         if (null === $channelName) {
-            $context->reply('error.invalid_channel');
+            $context->reply('error.invalid_channel', ['%example%' => new Fragment($context->trans('error.invalid_channel_example'), Component::Emphasis)], Role::Error);
 
             return CommandOutcome::rejected();
         }
         $account = $context->senderAccount;
         if (null === $account) {
-            $context->reply('error.not_identified');
+            $context->reply('presentation.error.not_identified', ['%identify%' => new Fragment($context->trans('presentation.identify'), Component::Command)], Role::Error);
 
             return CommandOutcome::rejected();
         }
@@ -123,23 +126,23 @@ final readonly class DelaccessCommand implements ChanServCommandInterface
             founderEquivalent: $context->isLevelFounder,
         ));
         if (RemoveOwnChannelAccessOutcome::NotRegistered === $outcome) {
-            $context->reply('error.channel_not_registered', ['%channel%' => $channelName]);
+            $context->reply('presentation.error.channel_not_registered', ['%channel%' => new Fragment((string) $channelName, Component::Emphasis)], Role::Error);
 
             return CommandOutcome::rejected();
         }
         if (RemoveOwnChannelAccessOutcome::FounderNotInAccess === $outcome) {
-            $context->reply('delaccess.founder_not_in_access', ['%channel%' => $channelName]);
+            $context->reply('delaccess.founder_not_in_access', ['%channel%' => new Fragment($channelName, Component::Emphasis)], Role::Error);
 
             return CommandOutcome::rejected();
         }
         if (RemoveOwnChannelAccessOutcome::NotInAccess === $outcome) {
-            $context->reply('delaccess.not_in_list', ['%channel%' => $channelName]);
+            $context->reply('delaccess.not_in_list', ['%channel%' => new Fragment($channelName, Component::Emphasis)], Role::Error);
 
             return CommandOutcome::rejected();
         }
 
-        $context->reply('delaccess.done', ['%channel%' => $channelName]);
-        $notice = $context->trans('delaccess.notice_channel', ['%nickname%' => $sender->nick]);
+        $context->reply('delaccess.done', ['%channel%' => new Fragment($channelName, Component::Emphasis)], Role::Success);
+        $notice = $context->renderReply(Role::Success, 'delaccess.notice_channel', ['%nickname%' => new Fragment($sender->nick, Component::Actor)]);
         $context->getNotifier()->sendNoticeToChannel($channelName, $notice);
 
         return CommandOutcome::success();
