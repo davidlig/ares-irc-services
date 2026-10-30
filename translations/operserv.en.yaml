@@ -16,11 +16,11 @@
 # HELP examples: example/examples and %command_prefix%.
 # The presenter adds the uncolored /msg prefix and a two-space margin.
 
-# --- ERROR -----------------------------------------------------------------
+# --- ERROR --------------------------------------------------------------------
 error:
   root_only: "This command is restricted to network root administrators."
 
-# --- HELP ------------------------------------------------------------------
+# --- HELP ---------------------------------------------------------------------
 help:
   syntax: "HELP [command] [option]"
   short: "List commands or show help for a command."
@@ -57,7 +57,7 @@ help:
     low_level: "Low level"
   ircop_header: "Available commands for IRC Operators:"
 
-# --- IRCOP -----------------------------------------------------------------
+# --- IRCOP --------------------------------------------------------------------
 ircop:
   syntax: "IRCOP {ADD <nickname> <role>|DEL <nickname>|LIST}"
   short: "Manage network IRC operators."
@@ -109,7 +109,7 @@ ircop:
     header: "Network IRC Operators"
     empty: "There are no IRC operators."
 
-# --- ROLE ------------------------------------------------------------------
+# --- ROLE ---------------------------------------------------------------------
 role:
   # --- ROLE OPERCLASS ------------------------------------------------------
   operclass:
@@ -310,7 +310,7 @@ role:
       cleared: "Removed forced vhost pattern from role %role%."
       invalid: "Invalid vhost pattern. Valid characters: a-z, A-Z, 0-9, - and .. Must have at least one dot, cannot start/end with - or . or have .."
 
-# --- KILL ------------------------------------------------------------------
+# --- KILL ---------------------------------------------------------------------
 kill:
   syntax: "KILL <nickname> <reason>"
   short: "Forcefully disconnect a user from the network."
@@ -322,7 +322,7 @@ kill:
   protected_ircop: "Cannot kill IRC operator %nickname%."
   done: "User %nickname% has been killed (%reason%)."
 
-# --- GLINE -----------------------------------------------------------------
+# --- GLINE --------------------------------------------------------------------
 gline:
   syntax: "GLINE {ADD <mask> <expiry> <reason>|DEL {<mask>|<number>}|LIST [mask]}"
   short: "Manage network-wide G-lines."
@@ -386,7 +386,48 @@ gline:
     empty: "There are no G-lines."
     entry: "%index%. %mask% - %reason% (%nickname%, expires: %expiration%)"
 
-# --- GLOBAL ----------------------------------------------------------------
+# --- BADMAIL ------------------------------------------------------------------
+badmail:
+  syntax: "BADMAIL {ADD <domain> <reason>|DEL {number|ALL}|LIST <pattern> [page]}"
+  short: "Manage blocked email domains."
+  help: |-
+    Manage blocked email domains.
+  example: "%command_prefix%BADMAIL LIST *"
+  add:
+    syntax: "BADMAIL ADD <domain> <reason>"
+    short: "Block a domain."
+    help: |-
+      Accepts ASCII or punycode domains, not addresses or patterns. A reason
+      is required. Blocking is exact and does not include subdomains.
+    example: "%command_prefix%BADMAIL ADD example.org abuse"
+  del:
+    syntax: "BADMAIL DEL {number|ALL}"
+    short: "Remove blocked domains."
+    help: |-
+      Delete a permanent identifier, or ALL entries. Other identifiers do
+      not change.
+    example: "%command_prefix%BADMAIL DEL 1"
+  list:
+    syntax: "BADMAIL LIST <pattern> [page]"
+    short: "List blocked domains."
+    help: |-
+      The pattern is required. Only * is a wildcard, matching any sequence.
+      Matching ignores case. The optional page starts at 1. Filtering and
+      pages preserve permanent identifiers.
+    example: "%command_prefix%BADMAIL LIST *.org 2"
+  invalid_domain: "Invalid domain. Use an ASCII or punycode domain without a trailing dot."
+  invalid_reason: "A nonblank, single-line administrative reason is required."
+  duplicate: "This domain is already blocked."
+  not_found: "No blocked domain has that identifier."
+  added: "Blocked domain %domain%."
+  deleted: "Removed blocked domain %id%."
+  cleared: "Removed %total% blocked domains."
+  empty: "No blocked domains match."
+  header: "ID | Domain | Reason"
+  page: "Page %page%/%pages%, %total% matching domains."
+  row: "%id% | %domain% | %reason%"
+
+# --- GLOBAL -------------------------------------------------------------------
 global:
   syntax: "GLOBAL {service|nick!ident@vhost} {PRIVMSG|NOTICE} <message>"
   short: "Send a global message to all connected users."
@@ -410,34 +451,7 @@ global:
   type_invalid: "Message type must be PRIVMSG or NOTICE."
   done: "Global message sent from %nickname% to %count% users."
 
-# --- RAW -------------------------------------------------------------------
-raw:
-  syntax: "RAW <line>"
-  short: "Send a raw protocol line to the IRCd."
-  help: |-
-    Sends the given line directly to the linked IRCd socket.
-    Use with extreme caution. Invalid protocol lines can disrupt the network.
-  example: "%command_prefix%RAW :services.ares NOTICE * :Scheduled maintenance"
-  empty: "You must specify a non-empty line to send."
-  too_long: "Line is too long. Maximum 510 characters."
-  not_connected: "Not connected to IRCd."
-  done: "Raw line sent."
-  protocol:
-    syntax: "The active protocol rejected the RAW command syntax."
-    done: "Protocol-owned RAW command executed."
-    target: "The active protocol rejected target %target%."
-    unsupported: "The active protocol does not support this RAW command."
-    invalid_resource_type: "Unknown protocol resource type: %resource_type%."
-    invalid_resource: "Invalid protocol resource: %resource%."
-    invalid_value: "Invalid value for protocol resource: %resource%."
-    error: "The active protocol could not execute the RAW command."
-
-# --- DEBUG -----------------------------------------------------------------
-debug:
-  action_global: "%operator% executes command GLOBAL with nickname %target% via %type% to %count% users. Message: %message%"
-  prefix_message: "Message: %reason%"
-
-# --- MOTD ------------------------------------------------------------------
+# --- MOTD ---------------------------------------------------------------------
 motd:
   short: "Manage connect MOTD messages sent to users on connect."
   syntax: "MOTD {ADD <target> {PRIVMSG|NOTICE} <expiry> <message>|DEL <id>|LIST|CLEAN}"
@@ -497,43 +511,29 @@ motd:
   debug:
     finalized: "MOTD message #%id% has ended: [%type%] %message% | %date% | %shown_count%"
 
-# --- BADMAIL ---------------------------------------------------------------
-badmail:
-  syntax: "BADMAIL {ADD <domain> <reason>|DEL {number|ALL}|LIST <pattern> [page]}"
-  short: "Manage blocked email domains."
+# --- RAW ----------------------------------------------------------------------
+raw:
+  syntax: "RAW <line>"
+  short: "Send a raw protocol line to the IRCd."
   help: |-
-    Manage blocked email domains.
-  example: "%command_prefix%BADMAIL LIST *"
-  add:
-    syntax: "BADMAIL ADD <domain> <reason>"
-    short: "Block a domain."
-    help: |-
-      Accepts ASCII or punycode domains, not addresses or patterns. A reason
-      is required. Blocking is exact and does not include subdomains.
-    example: "%command_prefix%BADMAIL ADD example.org abuse"
-  del:
-    syntax: "BADMAIL DEL {number|ALL}"
-    short: "Remove blocked domains."
-    help: |-
-      Delete a permanent identifier, or ALL entries. Other identifiers do
-      not change.
-    example: "%command_prefix%BADMAIL DEL 1"
-  list:
-    syntax: "BADMAIL LIST <pattern> [page]"
-    short: "List blocked domains."
-    help: |-
-      The pattern is required. Only * is a wildcard, matching any sequence.
-      Matching ignores case. The optional page starts at 1. Filtering and
-      pages preserve permanent identifiers.
-    example: "%command_prefix%BADMAIL LIST *.org 2"
-  invalid_domain: "Invalid domain. Use an ASCII or punycode domain without a trailing dot."
-  invalid_reason: "A nonblank, single-line administrative reason is required."
-  duplicate: "This domain is already blocked."
-  not_found: "No blocked domain has that identifier."
-  added: "Blocked domain %domain%."
-  deleted: "Removed blocked domain %id%."
-  cleared: "Removed %total% blocked domains."
-  empty: "No blocked domains match."
-  header: "ID | Domain | Reason"
-  page: "Page %page%/%pages%, %total% matching domains."
-  row: "%id% | %domain% | %reason%"
+    Sends the given line directly to the linked IRCd socket.
+    Use with extreme caution. Invalid protocol lines can disrupt the network.
+  example: "%command_prefix%RAW :services.ares NOTICE * :Scheduled maintenance"
+  empty: "You must specify a non-empty line to send."
+  too_long: "Line is too long. Maximum 510 characters."
+  not_connected: "Not connected to IRCd."
+  done: "Raw line sent."
+  protocol:
+    syntax: "The active protocol rejected the RAW command syntax."
+    done: "Protocol-owned RAW command executed."
+    target: "The active protocol rejected target %target%."
+    unsupported: "The active protocol does not support this RAW command."
+    invalid_resource_type: "Unknown protocol resource type: %resource_type%."
+    invalid_resource: "Invalid protocol resource: %resource%."
+    invalid_value: "Invalid value for protocol resource: %resource%."
+    error: "The active protocol could not execute the RAW command."
+
+# --- DEBUG --------------------------------------------------------------------
+debug:
+  action_global: "%operator% executes command GLOBAL with nickname %target% via %type% to %count% users. Message: %message%"
+  prefix_message: "Message: %reason%"

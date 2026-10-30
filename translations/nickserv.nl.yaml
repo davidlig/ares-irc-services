@@ -16,7 +16,7 @@
 # HELP-voorbeelden: example/examples en %command_prefix%.
 # De presentatielaag voegt /msg zonder kleur en een marge van twee spaties toe.
 
-# --- REGISTER --------------------------------------------------------------
+# --- REGISTER -----------------------------------------------------------------
 register:
   token_unavailable: !irc |-
     De registratie is in behandeling, maar het token kon niet worden verstrekt.
@@ -52,69 +52,7 @@ register:
   throttled: "U moet %minutes% minu(u)t(en) wachten voordat u opnieuw probeert te registreren."
   guest_prefix_forbidden: "U kunt geen bijnaam registreren die begint met %prefix%."
 
-# --- VERIFY ----------------------------------------------------------------
-verify:
-  syntax: "VERIFY <token>"
-  short: "Bevestigt een registratie of hersteltoken."
-  help: |-
-    Na verificatie wordt dit je permanente hersteltoken.
-    Bewaar het veilig: je kunt het gebruiken om je bijnaam te herstellen.
-    De geldigheidsduur van %duration% geldt alleen vóór verificatie.
-  example: "%command_prefix%VERIFY <ontvangen_token>"
-  success: "Bijnaam %nickname% is succesvol geregistreerd en u bent nu geïdentificeerd."
-  success_native: "De bijnaam %nickname% is succesvol geregistreerd. Gebruik de hieronder weergegeven native authenticatie."
-  invalid_token: "Het hersteltoken is ongeldig."
-  no_pending: "U heeft geen lopende registratie om te verifiëren."
-
-# --- RESEND ----------------------------------------------------------------
-resend:
-  disabled: "%resend% is uitgeschakeld omdat dit account een token rechtstreeks via chat verzendt."
-  syntax: "RESEND"
-  short: "Verstuur de verificatietoken opnieuw naar uw e-mail."
-  help: |-
-    RESEND is alleen beschikbaar als het verificatietoken per e-mail is gestuurd.
-    Na verificatie wordt dit je permanente hersteltoken. Bewaar het veilig om je
-    bijnaam te herstellen. De geldigheidsduur van %duration% geldt alleen vóór
-    verificatie.
-    Met RESEND ontvang je een nieuw token per e-mail.
-    De termijn van de registratie in behandeling wordt met %duration% verlengd.
-  example: "%command_prefix%RESEND"
-  success: "Verificatietoken opnieuw verzonden naar %email%."
-  no_pending: "U heeft geen lopende registratie om te verifiëren."
-  throttled: "U moet %minutes% minu(u)t(en) wachten voordat u een nieuwe verificatie-e-mail aanvraagt."
-
-# --- RECOVER ---------------------------------------------------------------
-recover:
-  no_email: "Er is geen e-mail ingesteld voor bijnaam %nickname%. Herstel is niet beschikbaar."
-  email_sent: "Er is een hersteltoken verzonden naar %email_hint%. Controleer uw inbox (en spammap)."
-  pending_deletion: "Bijnaam %nickname% staat klaar voor verwijdering en kan niet worden hersteld."
-  instructions: "EMAIL: %command_0% vraagt een voorlopig token per e-mail aan. TOKEN: geef je bevestigde token op. %command_1% accepteert een geldig e-mailtoken of bevestigd token. Het e-mailtoken vervangt het opgeslagen token pas na validatie. Het opgeslagen token biedt een optionele vervanging via %command_2%; negeer het bericht om het te behouden."
-  instructions_command_0: "RECOVER %nickname%"
-  instructions_command_1: "RECOVER %nickname% <token>"
-  instructions_command_2: "VERIFY"
-  syntax: "RECOVER <bijnaam> [token]"
-  short: "Herstel uw bijnaam als u uw wachtwoord bent kwijtgeraakt."
-  help: |-
-    Vraag zonder token per e-mail een tijdelijk token aan.
-    Je kunt ook een geldig hersteltoken opgeven; een tijdelijk token vervangt het
-    opgeslagen token pas na verificatie.
-    Na gebruik van het opgeslagen token wordt met VERIFY optioneel een vervanging
-    aangeboden. Negeer dat bericht als je het huidige wilt behouden.
-  example: "%command_prefix%RECOVER Gebruiker"
-  examples:
-    - "%command_prefix%RECOVER Gebruiker <ontvangen_token>"
-  pending: "De registratie van %nickname% is in behandeling. Gebruik %command_0%. %command_1% is alleen beschikbaar bij REGMODE EMAIL en een geldig gekoppeld e-mailadres."
-  pending_command_0: "VERIFY <token>"
-  pending_command_1: "RESEND"
-  suspended: "Bijnaam %nickname% is geschorst. Reden: %reason%"
-  forbidden: "Bijnaam %nickname% kan niet worden gebruikt op dit netwerk."
-  throttled: "Te veel ongeldige tokens. Probeer het over %minutes% minuten opnieuw."
-  invalid_token: "Het hersteltoken is ongeldig."
-  success_identify: "Wachtwoord gereset. Identificeer nu: %identify_cmd%"
-  success_then_change: "Wijzig daarna uw wachtwoord: /msg %bot% %command_0%"
-  success_then_change_command_0: "SET PASSWORD <nieuw_wachtwoord>"
-
-# --- IDENTIFY --------------------------------------------------------------
+# --- IDENTIFY -----------------------------------------------------------------
 identify:
   syntax: "IDENTIFY <bijnaam> <wachtwoord>"
   short: "Identificeer uzelf als de eigenaar van een bijnaam."
@@ -151,104 +89,69 @@ identify:
   forbidden: "Bijnaam %nickname% kan niet worden gebruikt op dit netwerk."
   pending_deletion: "Bijnaam %nickname% staat op het punt verwijderd te worden en kan niet worden gebruikt."
 
-# --- STATUS ----------------------------------------------------------------
-status:
-  syntax: "STATUS <bijnaam>"
-  short: "Toon de registratiestatus van een bijnaam."
+# --- VERIFY -------------------------------------------------------------------
+verify:
+  syntax: "VERIFY <token>"
+  short: "Bevestigt een registratie of hersteltoken."
   help: |-
-    Toont de huidige status van een bijnaam: geregistreerd, wachtend op verificatie,
-    geschorst, enzovoort.
-  example: "%command_prefix%STATUS Gebruiker"
-  header: "Status van bijnaam %nickname%"
-  unregistered: "  Status          : Niet geregistreerd"
-  not_registered_offline: "  Status          : %state%"
-  value_not_registered_offline: "Niet geregistreerd"
-  pending: "  Status          : %state%"
-  value_pending: "Wacht op verificatie"
-  pending_expires: "  Verloopt over     : %minutes% minu(u)t(en)"
-  pending_expires_at: "  Verloopt op       : %date%"
-  not_connected: "  Status          : %state%"
-  value_not_connected: "Niet verbonden"
-  not_identified: "  Status          : %state%"
-  value_not_identified: "Niet geïdentificeerd"
-  identified: "  Status          : %state%"
-  value_identified: "Geïdentificeerd"
-  suspended: "  Status          : %state%"
-  value_suspended: "Geschorst"
-  suspended_reason: "  Reden           : %reason%"
-  suspended_until: "  Eindigt op      : %date%"
-  suspended_permanent: "  Eindigt op      : Permanent"
-  forbidden: "  Status          : %state%"
-  value_forbidden: "Verboden"
-  forbidden_reason: "  Reden           : %reason%"
-  pending_deletion: "  %label%          : %state%"
-  value_pending_deletion: "Verwijdering in afwachting"
-  label_pending_deletion: "Status"
-  pending_deletion_at: "  %label%      : %date%"
+    Na verificatie wordt dit je permanente hersteltoken.
+    Bewaar het veilig: je kunt het gebruiken om je bijnaam te herstellen.
+    De geldigheidsduur van %duration% geldt alleen vóór verificatie.
+  example: "%command_prefix%VERIFY <ontvangen_token>"
+  success: "Bijnaam %nickname% is succesvol geregistreerd en u bent nu geïdentificeerd."
+  success_native: "De bijnaam %nickname% is succesvol geregistreerd. Gebruik de hieronder weergegeven native authenticatie."
+  invalid_token: "Het hersteltoken is ongeldig."
+  no_pending: "U heeft geen lopende registratie om te verifiëren."
 
-  label_pending_deletion_at: "Verwijderd"
-# --- INFO ------------------------------------------------------------------
-info:
-  syntax: "INFO <bijnaam>"
-  short: "Toon informatie over een geregistreerde bijnaam."
+# --- RESEND -------------------------------------------------------------------
+resend:
+  disabled: "%resend% is uitgeschakeld omdat dit account een token rechtstreeks via chat verzendt."
+  syntax: "RESEND"
+  short: "Verstuur de verificatietoken opnieuw naar uw e-mail."
   help: |-
-    Toont registratiegegevens van een bijnaam: registratiedatum, verbindingsstatus,
-    laatste uitgaande bericht en e-mailadres.
+    RESEND is alleen beschikbaar als het verificatietoken per e-mail is gestuurd.
+    Na verificatie wordt dit je permanente hersteltoken. Bewaar het veilig om je
+    bijnaam te herstellen. De geldigheidsduur van %duration% geldt alleen vóór
+    verificatie.
+    Met RESEND ontvang je een nieuw token per e-mail.
+    De termijn van de registratie in behandeling wordt met %duration% verlengd.
+  example: "%command_prefix%RESEND"
+  success: "Verificatietoken opnieuw verzonden naar %email%."
+  no_pending: "U heeft geen lopende registratie om te verifiëren."
+  throttled: "U moet %minutes% minu(u)t(en) wachten voordat u een nieuwe verificatie-e-mail aanvraagt."
 
-    Het e-mailadres is alleen zichtbaar voor de geïdentificeerde eigenaar.
-    Bij een privébijnaam zien alleen de eigenaar en IRC-operators de informatie.
-  example: "%command_prefix%INFO Gebruiker"
-  private: "Informatie van bijnaam %nickname% is privé."
-  header: "Informatie voor bijnaam %nickname%"
-  status: "%label%               : %status%"
-  label_status: "Status"
-  status_registered: "Geregistreerd"
-  status_suspended: "Geschorst"
-  status_forbidden: "Verboden"
-  status_pending_deletion: "Verwijdering in afwachting"
-  reason: "%label%                  : %reason%"
-  label_reason: "Reden"
-  suspended_until: "%label%           : %date%"
-  label_suspended_until: "Eindigt op"
-  suspended_permanent: "%label%           : Permanent"
-  label_suspended_permanent: "Eindigt op"
-  registered_at: "%label%        : %date%"
-  label_registered_at: "Geregistreerd"
-  last_seen_online: "%label%        : %online%"
-  label_last_seen_online: "Laatst gezien"
-  value_last_seen_online: "NU ONLINE"
-  last_seen_at: "%label%        : %date%"
-  label_last_seen_at: "Laatst gezien"
-  last_seen_never: "%label%        : Nooit"
-  label_last_seen_never: "Laatst gezien"
-  last_quit: "%label%  : %message%"
-  label_last_quit: "Laatste quitbericht"
-  last_connect: "%label%    : %ip% (%host%)"
-  label_last_connect: "Laatst gezien van"
-  language: "%label%                 : %language%"
-  label_language: "Taal"
-  email: "%label%               : %email%"
-  label_email: "E-mail"
-  vhost: "%label%                : %vhost%"
-  label_vhost: "VHost"
-  no_expire: "%label%          : Ja"
-  label_no_expire: "Vervalt nooit"
-  pending_deletion_at: "%label%             : %date%"
-  label_pending_deletion_at: "Verwijderd"
-  pending_deletion_until: "%label%          : %date%"
-  label_pending_deletion_until: "Definitief op"
-  pending_deletion_notice: "%notice%"
-  value_pending_deletion_notice: "Deze nickname staat op het punt verwijderd te worden en kan niet worden geregistreerd."
-  channels_header: |-
+# --- RECOVER ------------------------------------------------------------------
+recover:
+  no_email: "Er is geen e-mail ingesteld voor bijnaam %nickname%. Herstel is niet beschikbaar."
+  email_sent: "Er is een hersteltoken verzonden naar %email_hint%. Controleer uw inbox (en spammap)."
+  pending_deletion: "Bijnaam %nickname% staat klaar voor verwijdering en kan niet worden hersteld."
+  instructions: "EMAIL: %command_0% vraagt een voorlopig token per e-mail aan. TOKEN: geef je bevestigde token op. %command_1% accepteert een geldig e-mailtoken of bevestigd token. Het e-mailtoken vervangt het opgeslagen token pas na validatie. Het opgeslagen token biedt een optionele vervanging via %command_2%; negeer het bericht om het te behouden."
+  instructions_command_0: "RECOVER %nickname%"
+  instructions_command_1: "RECOVER %nickname% <token>"
+  instructions_command_2: "VERIFY"
+  syntax: "RECOVER <bijnaam> [token]"
+  short: "Herstel uw bijnaam als u uw wachtwoord bent kwijtgeraakt."
+  help: |-
+    Vraag zonder token per e-mail een tijdelijk token aan.
+    Je kunt ook een geldig hersteltoken opgeven; een tijdelijk token vervangt het
+    opgeslagen token pas na verificatie.
+    Na gebruik van het opgeslagen token wordt met VERIFY optioneel een vervanging
+    aangeboden. Negeer dat bericht als je het huidige wilt behouden.
+  example: "%command_prefix%RECOVER Gebruiker"
+  examples:
+    - "%command_prefix%RECOVER Gebruiker <ontvangen_token>"
+  pending: "De registratie van %nickname% is in behandeling. Gebruik %command_0%. %command_1% is alleen beschikbaar bij REGMODE EMAIL en een geldig gekoppeld e-mailadres."
+  pending_command_0: "VERIFY <token>"
+  pending_command_1: "RESEND"
+  suspended: "Bijnaam %nickname% is geschorst. Reden: %reason%"
+  forbidden: "Bijnaam %nickname% kan niet worden gebruikt op dit netwerk."
+  throttled: "Te veel ongeldige tokens. Probeer het over %minutes% minuten opnieuw."
+  invalid_token: "Het hersteltoken is ongeldig."
+  success_identify: "Wachtwoord gereset. Identificeer nu: %identify_cmd%"
+  success_then_change: "Wijzig daarna uw wachtwoord: /msg %bot% %command_0%"
+  success_then_change_command_0: "SET PASSWORD <nieuw_wachtwoord>"
 
-    Kanalen met toegang:
-  channels_entry_founder: "%channel% (%role%)"
-  channels_role_founder: "Oprichter"
-  channels_entry_successor: "%channel% (%role%)"
-  channels_role_successor: "Opvolger"
-  channels_entry_access: "%channel% (%level%)"
-
-# --- SET -------------------------------------------------------------------
+# --- SET ----------------------------------------------------------------------
 set:
   syntax: "SET {PASSWORD <nieuw_wachtwoord>|EMAIL <email> <token>|LANGUAGE <code>|TIMEZONE <tijdzone>|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
   short: "Wijzig de opties van je bijnaam."
@@ -391,7 +294,281 @@ set:
     taken: "Die vhost is al in gebruik door een andere bijnaam."
     forced: "Uw vhost wordt automatisch geconfigureerd en kan niet worden gewijzigd met SET VHOST."
 
-# --- SAREGISTER ------------------------------------------------------------
+# --- INFO ---------------------------------------------------------------------
+info:
+  syntax: "INFO <bijnaam>"
+  short: "Toon informatie over een geregistreerde bijnaam."
+  help: |-
+    Toont registratiegegevens van een bijnaam: registratiedatum, verbindingsstatus,
+    laatste uitgaande bericht en e-mailadres.
+
+    Het e-mailadres is alleen zichtbaar voor de geïdentificeerde eigenaar.
+    Bij een privébijnaam zien alleen de eigenaar en IRC-operators de informatie.
+  example: "%command_prefix%INFO Gebruiker"
+  private: "Informatie van bijnaam %nickname% is privé."
+  header: "Informatie voor bijnaam %nickname%"
+  status: "%label%               : %status%"
+  label_status: "Status"
+  status_registered: "Geregistreerd"
+  status_suspended: "Geschorst"
+  status_forbidden: "Verboden"
+  status_pending_deletion: "Verwijdering in afwachting"
+  reason: "%label%                  : %reason%"
+  label_reason: "Reden"
+  suspended_until: "%label%           : %date%"
+  label_suspended_until: "Eindigt op"
+  suspended_permanent: "%label%           : Permanent"
+  label_suspended_permanent: "Eindigt op"
+  registered_at: "%label%        : %date%"
+  label_registered_at: "Geregistreerd"
+  last_seen_online: "%label%        : %online%"
+  label_last_seen_online: "Laatst gezien"
+  value_last_seen_online: "NU ONLINE"
+  last_seen_at: "%label%        : %date%"
+  label_last_seen_at: "Laatst gezien"
+  last_seen_never: "%label%        : Nooit"
+  label_last_seen_never: "Laatst gezien"
+  last_quit: "%label%  : %message%"
+  label_last_quit: "Laatste quitbericht"
+  last_connect: "%label%    : %ip% (%host%)"
+  label_last_connect: "Laatst gezien van"
+  language: "%label%                 : %language%"
+  label_language: "Taal"
+  email: "%label%               : %email%"
+  label_email: "E-mail"
+  vhost: "%label%                : %vhost%"
+  label_vhost: "VHost"
+  no_expire: "%label%          : Ja"
+  label_no_expire: "Vervalt nooit"
+  pending_deletion_at: "%label%             : %date%"
+  label_pending_deletion_at: "Verwijderd"
+  pending_deletion_until: "%label%          : %date%"
+  label_pending_deletion_until: "Definitief op"
+  pending_deletion_notice: "%notice%"
+  value_pending_deletion_notice: "Deze nickname staat op het punt verwijderd te worden en kan niet worden geregistreerd."
+  channels_header: |-
+
+    Kanalen met toegang:
+  channels_entry_founder: "%channel% (%role%)"
+  channels_role_founder: "Oprichter"
+  channels_entry_successor: "%channel% (%role%)"
+  channels_role_successor: "Opvolger"
+  channels_entry_access: "%channel% (%level%)"
+
+# --- STATUS -------------------------------------------------------------------
+status:
+  syntax: "STATUS <bijnaam>"
+  short: "Toon de registratiestatus van een bijnaam."
+  help: |-
+    Toont de huidige status van een bijnaam: geregistreerd, wachtend op verificatie,
+    geschorst, enzovoort.
+  example: "%command_prefix%STATUS Gebruiker"
+  header: "Status van bijnaam %nickname%"
+  unregistered: "  Status          : Niet geregistreerd"
+  not_registered_offline: "  Status          : %state%"
+  value_not_registered_offline: "Niet geregistreerd"
+  pending: "  Status          : %state%"
+  value_pending: "Wacht op verificatie"
+  pending_expires: "  Verloopt over     : %minutes% minu(u)t(en)"
+  pending_expires_at: "  Verloopt op       : %date%"
+  not_connected: "  Status          : %state%"
+  value_not_connected: "Niet verbonden"
+  not_identified: "  Status          : %state%"
+  value_not_identified: "Niet geïdentificeerd"
+  identified: "  Status          : %state%"
+  value_identified: "Geïdentificeerd"
+  suspended: "  Status          : %state%"
+  value_suspended: "Geschorst"
+  suspended_reason: "  Reden           : %reason%"
+  suspended_until: "  Eindigt op      : %date%"
+  suspended_permanent: "  Eindigt op      : Permanent"
+  forbidden: "  Status          : %state%"
+  value_forbidden: "Verboden"
+  forbidden_reason: "  Reden           : %reason%"
+  pending_deletion: "  %label%          : %state%"
+  value_pending_deletion: "Verwijdering in afwachting"
+  label_pending_deletion: "Status"
+  pending_deletion_at: "  %label%      : %date%"
+
+  label_pending_deletion_at: "Verwijderd"
+
+# --- HELP ---------------------------------------------------------------------
+help:
+  syntax: "HELP [commando]"
+  short: "Toon hulp voor %nickserv% commando's."
+  help: |-
+    Toont algemene %nickserv% hulp of gedetailleerde informatie
+    voor een specifiek commando.
+  examples_header: "Voorbeelden:"
+  example: "%command_prefix%HELP"
+  examples:
+    - "%command_prefix%HELP SET"
+    - "%command_prefix%HELP SET EMAIL"
+    - "%command_prefix%HELP SET TIMEZONE Europe"
+  header_title: "%bot%"
+  header: "%title%"
+  navigation_marker: ""
+  info_marker: ""
+  error_marker: ""
+  warning_marker: ""
+  intro: |-
+    Registreert en beschermt je bijnaam zodat anderen deze niet kunnen gebruiken.
+    Beheer de accountbeveiliging, pas voorkeuren aan en herstel toegang wanneer
+    nodig.
+  intro_expiration: "%label%: Nicknamen die langer dan %duration% niet zijn gebruikt, worden automatisch verwijderd."
+  intro_expiration_duration: "%days% dagen"
+  intro_expiration_label: "OPMERKING"
+  general_header: "Beschikbare opdrachten:"
+  command_line: "%command%%description%"
+  subcommand_line: "%command%%description%"
+  options_header: "Opties:"
+  general_syntax: "HELP <opdracht>"
+  general_footer: "Gebruik /msg %bot% %syntax% voor meer informatie."
+  set_sub_syntax: "HELP %command% <optie>"
+  set_sub_footer: "Gebruik /msg %bot% %syntax% voor meer informatie."
+  syntax_label: "Syntaxis: %syntax%"
+  footer: ""
+  group_header: "%group%"
+  subgroup_header: "%group%"
+  group:
+    registration_auth: "Registratie en authenticatie"
+    account_security: "Account en beveiliging"
+  ircop_group:
+    lookup: "Opzoeken en onderzoek"
+    account_management: "Accountbeheer"
+    suspensions_bans: "Schorsingen en verboden"
+    deletion: "Verwijderen en herstellen"
+  ircop_header: "Beschikbare opdrachten voor IRC-operators:"
+  set_timezone:
+    index_label: "Regio's (gebruik %syntax% voor lijst):"
+    index_syntax: "HELP SET TIMEZONE <regio>"
+    region_header: "Tijdzones voor %region%:"
+    region_unknown: "Onbekende regio. Gebruik %syntax% voor de index."
+    region_syntax: "HELP SET TIMEZONE"
+
+# --- NICK PROTECTION ----------------------------------------------------------
+protection:
+  nick_in_use: "Bijnaam %nickname% is geregistreerd. U wordt hernoemd als u zich niet identificeert."
+  renamed_to: |-
+    U bent hernoemd naar %guest_nick%. Om uw bijnaam te herstellen:
+    /msg %bot% %identify%
+  renamed_command: "IDENTIFY %nickname% <wachtwoord>"
+  nick_forbidden: "Bijnaam %nickname% is verboden: %reason%"
+
+# --- USERIP (IRCop) -----------------------------------------------------------
+userip:
+  syntax: "USERIP <bijnaam>"
+  short: "Verkrijg het echte IP-adres en de hostnaam van de bijnaam."
+  help: |-
+    Toont het echte IP-adres en de hostnaam van een bijnaam.
+    Gebruik deze gevoelige informatie verantwoord.
+  example: "%command_prefix%USERIP Gebruiker"
+  result: "Bijnaam: %nickname% | IP: %ip% | Host: %host%"
+
+# --- WHOIP (IRCop) ------------------------------------------------------------
+whoip:
+  syntax: "WHOIP <ip>"
+  short: "Zoekt nicknames op basis van het IP-adres van hun laatste geïdentificeerde verbinding."
+  help: |-
+    Toont geregistreerde bijnamen waarvan de laatste geïdentificeerde verbinding
+    dit IP-adres gebruikte. Het opgeslagen adres kan verouderd zijn.
+  example: "%command_prefix%WHOIP 192.0.2.10"
+  empty: "Geen geregistreerde nicknames komen overeen met dit IP-adres."
+  header: "Overeenkomende nicknames:"
+
+# --- LIST (IRCop) -------------------------------------------------------------
+list:
+  syntax: "LIST <patroon> [pagina]"
+  short: "Toont geregistreerde bijnamen die overeenkomen met een patroon."
+  help: |-
+    Toont geregistreerde bijnamen die overeenkomen met het patroon. * staat voor
+    eender welke tekenreeks; de optionele pagina begint bij 1.
+  example: "%command_prefix%LIST Gebruiker*"
+  examples:
+    - "%command_prefix%LIST Gebruiker* 2"
+  header: "Bijnaam | Registratie | Laatste verbinding | IP | Status"
+  row: "%nickname% | %registered% | %last_seen% | %ip% | %status%"
+  empty: "Geen bijnamen komen overeen met patroon %pattern%."
+  status_pending: "In afwachting"
+  status_registered: "Geregistreerd"
+
+# --- HISTORY ---
+history:
+  syntax: "HISTORY <bijnaam> {ADD <bericht>|DEL <id>|VIEW [PAGE|ALL]|CLEAR}"
+  short: "Bekijk of beheer bijnaamactiegeschiedenis."
+  help: |-
+    Raadpleegt en beheert de actgeschiedenis van een bijnaam. Opschortingen en
+    wijzigingen van wachtwoord, e-mail of herstel worden automatisch vastgelegd.
+    VIEW toont drie vermeldingen per pagina; ALL toont de volledige geschiedenis.
+  example: "%command_prefix%HISTORY Gebruiker VIEW"
+  examples:
+    - "%command_prefix%HISTORY Gebruiker VIEW ALL"
+    - "%command_prefix%HISTORY Gebruiker ADD Handmatige notitie"
+
+  # --- HISTORY ADD ---------------------------------------------------------
+  add:
+    syntax: "HISTORY <bijnaam> ADD <bericht>"
+    short: "Voeg een handmatige geschiedenisvermelding toe."
+    help: "Voegt handmatig een vermelding toe aan de bijnaamgeschiedenis."
+    example: "%command_prefix%HISTORY Gebruiker ADD Gemeld wegens spam"
+    success: "Geschiedenisvermelding toegevoegd voor %nickname%."
+
+  # --- HISTORY DEL ---------------------------------------------------------
+  del:
+    syntax: "HISTORY <bijnaam> DEL <id>"
+    short: "Verwijder een geschiedenisvermelding op ID."
+    help: "Verwijdert een specifieke geschiedenisvermelding op basis van ID."
+    example: "%command_prefix%HISTORY Gebruiker DEL 42"
+
+  # --- HISTORY VIEW --------------------------------------------------------
+  view:
+    syntax: "HISTORY <bijnaam> VIEW [PAGINA|ALL]"
+    short: "Bekijk bijnaamactiegeschiedenis."
+    help: |-
+      Toont de actgeschiedenis van een bijnaam. Standaard drie vermeldingen per
+      pagina.
+      Gebruik ALL om alles te tonen.
+    example: "%command_prefix%HISTORY Gebruiker VIEW"
+    examples:
+      - "%command_prefix%HISTORY Gebruiker VIEW 2"
+      - "%command_prefix%HISTORY Gebruiker VIEW ALL"
+    header: "%heading% (toont %start%-%end% van %total%):"
+    header_title: "Geschiedenis voor %nickname%"
+    entry: "#%id% [%date%] %action% door %operator% — %message%"
+    no_entries: "Geen geschiedenisvermeldingen gevonden voor %nickname%."
+    page_hint: "Gebruik %command% voor meer vermeldingen."
+    page_hint_command: "HISTORY %nickname% VIEW %next_page%"
+
+  # --- HISTORY CLEAR -------------------------------------------------------
+  clear:
+    syntax: "HISTORY <bijnaam> CLEAR"
+    short: "Verwijder alle geschiedenisvermeldingen voor een bijnaam."
+    help: "Verwijdert alle vermeldingen in de bijnaamgeschiedenis onherroepelijk."
+    example: "%command_prefix%HISTORY Gebruiker CLEAR"
+    success: "%count% geschiedenisvermeldingen gewist voor %nickname%."
+
+# --- HISTORY MESSAGES ---
+history.message:
+  verify: "Account geactiveerd"
+  resend: "Verificatiemail opnieuw verzonden"
+  noexpire_on: "Vervalbeveiliging ingeschakeld"
+  noexpire_off: "Vervalbeveiliging uitgeschakeld"
+  userip: "USERIP-raadpleging"
+  history_clear: "Geschiedenis gewist"
+  password_changed_owner: "Wachtwoord gewijzigd door eigenaar"
+  password_changed_operator: "Wachtwoord gewijzigd door operator"
+  email_changed_owner: "E-mail gewijzigd van %old_email% naar %new_email%"
+  email_changed_operator: "E-mail gewijzigd naar %new_email% door operator"
+  recover: "Wachtwoord gereset via e-mailtoken"
+  saregister: "Account administratief geregistreerd"
+
+# --- HISTORY EXTRA FIELDS ---
+history.extra:
+  old_email: "Oude e-mail: %value%"
+  new_email: "Nieuwe e-mail: %value%"
+  method: "Methode: %value%"
+
+# --- SAREGISTER (IRCop) -------------------------------------------------------
 saregister:
   syntax: "SAREGISTER <bijnaam> <wachtwoord> [email]"
   short: "Een bijnaam administratief registreren."
@@ -410,7 +587,7 @@ saregister:
   success_email: "Bijnaam %nickname% is geregistreerd. Hersteltoken verzonden naar %email%."
   invalid_nickname: "Ongeldige bijnaam %nickname%."
 
-# --- SASET -----------------------------------------------------------------
+# --- SASET (IRCop) ------------------------------------------------------------
 saset:
   syntax: "SASET <bijnaam> {PASSWORD <nieuw_wachtwoord>|EMAIL <nieuwe_e-mail>|LANGUAGE <code>|TIMEZONE {<tijdzone>|OFF}|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
   short: "Instellingen van een andere bijnaam wijzigen."
@@ -491,91 +668,56 @@ saset:
     examples:
       - "%command_prefix%SASET Gebruiker VHOST"
 
-# --- HELP ------------------------------------------------------------------
-help:
-  syntax: "HELP [commando]"
-  short: "Toon hulp voor %nickserv% commando's."
+# --- RENAME (IRCop) -----------------------------------------------------------
+rename:
+  syntax: "RENAME <bijnaam>"
+  short: "Forceer hernoeming van een verbonden bijnaam naar een willekeurige bijnaam."
   help: |-
-    Toont algemene %nickserv% hulp of gedetailleerde informatie
-    voor een specifiek commando.
-  examples_header: "Voorbeelden:"
-  example: "%command_prefix%HELP"
+    Dwingt een verbonden bijnaam om te veranderen naar een willekeurige naam met
+    een door het netwerk ingesteld voorvoegsel.
+  example: "%command_prefix%RENAME Problematisch"
+  cannot_rename_root: "Kan rootgebruiker %nickname% niet hernoemen."
+  cannot_rename_oper: "Kan IRC-operator %nickname% niet hernoemen."
+  cannot_rename_service: "Kan service-bijnaam %nickname% niet hernoemen."
+  success: "Bijnaam %nickname% is hernoemd naar %new_nick%."
+
+# --- NOEXPIRE (IRCop) ---------------------------------------------------------
+noexpire:
+  syntax: "NOEXPIRE <bijnaam> {ON|OFF}"
+  short: "Stel verloopbescherming in of verwijder deze voor een bijnaam."
+  help: |-
+    Bepaalt of een bijnaam door inactiviteit verloopt.
+    ON voorkomt verval; OFF past de normale regels toe.
+  example: "%command_prefix%NOEXPIRE Gebruiker ON"
   examples:
-    - "%command_prefix%HELP SET"
-    - "%command_prefix%HELP SET EMAIL"
-    - "%command_prefix%HELP SET TIMEZONE Europe"
-  header_title: "%bot%"
-  header: "%title%"
-  navigation_marker: ""
-  info_marker: ""
-  error_marker: ""
-  warning_marker: ""
-  intro: |-
-    Registreert en beschermt je bijnaam zodat anderen deze niet kunnen gebruiken.
-    Beheer de accountbeveiliging, pas voorkeuren aan en herstel toegang wanneer
-    nodig.
-  intro_expiration: "%label%: Nicknamen die langer dan %duration% niet zijn gebruikt, worden automatisch verwijderd."
-  intro_expiration_duration: "%days% dagen"
-  intro_expiration_label: "OPMERKING"
-  general_header: "Beschikbare opdrachten:"
-  command_line: "%command%%description%"
-  subcommand_line: "%command%%description%"
-  options_header: "Opties:"
-  general_syntax: "HELP <opdracht>"
-  general_footer: "Gebruik /msg %bot% %syntax% voor meer informatie."
-  set_sub_syntax: "HELP %command% <optie>"
-  set_sub_footer: "Gebruik /msg %bot% %syntax% voor meer informatie."
-  syntax_label: "Syntaxis: %syntax%"
-  footer: ""
-  group_header: "%group%"
-  subgroup_header: "%group%"
-  group:
-    registration_auth: "Registratie en authenticatie"
-    account_security: "Account en beveiliging"
-  ircop_group:
-    lookup: "Opzoeken en onderzoek"
-    account_management: "Accountbeheer"
-    suspensions_bans: "Schorsingen en verboden"
-    deletion: "Verwijderen en herstellen"
-  ircop_header: "Beschikbare opdrachten voor IRC-operators:"
-  set_timezone:
-    index_label: "Regio's (gebruik %syntax% voor lijst):"
-    index_syntax: "HELP SET TIMEZONE <regio>"
-    region_header: "Tijdzones voor %region%:"
-    region_unknown: "Onbekende regio. Gebruik %syntax% voor de index."
-    region_syntax: "HELP SET TIMEZONE"
+    - "%command_prefix%NOEXPIRE Gebruiker OFF"
+  success_on: "Bijnaam %nickname% is nu beschermd tegen verloop."
+  success_off: "Bijnaam %nickname% verloopt nu normaal."
+  forbidden: "Bijnaam %nickname% is verboden."
+  suspended: "Bijnaam %nickname% is geschorst."
 
-# --- NICK PROTECTION -------------------------------------------------------
-protection:
-  nick_in_use: "Bijnaam %nickname% is geregistreerd. U wordt hernoemd als u zich niet identificeert."
-  renamed_to: |-
-    U bent hernoemd naar %guest_nick%. Om uw bijnaam te herstellen:
-    /msg %bot% %identify%
-  renamed_command: "IDENTIFY %nickname% <wachtwoord>"
-  nick_forbidden: "Bijnaam %nickname% is verboden: %reason%"
-
-# --- USERIP ----------------------------------------------------------------
-userip:
-  syntax: "USERIP <bijnaam>"
-  short: "Verkrijg het echte IP-adres en de hostnaam van de bijnaam."
+# --- REGMODE (IRCop) ----------------------------------------------------------
+regmode:
+  syntax: "REGMODE {EMAIL|TOKEN|STATUS}"
+  short: "De registratiemodus van het netwerk beheren."
   help: |-
-    Toont het echte IP-adres en de hostnaam van een bijnaam.
-    Gebruik deze gevoelige informatie verantwoord.
-  example: "%command_prefix%USERIP Gebruiker"
-  result: "Bijnaam: %nickname% | IP: %ip% | Host: %host%"
+    Stelt de registratiemodus voor nieuwe accounts in.
 
-# --- WHOIP -----------------------------------------------------------------
-whoip:
-  syntax: "WHOIP <ip>"
-  short: "Zoekt nicknames op basis van het IP-adres van hun laatste geïdentificeerde verbinding."
-  help: |-
-    Toont geregistreerde bijnamen waarvan de laatste geïdentificeerde verbinding
-    dit IP-adres gebruikte. Het opgeslagen adres kan verouderd zijn.
-  example: "%command_prefix%WHOIP 192.0.2.10"
-  empty: "Geen geregistreerde nicknames komen overeen met dit IP-adres."
-  header: "Overeenkomende nicknames:"
+    %emphasis_0% Stuurt het verificatietoken naar het e-mailadres van de gebruiker.
+    %emphasis_1% Levert het verificatietoken rechtstreeks via IRC.
+    %emphasis_2% Toont de huidige modus zonder deze te wijzigen.
 
-# --- SUSPEND ---------------------------------------------------------------
+    Registraties in behandeling behouden de modus waarmee ze zijn gestart.
+
+    In TOKEN-modus blijft RESEND voor alle gebruikers uitgeschakeld.
+  example: "%command_prefix%REGMODE STATUS"
+  examples:
+    - "%command_prefix%REGMODE EMAIL"
+    - "%command_prefix%REGMODE TOKEN"
+  status: "Huidige registratiemodus: %mode%."
+  changed: "Registratiemodus gewijzigd naar %mode%."
+
+# --- SUSPEND (IRCop) ----------------------------------------------------------
 suspend:
   syntax: "SUSPEND <bijnaam> <duur> <reden>"
   short: "Schors een bijnaam."
@@ -597,7 +739,7 @@ suspend:
   invalid_duration_format: "<d><h><m>"
   invalid_duration_permanent: "0"
 
-# --- UNSUSPEND -------------------------------------------------------------
+# --- UNSUSPEND (IRCop) --------------------------------------------------------
 unsuspend:
   syntax: "UNSUSPEND <bijnaam>"
   short: "Hef schorsing van een bijnaam op."
@@ -606,53 +748,7 @@ unsuspend:
   success: "De schorsing van %nickname% is opgeheven."
   not_suspended: "Bijnaam %nickname% is niet geschorst."
 
-# --- RENAME ----------------------------------------------------------------
-rename:
-  syntax: "RENAME <bijnaam>"
-  short: "Forceer hernoeming van een verbonden bijnaam naar een willekeurige bijnaam."
-  help: |-
-    Dwingt een verbonden bijnaam om te veranderen naar een willekeurige naam met
-    een door het netwerk ingesteld voorvoegsel.
-  example: "%command_prefix%RENAME Problematisch"
-  cannot_rename_root: "Kan rootgebruiker %nickname% niet hernoemen."
-  cannot_rename_oper: "Kan IRC-operator %nickname% niet hernoemen."
-  cannot_rename_service: "Kan service-bijnaam %nickname% niet hernoemen."
-  success: "Bijnaam %nickname% is hernoemd naar %new_nick%."
-
-# --- DROP ------------------------------------------------------------------
-drop:
-  syntax: "DROP <bijnaam> [FORCE]"
-  short: "Laat een geregistreerde bijnaam vallen."
-  help: |-
-    Markeert een geregistreerde bijnaam voor verwijdering tijdens de respijtperiode;
-    RESTORE kan deze herstellen. Voeg FORCE toe voor permanente verwijdering. Root-,
-    IRC-operator- en servicebijnamen en je eigen bijnaam kunnen niet worden
-    verwijderd.
-  force:
-    short: "Verwijdert een bijnaam die op verwijdering wacht definitief."
-  example: "%command_prefix%DROP OudAccount"
-  examples:
-    - "%command_prefix%DROP OudAccount FORCE"
-  suspended: "Bijnaam %nickname% is geschorst. Hef eerst de schorsing op."
-  forbidden: "Bijnaam %nickname% is verboden."
-  cannot_drop_root: "Kan rootgebruiker %nickname% niet verwijderen."
-  cannot_drop_oper: "Kan IRC-operator %nickname% niet verwijderen."
-  cannot_drop_self: "U kunt uw eigen bijnaam niet verwijderen."
-  success: "Bijnaam %nickname% is gemarkeerd voor verwijdering en kan tijdens de respijtperiode worden hersteld."
-  force_success: "Bijnaam %nickname% is definitief verwijderd."
-  pending_deletion: "Bijnaam %nickname% staat al op het punt verwijderd te worden. Gebruik DROP <bijnaam> FORCE om hem definitief te verwijderen."
-  cannot_drop_service: "Kan service-bijnaam %nickname% niet verwijderen."
-
-# --- RESTORE ---------------------------------------------------------------
-restore:
-  syntax: "RESTORE <bijnaam>"
-  short: "Een bijnaam die op verwijdering wacht herstellen."
-  help: "Herstelt een bijnaam die op verwijdering wacht zolang de respijtperiode duurt."
-  example: "%command_prefix%RESTORE OudAccount"
-  success: "Bijnaam %nickname% is hersteld."
-  not_pending_deletion: "Bijnaam %nickname% staat niet op het punt verwijderd te worden."
-
-# --- FORBID ----------------------------------------------------------------
+# --- FORBID (IRCop) -----------------------------------------------------------
 forbid:
   syntax: "FORBID <bijnaam> <reden>"
   short: "Blokkeer permanent het gebruik van een bijnaam."
@@ -669,7 +765,7 @@ forbid:
   cannot_forbid_oper: "Kan IRC-operator %nickname% niet verbieden."
   cannot_forbid_service: "Kan service-bijnaam %nickname% niet verbieden."
 
-# --- UNFORBID --------------------------------------------------------------
+# --- UNFORBID (IRCop) ---------------------------------------------------------
 unforbid:
   syntax: "UNFORBID <bijnaam>"
   short: "Hef een bijnaamverbod op."
@@ -678,7 +774,7 @@ unforbid:
   success: "Bijnaam %nickname% is niet langer verboden."
   not_forbidden: "Bijnaam %nickname% is niet verboden."
 
-# --- FORBIDVHOST -----------------------------------------------------------
+# --- FORBIDVHOST (IRCop) ------------------------------------------------------
 forbidvhost:
   syntax: "FORBIDVHOST {ADD <patroon>|DEL <patroon>|LIST}"
   short: "Beheer verboden vhost-patronen."
@@ -721,135 +817,40 @@ forbidvhost:
     entry: "%index%. %pattern% — door %nickname% (%date%)"
     empty: "Geen verboden vhost-patronen."
 
-# --- HISTORY ---
-history:
-  syntax: "HISTORY <bijnaam> {ADD <bericht>|DEL <id>|VIEW [PAGE|ALL]|CLEAR}"
-  short: "Bekijk of beheer bijnaamactiegeschiedenis."
+# --- DROP (IRCop) -------------------------------------------------------------
+drop:
+  syntax: "DROP <bijnaam> [FORCE]"
+  short: "Laat een geregistreerde bijnaam vallen."
   help: |-
-    Raadpleegt en beheert de actgeschiedenis van een bijnaam. Opschortingen en
-    wijzigingen van wachtwoord, e-mail of herstel worden automatisch vastgelegd.
-    VIEW toont drie vermeldingen per pagina; ALL toont de volledige geschiedenis.
-  example: "%command_prefix%HISTORY Gebruiker VIEW"
+    Markeert een geregistreerde bijnaam voor verwijdering tijdens de respijtperiode;
+    RESTORE kan deze herstellen. Voeg FORCE toe voor permanente verwijdering. Root-,
+    IRC-operator- en servicebijnamen en je eigen bijnaam kunnen niet worden
+    verwijderd.
+  force:
+    short: "Verwijdert een bijnaam die op verwijdering wacht definitief."
+  example: "%command_prefix%DROP OudAccount"
   examples:
-    - "%command_prefix%HISTORY Gebruiker VIEW ALL"
-    - "%command_prefix%HISTORY Gebruiker ADD Handmatige notitie"
-
-  # --- HISTORY ADD ---------------------------------------------------------
-  add:
-    syntax: "HISTORY <bijnaam> ADD <bericht>"
-    short: "Voeg een handmatige geschiedenisvermelding toe."
-    help: "Voegt handmatig een vermelding toe aan de bijnaamgeschiedenis."
-    example: "%command_prefix%HISTORY Gebruiker ADD Gemeld wegens spam"
-    success: "Geschiedenisvermelding toegevoegd voor %nickname%."
-
-  # --- HISTORY DEL ---------------------------------------------------------
-  del:
-    syntax: "HISTORY <bijnaam> DEL <id>"
-    short: "Verwijder een geschiedenisvermelding op ID."
-    help: "Verwijdert een specifieke geschiedenisvermelding op basis van ID."
-    example: "%command_prefix%HISTORY Gebruiker DEL 42"
-
-  # --- HISTORY VIEW --------------------------------------------------------
-  view:
-    syntax: "HISTORY <bijnaam> VIEW [PAGINA|ALL]"
-    short: "Bekijk bijnaamactiegeschiedenis."
-    help: |-
-      Toont de actgeschiedenis van een bijnaam. Standaard drie vermeldingen per
-      pagina.
-      Gebruik ALL om alles te tonen.
-    example: "%command_prefix%HISTORY Gebruiker VIEW"
-    examples:
-      - "%command_prefix%HISTORY Gebruiker VIEW 2"
-      - "%command_prefix%HISTORY Gebruiker VIEW ALL"
-    header: "%heading% (toont %start%-%end% van %total%):"
-    header_title: "Geschiedenis voor %nickname%"
-    entry: "#%id% [%date%] %action% door %operator% — %message%"
-    no_entries: "Geen geschiedenisvermeldingen gevonden voor %nickname%."
-    page_hint: "Gebruik %command% voor meer vermeldingen."
-    page_hint_command: "HISTORY %nickname% VIEW %next_page%"
-
-  # --- HISTORY CLEAR -------------------------------------------------------
-  clear:
-    syntax: "HISTORY <bijnaam> CLEAR"
-    short: "Verwijder alle geschiedenisvermeldingen voor een bijnaam."
-    help: "Verwijdert alle vermeldingen in de bijnaamgeschiedenis onherroepelijk."
-    example: "%command_prefix%HISTORY Gebruiker CLEAR"
-    success: "%count% geschiedenisvermeldingen gewist voor %nickname%."
-
-# --- HISTORY MESSAGES ---
-history.message:
-  verify: "Account geactiveerd"
-  resend: "Verificatiemail opnieuw verzonden"
-  noexpire_on: "Vervalbeveiliging ingeschakeld"
-  noexpire_off: "Vervalbeveiliging uitgeschakeld"
-  userip: "USERIP-raadpleging"
-  history_clear: "Geschiedenis gewist"
-  password_changed_owner: "Wachtwoord gewijzigd door eigenaar"
-  password_changed_operator: "Wachtwoord gewijzigd door operator"
-  email_changed_owner: "E-mail gewijzigd van %old_email% naar %new_email%"
-  email_changed_operator: "E-mail gewijzigd naar %new_email% door operator"
-  recover: "Wachtwoord gereset via e-mailtoken"
-  saregister: "Account administratief geregistreerd"
-
-# --- HISTORY EXTRA FIELDS ---
-history.extra:
-  old_email: "Oude e-mail: %value%"
-  new_email: "Nieuwe e-mail: %value%"
-  method: "Methode: %value%"
-
-# --- NOEXPIRE --------------------------------------------------------------
-noexpire:
-  syntax: "NOEXPIRE <bijnaam> {ON|OFF}"
-  short: "Stel verloopbescherming in of verwijder deze voor een bijnaam."
-  help: |-
-    Bepaalt of een bijnaam door inactiviteit verloopt.
-    ON voorkomt verval; OFF past de normale regels toe.
-  example: "%command_prefix%NOEXPIRE Gebruiker ON"
-  examples:
-    - "%command_prefix%NOEXPIRE Gebruiker OFF"
-  success_on: "Bijnaam %nickname% is nu beschermd tegen verloop."
-  success_off: "Bijnaam %nickname% verloopt nu normaal."
+    - "%command_prefix%DROP OudAccount FORCE"
+  suspended: "Bijnaam %nickname% is geschorst. Hef eerst de schorsing op."
   forbidden: "Bijnaam %nickname% is verboden."
-  suspended: "Bijnaam %nickname% is geschorst."
+  cannot_drop_root: "Kan rootgebruiker %nickname% niet verwijderen."
+  cannot_drop_oper: "Kan IRC-operator %nickname% niet verwijderen."
+  cannot_drop_self: "U kunt uw eigen bijnaam niet verwijderen."
+  success: "Bijnaam %nickname% is gemarkeerd voor verwijdering en kan tijdens de respijtperiode worden hersteld."
+  force_success: "Bijnaam %nickname% is definitief verwijderd."
+  pending_deletion: "Bijnaam %nickname% staat al op het punt verwijderd te worden. Gebruik DROP <bijnaam> FORCE om hem definitief te verwijderen."
+  cannot_drop_service: "Kan service-bijnaam %nickname% niet verwijderen."
 
-# --- LIST ------------------------------------------------------------------
-list:
-  syntax: "LIST <patroon> [pagina]"
-  short: "Toont geregistreerde bijnamen die overeenkomen met een patroon."
-  help: |-
-    Toont geregistreerde bijnamen die overeenkomen met het patroon. * staat voor
-    eender welke tekenreeks; de optionele pagina begint bij 1.
-  example: "%command_prefix%LIST Gebruiker*"
-  examples:
-    - "%command_prefix%LIST Gebruiker* 2"
-  header: "Bijnaam | Registratie | Laatste verbinding | IP | Status"
-  row: "%nickname% | %registered% | %last_seen% | %ip% | %status%"
-  empty: "Geen bijnamen komen overeen met patroon %pattern%."
-  status_pending: "In afwachting"
-  status_registered: "Geregistreerd"
+# --- RESTORE (IRCop) ----------------------------------------------------------
+restore:
+  syntax: "RESTORE <bijnaam>"
+  short: "Een bijnaam die op verwijdering wacht herstellen."
+  help: "Herstelt een bijnaam die op verwijdering wacht zolang de respijtperiode duurt."
+  example: "%command_prefix%RESTORE OudAccount"
+  success: "Bijnaam %nickname% is hersteld."
+  not_pending_deletion: "Bijnaam %nickname% staat niet op het punt verwijderd te worden."
 
-# --- REGMODE ---------------------------------------------------------------
-regmode:
-  syntax: "REGMODE {EMAIL|TOKEN|STATUS}"
-  short: "De registratiemodus van het netwerk beheren."
-  help: |-
-    Stelt de registratiemodus voor nieuwe accounts in.
-
-    %emphasis_0% Stuurt het verificatietoken naar het e-mailadres van de gebruiker.
-    %emphasis_1% Levert het verificatietoken rechtstreeks via IRC.
-    %emphasis_2% Toont de huidige modus zonder deze te wijzigen.
-
-    Registraties in behandeling behouden de modus waarmee ze zijn gestart.
-
-    In TOKEN-modus blijft RESEND voor alle gebruikers uitgeschakeld.
-  example: "%command_prefix%REGMODE STATUS"
-  examples:
-    - "%command_prefix%REGMODE EMAIL"
-    - "%command_prefix%REGMODE TOKEN"
-  status: "Huidige registratiemodus: %mode%."
-  changed: "Registratiemodus gewijzigd naar %mode%."
-
-# --- RESCUE ----------------------------------------------------------------
+# --- RESCUE -------------------------------------------------------------------
 rescue:
   issued: |-
     Hersteltoken: %token_display%
@@ -877,7 +878,7 @@ rescue:
   replacement_unavailable: "Je wachtwoord is hersteld, maar een nieuw token kon niet worden uitgegeven. Je huidige token blijft geldig."
   temporarily_unavailable: "De uitgifte van hersteltokens is tijdelijk niet beschikbaar. Probeer het later opnieuw."
 
-# --- HELP FRAGMENTS ---------------------------------------------------------
+# --- HELP FRAGMENTS -----------------------------------------------------------
 help_fragments:
   identify_help_0: "+r"
   set_language_help_0: "ca"

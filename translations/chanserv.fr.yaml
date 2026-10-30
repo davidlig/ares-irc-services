@@ -16,13 +16,13 @@
 # Exemples HELP : example/examples et %command_prefix%.
 # Le présentateur ajoute /msg sans couleur et une marge de deux espaces.
 
-# --- ERROR -----------------------------------------------------------------
+# --- ERROR --------------------------------------------------------------------
 error:
   invalid_channel: "Nom de canal invalide. Utilisez %example%."
   invalid_channel_example: "#canal"
   generic: "Une erreur est survenue. Veuillez réessayer."
 
-# --- REGISTER --------------------------------------------------------------
+# --- REGISTER -----------------------------------------------------------------
 register:
   syntax: "REGISTER <#canal> <description>"
   example: "%command_prefix%REGISTER #salon Projet communautaire"
@@ -43,102 +43,7 @@ register:
   restricted_indefinite: "Les nouvelles demandes pour %channel% sont bloquées indéfiniment."
   restricted_until: "Les nouvelles demandes pour %channel% sont bloquées jusqu’au %date%"
 
-# --- SAREGISTER ------------------------------------------------------------
-saregister:
-  syntax: "SAREGISTER <#canal> <surnom> <description>"
-  short: "Enregistrer administrativement un canal."
-  help: |-
-    Syntaxe : SAREGISTER <#canal> <surnom> <description>
-
-    Enregistre administrativement un canal immédiatement pour le pseudonyme
-    spécifié en tant que fondateur, sans exiger de présence, de vérification ou de limite de débit.
-  example: "%command_prefix%SAREGISTER #canal Alice Salon communautaire"
-  success: "Le canal %channel% a été enregistré pour %founder%."
-
-# --- REGMODE ---------------------------------------------------------------
-regmode:
-  syntax: "REGMODE {DIRECT|APPROVAL|STATUS}"
-  example: "%command_prefix%REGMODE APPROVAL"
-  short: "Définir ou consulter le mode d’enregistrement des salons."
-  help: |-
-    Définit DIRECT ou APPROVAL, ou consulte le mode avec STATUS.
-    DIRECT est le mode par défaut et conserve l’enregistrement immédiat.
-  status: "Le mode d’enregistrement des salons est %mode%."
-  changed: "Le mode d’enregistrement des salons est maintenant %mode%."
-
-# --- CREG ------------------------------------------------------------------
-creg:
-  syntax: "CREG {PENDING [page]|ACCEPT <#channel>|REJECT <#channel> <raison>}"
-  pending.syntax: "CREG PENDING [page]"
-  pending.example: "%command_prefix%CREG PENDING"
-  pending.short: "Liste les demandes en attente sur une page limitée."
-  pending.help: "Liste les demandes en attente sur une page limitée."
-  accept.syntax: "CREG ACCEPT <#channel>"
-  accept.example: "%command_prefix%CREG ACCEPT #channel"
-  accept.short: "Approuver une demande d’enregistrement de salon."
-  accept.help: "Revérifie la demande et active l’enregistrement en attente."
-  reject.syntax: "CREG REJECT <#channel> <raison>"
-  reject.example: "%command_prefix%CREG REJECT #channel Sujet public requis"
-  reject.short: "Refuser une demande d’enregistrement de salon."
-  reject.help: "Refuse une demande avec un raison obligatoire et une restriction."
-  example: "%command_prefix%CREG PENDING"
-  short: "Examiner les demandes d’enregistrement de salons."
-  help: |-
-    Liste les demandes en attente, ou accepte ou refuse une demande.
-    Un refus exige un motif. Seul ACCEPT enregistre le salon.
-  pending_header: "Enregistrements en attente (page %page%)"
-  pending_item: "%channel% — demandeur %requester%, soumise le %submitted%: %description%"
-  accepted: "L’enregistrement de %channel% a été approuvé."
-  rejected: "L’enregistrement de %channel% a été refusé."
-  not_pending: "Aucune demande en attente pour %channel%."
-  channel_not_on_network: "Le salon %channel% n’est pas sur le réseau."
-  founder_limit: "Le demandeur a atteint la limite d’enregistrement de salons."
-  requester_inactive: "Le compte du demandeur n’est plus actif."
-  requester_ineligible: "Le demandeur doit actuellement être opérateur du salon."
-
-# --- STATUS ----------------------------------------------------------------
-status:
-  syntax: "STATUS <#channel>"
-  example: "%command_prefix%STATUS #channel"
-  header: "Statut du salon %channel%"
-  short: "Afficher le statut d’enregistrement du salon."
-  help: |-
-    Indique si un salon est non enregistré, en attente d’approbation,
-    refusé ou enregistré.
-    Les détails du refus sont visibles uniquement par le demandeur et
-    les IRCops autorisés.
-  unregistered: "%label%%padding%: Non enregistré"
-  unregistered_label: "Statut"
-  pending: "%label%%padding%: %state%"
-  pending_label: "Statut"
-  pending_value: "En attente d’approbation"
-  registered: "%label%%padding%: %state%"
-  registered_label: "Statut"
-  registered_value: "Enregistré"
-  suspended: "%label%%padding%: %state%"
-  suspended_label: "Statut"
-  suspended_value: "Suspendu"
-  forbidden: "%label%%padding%: %state%"
-  forbidden_label: "Statut"
-  forbidden_value: "Interdit"
-  pending_deletion: "%label%%padding%: %state%"
-  pending_deletion_label: "Statut"
-  pending_deletion_value: "En attente de suppression"
-  rejected_private: "%label%%padding%: %state%"
-  rejected_private_label: "Statut"
-  rejected_private_value: "Enregistrement refusé"
-  rejected: "%label%%padding%: %state%"
-  rejected_label: "Statut"
-  rejected_value: "Enregistrement refusé"
-  rejection_reason: "%label%%padding%: %reason%"
-  rejection_reason_label: "Raison"
-  rejection_audit: "%label%%padding%: %operator% le %date%"
-  rejection_audit_label: "Refusé par"
-  restriction_until: "%label%%padding%: %date%"
-  restriction_until_label: "Disponible à partir du"
-  footer: ""
-
-# --- INFO ------------------------------------------------------------------
+# --- INFO ---------------------------------------------------------------------
 info:
   syntax: "INFO <#canal>"
   example: "%command_prefix%INFO #salon"
@@ -196,72 +101,7 @@ info:
   pending_deletion_until_label: "Suppr. définitive"
   pending_deletion_notice: "Ce canal est gelé et ne peut pas être enregistré."
 
-# --- HELP ------------------------------------------------------------------
-help:
-  examples_header: "Exemples :"
-  syntax: "HELP [commande] [option]"
-  example: "%command_prefix%HELP"
-  examples:
-    - "%command_prefix%HELP SET"
-    - "%command_prefix%HELP SET EMAIL"
-  short: "Lister les commandes ou afficher l'aide d'une commande."
-  help: "Affiche les commandes disponibles et l’aide détaillée de leurs options."
-  header_title: "%bot%"
-  header: "%title% %separator%"
-  intro: |-
-    Permet d’enregistrer et de gérer des salons, de configurer leurs options et de
-    contrôler qui peut y accéder. Gérez les niveaux d’accès et les privilèges des
-    utilisateurs pour que le salon reste sous le contrôle de ses responsables.
-  general_header: "Commandes disponibles :"
-  command_line: "%command%%description%"
-  subcommand_line: "%command%%description%"
-  options_header: "Options :"
-  general_footer: "Utilisez /msg %bot% %help% pour plus d’informations."
-  general_footer_command: "HELP <commande>"
-  set_sub_footer: "Utilisez /msg %bot% %help% pour plus d’informations."
-  set_sub_footer_command: "HELP %command% <option>"
-  syntax_label: "Syntaxe : %syntax%"
-  footer: ""
-  intro_expiration: "NOTE : les salons inutilisés pendant plus de %period% sont automatiquement supprimés."
-  intro_expiration_period: "%days% jours"
-  group_header: "%group%"
-  subgroup_header: "%group%"
-  group:
-    registration_info: "Inscription et informations"
-    access_levels: "Accès et niveaux"
-    ranks_entry: "Rangs et entrée"
-  ircop_group:
-    channel_operations: "Opérations du canal"
-    channel_management: "Gestion du canal"
-    deletion: "Suppression et restauration"
-    restrictions: "Restrictions"
-    lookup: "Recherche et enquête"
-    registration_approval: "Approbation des enregistrements"
-  ircop_header: "Commandes disponibles pour les IRCops :"
-
-# --- OP --------------------------------------------------------------------
-op:
-  syntax: "OP <#canal> <surnom>"
-  example: "%command_prefix%OP #salon Alicia"
-  short: "Donner le mode opérateur de canal."
-  help: "Donner le mode opérateur de canal."
-  done: "Le statut d'opérateur de canal a été attribué à %nickname%."
-  user_not_on_channel: "Le surnom %nickname% n'est pas sur le réseau."
-  notice_grant: "%from% donne %mode% à %to%"
-
-# --- DEOP ------------------------------------------------------------------
-deop:
-  syntax: "DEOP <#canal> <surnom>"
-  example: "%command_prefix%DEOP #salon Alicia"
-  short: "Retirer le mode opérateur de canal."
-  help: "Retirer le mode opérateur de canal."
-  done: "%nickname% a été déopé."
-
-# --- SECURE ----------------------------------------------------------------
-secure:
-  requires_min_level: "Avec SECURE activé, %nickname% doit avoir au moins le niveau %level% pour recevoir %mode%."
-
-# --- SET -------------------------------------------------------------------
+# --- SET ----------------------------------------------------------------------
 set:
   syntax: "SET <#canal> {FOUNDER <surnom> [jeton]|SUCCESSOR [surnom]|DESC <description>|URL [url]|EMAIL [e-mail]|ENTRYMSG [message]|TOPICLOCK {ON|OFF}|MLOCK {ON|OFF}|PRIVATE {ON|OFF}|SECURE {ON|OFF}}"
   example: "%command_prefix%SET #salon DESC Un salon communautaire"
@@ -423,7 +263,49 @@ set:
     notice_on: "%nickname% active le mode SECURE."
     notice_off: "%nickname% désactive le mode SECURE."
 
-# --- ACCESS ----------------------------------------------------------------
+# --- STATUS -------------------------------------------------------------------
+status:
+  syntax: "STATUS <#channel>"
+  example: "%command_prefix%STATUS #channel"
+  header: "Statut du salon %channel%"
+  short: "Afficher le statut d’enregistrement du salon."
+  help: |-
+    Indique si un salon est non enregistré, en attente d’approbation,
+    refusé ou enregistré.
+    Les détails du refus sont visibles uniquement par le demandeur et
+    les IRCops autorisés.
+  unregistered: "%label%%padding%: Non enregistré"
+  unregistered_label: "Statut"
+  pending: "%label%%padding%: %state%"
+  pending_label: "Statut"
+  pending_value: "En attente d’approbation"
+  registered: "%label%%padding%: %state%"
+  registered_label: "Statut"
+  registered_value: "Enregistré"
+  suspended: "%label%%padding%: %state%"
+  suspended_label: "Statut"
+  suspended_value: "Suspendu"
+  forbidden: "%label%%padding%: %state%"
+  forbidden_label: "Statut"
+  forbidden_value: "Interdit"
+  pending_deletion: "%label%%padding%: %state%"
+  pending_deletion_label: "Statut"
+  pending_deletion_value: "En attente de suppression"
+  rejected_private: "%label%%padding%: %state%"
+  rejected_private_label: "Statut"
+  rejected_private_value: "Enregistrement refusé"
+  rejected: "%label%%padding%: %state%"
+  rejected_label: "Statut"
+  rejected_value: "Enregistrement refusé"
+  rejection_reason: "%label%%padding%: %reason%"
+  rejection_reason_label: "Raison"
+  rejection_audit: "%label%%padding%: %operator% le %date%"
+  rejection_audit_label: "Refusé par"
+  restriction_until: "%label%%padding%: %date%"
+  restriction_until_label: "Disponible à partir du"
+  footer: ""
+
+# --- ACCESS -------------------------------------------------------------------
 access:
   syntax: "ACCESS <#canal> {ADD <surnom> <niveau>|DEL <surnom>|LIST}"
   example: "%command_prefix%ACCESS #salon LIST"
@@ -467,7 +349,7 @@ access:
     done: "%nickname% retiré de la liste d'accès."
     notice_channel: "%from% retire %to% de la liste d'accès"
 
-# --- DELACCESS -------------------------------------------------------------
+# --- DELACCESS ----------------------------------------------------------------
 delaccess:
   syntax: "DELACCESS <#canal>"
   example: "%command_prefix%DELACCESS #salon"
@@ -480,125 +362,7 @@ delaccess:
   founder_not_in_access: "Vous êtes le fondateur de %channel% et ne figurez pas dans la liste d'accès."
   notice_channel: "%nickname% retire son accès du canal"
 
-# --- LEVELS ----------------------------------------------------------------
-levels:
-  syntax: "LEVELS <#canal> {LIST|SET <niveau> <valeur>|RESET}"
-  example: "%command_prefix%LEVELS #salon LIST"
-  examples:
-    - "%command_prefix%LEVELS #salon SET OPDEOP 50"
-    - "%command_prefix%LEVELS #salon RESET"
-  short: "Configurer les niveaux du canal."
-  help: |-
-    Configure les niveaux d’accès minimum requis pour les actions du salon.
-    Seul le fondateur peut modifier ou réinitialiser les niveaux.
-  unknown_sub: "Sous-commande inconnue %sub%. Utilisez LIST, SET ou RESET."
-  unknown_key: "Clé de niveau inconnue %key% ou non prise en charge par cet IRCd."
-  value_range: "La valeur de niveau doit être entre %min% et %max%."
-
-  # --- LEVELS LIST ---------------------------------------------------------
-  list:
-    syntax: "LEVELS <#canal> LIST"
-    example: "%command_prefix%LEVELS #salon LIST"
-    short: "Lister les exigences de niveau."
-    help: "Affiche chaque clé de niveau et sa valeur (par défaut si non définie)."
-    header: "Niveaux de %channel%"
-
-  # --- LEVELS SET ----------------------------------------------------------
-  set:
-    syntax: "LEVELS <#canal> SET <niveau> <valeur>"
-    example: "%command_prefix%LEVELS #salon SET OPDEOP 50"
-    short: "Définir une exigence de niveau."
-    help: "Valeur -1 à 499. Fondateur uniquement."
-    done: "%key% défini à %value%."
-
-  # --- LEVELS RESET --------------------------------------------------------
-  reset:
-    syntax: "LEVELS <#canal> RESET"
-    example: "%command_prefix%LEVELS #salon RESET"
-    short: "Réinitialiser tous les niveaux aux valeurs par défaut."
-    help: "Supprime toutes les personnalisations. Fondateur uniquement."
-    done: "Tous les niveaux réinitialisés aux valeurs par défaut."
-
-# --- VOICE -----------------------------------------------------------------
-voice:
-  syntax: "VOICE <#canal> <surnom>"
-  example: "%command_prefix%VOICE #salon Alicia"
-  short: "Donner le mode voice dans le canal."
-  help: "Donner le mode voice dans le canal."
-  done: "%nickname% a reçu le voice."
-  user_not_on_channel: "Le surnom %nickname% n'est pas sur le réseau."
-  notice_grant: "%from% donne %mode% à %to%"
-
-# --- DEVOICE ---------------------------------------------------------------
-devoice:
-  syntax: "DEVOICE <#canal> <surnom>"
-  example: "%command_prefix%DEVOICE #salon Alicia"
-  short: "Retirer le mode voice dans le canal."
-  help: "Retirer le mode voice dans le canal."
-  done: "%nickname% a été dévoicé."
-
-# --- UNBAN -----------------------------------------------------------------
-unban:
-  syntax: "UNBAN <#canal>"
-  example: "%command_prefix%UNBAN #salon"
-  short: "Retirer les bannissements qui vous affectent."
-  help: "Retire tous les bannissements du canal correspondant à votre identité actuelle, y compris les jokers et les masques IP/CIDR."
-  done: "%count% bannissement(s) vous affectant retiré(s) de %channel%"
-  notice_channel: "%nickname% a utilisé UNBAN."
-  no_matches: "Aucun bannissement ne correspond à votre identité dans %channel%"
-  unavailable: "Impossible de déterminer vos bannissements correspondants ; rien n’a changé."
-  not_on_network: "Le canal %channel% n’est pas sur le réseau."
-
-# --- INVITE ----------------------------------------------------------------
-invite:
-  syntax: "INVITE <#canal>"
-  example: "%command_prefix%INVITE #salon"
-  short: "S'inviter soi-même sur le canal."
-  help: "S'inviter soi-même sur le canal."
-  done: "Vous avez été invité sur %channel%."
-  notice_channel: "%nickname% s'invite sur le canal."
-
-# --- ADMIN -----------------------------------------------------------------
-admin:
-  syntax: "ADMIN <#canal> <surnom>"
-  example: "%command_prefix%ADMIN #salon Alicia"
-  short: "Donner le mode admin de canal."
-  help: "Donne le mode admin de canal. Uniquement si l'IRCd prend en charge +a."
-  done: "%nickname% a reçu le statut admin de canal."
-  user_not_on_channel: "Le surnom %nickname% n'est pas sur le réseau."
-  notice_grant: "%from% donne %mode% à %to%"
-  not_supported: "Ce réseau ne prend pas en charge le mode admin de canal (+a)."
-
-# --- DEADMIN ---------------------------------------------------------------
-deadmin:
-  syntax: "DEADMIN <#canal> <surnom>"
-  example: "%command_prefix%DEADMIN #salon Alicia"
-  short: "Retirer le mode admin de canal."
-  help: "Retirer le mode admin de canal."
-  done: "%nickname% a été déadminné."
-
-# --- HALFOP ----------------------------------------------------------------
-halfop:
-  syntax: "HALFOP <#canal> <surnom>"
-  example: "%command_prefix%HALFOP #salon Alicia"
-  short: "Donner le mode semi-opérateur dans le canal."
-  help: |-
-    Donne le mode semi-opérateur dans le canal. Uniquement si l'IRCd prend en charge
-    +h.
-  done: "%nickname% a reçu le halfop."
-  user_not_on_channel: "Le surnom %nickname% n'est pas sur le réseau."
-  notice_grant: "%from% donne %mode% à %to%"
-  not_supported: "Ce réseau ne prend pas en charge le mode halfop (+h)."
-
-# --- DEHALFOP --------------------------------------------------------------
-dehalfop:
-  syntax: "DEHALFOP <#canal> <surnom>"
-  example: "%command_prefix%DEHALFOP #salon Alicia"
-  short: "Retirer le mode semi-opérateur dans le canal."
-  help: "Retirer le mode semi-opérateur dans le canal."
-  done: "%nickname% a été déhalfopé."
-
-# --- AKICK -----------------------------------------------------------------
+# --- AKICK --------------------------------------------------------------------
 akick:
   syntax: "AKICK <#canal> {ADD <masque> [expiration] [raison]|DEL {<masque>|<numéro>}|LIST}"
   example: "%command_prefix%AKICK #salon ADD *!*@* 0"
@@ -654,18 +418,250 @@ akick:
     empty: "Le canal %channel% n'a aucune entrée AKICK."
     entry: "#%index% %mask% %reason% (par %nickname%, expire : %expiration%)"
 
-# --- RESTORE ---------------------------------------------------------------
-restore:
-  syntax: "RESTORE <#canal>"
-  example: "%command_prefix%RESTORE #salon"
-  short: "Restaurer un canal en attente de suppression."
+# --- LEVELS -------------------------------------------------------------------
+levels:
+  syntax: "LEVELS <#canal> {LIST|SET <niveau> <valeur>|RESET}"
+  example: "%command_prefix%LEVELS #salon LIST"
+  examples:
+    - "%command_prefix%LEVELS #salon SET OPDEOP 50"
+    - "%command_prefix%LEVELS #salon RESET"
+  short: "Configurer les niveaux du canal."
   help: |-
-    Restaure un salon supprimé manuellement, s’il se trouve encore dans sa
-    période de grâce.
-  success: "Le canal %channel% a été restauré."
-  not_pending_deletion: "Le canal %channel% n'est pas en attente de suppression."
+    Configure les niveaux d’accès minimum requis pour les actions du salon.
+    Seul le fondateur peut modifier ou réinitialiser les niveaux.
+  unknown_sub: "Sous-commande inconnue %sub%. Utilisez LIST, SET ou RESET."
+  unknown_key: "Clé de niveau inconnue %key% ou non prise en charge par cet IRCd."
+  value_range: "La valeur de niveau doit être entre %min% et %max%."
 
-# --- DROP ------------------------------------------------------------------
+  # --- LEVELS LIST ---------------------------------------------------------
+  list:
+    syntax: "LEVELS <#canal> LIST"
+    example: "%command_prefix%LEVELS #salon LIST"
+    short: "Lister les exigences de niveau."
+    help: "Affiche chaque clé de niveau et sa valeur (par défaut si non définie)."
+    header: "Niveaux de %channel%"
+
+  # --- LEVELS SET ----------------------------------------------------------
+  set:
+    syntax: "LEVELS <#canal> SET <niveau> <valeur>"
+    example: "%command_prefix%LEVELS #salon SET OPDEOP 50"
+    short: "Définir une exigence de niveau."
+    help: "Valeur -1 à 499. Fondateur uniquement."
+    done: "%key% défini à %value%."
+
+  # --- LEVELS RESET --------------------------------------------------------
+  reset:
+    syntax: "LEVELS <#canal> RESET"
+    example: "%command_prefix%LEVELS #salon RESET"
+    short: "Réinitialiser tous les niveaux aux valeurs par défaut."
+    help: "Supprime toutes les personnalisations. Fondateur uniquement."
+    done: "Tous les niveaux réinitialisés aux valeurs par défaut."
+
+# --- INVITE -------------------------------------------------------------------
+invite:
+  syntax: "INVITE <#canal>"
+  example: "%command_prefix%INVITE #salon"
+  short: "S'inviter soi-même sur le canal."
+  help: "S'inviter soi-même sur le canal."
+  done: "Vous avez été invité sur %channel%."
+  notice_channel: "%nickname% s'invite sur le canal."
+
+# --- UNBAN --------------------------------------------------------------------
+unban:
+  syntax: "UNBAN <#canal>"
+  example: "%command_prefix%UNBAN #salon"
+  short: "Retirer les bannissements qui vous affectent."
+  help: "Retire tous les bannissements du canal correspondant à votre identité actuelle, y compris les jokers et les masques IP/CIDR."
+  done: "%count% bannissement(s) vous affectant retiré(s) de %channel%"
+  notice_channel: "%nickname% a utilisé UNBAN."
+  no_matches: "Aucun bannissement ne correspond à votre identité dans %channel%"
+  unavailable: "Impossible de déterminer vos bannissements correspondants ; rien n’a changé."
+  not_on_network: "Le canal %channel% n’est pas sur le réseau."
+
+# --- ADMIN --------------------------------------------------------------------
+admin:
+  syntax: "ADMIN <#canal> <surnom>"
+  example: "%command_prefix%ADMIN #salon Alicia"
+  short: "Donner le mode admin de canal."
+  help: "Donne le mode admin de canal. Uniquement si l'IRCd prend en charge +a."
+  done: "%nickname% a reçu le statut admin de canal."
+  user_not_on_channel: "Le surnom %nickname% n'est pas sur le réseau."
+  notice_grant: "%from% donne %mode% à %to%"
+  not_supported: "Ce réseau ne prend pas en charge le mode admin de canal (+a)."
+
+# --- DEADMIN ------------------------------------------------------------------
+deadmin:
+  syntax: "DEADMIN <#canal> <surnom>"
+  example: "%command_prefix%DEADMIN #salon Alicia"
+  short: "Retirer le mode admin de canal."
+  help: "Retirer le mode admin de canal."
+  done: "%nickname% a été déadminné."
+
+# --- OP -----------------------------------------------------------------------
+op:
+  syntax: "OP <#canal> <surnom>"
+  example: "%command_prefix%OP #salon Alicia"
+  short: "Donner le mode opérateur de canal."
+  help: "Donner le mode opérateur de canal."
+  done: "Le statut d'opérateur de canal a été attribué à %nickname%."
+  user_not_on_channel: "Le surnom %nickname% n'est pas sur le réseau."
+  notice_grant: "%from% donne %mode% à %to%"
+
+# --- DEOP ---------------------------------------------------------------------
+deop:
+  syntax: "DEOP <#canal> <surnom>"
+  example: "%command_prefix%DEOP #salon Alicia"
+  short: "Retirer le mode opérateur de canal."
+  help: "Retirer le mode opérateur de canal."
+  done: "%nickname% a été déopé."
+
+# --- HALFOP -------------------------------------------------------------------
+halfop:
+  syntax: "HALFOP <#canal> <surnom>"
+  example: "%command_prefix%HALFOP #salon Alicia"
+  short: "Donner le mode semi-opérateur dans le canal."
+  help: |-
+    Donne le mode semi-opérateur dans le canal. Uniquement si l'IRCd prend en charge
+    +h.
+  done: "%nickname% a reçu le halfop."
+  user_not_on_channel: "Le surnom %nickname% n'est pas sur le réseau."
+  notice_grant: "%from% donne %mode% à %to%"
+  not_supported: "Ce réseau ne prend pas en charge le mode halfop (+h)."
+
+# --- DEHALFOP -----------------------------------------------------------------
+dehalfop:
+  syntax: "DEHALFOP <#canal> <surnom>"
+  example: "%command_prefix%DEHALFOP #salon Alicia"
+  short: "Retirer le mode semi-opérateur dans le canal."
+  help: "Retirer le mode semi-opérateur dans le canal."
+  done: "%nickname% a été déhalfopé."
+
+# --- VOICE --------------------------------------------------------------------
+voice:
+  syntax: "VOICE <#canal> <surnom>"
+  example: "%command_prefix%VOICE #salon Alicia"
+  short: "Donner le mode voice dans le canal."
+  help: "Donner le mode voice dans le canal."
+  done: "%nickname% a reçu le voice."
+  user_not_on_channel: "Le surnom %nickname% n'est pas sur le réseau."
+  notice_grant: "%from% donne %mode% à %to%"
+
+# --- DEVOICE ------------------------------------------------------------------
+devoice:
+  syntax: "DEVOICE <#canal> <surnom>"
+  example: "%command_prefix%DEVOICE #salon Alicia"
+  short: "Retirer le mode voice dans le canal."
+  help: "Retirer le mode voice dans le canal."
+  done: "%nickname% a été dévoicé."
+
+# --- HELP ---------------------------------------------------------------------
+help:
+  examples_header: "Exemples :"
+  syntax: "HELP [commande] [option]"
+  example: "%command_prefix%HELP"
+  examples:
+    - "%command_prefix%HELP SET"
+    - "%command_prefix%HELP SET EMAIL"
+  short: "Lister les commandes ou afficher l'aide d'une commande."
+  help: "Affiche les commandes disponibles et l’aide détaillée de leurs options."
+  header_title: "%bot%"
+  header: "%title% %separator%"
+  intro: |-
+    Permet d’enregistrer et de gérer des salons, de configurer leurs options et de
+    contrôler qui peut y accéder. Gérez les niveaux d’accès et les privilèges des
+    utilisateurs pour que le salon reste sous le contrôle de ses responsables.
+  general_header: "Commandes disponibles :"
+  command_line: "%command%%description%"
+  subcommand_line: "%command%%description%"
+  options_header: "Options :"
+  general_footer: "Utilisez /msg %bot% %help% pour plus d’informations."
+  general_footer_command: "HELP <commande>"
+  set_sub_footer: "Utilisez /msg %bot% %help% pour plus d’informations."
+  set_sub_footer_command: "HELP %command% <option>"
+  syntax_label: "Syntaxe : %syntax%"
+  footer: ""
+  intro_expiration: "NOTE : les salons inutilisés pendant plus de %period% sont automatiquement supprimés."
+  intro_expiration_period: "%days% jours"
+  group_header: "%group%"
+  subgroup_header: "%group%"
+  group:
+    registration_info: "Inscription et informations"
+    access_levels: "Accès et niveaux"
+    ranks_entry: "Rangs et entrée"
+  ircop_group:
+    channel_operations: "Opérations du canal"
+    channel_management: "Gestion du canal"
+    deletion: "Suppression et restauration"
+    restrictions: "Restrictions"
+    lookup: "Recherche et enquête"
+    registration_approval: "Approbation des enregistrements"
+  ircop_header: "Commandes disponibles pour les IRCops :"
+
+# --- CLEARUSERS (IRCop) -------------------------------------------------------
+clearusers:
+  syntax: "CLEARUSERS <#canal> [raison]"
+  example: "%command_prefix%CLEARUSERS #salon"
+  examples:
+    - "%command_prefix%CLEARUSERS #salon flood"
+  short: "Expulser tous les utilisateurs d'un canal."
+  help: |-
+    Expulse tous les utilisateurs du salon. Cette commande est réservée aux IRCops ;
+    une raison par défaut est utilisée si vous n’en indiquez aucune.
+  not_on_network: "Le canal %channel% n'est pas actuellement sur le réseau."
+  empty: "Le canal %channel% n'a aucun utilisateur à expulser."
+  success: "%count% utilisateur(s) expulsé(s) de %channel%."
+  default_reason: "Commande CLEARUSERS"
+
+# --- CLEARACCESS (IRCop) ------------------------------------------------------
+clearaccess:
+  syntax: "CLEARACCESS <#canal>"
+  example: "%command_prefix%CLEARACCESS #salon"
+  short: "Vider toute la liste d'accès d'un canal."
+  help: "Supprime toutes les entrées d’accès du salon. Cette action est irréversible."
+  success: "%count% entrées d'accès effacées de %channel%."
+  empty: "Le canal %channel% n'a aucune entrée d'accès."
+
+# --- IRCOPONLY (IRCop) --------------------------------------------------------
+ircoponly:
+  syntax: "IRCOPONLY <#canal> {ON|OFF}"
+  example: "%command_prefix%IRCOPONLY #salon ON"
+  examples:
+    - "%command_prefix%IRCOPONLY #salon OFF"
+  short: "Réserver un canal aux opérateurs IRC."
+  help: |-
+    Seuls les opérateurs IRC autorisés peuvent rester dans le salon. %bot%
+    se charge d’appliquer cette restriction.
+  on: "IRCOPONLY est activé sur %channel%."
+  off: "IRCOPONLY est désactivé sur %channel%."
+
+# --- SAREGISTER (IRCop) -------------------------------------------------------
+saregister:
+  syntax: "SAREGISTER <#canal> <surnom> <description>"
+  short: "Enregistrer administrativement un canal."
+  help: |-
+    Syntaxe : SAREGISTER <#canal> <surnom> <description>
+
+    Enregistre administrativement un canal immédiatement pour le pseudonyme
+    spécifié en tant que fondateur, sans exiger de présence, de vérification ou de limite de débit.
+  example: "%command_prefix%SAREGISTER #canal Alice Salon communautaire"
+  success: "Le canal %channel% a été enregistré pour %founder%."
+
+# --- NOEXPIRE (IRCop) ---------------------------------------------------------
+noexpire:
+  syntax: "NOEXPIRE <#canal> {ON|OFF}"
+  example: "%command_prefix%NOEXPIRE #Important ON"
+  examples:
+    - "%command_prefix%NOEXPIRE #Important OFF"
+  short: "Définir ou retirer la protection contre l'expiration d'un canal."
+  help: |-
+    Détermine si le salon expire après une période d’inactivité.
+    ON empêche l’expiration et OFF applique les règles habituelles.
+  success_on: "Le canal %channel% est maintenant protégé contre l'expiration."
+  success_off: "Le canal %channel% expirera maintenant normalement."
+  forbidden: "Le canal %channel% est interdit."
+  suspended: "Le canal %channel% est suspendu."
+
+# --- DROP (IRCop) -------------------------------------------------------------
 drop:
   syntax: "DROP <#canal> [FORCE]"
   example: "%command_prefix%DROP #salon"
@@ -686,7 +682,18 @@ drop:
   invalid_channel: "Nom de canal invalide. Utilisez %example%."
   pending_deletion_reason: "Le salon %channel% est en cours de suppression. Plus d’informations : /msg %bot% \x0303INFO %channel%\x03"
 
-# --- SUSPEND ---------------------------------------------------------------
+# --- RESTORE (IRCop) ----------------------------------------------------------
+restore:
+  syntax: "RESTORE <#canal>"
+  example: "%command_prefix%RESTORE #salon"
+  short: "Restaurer un canal en attente de suppression."
+  help: |-
+    Restaure un salon supprimé manuellement, s’il se trouve encore dans sa
+    période de grâce.
+  success: "Le canal %channel% a été restauré."
+  not_pending_deletion: "Le canal %channel% n'est pas en attente de suppression."
+
+# --- SUSPEND (IRCop) ----------------------------------------------------------
 suspend:
   syntax: "SUSPEND <#canal> <durée> <raison>"
   example: "%command_prefix%SUSPEND #salon 7d Non-respect des règles"
@@ -704,7 +711,7 @@ suspend:
   channel_suspended: "Le canal %channel% est suspendu et ne peut pas être utilisé."
   notice_channel: "Le canal a été suspendu. Raison : %reason%"
 
-# --- UNSUSPEND -------------------------------------------------------------
+# --- UNSUSPEND (IRCop) --------------------------------------------------------
 unsuspend:
   syntax: "UNSUSPEND <#canal>"
   example: "%command_prefix%UNSUSPEND #salon"
@@ -714,43 +721,7 @@ unsuspend:
   not_suspended: "Le canal %channel% n'est pas suspendu."
   reason_expired: "suspension expirée"
 
-# --- NOJOIN ----------------------------------------------------------------
-nojoin:
-  reason: "Restriction de niveau NOJOIN"
-
-# --- DEBUG CHANNEL ---------------------------------------------------------
-debug_channel:
-  kick_reason: "Vous n'êtes pas autorisé à rejoindre ce canal."
-
-# --- IRCOPONLY -------------------------------------------------------------
-ircoponly:
-  syntax: "IRCOPONLY <#canal> {ON|OFF}"
-  example: "%command_prefix%IRCOPONLY #salon ON"
-  examples:
-    - "%command_prefix%IRCOPONLY #salon OFF"
-  short: "Réserver un canal aux opérateurs IRC."
-  help: |-
-    Seuls les opérateurs IRC autorisés peuvent rester dans le salon. %bot%
-    se charge d’appliquer cette restriction.
-  on: "IRCOPONLY est activé sur %channel%."
-  off: "IRCOPONLY est désactivé sur %channel%."
-
-# --- NOEXPIRE --------------------------------------------------------------
-noexpire:
-  syntax: "NOEXPIRE <#canal> {ON|OFF}"
-  example: "%command_prefix%NOEXPIRE #Important ON"
-  examples:
-    - "%command_prefix%NOEXPIRE #Important OFF"
-  short: "Définir ou retirer la protection contre l'expiration d'un canal."
-  help: |-
-    Détermine si le salon expire après une période d’inactivité.
-    ON empêche l’expiration et OFF applique les règles habituelles.
-  success_on: "Le canal %channel% est maintenant protégé contre l'expiration."
-  success_off: "Le canal %channel% expirera maintenant normalement."
-  forbidden: "Le canal %channel% est interdit."
-  suspended: "Le canal %channel% est suspendu."
-
-# --- FORBID ----------------------------------------------------------------
+# --- FORBID (IRCop) -----------------------------------------------------------
 forbid:
   syntax: "FORBID <#canal> <raison>"
   example: "%command_prefix%FORBID #salon Non-respect des règles"
@@ -764,7 +735,7 @@ forbid:
   updated: "La raison d'interdiction du canal %channel% a été mise à jour."
   channel_forbidden: "Le canal %channel% est interdit et ne peut pas être utilisé."
 
-# --- UNFORBID --------------------------------------------------------------
+# --- UNFORBID (IRCop) ---------------------------------------------------------
 unforbid:
   syntax: "UNFORBID <#canal>"
   example: "%command_prefix%UNFORBID #salon"
@@ -772,12 +743,6 @@ unforbid:
   help: "Lève l’interdiction d’un salon afin qu’il puisse être enregistré à nouveau."
   success: "Le canal %channel% n'est plus interdit."
   not_forbidden: "Le canal %channel% n'est pas interdit."
-
-# --- DEBUG -----------------------------------------------------------------
-debug:
-  registration_completed: "%operator% a enregistré le canal %target%"
-  registration_pending: "%operator% a demandé l’enregistrement du canal %target%"
-  founder_action: "Action niveau-fondateur"
 
 # --- HISTORY ---
 history:
@@ -878,35 +843,7 @@ history.extra:
   level: "Niveau : %value%"
   mask: "Masque : %value%"
 
-# --- LEVEL FOUNDER ---------------------------------------------------------
-level_founder:
-  short: "Permet d’effectuer les opérations qui exigent le niveau fondateur du salon."
-
-# --- CLEARACCESS -----------------------------------------------------------
-clearaccess:
-  syntax: "CLEARACCESS <#canal>"
-  example: "%command_prefix%CLEARACCESS #salon"
-  short: "Vider toute la liste d'accès d'un canal."
-  help: "Supprime toutes les entrées d’accès du salon. Cette action est irréversible."
-  success: "%count% entrées d'accès effacées de %channel%."
-  empty: "Le canal %channel% n'a aucune entrée d'accès."
-
-# --- CLEARUSERS ------------------------------------------------------------
-clearusers:
-  syntax: "CLEARUSERS <#canal> [raison]"
-  example: "%command_prefix%CLEARUSERS #salon"
-  examples:
-    - "%command_prefix%CLEARUSERS #salon flood"
-  short: "Expulser tous les utilisateurs d'un canal."
-  help: |-
-    Expulse tous les utilisateurs du salon. Cette commande est réservée aux IRCops ;
-    une raison par défaut est utilisée si vous n’en indiquez aucune.
-  not_on_network: "Le canal %channel% n'est pas actuellement sur le réseau."
-  empty: "Le canal %channel% n'a aucun utilisateur à expulser."
-  success: "%count% utilisateur(s) expulsé(s) de %channel%."
-  default_reason: "Commande CLEARUSERS"
-
-# --- LIST ------------------------------------------------------------------
+# --- LIST (IRCop) -------------------------------------------------------------
 list:
   syntax: "LIST <motif> [page]"
   example: "%command_prefix%LIST #*"
@@ -923,3 +860,66 @@ list:
   status_active: "Actif"
   status_pending_registration: "En attente d’approbation"
   status_rejected_registration: "Enregistrement refusé"
+
+# --- REGMODE (IRCop) ----------------------------------------------------------
+regmode:
+  syntax: "REGMODE {DIRECT|APPROVAL|STATUS}"
+  example: "%command_prefix%REGMODE APPROVAL"
+  short: "Définir ou consulter le mode d’enregistrement des salons."
+  help: |-
+    Définit DIRECT ou APPROVAL, ou consulte le mode avec STATUS.
+    DIRECT est le mode par défaut et conserve l’enregistrement immédiat.
+  status: "Le mode d’enregistrement des salons est %mode%."
+  changed: "Le mode d’enregistrement des salons est maintenant %mode%."
+
+# --- CREG (IRCop) -------------------------------------------------------------
+creg:
+  syntax: "CREG {PENDING [page]|ACCEPT <#channel>|REJECT <#channel> <raison>}"
+  pending.syntax: "CREG PENDING [page]"
+  pending.example: "%command_prefix%CREG PENDING"
+  pending.short: "Liste les demandes en attente sur une page limitée."
+  pending.help: "Liste les demandes en attente sur une page limitée."
+  accept.syntax: "CREG ACCEPT <#channel>"
+  accept.example: "%command_prefix%CREG ACCEPT #channel"
+  accept.short: "Approuver une demande d’enregistrement de salon."
+  accept.help: "Revérifie la demande et active l’enregistrement en attente."
+  reject.syntax: "CREG REJECT <#channel> <raison>"
+  reject.example: "%command_prefix%CREG REJECT #channel Sujet public requis"
+  reject.short: "Refuser une demande d’enregistrement de salon."
+  reject.help: "Refuse une demande avec un raison obligatoire et une restriction."
+  example: "%command_prefix%CREG PENDING"
+  short: "Examiner les demandes d’enregistrement de salons."
+  help: |-
+    Liste les demandes en attente, ou accepte ou refuse une demande.
+    Un refus exige un motif. Seul ACCEPT enregistre le salon.
+  pending_header: "Enregistrements en attente (page %page%)"
+  pending_item: "%channel% — demandeur %requester%, soumise le %submitted%: %description%"
+  accepted: "L’enregistrement de %channel% a été approuvé."
+  rejected: "L’enregistrement de %channel% a été refusé."
+  not_pending: "Aucune demande en attente pour %channel%."
+  channel_not_on_network: "Le salon %channel% n’est pas sur le réseau."
+  founder_limit: "Le demandeur a atteint la limite d’enregistrement de salons."
+  requester_inactive: "Le compte du demandeur n’est plus actif."
+  requester_ineligible: "Le demandeur doit actuellement être opérateur du salon."
+
+# --- SECURE -------------------------------------------------------------------
+secure:
+  requires_min_level: "Avec SECURE activé, %nickname% doit avoir au moins le niveau %level% pour recevoir %mode%."
+
+# --- NOJOIN -------------------------------------------------------------------
+nojoin:
+  reason: "Restriction de niveau NOJOIN"
+
+# --- DEBUG CHANNEL ------------------------------------------------------------
+debug_channel:
+  kick_reason: "Vous n'êtes pas autorisé à rejoindre ce canal."
+
+# --- DEBUG --------------------------------------------------------------------
+debug:
+  registration_completed: "%operator% a enregistré le canal %target%"
+  registration_pending: "%operator% a demandé l’enregistrement du canal %target%"
+  founder_action: "Action niveau-fondateur"
+
+# --- LEVEL FOUNDER ------------------------------------------------------------
+level_founder:
+  short: "Permet d’effectuer les opérations qui exigent le niveau fondateur du salon."

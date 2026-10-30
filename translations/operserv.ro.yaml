@@ -16,11 +16,11 @@
 # Exemple HELP: example/examples și %command_prefix%.
 # Prezentatorul adaugă /msg fără culoare și o margine de două spații.
 
-# --- ERROR -----------------------------------------------------------------
+# --- ERROR --------------------------------------------------------------------
 error:
   root_only: "Această comandă este rezervată administratorilor root ai rețelei."
 
-# --- HELP ------------------------------------------------------------------
+# --- HELP ---------------------------------------------------------------------
 help:
   syntax: "HELP [comandă] [opțiune]"
   short: "Listați comenzile sau afișați ajutor pentru o comandă."
@@ -58,7 +58,7 @@ help:
     low_level: "Nivel inferior"
   ircop_header: "Comenzi disponibile pentru IRCops:"
 
-# --- IRCOP -----------------------------------------------------------------
+# --- IRCOP --------------------------------------------------------------------
 ircop:
   syntax: "IRCOP {ADD <poreclă> <rol>|DEL <poreclă>|LIST}"
   short: "Gestionați operatorii IRC ai rețelei."
@@ -110,7 +110,7 @@ ircop:
     header: "Operatori IRC ai rețelei"
     empty: "Nu există operatori IRC."
 
-# --- ROLE ------------------------------------------------------------------
+# --- ROLE ---------------------------------------------------------------------
 role:
   # --- ROLE OPERCLASS ------------------------------------------------------
   operclass:
@@ -313,7 +313,7 @@ role:
       cleared: "Modelul de vhost forțat a fost eliminat din rolul %role%."
       invalid: "Model de vhost invalid. Caractere valide: a-z, A-Z, 0-9, - și .. Trebuie să aibă cel puțin un punct, nu poate începe/termina cu - sau . sau să aibă .."
 
-# --- KILL ------------------------------------------------------------------
+# --- KILL ---------------------------------------------------------------------
 kill:
   syntax: "KILL <poreclă> <motiv>"
   short: "Deconectați forțat un utilizator din rețea."
@@ -325,7 +325,7 @@ kill:
   protected_ircop: "Nu se poate da kill operatorului IRC %nickname%."
   done: "Utilizatorul %nickname% a primit kill (%reason%)."
 
-# --- GLINE -----------------------------------------------------------------
+# --- GLINE --------------------------------------------------------------------
 gline:
   syntax: "GLINE {ADD <mască> <expirare> <motiv>|DEL {<mască>|<număr>}|LIST [mască]}"
   short: "Gestionați G-line-urile la nivel de rețea."
@@ -389,7 +389,48 @@ gline:
     empty: "Nu există G-line-uri."
     entry: "%index%. %mask% - %reason% (%nickname%, expiră: %expiration%)"
 
-# --- GLOBAL ----------------------------------------------------------------
+# --- BADMAIL ------------------------------------------------------------------
+badmail:
+  syntax: "BADMAIL {ADD <domeniu> <motiv>|DEL {număr|ALL}|LIST <model> [pagină]}"
+  short: "Administrează domeniile email blocate."
+  help: |-
+    Administrează domeniile email blocate.
+  example: "%command_prefix%BADMAIL LIST *"
+  add:
+    syntax: "BADMAIL ADD <domeniu> <motiv>"
+    short: "Blochează un domeniu."
+    help: |-
+      Acceptă domenii ASCII sau punycode, nu adrese sau modele. Motivul este
+      obligatoriu. Blocarea este exactă și nu include subdomenii.
+    example: "%command_prefix%BADMAIL ADD example.org abuse"
+  del:
+    syntax: "BADMAIL DEL {număr|ALL}"
+    short: "Elimină blocările domeniilor."
+    help: |-
+      Șterge un identificator permanent sau toate intrările cu ALL. Ceilalți
+      identificatori nu se schimbă.
+    example: "%command_prefix%BADMAIL DEL 1"
+  list:
+    syntax: "BADMAIL LIST <model> [pagină]"
+    short: "Listează domeniile blocate."
+    help: |-
+      Modelul este obligatoriu. Numai * este un metacaracter pentru orice
+      secvență. Nu se diferențiază majusculele. Pagina opțională începe de
+      la 1. Filtrarea și paginarea păstrează identificatorii.
+    example: "%command_prefix%BADMAIL LIST *.org 2"
+  invalid_domain: "Domeniu invalid. Folosește ASCII sau punycode fără punct final."
+  invalid_reason: "Este necesar un motiv administrativ nevid, pe o singură linie."
+  duplicate: "Acest domeniu este deja blocat."
+  not_found: "Nu există un domeniu blocat cu acest identificator."
+  added: "Domeniul %domain% a fost blocat."
+  deleted: "Blocarea %id% a fost eliminată."
+  cleared: "Au fost eliminate %total% domenii blocate."
+  empty: "Niciun domeniu blocat nu corespunde."
+  header: "ID | Domeniu | Motiv"
+  page: "Pagina %page%/%pages%, %total% domenii corespunzătoare."
+  row: "%id% | %domain% | %reason%"
+
+# --- GLOBAL -------------------------------------------------------------------
 global:
   syntax: "GLOBAL {serviciu|poreclă!ident@vhost} {PRIVMSG|NOTICE} <mesaj>"
   short: "Trimiteți un mesaj global tuturor utilizatorilor conectați."
@@ -413,34 +454,7 @@ global:
   type_invalid: "Tipul mesajului trebuie să fie PRIVMSG sau NOTICE."
   done: "Mesaj global trimis de la %nickname% către %count% utilizatori."
 
-# --- RAW -------------------------------------------------------------------
-raw:
-  syntax: "RAW <linie>"
-  short: "Trimiteți o linie de protocol brută către IRCd."
-  help: |-
-    Trimite linia indicată direct către socketul IRCd uplink.
-    Folosește cu extremă precauție. Liniile de protocol invalide pot bloca rețeaua.
-  example: "%command_prefix%RAW :services.ares NOTICE * :Mentenanță programată"
-  empty: "Trebuie să specificați o linie nevidă de trimis."
-  too_long: "Linia este prea lungă. Maxim 510 caractere."
-  not_connected: "Neconectat la IRCd."
-  done: "Linie brută trimisă."
-  protocol:
-    syntax: "Protocolul activ a respins sintaxa comenzii RAW."
-    done: "Comanda RAW gestionată de protocol a fost executată."
-    target: "Protocolul activ a respins ținta %target%."
-    unsupported: "Protocolul activ nu acceptă această comandă RAW."
-    invalid_resource_type: "Tip necunoscut de resursă de protocol: %resource_type%."
-    invalid_resource: "Resursă de protocol invalidă: %resource%."
-    invalid_value: "Valoare invalidă pentru resursa de protocol: %resource%."
-    error: "Protocolul activ nu a putut executa comanda RAW."
-
-# --- DEBUG -----------------------------------------------------------------
-debug:
-  action_global: "%operator% execută comanda GLOBAL cu porecla %target% via %type% către %count% utilizatori. Mesaj: %message%"
-  prefix_message: "Mesaj: %reason%"
-
-# --- MOTD ------------------------------------------------------------------
+# --- MOTD ---------------------------------------------------------------------
 motd:
   short: "Gestionați mesajele MOTD de conectare trimise utilizatorilor la conectare."
   syntax: "MOTD {ADD <destinație> {PRIVMSG|NOTICE} <expirare> <mesaj>|DEL <id>|LIST|CLEAN}"
@@ -498,43 +512,29 @@ motd:
   debug:
     finalized: "Mesajul MOTD #%id% s-a încheiat: [%type%] %message% | %date% | %shown_count%"
 
-# --- BADMAIL ---------------------------------------------------------------
-badmail:
-  syntax: "BADMAIL {ADD <domeniu> <motiv>|DEL {număr|ALL}|LIST <model> [pagină]}"
-  short: "Administrează domeniile email blocate."
+# --- RAW ----------------------------------------------------------------------
+raw:
+  syntax: "RAW <linie>"
+  short: "Trimiteți o linie de protocol brută către IRCd."
   help: |-
-    Administrează domeniile email blocate.
-  example: "%command_prefix%BADMAIL LIST *"
-  add:
-    syntax: "BADMAIL ADD <domeniu> <motiv>"
-    short: "Blochează un domeniu."
-    help: |-
-      Acceptă domenii ASCII sau punycode, nu adrese sau modele. Motivul este
-      obligatoriu. Blocarea este exactă și nu include subdomenii.
-    example: "%command_prefix%BADMAIL ADD example.org abuse"
-  del:
-    syntax: "BADMAIL DEL {număr|ALL}"
-    short: "Elimină blocările domeniilor."
-    help: |-
-      Șterge un identificator permanent sau toate intrările cu ALL. Ceilalți
-      identificatori nu se schimbă.
-    example: "%command_prefix%BADMAIL DEL 1"
-  list:
-    syntax: "BADMAIL LIST <model> [pagină]"
-    short: "Listează domeniile blocate."
-    help: |-
-      Modelul este obligatoriu. Numai * este un metacaracter pentru orice
-      secvență. Nu se diferențiază majusculele. Pagina opțională începe de
-      la 1. Filtrarea și paginarea păstrează identificatorii.
-    example: "%command_prefix%BADMAIL LIST *.org 2"
-  invalid_domain: "Domeniu invalid. Folosește ASCII sau punycode fără punct final."
-  invalid_reason: "Este necesar un motiv administrativ nevid, pe o singură linie."
-  duplicate: "Acest domeniu este deja blocat."
-  not_found: "Nu există un domeniu blocat cu acest identificator."
-  added: "Domeniul %domain% a fost blocat."
-  deleted: "Blocarea %id% a fost eliminată."
-  cleared: "Au fost eliminate %total% domenii blocate."
-  empty: "Niciun domeniu blocat nu corespunde."
-  header: "ID | Domeniu | Motiv"
-  page: "Pagina %page%/%pages%, %total% domenii corespunzătoare."
-  row: "%id% | %domain% | %reason%"
+    Trimite linia indicată direct către socketul IRCd uplink.
+    Folosește cu extremă precauție. Liniile de protocol invalide pot bloca rețeaua.
+  example: "%command_prefix%RAW :services.ares NOTICE * :Mentenanță programată"
+  empty: "Trebuie să specificați o linie nevidă de trimis."
+  too_long: "Linia este prea lungă. Maxim 510 caractere."
+  not_connected: "Neconectat la IRCd."
+  done: "Linie brută trimisă."
+  protocol:
+    syntax: "Protocolul activ a respins sintaxa comenzii RAW."
+    done: "Comanda RAW gestionată de protocol a fost executată."
+    target: "Protocolul activ a respins ținta %target%."
+    unsupported: "Protocolul activ nu acceptă această comandă RAW."
+    invalid_resource_type: "Tip necunoscut de resursă de protocol: %resource_type%."
+    invalid_resource: "Resursă de protocol invalidă: %resource%."
+    invalid_value: "Valoare invalidă pentru resursa de protocol: %resource%."
+    error: "Protocolul activ nu a putut executa comanda RAW."
+
+# --- DEBUG --------------------------------------------------------------------
+debug:
+  action_global: "%operator% execută comanda GLOBAL cu porecla %target% via %type% către %count% utilizatori. Mesaj: %message%"
+  prefix_message: "Mesaj: %reason%"

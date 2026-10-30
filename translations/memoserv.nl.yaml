@@ -16,7 +16,7 @@
 # HELP-voorbeelden: example/examples en %command_prefix%.
 # De presentatielaag voegt /msg zonder kleur en een marge van twee spaties toe.
 
-# --- SEND ------------------------------------------------------------------
+# --- SEND ---------------------------------------------------------------------
 send:
   syntax: "SEND {bijnaam|#kanaal} <bericht>"
   short: "Stuur een bericht naar een bijnaam of kanaal."
@@ -35,7 +35,7 @@ send:
   message_too_long: "Bericht te lang. Maximum is %max% tekens."
   service_disabled_for_target: "Berichtenservice is uitgeschakeld voor %target%."
 
-# --- READ ------------------------------------------------------------------
+# --- READ ---------------------------------------------------------------------
 read:
   syntax: "READ [#kanaal] <nummer>"
   short: "Lees een bericht op nummer."
@@ -50,7 +50,7 @@ read:
   footer: "%separator% %date%"
   not_found: "Bericht #%index% niet gevonden."
 
-# --- LIST ------------------------------------------------------------------
+# --- LIST ---------------------------------------------------------------------
 list:
   syntax: "LIST [#kanaal]"
   short: "Toon berichten (ongelezen gemarkeerd met rode *)."
@@ -64,7 +64,7 @@ list:
   header: "Berichten voor %target%:"
   empty: "Geen berichten voor %target%."
 
-# --- DEL -------------------------------------------------------------------
+# --- DEL ----------------------------------------------------------------------
 del:
   syntax: "DEL [#kanaal] <nummer>"
   short: "Verwijder een bericht op nummer."
@@ -77,7 +77,7 @@ del:
   deleted: "Bericht #%index% verwijderd."
   not_found: "Bericht #%index% niet gevonden."
 
-# --- IGNORE ----------------------------------------------------------------
+# --- IGNORE -------------------------------------------------------------------
 ignore:
   syntax: "IGNORE {ADD [#kanaal] <bijnaam>|DEL [#kanaal] <bijnaam>|LIST [#kanaal]}"
   short: "Beheer negeerlijst voor berichten."
@@ -127,7 +127,7 @@ ignore:
   list_empty: "Negeerlijst is leeg."
   list_header: "Negeerlijst:"
 
-# --- ENABLE ----------------------------------------------------------------
+# --- ENABLE -------------------------------------------------------------------
 enable:
   syntax: "ENABLE [#kanaal]"
   short: "Schakel berichtenontvangst in."
@@ -143,7 +143,7 @@ enable:
   already_enabled_channel: "Berichtenservice is al ingeschakeld voor %channel%."
   founder_only: "Alleen de kanaaloprichter kan berichten inschakelen voor %channel%."
 
-# --- DISABLE ---------------------------------------------------------------
+# --- DISABLE ------------------------------------------------------------------
 disable:
   syntax: "DISABLE [#kanaal]"
   short: "Schakel berichtenontvangst uit."
@@ -159,7 +159,7 @@ disable:
   already_disabled_channel: "Berichtenservice is al uitgeschakeld voor %channel%."
   founder_only: "Alleen de kanaaloprichter kan berichten uitschakelen voor %channel%."
 
-# --- HELP ------------------------------------------------------------------
+# --- HELP ---------------------------------------------------------------------
 help:
   syntax: "HELP [commando] [optie]"
   short: "Toon commando's of hulp voor een commando."
@@ -191,12 +191,12 @@ help:
     preferences: "Voorkeuren"
   ircop_header: "Beschikbare opdrachten voor IRC-operators:"
 
-# --- NOTIFY ----------------------------------------------------------------
+# --- NOTIFY -------------------------------------------------------------------
 notify:
   nick_pending: "Je hebt %count% ongelezen bericht(en). Toon de berichten: /msg %bot% %list%"
   channel_pending: "Kanaal %channel% heeft %count% ongelezen bericht(en). Bekijk berichten met /msg %bot% %list%"
 
-# --- CHANNEL REGISTRATION DECISIONS ---
+# --- CHANNEL REGISTRATION DECISIONS -------------------------------------------
 registration_decision:
   accepted: "Je registratieaanvraag voor %channel% is goedgekeurd."
   rejected: "Je registratieaanvraag voor %channel% is afgewezen."

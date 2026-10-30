@@ -16,11 +16,11 @@
 # Exemplos HELP: example/examples e %command_prefix%.
 # O presentador engade /msg sen cor e unha marxe de dous espazos.
 
-# --- ERROR -----------------------------------------------------------------
+# --- ERROR --------------------------------------------------------------------
 error:
   root_only: "Este comando está restrinxido a administradores root da rede."
 
-# --- HELP ------------------------------------------------------------------
+# --- HELP ---------------------------------------------------------------------
 help:
   syntax: "HELP [comando] [opción]"
   short: "Listar comandos ou mostrar axuda dun comando."
@@ -57,7 +57,7 @@ help:
     low_level: "Baixo nivel"
   ircop_header: "Comandos dispoñibles para IRCops:"
 
-# --- IRCOP -----------------------------------------------------------------
+# --- IRCOP --------------------------------------------------------------------
 ircop:
   syntax: "IRCOP {ADD <alcume> <rol>|DEL <alcume>|LIST}"
   short: "Xestionar os operadores de IRC da rede."
@@ -109,7 +109,7 @@ ircop:
     header: "Operadores de IRC da Rede"
     empty: "Non hai operadores de IRC."
 
-# --- ROLE ------------------------------------------------------------------
+# --- ROLE ---------------------------------------------------------------------
 role:
   # --- ROLE OPERCLASS ------------------------------------------------------
   operclass:
@@ -312,7 +312,7 @@ role:
       cleared: "Eliminado o patrón de vhost forzado do rol %role%."
       invalid: "Patrón de vhost non válido. Caracteres válidos: a-z, A-Z, 0-9, - e .. Debe ter polo menos un punto, non pode comezar/rematar con - ou . nin ter .."
 
-# --- KILL ------------------------------------------------------------------
+# --- KILL ---------------------------------------------------------------------
 kill:
   syntax: "KILL <alcume> <motivo>"
   short: "Desconectar forzosamente un usuario da rede."
@@ -324,7 +324,7 @@ kill:
   protected_ircop: "Non se pode matar o operador de IRC %nickname%."
   done: "O usuario %nickname% foi matado (%reason%)."
 
-# --- GLINE -----------------------------------------------------------------
+# --- GLINE --------------------------------------------------------------------
 gline:
   syntax: "GLINE {ADD <máscara> <caducidade> <motivo>|DEL {<máscara>|<número>}|LIST [máscara]}"
   short: "Xestionar G-lines de toda a rede."
@@ -388,7 +388,48 @@ gline:
     empty: "Non hai G-lines."
     entry: "%index%. %mask% - %reason% (%nickname%, caduca: %expiration%)"
 
-# --- GLOBAL ----------------------------------------------------------------
+# --- BADMAIL ------------------------------------------------------------------
+badmail:
+  syntax: "BADMAIL {ADD <dominio> <motivo>|DEL {número|ALL}|LIST <patrón> [páxina]}"
+  short: "Administrar dominios de correo bloqueados."
+  help: |-
+    Administrar dominios de correo bloqueados.
+  example: "%command_prefix%BADMAIL LIST *"
+  add:
+    syntax: "BADMAIL ADD <dominio> <motivo>"
+    short: "Bloquear un dominio."
+    help: |-
+      Acepta dominios ASCII ou punycode, non enderezos nin patróns. O motivo
+      é obrigatorio. O bloqueo é exacto e non inclúe subdominios.
+    example: "%command_prefix%BADMAIL ADD example.org abuse"
+  del:
+    syntax: "BADMAIL DEL {número|ALL}"
+    short: "Eliminar dominios bloqueados."
+    help: |-
+      Elimina un identificador permanente ou todas as entradas con ALL. Os
+      demais identificadores non cambian.
+    example: "%command_prefix%BADMAIL DEL 1"
+  list:
+    syntax: "BADMAIL LIST <patrón> [páxina]"
+    short: "Listar dominios bloqueados."
+    help: |-
+      O patrón é obrigatorio. Só * é un comodín e coincide con calquera
+      secuencia. Non distingue maiúsculas. A páxina opcional comeza en 1. Os
+      identificadores consérvanse ao filtrar e paxinar.
+    example: "%command_prefix%BADMAIL LIST *.org 2"
+  invalid_domain: "Dominio non válido. Usa ASCII ou punycode, sen punto final."
+  invalid_reason: "Requírese un motivo administrativo non baleiro e dunha soa liña."
+  duplicate: "Este dominio xa está bloqueado."
+  not_found: "Non existe un dominio bloqueado con ese identificador."
+  added: "Dominio %domain% bloqueado."
+  deleted: "Dominio bloqueado %id% eliminado."
+  cleared: "Elimináronse %total% dominios bloqueados."
+  empty: "Ningún dominio bloqueado coincide."
+  header: "ID | Dominio | Motivo"
+  page: "Páxina %page%/%pages%, %total% dominios coincidentes."
+  row: "%id% | %domain% | %reason%"
+
+# --- GLOBAL -------------------------------------------------------------------
 global:
   syntax: "GLOBAL {servizo|alcume!ident@vhost} {PRIVMSG|NOTICE} <mensaxe>"
   short: "Enviar unha mensaxe global a todos os usuarios conectados."
@@ -413,35 +454,7 @@ global:
   type_invalid: "O tipo de mensaxe debe ser PRIVMSG ou NOTICE."
   done: "Mensaxe global enviada desde %nickname% a %count% usuarios."
 
-# --- RAW -------------------------------------------------------------------
-raw:
-  syntax: "RAW <liña>"
-  short: "Enviar unha liña de protocolo en bruto ao IRCd."
-  help: |-
-    Envía directamente a liña indicada ao socket do IRCd de enlace.
-    Utilízao con moita precaución. As liñas de protocolo inválidas poden bloquear
-    a rede.
-  example: "%command_prefix%RAW :services.ares NOTICE * :Mantemento programado"
-  empty: "Debe especificar unha liña non baleira para enviar."
-  too_long: "A liña é demasiado longa. Máximo 510 caracteres."
-  not_connected: "Non conectado ao IRCd."
-  done: "Liña en bruto enviada."
-  protocol:
-    syntax: "O protocolo activo rexeitou a sintaxe do comando RAW."
-    done: "Comando RAW xestionado polo protocolo executado."
-    target: "O protocolo activo rexeitou o destino %target%."
-    unsupported: "O protocolo activo non admite este comando RAW."
-    invalid_resource_type: "Tipo de recurso de protocolo descoñecido: %resource_type%."
-    invalid_resource: "Recurso de protocolo non válido: %resource%."
-    invalid_value: "Valor non válido para o recurso de protocolo: %resource%."
-    error: "O protocolo activo non puido executar o comando RAW."
-
-# --- DEBUG -----------------------------------------------------------------
-debug:
-  action_global: "%operator% executa o comando GLOBAL co alcume %target% mediante %type% a %count% usuarios. Mensaxe: %message%"
-  prefix_message: "Mensaxe: %reason%"
-
-# --- MOTD ------------------------------------------------------------------
+# --- MOTD ---------------------------------------------------------------------
 motd:
   short: "Xestionar as mensaxes MOTD de conexión enviadas aos usuarios ao conectarse."
   syntax: "MOTD {ADD <destino> {PRIVMSG|NOTICE} <caducidade> <mensaxe>|DEL <id>|LIST|CLEAN}"
@@ -501,43 +514,30 @@ motd:
   debug:
     finalized: "A mensaxe MOTD #%id% finalizou: [%type%] %message% | %date% | %shown_count%"
 
-# --- BADMAIL ---------------------------------------------------------------
-badmail:
-  syntax: "BADMAIL {ADD <dominio> <motivo>|DEL {número|ALL}|LIST <patrón> [páxina]}"
-  short: "Administrar dominios de correo bloqueados."
+# --- RAW ----------------------------------------------------------------------
+raw:
+  syntax: "RAW <liña>"
+  short: "Enviar unha liña de protocolo en bruto ao IRCd."
   help: |-
-    Administrar dominios de correo bloqueados.
-  example: "%command_prefix%BADMAIL LIST *"
-  add:
-    syntax: "BADMAIL ADD <dominio> <motivo>"
-    short: "Bloquear un dominio."
-    help: |-
-      Acepta dominios ASCII ou punycode, non enderezos nin patróns. O motivo
-      é obrigatorio. O bloqueo é exacto e non inclúe subdominios.
-    example: "%command_prefix%BADMAIL ADD example.org abuse"
-  del:
-    syntax: "BADMAIL DEL {número|ALL}"
-    short: "Eliminar dominios bloqueados."
-    help: |-
-      Elimina un identificador permanente ou todas as entradas con ALL. Os
-      demais identificadores non cambian.
-    example: "%command_prefix%BADMAIL DEL 1"
-  list:
-    syntax: "BADMAIL LIST <patrón> [páxina]"
-    short: "Listar dominios bloqueados."
-    help: |-
-      O patrón é obrigatorio. Só * é un comodín e coincide con calquera
-      secuencia. Non distingue maiúsculas. A páxina opcional comeza en 1. Os
-      identificadores consérvanse ao filtrar e paxinar.
-    example: "%command_prefix%BADMAIL LIST *.org 2"
-  invalid_domain: "Dominio non válido. Usa ASCII ou punycode, sen punto final."
-  invalid_reason: "Requírese un motivo administrativo non baleiro e dunha soa liña."
-  duplicate: "Este dominio xa está bloqueado."
-  not_found: "Non existe un dominio bloqueado con ese identificador."
-  added: "Dominio %domain% bloqueado."
-  deleted: "Dominio bloqueado %id% eliminado."
-  cleared: "Elimináronse %total% dominios bloqueados."
-  empty: "Ningún dominio bloqueado coincide."
-  header: "ID | Dominio | Motivo"
-  page: "Páxina %page%/%pages%, %total% dominios coincidentes."
-  row: "%id% | %domain% | %reason%"
+    Envía directamente a liña indicada ao socket do IRCd de enlace.
+    Utilízao con moita precaución. As liñas de protocolo inválidas poden bloquear
+    a rede.
+  example: "%command_prefix%RAW :services.ares NOTICE * :Mantemento programado"
+  empty: "Debe especificar unha liña non baleira para enviar."
+  too_long: "A liña é demasiado longa. Máximo 510 caracteres."
+  not_connected: "Non conectado ao IRCd."
+  done: "Liña en bruto enviada."
+  protocol:
+    syntax: "O protocolo activo rexeitou a sintaxe do comando RAW."
+    done: "Comando RAW xestionado polo protocolo executado."
+    target: "O protocolo activo rexeitou o destino %target%."
+    unsupported: "O protocolo activo non admite este comando RAW."
+    invalid_resource_type: "Tipo de recurso de protocolo descoñecido: %resource_type%."
+    invalid_resource: "Recurso de protocolo non válido: %resource%."
+    invalid_value: "Valor non válido para o recurso de protocolo: %resource%."
+    error: "O protocolo activo non puido executar o comando RAW."
+
+# --- DEBUG --------------------------------------------------------------------
+debug:
+  action_global: "%operator% executa o comando GLOBAL co alcume %target% mediante %type% a %count% usuarios. Mensaxe: %message%"
+  prefix_message: "Mensaxe: %reason%"

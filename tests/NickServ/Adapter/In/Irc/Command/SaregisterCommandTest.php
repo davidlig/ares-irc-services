@@ -41,7 +41,7 @@ final class SaregisterCommandTest extends TestCase
         self::assertSame('saregister.help', $command->getHelpKey());
         self::assertSame('saregister.example', $command->getExampleKey());
         self::assertSame('saregister.short', $command->getShortDescKey());
-        self::assertSame(64, $command->getOrder());
+        self::assertSame(63, $command->getOrder());
         self::assertSame([], $command->getSubCommandHelp());
         self::assertSame([], $command->getHelpParams());
         self::assertTrue($command->isOperOnly());

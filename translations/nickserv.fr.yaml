@@ -16,7 +16,7 @@
 # Exemples HELP : example/examples et %command_prefix%.
 # Le présentateur ajoute /msg sans couleur et une marge de deux espaces.
 
-# --- REGISTER --------------------------------------------------------------
+# --- REGISTER -----------------------------------------------------------------
 register:
   token_unavailable: !irc |-
     L’inscription est en attente, mais le jeton n’a pas pu être remis.
@@ -51,69 +51,7 @@ register:
   throttled: "Vous devez attendre %minutes% minute(s) avant de réessayer l'enregistrement."
   guest_prefix_forbidden: "Vous ne pouvez pas enregistrer un surnom commençant par %prefix%."
 
-# --- VERIFY ----------------------------------------------------------------
-verify:
-  syntax: "VERIFY <token>"
-  short: "Confirme une inscription ou un jeton de secours."
-  help: |-
-    Une fois validé, ce jeton deviendra votre jeton de récupération permanent.
-    Conservez-le en lieu sûr : il vous permettra de récupérer votre pseudonyme.
-    La durée de validité de %duration% ne s’applique qu’avant sa validation.
-  example: "%command_prefix%VERIFY <jeton_reçu>"
-  success: "Le surnom %nickname% a été enregistré avec succès et vous êtes maintenant identifié."
-  success_native: "Le surnom %nickname% a été enregistré avec succès. Utilisez l’authentification native indiquée ci-dessous."
-  invalid_token: "Le jeton de secours est incorrect."
-  no_pending: "Vous n'avez aucun enregistrement en attente à vérifier."
-
-# --- RESEND ----------------------------------------------------------------
-resend:
-  disabled: "Vous ne pouvez pas demander un autre jeton avec %resend%, car cet enregistrement envoie le jeton directement par chat."
-  syntax: "RESEND"
-  short: "Renvoyer le jeton de vérification à votre e-mail."
-  help: |-
-    RESEND n’est disponible que si le jeton de vérification a été envoyé par e-mail.
-    Une fois validé, ce jeton deviendra votre jeton de récupération permanent.
-    Conservez-le en lieu sûr : il vous permettra de récupérer votre pseudonyme.
-    La durée de validité de %duration% ne s’applique qu’avant sa validation.
-    En utilisant RESEND, vous recevrez un nouveau jeton par e-mail.
-    La durée de l’enregistrement en attente sera prolongée de %duration%.
-  example: "%command_prefix%RESEND"
-  success: "Jeton de vérification renvoyé à %email%."
-  no_pending: "Vous n'avez aucun enregistrement en attente à vérifier."
-  throttled: "Vous devez attendre %minutes% minute(s) avant de demander un autre e-mail de vérification."
-
-# --- RECOVER ---------------------------------------------------------------
-recover:
-  no_email: "Aucun e-mail n'est défini pour le surnom %nickname%. La récupération n'est pas disponible."
-  email_sent: "Un jeton de récupération a été envoyé à %email_hint%. Vérifiez votre boîte de réception (et vos spams)."
-  pending_deletion: "Le pseudonyme %nickname% est en attente de suppression et ne peut pas être récupéré."
-  instructions: "EMAIL : %command_0% demande un jeton provisoire par courriel. TOKEN : fournissez votre jeton confirmé. %command_1% accepte le jeton valide du courriel ou le jeton confirmé. Celui du courriel remplace le jeton enregistré après validation. L’utilisation du jeton enregistré propose un remplacement facultatif avec %command_2% ; ignorez le message pour le conserver."
-  instructions_command_0: "RECOVER %nickname%"
-  instructions_command_1: "RECOVER %nickname% <token>"
-  instructions_command_2: "VERIFY"
-  syntax: "RECOVER <surnom> [jeton]"
-  short: "Récupérer votre surnom si vous avez perdu votre mot de passe."
-  help: |-
-    Sans jeton, demandez un jeton provisoire par e-mail.
-    Vous pouvez aussi fournir un jeton de récupération valide ; s’il est
-    provisoire, il ne remplacera le jeton enregistré qu’après validation.
-    VERIFY vous proposera un remplacement facultatif après utilisation du jeton
-    enregistré ; ignorez ce message si vous souhaitez conserver le jeton actuel.
-  example: "%command_prefix%RECOVER Utilisateur"
-  examples:
-    - "%command_prefix%RECOVER Utilisateur <jeton_reçu>"
-  pending: "L’enregistrement de %nickname% est en attente. Utilisez %command_0%. Si le jeton a été envoyé par e-mail et qu’une adresse valide est associée, vous pouvez en demander un autre avec %command_1%."
-  pending_command_0: "VERIFY <token>"
-  pending_command_1: "RESEND"
-  suspended: "Le surnom %nickname% est suspendu. Raison : %reason%"
-  forbidden: "Le surnom %nickname% ne peut pas être utilisé sur ce réseau."
-  throttled: "Trop de jetons incorrects. Réessayez dans %minutes% minute(s)."
-  invalid_token: "Le jeton de secours est incorrect."
-  success_identify: "Mot de passe réinitialisé. Identifiez-vous maintenant : %identify_cmd%"
-  success_then_change: "Changez ensuite votre mot de passe : /msg %bot% %command_0%"
-  success_then_change_command_0: "SET PASSWORD <nouveau_mot_de_passe>"
-
-# --- IDENTIFY --------------------------------------------------------------
+# --- IDENTIFY -----------------------------------------------------------------
 identify:
   syntax: "IDENTIFY <surnom> <motdepasse>"
   short: "S'identifier comme le propriétaire d'un surnom."
@@ -151,105 +89,69 @@ identify:
   forbidden: "Le surnom %nickname% ne peut pas être utilisé sur ce réseau."
   pending_deletion: "Le surnom %nickname% est en attente de suppression et ne peut pas être utilisé."
 
-# --- STATUS ----------------------------------------------------------------
-status:
-  syntax: "STATUS <surnom>"
-  short: "Afficher le statut d'enregistrement d'un surnom."
+# --- VERIFY -------------------------------------------------------------------
+verify:
+  syntax: "VERIFY <token>"
+  short: "Confirme une inscription ou un jeton de secours."
   help: |-
-    Affiche l’état actuel d’un pseudonyme : enregistré, en attente de
-    vérification, suspendu, etc.
-  example: "%command_prefix%STATUS Utilisateur"
-  header: "Statut du surnom %nickname%"
-  unregistered: "  Statut          : Non enregistré"
-  not_registered_offline: "  Statut          : %state%"
-  value_not_registered_offline: "Non enregistré"
-  pending: "  Statut          : %state%"
-  value_pending: "En attente de vérification"
-  pending_expires: "  Expire dans     : %minutes% minute(s)"
-  pending_expires_at: "  Expire le       : %date%"
-  not_connected: "  Statut          : %state%"
-  value_not_connected: "Non connecté"
-  not_identified: "  Statut          : %state%"
-  value_not_identified: "Non identifié"
-  identified: "  Statut          : %state%"
-  value_identified: "Identifié"
-  suspended: "  Statut          : %state%"
-  value_suspended: "Suspendu"
-  suspended_reason: "  Raison          : %reason%"
-  suspended_until: "  Fin le          : %date%"
-  suspended_permanent: "  Fin le          : Permanent"
-  forbidden: "  Statut          : %state%"
-  value_forbidden: "Interdit"
-  forbidden_reason: "  Raison          : %reason%"
-  pending_deletion: "  %label%          : %state%"
-  value_pending_deletion: "En attente de suppression"
-  label_pending_deletion: "Statut"
-  pending_deletion_at: "  %label%        : %date%"
+    Une fois validé, ce jeton deviendra votre jeton de récupération permanent.
+    Conservez-le en lieu sûr : il vous permettra de récupérer votre pseudonyme.
+    La durée de validité de %duration% ne s’applique qu’avant sa validation.
+  example: "%command_prefix%VERIFY <jeton_reçu>"
+  success: "Le surnom %nickname% a été enregistré avec succès et vous êtes maintenant identifié."
+  success_native: "Le surnom %nickname% a été enregistré avec succès. Utilisez l’authentification native indiquée ci-dessous."
+  invalid_token: "Le jeton de secours est incorrect."
+  no_pending: "Vous n'avez aucun enregistrement en attente à vérifier."
 
-  label_pending_deletion_at: "Supprimé"
-# --- INFO ------------------------------------------------------------------
-info:
-  syntax: "INFO <surnom>"
-  short: "Afficher les informations d'un surnom enregistré."
+# --- RESEND -------------------------------------------------------------------
+resend:
+  disabled: "Vous ne pouvez pas demander un autre jeton avec %resend%, car cet enregistrement envoie le jeton directement par chat."
+  syntax: "RESEND"
+  short: "Renvoyer le jeton de vérification à votre e-mail."
   help: |-
-    Affiche les informations d’enregistrement d’un pseudonyme : date de création,
-    état de connexion, dernier message envoyé et adresse e-mail.
+    RESEND n’est disponible que si le jeton de vérification a été envoyé par e-mail.
+    Une fois validé, ce jeton deviendra votre jeton de récupération permanent.
+    Conservez-le en lieu sûr : il vous permettra de récupérer votre pseudonyme.
+    La durée de validité de %duration% ne s’applique qu’avant sa validation.
+    En utilisant RESEND, vous recevrez un nouveau jeton par e-mail.
+    La durée de l’enregistrement en attente sera prolongée de %duration%.
+  example: "%command_prefix%RESEND"
+  success: "Jeton de vérification renvoyé à %email%."
+  no_pending: "Vous n'avez aucun enregistrement en attente à vérifier."
+  throttled: "Vous devez attendre %minutes% minute(s) avant de demander un autre e-mail de vérification."
 
-    L’adresse e-mail n’est visible que par le propriétaire identifié.
-    Si le pseudonyme est privé, seul son propriétaire et les opérateurs IRC peuvent
-    consulter ces informations.
-  example: "%command_prefix%INFO Utilisateur"
-  private: "Les informations du surnom %nickname% sont privées."
-  header: "Informations pour le surnom %nickname%"
-  status: "%label%           : %status%"
-  label_status: "Statut"
-  status_registered: "Enregistré"
-  status_suspended: "Suspendu"
-  status_forbidden: "Interdit"
-  status_pending_deletion: "En attente de suppression"
-  reason: "%label%           : %reason%"
-  label_reason: "Raison"
-  suspended_until: "%label%           : %date%"
-  label_suspended_until: "Fin le"
-  suspended_permanent: "%label%           : Permanent"
-  label_suspended_permanent: "Fin le"
-  registered_at: "%label%       : %date%"
-  label_registered_at: "Enregistré"
-  last_seen_online: "%label%     : %online%"
-  label_last_seen_online: "Dernière vue"
-  value_last_seen_online: "EN LIGNE"
-  last_seen_at: "%label%     : %date%"
-  label_last_seen_at: "Dernière vue"
-  last_seen_never: "%label%     : Jamais"
-  label_last_seen_never: "Dernière vue"
-  last_quit: "%label%   : %message%"
-  label_last_quit: "Dernier départ"
-  last_connect: "%label%  : %ip% (%host%)"
-  label_last_connect: "Dernière vue de"
-  language: "%label%           : %language%"
-  label_language: "Langue"
-  email: "%label%           : %email%"
-  label_email: "E-mail"
-  vhost: "%label%            : %vhost%"
-  label_vhost: "VHost"
-  no_expire: "%label%       : Oui"
-  label_no_expire: "N'expire jamais"
-  pending_deletion_at: "%label%               : %date%"
-  label_pending_deletion_at: "Supprimé"
-  pending_deletion_until: "%label%      : %date%"
-  label_pending_deletion_until: "Suppr. définitive"
-  pending_deletion_notice: "%notice%"
-  value_pending_deletion_notice: "Ce pseudonyme est en attente de suppression et ne peut pas être enregistré."
-  channels_header: |-
+# --- RECOVER ------------------------------------------------------------------
+recover:
+  no_email: "Aucun e-mail n'est défini pour le surnom %nickname%. La récupération n'est pas disponible."
+  email_sent: "Un jeton de récupération a été envoyé à %email_hint%. Vérifiez votre boîte de réception (et vos spams)."
+  pending_deletion: "Le pseudonyme %nickname% est en attente de suppression et ne peut pas être récupéré."
+  instructions: "EMAIL : %command_0% demande un jeton provisoire par courriel. TOKEN : fournissez votre jeton confirmé. %command_1% accepte le jeton valide du courriel ou le jeton confirmé. Celui du courriel remplace le jeton enregistré après validation. L’utilisation du jeton enregistré propose un remplacement facultatif avec %command_2% ; ignorez le message pour le conserver."
+  instructions_command_0: "RECOVER %nickname%"
+  instructions_command_1: "RECOVER %nickname% <token>"
+  instructions_command_2: "VERIFY"
+  syntax: "RECOVER <surnom> [jeton]"
+  short: "Récupérer votre surnom si vous avez perdu votre mot de passe."
+  help: |-
+    Sans jeton, demandez un jeton provisoire par e-mail.
+    Vous pouvez aussi fournir un jeton de récupération valide ; s’il est
+    provisoire, il ne remplacera le jeton enregistré qu’après validation.
+    VERIFY vous proposera un remplacement facultatif après utilisation du jeton
+    enregistré ; ignorez ce message si vous souhaitez conserver le jeton actuel.
+  example: "%command_prefix%RECOVER Utilisateur"
+  examples:
+    - "%command_prefix%RECOVER Utilisateur <jeton_reçu>"
+  pending: "L’enregistrement de %nickname% est en attente. Utilisez %command_0%. Si le jeton a été envoyé par e-mail et qu’une adresse valide est associée, vous pouvez en demander un autre avec %command_1%."
+  pending_command_0: "VERIFY <token>"
+  pending_command_1: "RESEND"
+  suspended: "Le surnom %nickname% est suspendu. Raison : %reason%"
+  forbidden: "Le surnom %nickname% ne peut pas être utilisé sur ce réseau."
+  throttled: "Trop de jetons incorrects. Réessayez dans %minutes% minute(s)."
+  invalid_token: "Le jeton de secours est incorrect."
+  success_identify: "Mot de passe réinitialisé. Identifiez-vous maintenant : %identify_cmd%"
+  success_then_change: "Changez ensuite votre mot de passe : /msg %bot% %command_0%"
+  success_then_change_command_0: "SET PASSWORD <nouveau_mot_de_passe>"
 
-    Canaux avec accès :
-  channels_entry_founder: "%channel% (%role%)"
-  channels_role_founder: "Fondateur"
-  channels_entry_successor: "%channel% (%role%)"
-  channels_role_successor: "Successeur"
-  channels_entry_access: "%channel% (%level%)"
-
-# --- SET -------------------------------------------------------------------
+# --- SET ----------------------------------------------------------------------
 set:
   syntax: "SET {PASSWORD <nouveau_motdepasse>|EMAIL <email> <token>|LANGUAGE <code>|TIMEZONE <fuseau_horaire>|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
   short: "Modifier les options de votre pseudo."
@@ -395,7 +297,284 @@ set:
     taken: "Ce vhost est déjà utilisé par un autre surnom."
     forced: "Votre vhost est configuré automatiquement et ne peut pas être modifié avec SET VHOST."
 
-# --- SAREGISTER ------------------------------------------------------------
+# --- INFO ---------------------------------------------------------------------
+info:
+  syntax: "INFO <surnom>"
+  short: "Afficher les informations d'un surnom enregistré."
+  help: |-
+    Affiche les informations d’enregistrement d’un pseudonyme : date de création,
+    état de connexion, dernier message envoyé et adresse e-mail.
+
+    L’adresse e-mail n’est visible que par le propriétaire identifié.
+    Si le pseudonyme est privé, seul son propriétaire et les opérateurs IRC peuvent
+    consulter ces informations.
+  example: "%command_prefix%INFO Utilisateur"
+  private: "Les informations du surnom %nickname% sont privées."
+  header: "Informations pour le surnom %nickname%"
+  status: "%label%           : %status%"
+  label_status: "Statut"
+  status_registered: "Enregistré"
+  status_suspended: "Suspendu"
+  status_forbidden: "Interdit"
+  status_pending_deletion: "En attente de suppression"
+  reason: "%label%           : %reason%"
+  label_reason: "Raison"
+  suspended_until: "%label%           : %date%"
+  label_suspended_until: "Fin le"
+  suspended_permanent: "%label%           : Permanent"
+  label_suspended_permanent: "Fin le"
+  registered_at: "%label%       : %date%"
+  label_registered_at: "Enregistré"
+  last_seen_online: "%label%     : %online%"
+  label_last_seen_online: "Dernière vue"
+  value_last_seen_online: "EN LIGNE"
+  last_seen_at: "%label%     : %date%"
+  label_last_seen_at: "Dernière vue"
+  last_seen_never: "%label%     : Jamais"
+  label_last_seen_never: "Dernière vue"
+  last_quit: "%label%   : %message%"
+  label_last_quit: "Dernier départ"
+  last_connect: "%label%  : %ip% (%host%)"
+  label_last_connect: "Dernière vue de"
+  language: "%label%           : %language%"
+  label_language: "Langue"
+  email: "%label%           : %email%"
+  label_email: "E-mail"
+  vhost: "%label%            : %vhost%"
+  label_vhost: "VHost"
+  no_expire: "%label%       : Oui"
+  label_no_expire: "N'expire jamais"
+  pending_deletion_at: "%label%               : %date%"
+  label_pending_deletion_at: "Supprimé"
+  pending_deletion_until: "%label%      : %date%"
+  label_pending_deletion_until: "Suppr. définitive"
+  pending_deletion_notice: "%notice%"
+  value_pending_deletion_notice: "Ce pseudonyme est en attente de suppression et ne peut pas être enregistré."
+  channels_header: |-
+
+    Canaux avec accès :
+  channels_entry_founder: "%channel% (%role%)"
+  channels_role_founder: "Fondateur"
+  channels_entry_successor: "%channel% (%role%)"
+  channels_role_successor: "Successeur"
+  channels_entry_access: "%channel% (%level%)"
+
+# --- STATUS -------------------------------------------------------------------
+status:
+  syntax: "STATUS <surnom>"
+  short: "Afficher le statut d'enregistrement d'un surnom."
+  help: |-
+    Affiche l’état actuel d’un pseudonyme : enregistré, en attente de
+    vérification, suspendu, etc.
+  example: "%command_prefix%STATUS Utilisateur"
+  header: "Statut du surnom %nickname%"
+  unregistered: "  Statut          : Non enregistré"
+  not_registered_offline: "  Statut          : %state%"
+  value_not_registered_offline: "Non enregistré"
+  pending: "  Statut          : %state%"
+  value_pending: "En attente de vérification"
+  pending_expires: "  Expire dans     : %minutes% minute(s)"
+  pending_expires_at: "  Expire le       : %date%"
+  not_connected: "  Statut          : %state%"
+  value_not_connected: "Non connecté"
+  not_identified: "  Statut          : %state%"
+  value_not_identified: "Non identifié"
+  identified: "  Statut          : %state%"
+  value_identified: "Identifié"
+  suspended: "  Statut          : %state%"
+  value_suspended: "Suspendu"
+  suspended_reason: "  Raison          : %reason%"
+  suspended_until: "  Fin le          : %date%"
+  suspended_permanent: "  Fin le          : Permanent"
+  forbidden: "  Statut          : %state%"
+  value_forbidden: "Interdit"
+  forbidden_reason: "  Raison          : %reason%"
+  pending_deletion: "  %label%          : %state%"
+  value_pending_deletion: "En attente de suppression"
+  label_pending_deletion: "Statut"
+  pending_deletion_at: "  %label%        : %date%"
+
+  label_pending_deletion_at: "Supprimé"
+
+# --- HELP ---------------------------------------------------------------------
+help:
+  syntax: "HELP [commande]"
+  short: "Afficher l'aide des commandes %nickserv%."
+  help: |-
+    Affiche l'aide générale de %nickserv% ou des informations détaillées
+    pour une commande spécifique.
+  examples_header: "Exemples :"
+  example: "%command_prefix%HELP"
+  examples:
+    - "%command_prefix%HELP SET"
+    - "%command_prefix%HELP SET EMAIL"
+    - "%command_prefix%HELP SET TIMEZONE Europe"
+  header_title: "%bot%"
+  header: "%title%"
+  navigation_marker: ""
+  info_marker: ""
+  error_marker: ""
+  warning_marker: ""
+  intro: |-
+    Permet d’enregistrer et de protéger votre pseudonyme afin d’empêcher son
+    utilisation par d’autres. Gérez la sécurité de votre compte, personnalisez vos
+    préférences et récupérez l’accès lorsque nécessaire.
+  intro_expiration: "%label% : les pseudonymes inutilisés pendant plus de %duration% sont automatiquement supprimés."
+  intro_expiration_duration: "%days% jours"
+  intro_expiration_label: "NOTE"
+  general_header: "Commandes disponibles :"
+  command_line: "%command%%description%"
+  subcommand_line: "%command%%description%"
+  options_header: "Options :"
+  general_syntax: "HELP <commande>"
+  general_footer: "Utilisez /msg %bot% %syntax% pour plus d’informations."
+  set_sub_syntax: "HELP %command% <option>"
+  set_sub_footer: "Utilisez /msg %bot% %syntax% pour plus d’informations."
+  syntax_label: "Syntaxe : %syntax%"
+  footer: ""
+  group_header: "%group%"
+  subgroup_header: "%group%"
+  group:
+    registration_auth: "Inscription et authentification"
+    account_security: "Compte et sécurité"
+  ircop_group:
+    lookup: "Recherche et enquête"
+    account_management: "Gestion des comptes"
+    suspensions_bans: "Suspensions et interdictions"
+    deletion: "Suppression et restauration"
+  ircop_header: "Commandes disponibles pour les IRCops :"
+  set_timezone:
+    index_label: "Zones par région (utilisez %syntax% pour consulter une région) :"
+    index_syntax: "HELP SET TIMEZONE <région>"
+    region_header: "Fuseaux horaires pour %region% :"
+    region_unknown: "Région inconnue. Utilisez %syntax% pour l'index."
+    region_syntax: "HELP SET TIMEZONE"
+
+# --- NICK PROTECTION ----------------------------------------------------------
+protection:
+  nick_in_use: "Le surnom %nickname% est enregistré. Vous serez renommé si vous ne vous identifiez pas."
+  renamed_to: |-
+    Vous avez été renommé en %guest_nick%. Pour récupérer votre pseudonyme :
+    /msg %bot% %identify%
+  renamed_command: "IDENTIFY %nickname% <mot_de_passe>"
+  nick_forbidden: "Le surnom %nickname% est interdit : %reason%"
+
+# --- USERIP (IRCop) -----------------------------------------------------------
+userip:
+  syntax: "USERIP <surnom>"
+  short: "Obtenir l'adresse IP réelle et le nom d'hôte du surnom."
+  help: |-
+    Affiche l’adresse IP et le nom d’hôte réels d’un pseudonyme.
+    À utiliser avec précaution : ces informations sont sensibles.
+  example: "%command_prefix%USERIP Utilisateur"
+  result: "Surnom : %nickname% | IP : %ip% | Hôte : %host%"
+
+# --- WHOIP (IRCop) ------------------------------------------------------------
+whoip:
+  syntax: "WHOIP <ip>"
+  short: "Recherche les surnoms par l'adresse IP de leur dernière connexion identifiée."
+  help: |-
+    Affiche les pseudonymes enregistrés dont la dernière connexion identifiée
+    utilisait cette adresse IP. L’adresse enregistrée peut être obsolète.
+  example: "%command_prefix%WHOIP 192.0.2.10"
+  empty: "Aucun surnom enregistré ne correspond à cette adresse IP."
+  header: "Surnoms correspondants :"
+
+# --- LIST (IRCop) -------------------------------------------------------------
+list:
+  syntax: "LIST <motif> [page]"
+  short: "Liste les pseudos enregistrés correspondant à un motif."
+  help: |-
+    Affiche les pseudonymes enregistrés correspondant au motif. Le caractère
+    générique
+    * correspond à toute suite de caractères ; la page facultative commence à 1.
+  example: "%command_prefix%LIST Utilisateur*"
+  examples:
+    - "%command_prefix%LIST Utilisateur* 2"
+  header: "Pseudo | Enregistrement | Dernière connexion | IP | État"
+  row: "%nickname% | %registered% | %last_seen% | %ip% | %status%"
+  empty: "Aucun pseudo ne correspond au motif %pattern%."
+  status_pending: "En attente"
+  status_registered: "Enregistré"
+
+# --- HISTORY ---
+history:
+  syntax: "HISTORY <surnom> {ADD <message>|DEL <id>|VIEW [PAGE|ALL]|CLEAR}"
+  short: "Consulter ou gérer l'historique des actions du surnom."
+  help: |-
+    Consulte et gère l’historique des actions d’un pseudonyme. Les suspensions,
+    changements de mot de passe ou d’adresse e-mail et récupérations sont
+    enregistrés
+    automatiquement. VIEW affiche trois entrées par page ; ALL affiche tout
+    l’historique.
+  example: "%command_prefix%HISTORY Utilisateur VIEW"
+  examples:
+    - "%command_prefix%HISTORY Utilisateur VIEW ALL"
+    - "%command_prefix%HISTORY Utilisateur ADD Note manuelle"
+
+  # --- HISTORY ADD ---------------------------------------------------------
+  add:
+    syntax: "HISTORY <surnom> ADD <message>"
+    short: "Ajouter une entrée manuelle à l'historique."
+    help: "Ajoute une entrée manuelle à l’historique du pseudonyme."
+    example: "%command_prefix%HISTORY Utilisateur ADD Signalé pour spam"
+    success: "Entrée d'historique ajoutée pour %nickname%."
+
+  # --- HISTORY DEL ---------------------------------------------------------
+  del:
+    syntax: "HISTORY <surnom> DEL <id>"
+    short: "Supprimer une entrée d'historique par ID."
+    help: "Supprime une entrée précise de l’historique à l’aide de son identifiant."
+    example: "%command_prefix%HISTORY Utilisateur DEL 42"
+
+  # --- HISTORY VIEW --------------------------------------------------------
+  view:
+    syntax: "HISTORY <surnom> VIEW [PAGE|ALL]"
+    short: "Afficher l'historique des actions du surnom."
+    help: |-
+      Affiche l’historique des actions du pseudonyme. Trois entrées sont affichées par
+      page par défaut. Utilisez ALL pour les afficher toutes.
+    example: "%command_prefix%HISTORY Utilisateur VIEW"
+    examples:
+      - "%command_prefix%HISTORY Utilisateur VIEW 2"
+      - "%command_prefix%HISTORY Utilisateur VIEW ALL"
+    header: "%heading% (affichage %start%-%end% sur %total%) :"
+    header_title: "Historique pour %nickname%"
+    entry: "#%id% [%date%] %action% par %operator% — %message%"
+    no_entries: "Aucune entrée d'historique trouvée pour %nickname%."
+    page_hint: "Utilisez %command% pour plus d'entrées."
+    page_hint_command: "HISTORY %nickname% VIEW %next_page%"
+
+  # --- HISTORY CLEAR -------------------------------------------------------
+  clear:
+    syntax: "HISTORY <surnom> CLEAR"
+    short: "Supprimer toutes les entrées d'historique d'un surnom."
+    help: "Supprime de façon irréversible toutes les entrées de l’historique du pseudonyme."
+    example: "%command_prefix%HISTORY Utilisateur CLEAR"
+    success: "%count% entrées d'historique effacées pour %nickname%."
+
+# --- HISTORY MESSAGES ---
+history.message:
+  verify: "Compte activé"
+  resend: "Courriel de vérification renvoyé"
+  noexpire_on: "Protection contre l’expiration activée"
+  noexpire_off: "Protection contre l’expiration désactivée"
+  userip: "Consultation USERIP"
+  history_clear: "Historique effacé"
+  password_changed_owner: "Mot de passe changé par le propriétaire"
+  password_changed_operator: "Mot de passe changé par l'opérateur"
+  email_changed_owner: "E-mail changé de %old_email% à %new_email%"
+  email_changed_operator: "E-mail changé en %new_email% par l'opérateur"
+  recover: "Mot de passe réinitialisé via jeton e-mail"
+  saregister: "Compte enregistré administrativement"
+
+# --- HISTORY EXTRA FIELDS ---
+history.extra:
+  old_email: "Ancien e-mail : %value%"
+  new_email: "Nouvel e-mail : %value%"
+  method: "Méthode : %value%"
+
+# --- SAREGISTER (IRCop) -------------------------------------------------------
 saregister:
   syntax: "SAREGISTER <surnom> <motdepasse> [email]"
   short: "Enregistrer administrativement un pseudonyme."
@@ -414,7 +593,7 @@ saregister:
   success_email: "Le pseudonyme %nickname% a été enregistré. Jeton de secours envoyé à %email%."
   invalid_nickname: "Pseudonyme non valide %nickname%."
 
-# --- SASET -----------------------------------------------------------------
+# --- SASET (IRCop) ------------------------------------------------------------
 saset:
   syntax: "SASET <surnom> {PASSWORD <nouveau_mdp>|EMAIL <nouvel_e-mail>|LANGUAGE <code>|TIMEZONE {<fuseau_horaire>|OFF}|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
   short: "Modifier les paramètres d'un autre surnom."
@@ -495,91 +674,56 @@ saset:
     examples:
       - "%command_prefix%SASET Utilisateur VHOST"
 
-# --- HELP ------------------------------------------------------------------
-help:
-  syntax: "HELP [commande]"
-  short: "Afficher l'aide des commandes %nickserv%."
+# --- RENAME (IRCop) -----------------------------------------------------------
+rename:
+  syntax: "RENAME <surnom>"
+  short: "Forcer le renommage d'un surnom connecté en un surnom aléatoire."
   help: |-
-    Affiche l'aide générale de %nickserv% ou des informations détaillées
-    pour une commande spécifique.
-  examples_header: "Exemples :"
-  example: "%command_prefix%HELP"
+    Force un pseudonyme connecté à prendre un nom aléatoire précédé d’un
+    préfixe défini par le réseau.
+  example: "%command_prefix%RENAME Problematico"
+  cannot_rename_root: "Impossible de renommer l'utilisateur root %nickname%."
+  cannot_rename_oper: "Impossible de renommer l'opérateur IRC %nickname%."
+  cannot_rename_service: "Impossible de renommer le surnom de service %nickname%."
+  success: "Le surnom %nickname% a été renommé en %new_nick%."
+
+# --- NOEXPIRE (IRCop) ---------------------------------------------------------
+noexpire:
+  syntax: "NOEXPIRE <surnom> {ON|OFF}"
+  short: "Définir ou retirer la protection contre l'expiration d'un surnom."
+  help: |-
+    Détermine si le pseudonyme expire après une période d’inactivité.
+    ON empêche l’expiration et OFF applique les règles habituelles.
+  example: "%command_prefix%NOEXPIRE Utilisateur ON"
   examples:
-    - "%command_prefix%HELP SET"
-    - "%command_prefix%HELP SET EMAIL"
-    - "%command_prefix%HELP SET TIMEZONE Europe"
-  header_title: "%bot%"
-  header: "%title%"
-  navigation_marker: ""
-  info_marker: ""
-  error_marker: ""
-  warning_marker: ""
-  intro: |-
-    Permet d’enregistrer et de protéger votre pseudonyme afin d’empêcher son
-    utilisation par d’autres. Gérez la sécurité de votre compte, personnalisez vos
-    préférences et récupérez l’accès lorsque nécessaire.
-  intro_expiration: "%label% : les pseudonymes inutilisés pendant plus de %duration% sont automatiquement supprimés."
-  intro_expiration_duration: "%days% jours"
-  intro_expiration_label: "NOTE"
-  general_header: "Commandes disponibles :"
-  command_line: "%command%%description%"
-  subcommand_line: "%command%%description%"
-  options_header: "Options :"
-  general_syntax: "HELP <commande>"
-  general_footer: "Utilisez /msg %bot% %syntax% pour plus d’informations."
-  set_sub_syntax: "HELP %command% <option>"
-  set_sub_footer: "Utilisez /msg %bot% %syntax% pour plus d’informations."
-  syntax_label: "Syntaxe : %syntax%"
-  footer: ""
-  group_header: "%group%"
-  subgroup_header: "%group%"
-  group:
-    registration_auth: "Inscription et authentification"
-    account_security: "Compte et sécurité"
-  ircop_group:
-    lookup: "Recherche et enquête"
-    account_management: "Gestion des comptes"
-    suspensions_bans: "Suspensions et interdictions"
-    deletion: "Suppression et restauration"
-  ircop_header: "Commandes disponibles pour les IRCops :"
-  set_timezone:
-    index_label: "Zones par région (utilisez %syntax% pour consulter une région) :"
-    index_syntax: "HELP SET TIMEZONE <région>"
-    region_header: "Fuseaux horaires pour %region% :"
-    region_unknown: "Région inconnue. Utilisez %syntax% pour l'index."
-    region_syntax: "HELP SET TIMEZONE"
+    - "%command_prefix%NOEXPIRE Utilisateur OFF"
+  success_on: "Le surnom %nickname% est maintenant protégé contre l'expiration."
+  success_off: "Le surnom %nickname% expirera maintenant normalement."
+  forbidden: "Le surnom %nickname% est interdit."
+  suspended: "Le surnom %nickname% est suspendu."
 
-# --- NICK PROTECTION -------------------------------------------------------
-protection:
-  nick_in_use: "Le surnom %nickname% est enregistré. Vous serez renommé si vous ne vous identifiez pas."
-  renamed_to: |-
-    Vous avez été renommé en %guest_nick%. Pour récupérer votre pseudonyme :
-    /msg %bot% %identify%
-  renamed_command: "IDENTIFY %nickname% <mot_de_passe>"
-  nick_forbidden: "Le surnom %nickname% est interdit : %reason%"
-
-# --- USERIP ----------------------------------------------------------------
-userip:
-  syntax: "USERIP <surnom>"
-  short: "Obtenir l'adresse IP réelle et le nom d'hôte du surnom."
+# --- REGMODE (IRCop) ----------------------------------------------------------
+regmode:
+  syntax: "REGMODE {EMAIL|TOKEN|STATUS}"
+  short: "Gérer le mode d’inscription du réseau."
   help: |-
-    Affiche l’adresse IP et le nom d’hôte réels d’un pseudonyme.
-    À utiliser avec précaution : ces informations sont sensibles.
-  example: "%command_prefix%USERIP Utilisateur"
-  result: "Surnom : %nickname% | IP : %ip% | Hôte : %host%"
+    Configure le mode d’enregistrement des nouveaux comptes.
 
-# --- WHOIP -----------------------------------------------------------------
-whoip:
-  syntax: "WHOIP <ip>"
-  short: "Recherche les surnoms par l'adresse IP de leur dernière connexion identifiée."
-  help: |-
-    Affiche les pseudonymes enregistrés dont la dernière connexion identifiée
-    utilisait cette adresse IP. L’adresse enregistrée peut être obsolète.
-  example: "%command_prefix%WHOIP 192.0.2.10"
-  empty: "Aucun surnom enregistré ne correspond à cette adresse IP."
-  header: "Surnoms correspondants :"
+    %emphasis_0% Envoie le jeton de vérification à l’adresse e-mail de l’utilisateur.
+    %emphasis_1% Envoie directement le jeton de vérification par IRC.
+    %emphasis_2% Affiche le mode actuel sans le modifier.
 
-# --- SUSPEND ---------------------------------------------------------------
+    Les enregistrements en attente conservent le mode utilisé à leur création.
+
+    En mode TOKEN, la commande RESEND reste désactivée pour tous les utilisateurs.
+  example: "%command_prefix%REGMODE STATUS"
+  examples:
+    - "%command_prefix%REGMODE EMAIL"
+    - "%command_prefix%REGMODE TOKEN"
+  status: "Mode d’inscription actuel : %mode%."
+  changed: "Mode d’inscription modifié : %mode%."
+
+# --- SUSPEND (IRCop) ----------------------------------------------------------
 suspend:
   syntax: "SUSPEND <surnom> <durée> <raison>"
   short: "Suspendre un surnom."
@@ -601,7 +745,7 @@ suspend:
   invalid_duration_format: "<j><h><m>"
   invalid_duration_permanent: "0"
 
-# --- UNSUSPEND -------------------------------------------------------------
+# --- UNSUSPEND (IRCop) --------------------------------------------------------
 unsuspend:
   syntax: "UNSUSPEND <surnom>"
   short: "Lever la suspension d'un surnom."
@@ -612,56 +756,7 @@ unsuspend:
   success: "La suspension a été levée pour %nickname%."
   not_suspended: "Le surnom %nickname% n'est pas suspendu."
 
-# --- RENAME ----------------------------------------------------------------
-rename:
-  syntax: "RENAME <surnom>"
-  short: "Forcer le renommage d'un surnom connecté en un surnom aléatoire."
-  help: |-
-    Force un pseudonyme connecté à prendre un nom aléatoire précédé d’un
-    préfixe défini par le réseau.
-  example: "%command_prefix%RENAME Problematico"
-  cannot_rename_root: "Impossible de renommer l'utilisateur root %nickname%."
-  cannot_rename_oper: "Impossible de renommer l'opérateur IRC %nickname%."
-  cannot_rename_service: "Impossible de renommer le surnom de service %nickname%."
-  success: "Le surnom %nickname% a été renommé en %new_nick%."
-
-# --- DROP ------------------------------------------------------------------
-drop:
-  syntax: "DROP <surnom> [FORCE]"
-  short: "Abandonner un surnom enregistré."
-  help: |-
-    Marque un pseudonyme enregistré pour suppression à la fin de la période de
-    grâce ; il peut être restauré avec RESTORE. Ajoutez FORCE pour le supprimer
-    définitivement. Les utilisateurs Root, IRCops et services, ainsi que votre
-    propre
-    pseudonyme, ne peuvent pas être supprimés.
-  force:
-    short: "Supprime définitivement un pseudonyme en attente de suppression."
-  example: "%command_prefix%DROP CuentaAntigua"
-  examples:
-    - "%command_prefix%DROP CuentaAntigua FORCE"
-  suspended: "Le surnom %nickname% est suspendu. Levez d'abord la suspension."
-  forbidden: "Le surnom %nickname% est interdit."
-  cannot_drop_root: "Impossible d'abandonner l'utilisateur root %nickname%."
-  cannot_drop_oper: "Impossible d'abandonner l'opérateur IRC %nickname%."
-  cannot_drop_self: "Vous ne pouvez pas abandonner votre propre surnom."
-  success: "Le surnom %nickname% a été marqué pour suppression et peut être restauré pendant la période de grâce."
-  force_success: "Le surnom %nickname% a été définitivement supprimé."
-  pending_deletion: "Le surnom %nickname% est déjà en attente de suppression. Utilisez DROP <surnom> FORCE pour le supprimer définitivement."
-  cannot_drop_service: "Impossible d'abandonner le surnom de service %nickname%."
-
-# --- RESTORE ---------------------------------------------------------------
-restore:
-  syntax: "RESTORE <surnom>"
-  short: "Restaurer un surnom en attente de suppression."
-  help: |-
-    Restaure un pseudonyme en attente de suppression tant qu’il est encore dans sa
-    période de grâce.
-  example: "%command_prefix%RESTORE CuentaAntigua"
-  success: "Le surnom %nickname% a été restauré."
-  not_pending_deletion: "Le surnom %nickname% n'est pas en attente de suppression."
-
-# --- FORBID ----------------------------------------------------------------
+# --- FORBID (IRCop) -----------------------------------------------------------
 forbid:
   syntax: "FORBID <surnom> <raison>"
   short: "Bloquer définitivement l'utilisation d'un surnom."
@@ -679,7 +774,7 @@ forbid:
   cannot_forbid_oper: "Impossible d'interdire l'opérateur IRC %nickname%."
   cannot_forbid_service: "Impossible d'interdire le surnom de service %nickname%."
 
-# --- UNFORBID --------------------------------------------------------------
+# --- UNFORBID (IRCop) ---------------------------------------------------------
 unforbid:
   syntax: "UNFORBID <surnom>"
   short: "Lever l'interdiction d'un surnom."
@@ -688,7 +783,7 @@ unforbid:
   success: "Le surnom %nickname% n'est plus interdit."
   not_forbidden: "Le surnom %nickname% n'est pas interdit."
 
-# --- FORBIDVHOST -----------------------------------------------------------
+# --- FORBIDVHOST (IRCop) ------------------------------------------------------
 forbidvhost:
   syntax: "FORBIDVHOST {ADD <motif>|DEL <motif>|LIST}"
   short: "Gérer les motifs de vhost interdits."
@@ -733,137 +828,43 @@ forbidvhost:
     entry: "%index%. %pattern% — par %nickname% (%date%)"
     empty: "Aucun motif de vhost interdit."
 
-# --- HISTORY ---
-history:
-  syntax: "HISTORY <surnom> {ADD <message>|DEL <id>|VIEW [PAGE|ALL]|CLEAR}"
-  short: "Consulter ou gérer l'historique des actions du surnom."
+# --- DROP (IRCop) -------------------------------------------------------------
+drop:
+  syntax: "DROP <surnom> [FORCE]"
+  short: "Abandonner un surnom enregistré."
   help: |-
-    Consulte et gère l’historique des actions d’un pseudonyme. Les suspensions,
-    changements de mot de passe ou d’adresse e-mail et récupérations sont
-    enregistrés
-    automatiquement. VIEW affiche trois entrées par page ; ALL affiche tout
-    l’historique.
-  example: "%command_prefix%HISTORY Utilisateur VIEW"
+    Marque un pseudonyme enregistré pour suppression à la fin de la période de
+    grâce ; il peut être restauré avec RESTORE. Ajoutez FORCE pour le supprimer
+    définitivement. Les utilisateurs Root, IRCops et services, ainsi que votre
+    propre
+    pseudonyme, ne peuvent pas être supprimés.
+  force:
+    short: "Supprime définitivement un pseudonyme en attente de suppression."
+  example: "%command_prefix%DROP CuentaAntigua"
   examples:
-    - "%command_prefix%HISTORY Utilisateur VIEW ALL"
-    - "%command_prefix%HISTORY Utilisateur ADD Note manuelle"
-
-  # --- HISTORY ADD ---------------------------------------------------------
-  add:
-    syntax: "HISTORY <surnom> ADD <message>"
-    short: "Ajouter une entrée manuelle à l'historique."
-    help: "Ajoute une entrée manuelle à l’historique du pseudonyme."
-    example: "%command_prefix%HISTORY Utilisateur ADD Signalé pour spam"
-    success: "Entrée d'historique ajoutée pour %nickname%."
-
-  # --- HISTORY DEL ---------------------------------------------------------
-  del:
-    syntax: "HISTORY <surnom> DEL <id>"
-    short: "Supprimer une entrée d'historique par ID."
-    help: "Supprime une entrée précise de l’historique à l’aide de son identifiant."
-    example: "%command_prefix%HISTORY Utilisateur DEL 42"
-
-  # --- HISTORY VIEW --------------------------------------------------------
-  view:
-    syntax: "HISTORY <surnom> VIEW [PAGE|ALL]"
-    short: "Afficher l'historique des actions du surnom."
-    help: |-
-      Affiche l’historique des actions du pseudonyme. Trois entrées sont affichées par
-      page par défaut. Utilisez ALL pour les afficher toutes.
-    example: "%command_prefix%HISTORY Utilisateur VIEW"
-    examples:
-      - "%command_prefix%HISTORY Utilisateur VIEW 2"
-      - "%command_prefix%HISTORY Utilisateur VIEW ALL"
-    header: "%heading% (affichage %start%-%end% sur %total%) :"
-    header_title: "Historique pour %nickname%"
-    entry: "#%id% [%date%] %action% par %operator% — %message%"
-    no_entries: "Aucune entrée d'historique trouvée pour %nickname%."
-    page_hint: "Utilisez %command% pour plus d'entrées."
-    page_hint_command: "HISTORY %nickname% VIEW %next_page%"
-
-  # --- HISTORY CLEAR -------------------------------------------------------
-  clear:
-    syntax: "HISTORY <surnom> CLEAR"
-    short: "Supprimer toutes les entrées d'historique d'un surnom."
-    help: "Supprime de façon irréversible toutes les entrées de l’historique du pseudonyme."
-    example: "%command_prefix%HISTORY Utilisateur CLEAR"
-    success: "%count% entrées d'historique effacées pour %nickname%."
-
-# --- HISTORY MESSAGES ---
-history.message:
-  verify: "Compte activé"
-  resend: "Courriel de vérification renvoyé"
-  noexpire_on: "Protection contre l’expiration activée"
-  noexpire_off: "Protection contre l’expiration désactivée"
-  userip: "Consultation USERIP"
-  history_clear: "Historique effacé"
-  password_changed_owner: "Mot de passe changé par le propriétaire"
-  password_changed_operator: "Mot de passe changé par l'opérateur"
-  email_changed_owner: "E-mail changé de %old_email% à %new_email%"
-  email_changed_operator: "E-mail changé en %new_email% par l'opérateur"
-  recover: "Mot de passe réinitialisé via jeton e-mail"
-  saregister: "Compte enregistré administrativement"
-
-# --- HISTORY EXTRA FIELDS ---
-history.extra:
-  old_email: "Ancien e-mail : %value%"
-  new_email: "Nouvel e-mail : %value%"
-  method: "Méthode : %value%"
-
-# --- NOEXPIRE --------------------------------------------------------------
-noexpire:
-  syntax: "NOEXPIRE <surnom> {ON|OFF}"
-  short: "Définir ou retirer la protection contre l'expiration d'un surnom."
-  help: |-
-    Détermine si le pseudonyme expire après une période d’inactivité.
-    ON empêche l’expiration et OFF applique les règles habituelles.
-  example: "%command_prefix%NOEXPIRE Utilisateur ON"
-  examples:
-    - "%command_prefix%NOEXPIRE Utilisateur OFF"
-  success_on: "Le surnom %nickname% est maintenant protégé contre l'expiration."
-  success_off: "Le surnom %nickname% expirera maintenant normalement."
+    - "%command_prefix%DROP CuentaAntigua FORCE"
+  suspended: "Le surnom %nickname% est suspendu. Levez d'abord la suspension."
   forbidden: "Le surnom %nickname% est interdit."
-  suspended: "Le surnom %nickname% est suspendu."
+  cannot_drop_root: "Impossible d'abandonner l'utilisateur root %nickname%."
+  cannot_drop_oper: "Impossible d'abandonner l'opérateur IRC %nickname%."
+  cannot_drop_self: "Vous ne pouvez pas abandonner votre propre surnom."
+  success: "Le surnom %nickname% a été marqué pour suppression et peut être restauré pendant la période de grâce."
+  force_success: "Le surnom %nickname% a été définitivement supprimé."
+  pending_deletion: "Le surnom %nickname% est déjà en attente de suppression. Utilisez DROP <surnom> FORCE pour le supprimer définitivement."
+  cannot_drop_service: "Impossible d'abandonner le surnom de service %nickname%."
 
-# --- LIST ------------------------------------------------------------------
-list:
-  syntax: "LIST <motif> [page]"
-  short: "Liste les pseudos enregistrés correspondant à un motif."
+# --- RESTORE (IRCop) ----------------------------------------------------------
+restore:
+  syntax: "RESTORE <surnom>"
+  short: "Restaurer un surnom en attente de suppression."
   help: |-
-    Affiche les pseudonymes enregistrés correspondant au motif. Le caractère
-    générique
-    * correspond à toute suite de caractères ; la page facultative commence à 1.
-  example: "%command_prefix%LIST Utilisateur*"
-  examples:
-    - "%command_prefix%LIST Utilisateur* 2"
-  header: "Pseudo | Enregistrement | Dernière connexion | IP | État"
-  row: "%nickname% | %registered% | %last_seen% | %ip% | %status%"
-  empty: "Aucun pseudo ne correspond au motif %pattern%."
-  status_pending: "En attente"
-  status_registered: "Enregistré"
+    Restaure un pseudonyme en attente de suppression tant qu’il est encore dans sa
+    période de grâce.
+  example: "%command_prefix%RESTORE CuentaAntigua"
+  success: "Le surnom %nickname% a été restauré."
+  not_pending_deletion: "Le surnom %nickname% n'est pas en attente de suppression."
 
-# --- REGMODE ---------------------------------------------------------------
-regmode:
-  syntax: "REGMODE {EMAIL|TOKEN|STATUS}"
-  short: "Gérer le mode d’inscription du réseau."
-  help: |-
-    Configure le mode d’enregistrement des nouveaux comptes.
-
-    %emphasis_0% Envoie le jeton de vérification à l’adresse e-mail de l’utilisateur.
-    %emphasis_1% Envoie directement le jeton de vérification par IRC.
-    %emphasis_2% Affiche le mode actuel sans le modifier.
-
-    Les enregistrements en attente conservent le mode utilisé à leur création.
-
-    En mode TOKEN, la commande RESEND reste désactivée pour tous les utilisateurs.
-  example: "%command_prefix%REGMODE STATUS"
-  examples:
-    - "%command_prefix%REGMODE EMAIL"
-    - "%command_prefix%REGMODE TOKEN"
-  status: "Mode d’inscription actuel : %mode%."
-  changed: "Mode d’inscription modifié : %mode%."
-
-# --- RESCUE ----------------------------------------------------------------
+# --- RESCUE -------------------------------------------------------------------
 rescue:
   issued: |-
     Jeton de secours : %token_display%
@@ -891,7 +892,7 @@ rescue:
   replacement_unavailable: "Votre mot de passe est réinitialisé, mais aucun nouveau jeton n’a pu être émis. Votre jeton actuel reste valable."
   temporarily_unavailable: "La remise du jeton de récupération est temporairement indisponible. Réessayez plus tard."
 
-# --- HELP FRAGMENTS ---------------------------------------------------------
+# --- HELP FRAGMENTS -----------------------------------------------------------
 help_fragments:
   identify_help_0: "+r"
   set_language_help_0: "ca"

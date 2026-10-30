@@ -16,11 +16,11 @@
 # HELP-voorbeelden: example/examples en %command_prefix%.
 # De presentatielaag voegt /msg zonder kleur en een marge van twee spaties toe.
 
-# --- ERROR -----------------------------------------------------------------
+# --- ERROR --------------------------------------------------------------------
 error:
   root_only: "Dit commando is voorbehouden aan netwerk-rootbeheerders."
 
-# --- HELP ------------------------------------------------------------------
+# --- HELP ---------------------------------------------------------------------
 help:
   syntax: "HELP [commando] [optie]"
   short: "Toon commando's of hulp voor een commando."
@@ -57,7 +57,7 @@ help:
     low_level: "Laag niveau"
   ircop_header: "Beschikbare opdrachten voor IRC-operators:"
 
-# --- IRCOP -----------------------------------------------------------------
+# --- IRCOP --------------------------------------------------------------------
 ircop:
   syntax: "IRCOP {ADD <bijnaam> <rol>|DEL <bijnaam>|LIST}"
   short: "Beheer netwerk IRC-operators."
@@ -110,7 +110,7 @@ ircop:
     header: "Netwerk IRC Operators"
     empty: "Er zijn geen IRC-operators."
 
-# --- ROLE ------------------------------------------------------------------
+# --- ROLE ---------------------------------------------------------------------
 role:
   # --- ROLE OPERCLASS ------------------------------------------------------
   operclass:
@@ -312,7 +312,7 @@ role:
       cleared: "Geforceerd vhost-patroon verwijderd uit rol %role%."
       invalid: "Ongeldig vhost-patroon. Geldige tekens: a-z, A-Z, 0-9, - en .. Moet ten minste één punt bevatten, mag niet beginnen/eindigen met - of . of .. hebben"
 
-# --- KILL ------------------------------------------------------------------
+# --- KILL ---------------------------------------------------------------------
 kill:
   syntax: "KILL <bijnaam> <reden>"
   short: "Verbreek geforceerd de verbinding van een gebruiker met het netwerk."
@@ -324,7 +324,7 @@ kill:
   protected_ircop: "Kan IRC-operator %nickname% niet killen."
   done: "Gebruiker %nickname% is gekilld (%reason%)."
 
-# --- GLINE -----------------------------------------------------------------
+# --- GLINE --------------------------------------------------------------------
 gline:
   syntax: "GLINE {ADD <masker> <verloop> <reden>|DEL {<masker>|<nummer>}|LIST [masker]}"
   short: "Beheer netwerkbrede G-lines."
@@ -388,7 +388,48 @@ gline:
     empty: "Er zijn geen G-lines."
     entry: "%index%. %mask% - %reason% (%nickname%, verloopt: %expiration%)"
 
-# --- GLOBAL ----------------------------------------------------------------
+# --- BADMAIL ------------------------------------------------------------------
+badmail:
+  syntax: "BADMAIL {ADD <domein> <reden>|DEL {nummer|ALL}|LIST <patroon> [pagina]}"
+  short: "Geblokkeerde e-maildomeinen beheren."
+  help: |-
+    Geblokkeerde e-maildomeinen beheren.
+  example: "%command_prefix%BADMAIL LIST *"
+  add:
+    syntax: "BADMAIL ADD <domein> <reden>"
+    short: "Een domein blokkeren."
+    help: |-
+      Accepteert ASCII- of punycode-domeinen, geen adressen of patronen. Een
+      reden is verplicht. De blokkade geldt exact, niet voor subdomeinen.
+    example: "%command_prefix%BADMAIL ADD example.org abuse"
+  del:
+    syntax: "BADMAIL DEL {nummer|ALL}"
+    short: "Domeinblokkades verwijderen."
+    help: |-
+      Verwijder een blijvend nummer of alle vermeldingen met ALL. Andere
+      nummers veranderen niet.
+    example: "%command_prefix%BADMAIL DEL 1"
+  list:
+    syntax: "BADMAIL LIST <patroon> [pagina]"
+    short: "Geblokkeerde domeinen tonen."
+    help: |-
+      Een patroon is verplicht. Alleen * is een joker voor elke tekenreeks.
+      Hoofdletters worden genegeerd. De optionele pagina begint bij 1.
+      Nummers blijven behouden bij filteren en pagineren.
+    example: "%command_prefix%BADMAIL LIST *.org 2"
+  invalid_domain: "Ongeldig domein. Gebruik ASCII of punycode zonder afsluitende punt."
+  invalid_reason: "Een niet-lege administratieve reden op één regel is verplicht."
+  duplicate: "Dit domein is al geblokkeerd."
+  not_found: "Geen geblokkeerd domein met dit nummer."
+  added: "Domein %domain% geblokkeerd."
+  deleted: "Domeinblokkade %id% verwijderd."
+  cleared: "%total% domeinblokkades verwijderd."
+  empty: "Geen overeenkomende geblokkeerde domeinen."
+  header: "ID | Domein | Reden"
+  page: "Pagina %page%/%pages%, %total% overeenkomende domeinen."
+  row: "%id% | %domain% | %reason%"
+
+# --- GLOBAL -------------------------------------------------------------------
 global:
   syntax: "GLOBAL {service|nick!ident@vhost} {PRIVMSG|NOTICE} <bericht>"
   short: "Stuur een globaal bericht naar alle verbonden gebruikers."
@@ -412,35 +453,7 @@ global:
   type_invalid: "Berichttype moet PRIVMSG of NOTICE zijn."
   done: "Globaal bericht verzonden van %nickname% naar %count% gebruikers."
 
-# --- RAW -------------------------------------------------------------------
-raw:
-  syntax: "RAW <regel>"
-  short: "Stuur een rauwe protocolregel naar de IRCd."
-  help: |-
-    Stuurt de opgegeven regel rechtstreeks naar de socket van de uplink-IRCd.
-    Gebruik dit uiterst voorzichtig. Ongeldige protocolregels kunnen het netwerk
-    platleggen.
-  example: "%command_prefix%RAW :services.ares NOTICE * :Gepland onderhoud"
-  empty: "U moet een niet-lege regel opgeven om te verzenden."
-  too_long: "Regel is te lang. Maximum 510 tekens."
-  not_connected: "Niet verbonden met IRCd."
-  done: "Rauwe regel verzonden."
-  protocol:
-    syntax: "Het actieve protocol heeft de syntaxis van het RAW-commando geweigerd."
-    done: "RAW-commando van het protocol uitgevoerd."
-    target: "Het actieve protocol heeft doel %target% geweigerd."
-    unsupported: "Het actieve protocol ondersteunt dit RAW-commando niet."
-    invalid_resource_type: "Onbekend protocolresourcetype: %resource_type%."
-    invalid_resource: "Ongeldige protocolresource: %resource%."
-    invalid_value: "Ongeldige waarde voor protocolresource: %resource%."
-    error: "Het actieve protocol kon het RAW-commando niet uitvoeren."
-
-# --- DEBUG -----------------------------------------------------------------
-debug:
-  action_global: "%operator% voert commando GLOBAL uit met bijnaam %target% via %type% naar %count% gebruikers. Bericht: %message%"
-  prefix_message: "Bericht: %reason%"
-
-# --- MOTD ------------------------------------------------------------------
+# --- MOTD ---------------------------------------------------------------------
 motd:
   short: "Beheer connect MOTD-berichten die naar gebruikers worden gestuurd bij verbinding."
   syntax: "MOTD {ADD <doel> {PRIVMSG|NOTICE} <verloop> <bericht>|DEL <id>|LIST|CLEAN}"
@@ -501,43 +514,30 @@ motd:
   debug:
     finalized: "MOTD-bericht #%id% is beëindigd: [%type%] %message% | %date% | %shown_count%"
 
-# --- BADMAIL ---------------------------------------------------------------
-badmail:
-  syntax: "BADMAIL {ADD <domein> <reden>|DEL {nummer|ALL}|LIST <patroon> [pagina]}"
-  short: "Geblokkeerde e-maildomeinen beheren."
+# --- RAW ----------------------------------------------------------------------
+raw:
+  syntax: "RAW <regel>"
+  short: "Stuur een rauwe protocolregel naar de IRCd."
   help: |-
-    Geblokkeerde e-maildomeinen beheren.
-  example: "%command_prefix%BADMAIL LIST *"
-  add:
-    syntax: "BADMAIL ADD <domein> <reden>"
-    short: "Een domein blokkeren."
-    help: |-
-      Accepteert ASCII- of punycode-domeinen, geen adressen of patronen. Een
-      reden is verplicht. De blokkade geldt exact, niet voor subdomeinen.
-    example: "%command_prefix%BADMAIL ADD example.org abuse"
-  del:
-    syntax: "BADMAIL DEL {nummer|ALL}"
-    short: "Domeinblokkades verwijderen."
-    help: |-
-      Verwijder een blijvend nummer of alle vermeldingen met ALL. Andere
-      nummers veranderen niet.
-    example: "%command_prefix%BADMAIL DEL 1"
-  list:
-    syntax: "BADMAIL LIST <patroon> [pagina]"
-    short: "Geblokkeerde domeinen tonen."
-    help: |-
-      Een patroon is verplicht. Alleen * is een joker voor elke tekenreeks.
-      Hoofdletters worden genegeerd. De optionele pagina begint bij 1.
-      Nummers blijven behouden bij filteren en pagineren.
-    example: "%command_prefix%BADMAIL LIST *.org 2"
-  invalid_domain: "Ongeldig domein. Gebruik ASCII of punycode zonder afsluitende punt."
-  invalid_reason: "Een niet-lege administratieve reden op één regel is verplicht."
-  duplicate: "Dit domein is al geblokkeerd."
-  not_found: "Geen geblokkeerd domein met dit nummer."
-  added: "Domein %domain% geblokkeerd."
-  deleted: "Domeinblokkade %id% verwijderd."
-  cleared: "%total% domeinblokkades verwijderd."
-  empty: "Geen overeenkomende geblokkeerde domeinen."
-  header: "ID | Domein | Reden"
-  page: "Pagina %page%/%pages%, %total% overeenkomende domeinen."
-  row: "%id% | %domain% | %reason%"
+    Stuurt de opgegeven regel rechtstreeks naar de socket van de uplink-IRCd.
+    Gebruik dit uiterst voorzichtig. Ongeldige protocolregels kunnen het netwerk
+    platleggen.
+  example: "%command_prefix%RAW :services.ares NOTICE * :Gepland onderhoud"
+  empty: "U moet een niet-lege regel opgeven om te verzenden."
+  too_long: "Regel is te lang. Maximum 510 tekens."
+  not_connected: "Niet verbonden met IRCd."
+  done: "Rauwe regel verzonden."
+  protocol:
+    syntax: "Het actieve protocol heeft de syntaxis van het RAW-commando geweigerd."
+    done: "RAW-commando van het protocol uitgevoerd."
+    target: "Het actieve protocol heeft doel %target% geweigerd."
+    unsupported: "Het actieve protocol ondersteunt dit RAW-commando niet."
+    invalid_resource_type: "Onbekend protocolresourcetype: %resource_type%."
+    invalid_resource: "Ongeldige protocolresource: %resource%."
+    invalid_value: "Ongeldige waarde voor protocolresource: %resource%."
+    error: "Het actieve protocol kon het RAW-commando niet uitvoeren."
+
+# --- DEBUG --------------------------------------------------------------------
+debug:
+  action_global: "%operator% voert commando GLOBAL uit met bijnaam %target% via %type% naar %count% gebruikers. Bericht: %message%"
+  prefix_message: "Bericht: %reason%"

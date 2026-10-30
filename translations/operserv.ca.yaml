@@ -16,11 +16,11 @@
 # Exemples HELP: example/examples i %command_prefix%.
 # El presentador afegeix /msg sense color i un marge de dos espais.
 
-# --- ERROR -----------------------------------------------------------------
+# --- ERROR --------------------------------------------------------------------
 error:
   root_only: "Aquesta ordre està restringida als administradors root de la xarxa."
 
-# --- HELP ------------------------------------------------------------------
+# --- HELP ---------------------------------------------------------------------
 help:
   syntax: "HELP [ordre] [opció]"
   short: "Llistar les ordres o mostrar l'ajuda d'una ordre."
@@ -61,7 +61,7 @@ help:
     low_level: "Baix nivell"
   ircop_header: "Comandes disponibles per als IRCops:"
 
-# --- IRCOP -----------------------------------------------------------------
+# --- IRCOP --------------------------------------------------------------------
 ircop:
   syntax: "IRCOP {ADD <nickname> <rol>|DEL <nickname>|LIST}"
   short: "Gestionar els operadors d'IRC de la xarxa."
@@ -113,7 +113,7 @@ ircop:
     header: "Operadors d'IRC de la xarxa"
     empty: "No hi ha operadors d'IRC."
 
-# --- ROLE ------------------------------------------------------------------
+# --- ROLE ---------------------------------------------------------------------
 role:
   # --- ROLE OPERCLASS ------------------------------------------------------
   operclass:
@@ -314,7 +314,7 @@ role:
       cleared: "Tret el patró de vhost forçat del rol %role%."
       invalid: "Patró de vhost no vàlid. Caràcters vàlids: a-z, A-Z, 0-9, - i .. Ha de tenir almenys un punt, no pot començar/acabar amb - o . ni tenir .."
 
-# --- KILL ------------------------------------------------------------------
+# --- KILL ---------------------------------------------------------------------
 kill:
   syntax: "KILL <nickname> <motiu>"
   short: "Desconnectar forçosament un usuari de la xarxa."
@@ -326,7 +326,7 @@ kill:
   protected_ircop: "No es pot matar l'operador d'IRC %nickname%."
   done: "L'usuari %nickname% ha estat mort (%reason%)."
 
-# --- GLINE -----------------------------------------------------------------
+# --- GLINE --------------------------------------------------------------------
 gline:
   syntax: "GLINE {ADD <mask> <expiry> <motiu>|DEL {<mask>|<number>}|LIST [mask]}"
   short: "Gestionar les G-lines de tota la xarxa."
@@ -390,7 +390,48 @@ gline:
     empty: "No hi ha G-lines."
     entry: "%index%. %mask% - %reason% (%nickname%, expira: %expiration%)"
 
-# --- GLOBAL ----------------------------------------------------------------
+# --- BADMAIL ------------------------------------------------------------------
+badmail:
+  syntax: "BADMAIL {ADD <domini> <motiu>|DEL {número|ALL}|LIST <patró> [pàgina]}"
+  short: "Administrar dominis de correu bloquejats."
+  help: |-
+    Administrar dominis de correu bloquejats.
+  example: "%command_prefix%BADMAIL LIST *"
+  add:
+    syntax: "BADMAIL ADD <domini> <motiu>"
+    short: "Bloquejar un domini."
+    help: |-
+      Accepta dominis ASCII o punycode, no adreces ni patrons. El motiu és
+      obligatori. El bloqueig és exacte i no inclou subdominis.
+    example: "%command_prefix%BADMAIL ADD example.org abuse"
+  del:
+    syntax: "BADMAIL DEL {número|ALL}"
+    short: "Eliminar dominis bloquejats."
+    help: |-
+      Elimina un identificador permanent o totes les entrades amb ALL. Els
+      altres identificadors no canvien.
+    example: "%command_prefix%BADMAIL DEL 1"
+  list:
+    syntax: "BADMAIL LIST <patró> [pàgina]"
+    short: "Llistar dominis bloquejats."
+    help: |-
+      El patró és obligatori. Només * és un comodí i coincideix amb
+      qualsevol seqüència. No distingeix majúscules. La pàgina opcional
+      comença a 1. Els identificadors es conserven en filtrar i paginar.
+    example: "%command_prefix%BADMAIL LIST *.org 2"
+  invalid_domain: "Domini invàlid. Usa ASCII o punycode, sense punt final."
+  invalid_reason: "Cal un motiu administratiu no buit i d’una sola línia."
+  duplicate: "Aquest domini ja està bloquejat."
+  not_found: "No hi ha cap domini bloquejat amb aquest identificador."
+  added: "Domini %domain% bloquejat."
+  deleted: "Domini bloquejat %id% eliminat."
+  cleared: "S’han eliminat %total% dominis bloquejats."
+  empty: "Cap domini bloquejat coincideix."
+  header: "ID | Domini | Motiu"
+  page: "Pàgina %page%/%pages%, %total% dominis coincidents."
+  row: "%id% | %domain% | %reason%"
+
+# --- GLOBAL -------------------------------------------------------------------
 global:
   syntax: "GLOBAL {service|nick!ident@vhost} {PRIVMSG|NOTICE} <message>"
   short: "Enviar un missatge global a tots els usuaris connectats."
@@ -418,35 +459,7 @@ global:
   type_invalid: "El tipus de missatge ha de ser PRIVMSG o NOTICE."
   done: "Missatge global enviat des de %nickname% a %count% usuaris."
 
-# --- RAW -------------------------------------------------------------------
-raw:
-  syntax: "RAW <line>"
-  short: "Enviar una línia de protocol en brut a l'IRCd."
-  help: |-
-    Envia directament la línia indicada al sòcol de l'IRCd d'enllaç.
-    Fes-ho amb molta precaució. Les línies de protocol no vàlides poden bloquejar la
-    xarxa.
-  example: "%command_prefix%RAW :services.ares NOTICE * :Manteniment programat"
-  empty: "Heu d'especificar una línia no buida per enviar."
-  too_long: "La línia és massa llarga. Màxim 510 caràcters."
-  not_connected: "No està connectat a l'IRCd."
-  done: "Línia en brut enviada."
-  protocol:
-    syntax: "El protocol actiu ha rebutjat la sintaxi de l’ordre RAW."
-    done: "Ordre RAW gestionada pel protocol executada."
-    target: "El protocol actiu ha rebutjat la destinació %target%."
-    unsupported: "El protocol actiu no admet aquesta ordre RAW."
-    invalid_resource_type: "Tipus de recurs de protocol desconegut: %resource_type%."
-    invalid_resource: "Recurs de protocol no vàlid: %resource%."
-    invalid_value: "Valor no vàlid per al recurs de protocol: %resource%."
-    error: "El protocol actiu no ha pogut executar l’ordre RAW."
-
-# --- DEBUG -----------------------------------------------------------------
-debug:
-  action_global: "%operator% executa l'ordre GLOBAL amb el sobrenom %target% via %type% a %count% usuaris. Missatge: %message%"
-  prefix_message: "Missatge: %reason%"
-
-# --- MOTD ------------------------------------------------------------------
+# --- MOTD ---------------------------------------------------------------------
 motd:
   short: "Gestionar els missatges MOTD enviats als usuaris en connectar-se."
   syntax: "MOTD {ADD <destinació> {PRIVMSG|NOTICE} <expiry> <missatge>|DEL <id>|LIST|CLEAN}"
@@ -506,43 +519,30 @@ motd:
   debug:
     finalized: "El missatge MOTD #%id% ha finalitzat: [%type%] %message% | %date% | %shown_count%"
 
-# --- BADMAIL ---------------------------------------------------------------
-badmail:
-  syntax: "BADMAIL {ADD <domini> <motiu>|DEL {número|ALL}|LIST <patró> [pàgina]}"
-  short: "Administrar dominis de correu bloquejats."
+# --- RAW ----------------------------------------------------------------------
+raw:
+  syntax: "RAW <line>"
+  short: "Enviar una línia de protocol en brut a l'IRCd."
   help: |-
-    Administrar dominis de correu bloquejats.
-  example: "%command_prefix%BADMAIL LIST *"
-  add:
-    syntax: "BADMAIL ADD <domini> <motiu>"
-    short: "Bloquejar un domini."
-    help: |-
-      Accepta dominis ASCII o punycode, no adreces ni patrons. El motiu és
-      obligatori. El bloqueig és exacte i no inclou subdominis.
-    example: "%command_prefix%BADMAIL ADD example.org abuse"
-  del:
-    syntax: "BADMAIL DEL {número|ALL}"
-    short: "Eliminar dominis bloquejats."
-    help: |-
-      Elimina un identificador permanent o totes les entrades amb ALL. Els
-      altres identificadors no canvien.
-    example: "%command_prefix%BADMAIL DEL 1"
-  list:
-    syntax: "BADMAIL LIST <patró> [pàgina]"
-    short: "Llistar dominis bloquejats."
-    help: |-
-      El patró és obligatori. Només * és un comodí i coincideix amb
-      qualsevol seqüència. No distingeix majúscules. La pàgina opcional
-      comença a 1. Els identificadors es conserven en filtrar i paginar.
-    example: "%command_prefix%BADMAIL LIST *.org 2"
-  invalid_domain: "Domini invàlid. Usa ASCII o punycode, sense punt final."
-  invalid_reason: "Cal un motiu administratiu no buit i d’una sola línia."
-  duplicate: "Aquest domini ja està bloquejat."
-  not_found: "No hi ha cap domini bloquejat amb aquest identificador."
-  added: "Domini %domain% bloquejat."
-  deleted: "Domini bloquejat %id% eliminat."
-  cleared: "S’han eliminat %total% dominis bloquejats."
-  empty: "Cap domini bloquejat coincideix."
-  header: "ID | Domini | Motiu"
-  page: "Pàgina %page%/%pages%, %total% dominis coincidents."
-  row: "%id% | %domain% | %reason%"
+    Envia directament la línia indicada al sòcol de l'IRCd d'enllaç.
+    Fes-ho amb molta precaució. Les línies de protocol no vàlides poden bloquejar la
+    xarxa.
+  example: "%command_prefix%RAW :services.ares NOTICE * :Manteniment programat"
+  empty: "Heu d'especificar una línia no buida per enviar."
+  too_long: "La línia és massa llarga. Màxim 510 caràcters."
+  not_connected: "No està connectat a l'IRCd."
+  done: "Línia en brut enviada."
+  protocol:
+    syntax: "El protocol actiu ha rebutjat la sintaxi de l’ordre RAW."
+    done: "Ordre RAW gestionada pel protocol executada."
+    target: "El protocol actiu ha rebutjat la destinació %target%."
+    unsupported: "El protocol actiu no admet aquesta ordre RAW."
+    invalid_resource_type: "Tipus de recurs de protocol desconegut: %resource_type%."
+    invalid_resource: "Recurs de protocol no vàlid: %resource%."
+    invalid_value: "Valor no vàlid per al recurs de protocol: %resource%."
+    error: "El protocol actiu no ha pogut executar l’ordre RAW."
+
+# --- DEBUG --------------------------------------------------------------------
+debug:
+  action_global: "%operator% executa l'ordre GLOBAL amb el sobrenom %target% via %type% a %count% usuaris. Missatge: %message%"
+  prefix_message: "Missatge: %reason%"

@@ -16,7 +16,7 @@
 # HELP adibideak: example/examples eta %command_prefix%.
 # Aurkezleak kolorerik gabeko /msg eta bi zuriuneko marjina gehitzen ditu.
 
-# --- SEND ------------------------------------------------------------------
+# --- SEND ---------------------------------------------------------------------
 send:
   syntax: "SEND {ezizena|#kanala} <mezua>"
   short: "Bidali mezu bat ezizen edo kanal batera."
@@ -35,7 +35,7 @@ send:
   message_too_long: "Mezua luzeegia da. Gehienez %max% karaktere onartzen dira."
   service_disabled_for_target: "Mezu zerbitzua desgaituta dago %target%(r)entzat."
 
-# --- READ ------------------------------------------------------------------
+# --- READ ---------------------------------------------------------------------
 read:
   syntax: "READ [#kanala] <zenbakia>"
   short: "Irakurri mezu bat zenbakiaren arabera."
@@ -49,7 +49,7 @@ read:
   footer: "%separator% %date%"
   not_found: "#%index% mezua ez da aurkitu."
 
-# --- LIST ------------------------------------------------------------------
+# --- LIST ---------------------------------------------------------------------
 list:
   syntax: "LIST [#kanala]"
   short: "Zerrendatu mezuak (irakurri gabeak * gorriaz markatuta)."
@@ -63,7 +63,7 @@ list:
   header: "%target%(r)en mezuak:"
   empty: "Ez dago mezurik %target%(r)entzat."
 
-# --- DEL -------------------------------------------------------------------
+# --- DEL ----------------------------------------------------------------------
 del:
   syntax: "DEL [#kanala] <zenbakia>"
   short: "Ezabatu mezu bat zenbakiaren arabera."
@@ -74,7 +74,7 @@ del:
   deleted: "#%index% mezua ezabatu da."
   not_found: "#%index% mezua ez da aurkitu."
 
-# --- IGNORE ----------------------------------------------------------------
+# --- IGNORE -------------------------------------------------------------------
 ignore:
   syntax: "IGNORE {ADD [#kanala] <ezizena>|DEL [#kanala] <ezizena>|LIST [#kanala]}"
   short: "Kudeatu mezuetarako baztertze zerrenda."
@@ -122,7 +122,7 @@ ignore:
   list_empty: "Baztertze zerrenda hutsik dago."
   list_header: "Baztertze zerrenda:"
 
-# --- ENABLE ----------------------------------------------------------------
+# --- ENABLE -------------------------------------------------------------------
 enable:
   syntax: "ENABLE [#kanala]"
   short: "Gaitu mezuen harrera."
@@ -136,7 +136,7 @@ enable:
   already_enabled_channel: "Mezu zerbitzua jada gaituta dago %channel% kanalerako."
   founder_only: "Kanal sortzaileak soilik gaitu ditzake mezuak %channel% kanalerako."
 
-# --- DISABLE ---------------------------------------------------------------
+# --- DISABLE ------------------------------------------------------------------
 disable:
   syntax: "DISABLE [#kanala]"
   short: "Desgaitu mezuen harrera."
@@ -152,7 +152,7 @@ disable:
   already_disabled_channel: "Mezu zerbitzua jada desgaituta dago %channel% kanalerako."
   founder_only: "Kanal sortzaileak soilik desgaitu ditzake mezuak %channel% kanalerako."
 
-# --- HELP ------------------------------------------------------------------
+# --- HELP ---------------------------------------------------------------------
 help:
   syntax: "HELP [komandoa] [aukera]"
   short: "Zerrendatu komandoak edo erakutsi komando baten laguntza."
@@ -184,12 +184,12 @@ help:
     preferences: "Hobespenak"
   ircop_header: "IRC operadoreentzako komando erabilgarriak:"
 
-# --- NOTIFY ----------------------------------------------------------------
+# --- NOTIFY -------------------------------------------------------------------
 notify:
   nick_pending: "%count% mezu irakurtzeke dituzu. Zerrendatzeko: /msg %bot% %list%"
   channel_pending: "%channel% kanalak %count% mezu irakurtzeke ditu. Erabili /msg %bot% %list%"
 
-# --- CHANNEL REGISTRATION DECISIONS ---
+# --- CHANNEL REGISTRATION DECISIONS -------------------------------------------
 registration_decision:
   accepted: "%channel% kanalaren erregistro-eskaera onartu da."
   rejected: "%channel% kanalaren erregistro-eskaera ukatu da."

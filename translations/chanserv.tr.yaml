@@ -16,13 +16,13 @@
 # HELP örnekleri: example/examples ve %command_prefix%.
 # Sunum katmanı renksiz /msg ve iki boşlukluk kenar payı ekler.
 
-# --- ERROR -----------------------------------------------------------------
+# --- ERROR --------------------------------------------------------------------
 error:
   invalid_channel: "Geçersiz kanal adı. %example% kullanın."
   invalid_channel_example: "#channel"
   generic: "Bir hata oluştu. Lütfen tekrar deneyin."
 
-# --- REGISTER --------------------------------------------------------------
+# --- REGISTER -----------------------------------------------------------------
 register:
   syntax: "REGISTER <#channel> <açıklama>"
   example: "%command_prefix%REGISTER #kanal Topluluk projesi"
@@ -42,104 +42,7 @@ register:
   restricted_indefinite: "%channel% için yeni istekler süresiz olarak engellendi."
   restricted_until: "%channel% için yeni istekler %date% tarihine kadar engellendi"
 
-# --- SAREGISTER ------------------------------------------------------------
-saregister:
-  syntax: "SAREGISTER <#channel> <nickname> <açıklama>"
-  short: "Bir kanalı yönetimsel olarak kaydedin."
-  help: |-
-    Sözdizimi: SAREGISTER <#channel> <nickname> <açıklama>
-
-    Belirtilen takma ad için varlık, doğrulama veya hız sınırları gerekmeden
-    hemen kurucu olarak bir kanalı yönetimsel olarak kaydeder.
-  example: "%command_prefix%SAREGISTER #channel Alice Topluluk kanalı"
-  success: "%channel% kanalı %founder% adına kaydedildi."
-
-# --- REGMODE ---------------------------------------------------------------
-regmode:
-  syntax: "REGMODE {DIRECT|APPROVAL|STATUS}"
-  example: "%command_prefix%REGMODE APPROVAL"
-  short: "Kanal kayıt modunu ayarlayın veya görüntüleyin."
-  help: |-
-    Kaydı DIRECT ya da APPROVAL olarak ayarlayın veya STATUS ile görüntüleyin.
-    DIRECT varsayılandır ve anında kaydı sürdürür.
-
-  status: "Kanal kayıt modu %mode%."
-  changed: "Kanal kayıt modu artık %mode%."
-
-# --- CREG ------------------------------------------------------------------
-creg:
-  syntax: "CREG {PENDING [sayfa]|ACCEPT <#kanal>|REJECT <#kanal> <neden>}"
-  pending.syntax: "CREG PENDING [sayfa]"
-  pending.example: "%command_prefix%CREG PENDING"
-  pending.short: "Bekleyen kayıt isteklerini listeleyin."
-  pending.help: "Bekleyen istekleri sınırlı bir sayfada listeler."
-  accept.syntax: "CREG ACCEPT <#kanal>"
-  accept.example: "%command_prefix%CREG ACCEPT #canal"
-  accept.short: "Bir kanal kayıt isteğini onaylayın."
-  accept.help: "İstek sahibini yeniden doğrular ve bekleyen kaydı etkinleştirir."
-  reject.syntax: "CREG REJECT <#kanal> <neden>"
-  reject.example: "%command_prefix%CREG REJECT #canal Motivo público"
-  reject.short: "Bir kanal kayıt isteğini reddedin."
-  reject.help: "İsteği zorunlu bir neden ve kısıtlamayla reddeder."
-  example: "%command_prefix%CREG PENDING"
-  short: "Kanal kayıt isteklerini inceleyin."
-  help: |-
-    Bekleyen istekleri listeler veya bir isteği kabul ya da reddeder.
-    Ret için neden gerekir. Kanalı yalnızca ACCEPT kaydeder.
-
-  pending_header: "Bekleyen kayıtlar (sayfa %page%)"
-  pending_item: "%channel% — isteyen %requester%, gönderim %submitted%: %description%"
-  accepted: "%channel% kaydı onaylandı."
-  rejected: "%channel% kaydı reddedildi."
-  not_pending: "%channel% için bekleyen kayıt yok."
-  channel_not_on_network: "%channel% ağda değil."
-  founder_limit: "İstek sahibi kanal kayıt sınırına ulaştı."
-  requester_inactive: "İstek sahibinin hesabı artık etkin değil."
-  requester_ineligible: "İstek sahibi şu anda kanalda operatör olmalıdır."
-
-# --- STATUS ----------------------------------------------------------------
-status:
-  syntax: "STATUS <#kanal>"
-  example: "%command_prefix%STATUS #canal"
-  header: "Kanal durumu %channel%"
-  short: "Kanal kayıt durumunu gösterin."
-  help: |-
-    Kanalın kayıtlı olmadığını, onay beklediğini, reddedildiğini veya kayıtlı
-    olduğunu gösterir.
-    Ret ayrıntılarını yalnızca istek sahibi ve yetkili IRCoplar görebilir.
-
-  unregistered: "%label%%padding%: Kayıtlı değil"
-  unregistered_label: "Durum"
-  pending: "%label%%padding%: %state%"
-  pending_label: "Durum"
-  pending_value: "Onay bekliyor"
-  registered: "%label%%padding%: %state%"
-  registered_label: "Durum"
-  registered_value: "Kayıtlı"
-  suspended: "%label%%padding%: %state%"
-  suspended_label: "Durum"
-  suspended_value: "Askıya alındı"
-  forbidden: "%label%%padding%: %state%"
-  forbidden_label: "Durum"
-  forbidden_value: "Yasaklandı"
-  pending_deletion: "%label%%padding%: %state%"
-  pending_deletion_label: "Durum"
-  pending_deletion_value: "Silinmeyi bekliyor"
-  rejected_private: "%label%%padding%: %state%"
-  rejected_private_label: "Durum"
-  rejected_private_value: "Kayıt reddedildi"
-  rejected: "%label%%padding%: %state%"
-  rejected_label: "Durum"
-  rejected_value: "Kayıt reddedildi"
-  rejection_reason: "%label%%padding%: %reason%"
-  rejection_reason_label: "Neden"
-  rejection_audit: "%label%%padding%: %operator%, %date% tarihinde"
-  rejection_audit_label: "Reddeden"
-  restriction_until: "%label%%padding%: %date%"
-  restriction_until_label: "Kullanılabilir olduğu tarih"
-  footer: ""
-
-# --- INFO ------------------------------------------------------------------
+# --- INFO ---------------------------------------------------------------------
 info:
   syntax: "INFO <#channel>"
   example: "%command_prefix%INFO #kanal"
@@ -196,72 +99,7 @@ info:
   pending_deletion_until_label: "Kalıcı silinme"
   pending_deletion_notice: "Bu kanal dondurulmuştur ve kaydedilemez."
 
-# --- HELP ------------------------------------------------------------------
-help:
-  examples_header: "Örnekler:"
-  syntax: "HELP [komut] [seçenek]"
-  example: "%command_prefix%HELP"
-  examples:
-    - "%command_prefix%HELP SET"
-    - "%command_prefix%HELP SET EMAIL"
-  short: "Komutları listeleyin veya bir komut için yardım gösterin."
-  help: "Kullanılabilir komutları ve seçeneklerinin ayrıntılı yardımını gösterir."
-  header_title: "%bot%"
-  header: "%title% %separator%"
-  intro: |-
-    Kanalları kaydetmenizi ve yönetmenizi, seçeneklerini yapılandırmanızı ve
-    erişimi denetlemenizi sağlar. Kanalın sorumluların kontrolünde kalması için
-    erişim düzeylerini ve kullanıcı ayrıcalıklarını yönetir.
-  general_header: "Kullanılabilir komutlar:"
-  command_line: "%command%%description%"
-  subcommand_line: "%command%%description%"
-  options_header: "Seçenekler:"
-  general_footer: "Daha fazla bilgi için /msg %bot% %help% kullanın."
-  general_footer_command: "HELP <komut>"
-  set_sub_footer: "Daha fazla bilgi için /msg %bot% %help% kullanın."
-  set_sub_footer_command: "HELP %command% <seçenek>"
-  syntax_label: "Sözdizimi: %syntax%"
-  footer: ""
-  intro_expiration: "NOT: %period% uzun süre kullanılmayan kanallar otomatik olarak silinir."
-  intro_expiration_period: "%days% günden"
-  group_header: "%group%"
-  subgroup_header: "%group%"
-  group:
-    registration_info: "Kayıt ve bilgi"
-    access_levels: "Erişim ve seviyeler"
-    ranks_entry: "Yetkiler ve giriş"
-  ircop_group:
-    channel_operations: "Kanal işlemleri"
-    channel_management: "Kanal yönetimi"
-    deletion: "Silme ve geri yükleme"
-    restrictions: "Kısıtlamalar"
-    lookup: "Arama ve inceleme"
-    registration_approval: "Kayıt onayı"
-  ircop_header: "IRC operatörleri için kullanılabilir komutlar:"
-
-# --- OP --------------------------------------------------------------------
-op:
-  syntax: "OP <#channel> <nickname>"
-  example: "%command_prefix%OP #kanal Alicia"
-  short: "Kanal operatörü modu verin."
-  help: "Kanal operatörü modu verin."
-  done: "%nickname% adlı kullanıcıya kanal operatörü statüsü verildi."
-  user_not_on_channel: "%nickname% rumuzu ağda değil."
-  notice_grant: "%from%, %to% adlı kullanıcıya %mode% veriyor"
-
-# --- DEOP ------------------------------------------------------------------
-deop:
-  syntax: "DEOP <#channel> <nickname>"
-  example: "%command_prefix%DEOP #kanal Alicia"
-  short: "Kanal operatörü modunu kaldırın."
-  help: "Kanal operatörü modunu kaldırın."
-  done: "%nickname% adlı kullanıcının op'u alındı."
-
-# --- SECURE ----------------------------------------------------------------
-secure:
-  requires_min_level: "SECURE açıkken, %nickname% %mode% alabilmek için en az seviye %level% olmalıdır."
-
-# --- SET -------------------------------------------------------------------
+# --- SET ----------------------------------------------------------------------
 set:
   syntax: "SET <#channel> {FOUNDER <takma_ad> [token]|SUCCESSOR [nickname]|DESC <açıklama>|URL [url]|EMAIL [e-posta]|ENTRYMSG [mesaj]|TOPICLOCK {ON|OFF}|MLOCK {ON|OFF}|PRIVATE {ON|OFF}|SECURE {ON|OFF}}"
   example: "%command_prefix%SET #kanal DESC Bir topluluk kanalı"
@@ -414,7 +252,49 @@ set:
     notice_on: "%nickname% SECURE modunu etkinleştiriyor."
     notice_off: "%nickname% SECURE modunu devre dışı bırakıyor."
 
-# --- ACCESS ----------------------------------------------------------------
+# --- STATUS -------------------------------------------------------------------
+status:
+  syntax: "STATUS <#kanal>"
+  example: "%command_prefix%STATUS #canal"
+  header: "Kanal durumu %channel%"
+  short: "Kanal kayıt durumunu gösterin."
+  help: |-
+    Kanalın kayıtlı olmadığını, onay beklediğini, reddedildiğini veya kayıtlı
+    olduğunu gösterir.
+    Ret ayrıntılarını yalnızca istek sahibi ve yetkili IRCoplar görebilir.
+
+  unregistered: "%label%%padding%: Kayıtlı değil"
+  unregistered_label: "Durum"
+  pending: "%label%%padding%: %state%"
+  pending_label: "Durum"
+  pending_value: "Onay bekliyor"
+  registered: "%label%%padding%: %state%"
+  registered_label: "Durum"
+  registered_value: "Kayıtlı"
+  suspended: "%label%%padding%: %state%"
+  suspended_label: "Durum"
+  suspended_value: "Askıya alındı"
+  forbidden: "%label%%padding%: %state%"
+  forbidden_label: "Durum"
+  forbidden_value: "Yasaklandı"
+  pending_deletion: "%label%%padding%: %state%"
+  pending_deletion_label: "Durum"
+  pending_deletion_value: "Silinmeyi bekliyor"
+  rejected_private: "%label%%padding%: %state%"
+  rejected_private_label: "Durum"
+  rejected_private_value: "Kayıt reddedildi"
+  rejected: "%label%%padding%: %state%"
+  rejected_label: "Durum"
+  rejected_value: "Kayıt reddedildi"
+  rejection_reason: "%label%%padding%: %reason%"
+  rejection_reason_label: "Neden"
+  rejection_audit: "%label%%padding%: %operator%, %date% tarihinde"
+  rejection_audit_label: "Reddeden"
+  restriction_until: "%label%%padding%: %date%"
+  restriction_until_label: "Kullanılabilir olduğu tarih"
+  footer: ""
+
+# --- ACCESS -------------------------------------------------------------------
 access:
   syntax: "ACCESS <#channel> {ADD <nickname> <seviye>|DEL <nickname>|LIST}"
   example: "%command_prefix%ACCESS #kanal LIST"
@@ -460,7 +340,7 @@ access:
     done: "%nickname% erişim listesinden kaldırıldı."
     notice_channel: "%from%, %to% adlı kullanıcıyı erişim listesinden kaldırıyor"
 
-# --- DELACCESS -------------------------------------------------------------
+# --- DELACCESS ----------------------------------------------------------------
 delaccess:
   syntax: "DELACCESS <#channel>"
   example: "%command_prefix%DELACCESS #kanal"
@@ -474,125 +354,7 @@ delaccess:
   founder_not_in_access: "%channel% kanalının kurucususunuz ve erişim listesinde değilsiniz."
   notice_channel: "%nickname% kanaldan kendi erişimini kaldırıyor"
 
-# --- LEVELS ----------------------------------------------------------------
-levels:
-  syntax: "LEVELS <#channel> {LIST|SET <seviye> <değer>|RESET}"
-  example: "%command_prefix%LEVELS #kanal LIST"
-  examples:
-    - "%command_prefix%LEVELS #kanal SET OPDEOP 50"
-    - "%command_prefix%LEVELS #kanal RESET"
-  short: "Kanal seviyelerini yapılandırın."
-  help: |-
-    Kanal işlemleri için gereken en düşük erişim düzeylerini yapılandırır. Düzeyleri
-    yalnızca kurucu değiştirebilir veya sıfırlayabilir.
-  unknown_sub: "Bilinmeyen alt komut %sub%. LIST, SET veya RESET kullanın."
-  unknown_key: "Bilinmeyen seviye anahtarı %key% veya bu IRCd tarafından desteklenmiyor."
-  value_range: "Seviye değeri %min% ile %max% arasında olmalıdır."
-
-  # --- LEVELS LIST ---------------------------------------------------------
-  list:
-    syntax: "LEVELS <#channel> LIST"
-    example: "%command_prefix%LEVELS #kanal LIST"
-    short: "Seviye gereksinimlerini listeleyin."
-    help: "Her seviye anahtarını ve değerini gösterir (ayarlanmamışsa varsayılanlar)."
-    header: "%channel% için düzeyler"
-
-  # --- LEVELS SET ----------------------------------------------------------
-  set:
-    syntax: "LEVELS <#channel> SET <seviye> <değer>"
-    example: "%command_prefix%LEVELS #kanal SET OPDEOP 50"
-    short: "Bir seviye gereksinimi ayarlayın."
-    help: "Değer -1 ila 499. Yalnızca kurucu."
-    done: "%key% %value% olarak ayarlandı."
-
-  # --- LEVELS RESET --------------------------------------------------------
-  reset:
-    syntax: "LEVELS <#channel> RESET"
-    example: "%command_prefix%LEVELS #kanal RESET"
-    short: "Tüm seviyeleri varsayılanlara sıfırlayın."
-    help: "Tüm geçersiz kılmaları kaldırır. Yalnızca kurucu."
-    done: "Tüm seviyeler varsayılanlara sıfırlandı."
-
-# --- VOICE -----------------------------------------------------------------
-voice:
-  syntax: "VOICE <#channel> <nickname>"
-  example: "%command_prefix%VOICE #kanal Alicia"
-  short: "Kanaldaki kullanıcıya voice modu verin."
-  help: "Kanaldaki kullanıcıya voice modu verin."
-  done: "%nickname% adlı kullanıcıya voice verildi."
-  user_not_on_channel: "%nickname% rumuzu ağda değil."
-  notice_grant: "%from%, %to% adlı kullanıcıya %mode% veriyor"
-
-# --- DEVOICE ---------------------------------------------------------------
-devoice:
-  syntax: "DEVOICE <#channel> <nickname>"
-  example: "%command_prefix%DEVOICE #kanal Alicia"
-  short: "Kanaldaki voice modunu kaldırın."
-  help: "Kanaldaki voice modunu kaldırın."
-  done: "%nickname% adlı kullanıcının voice'u alındı."
-
-# --- UNBAN -----------------------------------------------------------------
-unban:
-  syntax: "UNBAN <#channel>"
-  example: "%command_prefix%UNBAN #kanal"
-  short: "Sizi etkileyen yasakları kaldırır."
-  help: "Mevcut kimliğinizle eşleşen tüm kanal yasaklarını, joker karakterler ve IP/CIDR maskeleri dahil kaldırır."
-  done: "%channel% kanalında sizi etkileyen %count% yasak kaldırıldı"
-  notice_channel: "%nickname% UNBAN kullandı."
-  no_matches: "%channel% kanalında kimliğinizle eşleşen yasak yok"
-  unavailable: "Eşleşen yasaklarınız belirlenemedi; hiçbir şey değiştirilmedi."
-  not_on_network: "%channel% kanalı ağda bulunmuyor."
-
-# --- INVITE ----------------------------------------------------------------
-invite:
-  syntax: "INVITE <#channel>"
-  example: "%command_prefix%INVITE #kanal"
-  short: "Kendinizi kanala davet edin."
-  help: "Kendinizi kanala davet edin."
-  done: "%channel% kanalına davet edildiniz."
-  notice_channel: "%nickname% kendini kanala davet ediyor."
-
-# --- ADMIN -----------------------------------------------------------------
-admin:
-  syntax: "ADMIN <#channel> <nickname>"
-  example: "%command_prefix%ADMIN #kanal Alicia"
-  short: "Kanal admin modu verin."
-  help: "Kanal admin modu verin. Yalnızca IRCd +a'yı destekliyorsa."
-  done: "%nickname% adlı kullanıcıya kanal admini verildi."
-  user_not_on_channel: "%nickname% rumuzu ağda değil."
-  notice_grant: "%from%, %to% adlı kullanıcıya %mode% veriyor"
-  not_supported: "Bu ağ kanal admin (+a) modunu desteklemiyor."
-
-# --- DEADMIN ---------------------------------------------------------------
-deadmin:
-  syntax: "DEADMIN <#channel> <nickname>"
-  example: "%command_prefix%DEADMIN #kanal Alicia"
-  short: "Kanal admin modunu kaldırın."
-  help: "Kanal admin modunu kaldırın."
-  done: "%nickname% adlı kullanıcının admini alındı."
-
-# --- HALFOP ----------------------------------------------------------------
-halfop:
-  syntax: "HALFOP <#channel> <nickname>"
-  example: "%command_prefix%HALFOP #kanal Alicia"
-  short: "Kanaldaki kullanıcıya yarı-operatör modu verin."
-  help: |-
-    Kanaldaki kullanıcıya yarı-operatör modu verin. Yalnızca IRCd +h'ı
-    destekliyorsa.
-  done: "%nickname% adlı kullanıcıya halfop verildi."
-  user_not_on_channel: "%nickname% rumuzu ağda değil."
-  notice_grant: "%from%, %to% adlı kullanıcıya %mode% veriyor"
-  not_supported: "Bu ağ halfop (+h) modunu desteklemiyor."
-
-# --- DEHALFOP --------------------------------------------------------------
-dehalfop:
-  syntax: "DEHALFOP <#channel> <nickname>"
-  example: "%command_prefix%DEHALFOP #kanal Alicia"
-  short: "Kanaldaki yarı-operatör modunu kaldırın."
-  help: "Kanaldaki yarı-operatör modunu kaldırın."
-  done: "%nickname% adlı kullanıcının halfop'u alındı."
-
-# --- AKICK -----------------------------------------------------------------
+# --- AKICK --------------------------------------------------------------------
 akick:
   syntax: "AKICK <#channel> {ADD <maske> [süre] [gerekçe]|DEL {<maske>|<numara>}|LIST}"
   example: "%command_prefix%AKICK #kanal ADD *!*@* 0"
@@ -647,16 +409,251 @@ akick:
     empty: "%channel% kanalının AKICK girişi yok."
     entry: "#%index% %mask% %reason% (ekleyen: %nickname%, bitiş: %expiration%)"
 
-# --- RESTORE ---------------------------------------------------------------
-restore:
-  syntax: "RESTORE <#channel>"
-  example: "%command_prefix%RESTORE #kanal"
-  short: "Silinmeyi bekleyen bir kanalı geri yükle."
-  help: "Elle silinmiş ve hâlâ bekleme süresinde olan bir kanalı geri yükler."
-  success: "%channel% kanalı geri yüklendi."
-  not_pending_deletion: "%channel% kanalı silinmeyi beklemiyor."
+# --- LEVELS -------------------------------------------------------------------
+levels:
+  syntax: "LEVELS <#channel> {LIST|SET <seviye> <değer>|RESET}"
+  example: "%command_prefix%LEVELS #kanal LIST"
+  examples:
+    - "%command_prefix%LEVELS #kanal SET OPDEOP 50"
+    - "%command_prefix%LEVELS #kanal RESET"
+  short: "Kanal seviyelerini yapılandırın."
+  help: |-
+    Kanal işlemleri için gereken en düşük erişim düzeylerini yapılandırır. Düzeyleri
+    yalnızca kurucu değiştirebilir veya sıfırlayabilir.
+  unknown_sub: "Bilinmeyen alt komut %sub%. LIST, SET veya RESET kullanın."
+  unknown_key: "Bilinmeyen seviye anahtarı %key% veya bu IRCd tarafından desteklenmiyor."
+  value_range: "Seviye değeri %min% ile %max% arasında olmalıdır."
 
-# --- DROP ------------------------------------------------------------------
+  # --- LEVELS LIST ---------------------------------------------------------
+  list:
+    syntax: "LEVELS <#channel> LIST"
+    example: "%command_prefix%LEVELS #kanal LIST"
+    short: "Seviye gereksinimlerini listeleyin."
+    help: "Her seviye anahtarını ve değerini gösterir (ayarlanmamışsa varsayılanlar)."
+    header: "%channel% için düzeyler"
+
+  # --- LEVELS SET ----------------------------------------------------------
+  set:
+    syntax: "LEVELS <#channel> SET <seviye> <değer>"
+    example: "%command_prefix%LEVELS #kanal SET OPDEOP 50"
+    short: "Bir seviye gereksinimi ayarlayın."
+    help: "Değer -1 ila 499. Yalnızca kurucu."
+    done: "%key% %value% olarak ayarlandı."
+
+  # --- LEVELS RESET --------------------------------------------------------
+  reset:
+    syntax: "LEVELS <#channel> RESET"
+    example: "%command_prefix%LEVELS #kanal RESET"
+    short: "Tüm seviyeleri varsayılanlara sıfırlayın."
+    help: "Tüm geçersiz kılmaları kaldırır. Yalnızca kurucu."
+    done: "Tüm seviyeler varsayılanlara sıfırlandı."
+
+# --- INVITE -------------------------------------------------------------------
+invite:
+  syntax: "INVITE <#channel>"
+  example: "%command_prefix%INVITE #kanal"
+  short: "Kendinizi kanala davet edin."
+  help: "Kendinizi kanala davet edin."
+  done: "%channel% kanalına davet edildiniz."
+  notice_channel: "%nickname% kendini kanala davet ediyor."
+
+# --- UNBAN --------------------------------------------------------------------
+unban:
+  syntax: "UNBAN <#channel>"
+  example: "%command_prefix%UNBAN #kanal"
+  short: "Sizi etkileyen yasakları kaldırır."
+  help: "Mevcut kimliğinizle eşleşen tüm kanal yasaklarını, joker karakterler ve IP/CIDR maskeleri dahil kaldırır."
+  done: "%channel% kanalında sizi etkileyen %count% yasak kaldırıldı"
+  notice_channel: "%nickname% UNBAN kullandı."
+  no_matches: "%channel% kanalında kimliğinizle eşleşen yasak yok"
+  unavailable: "Eşleşen yasaklarınız belirlenemedi; hiçbir şey değiştirilmedi."
+  not_on_network: "%channel% kanalı ağda bulunmuyor."
+
+# --- ADMIN --------------------------------------------------------------------
+admin:
+  syntax: "ADMIN <#channel> <nickname>"
+  example: "%command_prefix%ADMIN #kanal Alicia"
+  short: "Kanal admin modu verin."
+  help: "Kanal admin modu verin. Yalnızca IRCd +a'yı destekliyorsa."
+  done: "%nickname% adlı kullanıcıya kanal admini verildi."
+  user_not_on_channel: "%nickname% rumuzu ağda değil."
+  notice_grant: "%from%, %to% adlı kullanıcıya %mode% veriyor"
+  not_supported: "Bu ağ kanal admin (+a) modunu desteklemiyor."
+
+# --- DEADMIN ------------------------------------------------------------------
+deadmin:
+  syntax: "DEADMIN <#channel> <nickname>"
+  example: "%command_prefix%DEADMIN #kanal Alicia"
+  short: "Kanal admin modunu kaldırın."
+  help: "Kanal admin modunu kaldırın."
+  done: "%nickname% adlı kullanıcının admini alındı."
+
+# --- OP -----------------------------------------------------------------------
+op:
+  syntax: "OP <#channel> <nickname>"
+  example: "%command_prefix%OP #kanal Alicia"
+  short: "Kanal operatörü modu verin."
+  help: "Kanal operatörü modu verin."
+  done: "%nickname% adlı kullanıcıya kanal operatörü statüsü verildi."
+  user_not_on_channel: "%nickname% rumuzu ağda değil."
+  notice_grant: "%from%, %to% adlı kullanıcıya %mode% veriyor"
+
+# --- DEOP ---------------------------------------------------------------------
+deop:
+  syntax: "DEOP <#channel> <nickname>"
+  example: "%command_prefix%DEOP #kanal Alicia"
+  short: "Kanal operatörü modunu kaldırın."
+  help: "Kanal operatörü modunu kaldırın."
+  done: "%nickname% adlı kullanıcının op'u alındı."
+
+# --- HALFOP -------------------------------------------------------------------
+halfop:
+  syntax: "HALFOP <#channel> <nickname>"
+  example: "%command_prefix%HALFOP #kanal Alicia"
+  short: "Kanaldaki kullanıcıya yarı-operatör modu verin."
+  help: |-
+    Kanaldaki kullanıcıya yarı-operatör modu verin. Yalnızca IRCd +h'ı
+    destekliyorsa.
+  done: "%nickname% adlı kullanıcıya halfop verildi."
+  user_not_on_channel: "%nickname% rumuzu ağda değil."
+  notice_grant: "%from%, %to% adlı kullanıcıya %mode% veriyor"
+  not_supported: "Bu ağ halfop (+h) modunu desteklemiyor."
+
+# --- DEHALFOP -----------------------------------------------------------------
+dehalfop:
+  syntax: "DEHALFOP <#channel> <nickname>"
+  example: "%command_prefix%DEHALFOP #kanal Alicia"
+  short: "Kanaldaki yarı-operatör modunu kaldırın."
+  help: "Kanaldaki yarı-operatör modunu kaldırın."
+  done: "%nickname% adlı kullanıcının halfop'u alındı."
+
+# --- VOICE --------------------------------------------------------------------
+voice:
+  syntax: "VOICE <#channel> <nickname>"
+  example: "%command_prefix%VOICE #kanal Alicia"
+  short: "Kanaldaki kullanıcıya voice modu verin."
+  help: "Kanaldaki kullanıcıya voice modu verin."
+  done: "%nickname% adlı kullanıcıya voice verildi."
+  user_not_on_channel: "%nickname% rumuzu ağda değil."
+  notice_grant: "%from%, %to% adlı kullanıcıya %mode% veriyor"
+
+# --- DEVOICE ------------------------------------------------------------------
+devoice:
+  syntax: "DEVOICE <#channel> <nickname>"
+  example: "%command_prefix%DEVOICE #kanal Alicia"
+  short: "Kanaldaki voice modunu kaldırın."
+  help: "Kanaldaki voice modunu kaldırın."
+  done: "%nickname% adlı kullanıcının voice'u alındı."
+
+# --- HELP ---------------------------------------------------------------------
+help:
+  examples_header: "Örnekler:"
+  syntax: "HELP [komut] [seçenek]"
+  example: "%command_prefix%HELP"
+  examples:
+    - "%command_prefix%HELP SET"
+    - "%command_prefix%HELP SET EMAIL"
+  short: "Komutları listeleyin veya bir komut için yardım gösterin."
+  help: "Kullanılabilir komutları ve seçeneklerinin ayrıntılı yardımını gösterir."
+  header_title: "%bot%"
+  header: "%title% %separator%"
+  intro: |-
+    Kanalları kaydetmenizi ve yönetmenizi, seçeneklerini yapılandırmanızı ve
+    erişimi denetlemenizi sağlar. Kanalın sorumluların kontrolünde kalması için
+    erişim düzeylerini ve kullanıcı ayrıcalıklarını yönetir.
+  general_header: "Kullanılabilir komutlar:"
+  command_line: "%command%%description%"
+  subcommand_line: "%command%%description%"
+  options_header: "Seçenekler:"
+  general_footer: "Daha fazla bilgi için /msg %bot% %help% kullanın."
+  general_footer_command: "HELP <komut>"
+  set_sub_footer: "Daha fazla bilgi için /msg %bot% %help% kullanın."
+  set_sub_footer_command: "HELP %command% <seçenek>"
+  syntax_label: "Sözdizimi: %syntax%"
+  footer: ""
+  intro_expiration: "NOT: %period% uzun süre kullanılmayan kanallar otomatik olarak silinir."
+  intro_expiration_period: "%days% günden"
+  group_header: "%group%"
+  subgroup_header: "%group%"
+  group:
+    registration_info: "Kayıt ve bilgi"
+    access_levels: "Erişim ve seviyeler"
+    ranks_entry: "Yetkiler ve giriş"
+  ircop_group:
+    channel_operations: "Kanal işlemleri"
+    channel_management: "Kanal yönetimi"
+    deletion: "Silme ve geri yükleme"
+    restrictions: "Kısıtlamalar"
+    lookup: "Arama ve inceleme"
+    registration_approval: "Kayıt onayı"
+  ircop_header: "IRC operatörleri için kullanılabilir komutlar:"
+
+# --- CLEARUSERS (IRCop) -------------------------------------------------------
+clearusers:
+  syntax: "CLEARUSERS <#channel> [gerekçe]"
+  example: "%command_prefix%CLEARUSERS #kanal"
+  examples:
+    - "%command_prefix%CLEARUSERS #kanal flooding"
+  short: "Bir kanaldaki tüm kullanıcıları atın."
+  help: |-
+    Kanaldaki tüm kullanıcıları atar. Yalnızca IRCop kullanabilir; gerekçe
+    belirtilmezse
+    varsayılan bir gerekçe kullanılır.
+  not_on_network: "%channel% kanalı şu anda ağda değil."
+  empty: "%channel% kanalında atılacak kullanıcı yok."
+  success: "%channel% kanalından %count% kullanıcı atıldı."
+  default_reason: "CLEARUSERS komutu"
+
+# --- CLEARACCESS (IRCop) ------------------------------------------------------
+clearaccess:
+  syntax: "CLEARACCESS <#channel>"
+  example: "%command_prefix%CLEARACCESS #kanal"
+  short: "Bir kanalın tüm erişim listesini temizleyin."
+  help: "Kanalın tüm erişim kayıtlarını siler. Bu işlem geri alınamaz."
+  success: "%channel% kanalından %count% erişim girişi temizlendi."
+  empty: "%channel% kanalının erişim girişi yok."
+
+# --- IRCOPONLY (IRCop) --------------------------------------------------------
+ircoponly:
+  syntax: "IRCOPONLY <#channel> {ON|OFF}"
+  example: "%command_prefix%IRCOPONLY #kanal ON"
+  examples:
+    - "%command_prefix%IRCOPONLY #kanal OFF"
+  short: "Bir kanalı IRC operatörleriyle sınırlandırın."
+  help: |-
+    Kanala yalnızca yetkili IRC operatörleri katılabilir. Bu kısıtlamayı %bot%
+    uygular.
+  on: "IRCOPONLY %channel% kanalında açıldı."
+  off: "IRCOPONLY %channel% kanalında kapatıldı."
+
+# --- SAREGISTER (IRCop) -------------------------------------------------------
+saregister:
+  syntax: "SAREGISTER <#channel> <nickname> <açıklama>"
+  short: "Bir kanalı yönetimsel olarak kaydedin."
+  help: |-
+    Sözdizimi: SAREGISTER <#channel> <nickname> <açıklama>
+
+    Belirtilen takma ad için varlık, doğrulama veya hız sınırları gerekmeden
+    hemen kurucu olarak bir kanalı yönetimsel olarak kaydeder.
+  example: "%command_prefix%SAREGISTER #channel Alice Topluluk kanalı"
+  success: "%channel% kanalı %founder% adına kaydedildi."
+
+# --- NOEXPIRE (IRCop) ---------------------------------------------------------
+noexpire:
+  syntax: "NOEXPIRE <#channel> {ON|OFF}"
+  example: "%command_prefix%NOEXPIRE #Önemli ON"
+  examples:
+    - "%command_prefix%NOEXPIRE #Önemli OFF"
+  short: "Bir kanal için süre sonu korumasını ayarlayın veya kaldırın."
+  help: |-
+    Kanalın etkin olmama nedeniyle süresinin dolup dolmayacağını belirler.
+    ON süre dolmasını engeller, OFF olağan kuralları uygular.
+  success_on: "%channel% kanalı artık süre sonuna karşı korunuyor."
+  success_off: "%channel% kanalı artık normal şekilde sona erecek."
+  forbidden: "%channel% kanalı yasaklanmış."
+  suspended: "%channel% kanalı askıya alınmış."
+
+# --- DROP (IRCop) -------------------------------------------------------------
 drop:
   syntax: "DROP <#channel> [FORCE]"
   example: "%command_prefix%DROP #kanal"
@@ -677,7 +674,16 @@ drop:
   invalid_channel: "Geçersiz kanal adı. %example% kullanın."
   pending_deletion_reason: "%channel% kanalı siliniyor. Daha fazla bilgi: /msg %bot% \x0303INFO %channel%\x03"
 
-# --- SUSPEND ---------------------------------------------------------------
+# --- RESTORE (IRCop) ----------------------------------------------------------
+restore:
+  syntax: "RESTORE <#channel>"
+  example: "%command_prefix%RESTORE #kanal"
+  short: "Silinmeyi bekleyen bir kanalı geri yükle."
+  help: "Elle silinmiş ve hâlâ bekleme süresinde olan bir kanalı geri yükler."
+  success: "%channel% kanalı geri yüklendi."
+  not_pending_deletion: "%channel% kanalı silinmeyi beklemiyor."
+
+# --- SUSPEND (IRCop) ----------------------------------------------------------
 suspend:
   syntax: "SUSPEND <#channel> <süre> <gerekçe>"
   example: "%command_prefix%SUSPEND #kanal 7d Kuralların ihlali"
@@ -695,7 +701,7 @@ suspend:
   channel_suspended: "%channel% kanalı askıya alınmış ve kullanılamaz."
   notice_channel: "Kanal askıya alındı. Gerekçe: %reason%"
 
-# --- UNSUSPEND -------------------------------------------------------------
+# --- UNSUSPEND (IRCop) --------------------------------------------------------
 unsuspend:
   syntax: "UNSUSPEND <#channel>"
   example: "%command_prefix%UNSUSPEND #kanal"
@@ -707,43 +713,7 @@ unsuspend:
   not_suspended: "%channel% kanalı askıya alınmamış."
   reason_expired: "askı süresi doldu"
 
-# --- NOJOIN ----------------------------------------------------------------
-nojoin:
-  reason: "NOJOIN seviye kısıtlaması"
-
-# --- DEBUG CHANNEL ---------------------------------------------------------
-debug_channel:
-  kick_reason: "Bu kanala katılmaya yetkiniz yok."
-
-# --- IRCOPONLY -------------------------------------------------------------
-ircoponly:
-  syntax: "IRCOPONLY <#channel> {ON|OFF}"
-  example: "%command_prefix%IRCOPONLY #kanal ON"
-  examples:
-    - "%command_prefix%IRCOPONLY #kanal OFF"
-  short: "Bir kanalı IRC operatörleriyle sınırlandırın."
-  help: |-
-    Kanala yalnızca yetkili IRC operatörleri katılabilir. Bu kısıtlamayı %bot%
-    uygular.
-  on: "IRCOPONLY %channel% kanalında açıldı."
-  off: "IRCOPONLY %channel% kanalında kapatıldı."
-
-# --- NOEXPIRE --------------------------------------------------------------
-noexpire:
-  syntax: "NOEXPIRE <#channel> {ON|OFF}"
-  example: "%command_prefix%NOEXPIRE #Önemli ON"
-  examples:
-    - "%command_prefix%NOEXPIRE #Önemli OFF"
-  short: "Bir kanal için süre sonu korumasını ayarlayın veya kaldırın."
-  help: |-
-    Kanalın etkin olmama nedeniyle süresinin dolup dolmayacağını belirler.
-    ON süre dolmasını engeller, OFF olağan kuralları uygular.
-  success_on: "%channel% kanalı artık süre sonuna karşı korunuyor."
-  success_off: "%channel% kanalı artık normal şekilde sona erecek."
-  forbidden: "%channel% kanalı yasaklanmış."
-  suspended: "%channel% kanalı askıya alınmış."
-
-# --- FORBID ----------------------------------------------------------------
+# --- FORBID (IRCop) -----------------------------------------------------------
 forbid:
   syntax: "FORBID <#channel> <gerekçe>"
   example: "%command_prefix%FORBID #kanal Kuralların ihlali"
@@ -757,7 +727,7 @@ forbid:
   updated: "%channel% kanalı için yasaklama gerekçesi güncellendi."
   channel_forbidden: "%channel% kanalı yasaklanmış ve kullanılamaz."
 
-# --- UNFORBID --------------------------------------------------------------
+# --- UNFORBID (IRCop) ---------------------------------------------------------
 unforbid:
   syntax: "UNFORBID <#channel>"
   example: "%command_prefix%UNFORBID #kanal"
@@ -765,12 +735,6 @@ unforbid:
   help: "Kanal yasağını kaldırır ve yeniden kaydedilmesine izin verir."
   success: "%channel% kanalı artık yasaklı değil."
   not_forbidden: "%channel% kanalı yasaklı değil."
-
-# --- DEBUG -----------------------------------------------------------------
-debug:
-  registration_completed: "%operator%, %target% kanalını kaydetti"
-  registration_pending: "%operator%, %target% kanalı için kayıt isteği gönderdi"
-  founder_action: "Seviye-kurucu eylemi"
 
 # --- HISTORY ---
 history:
@@ -871,36 +835,7 @@ history.extra:
   level: "Seviye: %value%"
   mask: "Maske: %value%"
 
-# --- LEVEL FOUNDER ---------------------------------------------------------
-level_founder:
-  short: "Kanal kurucu düzeyi gerektiren işlemleri yapmayı sağlar."
-
-# --- CLEARACCESS -----------------------------------------------------------
-clearaccess:
-  syntax: "CLEARACCESS <#channel>"
-  example: "%command_prefix%CLEARACCESS #kanal"
-  short: "Bir kanalın tüm erişim listesini temizleyin."
-  help: "Kanalın tüm erişim kayıtlarını siler. Bu işlem geri alınamaz."
-  success: "%channel% kanalından %count% erişim girişi temizlendi."
-  empty: "%channel% kanalının erişim girişi yok."
-
-# --- CLEARUSERS ------------------------------------------------------------
-clearusers:
-  syntax: "CLEARUSERS <#channel> [gerekçe]"
-  example: "%command_prefix%CLEARUSERS #kanal"
-  examples:
-    - "%command_prefix%CLEARUSERS #kanal flooding"
-  short: "Bir kanaldaki tüm kullanıcıları atın."
-  help: |-
-    Kanaldaki tüm kullanıcıları atar. Yalnızca IRCop kullanabilir; gerekçe
-    belirtilmezse
-    varsayılan bir gerekçe kullanılır.
-  not_on_network: "%channel% kanalı şu anda ağda değil."
-  empty: "%channel% kanalında atılacak kullanıcı yok."
-  success: "%channel% kanalından %count% kullanıcı atıldı."
-  default_reason: "CLEARUSERS komutu"
-
-# --- LIST ------------------------------------------------------------------
+# --- LIST (IRCop) -------------------------------------------------------------
 list:
   syntax: "LIST <desen> [sayfa]"
   example: "%command_prefix%LIST #*"
@@ -917,3 +852,68 @@ list:
   status_pending_registration: "Onay bekliyor"
   status_rejected_registration: "Kayıt reddedildi"
   status_active: "Etkin"
+
+# --- REGMODE (IRCop) ----------------------------------------------------------
+regmode:
+  syntax: "REGMODE {DIRECT|APPROVAL|STATUS}"
+  example: "%command_prefix%REGMODE APPROVAL"
+  short: "Kanal kayıt modunu ayarlayın veya görüntüleyin."
+  help: |-
+    Kaydı DIRECT ya da APPROVAL olarak ayarlayın veya STATUS ile görüntüleyin.
+    DIRECT varsayılandır ve anında kaydı sürdürür.
+
+  status: "Kanal kayıt modu %mode%."
+  changed: "Kanal kayıt modu artık %mode%."
+
+# --- CREG (IRCop) -------------------------------------------------------------
+creg:
+  syntax: "CREG {PENDING [sayfa]|ACCEPT <#kanal>|REJECT <#kanal> <neden>}"
+  pending.syntax: "CREG PENDING [sayfa]"
+  pending.example: "%command_prefix%CREG PENDING"
+  pending.short: "Bekleyen kayıt isteklerini listeleyin."
+  pending.help: "Bekleyen istekleri sınırlı bir sayfada listeler."
+  accept.syntax: "CREG ACCEPT <#kanal>"
+  accept.example: "%command_prefix%CREG ACCEPT #canal"
+  accept.short: "Bir kanal kayıt isteğini onaylayın."
+  accept.help: "İstek sahibini yeniden doğrular ve bekleyen kaydı etkinleştirir."
+  reject.syntax: "CREG REJECT <#kanal> <neden>"
+  reject.example: "%command_prefix%CREG REJECT #canal Motivo público"
+  reject.short: "Bir kanal kayıt isteğini reddedin."
+  reject.help: "İsteği zorunlu bir neden ve kısıtlamayla reddeder."
+  example: "%command_prefix%CREG PENDING"
+  short: "Kanal kayıt isteklerini inceleyin."
+  help: |-
+    Bekleyen istekleri listeler veya bir isteği kabul ya da reddeder.
+    Ret için neden gerekir. Kanalı yalnızca ACCEPT kaydeder.
+
+  pending_header: "Bekleyen kayıtlar (sayfa %page%)"
+  pending_item: "%channel% — isteyen %requester%, gönderim %submitted%: %description%"
+  accepted: "%channel% kaydı onaylandı."
+  rejected: "%channel% kaydı reddedildi."
+  not_pending: "%channel% için bekleyen kayıt yok."
+  channel_not_on_network: "%channel% ağda değil."
+  founder_limit: "İstek sahibi kanal kayıt sınırına ulaştı."
+  requester_inactive: "İstek sahibinin hesabı artık etkin değil."
+  requester_ineligible: "İstek sahibi şu anda kanalda operatör olmalıdır."
+
+# --- SECURE -------------------------------------------------------------------
+secure:
+  requires_min_level: "SECURE açıkken, %nickname% %mode% alabilmek için en az seviye %level% olmalıdır."
+
+# --- NOJOIN -------------------------------------------------------------------
+nojoin:
+  reason: "NOJOIN seviye kısıtlaması"
+
+# --- DEBUG CHANNEL ------------------------------------------------------------
+debug_channel:
+  kick_reason: "Bu kanala katılmaya yetkiniz yok."
+
+# --- DEBUG --------------------------------------------------------------------
+debug:
+  registration_completed: "%operator%, %target% kanalını kaydetti"
+  registration_pending: "%operator%, %target% kanalı için kayıt isteği gönderdi"
+  founder_action: "Seviye-kurucu eylemi"
+
+# --- LEVEL FOUNDER ------------------------------------------------------------
+level_founder:
+  short: "Kanal kurucu düzeyi gerektiren işlemleri yapmayı sağlar."

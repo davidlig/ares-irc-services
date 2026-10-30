@@ -16,11 +16,11 @@
 # HELP örnekleri: example/examples ve %command_prefix%.
 # Sunum katmanı renksiz /msg ve iki boşlukluk kenar payı ekler.
 
-# --- ERROR -----------------------------------------------------------------
+# --- ERROR --------------------------------------------------------------------
 error:
   root_only: "Bu komut yalnızca ağ root yöneticileri içindir."
 
-# --- HELP ------------------------------------------------------------------
+# --- HELP ---------------------------------------------------------------------
 help:
   syntax: "HELP [komut] [seçenek]"
   short: "Komutları listeleyin veya bir komut için yardım gösterin."
@@ -57,7 +57,7 @@ help:
     low_level: "Düşük seviye"
   ircop_header: "IRC operatörleri için kullanılabilir komutlar:"
 
-# --- IRCOP -----------------------------------------------------------------
+# --- IRCOP --------------------------------------------------------------------
 ircop:
   syntax: "IRCOP {ADD <nickname> <rol>|DEL <nickname>|LIST}"
   short: "Ağ IRC operatörlerini yönetin."
@@ -109,7 +109,7 @@ ircop:
     header: "Ağ IRC Operatörleri"
     empty: "IRC operatörü bulunmamaktadır."
 
-# --- ROLE ------------------------------------------------------------------
+# --- ROLE ---------------------------------------------------------------------
 role:
   # --- ROLE OPERCLASS ------------------------------------------------------
   operclass:
@@ -308,7 +308,7 @@ role:
       cleared: "%role% rolünden zorunlu vhost kalıbı kaldırıldı."
       invalid: "Geçersiz vhost kalıbı. Geçerli karakterler: a-z, A-Z, 0-9, - ve .. En az bir nokta olmalı, - veya . ile başlayamaz/bitemez veya .. içeremez."
 
-# --- KILL ------------------------------------------------------------------
+# --- KILL ---------------------------------------------------------------------
 kill:
   syntax: "KILL <nickname> <gerekçe>"
   short: "Bir kullanıcıyı ağdan zorla ayırın."
@@ -320,7 +320,7 @@ kill:
   protected_ircop: "IRC operatörü %nickname% kill'lenemez."
   done: "%nickname% kullanıcısı kill'lendi (%reason%)."
 
-# --- GLINE -----------------------------------------------------------------
+# --- GLINE --------------------------------------------------------------------
 gline:
   syntax: "GLINE {ADD <maske> <süre> <gerekçe>|DEL {<maske>|<numara>}|LIST [maske]}"
   short: "Ağ genelindeki G-line'ları yönetin."
@@ -386,7 +386,49 @@ gline:
     empty: "G-line bulunmamaktadır."
     entry: "%index%. %mask% - %reason% (%nickname%, bitiş: %expiration%)"
 
-# --- GLOBAL ----------------------------------------------------------------
+# --- BADMAIL ------------------------------------------------------------------
+badmail:
+  syntax: "BADMAIL {ADD <alan_adı> <gerekçe>|DEL {numara|ALL}|LIST <kalıp> [sayfa]}"
+  short: "Engellenen e-posta alan adlarını yönet."
+  help: |-
+    Engellenen e-posta alan adlarını yönet.
+  example: "%command_prefix%BADMAIL LIST *"
+  add:
+    syntax: "BADMAIL ADD <alan_adı> <gerekçe>"
+    short: "Bir alan adını engelle."
+    help: |-
+      ASCII veya punycode alan adlarını kabul eder; adres veya kalıp kabul
+      etmez. Gerekçe zorunludur. Engel tam eşleşir, alt alan adlarını
+      kapsamaz.
+    example: "%command_prefix%BADMAIL ADD example.org abuse"
+  del:
+    syntax: "BADMAIL DEL {numara|ALL}"
+    short: "Alan adı engellerini kaldır."
+    help: |-
+      Kalıcı bir kimliği veya ALL ile tüm kayıtları siler. Diğer kimlikler
+      değişmez.
+    example: "%command_prefix%BADMAIL DEL 1"
+  list:
+    syntax: "BADMAIL LIST <kalıp> [sayfa]"
+    short: "Engellenen alan adlarını listele."
+    help: |-
+      Kalıp zorunludur. Yalnızca * herhangi bir diziyi eşleştiren joker
+      karakterdir. Büyük ve küçük harf ayrımı yapılmaz. İsteğe bağlı sayfa
+      1’den başlar. Filtreleme ve sayfalama kimlikleri korur.
+    example: "%command_prefix%BADMAIL LIST *.org 2"
+  invalid_domain: "Geçersiz alan adı. Sonda nokta olmadan ASCII veya punycode kullanın."
+  invalid_reason: "Boş olmayan, tek satırlık bir yönetim gerekçesi gereklidir."
+  duplicate: "Bu alan adı zaten engellenmiş."
+  not_found: "Bu kimliğe sahip engellenmiş alan adı yok."
+  added: "%domain% alan adı engellendi."
+  deleted: "%id% alan adı engeli kaldırıldı."
+  cleared: "%total% alan adı engeli kaldırıldı."
+  empty: "Eşleşen engellenmiş alan adı yok."
+  header: "ID | Alan adı | Gerekçe"
+  page: "Sayfa %page%/%pages%, eşleşen %total% alan adı."
+  row: "%id% | %domain% | %reason%"
+
+# --- GLOBAL -------------------------------------------------------------------
 global:
   syntax: "GLOBAL {service|nick!ident@vhost} {PRIVMSG|NOTICE} <mesaj>"
   short: "Tüm bağlı kullanıcılara genel bir mesaj gönderin."
@@ -411,34 +453,7 @@ global:
   type_invalid: "Mesaj türü PRIVMSG veya NOTICE olmalıdır."
   done: "Genel mesaj %nickname% adresinden %count% kullanıcıya gönderildi."
 
-# --- RAW -------------------------------------------------------------------
-raw:
-  syntax: "RAW <satır>"
-  short: "IRCd'ye ham bir protokol satırı gönderin."
-  help: |-
-    Belirtilen satırı doğrudan bağlantı IRCd soketine gönderir.
-    Son derece dikkatli kullanın. Geçersiz protokol satırları ağı kilitleyebilir.
-  example: "%command_prefix%RAW :services.ares NOTICE * :Planlı bakım"
-  empty: "Göndermek için boş olmayan bir satır belirtmelisiniz."
-  too_long: "Satır çok uzun. Maksimum 510 karakter."
-  not_connected: "IRCd'ye bağlı değil."
-  done: "Ham satır gönderildi."
-  protocol:
-    syntax: "Etkin protokol RAW komutunun sözdizimini reddetti."
-    done: "Protokol tarafından yönetilen RAW komutu yürütüldü."
-    target: "Etkin protokol %target% hedefini reddetti."
-    unsupported: "Etkin protokol bu RAW komutunu desteklemiyor."
-    invalid_resource_type: "Bilinmeyen protokol kaynak türü: %resource_type%."
-    invalid_resource: "Geçersiz protokol kaynağı: %resource%."
-    invalid_value: "Protokol kaynağı için geçersiz değer: %resource%."
-    error: "Etkin protokol RAW komutunu yürütemedi."
-
-# --- DEBUG -----------------------------------------------------------------
-debug:
-  action_global: "%operator%, %type% aracılığıyla %target% rumuzu ile %count% kullanıcıya GLOBAL komutunu çalıştırıyor. Mesaj: %message%"
-  prefix_message: "Mesaj: %reason%"
-
-# --- MOTD ------------------------------------------------------------------
+# --- MOTD ---------------------------------------------------------------------
 motd:
   short: "Bağlantıda kullanıcılara gönderilen MOTD mesajlarını yönetin."
   syntax: "MOTD {ADD <hedef> {PRIVMSG|NOTICE} <süre> <mesaj>|DEL <id>|LIST|CLEAN}"
@@ -494,44 +509,29 @@ motd:
   debug:
     finalized: "MOTD mesajı #%id% sona erdi: [%type%] %message% | %date% | %shown_count%"
 
-# --- BADMAIL ---------------------------------------------------------------
-badmail:
-  syntax: "BADMAIL {ADD <alan_adı> <gerekçe>|DEL {numara|ALL}|LIST <kalıp> [sayfa]}"
-  short: "Engellenen e-posta alan adlarını yönet."
+# --- RAW ----------------------------------------------------------------------
+raw:
+  syntax: "RAW <satır>"
+  short: "IRCd'ye ham bir protokol satırı gönderin."
   help: |-
-    Engellenen e-posta alan adlarını yönet.
-  example: "%command_prefix%BADMAIL LIST *"
-  add:
-    syntax: "BADMAIL ADD <alan_adı> <gerekçe>"
-    short: "Bir alan adını engelle."
-    help: |-
-      ASCII veya punycode alan adlarını kabul eder; adres veya kalıp kabul
-      etmez. Gerekçe zorunludur. Engel tam eşleşir, alt alan adlarını
-      kapsamaz.
-    example: "%command_prefix%BADMAIL ADD example.org abuse"
-  del:
-    syntax: "BADMAIL DEL {numara|ALL}"
-    short: "Alan adı engellerini kaldır."
-    help: |-
-      Kalıcı bir kimliği veya ALL ile tüm kayıtları siler. Diğer kimlikler
-      değişmez.
-    example: "%command_prefix%BADMAIL DEL 1"
-  list:
-    syntax: "BADMAIL LIST <kalıp> [sayfa]"
-    short: "Engellenen alan adlarını listele."
-    help: |-
-      Kalıp zorunludur. Yalnızca * herhangi bir diziyi eşleştiren joker
-      karakterdir. Büyük ve küçük harf ayrımı yapılmaz. İsteğe bağlı sayfa
-      1’den başlar. Filtreleme ve sayfalama kimlikleri korur.
-    example: "%command_prefix%BADMAIL LIST *.org 2"
-  invalid_domain: "Geçersiz alan adı. Sonda nokta olmadan ASCII veya punycode kullanın."
-  invalid_reason: "Boş olmayan, tek satırlık bir yönetim gerekçesi gereklidir."
-  duplicate: "Bu alan adı zaten engellenmiş."
-  not_found: "Bu kimliğe sahip engellenmiş alan adı yok."
-  added: "%domain% alan adı engellendi."
-  deleted: "%id% alan adı engeli kaldırıldı."
-  cleared: "%total% alan adı engeli kaldırıldı."
-  empty: "Eşleşen engellenmiş alan adı yok."
-  header: "ID | Alan adı | Gerekçe"
-  page: "Sayfa %page%/%pages%, eşleşen %total% alan adı."
-  row: "%id% | %domain% | %reason%"
+    Belirtilen satırı doğrudan bağlantı IRCd soketine gönderir.
+    Son derece dikkatli kullanın. Geçersiz protokol satırları ağı kilitleyebilir.
+  example: "%command_prefix%RAW :services.ares NOTICE * :Planlı bakım"
+  empty: "Göndermek için boş olmayan bir satır belirtmelisiniz."
+  too_long: "Satır çok uzun. Maksimum 510 karakter."
+  not_connected: "IRCd'ye bağlı değil."
+  done: "Ham satır gönderildi."
+  protocol:
+    syntax: "Etkin protokol RAW komutunun sözdizimini reddetti."
+    done: "Protokol tarafından yönetilen RAW komutu yürütüldü."
+    target: "Etkin protokol %target% hedefini reddetti."
+    unsupported: "Etkin protokol bu RAW komutunu desteklemiyor."
+    invalid_resource_type: "Bilinmeyen protokol kaynak türü: %resource_type%."
+    invalid_resource: "Geçersiz protokol kaynağı: %resource%."
+    invalid_value: "Protokol kaynağı için geçersiz değer: %resource%."
+    error: "Etkin protokol RAW komutunu yürütemedi."
+
+# --- DEBUG --------------------------------------------------------------------
+debug:
+  action_global: "%operator%, %type% aracılığıyla %target% rumuzu ile %count% kullanıcıya GLOBAL komutunu çalıştırıyor. Mesaj: %message%"
+  prefix_message: "Mesaj: %reason%"

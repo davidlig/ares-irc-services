@@ -16,7 +16,7 @@
 # Exemple HELP: example/examples și %command_prefix%.
 # Prezentatorul adaugă /msg fără culoare și o margine de două spații.
 
-# --- SEND ------------------------------------------------------------------
+# --- SEND ---------------------------------------------------------------------
 send:
   syntax: "SEND {poreclă|#canal} <mesaj>"
   short: "Trimiteți un mesaj către o poreclă sau un canal."
@@ -35,7 +35,7 @@ send:
   message_too_long: "Mesaj prea lung. Maximul este de %max% caractere."
   service_disabled_for_target: "Serviciul de mesaje este dezactivat pentru %target%."
 
-# --- READ ------------------------------------------------------------------
+# --- READ ---------------------------------------------------------------------
 read:
   syntax: "READ [#canal] <număr>"
   short: "Citiți un mesaj după număr."
@@ -49,7 +49,7 @@ read:
   footer: "%separator% %date%"
   not_found: "Mesajul #%index% nu a fost găsit."
 
-# --- LIST ------------------------------------------------------------------
+# --- LIST ---------------------------------------------------------------------
 list:
   syntax: "LIST [#canal]"
   short: "Listați mesajele (necititele sunt marcate cu * roșu)."
@@ -63,7 +63,7 @@ list:
   header: "Mesaje pentru %target%:"
   empty: "Nu există mesaje pentru %target%."
 
-# --- DEL -------------------------------------------------------------------
+# --- DEL ----------------------------------------------------------------------
 del:
   syntax: "DEL [#canal] <număr>"
   short: "Ștergeți un mesaj după număr."
@@ -74,7 +74,7 @@ del:
   deleted: "Mesajul #%index% a fost șters."
   not_found: "Mesajul #%index% nu a fost găsit."
 
-# --- IGNORE ----------------------------------------------------------------
+# --- IGNORE -------------------------------------------------------------------
 ignore:
   syntax: "IGNORE {ADD [#canal] <poreclă>|DEL [#canal] <poreclă>|LIST [#canal]}"
   short: "Gestionați lista de ignorare pentru mesaje."
@@ -127,7 +127,7 @@ ignore:
   list_empty: "Lista de ignorare este goală."
   list_header: "Lista de ignorare:"
 
-# --- ENABLE ----------------------------------------------------------------
+# --- ENABLE -------------------------------------------------------------------
 enable:
   syntax: "ENABLE [#canal]"
   short: "Activați recepția de mesaje."
@@ -143,7 +143,7 @@ enable:
   already_enabled_channel: "Serviciul de mesaje este deja activat pentru %channel%."
   founder_only: "Doar fondatorul canalului poate activa mesajele pentru %channel%."
 
-# --- DISABLE ---------------------------------------------------------------
+# --- DISABLE ------------------------------------------------------------------
 disable:
   syntax: "DISABLE [#canal]"
   short: "Dezactivați recepția de mesaje."
@@ -159,7 +159,7 @@ disable:
   already_disabled_channel: "Serviciul de mesaje este deja dezactivat pentru %channel%."
   founder_only: "Doar fondatorul canalului poate dezactiva mesajele pentru %channel%."
 
-# --- HELP ------------------------------------------------------------------
+# --- HELP ---------------------------------------------------------------------
 help:
   syntax: "HELP [comandă] [opțiune]"
   short: "Listați comenzile sau afișați ajutor pentru o comandă."
@@ -191,12 +191,12 @@ help:
     preferences: "Preferințe"
   ircop_header: "Comenzi disponibile pentru IRCops:"
 
-# --- NOTIFY ----------------------------------------------------------------
+# --- NOTIFY -------------------------------------------------------------------
 notify:
   nick_pending: "Ai %count% mesaj(e) necitit(e). Listează mesajele: /msg %bot% %list%"
   channel_pending: "Canalul %channel% are %count% mesaj(e) necitit(e). Verifică mesajele cu /msg %bot% %list%"
 
-# --- CHANNEL REGISTRATION DECISIONS ---
+# --- CHANNEL REGISTRATION DECISIONS -------------------------------------------
 registration_decision:
   accepted: "Cererea ta de înregistrare pentru %channel% a fost aprobată."
   rejected: "Cererea ta de înregistrare pentru %channel% a fost respinsă."

@@ -81,7 +81,7 @@ final readonly class SasetCommand implements NickServCommandInterface, IrcopAudi
 
     public function getOrder(): int
     {
-        return 5;
+        return 64;
     }
 
     public function getShortDescKey(): string

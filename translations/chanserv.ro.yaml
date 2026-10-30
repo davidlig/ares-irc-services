@@ -16,13 +16,13 @@
 # Exemple HELP: example/examples și %command_prefix%.
 # Prezentatorul adaugă /msg fără culoare și o margine de două spații.
 
-# --- ERROR -----------------------------------------------------------------
+# --- ERROR --------------------------------------------------------------------
 error:
   invalid_channel: "Nume de canal invalid. Folosiți %example%."
   invalid_channel_example: "#canal"
   generic: "A apărut o eroare. Vă rugăm să încercați din nou."
 
-# --- REGISTER --------------------------------------------------------------
+# --- REGISTER -----------------------------------------------------------------
 register:
   syntax: "REGISTER <#canal> <descriere>"
   example: "%command_prefix%REGISTER #canal Proiect comunitar"
@@ -43,105 +43,7 @@ register:
   restricted_indefinite: "Cereri noi pentru %channel% sunt blocate pe termen nelimitat."
   restricted_until: "Cereri noi pentru %channel% sunt blocate până la %date%"
 
-# --- SAREGISTER ------------------------------------------------------------
-saregister:
-  syntax: "SAREGISTER <#canal> <poreclă> <descriere>"
-  short: "Înregistrați administrativ un canal."
-  help: |-
-    Sintaxă: SAREGISTER <#canal> <poreclă> <descriere>
-
-    Înregistrează administrativ un canal imediat pentru porecla
-    specificată ca fondator, fără a necesita prezență, verificare sau limite de frecvență.
-  example: "%command_prefix%SAREGISTER #canal Alice Canal comunitar"
-  success: "Canalul %channel% a fost înregistrat pentru %founder%."
-
-# --- REGMODE ---------------------------------------------------------------
-regmode:
-  syntax: "REGMODE {DIRECT|APPROVAL|STATUS}"
-  example: "%command_prefix%REGMODE APPROVAL"
-  short: "Setează sau verifică modul de înregistrare a canalelor."
-  help: |-
-    Setează înregistrarea la DIRECT sau APPROVAL ori verifică STATUS.
-    DIRECT este modul implicit și păstrează înregistrarea imediată.
-
-  status: "Modul de înregistrare a canalelor este %mode%."
-  changed: "Modul de înregistrare a canalelor este acum %mode%."
-
-# --- CREG ------------------------------------------------------------------
-creg:
-  syntax: "CREG {PENDING [pagină]|ACCEPT <#canal>|REJECT <#canal> <motiv>}"
-  pending.syntax: "CREG PENDING [pagină]"
-  pending.example: "%command_prefix%CREG PENDING"
-  pending.short: "Listează cererile de înregistrare în așteptare."
-  pending.help: "Listează cererile în așteptare într-o pagină limitată."
-  accept.syntax: "CREG ACCEPT <#canal>"
-  accept.example: "%command_prefix%CREG ACCEPT #canal"
-  accept.short: "Aprobă o cerere de înregistrare a canalului."
-  accept.help: "Verifică din nou solicitantul și activează înregistrarea."
-  reject.syntax: "CREG REJECT <#canal> <motiv>"
-  reject.example: "%command_prefix%CREG REJECT #canal Motivo público"
-  reject.short: "Respinge o cerere de înregistrare a canalului."
-  reject.help: "Respinge cererea cu motiv obligatoriu și restricție."
-  example: "%command_prefix%CREG PENDING"
-  short: "Revizuiește cererile de înregistrare a canalelor."
-  help: |-
-    Listează cererile în așteptare sau aprobă ori respinge o cerere.
-    Respingerea necesită un motiv. Numai ACCEPT înregistrează canalul.
-
-  pending_header: "Înregistrări în așteptare (pagina %page%)"
-  pending_item: "%channel% — solicitant %requester%, trimisă %submitted%: %description%"
-  accepted: "Înregistrarea pentru %channel% a fost aprobată."
-  rejected: "Înregistrarea pentru %channel% a fost respinsă."
-  not_pending: "Canalul %channel% nu are o înregistrare în așteptare."
-  channel_not_on_network: "Canalul %channel% nu este în rețea."
-  founder_limit: "Solicitantul a atins limita de înregistrări de canale."
-  requester_inactive: "Contul solicitantului nu mai este activ."
-  requester_ineligible: "Solicitantul trebuie să aibă acum statut de operator pe canal."
-
-# --- STATUS ----------------------------------------------------------------
-status:
-  syntax: "STATUS <#canal>"
-  example: "%command_prefix%STATUS #canal"
-  header: "Starea canalului %channel%"
-  short: "Afișează starea înregistrării canalului."
-  help: |-
-    Arată dacă un canal nu este înregistrat, așteaptă aprobarea, a fost respins
-    sau este înregistrat.
-    Detaliile respingerii sunt vizibile doar solicitantului și IRCopilor
-    autorizați.
-
-  unregistered: "%label%%padding%: Neînregistrat"
-  unregistered_label: "Stare"
-  pending: "%label%%padding%: %state%"
-  pending_label: "Stare"
-  pending_value: "În așteptarea aprobării"
-  registered: "%label%%padding%: %state%"
-  registered_label: "Stare"
-  registered_value: "Înregistrat"
-  suspended: "%label%%padding%: %state%"
-  suspended_label: "Stare"
-  suspended_value: "Suspendat"
-  forbidden: "%label%%padding%: %state%"
-  forbidden_label: "Stare"
-  forbidden_value: "Interzis"
-  pending_deletion: "%label%%padding%: %state%"
-  pending_deletion_label: "Stare"
-  pending_deletion_value: "În așteptarea ștergerii"
-  rejected_private: "%label%%padding%: %state%"
-  rejected_private_label: "Stare"
-  rejected_private_value: "Înregistrare respinsă"
-  rejected: "%label%%padding%: %state%"
-  rejected_label: "Stare"
-  rejected_value: "Înregistrare respinsă"
-  rejection_reason: "%label%%padding%: %reason%"
-  rejection_reason_label: "Motiv"
-  rejection_audit: "%label%%padding%: %operator% la %date%"
-  rejection_audit_label: "Respinsă de"
-  restriction_until: "%label%%padding%: %date%"
-  restriction_until_label: "Disponibilă de la"
-  footer: ""
-
-# --- INFO ------------------------------------------------------------------
+# --- INFO ---------------------------------------------------------------------
 info:
   syntax: "INFO <#canal>"
   example: "%command_prefix%INFO #canal"
@@ -199,73 +101,7 @@ info:
   pending_deletion_until_label: "Ștergere definitivă"
   pending_deletion_notice: "Acest canal este înghețat și nu poate fi înregistrat."
 
-# --- HELP ------------------------------------------------------------------
-help:
-  examples_header: "Exemple:"
-  syntax: "HELP [comandă] [opțiune]"
-  example: "%command_prefix%HELP"
-  examples:
-    - "%command_prefix%HELP SET"
-    - "%command_prefix%HELP SET EMAIL"
-  short: "Listați comenzile sau afișați ajutor pentru o comandă."
-  help: "Afișează comenzile disponibile și ajutor detaliat pentru opțiunile lor."
-  header_title: "%bot%"
-  header: "%title% %separator%"
-  intro: |-
-    Permite înregistrarea și administrarea canalelor, configurarea opțiunilor și
-    controlul accesului. Gestionează nivelurile de acces și privilegiile
-    utilizatorilor
-    pentru a păstra canalul sub controlul celor responsabili.
-  general_header: "Comenzi disponibile:"
-  command_line: "%command%%description%"
-  subcommand_line: "%command%%description%"
-  options_header: "Opțiuni:"
-  general_footer: "Folosește /msg %bot% %help% pentru mai multe informații."
-  general_footer_command: "HELP <comandă>"
-  set_sub_footer: "Folosește /msg %bot% %help% pentru mai multe informații."
-  set_sub_footer_command: "HELP %command% <opțiune>"
-  syntax_label: "Sintaxă: %syntax%"
-  footer: ""
-  intro_expiration: "NOTĂ: Canalele nefolosite mai mult de %period% sunt eliminate automat."
-  intro_expiration_period: "%days% zile"
-  group_header: "%group%"
-  subgroup_header: "%group%"
-  group:
-    registration_info: "Înregistrare și informații"
-    access_levels: "Acces și niveluri"
-    ranks_entry: "Ranguri și intrare"
-  ircop_group:
-    channel_operations: "Operațiuni de canal"
-    channel_management: "Gestionarea canalului"
-    deletion: "Ștergere și restaurare"
-    restrictions: "Restricții"
-    lookup: "Căutare și investigare"
-    registration_approval: "Aprobarea înregistrării"
-  ircop_header: "Comenzi disponibile pentru IRCops:"
-
-# --- OP --------------------------------------------------------------------
-op:
-  syntax: "OP <#canal> <poreclă>"
-  example: "%command_prefix%OP #canal Alice"
-  short: "Acordați modul de operator de canal."
-  help: "Acordați modul de operator de canal."
-  done: "Lui %nickname% i s-a acordat statutul de operator de canal."
-  user_not_on_channel: "Porecla %nickname% nu se află în rețea."
-  notice_grant: "%from% acordă %mode% lui %to%"
-
-# --- DEOP ------------------------------------------------------------------
-deop:
-  syntax: "DEOP <#canal> <poreclă>"
-  example: "%command_prefix%DEOP #canal Alice"
-  short: "Retrageți modul de operator de canal."
-  help: "Retrageți modul de operator de canal."
-  done: "Lui %nickname% i s-a retras statutul de operator."
-
-# --- SECURE ----------------------------------------------------------------
-secure:
-  requires_min_level: "Cu SECURE activat, %nickname% trebuie să aibă cel puțin nivelul %level% pentru a primi %mode%."
-
-# --- SET -------------------------------------------------------------------
+# --- SET ----------------------------------------------------------------------
 set:
   syntax: "SET <#canal> {FOUNDER <poreclă> [token]|SUCCESSOR [poreclă]|DESC <descriere>|URL [url]|EMAIL [e-mail]|ENTRYMSG [mesaj]|TOPICLOCK {ON|OFF}|MLOCK {ON|OFF}|PRIVATE {ON|OFF}|SECURE {ON|OFF}}"
   example: "%command_prefix%SET #canal DESC Un canal comunitar"
@@ -423,7 +259,50 @@ set:
     notice_on: "%nickname% activează modul SECURE."
     notice_off: "%nickname% dezactivează modul SECURE."
 
-# --- ACCESS ----------------------------------------------------------------
+# --- STATUS -------------------------------------------------------------------
+status:
+  syntax: "STATUS <#canal>"
+  example: "%command_prefix%STATUS #canal"
+  header: "Starea canalului %channel%"
+  short: "Afișează starea înregistrării canalului."
+  help: |-
+    Arată dacă un canal nu este înregistrat, așteaptă aprobarea, a fost respins
+    sau este înregistrat.
+    Detaliile respingerii sunt vizibile doar solicitantului și IRCopilor
+    autorizați.
+
+  unregistered: "%label%%padding%: Neînregistrat"
+  unregistered_label: "Stare"
+  pending: "%label%%padding%: %state%"
+  pending_label: "Stare"
+  pending_value: "În așteptarea aprobării"
+  registered: "%label%%padding%: %state%"
+  registered_label: "Stare"
+  registered_value: "Înregistrat"
+  suspended: "%label%%padding%: %state%"
+  suspended_label: "Stare"
+  suspended_value: "Suspendat"
+  forbidden: "%label%%padding%: %state%"
+  forbidden_label: "Stare"
+  forbidden_value: "Interzis"
+  pending_deletion: "%label%%padding%: %state%"
+  pending_deletion_label: "Stare"
+  pending_deletion_value: "În așteptarea ștergerii"
+  rejected_private: "%label%%padding%: %state%"
+  rejected_private_label: "Stare"
+  rejected_private_value: "Înregistrare respinsă"
+  rejected: "%label%%padding%: %state%"
+  rejected_label: "Stare"
+  rejected_value: "Înregistrare respinsă"
+  rejection_reason: "%label%%padding%: %reason%"
+  rejection_reason_label: "Motiv"
+  rejection_audit: "%label%%padding%: %operator% la %date%"
+  rejection_audit_label: "Respinsă de"
+  restriction_until: "%label%%padding%: %date%"
+  restriction_until_label: "Disponibilă de la"
+  footer: ""
+
+# --- ACCESS -------------------------------------------------------------------
 access:
   syntax: "ACCESS <#canal> {ADD <poreclă> <nivel>|DEL <poreclă>|LIST}"
   example: "%command_prefix%ACCESS #canal LIST"
@@ -467,7 +346,7 @@ access:
     done: "%nickname% eliminat din lista de acces."
     notice_channel: "%from% elimină %to% din lista de acces"
 
-# --- DELACCESS -------------------------------------------------------------
+# --- DELACCESS ----------------------------------------------------------------
 delaccess:
   syntax: "DELACCESS <#canal>"
   example: "%command_prefix%DELACCESS #canal"
@@ -480,123 +359,7 @@ delaccess:
   founder_not_in_access: "Sunteți fondatorul canalului %channel% și nu vă aflați în lista de acces."
   notice_channel: "%nickname% își elimină accesul din canal"
 
-# --- LEVELS ----------------------------------------------------------------
-levels:
-  syntax: "LEVELS <#canal> {LIST|SET <nivel> <valoare>|RESET}"
-  example: "%command_prefix%LEVELS #canal LIST"
-  examples:
-    - "%command_prefix%LEVELS #canal SET OPDEOP 50"
-    - "%command_prefix%LEVELS #canal RESET"
-  short: "Configurați nivelurile canalului."
-  help: |-
-    Configurează nivelurile minime de acces pentru acțiunile canalului. Numai
-    fondatorul poate modifica sau reseta nivelurile.
-  unknown_sub: "Subcomandă necunoscută %sub%. Folosiți LIST, SET sau RESET."
-  unknown_key: "Cheie de nivel necunoscută %key% sau nesuportată de acest IRCd."
-  value_range: "Valoarea nivelului trebuie să fie între %min% și %max%."
-
-  # --- LEVELS LIST ---------------------------------------------------------
-  list:
-    syntax: "LEVELS <#canal> LIST"
-    example: "%command_prefix%LEVELS #canal LIST"
-    short: "Listați cerințele de nivel."
-    help: "Afișează fiecare cheie de nivel și valoarea sa (implicită dacă nu este setată)."
-    header: "Niveluri pentru %channel%"
-
-  # --- LEVELS SET ----------------------------------------------------------
-  set:
-    syntax: "LEVELS <#canal> SET <nivel> <valoare>"
-    example: "%command_prefix%LEVELS #canal SET OPDEOP 50"
-    short: "Setați o cerință de nivel."
-    help: "Valoare de la -1 la 499. Doar fondatorul."
-    done: "%key% setat la %value%."
-
-  # --- LEVELS RESET --------------------------------------------------------
-  reset:
-    syntax: "LEVELS <#canal> RESET"
-    example: "%command_prefix%LEVELS #canal RESET"
-    short: "Resetați toate nivelurile la valorile implicite."
-    help: "Elimină toate suprascrierile. Doar fondatorul."
-    done: "Toate nivelurile au fost resetate la valorile implicite."
-
-# --- VOICE -----------------------------------------------------------------
-voice:
-  syntax: "VOICE <#canal> <poreclă>"
-  example: "%command_prefix%VOICE #canal Alice"
-  short: "Acordați modul voice pe canal."
-  help: "Acordați modul voice pe canal."
-  done: "Lui %nickname% i s-a acordat voice."
-  user_not_on_channel: "Porecla %nickname% nu se află în rețea."
-  notice_grant: "%from% acordă %mode% lui %to%"
-
-# --- DEVOICE ---------------------------------------------------------------
-devoice:
-  syntax: "DEVOICE <#canal> <poreclă>"
-  example: "%command_prefix%DEVOICE #canal Alice"
-  short: "Retrageți modul voice pe canal."
-  help: "Retrageți modul voice pe canal."
-  done: "Lui %nickname% i s-a retras voice-ul."
-
-# --- UNBAN -----------------------------------------------------------------
-unban:
-  syntax: "UNBAN <#canal>"
-  example: "%command_prefix%UNBAN #canal"
-  short: "Elimină banurile care te afectează."
-  help: "Elimină toate banurile canalului care corespund identității tale actuale, inclusiv metacaractere și măști IP/CIDR."
-  done: "Au fost eliminate %count% banuri care te afectează pe %channel%"
-  notice_channel: "%nickname% a folosit UNBAN."
-  no_matches: "Niciun ban nu corespunde identității tale pe %channel%"
-  unavailable: "Nu s-au putut determina banurile corespunzătoare; nu s-a modificat nimic."
-  not_on_network: "Canalul %channel% nu este prezent în rețea."
-
-# --- INVITE ----------------------------------------------------------------
-invite:
-  syntax: "INVITE <#canal>"
-  example: "%command_prefix%INVITE #canal"
-  short: "Invitați-vă pe canal."
-  help: "Invitați-vă pe canal."
-  done: "Ați fost invitat pe %channel%."
-  notice_channel: "%nickname% se invită singur pe canal."
-
-# --- ADMIN -----------------------------------------------------------------
-admin:
-  syntax: "ADMIN <#canal> <poreclă>"
-  example: "%command_prefix%ADMIN #canal Alice"
-  short: "Acordați modul de admin de canal."
-  help: "Acordați modul de admin de canal. Doar dacă IRCd-ul suportă +a."
-  done: "Lui %nickname% i s-a acordat admin de canal."
-  user_not_on_channel: "Porecla %nickname% nu se află în rețea."
-  notice_grant: "%from% acordă %mode% lui %to%"
-  not_supported: "Această rețea nu suportă modul admin de canal (+a)."
-
-# --- DEADMIN ---------------------------------------------------------------
-deadmin:
-  syntax: "DEADMIN <#canal> <poreclă>"
-  example: "%command_prefix%DEADMIN #canal Alice"
-  short: "Retrageți modul de admin de canal."
-  help: "Retrageți modul de admin de canal."
-  done: "Lui %nickname% i s-a retras adminul de canal."
-
-# --- HALFOP ----------------------------------------------------------------
-halfop:
-  syntax: "HALFOP <#canal> <poreclă>"
-  example: "%command_prefix%HALFOP #canal Alice"
-  short: "Acordați modul de semi-operator pe canal."
-  help: "Acordați modul de semi-operator pe canal. Doar dacă IRCd-ul suportă +h."
-  done: "Lui %nickname% i s-a acordat halfop."
-  user_not_on_channel: "Porecla %nickname% nu se află în rețea."
-  notice_grant: "%from% acordă %mode% lui %to%"
-  not_supported: "Această rețea nu suportă modul halfop (+h)."
-
-# --- DEHALFOP --------------------------------------------------------------
-dehalfop:
-  syntax: "DEHALFOP <#canal> <poreclă>"
-  example: "%command_prefix%DEHALFOP #canal Alice"
-  short: "Retrageți modul de semi-operator pe canal."
-  help: "Retrageți modul de semi-operator pe canal."
-  done: "Lui %nickname% i s-a retras halfopul."
-
-# --- AKICK -----------------------------------------------------------------
+# --- AKICK --------------------------------------------------------------------
 akick:
   syntax: "AKICK <#canal> {ADD <mască> [expirare] [motiv]|DEL {<mască>|<număr>}|LIST}"
   example: "%command_prefix%AKICK #canal ADD *!*@* 0"
@@ -651,16 +414,249 @@ akick:
     empty: "Canalul %channel% nu are intrări AKICK."
     entry: "#%index% %mask% %reason% (de %nickname%, expiră: %expiration%)"
 
-# --- RESTORE ---------------------------------------------------------------
-restore:
-  syntax: "RESTORE <#canal>"
-  example: "%command_prefix%RESTORE #canal"
-  short: "Restaurați un canal în așteptare de ștergere."
-  help: "Restaurează un canal șters manual, dacă perioada de grație nu a expirat."
-  success: "Canalul %channel% a fost restaurat."
-  not_pending_deletion: "Canalul %channel% nu este în așteptare de ștergere."
+# --- LEVELS -------------------------------------------------------------------
+levels:
+  syntax: "LEVELS <#canal> {LIST|SET <nivel> <valoare>|RESET}"
+  example: "%command_prefix%LEVELS #canal LIST"
+  examples:
+    - "%command_prefix%LEVELS #canal SET OPDEOP 50"
+    - "%command_prefix%LEVELS #canal RESET"
+  short: "Configurați nivelurile canalului."
+  help: |-
+    Configurează nivelurile minime de acces pentru acțiunile canalului. Numai
+    fondatorul poate modifica sau reseta nivelurile.
+  unknown_sub: "Subcomandă necunoscută %sub%. Folosiți LIST, SET sau RESET."
+  unknown_key: "Cheie de nivel necunoscută %key% sau nesuportată de acest IRCd."
+  value_range: "Valoarea nivelului trebuie să fie între %min% și %max%."
 
-# --- DROP ------------------------------------------------------------------
+  # --- LEVELS LIST ---------------------------------------------------------
+  list:
+    syntax: "LEVELS <#canal> LIST"
+    example: "%command_prefix%LEVELS #canal LIST"
+    short: "Listați cerințele de nivel."
+    help: "Afișează fiecare cheie de nivel și valoarea sa (implicită dacă nu este setată)."
+    header: "Niveluri pentru %channel%"
+
+  # --- LEVELS SET ----------------------------------------------------------
+  set:
+    syntax: "LEVELS <#canal> SET <nivel> <valoare>"
+    example: "%command_prefix%LEVELS #canal SET OPDEOP 50"
+    short: "Setați o cerință de nivel."
+    help: "Valoare de la -1 la 499. Doar fondatorul."
+    done: "%key% setat la %value%."
+
+  # --- LEVELS RESET --------------------------------------------------------
+  reset:
+    syntax: "LEVELS <#canal> RESET"
+    example: "%command_prefix%LEVELS #canal RESET"
+    short: "Resetați toate nivelurile la valorile implicite."
+    help: "Elimină toate suprascrierile. Doar fondatorul."
+    done: "Toate nivelurile au fost resetate la valorile implicite."
+
+# --- INVITE -------------------------------------------------------------------
+invite:
+  syntax: "INVITE <#canal>"
+  example: "%command_prefix%INVITE #canal"
+  short: "Invitați-vă pe canal."
+  help: "Invitați-vă pe canal."
+  done: "Ați fost invitat pe %channel%."
+  notice_channel: "%nickname% se invită singur pe canal."
+
+# --- UNBAN --------------------------------------------------------------------
+unban:
+  syntax: "UNBAN <#canal>"
+  example: "%command_prefix%UNBAN #canal"
+  short: "Elimină banurile care te afectează."
+  help: "Elimină toate banurile canalului care corespund identității tale actuale, inclusiv metacaractere și măști IP/CIDR."
+  done: "Au fost eliminate %count% banuri care te afectează pe %channel%"
+  notice_channel: "%nickname% a folosit UNBAN."
+  no_matches: "Niciun ban nu corespunde identității tale pe %channel%"
+  unavailable: "Nu s-au putut determina banurile corespunzătoare; nu s-a modificat nimic."
+  not_on_network: "Canalul %channel% nu este prezent în rețea."
+
+# --- ADMIN --------------------------------------------------------------------
+admin:
+  syntax: "ADMIN <#canal> <poreclă>"
+  example: "%command_prefix%ADMIN #canal Alice"
+  short: "Acordați modul de admin de canal."
+  help: "Acordați modul de admin de canal. Doar dacă IRCd-ul suportă +a."
+  done: "Lui %nickname% i s-a acordat admin de canal."
+  user_not_on_channel: "Porecla %nickname% nu se află în rețea."
+  notice_grant: "%from% acordă %mode% lui %to%"
+  not_supported: "Această rețea nu suportă modul admin de canal (+a)."
+
+# --- DEADMIN ------------------------------------------------------------------
+deadmin:
+  syntax: "DEADMIN <#canal> <poreclă>"
+  example: "%command_prefix%DEADMIN #canal Alice"
+  short: "Retrageți modul de admin de canal."
+  help: "Retrageți modul de admin de canal."
+  done: "Lui %nickname% i s-a retras adminul de canal."
+
+# --- OP -----------------------------------------------------------------------
+op:
+  syntax: "OP <#canal> <poreclă>"
+  example: "%command_prefix%OP #canal Alice"
+  short: "Acordați modul de operator de canal."
+  help: "Acordați modul de operator de canal."
+  done: "Lui %nickname% i s-a acordat statutul de operator de canal."
+  user_not_on_channel: "Porecla %nickname% nu se află în rețea."
+  notice_grant: "%from% acordă %mode% lui %to%"
+
+# --- DEOP ---------------------------------------------------------------------
+deop:
+  syntax: "DEOP <#canal> <poreclă>"
+  example: "%command_prefix%DEOP #canal Alice"
+  short: "Retrageți modul de operator de canal."
+  help: "Retrageți modul de operator de canal."
+  done: "Lui %nickname% i s-a retras statutul de operator."
+
+# --- HALFOP -------------------------------------------------------------------
+halfop:
+  syntax: "HALFOP <#canal> <poreclă>"
+  example: "%command_prefix%HALFOP #canal Alice"
+  short: "Acordați modul de semi-operator pe canal."
+  help: "Acordați modul de semi-operator pe canal. Doar dacă IRCd-ul suportă +h."
+  done: "Lui %nickname% i s-a acordat halfop."
+  user_not_on_channel: "Porecla %nickname% nu se află în rețea."
+  notice_grant: "%from% acordă %mode% lui %to%"
+  not_supported: "Această rețea nu suportă modul halfop (+h)."
+
+# --- DEHALFOP -----------------------------------------------------------------
+dehalfop:
+  syntax: "DEHALFOP <#canal> <poreclă>"
+  example: "%command_prefix%DEHALFOP #canal Alice"
+  short: "Retrageți modul de semi-operator pe canal."
+  help: "Retrageți modul de semi-operator pe canal."
+  done: "Lui %nickname% i s-a retras halfopul."
+
+# --- VOICE --------------------------------------------------------------------
+voice:
+  syntax: "VOICE <#canal> <poreclă>"
+  example: "%command_prefix%VOICE #canal Alice"
+  short: "Acordați modul voice pe canal."
+  help: "Acordați modul voice pe canal."
+  done: "Lui %nickname% i s-a acordat voice."
+  user_not_on_channel: "Porecla %nickname% nu se află în rețea."
+  notice_grant: "%from% acordă %mode% lui %to%"
+
+# --- DEVOICE ------------------------------------------------------------------
+devoice:
+  syntax: "DEVOICE <#canal> <poreclă>"
+  example: "%command_prefix%DEVOICE #canal Alice"
+  short: "Retrageți modul voice pe canal."
+  help: "Retrageți modul voice pe canal."
+  done: "Lui %nickname% i s-a retras voice-ul."
+
+# --- HELP ---------------------------------------------------------------------
+help:
+  examples_header: "Exemple:"
+  syntax: "HELP [comandă] [opțiune]"
+  example: "%command_prefix%HELP"
+  examples:
+    - "%command_prefix%HELP SET"
+    - "%command_prefix%HELP SET EMAIL"
+  short: "Listați comenzile sau afișați ajutor pentru o comandă."
+  help: "Afișează comenzile disponibile și ajutor detaliat pentru opțiunile lor."
+  header_title: "%bot%"
+  header: "%title% %separator%"
+  intro: |-
+    Permite înregistrarea și administrarea canalelor, configurarea opțiunilor și
+    controlul accesului. Gestionează nivelurile de acces și privilegiile
+    utilizatorilor
+    pentru a păstra canalul sub controlul celor responsabili.
+  general_header: "Comenzi disponibile:"
+  command_line: "%command%%description%"
+  subcommand_line: "%command%%description%"
+  options_header: "Opțiuni:"
+  general_footer: "Folosește /msg %bot% %help% pentru mai multe informații."
+  general_footer_command: "HELP <comandă>"
+  set_sub_footer: "Folosește /msg %bot% %help% pentru mai multe informații."
+  set_sub_footer_command: "HELP %command% <opțiune>"
+  syntax_label: "Sintaxă: %syntax%"
+  footer: ""
+  intro_expiration: "NOTĂ: Canalele nefolosite mai mult de %period% sunt eliminate automat."
+  intro_expiration_period: "%days% zile"
+  group_header: "%group%"
+  subgroup_header: "%group%"
+  group:
+    registration_info: "Înregistrare și informații"
+    access_levels: "Acces și niveluri"
+    ranks_entry: "Ranguri și intrare"
+  ircop_group:
+    channel_operations: "Operațiuni de canal"
+    channel_management: "Gestionarea canalului"
+    deletion: "Ștergere și restaurare"
+    restrictions: "Restricții"
+    lookup: "Căutare și investigare"
+    registration_approval: "Aprobarea înregistrării"
+  ircop_header: "Comenzi disponibile pentru IRCops:"
+
+# --- CLEARUSERS (IRCop) -------------------------------------------------------
+clearusers:
+  syntax: "CLEARUSERS <#canal> [motiv]"
+  example: "%command_prefix%CLEARUSERS #canal"
+  examples:
+    - "%command_prefix%CLEARUSERS #canal inundare"
+  short: "Eliminați prin kick toți utilizatorii dintr-un canal."
+  help: |-
+    Evacuează toți utilizatorii de pe canal. Comanda este rezervată IRCop; dacă
+    nu se indică un motiv, se folosește unul implicit.
+  not_on_network: "Canalul %channel% nu se află în prezent în rețea."
+  empty: "Canalul %channel% nu are utilizatori cărora să li se dea kick."
+  success: "S-a dat kick la %count% utilizator(i) din %channel%."
+  default_reason: "Comanda CLEARUSERS"
+
+# --- CLEARACCESS (IRCop) ------------------------------------------------------
+clearaccess:
+  syntax: "CLEARACCESS <#canal>"
+  example: "%command_prefix%CLEARACCESS #canal"
+  short: "Ștergeți întreaga listă de acces a unui canal."
+  help: "Elimină toate intrările de acces ale canalului. Acțiunea este ireversibilă."
+  success: "S-au șters %count% intrări de acces din %channel%."
+  empty: "Canalul %channel% nu are intrări de acces."
+
+# --- IRCOPONLY (IRCop) --------------------------------------------------------
+ircoponly:
+  syntax: "IRCOPONLY <#canal> {ON|OFF}"
+  example: "%command_prefix%IRCOPONLY #canal ON"
+  examples:
+    - "%command_prefix%IRCOPONLY #canal OFF"
+  short: "Restricționați un canal la operatorii IRC."
+  help: |-
+    Doar operatorii IRC autorizați pot rămâne pe canal. %bot% aplică această
+    restricție.
+  on: "IRCOPONLY este activat pe %channel%."
+  off: "IRCOPONLY este dezactivat pe %channel%."
+
+# --- SAREGISTER (IRCop) -------------------------------------------------------
+saregister:
+  syntax: "SAREGISTER <#canal> <poreclă> <descriere>"
+  short: "Înregistrați administrativ un canal."
+  help: |-
+    Sintaxă: SAREGISTER <#canal> <poreclă> <descriere>
+
+    Înregistrează administrativ un canal imediat pentru porecla
+    specificată ca fondator, fără a necesita prezență, verificare sau limite de frecvență.
+  example: "%command_prefix%SAREGISTER #canal Alice Canal comunitar"
+  success: "Canalul %channel% a fost înregistrat pentru %founder%."
+
+# --- NOEXPIRE (IRCop) ---------------------------------------------------------
+noexpire:
+  syntax: "NOEXPIRE <#canal> {ON|OFF}"
+  example: "%command_prefix%NOEXPIRE #Important ON"
+  examples:
+    - "%command_prefix%NOEXPIRE #Important OFF"
+  short: "Setați sau eliminați protecția împotriva expirării pentru un canal."
+  help: |-
+    Controlează expirarea canalului din cauza inactivității.
+    ON previne expirarea, iar OFF aplică regulile normale.
+  success_on: "Canalul %channel% este acum protejat împotriva expirării."
+  success_off: "Canalul %channel% va expira acum normal."
+  forbidden: "Canalul %channel% este interzis."
+  suspended: "Canalul %channel% este suspendat."
+
+# --- DROP (IRCop) -------------------------------------------------------------
 drop:
   syntax: "DROP <#canal> [FORCE]"
   example: "%command_prefix%DROP #canal"
@@ -681,7 +677,16 @@ drop:
   invalid_channel: "Nume de canal invalid. Folosiți %example%."
   pending_deletion_reason: "Canalul %channel% este în curs de ștergere. Mai multe informații: /msg %bot% \x0303INFO %channel%\x03"
 
-# --- SUSPEND ---------------------------------------------------------------
+# --- RESTORE (IRCop) ----------------------------------------------------------
+restore:
+  syntax: "RESTORE <#canal>"
+  example: "%command_prefix%RESTORE #canal"
+  short: "Restaurați un canal în așteptare de ștergere."
+  help: "Restaurează un canal șters manual, dacă perioada de grație nu a expirat."
+  success: "Canalul %channel% a fost restaurat."
+  not_pending_deletion: "Canalul %channel% nu este în așteptare de ștergere."
+
+# --- SUSPEND (IRCop) ----------------------------------------------------------
 suspend:
   syntax: "SUSPEND <#canal> <durată> <motiv>"
   example: "%command_prefix%SUSPEND #canal 7d Încălcarea regulilor"
@@ -699,7 +704,7 @@ suspend:
   channel_suspended: "Canalul %channel% este suspendat și nu poate fi folosit."
   notice_channel: "Canalul a fost suspendat. Motiv: %reason%"
 
-# --- UNSUSPEND -------------------------------------------------------------
+# --- UNSUSPEND (IRCop) --------------------------------------------------------
 unsuspend:
   syntax: "UNSUSPEND <#canal>"
   example: "%command_prefix%UNSUSPEND #canal"
@@ -711,43 +716,7 @@ unsuspend:
   not_suspended: "Canalul %channel% nu este suspendat."
   reason_expired: "suspendare expirată"
 
-# --- NOJOIN ----------------------------------------------------------------
-nojoin:
-  reason: "Restricție de nivel NOJOIN"
-
-# --- DEBUG CHANNEL ---------------------------------------------------------
-debug_channel:
-  kick_reason: "Nu sunteți autorizat să intrați pe acest canal."
-
-# --- IRCOPONLY -------------------------------------------------------------
-ircoponly:
-  syntax: "IRCOPONLY <#canal> {ON|OFF}"
-  example: "%command_prefix%IRCOPONLY #canal ON"
-  examples:
-    - "%command_prefix%IRCOPONLY #canal OFF"
-  short: "Restricționați un canal la operatorii IRC."
-  help: |-
-    Doar operatorii IRC autorizați pot rămâne pe canal. %bot% aplică această
-    restricție.
-  on: "IRCOPONLY este activat pe %channel%."
-  off: "IRCOPONLY este dezactivat pe %channel%."
-
-# --- NOEXPIRE --------------------------------------------------------------
-noexpire:
-  syntax: "NOEXPIRE <#canal> {ON|OFF}"
-  example: "%command_prefix%NOEXPIRE #Important ON"
-  examples:
-    - "%command_prefix%NOEXPIRE #Important OFF"
-  short: "Setați sau eliminați protecția împotriva expirării pentru un canal."
-  help: |-
-    Controlează expirarea canalului din cauza inactivității.
-    ON previne expirarea, iar OFF aplică regulile normale.
-  success_on: "Canalul %channel% este acum protejat împotriva expirării."
-  success_off: "Canalul %channel% va expira acum normal."
-  forbidden: "Canalul %channel% este interzis."
-  suspended: "Canalul %channel% este suspendat."
-
-# --- FORBID ----------------------------------------------------------------
+# --- FORBID (IRCop) -----------------------------------------------------------
 forbid:
   syntax: "FORBID <#canal> <motiv>"
   example: "%command_prefix%FORBID #canal Încălcarea regulilor"
@@ -760,7 +729,7 @@ forbid:
   updated: "Motivul interzicerii pentru canalul %channel% a fost actualizat."
   channel_forbidden: "Canalul %channel% este interzis și nu poate fi folosit."
 
-# --- UNFORBID --------------------------------------------------------------
+# --- UNFORBID (IRCop) ---------------------------------------------------------
 unforbid:
   syntax: "UNFORBID <#canal>"
   example: "%command_prefix%UNFORBID #canal"
@@ -768,12 +737,6 @@ unforbid:
   help: "Elimină interdicția canalului, permițând înregistrarea lui din nou."
   success: "Canalul %channel% nu mai este interzis."
   not_forbidden: "Canalul %channel% nu este interzis."
-
-# --- DEBUG -----------------------------------------------------------------
-debug:
-  registration_completed: "%operator% a înregistrat canalul %target%"
-  registration_pending: "%operator% a solicitat înregistrarea canalului %target%"
-  founder_action: "Acțiune de nivel fondator"
 
 # --- HISTORY ---
 history:
@@ -874,35 +837,7 @@ history.extra:
   level: "Nivel: %value%"
   mask: "Mască: %value%"
 
-# --- LEVEL FOUNDER ---------------------------------------------------------
-level_founder:
-  short: "Permite operațiuni care necesită nivelul de fondator al canalului."
-
-# --- CLEARACCESS -----------------------------------------------------------
-clearaccess:
-  syntax: "CLEARACCESS <#canal>"
-  example: "%command_prefix%CLEARACCESS #canal"
-  short: "Ștergeți întreaga listă de acces a unui canal."
-  help: "Elimină toate intrările de acces ale canalului. Acțiunea este ireversibilă."
-  success: "S-au șters %count% intrări de acces din %channel%."
-  empty: "Canalul %channel% nu are intrări de acces."
-
-# --- CLEARUSERS ------------------------------------------------------------
-clearusers:
-  syntax: "CLEARUSERS <#canal> [motiv]"
-  example: "%command_prefix%CLEARUSERS #canal"
-  examples:
-    - "%command_prefix%CLEARUSERS #canal inundare"
-  short: "Eliminați prin kick toți utilizatorii dintr-un canal."
-  help: |-
-    Evacuează toți utilizatorii de pe canal. Comanda este rezervată IRCop; dacă
-    nu se indică un motiv, se folosește unul implicit.
-  not_on_network: "Canalul %channel% nu se află în prezent în rețea."
-  empty: "Canalul %channel% nu are utilizatori cărora să li se dea kick."
-  success: "S-a dat kick la %count% utilizator(i) din %channel%."
-  default_reason: "Comanda CLEARUSERS"
-
-# --- LIST ------------------------------------------------------------------
+# --- LIST (IRCop) -------------------------------------------------------------
 list:
   syntax: "LIST <model> [pagină]"
   example: "%command_prefix%LIST #*"
@@ -918,3 +853,68 @@ list:
   status_pending_registration: "Aprobare în așteptare"
   status_rejected_registration: "Înregistrare respinsă"
   status_active: "Activ"
+
+# --- REGMODE (IRCop) ----------------------------------------------------------
+regmode:
+  syntax: "REGMODE {DIRECT|APPROVAL|STATUS}"
+  example: "%command_prefix%REGMODE APPROVAL"
+  short: "Setează sau verifică modul de înregistrare a canalelor."
+  help: |-
+    Setează înregistrarea la DIRECT sau APPROVAL ori verifică STATUS.
+    DIRECT este modul implicit și păstrează înregistrarea imediată.
+
+  status: "Modul de înregistrare a canalelor este %mode%."
+  changed: "Modul de înregistrare a canalelor este acum %mode%."
+
+# --- CREG (IRCop) -------------------------------------------------------------
+creg:
+  syntax: "CREG {PENDING [pagină]|ACCEPT <#canal>|REJECT <#canal> <motiv>}"
+  pending.syntax: "CREG PENDING [pagină]"
+  pending.example: "%command_prefix%CREG PENDING"
+  pending.short: "Listează cererile de înregistrare în așteptare."
+  pending.help: "Listează cererile în așteptare într-o pagină limitată."
+  accept.syntax: "CREG ACCEPT <#canal>"
+  accept.example: "%command_prefix%CREG ACCEPT #canal"
+  accept.short: "Aprobă o cerere de înregistrare a canalului."
+  accept.help: "Verifică din nou solicitantul și activează înregistrarea."
+  reject.syntax: "CREG REJECT <#canal> <motiv>"
+  reject.example: "%command_prefix%CREG REJECT #canal Motivo público"
+  reject.short: "Respinge o cerere de înregistrare a canalului."
+  reject.help: "Respinge cererea cu motiv obligatoriu și restricție."
+  example: "%command_prefix%CREG PENDING"
+  short: "Revizuiește cererile de înregistrare a canalelor."
+  help: |-
+    Listează cererile în așteptare sau aprobă ori respinge o cerere.
+    Respingerea necesită un motiv. Numai ACCEPT înregistrează canalul.
+
+  pending_header: "Înregistrări în așteptare (pagina %page%)"
+  pending_item: "%channel% — solicitant %requester%, trimisă %submitted%: %description%"
+  accepted: "Înregistrarea pentru %channel% a fost aprobată."
+  rejected: "Înregistrarea pentru %channel% a fost respinsă."
+  not_pending: "Canalul %channel% nu are o înregistrare în așteptare."
+  channel_not_on_network: "Canalul %channel% nu este în rețea."
+  founder_limit: "Solicitantul a atins limita de înregistrări de canale."
+  requester_inactive: "Contul solicitantului nu mai este activ."
+  requester_ineligible: "Solicitantul trebuie să aibă acum statut de operator pe canal."
+
+# --- SECURE -------------------------------------------------------------------
+secure:
+  requires_min_level: "Cu SECURE activat, %nickname% trebuie să aibă cel puțin nivelul %level% pentru a primi %mode%."
+
+# --- NOJOIN -------------------------------------------------------------------
+nojoin:
+  reason: "Restricție de nivel NOJOIN"
+
+# --- DEBUG CHANNEL ------------------------------------------------------------
+debug_channel:
+  kick_reason: "Nu sunteți autorizat să intrați pe acest canal."
+
+# --- DEBUG --------------------------------------------------------------------
+debug:
+  registration_completed: "%operator% a înregistrat canalul %target%"
+  registration_pending: "%operator% a solicitat înregistrarea canalului %target%"
+  founder_action: "Acțiune de nivel fondator"
+
+# --- LEVEL FOUNDER ------------------------------------------------------------
+level_founder:
+  short: "Permite operațiuni care necesită nivelul de fondator al canalului."

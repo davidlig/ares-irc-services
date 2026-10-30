@@ -16,11 +16,11 @@
 # HELP-Beispiele: example/examples und %command_prefix%.
 # Die Darstellung ergänzt /msg ohne Farbe und einen Rand von zwei Leerzeichen.
 
-# --- ERROR -----------------------------------------------------------------
+# --- ERROR --------------------------------------------------------------------
 error:
   root_only: "Dieser Befehl ist Netzwerk-Root-Administratoren vorbehalten."
 
-# --- HELP ------------------------------------------------------------------
+# --- HELP ---------------------------------------------------------------------
 help:
   syntax: "HELP [Befehl] [Option]"
   short: "Befehle auflisten oder Hilfe für einen Befehl anzeigen."
@@ -58,7 +58,7 @@ help:
     low_level: "Niedrige Ebene"
   ircop_header: "Verfügbare Befehle für IRC-Operatoren:"
 
-# --- IRCOP -----------------------------------------------------------------
+# --- IRCOP --------------------------------------------------------------------
 ircop:
   syntax: "IRCOP {ADD <nickname> <Rolle>|DEL <nickname>|LIST}"
   short: "Netzwerk-IRC-Operatoren verwalten."
@@ -111,7 +111,7 @@ ircop:
     header: "Netzwerk-IRC-Operatoren"
     empty: "Es gibt keine IRC-Operatoren."
 
-# --- ROLE ------------------------------------------------------------------
+# --- ROLE ---------------------------------------------------------------------
 role:
   # --- ROLE OPERCLASS ------------------------------------------------------
   operclass:
@@ -315,7 +315,7 @@ role:
       cleared: "Erzwungenes VHost-Muster von Rolle %role% entfernt."
       invalid: "Ungültiges VHost-Muster. Gültige Zeichen: a-z, A-Z, 0-9, - und .. Muss mindestens einen Punkt haben, darf nicht mit - oder . beginnen/enden oder .. enthalten"
 
-# --- KILL ------------------------------------------------------------------
+# --- KILL ---------------------------------------------------------------------
 kill:
   syntax: "KILL <nickname> <Begründung>"
   short: "Einen Benutzer zwangsweise vom Netzwerk trennen."
@@ -327,7 +327,7 @@ kill:
   protected_ircop: "IRC-Operator %nickname% kann nicht gekillt werden."
   done: "Benutzer %nickname% wurde gekillt (%reason%)."
 
-# --- GLINE -----------------------------------------------------------------
+# --- GLINE --------------------------------------------------------------------
 gline:
   syntax: "GLINE {ADD <Maske> <Ablauf> <Begründung>|DEL {<Maske>|<Nummer>}|LIST [Maske]}"
   short: "Netzwerkweite G-Lines verwalten."
@@ -391,7 +391,50 @@ gline:
     empty: "Es gibt keine G-Lines."
     entry: "%index%. %mask% - %reason% (%nickname%, läuft ab: %expiration%)"
 
-# --- GLOBAL ----------------------------------------------------------------
+# --- BADMAIL ------------------------------------------------------------------
+badmail:
+  syntax: "BADMAIL {ADD <Domain> <Begründung>|DEL {Nummer|ALL}|LIST <Muster> [Seite]}"
+  short: "Gesperrte E-Mail-Domains verwalten."
+  help: |-
+    Gesperrte E-Mail-Domains verwalten.
+  example: "%command_prefix%BADMAIL LIST *"
+  add:
+    syntax: "BADMAIL ADD <Domain> <Begründung>"
+    short: "Eine Domain sperren."
+    help: |-
+      Akzeptiert ASCII- oder Punycode-Domains, keine Adressen oder Muster.
+      Eine Begründung ist erforderlich. Die Sperre gilt exakt, nicht für
+      Subdomains.
+    example: "%command_prefix%BADMAIL ADD example.org abuse"
+  del:
+    syntax: "BADMAIL DEL {Nummer|ALL}"
+    short: "Domainsperren entfernen."
+    help: |-
+      Eine dauerhafte Kennung oder mit ALL alle Einträge löschen. Andere
+      Kennungen bleiben unverändert.
+    example: "%command_prefix%BADMAIL DEL 1"
+  list:
+    syntax: "BADMAIL LIST <Muster> [Seite]"
+    short: "Gesperrte Domains auflisten."
+    help: |-
+      Ein Muster ist erforderlich. Nur * ist ein Platzhalter für beliebige
+      Zeichenfolgen. Groß- und Kleinschreibung wird ignoriert. Die optionale
+      Seite beginnt bei 1. Kennungen bleiben beim Filtern und Blättern
+      erhalten.
+    example: "%command_prefix%BADMAIL LIST *.org 2"
+  invalid_domain: "Ungültige Domain. ASCII oder Punycode ohne abschließenden Punkt verwenden."
+  invalid_reason: "Eine nicht leere, einzeilige administrative Begründung ist erforderlich."
+  duplicate: "Diese Domain ist bereits gesperrt."
+  not_found: "Keine gesperrte Domain mit dieser Kennung gefunden."
+  added: "Domain %domain% gesperrt."
+  deleted: "Domainsperre %id% entfernt."
+  cleared: "%total% Domainsperren entfernt."
+  empty: "Keine passenden gesperrten Domains."
+  header: "ID | Domain | Begründung"
+  page: "Seite %page%/%pages%, %total% passende Domains."
+  row: "%id% | %domain% | %reason%"
+
+# --- GLOBAL -------------------------------------------------------------------
 global:
   syntax: "GLOBAL {Service|nick!ident@vhost} {PRIVMSG|NOTICE} <Nachricht>"
   short: "Eine globale Nachricht an alle verbundenen Benutzer senden."
@@ -415,35 +458,7 @@ global:
   type_invalid: "Nachrichtentyp muss PRIVMSG oder NOTICE sein."
   done: "Globale Nachricht von %nickname% an %count% Benutzer gesendet."
 
-# --- RAW -------------------------------------------------------------------
-raw:
-  syntax: "RAW <Zeile>"
-  short: "Eine rohe Protokollzeile an den IRCd senden."
-  help: |-
-    Sendet die angegebene Zeile direkt an den Socket des IRCd-Linkservers.
-    Mit äußerster Vorsicht verwenden. Ungültige Protokollzeilen können das Netzwerk
-    stören.
-  example: "%command_prefix%RAW :services.ares NOTICE * :Geplante Wartung"
-  empty: "Sie müssen eine nicht-leere Zeile zum Senden angeben."
-  too_long: "Zeile ist zu lang. Maximal 510 Zeichen."
-  not_connected: "Nicht mit IRCd verbunden."
-  done: "Rohe Zeile gesendet."
-  protocol:
-    syntax: "Das aktive Protokoll hat die Syntax des RAW-Befehls abgelehnt."
-    done: "Protokolleigener RAW-Befehl ausgeführt."
-    target: "Das aktive Protokoll hat das Ziel %target% abgelehnt."
-    unsupported: "Das aktive Protokoll unterstützt diesen RAW-Befehl nicht."
-    invalid_resource_type: "Unbekannter Protokoll-Ressourcentyp: %resource_type%."
-    invalid_resource: "Ungültige Protokollressource: %resource%."
-    invalid_value: "Ungültiger Wert für Protokollressource: %resource%."
-    error: "Das aktive Protokoll konnte den RAW-Befehl nicht ausführen."
-
-# --- DEBUG -----------------------------------------------------------------
-debug:
-  action_global: "%operator% führt Befehl GLOBAL mit Nickname %target% via %type% an %count% Benutzer aus. Nachricht: %message%"
-  prefix_message: "Nachricht: %reason%"
-
-# --- MOTD ------------------------------------------------------------------
+# --- MOTD ---------------------------------------------------------------------
 motd:
   short: "Connect-MOTD-Nachrichten verwalten, die Benutzern beim Verbinden gesendet werden."
   syntax: "MOTD {ADD <Ziel> {PRIVMSG|NOTICE} <Ablauf> <Nachricht>|DEL <id>|LIST|CLEAN}"
@@ -503,45 +518,30 @@ motd:
   debug:
     finalized: "MOTD-Nachricht #%id% wurde beendet: [%type%] %message% | %date% | %shown_count%"
 
-# --- BADMAIL ---------------------------------------------------------------
-badmail:
-  syntax: "BADMAIL {ADD <Domain> <Begründung>|DEL {Nummer|ALL}|LIST <Muster> [Seite]}"
-  short: "Gesperrte E-Mail-Domains verwalten."
+# --- RAW ----------------------------------------------------------------------
+raw:
+  syntax: "RAW <Zeile>"
+  short: "Eine rohe Protokollzeile an den IRCd senden."
   help: |-
-    Gesperrte E-Mail-Domains verwalten.
-  example: "%command_prefix%BADMAIL LIST *"
-  add:
-    syntax: "BADMAIL ADD <Domain> <Begründung>"
-    short: "Eine Domain sperren."
-    help: |-
-      Akzeptiert ASCII- oder Punycode-Domains, keine Adressen oder Muster.
-      Eine Begründung ist erforderlich. Die Sperre gilt exakt, nicht für
-      Subdomains.
-    example: "%command_prefix%BADMAIL ADD example.org abuse"
-  del:
-    syntax: "BADMAIL DEL {Nummer|ALL}"
-    short: "Domainsperren entfernen."
-    help: |-
-      Eine dauerhafte Kennung oder mit ALL alle Einträge löschen. Andere
-      Kennungen bleiben unverändert.
-    example: "%command_prefix%BADMAIL DEL 1"
-  list:
-    syntax: "BADMAIL LIST <Muster> [Seite]"
-    short: "Gesperrte Domains auflisten."
-    help: |-
-      Ein Muster ist erforderlich. Nur * ist ein Platzhalter für beliebige
-      Zeichenfolgen. Groß- und Kleinschreibung wird ignoriert. Die optionale
-      Seite beginnt bei 1. Kennungen bleiben beim Filtern und Blättern
-      erhalten.
-    example: "%command_prefix%BADMAIL LIST *.org 2"
-  invalid_domain: "Ungültige Domain. ASCII oder Punycode ohne abschließenden Punkt verwenden."
-  invalid_reason: "Eine nicht leere, einzeilige administrative Begründung ist erforderlich."
-  duplicate: "Diese Domain ist bereits gesperrt."
-  not_found: "Keine gesperrte Domain mit dieser Kennung gefunden."
-  added: "Domain %domain% gesperrt."
-  deleted: "Domainsperre %id% entfernt."
-  cleared: "%total% Domainsperren entfernt."
-  empty: "Keine passenden gesperrten Domains."
-  header: "ID | Domain | Begründung"
-  page: "Seite %page%/%pages%, %total% passende Domains."
-  row: "%id% | %domain% | %reason%"
+    Sendet die angegebene Zeile direkt an den Socket des IRCd-Linkservers.
+    Mit äußerster Vorsicht verwenden. Ungültige Protokollzeilen können das Netzwerk
+    stören.
+  example: "%command_prefix%RAW :services.ares NOTICE * :Geplante Wartung"
+  empty: "Sie müssen eine nicht-leere Zeile zum Senden angeben."
+  too_long: "Zeile ist zu lang. Maximal 510 Zeichen."
+  not_connected: "Nicht mit IRCd verbunden."
+  done: "Rohe Zeile gesendet."
+  protocol:
+    syntax: "Das aktive Protokoll hat die Syntax des RAW-Befehls abgelehnt."
+    done: "Protokolleigener RAW-Befehl ausgeführt."
+    target: "Das aktive Protokoll hat das Ziel %target% abgelehnt."
+    unsupported: "Das aktive Protokoll unterstützt diesen RAW-Befehl nicht."
+    invalid_resource_type: "Unbekannter Protokoll-Ressourcentyp: %resource_type%."
+    invalid_resource: "Ungültige Protokollressource: %resource%."
+    invalid_value: "Ungültiger Wert für Protokollressource: %resource%."
+    error: "Das aktive Protokoll konnte den RAW-Befehl nicht ausführen."
+
+# --- DEBUG --------------------------------------------------------------------
+debug:
+  action_global: "%operator% führt Befehl GLOBAL mit Nickname %target% via %type% an %count% Benutzer aus. Nachricht: %message%"
+  prefix_message: "Nachricht: %reason%"

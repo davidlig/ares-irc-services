@@ -16,7 +16,7 @@
 # HELP examples: example/examples and %command_prefix%.
 # The presenter adds the uncolored /msg prefix and a two-space margin.
 
-# --- SEND ------------------------------------------------------------------
+# --- SEND ---------------------------------------------------------------------
 send:
   syntax: "SEND {nickname|#channel} <message>"
   short: "Send a message to a nickname or channel."
@@ -35,7 +35,7 @@ send:
   message_too_long: "Message too long. Maximum is %max% characters."
   service_disabled_for_target: "Message service is disabled for %target%."
 
-# --- READ ------------------------------------------------------------------
+# --- READ ---------------------------------------------------------------------
 read:
   syntax: "READ [#channel] <number>"
   short: "Read a message by number."
@@ -49,7 +49,7 @@ read:
   footer: "%separator% %date%"
   not_found: "Message #%index% not found."
 
-# --- LIST ------------------------------------------------------------------
+# --- LIST ---------------------------------------------------------------------
 list:
   syntax: "LIST [#channel]"
   short: "List messages (unread marked with red *)."
@@ -63,7 +63,7 @@ list:
   header: "Messages for %target%:"
   empty: "No messages for %target%."
 
-# --- DEL -------------------------------------------------------------------
+# --- DEL ----------------------------------------------------------------------
 del:
   syntax: "DEL [#channel] <number>"
   short: "Delete a message by number."
@@ -76,7 +76,7 @@ del:
   deleted: "Message #%index% deleted."
   not_found: "Message #%index% not found."
 
-# --- IGNORE ----------------------------------------------------------------
+# --- IGNORE -------------------------------------------------------------------
 ignore:
   syntax: "IGNORE {ADD [#channel] <nickname>|DEL [#channel] <nickname>|LIST [#channel]}"
   short: "Manage ignore list for messages."
@@ -126,7 +126,7 @@ ignore:
   list_empty: "Ignore list is empty."
   list_header: "Ignore list:"
 
-# --- ENABLE ----------------------------------------------------------------
+# --- ENABLE -------------------------------------------------------------------
 enable:
   syntax: "ENABLE [#channel]"
   short: "Enable message reception."
@@ -142,7 +142,7 @@ enable:
   already_enabled_channel: "Message service is already enabled for %channel%."
   founder_only: "Only the channel founder can enable messages for %channel%."
 
-# --- DISABLE ---------------------------------------------------------------
+# --- DISABLE ------------------------------------------------------------------
 disable:
   syntax: "DISABLE [#channel]"
   short: "Disable message reception."
@@ -158,7 +158,7 @@ disable:
   already_disabled_channel: "Message service is already disabled for %channel%."
   founder_only: "Only the channel founder can disable messages for %channel%."
 
-# --- HELP ------------------------------------------------------------------
+# --- HELP ---------------------------------------------------------------------
 help:
   syntax: "HELP [command] [option]"
   short: "List commands or show help for a command."
@@ -189,12 +189,12 @@ help:
     preferences: "Preferences"
   ircop_header: "Available commands for IRC Operators:"
 
-# --- NOTIFY ----------------------------------------------------------------
+# --- NOTIFY -------------------------------------------------------------------
 notify:
   nick_pending: "You have %count% unread message(s). To list them: /msg %bot% %list%"
   channel_pending: "Channel %channel% has %count% unread message(s). Read them with /msg %bot% %list%"
 
-# --- CHANNEL REGISTRATION DECISIONS ---
+# --- CHANNEL REGISTRATION DECISIONS -------------------------------------------
 registration_decision:
   accepted: "Your registration request for %channel% was accepted."
   rejected: "Your registration request for %channel% was rejected."

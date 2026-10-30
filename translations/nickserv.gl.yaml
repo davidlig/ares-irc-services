@@ -16,7 +16,7 @@
 # Exemplos HELP: example/examples e %command_prefix%.
 # O presentador engade /msg sen cor e unha marxe de dous espazos.
 
-# --- REGISTER --------------------------------------------------------------
+# --- REGISTER -----------------------------------------------------------------
 register:
   token_unavailable: !irc |-
     O rexistro está pendente, pero non se puido entregar o token.
@@ -51,69 +51,7 @@ register:
   throttled: "Debe agardar %minutes% minuto(s) antes de tentar rexistrarse de novo."
   guest_prefix_forbidden: "Non pode rexistrar un alcume que comece con %prefix%."
 
-# --- VERIFY ----------------------------------------------------------------
-verify:
-  syntax: "VERIFY <token>"
-  short: "Confirma un rexistro ou token de rescate."
-  help: |-
-    Unha vez validado, este token será o teu token de recuperación permanente.
-    Gárdao nun lugar seguro: poderás usalo para recuperar o teu alcume.
-    A caducidade de %duration% só se aplica antes de validalo.
-  example: "%command_prefix%VERIFY <token_recibido>"
-  success: "O alcume %nickname% foi rexistrado con éxito e agora está identificado."
-  success_native: "O alcume %nickname% rexistrouse correctamente. Usa a autenticación nativa que se mostra a continuación."
-  invalid_token: "O token de rescate non é válido."
-  no_pending: "Non ten ningún rexistro pendente que verificar."
-
-# --- RESEND ----------------------------------------------------------------
-resend:
-  disabled: "Non podes solicitar outro token con %resend% porque este rexistro entrega o token directamente polo chat."
-  syntax: "RESEND"
-  short: "Reenviar o token de verificación ao seu correo electrónico."
-  help: |-
-    RESEND só está dispoñible se o token de verificación se enviou por correo.
-    Unha vez validado, este token será o teu token de recuperación permanente.
-    Gárdao nun lugar seguro: poderás usalo para recuperar o teu alcume.
-    A caducidade de %duration% só se aplica antes de validalo.
-    Ao usar RESEND, recibirás un novo token por correo.
-    O prazo do rexistro pendente renovarase durante %duration%.
-  example: "%command_prefix%RESEND"
-  success: "Token de verificación reenviado a %email%."
-  no_pending: "Non ten ningún rexistro pendente que verificar."
-  throttled: "Debe agardar %minutes% minuto(s) antes de solicitar outro correo de verificación."
-
-# --- RECOVER ---------------------------------------------------------------
-recover:
-  no_email: "Non hai un correo electrónico configurado para o alcume %nickname%. A recuperación non está dispoñible."
-  email_sent: "Enviouse un token de recuperación a %email_hint%. Comprobe a súa caixa de entrada (e o cartafol de spam)."
-  pending_deletion: "O alcume %nickname% está pendente de eliminación e non se pode recuperar."
-  instructions: "EMAIL: %command_0% solicita un token provisional por correo. TOKEN: proporciona o token confirmado. %command_1% acepta o token válido do correo ou o confirmado. O do correo substitúe o gardado só tras validalo. Usar o gardado ofrece un reemplazo opcional con %command_2%; ignora a mensaxe para conservalo."
-  instructions_command_0: "RECOVER %nickname%"
-  instructions_command_1: "RECOVER %nickname% <token>"
-  instructions_command_2: "VERIFY"
-  syntax: "RECOVER <alcume> [token]"
-  short: "Recuperar o seu alcume se perdeu o contrasinal."
-  help: |-
-    Se non tes un token, solicita por correo un token provisional.
-    Tamén podes proporcionar un token de recuperación válido; se é provisional,
-    substituirá o gardado só despois de validalo.
-    Ao usar o token gardado ofrécesche unha substitución opcional con VERIFY; ignora
-    a mensaxe se queres conservar o actual.
-  example: "%command_prefix%RECOVER Usuario"
-  examples:
-    - "%command_prefix%RECOVER Usuario <token_recibido>"
-  pending: "O rexistro de %nickname% está pendente. Usa %command_0%. Se o token se enviou por correo e hai un enderezo válido asociado, podes solicitar outro con %command_1%."
-  pending_command_0: "VERIFY <token>"
-  pending_command_1: "RESEND"
-  suspended: "O alcume %nickname% está suspendido. Motivo: %reason%"
-  forbidden: "O alcume %nickname% non se pode usar nesta rede."
-  throttled: "Demasiados tokens incorrectos. Téntao de novo en %minutes% minuto(s)."
-  invalid_token: "O token de rescate non é válido."
-  success_identify: "Contrasinal restablecido. Identifíquese agora: %identify_cmd%"
-  success_then_change: "Despois cambia o teu contrasinal: /msg %bot% %command_0%"
-  success_then_change_command_0: "SET PASSWORD <novo_contrasinal>"
-
-# --- IDENTIFY --------------------------------------------------------------
+# --- IDENTIFY -----------------------------------------------------------------
 identify:
   syntax: "IDENTIFY <alcume> <contrasinal>"
   short: "Identificarse como o propietario dun alcume."
@@ -151,105 +89,69 @@ identify:
   forbidden: "O alcume %nickname% non se pode usar nesta rede."
   pending_deletion: "O alcume %nickname% está pendente de eliminación e non se pode usar."
 
-# --- STATUS ----------------------------------------------------------------
-status:
-  syntax: "STATUS <alcume>"
-  short: "Mostrar o estado de rexistro dun alcume."
+# --- VERIFY -------------------------------------------------------------------
+verify:
+  syntax: "VERIFY <token>"
+  short: "Confirma un rexistro ou token de rescate."
   help: |-
-    Amosa o estado actual dun alcume: se está rexistrado, pendente de
-    verificación, suspendido, etc.
-  example: "%command_prefix%STATUS Usuario"
-  header: "Estado do alcume %nickname%"
-  unregistered: "  Estado          : Non rexistrado"
-  not_registered_offline: "  Estado          : %state%"
-  value_not_registered_offline: "Non rexistrado"
-  pending: "  Estado          : %state%"
-  value_pending: "Verificación pendente"
-  pending_expires: "  Caduca en       : %minutes% minuto(s)"
-  pending_expires_at: "  Caduca ás       : %date%"
-  not_connected: "  Estado          : %state%"
-  value_not_connected: "Non conectado"
-  not_identified: "  Estado          : %state%"
-  value_not_identified: "Non identificado"
-  identified: "  Estado          : %state%"
-  value_identified: "Identificado"
-  suspended: "  Estado          : %state%"
-  value_suspended: "Suspendido"
-  suspended_reason: "  Motivo          : %reason%"
-  suspended_until: "  Finaliza o      : %date%"
-  suspended_permanent: "  Finaliza o      : Permanente"
-  forbidden: "  Estado          : %state%"
-  value_forbidden: "Prohibido"
-  forbidden_reason: "  Motivo          : %reason%"
-  pending_deletion: "  %label%          : %state%"
-  value_pending_deletion: "Pendente de eliminación"
-  label_pending_deletion: "Estado"
-  pending_deletion_at: "  %label%       : %date%"
+    Unha vez validado, este token será o teu token de recuperación permanente.
+    Gárdao nun lugar seguro: poderás usalo para recuperar o teu alcume.
+    A caducidade de %duration% só se aplica antes de validalo.
+  example: "%command_prefix%VERIFY <token_recibido>"
+  success: "O alcume %nickname% foi rexistrado con éxito e agora está identificado."
+  success_native: "O alcume %nickname% rexistrouse correctamente. Usa a autenticación nativa que se mostra a continuación."
+  invalid_token: "O token de rescate non é válido."
+  no_pending: "Non ten ningún rexistro pendente que verificar."
 
-  label_pending_deletion_at: "Eliminado"
-# --- INFO ------------------------------------------------------------------
-info:
-  syntax: "INFO <alcume>"
-  short: "Mostrar información sobre un alcume rexistrado."
+# --- RESEND -------------------------------------------------------------------
+resend:
+  disabled: "Non podes solicitar outro token con %resend% porque este rexistro entrega o token directamente polo chat."
+  syntax: "RESEND"
+  short: "Reenviar o token de verificación ao seu correo electrónico."
   help: |-
-    Amosa os datos de rexistro dun alcume: data de alta, estado da conexión,
-    última mensaxe enviada e correo electrónico.
+    RESEND só está dispoñible se o token de verificación se enviou por correo.
+    Unha vez validado, este token será o teu token de recuperación permanente.
+    Gárdao nun lugar seguro: poderás usalo para recuperar o teu alcume.
+    A caducidade de %duration% só se aplica antes de validalo.
+    Ao usar RESEND, recibirás un novo token por correo.
+    O prazo do rexistro pendente renovarase durante %duration%.
+  example: "%command_prefix%RESEND"
+  success: "Token de verificación reenviado a %email%."
+  no_pending: "Non ten ningún rexistro pendente que verificar."
+  throttled: "Debe agardar %minutes% minuto(s) antes de solicitar outro correo de verificación."
 
-    O correo só é visible para a persoa propietaria identificada.
-    Se o alcume é privado, só a súa persoa propietaria e os operadores IRC poden
-    consultar a información.
-  example: "%command_prefix%INFO Usuario"
-  private: "A información do alcume %nickname% é privada."
-  header: "Información do alcume %nickname%"
-  status: "%label%            : %status%"
-  label_status: "Estado"
-  status_registered: "Rexistrado"
-  status_suspended: "Suspendido"
-  status_forbidden: "Prohibido"
-  status_pending_deletion: "Pendente de eliminación"
-  reason: "%label%                 : %reason%"
-  label_reason: "Motivo"
-  suspended_until: "%label%        : %date%"
-  label_suspended_until: "Finaliza o"
-  suspended_permanent: "%label%        : Permanente"
-  label_suspended_permanent: "Finaliza o"
-  registered_at: "%label%        : %date%"
-  label_registered_at: "Rexistrado"
-  last_seen_online: "%label%        : %online%"
-  label_last_seen_online: "Última vez"
-  value_last_seen_online: "EN LIÑA AGORA"
-  last_seen_at: "%label%        : %date%"
-  label_last_seen_at: "Última vez"
-  last_seen_never: "%label%        : Nunca"
-  label_last_seen_never: "Última vez"
-  last_quit: "%label%  : %message%"
-  label_last_quit: "Últ. mens. saída"
-  last_connect: "%label%    : %ip% (%host%)"
-  label_last_connect: "Últ. vez desde"
-  language: "%label%            : %language%"
-  label_language: "Idioma"
-  email: "%label%          : %email%"
-  label_email: "Correo-e"
-  vhost: "%label%             : %vhost%"
-  label_vhost: "VHost"
-  no_expire: "%label%      : Si"
-  label_no_expire: "Nunca caduca"
-  pending_deletion_at: "%label%              : %date%"
-  label_pending_deletion_at: "Eliminado"
-  pending_deletion_until: "%label%       : %date%"
-  label_pending_deletion_until: "Elim. definitiva"
-  pending_deletion_notice: "%notice%"
-  value_pending_deletion_notice: "Este alcume está pendente de eliminación e non se pode rexistrar."
-  channels_header: |-
+# --- RECOVER ------------------------------------------------------------------
+recover:
+  no_email: "Non hai un correo electrónico configurado para o alcume %nickname%. A recuperación non está dispoñible."
+  email_sent: "Enviouse un token de recuperación a %email_hint%. Comprobe a súa caixa de entrada (e o cartafol de spam)."
+  pending_deletion: "O alcume %nickname% está pendente de eliminación e non se pode recuperar."
+  instructions: "EMAIL: %command_0% solicita un token provisional por correo. TOKEN: proporciona o token confirmado. %command_1% acepta o token válido do correo ou o confirmado. O do correo substitúe o gardado só tras validalo. Usar o gardado ofrece un reemplazo opcional con %command_2%; ignora a mensaxe para conservalo."
+  instructions_command_0: "RECOVER %nickname%"
+  instructions_command_1: "RECOVER %nickname% <token>"
+  instructions_command_2: "VERIFY"
+  syntax: "RECOVER <alcume> [token]"
+  short: "Recuperar o seu alcume se perdeu o contrasinal."
+  help: |-
+    Se non tes un token, solicita por correo un token provisional.
+    Tamén podes proporcionar un token de recuperación válido; se é provisional,
+    substituirá o gardado só despois de validalo.
+    Ao usar o token gardado ofrécesche unha substitución opcional con VERIFY; ignora
+    a mensaxe se queres conservar o actual.
+  example: "%command_prefix%RECOVER Usuario"
+  examples:
+    - "%command_prefix%RECOVER Usuario <token_recibido>"
+  pending: "O rexistro de %nickname% está pendente. Usa %command_0%. Se o token se enviou por correo e hai un enderezo válido asociado, podes solicitar outro con %command_1%."
+  pending_command_0: "VERIFY <token>"
+  pending_command_1: "RESEND"
+  suspended: "O alcume %nickname% está suspendido. Motivo: %reason%"
+  forbidden: "O alcume %nickname% non se pode usar nesta rede."
+  throttled: "Demasiados tokens incorrectos. Téntao de novo en %minutes% minuto(s)."
+  invalid_token: "O token de rescate non é válido."
+  success_identify: "Contrasinal restablecido. Identifíquese agora: %identify_cmd%"
+  success_then_change: "Despois cambia o teu contrasinal: /msg %bot% %command_0%"
+  success_then_change_command_0: "SET PASSWORD <novo_contrasinal>"
 
-    Canles con acceso:
-  channels_entry_founder: "%channel% (%role%)"
-  channels_role_founder: "Fundador"
-  channels_entry_successor: "%channel% (%role%)"
-  channels_role_successor: "Sucesor"
-  channels_entry_access: "%channel% (%level%)"
-
-# --- SET -------------------------------------------------------------------
+# --- SET ----------------------------------------------------------------------
 set:
   syntax: "SET {PASSWORD <novo_contrasinal>|EMAIL <email> <token>|LANGUAGE <código>|TIMEZONE <fuso_horario>|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
   short: "Cambiar as opcións do teu alcume."
@@ -390,103 +292,106 @@ set:
     taken: "Ese vhost xa está en uso por outro alcume."
     forced: "O seu vhost está configurado automaticamente e non se pode cambiar con SET VHOST."
 
-# --- SAREGISTER ------------------------------------------------------------
-saregister:
-  syntax: "SAREGISTER <alcume> <contrasinal> [email]"
-  short: "Rexistrar administrativamente un alcume."
+# --- INFO ---------------------------------------------------------------------
+info:
+  syntax: "INFO <alcume>"
+  short: "Mostrar información sobre un alcume rexistrado."
   help: |-
-    Sintaxe: SAREGISTER <alcume> <contrasinal> [email]
+    Amosa os datos de rexistro dun alcume: data de alta, estado da conexión,
+    última mensaxe enviada e correo electrónico.
 
-    Rexistra administrativamente un alcume de xeito inmediato sen requirir
-    verificación do cliente nin límites de frecuencia.
+    O correo só é visible para a persoa propietaria identificada.
+    Se o alcume é privado, só a súa persoa propietaria e os operadores IRC poden
+    consultar a información.
+  example: "%command_prefix%INFO Usuario"
+  private: "A información do alcume %nickname% é privada."
+  header: "Información do alcume %nickname%"
+  status: "%label%            : %status%"
+  label_status: "Estado"
+  status_registered: "Rexistrado"
+  status_suspended: "Suspendido"
+  status_forbidden: "Prohibido"
+  status_pending_deletion: "Pendente de eliminación"
+  reason: "%label%                 : %reason%"
+  label_reason: "Motivo"
+  suspended_until: "%label%        : %date%"
+  label_suspended_until: "Finaliza o"
+  suspended_permanent: "%label%        : Permanente"
+  label_suspended_permanent: "Finaliza o"
+  registered_at: "%label%        : %date%"
+  label_registered_at: "Rexistrado"
+  last_seen_online: "%label%        : %online%"
+  label_last_seen_online: "Última vez"
+  value_last_seen_online: "EN LIÑA AGORA"
+  last_seen_at: "%label%        : %date%"
+  label_last_seen_at: "Última vez"
+  last_seen_never: "%label%        : Nunca"
+  label_last_seen_never: "Última vez"
+  last_quit: "%label%  : %message%"
+  label_last_quit: "Últ. mens. saída"
+  last_connect: "%label%    : %ip% (%host%)"
+  label_last_connect: "Últ. vez desde"
+  language: "%label%            : %language%"
+  label_language: "Idioma"
+  email: "%label%          : %email%"
+  label_email: "Correo-e"
+  vhost: "%label%             : %vhost%"
+  label_vhost: "VHost"
+  no_expire: "%label%      : Si"
+  label_no_expire: "Nunca caduca"
+  pending_deletion_at: "%label%              : %date%"
+  label_pending_deletion_at: "Eliminado"
+  pending_deletion_until: "%label%       : %date%"
+  label_pending_deletion_until: "Elim. definitiva"
+  pending_deletion_notice: "%notice%"
+  value_pending_deletion_notice: "Este alcume está pendente de eliminación e non se pode rexistrar."
+  channels_header: |-
 
-    En modo TOKEN, o código de rescate móstrase unha vez ao operador.
-    En modo EMAIL, o código de rescate envíase ao enderezo de correo indicado.
-  example: "%command_prefix%SAREGISTER Alice Contrasinal123"
-  examples:
-    - "%command_prefix%SAREGISTER Bob Contrasinal456 bob@exemplo.gal"
-  success_token: "O alcume %nickname% foi rexistrado. Código de rescate: %token%"
-  success_email: "O alcume %nickname% foi rexistrado. Código de rescate enviado a %email%."
-  invalid_nickname: "Alcume non válido %nickname%."
+    Canles con acceso:
+  channels_entry_founder: "%channel% (%role%)"
+  channels_role_founder: "Fundador"
+  channels_entry_successor: "%channel% (%role%)"
+  channels_role_successor: "Sucesor"
+  channels_entry_access: "%channel% (%level%)"
 
-# --- SASET -----------------------------------------------------------------
-saset:
-  syntax: "SASET <alcume> {PASSWORD <novo_contrasinal>|EMAIL <novo_correo>|LANGUAGE <código>|TIMEZONE {<fuso_horario>|OFF}|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
-  short: "Modificar a configuración doutro alcume."
+# --- STATUS -------------------------------------------------------------------
+status:
+  syntax: "STATUS <alcume>"
+  short: "Mostrar o estado de rexistro dun alcume."
   help: |-
-    Permite a un IRCop cambiar a configuración doutro alcume rexistrado. Non
-    admite alcumes Root, IRCop nin de servizos.
-  example: "%command_prefix%SASET Usuario PRIVATE ON"
-  examples:
-    - "%command_prefix%SASET Usuario TIMEZONE OFF"
-  unknown_option: "Opción descoñecida %option%. Opcións dispoñibles: %options%."
-  cannot_modify_oper: "Non se pode modificar un alcume de Operador de IRC."
+    Amosa o estado actual dun alcume: se está rexistrado, pendente de
+    verificación, suspendido, etc.
+  example: "%command_prefix%STATUS Usuario"
+  header: "Estado do alcume %nickname%"
+  unregistered: "  Estado          : Non rexistrado"
+  not_registered_offline: "  Estado          : %state%"
+  value_not_registered_offline: "Non rexistrado"
+  pending: "  Estado          : %state%"
+  value_pending: "Verificación pendente"
+  pending_expires: "  Caduca en       : %minutes% minuto(s)"
+  pending_expires_at: "  Caduca ás       : %date%"
+  not_connected: "  Estado          : %state%"
+  value_not_connected: "Non conectado"
+  not_identified: "  Estado          : %state%"
+  value_not_identified: "Non identificado"
+  identified: "  Estado          : %state%"
+  value_identified: "Identificado"
+  suspended: "  Estado          : %state%"
+  value_suspended: "Suspendido"
+  suspended_reason: "  Motivo          : %reason%"
+  suspended_until: "  Finaliza o      : %date%"
+  suspended_permanent: "  Finaliza o      : Permanente"
+  forbidden: "  Estado          : %state%"
+  value_forbidden: "Prohibido"
+  forbidden_reason: "  Motivo          : %reason%"
+  pending_deletion: "  %label%          : %state%"
+  value_pending_deletion: "Pendente de eliminación"
+  label_pending_deletion: "Estado"
+  pending_deletion_at: "  %label%       : %date%"
 
-  # --- SASET PASSWORD ------------------------------------------------------
-  password:
-    syntax: "SASET <alcume> PASSWORD <novo_contrasinal>"
-    short: "Cambiar o contrasinal dun alcume."
-    help: "Cambia o contrasinal doutro alcume. O cambio é inmediato."
-    example: "%command_prefix%SASET Usuario PASSWORD ChaveSegura123"
+  label_pending_deletion_at: "Eliminado"
 
-  # --- SASET EMAIL ---------------------------------------------------------
-  email:
-    syntax: "SASET <alcume> EMAIL <novo_correo>"
-    short: "Cambiar o correo electrónico dun alcume."
-    help: |-
-      Cambia o correo electrónico doutro alcume. O cambio é inmediato e non require
-      o token de rescate nin envía un correo de confirmación.
-      BADMAIL non restrinxe este cambio administrativo de correo.
-    example: "%command_prefix%SASET Usuario EMAIL usuario@exemplo.com"
-
-  # --- SASET LANGUAGE ------------------------------------------------------
-  language:
-    syntax: "SASET <alcume> LANGUAGE <código>"
-    short: "Cambiar o idioma dun alcume."
-    help: |-
-      Cambia o idioma doutro alcume. Neste comando están dispoñibles en (inglés)
-      e es (castelán).
-    example: "%command_prefix%SASET Usuario LANGUAGE es"
-
-  # --- SASET TIMEZONE ------------------------------------------------------
-  timezone:
-    syntax: "SASET <alcume> TIMEZONE {<fuso_horario>|OFF}"
-    short: "Cambiar o fuso horario dun alcume."
-    help: "Establece ou elimina o fuso horario doutro alcume. Usa OFF para eliminalo."
-    example: "%command_prefix%SASET Usuario TIMEZONE Europe/Madrid"
-    examples:
-      - "%command_prefix%SASET Usuario TIMEZONE OFF"
-
-  # --- SASET PRIVATE -------------------------------------------------------
-  private:
-    syntax: "SASET <alcume> PRIVATE {ON|OFF}"
-    short: "Cambiar a privacidade dun alcume."
-    help: "Activa ou desactiva a privacidade da información doutro alcume."
-    example: "%command_prefix%SASET Usuario PRIVATE ON"
-    examples:
-      - "%command_prefix%SASET Usuario PRIVATE OFF"
-
-  # --- SASET MSG -----------------------------------------------------------
-  msg:
-    syntax: "SASET <alcume> MSG {ON|OFF}"
-    short: "Cambiar a preferencia de mensaxes dun alcume."
-    help: "Establece se outro alcume recibe respostas como PRIVMSG (ON) ou NOTICE (OFF)."
-    example: "%command_prefix%SASET Usuario MSG ON"
-    examples:
-      - "%command_prefix%SASET Usuario MSG OFF"
-
-  # --- SASET VHOST ---------------------------------------------------------
-  vhost:
-    syntax: "SASET <alcume> VHOST [vhost]"
-    short: "Cambiar o host virtual dun alcume."
-    help: |-
-      Establece ou elimina o host virtual doutro alcume. Executa SASET <alcume> VHOST
-      sen valor para eliminalo.
-    example: "%command_prefix%SASET Usuario VHOST usuario.exemplo.org"
-    examples:
-      - "%command_prefix%SASET Usuario VHOST"
-
-# --- HELP ------------------------------------------------------------------
+# --- HELP ---------------------------------------------------------------------
 help:
   syntax: "HELP [comando]"
   short: "Mostrar axuda dos comandos de %nickserv%."
@@ -540,7 +445,7 @@ help:
     region_unknown: "Rexión descoñecida. Use %syntax% para o índice."
     region_syntax: "HELP SET TIMEZONE"
 
-# --- NICK PROTECTION -------------------------------------------------------
+# --- NICK PROTECTION ----------------------------------------------------------
 protection:
   nick_in_use: "O alcume %nickname% está rexistrado. Será renomeado se non se identifica."
   renamed_to: |-
@@ -549,7 +454,7 @@ protection:
   renamed_command: "IDENTIFY %nickname% <contrasinal>"
   nick_forbidden: "O alcume %nickname% está prohibido: %reason%"
 
-# --- USERIP ----------------------------------------------------------------
+# --- USERIP (IRCop) -----------------------------------------------------------
 userip:
   syntax: "USERIP <alcume>"
   short: "Obter o enderezo IP real e o nome de servidor do alcume."
@@ -559,7 +464,7 @@ userip:
   example: "%command_prefix%USERIP Usuario"
   result: "Alcume: %nickname% | IP: %ip% | Host: %host%"
 
-# --- WHOIP -----------------------------------------------------------------
+# --- WHOIP (IRCop) ------------------------------------------------------------
 whoip:
   syntax: "WHOIP <ip>"
   short: "Busca alcumes polo IP da súa última conexión identificada."
@@ -570,156 +475,21 @@ whoip:
   empty: "Non hai alcumes rexistrados que coincidan con este enderezo IP."
   header: "Alcumes coincidentes:"
 
-# --- SUSPEND ---------------------------------------------------------------
-suspend:
-  syntax: "SUSPEND <alcume> <duración> <motivo>"
-  short: "Suspender un alcume."
+# --- LIST (IRCop) -------------------------------------------------------------
+list:
+  syntax: "LIST <patrón> [páxina]"
+  short: "Lista alcumes rexistrados que coinciden cun patrón."
   help: |-
-    Impide que a persoa propietaria se identifique. A duración pode expresarse en
-    días (d), horas (h), minutos (m) ou 0 para unha suspensión permanente. Non se
-    poden suspender operadores IRC nin persoas usuarias Root.
-  example: "%command_prefix%SUSPEND MalUsuario 7d Spam en #axuda"
+    Lista os alcumes rexistrados que coinciden co patrón. O comodín * coincide con
+    calquera secuencia de caracteres; a páxina opcional comeza en 1.
+  example: "%command_prefix%LIST Usuario*"
   examples:
-    - "%command_prefix%SUSPEND Problematico 0 Evasión de prohibición"
-  success: "O alcume %nickname% foi suspendido ata %duration%."
-  already_suspended: "O alcume %nickname% xa está suspendido."
-  forbidden: "O alcume %nickname% está prohibido e non se pode suspender."
-  cannot_suspend_oper: "Non se pode suspender o operador de IRC %nickname%."
-  cannot_suspend_root: "Non se pode suspender o usuario root %nickname%."
-  cannot_suspend_service: "Non se pode suspender o alcume de servizo %nickname%."
-  invalid_duration: "Duración non válida. Use: %duration_format% (p.ex., 7d, 12h, 30m) ou %permanent% para permanente."
-  invalid_duration_format: "<d><h><m>"
-  invalid_duration_permanent: "0"
-
-# --- UNSUSPEND -------------------------------------------------------------
-unsuspend:
-  syntax: "UNSUSPEND <alcume>"
-  short: "Eliminar a suspensión dun alcume."
-  help: |-
-    Retira unha suspensión activa para que a persoa propietaria poida volver
-    a identificarse.
-  example: "%command_prefix%UNSUSPEND Usuario"
-  success: "A suspensión foi levantada de %nickname%."
-  not_suspended: "O alcume %nickname% non está suspendido."
-
-# --- RENAME ----------------------------------------------------------------
-rename:
-  syntax: "RENAME <alcume>"
-  short: "Forzar o renomeado dun alcume conectado a un alcume aleatorio."
-  help: |-
-    Obriga un alcume conectado a cambiar a un nome aleatorio cun prefixo definido
-    pola rede.
-  example: "%command_prefix%RENAME Problematico"
-  cannot_rename_root: "Non se pode renomear o usuario root %nickname%."
-  cannot_rename_oper: "Non se pode renomear o operador de IRC %nickname%."
-  cannot_rename_service: "Non se pode renomear o alcume de servizo %nickname%."
-  success: "O alcume %nickname% foi renomeado a %new_nick%."
-
-# --- DROP ------------------------------------------------------------------
-drop:
-  syntax: "DROP <alcume> [FORCE]"
-  short: "Eliminar un alcume rexistrado."
-  help: |-
-    Marca un alcume rexistrado para eliminalo ao rematar o período de graza; pódese
-    restaurar con RESTORE. Engade FORCE para eliminalo permanentemente. Non se poden
-    eliminar persoas usuarias Root, IRCops e servizos, nin o teu propio alcume.
-  force:
-    short: "Elimina permanentemente un alcume pendente de eliminación."
-  example: "%command_prefix%DROP CuentaAntigua"
-  examples:
-    - "%command_prefix%DROP CuentaAntigua FORCE"
-  suspended: "O alcume %nickname% está suspendido. Reactíveo primeiro."
-  forbidden: "O alcume %nickname% está prohibido."
-  cannot_drop_root: "Non se pode eliminar o usuario root %nickname%."
-  cannot_drop_oper: "Non se pode eliminar o operador de IRC %nickname%."
-  cannot_drop_self: "Non pode eliminar o seu propio alcume."
-  success: "O alcume %nickname% foi marcado para eliminación e pode ser restaurado durante o período de graza."
-  force_success: "O alcume %nickname% foi eliminado permanentemente."
-  pending_deletion: "O alcume %nickname% xa está pendente de eliminación. Use DROP <alcume> FORCE para eliminalo permanentemente."
-  cannot_drop_service: "Non se pode eliminar o alcume de servizo %nickname%."
-
-# --- RESTORE ---------------------------------------------------------------
-restore:
-  syntax: "RESTORE <alcume>"
-  short: "Restaurar un alcume pendente de eliminación."
-  help: |-
-    Restaura un alcume pendente de eliminación mentres siga dentro do período
-    de graza.
-  example: "%command_prefix%RESTORE CuentaAntigua"
-  success: "O alcume %nickname% foi restaurado."
-  not_pending_deletion: "O alcume %nickname% non está pendente de eliminación."
-
-# --- FORBID ----------------------------------------------------------------
-forbid:
-  syntax: "FORBID <alcume> <motivo>"
-  short: "Bloquear permanentemente un alcume para que non se poida usar."
-  help: |-
-    Prohibe permanentemente un alcume para que ninguén poida rexistralo nin usalo.
-    Se está rexistrado, elimínase; se está conectado, obrígaselle a cambiar a un
-    alcume aleatorio. Non se poden prohibir persoas usuarias Root, IRCops nin
-    servizos.
-  example: "%command_prefix%FORBID MalUsuario Infraccións reiteradas das normas"
-  success: "O alcume %nickname% foi prohibido."
-  updated: "O motivo de prohibición de %nickname% foi actualizado."
-  reason_required: "Debe proporcionar un motivo para a prohibición."
-  cannot_forbid_root: "Non se pode prohibir o usuario root %nickname%."
-  cannot_forbid_oper: "Non se pode prohibir o operador de IRC %nickname%."
-  cannot_forbid_service: "Non se pode prohibir o alcume de servizo %nickname%."
-
-# --- UNFORBID --------------------------------------------------------------
-unforbid:
-  syntax: "UNFORBID <alcume>"
-  short: "Eliminar unha prohibición de alcume."
-  help: "Retira a prohibición para que o alcume poida volver usarse."
-  example: "%command_prefix%UNFORBID AlcumeProhibido"
-  success: "O alcume %nickname% xa non está prohibido."
-  not_forbidden: "O alcume %nickname% non está prohibido."
-
-# --- FORBIDVHOST -----------------------------------------------------------
-forbidvhost:
-  syntax: "FORBIDVHOST {ADD <patrón>|DEL <patrón>|LIST}"
-  short: "Xestionar os patróns de vhost prohibidos."
-  help: |-
-    Xestiona os patróns que impiden establecer vhosts coincidentes con SET VHOST.
-    O comodín * coincide con calquera secuencia e ? cun carácter. Require
-    privilexios
-    de operador IRC.
-  example: "%command_prefix%FORBIDVHOST ADD *.pirata.com"
-  examples:
-    - "%command_prefix%FORBIDVHOST LIST"
-  unknown_sub: "Subcomando descoñecido %sub%. Use ADD, DEL ou LIST."
-
-  # --- FORBIDVHOST ADD -----------------------------------------------------
-  add:
-    syntax: "FORBIDVHOST ADD <patrón>"
-    short: "Engadir un patrón de vhost prohibido."
-    help: |-
-      Engade un patrón á lista. As persoas usuarias non poderán establecer vhosts
-      coincidentes mediante SET VHOST. * coincide con calquera secuencia e ? cun
-      carácter.
-    example: "%command_prefix%FORBIDVHOST ADD *.pirata.com"
-    done: "Patrón de vhost prohibido engadido: %pattern%"
-    already_exists: "O patrón %pattern% xa existe."
-    invalid: "Formato de patrón de vhost non válido."
-
-  # --- FORBIDVHOST DEL -----------------------------------------------------
-  del:
-    syntax: "FORBIDVHOST DEL <patrón>"
-    short: "Eliminar un patrón de vhost prohibido."
-    help: "Elimina un patrón da lista de vhosts prohibidos."
-    example: "%command_prefix%FORBIDVHOST DEL *.pirata.com"
-    done: "Patrón de vhost prohibido eliminado: %pattern%"
-    not_found: "Patrón %pattern% non atopado."
-
-  # --- FORBIDVHOST LIST ----------------------------------------------------
-  list:
-    short: "Listar todos os patróns de vhost prohibidos."
-    syntax: "FORBIDVHOST LIST"
-    help: "Amosa todos os patróns de vhost prohibidos."
-    example: "%command_prefix%FORBIDVHOST LIST"
-    header: "Patróns de vhost prohibidos (%count%):"
-    entry: "%index%. %pattern% — por %nickname% (%date%)"
-    empty: "Non hai patróns de vhost prohibidos."
+    - "%command_prefix%LIST Usuario* 2"
+  header: "Alcume | Rexistro | Última conexión | IP | Estado"
+  row: "%nickname% | %registered% | %last_seen% | %ip% | %status%"
+  empty: "Ningún alcume coincide co patrón %pattern%."
+  status_pending: "Pendente"
+  status_registered: "Rexistrado"
 
 # --- HISTORY ---
 history:
@@ -796,7 +566,116 @@ history.extra:
   new_email: "Novo correo-e: %value%"
   method: "Método: %value%"
 
-# --- NOEXPIRE --------------------------------------------------------------
+# --- SAREGISTER (IRCop) -------------------------------------------------------
+saregister:
+  syntax: "SAREGISTER <alcume> <contrasinal> [email]"
+  short: "Rexistrar administrativamente un alcume."
+  help: |-
+    Sintaxe: SAREGISTER <alcume> <contrasinal> [email]
+
+    Rexistra administrativamente un alcume de xeito inmediato sen requirir
+    verificación do cliente nin límites de frecuencia.
+
+    En modo TOKEN, o código de rescate móstrase unha vez ao operador.
+    En modo EMAIL, o código de rescate envíase ao enderezo de correo indicado.
+  example: "%command_prefix%SAREGISTER Alice Contrasinal123"
+  examples:
+    - "%command_prefix%SAREGISTER Bob Contrasinal456 bob@exemplo.gal"
+  success_token: "O alcume %nickname% foi rexistrado. Código de rescate: %token%"
+  success_email: "O alcume %nickname% foi rexistrado. Código de rescate enviado a %email%."
+  invalid_nickname: "Alcume non válido %nickname%."
+
+# --- SASET (IRCop) ------------------------------------------------------------
+saset:
+  syntax: "SASET <alcume> {PASSWORD <novo_contrasinal>|EMAIL <novo_correo>|LANGUAGE <código>|TIMEZONE {<fuso_horario>|OFF}|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
+  short: "Modificar a configuración doutro alcume."
+  help: |-
+    Permite a un IRCop cambiar a configuración doutro alcume rexistrado. Non
+    admite alcumes Root, IRCop nin de servizos.
+  example: "%command_prefix%SASET Usuario PRIVATE ON"
+  examples:
+    - "%command_prefix%SASET Usuario TIMEZONE OFF"
+  unknown_option: "Opción descoñecida %option%. Opcións dispoñibles: %options%."
+  cannot_modify_oper: "Non se pode modificar un alcume de Operador de IRC."
+
+  # --- SASET PASSWORD ------------------------------------------------------
+  password:
+    syntax: "SASET <alcume> PASSWORD <novo_contrasinal>"
+    short: "Cambiar o contrasinal dun alcume."
+    help: "Cambia o contrasinal doutro alcume. O cambio é inmediato."
+    example: "%command_prefix%SASET Usuario PASSWORD ChaveSegura123"
+
+  # --- SASET EMAIL ---------------------------------------------------------
+  email:
+    syntax: "SASET <alcume> EMAIL <novo_correo>"
+    short: "Cambiar o correo electrónico dun alcume."
+    help: |-
+      Cambia o correo electrónico doutro alcume. O cambio é inmediato e non require
+      o token de rescate nin envía un correo de confirmación.
+      BADMAIL non restrinxe este cambio administrativo de correo.
+    example: "%command_prefix%SASET Usuario EMAIL usuario@exemplo.com"
+
+  # --- SASET LANGUAGE ------------------------------------------------------
+  language:
+    syntax: "SASET <alcume> LANGUAGE <código>"
+    short: "Cambiar o idioma dun alcume."
+    help: |-
+      Cambia o idioma doutro alcume. Neste comando están dispoñibles en (inglés)
+      e es (castelán).
+    example: "%command_prefix%SASET Usuario LANGUAGE es"
+
+  # --- SASET TIMEZONE ------------------------------------------------------
+  timezone:
+    syntax: "SASET <alcume> TIMEZONE {<fuso_horario>|OFF}"
+    short: "Cambiar o fuso horario dun alcume."
+    help: "Establece ou elimina o fuso horario doutro alcume. Usa OFF para eliminalo."
+    example: "%command_prefix%SASET Usuario TIMEZONE Europe/Madrid"
+    examples:
+      - "%command_prefix%SASET Usuario TIMEZONE OFF"
+
+  # --- SASET PRIVATE -------------------------------------------------------
+  private:
+    syntax: "SASET <alcume> PRIVATE {ON|OFF}"
+    short: "Cambiar a privacidade dun alcume."
+    help: "Activa ou desactiva a privacidade da información doutro alcume."
+    example: "%command_prefix%SASET Usuario PRIVATE ON"
+    examples:
+      - "%command_prefix%SASET Usuario PRIVATE OFF"
+
+  # --- SASET MSG -----------------------------------------------------------
+  msg:
+    syntax: "SASET <alcume> MSG {ON|OFF}"
+    short: "Cambiar a preferencia de mensaxes dun alcume."
+    help: "Establece se outro alcume recibe respostas como PRIVMSG (ON) ou NOTICE (OFF)."
+    example: "%command_prefix%SASET Usuario MSG ON"
+    examples:
+      - "%command_prefix%SASET Usuario MSG OFF"
+
+  # --- SASET VHOST ---------------------------------------------------------
+  vhost:
+    syntax: "SASET <alcume> VHOST [vhost]"
+    short: "Cambiar o host virtual dun alcume."
+    help: |-
+      Establece ou elimina o host virtual doutro alcume. Executa SASET <alcume> VHOST
+      sen valor para eliminalo.
+    example: "%command_prefix%SASET Usuario VHOST usuario.exemplo.org"
+    examples:
+      - "%command_prefix%SASET Usuario VHOST"
+
+# --- RENAME (IRCop) -----------------------------------------------------------
+rename:
+  syntax: "RENAME <alcume>"
+  short: "Forzar o renomeado dun alcume conectado a un alcume aleatorio."
+  help: |-
+    Obriga un alcume conectado a cambiar a un nome aleatorio cun prefixo definido
+    pola rede.
+  example: "%command_prefix%RENAME Problematico"
+  cannot_rename_root: "Non se pode renomear o usuario root %nickname%."
+  cannot_rename_oper: "Non se pode renomear o operador de IRC %nickname%."
+  cannot_rename_service: "Non se pode renomear o alcume de servizo %nickname%."
+  success: "O alcume %nickname% foi renomeado a %new_nick%."
+
+# --- NOEXPIRE (IRCop) ---------------------------------------------------------
 noexpire:
   syntax: "NOEXPIRE <alcume> {ON|OFF}"
   short: "Establecer ou eliminar a protección contra caducidade dun alcume."
@@ -811,23 +690,7 @@ noexpire:
   forbidden: "O alcume %nickname% está prohibido."
   suspended: "O alcume %nickname% está suspendido."
 
-# --- LIST ------------------------------------------------------------------
-list:
-  syntax: "LIST <patrón> [páxina]"
-  short: "Lista alcumes rexistrados que coinciden cun patrón."
-  help: |-
-    Lista os alcumes rexistrados que coinciden co patrón. O comodín * coincide con
-    calquera secuencia de caracteres; a páxina opcional comeza en 1.
-  example: "%command_prefix%LIST Usuario*"
-  examples:
-    - "%command_prefix%LIST Usuario* 2"
-  header: "Alcume | Rexistro | Última conexión | IP | Estado"
-  row: "%nickname% | %registered% | %last_seen% | %ip% | %status%"
-  empty: "Ningún alcume coincide co patrón %pattern%."
-  status_pending: "Pendente"
-  status_registered: "Rexistrado"
-
-# --- REGMODE ---------------------------------------------------------------
+# --- REGMODE (IRCop) ----------------------------------------------------------
 regmode:
   syntax: "REGMODE {EMAIL|TOKEN|STATUS}"
   short: "Administrar o modo de rexistro da rede."
@@ -849,7 +712,145 @@ regmode:
   status: "Modo de rexistro actual: %mode%."
   changed: "Modo de rexistro cambiado a %mode%."
 
-# --- RESCUE ----------------------------------------------------------------
+# --- SUSPEND (IRCop) ----------------------------------------------------------
+suspend:
+  syntax: "SUSPEND <alcume> <duración> <motivo>"
+  short: "Suspender un alcume."
+  help: |-
+    Impide que a persoa propietaria se identifique. A duración pode expresarse en
+    días (d), horas (h), minutos (m) ou 0 para unha suspensión permanente. Non se
+    poden suspender operadores IRC nin persoas usuarias Root.
+  example: "%command_prefix%SUSPEND MalUsuario 7d Spam en #axuda"
+  examples:
+    - "%command_prefix%SUSPEND Problematico 0 Evasión de prohibición"
+  success: "O alcume %nickname% foi suspendido ata %duration%."
+  already_suspended: "O alcume %nickname% xa está suspendido."
+  forbidden: "O alcume %nickname% está prohibido e non se pode suspender."
+  cannot_suspend_oper: "Non se pode suspender o operador de IRC %nickname%."
+  cannot_suspend_root: "Non se pode suspender o usuario root %nickname%."
+  cannot_suspend_service: "Non se pode suspender o alcume de servizo %nickname%."
+  invalid_duration: "Duración non válida. Use: %duration_format% (p.ex., 7d, 12h, 30m) ou %permanent% para permanente."
+  invalid_duration_format: "<d><h><m>"
+  invalid_duration_permanent: "0"
+
+# --- UNSUSPEND (IRCop) --------------------------------------------------------
+unsuspend:
+  syntax: "UNSUSPEND <alcume>"
+  short: "Eliminar a suspensión dun alcume."
+  help: |-
+    Retira unha suspensión activa para que a persoa propietaria poida volver
+    a identificarse.
+  example: "%command_prefix%UNSUSPEND Usuario"
+  success: "A suspensión foi levantada de %nickname%."
+  not_suspended: "O alcume %nickname% non está suspendido."
+
+# --- FORBID (IRCop) -----------------------------------------------------------
+forbid:
+  syntax: "FORBID <alcume> <motivo>"
+  short: "Bloquear permanentemente un alcume para que non se poida usar."
+  help: |-
+    Prohibe permanentemente un alcume para que ninguén poida rexistralo nin usalo.
+    Se está rexistrado, elimínase; se está conectado, obrígaselle a cambiar a un
+    alcume aleatorio. Non se poden prohibir persoas usuarias Root, IRCops nin
+    servizos.
+  example: "%command_prefix%FORBID MalUsuario Infraccións reiteradas das normas"
+  success: "O alcume %nickname% foi prohibido."
+  updated: "O motivo de prohibición de %nickname% foi actualizado."
+  reason_required: "Debe proporcionar un motivo para a prohibición."
+  cannot_forbid_root: "Non se pode prohibir o usuario root %nickname%."
+  cannot_forbid_oper: "Non se pode prohibir o operador de IRC %nickname%."
+  cannot_forbid_service: "Non se pode prohibir o alcume de servizo %nickname%."
+
+# --- UNFORBID (IRCop) ---------------------------------------------------------
+unforbid:
+  syntax: "UNFORBID <alcume>"
+  short: "Eliminar unha prohibición de alcume."
+  help: "Retira a prohibición para que o alcume poida volver usarse."
+  example: "%command_prefix%UNFORBID AlcumeProhibido"
+  success: "O alcume %nickname% xa non está prohibido."
+  not_forbidden: "O alcume %nickname% non está prohibido."
+
+# --- FORBIDVHOST (IRCop) ------------------------------------------------------
+forbidvhost:
+  syntax: "FORBIDVHOST {ADD <patrón>|DEL <patrón>|LIST}"
+  short: "Xestionar os patróns de vhost prohibidos."
+  help: |-
+    Xestiona os patróns que impiden establecer vhosts coincidentes con SET VHOST.
+    O comodín * coincide con calquera secuencia e ? cun carácter. Require
+    privilexios
+    de operador IRC.
+  example: "%command_prefix%FORBIDVHOST ADD *.pirata.com"
+  examples:
+    - "%command_prefix%FORBIDVHOST LIST"
+  unknown_sub: "Subcomando descoñecido %sub%. Use ADD, DEL ou LIST."
+
+  # --- FORBIDVHOST ADD -----------------------------------------------------
+  add:
+    syntax: "FORBIDVHOST ADD <patrón>"
+    short: "Engadir un patrón de vhost prohibido."
+    help: |-
+      Engade un patrón á lista. As persoas usuarias non poderán establecer vhosts
+      coincidentes mediante SET VHOST. * coincide con calquera secuencia e ? cun
+      carácter.
+    example: "%command_prefix%FORBIDVHOST ADD *.pirata.com"
+    done: "Patrón de vhost prohibido engadido: %pattern%"
+    already_exists: "O patrón %pattern% xa existe."
+    invalid: "Formato de patrón de vhost non válido."
+
+  # --- FORBIDVHOST DEL -----------------------------------------------------
+  del:
+    syntax: "FORBIDVHOST DEL <patrón>"
+    short: "Eliminar un patrón de vhost prohibido."
+    help: "Elimina un patrón da lista de vhosts prohibidos."
+    example: "%command_prefix%FORBIDVHOST DEL *.pirata.com"
+    done: "Patrón de vhost prohibido eliminado: %pattern%"
+    not_found: "Patrón %pattern% non atopado."
+
+  # --- FORBIDVHOST LIST ----------------------------------------------------
+  list:
+    short: "Listar todos os patróns de vhost prohibidos."
+    syntax: "FORBIDVHOST LIST"
+    help: "Amosa todos os patróns de vhost prohibidos."
+    example: "%command_prefix%FORBIDVHOST LIST"
+    header: "Patróns de vhost prohibidos (%count%):"
+    entry: "%index%. %pattern% — por %nickname% (%date%)"
+    empty: "Non hai patróns de vhost prohibidos."
+
+# --- DROP (IRCop) -------------------------------------------------------------
+drop:
+  syntax: "DROP <alcume> [FORCE]"
+  short: "Eliminar un alcume rexistrado."
+  help: |-
+    Marca un alcume rexistrado para eliminalo ao rematar o período de graza; pódese
+    restaurar con RESTORE. Engade FORCE para eliminalo permanentemente. Non se poden
+    eliminar persoas usuarias Root, IRCops e servizos, nin o teu propio alcume.
+  force:
+    short: "Elimina permanentemente un alcume pendente de eliminación."
+  example: "%command_prefix%DROP CuentaAntigua"
+  examples:
+    - "%command_prefix%DROP CuentaAntigua FORCE"
+  suspended: "O alcume %nickname% está suspendido. Reactíveo primeiro."
+  forbidden: "O alcume %nickname% está prohibido."
+  cannot_drop_root: "Non se pode eliminar o usuario root %nickname%."
+  cannot_drop_oper: "Non se pode eliminar o operador de IRC %nickname%."
+  cannot_drop_self: "Non pode eliminar o seu propio alcume."
+  success: "O alcume %nickname% foi marcado para eliminación e pode ser restaurado durante o período de graza."
+  force_success: "O alcume %nickname% foi eliminado permanentemente."
+  pending_deletion: "O alcume %nickname% xa está pendente de eliminación. Use DROP <alcume> FORCE para eliminalo permanentemente."
+  cannot_drop_service: "Non se pode eliminar o alcume de servizo %nickname%."
+
+# --- RESTORE (IRCop) ----------------------------------------------------------
+restore:
+  syntax: "RESTORE <alcume>"
+  short: "Restaurar un alcume pendente de eliminación."
+  help: |-
+    Restaura un alcume pendente de eliminación mentres siga dentro do período
+    de graza.
+  example: "%command_prefix%RESTORE CuentaAntigua"
+  success: "O alcume %nickname% foi restaurado."
+  not_pending_deletion: "O alcume %nickname% non está pendente de eliminación."
+
+# --- RESCUE -------------------------------------------------------------------
 rescue:
   issued: |-
     Token de rescate: %token_display%
@@ -877,7 +878,7 @@ rescue:
   replacement_unavailable: "O contrasinal restableceuse, pero non se puido emitir un token novo. O actual segue sendo válido."
   temporarily_unavailable: "A entrega do token de recuperación non está dispoñible temporalmente. Téntao máis tarde."
 
-# --- HELP FRAGMENTS ---------------------------------------------------------
+# --- HELP FRAGMENTS -----------------------------------------------------------
 help_fragments:
   identify_help_0: "+r"
   set_language_help_0: "ca"

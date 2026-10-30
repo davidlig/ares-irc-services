@@ -16,13 +16,13 @@
 # Exemples HELP: example/examples i %command_prefix%.
 # El presentador afegeix /msg sense color i un marge de dos espais.
 
-# --- ERROR -----------------------------------------------------------------
+# --- ERROR --------------------------------------------------------------------
 error:
   invalid_channel: "Nom de canal no vàlid. Utilitzeu %example%."
   invalid_channel_example: "#channel"
   generic: "S'ha produït un error. Torneu-ho a provar."
 
-# --- REGISTER --------------------------------------------------------------
+# --- REGISTER -----------------------------------------------------------------
 register:
   syntax: "REGISTER <#channel> <description>"
   example: "%command_prefix%REGISTER #canal Projecte comunitari"
@@ -43,102 +43,7 @@ register:
   restricted_indefinite: "Les noves sol·licituds per a %channel% estan bloquejades indefinidament."
   restricted_until: "Les noves sol·licituds per a %channel% estan bloquejades fins a %date%"
 
-# --- SAREGISTER ------------------------------------------------------------
-saregister:
-  syntax: "SAREGISTER <#channel> <nickname> <description>"
-  short: "Registrar administrativament un canal."
-  help: |-
-    Sintaxi: SAREGISTER <#channel> <nickname> <description>
-
-    Registra administrativament un canal immediatament per al sobrenom
-    especificat com a fundador sense requerir presència, verificació ni límits de freqüència.
-  example: "%command_prefix%SAREGISTER #channel Alicia Canal comunitari"
-  success: "El canal %channel% ha estat registrat per a %founder%."
-
-# --- REGMODE ---------------------------------------------------------------
-regmode:
-  syntax: "REGMODE {DIRECT|APPROVAL|STATUS}"
-  example: "%command_prefix%REGMODE APPROVAL"
-  short: "Establir o consultar el mode de registre del canal."
-  help: |-
-    Estableix el registre com a DIRECT o APPROVAL, o consulta STATUS.
-    DIRECT és el mode per defecte i manté el registre immediat.
-  status: "El mode de registre del canal és %mode%."
-  changed: "El mode de registre del canal ara és %mode%."
-
-# --- CREG ------------------------------------------------------------------
-creg:
-  syntax: "CREG {PENDING [page]|ACCEPT <#channel>|REJECT <#channel> <raó>}"
-  pending.syntax: "CREG PENDING [page]"
-  pending.example: "%command_prefix%CREG PENDING"
-  pending.short: "Llista les sol·licituds pendents en una pàgina limitada."
-  pending.help: "Mostra les sol·licituds pendents en una pàgina limitada."
-  accept.syntax: "CREG ACCEPT <#channel>"
-  accept.example: "%command_prefix%CREG ACCEPT #channel"
-  accept.short: "Aprova una sol·licitud de registre de canal."
-  accept.help: "Torna a validar el sol·licitant i activa el registre pendent."
-  reject.syntax: "CREG REJECT <#channel> <raó>"
-  reject.example: "%command_prefix%CREG REJECT #channel Necessita un tema públic"
-  reject.short: "Rebutja una sol·licitud de registre de canal."
-  reject.help: "Rebutja una sol·licitud amb un raó obligatori i una restricció."
-  example: "%command_prefix%CREG PENDING"
-  short: "Revisar les sol·licituds de registre de canals."
-  help: |-
-    Llista les sol·licituds pendents, o n’accepta o rebutja una.
-    Els rebutjos requereixen un motiu. Només ACCEPT registra el canal.
-  pending_header: "Registres pendents (pàgina %page%)"
-  pending_item: "%channel% — sol·licitant %requester%, enviada %submitted%: %description%"
-  accepted: "El registre de %channel% ha estat aprovat."
-  rejected: "El registre de %channel% ha estat rebutjat."
-  not_pending: "El canal %channel% no té cap registre pendent."
-  channel_not_on_network: "El canal %channel% no és a la xarxa."
-  founder_limit: "El sol·licitant ha assolit el límit de canals registrats."
-  requester_inactive: "El compte sol·licitant ja no és actiu."
-  requester_ineligible: "El sol·licitant ha de tenir actualment estat d’operador al canal."
-
-# --- STATUS ----------------------------------------------------------------
-status:
-  syntax: "STATUS <#channel>"
-  example: "%command_prefix%STATUS #channel"
-  header: "Estat del canal %channel%"
-  short: "Mostra l’estat del registre del canal."
-  help: |-
-    Mostra si un canal no està registrat, espera aprovació, ha estat
-    rebutjat o està registrat.
-    Els detalls del rebuig només són visibles per al sol·licitant i els
-    IRCops autoritzats.
-  unregistered: "%label%%padding%: No registrat"
-  unregistered_label: "Estat"
-  pending: "%label%%padding%: %state%"
-  pending_label: "Estat"
-  pending_value: "Pendent d’aprovació"
-  registered: "%label%%padding%: %state%"
-  registered_label: "Estat"
-  registered_value: "Registrat"
-  suspended: "%label%%padding%: %state%"
-  suspended_label: "Estat"
-  suspended_value: "Suspès"
-  forbidden: "%label%%padding%: %state%"
-  forbidden_label: "Estat"
-  forbidden_value: "Prohibit"
-  pending_deletion: "%label%%padding%: %state%"
-  pending_deletion_label: "Estat"
-  pending_deletion_value: "Pendent d’eliminació"
-  rejected_private: "%label%%padding%: %state%"
-  rejected_private_label: "Estat"
-  rejected_private_value: "Registre rebutjat"
-  rejected: "%label%%padding%: %state%"
-  rejected_label: "Estat"
-  rejected_value: "Registre rebutjat"
-  rejection_reason: "%label%%padding%: %reason%"
-  rejection_reason_label: "Motiu"
-  rejection_audit: "%label%%padding%: %operator% el %date%"
-  rejection_audit_label: "Rebutjat per"
-  restriction_until: "%label%%padding%: %date%"
-  restriction_until_label: "Disponible a partir del"
-  footer: ""
-
-# --- INFO ------------------------------------------------------------------
+# --- INFO ---------------------------------------------------------------------
 info:
   syntax: "INFO <#channel>"
   example: "%command_prefix%INFO #canal"
@@ -196,72 +101,7 @@ info:
   pending_deletion_until_label: "Elim. definitiva"
   pending_deletion_notice: "Aquest canal està congelat i no pot ser registrat."
 
-# --- HELP ------------------------------------------------------------------
-help:
-  examples_header: "Exemples:"
-  syntax: "HELP [ordre] [opció]"
-  example: "%command_prefix%HELP"
-  examples:
-    - "%command_prefix%HELP SET"
-    - "%command_prefix%HELP SET EMAIL"
-  short: "Llistar les ordres o mostrar l'ajuda d'una ordre."
-  help: "Mostra les ordres disponibles i l'ajuda detallada de les seves opcions."
-  header_title: "%bot%"
-  header: "%title% %separator%"
-  intro: |-
-    Permet registrar i administrar canals, configurar-ne les opcions i controlar
-    qui hi pot accedir. Gestiona els nivells d'accés i els privilegis dels usuaris
-    perquè els responsables mantinguin el control del canal.
-  general_header: "Comandes disponibles:"
-  command_line: "%command%%description%"
-  subcommand_line: "%command%%description%"
-  options_header: "Opcions:"
-  general_footer: "Fes servir /msg %bot% %help% per obtenir més informació."
-  general_footer_command: "HELP <comanda>"
-  set_sub_footer: "Fes servir /msg %bot% %help% per obtenir més informació."
-  set_sub_footer_command: "HELP %command% <opció>"
-  syntax_label: "Sintaxi: %syntax%"
-  footer: ""
-  intro_expiration: "NOTA: Els canals inactius més de %period% s'esborren."
-  intro_expiration_period: "%days% dies"
-  group_header: "%group%"
-  subgroup_header: "%group%"
-  group:
-    registration_info: "Registre i informació"
-    access_levels: "Accés i nivells"
-    ranks_entry: "Rangs i entrada"
-  ircop_group:
-    channel_operations: "Operacions del canal"
-    channel_management: "Gestió del canal"
-    deletion: "Eliminació i restauració"
-    restrictions: "Restriccions"
-    lookup: "Consulta i investigació"
-    registration_approval: "Aprovació del registre"
-  ircop_header: "Comandes disponibles per als IRCops:"
-
-# --- OP --------------------------------------------------------------------
-op:
-  syntax: "OP <#channel> <nickname>"
-  example: "%command_prefix%OP #canal Alícia"
-  short: "Donar el mode d'operador de canal."
-  help: "Donar el mode d'operador de canal."
-  done: "A %nickname% se li ha donat l'estat d'operador de canal."
-  user_not_on_channel: "El sobrenom %nickname% no és a la xarxa."
-  notice_grant: "%from% dona %mode% a %to%"
-
-# --- DEOP ------------------------------------------------------------------
-deop:
-  syntax: "DEOP <#channel> <nickname>"
-  example: "%command_prefix%DEOP #canal Alícia"
-  short: "Treure el mode d'operador de canal."
-  help: "Treure el mode d'operador de canal."
-  done: "A %nickname% se li ha tret l'op."
-
-# --- SECURE ----------------------------------------------------------------
-secure:
-  requires_min_level: "Amb SECURE activat, %nickname% ha de tenir almenys el nivell %level% per rebre %mode%."
-
-# --- SET -------------------------------------------------------------------
+# --- SET ----------------------------------------------------------------------
 set:
   syntax: "SET <#channel> {FOUNDER <sobrenom> [token]|SUCCESSOR [nickname]|DESC <description>|URL [url]|EMAIL [correu]|ENTRYMSG [missatge]|TOPICLOCK {ON|OFF}|MLOCK {ON|OFF}|PRIVATE {ON|OFF}|SECURE {ON|OFF}}"
   example: "%command_prefix%SET #canal DESC Un canal comunitari"
@@ -416,7 +256,49 @@ set:
     notice_on: "%nickname% activa el mode SECURE."
     notice_off: "%nickname% desactiva el mode SECURE."
 
-# --- ACCESS ----------------------------------------------------------------
+# --- STATUS -------------------------------------------------------------------
+status:
+  syntax: "STATUS <#channel>"
+  example: "%command_prefix%STATUS #channel"
+  header: "Estat del canal %channel%"
+  short: "Mostra l’estat del registre del canal."
+  help: |-
+    Mostra si un canal no està registrat, espera aprovació, ha estat
+    rebutjat o està registrat.
+    Els detalls del rebuig només són visibles per al sol·licitant i els
+    IRCops autoritzats.
+  unregistered: "%label%%padding%: No registrat"
+  unregistered_label: "Estat"
+  pending: "%label%%padding%: %state%"
+  pending_label: "Estat"
+  pending_value: "Pendent d’aprovació"
+  registered: "%label%%padding%: %state%"
+  registered_label: "Estat"
+  registered_value: "Registrat"
+  suspended: "%label%%padding%: %state%"
+  suspended_label: "Estat"
+  suspended_value: "Suspès"
+  forbidden: "%label%%padding%: %state%"
+  forbidden_label: "Estat"
+  forbidden_value: "Prohibit"
+  pending_deletion: "%label%%padding%: %state%"
+  pending_deletion_label: "Estat"
+  pending_deletion_value: "Pendent d’eliminació"
+  rejected_private: "%label%%padding%: %state%"
+  rejected_private_label: "Estat"
+  rejected_private_value: "Registre rebutjat"
+  rejected: "%label%%padding%: %state%"
+  rejected_label: "Estat"
+  rejected_value: "Registre rebutjat"
+  rejection_reason: "%label%%padding%: %reason%"
+  rejection_reason_label: "Motiu"
+  rejection_audit: "%label%%padding%: %operator% el %date%"
+  rejection_audit_label: "Rebutjat per"
+  restriction_until: "%label%%padding%: %date%"
+  restriction_until_label: "Disponible a partir del"
+  footer: ""
+
+# --- ACCESS -------------------------------------------------------------------
 access:
   syntax: "ACCESS <#channel> {ADD <nickname> <level>|DEL <nickname>|LIST}"
   example: "%command_prefix%ACCESS #canal LIST"
@@ -460,7 +342,7 @@ access:
     done: "%nickname% tret de la llista d'accés."
     notice_channel: "%from% treu %to% de la llista d'accés"
 
-# --- DELACCESS -------------------------------------------------------------
+# --- DELACCESS ----------------------------------------------------------------
 delaccess:
   syntax: "DELACCESS <#channel>"
   example: "%command_prefix%DELACCESS #canal"
@@ -473,125 +355,7 @@ delaccess:
   founder_not_in_access: "Sou el fundador de %channel% i no sou a la llista d'accés."
   notice_channel: "%nickname% treu el seu accés del canal"
 
-# --- LEVELS ----------------------------------------------------------------
-levels:
-  syntax: "LEVELS <#channel> {LIST|SET <level> <value>|RESET}"
-  example: "%command_prefix%LEVELS #canal LIST"
-  examples:
-    - "%command_prefix%LEVELS #canal SET OPDEOP 50"
-    - "%command_prefix%LEVELS #canal RESET"
-  short: "Configurar els nivells del canal."
-  help: |-
-    Configura els nivells mínims d'accés per a les accions del canal. Només el
-    fundador pot canviar o restablir els nivells.
-  unknown_sub: "Subordre desconeguda %sub%. Utilitzeu LIST, SET, o RESET."
-  unknown_key: "Clau de nivell desconeguda %key% o no compatible amb aquest IRCd."
-  value_range: "El valor del nivell ha d'estar entre %min% i %max%."
-
-  # --- LEVELS LIST ---------------------------------------------------------
-  list:
-    syntax: "LEVELS <#channel> LIST"
-    example: "%command_prefix%LEVELS #canal LIST"
-    short: "Llistar els requisits de nivell."
-    help: |-
-      Mostra cada clau de nivell i el seu valor (el
-      predeterminat si no s'ha establert).
-    header: "Nivells de %channel%"
-
-  # --- LEVELS SET ----------------------------------------------------------
-  set:
-    syntax: "LEVELS <#channel> SET <level> <value>"
-    example: "%command_prefix%LEVELS #canal SET OPDEOP 50"
-    short: "Establir un requisit de nivell."
-    help: "Valor -1 a 499. Només el fundador."
-    done: "%key% establert a %value%."
-
-  # --- LEVELS RESET --------------------------------------------------------
-  reset:
-    syntax: "LEVELS <#channel> RESET"
-    example: "%command_prefix%LEVELS #canal RESET"
-    short: "Restablir tots els nivells als valors predeterminats."
-    help: "Treu totes les modificacions. Només el fundador."
-    done: "Tots els nivells restablerts als valors predeterminats."
-
-# --- VOICE -----------------------------------------------------------------
-voice:
-  syntax: "VOICE <#channel> <nickname>"
-  example: "%command_prefix%VOICE #canal Alícia"
-  short: "Donar el mode de veu al canal."
-  help: "Donar el mode de veu al canal."
-  done: "A %nickname% se li ha donat veu."
-  user_not_on_channel: "El sobrenom %nickname% no és a la xarxa."
-  notice_grant: "%from% dona %mode% a %to%"
-
-# --- DEVOICE ---------------------------------------------------------------
-devoice:
-  syntax: "DEVOICE <#channel> <nickname>"
-  example: "%command_prefix%DEVOICE #canal Alícia"
-  short: "Treure el mode de veu al canal."
-  help: "Treure el mode de veu al canal."
-  done: "A %nickname% se li ha tret la veu."
-
-# --- UNBAN -----------------------------------------------------------------
-unban:
-  syntax: "UNBAN <#channel>"
-  example: "%command_prefix%UNBAN #canal"
-  short: "Retirar els bans que t’afecten."
-  help: "Retira tots els bans del canal que coincideixen amb la teva identitat actual, inclosos comodins i màscares IP/CIDR."
-  done: "S’han retirat %count% ban(s) que t’afecten a %channel%"
-  notice_channel: "%nickname% ha utilitzat UNBAN."
-  no_matches: "Cap ban coincideix amb la teva identitat a %channel%"
-  unavailable: "No s’han pogut determinar els bans que et corresponen; no s’ha canviat res."
-  not_on_network: "El canal %channel% no és a la xarxa."
-
-# --- INVITE ----------------------------------------------------------------
-invite:
-  syntax: "INVITE <#channel>"
-  example: "%command_prefix%INVITE #canal"
-  short: "Convidar-vos al canal."
-  help: "Convidar-vos al canal."
-  done: "Heu estat convidat a %channel%."
-  notice_channel: "%nickname% es convida al canal."
-
-# --- ADMIN -----------------------------------------------------------------
-admin:
-  syntax: "ADMIN <#channel> <nickname>"
-  example: "%command_prefix%ADMIN #canal Alícia"
-  short: "Donar el mode d'administrador de canal."
-  help: "Donar el mode d'administrador de canal. Només si l'IRCd admet +a."
-  done: "A %nickname% se li ha donat administrador de canal."
-  user_not_on_channel: "El sobrenom %nickname% no és a la xarxa."
-  notice_grant: "%from% dona %mode% a %to%"
-  not_supported: "Aquesta xarxa no admet el mode d'administrador de canal (+a)."
-
-# --- DEADMIN ---------------------------------------------------------------
-deadmin:
-  syntax: "DEADMIN <#channel> <nickname>"
-  example: "%command_prefix%DEADMIN #canal Alícia"
-  short: "Treure el mode d'administrador de canal."
-  help: "Treure el mode d'administrador de canal."
-  done: "A %nickname% se li ha tret l'admin."
-
-# --- HALFOP ----------------------------------------------------------------
-halfop:
-  syntax: "HALFOP <#channel> <nickname>"
-  example: "%command_prefix%HALFOP #canal Alícia"
-  short: "Donar el mode de semioperador al canal."
-  help: "Donar el mode de semioperador al canal. Només si l'IRCd admet +h."
-  done: "A %nickname% se li ha donat halfop."
-  user_not_on_channel: "El sobrenom %nickname% no és a la xarxa."
-  notice_grant: "%from% dona %mode% a %to%"
-  not_supported: "Aquesta xarxa no admet el mode de semioperador (+h)."
-
-# --- DEHALFOP --------------------------------------------------------------
-dehalfop:
-  syntax: "DEHALFOP <#channel> <nickname>"
-  example: "%command_prefix%DEHALFOP #canal Alícia"
-  short: "Treure el mode de semioperador al canal."
-  help: "Treure el mode de semioperador al canal."
-  done: "A %nickname% se li ha tret el halfop."
-
-# --- AKICK -----------------------------------------------------------------
+# --- AKICK --------------------------------------------------------------------
 akick:
   syntax: "AKICK <#channel> {ADD <mask> [expiry] [motiu]|DEL {<mask>|<number>}|LIST}"
   example: "%command_prefix%AKICK #canal ADD *!*@* 0"
@@ -646,18 +410,250 @@ akick:
     empty: "El canal %channel% no té cap entrada AKICK."
     entry: "#%index% %mask% %reason% (per %nickname%, expira: %expiration%)"
 
-# --- RESTORE ---------------------------------------------------------------
-restore:
-  syntax: "RESTORE <#channel>"
-  example: "%command_prefix%RESTORE #canal"
-  short: "Restaurar un canal pendent d'eliminació."
+# --- LEVELS -------------------------------------------------------------------
+levels:
+  syntax: "LEVELS <#channel> {LIST|SET <level> <value>|RESET}"
+  example: "%command_prefix%LEVELS #canal LIST"
+  examples:
+    - "%command_prefix%LEVELS #canal SET OPDEOP 50"
+    - "%command_prefix%LEVELS #canal RESET"
+  short: "Configurar els nivells del canal."
   help: |-
-    Restaura un canal eliminat manualment que encara es troba dins del període de
-    marge.
-  success: "El canal %channel% ha estat restaurat."
-  not_pending_deletion: "El canal %channel% no està pendent d'eliminació."
+    Configura els nivells mínims d'accés per a les accions del canal. Només el
+    fundador pot canviar o restablir els nivells.
+  unknown_sub: "Subordre desconeguda %sub%. Utilitzeu LIST, SET, o RESET."
+  unknown_key: "Clau de nivell desconeguda %key% o no compatible amb aquest IRCd."
+  value_range: "El valor del nivell ha d'estar entre %min% i %max%."
 
-# --- DROP ------------------------------------------------------------------
+  # --- LEVELS LIST ---------------------------------------------------------
+  list:
+    syntax: "LEVELS <#channel> LIST"
+    example: "%command_prefix%LEVELS #canal LIST"
+    short: "Llistar els requisits de nivell."
+    help: |-
+      Mostra cada clau de nivell i el seu valor (el
+      predeterminat si no s'ha establert).
+    header: "Nivells de %channel%"
+
+  # --- LEVELS SET ----------------------------------------------------------
+  set:
+    syntax: "LEVELS <#channel> SET <level> <value>"
+    example: "%command_prefix%LEVELS #canal SET OPDEOP 50"
+    short: "Establir un requisit de nivell."
+    help: "Valor -1 a 499. Només el fundador."
+    done: "%key% establert a %value%."
+
+  # --- LEVELS RESET --------------------------------------------------------
+  reset:
+    syntax: "LEVELS <#channel> RESET"
+    example: "%command_prefix%LEVELS #canal RESET"
+    short: "Restablir tots els nivells als valors predeterminats."
+    help: "Treu totes les modificacions. Només el fundador."
+    done: "Tots els nivells restablerts als valors predeterminats."
+
+# --- INVITE -------------------------------------------------------------------
+invite:
+  syntax: "INVITE <#channel>"
+  example: "%command_prefix%INVITE #canal"
+  short: "Convidar-vos al canal."
+  help: "Convidar-vos al canal."
+  done: "Heu estat convidat a %channel%."
+  notice_channel: "%nickname% es convida al canal."
+
+# --- UNBAN --------------------------------------------------------------------
+unban:
+  syntax: "UNBAN <#channel>"
+  example: "%command_prefix%UNBAN #canal"
+  short: "Retirar els bans que t’afecten."
+  help: "Retira tots els bans del canal que coincideixen amb la teva identitat actual, inclosos comodins i màscares IP/CIDR."
+  done: "S’han retirat %count% ban(s) que t’afecten a %channel%"
+  notice_channel: "%nickname% ha utilitzat UNBAN."
+  no_matches: "Cap ban coincideix amb la teva identitat a %channel%"
+  unavailable: "No s’han pogut determinar els bans que et corresponen; no s’ha canviat res."
+  not_on_network: "El canal %channel% no és a la xarxa."
+
+# --- ADMIN --------------------------------------------------------------------
+admin:
+  syntax: "ADMIN <#channel> <nickname>"
+  example: "%command_prefix%ADMIN #canal Alícia"
+  short: "Donar el mode d'administrador de canal."
+  help: "Donar el mode d'administrador de canal. Només si l'IRCd admet +a."
+  done: "A %nickname% se li ha donat administrador de canal."
+  user_not_on_channel: "El sobrenom %nickname% no és a la xarxa."
+  notice_grant: "%from% dona %mode% a %to%"
+  not_supported: "Aquesta xarxa no admet el mode d'administrador de canal (+a)."
+
+# --- DEADMIN ------------------------------------------------------------------
+deadmin:
+  syntax: "DEADMIN <#channel> <nickname>"
+  example: "%command_prefix%DEADMIN #canal Alícia"
+  short: "Treure el mode d'administrador de canal."
+  help: "Treure el mode d'administrador de canal."
+  done: "A %nickname% se li ha tret l'admin."
+
+# --- OP -----------------------------------------------------------------------
+op:
+  syntax: "OP <#channel> <nickname>"
+  example: "%command_prefix%OP #canal Alícia"
+  short: "Donar el mode d'operador de canal."
+  help: "Donar el mode d'operador de canal."
+  done: "A %nickname% se li ha donat l'estat d'operador de canal."
+  user_not_on_channel: "El sobrenom %nickname% no és a la xarxa."
+  notice_grant: "%from% dona %mode% a %to%"
+
+# --- DEOP ---------------------------------------------------------------------
+deop:
+  syntax: "DEOP <#channel> <nickname>"
+  example: "%command_prefix%DEOP #canal Alícia"
+  short: "Treure el mode d'operador de canal."
+  help: "Treure el mode d'operador de canal."
+  done: "A %nickname% se li ha tret l'op."
+
+# --- HALFOP -------------------------------------------------------------------
+halfop:
+  syntax: "HALFOP <#channel> <nickname>"
+  example: "%command_prefix%HALFOP #canal Alícia"
+  short: "Donar el mode de semioperador al canal."
+  help: "Donar el mode de semioperador al canal. Només si l'IRCd admet +h."
+  done: "A %nickname% se li ha donat halfop."
+  user_not_on_channel: "El sobrenom %nickname% no és a la xarxa."
+  notice_grant: "%from% dona %mode% a %to%"
+  not_supported: "Aquesta xarxa no admet el mode de semioperador (+h)."
+
+# --- DEHALFOP -----------------------------------------------------------------
+dehalfop:
+  syntax: "DEHALFOP <#channel> <nickname>"
+  example: "%command_prefix%DEHALFOP #canal Alícia"
+  short: "Treure el mode de semioperador al canal."
+  help: "Treure el mode de semioperador al canal."
+  done: "A %nickname% se li ha tret el halfop."
+
+# --- VOICE --------------------------------------------------------------------
+voice:
+  syntax: "VOICE <#channel> <nickname>"
+  example: "%command_prefix%VOICE #canal Alícia"
+  short: "Donar el mode de veu al canal."
+  help: "Donar el mode de veu al canal."
+  done: "A %nickname% se li ha donat veu."
+  user_not_on_channel: "El sobrenom %nickname% no és a la xarxa."
+  notice_grant: "%from% dona %mode% a %to%"
+
+# --- DEVOICE ------------------------------------------------------------------
+devoice:
+  syntax: "DEVOICE <#channel> <nickname>"
+  example: "%command_prefix%DEVOICE #canal Alícia"
+  short: "Treure el mode de veu al canal."
+  help: "Treure el mode de veu al canal."
+  done: "A %nickname% se li ha tret la veu."
+
+# --- HELP ---------------------------------------------------------------------
+help:
+  examples_header: "Exemples:"
+  syntax: "HELP [ordre] [opció]"
+  example: "%command_prefix%HELP"
+  examples:
+    - "%command_prefix%HELP SET"
+    - "%command_prefix%HELP SET EMAIL"
+  short: "Llistar les ordres o mostrar l'ajuda d'una ordre."
+  help: "Mostra les ordres disponibles i l'ajuda detallada de les seves opcions."
+  header_title: "%bot%"
+  header: "%title% %separator%"
+  intro: |-
+    Permet registrar i administrar canals, configurar-ne les opcions i controlar
+    qui hi pot accedir. Gestiona els nivells d'accés i els privilegis dels usuaris
+    perquè els responsables mantinguin el control del canal.
+  general_header: "Comandes disponibles:"
+  command_line: "%command%%description%"
+  subcommand_line: "%command%%description%"
+  options_header: "Opcions:"
+  general_footer: "Fes servir /msg %bot% %help% per obtenir més informació."
+  general_footer_command: "HELP <comanda>"
+  set_sub_footer: "Fes servir /msg %bot% %help% per obtenir més informació."
+  set_sub_footer_command: "HELP %command% <opció>"
+  syntax_label: "Sintaxi: %syntax%"
+  footer: ""
+  intro_expiration: "NOTA: Els canals inactius més de %period% s'esborren."
+  intro_expiration_period: "%days% dies"
+  group_header: "%group%"
+  subgroup_header: "%group%"
+  group:
+    registration_info: "Registre i informació"
+    access_levels: "Accés i nivells"
+    ranks_entry: "Rangs i entrada"
+  ircop_group:
+    channel_operations: "Operacions del canal"
+    channel_management: "Gestió del canal"
+    deletion: "Eliminació i restauració"
+    restrictions: "Restriccions"
+    lookup: "Consulta i investigació"
+    registration_approval: "Aprovació del registre"
+  ircop_header: "Comandes disponibles per als IRCops:"
+
+# --- CLEARUSERS (IRCop) -------------------------------------------------------
+clearusers:
+  syntax: "CLEARUSERS <#channel> [motiu]"
+  example: "%command_prefix%CLEARUSERS #canal"
+  examples:
+    - "%command_prefix%CLEARUSERS #canal flooding"
+  short: "Fer kick a tots els usuaris d'un canal."
+  help: |-
+    Expulsa tots els usuaris del canal. És una ordre exclusiva d'IRCop; si no
+    s'indica cap motiu, se n'utilitza un de predeterminat.
+  not_on_network: "El canal %channel% no és actualment a la xarxa."
+  empty: "El canal %channel% no té cap usuari per fer kick."
+  success: "S'ha fet kick a %count% usuari(s) de %channel%."
+  default_reason: "ordre CLEARUSERS"
+
+# --- CLEARACCESS (IRCop) ------------------------------------------------------
+clearaccess:
+  syntax: "CLEARACCESS <#channel>"
+  example: "%command_prefix%CLEARACCESS #canal"
+  short: "Esborrar tota la llista d'accés d'un canal."
+  help: "Elimina totes les entrades d'accés del canal. Aquesta acció és irreversible."
+  success: "S'han esborrat %count% entrades d'accés de %channel%."
+  empty: "El canal %channel% no té cap entrada d'accés."
+
+# --- IRCOPONLY (IRCop) --------------------------------------------------------
+ircoponly:
+  syntax: "IRCOPONLY <#channel> {ON|OFF}"
+  example: "%command_prefix%IRCOPONLY #canal ON"
+  examples:
+    - "%command_prefix%IRCOPONLY #canal OFF"
+  short: "Restringir un canal als operadors IRC."
+  help: |-
+    Només els operadors IRC autoritzats poden romandre al canal. %bot% s'encarrega
+    d'aplicar aquesta restricció.
+  on: "IRCOPONLY activat a %channel%."
+  off: "IRCOPONLY desactivat a %channel%."
+
+# --- SAREGISTER (IRCop) -------------------------------------------------------
+saregister:
+  syntax: "SAREGISTER <#channel> <nickname> <description>"
+  short: "Registrar administrativament un canal."
+  help: |-
+    Sintaxi: SAREGISTER <#channel> <nickname> <description>
+
+    Registra administrativament un canal immediatament per al sobrenom
+    especificat com a fundador sense requerir presència, verificació ni límits de freqüència.
+  example: "%command_prefix%SAREGISTER #channel Alicia Canal comunitari"
+  success: "El canal %channel% ha estat registrat per a %founder%."
+
+# --- NOEXPIRE (IRCop) ---------------------------------------------------------
+noexpire:
+  syntax: "NOEXPIRE <#channel> {ON|OFF}"
+  example: "%command_prefix%NOEXPIRE #Important ON"
+  examples:
+    - "%command_prefix%NOEXPIRE #Important OFF"
+  short: "Establir o treure la protecció contra l'expiració d'un canal."
+  help: |-
+    Controla si el canal caduca per inactivitat.
+    ON n'evita la caducitat i OFF aplica les regles normals.
+  success_on: "El canal %channel% ara està protegit contra l'expiració."
+  success_off: "El canal %channel% ara expirarà normalment."
+  forbidden: "El canal %channel% està prohibit."
+  suspended: "El canal %channel% està suspès."
+
+# --- DROP (IRCop) -------------------------------------------------------------
 drop:
   syntax: "DROP <#channel> [FORCE]"
   example: "%command_prefix%DROP #canal"
@@ -678,7 +674,18 @@ drop:
   invalid_channel: "Nom de canal no vàlid. Utilitzeu %example%."
   pending_deletion_reason: "El canal %channel% està pendent d'eliminació. Més informació: /msg %bot% \x0303INFO %channel%\x03"
 
-# --- SUSPEND ---------------------------------------------------------------
+# --- RESTORE (IRCop) ----------------------------------------------------------
+restore:
+  syntax: "RESTORE <#channel>"
+  example: "%command_prefix%RESTORE #canal"
+  short: "Restaurar un canal pendent d'eliminació."
+  help: |-
+    Restaura un canal eliminat manualment que encara es troba dins del període de
+    marge.
+  success: "El canal %channel% ha estat restaurat."
+  not_pending_deletion: "El canal %channel% no està pendent d'eliminació."
+
+# --- SUSPEND (IRCop) ----------------------------------------------------------
 suspend:
   syntax: "SUSPEND <#channel> <duration> <motiu>"
   example: "%command_prefix%SUSPEND #canal 7d Incompliment de les normes"
@@ -696,7 +703,7 @@ suspend:
   channel_suspended: "El canal %channel% està suspès i no es pot utilitzar."
   notice_channel: "El canal ha estat suspès. Motiu: %reason%"
 
-# --- UNSUSPEND -------------------------------------------------------------
+# --- UNSUSPEND (IRCop) --------------------------------------------------------
 unsuspend:
   syntax: "UNSUSPEND <#channel>"
   example: "%command_prefix%UNSUSPEND #canal"
@@ -706,43 +713,7 @@ unsuspend:
   not_suspended: "El canal %channel% no està suspès."
   reason_expired: "suspensió expirada"
 
-# --- NOJOIN ----------------------------------------------------------------
-nojoin:
-  reason: "restricció de nivell NOJOIN"
-
-# --- DEBUG CHANNEL ---------------------------------------------------------
-debug_channel:
-  kick_reason: "No esteu autoritzat a unir-vos a aquest canal."
-
-# --- IRCOPONLY -------------------------------------------------------------
-ircoponly:
-  syntax: "IRCOPONLY <#channel> {ON|OFF}"
-  example: "%command_prefix%IRCOPONLY #canal ON"
-  examples:
-    - "%command_prefix%IRCOPONLY #canal OFF"
-  short: "Restringir un canal als operadors IRC."
-  help: |-
-    Només els operadors IRC autoritzats poden romandre al canal. %bot% s'encarrega
-    d'aplicar aquesta restricció.
-  on: "IRCOPONLY activat a %channel%."
-  off: "IRCOPONLY desactivat a %channel%."
-
-# --- NOEXPIRE --------------------------------------------------------------
-noexpire:
-  syntax: "NOEXPIRE <#channel> {ON|OFF}"
-  example: "%command_prefix%NOEXPIRE #Important ON"
-  examples:
-    - "%command_prefix%NOEXPIRE #Important OFF"
-  short: "Establir o treure la protecció contra l'expiració d'un canal."
-  help: |-
-    Controla si el canal caduca per inactivitat.
-    ON n'evita la caducitat i OFF aplica les regles normals.
-  success_on: "El canal %channel% ara està protegit contra l'expiració."
-  success_off: "El canal %channel% ara expirarà normalment."
-  forbidden: "El canal %channel% està prohibit."
-  suspended: "El canal %channel% està suspès."
-
-# --- FORBID ----------------------------------------------------------------
+# --- FORBID (IRCop) -----------------------------------------------------------
 forbid:
   syntax: "FORBID <#channel> <motiu>"
   example: "%command_prefix%FORBID #canal Incompliment de les normes"
@@ -756,7 +727,7 @@ forbid:
   updated: "El motiu de prohibició del canal %channel% ha estat actualitzat."
   channel_forbidden: "El canal %channel% està prohibit i no es pot utilitzar."
 
-# --- UNFORBID --------------------------------------------------------------
+# --- UNFORBID (IRCop) ---------------------------------------------------------
 unforbid:
   syntax: "UNFORBID <#channel>"
   example: "%command_prefix%UNFORBID #canal"
@@ -764,12 +735,6 @@ unforbid:
   help: "Retira la prohibició d'un canal perquè es pugui tornar a registrar."
   success: "El canal %channel% ja no està prohibit."
   not_forbidden: "El canal %channel% no està prohibit."
-
-# --- DEBUG -----------------------------------------------------------------
-debug:
-  registration_completed: "%operator% ha registrat el canal %target%"
-  registration_pending: "%operator% ha sol·licitat el registre del canal %target%"
-  founder_action: "Acció de nivell de fundador"
 
 # --- HISTORY ---
 history:
@@ -870,35 +835,7 @@ history.extra:
   level: "Nivell: %value%"
   mask: "Màscara: %value%"
 
-# --- LEVEL FOUNDER ---------------------------------------------------------
-level_founder:
-  short: "Permet fer operacions que requereixen el nivell de fundador del canal."
-
-# --- CLEARACCESS -----------------------------------------------------------
-clearaccess:
-  syntax: "CLEARACCESS <#channel>"
-  example: "%command_prefix%CLEARACCESS #canal"
-  short: "Esborrar tota la llista d'accés d'un canal."
-  help: "Elimina totes les entrades d'accés del canal. Aquesta acció és irreversible."
-  success: "S'han esborrat %count% entrades d'accés de %channel%."
-  empty: "El canal %channel% no té cap entrada d'accés."
-
-# --- CLEARUSERS ------------------------------------------------------------
-clearusers:
-  syntax: "CLEARUSERS <#channel> [motiu]"
-  example: "%command_prefix%CLEARUSERS #canal"
-  examples:
-    - "%command_prefix%CLEARUSERS #canal flooding"
-  short: "Fer kick a tots els usuaris d'un canal."
-  help: |-
-    Expulsa tots els usuaris del canal. És una ordre exclusiva d'IRCop; si no
-    s'indica cap motiu, se n'utilitza un de predeterminat.
-  not_on_network: "El canal %channel% no és actualment a la xarxa."
-  empty: "El canal %channel% no té cap usuari per fer kick."
-  success: "S'ha fet kick a %count% usuari(s) de %channel%."
-  default_reason: "ordre CLEARUSERS"
-
-# --- LIST ------------------------------------------------------------------
+# --- LIST (IRCop) -------------------------------------------------------------
 list:
   syntax: "LIST <patró> [pàgina]"
   example: "%command_prefix%LIST #*"
@@ -915,3 +852,66 @@ list:
   status_active: "Actiu"
   status_pending_registration: "Pendent d’aprovació"
   status_rejected_registration: "Registre rebutjat"
+
+# --- REGMODE (IRCop) ----------------------------------------------------------
+regmode:
+  syntax: "REGMODE {DIRECT|APPROVAL|STATUS}"
+  example: "%command_prefix%REGMODE APPROVAL"
+  short: "Establir o consultar el mode de registre del canal."
+  help: |-
+    Estableix el registre com a DIRECT o APPROVAL, o consulta STATUS.
+    DIRECT és el mode per defecte i manté el registre immediat.
+  status: "El mode de registre del canal és %mode%."
+  changed: "El mode de registre del canal ara és %mode%."
+
+# --- CREG (IRCop) -------------------------------------------------------------
+creg:
+  syntax: "CREG {PENDING [page]|ACCEPT <#channel>|REJECT <#channel> <raó>}"
+  pending.syntax: "CREG PENDING [page]"
+  pending.example: "%command_prefix%CREG PENDING"
+  pending.short: "Llista les sol·licituds pendents en una pàgina limitada."
+  pending.help: "Mostra les sol·licituds pendents en una pàgina limitada."
+  accept.syntax: "CREG ACCEPT <#channel>"
+  accept.example: "%command_prefix%CREG ACCEPT #channel"
+  accept.short: "Aprova una sol·licitud de registre de canal."
+  accept.help: "Torna a validar el sol·licitant i activa el registre pendent."
+  reject.syntax: "CREG REJECT <#channel> <raó>"
+  reject.example: "%command_prefix%CREG REJECT #channel Necessita un tema públic"
+  reject.short: "Rebutja una sol·licitud de registre de canal."
+  reject.help: "Rebutja una sol·licitud amb un raó obligatori i una restricció."
+  example: "%command_prefix%CREG PENDING"
+  short: "Revisar les sol·licituds de registre de canals."
+  help: |-
+    Llista les sol·licituds pendents, o n’accepta o rebutja una.
+    Els rebutjos requereixen un motiu. Només ACCEPT registra el canal.
+  pending_header: "Registres pendents (pàgina %page%)"
+  pending_item: "%channel% — sol·licitant %requester%, enviada %submitted%: %description%"
+  accepted: "El registre de %channel% ha estat aprovat."
+  rejected: "El registre de %channel% ha estat rebutjat."
+  not_pending: "El canal %channel% no té cap registre pendent."
+  channel_not_on_network: "El canal %channel% no és a la xarxa."
+  founder_limit: "El sol·licitant ha assolit el límit de canals registrats."
+  requester_inactive: "El compte sol·licitant ja no és actiu."
+  requester_ineligible: "El sol·licitant ha de tenir actualment estat d’operador al canal."
+
+# --- SECURE -------------------------------------------------------------------
+secure:
+  requires_min_level: "Amb SECURE activat, %nickname% ha de tenir almenys el nivell %level% per rebre %mode%."
+
+# --- NOJOIN -------------------------------------------------------------------
+nojoin:
+  reason: "restricció de nivell NOJOIN"
+
+# --- DEBUG CHANNEL ------------------------------------------------------------
+debug_channel:
+  kick_reason: "No esteu autoritzat a unir-vos a aquest canal."
+
+# --- DEBUG --------------------------------------------------------------------
+debug:
+  registration_completed: "%operator% ha registrat el canal %target%"
+  registration_pending: "%operator% ha sol·licitat el registre del canal %target%"
+  founder_action: "Acció de nivell de fundador"
+
+# --- LEVEL FOUNDER ------------------------------------------------------------
+level_founder:
+  short: "Permet fer operacions que requereixen el nivell de fundador del canal."

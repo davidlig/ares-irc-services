@@ -16,7 +16,7 @@
 # Przykłady HELP: example/examples i %command_prefix%.
 # Prezenter dodaje /msg bez koloru i margines dwóch spacji.
 
-# --- REGISTER --------------------------------------------------------------
+# --- REGISTER -----------------------------------------------------------------
 register:
   token_unavailable: !irc |-
     Rejestracja oczekuje, ale nie udało się dostarczyć tokenu.
@@ -51,69 +51,7 @@ register:
   throttled: "Musisz poczekać %minutes% minut(y) przed ponowną próbą rejestracji."
   guest_prefix_forbidden: "Nie możesz zarejestrować nicka zaczynającego się od %prefix%."
 
-# --- VERIFY ----------------------------------------------------------------
-verify:
-  syntax: "VERIFY <token>"
-  short: "Potwierdza rejestrację lub token ratunkowy."
-  help: |-
-    Po weryfikacji ten token stanie się Twoim stałym tokenem odzyskiwania.
-    Przechowuj go w bezpiecznym miejscu: pozwoli Ci odzyskać pseudonim.
-    Czas ważności %duration% dotyczy wyłącznie okresu przed weryfikacją.
-  example: "%command_prefix%VERIFY <otrzymany_token>"
-  success: "Nick %nickname% został pomyślnie zarejestrowany i jesteś teraz zidentyfikowany."
-  success_native: "Nick %nickname% został pomyślnie zarejestrowany. Użyj natywnego uwierzytelniania pokazanego poniżej."
-  invalid_token: "Token ratunkowy jest nieprawidłowy."
-  no_pending: "Nie masz oczekującej rejestracji do zweryfikowania."
-
-# --- RESEND ----------------------------------------------------------------
-resend:
-  disabled: "Nie możesz poprosić o kolejny token poleceniem %resend%, ponieważ ta rejestracja dostarcza token bezpośrednio przez czat."
-  syntax: "RESEND"
-  short: "Wyślij ponownie token weryfikacyjny na Twój e-mail."
-  help: |-
-    RESEND jest dostępne tylko wtedy, gdy token weryfikacyjny wysłano e-mailem.
-    Po weryfikacji stanie się on stałym tokenem odzyskiwania. Przechowuj go
-    w bezpiecznym miejscu: pozwoli Ci odzyskać pseudonim.
-    Czas ważności %duration% dotyczy wyłącznie okresu przed weryfikacją.
-    Po użyciu RESEND otrzymasz nowy token e-mailem.
-    Okres oczekującej rejestracji zostanie przedłużony o %duration%.
-  example: "%command_prefix%RESEND"
-  success: "Token weryfikacyjny ponownie wysłany na %email%."
-  no_pending: "Nie masz oczekującej rejestracji do zweryfikowania."
-  throttled: "Musisz poczekać %minutes% minut(y) przed zażądaniem kolejnego e-maila weryfikacyjnego."
-
-# --- RECOVER ---------------------------------------------------------------
-recover:
-  no_email: "Brak ustawionego e-maila dla nicka %nickname%. Odzyskiwanie nie jest dostępne."
-  email_sent: "Token odzyskiwania został wysłany na %email_hint%. Sprawdź skrzynkę odbiorczą (i folder spam)."
-  pending_deletion: "Pseudonim %nickname% oczekuje na usunięcie i nie można go odzyskać."
-  instructions: "EMAIL: %command_0% żąda tymczasowego tokenu emailem. TOKEN: podaj potwierdzony token. %command_1% akceptuje poprawny token z emaila lub potwierdzony token. Token z emaila zastępuje zapisany dopiero po weryfikacji. Użycie zapisanego proponuje opcjonalną zmianę przez %command_2%; zignoruj wiadomość, aby go zachować."
-  instructions_command_0: "RECOVER %nickname%"
-  instructions_command_1: "RECOVER %nickname% <token>"
-  instructions_command_2: "VERIFY"
-  syntax: "RECOVER <nick> [token]"
-  short: "Odzyskaj nick jeśli zgubiłeś hasło."
-  help: |-
-    Bez tokenu poproś e-mailem o token tymczasowy.
-    Możesz też podać prawidłowy token odzyskiwania; jeśli jest tymczasowy, zastąpi
-    zapisany token dopiero po weryfikacji.
-    Po użyciu zapisanego tokenu VERIFY zaproponuje opcjonalną zamianę; zignoruj tę
-    wiadomość, jeśli chcesz zachować obecny token.
-  example: "%command_prefix%RECOVER Użytkownik"
-  examples:
-    - "%command_prefix%RECOVER Użytkownik <otrzymany_token>"
-  pending: "Rejestracja %nickname% jest w toku. Użyj %command_0%. Jeśli token wysłano e-mailem i przypisano prawidłowy adres, możesz poprosić o kolejny przez %command_1%."
-  pending_command_0: "VERIFY <token>"
-  pending_command_1: "RESEND"
-  suspended: "Nick %nickname% jest zawieszony. Powód: %reason%"
-  forbidden: "Nick %nickname% nie może być używany w tej sieci."
-  throttled: "Zbyt wiele błędnych tokenów. Spróbuj ponownie za %minutes% minut."
-  invalid_token: "Token ratunkowy jest nieprawidłowy."
-  success_identify: "Hasło zresetowane. Zidentyfikuj się teraz: %identify_cmd%"
-  success_then_change: "Następnie zmień hasło: /msg %bot% %command_0%"
-  success_then_change_command_0: "SET PASSWORD <nowe_hasło>"
-
-# --- IDENTIFY --------------------------------------------------------------
+# --- IDENTIFY -----------------------------------------------------------------
 identify:
   syntax: "IDENTIFY <nick> <hasło>"
   short: "Zidentyfikuj się jako właściciel nicka."
@@ -150,105 +88,69 @@ identify:
   forbidden: "Nick %nickname% nie może być używany w tej sieci."
   pending_deletion: "Nick %nickname% oczekuje na usunięcie i nie może być używany."
 
-# --- STATUS ----------------------------------------------------------------
-status:
-  syntax: "STATUS <nick>"
-  short: "Wyświetl status rejestracji nicka."
+# --- VERIFY -------------------------------------------------------------------
+verify:
+  syntax: "VERIFY <token>"
+  short: "Potwierdza rejestrację lub token ratunkowy."
   help: |-
-    Wyświetla bieżący stan pseudonimu: zarejestrowany, oczekujący na
-    weryfikację, zawieszony itd.
-  example: "%command_prefix%STATUS Użytkownik"
-  header: "Status nicka %nickname%"
-  unregistered: "  Status          : Niezarejestrowany"
-  not_registered_offline: "  Status          : %state%"
-  value_not_registered_offline: "Niezarejestrowany"
-  pending: "  Status          : %state%"
-  value_pending: "Oczekująca weryfikacja"
-  pending_expires: "  Wygasa za       : %minutes% minut(y)"
-  pending_expires_at: "  Wygasa o        : %date%"
-  not_connected: "  Status          : %state%"
-  value_not_connected: "Niepołączony"
-  not_identified: "  Status          : %state%"
-  value_not_identified: "Niezidentyfikowany"
-  identified: "  Status          : %state%"
-  value_identified: "Zidentyfikowany"
-  suspended: "  Status          : %state%"
-  value_suspended: "Zawieszony"
-  suspended_reason: "  Powód           : %reason%"
-  suspended_until: "  Kończy się      : %date%"
-  suspended_permanent: "  Kończy się      : Stałe"
-  forbidden: "  Status          : %state%"
-  value_forbidden: "Zabroniony"
-  forbidden_reason: "  Powód           : %reason%"
-  pending_deletion: "  %label%          : %state%"
-  value_pending_deletion: "Oczekuje na usunięcie"
-  label_pending_deletion: "Status"
-  pending_deletion_at: "  %label%        : %date%"
+    Po weryfikacji ten token stanie się Twoim stałym tokenem odzyskiwania.
+    Przechowuj go w bezpiecznym miejscu: pozwoli Ci odzyskać pseudonim.
+    Czas ważności %duration% dotyczy wyłącznie okresu przed weryfikacją.
+  example: "%command_prefix%VERIFY <otrzymany_token>"
+  success: "Nick %nickname% został pomyślnie zarejestrowany i jesteś teraz zidentyfikowany."
+  success_native: "Nick %nickname% został pomyślnie zarejestrowany. Użyj natywnego uwierzytelniania pokazanego poniżej."
+  invalid_token: "Token ratunkowy jest nieprawidłowy."
+  no_pending: "Nie masz oczekującej rejestracji do zweryfikowania."
 
-  label_pending_deletion_at: "Usunięty"
-# --- INFO ------------------------------------------------------------------
-info:
-  syntax: "INFO <nick>"
-  short: "Wyświetl informacje o zarejestrowanym nicku."
+# --- RESEND -------------------------------------------------------------------
+resend:
+  disabled: "Nie możesz poprosić o kolejny token poleceniem %resend%, ponieważ ta rejestracja dostarcza token bezpośrednio przez czat."
+  syntax: "RESEND"
+  short: "Wyślij ponownie token weryfikacyjny na Twój e-mail."
   help: |-
-    Wyświetla dane rejestracji pseudonimu: datę utworzenia, stan połączenia,
-    ostatnią wysłaną wiadomość i adres e-mail.
+    RESEND jest dostępne tylko wtedy, gdy token weryfikacyjny wysłano e-mailem.
+    Po weryfikacji stanie się on stałym tokenem odzyskiwania. Przechowuj go
+    w bezpiecznym miejscu: pozwoli Ci odzyskać pseudonim.
+    Czas ważności %duration% dotyczy wyłącznie okresu przed weryfikacją.
+    Po użyciu RESEND otrzymasz nowy token e-mailem.
+    Okres oczekującej rejestracji zostanie przedłużony o %duration%.
+  example: "%command_prefix%RESEND"
+  success: "Token weryfikacyjny ponownie wysłany na %email%."
+  no_pending: "Nie masz oczekującej rejestracji do zweryfikowania."
+  throttled: "Musisz poczekać %minutes% minut(y) przed zażądaniem kolejnego e-maila weryfikacyjnego."
 
-    Adres e-mail jest widoczny tylko dla zidentyfikowanego właściciela.
-    Jeśli pseudonim jest prywatny, informacje może zobaczyć tylko jego właściciel
-    i operatorzy IRC.
-  example: "%command_prefix%INFO Użytkownik"
-  private: "Informacje o nicku %nickname% są prywatne."
-  header: "Informacje o nicku %nickname%"
-  status: "%label%                  : %status%"
-  label_status: "Status"
-  status_registered: "Zarejestrowany"
-  status_suspended: "Zawieszony"
-  status_forbidden: "Zabroniony"
-  status_pending_deletion: "Oczekuje na usunięcie"
-  reason: "%label%                   : %reason%"
-  label_reason: "Powód"
-  suspended_until: "%label%              : %date%"
-  label_suspended_until: "Kończy się"
-  suspended_permanent: "%label%              : Stałe"
-  label_suspended_permanent: "Kończy się"
-  registered_at: "%label%          : %date%"
-  label_registered_at: "Zarejestrowany"
-  last_seen_online: "%label%       : %online%"
-  label_last_seen_online: "Ostatnio widziany"
-  value_last_seen_online: "TERAZ ONLINE"
-  last_seen_at: "%label%       : %date%"
-  label_last_seen_at: "Ostatnio widziany"
-  last_seen_never: "%label%       : Nigdy"
-  label_last_seen_never: "Ostatnio widziany"
-  last_quit: "%label%  : %message%"
-  label_last_quit: "Ostatnia wiad. wyjścia"
-  last_connect: "%label%     : %ip% (%host%)"
-  label_last_connect: "Ostatnio widziany z"
-  language: "%label%                   : %language%"
-  label_language: "Język"
-  email: "%label%                  : %email%"
-  label_email: "E-mail"
-  vhost: "%label%                   : %vhost%"
-  label_vhost: "VHost"
-  no_expire: "%label%        : Tak"
-  label_no_expire: "Nigdy nie wygasa"
-  pending_deletion_at: "%label%               : %date%"
-  label_pending_deletion_at: "Usunięty"
-  pending_deletion_until: "%label%       : %date%"
-  label_pending_deletion_until: "Trwale usunięcie"
-  pending_deletion_notice: "%notice%"
-  value_pending_deletion_notice: "Ten nick oczekuje na usunięcie i nie może być zarejestrowany."
-  channels_header: |-
+# --- RECOVER ------------------------------------------------------------------
+recover:
+  no_email: "Brak ustawionego e-maila dla nicka %nickname%. Odzyskiwanie nie jest dostępne."
+  email_sent: "Token odzyskiwania został wysłany na %email_hint%. Sprawdź skrzynkę odbiorczą (i folder spam)."
+  pending_deletion: "Pseudonim %nickname% oczekuje na usunięcie i nie można go odzyskać."
+  instructions: "EMAIL: %command_0% żąda tymczasowego tokenu emailem. TOKEN: podaj potwierdzony token. %command_1% akceptuje poprawny token z emaila lub potwierdzony token. Token z emaila zastępuje zapisany dopiero po weryfikacji. Użycie zapisanego proponuje opcjonalną zmianę przez %command_2%; zignoruj wiadomość, aby go zachować."
+  instructions_command_0: "RECOVER %nickname%"
+  instructions_command_1: "RECOVER %nickname% <token>"
+  instructions_command_2: "VERIFY"
+  syntax: "RECOVER <nick> [token]"
+  short: "Odzyskaj nick jeśli zgubiłeś hasło."
+  help: |-
+    Bez tokenu poproś e-mailem o token tymczasowy.
+    Możesz też podać prawidłowy token odzyskiwania; jeśli jest tymczasowy, zastąpi
+    zapisany token dopiero po weryfikacji.
+    Po użyciu zapisanego tokenu VERIFY zaproponuje opcjonalną zamianę; zignoruj tę
+    wiadomość, jeśli chcesz zachować obecny token.
+  example: "%command_prefix%RECOVER Użytkownik"
+  examples:
+    - "%command_prefix%RECOVER Użytkownik <otrzymany_token>"
+  pending: "Rejestracja %nickname% jest w toku. Użyj %command_0%. Jeśli token wysłano e-mailem i przypisano prawidłowy adres, możesz poprosić o kolejny przez %command_1%."
+  pending_command_0: "VERIFY <token>"
+  pending_command_1: "RESEND"
+  suspended: "Nick %nickname% jest zawieszony. Powód: %reason%"
+  forbidden: "Nick %nickname% nie może być używany w tej sieci."
+  throttled: "Zbyt wiele błędnych tokenów. Spróbuj ponownie za %minutes% minut."
+  invalid_token: "Token ratunkowy jest nieprawidłowy."
+  success_identify: "Hasło zresetowane. Zidentyfikuj się teraz: %identify_cmd%"
+  success_then_change: "Następnie zmień hasło: /msg %bot% %command_0%"
+  success_then_change_command_0: "SET PASSWORD <nowe_hasło>"
 
-    Kanały z dostępem:
-  channels_entry_founder: "%channel% (%role%)"
-  channels_role_founder: "Założyciel"
-  channels_entry_successor: "%channel% (%role%)"
-  channels_role_successor: "Następca"
-  channels_entry_access: "%channel% (%level%)"
-
-# --- SET -------------------------------------------------------------------
+# --- SET ----------------------------------------------------------------------
 set:
   syntax: "SET {PASSWORD <nowe_hasło>|EMAIL <email> <token>|LANGUAGE <kod>|TIMEZONE <strefa_czasowa>|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
   short: "Zmień opcje swojego nicka."
@@ -390,7 +292,281 @@ set:
     taken: "Ten vhost jest już używany przez inny nick."
     forced: "Twój vhost jest konfigurowany automatycznie i nie może być zmieniony przez SET VHOST."
 
-# --- SAREGISTER ------------------------------------------------------------
+# --- INFO ---------------------------------------------------------------------
+info:
+  syntax: "INFO <nick>"
+  short: "Wyświetl informacje o zarejestrowanym nicku."
+  help: |-
+    Wyświetla dane rejestracji pseudonimu: datę utworzenia, stan połączenia,
+    ostatnią wysłaną wiadomość i adres e-mail.
+
+    Adres e-mail jest widoczny tylko dla zidentyfikowanego właściciela.
+    Jeśli pseudonim jest prywatny, informacje może zobaczyć tylko jego właściciel
+    i operatorzy IRC.
+  example: "%command_prefix%INFO Użytkownik"
+  private: "Informacje o nicku %nickname% są prywatne."
+  header: "Informacje o nicku %nickname%"
+  status: "%label%                  : %status%"
+  label_status: "Status"
+  status_registered: "Zarejestrowany"
+  status_suspended: "Zawieszony"
+  status_forbidden: "Zabroniony"
+  status_pending_deletion: "Oczekuje na usunięcie"
+  reason: "%label%                   : %reason%"
+  label_reason: "Powód"
+  suspended_until: "%label%              : %date%"
+  label_suspended_until: "Kończy się"
+  suspended_permanent: "%label%              : Stałe"
+  label_suspended_permanent: "Kończy się"
+  registered_at: "%label%          : %date%"
+  label_registered_at: "Zarejestrowany"
+  last_seen_online: "%label%       : %online%"
+  label_last_seen_online: "Ostatnio widziany"
+  value_last_seen_online: "TERAZ ONLINE"
+  last_seen_at: "%label%       : %date%"
+  label_last_seen_at: "Ostatnio widziany"
+  last_seen_never: "%label%       : Nigdy"
+  label_last_seen_never: "Ostatnio widziany"
+  last_quit: "%label%  : %message%"
+  label_last_quit: "Ostatnia wiad. wyjścia"
+  last_connect: "%label%     : %ip% (%host%)"
+  label_last_connect: "Ostatnio widziany z"
+  language: "%label%                   : %language%"
+  label_language: "Język"
+  email: "%label%                  : %email%"
+  label_email: "E-mail"
+  vhost: "%label%                   : %vhost%"
+  label_vhost: "VHost"
+  no_expire: "%label%        : Tak"
+  label_no_expire: "Nigdy nie wygasa"
+  pending_deletion_at: "%label%               : %date%"
+  label_pending_deletion_at: "Usunięty"
+  pending_deletion_until: "%label%       : %date%"
+  label_pending_deletion_until: "Trwale usunięcie"
+  pending_deletion_notice: "%notice%"
+  value_pending_deletion_notice: "Ten nick oczekuje na usunięcie i nie może być zarejestrowany."
+  channels_header: |-
+
+    Kanały z dostępem:
+  channels_entry_founder: "%channel% (%role%)"
+  channels_role_founder: "Założyciel"
+  channels_entry_successor: "%channel% (%role%)"
+  channels_role_successor: "Następca"
+  channels_entry_access: "%channel% (%level%)"
+
+# --- STATUS -------------------------------------------------------------------
+status:
+  syntax: "STATUS <nick>"
+  short: "Wyświetl status rejestracji nicka."
+  help: |-
+    Wyświetla bieżący stan pseudonimu: zarejestrowany, oczekujący na
+    weryfikację, zawieszony itd.
+  example: "%command_prefix%STATUS Użytkownik"
+  header: "Status nicka %nickname%"
+  unregistered: "  Status          : Niezarejestrowany"
+  not_registered_offline: "  Status          : %state%"
+  value_not_registered_offline: "Niezarejestrowany"
+  pending: "  Status          : %state%"
+  value_pending: "Oczekująca weryfikacja"
+  pending_expires: "  Wygasa za       : %minutes% minut(y)"
+  pending_expires_at: "  Wygasa o        : %date%"
+  not_connected: "  Status          : %state%"
+  value_not_connected: "Niepołączony"
+  not_identified: "  Status          : %state%"
+  value_not_identified: "Niezidentyfikowany"
+  identified: "  Status          : %state%"
+  value_identified: "Zidentyfikowany"
+  suspended: "  Status          : %state%"
+  value_suspended: "Zawieszony"
+  suspended_reason: "  Powód           : %reason%"
+  suspended_until: "  Kończy się      : %date%"
+  suspended_permanent: "  Kończy się      : Stałe"
+  forbidden: "  Status          : %state%"
+  value_forbidden: "Zabroniony"
+  forbidden_reason: "  Powód           : %reason%"
+  pending_deletion: "  %label%          : %state%"
+  value_pending_deletion: "Oczekuje na usunięcie"
+  label_pending_deletion: "Status"
+  pending_deletion_at: "  %label%        : %date%"
+
+  label_pending_deletion_at: "Usunięty"
+
+# --- HELP ---------------------------------------------------------------------
+help:
+  syntax: "HELP [komenda]"
+  short: "Wyświetl pomoc dla komend %nickserv%."
+  help: |-
+    Wyświetla ogólną pomoc %nickserv% lub szczegółowe informacje
+    dla konkretnej komendy.
+  examples_header: "Przykłady:"
+  example: "%command_prefix%HELP"
+  examples:
+    - "%command_prefix%HELP SET"
+    - "%command_prefix%HELP SET EMAIL"
+    - "%command_prefix%HELP SET TIMEZONE Europe"
+  header_title: "%bot%"
+  header: "%title%"
+  navigation_marker: ""
+  info_marker: ""
+  error_marker: ""
+  warning_marker: ""
+  intro: |-
+    Pozwala zarejestrować i chronić pseudonim przed użyciem przez inne osoby.
+    Zarządzaj bezpieczeństwem konta, dostosuj preferencje i odzyskaj dostęp w razie
+    potrzeby.
+  intro_expiration: "%label%: Nieużywane przez ponad %duration% pseudonimy są automatycznie usuwane."
+  intro_expiration_duration: "%days% dni"
+  intro_expiration_label: "UWAGA"
+  general_header: "Dostępne komendy:"
+  command_line: "%command%%description%"
+  subcommand_line: "%command%%description%"
+  options_header: "Opcje:"
+  general_syntax: "HELP <komenda>"
+  general_footer: "Użyj /msg %bot% %syntax%, aby uzyskać więcej informacji."
+  set_sub_syntax: "HELP %command% <opcja>"
+  set_sub_footer: "Użyj /msg %bot% %syntax%, aby uzyskać więcej informacji."
+  syntax_label: "Składnia: %syntax%"
+  footer: ""
+  group_header: "%group%"
+  subgroup_header: "%group%"
+  group:
+    registration_auth: "Rejestracja i uwierzytelnianie"
+    account_security: "Konto i bezpieczeństwo"
+  ircop_group:
+    lookup: "Wyszukiwanie i dochodzenie"
+    account_management: "Zarządzanie kontami"
+    suspensions_bans: "Zawieszenia i zakazy"
+    deletion: "Usuwanie i przywracanie"
+  ircop_header: "Dostępne komendy dla operatorów IRC:"
+  set_timezone:
+    index_label: "Strefy według regionu (użyj %syntax%, aby wyszukać region):"
+    index_syntax: "HELP SET TIMEZONE <region>"
+    region_header: "Strefy czasowe dla %region%:"
+    region_unknown: "Nieznany region. Użyj %syntax% aby zobaczyć indeks."
+    region_syntax: "HELP SET TIMEZONE"
+
+# --- NICK PROTECTION ----------------------------------------------------------
+protection:
+  nick_in_use: "Nick %nickname% jest zarejestrowany. Zostaniesz przemianowany jeśli się nie zidentyfikujesz."
+  renamed_to: |-
+    Zmieniono Twój pseudonim na %guest_nick%. Aby odzyskać swój pseudonim:
+    /msg %bot% %identify%
+  renamed_command: "IDENTIFY %nickname% <hasło>"
+  nick_forbidden: "Nick %nickname% jest zabroniony: %reason%"
+
+# --- USERIP (IRCop) -----------------------------------------------------------
+userip:
+  syntax: "USERIP <nick>"
+  short: "Pobierz prawdziwy adres IP i nazwę hosta nicka."
+  help: |-
+    Wyświetla rzeczywisty adres IP i nazwę hosta pseudonimu.
+    Używaj odpowiedzialnie: to poufne informacje.
+  example: "%command_prefix%USERIP Użytkownik"
+  result: "Nick: %nickname% | IP: %ip% | Host: %host%"
+
+# --- WHOIP (IRCop) ------------------------------------------------------------
+whoip:
+  syntax: "WHOIP <ip>"
+  short: "Wyszukuje pseudonimy według IP ich ostatniego uwierzytelnionego połączenia."
+  help: |-
+    Wyświetla zarejestrowane pseudonimy, których ostatnie zidentyfikowane
+    połączenie używało tego adresu IP. Zapisany adres może być nieaktualny.
+  example: "%command_prefix%WHOIP 192.0.2.10"
+  empty: "Brak zarejestrowanych pseudonimów pasujących do tego adresu IP."
+  header: "Pasujące pseudonimy:"
+
+# --- LIST (IRCop) -------------------------------------------------------------
+list:
+  syntax: "LIST <wzorzec> [strona]"
+  short: "Wyświetla zarejestrowane pseudonimy pasujące do wzorca."
+  help: |-
+    Wyświetla zarejestrowane pseudonimy pasujące do wzorca. Symbol * dopasowuje
+    dowolny ciąg znaków; opcjonalna strona zaczyna się od 1.
+  example: "%command_prefix%LIST Użytkownik*"
+  examples:
+    - "%command_prefix%LIST Użytkownik* 2"
+  header: "Pseudonim | Rejestracja | Ostatnie połączenie | IP | Status"
+  row: "%nickname% | %registered% | %last_seen% | %ip% | %status%"
+  empty: "Brak pseudonimów pasujących do wzorca %pattern%."
+  status_pending: "Oczekujący"
+  status_registered: "Zarejestrowany"
+
+# --- HISTORY ---
+history:
+  syntax: "HISTORY <nick> {ADD <wiadomość>|DEL <id>|VIEW [PAGE|ALL]|CLEAR}"
+  short: "Przeglądaj lub zarządzaj historią działań nicka."
+  help: |-
+    Wyświetla historię działań pseudonimu. Automatycznie zapisuje zawieszenia,
+    zmiany hasła lub e-maila oraz odzyskiwanie. VIEW pokazuje trzy wpisy na stronę;
+    ALL wyświetla całą historię.
+  example: "%command_prefix%HISTORY Użytkownik VIEW"
+  examples:
+    - "%command_prefix%HISTORY Użytkownik VIEW ALL"
+    - "%command_prefix%HISTORY Użytkownik ADD Notatka ręczna"
+
+  # --- HISTORY ADD ---------------------------------------------------------
+  add:
+    syntax: "HISTORY <nick> ADD <wiadomość>"
+    short: "Dodaj ręczny wpis historii."
+    help: "Dodaje ręczny wpis do historii pseudonimu."
+    example: "%command_prefix%HISTORY Użytkownik ADD Zgłoszono spam"
+    success: "Wpis historii dodany dla %nickname%."
+
+  # --- HISTORY DEL ---------------------------------------------------------
+  del:
+    syntax: "HISTORY <nick> DEL <id>"
+    short: "Usuń wpis historii według ID."
+    help: "Usuwa wskazany wpis z historii według jego ID."
+    example: "%command_prefix%HISTORY Użytkownik DEL 42"
+
+  # --- HISTORY VIEW --------------------------------------------------------
+  view:
+    syntax: "HISTORY <nick> VIEW [PAGE|ALL]"
+    short: "Przeglądaj historię działań nicka."
+    help: |-
+      Wyświetla historię działań pseudonimu. Domyślnie pokazuje trzy wpisy na stronę.
+      Użyj ALL, aby wyświetlić wszystkie.
+    example: "%command_prefix%HISTORY Użytkownik VIEW"
+    examples:
+      - "%command_prefix%HISTORY Użytkownik VIEW 2"
+      - "%command_prefix%HISTORY Użytkownik VIEW ALL"
+    header: "%heading% (pokazuje %start%-%end% z %total%):"
+    header_title: "Historia dla %nickname%"
+    entry: "#%id% [%date%] %action% przez %operator% — %message%"
+    no_entries: "Brak wpisów historii dla %nickname%."
+    page_hint: "Użyj %command% aby zobaczyć więcej wpisów."
+    page_hint_command: "HISTORY %nickname% VIEW %next_page%"
+
+  # --- HISTORY CLEAR -------------------------------------------------------
+  clear:
+    syntax: "HISTORY <nick> CLEAR"
+    short: "Usuń wszystkie wpisy historii nicka."
+    help: "Nieodwracalnie usuwa wszystkie wpisy historii pseudonimu."
+    example: "%command_prefix%HISTORY Użytkownik CLEAR"
+    success: "Wyczyszczono %count% wpisów historii dla %nickname%."
+
+# --- HISTORY MESSAGES ---
+history.message:
+  verify: "Konto aktywowane"
+  resend: "Wiadomość weryfikacyjna wysłana ponownie"
+  noexpire_on: "Ochrona przed wygaśnięciem włączona"
+  noexpire_off: "Ochrona przed wygaśnięciem wyłączona"
+  userip: "Zapytanie USERIP"
+  history_clear: "Historia wyczyszczona"
+  password_changed_owner: "Hasło zmienione przez właściciela"
+  password_changed_operator: "Hasło zmienione przez operatora"
+  email_changed_owner: "E-mail zmieniony z %old_email% na %new_email%"
+  email_changed_operator: "E-mail zmieniony na %new_email% przez operatora"
+  recover: "Hasło zresetowane przez token e-mail"
+  saregister: "Konto zarejestrowane administracyjnie"
+
+# --- HISTORY EXTRA FIELDS ---
+history.extra:
+  old_email: "Poprzedni e-mail: %value%"
+  new_email: "Nowy e-mail: %value%"
+  method: "Metoda: %value%"
+
+# --- SAREGISTER (IRCop) -------------------------------------------------------
 saregister:
   syntax: "SAREGISTER <nick> <hasło> [email]"
   short: "Administracyjna rejestracja nicka."
@@ -409,7 +585,7 @@ saregister:
   success_email: "Nick %nickname% został zarejestrowany. Token ratunkowy wysłany na %email%."
   invalid_nickname: "Nieprawidłowy nick %nickname%."
 
-# --- SASET -----------------------------------------------------------------
+# --- SASET (IRCop) ------------------------------------------------------------
 saset:
   syntax: "SASET <nick> {PASSWORD <nowe_hasło>|EMAIL <nowy_e-mail>|LANGUAGE <kod>|TIMEZONE {<strefa_czasowa>|OFF}|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
   short: "Modyfikuj ustawienia innego nicka."
@@ -488,91 +664,56 @@ saset:
     examples:
       - "%command_prefix%SASET Użytkownik VHOST"
 
-# --- HELP ------------------------------------------------------------------
-help:
-  syntax: "HELP [komenda]"
-  short: "Wyświetl pomoc dla komend %nickserv%."
+# --- RENAME (IRCop) -----------------------------------------------------------
+rename:
+  syntax: "RENAME <nick>"
+  short: "Wymuś zmianę nicka połączonego użytkownika na losowy."
   help: |-
-    Wyświetla ogólną pomoc %nickserv% lub szczegółowe informacje
-    dla konkretnej komendy.
-  examples_header: "Przykłady:"
-  example: "%command_prefix%HELP"
+    Wymusza zmianę pseudonimu połączonego użytkownika na losową nazwę z prefiksem
+    określonym przez sieć.
+  example: "%command_prefix%RENAME Kłopotliwy"
+  cannot_rename_root: "Nie można przemianować użytkownika root %nickname%."
+  cannot_rename_oper: "Nie można przemianować operatora IRC %nickname%."
+  cannot_rename_service: "Nie można przemianować nicka serwisowego %nickname%."
+  success: "Nick %nickname% został przemianowany na %new_nick%."
+
+# --- NOEXPIRE (IRCop) ---------------------------------------------------------
+noexpire:
+  syntax: "NOEXPIRE <nick> {ON|OFF}"
+  short: "Ustaw lub usuń ochronę przed wygaśnięciem nicka."
+  help: |-
+    Określa, czy pseudonim wygasa z powodu braku aktywności.
+    ON zapobiega wygaśnięciu, a OFF stosuje zwykłe zasady.
+  example: "%command_prefix%NOEXPIRE Użytkownik ON"
   examples:
-    - "%command_prefix%HELP SET"
-    - "%command_prefix%HELP SET EMAIL"
-    - "%command_prefix%HELP SET TIMEZONE Europe"
-  header_title: "%bot%"
-  header: "%title%"
-  navigation_marker: ""
-  info_marker: ""
-  error_marker: ""
-  warning_marker: ""
-  intro: |-
-    Pozwala zarejestrować i chronić pseudonim przed użyciem przez inne osoby.
-    Zarządzaj bezpieczeństwem konta, dostosuj preferencje i odzyskaj dostęp w razie
-    potrzeby.
-  intro_expiration: "%label%: Nieużywane przez ponad %duration% pseudonimy są automatycznie usuwane."
-  intro_expiration_duration: "%days% dni"
-  intro_expiration_label: "UWAGA"
-  general_header: "Dostępne komendy:"
-  command_line: "%command%%description%"
-  subcommand_line: "%command%%description%"
-  options_header: "Opcje:"
-  general_syntax: "HELP <komenda>"
-  general_footer: "Użyj /msg %bot% %syntax%, aby uzyskać więcej informacji."
-  set_sub_syntax: "HELP %command% <opcja>"
-  set_sub_footer: "Użyj /msg %bot% %syntax%, aby uzyskać więcej informacji."
-  syntax_label: "Składnia: %syntax%"
-  footer: ""
-  group_header: "%group%"
-  subgroup_header: "%group%"
-  group:
-    registration_auth: "Rejestracja i uwierzytelnianie"
-    account_security: "Konto i bezpieczeństwo"
-  ircop_group:
-    lookup: "Wyszukiwanie i dochodzenie"
-    account_management: "Zarządzanie kontami"
-    suspensions_bans: "Zawieszenia i zakazy"
-    deletion: "Usuwanie i przywracanie"
-  ircop_header: "Dostępne komendy dla operatorów IRC:"
-  set_timezone:
-    index_label: "Strefy według regionu (użyj %syntax%, aby wyszukać region):"
-    index_syntax: "HELP SET TIMEZONE <region>"
-    region_header: "Strefy czasowe dla %region%:"
-    region_unknown: "Nieznany region. Użyj %syntax% aby zobaczyć indeks."
-    region_syntax: "HELP SET TIMEZONE"
+    - "%command_prefix%NOEXPIRE Użytkownik OFF"
+  success_on: "Nick %nickname% jest teraz chroniony przed wygaśnięciem."
+  success_off: "Nick %nickname% będzie teraz wygasał normalnie."
+  forbidden: "Nick %nickname% jest zabroniony."
+  suspended: "Nick %nickname% jest zawieszony."
 
-# --- NICK PROTECTION -------------------------------------------------------
-protection:
-  nick_in_use: "Nick %nickname% jest zarejestrowany. Zostaniesz przemianowany jeśli się nie zidentyfikujesz."
-  renamed_to: |-
-    Zmieniono Twój pseudonim na %guest_nick%. Aby odzyskać swój pseudonim:
-    /msg %bot% %identify%
-  renamed_command: "IDENTIFY %nickname% <hasło>"
-  nick_forbidden: "Nick %nickname% jest zabroniony: %reason%"
-
-# --- USERIP ----------------------------------------------------------------
-userip:
-  syntax: "USERIP <nick>"
-  short: "Pobierz prawdziwy adres IP i nazwę hosta nicka."
+# --- REGMODE (IRCop) ----------------------------------------------------------
+regmode:
+  syntax: "REGMODE {EMAIL|TOKEN|STATUS}"
+  short: "Zarządzanie trybem rejestracji w sieci."
   help: |-
-    Wyświetla rzeczywisty adres IP i nazwę hosta pseudonimu.
-    Używaj odpowiedzialnie: to poufne informacje.
-  example: "%command_prefix%USERIP Użytkownik"
-  result: "Nick: %nickname% | IP: %ip% | Host: %host%"
+    Konfiguruje tryb rejestracji nowych kont.
 
-# --- WHOIP -----------------------------------------------------------------
-whoip:
-  syntax: "WHOIP <ip>"
-  short: "Wyszukuje pseudonimy według IP ich ostatniego uwierzytelnionego połączenia."
-  help: |-
-    Wyświetla zarejestrowane pseudonimy, których ostatnie zidentyfikowane
-    połączenie używało tego adresu IP. Zapisany adres może być nieaktualny.
-  example: "%command_prefix%WHOIP 192.0.2.10"
-  empty: "Brak zarejestrowanych pseudonimów pasujących do tego adresu IP."
-  header: "Pasujące pseudonimy:"
+    %emphasis_0% Wysyła token weryfikacyjny na adres e-mail użytkownika.
+    %emphasis_1% Dostarcza token weryfikacyjny bezpośrednio przez IRC.
+    %emphasis_2% Wyświetla bieżący tryb bez wprowadzania zmian.
 
-# --- SUSPEND ---------------------------------------------------------------
+    Oczekujące rejestracje zachowują tryb wybrany przy rozpoczęciu.
+
+    W trybie TOKEN polecenie RESEND pozostaje wyłączone dla wszystkich użytkowników.
+  example: "%command_prefix%REGMODE STATUS"
+  examples:
+    - "%command_prefix%REGMODE EMAIL"
+    - "%command_prefix%REGMODE TOKEN"
+  status: "Bieżący tryb rejestracji: %mode%."
+  changed: "Tryb rejestracji zmieniono na %mode%."
+
+# --- SUSPEND (IRCop) ----------------------------------------------------------
 suspend:
   syntax: "SUSPEND <nick> <czas_trwania> <powód>"
   short: "Zawieś nick."
@@ -593,7 +734,7 @@ suspend:
   invalid_duration_format: "<d><h><m>"
   invalid_duration_permanent: "0"
 
-# --- UNSUSPEND -------------------------------------------------------------
+# --- UNSUSPEND (IRCop) --------------------------------------------------------
 unsuspend:
   syntax: "UNSUSPEND <nick>"
   short: "Usuń zawieszenie z nicka."
@@ -602,52 +743,7 @@ unsuspend:
   success: "Zawieszenie zostało zniesione z %nickname%."
   not_suspended: "Nick %nickname% nie jest zawieszony."
 
-# --- RENAME ----------------------------------------------------------------
-rename:
-  syntax: "RENAME <nick>"
-  short: "Wymuś zmianę nicka połączonego użytkownika na losowy."
-  help: |-
-    Wymusza zmianę pseudonimu połączonego użytkownika na losową nazwę z prefiksem
-    określonym przez sieć.
-  example: "%command_prefix%RENAME Kłopotliwy"
-  cannot_rename_root: "Nie można przemianować użytkownika root %nickname%."
-  cannot_rename_oper: "Nie można przemianować operatora IRC %nickname%."
-  cannot_rename_service: "Nie można przemianować nicka serwisowego %nickname%."
-  success: "Nick %nickname% został przemianowany na %new_nick%."
-
-# --- DROP ------------------------------------------------------------------
-drop:
-  syntax: "DROP <nick> [FORCE]"
-  short: "Usuń zarejestrowany nick."
-  help: |-
-    Oznacza zarejestrowany pseudonim do usunięcia po okresie karencji; można go
-    przywrócić poleceniem RESTORE. Dodaj FORCE, aby usunąć go na stałe. Nie można
-    usunąć użytkowników Root, IRCops, usług ani własnego pseudonimu.
-  force:
-    short: "Trwale usuwa pseudonim oczekujący na usunięcie."
-  example: "%command_prefix%DROP CuentaAntigua"
-  examples:
-    - "%command_prefix%DROP CuentaAntigua FORCE"
-  suspended: "Nick %nickname% jest zawieszony. Najpierw zdejmij zawieszenie."
-  forbidden: "Nick %nickname% jest zabroniony."
-  cannot_drop_root: "Nie można usunąć użytkownika root %nickname%."
-  cannot_drop_oper: "Nie można usunąć operatora IRC %nickname%."
-  cannot_drop_self: "Nie możesz usunąć własnego nicka."
-  success: "Nick %nickname% został oznaczony do usunięcia i może być przywrócony w okresie karencji."
-  force_success: "Nick %nickname% został trwale usunięty."
-  pending_deletion: "Nick %nickname% już oczekuje na usunięcie. Użyj DROP <nick> FORCE aby usunąć go trwale."
-  cannot_drop_service: "Nie można usunąć nicka serwisowego %nickname%."
-
-# --- RESTORE ---------------------------------------------------------------
-restore:
-  syntax: "RESTORE <nick>"
-  short: "Przywróć nicka oczekującego na usunięcie."
-  help: "Przywraca pseudonim oczekujący na usunięcie, o ile nadal trwa okres karencji."
-  example: "%command_prefix%RESTORE CuentaAntigua"
-  success: "Nick %nickname% został przywrócony."
-  not_pending_deletion: "Nick %nickname% nie oczekuje na usunięcie."
-
-# --- FORBID ----------------------------------------------------------------
+# --- FORBID (IRCop) -----------------------------------------------------------
 forbid:
   syntax: "FORBID <nick> <powód>"
   short: "Trwale zablokuj nick przed używaniem."
@@ -664,7 +760,7 @@ forbid:
   cannot_forbid_oper: "Nie można zabronić operatora IRC %nickname%."
   cannot_forbid_service: "Nie można zabronić nicka serwisowego %nickname%."
 
-# --- UNFORBID --------------------------------------------------------------
+# --- UNFORBID (IRCop) ---------------------------------------------------------
 unforbid:
   syntax: "UNFORBID <nick>"
   short: "Usuń zabronienie nicka."
@@ -673,7 +769,7 @@ unforbid:
   success: "Nick %nickname% nie jest już zabroniony."
   not_forbidden: "Nick %nickname% nie jest zabroniony."
 
-# --- FORBIDVHOST -----------------------------------------------------------
+# --- FORBIDVHOST (IRCop) ------------------------------------------------------
 forbidvhost:
   syntax: "FORBIDVHOST {ADD <wzorzec>|DEL <wzorzec>|LIST}"
   short: "Zarządzaj zabronionymi wzorcami vhost."
@@ -717,134 +813,39 @@ forbidvhost:
     entry: "%index%. %pattern% — przez %nickname% (%date%)"
     empty: "Brak zabronionych wzorców vhost."
 
-# --- HISTORY ---
-history:
-  syntax: "HISTORY <nick> {ADD <wiadomość>|DEL <id>|VIEW [PAGE|ALL]|CLEAR}"
-  short: "Przeglądaj lub zarządzaj historią działań nicka."
+# --- DROP (IRCop) -------------------------------------------------------------
+drop:
+  syntax: "DROP <nick> [FORCE]"
+  short: "Usuń zarejestrowany nick."
   help: |-
-    Wyświetla historię działań pseudonimu. Automatycznie zapisuje zawieszenia,
-    zmiany hasła lub e-maila oraz odzyskiwanie. VIEW pokazuje trzy wpisy na stronę;
-    ALL wyświetla całą historię.
-  example: "%command_prefix%HISTORY Użytkownik VIEW"
+    Oznacza zarejestrowany pseudonim do usunięcia po okresie karencji; można go
+    przywrócić poleceniem RESTORE. Dodaj FORCE, aby usunąć go na stałe. Nie można
+    usunąć użytkowników Root, IRCops, usług ani własnego pseudonimu.
+  force:
+    short: "Trwale usuwa pseudonim oczekujący na usunięcie."
+  example: "%command_prefix%DROP CuentaAntigua"
   examples:
-    - "%command_prefix%HISTORY Użytkownik VIEW ALL"
-    - "%command_prefix%HISTORY Użytkownik ADD Notatka ręczna"
-
-  # --- HISTORY ADD ---------------------------------------------------------
-  add:
-    syntax: "HISTORY <nick> ADD <wiadomość>"
-    short: "Dodaj ręczny wpis historii."
-    help: "Dodaje ręczny wpis do historii pseudonimu."
-    example: "%command_prefix%HISTORY Użytkownik ADD Zgłoszono spam"
-    success: "Wpis historii dodany dla %nickname%."
-
-  # --- HISTORY DEL ---------------------------------------------------------
-  del:
-    syntax: "HISTORY <nick> DEL <id>"
-    short: "Usuń wpis historii według ID."
-    help: "Usuwa wskazany wpis z historii według jego ID."
-    example: "%command_prefix%HISTORY Użytkownik DEL 42"
-
-  # --- HISTORY VIEW --------------------------------------------------------
-  view:
-    syntax: "HISTORY <nick> VIEW [PAGE|ALL]"
-    short: "Przeglądaj historię działań nicka."
-    help: |-
-      Wyświetla historię działań pseudonimu. Domyślnie pokazuje trzy wpisy na stronę.
-      Użyj ALL, aby wyświetlić wszystkie.
-    example: "%command_prefix%HISTORY Użytkownik VIEW"
-    examples:
-      - "%command_prefix%HISTORY Użytkownik VIEW 2"
-      - "%command_prefix%HISTORY Użytkownik VIEW ALL"
-    header: "%heading% (pokazuje %start%-%end% z %total%):"
-    header_title: "Historia dla %nickname%"
-    entry: "#%id% [%date%] %action% przez %operator% — %message%"
-    no_entries: "Brak wpisów historii dla %nickname%."
-    page_hint: "Użyj %command% aby zobaczyć więcej wpisów."
-    page_hint_command: "HISTORY %nickname% VIEW %next_page%"
-
-  # --- HISTORY CLEAR -------------------------------------------------------
-  clear:
-    syntax: "HISTORY <nick> CLEAR"
-    short: "Usuń wszystkie wpisy historii nicka."
-    help: "Nieodwracalnie usuwa wszystkie wpisy historii pseudonimu."
-    example: "%command_prefix%HISTORY Użytkownik CLEAR"
-    success: "Wyczyszczono %count% wpisów historii dla %nickname%."
-
-# --- HISTORY MESSAGES ---
-history.message:
-  verify: "Konto aktywowane"
-  resend: "Wiadomość weryfikacyjna wysłana ponownie"
-  noexpire_on: "Ochrona przed wygaśnięciem włączona"
-  noexpire_off: "Ochrona przed wygaśnięciem wyłączona"
-  userip: "Zapytanie USERIP"
-  history_clear: "Historia wyczyszczona"
-  password_changed_owner: "Hasło zmienione przez właściciela"
-  password_changed_operator: "Hasło zmienione przez operatora"
-  email_changed_owner: "E-mail zmieniony z %old_email% na %new_email%"
-  email_changed_operator: "E-mail zmieniony na %new_email% przez operatora"
-  recover: "Hasło zresetowane przez token e-mail"
-  saregister: "Konto zarejestrowane administracyjnie"
-
-# --- HISTORY EXTRA FIELDS ---
-history.extra:
-  old_email: "Poprzedni e-mail: %value%"
-  new_email: "Nowy e-mail: %value%"
-  method: "Metoda: %value%"
-
-# --- NOEXPIRE --------------------------------------------------------------
-noexpire:
-  syntax: "NOEXPIRE <nick> {ON|OFF}"
-  short: "Ustaw lub usuń ochronę przed wygaśnięciem nicka."
-  help: |-
-    Określa, czy pseudonim wygasa z powodu braku aktywności.
-    ON zapobiega wygaśnięciu, a OFF stosuje zwykłe zasady.
-  example: "%command_prefix%NOEXPIRE Użytkownik ON"
-  examples:
-    - "%command_prefix%NOEXPIRE Użytkownik OFF"
-  success_on: "Nick %nickname% jest teraz chroniony przed wygaśnięciem."
-  success_off: "Nick %nickname% będzie teraz wygasał normalnie."
+    - "%command_prefix%DROP CuentaAntigua FORCE"
+  suspended: "Nick %nickname% jest zawieszony. Najpierw zdejmij zawieszenie."
   forbidden: "Nick %nickname% jest zabroniony."
-  suspended: "Nick %nickname% jest zawieszony."
+  cannot_drop_root: "Nie można usunąć użytkownika root %nickname%."
+  cannot_drop_oper: "Nie można usunąć operatora IRC %nickname%."
+  cannot_drop_self: "Nie możesz usunąć własnego nicka."
+  success: "Nick %nickname% został oznaczony do usunięcia i może być przywrócony w okresie karencji."
+  force_success: "Nick %nickname% został trwale usunięty."
+  pending_deletion: "Nick %nickname% już oczekuje na usunięcie. Użyj DROP <nick> FORCE aby usunąć go trwale."
+  cannot_drop_service: "Nie można usunąć nicka serwisowego %nickname%."
 
-# --- LIST ------------------------------------------------------------------
-list:
-  syntax: "LIST <wzorzec> [strona]"
-  short: "Wyświetla zarejestrowane pseudonimy pasujące do wzorca."
-  help: |-
-    Wyświetla zarejestrowane pseudonimy pasujące do wzorca. Symbol * dopasowuje
-    dowolny ciąg znaków; opcjonalna strona zaczyna się od 1.
-  example: "%command_prefix%LIST Użytkownik*"
-  examples:
-    - "%command_prefix%LIST Użytkownik* 2"
-  header: "Pseudonim | Rejestracja | Ostatnie połączenie | IP | Status"
-  row: "%nickname% | %registered% | %last_seen% | %ip% | %status%"
-  empty: "Brak pseudonimów pasujących do wzorca %pattern%."
-  status_pending: "Oczekujący"
-  status_registered: "Zarejestrowany"
+# --- RESTORE (IRCop) ----------------------------------------------------------
+restore:
+  syntax: "RESTORE <nick>"
+  short: "Przywróć nicka oczekującego na usunięcie."
+  help: "Przywraca pseudonim oczekujący na usunięcie, o ile nadal trwa okres karencji."
+  example: "%command_prefix%RESTORE CuentaAntigua"
+  success: "Nick %nickname% został przywrócony."
+  not_pending_deletion: "Nick %nickname% nie oczekuje na usunięcie."
 
-# --- REGMODE ---------------------------------------------------------------
-regmode:
-  syntax: "REGMODE {EMAIL|TOKEN|STATUS}"
-  short: "Zarządzanie trybem rejestracji w sieci."
-  help: |-
-    Konfiguruje tryb rejestracji nowych kont.
-
-    %emphasis_0% Wysyła token weryfikacyjny na adres e-mail użytkownika.
-    %emphasis_1% Dostarcza token weryfikacyjny bezpośrednio przez IRC.
-    %emphasis_2% Wyświetla bieżący tryb bez wprowadzania zmian.
-
-    Oczekujące rejestracje zachowują tryb wybrany przy rozpoczęciu.
-
-    W trybie TOKEN polecenie RESEND pozostaje wyłączone dla wszystkich użytkowników.
-  example: "%command_prefix%REGMODE STATUS"
-  examples:
-    - "%command_prefix%REGMODE EMAIL"
-    - "%command_prefix%REGMODE TOKEN"
-  status: "Bieżący tryb rejestracji: %mode%."
-  changed: "Tryb rejestracji zmieniono na %mode%."
-
-# --- RESCUE ----------------------------------------------------------------
+# --- RESCUE -------------------------------------------------------------------
 rescue:
   issued: |-
     Token ratunkowy: %token_display%
@@ -872,7 +873,7 @@ rescue:
   replacement_unavailable: "Hasło zostało zresetowane, ale nie udało się wydać nowego tokenu. Obecny token pozostaje ważny."
   temporarily_unavailable: "Wydawanie tokenu odzyskiwania jest chwilowo niedostępne. Spróbuj później."
 
-# --- HELP FRAGMENTS ---------------------------------------------------------
+# --- HELP FRAGMENTS -----------------------------------------------------------
 help_fragments:
   identify_help_0: "+r"
   set_language_help_0: "ca"

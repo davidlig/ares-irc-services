@@ -66,7 +66,7 @@ final readonly class SaregisterCommand implements NickServCommandInterface, Irco
 
     public function getOrder(): int
     {
-        return 64;
+        return 63;
     }
 
     public function getShortDescKey(): string

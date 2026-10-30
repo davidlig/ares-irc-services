@@ -16,7 +16,7 @@
 # HELP-Beispiele: example/examples und %command_prefix%.
 # Die Darstellung ergänzt /msg ohne Farbe und einen Rand von zwei Leerzeichen.
 
-# --- SEND ------------------------------------------------------------------
+# --- SEND ---------------------------------------------------------------------
 send:
   syntax: "SEND {nickname|#channel} <Nachricht>"
   short: "Eine Nachricht an einen Nickname oder Channel senden."
@@ -35,7 +35,7 @@ send:
   message_too_long: "Nachricht zu lang. Maximum sind %max% Zeichen."
   service_disabled_for_target: "Nachrichtendienst ist für %target% deaktiviert."
 
-# --- READ ------------------------------------------------------------------
+# --- READ ---------------------------------------------------------------------
 read:
   syntax: "READ [#channel] <Nummer>"
   short: "Eine Nachricht anhand der Nummer lesen."
@@ -49,7 +49,7 @@ read:
   footer: "%separator% %date%"
   not_found: "Nachricht #%index% nicht gefunden."
 
-# --- LIST ------------------------------------------------------------------
+# --- LIST ---------------------------------------------------------------------
 list:
   syntax: "LIST [#channel]"
   short: "Nachrichten auflisten (ungelesen mit rotem * markiert)."
@@ -63,7 +63,7 @@ list:
   header: "Nachrichten für %target%:"
   empty: "Keine Nachrichten für %target%."
 
-# --- DEL -------------------------------------------------------------------
+# --- DEL ----------------------------------------------------------------------
 del:
   syntax: "DEL [#channel] <Nummer>"
   short: "Eine Nachricht anhand der Nummer löschen."
@@ -76,7 +76,7 @@ del:
   deleted: "Nachricht #%index% gelöscht."
   not_found: "Nachricht #%index% nicht gefunden."
 
-# --- IGNORE ----------------------------------------------------------------
+# --- IGNORE -------------------------------------------------------------------
 ignore:
   syntax: "IGNORE {ADD [#channel] <nickname>|DEL [#channel] <nickname>|LIST [#channel]}"
   short: "Ignorierliste für Nachrichten verwalten."
@@ -128,7 +128,7 @@ ignore:
   list_empty: "Ignorierliste ist leer."
   list_header: "Ignorierliste:"
 
-# --- ENABLE ----------------------------------------------------------------
+# --- ENABLE -------------------------------------------------------------------
 enable:
   syntax: "ENABLE [#channel]"
   short: "Nachrichtenempfang aktivieren."
@@ -144,7 +144,7 @@ enable:
   already_enabled_channel: "Nachrichtendienst ist für %channel% bereits aktiviert."
   founder_only: "Nur der Channel-Founder kann Nachrichten für %channel% aktivieren."
 
-# --- DISABLE ---------------------------------------------------------------
+# --- DISABLE ------------------------------------------------------------------
 disable:
   syntax: "DISABLE [#channel]"
   short: "Nachrichtenempfang deaktivieren."
@@ -160,7 +160,7 @@ disable:
   already_disabled_channel: "Nachrichtendienst ist für %channel% bereits deaktiviert."
   founder_only: "Nur der Channel-Founder kann Nachrichten für %channel% deaktivieren."
 
-# --- HELP ------------------------------------------------------------------
+# --- HELP ---------------------------------------------------------------------
 help:
   syntax: "HELP [Befehl] [Option]"
   short: "Befehle auflisten oder Hilfe für einen Befehl anzeigen."
@@ -194,12 +194,12 @@ help:
     preferences: "Einstellungen"
   ircop_header: "Verfügbare Befehle für IRC-Operatoren:"
 
-# --- NOTIFY ----------------------------------------------------------------
+# --- NOTIFY -------------------------------------------------------------------
 notify:
   nick_pending: "Du hast %count% ungelesene Nachricht(en). Nachrichten anzeigen: /msg %bot% %list%"
   channel_pending: "Der Channel %channel% hat %count% ungelesene Nachricht(en). Nachrichten anzeigen: /msg %bot% %list%"
 
-# --- CHANNEL REGISTRATION DECISIONS ---
+# --- CHANNEL REGISTRATION DECISIONS -------------------------------------------
 registration_decision:
   accepted: "Deine Registrierungsanfrage für %channel% wurde angenommen."
   rejected: "Deine Registrierungsanfrage für %channel% wurde abgelehnt."
