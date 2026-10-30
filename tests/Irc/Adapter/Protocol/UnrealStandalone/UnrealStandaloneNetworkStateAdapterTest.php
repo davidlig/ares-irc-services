@@ -1115,12 +1115,18 @@ final class UnrealStandaloneNetworkStateAdapterTest extends TestCase
             });
 
         $adapter = new UnrealStandaloneNetworkStateAdapter($eventDispatcher);
-        $adapter->handleMessage(new IRCMessage('SJOIN', null, ['1704067200', '#test'], '&001ABC123'));
+        $adapter->handleMessage(new IRCMessage('SJOIN', null, ['1704067200', '#test'], '~001ABC123 &001DEF456'));
 
         self::assertInstanceOf(ChannelJoinReceivedEvent::class, $captured);
-        self::assertCount(1, $captured->members);
+        self::assertCount(2, $captured->members);
         self::assertSame('001ABC123', $captured->members[0]['uid']->value);
         self::assertSame(ChannelMemberRole::Admin, $captured->members[0]['role']);
+        self::assertArrayHasKey('prefixLetters', $captured->members[0]);
+        self::assertSame(['a'], $captured->members[0]['prefixLetters']);
+        self::assertSame('001DEF456', $captured->members[1]['uid']->value);
+        self::assertSame(ChannelMemberRole::Admin, $captured->members[1]['role']);
+        self::assertArrayHasKey('prefixLetters', $captured->members[1]);
+        self::assertSame(['a'], $captured->members[1]['prefixLetters']);
     }
 
     #[Test]
@@ -1136,12 +1142,41 @@ final class UnrealStandaloneNetworkStateAdapterTest extends TestCase
             });
 
         $adapter = new UnrealStandaloneNetworkStateAdapter($eventDispatcher);
-        $adapter->handleMessage(new IRCMessage('SJOIN', null, ['1704067200', '#test'], '~001ABC123'));
+        $adapter->handleMessage(new IRCMessage('SJOIN', null, ['1704067200', '#test'], '*001ABC123'));
 
         self::assertInstanceOf(ChannelJoinReceivedEvent::class, $captured);
         self::assertCount(1, $captured->members);
         self::assertSame('001ABC123', $captured->members[0]['uid']->value);
         self::assertSame(ChannelMemberRole::Owner, $captured->members[0]['role']);
+        self::assertArrayHasKey('prefixLetters', $captured->members[0]);
+        self::assertSame(['q'], $captured->members[0]['prefixLetters']);
+    }
+
+    #[Test]
+    public function handleSjoinWithMultipleCombinedPrefixesResolvesToHighestPrivilege(): void
+    {
+        $captured = null;
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch')
+            ->willReturnCallback(static function ($event) use (&$captured) {
+                $captured = $event;
+
+                return $event;
+            });
+
+        $adapter = new UnrealStandaloneNetworkStateAdapter($eventDispatcher);
+        $adapter->handleMessage(new IRCMessage('SJOIN', null, ['1704067200', '#test'], '*~001ABC123 *@001DEF456'));
+
+        self::assertInstanceOf(ChannelJoinReceivedEvent::class, $captured);
+        self::assertCount(2, $captured->members);
+        self::assertSame('001ABC123', $captured->members[0]['uid']->value);
+        self::assertSame(ChannelMemberRole::Owner, $captured->members[0]['role']);
+        self::assertArrayHasKey('prefixLetters', $captured->members[0]);
+        self::assertSame(['q', 'a'], $captured->members[0]['prefixLetters']);
+        self::assertSame('001DEF456', $captured->members[1]['uid']->value);
+        self::assertSame(ChannelMemberRole::Owner, $captured->members[1]['role']);
+        self::assertArrayHasKey('prefixLetters', $captured->members[1]);
+        self::assertSame(['q', 'o'], $captured->members[1]['prefixLetters']);
     }
 
     #[Test]
