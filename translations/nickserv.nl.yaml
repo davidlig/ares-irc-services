@@ -19,7 +19,7 @@
 # --- REGISTER --------------------------------------------------------------
 register:
   token_unavailable: !irc |-
-    \x0304✗\x03 De registratie is in behandeling, maar het token kon niet worden verstrekt.
+    De registratie is in behandeling, maar het token kon niet worden verstrekt.
     Wacht tot deze registratie verloopt voordat je opnieuw registreert.
   syntax: "REGISTER <wachtwoord> [email]"
   short: "Registreer uw bijnaam bij de services."
@@ -31,22 +31,26 @@ register:
     Bewaar het op een veilige plaats.
     De geldigheidsduur van %duration% geldt alleen vóór verificatie.
     Administratief geblokkeerde e-maildomeinen zijn niet toegestaan.
-  example: "%command_prefix%\x02\x0303REGISTER Veilig$Wachtwoord_123\x03\x0F"
+  example: "%command_prefix%REGISTER Veilig$Wachtwoord_123"
   examples:
-    - "%command_prefix%\x02\x0303REGISTER Veilig$Wachtwoord_123 gebruiker@voorbeeld.nl\x03\x0F"
-  pending: !irc |-
-    \x0307→\x03 Er is een verificatietoken gestuurd naar \x02%email%\x02.
-      Voer /msg %bot% \x0303VERIFY <token>\x03 uit om de registratie te voltooien.
-      Niets ontvangen? Controleer spam of gebruik /msg %bot% \x0303RESEND\x03
-      Het token verloopt over \x02%duration%\x02.
-  already_registered: "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is al geregistreerd."
-  already_pending: "\x0307→\x03 De registratie van \x02%nickname%\x02 staat in behandeling. Gebruik \x0303VERIFY <token>\x03. Als het token per e-mail is gestuurd en er een geldig adres is gekoppeld, kun je met \x0303RESEND\x03 een nieuw token aanvragen."
-  forbidden: "\x0304✗\x03 Bijnaam \x02%nickname%\x02 kan niet worden geregistreerd op dit netwerk."
-  pending_deletion: "\x0304✗\x03 Bijnaam \x02%nickname%\x02 staat op het punt verwijderd te worden en kan niet worden geregistreerd."
-  invalid_email: "\x0304✗\x03 Het opgegeven e-mailadres is niet geldig."
-  email_already_used: "\x0304✗\x03 De e-mail \x02%email%\x02 is al in gebruik door een andere bijnaam. Gebruik een ander adres."
-  throttled: "\x0304✗\x03 U moet \x02%minutes%\x02 minu(u)t(en) wachten voordat u opnieuw probeert te registreren."
-  guest_prefix_forbidden: "\x0304✗\x03 U kunt geen bijnaam registreren die begint met \x02%prefix%\x02."
+    - "%command_prefix%REGISTER Veilig$Wachtwoord_123 gebruiker@voorbeeld.nl"
+  pending: |-
+    %first%
+    %second%
+    %third%
+    %fourth%
+  pending_line_1: "Er is een verificatietoken gestuurd naar %email%."
+  pending_line_2: "Voer /msg %bot% %verify% uit om de registratie te voltooien."
+  pending_line_3: "Niets ontvangen? Controleer spam of gebruik /msg %bot% %resend%"
+  pending_line_4: "Het token verloopt over %duration%."
+  already_registered: "Bijnaam %nickname% is al geregistreerd."
+  already_pending: "De registratie van %nickname% staat in behandeling. Gebruik %verify%. Als het token per e-mail is gestuurd en er een geldig adres is gekoppeld, kun je met %resend% een nieuw token aanvragen."
+  forbidden: "Bijnaam %nickname% kan niet worden geregistreerd op dit netwerk."
+  pending_deletion: "Bijnaam %nickname% staat op het punt verwijderd te worden en kan niet worden geregistreerd."
+  invalid_email: "Het opgegeven e-mailadres is niet geldig."
+  email_already_used: "De e-mail %email% is al in gebruik door een andere bijnaam. Gebruik een ander adres."
+  throttled: "U moet %minutes% minu(u)t(en) wachten voordat u opnieuw probeert te registreren."
+  guest_prefix_forbidden: "U kunt geen bijnaam registreren die begint met %prefix%."
 
 # --- VERIFY ----------------------------------------------------------------
 verify:
@@ -56,15 +60,15 @@ verify:
     Na verificatie wordt dit je permanente hersteltoken.
     Bewaar het veilig: je kunt het gebruiken om je bijnaam te herstellen.
     De geldigheidsduur van %duration% geldt alleen vóór verificatie.
-  example: "%command_prefix%\x02\x0303VERIFY <ontvangen_token>\x03\x0F"
-  success: "\x0303✔\x03 Bijnaam \x02%nickname%\x02 is succesvol geregistreerd en u bent nu geïdentificeerd."
-  success_native: "\x0303✔\x03 De bijnaam \x02%nickname%\x02 is succesvol geregistreerd. Gebruik de hieronder weergegeven native authenticatie."
-  invalid_token: "\x0304✗\x03 Het hersteltoken is ongeldig."
-  no_pending: "\x0304✗\x03 U heeft geen lopende registratie om te verifiëren."
+  example: "%command_prefix%VERIFY <ontvangen_token>"
+  success: "Bijnaam %nickname% is succesvol geregistreerd en u bent nu geïdentificeerd."
+  success_native: "De bijnaam %nickname% is succesvol geregistreerd. Gebruik de hieronder weergegeven native authenticatie."
+  invalid_token: "Het hersteltoken is ongeldig."
+  no_pending: "U heeft geen lopende registratie om te verifiëren."
 
 # --- RESEND ----------------------------------------------------------------
 resend:
-  disabled: "\x0307ℹ\x03 \x0303RESEND\x03 is uitgeschakeld omdat dit account een token rechtstreeks via chat verzendt."
+  disabled: "%resend% is uitgeschakeld omdat dit account een token rechtstreeks via chat verzendt."
   syntax: "RESEND"
   short: "Verstuur de verificatietoken opnieuw naar uw e-mail."
   help: |-
@@ -74,17 +78,20 @@ resend:
     verificatie.
     Met RESEND ontvang je een nieuw token per e-mail.
     De termijn van de registratie in behandeling wordt met %duration% verlengd.
-  example: "%command_prefix%\x02\x0303RESEND\x03\x0F"
-  success: "\x0307→\x03 Verificatietoken opnieuw verzonden naar \x02%email%\x02."
-  no_pending: "\x0304✗\x03 U heeft geen lopende registratie om te verifiëren."
-  throttled: "\x0304✗\x03 U moet \x02%minutes%\x02 minu(u)t(en) wachten voordat u een nieuwe verificatie-e-mail aanvraagt."
+  example: "%command_prefix%RESEND"
+  success: "Verificatietoken opnieuw verzonden naar %email%."
+  no_pending: "U heeft geen lopende registratie om te verifiëren."
+  throttled: "U moet %minutes% minu(u)t(en) wachten voordat u een nieuwe verificatie-e-mail aanvraagt."
 
 # --- RECOVER ---------------------------------------------------------------
 recover:
-  no_email: "\x0304✗\x03 Er is geen e-mail ingesteld voor bijnaam \x02%nickname%\x02. Herstel is niet beschikbaar."
-  email_sent: "\x0307→\x03 Er is een hersteltoken verzonden naar \x02%email_hint%\x02. Controleer uw inbox (en spammap)."
-  pending_deletion: "\x0304✗\x03 Bijnaam \x02%nickname%\x02 staat klaar voor verwijdering en kan niet worden hersteld."
-  instructions: "\x0307ℹ\x03 EMAIL: \x0303RECOVER %nickname%\x03 vraagt een voorlopig token per e-mail aan. TOKEN: geef je bevestigde token op. \x0303RECOVER %nickname% <token>\x03 accepteert een geldig e-mailtoken of bevestigd token. Het e-mailtoken vervangt het opgeslagen token pas na validatie. Het opgeslagen token biedt een optionele vervanging via \x0303VERIFY\x03; negeer het bericht om het te behouden."
+  no_email: "Er is geen e-mail ingesteld voor bijnaam %nickname%. Herstel is niet beschikbaar."
+  email_sent: "Er is een hersteltoken verzonden naar %email_hint%. Controleer uw inbox (en spammap)."
+  pending_deletion: "Bijnaam %nickname% staat klaar voor verwijdering en kan niet worden hersteld."
+  instructions: "EMAIL: %command_0% vraagt een voorlopig token per e-mail aan. TOKEN: geef je bevestigde token op. %command_1% accepteert een geldig e-mailtoken of bevestigd token. Het e-mailtoken vervangt het opgeslagen token pas na validatie. Het opgeslagen token biedt een optionele vervanging via %command_2%; negeer het bericht om het te behouden."
+  instructions_command_0: "RECOVER %nickname%"
+  instructions_command_1: "RECOVER %nickname% <token>"
+  instructions_command_2: "VERIFY"
   syntax: "RECOVER <bijnaam> [token]"
   short: "Herstel uw bijnaam als u uw wachtwoord bent kwijtgeraakt."
   help: |-
@@ -93,47 +100,56 @@ recover:
     opgeslagen token pas na verificatie.
     Na gebruik van het opgeslagen token wordt met VERIFY optioneel een vervanging
     aangeboden. Negeer dat bericht als je het huidige wilt behouden.
-  example: "%command_prefix%\x02\x0303RECOVER Gebruiker\x03\x0F"
+  example: "%command_prefix%RECOVER Gebruiker"
   examples:
-    - "%command_prefix%\x02\x0303RECOVER Gebruiker <ontvangen_token>\x03\x0F"
-  pending: "\x0307→\x03 De registratie van \x02%nickname%\x02 is in behandeling. Gebruik \x0303VERIFY <token>\x03. \x0303RESEND\x03 is alleen beschikbaar bij REGMODE EMAIL en een geldig gekoppeld e-mailadres."
-  suspended: "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is geschorst. Reden: %reason%"
-  forbidden: "\x0304✗\x03 Bijnaam \x02%nickname%\x02 kan niet worden gebruikt op dit netwerk."
-  throttled: "\x0304✗\x03 Te veel ongeldige tokens. Probeer het over \x02%minutes%\x02 minuten opnieuw."
-  invalid_token: "\x0304✗\x03 Het hersteltoken is ongeldig."
-  success_identify: "\x0303✔\x03 Wachtwoord gereset. Identificeer nu: \x0303%identify_cmd%\x03"
-  success_then_change: "Wijzig daarna uw wachtwoord: \x0303/msg %bot% SET PASSWORD <nieuw_wachtwoord>\x03"
+    - "%command_prefix%RECOVER Gebruiker <ontvangen_token>"
+  pending: "De registratie van %nickname% is in behandeling. Gebruik %command_0%. %command_1% is alleen beschikbaar bij REGMODE EMAIL en een geldig gekoppeld e-mailadres."
+  pending_command_0: "VERIFY <token>"
+  pending_command_1: "RESEND"
+  suspended: "Bijnaam %nickname% is geschorst. Reden: %reason%"
+  forbidden: "Bijnaam %nickname% kan niet worden gebruikt op dit netwerk."
+  throttled: "Te veel ongeldige tokens. Probeer het over %minutes% minuten opnieuw."
+  invalid_token: "Het hersteltoken is ongeldig."
+  success_identify: "Wachtwoord gereset. Identificeer nu: %identify_cmd%"
+  success_then_change: "Wijzig daarna uw wachtwoord: /msg %bot% %command_0%"
+  success_then_change_command_0: "SET PASSWORD <nieuw_wachtwoord>"
 
 # --- IDENTIFY --------------------------------------------------------------
 identify:
   syntax: "IDENTIFY <bijnaam> <wachtwoord>"
   short: "Identificeer uzelf als de eigenaar van een bijnaam."
-  help: !irc |-
+  help: |-
     Authenticeert uw sessie bij %nickserv% met uw bijnaam en wachtwoord.
-    Na succesvolle identificatie ontvangt u de geregistreerde modus \x02+r\x02
+    Na succesvolle identificatie ontvangt u de geregistreerde modus %emphasis_0%
     en, als u een gastbijnaam gebruikte, wordt uw geregistreerde bijnaam hersteld.
-  example: "%command_prefix%\x02\x0303IDENTIFY Gebruiker <wachtwoord>\x03\x0F"
+  example: "%command_prefix%IDENTIFY Gebruiker <wachtwoord>"
   native_syntax: "/NICK <bijnaam>:<wachtwoord> | /NICK <bijnaam>!<wachtwoord>"
   native_short: "Toont de native syntaxis voor nickname-authenticatie."
   native_help: |-
     Dit protocol authenticeert accounts via nicknamewijzigingen.
-    Gebruik /NICK <bijnaam>:<wachtwoord> of, als de nickname bezet is, /NICK <bijnaam>!<wachtwoord>.
-  native_example: "\x02\x0303/NICK Gebruiker:<wachtwoord>\x03\x0F"
+    Gebruik %emphasis_0% of, als de nickname bezet is, %emphasis_1%.
+  native_example: "/NICK Gebruiker:<wachtwoord>"
   native_examples:
-    - "%command_prefix%\x02\x0303/NICK Gebruiker!<wachtwoord>\x03\x0F"
-  native_authentication: "\x0307ℹ\x03 Dit protocol beheert authenticatie via nicknamewijzigingen. Gebruik \x0303/NICK <bijnaam>:<wachtwoord>\x03 of, als de nickname bezet is, \x0303/NICK <bijnaam>!<wachtwoord>\x03."
-  success: "\x0303✔\x03 U bent nu geïdentificeerd als \x02%nickname%\x02."
-  already_identified: "\x0307ℹ\x03 U bent al geïdentificeerd als \x02%nickname%\x02."
-  invalid_credentials: "\x0304✗\x03 Onjuist wachtwoord. Probeer het opnieuw."
-  locked_out: "\x0304✗\x03 Te veel mislukte pogingen. Probeer het over \x02%minutes%\x02 minu(u)t(en) opnieuw."
-  ghost_released: "\x0307⚡\x03 De spooksessie die \x02%nickname%\x02 vasthield is verbroken."
+    - "%command_prefix%/NICK Gebruiker!<wachtwoord>"
+  native_authentication: "Dit protocol beheert authenticatie via nicknamewijzigingen. Gebruik %command_0% of, als de nickname bezet is, %command_1%."
+  native_authentication_command_0: "/NICK <bijnaam>:<wachtwoord>"
+  native_authentication_command_1: "/NICK <bijnaam>!<wachtwoord>"
+  success: "U bent nu geïdentificeerd als %nickname%."
+  already_identified: "U bent al geïdentificeerd als %nickname%."
+  invalid_credentials: "Onjuist wachtwoord. Probeer het opnieuw."
+  locked_out: "Te veel mislukte pogingen. Probeer het over %minutes% minu(u)t(en) opnieuw."
+  ghost_released: "De spooksessie die %nickname% vasthield is verbroken."
   kill_reason: "Bijnaam %nickname% teruggevorderd door %source% (de geregistreerde eigenaar heeft zich geïdentificeerd)"
-  pending: !irc |-
-    \x0304✗\x03 Bijnaam \x02%nickname%\x02 wacht op e-mailverificatie.
-      Voer \x0303/msg %bot% VERIFY <token>\x03 uit of \x0303/msg %bot% RESEND\x03.
-  suspended: "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is geschorst. Reden: %reason%"
-  forbidden: "\x0304✗\x03 Bijnaam \x02%nickname%\x02 kan niet worden gebruikt op dit netwerk."
-  pending_deletion: "\x0304✗\x03 Bijnaam \x02%nickname%\x02 staat op het punt verwijderd te worden en kan niet worden gebruikt."
+  pending: |-
+    %first%
+    %second%
+  pending_line_1: "Bijnaam %nickname% wacht op e-mailverificatie."
+  pending_line_2: "Voer /msg %bot% %command_0% uit of /msg %bot% %command_1%."
+  pending_command_0: "VERIFY <token>"
+  pending_command_1: "RESEND"
+  suspended: "Bijnaam %nickname% is geschorst. Reden: %reason%"
+  forbidden: "Bijnaam %nickname% kan niet worden gebruikt op dit netwerk."
+  pending_deletion: "Bijnaam %nickname% staat op het punt verwijderd te worden en kan niet worden gebruikt."
 
 # --- STATUS ----------------------------------------------------------------
 status:
@@ -142,25 +158,35 @@ status:
   help: |-
     Toont de huidige status van een bijnaam: geregistreerd, wachtend op verificatie,
     geschorst, enzovoort.
-  example: "%command_prefix%\x02\x0303STATUS Gebruiker\x03\x0F"
-  header: "\x02Status van bijnaam \x0307%nickname%\x03\x02"
+  example: "%command_prefix%STATUS Gebruiker"
+  header: "Status van bijnaam %nickname%"
   unregistered: "  Status          : Niet geregistreerd"
-  not_registered_offline: "  Status          : \x0315Niet geregistreerd\x03"
-  pending: "  Status          : \x0307Wacht op verificatie\x03"
+  not_registered_offline: "  Status          : %state%"
+  value_not_registered_offline: "Niet geregistreerd"
+  pending: "  Status          : %state%"
+  value_pending: "Wacht op verificatie"
   pending_expires: "  Verloopt over     : %minutes% minu(u)t(en)"
   pending_expires_at: "  Verloopt op       : %date%"
-  not_connected: "  Status          : \x0315Niet verbonden\x03"
-  not_identified: "  Status          : \x0307Niet geïdentificeerd\x03"
-  identified: "  Status          : \x0303Geïdentificeerd\x03"
-  suspended: "  Status          : \x0304Geschorst\x03"
+  not_connected: "  Status          : %state%"
+  value_not_connected: "Niet verbonden"
+  not_identified: "  Status          : %state%"
+  value_not_identified: "Niet geïdentificeerd"
+  identified: "  Status          : %state%"
+  value_identified: "Geïdentificeerd"
+  suspended: "  Status          : %state%"
+  value_suspended: "Geschorst"
   suspended_reason: "  Reden           : %reason%"
   suspended_until: "  Eindigt op      : %date%"
   suspended_permanent: "  Eindigt op      : Permanent"
-  forbidden: "  Status          : \x0304Verboden\x03"
+  forbidden: "  Status          : %state%"
+  value_forbidden: "Verboden"
   forbidden_reason: "  Reden           : %reason%"
-  pending_deletion: "  \x0314Status\x03          : \x0307Verwijdering in afwachting\x03"
-  pending_deletion_at: "  \x0314Verwijderd\x03      : %date%"
+  pending_deletion: "  %label%          : %state%"
+  value_pending_deletion: "Verwijdering in afwachting"
+  label_pending_deletion: "Status"
+  pending_deletion_at: "  %label%      : %date%"
 
+  label_pending_deletion_at: "Verwijderd"
 # --- INFO ------------------------------------------------------------------
 info:
   syntax: "INFO <bijnaam>"
@@ -171,36 +197,56 @@ info:
 
     Het e-mailadres is alleen zichtbaar voor de geïdentificeerde eigenaar.
     Bij een privébijnaam zien alleen de eigenaar en IRC-operators de informatie.
-  example: "%command_prefix%\x02\x0303INFO Gebruiker\x03\x0F"
-  private: "\x0304✗\x03 Informatie van bijnaam \x02%nickname%\x02 is privé."
-  header: "\x02Informatie voor bijnaam \x0307%nickname%\x03\x02"
-  status: "  \x0314Status\x03               : %status%"
-  status_registered: "\x0303Geregistreerd\x03"
-  status_suspended: "\x0304Geschorst\x03"
-  status_forbidden: "\x0304Verboden\x03"
-  status_pending_deletion: "\x0307Verwijdering in afwachting\x03"
-  reason: "  \x0314Reden\x03                  : %reason%"
-  suspended_until: "  \x0314Eindigt op\x03           : %date%"
-  suspended_permanent: "  \x0314Eindigt op\x03           : Permanent"
-  registered_at: "  \x0314Geregistreerd\x03        : %date%"
-  last_seen_online: "  \x0314Laatst gezien\x03        : \x0303● NU ONLINE\x03"
-  last_seen_at: "  \x0314Laatst gezien\x03        : %date%"
-  last_seen_never: "  \x0314Laatst gezien\x03        : Nooit"
-  last_quit: "  \x0314Laatste quitbericht\x03  : %message%"
-  last_connect: "  \x0314Laatst gezien van\x03    : %ip% (%host%)"
-  language: "  \x0314Taal\x03                 : %language%"
-  email: "  \x0314E-mail\x03               : %email%"
-  vhost: "  \x0314VHost\x03                : %vhost%"
-  no_expire: "  \x0314Vervalt nooit\x03          : Ja"
-  pending_deletion_at: "  \x0314Verwijderd\x03             : %date%"
-  pending_deletion_until: "  \x0314Definitief op\x03          : %date%"
-  pending_deletion_notice: "  \x0307Deze nickname staat op het punt verwijderd te worden en kan niet worden geregistreerd.\x03"
-  channels_header: !irc |-
-    \x0314
-    Kanalen met toegang:\x03
-  channels_entry_founder: "  %channel% (\x0303Oprichter\x03)"
-  channels_entry_successor: "  %channel% (\x0303Opvolger\x03)"
-  channels_entry_access: "  %channel% (%level%)"
+  example: "%command_prefix%INFO Gebruiker"
+  private: "Informatie van bijnaam %nickname% is privé."
+  header: "Informatie voor bijnaam %nickname%"
+  status: "%label%               : %status%"
+  label_status: "Status"
+  status_registered: "Geregistreerd"
+  status_suspended: "Geschorst"
+  status_forbidden: "Verboden"
+  status_pending_deletion: "Verwijdering in afwachting"
+  reason: "%label%                  : %reason%"
+  label_reason: "Reden"
+  suspended_until: "%label%           : %date%"
+  label_suspended_until: "Eindigt op"
+  suspended_permanent: "%label%           : Permanent"
+  label_suspended_permanent: "Eindigt op"
+  registered_at: "%label%        : %date%"
+  label_registered_at: "Geregistreerd"
+  last_seen_online: "%label%        : %online%"
+  label_last_seen_online: "Laatst gezien"
+  value_last_seen_online: "NU ONLINE"
+  last_seen_at: "%label%        : %date%"
+  label_last_seen_at: "Laatst gezien"
+  last_seen_never: "%label%        : Nooit"
+  label_last_seen_never: "Laatst gezien"
+  last_quit: "%label%  : %message%"
+  label_last_quit: "Laatste quitbericht"
+  last_connect: "%label%    : %ip% (%host%)"
+  label_last_connect: "Laatst gezien van"
+  language: "%label%                 : %language%"
+  label_language: "Taal"
+  email: "%label%               : %email%"
+  label_email: "E-mail"
+  vhost: "%label%                : %vhost%"
+  label_vhost: "VHost"
+  no_expire: "%label%          : Ja"
+  label_no_expire: "Vervalt nooit"
+  pending_deletion_at: "%label%             : %date%"
+  label_pending_deletion_at: "Verwijderd"
+  pending_deletion_until: "%label%          : %date%"
+  label_pending_deletion_until: "Definitief op"
+  pending_deletion_notice: "%notice%"
+  value_pending_deletion_notice: "Deze nickname staat op het punt verwijderd te worden en kan niet worden geregistreerd."
+  channels_header: |-
+
+    Kanalen met toegang:
+  channels_entry_founder: "%channel% (%role%)"
+  channels_role_founder: "Oprichter"
+  channels_entry_successor: "%channel% (%role%)"
+  channels_role_successor: "Opvolger"
+  channels_entry_access: "%channel% (%level%)"
 
 # --- SET -------------------------------------------------------------------
 set:
@@ -209,10 +255,10 @@ set:
   help: |-
     Wijzigt de instellingen van je bijnaam. Je moet geïdentificeerd zijn om deze
     opties te wijzigen.
-  example: "%command_prefix%\x02\x0303SET LANGUAGE es\x03\x0F"
+  example: "%command_prefix%SET LANGUAGE es"
   examples:
-    - "%command_prefix%\x02\x0303SET TIMEZONE Europe/Madrid\x03\x0F"
-  unknown_option: "\x0304✗\x03 Onbekende optie \x02%option%\x02. Beschikbare opties: %options%."
+    - "%command_prefix%SET TIMEZONE Europe/Madrid"
+  unknown_option: "Onbekende optie %option%. Beschikbare opties: %options%."
 
   # --- SET PASSWORD --------------------------------------------------------
   password:
@@ -222,12 +268,13 @@ set:
       Wijzigt het wachtwoord voor uw bijnaam. Het nieuwe wachtwoord wordt
       direct van kracht. Kies een sterk wachtwoord van minimaal 6 tekens
       dat u niet op andere services gebruikt.
-    example: "%command_prefix%\x02\x0303SET PASSWORD Veilig$Wachtwoord_123\x03\x0F"
-    success: "\x0303✔\x03 Uw wachtwoord is succesvol bijgewerkt."
+    example: "%command_prefix%SET PASSWORD Veilig$Wachtwoord_123"
+    success: "Uw wachtwoord is succesvol bijgewerkt."
 
   # --- SET EMAIL -----------------------------------------------------------
   email:
-    token_required: "\x0304✗\x03 Gebruik \x0303SET EMAIL <email> <token>\x03 met je bevestigde hersteltoken."
+    token_required: "Gebruik %value% met je bevestigde hersteltoken."
+    token_required_value: "SET EMAIL <email> <token>"
     syntax: "SET EMAIL <email> <token>"
     short: "Wijzigt het e-mailadres met je bevestigde herstel-token."
     help: |-
@@ -235,40 +282,46 @@ set:
       te verbruiken. Formaat en uniekheid worden gecontroleerd; er wordt geen
       bevestigingsmail verstuurd.
       Administratief geblokkeerde e-maildomeinen zijn niet toegestaan.
-    example: "%command_prefix%\x02\x0303SET EMAIL gebruiker@voorbeeld.nl <token_confirmado>\x03\x0F"
-    success: "\x0303✔\x03 Uw e-mail is bijgewerkt naar \x02%email%\x02."
-    pending_sent: !irc |-
-      \x0307→\x03 Er is een bevestigingstoken verzonden naar \x02%current_email%\x02.
-        Om de wijziging naar \x02%new_email%\x02 te bevestigen, voer uit:
-        \x0303/msg %bot% SET EMAIL %new_email% <token>\x03
-        De token verloopt binnen 1 uur.
-    invalid_token: "\x0304✗\x03 De token is ongeldig of verlopen. Vraag een nieuwe aan met \x0303SET EMAIL <nieuwe_e-mail>\x03."
+    example: "%command_prefix%SET EMAIL gebruiker@voorbeeld.nl <token_confirmado>"
+    success: "Uw e-mail is bijgewerkt naar %email%."
+    pending_sent: |-
+      %first%
+      %second%
+      %third%
+      %fourth%
+    pending_line_1: "Er is een bevestigingstoken verzonden naar %current_email%."
+    pending_line_2: "Om de wijziging naar %new_email% te bevestigen, voer uit:"
+    pending_line_3: "/msg %bot% %command%"
+    pending_line_4: "De token verloopt binnen 1 uur."
+    pending_command: "SET EMAIL %new_email% <token>"
+    invalid_token: "De token is ongeldig of verlopen. Vraag een nieuwe aan met %value%."
+    invalid_token_value: "SET EMAIL <nieuwe_e-mail>"
 
   # --- SET LANGUAGE --------------------------------------------------------
   language:
     syntax: "SET LANGUAGE <code>"
     short: "Wijzig de taal die de services gebruiken om met u te communiceren."
-    help: !irc |-
+    help: |-
       Wijzigt de taal die %nickserv% en andere services gebruiken wanneer ze met u
       praten.
       Beschikbare talen:
-        \x02ca\x02 (Catalaans)
-        \x02de\x02 (Duits)
-        \x02el\x02 (Grieks)
-        \x02en\x02 (Engels)
-        \x02es\x02 (Spaans)
-        \x02eu\x02 (Baskisch)
-        \x02fr\x02 (Frans)
-        \x02gl\x02 (Galicisch)
-        \x02it\x02 (Italiaans)
-        \x02nl\x02 (Nederlands)
-        \x02pl\x02 (Pools)
-        \x02pt\x02 (Portugees)
-        \x02ro\x02 (Roemeens)
-        \x02tr\x02 (Turks)
-    example: "%command_prefix%\x02\x0303SET LANGUAGE es\x03\x0F"
-    success: "\x0303✔\x03 Taal gewijzigd naar \x02%language%\x02."
-    invalid: "\x0304✗\x03 Niet-ondersteunde taal. Beschikbare talen: %languages%."
+      %emphasis_0% (Catalaans)
+      %emphasis_1% (Duits)
+      %emphasis_2% (Grieks)
+      %emphasis_3% (Engels)
+      %emphasis_4% (Spaans)
+      %emphasis_5% (Baskisch)
+      %emphasis_6% (Frans)
+      %emphasis_7% (Galicisch)
+      %emphasis_8% (Italiaans)
+      %emphasis_9% (Nederlands)
+      %emphasis_10% (Pools)
+      %emphasis_11% (Portugees)
+      %emphasis_12% (Roemeens)
+      %emphasis_13% (Turks)
+    example: "%command_prefix%SET LANGUAGE es"
+    success: "Taal gewijzigd naar %language%."
+    invalid: "Niet-ondersteunde taal. Beschikbare talen: %languages%."
 
   # --- SET TIMEZONE --------------------------------------------------------
   timezone:
@@ -277,62 +330,66 @@ set:
     help: |-
       Stelt de tijdzone in die %nickserv% gebruikt voor datumweergave. Bekijk HELP SET
       TIMEZONE voor regio’s. Gebruik OFF om deze te verwijderen.
-    example: "%command_prefix%\x02\x0303SET TIMEZONE Europe/Madrid\x03\x0F"
+    example: "%command_prefix%SET TIMEZONE Europe/Madrid"
     examples:
-      - "%command_prefix%\x02\x0303SET TIMEZONE OFF\x03\x0F"
-    success: "\x0303✔\x03 Tijdzone ingesteld op \x02%timezone%\x02. Datums worden in deze tijdzone weergegeven."
-    cleared: "\x0303✔\x03 Tijdzone gewist. Datums gebruiken de netwerkstandaard."
-    invalid: "\x0304✗\x03 Ongeldige tijdzone \x02%timezone%\x02. Gebruik een geldige identificatie (bijv. UTC, Europe/Amsterdam)."
+      - "%command_prefix%SET TIMEZONE OFF"
+    success: "Tijdzone ingesteld op %timezone%. Datums worden in deze tijdzone weergegeven."
+    cleared: "Tijdzone gewist. Datums gebruiken de netwerkstandaard."
+    invalid: "Ongeldige tijdzone %timezone%. Gebruik een geldige identificatie (bijv. UTC, Europe/Amsterdam)."
 
   # --- SET PRIVATE ---------------------------------------------------------
   private:
     syntax: "SET PRIVATE {ON|OFF}"
     short: "Toont of verbergt informatie over je bijnaam."
-    help: !irc |-
+    help: |-
       Bepaalt de zichtbaarheid van uw bijnaaminformatie in het INFO-commando.
-      Met \x02PRIVATE ON\x02 kunnen alleen u en IRC Operators uw gegevens bekijken.
-      Met \x02PRIVATE OFF\x02 is uw informatie openbaar voor iedereen.
-    example: "%command_prefix%\x02\x0303SET PRIVATE ON\x03\x0F"
+      Met %emphasis_0% kunnen alleen u en IRC Operators uw gegevens bekijken.
+      Met %emphasis_1% is uw informatie openbaar voor iedereen.
+    example: "%command_prefix%SET PRIVATE ON"
     examples:
-      - "%command_prefix%\x02\x0303SET PRIVATE OFF\x03\x0F"
-    on: "\x0303✔\x03 Uw bijnaaminformatie is nu \x02privé\x02."
-    off: "\x0303✔\x03 Uw bijnaaminformatie is nu \x02openbaar\x02."
+      - "%command_prefix%SET PRIVATE OFF"
+    on: "Uw bijnaaminformatie is nu %value%."
+    on_value: "privé"
+    off: "Uw bijnaaminformatie is nu %value%."
+    off_value: "openbaar"
 
   # --- SET MSG -------------------------------------------------------------
   msg:
     syntax: "SET MSG {ON|OFF}"
     short: "Wijzigt hoe de services je berichten sturen."
-    help: !irc |-
+    help: |-
       Bepaalt hoe %nickserv% en andere services je berichten sturen.
-      Met \x02MSG ON\x02 worden antwoorden als \x02PRIVMSG\x02 verstuurd.
-      Met \x02MSG OFF\x02 worden antwoorden als \x02NOTICE\x02 verstuurd.
-    example: "%command_prefix%\x02\x0303SET MSG ON\x03\x0F"
+      Met %emphasis_0% worden antwoorden als %emphasis_1% verstuurd.
+      Met %emphasis_2% worden antwoorden als %emphasis_3% verstuurd.
+    example: "%command_prefix%SET MSG ON"
     examples:
-      - "%command_prefix%\x02\x0303SET MSG OFF\x03\x0F"
-    on: "\x0303✔\x03 Serviceberichten worden nu verzonden als \x02PRIVMSG\x02."
-    off: "\x0303✔\x03 Serviceberichten worden nu verzonden als \x02NOTICE\x02."
+      - "%command_prefix%SET MSG OFF"
+    on: "Serviceberichten worden nu verzonden als %value%."
+    on_value: "PRIVMSG"
+    off: "Serviceberichten worden nu verzonden als %value%."
+    off_value: "NOTICE"
 
   # --- SET VHOST -----------------------------------------------------------
   vhost:
     syntax: "SET VHOST [vhost]"
     short: "Stelt je virtuele host in of verwijdert deze."
-    help: !irc |-
+    help: |-
       Stelt een aangepaste hostnaam in die anderen zien wanneer je geïdentificeerd
       bent.
 
-      Voer \x02SET VHOST\x02 zonder waarde uit om deze te verwijderen.
+      Voer %emphasis_0% zonder waarde uit om deze te verwijderen.
 
       Alleen letters (a-z, A-Z), cijfers, koppeltekens en punten zijn toegestaan.
       Elk onderdeel moet beginnen en eindigen met een letter of cijfer.
       De hostnaam mag maximaal 48 tekens lang zijn en moet uniek zijn per bijnaam.
-    example: "%command_prefix%\x02\x0303SET VHOST user.voorbeeld.nl\x03\x0F"
+    example: "%command_prefix%SET VHOST user.voorbeeld.nl"
     examples:
-      - "%command_prefix%\x02\x0303SET VHOST\x03\x0F"
-    success: "\x0303✔\x03 Uw virtuele host is ingesteld op \x02%vhost%\x02."
-    cleared: "\x0303✔\x03 Uw virtuele host is gewist."
-    invalid: "\x0304✗\x03 Ongeldige vhost. Alleen letters, cijfers, koppelteken en punt (niet aan begin/einde van blok); max 48 tekens."
-    taken: "\x0304✗\x03 Die vhost is al in gebruik door een andere bijnaam."
-    forced: "\x0304✗\x03 Uw vhost wordt automatisch geconfigureerd en kan niet worden gewijzigd met SET VHOST."
+      - "%command_prefix%SET VHOST"
+    success: "Uw virtuele host is ingesteld op %vhost%."
+    cleared: "Uw virtuele host is gewist."
+    invalid: "Ongeldige vhost. Alleen letters, cijfers, koppelteken en punt (niet aan begin/einde van blok); max 48 tekens."
+    taken: "Die vhost is al in gebruik door een andere bijnaam."
+    forced: "Uw vhost wordt automatisch geconfigureerd en kan niet worden gewijzigd met SET VHOST."
 
 # --- SASET -----------------------------------------------------------------
 saset:
@@ -341,18 +398,18 @@ saset:
   help: |-
     Hiermee kan een IRC-operator instellingen van een andere geregistreerde bijnaam
     wijzigen. Root-, IRC-operator- en servicebijnamen zijn uitgesloten.
-  example: "%command_prefix%\x02\x0303SASET Gebruiker PRIVATE ON\x03\x0F"
+  example: "%command_prefix%SASET Gebruiker PRIVATE ON"
   examples:
-    - "%command_prefix%\x02\x0303SASET Gebruiker TIMEZONE OFF\x03\x0F"
-  unknown_option: "\x0304✗\x03 Onbekende optie \x02%option%\x02. Beschikbare opties: %options%."
-  cannot_modify_oper: "\x0304✗\x03 Kan de bijnaam van een IRC-operator niet wijzigen."
+    - "%command_prefix%SASET Gebruiker TIMEZONE OFF"
+  unknown_option: "Onbekende optie %option%. Beschikbare opties: %options%."
+  cannot_modify_oper: "Kan de bijnaam van een IRC-operator niet wijzigen."
 
   # --- SASET PASSWORD ------------------------------------------------------
   password:
     syntax: "SASET <bijnaam> PASSWORD <nieuw_wachtwoord>"
     short: "Wachtwoord van een bijnaam wijzigen."
     help: "Wijzigt het wachtwoord van een andere bijnaam onmiddellijk."
-    example: "%command_prefix%\x02\x0303SASET Gebruiker PASSWORD ClaveSegura123\x03\x0F"
+    example: "%command_prefix%SASET Gebruiker PASSWORD ClaveSegura123"
 
   # --- SASET EMAIL ---------------------------------------------------------
   email:
@@ -362,7 +419,7 @@ saset:
       Wijzigt het e-mailadres van een andere bijnaam direct. Het herstel-token is niet
       nodig en er wordt geen bevestigingsmail verstuurd.
       BADMAIL beperkt deze administratieve e-mailwijziging niet.
-    example: "%command_prefix%\x02\x0303SASET Gebruiker EMAIL gebruiker@voorbeeld.nl\x03\x0F"
+    example: "%command_prefix%SASET Gebruiker EMAIL gebruiker@voorbeeld.nl"
 
   # --- SASET LANGUAGE ------------------------------------------------------
   language:
@@ -371,7 +428,7 @@ saset:
     help: |-
       Wijzigt de taal van een andere bijnaam. Beschikbaar zijn en (Engels) en es
       (Spaans).
-    example: "%command_prefix%\x02\x0303SASET Gebruiker LANGUAGE es\x03\x0F"
+    example: "%command_prefix%SASET Gebruiker LANGUAGE es"
 
   # --- SASET TIMEZONE ------------------------------------------------------
   timezone:
@@ -380,18 +437,18 @@ saset:
     help: |-
       Stelt de tijdzone van een andere bijnaam in of verwijdert deze. Gebruik OFF om
       te verwijderen.
-    example: "%command_prefix%\x02\x0303SASET Gebruiker TIMEZONE Europe/Madrid\x03\x0F"
+    example: "%command_prefix%SASET Gebruiker TIMEZONE Europe/Madrid"
     examples:
-      - "%command_prefix%\x02\x0303SASET Gebruiker TIMEZONE OFF\x03\x0F"
+      - "%command_prefix%SASET Gebruiker TIMEZONE OFF"
 
   # --- SASET PRIVATE -------------------------------------------------------
   private:
     syntax: "SASET <bijnaam> PRIVATE {ON|OFF}"
     short: "Privacy van een bijnaam wijzigen."
     help: "Schakelt de privacy van de informatie van een andere bijnaam in of uit."
-    example: "%command_prefix%\x02\x0303SASET Gebruiker PRIVATE ON\x03\x0F"
+    example: "%command_prefix%SASET Gebruiker PRIVATE ON"
     examples:
-      - "%command_prefix%\x02\x0303SASET Gebruiker PRIVATE OFF\x03\x0F"
+      - "%command_prefix%SASET Gebruiker PRIVATE OFF"
 
   # --- SASET MSG -----------------------------------------------------------
   msg:
@@ -400,9 +457,9 @@ saset:
     help: |-
       Stelt in of een andere bijnaam antwoorden als PRIVMSG (ON) of NOTICE (OFF)
       ontvangt.
-    example: "%command_prefix%\x02\x0303SASET Gebruiker MSG ON\x03\x0F"
+    example: "%command_prefix%SASET Gebruiker MSG ON"
     examples:
-      - "%command_prefix%\x02\x0303SASET Gebruiker MSG OFF\x03\x0F"
+      - "%command_prefix%SASET Gebruiker MSG OFF"
 
   # --- SASET VHOST ---------------------------------------------------------
   vhost:
@@ -411,9 +468,9 @@ saset:
     help: |-
       Stelt de virtuele host van een andere bijnaam in of verwijdert deze. Voer SASET
       <bijnaam> VHOST zonder waarde uit om deze te verwijderen.
-    example: "%command_prefix%\x02\x0303SASET Gebruiker VHOST user.voorbeeld.nl\x03\x0F"
+    example: "%command_prefix%SASET Gebruiker VHOST user.voorbeeld.nl"
     examples:
-      - "%command_prefix%\x02\x0303SASET Gebruiker VHOST\x03\x0F"
+      - "%command_prefix%SASET Gebruiker VHOST"
 
 # --- HELP ------------------------------------------------------------------
 help:
@@ -422,36 +479,37 @@ help:
   help: |-
     Toont algemene %nickserv% hulp of gedetailleerde informatie
     voor een specifiek commando.
-  examples_header: "\x02 ■ Voorbeelden:\x02"
-  example: "%command_prefix%\x02\x0303HELP\x03\x0F"
+  examples_header: "Voorbeelden:"
+  example: "%command_prefix%HELP"
   examples:
-    - "%command_prefix%\x02\x0303HELP SET\x03\x0F"
-    - "%command_prefix%\x02\x0303HELP SET EMAIL\x03\x0F"
-    - "%command_prefix%\x02\x0303HELP SET TIMEZONE Europe\x03\x0F"
+    - "%command_prefix%HELP SET"
+    - "%command_prefix%HELP SET EMAIL"
+    - "%command_prefix%HELP SET TIMEZONE Europe"
   header_title: "%bot%"
-  header: "\x02\x0307🤖 %title%\x03\x0F \x0314─────────────────────────────\x03\x0F"
-  navigation_marker: "\x0310›\x03\x0F"
-  info_marker: "\x0310ℹ\x03\x0F"
-  error_marker: "\x0304✗\x03\x0F"
-  warning_marker: "\x0304⚠\x03\x0F"
+  header: "%title%"
+  navigation_marker: ""
+  info_marker: ""
+  error_marker: ""
+  warning_marker: ""
   intro: |-
     Registreert en beschermt je bijnaam zodat anderen deze niet kunnen gebruiken.
     Beheer de accountbeveiliging, pas voorkeuren aan en herstel toegang wanneer
     nodig.
-  intro_expiration: "%marker% %label%: Nicknamen die langer dan \x1F\x0304%days% dagen\x03\x1F niet zijn gebruikt, worden automatisch verwijderd."
+  intro_expiration: "%label%: Nicknamen die langer dan %duration% niet zijn gebruikt, worden automatisch verwijderd."
+  intro_expiration_duration: "%days% dagen"
   intro_expiration_label: "OPMERKING"
-  general_header: "\x02 ■ Beschikbare opdrachten:\x02"
-  command_line: "    %marker% \x02\x0303%command%\x03\x0F%description%"
-  subcommand_line: "    %marker% \x02\x0303%command%\x03\x0F%description%"
-  options_header: "\x02 ■ Opties:\x02"
+  general_header: "Beschikbare opdrachten:"
+  command_line: "%command%%description%"
+  subcommand_line: "%command%%description%"
+  options_header: "Opties:"
   general_syntax: "HELP <opdracht>"
-  general_footer: "%marker% Gebruik /msg %bot% \x02\x0303%syntax%\x03\x0F voor meer informatie."
+  general_footer: "Gebruik /msg %bot% %syntax% voor meer informatie."
   set_sub_syntax: "HELP %command% <optie>"
-  set_sub_footer: "%marker% Gebruik /msg %bot% \x02\x0303%syntax%\x03\x0F voor meer informatie."
-  syntax_label: "Syntaxis: \x02\x0303%syntax%\x03\x0F"
-  footer: "\x0314─────────────────────────────\x03\x0F"
-  group_header: "\x0310  ◆ %group%\x03\x0F"
-  subgroup_header: "\x0310  ◆ %group%\x03\x0F"
+  set_sub_footer: "Gebruik /msg %bot% %syntax% voor meer informatie."
+  syntax_label: "Syntaxis: %syntax%"
+  footer: ""
+  group_header: "%group%"
+  subgroup_header: "%group%"
   group:
     registration_auth: "Registratie en authenticatie"
     account_security: "Account en beveiliging"
@@ -460,21 +518,22 @@ help:
     account_management: "Accountbeheer"
     suspensions_bans: "Schorsingen en verboden"
     deletion: "Verwijderen en herstellen"
-  ircop_header: "\x02 ■ Beschikbare opdrachten voor IRC-operators:\x02"
+  ircop_header: "Beschikbare opdrachten voor IRC-operators:"
   set_timezone:
-    index_label: "Regio's (gebruik \x02\x0303%syntax%\x03\x0F voor lijst):"
+    index_label: "Regio's (gebruik %syntax% voor lijst):"
     index_syntax: "HELP SET TIMEZONE <regio>"
-    region_header: "\x02 ■ Tijdzones voor %region%:\x02"
-    region_unknown: "%marker% Onbekende regio. Gebruik \x02\x0303%syntax%\x03\x0F voor de index."
+    region_header: "Tijdzones voor %region%:"
+    region_unknown: "Onbekende regio. Gebruik %syntax% voor de index."
     region_syntax: "HELP SET TIMEZONE"
 
 # --- NICK PROTECTION -------------------------------------------------------
 protection:
-  nick_in_use: "\x0304⚠\x03 Bijnaam \x02%nickname%\x02 is geregistreerd. U wordt hernoemd als u zich niet identificeert."
-  renamed_to: !irc |-
-    \x0307→\x03 U bent hernoemd naar \x02%guest_nick%\x02. Om uw bijnaam te herstellen:
-    \x0303/msg %bot% IDENTIFY %nickname% <wachtwoord>\x03
-  nick_forbidden: "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is verboden: %reason%"
+  nick_in_use: "Bijnaam %nickname% is geregistreerd. U wordt hernoemd als u zich niet identificeert."
+  renamed_to: |-
+    U bent hernoemd naar %guest_nick%. Om uw bijnaam te herstellen:
+    /msg %bot% %identify%
+  renamed_command: "IDENTIFY %nickname% <wachtwoord>"
+  nick_forbidden: "Bijnaam %nickname% is verboden: %reason%"
 
 # --- USERIP ----------------------------------------------------------------
 userip:
@@ -483,8 +542,8 @@ userip:
   help: |-
     Toont het echte IP-adres en de hostnaam van een bijnaam.
     Gebruik deze gevoelige informatie verantwoord.
-  example: "%command_prefix%\x02\x0303USERIP Gebruiker\x03\x0F"
-  result: "\x0307ℹ\x03 Bijnaam: \x02%nickname%\x02 | IP: \x0307%ip%\x03 | Host: \x0307%host%\x03"
+  example: "%command_prefix%USERIP Gebruiker"
+  result: "Bijnaam: %nickname% | IP: %ip% | Host: %host%"
 
 # --- WHOIP -----------------------------------------------------------------
 whoip:
@@ -493,7 +552,7 @@ whoip:
   help: |-
     Toont geregistreerde bijnamen waarvan de laatste geïdentificeerde verbinding
     dit IP-adres gebruikte. Het opgeslagen adres kan verouderd zijn.
-  example: "%command_prefix%\x02\x0303WHOIP 192.0.2.10\x03\x0F"
+  example: "%command_prefix%WHOIP 192.0.2.10"
   empty: "Geen geregistreerde nicknames komen overeen met dit IP-adres."
   header: "Overeenkomende nicknames:"
 
@@ -506,25 +565,27 @@ suspend:
     dagen (d), uren (h), minuten (m) of 0 voor een permanente opschorting.
     IRC-operators
     en Root-gebruikers kunnen niet worden opgeschort.
-  example: "%command_prefix%\x02\x0303SUSPEND SlechteGebruiker 7d Spam en #hulp\x03\x0F"
+  example: "%command_prefix%SUSPEND SlechteGebruiker 7d Spam en #hulp"
   examples:
-    - "%command_prefix%\x02\x0303SUSPEND Problematisch 0 Omzeilen van een ban\x03\x0F"
-  success: "\x0303✔\x03 Bijnaam \x02%nickname%\x02 is geschorst tot \x02%duration%\x02."
-  already_suspended: "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is al geschorst."
-  forbidden: "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is verboden en kan niet worden geschorst."
-  cannot_suspend_oper: "\x0304✗\x03 Kan IRC-operator \x02%nickname%\x02 niet schorsen."
-  cannot_suspend_root: "\x0304✗\x03 Kan rootgebruiker \x02%nickname%\x02 niet schorsen."
-  cannot_suspend_service: "\x0304✗\x03 Kan service-bijnaam \x02%nickname%\x02 niet schorsen."
-  invalid_duration: "\x0304✗\x03 Ongeldige duur. Gebruik: \x0303<d><h><m>\x03 (bijv. 7d, 12h, 30m) of \x03030\x03 voor permanent."
+    - "%command_prefix%SUSPEND Problematisch 0 Omzeilen van een ban"
+  success: "Bijnaam %nickname% is geschorst tot %duration%."
+  already_suspended: "Bijnaam %nickname% is al geschorst."
+  forbidden: "Bijnaam %nickname% is verboden en kan niet worden geschorst."
+  cannot_suspend_oper: "Kan IRC-operator %nickname% niet schorsen."
+  cannot_suspend_root: "Kan rootgebruiker %nickname% niet schorsen."
+  cannot_suspend_service: "Kan service-bijnaam %nickname% niet schorsen."
+  invalid_duration: "Ongeldige duur. Gebruik: %duration_format% (bijv. 7d, 12h, 30m) of %permanent% voor permanent."
+  invalid_duration_format: "<d><h><m>"
+  invalid_duration_permanent: "0"
 
 # --- UNSUSPEND -------------------------------------------------------------
 unsuspend:
   syntax: "UNSUSPEND <bijnaam>"
   short: "Hef schorsing van een bijnaam op."
   help: "Heft een actieve opschorting op, zodat de eigenaar zich weer kan identificeren."
-  example: "%command_prefix%\x02\x0303UNSUSPEND Gebruiker\x03\x0F"
-  success: "\x0303✔\x03 De schorsing van \x02%nickname%\x02 is opgeheven."
-  not_suspended: "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is niet geschorst."
+  example: "%command_prefix%UNSUSPEND Gebruiker"
+  success: "De schorsing van %nickname% is opgeheven."
+  not_suspended: "Bijnaam %nickname% is niet geschorst."
 
 # --- RENAME ----------------------------------------------------------------
 rename:
@@ -533,11 +594,11 @@ rename:
   help: |-
     Dwingt een verbonden bijnaam om te veranderen naar een willekeurige naam met
     een door het netwerk ingesteld voorvoegsel.
-  example: "%command_prefix%\x02\x0303RENAME Problematisch\x03\x0F"
-  cannot_rename_root: "\x0304✗\x03 Kan rootgebruiker \x02%nickname%\x02 niet hernoemen."
-  cannot_rename_oper: "\x0304✗\x03 Kan IRC-operator \x02%nickname%\x02 niet hernoemen."
-  cannot_rename_service: "\x0304✗\x03 Kan service-bijnaam \x02%nickname%\x02 niet hernoemen."
-  success: "\x0303✓\x03 Bijnaam \x02%nickname%\x02 is hernoemd naar \x02%new_nick%\x02."
+  example: "%command_prefix%RENAME Problematisch"
+  cannot_rename_root: "Kan rootgebruiker %nickname% niet hernoemen."
+  cannot_rename_oper: "Kan IRC-operator %nickname% niet hernoemen."
+  cannot_rename_service: "Kan service-bijnaam %nickname% niet hernoemen."
+  success: "Bijnaam %nickname% is hernoemd naar %new_nick%."
 
 # --- DROP ------------------------------------------------------------------
 drop:
@@ -550,27 +611,27 @@ drop:
     verwijderd.
   force:
     short: "Verwijdert een bijnaam die op verwijdering wacht definitief."
-  example: "%command_prefix%\x02\x0303DROP OudAccount\x03\x0F"
+  example: "%command_prefix%DROP OudAccount"
   examples:
-    - "%command_prefix%\x02\x0303DROP OudAccount FORCE\x03\x0F"
-  suspended: "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is geschorst. Hef eerst de schorsing op."
-  forbidden: "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is verboden."
-  cannot_drop_root: "\x0304✗\x03 Kan rootgebruiker \x02%nickname%\x02 niet verwijderen."
-  cannot_drop_oper: "\x0304✗\x03 Kan IRC-operator \x02%nickname%\x02 niet verwijderen."
-  cannot_drop_self: "\x0304✗\x03 U kunt uw eigen bijnaam niet verwijderen."
-  success: "\x0303✓\x03 Bijnaam \x02%nickname%\x02 is gemarkeerd voor verwijdering en kan tijdens de respijtperiode worden hersteld."
-  force_success: "\x0303✓\x03 Bijnaam \x02%nickname%\x02 is definitief verwijderd."
-  pending_deletion: "\x0304✗\x03 Bijnaam \x02%nickname%\x02 staat al op het punt verwijderd te worden. Gebruik DROP <bijnaam> FORCE om hem definitief te verwijderen."
-  cannot_drop_service: "\x0304✗\x03 Kan service-bijnaam \x02%nickname%\x02 niet verwijderen."
+    - "%command_prefix%DROP OudAccount FORCE"
+  suspended: "Bijnaam %nickname% is geschorst. Hef eerst de schorsing op."
+  forbidden: "Bijnaam %nickname% is verboden."
+  cannot_drop_root: "Kan rootgebruiker %nickname% niet verwijderen."
+  cannot_drop_oper: "Kan IRC-operator %nickname% niet verwijderen."
+  cannot_drop_self: "U kunt uw eigen bijnaam niet verwijderen."
+  success: "Bijnaam %nickname% is gemarkeerd voor verwijdering en kan tijdens de respijtperiode worden hersteld."
+  force_success: "Bijnaam %nickname% is definitief verwijderd."
+  pending_deletion: "Bijnaam %nickname% staat al op het punt verwijderd te worden. Gebruik DROP <bijnaam> FORCE om hem definitief te verwijderen."
+  cannot_drop_service: "Kan service-bijnaam %nickname% niet verwijderen."
 
 # --- RESTORE ---------------------------------------------------------------
 restore:
   syntax: "RESTORE <bijnaam>"
   short: "Een bijnaam die op verwijdering wacht herstellen."
   help: "Herstelt een bijnaam die op verwijdering wacht zolang de respijtperiode duurt."
-  example: "%command_prefix%\x02\x0303RESTORE OudAccount\x03\x0F"
-  success: "\x0303✓\x03 Bijnaam \x02%nickname%\x02 is hersteld."
-  not_pending_deletion: "\x0304✗\x03 Bijnaam \x02%nickname%\x02 staat niet op het punt verwijderd te worden."
+  example: "%command_prefix%RESTORE OudAccount"
+  success: "Bijnaam %nickname% is hersteld."
+  not_pending_deletion: "Bijnaam %nickname% staat niet op het punt verwijderd te worden."
 
 # --- FORBID ----------------------------------------------------------------
 forbid:
@@ -581,22 +642,22 @@ forbid:
     Een geregistreerde bijnaam wordt verwijderd; een verbonden gebruiker wordt naar
     een willekeurige bijnaam verplaatst. Root, IRC-operators en services kunnen niet
     worden verboden.
-  example: "%command_prefix%\x02\x0303FORBID SlechteGebruiker Herhaalde beleidsschendingen\x03\x0F"
-  success: "\x0303✔\x03 Bijnaam \x02%nickname%\x02 is verboden."
-  updated: "\x0303✔\x03 Verbodsreden voor \x02%nickname%\x02 is bijgewerkt."
-  reason_required: "\x0304✗\x03 U moet een reden opgeven voor het verbod."
-  cannot_forbid_root: "\x0304✗\x03 Kan rootgebruiker \x02%nickname%\x02 niet verbieden."
-  cannot_forbid_oper: "\x0304✗\x03 Kan IRC-operator \x02%nickname%\x02 niet verbieden."
-  cannot_forbid_service: "\x0304✗\x03 Kan service-bijnaam \x02%nickname%\x02 niet verbieden."
+  example: "%command_prefix%FORBID SlechteGebruiker Herhaalde beleidsschendingen"
+  success: "Bijnaam %nickname% is verboden."
+  updated: "Verbodsreden voor %nickname% is bijgewerkt."
+  reason_required: "U moet een reden opgeven voor het verbod."
+  cannot_forbid_root: "Kan rootgebruiker %nickname% niet verbieden."
+  cannot_forbid_oper: "Kan IRC-operator %nickname% niet verbieden."
+  cannot_forbid_service: "Kan service-bijnaam %nickname% niet verbieden."
 
 # --- UNFORBID --------------------------------------------------------------
 unforbid:
   syntax: "UNFORBID <bijnaam>"
   short: "Hef een bijnaamverbod op."
   help: "Heft het verbod op zodat de bijnaam weer gebruikt kan worden."
-  example: "%command_prefix%\x02\x0303UNFORBID VerbodenBijnaam\x03\x0F"
-  success: "\x0303✔\x03 Bijnaam \x02%nickname%\x02 is niet langer verboden."
-  not_forbidden: "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is niet verboden."
+  example: "%command_prefix%UNFORBID VerbodenBijnaam"
+  success: "Bijnaam %nickname% is niet langer verboden."
+  not_forbidden: "Bijnaam %nickname% is niet verboden."
 
 # --- FORBIDVHOST -----------------------------------------------------------
 forbidvhost:
@@ -605,10 +666,10 @@ forbidvhost:
   help: |-
     Beheert patronen die overeenkomende VHosts via SET VHOST blokkeren. * staat voor
     eender welke reeks en ? voor één teken. IRC-operatorrechten zijn vereist.
-  example: "%command_prefix%\x02\x0303FORBIDVHOST ADD *.pirata.com\x03\x0F"
+  example: "%command_prefix%FORBIDVHOST ADD *.pirata.com"
   examples:
-    - "%command_prefix%\x02\x0303FORBIDVHOST LIST\x03\x0F"
-  unknown_sub: "\x0304✗\x03 Onbekende sub-opdracht \x02%sub%\x02. Gebruik ADD, DEL of LIST."
+    - "%command_prefix%FORBIDVHOST LIST"
+  unknown_sub: "Onbekende sub-opdracht %sub%. Gebruik ADD, DEL of LIST."
 
   # --- FORBIDVHOST ADD -----------------------------------------------------
   add:
@@ -617,29 +678,29 @@ forbidvhost:
     help: |-
       Voegt een patroon toe aan de lijst. Gebruikers kunnen geen overeenkomende VHost
       instellen via SET VHOST. * staat voor elke reeks en ? voor één teken.
-    example: "%command_prefix%\x02\x0303FORBIDVHOST ADD *.pirata.com\x03\x0F"
-    done: "\x0303✓\x03 Verboden vhost-patroon toegevoegd: \x02%pattern%\x02"
-    already_exists: "\x0304✗\x03 Patroon \x02%pattern%\x02 bestaat al."
-    invalid: "\x0304✗\x03 Ongeldig vhost-patroonformaat."
+    example: "%command_prefix%FORBIDVHOST ADD *.pirata.com"
+    done: "Verboden vhost-patroon toegevoegd: %pattern%"
+    already_exists: "Patroon %pattern% bestaat al."
+    invalid: "Ongeldig vhost-patroonformaat."
 
   # --- FORBIDVHOST DEL -----------------------------------------------------
   del:
     syntax: "FORBIDVHOST DEL <patroon>"
     short: "Verwijder een verboden vhost-patroon."
     help: "Verwijdert een patroon uit de lijst met verboden VHosts."
-    example: "%command_prefix%\x02\x0303FORBIDVHOST DEL *.pirata.com\x03\x0F"
-    done: "\x0303✓\x03 Verboden vhost-patroon verwijderd: \x02%pattern%\x02"
-    not_found: "\x0304✗\x03 Patroon \x02%pattern%\x02 niet gevonden."
+    example: "%command_prefix%FORBIDVHOST DEL *.pirata.com"
+    done: "Verboden vhost-patroon verwijderd: %pattern%"
+    not_found: "Patroon %pattern% niet gevonden."
 
   # --- FORBIDVHOST LIST ----------------------------------------------------
   list:
     short: "Toon alle verboden vhost-patronen."
     syntax: "FORBIDVHOST LIST"
     help: "Toont alle verboden VHost-patronen."
-    example: "%command_prefix%\x02\x0303FORBIDVHOST LIST\x03\x0F"
-    header: "\x0307ℹ\x03 Verboden vhost-patronen (\x02%count%\x02):"
-    entry: "  %index%. \x0304%pattern%\x03 — door %nickname% (%date%)"
-    empty: "\x0307ℹ\x03 Geen verboden vhost-patronen."
+    example: "%command_prefix%FORBIDVHOST LIST"
+    header: "Verboden vhost-patronen (%count%):"
+    entry: "%index%. %pattern% — door %nickname% (%date%)"
+    empty: "Geen verboden vhost-patronen."
 
 # --- HISTORY ---
 history:
@@ -649,25 +710,25 @@ history:
     Raadpleegt en beheert de actgeschiedenis van een bijnaam. Opschortingen en
     wijzigingen van wachtwoord, e-mail of herstel worden automatisch vastgelegd.
     VIEW toont drie vermeldingen per pagina; ALL toont de volledige geschiedenis.
-  example: "%command_prefix%\x02\x0303HISTORY Gebruiker VIEW\x03\x0F"
+  example: "%command_prefix%HISTORY Gebruiker VIEW"
   examples:
-    - "%command_prefix%\x02\x0303HISTORY Gebruiker VIEW ALL\x03\x0F"
-    - "%command_prefix%\x02\x0303HISTORY Gebruiker ADD Handmatige notitie\x03\x0F"
+    - "%command_prefix%HISTORY Gebruiker VIEW ALL"
+    - "%command_prefix%HISTORY Gebruiker ADD Handmatige notitie"
 
   # --- HISTORY ADD ---------------------------------------------------------
   add:
     syntax: "HISTORY <bijnaam> ADD <bericht>"
     short: "Voeg een handmatige geschiedenisvermelding toe."
     help: "Voegt handmatig een vermelding toe aan de bijnaamgeschiedenis."
-    example: "%command_prefix%\x02\x0303HISTORY Gebruiker ADD Gemeld wegens spam\x03\x0F"
-    success: "\x0303✔\x03 Geschiedenisvermelding toegevoegd voor \x02%nickname%\x02."
+    example: "%command_prefix%HISTORY Gebruiker ADD Gemeld wegens spam"
+    success: "Geschiedenisvermelding toegevoegd voor %nickname%."
 
   # --- HISTORY DEL ---------------------------------------------------------
   del:
     syntax: "HISTORY <bijnaam> DEL <id>"
     short: "Verwijder een geschiedenisvermelding op ID."
     help: "Verwijdert een specifieke geschiedenisvermelding op basis van ID."
-    example: "%command_prefix%\x02\x0303HISTORY Gebruiker DEL 42\x03\x0F"
+    example: "%command_prefix%HISTORY Gebruiker DEL 42"
 
   # --- HISTORY VIEW --------------------------------------------------------
   view:
@@ -677,22 +738,24 @@ history:
       Toont de actgeschiedenis van een bijnaam. Standaard drie vermeldingen per
       pagina.
       Gebruik ALL om alles te tonen.
-    example: "%command_prefix%\x02\x0303HISTORY Gebruiker VIEW\x03\x0F"
+    example: "%command_prefix%HISTORY Gebruiker VIEW"
     examples:
-      - "%command_prefix%\x02\x0303HISTORY Gebruiker VIEW 2\x03\x0F"
-      - "%command_prefix%\x02\x0303HISTORY Gebruiker VIEW ALL\x03\x0F"
-    header: "\x02Geschiedenis voor \x0307%nickname%\x03\x02 (toont %start%-%end% van %total%):"
-    entry: "#%id% [%date%] \x0303%action%\x03 door %operator% — %message%"
-    no_entries: "\x0307ℹ\x03 Geen geschiedenisvermeldingen gevonden voor \x02%nickname%\x02."
-    page_hint: "Gebruik \x0303HISTORY %nickname% VIEW %next_page%\x03 voor meer vermeldingen."
+      - "%command_prefix%HISTORY Gebruiker VIEW 2"
+      - "%command_prefix%HISTORY Gebruiker VIEW ALL"
+    header: "%heading% (toont %start%-%end% van %total%):"
+    header_title: "Geschiedenis voor %nickname%"
+    entry: "#%id% [%date%] %action% door %operator% — %message%"
+    no_entries: "Geen geschiedenisvermeldingen gevonden voor %nickname%."
+    page_hint: "Gebruik %command% voor meer vermeldingen."
+    page_hint_command: "HISTORY %nickname% VIEW %next_page%"
 
   # --- HISTORY CLEAR -------------------------------------------------------
   clear:
     syntax: "HISTORY <bijnaam> CLEAR"
     short: "Verwijder alle geschiedenisvermeldingen voor een bijnaam."
     help: "Verwijdert alle vermeldingen in de bijnaamgeschiedenis onherroepelijk."
-    example: "%command_prefix%\x02\x0303HISTORY Gebruiker CLEAR\x03\x0F"
-    success: "\x0303✔\x03 \x02%count%\x02 geschiedenisvermeldingen gewist voor \x02%nickname%\x02."
+    example: "%command_prefix%HISTORY Gebruiker CLEAR"
+    success: "%count% geschiedenisvermeldingen gewist voor %nickname%."
 
 # --- HISTORY MESSAGES ---
 history.message:
@@ -721,13 +784,13 @@ noexpire:
   help: |-
     Bepaalt of een bijnaam door inactiviteit verloopt.
     ON voorkomt verval; OFF past de normale regels toe.
-  example: "%command_prefix%\x02\x0303NOEXPIRE Gebruiker ON\x03\x0F"
+  example: "%command_prefix%NOEXPIRE Gebruiker ON"
   examples:
-    - "%command_prefix%\x02\x0303NOEXPIRE Gebruiker OFF\x03\x0F"
-  success_on: "\x0303✔\x03 Bijnaam \x02%nickname%\x02 is nu beschermd tegen verloop."
-  success_off: "\x0303✔\x03 Bijnaam \x02%nickname%\x02 verloopt nu normaal."
-  forbidden: "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is verboden."
-  suspended: "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is geschorst."
+    - "%command_prefix%NOEXPIRE Gebruiker OFF"
+  success_on: "Bijnaam %nickname% is nu beschermd tegen verloop."
+  success_off: "Bijnaam %nickname% verloopt nu normaal."
+  forbidden: "Bijnaam %nickname% is verboden."
+  suspended: "Bijnaam %nickname% is geschorst."
 
 # --- LIST ------------------------------------------------------------------
 list:
@@ -736,9 +799,9 @@ list:
   help: |-
     Toont geregistreerde bijnamen die overeenkomen met het patroon. * staat voor
     eender welke tekenreeks; de optionele pagina begint bij 1.
-  example: "%command_prefix%\x02\x0303LIST Gebruiker*\x03\x0F"
+  example: "%command_prefix%LIST Gebruiker*"
   examples:
-    - "%command_prefix%\x02\x0303LIST Gebruiker* 2\x03\x0F"
+    - "%command_prefix%LIST Gebruiker* 2"
   header: "Bijnaam | Registratie | Laatste verbinding | IP | Status"
   row: "%nickname% | %registered% | %last_seen% | %ip% | %status%"
   empty: "Geen bijnamen komen overeen met patroon %pattern%."
@@ -749,45 +812,81 @@ list:
 regmode:
   syntax: "REGMODE {EMAIL|TOKEN|STATUS}"
   short: "De registratiemodus van het netwerk beheren."
-  help: !irc |-
+  help: |-
     Stelt de registratiemodus voor nieuwe accounts in.
 
-    • \x02EMAIL:\x02 Stuurt het verificatietoken naar het e-mailadres van de gebruiker.
-    • \x02TOKEN:\x02 Levert het verificatietoken rechtstreeks via IRC.
-    • \x02STATUS:\x02 Toont de huidige modus zonder deze te wijzigen.
+    %emphasis_0% Stuurt het verificatietoken naar het e-mailadres van de gebruiker.
+    %emphasis_1% Levert het verificatietoken rechtstreeks via IRC.
+    %emphasis_2% Toont de huidige modus zonder deze te wijzigen.
 
     Registraties in behandeling behouden de modus waarmee ze zijn gestart.
 
     In TOKEN-modus blijft RESEND voor alle gebruikers uitgeschakeld.
-  example: "%command_prefix%\x02\x0303REGMODE STATUS\x03\x0F"
+  example: "%command_prefix%REGMODE STATUS"
   examples:
-    - "%command_prefix%\x02\x0303REGMODE EMAIL\x03\x0F"
-    - "%command_prefix%\x02\x0303REGMODE TOKEN\x03\x0F"
-  status: "\x0307ℹ\x03 Huidige registratiemodus: \x02%mode%\x02."
-  changed: "\x0303✔\x03 Registratiemodus gewijzigd naar \x02%mode%\x02."
+    - "%command_prefix%REGMODE EMAIL"
+    - "%command_prefix%REGMODE TOKEN"
+  status: "Huidige registratiemodus: %mode%."
+  changed: "Registratiemodus gewijzigd naar %mode%."
 
 # --- RESCUE ----------------------------------------------------------------
 rescue:
-  issued: !irc |-
-    Hersteltoken: \x0303%token%\x03
+  issued: |-
+    Hersteltoken: %token_display%
 
     Bewaar dit token op een veilige plek. Je hebt het nodig om je nickname te herstellen als je je wachtwoord vergeet.
 
-    Gebruik om het te bevestigen: /msg %bot% \x0303VERIFY %token%\x03
+    Gebruik om het te bevestigen: /msg %bot% %verify%
 
-    \x0304⚠\x03 BELANGRIJK: Alleen het laatst aangemaakte token is geldig. Na bevestiging wordt het niet meer getoond. Deel het met niemand.
-  confirmed: "\x0303✔\x03 Je hersteltoken is bevestigd. Bewaar het veilig."
-  unavailable: "\x0304✗\x03 Authenticeer je en bevestig je hersteltoken met \x0303VERIFY\x03 voordat je deze bewerking gebruikt."
-  locked_out: "\x0304✗\x03 Te veel ongeldige tokens. Probeer het over \x02%seconds%\x02 seconden opnieuw."
-  throttled: "\x0304✗\x03 Te veel ongeldige tokens. Probeer het over \x02%minutes%\x02 minuten opnieuw."
-  replaced: "\x0303✔\x03 Je hersteltoken is vervangen door het zojuist bevestigde token uit de e-mail. Bewaar het veilig."
-  optional_replacement: !irc |-
-    \x0307→\x03 Optioneel nieuw hersteltoken: \x0303%token%\x03
+    %warning%
+  issued_warning: "BELANGRIJK: Alleen het laatst aangemaakte token is geldig. Na bevestiging wordt het niet meer getoond. Deel het met niemand."
+  confirmed: "Je hersteltoken is bevestigd. Bewaar het veilig."
+  unavailable: "Authenticeer je en bevestig je hersteltoken met %command_0% voordat je deze bewerking gebruikt."
+  unavailable_command_0: "VERIFY"
+  locked_out: "Te veel ongeldige tokens. Probeer het over %seconds% seconden opnieuw."
+  throttled: "Te veel ongeldige tokens. Probeer het over %minutes% minuten opnieuw."
+  replaced: "Je hersteltoken is vervangen door het zojuist bevestigde token uit de e-mail. Bewaar het veilig."
+  optional_replacement: |-
+    Optioneel nieuw hersteltoken: %token_display%
 
-    Gebruik om je huidige hersteltoken te vervangen: /msg %bot% \x0303VERIFY %token%\x03
+    Gebruik om je huidige hersteltoken te vervangen: /msg %bot% %verify%
 
     Je huidige token blijft geldig tot bevestiging.
 
     Wil je het niet wijzigen, negeer dan dit bericht.
-  replacement_unavailable: "\x0307ℹ\x03 Je wachtwoord is hersteld, maar een nieuw token kon niet worden uitgegeven. Je huidige token blijft geldig."
-  temporarily_unavailable: "\x0304✗\x03 De uitgifte van hersteltokens is tijdelijk niet beschikbaar. Probeer het later opnieuw."
+  replacement_unavailable: "Je wachtwoord is hersteld, maar een nieuw token kon niet worden uitgegeven. Je huidige token blijft geldig."
+  temporarily_unavailable: "De uitgifte van hersteltokens is tijdelijk niet beschikbaar. Probeer het later opnieuw."
+
+# --- HELP FRAGMENTS ---------------------------------------------------------
+help_fragments:
+  identify_help_0: "+r"
+  set_language_help_0: "ca"
+  set_language_help_1: "de"
+  set_language_help_2: "el"
+  set_language_help_3: "en"
+  set_language_help_4: "es"
+  set_language_help_5: "eu"
+  set_language_help_6: "fr"
+  set_language_help_7: "gl"
+  set_language_help_8: "it"
+  set_language_help_9: "nl"
+  set_language_help_10: "pl"
+  set_language_help_11: "pt"
+  set_language_help_12: "ro"
+  set_language_help_13: "tr"
+  set_private_help_0: "PRIVATE ON"
+  set_private_help_1: "PRIVATE OFF"
+  set_msg_help_0: "MSG ON"
+  set_msg_help_1: "PRIVMSG"
+  set_msg_help_2: "MSG OFF"
+  set_msg_help_3: "NOTICE"
+  set_vhost_help_0: "SET VHOST"
+  regmode_help_0: "EMAIL:"
+  regmode_help_1: "TOKEN:"
+  regmode_help_2: "STATUS:"
+  identify_native_help_0: "/NICK <bijnaam>:<wachtwoord>"
+  identify_native_help_1: "/NICK <bijnaam>!<wachtwoord>"
+  suspend_help_0: "%d"
+  suspend_help_1: "%h"
+  suspend_help_2: "%m"
+  suspend_help_3: "0"
