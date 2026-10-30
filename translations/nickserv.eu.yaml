@@ -394,6 +394,25 @@ set:
     taken: "Vhost hori jada beste ezizen batek erabiltzen du."
     forced: "Zure vhost-a automatikoki konfiguratuta dago eta ezin da SET VHOST bidez aldatu."
 
+# --- SAREGISTER ------------------------------------------------------------
+saregister:
+  syntax: "SAREGISTER <ezizena> <pasahitza> [email]"
+  short: "Ezizen bat administratiboki erregistratu."
+  help: |-
+    Sintaxia: SAREGISTER <ezizena> <pasahitza> [email]
+
+    Ezizen bat administratiboki erregistratzen du berehala, bezeroaren
+    egiaztapenik edo maiztasun-mugarik eskatu gabe.
+
+    TOKEN moduan, erreskate-tokena behin erakusten zaio operadoreari.
+    EMAIL moduan, erreskate-tokena zehaztutako helbide elektronikora bidaltzen da.
+  example: "%command_prefix%SAREGISTER Alice Pasahitza123"
+  examples:
+    - "%command_prefix%SAREGISTER Bob Pasahitza456 bob@adibidea.eus"
+  success_token: "%nickname% ezizena erregistratu da. Erreskate-tokena: %token%"
+  success_email: "%nickname% ezizena erregistratu da. Erreskate-tokena %email% helbidera bidali da."
+  invalid_nickname: "%nickname% ezizena ez da baliozkoa."
+
 # --- SASET -----------------------------------------------------------------
 saset:
   syntax: "SASET <ezizen> {PASSWORD <pasahitz_berria>|EMAIL <posta_berria>|LANGUAGE <kodea>|TIMEZONE {<ordu_zona>|OFF}|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
@@ -916,25 +935,6 @@ regmode:
     - "%command_prefix%REGMODE TOKEN"
   status: "Uneko erregistro modua: %mode%."
   changed: "Erregistro modua %mode% modura aldatu da."
-
-# --- SAREGISTER ------------------------------------------------------------
-saregister:
-  syntax: "SAREGISTER <ezizena> <pasahitza> [email]"
-  short: "Ezizen bat administratiboki erregistratu."
-  help: |-
-    Sintaxia: SAREGISTER <ezizena> <pasahitza> [email]
-
-    Ezizen bat administratiboki erregistratzen du berehala, bezeroaren
-    egiaztapenik edo maiztasun-mugarik eskatu gabe.
-
-    TOKEN moduan, erreskate-tokena behin erakusten zaio operadoreari.
-    EMAIL moduan, erreskate-tokena zehaztutako helbide elektronikora bidaltzen da.
-  example: "%command_prefix%SAREGISTER Alice Pasahitza123"
-  examples:
-    - "%command_prefix%SAREGISTER Bob Pasahitza456 bob@adibidea.eus"
-  success_token: "%nickname% ezizena erregistratu da. Erreskate-tokena: %token%"
-  success_email: "%nickname% ezizena erregistratu da. Erreskate-tokena %email% helbidera bidali da."
-  invalid_nickname: "%nickname% ezizena ez da baliozkoa."
 
 # --- RESCUE ----------------------------------------------------------------
 rescue:

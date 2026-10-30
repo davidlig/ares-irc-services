@@ -399,6 +399,25 @@ set:
     taken: "Αυτό το vhost χρησιμοποιείται ήδη από άλλο ψευδώνυμο."
     forced: "Το vhost σας διαμορφώνεται αυτόματα και δεν μπορεί να αλλάξει με SET VHOST."
 
+# --- SAREGISTER ------------------------------------------------------------
+saregister:
+  syntax: "SAREGISTER <nickname> <κωδικός> [email]"
+  short: "Διοικητική καταχώριση ψευδωνύμου."
+  help: |-
+    Σύνταξη: SAREGISTER <nickname> <κωδικός> [email]
+
+    Καταχωρεί διοικητικά ένα ψευδώνυμο αμέσως χωρίς να απαιτείται
+    επαλήθευση πελάτη ή όρια συχνότητας.
+
+    Στη λειτουργία TOKEN, το διακριτικό διάσωσης εμφανίζεται μία φορά στον διαχειριστή.
+    Στη λειτουργία EMAIL, το διακριτικό διάσωσης αποστέλλεται στην καθορισμένη διεύθυνση email.
+  example: "%command_prefix%SAREGISTER Alice Κωδικός123"
+  examples:
+    - "%command_prefix%SAREGISTER Bob Κωδικός456 bob@example.gr"
+  success_token: "Το ψευδώνυμο %nickname% καταχωρήθηκε. Διακριτικό διάσωσης: %token%"
+  success_email: "Το ψευδώνυμο %nickname% καταχωρήθηκε. Το διακριτικό διάσωσης στάλθηκε στο %email%."
+  invalid_nickname: "Μη έγκυρο ψευδώνυμο %nickname%."
+
 # --- SASET -----------------------------------------------------------------
 saset:
   syntax: "SASET <ψευδώνυμο> {PASSWORD <νέος_κωδικός>|EMAIL <νέο_email>|LANGUAGE <κωδικός>|TIMEZONE {<ζώνη_ώρας>|OFF}|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
@@ -984,25 +1003,6 @@ regmode:
     - "%command_prefix%REGMODE TOKEN"
   status: "Τρέχων τρόπος εγγραφής: %mode%."
   changed: "Ο τρόπος εγγραφής άλλαξε σε %mode%."
-
-# --- SAREGISTER ------------------------------------------------------------
-saregister:
-  syntax: "SAREGISTER <nickname> <κωδικός> [email]"
-  short: "Διοικητική καταχώριση ψευδωνύμου."
-  help: |-
-    Σύνταξη: SAREGISTER <nickname> <κωδικός> [email]
-
-    Καταχωρεί διοικητικά ένα ψευδώνυμο αμέσως χωρίς να απαιτείται
-    επαλήθευση πελάτη ή όρια συχνότητας.
-
-    Στη λειτουργία TOKEN, το διακριτικό διάσωσης εμφανίζεται μία φορά στον διαχειριστή.
-    Στη λειτουργία EMAIL, το διακριτικό διάσωσης αποστέλλεται στην καθορισμένη διεύθυνση email.
-  example: "%command_prefix%SAREGISTER Alice Κωδικός123"
-  examples:
-    - "%command_prefix%SAREGISTER Bob Κωδικός456 bob@example.gr"
-  success_token: "Το ψευδώνυμο %nickname% καταχωρήθηκε. Διακριτικό διάσωσης: %token%"
-  success_email: "Το ψευδώνυμο %nickname% καταχωρήθηκε. Το διακριτικό διάσωσης στάλθηκε στο %email%."
-  invalid_nickname: "Μη έγκυρο ψευδώνυμο %nickname%."
 
 # --- RESCUE ----------------------------------------------------------------
 rescue:

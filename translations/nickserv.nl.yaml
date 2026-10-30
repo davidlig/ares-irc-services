@@ -391,6 +391,25 @@ set:
     taken: "Die vhost is al in gebruik door een andere bijnaam."
     forced: "Uw vhost wordt automatisch geconfigureerd en kan niet worden gewijzigd met SET VHOST."
 
+# --- SAREGISTER ------------------------------------------------------------
+saregister:
+  syntax: "SAREGISTER <bijnaam> <wachtwoord> [email]"
+  short: "Een bijnaam administratief registreren."
+  help: |-
+    Syntaxis: SAREGISTER <bijnaam> <wachtwoord> [email]
+
+    Registreert een bijnaam onmiddellijk administratief zonder dat
+    clientverificatie of frequentielimieten vereist zijn.
+
+    In TOKEN-modus wordt het hersteltoken eenmalig aan de beheerder getoond.
+    In EMAIL-modus wordt het hersteltoken naar het opgegeven e-mailadres verzonden.
+  example: "%command_prefix%SAREGISTER Alice Wachtwoord123"
+  examples:
+    - "%command_prefix%SAREGISTER Bob Wachtwoord456 bob@voorbeeld.nl"
+  success_token: "Bijnaam %nickname% is geregistreerd. Hersteltoken: %token%"
+  success_email: "Bijnaam %nickname% is geregistreerd. Hersteltoken verzonden naar %email%."
+  invalid_nickname: "Ongeldige bijnaam %nickname%."
+
 # --- SASET -----------------------------------------------------------------
 saset:
   syntax: "SASET <bijnaam> {PASSWORD <nieuw_wachtwoord>|EMAIL <nieuwe_e-mail>|LANGUAGE <code>|TIMEZONE {<tijdzone>|OFF}|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
@@ -829,25 +848,6 @@ regmode:
     - "%command_prefix%REGMODE TOKEN"
   status: "Huidige registratiemodus: %mode%."
   changed: "Registratiemodus gewijzigd naar %mode%."
-
-# --- SAREGISTER ------------------------------------------------------------
-saregister:
-  syntax: "SAREGISTER <bijnaam> <wachtwoord> [email]"
-  short: "Een bijnaam administratief registreren."
-  help: |-
-    Syntaxis: SAREGISTER <bijnaam> <wachtwoord> [email]
-
-    Registreert een bijnaam onmiddellijk administratief zonder dat
-    clientverificatie of frequentielimieten vereist zijn.
-
-    In TOKEN-modus wordt het hersteltoken eenmalig aan de beheerder getoond.
-    In EMAIL-modus wordt het hersteltoken naar het opgegeven e-mailadres verzonden.
-  example: "%command_prefix%SAREGISTER Alice Wachtwoord123"
-  examples:
-    - "%command_prefix%SAREGISTER Bob Wachtwoord456 bob@voorbeeld.nl"
-  success_token: "Bijnaam %nickname% is geregistreerd. Hersteltoken: %token%"
-  success_email: "Bijnaam %nickname% is geregistreerd. Hersteltoken verzonden naar %email%."
-  invalid_nickname: "Ongeldige bijnaam %nickname%."
 
 # --- RESCUE ----------------------------------------------------------------
 rescue:

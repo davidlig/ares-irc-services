@@ -389,6 +389,25 @@ set:
     taken: "Quel vhost è già in uso da un altro nickname."
     forced: "Il suo vhost è configurato automaticamente e non può essere modificato con SET VHOST."
 
+# --- SAREGISTER ------------------------------------------------------------
+saregister:
+  syntax: "SAREGISTER <nickname> <password> [email]"
+  short: "Registra amministrativamente un nickname."
+  help: |-
+    Sintassi: SAREGISTER <nickname> <password> [email]
+
+    Registra amministrativamente un nickname immediatamente senza richiedere
+    la verifica dell'utente né limiti di frequenza.
+
+    In modalità TOKEN, il token di recupero viene mostrato una sola volta all'operatore.
+    In modalità EMAIL, il token di recupero viene inviato all'indirizzo email specificato.
+  example: "%command_prefix%SAREGISTER Alice Password123"
+  examples:
+    - "%command_prefix%SAREGISTER Bob Password456 bob@esempio.it"
+  success_token: "Il nickname %nickname% è stato registrato. Token di recupero: %token%"
+  success_email: "Il nickname %nickname% è stato registrato. Token di recupero inviato a %email%."
+  invalid_nickname: "Nickname non valido %nickname%."
+
 # --- SASET -----------------------------------------------------------------
 saset:
   syntax: "SASET <nickname> {PASSWORD <nuova_password>|EMAIL <nuova_email>|LANGUAGE <codice>|TIMEZONE {<fuso_orario>|OFF}|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
@@ -829,25 +848,6 @@ regmode:
     - "%command_prefix%REGMODE TOKEN"
   status: "Modalità di registrazione attuale: %mode%."
   changed: "Modalità di registrazione impostata su %mode%."
-
-# --- SAREGISTER ------------------------------------------------------------
-saregister:
-  syntax: "SAREGISTER <nickname> <password> [email]"
-  short: "Registra amministrativamente un nickname."
-  help: |-
-    Sintassi: SAREGISTER <nickname> <password> [email]
-
-    Registra amministrativamente un nickname immediatamente senza richiedere
-    la verifica dell'utente né limiti di frequenza.
-
-    In modalità TOKEN, il token di recupero viene mostrato una sola volta all'operatore.
-    In modalità EMAIL, il token di recupero viene inviato all'indirizzo email specificato.
-  example: "%command_prefix%SAREGISTER Alice Password123"
-  examples:
-    - "%command_prefix%SAREGISTER Bob Password456 bob@esempio.it"
-  success_token: "Il nickname %nickname% è stato registrato. Token di recupero: %token%"
-  success_email: "Il nickname %nickname% è stato registrato. Token di recupero inviato a %email%."
-  invalid_nickname: "Nickname non valido %nickname%."
 
 # --- RESCUE ----------------------------------------------------------------
 rescue:

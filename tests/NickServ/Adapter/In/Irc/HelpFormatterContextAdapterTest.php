@@ -169,6 +169,30 @@ final class HelpFormatterContextAdapterTest extends TestCase
     }
 
     #[Test]
+    public function getHelpGroupsPlacesSaregisterBeforeSaset(): void
+    {
+        $context = $this->createContext(
+            new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
+            $this->createStub(NickServNotifierInterface::class),
+            $this->createStub(TranslatorInterface::class),
+            new NickServCommandRegistry([]),
+        );
+        $adapter = $this->createAdapter($context);
+
+        $groups = $adapter->getHelpGroups();
+        $accountMgmt = null;
+        foreach ($groups as $group) {
+            if ('help.ircop_group.account_management' === $group['group_key']) {
+                $accountMgmt = $group;
+                break;
+            }
+        }
+
+        self::assertNotNull($accountMgmt);
+        self::assertSame(['SAREGISTER', 'SASET', 'RENAME', 'NOEXPIRE', 'REGMODE'], $accountMgmt['commands']);
+    }
+
+    #[Test]
     public function getIrcopCommandsReturnsEmptyWhenSenderNull(): void
     {
         $cmd = $this->createIrcopCommandStub('USERIP', 'nickserv.userip');

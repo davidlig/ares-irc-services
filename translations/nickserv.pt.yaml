@@ -390,6 +390,25 @@ set:
     taken: "Esse vhost já está em uso por outro nickname."
     forced: "O seu vhost é configurado automaticamente e não pode ser alterado com SET VHOST."
 
+# --- SAREGISTER ------------------------------------------------------------
+saregister:
+  syntax: "SAREGISTER <nickname> <palavra-passe> [email]"
+  short: "Registar administrativamente um nickname."
+  help: |-
+    Sintaxe: SAREGISTER <nickname> <palavra-passe> [email]
+
+    Regista administrativamente um nickname de forma imediata sem exigir
+    verificação do cliente nem limites de frequência.
+
+    No modo TOKEN, o token de recuperação é apresentado uma vez ao operador.
+    No modo EMAIL, o token de recuperação é enviado para o endereço de email indicado.
+  example: "%command_prefix%SAREGISTER Alice PalavraPasse123"
+  examples:
+    - "%command_prefix%SAREGISTER Bob PalavraPasse456 bob@exemplo.pt"
+  success_token: "O nickname %nickname% foi registado. Token de recuperação: %token%"
+  success_email: "O nickname %nickname% foi registado. Token de recuperação enviado para %email%."
+  invalid_nickname: "Nickname inválido %nickname%."
+
 # --- SASET -----------------------------------------------------------------
 saset:
   syntax: "SASET <nickname> {PASSWORD <nova_palavra-passe>|EMAIL <novo_email>|LANGUAGE <código>|TIMEZONE {<fuso_horário>|OFF}|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
@@ -828,25 +847,6 @@ regmode:
     - "%command_prefix%REGMODE TOKEN"
   status: "Modo de registo atual: %mode%."
   changed: "Modo de registo alterado para %mode%."
-
-# --- SAREGISTER ------------------------------------------------------------
-saregister:
-  syntax: "SAREGISTER <nickname> <palavra-passe> [email]"
-  short: "Registar administrativamente um nickname."
-  help: |-
-    Sintaxe: SAREGISTER <nickname> <palavra-passe> [email]
-
-    Regista administrativamente um nickname de forma imediata sem exigir
-    verificação do cliente nem limites de frequência.
-
-    No modo TOKEN, o token de recuperação é apresentado uma vez ao operador.
-    No modo EMAIL, o token de recuperação é enviado para o endereço de email indicado.
-  example: "%command_prefix%SAREGISTER Alice PalavraPasse123"
-  examples:
-    - "%command_prefix%SAREGISTER Bob PalavraPasse456 bob@exemplo.pt"
-  success_token: "O nickname %nickname% foi registado. Token de recuperação: %token%"
-  success_email: "O nickname %nickname% foi registado. Token de recuperação enviado para %email%."
-  invalid_nickname: "Nickname inválido %nickname%."
 
 # --- RESCUE ----------------------------------------------------------------
 rescue:
