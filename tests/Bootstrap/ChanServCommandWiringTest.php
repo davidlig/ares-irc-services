@@ -20,6 +20,9 @@ use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\OperServ\Application\Port\In\OperatorPermissionCatalog;
+use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -75,15 +78,7 @@ final class ChanServCommandWiringTest extends KernelTestCase
             $messages = explode("\n", $message);
         });
         $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static function (string $key, array $params): string {
-            if ('help.command_line' !== $key) {
-                return $key;
-            }
-            $command = $params['%command%'] ?? null;
-            self::assertIsString($command);
-
-            return $command;
-        });
+        $translator->method('trans')->willReturnCallback(static fn (string $key): string => 'help.command_line' === $key ? '%command%' : $key);
         $access = $this->createStub(ChanServOperatorAccess::class);
         $access->method('hasAnyPermission')->willReturn(true);
         $access->method('hasPermission')->willReturnCallback(static fn (string $nick, ?int $id, bool $identified, bool $oper, string $permission): bool => ChanServPermission::IRCOPONLY === $permission);
@@ -102,6 +97,7 @@ final class ChanServCommandWiringTest extends KernelTestCase
             new NullChannelModeSupport(),
             $this->createStub(NetworkUserLookupPort::class),
             new ServiceNicknameRegistry([]),
+            renderer: new IrcRenderer(new FixedStyleProvider(new PresentationStyle())),
         );
 
         new HelpCommand(new UnifiedHelpFormatter(), $access)->execute($context);

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Adapter\In\Irc\Help;
 
+use App\ChanServ\Adapter\In\Irc\HelpFormatterContextAdapter;
+
 use function array_map;
 use function explode;
 use function implode;
@@ -238,6 +240,10 @@ final readonly class UnifiedHelpFormatter
 
     private function addBotMessagePrefix(HelpFormatterContextInterface $context, string $example): string
     {
+        if ($context instanceof HelpFormatterContextAdapter) {
+            return $context->renderExample($example);
+        }
+
         $prefixPlaceholder = '%command_prefix%';
         if (!str_contains($example, $prefixPlaceholder)) {
             return $example;

@@ -18,156 +18,202 @@
 
 # --- ERROR -----------------------------------------------------------------
 error:
-  invalid_channel: "\x0304✗\x03 Μη έγκυρο όνομα καναλιού. Χρησιμοποιήστε \x02#channel\x02."
-  generic: "\x0304✗\x03 Παρουσιάστηκε σφάλμα. Παρακαλώ δοκιμάστε ξανά."
+  invalid_channel: "Μη έγκυρο όνομα καναλιού. Χρησιμοποιήστε %example%."
+  invalid_channel_example: "#channel"
+  generic: "Παρουσιάστηκε σφάλμα. Παρακαλώ δοκιμάστε ξανά."
 
 # --- REGISTER --------------------------------------------------------------
 register:
   syntax: "REGISTER <#channel> <description>"
-  example: "%command_prefix%\x02\x0303REGISTER #κανάλι Κοινοτικό έργο\x03\x0F"
+  example: "%command_prefix%REGISTER #κανάλι Κοινοτικό έργο"
   short: "Καταχώρηση καναλιού."
   help: |-
     Καταχωρίζει ένα κανάλι και το συνδέει με το ψευδώνυμό σας. Πρέπει
     να έχετε ταυτοποιηθεί στο %nickserv%. Στη λειτουργία APPROVAL, ένας
     IRCop πρέπει να εγκρίνει το αίτημα.
-  success: "\x0303✔\x03 Το κανάλι \x02%channel%\x02 έχει καταχωρηθεί."
-  already_registered: "\x0304✗\x03 Το κανάλι \x02%channel%\x02 είναι ήδη εγγεγραμμένο ή η εγγραφή του εκκρεμεί."
-  channel_not_on_network: "\x0304✗\x03 Το κανάλι \x02%channel%\x02 δεν υπάρχει στο δίκτυο."
-  pending_deletion: "\x0304✗\x03 Το κανάλι \x02%channel%\x02 είναι σε αναμονή διαγραφής και δεν μπορεί να καταχωρηθεί."
-  insufficient_channel_rank: "\x0304✗\x03 Πρέπει να έχεις τουλάχιστον κατάσταση operator στο \x02%channel%\x02 για να το καταχωρήσεις."
-  limit_exceeded: "\x0304✗\x03 Έχετε φτάσει το μέγιστο όριο των %max% καταχωρημένων καναλιών."
-  throttled: "\x0304✗\x03 Πρέπει να περιμένετε \x02%minutes%\x02 λεπτό(ά) πριν καταχωρήσετε άλλο κανάλι."
+  success: "Το κανάλι %channel% έχει καταχωρηθεί."
+  already_registered: "Το κανάλι %channel% είναι ήδη εγγεγραμμένο ή η εγγραφή του εκκρεμεί."
+  channel_not_on_network: "Το κανάλι %channel% δεν υπάρχει στο δίκτυο."
+  pending_deletion: "Το κανάλι %channel% είναι σε αναμονή διαγραφής και δεν μπορεί να καταχωρηθεί."
+  insufficient_channel_rank: "Πρέπει να έχεις τουλάχιστον κατάσταση operator στο %channel% για να το καταχωρήσεις."
+  limit_exceeded: "Έχετε φτάσει το μέγιστο όριο των %max% καταχωρημένων καναλιών."
+  throttled: "Πρέπει να περιμένετε %minutes% λεπτό(ά) πριν καταχωρήσετε άλλο κανάλι."
 
-  awaiting_approval: "\x0307✔\x03 Το αίτημα για το %channel% αναμένει έγκριση από IRCop."
-  restricted_indefinite: "\x0304✗\x03 Τα νέα αιτήματα εγγραφής για \x02%channel%\x02 αποκλείονται επ’ αόριστον."
-  restricted_until: "\x0304✗\x03 Τα νέα αιτήματα εγγραφής για \x02%channel%\x02 αποκλείονται έως %date%"
+  awaiting_approval: "Το αίτημα για το %channel% αναμένει έγκριση από IRCop."
+  restricted_indefinite: "Τα νέα αιτήματα εγγραφής για %channel% αποκλείονται επ’ αόριστον."
+  restricted_until: "Τα νέα αιτήματα εγγραφής για %channel% αποκλείονται έως %date%"
 
 # --- REGMODE ---------------------------------------------------------------
 regmode:
   syntax: "REGMODE {DIRECT|APPROVAL|STATUS}"
-  example: "%command_prefix%\x02\x0303REGMODE APPROVAL\x03\x0F"
+  example: "%command_prefix%REGMODE APPROVAL"
   short: "Ορισμός ή προβολή της λειτουργίας εγγραφής καναλιών."
   help: |-
     Ορίζει DIRECT ή APPROVAL ή εμφανίζει την κατάσταση με STATUS.
     Το DIRECT είναι η προεπιλογή και διατηρεί την άμεση εγγραφή.
-  status: "\x0307ℹ\x03 Η λειτουργία εγγραφής καναλιών είναι %mode%."
-  changed: "\x0303✔\x03 Η λειτουργία εγγραφής καναλιών άλλαξε σε %mode%."
+  status: "Η λειτουργία εγγραφής καναλιών είναι %mode%."
+  changed: "Η λειτουργία εγγραφής καναλιών άλλαξε σε %mode%."
 
 # --- CREG ------------------------------------------------------------------
 creg:
   syntax: "CREG {PENDING [page]|ACCEPT <#channel>|REJECT <#channel> <αιτία>}"
   pending.syntax: "CREG PENDING [page]"
-  pending.example: "%command_prefix%\x02\x0303CREG PENDING\x03\x0F"
+  pending.example: "%command_prefix%CREG PENDING"
   pending.short: "Εμφανίζει εκκρεμή αιτήματα σε περιορισμένη σελίδα."
   pending.help: "Εμφανίζει εκκρεμή αιτήματα σε περιορισμένη σελίδα."
   accept.syntax: "CREG ACCEPT <#channel>"
-  accept.example: "%command_prefix%\x02\x0303CREG ACCEPT #channel\x03\x0F"
+  accept.example: "%command_prefix%CREG ACCEPT #channel"
   accept.short: "Εγκρίνει αίτημα εγγραφής καναλιού."
   accept.help: "Ελέγχει ξανά το αίτημα και ενεργοποιεί την εγγραφή."
   reject.syntax: "CREG REJECT <#channel> <αιτία>"
-  reject.example: "%command_prefix%\x02\x0303CREG REJECT #channel Απαιτείται δημόσιο θέμα\x03\x0F"
+  reject.example: "%command_prefix%CREG REJECT #channel Απαιτείται δημόσιο θέμα"
   reject.short: "Απορρίπτει αίτημα εγγραφής καναλιού."
   reject.help: "Απορρίπτει αίτημα με υποχρεωτική αιτία και περιορισμό."
-  example: "%command_prefix%\x02\x0303CREG PENDING\x03\x0F"
+  example: "%command_prefix%CREG PENDING"
   short: "Έλεγχος αιτημάτων εγγραφής καναλιών."
   help: |-
     Εμφανίζει εκκρεμή αιτήματα ή αποδέχεται ή απορρίπτει ένα.
     Η απόρριψη απαιτεί αιτιολογία. Μόνο το ACCEPT εγγράφει το κανάλι.
-  pending_header: "\x0314Εκκρεμείς εγγραφές (σελίδα %page%)\x03"
-  pending_item: "  %channel% — αιτών %requester%, υποβλήθηκε %submitted%: %description%"
-  accepted: "\x0303✔\x03 Η εγγραφή του %channel% εγκρίθηκε."
-  rejected: "\x0303✔\x03 Η εγγραφή του %channel% απορρίφθηκε."
-  not_pending: "\x0304✗\x03 Το %channel% δεν έχει εκκρεμές αίτημα εγγραφής."
-  channel_not_on_network: "\x0304✗\x03 Το κανάλι %channel% δεν βρίσκεται στο δίκτυο."
-  founder_limit: "\x0304✗\x03 Ο αιτών έφτασε το όριο εγγραφών καναλιών."
-  requester_inactive: "\x0304✗\x03 Ο λογαριασμός του αιτούντος δεν είναι πλέον ενεργός."
-  requester_ineligible: "\x0304✗\x03 Ο αιτών πρέπει τώρα να έχει δικαιώματα operator στο κανάλι."
+  pending_header: "Εκκρεμείς εγγραφές (σελίδα %page%)"
+  pending_item: "%channel% — αιτών %requester%, υποβλήθηκε %submitted%: %description%"
+  accepted: "Η εγγραφή του %channel% εγκρίθηκε."
+  rejected: "Η εγγραφή του %channel% απορρίφθηκε."
+  not_pending: "Το %channel% δεν έχει εκκρεμές αίτημα εγγραφής."
+  channel_not_on_network: "Το κανάλι %channel% δεν βρίσκεται στο δίκτυο."
+  founder_limit: "Ο αιτών έφτασε το όριο εγγραφών καναλιών."
+  requester_inactive: "Ο λογαριασμός του αιτούντος δεν είναι πλέον ενεργός."
+  requester_ineligible: "Ο αιτών πρέπει τώρα να έχει δικαιώματα operator στο κανάλι."
 
 # --- STATUS ----------------------------------------------------------------
 status:
   syntax: "STATUS <#channel>"
-  example: "%command_prefix%\x02\x0303STATUS #channel\x03\x0F"
-  header: "\x02Κατάσταση καναλιού \x0307%channel%\x03\x02"
+  example: "%command_prefix%STATUS #channel"
+  header: "Κατάσταση καναλιού %channel%"
   short: "Προβολή κατάστασης εγγραφής καναλιού."
   help: |-
     Εμφανίζει αν το κανάλι δεν είναι εγγεγραμμένο, αναμένει έγκριση,
     απορρίφθηκε ή είναι εγγεγραμμένο.
     Οι λεπτομέρειες απόρριψης είναι ορατές μόνο στον αιτούντα και
     στους εξουσιοδοτημένους IRCops.
-  unregistered: "  \x0314Κατάσταση               \x03: Μη εγγεγραμμένο"
-  pending: "  \x0314Κατάσταση               \x03: \x0307Σε αναμονή έγκρισης\x03"
-  registered: "  \x0314Κατάσταση               \x03: \x0303Εγγεγραμμένο\x03"
-  suspended: "  \x0314Κατάσταση               \x03: \x0304Σε αναστολή\x03"
-  forbidden: "  \x0314Κατάσταση               \x03: \x0304Απαγορευμένο\x03"
-  pending_deletion: "  \x0314Κατάσταση               \x03: \x0307Σε αναμονή διαγραφής\x03"
-  rejected_private: "  \x0314Κατάσταση               \x03: \x0304Απόρριψη εγγραφής\x03"
-  rejected: "  \x0314Κατάσταση               \x03: \x0304Απόρριψη εγγραφής\x03"
-  rejection_reason: "  \x0314Αιτία                   \x03: %reason%"
-  rejection_audit: "  \x0314Απορρίφθηκε από         \x03: %operator% στις %date%"
-  restriction_until: "  \x0314Διαθέσιμο από           \x03: %date%"
-  footer: "\x0314─────────────────────────────\x03\x0F"
+  unregistered: "%label%%padding%: Μη εγγεγραμμένο"
+  unregistered_label: "Κατάσταση"
+  pending: "%label%%padding%: %state%"
+  pending_label: "Κατάσταση"
+  pending_value: "Σε αναμονή έγκρισης"
+  registered: "%label%%padding%: %state%"
+  registered_label: "Κατάσταση"
+  registered_value: "Εγγεγραμμένο"
+  suspended: "%label%%padding%: %state%"
+  suspended_label: "Κατάσταση"
+  suspended_value: "Σε αναστολή"
+  forbidden: "%label%%padding%: %state%"
+  forbidden_label: "Κατάσταση"
+  forbidden_value: "Απαγορευμένο"
+  pending_deletion: "%label%%padding%: %state%"
+  pending_deletion_label: "Κατάσταση"
+  pending_deletion_value: "Σε αναμονή διαγραφής"
+  rejected_private: "%label%%padding%: %state%"
+  rejected_private_label: "Κατάσταση"
+  rejected_private_value: "Απόρριψη εγγραφής"
+  rejected: "%label%%padding%: %state%"
+  rejected_label: "Κατάσταση"
+  rejected_value: "Απόρριψη εγγραφής"
+  rejection_reason: "%label%%padding%: %reason%"
+  rejection_reason_label: "Αιτία"
+  rejection_audit: "%label%%padding%: %operator% στις %date%"
+  rejection_audit_label: "Απορρίφθηκε από"
+  restriction_until: "%label%%padding%: %date%"
+  restriction_until_label: "Διαθέσιμο από"
+  footer: ""
 
 # --- INFO ------------------------------------------------------------------
 info:
   syntax: "INFO <#channel>"
-  example: "%command_prefix%\x02\x0303INFO #κανάλι\x03\x0F"
+  example: "%command_prefix%INFO #κανάλι"
   short: "Εμφάνιση πληροφοριών καναλιού."
   help: |-
     Εμφανίζει ιδρυτή, ημερομηνία καταχώρησης, διάδοχο, URL, email, περιγραφή,
     τελευταία χρήση, θέμα και επιλογές (TOPICLOCK, MLOCK, SECURE).
-  header: "\x02Πληροφορίες για το κανάλι \x0307%channel%\x03\x02"
-  founder: "  \x0314Ιδρυτής\x03         : \x02%nickname%\x02"
-  registered: "  \x0314Καταχωρήθηκε\x03    : %date%"
-  successor: "  \x0314Διάδοχος\x03        : \x02%nickname%\x02"
-  description: "  \x0314Περιγραφή\x03       : %desc%"
-  url: "  \x0314URL\x03             : %url%"
-  email: "  \x0314Email\x03           : %email%"
-  last_used: "  \x0314Τελ. χρήση\x03      : %date%"
-  topic: "  \x0314Τελευταίο θέμα\x03  : %topic%"
-  topic_set_by: "  \x0314Θέμα από\x03        : %nickname%"
-  options: "  \x0314Επιλογές\x03        : %options%"
-  private: "\x0304✗\x03 Οι πληροφορίες του καναλιού \x02%channel%\x02 είναι ιδιωτικές."
-  no_expire: "  \x0314Ποτέ δεν λήγει\x03  : Ναι"
-  mlock_modes: "  \x0314Κλείδωμα λειτ.\x03  : %modes%"
-  suspended_status: "  \x0314Κατάσταση\x03       : \x0304Σε αναστολή\x03"
-  suspended_reason: "  \x0314Αιτιολογία\x03      : %reason%"
-  suspended_until: "  \x0314Λήγει στις\x03      : %date%"
-  suspended_permanent: "  \x0314Λήγει στις\x03      : Μόνιμη"
-  forbidden_status: "  \x0314Κατάσταση\x03       : \x0304Απαγορευμένο\x03"
-  forbidden_reason: "  \x0314Αιτιολογία\x03      : %reason%"
-  pending_deletion_status: "  \x0314Κατάσταση\x03          : \x0307Σε εκκρεμότητα διαγραφής\x03"
-  pending_deletion_at: "  \x0314Διαγράφηκε\x03         : %date%"
-  pending_deletion_until: "  \x0314Οριστική διαγραφή\x03  : %date%"
-  pending_deletion_notice: "  \x0307Αυτό το κανάλι είναι παγωμένο και δεν μπορεί να καταχωρηθεί.\x03"
+  header: "Πληροφορίες για το κανάλι %channel%"
+  founder: "%label%%padding%: %nickname%"
+  founder_label: "Ιδρυτής"
+  registered: "%label%%padding%: %date%"
+  registered_label: "Καταχωρήθηκε"
+  successor: "%label%%padding%: %nickname%"
+  successor_label: "Διάδοχος"
+  description: "%label%%padding%: %desc%"
+  description_label: "Περιγραφή"
+  url: "%label%%padding%: %url%"
+  url_label: "URL"
+  email: "%label%%padding%: %email%"
+  email_label: "Email"
+  last_used: "%label%%padding%: %date%"
+  last_used_label: "Τελ. χρήση"
+  topic: "%label%%padding%: %topic%"
+  topic_label: "Τελευταίο θέμα"
+  topic_set_by: "%label%%padding%: %nickname%"
+  topic_set_by_label: "Θέμα από"
+  options: "%label%%padding%: %options%"
+  options_label: "Επιλογές"
+  private: "Οι πληροφορίες του καναλιού %channel% είναι ιδιωτικές."
+  no_expire: "%label%%padding%: Ναι"
+  no_expire_label: "Ποτέ δεν λήγει"
+  mlock_modes: "%label%%padding%: %modes%"
+  mlock_modes_label: "Κλείδωμα λειτ."
+  suspended_status: "%label%%padding%: %state%"
+  suspended_status_label: "Κατάσταση"
+  suspended_status_value: "Σε αναστολή"
+  suspended_reason: "%label%%padding%: %reason%"
+  suspended_reason_label: "Αιτιολογία"
+  suspended_until: "%label%%padding%: %date%"
+  suspended_until_label: "Λήγει στις"
+  suspended_permanent: "%label%%padding%: Μόνιμη"
+  suspended_permanent_label: "Λήγει στις"
+  forbidden_status: "%label%%padding%: %state%"
+  forbidden_status_label: "Κατάσταση"
+  forbidden_status_value: "Απαγορευμένο"
+  forbidden_reason: "%label%%padding%: %reason%"
+  forbidden_reason_label: "Αιτιολογία"
+  pending_deletion_status: "%label%%padding%: %state%"
+  pending_deletion_status_label: "Κατάσταση"
+  pending_deletion_status_value: "Σε εκκρεμότητα διαγραφής"
+  pending_deletion_at: "%label%%padding%: %date%"
+  pending_deletion_at_label: "Διαγράφηκε"
+  pending_deletion_until: "%label%%padding%: %date%"
+  pending_deletion_until_label: "Οριστική διαγραφή"
+  pending_deletion_notice: "Αυτό το κανάλι είναι παγωμένο και δεν μπορεί να καταχωρηθεί."
 
 # --- HELP ------------------------------------------------------------------
 help:
-  examples_header: "\x02 ■ Παραδείγματα:\x02"
+  examples_header: "Παραδείγματα:"
   syntax: "HELP [εντολή] [επιλογή]"
-  example: "%command_prefix%\x02\x0303HELP\x03\x0F"
+  example: "%command_prefix%HELP"
   examples:
-    - "%command_prefix%\x02\x0303HELP SET\x03\x0F"
-    - "%command_prefix%\x02\x0303HELP SET EMAIL\x03\x0F"
+    - "%command_prefix%HELP SET"
+    - "%command_prefix%HELP SET EMAIL"
   short: "Λίστα εντολών ή βοήθεια για μια εντολή."
   help: "Εμφανίζει τις διαθέσιμες εντολές και αναλυτική βοήθεια για τις επιλογές τους."
   header_title: "%bot%"
-  header: "\x02\x0307🤖 %title%\x03\x0F \x0314%separator%\x03\x0F"
+  header: "%title% %separator%"
   intro: |-
     Σας επιτρέπει να καταχωρείτε και να διαχειρίζεστε κανάλια, να ρυθμίζετε τις
     επιλογές τους και να ελέγχετε ποιος έχει πρόσβαση σε αυτά. Διαχειρίζεται τα
     επίπεδα πρόσβασης και τα προνόμια των χρηστών, ώστε το κανάλι να παραμένει υπό
     τον έλεγχο των υπευθύνων του.
-  general_header: "\x02 ■ Διαθέσιμες εντολές:\x02"
-  command_line: "    \x0310›\x03\x0F \x02\x0303%command%\x03\x0F%description%"
-  subcommand_line: "    \x0310›\x03\x0F \x02\x0303%command%\x03\x0F%description%"
-  options_header: "\x02 ■ Επιλογές:\x02"
-  general_footer: "\x0310ℹ\x03\x0F Χρησιμοποιήστε /msg %bot% \x02\x0303HELP <εντολή>\x03\x0F για περισσότερες πληροφορίες."
-  set_sub_footer: "\x0310ℹ\x03\x0F Χρησιμοποιήστε /msg %bot% \x02\x0303HELP %command% <επιλογή>\x03\x0F για περισσότερες πληροφορίες."
-  syntax_label: "Σύνταξη: \x02\x0303%syntax%\x03\x0F"
-  footer: "\x0314─────────────────────────────\x03\x0F"
-  intro_expiration: "\x0304⚠\x03\x0F ΣΗΜΕΙΩΣΗ: Τα κανάλια που δεν χρησιμοποιούνται για περισσότερες από \x1F\x0304%days% ημέρες\x03\x1F διαγράφονται αυτόματα."
-  group_header: "\x0310  ◆ %group%\x03\x0F"
-  subgroup_header: "\x0310  ◆ %group%\x03\x0F"
+  general_header: "Διαθέσιμες εντολές:"
+  command_line: "%command%%description%"
+  subcommand_line: "%command%%description%"
+  options_header: "Επιλογές:"
+  general_footer: "Χρησιμοποιήστε /msg %bot% %help% για περισσότερες πληροφορίες."
+  general_footer_command: "HELP <εντολή>"
+  set_sub_footer: "Χρησιμοποιήστε /msg %bot% %help% για περισσότερες πληροφορίες."
+  set_sub_footer_command: "HELP %command% <επιλογή>"
+  syntax_label: "Σύνταξη: %syntax%"
+  footer: ""
+  intro_expiration: "ΣΗΜΕΙΩΣΗ: Τα κανάλια που δεν χρησιμοποιούνται για περισσότερες από %period% διαγράφονται αυτόματα."
+  intro_expiration_period: "%days% ημέρες"
+  group_header: "%group%"
+  subgroup_header: "%group%"
   group:
     registration_info: "Εγγραφή και πληροφορίες"
     access_levels: "Πρόσβαση και επίπεδα"
@@ -179,310 +225,310 @@ help:
     restrictions: "Περιορισμοί"
     lookup: "Αναζήτηση και διερεύνηση"
     registration_approval: "Έγκριση εγγραφής"
-  ircop_header: "\x02 ■ Διαθέσιμες εντολές για IRC operators:\x02"
+  ircop_header: "Διαθέσιμες εντολές για IRC operators:"
 
 # --- OP --------------------------------------------------------------------
 op:
   syntax: "OP <#channel> <nickname>"
-  example: "%command_prefix%\x02\x0303OP #κανάλι Αλίκη\x03\x0F"
+  example: "%command_prefix%OP #κανάλι Αλίκη"
   short: "Δώστε κατάσταση operator καναλιού."
   help: "Δώστε κατάσταση operator καναλιού."
-  done: "\x0303✔\x03 Στο \x02%nickname%\x02 δόθηκε κατάσταση operator καναλιού."
-  user_not_on_channel: "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι στο δίκτυο."
-  notice_grant: "\x0303✔\x03 \x0302%from%\x03 δίνει \x0304%mode%\x03 σε \x0314%to%\x03"
+  done: "Στο %nickname% δόθηκε κατάσταση operator καναλιού."
+  user_not_on_channel: "Το ψευδώνυμο %nickname% δεν είναι στο δίκτυο."
+  notice_grant: "%from% δίνει %mode% σε %to%"
 
 # --- DEOP ------------------------------------------------------------------
 deop:
   syntax: "DEOP <#channel> <nickname>"
-  example: "%command_prefix%\x02\x0303DEOP #κανάλι Αλίκη\x03\x0F"
+  example: "%command_prefix%DEOP #κανάλι Αλίκη"
   short: "Αφαίρεση κατάστασης operator καναλιού."
   help: "Αφαίρεση κατάστασης operator καναλιού."
-  done: "\x0303✔\x03 Αφαιρέθηκε το op από τον/την \x02%nickname%\x02."
+  done: "Αφαιρέθηκε το op από τον/την %nickname%."
 
 # --- SECURE ----------------------------------------------------------------
 secure:
-  requires_min_level: "\x0304✗\x03 Με το SECURE ενεργό, ο/η \x02%nickname%\x02 πρέπει να έχει τουλάχιστον επίπεδο \x02%level%\x02 για να λάβει \x02%mode%\x02."
+  requires_min_level: "Με το SECURE ενεργό, ο/η %nickname% πρέπει να έχει τουλάχιστον επίπεδο %level% για να λάβει %mode%."
 
 # --- SET -------------------------------------------------------------------
 set:
   syntax: "SET <#channel> {FOUNDER <ψευδώνυμο> [token]|SUCCESSOR [nickname]|DESC <description>|URL [url]|EMAIL [email]|ENTRYMSG [message]|TOPICLOCK {ON|OFF}|MLOCK {ON|OFF}|PRIVATE {ON|OFF}|SECURE {ON|OFF}}"
-  example: "%command_prefix%\x02\x0303SET #κανάλι DESC Ένα κοινοτικό κανάλι\x03\x0F"
+  example: "%command_prefix%SET #κανάλι DESC Ένα κοινοτικό κανάλι"
   examples:
-    - "%command_prefix%\x02\x0303SET #κανάλι URL https://example.test\x03\x0F"
-    - "%command_prefix%\x02\x0303SET #κανάλι MLOCK ON\x03\x0F"
+    - "%command_prefix%SET #κανάλι URL https://example.test"
+    - "%command_prefix%SET #κανάλι MLOCK ON"
   short: "Αλλαγή επιλογών καναλιού."
   help: |-
     Αλλάζει μια επιλογή καναλιού. Η βοήθεια κάθε επιλογής εξηγεί τις απαιτήσεις και
     τις παραλλαγές της.
-  unknown_option: "\x0304✗\x03 Άγνωστη επιλογή \x02%option%\x02. Χρησιμοποιήστε μία από: %options%."
+  unknown_option: "Άγνωστη επιλογή %option%. Χρησιμοποιήστε μία από: %options%."
 
   # --- SET FOUNDER ---------------------------------------------------------
   founder:
     token_required: "Χρησιμοποίησε SET <#κανάλι> FOUNDER <ψευδώνυμο> <token> με το επιβεβαιωμένο διακριτικό του τρέχοντος ιδρυτή."
     token_unavailable: "Ο τρέχων ιδρυτής δεν έχει επιβεβαιωμένο διακριτικό διάσωσης. Πρέπει πρώτα να συνδεθεί και να χρησιμοποιήσει VERIFY."
     syntax: "SET <#κανάλι> FOUNDER <ψευδώνυμο> [token]"
-    example: "%command_prefix%\x02\x0303SET #κανάλι FOUNDER Αλίκη\x03\x0F"
+    example: "%command_prefix%SET #κανάλι FOUNDER Αλίκη"
     examples:
-      - "%command_prefix%\x02\x0303SET #κανάλι FOUNDER Αλίκη επιβεβαιωμένο-διακριτικό\x03\x0F"
+      - "%command_prefix%SET #κανάλι FOUNDER Αλίκη επιβεβαιωμένο-διακριτικό"
     short: "Μεταφορά καναλιού σε άλλο καταχωρημένο ψευδώνυμο."
     help: |-
       Αλλάζει τον ιδρυτή μετά την επικύρωση του διακριτικού του τρέχοντος ιδρυτή.
       Διατηρεί την υπάρχουσα διοικητική εξαίρεση επιπέδου ιδρυτή. Το διακριτικό δεν
       καταναλώνεται.
     invalid_token: "Το διακριτικό διάσωσης είναι άκυρο."
-    updated: "\x0303✔\x03 Ο ιδρυτής έχει αλλάξει σε \x02%nickname%\x02."
+    updated: "Ο ιδρυτής έχει αλλάξει σε %nickname%."
     throttled: "Πάρα πολλά λανθασμένα διακριτικά. Δοκίμασε ξανά σε %minutes% λεπτά."
-    must_be_registered: "\x0304✗\x03 Το \x02%nickname%\x02 πρέπει να είναι καταχωρημένο και ενεργοποιημένο."
-    suspended: "\x0304✗\x03 Το \x02%nickname%\x02 είναι σε αναστολή και δεν μπορεί να οριστεί ως ιδρυτής."
-    cannot_be_self: "\x0304✗\x03 Ο νέος ιδρυτής δεν μπορεί να είναι ο τρέχων ιδρυτής."
-    cannot_be_successor: "\x0304✗\x03 Ο νέος ιδρυτής δεν μπορεί να είναι ο διάδοχος του καναλιού."
-    limit_exceeded: "\x0304✗\x03 Το \x02%nickname%\x02 έχει φτάσει το μέγιστο όριο των %max% καταχωρημένων καναλιών."
-    notice_channel: "\x02%from%\x02 ορίζει τον/την \x02%nickname%\x02 ως ιδρυτή καναλιού."
+    must_be_registered: "Το %nickname% πρέπει να είναι καταχωρημένο και ενεργοποιημένο."
+    suspended: "Το %nickname% είναι σε αναστολή και δεν μπορεί να οριστεί ως ιδρυτής."
+    cannot_be_self: "Ο νέος ιδρυτής δεν μπορεί να είναι ο τρέχων ιδρυτής."
+    cannot_be_successor: "Ο νέος ιδρυτής δεν μπορεί να είναι ο διάδοχος του καναλιού."
+    limit_exceeded: "Το %nickname% έχει φτάσει το μέγιστο όριο των %max% καταχωρημένων καναλιών."
+    notice_channel: "%from% ορίζει τον/την %nickname% ως ιδρυτή καναλιού."
 
   # --- SET SUCCESSOR -------------------------------------------------------
   successor:
     syntax: "SET <#channel> SUCCESSOR [nickname]"
-    example: "%command_prefix%\x02\x0303SET #κανάλι SUCCESSOR Αλίκη\x03\x0F"
+    example: "%command_prefix%SET #κανάλι SUCCESSOR Αλίκη"
     examples:
-      - "%command_prefix%\x02\x0303SET #κανάλι SUCCESSOR\x03\x0F"
+      - "%command_prefix%SET #κανάλι SUCCESSOR"
     short: "Ορισμός διαδόχου καναλιού."
     help: |-
       Ορίζει ένα ψευδώνυμο ως διάδοχο καναλιού. Παραλείψτε το ψευδώνυμο για
       εκκαθάριση. Το ψευδώνυμο πρέπει να είναι καταχωρημένο και ενεργοποιημένο.
-    cleared: "\x0303✔\x03 Ο διάδοχος έχει εκκαθαριστεί."
-    updated: "\x0303✔\x03 Ο διάδοχος έχει οριστεί σε \x02%nickname%\x02."
-    must_be_registered: "\x0304✗\x03 Το \x02%nickname%\x02 πρέπει να είναι καταχωρημένο και ενεργοποιημένο."
-    suspended: "\x0304✗\x03 Το \x02%nickname%\x02 είναι σε αναστολή και δεν μπορεί να οριστεί ως διάδοχος."
-    cannot_be_founder: "\x0304✗\x03 Ο ιδρυτής δεν μπορεί να οριστεί ως διάδοχος."
-    notice_channel: "\x02%from%\x02 ορίζει τον/την \x02%nickname%\x02 ως διάδοχο καναλιού."
-    notice_channel_cleared: "\x02%from%\x02 έχει εκκαθαρίσει τον διάδοχο καναλιού."
+    cleared: "Ο διάδοχος έχει εκκαθαριστεί."
+    updated: "Ο διάδοχος έχει οριστεί σε %nickname%."
+    must_be_registered: "Το %nickname% πρέπει να είναι καταχωρημένο και ενεργοποιημένο."
+    suspended: "Το %nickname% είναι σε αναστολή και δεν μπορεί να οριστεί ως διάδοχος."
+    cannot_be_founder: "Ο ιδρυτής δεν μπορεί να οριστεί ως διάδοχος."
+    notice_channel: "%from% ορίζει τον/την %nickname% ως διάδοχο καναλιού."
+    notice_channel_cleared: "%from% έχει εκκαθαρίσει τον διάδοχο καναλιού."
 
   # --- SET DESC ------------------------------------------------------------
   desc:
     syntax: "SET <#channel> DESC <description>"
-    example: "%command_prefix%\x02\x0303SET #κανάλι DESC Ένα κοινοτικό κανάλι\x03\x0F"
+    example: "%command_prefix%SET #κανάλι DESC Ένα κοινοτικό κανάλι"
     short: "Αλλαγή περιγραφής καναλιού."
     help: "Αλλάξτε την περιγραφή του καναλιού (απαιτείται)."
-    updated: "\x0303✔\x03 Η περιγραφή ενημερώθηκε."
+    updated: "Η περιγραφή ενημερώθηκε."
 
   # --- SET URL -------------------------------------------------------------
   url:
     syntax: "SET <#channel> URL [url]"
-    example: "%command_prefix%\x02\x0303SET #κανάλι URL https://example.test\x03\x0F"
+    example: "%command_prefix%SET #κανάλι URL https://example.test"
     examples:
-      - "%command_prefix%\x02\x0303SET #κανάλι URL\x03\x0F"
+      - "%command_prefix%SET #κανάλι URL"
     short: "Ορισμός URL καναλιού."
     help: "Αλλάξτε την ιστοσελίδα (URL) του καναλιού. Παραλείψτε το url για εκκαθάριση."
-    updated: "\x0303✔\x03 Το URL ενημερώθηκε."
-    cleared: "\x0303✔\x03 Το URL εκκαθαρίστηκε."
+    updated: "Το URL ενημερώθηκε."
+    cleared: "Το URL εκκαθαρίστηκε."
 
   # --- SET EMAIL -----------------------------------------------------------
   email:
     syntax: "SET <#κανάλι> EMAIL [email]"
-    example: "%command_prefix%\x02\x0303SET #κανάλι EMAIL team@example.test\x03\x0F"
+    example: "%command_prefix%SET #κανάλι EMAIL team@example.test"
     examples:
-      - "%command_prefix%\x02\x0303SET #κανάλι EMAIL\x03\x0F"
+      - "%command_prefix%SET #κανάλι EMAIL"
     short: "Ορισμός email καναλιού."
     help: |-
       Αλλάζει τη διεύθυνση email του καναλιού. Παραλείψτε το email για
       διαγραφή. Δεν επιτρέπονται διοικητικά αποκλεισμένοι τομείς email.
       Διοικητική εξαίρεση: διαχειριστές με πρόσβαση επιπέδου ιδρυτή.
-    invalid: "\x0304✗\x03 Μη έγκυρη διεύθυνση email."
-    updated: "\x0303✔\x03 Το email ενημερώθηκε."
-    cleared: "\x0303✔\x03 Το email εκκαθαρίστηκε."
+    invalid: "Μη έγκυρη διεύθυνση email."
+    updated: "Το email ενημερώθηκε."
+    cleared: "Το email εκκαθαρίστηκε."
 
   # --- SET ENTRYMSG --------------------------------------------------------
   entrymsg:
     syntax: "SET <#κανάλι> ENTRYMSG [message]"
-    example: "%command_prefix%\x02\x0303SET #κανάλι ENTRYMSG Καλώς ορίσατε\x03\x0F"
+    example: "%command_prefix%SET #κανάλι ENTRYMSG Καλώς ορίσατε"
     examples:
-      - "%command_prefix%\x02\x0303SET #κανάλι ENTRYMSG\x03\x0F"
+      - "%command_prefix%SET #κανάλι ENTRYMSG"
     short: "Ορισμός μηνύματος εισόδου καναλιού."
     help: "Ορίζει το μήνυμα εισόδου (NOTICE). Παραλείψτε το μήνυμα για διαγραφή."
-    updated: "\x0303✔\x03 Το μήνυμα εισόδου ενημερώθηκε."
-    too_long: "\x0304✗\x03 Το μήνυμα εισόδου δεν μπορεί να υπερβαίνει τους %max% χαρακτήρες."
+    updated: "Το μήνυμα εισόδου ενημερώθηκε."
+    too_long: "Το μήνυμα εισόδου δεν μπορεί να υπερβαίνει τους %max% χαρακτήρες."
 
   # --- SET TOPICLOCK -------------------------------------------------------
   topiclock:
     syntax: "SET <#channel> TOPICLOCK {ON|OFF}"
-    example: "%command_prefix%\x02\x0303SET #κανάλι TOPICLOCK ON\x03\x0F"
+    example: "%command_prefix%SET #κανάλι TOPICLOCK ON"
     examples:
-      - "%command_prefix%\x02\x0303SET #κανάλι TOPICLOCK OFF\x03\x0F"
+      - "%command_prefix%SET #κανάλι TOPICLOCK OFF"
     short: "Κλείδωμα θέματος καναλιού."
     help: |-
       Αποτρέπει την αλλαγή του θέματος του καναλιού. Όταν είναι ON, το τρέχον θέμα
       αποθηκεύεται και κλειδώνεται.
-    on: "\x0303✔\x03 Το κλείδωμα θέματος είναι τώρα ON."
-    off: "\x0303✔\x03 Το κλείδωμα θέματος είναι τώρα OFF."
-    notice_on: "\x0303✔\x03 \x0302%nickname%\x03 ενεργοποιεί το TOPICLOCK."
-    notice_off: "\x0304✗\x03 \x0302%nickname%\x03 απενεργοποιεί το TOPICLOCK."
+    on: "Το κλείδωμα θέματος είναι τώρα ON."
+    off: "Το κλείδωμα θέματος είναι τώρα OFF."
+    notice_on: "%nickname% ενεργοποιεί το TOPICLOCK."
+    notice_off: "%nickname% απενεργοποιεί το TOPICLOCK."
 
   # --- SET MLOCK -----------------------------------------------------------
   mlock:
     syntax: "SET <#channel> MLOCK {ON|OFF}"
-    example: "%command_prefix%\x02\x0303SET #κανάλι MLOCK ON\x03\x0F"
+    example: "%command_prefix%SET #κανάλι MLOCK ON"
     examples:
-      - "%command_prefix%\x02\x0303SET #κανάλι MLOCK OFF\x03\x0F"
+      - "%command_prefix%SET #κανάλι MLOCK OFF"
     short: "Κλείδωμα λειτουργιών καναλιού."
     help: |-
       Κλειδώνει τις τρέχουσες λειτουργίες καναλιού (π.χ. +nt). Όταν είναι ON, οι
       λειτουργίες δεν μπορούν να αλλάξουν.
     no_modes: "καμία λειτουργία"
-    on: "\x0303✔\x03 Το MLOCK είναι τώρα ON (%modes%)."
-    off: "\x0303✔\x03 Το MLOCK είναι τώρα OFF."
-    notice_on: "\x0303✔\x03 \x0302%nickname%\x03 ενεργοποιεί το MLOCK (%modes%)."
-    notice_off: "\x0304✗\x03 \x0302%nickname%\x03 απενεργοποιεί το MLOCK."
+    on: "Το MLOCK είναι τώρα ON (%modes%)."
+    off: "Το MLOCK είναι τώρα OFF."
+    notice_on: "%nickname% ενεργοποιεί το MLOCK (%modes%)."
+    notice_off: "%nickname% απενεργοποιεί το MLOCK."
 
   # --- SET PRIVATE ---------------------------------------------------------
   private:
     syntax: "SET <#κανάλι> PRIVATE {ON|OFF}"
-    example: "%command_prefix%\x02\x0303SET #κανάλι PRIVATE ON\x03\x0F"
+    example: "%command_prefix%SET #κανάλι PRIVATE ON"
     examples:
-      - "%command_prefix%\x02\x0303SET #κανάλι PRIVATE OFF\x03\x0F"
+      - "%command_prefix%SET #κανάλι PRIVATE OFF"
     short: "Απόκρυψη πληροφοριών καναλιού."
     help: |-
       Όταν είναι ON, μόνο ο ιδρυτής και οι χρήστες με πρόσβαση μπορούν να δουν τις
       πληροφορίες του καναλιού.
-    on: "\x0303✔\x03 Οι πληροφορίες του καναλιού είναι πλέον ιδιωτικές."
-    off: "\x0303✔\x03 Οι πληροφορίες του καναλιού είναι πλέον δημόσιες."
+    on: "Οι πληροφορίες του καναλιού είναι πλέον ιδιωτικές."
+    off: "Οι πληροφορίες του καναλιού είναι πλέον δημόσιες."
 
   # --- SET SECURE ----------------------------------------------------------
   secure:
     syntax: "SET <#channel> SECURE {ON|OFF}"
-    example: "%command_prefix%\x02\x0303SET #κανάλι SECURE ON\x03\x0F"
+    example: "%command_prefix%SET #κανάλι SECURE ON"
     examples:
-      - "%command_prefix%\x02\x0303SET #κανάλι SECURE OFF\x03\x0F"
+      - "%command_prefix%SET #κανάλι SECURE OFF"
     short: "Απαίτηση λίστας πρόσβασης για βαθμίδες καναλιού."
     help: |-
       Όταν είναι ON, μόνο χρήστες στη λίστα πρόσβασης μπορούν να λάβουν βαθμίδες
       καναλιού (OP, VOICE, κλπ.).
-    on: "\x0303✔\x03 Το SECURE είναι τώρα ON."
-    off: "\x0303✔\x03 Το SECURE είναι τώρα OFF."
-    notice_on: "\x0303✔\x03 \x0302%nickname%\x03 ενεργοποιεί τη λειτουργία SECURE."
-    notice_off: "\x0304✗\x03 \x0302%nickname%\x03 απενεργοποιεί τη λειτουργία SECURE."
+    on: "Το SECURE είναι τώρα ON."
+    off: "Το SECURE είναι τώρα OFF."
+    notice_on: "%nickname% ενεργοποιεί τη λειτουργία SECURE."
+    notice_off: "%nickname% απενεργοποιεί τη λειτουργία SECURE."
 
 # --- ACCESS ----------------------------------------------------------------
 access:
   syntax: "ACCESS <#channel> {ADD <nickname> <level>|DEL <nickname>|LIST}"
-  example: "%command_prefix%\x02\x0303ACCESS #κανάλι LIST\x03\x0F"
+  example: "%command_prefix%ACCESS #κανάλι LIST"
   examples:
-    - "%command_prefix%\x02\x0303ACCESS #κανάλι ADD Αλίκη 100\x03\x0F"
-    - "%command_prefix%\x02\x0303ACCESS #κανάλι DEL Αλίκη\x03\x0F"
+    - "%command_prefix%ACCESS #κανάλι ADD Αλίκη 100"
+    - "%command_prefix%ACCESS #κανάλι DEL Αλίκη"
   short: "Διαχείριση λίστας πρόσβασης."
   help: "Διαχειρίζεται τη λίστα πρόσβασης του καναλιού."
-  unknown_sub: "\x0304✗\x03 Άγνωστη υπο-εντολή \x02%sub%\x02. Χρησιμοποιήστε LIST, ADD, ή DEL."
-  level_range: "\x0304✗\x03 Το επίπεδο πρόσβασης πρέπει να είναι μεταξύ %min% και %max%."
-  cannot_manage_level: "\x0304✗\x03 Μπορείτε να διαχειριστείτε μόνο ψευδώνυμα με επίπεδο αυστηρά χαμηλότερο από το δικό σας."
-  founder_not_in_list: "\x0304✗\x03 Ο ιδρυτής δεν είναι στη λίστα πρόσβασης."
-  max_entries: "\x0304✗\x03 Μέγιστο %max% καταχωρήσεις πρόσβασης ανά κανάλι."
+  unknown_sub: "Άγνωστη υπο-εντολή %sub%. Χρησιμοποιήστε LIST, ADD, ή DEL."
+  level_range: "Το επίπεδο πρόσβασης πρέπει να είναι μεταξύ %min% και %max%."
+  cannot_manage_level: "Μπορείτε να διαχειριστείτε μόνο ψευδώνυμα με επίπεδο αυστηρά χαμηλότερο από το δικό σας."
+  founder_not_in_list: "Ο ιδρυτής δεν είναι στη λίστα πρόσβασης."
+  max_entries: "Μέγιστο %max% καταχωρήσεις πρόσβασης ανά κανάλι."
 
   # --- ACCESS LIST ---------------------------------------------------------
   list:
     syntax: "ACCESS <#channel> LIST"
-    example: "%command_prefix%\x02\x0303ACCESS #κανάλι LIST\x03\x0F"
+    example: "%command_prefix%ACCESS #κανάλι LIST"
     short: "Λίστα πρόσβασης (απαιτεί επίπεδο ACCESSLIST)."
     help: "Εμφανίζει ψευδώνυμο και επίπεδο για κάθε καταχώρηση."
-    header: "\x0303Λίστα πρόσβασης για \x02%channel%\x02\x03"
-    empty: "\x0307ℹ\x03 Το κανάλι \x02%channel%\x02 δεν έχει καταχωρήσεις πρόσβασης."
-    entry: "  #%index%: %nickname% (επίπεδο %level%)"
+    header: "Λίστα πρόσβασης για %channel%"
+    empty: "Το κανάλι %channel% δεν έχει καταχωρήσεις πρόσβασης."
+    entry: "#%index%: %nickname% (επίπεδο %level%)"
 
   # --- ACCESS ADD ----------------------------------------------------------
   add:
     syntax: "ACCESS <#channel> ADD <nickname> <level>"
-    example: "%command_prefix%\x02\x0303ACCESS #κανάλι ADD Αλίκη 100\x03\x0F"
+    example: "%command_prefix%ACCESS #κανάλι ADD Αλίκη 100"
     short: "Προσθήκη ή ενημέρωση επιπέδου πρόσβασης (απαιτεί επίπεδο ACCESSCHANGE)."
     help: "Επίπεδο 1-499. Μπορείτε να ορίσετε μόνο επίπεδα χαμηλότερα από το δικό σας."
-    done: "\x0303✔\x03 \x02%nickname%\x02 ορίστηκε σε επίπεδο %level%."
-    notice_channel: "\x0303✔\x03 \x0302%from%\x03 ορίζει τον/την \x0314%to%\x03 σε επίπεδο \x0304%level%\x03"
+    done: "%nickname% ορίστηκε σε επίπεδο %level%."
+    notice_channel: "%from% ορίζει τον/την %to% σε επίπεδο %level%"
 
   # --- ACCESS DEL ----------------------------------------------------------
   del:
     syntax: "ACCESS <#channel> DEL <nickname>"
-    example: "%command_prefix%\x02\x0303ACCESS #κανάλι DEL Αλίκη\x03\x0F"
+    example: "%command_prefix%ACCESS #κανάλι DEL Αλίκη"
     short: "Αφαίρεση από τη λίστα πρόσβασης (απαιτεί επίπεδο ACCESSCHANGE)."
     help: "Μπορείτε να αφαιρέσετε μόνο ψευδώνυμα με επίπεδο χαμηλότερο από το δικό σας."
-    not_in_list: "\x0304✗\x03 Το \x02%nickname%\x02 δεν είναι στη λίστα πρόσβασης."
-    done: "\x0303✔\x03 Το \x02%nickname%\x02 αφαιρέθηκε από τη λίστα πρόσβασης."
-    notice_channel: "\x0304✗\x03 \x0302%from%\x03 αφαιρεί τον/την \x0314%to%\x03 από τη λίστα πρόσβασης"
+    not_in_list: "Το %nickname% δεν είναι στη λίστα πρόσβασης."
+    done: "Το %nickname% αφαιρέθηκε από τη λίστα πρόσβασης."
+    notice_channel: "%from% αφαιρεί τον/την %to% από τη λίστα πρόσβασης"
 
 # --- DELACCESS -------------------------------------------------------------
 delaccess:
   syntax: "DELACCESS <#channel>"
-  example: "%command_prefix%\x02\x0303DELACCESS #κανάλι\x03\x0F"
+  example: "%command_prefix%DELACCESS #κανάλι"
   short: "Αφαίρεση της δικής σας πρόσβασης από ένα κανάλι."
   help: |-
     Αφαιρεί την καταχώρηση πρόσβασής σας από τη λίστα πρόσβασης του καναλιού. Πρέπει
     να είστε ταυτοποιημένοι. Ο ιδρυτής δεν μπορεί να χρησιμοποιήσει αυτήν την
     εντολή.
-  done: "\x0303✔\x03 Η πρόσβασή σας έχει αφαιρεθεί από το \x02%channel%\x02."
-  not_in_list: "\x0304✗\x03 Δεν έχετε πρόσβαση στο \x02%channel%\x02."
-  founder_not_in_access: "\x0304✗\x03 Είστε ο ιδρυτής του \x02%channel%\x02 και δεν είστε στη λίστα πρόσβασης."
-  notice_channel: "\x0304✗\x03 \x0302%nickname%\x03 αφαιρεί την πρόσβασή του/της από το κανάλι"
+  done: "Η πρόσβασή σας έχει αφαιρεθεί από το %channel%."
+  not_in_list: "Δεν έχετε πρόσβαση στο %channel%."
+  founder_not_in_access: "Είστε ο ιδρυτής του %channel% και δεν είστε στη λίστα πρόσβασης."
+  notice_channel: "%nickname% αφαιρεί την πρόσβασή του/της από το κανάλι"
 
 # --- LEVELS ----------------------------------------------------------------
 levels:
   syntax: "LEVELS <#channel> {LIST|SET <level> <value>|RESET}"
-  example: "%command_prefix%\x02\x0303LEVELS #κανάλι LIST\x03\x0F"
+  example: "%command_prefix%LEVELS #κανάλι LIST"
   examples:
-    - "%command_prefix%\x02\x0303LEVELS #κανάλι SET OPDEOP 50\x03\x0F"
-    - "%command_prefix%\x02\x0303LEVELS #κανάλι RESET\x03\x0F"
+    - "%command_prefix%LEVELS #κανάλι SET OPDEOP 50"
+    - "%command_prefix%LEVELS #κανάλι RESET"
   short: "Διαμόρφωση επιπέδων καναλιού."
   help: |-
     LIST: εμφάνιση απαιτήσεων επιπέδου (OPDEOP, VOICEDEVOICE, κλπ.). SET: ορισμός
     ελάχιστου επιπέδου για μια ενέργεια (-1 έως 499). RESET: επαναφορά προεπιλογών.
     Μόνο ο ιδρυτής για SET/RESET.
-  unknown_sub: "\x0304✗\x03 Άγνωστη υπο-εντολή \x02%sub%\x02. Χρησιμοποιήστε LIST, SET, ή RESET."
-  unknown_key: "\x0304✗\x03 Άγνωστο κλειδί επιπέδου \x02%key%\x02 ή δεν υποστηρίζεται από αυτό το IRCd."
-  value_range: "\x0304✗\x03 Η τιμή επιπέδου πρέπει να είναι μεταξύ %min% και %max%."
+  unknown_sub: "Άγνωστη υπο-εντολή %sub%. Χρησιμοποιήστε LIST, SET, ή RESET."
+  unknown_key: "Άγνωστο κλειδί επιπέδου %key% ή δεν υποστηρίζεται από αυτό το IRCd."
+  value_range: "Η τιμή επιπέδου πρέπει να είναι μεταξύ %min% και %max%."
 
   # --- LEVELS LIST ---------------------------------------------------------
   list:
     syntax: "LEVELS <#channel> LIST"
-    example: "%command_prefix%\x02\x0303LEVELS #κανάλι LIST\x03\x0F"
+    example: "%command_prefix%LEVELS #κανάλι LIST"
     short: "Λίστα απαιτήσεων επιπέδου."
     help: |-
       Εμφανίζει κάθε κλειδί επιπέδου και την τιμή του (προεπιλογές αν δεν έχει
       οριστεί).
-    header: "\x0303Επίπεδα για το %channel%\x03"
+    header: "Επίπεδα για το %channel%"
 
   # --- LEVELS SET ----------------------------------------------------------
   set:
     syntax: "LEVELS <#channel> SET <level> <value>"
-    example: "%command_prefix%\x02\x0303LEVELS #κανάλι SET OPDEOP 50\x03\x0F"
+    example: "%command_prefix%LEVELS #κανάλι SET OPDEOP 50"
     short: "Ορισμός απαίτησης επιπέδου."
     help: "Τιμή -1 έως 499. Μόνο ο ιδρυτής."
-    done: "\x0303✔\x03 \x02%key%\x02 ορίστηκε σε %value%."
+    done: "%key% ορίστηκε σε %value%."
 
   # --- LEVELS RESET --------------------------------------------------------
   reset:
     syntax: "LEVELS <#channel> RESET"
-    example: "%command_prefix%\x02\x0303LEVELS #κανάλι RESET\x03\x0F"
+    example: "%command_prefix%LEVELS #κανάλι RESET"
     short: "Επαναφορά όλων των επιπέδων στις προεπιλογές."
     help: "Αφαιρεί όλες τις παρακάμψεις. Μόνο ο ιδρυτής."
-    done: "\x0303✔\x03 Όλα τα επίπεδα επαναφέρθηκαν στις προεπιλογές."
+    done: "Όλα τα επίπεδα επαναφέρθηκαν στις προεπιλογές."
 
 # --- VOICE -----------------------------------------------------------------
 voice:
   syntax: "VOICE <#channel> <nickname>"
-  example: "%command_prefix%\x02\x0303VOICE #κανάλι Αλίκη\x03\x0F"
+  example: "%command_prefix%VOICE #κανάλι Αλίκη"
   short: "Δώστε λειτουργία voice στο κανάλι."
   help: "Δώστε λειτουργία voice στο κανάλι."
-  done: "\x0303✔\x03 Στο \x02%nickname%\x02 δόθηκε voice."
-  user_not_on_channel: "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι στο δίκτυο."
-  notice_grant: "\x0303✔\x03 \x0302%from%\x03 δίνει \x0304%mode%\x03 σε \x0314%to%\x03"
+  done: "Στο %nickname% δόθηκε voice."
+  user_not_on_channel: "Το ψευδώνυμο %nickname% δεν είναι στο δίκτυο."
+  notice_grant: "%from% δίνει %mode% σε %to%"
 
 # --- DEVOICE ---------------------------------------------------------------
 devoice:
   syntax: "DEVOICE <#channel> <nickname>"
-  example: "%command_prefix%\x02\x0303DEVOICE #κανάλι Αλίκη\x03\x0F"
+  example: "%command_prefix%DEVOICE #κανάλι Αλίκη"
   short: "Αφαίρεση λειτουργίας voice στο κανάλι."
   help: "Αφαίρεση λειτουργίας voice στο κανάλι."
-  done: "\x0303✔\x03 Αφαιρέθηκε το voice από τον/την \x02%nickname%\x02."
+  done: "Αφαιρέθηκε το voice από τον/την %nickname%."
 
 # --- UNBAN -----------------------------------------------------------------
 unban:
   syntax: "UNBAN <#channel>"
-  example: "%command_prefix%\x02\x0303UNBAN #channel\x03\x0F"
+  example: "%command_prefix%UNBAN #channel"
   short: "Αφαίρεση αποκλεισμών που σε επηρεάζουν."
   help: |-
     Αφαιρεί όλους τους απλούς αποκλεισμούς του καναλιού που αντιστοιχούν στην τρέχουσα ταυτότητά σου, μαζί με μπαλαντέρ και μάσκες IP/CIDR, σύμφωνα με το IRCd.
@@ -496,145 +542,145 @@ unban:
 # --- INVITE ----------------------------------------------------------------
 invite:
   syntax: "INVITE <#channel>"
-  example: "%command_prefix%\x02\x0303INVITE #κανάλι\x03\x0F"
+  example: "%command_prefix%INVITE #κανάλι"
   short: "Προσκαλέστε τον εαυτό σας στο κανάλι."
   help: "Προσκαλέστε τον εαυτό σας στο κανάλι."
-  done: "\x0303✔\x03 Έχετε προσκληθεί στο \x02%channel%\x02."
-  notice_channel: "\x0303✔\x03 \x0302%nickname%\x03 προσκαλεί τον εαυτό του/της στο κανάλι."
+  done: "Έχετε προσκληθεί στο %channel%."
+  notice_channel: "%nickname% προσκαλεί τον εαυτό του/της στο κανάλι."
 
 # --- ADMIN -----------------------------------------------------------------
 admin:
   syntax: "ADMIN <#channel> <nickname>"
-  example: "%command_prefix%\x02\x0303ADMIN #κανάλι Αλίκη\x03\x0F"
+  example: "%command_prefix%ADMIN #κανάλι Αλίκη"
   short: "Δώστε λειτουργία admin καναλιού."
   help: "Δώστε λειτουργία admin καναλιού. Μόνο αν το IRCd υποστηρίζει +a."
-  done: "\x0303✔\x03 Στο \x02%nickname%\x02 δόθηκε admin καναλιού."
-  user_not_on_channel: "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι στο δίκτυο."
-  notice_grant: "\x0303✔\x03 \x0302%from%\x03 δίνει \x0304%mode%\x03 σε \x0314%to%\x03"
-  not_supported: "\x0304✗\x03 Αυτό το δίκτυο δεν υποστηρίζει τη λειτουργία admin καναλιού (+a)."
+  done: "Στο %nickname% δόθηκε admin καναλιού."
+  user_not_on_channel: "Το ψευδώνυμο %nickname% δεν είναι στο δίκτυο."
+  notice_grant: "%from% δίνει %mode% σε %to%"
+  not_supported: "Αυτό το δίκτυο δεν υποστηρίζει τη λειτουργία admin καναλιού (+a)."
 
 # --- DEADMIN ---------------------------------------------------------------
 deadmin:
   syntax: "DEADMIN <#channel> <nickname>"
-  example: "%command_prefix%\x02\x0303DEADMIN #κανάλι Αλίκη\x03\x0F"
+  example: "%command_prefix%DEADMIN #κανάλι Αλίκη"
   short: "Αφαίρεση λειτουργίας admin καναλιού."
   help: "Αφαίρεση λειτουργίας admin καναλιού."
-  done: "\x0303✔\x03 Αφαιρέθηκε το admin από τον/την \x02%nickname%\x02."
+  done: "Αφαιρέθηκε το admin από τον/την %nickname%."
 
 # --- HALFOP ----------------------------------------------------------------
 halfop:
   syntax: "HALFOP <#channel> <nickname>"
-  example: "%command_prefix%\x02\x0303HALFOP #κανάλι Αλίκη\x03\x0F"
+  example: "%command_prefix%HALFOP #κανάλι Αλίκη"
   short: "Δώστε λειτουργία semi-operator στο κανάλι."
   help: "Δώστε λειτουργία semi-operator στο κανάλι. Μόνο αν το IRCd υποστηρίζει +h."
-  done: "\x0303✔\x03 Στο \x02%nickname%\x02 δόθηκε halfop."
-  user_not_on_channel: "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι στο δίκτυο."
-  notice_grant: "\x0303✔\x03 \x0302%from%\x03 δίνει \x0304%mode%\x03 σε \x0314%to%\x03"
-  not_supported: "\x0304✗\x03 Αυτό το δίκτυο δεν υποστηρίζει τη λειτουργία halfop (+h)."
+  done: "Στο %nickname% δόθηκε halfop."
+  user_not_on_channel: "Το ψευδώνυμο %nickname% δεν είναι στο δίκτυο."
+  notice_grant: "%from% δίνει %mode% σε %to%"
+  not_supported: "Αυτό το δίκτυο δεν υποστηρίζει τη λειτουργία halfop (+h)."
 
 # --- DEHALFOP --------------------------------------------------------------
 dehalfop:
   syntax: "DEHALFOP <#channel> <nickname>"
-  example: "%command_prefix%\x02\x0303DEHALFOP #κανάλι Αλίκη\x03\x0F"
+  example: "%command_prefix%DEHALFOP #κανάλι Αλίκη"
   short: "Αφαίρεση λειτουργίας semi-operator στο κανάλι."
   help: "Αφαίρεση λειτουργίας semi-operator στο κανάλι."
-  done: "\x0303✔\x03 Αφαιρέθηκε το halfop από τον/την \x02%nickname%\x02."
+  done: "Αφαιρέθηκε το halfop από τον/την %nickname%."
 
 # --- AKICK -----------------------------------------------------------------
 akick:
   syntax: "AKICK <#channel> {ADD <mask> [expiry] [αιτιολογία]|DEL {<mask>|<number>}|LIST}"
-  example: "%command_prefix%\x02\x0303AKICK #κανάλι ADD *!*@* 0\x03\x0F"
+  example: "%command_prefix%AKICK #κανάλι ADD *!*@* 0"
   examples:
-    - "%command_prefix%\x02\x0303AKICK #κανάλι ADD *!*@* 7d Spam\x03\x0F"
-    - "%command_prefix%\x02\x0303AKICK #κανάλι DEL *!*@*\x03\x0F"
-    - "%command_prefix%\x02\x0303AKICK #κανάλι DEL 2\x03\x0F"
-    - "%command_prefix%\x02\x0303AKICK #κανάλι LIST\x03\x0F"
+    - "%command_prefix%AKICK #κανάλι ADD *!*@* 7d Spam"
+    - "%command_prefix%AKICK #κανάλι DEL *!*@*"
+    - "%command_prefix%AKICK #κανάλι DEL 2"
+    - "%command_prefix%AKICK #κανάλι LIST"
   short: "Διαχείριση λίστας auto-kick."
   help: |-
     ADD <μάσκα> [expiry] [αιτιολογία]: προσθήκη καταχώρησης.
     DEL <mask|num>: αφαίρεση.
     LIST: λίστα καταχωρήσεων.
-  unknown_sub: "\x0304✗\x03 Άγνωστη υπο-εντολή \x02%sub%\x02. Χρησιμοποιήστε ADD, DEL ή LIST."
-  invalid_mask: "\x0304✗\x03 Μη έγκυρη μορφή μάσκας. Χρησιμοποιήστε \x02nick!ident@host\x02 με χαρακτήρες wildcard (*)."
-  dangerous_mask: "\x0304✗\x03 Η μάσκα \x02%mask%\x02 είναι πολύ ευρεία. Πρέπει να περιέχει τουλάχιστον 4 αλφαριθμητικούς χαρακτήρες."
-  protected_user: "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 έχει πρόσβαση σε αυτό το κανάλι."
-  max_entries: "\x0304✗\x03 Μέγιστο %max% καταχωρήσεις AKICK ανά κανάλι."
+  unknown_sub: "Άγνωστη υπο-εντολή %sub%. Χρησιμοποιήστε ADD, DEL ή LIST."
+  invalid_mask: "Μη έγκυρη μορφή μάσκας. Χρησιμοποιήστε nick!ident@host με χαρακτήρες wildcard (*)."
+  dangerous_mask: "Η μάσκα %mask% είναι πολύ ευρεία. Πρέπει να περιέχει τουλάχιστον 4 αλφαριθμητικούς χαρακτήρες."
+  protected_user: "Το ψευδώνυμο %nickname% έχει πρόσβαση σε αυτό το κανάλι."
+  max_entries: "Μέγιστο %max% καταχωρήσεις AKICK ανά κανάλι."
 
   # --- AKICK ADD -----------------------------------------------------------
   add:
     syntax: "AKICK <#channel> ADD <mask> [expiry] [αιτιολογία]"
-    example: "%command_prefix%\x02\x0303AKICK #κανάλι ADD *!*@* 0\x03\x0F"
+    example: "%command_prefix%AKICK #κανάλι ADD *!*@* 0"
     examples:
-      - "%command_prefix%\x02\x0303AKICK #κανάλι ADD *!*@* 7d Spam\x03\x0F"
+      - "%command_prefix%AKICK #κανάλι ADD *!*@* 7d Spam"
     short: "Προσθήκη καταχώρησης AKICK."
     help: |-
       Απαιτείται λήξη αν καθορίζεται αιτιολογία.
       Μορφές: 0 (μόνιμο), 1d, 7d, 30d, 12h, 60m.
       Παραδείγματα: 'AKICK #c ADD *!*@* 0', 'AKICK #c ADD *!*@* 7d Spam'.
-    done: "\x0303✔\x03 Το AKICK \x02%mask%\x02 προστέθηκε."
-    already_exists: "\x0304✗\x03 Το AKICK \x02%mask%\x02 υπάρχει ήδη."
-    notice_channel: "\x02%from%\x02 προσθέτει AKICK: \x02%mask%\x02 (%reason%)"
+    done: "Το AKICK %mask% προστέθηκε."
+    already_exists: "Το AKICK %mask% υπάρχει ήδη."
+    notice_channel: "%from% προσθέτει AKICK: %mask% (%reason%)"
 
   # --- AKICK DEL -----------------------------------------------------------
   del:
     syntax: "AKICK <#channel> DEL {<mask>|<number>}"
-    example: "%command_prefix%\x02\x0303AKICK #κανάλι DEL *!*@*\x03\x0F"
+    example: "%command_prefix%AKICK #κανάλι DEL *!*@*"
     examples:
-      - "%command_prefix%\x02\x0303AKICK #κανάλι DEL 2\x03\x0F"
+      - "%command_prefix%AKICK #κανάλι DEL 2"
     short: "Αφαίρεση καταχώρησης AKICK."
     help: "Αφαίρεση με ακριβή μάσκα ή αριθμό καταχώρησης από το LIST."
-    not_found: "\x0304✗\x03 Το AKICK \x02%mask%\x02 δεν βρέθηκε."
-    done: "\x0303✔\x03 Το AKICK \x02%mask%\x02 αφαιρέθηκε."
-    notice_channel: "\x02%from%\x02 αφαιρεί AKICK: \x02%mask%\x02"
+    not_found: "Το AKICK %mask% δεν βρέθηκε."
+    done: "Το AKICK %mask% αφαιρέθηκε."
+    notice_channel: "%from% αφαιρεί AKICK: %mask%"
 
   # --- AKICK LIST ----------------------------------------------------------
   list:
     syntax: "AKICK <#channel> LIST"
-    example: "%command_prefix%\x02\x0303AKICK #κανάλι LIST\x03\x0F"
+    example: "%command_prefix%AKICK #κανάλι LIST"
     short: "Λίστα καταχωρήσεων AKICK."
     help: "Εμφανίζει μάσκα, αιτιολογία, λήξη και ποιος πρόσθεσε."
-    header: "\x0303Λίστα AKICK για \x02%channel%\x02\x03"
-    empty: "\x0307ℹ\x03 Το κανάλι \x02%channel%\x02 δεν έχει καταχωρήσεις AKICK."
-    entry: "  #%index% %mask% %reason% (από %nickname%, λήγει: %expiration%)"
+    header: "Λίστα AKICK για %channel%"
+    empty: "Το κανάλι %channel% δεν έχει καταχωρήσεις AKICK."
+    entry: "#%index% %mask% %reason% (από %nickname%, λήγει: %expiration%)"
 
 # --- RESTORE ---------------------------------------------------------------
 restore:
   syntax: "RESTORE <#channel>"
-  example: "%command_prefix%\x02\x0303RESTORE #κανάλι\x03\x0F"
+  example: "%command_prefix%RESTORE #κανάλι"
   short: "Επαναφορά καναλιού σε αναμονή διαγραφής."
   help: |-
     Επαναφέρει ένα κανάλι που διαγράφηκε χειροκίνητα και βρίσκεται ακόμα εντός της
     περιόδου χάριτος. Απαιτεί άδεια IRCop: chanserv.restore.
-  success: "\x0303✔\x03 Το κανάλι \x02%channel%\x02 έχει επαναφερθεί."
-  not_pending_deletion: "\x0304✗\x03 Το κανάλι \x02%channel%\x02 δεν είναι σε αναμονή διαγραφής."
+  success: "Το κανάλι %channel% έχει επαναφερθεί."
+  not_pending_deletion: "Το κανάλι %channel% δεν είναι σε αναμονή διαγραφής."
 
 # --- DROP ------------------------------------------------------------------
 drop:
   syntax: "DROP <#channel> [FORCE]"
-  example: "%command_prefix%\x02\x0303DROP #κανάλι\x03\x0F"
+  example: "%command_prefix%DROP #κανάλι"
   examples:
-    - "%command_prefix%\x02\x0303DROP #κανάλι FORCE\x03\x0F"
+    - "%command_prefix%DROP #κανάλι FORCE"
   short: "Διαγραφή καταχωρημένου καναλιού."
   help: |-
     Διαγράφει ένα εγγεγραμμένο κανάλι από τη βάση δεδομένων.
     Το FORCE διαγράφει οριστικά ένα κανάλι που εκκρεμεί προς διαγραφή.
     Ένας IRCop με άδεια DROP μπορεί επίσης να αποδεσμεύσει άμεσα
     εκκρεμείς και απορριφθείσες αιτήσεις εγγραφής, με ή χωρίς FORCE.
-  registration_restricted: "\x0304✗\x03 Αυτό το αίτημα εγγραφής αποκλείεται έως %date%."
+  registration_restricted: "Αυτό το αίτημα εγγραφής αποκλείεται έως %date%."
   force:
     short: "Διαγράφει οριστικά ένα κανάλι που εκκρεμεί προς διαγραφή."
-  success: "\x0303✔\x03 Το κανάλι \x02%channel%\x02 έχει επισημανθεί για διαγραφή και μπορεί να αποκατασταθεί κατά την περίοδο χάριτος."
-  force_success: "\x0303✔\x03 Το κανάλι \x02%channel%\x02 έχει διαγραφεί οριστικά."
-  pending_deletion: "\x0304✗\x03 Το κανάλι \x02%channel%\x02 είναι ήδη σε αναμονή διαγραφής. Χρησιμοποιήστε DROP <#channel> FORCE για οριστική διαγραφή."
-  invalid_channel: "\x0304✗\x03 Μη έγκυρο όνομα καναλιού. Χρησιμοποιήστε \x02#channel\x02."
+  success: "Το κανάλι %channel% έχει επισημανθεί για διαγραφή και μπορεί να αποκατασταθεί κατά την περίοδο χάριτος."
+  force_success: "Το κανάλι %channel% έχει διαγραφεί οριστικά."
+  pending_deletion: "Το κανάλι %channel% είναι ήδη σε αναμονή διαγραφής. Χρησιμοποιήστε DROP <#channel> FORCE για οριστική διαγραφή."
+  invalid_channel: "Μη έγκυρο όνομα καναλιού. Χρησιμοποιήστε %example%."
   pending_deletion_reason: "Το κανάλι %channel% βρίσκεται σε διαδικασία διαγραφής. Περισσότερες πληροφορίες /msg %bot% \x0303INFO %channel%\x03"
 
 # --- SUSPEND ---------------------------------------------------------------
 suspend:
   syntax: "SUSPEND <#channel> <duration> <αιτιολογία>"
-  example: "%command_prefix%\x02\x0303SUSPEND #κανάλι 7d Παραβίαση κανόνων\x03\x0F"
+  example: "%command_prefix%SUSPEND #κανάλι 7d Παραβίαση κανόνων"
   examples:
-    - "%command_prefix%\x02\x0303SUSPEND #κανάλι 0 Παραβίαση κανόνων\x03\x0F"
+    - "%command_prefix%SUSPEND #κανάλι 0 Παραβίαση κανόνων"
   short: "Αναστολή καναλιού."
   help: |-
     Απενεργοποιεί προσωρινά ένα καταχωρημένο κανάλι. Μορφές διάρκειας: 0 = μόνιμη,
@@ -642,23 +688,23 @@ suspend:
     Όσο είναι σε αναστολή, οι λειτουργίες καναλιού, η πρόσβαση και η επιβολή είναι
     απενεργοποιημένες.
     Αυτή η εντολή απαιτεί άδεια IRCop: chanserv.suspend
-  success: "\x0303✔\x03 Το κανάλι \x02%channel%\x02 έχει τεθεί σε αναστολή μέχρι \x02%duration%\x02."
-  already_suspended: "\x0304✗\x03 Το κανάλι \x02%channel%\x02 είναι ήδη σε αναστολή."
-  invalid_duration: "\x0304✗\x03 Μη έγκυρη διάρκεια. Χρησιμοποιήστε: 0 (μόνιμη), 1d, 12h, ή 60m."
-  channel_suspended: "\x0304✗\x03 Το κανάλι \x02%channel%\x02 είναι σε αναστολή και δεν μπορεί να χρησιμοποιηθεί."
-  notice_channel: "\x0304⚠\x03 Το κανάλι έχει τεθεί σε αναστολή. Αιτιολογία: %reason%"
+  success: "Το κανάλι %channel% έχει τεθεί σε αναστολή μέχρι %duration%."
+  already_suspended: "Το κανάλι %channel% είναι ήδη σε αναστολή."
+  invalid_duration: "Μη έγκυρη διάρκεια. Χρησιμοποιήστε: 0 (μόνιμη), 1d, 12h, ή 60m."
+  channel_suspended: "Το κανάλι %channel% είναι σε αναστολή και δεν μπορεί να χρησιμοποιηθεί."
+  notice_channel: "Το κανάλι έχει τεθεί σε αναστολή. Αιτιολογία: %reason%"
 
 # --- UNSUSPEND -------------------------------------------------------------
 unsuspend:
   syntax: "UNSUSPEND <#channel>"
-  example: "%command_prefix%\x02\x0303UNSUSPEND #κανάλι\x03\x0F"
+  example: "%command_prefix%UNSUSPEND #κανάλι"
   short: "Άρση αναστολής καναλιού."
   help: |-
     Επανενεργοποιεί ένα κανάλι σε αναστολή, αποκαθιστώντας τις λειτουργίες και την
     επιβολή του.
     Αυτή η εντολή απαιτεί άδεια IRCop: chanserv.suspend
-  success: "\x0303✔\x03 Το κανάλι \x02%channel%\x02 δεν είναι πλέον σε αναστολή."
-  not_suspended: "\x0304✗\x03 Το κανάλι \x02%channel%\x02 δεν είναι σε αναστολή."
+  success: "Το κανάλι %channel% δεν είναι πλέον σε αναστολή."
+  not_suspended: "Το κανάλι %channel% δεν είναι σε αναστολή."
   reason_expired: "έληξε η αναστολή"
 
 # --- NOJOIN ----------------------------------------------------------------
@@ -672,9 +718,9 @@ debug_channel:
 # --- IRCOPONLY -------------------------------------------------------------
 ircoponly:
   syntax: "IRCOPONLY <#channel> {ON|OFF}"
-  example: "%command_prefix%\x02\x0303IRCOPONLY #κανάλι ON\x03\x0F"
+  example: "%command_prefix%IRCOPONLY #κανάλι ON"
   examples:
-    - "%command_prefix%\x02\x0303IRCOPONLY #κανάλι OFF\x03\x0F"
+    - "%command_prefix%IRCOPONLY #κανάλι OFF"
   short: "Περιορίστε ένα κανάλι στους χειριστές IRC."
   help: |-
     Μόνο εξουσιοδοτημένοι χειριστές IRC μπορούν να παραμείνουν στο κανάλι. Το %bot%
@@ -685,9 +731,9 @@ ircoponly:
 # --- NOEXPIRE --------------------------------------------------------------
 noexpire:
   syntax: "NOEXPIRE <#channel> {ON|OFF}"
-  example: "%command_prefix%\x02\x0303NOEXPIRE #Σημαντικό ON\x03\x0F"
+  example: "%command_prefix%NOEXPIRE #Σημαντικό ON"
   examples:
-    - "%command_prefix%\x02\x0303NOEXPIRE #Σημαντικό OFF\x03\x0F"
+    - "%command_prefix%NOEXPIRE #Σημαντικό OFF"
   short: "Ορισμός ή αφαίρεση προστασίας λήξης για ένα κανάλι."
   help: |-
     Ελέγχει αν ένα κανάλι θα λήξει λόγω αδράνειας.
@@ -702,36 +748,36 @@ noexpire:
     Παραδείγματα:
       NOEXPIRE #Important ON
       NOEXPIRE #Important OFF
-  success_on: "\x0303✔\x03 Το κανάλι \x02%channel%\x02 είναι τώρα προστατευμένο από λήξη."
-  success_off: "\x0303✔\x03 Το κανάλι \x02%channel%\x02 θα λήγει τώρα κανονικά."
-  forbidden: "\x0304✗\x03 Το κανάλι \x02%channel%\x02 είναι απαγορευμένο."
-  suspended: "\x0304✗\x03 Το κανάλι \x02%channel%\x02 είναι σε αναστολή."
+  success_on: "Το κανάλι %channel% είναι τώρα προστατευμένο από λήξη."
+  success_off: "Το κανάλι %channel% θα λήγει τώρα κανονικά."
+  forbidden: "Το κανάλι %channel% είναι απαγορευμένο."
+  suspended: "Το κανάλι %channel% είναι σε αναστολή."
 
 # --- FORBID ----------------------------------------------------------------
 forbid:
   syntax: "FORBID <#channel> <αιτιολογία>"
-  example: "%command_prefix%\x02\x0303FORBID #κανάλι Παραβίαση κανόνων\x03\x0F"
+  example: "%command_prefix%FORBID #κανάλι Παραβίαση κανόνων"
   short: "Απαγόρευση χρήσης καναλιού."
   help: |-
     Αποτρέπει τη χρήση ενός καναλιού από οποιονδήποτε.
     Αν το κανάλι είναι τρέχοντα καταχωρημένο, θα διαγραφεί πρώτα.
     Όλοι οι χρήστες στο κανάλι θα γίνουν kick και το κανάλι θα κλειδωθεί.
     Αυτή η εντολή απαιτεί άδεια IRCop: chanserv.forbid
-  reason_required: "\x0304✗\x03 Πρέπει να καθορίσετε μια αιτιολογία."
-  success: "\x0303✔\x03 Το κανάλι \x02%channel%\x02 έχει απαγορευτεί."
-  updated: "\x0303✔\x03 Η αιτιολογία απαγόρευσης για το κανάλι \x02%channel%\x02 έχει ενημερωθεί."
-  channel_forbidden: "\x0304✗\x03 Το κανάλι \x02%channel%\x02 είναι απαγορευμένο και δεν μπορεί να χρησιμοποιηθεί."
+  reason_required: "Πρέπει να καθορίσετε μια αιτιολογία."
+  success: "Το κανάλι %channel% έχει απαγορευτεί."
+  updated: "Η αιτιολογία απαγόρευσης για το κανάλι %channel% έχει ενημερωθεί."
+  channel_forbidden: "Το κανάλι %channel% είναι απαγορευμένο και δεν μπορεί να χρησιμοποιηθεί."
 
 # --- UNFORBID --------------------------------------------------------------
 unforbid:
   syntax: "UNFORBID <#channel>"
-  example: "%command_prefix%\x02\x0303UNFORBID #κανάλι\x03\x0F"
+  example: "%command_prefix%UNFORBID #κανάλι"
   short: "Άρση απαγόρευσης καναλιού."
   help: |-
     Αφαιρεί την απαγόρευση ενός καναλιού, επιτρέποντας την εκ νέου καταχώρησή του.
     Αυτή η εντολή απαιτεί άδεια IRCop: chanserv.forbid
-  success: "\x0303✔\x03 Το κανάλι \x02%channel%\x02 δεν είναι πλέον απαγορευμένο."
-  not_forbidden: "\x0304✗\x03 Το κανάλι \x02%channel%\x02 δεν είναι απαγορευμένο."
+  success: "Το κανάλι %channel% δεν είναι πλέον απαγορευμένο."
+  not_forbidden: "Το κανάλι %channel% δεν είναι απαγορευμένο."
 
 # --- DEBUG -----------------------------------------------------------------
 debug:
@@ -742,13 +788,13 @@ debug:
 # --- HISTORY ---
 history:
   syntax: "HISTORY <#channel> {ADD <message>|DEL <id>|VIEW [PAGE|ALL]|CLEAR}"
-  example: "%command_prefix%\x02\x0303HISTORY #κανάλι ADD Έλεγχος συντονισμού\x03\x0F"
+  example: "%command_prefix%HISTORY #κανάλι ADD Έλεγχος συντονισμού"
   examples:
-    - "%command_prefix%\x02\x0303HISTORY #κανάλι DEL 42\x03\x0F"
-    - "%command_prefix%\x02\x0303HISTORY #κανάλι VIEW\x03\x0F"
-    - "%command_prefix%\x02\x0303HISTORY #κανάλι VIEW 2\x03\x0F"
-    - "%command_prefix%\x02\x0303HISTORY #κανάλι VIEW ALL\x03\x0F"
-    - "%command_prefix%\x02\x0303HISTORY #κανάλι CLEAR\x03\x0F"
+    - "%command_prefix%HISTORY #κανάλι DEL 42"
+    - "%command_prefix%HISTORY #κανάλι VIEW"
+    - "%command_prefix%HISTORY #κανάλι VIEW 2"
+    - "%command_prefix%HISTORY #κανάλι VIEW ALL"
+    - "%command_prefix%HISTORY #κανάλι CLEAR"
   short: "Προβολή ή διαχείριση ιστορικού ενεργειών καναλιού."
   help: |-
     Διαχείριση του ιστορικού ενεργειών για ένα κανάλι.
@@ -773,40 +819,42 @@ history:
   # --- HISTORY ADD ---------------------------------------------------------
   add:
     syntax: "HISTORY <#channel> ADD <message>"
-    example: "%command_prefix%\x02\x0303HISTORY #κανάλι ADD Έλεγχος συντονισμού\x03\x0F"
+    example: "%command_prefix%HISTORY #κανάλι ADD Έλεγχος συντονισμού"
     short: "Προσθήκη χειροκίνητης καταχώρησης ιστορικού."
     help: |-
       Προσθέτει μια χειροκίνητη καταχώρηση στο ιστορικό του καναλιού.
-    success: "\x0303✔\x03 Η καταχώρηση ιστορικού προστέθηκε για το \x02%channel%\x02."
+    success: "Η καταχώρηση ιστορικού προστέθηκε για το %channel%."
 
   # --- HISTORY DEL ---------------------------------------------------------
   del:
     syntax: "HISTORY <#channel> DEL <id>"
-    example: "%command_prefix%\x02\x0303HISTORY #κανάλι DEL 42\x03\x0F"
+    example: "%command_prefix%HISTORY #κανάλι DEL 42"
     short: "Διαγραφή καταχώρησης ιστορικού μέσω ID."
     help: "Διαγράφει μια καταχώρηση ιστορικού με το ID της."
 
   # --- HISTORY VIEW --------------------------------------------------------
   view:
     syntax: "HISTORY <#channel> VIEW [PAGE|ALL]"
-    example: "%command_prefix%\x02\x0303HISTORY #κανάλι VIEW\x03\x0F"
+    example: "%command_prefix%HISTORY #κανάλι VIEW"
     examples:
-      - "%command_prefix%\x02\x0303HISTORY #κανάλι VIEW 2\x03\x0F"
-      - "%command_prefix%\x02\x0303HISTORY #κανάλι VIEW ALL\x03\x0F"
+      - "%command_prefix%HISTORY #κανάλι VIEW 2"
+      - "%command_prefix%HISTORY #κανάλι VIEW ALL"
     short: "Προβολή ιστορικού ενεργειών καναλιού."
     help: "Εμφανίζει τις καταχωρήσεις ιστορικού του καναλιού."
-    header: "\x02Ιστορικό για \x0307%channel%\x03\x02 (εμφάνιση %start%-%end% από %total%):"
-    entry: "#%id% [%date%] \x0303%action%\x03 από %operator% — %message%"
-    no_entries: "\x0307ℹ\x03 Δεν βρέθηκαν καταχωρήσεις ιστορικού για \x02%channel%\x02."
-    page_hint: "Χρησιμοποιήστε \x0303HISTORY %channel% VIEW %next_page%\x03 για περισσότερες καταχωρήσεις."
+    header: "%heading% (εμφάνιση %start%-%end% από %total%):"
+    header_heading: "Ιστορικό για %channel%"
+    entry: "#%id% [%date%] %action% από %operator% — %message%"
+    no_entries: "Δεν βρέθηκαν καταχωρήσεις ιστορικού για %channel%."
+    page_hint: "Χρησιμοποιήστε %command% για περισσότερες καταχωρήσεις."
+    page_hint_command: "HISTORY %channel% VIEW %next_page%"
 
   # --- HISTORY CLEAR -------------------------------------------------------
   clear:
     syntax: "HISTORY <#channel> CLEAR"
-    example: "%command_prefix%\x02\x0303HISTORY #κανάλι CLEAR\x03\x0F"
+    example: "%command_prefix%HISTORY #κανάλι CLEAR"
     short: "Διαγραφή όλων των καταχωρήσεων ιστορικού για ένα κανάλι."
     help: "Διαγράφει όλες τις καταχωρήσεις ιστορικού του καναλιού."
-    success: "\x0303✔\x03 Εκκαθαρίστηκαν \x02%count%\x02 καταχωρήσεις ιστορικού για \x02%channel%\x02."
+    success: "Εκκαθαρίστηκαν %count% καταχωρήσεις ιστορικού για %channel%."
 
 # --- HISTORY MESSAGES ---
 history.message:
@@ -860,7 +908,7 @@ level_founder:
 # --- CLEARACCESS -----------------------------------------------------------
 clearaccess:
   syntax: "CLEARACCESS <#channel>"
-  example: "%command_prefix%\x02\x0303CLEARACCESS #κανάλι\x03\x0F"
+  example: "%command_prefix%CLEARACCESS #κανάλι"
   short: "Εκκαθάριση ολόκληρης της λίστας πρόσβασης ενός καναλιού."
   help: |-
     Αφαιρεί όλες τις καταχωρήσεις πρόσβασης από τη λίστα πρόσβασης ενός καναλιού.
@@ -871,15 +919,15 @@ clearaccess:
     Σύνταξη: CLEARACCESS <#κανάλι>
     Παραδείγματα:
       CLEARACCESS #channel
-  success: "\x0303✔\x03 Εκκαθαρίστηκαν \x02%count%\x02 καταχωρήσεις πρόσβασης από \x02%channel%\x02."
-  empty: "\x0307ℹ\x03 Το κανάλι \x02%channel%\x02 δεν έχει καταχωρήσεις πρόσβασης."
+  success: "Εκκαθαρίστηκαν %count% καταχωρήσεις πρόσβασης από %channel%."
+  empty: "Το κανάλι %channel% δεν έχει καταχωρήσεις πρόσβασης."
 
 # --- CLEARUSERS ------------------------------------------------------------
 clearusers:
   syntax: "CLEARUSERS <#channel> [αιτιολογία]"
-  example: "%command_prefix%\x02\x0303CLEARUSERS #κανάλι\x03\x0F"
+  example: "%command_prefix%CLEARUSERS #κανάλι"
   examples:
-    - "%command_prefix%\x02\x0303CLEARUSERS #κανάλι κατάκλυση\x03\x0F"
+    - "%command_prefix%CLEARUSERS #κανάλι κατάκλυση"
   short: "Kick όλων των χρηστών από ένα κανάλι."
   help: |-
     Κάνει kick όλους τους χρήστες από το καθορισμένο κανάλι.
@@ -895,17 +943,17 @@ clearusers:
     Παραδείγματα:
       CLEARUSERS #channel
       CLEARUSERS #channel flooding
-  not_on_network: "\x0304✗\x03 Το κανάλι \x02%channel%\x02 δεν είναι τρέχοντα στο δίκτυο."
-  empty: "\x0307ℹ\x03 Το κανάλι \x02%channel%\x02 δεν έχει χρήστες για kick."
-  success: "\x0303✔\x03 Έγιναν kick \x02%count%\x02 χρήστης(ες) από \x02%channel%\x02."
+  not_on_network: "Το κανάλι %channel% δεν είναι τρέχοντα στο δίκτυο."
+  empty: "Το κανάλι %channel% δεν έχει χρήστες για kick."
+  success: "Έγιναν kick %count% χρήστης(ες) από %channel%."
   default_reason: "Εντολή CLEARUSERS"
 
 # --- LIST ------------------------------------------------------------------
 list:
   syntax: "LIST <μοτίβο> [σελίδα]"
-  example: "%command_prefix%\x02\x0303LIST #*\x03\x0F"
+  example: "%command_prefix%LIST #*"
   examples:
-    - "%command_prefix%\x02\x0303LIST #* 2\x03\x0F"
+    - "%command_prefix%LIST #* 2"
   short: "Λίστα καταχωρισμένων καναλιών που ταιριάζουν με μοτίβο."
   help: |-
     Εμφανίζει τα καταχωρισμένα κανάλια που ταιριάζουν με το μοτίβο. Ο χαρακτήρας *

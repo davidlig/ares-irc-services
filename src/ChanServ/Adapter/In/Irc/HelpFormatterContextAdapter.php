@@ -8,9 +8,17 @@ use App\ChanServ\Adapter\In\Irc\Help\HelpableCommandInterface;
 use App\ChanServ\Adapter\In\Irc\Help\HelpFormatterContextInterface;
 use App\ChanServ\Application\Port\Out\ChanServOperatorAccess;
 use App\ChanServ\Application\Security\ChanServPermission;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\Fragment;
+use InvalidArgumentException;
 
+use function is_string;
+use function mb_strlen;
 use function str_starts_with;
+use function strlen;
 use function strtolower;
+use function strtr;
+use function substr;
 
 /**
  * Adapter from ChanServContext to HelpFormatterContextInterface for UnifiedHelpFormatter.
@@ -60,7 +68,51 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
      */
     public function trans(string $key, array $params = []): string
     {
-        return $this->context->trans($key, $params);
+        if ('help.header' === $key) {
+            return strtr($this->context->trans($key), [
+                '%title%' => $this->context->renderTextComponent(Component::Header, self::stringParam($params, 'title')),
+                '%separator%' => $this->context->renderSeparator(mb_strlen(self::stringParam($params, 'separator'))),
+            ]);
+        }
+        if ('help.footer' === $key) {
+            return $this->context->renderSeparator(29);
+        }
+
+        $component = match ($key) {
+            'help.general_header', 'help.ircop_header', 'help.options_header', 'help.examples_header' => Component::Section,
+            'help.group_header', 'help.subgroup_header' => Component::Group,
+            'help.command_line', 'help.subcommand_line' => Component::CommandRow,
+            'help.general_footer', 'help.set_sub_footer' => Component::Navigation,
+            default => Component::Text,
+        };
+        if ('help.command_line' === $key || 'help.subcommand_line' === $key) {
+            $params['command'] = new Fragment(self::stringParam($params, 'command'), Component::Command);
+        } elseif ('help.syntax_label' === $key) {
+            $params['syntax'] = new Fragment(self::stringParam($params, 'syntax'), Component::Command);
+        } elseif ('help.general_footer' === $key) {
+            $params['help'] = new Fragment($this->context->trans('help.general_footer_command'), Component::Command);
+        } elseif ('help.set_sub_footer' === $key) {
+            $params['help'] = new Fragment($this->context->trans('help.set_sub_footer_command', ['command' => $params['command']]), Component::Command);
+        }
+
+        return $this->context->renderComponent($component, $key, $params);
+    }
+
+    public function getLanguage(): string
+    {
+        return $this->context->getLanguage();
+    }
+
+    public function renderExample(string $example): string
+    {
+        if (!str_starts_with($example, '%command_prefix%')) {
+            return $example;
+        }
+
+        return $this->context->renderTextComponent(Component::Example, '%prefix%%command%', [
+            'prefix' => '/msg ' . $this->getBotName() . ' ',
+            'command' => new Fragment(substr($example, strlen('%command_prefix%')), Component::Command),
+        ]);
     }
 
     public function getBotName(): string
@@ -147,6 +199,17 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
             $sender->isOper,
             ChanServPermission::allIrcop(),
         );
+    }
+
+    /** @param array<string, mixed> $params */
+    private static function stringParam(array $params, string $name): string
+    {
+        $value = $params[$name] ?? null;
+        if (!is_string($value)) {
+            throw new InvalidArgumentException('HELP presentation parameter must be a string: ' . $name);
+        }
+
+        return $value;
     }
 
     private function shouldShowByName(HelpableCommandInterface $command): bool
