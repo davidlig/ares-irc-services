@@ -129,6 +129,57 @@ final class DelMemoHandlerTest extends TestCase
         self::assertSame('#Ares', $result->channelName);
     }
 
+    #[Test]
+    public function deletesOnlyPersonalInboxForAll(): void
+    {
+        $memos = [new Memo(1, null, 2, 'One', new DateTimeImmutable()), new Memo(1, null, 3, 'Two', new DateTimeImmutable())];
+        $repository = $this->createMock(MemoRepositoryInterface::class);
+        $repository->expects(self::once())->method('findByTargetNick')->with(1)->willReturn($memos);
+        $repository->expects(self::never())->method('deleteAllForNick');
+        $deleted = [];
+        $repository->expects(self::exactly(2))->method('delete')->willReturnCallback(static function (Memo $memo) use (&$deleted): void { $deleted[] = $memo; });
+        $this->memoRepository = $repository;
+        $result = $this->createHandler()->handle(new DelMemo(1, null, 0, all: true));
+        self::assertSame(DelMemoOutcome::AllDeleted, $result->outcome);
+        self::assertSame($memos, $deleted);
+    }
+
+    #[Test]
+    public function handlesAllForChannelAndEmptyInboxes(): void
+    {
+        $channel = $this->createStub(MemoChannelPort::class);
+        $channel->method('findChannelByName')->willReturn(new MemoChannelView(5, '#Ares'));
+        $channel->method('canManageChannelMemos')->willReturn(true);
+        $this->channelPort = $channel;
+        $memo = new Memo(null, 5, 2, 'One', new DateTimeImmutable());
+        $repository = $this->createMock(MemoRepositoryInterface::class);
+        $repository->expects(self::exactly(2))->method('findByTargetChannel')->with(5)->willReturnOnConsecutiveCalls([$memo], []);
+        $repository->method('findByTargetNick')->willReturn([]);
+        $repository->expects(self::once())->method('delete')->with($memo);
+        $this->memoRepository = $repository;
+        $deleted = $this->createHandler()->handle(new DelMemo(1, '#ares', 0, all: true));
+        $emptyChannel = $this->createHandler()->handle(new DelMemo(1, '#ares', 0, all: true));
+        $emptyNick = $this->createHandler()->handle(new DelMemo(1, null, 0, all: true));
+        self::assertSame(DelMemoOutcome::AllDeleted, $deleted->outcome);
+        self::assertSame(DelMemoOutcome::Empty, $emptyChannel->outcome);
+        self::assertSame(DelMemoOutcome::Empty, $emptyNick->outcome);
+    }
+
+    #[Test]
+    public function deniesAllBeforeReadingChannelInbox(): void
+    {
+        $channel = $this->createStub(MemoChannelPort::class);
+        $channel->method('findChannelByName')->willReturnOnConsecutiveCalls(new MemoChannelView(5, '#Ares'), null);
+        $channel->method('canManageChannelMemos')->willReturn(false);
+        $this->channelPort = $channel;
+        $repository = $this->createMock(MemoRepositoryInterface::class);
+        $repository->expects(self::never())->method('findByTargetChannel');
+        $repository->expects(self::never())->method('delete');
+        $this->memoRepository = $repository;
+        self::assertSame(DelMemoOutcome::AccessDenied, $this->createHandler()->handle(new DelMemo(1, '#ares', 0, all: true))->outcome);
+        self::assertSame(DelMemoOutcome::ChannelNotRegistered, $this->createHandler()->handle(new DelMemo(1, '#ares', 0, all: true))->outcome);
+    }
+
     protected function setUp(): void
     {
         $this->channelPort = $this->createStub(MemoChannelPort::class);

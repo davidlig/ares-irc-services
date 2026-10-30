@@ -65,14 +65,20 @@ list:
 
 # --- DEL ----------------------------------------------------------------------
 del:
-  syntax: "DEL [#kanał] <numer>"
+  syntax: "DEL [#kanał] {numer|ALL}"
   short: "Usuń wiadomość według numeru."
-  help: "Usuwa wiadomość o podanym numerze. Dla kanałów wymaga poziomu MEMOCHANGE."
-  example: "%command_prefix%DEL 1"
+  help: |-
+    Usuwa wiadomość według numeru lub opróżnia skrzynkę opcją ALL. Dla kanałów
+    wymagany jest poziom MEMOCHANGE.
+  example: "%command_prefix%DEL ALL"
   examples:
+    - "%command_prefix%DEL 1"
     - "%command_prefix%DEL #pomoc 2"
+    - "%command_prefix%DEL #pomoc ALL"
   deleted: "Wiadomość #%index% usunięta."
   not_found: "Wiadomość #%index% nie znaleziona."
+  all_deleted: "Usunięto wszystkie wiadomości z tej skrzynki."
+  none_to_delete: "Nie ma wiadomości do usunięcia."
 
 # --- IGNORE -------------------------------------------------------------------
 ignore:

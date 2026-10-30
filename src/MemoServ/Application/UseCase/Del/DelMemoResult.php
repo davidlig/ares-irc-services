@@ -12,6 +12,16 @@ final readonly class DelMemoResult
         public ?string $channelName = null,
     ) {}
 
+    public static function allDeleted(): self
+    {
+        return new self(DelMemoOutcome::AllDeleted);
+    }
+
+    public static function empty(): self
+    {
+        return new self(DelMemoOutcome::Empty);
+    }
+
     public static function deleted(int $index): self
     {
         return new self(

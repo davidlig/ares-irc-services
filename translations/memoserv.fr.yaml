@@ -66,16 +66,20 @@ list:
 
 # --- DEL ----------------------------------------------------------------------
 del:
-  syntax: "DEL [#canal] <numéro>"
+  syntax: "DEL [#canal] {numéro|ALL}"
   short: "Supprimer un message par son numéro."
   help: |-
-    Supprime le message avec le numéro indiqué. Pour les canaux, nécessite le niveau
-    MEMOCHANGE.
-  example: "%command_prefix%DEL 1"
+    Supprime un message par son numéro, ou vide la boîte avec ALL. Pour un
+    canal, le niveau MEMOCHANGE est requis.
+  example: "%command_prefix%DEL ALL"
   examples:
+    - "%command_prefix%DEL 1"
     - "%command_prefix%DEL #aide 2"
+    - "%command_prefix%DEL #aide ALL"
   deleted: "Message n°%index% supprimé."
   not_found: "Message n°%index% introuvable."
+  all_deleted: "Tous les messages de cette boîte ont été supprimés."
+  none_to_delete: "Aucun message à supprimer."
 
 # --- IGNORE -------------------------------------------------------------------
 ignore:

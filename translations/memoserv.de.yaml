@@ -65,16 +65,20 @@ list:
 
 # --- DEL ----------------------------------------------------------------------
 del:
-  syntax: "DEL [#channel] <Nummer>"
+  syntax: "DEL [#channel] {Nummer|ALL}"
   short: "Eine Nachricht anhand der Nummer löschen."
   help: |-
-    Löscht die Nachricht mit der angegebenen Nummer. Für Channels ist
-    MEMOCHANGE-Level erforderlich.
-  example: "%command_prefix%DEL 1"
+    Löscht eine Nachricht nach Nummer oder leert mit ALL das Postfach. Für
+    Kanäle ist die Zugriffsstufe MEMOCHANGE erforderlich.
+  example: "%command_prefix%DEL ALL"
   examples:
+    - "%command_prefix%DEL 1"
     - "%command_prefix%DEL #hilfe 2"
+    - "%command_prefix%DEL #hilfe ALL"
   deleted: "Nachricht #%index% gelöscht."
   not_found: "Nachricht #%index% nicht gefunden."
+  all_deleted: "Alle Nachrichten in diesem Postfach wurden gelöscht."
+  none_to_delete: "Es sind keine Nachrichten zum Löschen vorhanden."
 
 # --- IGNORE -------------------------------------------------------------------
 ignore:

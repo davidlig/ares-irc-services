@@ -65,16 +65,20 @@ list:
 
 # --- DEL ----------------------------------------------------------------------
 del:
-  syntax: "DEL [#channel] <number>"
+  syntax: "DEL [#channel] {number|ALL}"
   short: "Delete a message by number."
   help: |-
-    Deletes the message with the given number. For channels requires MEMOCHANGE
-    level.
-  example: "%command_prefix%DEL 1"
+    Deletes a message by number, or use ALL to empty the inbox. Channel deletion
+    requires MEMOCHANGE.
+  example: "%command_prefix%DEL ALL"
   examples:
+    - "%command_prefix%DEL 1"
     - "%command_prefix%DEL #help 2"
+    - "%command_prefix%DEL #help ALL"
   deleted: "Message #%index% deleted."
   not_found: "Message #%index% not found."
+  all_deleted: "All messages in this inbox have been deleted."
+  none_to_delete: "There are no messages to delete."
 
 # --- IGNORE -------------------------------------------------------------------
 ignore:

@@ -10,5 +10,6 @@ final readonly class DelMemo
         public int $senderNickId,
         public ?string $channelName,
         public int $index,
+        public bool $all = false,
     ) {}
 }

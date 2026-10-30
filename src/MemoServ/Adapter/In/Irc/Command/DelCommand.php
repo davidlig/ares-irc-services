@@ -15,10 +15,11 @@ use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentValidator;
 use App\Shared\Adapter\In\Irc\Presentation\Role;
 
 use function str_starts_with;
+use function strtoupper;
 
 /**
- * DEL [#canal] <número>.
- * Delete a memo by its 1-based index. For channel, requires MEMOCHANGE.
+ * DEL [#channel] {number|ALL}.
+ * Delete a memo by its 1-based index or clear the inbox. For channel, requires MEMOCHANGE.
  */
 final readonly class DelCommand implements MemoServCommandInterface
 {
@@ -38,7 +39,7 @@ final readonly class DelCommand implements MemoServCommandInterface
 
     public function getArgumentDefinition(): CommandArgumentDefinition
     {
-        return new CommandArgumentDefinition('del.syntax', [new Argument('channel', optional: true, prefix: '#'), new Argument('index', digits: true)]);
+        return new CommandArgumentDefinition('del.syntax', [new Argument('channel', optional: true, prefix: '#'), new Argument('index', alternatives: ['ALL'], digits: true)]);
     }
 
     public function getMinArgs(): int
@@ -113,9 +114,18 @@ final readonly class DelCommand implements MemoServCommandInterface
             senderNickId: $senderAccount->id,
             channelName: $targetChannel,
             index: $index,
+            all: 'ALL' === strtoupper($indexArg),
         ));
 
         switch ($result->outcome) {
+            case DelMemoOutcome::AllDeleted:
+                $context->reply('del.all_deleted', [], Role::Success);
+                break;
+
+            case DelMemoOutcome::Empty:
+                $context->reply('del.none_to_delete', [], Role::Information);
+                break;
+
             case DelMemoOutcome::Deleted:
                 $context->reply('del.deleted', ['index' => $result->index], Role::Success);
                 break;
