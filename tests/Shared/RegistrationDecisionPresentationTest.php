@@ -5,8 +5,21 @@ declare(strict_types=1);
 namespace App\Tests\Shared;
 
 use App\ChanServ\Adapter\In\Irc\ChanServCommandRegistry;
+use App\ChanServ\Adapter\In\Irc\ChanServContext;
+use App\ChanServ\Adapter\In\Irc\ChanServDetailPresenter;
+use App\ChanServ\Adapter\In\Irc\ChanServNotifierInterface;
+use App\Irc\Application\Port\In\ChannelLookupPort;
+use App\Irc\Application\Port\In\ChannelModeSupportInterface;
+use App\Irc\Application\Port\In\NetworkUserLookupPort;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\Kernel;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentValidator;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
+use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
+use App\Shared\Adapter\In\Irc\Presentation\Fragment;
+use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
+use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
+use App\Shared\Adapter\In\Irc\Presentation\Role;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -97,14 +110,15 @@ final class RegistrationDecisionPresentationTest extends TestCase
             self::$translator->trans('gline.syntax', [], 'operserv', 'es'),
         );
 
-        $reason = self::$translator->trans('status.rejection_reason', ['%reason%' => 'canal duplicado'], 'chanserv', 'es');
+        $presenter = new ChanServDetailPresenter();
+        $reason = $presenter->row($this->presentationContext(), 'status.rejection_reason', ['%reason%' => 'canal duplicado']);
         self::assertStringContainsString('Razón', $reason);
         self::assertStringContainsString('canal duplicado', $reason);
 
-        $restriction = self::$translator->trans('status.restriction_until', ['%date%' => '28/10/2026 12:35 UTC'], 'chanserv', 'es');
+        $restriction = $presenter->row($this->presentationContext(), 'status.restriction_until', ['%date%' => '28/10/2026 12:35 UTC']);
         $plainRestriction = preg_replace('/\x03(?:\d{1,2}(?:,\d{1,2})?)?/', '', $restriction);
         self::assertIsString($plainRestriction);
-        self::assertStringContainsString('Disponible a partir del :', $plainRestriction);
+        self::assertStringContainsString('Disponible a partir del', $plainRestriction);
         self::assertStringContainsString('28/10/2026 12:35 UTC', $restriction);
 
         $memo = self::$translator->trans('registration_decision.rejected', ['%channel%' => '#example'], 'memoserv', 'es');
@@ -124,10 +138,10 @@ final class RegistrationDecisionPresentationTest extends TestCase
         self::assertNotNull(self::$translator);
 
         self::assertSame(
-            "\x0304✗\x03 El canal \x02%channel%\x02 ya está registrado o en proceso de registro.",
-            self::$translator->trans('register.already_registered', ['%channel%' => '%channel%'], 'chanserv', 'es'),
+            "\x0304✗\x03\x0F El canal \x02#example\x03\x0F ya está registrado o en proceso de registro.",
+            $this->presentationContext()->renderReply(Role::Error, 'register.already_registered', ['channel' => new Fragment('#example', Component::Emphasis)]),
         );
-        self::assertStringStartsWith("\x0303✔\x03", self::$translator->trans('creg.rejected', [], 'chanserv', 'es'));
+        self::assertStringStartsWith("\x0303✔\x03\x0F", $this->presentationContext()->renderReply(Role::Success, 'creg.rejected', ['channel' => new Fragment('#example', Component::Emphasis)]));
     }
 
     #[Test]
@@ -160,5 +174,28 @@ final class RegistrationDecisionPresentationTest extends TestCase
             self::assertStringContainsString('%date%', $availability, $locale . ' memo availability');
             self::assertStringNotContainsString('%remaining_seconds%', $availability, $locale . ' memo availability');
         }
+    }
+
+    private function presentationContext(): ChanServContext
+    {
+        self::assertNotNull(self::$translator);
+
+        return new ChanServContext(
+            null,
+            null,
+            'STATUS',
+            [],
+            $this->createStub(ChanServNotifierInterface::class),
+            self::$translator,
+            'es',
+            'UTC',
+            'NOTICE',
+            new ChanServCommandRegistry([]),
+            $this->createStub(ChannelLookupPort::class),
+            $this->createStub(ChannelModeSupportInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            new ServiceNicknameRegistry([]),
+            renderer: new IrcRenderer(new FixedStyleProvider(PresentationStyle::default())),
+        );
     }
 }
