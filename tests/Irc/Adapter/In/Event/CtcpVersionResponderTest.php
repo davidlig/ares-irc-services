@@ -14,6 +14,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 use function array_filter;
 use function implode;
 use function str_contains;
+use function str_repeat;
 
 #[CoversClass(CtcpVersionResponder::class)]
 final class CtcpVersionResponderTest extends TestCase
@@ -25,7 +26,19 @@ final class CtcpVersionResponderTest extends TestCase
     #[Test]
     public function getVersionResponseReturnsExpectedString(): void
     {
-        self::assertSame('Ares IRC Services v2.4.0', $this->responder->getVersionResponse());
+        self::assertSame(
+            'Ares IRC Services v2.4.0 - David Abuín Fontán | https://ares-services.davidlig.net',
+            $this->responder->getVersionResponse(),
+        );
+    }
+
+    #[Test]
+    public function getVersionResponseContainsAuthorAndOfficialWebsiteCredits(): void
+    {
+        $response = $this->responder->getVersionResponse();
+
+        self::assertStringContainsString('David Abuín Fontán', $response);
+        self::assertStringContainsString('https://ares-services.davidlig.net', $response);
     }
 
     #[Test]
@@ -123,6 +136,65 @@ final class CtcpVersionResponderTest extends TestCase
         $blankLines = array_filter($lines, static fn (string $line): bool => ' ' === $line);
 
         self::assertNotEmpty($blankLines);
+    }
+
+    #[Test]
+    public function getAsciiArtLinesInMinimalModeOmitsAsciiArt(): void
+    {
+        $responder = new CtcpVersionResponder(
+            $this->createTranslator("Line 1\nLine 2"),
+            $this->languageResolver,
+            'v2.4.0',
+            'MINIMAL',
+        );
+
+        $lines = $responder->getAsciiArtLines('en');
+        $combined = implode("\n", $lines);
+
+        self::assertStringNotContainsString('@@@', $combined);
+        self::assertStringContainsString('Line 1', $combined);
+        self::assertStringContainsString('Line 2', $combined);
+        self::assertStringContainsString('Ares 2011-2023', $combined);
+        self::assertSame([
+            'Line 1',
+            'Line 2',
+            ' ',
+            str_repeat(' ', 30) . "\x034\u{2764}\x0F Ares 2011-2023 \x034\u{2764}\x0F",
+        ], $lines);
+    }
+
+    #[Test]
+    public function getAsciiArtLinesHandlesCaseInsensitiveMinimalMode(): void
+    {
+        $responder = new CtcpVersionResponder(
+            $this->createTranslator(),
+            $this->languageResolver,
+            'v2.4.0',
+            '  minimal  ',
+        );
+
+        $lines = $responder->getAsciiArtLines('en');
+        $combined = implode("\n", $lines);
+
+        self::assertStringNotContainsString('@@@', $combined);
+        self::assertStringContainsString('Ares 2011-2023', $combined);
+    }
+
+    #[Test]
+    public function getAsciiArtLinesDefaultsToFullForUnknownMode(): void
+    {
+        $responder = new CtcpVersionResponder(
+            $this->createTranslator(),
+            $this->languageResolver,
+            'v2.4.0',
+            'UNKNOWN_MODE',
+        );
+
+        $lines = $responder->getAsciiArtLines('en');
+        $combined = implode("\n", $lines);
+
+        self::assertStringContainsString('@@@', $combined);
+        self::assertStringContainsString('Ares 2011-2023', $combined);
     }
 
     protected function setUp(): void
