@@ -22,7 +22,7 @@ class WorkflowTests(unittest.TestCase):
         self.assertIn("repository: davidlig/ares-irc-services", workflow)
         self.assertIn("ref: refs/heads/main", workflow)
         self.assertIn("persist-credentials: false", workflow)
-        self.assertIn("runs-on: ubuntu-latest", workflow)
+        self.assertIn("runs-on: ubuntu-26.04", workflow)
         for forbidden in ("self-hosted", "head_ref", "head.sha", "upload-artifact", "download-artifact", "cache@", "composer", "npm ", "pip ", "pull_request:"):
             self.assertNotIn(forbidden, workflow)
         self.assertNotRegex(workflow, r"\$\{\{\s*github\.event\.[^}]*(?:body|title|head_ref)")
@@ -65,7 +65,7 @@ class WorkflowTests(unittest.TestCase):
         self.assertIn("name: Contribution review signal", workflow)
         self.assertIn("types: [submitted, edited, dismissed]", workflow)
         self.assertIn("permissions: {}", workflow)
-        self.assertIn("runs-on: ubuntu-latest", workflow)
+        self.assertIn("runs-on: ubuntu-26.04", workflow)
         for forbidden in ("uses:", "secrets.", "github.event.", "artifact", "self-hosted", "checkout"):
             self.assertNotIn(forbidden, workflow)
         commands = re.findall(r"run: (.+)", workflow)

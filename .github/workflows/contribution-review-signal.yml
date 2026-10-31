@@ -9,7 +9,7 @@ permissions: {}
 jobs:
   signal:
     if: github.repository_id == '1167938167'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       - name: Wake trusted reconciliation
         run: "true"
