@@ -16,6 +16,7 @@ use Doctrine\DBAL\Schema\AbstractSchemaManager;
 use Doctrine\DBAL\Schema\Column;
 use Doctrine\DBAL\Schema\Index;
 use Doctrine\DBAL\Schema\Index\IndexType;
+use Doctrine\DBAL\Schema\Name\OptionallyQualifiedName;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Schema\Table;
 use Doctrine\DBAL\Types\Types;
@@ -39,8 +40,8 @@ final class MigrationOwnedSchemaListenerTest extends TestCase
             ->addIndex(Index::editor()->setUnquotedName('idx_registered_nicks_list_pattern')->setType(IndexType::REGULAR)->setUnquotedColumnNames('nickname_lower'))->create();
         $target = Schema::editor()->addTable($table)->create();
         $manager = $this->createStub(AbstractSchemaManager::class);
-        $manager->method('listTableNames')->willReturn(['registered_nicks']);
-        $manager->method('introspectTable')->willReturn($native);
+        $manager->method('introspectTableNames')->willReturn([OptionallyQualifiedName::unquoted('registered_nicks')]);
+        $manager->method('introspectTableByUnquotedName')->willReturn($native);
         $connection = $this->createStub(Connection::class);
         $connection->method('createSchemaManager')->willReturn($manager);
         $connection->method('getDatabasePlatform')->willReturn($platform);
@@ -61,7 +62,7 @@ final class MigrationOwnedSchemaListenerTest extends TestCase
     public function testCanonicalGlobalSettingsSchemaIsProjectedOnEveryPlatform(AbstractPlatform $platform): void
     {
         $manager = $this->createStub(AbstractSchemaManager::class);
-        $manager->method('listTableNames')->willReturn([]);
+        $manager->method('introspectTableNames')->willReturn([]);
         $connection = $this->createStub(Connection::class);
         $connection->method('createSchemaManager')->willReturn($manager);
         $connection->method('getDatabasePlatform')->willReturn($platform);
