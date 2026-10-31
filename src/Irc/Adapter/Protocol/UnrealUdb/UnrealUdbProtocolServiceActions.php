@@ -19,9 +19,7 @@ use function count;
 use function implode;
 use function in_array;
 use function sprintf;
-use function str_replace;
 use function str_split;
-use function time;
 
 /**
  * UnrealUdb service actions: UDB-native behavior.
@@ -260,10 +258,9 @@ final readonly class UnrealUdbProtocolServiceActions implements ProtocolServiceA
                 '+' => in_array($char, $prefixModes, true)
                     || in_array($char, $listModes, true)
                     || in_array($char, $setWithParam, true),
-                '-' => in_array($char, $prefixModes, true)
+                default => in_array($char, $prefixModes, true)
                     || in_array($char, $listModes, true)
                     || in_array($char, $unsetWithParam, true),
-                default => false,
             };
 
             if ('q' === $char) {

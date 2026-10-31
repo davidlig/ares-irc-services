@@ -22,6 +22,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function sys_get_temp_dir;
+
 #[CoversClass(UdbConnectionLifecycleSubscriber::class)]
 final class UdbConnectionLifecycleSubscriberTest extends TestCase
 {

@@ -70,6 +70,7 @@ use function str_repeat;
 use function strlen;
 use function strtoupper;
 use function substr_count;
+use function sys_get_temp_dir;
 
 #[CoversClass(UdbSessionCoordinator::class)]
 #[CoversClass(UdbPeerSession::class)]

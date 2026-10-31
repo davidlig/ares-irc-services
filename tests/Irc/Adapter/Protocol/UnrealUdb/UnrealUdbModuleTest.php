@@ -29,6 +29,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 use function class_implements;
+use function sys_get_temp_dir;
 
 #[CoversClass(UnrealUdbModule::class)]
 final class UnrealUdbModuleTest extends TestCase
