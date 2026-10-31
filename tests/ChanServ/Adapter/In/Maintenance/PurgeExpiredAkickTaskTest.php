@@ -7,23 +7,20 @@ namespace App\Tests\ChanServ\Adapter\In\Maintenance;
 use App\ChanServ\Adapter\In\Maintenance\PurgeExpiredAkickTask;
 use App\ChanServ\Application\Port\Out\ChannelAkickRepositoryInterface;
 use App\ChanServ\Domain\Entity\ChannelAkick;
-use App\Irc\Application\Port\In\ServiceDebugNotifierInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
 #[CoversClass(PurgeExpiredAkickTask::class)]
 final class PurgeExpiredAkickTaskTest extends TestCase
 {
-    private const string SERVER_NAME = 'test-server.example.com';
-
     #[Test]
     public function getNameReturnsChanservPurgeExpiredAkick(): void
     {
         $akickRepo = $this->createStub(ChannelAkickRepositoryInterface::class);
-        $debugNotifier = $this->createStub(ServiceDebugNotifierInterface::class);
-        $task = new PurgeExpiredAkickTask($akickRepo, $debugNotifier, new NullLogger(), self::SERVER_NAME, 3600);
+        $task = new PurgeExpiredAkickTask($akickRepo, new NullLogger(), 3600);
 
         self::assertSame('chanserv.purge_expired_akick', $task->getName());
     }
@@ -32,8 +29,7 @@ final class PurgeExpiredAkickTaskTest extends TestCase
     public function getIntervalSecondsReturnsConfiguredValue(): void
     {
         $akickRepo = $this->createStub(ChannelAkickRepositoryInterface::class);
-        $debugNotifier = $this->createStub(ServiceDebugNotifierInterface::class);
-        $task = new PurgeExpiredAkickTask($akickRepo, $debugNotifier, new NullLogger(), self::SERVER_NAME, 7200);
+        $task = new PurgeExpiredAkickTask($akickRepo, new NullLogger(), 7200);
 
         self::assertSame(7200, $task->getIntervalSeconds());
     }
@@ -42,14 +38,13 @@ final class PurgeExpiredAkickTaskTest extends TestCase
     public function getOrderReturns350(): void
     {
         $akickRepo = $this->createStub(ChannelAkickRepositoryInterface::class);
-        $debugNotifier = $this->createStub(ServiceDebugNotifierInterface::class);
-        $task = new PurgeExpiredAkickTask($akickRepo, $debugNotifier, new NullLogger(), self::SERVER_NAME, 3600);
+        $task = new PurgeExpiredAkickTask($akickRepo, new NullLogger(), 3600);
 
         self::assertSame(350, $task->getOrder());
     }
 
     #[Test]
-    public function runRemovesExpiredAkicksAndLogsToDebug(): void
+    public function runRemovesExpiredAkicksAndLogsToSystemLogger(): void
     {
         $expiredAkick1 = $this->createStub(ChannelAkick::class);
         $expiredAkick1->method('isExpired')->willReturn(true);
@@ -67,15 +62,10 @@ final class PurgeExpiredAkickTaskTest extends TestCase
         $akickRepo->expects(self::once())->method('findExpired')->willReturn([$expiredAkick1, $expiredAkick2]);
         $akickRepo->expects(self::exactly(2))->method('remove');
 
-        $debugNotifier = $this->createMock(ServiceDebugNotifierInterface::class);
-        $debugNotifier->expects(self::exactly(2))->method('log')
-            ->willReturnCallback(static function (string $operator, string $command, string $target, ?string $targetHost, ?string $targetIp, ?string $reason): void {
-                self::assertSame(self::SERVER_NAME, $operator);
-                self::assertSame('AKICK DEL', $command);
-                self::assertSame('expired', $reason);
-            });
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::exactly(2))->method('info');
 
-        $task = new PurgeExpiredAkickTask($akickRepo, $debugNotifier, new NullLogger(), self::SERVER_NAME, 3600);
+        $task = new PurgeExpiredAkickTask($akickRepo, $logger, 3600);
         $task->run();
     }
 
@@ -86,10 +76,10 @@ final class PurgeExpiredAkickTaskTest extends TestCase
         $akickRepo->expects(self::once())->method('findExpired')->willReturn([]);
         $akickRepo->expects(self::never())->method('remove');
 
-        $debugNotifier = $this->createMock(ServiceDebugNotifierInterface::class);
-        $debugNotifier->expects(self::never())->method('log');
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::never())->method('info');
 
-        $task = new PurgeExpiredAkickTask($akickRepo, $debugNotifier, new NullLogger(), self::SERVER_NAME, 3600);
+        $task = new PurgeExpiredAkickTask($akickRepo, $logger, 3600);
         $task->run();
     }
 
@@ -110,17 +100,12 @@ final class PurgeExpiredAkickTaskTest extends TestCase
                 $removed[] = $akick;
             });
 
-        $debugNotifier = $this->createMock(ServiceDebugNotifierInterface::class);
-        $debugNotifier->expects(self::once())->method('log')->with(
-            self::SERVER_NAME,
-            'AKICK DEL',
-            '*!*@*.isp.com',
-            null,
-            null,
-            'expired',
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::once())->method('info')->with(
+            self::stringContains('Maintenance [chanserv.purge_expired_akick]: removed expired AKICK *!*@*.isp.com (id 999) from channel 5.'),
         );
 
-        $task = new PurgeExpiredAkickTask($akickRepo, $debugNotifier, new NullLogger(), self::SERVER_NAME, 3600);
+        $task = new PurgeExpiredAkickTask($akickRepo, $logger, 3600);
         $task->run();
 
         self::assertCount(1, $removed);

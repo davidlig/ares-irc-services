@@ -74,4 +74,50 @@ final class SenderViewTest extends TestCase
 
         self::assertSame('TestNick!testident@testhost.example.com', $mask);
     }
+
+    #[Test]
+    public function toDisplayMaskPrefersDisplayHost(): void
+    {
+        $view = new SenderView(
+            uid: '001',
+            nick: 'Nick',
+            ident: 'user',
+            hostname: 'real.host.com',
+            cloakedHost: 'cloaked.host.com',
+            ipBase64: 'ip',
+            displayHost: 'vhost.host.com',
+        );
+
+        self::assertSame('Nick!user@vhost.host.com', $view->toDisplayMask());
+    }
+
+    #[Test]
+    public function toDisplayMaskFallsBackToCloakedHost(): void
+    {
+        $view = new SenderView(
+            uid: '001',
+            nick: 'Nick',
+            ident: 'user',
+            hostname: 'real.host.com',
+            cloakedHost: 'cloaked.host.com',
+            ipBase64: 'ip',
+        );
+
+        self::assertSame('Nick!user@cloaked.host.com', $view->toDisplayMask());
+    }
+
+    #[Test]
+    public function toDisplayMaskFallsBackToHostname(): void
+    {
+        $view = new SenderView(
+            uid: '001',
+            nick: 'Nick',
+            ident: 'user',
+            hostname: 'real.host.com',
+            cloakedHost: '',
+            ipBase64: 'ip',
+        );
+
+        self::assertSame('Nick!user@real.host.com', $view->toDisplayMask());
+    }
 }

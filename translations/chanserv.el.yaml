@@ -72,6 +72,8 @@ info:
   topic_set_by_label: "Θέμα από"
   options: "%label%%padding%: %options%"
   options_label: "Επιλογές"
+  verbose: "%label%%padding%: %state%"
+  verbose_label: "Ειδοποιήσεις καναλιού"
   private: "Οι πληροφορίες του καναλιού %channel% είναι ιδιωτικές."
   no_expire: "%label%%padding%: Ναι"
   no_expire_label: "Ποτέ δεν λήγει"
@@ -102,7 +104,7 @@ info:
 
 # --- SET ----------------------------------------------------------------------
 set:
-  syntax: "SET <#channel> {FOUNDER <ψευδώνυμο> [token]|SUCCESSOR [nickname]|DESC <description>|URL [url]|EMAIL [email]|ENTRYMSG [message]|TOPICLOCK {ON|OFF}|MLOCK {ON|OFF}|PRIVATE {ON|OFF}|SECURE {ON|OFF}}"
+  syntax: "SET <#channel> {FOUNDER <ψευδώνυμο> [token]|SUCCESSOR [nickname]|DESC <description>|URL [url]|EMAIL [email]|ENTRYMSG [message]|TOPICLOCK {ON|OFF}|MLOCK {ON|OFF}|PRIVATE {ON|OFF}|SECURE {ON|OFF}|VERBOSE {ON|OFF}}"
   example: "%command_prefix%SET #κανάλι DESC Ένα κοινοτικό κανάλι"
   examples:
     - "%command_prefix%SET #κανάλι URL https://example.test"
@@ -258,6 +260,19 @@ set:
     notice_on: "%nickname% ενεργοποιεί τη λειτουργία SECURE."
     notice_off: "%nickname% απενεργοποιεί τη λειτουργία SECURE."
 
+  # --- SET VERBOSE ---------------------------------------------------------
+  verbose:
+    syntax: "SET <#channel> VERBOSE {ON|OFF}"
+    example: "%command_prefix%SET #κανάλι VERBOSE ON"
+    examples:
+      - "%command_prefix%SET #κανάλι VERBOSE OFF"
+    short: "Εναλλαγή ειδοποιήσεων ενεργειών καναλιού."
+    help: |-
+      Ενεργοποιεί ή απενεργοποιεί τις εκπομπές NOTICE στο κανάλι για ενέργειες
+      που εκτελούνται σε αυτό.
+    on: "Οι ειδοποιήσεις ενεργειών καναλιού ενεργοποιήθηκαν."
+    off: "Οι ειδοποιήσεις ενεργειών καναλιού απενεργοποιήθηκαν."
+
 # --- STATUS -------------------------------------------------------------------
 status:
   syntax: "STATUS <#channel>"
@@ -360,19 +375,22 @@ delaccess:
 
 # --- AKICK --------------------------------------------------------------------
 akick:
-  syntax: "AKICK <#channel> {ADD <mask> [expiry] [αιτιολογία]|DEL {<mask>|<number>}|LIST}"
+  syntax: "AKICK <#channel> {ADD <mask> [expiry] [αιτιολογία]|DEL {<mask>|<number>}|LIST|VIEW {<mask>|<number>}|CLEAR|CHECK <ψευδώνυμο>|ENFORCE}"
   example: "%command_prefix%AKICK #κανάλι ADD *!*@* 0"
   examples:
     - "%command_prefix%AKICK #κανάλι ADD *!*@* 7d Spam"
     - "%command_prefix%AKICK #κανάλι DEL *!*@*"
     - "%command_prefix%AKICK #κανάλι DEL 2"
     - "%command_prefix%AKICK #κανάλι LIST"
+    - "%command_prefix%AKICK #κανάλι VIEW 1"
+    - "%command_prefix%AKICK #κανάλι CLEAR"
+    - "%command_prefix%AKICK #κανάλι CHECK Alice"
   short: "Διαχείριση λίστας auto-kick."
   help: |-
     ADD <μάσκα> [expiry] [αιτιολογία]: προσθήκη καταχώρησης.
     DEL <mask|num>: αφαίρεση.
     LIST: λίστα καταχωρήσεων.
-  unknown_sub: "Άγνωστη υπο-εντολή %sub%. Χρησιμοποιήστε ADD, DEL ή LIST."
+  unknown_sub: "Άγνωστη υπο-εντολή %sub%. Χρησιμοποιήστε ADD, DEL, LIST, VIEW, CLEAR ή CHECK."
   invalid_mask: "Μη έγκυρη μορφή μάσκας. Χρησιμοποιήστε nick!ident@host με χαρακτήρες wildcard (*)."
   dangerous_mask: "Η μάσκα %mask% είναι πολύ ευρεία. Πρέπει να περιέχει τουλάχιστον 4 αλφαριθμητικούς χαρακτήρες."
   protected_user: "Το ψευδώνυμο %nickname% έχει πρόσβαση σε αυτό το κανάλι."
@@ -413,7 +431,67 @@ akick:
     help: "Εμφανίζει μάσκα, αιτιολογία, λήξη και ποιος πρόσθεσε."
     header: "Λίστα AKICK για %channel%"
     empty: "Το κανάλι %channel% δεν έχει καταχωρήσεις AKICK."
-    entry: "#%index% %mask% %reason% (από %nickname%, λήγει: %expiration%)"
+    entry: "#%index% %mask% %reason% (από %nickname%, λήγει: %expiration%, χρήσεις: %uses%)"
+
+  # --- AKICK VIEW ----------------------------------------------------------
+  view:
+    syntax: "AKICK <#channel> VIEW {<mask>|<number>}"
+    example: "%command_prefix%AKICK #κανάλι VIEW 1"
+    examples:
+      - "%command_prefix%AKICK #κανάλι VIEW *!*@bad.host"
+    short: "Προβολή λεπτομερών μεταδεδομένων εγγραφής AKICK."
+    help: |-
+      Εμφανίζει αιτία, δημιουργό, ημερομηνία δημιουργίας, ημερομηνία λήξης,
+      μετρητή χρήσεων και ημερομηνία τελευταίας χρήσης για μια εγγραφή autokick.
+    header: "Λεπτομέρειες AKICK για %channel%"
+    reason: "%label%%padding%: %reason%"
+    reason_label: "Αιτία"
+    author: "%label%%padding%: %author%"
+    author_label: "Δημιουργός"
+    created: "%label%%padding%: %date%"
+    created_label: "Δημιουργήθηκε"
+    expires: "%label%%padding%: %date%"
+    expires_label: "Λήγει"
+    uses: "%label%%padding%: %uses%"
+    uses_label: "Χρήσεις"
+    last_used: "%label%%padding%: %date%"
+    last_used_label: "Τελευταία χρήση"
+
+  # --- AKICK CLEAR ---------------------------------------------------------
+  clear:
+    syntax: "AKICK <#channel> CLEAR"
+    example: "%command_prefix%AKICK #κανάλι CLEAR"
+    short: "Εκκαθάριση όλων των εγγραφών AKICK."
+    help: |-
+      Αφαιρεί όλες τις εγγραφές αυτόματου kick από το κανάλι.
+      Απαιτεί επίπεδο ιδρυτή ή AKICK.
+    empty: "Το κανάλι %channel% δεν έχει εγγραφές AKICK για εκκαθάριση."
+    done: "Εκκαθαρίστηκαν %count% εγγραφές AKICK από το %channel%."
+    notice_channel: "%from% εκκαθάρισε %count% εγγραφές AKICK από το %channel%"
+
+  # --- AKICK CHECK ---------------------------------------------------------
+  check:
+    syntax: "AKICK <#channel> CHECK <ψευδώνυμο>"
+    example: "%command_prefix%AKICK #κανάλι CHECK Alice"
+    short: "Έλεγχος αν ένα ψευδώνυμο ταιριάζει με εγγραφές AKICK."
+    help: |-
+      Ελέγχει αν ένας συνδεδεμένος χρήστης ταιριάζει με εγγραφή autokick στο κανάλι.
+    no_match: "Το %nickname% δεν ταιριάζει με καμία εγγραφή AKICK στο %channel%."
+    not_connected: "Ο χρήστης %nickname% δεν είναι συνδεδεμένος."
+    header: "Αντιστοιχίσεις AKICK για %nickname% στο %channel%"
+    entry: "#%index% %mask% %reason%"
+
+  # --- AKICK ENFORCE -------------------------------------------------------
+  enforce:
+    syntax: "AKICK <#channel> ENFORCE"
+    example: "%command_prefix%AKICK #channel ENFORCE"
+    short: "Εφαρμογή εγγραφών AKICK στους τρέχοντες χρήστες του καναλιού."
+    help: |-
+      Ελέγχει τους συνδεδεμένους χρήστες στο κανάλι έναντι της λίστας AKICK
+      και αποκλείει και απομακρύνει όσους ταιριάζουν.
+    no_matches: "Κανένας χρήστης στο %channel% δεν ταιριάζει με εγγραφές AKICK."
+    done: "Εφαρμόστηκαν %count% απομακρύνσεις AKICK στο %channel%."
+    notice_channel: "Ο/Η %from% εφάρμοσε AKICK στο %channel% (%count% χρήστες)"
 
 # --- LEVELS -------------------------------------------------------------------
 levels:
@@ -873,6 +951,8 @@ history.message:
   set_secure_off: "Η επιλογή SECURE απενεργοποιήθηκε"
   set_private_on: "Η επιλογή PRIVATE ενεργοποιήθηκε"
   set_private_off: "Η επιλογή PRIVATE απενεργοποιήθηκε"
+  set_verbose_on: "Επιλογή VERBOSE ενεργοποιήθηκε"
+  set_verbose_off: "Επιλογή VERBOSE απενεργοποιήθηκε"
   registration_approved: "Η εγγραφή καναλιού εγκρίθηκε"
   founder_changed: "Ο ιδρυτής άλλαξε από %old_founder% σε %new_founder%"
   successor_changed: "Ο διάδοχος άλλαξε από %old_successor% σε %new_successor%"
@@ -881,6 +961,8 @@ history.message:
   access_del: "Πρόσβαση αφαιρέθηκε για %target_nickname%"
   akick_add: "AKICK προστέθηκε: %mask%"
   akick_del: "AKICK αφαιρέθηκε: %mask%"
+  akick_clear: "Η λίστα AKICK εκκαθαρίστηκε"
+  akick_enforce: "Εφαρμογή AKICK (%count% απομακρύνθηκαν)"
   saregister: "Το κανάλι καταχωρήθηκε διοικητικά"
 
 # --- HISTORY EXTRA FIELDS ---

@@ -34,6 +34,9 @@
         <field name="private" type="boolean" column="private">
             <options><option name="default">0</option></options>
         </field>
+        <field name="verbose" type="boolean" column="verbose">
+            <options><option name="default">1</option></options>
+        </field>
         <field name="topic" type="text" nullable="true" column="topic"/>
         <field name="lastTopicSetAt" type="datetime_immutable" nullable="true" column="last_topic_set_at"/>
         <field name="lastTopicSetByNick" type="string" length="64" nullable="true" column="last_topic_set_by_nick"/>

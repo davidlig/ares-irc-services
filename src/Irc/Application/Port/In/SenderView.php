@@ -33,4 +33,13 @@ final readonly class SenderView
     {
         return sprintf('%s!%s@%s', $this->nick, $this->ident, $this->hostname);
     }
+
+    public function toDisplayMask(): string
+    {
+        $host = '' !== $this->displayHost
+            ? $this->displayHost
+            : ('' !== $this->cloakedHost ? $this->cloakedHost : $this->hostname);
+
+        return sprintf('%s!%s@%s', $this->nick, $this->ident, $host);
+    }
 }

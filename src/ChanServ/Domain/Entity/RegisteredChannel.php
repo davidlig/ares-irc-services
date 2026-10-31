@@ -58,6 +58,8 @@ class RegisteredChannel
 
     private bool $private = false;
 
+    private bool $verbose = true;
+
     private ?string $topic = null;
 
     private ?DateTimeImmutable $lastTopicSetAt = null;
@@ -230,6 +232,11 @@ class RegisteredChannel
         return $this->private;
     }
 
+    public function isVerbose(): bool
+    {
+        return $this->verbose;
+    }
+
     public function getTopic(): ?string
     {
         return $this->topic;
@@ -329,6 +336,11 @@ class RegisteredChannel
     public function configurePrivate(bool $on): void
     {
         $this->private = $on;
+    }
+
+    public function configureVerbose(bool $on): void
+    {
+        $this->verbose = $on;
     }
 
     public function updateTopic(?string $topic, DateTimeImmutable $updatedAt, ?string $setByNick = null): void

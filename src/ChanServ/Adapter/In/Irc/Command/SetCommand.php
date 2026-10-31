@@ -32,7 +32,7 @@ final readonly class SetCommand implements ChanServCommandInterface
 
     private const array SUPPORTED_OPTIONS = [
         'FOUNDER', 'SUCCESSOR', 'DESC', 'URL', 'EMAIL', 'ENTRYMSG',
-        'TOPICLOCK', 'MLOCK', 'SECURE', 'PRIVATE',
+        'TOPICLOCK', 'MLOCK', 'SECURE', 'PRIVATE', 'VERBOSE',
     ];
 
     /** @var array<string, SetOptionHandlerInterface> */
@@ -50,6 +50,7 @@ final readonly class SetCommand implements ChanServCommandInterface
         SetMlockHandler $setMlockHandler,
         SetSecureHandler $setSecureHandler,
         SetPrivateHandler $setPrivateHandler,
+        SetVerboseHandler $setVerboseHandler,
     ) {
         $this->handlers = [
             'FOUNDER' => $setFounderHandler,
@@ -62,6 +63,7 @@ final readonly class SetCommand implements ChanServCommandInterface
             'MLOCK' => $setMlockHandler,
             'SECURE' => $setSecureHandler,
             'PRIVATE' => $setPrivateHandler,
+            'VERBOSE' => $setVerboseHandler,
         ];
     }
 
@@ -146,6 +148,13 @@ final readonly class SetCommand implements ChanServCommandInterface
                     ],
                     allowExtra: false,
                 ),
+                'VERBOSE' => new CommandArgumentDefinition(
+                    syntaxKey: 'set.verbose.syntax',
+                    arguments: [
+                        new Argument('state', alternatives: ['ON', 'OFF']),
+                    ],
+                    allowExtra: false,
+                ),
             ],
         );
     }
@@ -183,6 +192,7 @@ final readonly class SetCommand implements ChanServCommandInterface
             ['name' => 'MLOCK', 'desc_key' => 'set.mlock.short', 'help_key' => 'set.mlock.help', 'example_key' => 'set.mlock.example', 'syntax_key' => 'set.mlock.syntax'],
             ['name' => 'SECURE', 'desc_key' => 'set.secure.short', 'help_key' => 'set.secure.help', 'example_key' => 'set.secure.example', 'syntax_key' => 'set.secure.syntax'],
             ['name' => 'PRIVATE', 'desc_key' => 'set.private.short', 'help_key' => 'set.private.help', 'example_key' => 'set.private.example', 'syntax_key' => 'set.private.syntax'],
+            ['name' => 'VERBOSE', 'desc_key' => 'set.verbose.short', 'help_key' => 'set.verbose.help', 'example_key' => 'set.verbose.example', 'syntax_key' => 'set.verbose.syntax'],
         ];
     }
 

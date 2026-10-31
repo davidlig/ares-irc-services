@@ -71,6 +71,8 @@ info:
   topic_set_by_label: "Tema cambiado por"
   options: "%label%%padding%: %options%"
   options_label: "Opciones"
+  verbose: "%label%%padding%: %state%"
+  verbose_label: "Notificaciones de canal"
   private: "La información del canal %channel% es privada."
   no_expire: "%label%%padding%: Sí"
   no_expire_label: "Nunca Expira"
@@ -101,7 +103,7 @@ info:
 
 # --- SET ----------------------------------------------------------------------
 set:
-  syntax: "SET <#canal> {FOUNDER <apodo> [token]|SUCCESSOR [apodo]|DESC <descripción>|URL [url]|EMAIL [email]|ENTRYMSG [mensaje]|TOPICLOCK {ON|OFF}|MLOCK {ON|OFF}|PRIVATE {ON|OFF}|SECURE {ON|OFF}}"
+  syntax: "SET <#canal> {FOUNDER <apodo> [token]|SUCCESSOR [apodo]|DESC <descripción>|URL [url]|EMAIL [email]|ENTRYMSG [mensaje]|TOPICLOCK {ON|OFF}|MLOCK {ON|OFF}|PRIVATE {ON|OFF}|SECURE {ON|OFF}|VERBOSE {ON|OFF}}"
   example: "%command_prefix%SET #canal DESC Un canal comunitario"
   examples:
     - "%command_prefix%SET #canal URL https://example.test"
@@ -254,6 +256,19 @@ set:
     notice_on: "%nickname% activa el modo SECURE."
     notice_off: "%nickname% desactiva el modo SECURE."
 
+  # --- SET VERBOSE ---------------------------------------------------------
+  verbose:
+    syntax: "SET <#canal> VERBOSE {ON|OFF}"
+    example: "%command_prefix%SET #canal VERBOSE ON"
+    examples:
+      - "%command_prefix%SET #canal VERBOSE OFF"
+    short: "Alternar notificaciones de acciones del canal."
+    help: |-
+      Activa o desactiva las emisiones NOTICE al canal para las acciones
+      realizadas en él.
+    on: "Notificaciones de acciones del canal activadas."
+    off: "Notificaciones de acciones del canal desactivadas."
+
 # --- STATUS -------------------------------------------------------------------
 status:
   syntax: "STATUS <#canal>"
@@ -356,16 +371,19 @@ delaccess:
 
 # --- AKICK --------------------------------------------------------------------
 akick:
-  syntax: "AKICK <#canal> {ADD <máscara> [expiración] [razón]|DEL {<máscara>|<número>}|LIST}"
+  syntax: "AKICK <#canal> {ADD <máscara> [expiración] [razón]|DEL {<máscara>|<número>}|LIST|VIEW {<máscara>|<número>}|CLEAR|CHECK <apodo>|ENFORCE}"
   example: "%command_prefix%AKICK #canal ADD *!*@* 0"
   examples:
     - "%command_prefix%AKICK #canal ADD *!*@* 7d Spam"
     - "%command_prefix%AKICK #canal DEL *!*@*"
     - "%command_prefix%AKICK #canal DEL 2"
     - "%command_prefix%AKICK #canal LIST"
+    - "%command_prefix%AKICK #canal VIEW 1"
+    - "%command_prefix%AKICK #canal CLEAR"
+    - "%command_prefix%AKICK #canal CHECK Alice"
   short: "Gestionar lista de auto-kick."
   help: "Gestiona las entradas de autokick y su expiración opcional."
-  unknown_sub: "Subcomando desconocido %sub%. Usa ADD, DEL o LIST."
+  unknown_sub: "Subcomando desconocido %sub%. Usa ADD, DEL, LIST, VIEW, CLEAR o CHECK."
   invalid_mask: "Formato de máscara inválido. Usa apodo!ident@host con comodines (*)."
   dangerous_mask: "La máscara %mask% es demasiado amplia. Debe contener al menos 4 caracteres alfanuméricos."
   protected_user: "El apodo %nickname% tiene acceso en este canal."
@@ -408,7 +426,67 @@ akick:
     help: "Muestra máscara, razón, expiración y quién añadió."
     header: "Lista AKICK de %channel%"
     empty: "El canal %channel% no tiene AKICKs."
-    entry: "#%index% %mask% %reason% (por %nickname%, expira: %expiration%)"
+    entry: "#%index% %mask% %reason% (por %nickname%, expira: %expiration%, usos: %uses%)"
+
+  # --- AKICK VIEW ----------------------------------------------------------
+  view:
+    syntax: "AKICK <#canal> VIEW {<máscara>|<número>}"
+    example: "%command_prefix%AKICK #canal VIEW 1"
+    examples:
+      - "%command_prefix%AKICK #canal VIEW *!*@bad.host"
+    short: "Ver metadatos detallados de una entrada AKICK."
+    help: |-
+      Muestra razón, autor, fecha de creación, fecha de expiración,
+      contador de usos y fecha del último uso para una entrada de autokick.
+    header: "Detalles de AKICK para %channel%"
+    reason: "%label%%padding%: %reason%"
+    reason_label: "Razón"
+    author: "%label%%padding%: %author%"
+    author_label: "Autor"
+    created: "%label%%padding%: %date%"
+    created_label: "Fecha creación"
+    expires: "%label%%padding%: %date%"
+    expires_label: "Fecha expiración"
+    uses: "%label%%padding%: %uses%"
+    uses_label: "Usos"
+    last_used: "%label%%padding%: %date%"
+    last_used_label: "Último uso"
+
+  # --- AKICK CLEAR ---------------------------------------------------------
+  clear:
+    syntax: "AKICK <#canal> CLEAR"
+    example: "%command_prefix%AKICK #canal CLEAR"
+    short: "Vaciar todas las entradas AKICK."
+    help: |-
+      Elimina todas las entradas de expulsión automática del canal.
+      Requiere nivel de fundador o AKICK.
+    empty: "El canal %channel% no tiene entradas AKICK para vaciar."
+    done: "%count% entradas AKICK vaciadas de %channel%."
+    notice_channel: "%from% vació %count% entradas AKICK de %channel%"
+
+  # --- AKICK CHECK ---------------------------------------------------------
+  check:
+    syntax: "AKICK <#canal> CHECK <apodo>"
+    example: "%command_prefix%AKICK #canal CHECK Alice"
+    short: "Comprobar si un apodo coincide con entradas AKICK."
+    help: |-
+      Comprueba si un usuario conectado coincide con alguna entrada de autokick del canal.
+    no_match: "%nickname% no coincide con ninguna entrada AKICK en %channel%."
+    not_connected: "El usuario %nickname% no está conectado."
+    header: "Coincidencias AKICK para %nickname% en %channel%"
+    entry: "#%index% %mask% %reason%"
+
+  # --- AKICK ENFORCE -------------------------------------------------------
+  enforce:
+    syntax: "AKICK <#canal> ENFORCE"
+    example: "%command_prefix%AKICK #canal ENFORCE"
+    short: "Aplica las entradas AKICK a los usuarios actuales del canal."
+    help: |-
+      Comprueba si hay usuarios en el canal que coincidan con la lista AKICK
+      y expulsa y banea a quienes coincidan.
+    no_matches: "Ningún usuario en %channel% coincide con la lista AKICK."
+    done: "Se aplicaron %count% expulsiones de AKICK en %channel%."
+    notice_channel: "%from% aplicó expulsiones AKICK en %channel% (%count% usuarios)"
 
 # --- LEVELS -------------------------------------------------------------------
 levels:
@@ -814,6 +892,8 @@ history.message:
   set_secure_off: "Opción SECURE desactivada"
   set_private_on: "Opción PRIVATE activada"
   set_private_off: "Opción PRIVATE desactivada"
+  set_verbose_on: "Opción VERBOSE activada"
+  set_verbose_off: "Opción VERBOSE desactivada"
   founder_changed: "Fundador cambiado de %old_founder% a %new_founder%"
   successor_changed: "Sucesor cambiado de %old_successor% a %new_successor%"
   registration_approved: "Registro de canal aprobado"
@@ -822,6 +902,8 @@ history.message:
   access_del: "Acceso eliminado para %target_nickname%"
   akick_add: "AKICK añadido: %mask%"
   akick_del: "AKICK eliminado: %mask%"
+  akick_clear: "Lista AKICK vaciada"
+  akick_enforce: "Expulsiones AKICK aplicadas (%count% expulsados)"
   saregister: "Canal registrado administrativamente"
 
 # --- HISTORY EXTRA FIELDS ---

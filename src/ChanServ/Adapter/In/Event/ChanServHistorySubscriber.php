@@ -161,19 +161,36 @@ final readonly class ChanServHistorySubscriber implements EventSubscriberInterfa
 
     public function onChannelAkickChanged(ChannelAkickChangedEvent $event): void
     {
-        $extra = [
-            'mask' => $event->mask,
-        ];
+        $extra = [];
 
-        if (null !== $event->reason) {
-            $extra['reason'] = $event->reason;
+        switch ($event->action) {
+            case 'ADD':
+                $action = 'AKICK_ADD';
+                $messageKey = 'history.message.akick_add';
+                $extra['mask'] = $event->mask;
+                if (null !== $event->reason) {
+                    $extra['reason'] = $event->reason;
+                }
+                break;
+
+            case 'DEL':
+                $action = 'AKICK_DEL';
+                $messageKey = 'history.message.akick_del';
+                $extra['mask'] = $event->mask;
+                break;
+
+            case 'ENFORCE':
+                $action = 'AKICK_ENFORCE';
+                $messageKey = 'history.message.akick_enforce';
+                $extra['count'] = (string) ($event->count ?? 0);
+                break;
+
+            case 'CLEAR':
+            default:
+                $action = 'AKICK_CLEAR';
+                $messageKey = 'history.message.akick_clear';
+                break;
         }
-
-        $action = 'ADD' === $event->action ? 'AKICK_ADD' : 'AKICK_DEL';
-
-        $messageKey = 'ADD' === $event->action
-            ? 'history.message.akick_add'
-            : 'history.message.akick_del';
 
         $this->historyService->recordAction(
             channelId: $event->channelId,

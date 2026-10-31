@@ -79,6 +79,32 @@ final class EnforceChannelAkickHandlerTest extends TestCase
     }
 
     #[Test]
+    public function matchingAkickIncrementsUsesAndRecordsLastUsedAtAndSaves(): void
+    {
+        $akick = ChannelAkick::create(new DateTimeImmutable(), 1, 2, '*!*@example.test');
+        self::assertSame(0, $akick->getUses());
+        self::assertNull($akick->getLastUsedAt());
+
+        $akicks = $this->createMock(ChannelAkickRepositoryInterface::class);
+        $akicks->method('listByChannel')->willReturn([$akick]);
+        $akicks->expects(self::once())->method('save')->with($akick);
+
+        $actions = $this->createStub(AkickActions::class);
+
+        $handler = $this->handler(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $akicks,
+            $this->createStub(ChannelEntryNetworkQuery::class),
+            $actions,
+        );
+
+        $handler->handleKnownChannel($this->channel(), [$this->member('001A', 'nick!ident@example.test')], $this->now);
+
+        self::assertSame(1, $akick->getUses());
+        self::assertSame($this->now, $akick->getLastUsedAt());
+    }
+
+    #[Test]
     public function exactExpiryInstantStillMatchesAndExplicitReasonIsPreserved(): void
     {
         $akicks = $this->createStub(ChannelAkickRepositoryInterface::class);

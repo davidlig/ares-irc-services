@@ -51,6 +51,24 @@ final class ChannelAkickTest extends TestCase
     }
 
     #[Test]
+    public function recordUsageIncrementsUsesAndSetsLastUsedAt(): void
+    {
+        $akick = ChannelAkick::create(new DateTimeImmutable(), 1, 2, '*!*@host.com');
+        self::assertSame(0, $akick->getUses());
+        self::assertNull($akick->getLastUsedAt());
+
+        $now = new DateTimeImmutable('2026-10-30 12:00:00');
+        $akick->recordUsage($now);
+        self::assertSame(1, $akick->getUses());
+        self::assertSame($now, $akick->getLastUsedAt());
+
+        $later = new DateTimeImmutable('2026-10-30 13:00:00');
+        $akick->recordUsage($later);
+        self::assertSame(2, $akick->getUses());
+        self::assertSame($later, $akick->getLastUsedAt());
+    }
+
+    #[Test]
     public function isExpiredReturnsTrueWhenExpired(): void
     {
         $akick = ChannelAkick::create(new DateTimeImmutable(), 1, 2, '*!*@host.com', null, new DateTimeImmutable('-1 day'));

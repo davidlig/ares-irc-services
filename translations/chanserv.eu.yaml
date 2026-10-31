@@ -72,6 +72,8 @@ info:
   topic_set_by_label: "Gaia ezarlea"
   options: "%label%%padding%: %options%"
   options_label: "Aukerak"
+  verbose: "%label%%padding%: %state%"
+  verbose_label: "Kanalaren jakinarazpenak"
   private: "%channel% kanalaren informazioa pribatua da."
   no_expire: "%label%%padding%: Bai"
   no_expire_label: "Iraungitzen ez da"
@@ -102,7 +104,7 @@ info:
 
 # --- SET ----------------------------------------------------------------------
 set:
-  syntax: "SET <#kanala> {FOUNDER <ezizena> [tokena]|SUCCESSOR [ezizena]|DESC <deskribapena>|URL [urla]|EMAIL [posta]|ENTRYMSG [mezua]|TOPICLOCK {ON|OFF}|MLOCK {ON|OFF}|PRIVATE {ON|OFF}|SECURE {ON|OFF}}"
+  syntax: "SET <#kanala> {FOUNDER <ezizena> [tokena]|SUCCESSOR [ezizena]|DESC <deskribapena>|URL [urla]|EMAIL [posta]|ENTRYMSG [mezua]|TOPICLOCK {ON|OFF}|MLOCK {ON|OFF}|PRIVATE {ON|OFF}|SECURE {ON|OFF}|VERBOSE {ON|OFF}}"
   example: "%command_prefix%SET #kanala DESC Komunitate-kanala"
   examples:
     - "%command_prefix%SET #kanala URL https://example.test"
@@ -255,6 +257,19 @@ set:
     notice_on: "%nickname%(e)k SECURE modua gaitzen du."
     notice_off: "%nickname%(e)k SECURE modua desgaitzen du."
 
+  # --- SET VERBOSE ---------------------------------------------------------
+  verbose:
+    syntax: "SET <#kanala> VERBOSE {ON|OFF}"
+    example: "%command_prefix%SET #kanala VERBOSE ON"
+    examples:
+      - "%command_prefix%SET #kanala VERBOSE OFF"
+    short: "Kanaleko ekintza-jakinarazpenak txandakatu."
+    help: |-
+      Kanalean egindako ekintzetarako kanalera NOTICE difusioak
+      aktibatu edo desaktibatzen ditu.
+    on: "Kanaleko ekintza-jakinarazpenak gaituta."
+    off: "Kanaleko ekintza-jakinarazpenak desgaituta."
+
 # --- STATUS -------------------------------------------------------------------
 status:
   syntax: "STATUS <#channel>"
@@ -356,16 +371,19 @@ delaccess:
 
 # --- AKICK --------------------------------------------------------------------
 akick:
-  syntax: "AKICK <#kanala> {ADD <maskara> [iraungitzea] [arrazoia]|DEL {<maskara>|<zenbakia>}|LIST}"
+  syntax: "AKICK <#kanala> {ADD <maskara> [iraungitzea] [arrazoia]|DEL {<maskara>|<zenbakia>}|LIST|VIEW {<maskara>|<zenbakia>}|CLEAR|CHECK <ezizena>|ENFORCE}"
   example: "%command_prefix%AKICK #kanala ADD *!*@* 0"
   examples:
     - "%command_prefix%AKICK #kanala ADD *!*@* 7d Spam"
     - "%command_prefix%AKICK #kanala DEL *!*@*"
     - "%command_prefix%AKICK #kanala DEL 2"
     - "%command_prefix%AKICK #kanala LIST"
+    - "%command_prefix%AKICK #kanala VIEW 1"
+    - "%command_prefix%AKICK #kanala CLEAR"
+    - "%command_prefix%AKICK #kanala CHECK Alice"
   short: "Kudeatu auto-kick zerrenda."
   help: "Auto-kick sarrerak eta haien aukerako iraungitzea kudeatzen ditu."
-  unknown_sub: "Azpikomando ezezaguna %sub%. Erabili ADD, DEL edo LIST."
+  unknown_sub: "Azpikomando ezezaguna %sub%. Erabili ADD, DEL, LIST, VIEW, CLEAR edo CHECK."
   invalid_mask: "Maskara formatu baliogabea. Erabili nick!ident@host komodinak erabiliz (*)."
   dangerous_mask: "%mask% maskara zabalegia da. Gutxienez 4 karaktere alfanumeriko eduki behar ditu."
   protected_user: "%nickname% ezizenak sarbidea du kanal honetan."
@@ -408,7 +426,67 @@ akick:
     help: "Maskara, arrazoia, iraungitzea eta nork gehitu zuen erakusten ditu."
     header: "%channel% kanalaren AKICK zerrenda"
     empty: "%channel% kanalak ez du AKICK sarrerarik."
-    entry: "#%index% %mask% %reason% (%nickname%-(e)k gehituta, iraungitzea: %expiration%)"
+    entry: "#%index% %mask% %reason% (%nickname%-(e)k gehituta, iraungitzea: %expiration%, erabilpenak: %uses%)"
+
+  # --- AKICK VIEW ----------------------------------------------------------
+  view:
+    syntax: "AKICK <#kanala> VIEW {<maskara>|<zenbakia>}"
+    example: "%command_prefix%AKICK #kanala VIEW 1"
+    examples:
+      - "%command_prefix%AKICK #kanala VIEW *!*@bad.host"
+    short: "Ikusi AKICK sarreraren metadatu zehatzak."
+    help: |-
+      Arrazoia, egilea, sortze-data, iraungitze-data, erabilpen-kontagailua
+      eta azken erabilpen-data erakusten ditu autokick sarrera baterako.
+    header: "AKICK xehetasunak %channel% kanalerako"
+    reason: "%label%%padding%: %reason%"
+    reason_label: "Arrazoia"
+    author: "%label%%padding%: %author%"
+    author_label: "Egilea"
+    created: "%label%%padding%: %date%"
+    created_label: "Sortua"
+    expires: "%label%%padding%: %date%"
+    expires_label: "Iraungipena"
+    uses: "%label%%padding%: %uses%"
+    uses_label: "Erabilpenak"
+    last_used: "%label%%padding%: %date%"
+    last_used_label: "Azken erabilpena"
+
+  # --- AKICK CLEAR ---------------------------------------------------------
+  clear:
+    syntax: "AKICK <#kanala> CLEAR"
+    example: "%command_prefix%AKICK #kanala CLEAR"
+    short: "Garbitu AKICK sarrera guztiak."
+    help: |-
+      Kanaleko automatikoki botatzeko sarrera guztiak ezabatzen ditu.
+      Kanalaren sortzaile edo AKICK maila behar du.
+    empty: "%channel% kanalak ez du garbitzeko AKICK sarrerarik."
+    done: "%count% AKICK sarrera garbitu dira %channel% kanaletik."
+    notice_channel: "%from%(e)k %count% AKICK sarrera garbitu ditu %channel% kanaletik"
+
+  # --- AKICK CHECK ---------------------------------------------------------
+  check:
+    syntax: "AKICK <#kanala> CHECK <ezizena>"
+    example: "%command_prefix%AKICK #kanala CHECK Alice"
+    short: "Egiaztatu ezizen batek AKICK sarrerekin bat egiten duen."
+    help: |-
+      Konektatutako erabiltzaile batek kanaleko autokick sarreraren batekin bat egiten duen egiaztatzen du.
+    no_match: "%nickname% ez dator bat %channel% kanaleko AKICK sarrerekin."
+    not_connected: "%nickname% erabiltzailea ez dago konektatuta."
+    header: "AKICK bat-etortzeak %nickname% erabiltzailearentzat %channel% kanalean"
+    entry: "#%index% %mask% %reason%"
+
+  # --- AKICK ENFORCE -------------------------------------------------------
+  enforce:
+    syntax: "AKICK <#kanala> ENFORCE"
+    example: "%command_prefix%AKICK #kanala ENFORCE"
+    short: "Aplikatu AKICK sarrerak kanaleko uneko erabiltzaileei."
+    help: |-
+      Kanaleko erabiltzaileak AKICK zerrendarekin alderatzen ditu
+      eta bat datozenak kanporatu eta debekatu egiten ditu.
+    no_matches: "%channel% kanaleko erabiltzailerik ez dator bat AKICK zerrendarekin."
+    done: "%count% AKICK kanporatze aplikatu dira %channel% kanalean."
+    notice_channel: "%from%(e)k AKICK kanporatzeak aplikatu ditu %channel% kanalean (%count% erabiltzaile)"
 
 # --- LEVELS -------------------------------------------------------------------
 levels:
@@ -812,6 +890,8 @@ history.message:
   set_secure_off: "SECURE aukera desaktibatu da"
   set_private_on: "PRIVATE aukera aktibatu da"
   set_private_off: "PRIVATE aukera desaktibatu da"
+  set_verbose_on: "VERBOSE aukera gaituta"
+  set_verbose_off: "VERBOSE aukera desgaituta"
   registration_approved: "Kanalaren erregistroa onartuta"
   founder_changed: "Sortzailea %old_founder%-(e)tik %new_founder%-(e)ra aldatua"
   successor_changed: "Ondorengoa %old_successor%-(e)tik %new_successor%-(e)ra aldatua"
@@ -820,6 +900,8 @@ history.message:
   access_del: "Sarbidea kendua %target_nickname%-(r)entzat"
   akick_add: "AKICK gehitua: %mask%"
   akick_del: "AKICK kendua: %mask%"
+  akick_clear: "AKICK zerrenda garbituta"
+  akick_enforce: "AKICK betearazita (%count% kanporatuta)"
   saregister: "Kanala administratiboki erregistratua"
 
 # --- HISTORY EXTRA FIELDS ---

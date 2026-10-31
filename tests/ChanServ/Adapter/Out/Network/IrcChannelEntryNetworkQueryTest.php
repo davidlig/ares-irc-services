@@ -50,8 +50,25 @@ final class IrcChannelEntryNetworkQueryTest extends TestCase
 
         self::assertNull($query->findMember('missing'));
         self::assertMember(
-            new ChannelEntryMember('001A', 'cHaNsErV', 'cHaNsErV!ident@example.test', true, true, true),
+            new ChannelEntryMember('001A', 'cHaNsErV', 'cHaNsErV!ident@example.test', true, true, true, 'cHaNsErV!ident@cloak.test'),
             $query->findMember('001A'),
+        );
+    }
+
+    #[Test]
+    public function mapsIndividualMemberByNickname(): void
+    {
+        $users = $this->createStub(NetworkUserLookupPort::class);
+        $users->method('findByNick')->willReturnMap([
+            ['missing', null],
+            ['Alice', $this->user('001A', 'Alice', identified: true, operator: false)],
+        ]);
+        $query = new IrcChannelEntryNetworkQuery($this->createStub(ChannelLookupPort::class), $users, 'ChanServ');
+
+        self::assertNull($query->findMemberByNick('missing'));
+        self::assertMember(
+            new ChannelEntryMember('001A', 'Alice', 'Alice!ident@example.test', true, false, false, 'Alice!ident@cloak.test'),
+            $query->findMemberByNick('Alice'),
         );
     }
 
@@ -81,7 +98,7 @@ final class IrcChannelEntryNetworkQueryTest extends TestCase
         self::assertSame('#Test', $state->name);
         self::assertCount(1, $state->members);
         self::assertMember(
-            new ChannelEntryMember('001A', 'Member', 'Member!ident@example.test', false, false, false),
+            new ChannelEntryMember('001A', 'Member', 'Member!ident@example.test', false, false, false, 'Member!ident@cloak.test'),
             $state->members[0],
         );
     }
@@ -95,6 +112,7 @@ final class IrcChannelEntryNetworkQueryTest extends TestCase
         self::assertSame($expected->identified, $actual->identified);
         self::assertSame($expected->operator, $actual->operator);
         self::assertSame($expected->service, $actual->service);
+        self::assertSame($expected->displayMask, $actual->displayMask);
     }
 
     private function user(string $uid, string $nickname, bool $identified = false, bool $operator = false): SenderView

@@ -542,6 +542,7 @@ final class AkickEnforcementUnbanIntegrationTest extends TestCase
             $this->createStub(SendNoticePort::class),
             $uidGen,
             'services.example.com',
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
             'ChanServ',
         );
         $this->chanServBot->onBurstComplete(new ServiceIntroductionRequestedEvent('001'));

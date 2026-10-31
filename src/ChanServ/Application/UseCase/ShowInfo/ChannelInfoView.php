@@ -34,5 +34,6 @@ final readonly class ChannelInfoView
         public ?DateTimeImmutable $suspendedUntil,
         public bool $ircopOnly = false,
         public bool $privateInfoDenied = false,
+        public bool $verbose = true,
     ) {}
 }

@@ -204,7 +204,7 @@ final readonly class AccessCommand implements ChanServCommandInterface
         $nickname = (string) $result->targetNickname;
         $level = (string) $result->level;
         $context->reply('access.add.done', ['%nickname%' => new Fragment($nickname, Component::Emphasis), '%level%' => $level], Role::Success);
-        $context->getNotifier()->sendNoticeToChannel($channelName, $context->renderReply(Role::Success, 'access.add.notice_channel', [
+        $context->getNotifier()->sendNoticeToChannel($channelName, $context->renderReply(Role::Information, 'access.add.notice_channel', [
             '%from%' => new Fragment($performedBy, Component::Actor),
             '%to%' => new Fragment($nickname, Component::Target),
             '%level%' => new Fragment($level, Component::ModeChange),
@@ -215,7 +215,7 @@ final readonly class AccessCommand implements ChanServCommandInterface
     {
         $nickname = (string) $result->targetNickname;
         $context->reply('access.del.done', ['%nickname%' => new Fragment($nickname, Component::Emphasis)], Role::Success);
-        $context->getNotifier()->sendNoticeToChannel($channelName, $context->renderReply(Role::Success, 'access.del.notice_channel', [
+        $context->getNotifier()->sendNoticeToChannel($channelName, $context->renderReply(Role::Information, 'access.del.notice_channel', [
             '%from%' => new Fragment($performedBy, Component::Actor),
             '%to%' => new Fragment($nickname, Component::Target),
         ]));

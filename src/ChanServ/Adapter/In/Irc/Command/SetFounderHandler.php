@@ -96,7 +96,7 @@ final readonly class SetFounderHandler implements SetOptionHandlerInterface
         string $actorNickname,
     ): void {
         $context->reply('set.founder.updated', ['%nickname%' => new Fragment((string) $result->targetNickname, Component::Emphasis)], Role::Success);
-        $notice = $context->renderReply(Role::Success, 'set.founder.notice_channel', [
+        $notice = $context->renderReply(Role::Information, 'set.founder.notice_channel', [
             '%from%' => new Fragment($actorNickname, Component::Actor),
             '%nickname%' => new Fragment((string) $result->targetNickname, Component::Emphasis),
         ]);

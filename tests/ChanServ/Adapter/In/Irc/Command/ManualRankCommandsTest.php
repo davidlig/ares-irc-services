@@ -175,12 +175,12 @@ final class ManualRankCommandsTest extends TestCase
         self::assertSame(7, $captured->actorAccountId);
         self::assertTrue($captured->founderOverride);
         self::assertSame(ManualRankOperation::Voice, $captured->operation);
-        self::assertSame(["\x0303✔\x03\x0F voice.notice_grant:\x0302Actor\x03\x0F|\x0304+v\x03\x0F|\x0314Target\x03\x0F", "\x0303✔\x03\x0F voice.done"], [$notices[0], $messages[0]]);
+        self::assertSame(["\x0310ℹ\x03\x0F voice.notice_grant:\x0302Actor\x03\x0F|\x0304+v\x03\x0F|\x0314Target\x03\x0F", "\x0303✔\x03\x0F voice.done"], [$notices[0], $messages[0]]);
 
         $messages = [];
         $notices = [];
         new DevoiceCommand($handler)->execute($this->context($this->sender(), $this->account(), ['#Channel', 'Target'], $messages, $notices));
-        self::assertSame(["\x0303✔\x03\x0F voice.notice_grant:\x0302Actor\x03\x0F|\x0304-v\x03\x0F|\x0314Target\x03\x0F", "\x0303✔\x03\x0F devoice.done"], [$notices[0], $messages[0]]);
+        self::assertSame(["\x0310ℹ\x03\x0F voice.notice_grant:\x0302Actor\x03\x0F|\x0304-v\x03\x0F|\x0314Target\x03\x0F", "\x0303✔\x03\x0F devoice.done"], [$notices[0], $messages[0]]);
     }
 
     /** @param class-string<ChanServCommandInterface> $class */
@@ -201,7 +201,7 @@ final class ManualRankCommandsTest extends TestCase
             $notices,
         ));
 
-        self::assertSame("\x0303✔\x03\x0F " . $noticeKey . ":\x0302Actor\x03\x0F|\x0304" . $displayMode . "\x03\x0F|\x0314Target\x03\x0F", $notices[0]);
+        self::assertSame("\x0310ℹ\x03\x0F " . $noticeKey . ":\x0302Actor\x03\x0F|\x0304" . $displayMode . "\x03\x0F|\x0314Target\x03\x0F", $notices[0]);
     }
 
     private function sender(): SenderView

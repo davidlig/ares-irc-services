@@ -78,7 +78,7 @@ trait ManualRankCommandPresentation
                 break;
             case ManageManualRankOutcome::Applied:
                 $context->getNotifier()->sendNoticeToChannel($channelName, $context->renderReply(
-                    Role::Success,
+                    Role::Information,
                     $this->rankBase($operation) . '.notice_grant',
                     [
                         '%from%' => new Fragment($context->sender->nick, Component::Actor),

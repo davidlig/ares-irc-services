@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\ChanServ\Adapter\In\Irc\Bot;
 
 use App\ChanServ\Adapter\In\Irc\ChanServNotifierInterface;
+use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\Irc\Application\Port\In\ActiveProtocolModuleHolderInterface;
 use App\Irc\Application\Port\In\ApplyOutgoingChannelModesPort;
 use App\Irc\Application\Port\In\ChannelLookupPort;
@@ -21,6 +22,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 use function array_find;
 use function in_array;
+use function strtolower;
 use function time;
 
 /**
@@ -42,6 +44,7 @@ final class ChanServBot implements ChanServNotifierInterface, ChannelServiceActi
         private readonly SendNoticePort $sendNoticePort,
         private readonly ServiceUidGeneratorInterface $uidGenerator,
         private readonly string $servicesVhost,
+        private readonly RegisteredChannelRepositoryInterface $channels,
         private readonly string $chanservNick = 'ChanServ',
         private readonly string $chanservIdent = 'ChanServ',
         private readonly string $chanservRealname = 'Channel Registration Services',
@@ -73,6 +76,11 @@ final class ChanServBot implements ChanServNotifierInterface, ChannelServiceActi
 
     public function sendNoticeToChannel(string $channelName, string $message): void
     {
+        $channel = $this->channels->findByChannelName(strtolower($channelName));
+        if (null !== $channel && !$channel->isVerbose()) {
+            return;
+        }
+
         $channelView = $this->channelLookup->findByChannelName($channelName);
         if (null === $channelView || $channelView->memberCount < 1) {
             return;

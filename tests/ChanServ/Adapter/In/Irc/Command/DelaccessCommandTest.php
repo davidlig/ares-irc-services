@@ -174,7 +174,7 @@ final class DelaccessCommandTest extends TestCase
         self::assertSame(["\x0303✔\x03\x0F delaccess.done"], $messages);
         self::assertCount(1, $noticesToChannel);
         self::assertSame('#test', $noticesToChannel[0][0]);
-        self::assertSame("\x0303✔\x03\x0F delaccess.notice_channel", $noticesToChannel[0][1]);
+        self::assertSame("\x0310ℹ\x03\x0F delaccess.notice_channel", $noticesToChannel[0][1]);
     }
 
     #[Test]

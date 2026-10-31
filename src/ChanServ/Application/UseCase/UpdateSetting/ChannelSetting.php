@@ -13,4 +13,5 @@ enum ChannelSetting
     case Successor;
     case TopicLock;
     case Url;
+    case Verbose;
 }

@@ -1513,8 +1513,6 @@ services:
   # Maintenance Tasks
   App\ChanServ\Adapter\In\Maintenance\PurgeExpiredAkickTask:
     arguments:
-      $debugNotifier: '@App\ChanServ\Adapter\Out\Service\ChanServDebugNotifier'
-      $serverName: "%irc.server_name%"
       $logger: "@monolog.logger.maintenance"
       $intervalSeconds: "%maintenance.purge_expired_akick_interval%"
     tags: ["maintenance.task"]

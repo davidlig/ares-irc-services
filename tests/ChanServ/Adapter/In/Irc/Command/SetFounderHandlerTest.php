@@ -193,7 +193,7 @@ final class SetFounderHandlerTest extends TestCase
         );
 
         self::assertSame(["\x0303✔\x03\x0F set.founder.updated"], $messages);
-        self::assertSame([['#test', "\x0303✔\x03\x0F set.founder.notice_channel"]], $notices);
+        self::assertSame([['#test', "\x0310ℹ\x03\x0F set.founder.notice_channel"]], $notices);
     }
 
     /**

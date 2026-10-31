@@ -38,6 +38,11 @@ final class RegisteredChannelTest extends TestCase
         self::assertFalse($channel->isSecure());
         self::assertFalse($channel->isIrcopOnly());
         self::assertFalse($channel->isPrivate());
+        self::assertTrue($channel->isVerbose());
+        $channel->configureVerbose(false);
+        self::assertFalse($channel->isVerbose());
+        $channel->configureVerbose(true);
+        self::assertTrue($channel->isVerbose());
         self::assertNull($channel->getTopic());
         self::assertTrue($channel->isFounder(1));
         self::assertFalse($channel->isFounder(2));

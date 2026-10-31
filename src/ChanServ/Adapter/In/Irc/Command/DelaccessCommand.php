@@ -142,7 +142,7 @@ final readonly class DelaccessCommand implements ChanServCommandInterface
         }
 
         $context->reply('delaccess.done', ['%channel%' => new Fragment($channelName, Component::Emphasis)], Role::Success);
-        $notice = $context->renderReply(Role::Success, 'delaccess.notice_channel', ['%nickname%' => new Fragment($sender->nick, Component::Actor)]);
+        $notice = $context->renderReply(Role::Information, 'delaccess.notice_channel', ['%nickname%' => new Fragment($sender->nick, Component::Actor)]);
         $context->getNotifier()->sendNoticeToChannel($channelName, $notice);
 
         return CommandOutcome::success();
