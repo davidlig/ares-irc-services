@@ -21,8 +21,13 @@ final readonly class IrcChannelEntryMessageDelivery implements ChannelEntryMessa
 
     public function deliver(string $channelName, string $targetUid, string $entryMessage): void
     {
+        $sourceUid = $this->uidRegistry->getUid('chanserv');
+        if (null === $sourceUid || '' === $sourceUid) {
+            return;
+        }
+
         $this->notices->sendNotice(
-            $this->uidRegistry->getUid('chanserv') ?? '',
+            $sourceUid,
             $targetUid,
             $this->renderer->component(Component::Text, '%channel% %message%', [
                 '%channel%' => new Fragment($channelName, Component::ChannelTag),
