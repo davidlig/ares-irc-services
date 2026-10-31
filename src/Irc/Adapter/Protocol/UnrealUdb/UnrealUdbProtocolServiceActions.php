@@ -9,6 +9,7 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Session\SystemUdbClock;
 use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbClock;
 use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionStateInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbRecordWriterInterface;
+use App\Irc\Application\Port\In\ChannelModeSupportInterface;
 use App\Irc\Application\Port\In\OperclassServiceActionsInterface;
 use App\Irc\Application\Port\In\ProtocolServiceActionsInterface;
 use Psr\Log\LoggerInterface;
@@ -16,6 +17,7 @@ use Psr\Log\NullLogger;
 
 use function count;
 use function implode;
+use function in_array;
 use function sprintf;
 use function str_replace;
 use function str_split;
@@ -48,6 +50,7 @@ final readonly class UnrealUdbProtocolServiceActions implements ProtocolServiceA
         private UnrealUdbServiceIntroductionFormatter $introductionFormatter = new UnrealUdbServiceIntroductionFormatter(),
         private LoggerInterface $logger = new NullLogger(),
         private UdbClock $clock = new SystemUdbClock(),
+        private ChannelModeSupportInterface $channelModeSupport = new UnrealUdbChannelModeSupport(),
     ) {}
 
     public function setUserAccount(string $serverSid, string $targetUid, string $accountName): void
@@ -235,19 +238,36 @@ final readonly class UnrealUdbProtocolServiceActions implements ProtocolServiceA
      */
     private function stripUdbManagedModes(string $modeStr, array $params): array
     {
+        $currentSign = '+';
+        $activeSign = null;
         $filtered = '';
         $filteredParams = [];
         $paramIdx = 0;
         $paramCount = count($params);
 
+        $prefixModes = $this->channelModeSupport->getSupportedPrefixModes();
+        $listModes = $this->channelModeSupport->getListModeLetters();
+        $setWithParam = $this->channelModeSupport->getChannelSettingModesWithParamOnSet();
+        $unsetWithParam = $this->channelModeSupport->getChannelSettingModesUnsetWithParam();
+
         foreach (str_split($modeStr) as $char) {
             if ('+' === $char || '-' === $char) {
-                $filtered .= $char;
+                $currentSign = $char;
                 continue;
             }
 
+            $isParametric = match ($currentSign) {
+                '+' => in_array($char, $prefixModes, true)
+                    || in_array($char, $listModes, true)
+                    || in_array($char, $setWithParam, true),
+                '-' => in_array($char, $prefixModes, true)
+                    || in_array($char, $listModes, true)
+                    || in_array($char, $unsetWithParam, true),
+                default => false,
+            };
+
             if ('q' === $char) {
-                if ($paramIdx < $paramCount) {
+                if ($isParametric && $paramIdx < $paramCount) {
                     ++$paramIdx;
                 }
 
@@ -258,14 +278,19 @@ final readonly class UnrealUdbProtocolServiceActions implements ProtocolServiceA
                 continue;
             }
 
+            if ($activeSign !== $currentSign) {
+                $filtered .= $currentSign;
+                $activeSign = $currentSign;
+            }
+
             $filtered .= $char;
-            if ($paramIdx < $paramCount) {
+            if ($isParametric && $paramIdx < $paramCount) {
                 $filteredParams[] = $params[$paramIdx];
                 ++$paramIdx;
             }
         }
 
-        if ('' === str_replace(['+', '-'], '', $filtered)) {
+        if ('' === $filtered) {
             return ['', []];
         }
 

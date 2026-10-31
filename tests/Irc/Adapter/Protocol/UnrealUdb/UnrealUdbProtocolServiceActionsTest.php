@@ -192,6 +192,47 @@ final class UnrealUdbProtocolServiceActionsTest extends TestCase
     }
 
     #[Test]
+    public function setChannelModesPreservesParameterAlignmentWithMixedParameterlessAndParametricModes(): void
+    {
+        $actions = $this->createActions();
+
+        $actions->setChannelModes('001', '#test', '+nqo', ['UID_OWNER', 'UID_OPER'], '001CSRV');
+
+        self::assertSame([':001CSRV MODE #test +no UID_OPER'], $this->written);
+    }
+
+    #[Test]
+    public function setChannelModesPreservesParameterAlignmentAcrossSettingAndListModesWithMixedSigns(): void
+    {
+        $actions = $this->createActions();
+
+        $actions->setChannelModes('001', '#test', '+ntb-l+k', ['*!*@bad.host', 'secret']);
+
+        self::assertSame([':001 MODE #test +ntb-l+k *!*@bad.host secret'], $this->written);
+    }
+
+    #[Test]
+    public function setChannelModesCorrectlyDiscardsParametersForModesStrippedAcrossMixedSigns(): void
+    {
+        $actions = $this->createActions();
+
+        $actions->setChannelModes('001', '#test', '+q-o', ['UID_OWNER', 'UID_OPER']);
+
+        self::assertSame([':001 MODE #test -o UID_OPER'], $this->written);
+    }
+
+    #[Test]
+    public function setChannelModesOmitsEntirelyWhenAllModesAcrossSignsAreStripped(): void
+    {
+        $actions = $this->createActions();
+
+        $actions->setChannelModes('001', '#test', '+q-q', ['UID_OWNER1', 'UID_OWNER2']);
+        $actions->setChannelModes('001', '#test', '+qrP-q', ['UID_OWNER1', 'UID_OWNER2']);
+
+        self::assertSame([], $this->written);
+    }
+
+    #[Test]
     public function setChannelModesFiltersOwnerRankRemovalFromMixedBatch(): void
     {
         $actions = $this->createActions();
