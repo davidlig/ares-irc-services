@@ -655,6 +655,62 @@ final class SocketConnectionTest extends TestCase
     }
 
     #[Test]
+    public function readLineAcceptsExactMaxLineBytesFragmentedBeforeNewline(): void
+    {
+        $server = listen('127.0.0.1:0');
+        $port = $this->serverPort($server);
+        $expected = str_repeat('M', 64);
+
+        async(static function () use ($server, $expected): void {
+            $client = $server->accept();
+            self::assertNotNull($client);
+            $client->write($expected);
+            delay(0.01);
+            $client->write("\n");
+            $client->close();
+            $server->close();
+        });
+
+        $conn = new SocketConnection('127.0.0.1', $port, false, 2, maxLineBytes: 64);
+        $conn->connect();
+
+        $line = $conn->readLine();
+        self::assertSame($expected, $line);
+
+        $conn->disconnect();
+    }
+
+    #[Test]
+    public function readLineRejectsExactMaxLineBytesPlusOneFragmentedBeforeNewline(): void
+    {
+        $server = listen('127.0.0.1:0');
+        $port = $this->serverPort($server);
+
+        async(static function () use ($server): void {
+            $client = $server->accept();
+            self::assertNotNull($client);
+            $client->write(str_repeat('M', 64));
+            delay(0.01);
+            $client->write("X\n");
+            $client->close();
+            $server->close();
+        });
+
+        $conn = new SocketConnection('127.0.0.1', $port, false, 2, maxLineBytes: 64);
+        $conn->connect();
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Incoming line exceeded maximum buffer size of 64 bytes.');
+
+        try {
+            $conn->readLine();
+        } finally {
+            self::assertSame(ConnectionStatus::Error, $conn->getStatus());
+            $conn->disconnect();
+        }
+    }
+
+    #[Test]
     public function readLineRejectsOversizedPartialLineAtEof(): void
     {
         $server = listen('127.0.0.1:0');

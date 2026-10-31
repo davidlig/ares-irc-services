@@ -153,7 +153,7 @@ class SocketConnection implements ConnectionInterface
         $newlinePos = strpos($this->recvBuffer, "\n");
 
         while (false === $newlinePos) {
-            if (strlen($this->recvBuffer) >= $this->maxLineBytes) {
+            if (strlen($this->recvBuffer) > $this->maxLineBytes) {
                 $this->status = ConnectionStatus::Error;
                 $this->socket?->close();
                 $this->recvBuffer = '';
