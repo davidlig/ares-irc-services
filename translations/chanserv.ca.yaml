@@ -105,7 +105,7 @@ info:
 
 # --- SET ----------------------------------------------------------------------
 set:
-  syntax: "SET <#channel> {FOUNDER <sobrenom> [token]|SUCCESSOR [nickname]|DESC <description>|URL [url]|EMAIL [correu]|ENTRYMSG [missatge]|TOPICLOCK {ON|OFF}|MLOCK {ON|OFF}|PRIVATE {ON|OFF}|SECURE {ON|OFF}|VERBOSE {ON|OFF}}"
+  syntax: "SET <#canal> <opció> [paràmetres]"
   example: "%command_prefix%SET #canal DESC Un canal comunitari"
   examples:
     - "%command_prefix%SET #canal URL https://example.test"
@@ -315,7 +315,7 @@ status:
 
 # --- ACCESS -------------------------------------------------------------------
 access:
-  syntax: "ACCESS <#channel> {ADD <nickname> <level>|DEL <nickname>|LIST}"
+  syntax: "ACCESS <#canal> <opció> [paràmetres]"
   example: "%command_prefix%ACCESS #canal LIST"
   examples:
     - "%command_prefix%ACCESS #canal ADD Alícia 100"
@@ -372,7 +372,7 @@ delaccess:
 
 # --- AKICK --------------------------------------------------------------------
 akick:
-  syntax: "AKICK <#channel> {ADD <mask> [expiry] [motiu]|DEL {<mask>|<number>}|LIST|VIEW {<mask>|<number>}|CLEAR|CHECK <nickname>|ENFORCE}"
+  syntax: "AKICK <#canal> <opció> [paràmetres]"
   example: "%command_prefix%AKICK #canal ADD *!*@* 0"
   examples:
     - "%command_prefix%AKICK #canal ADD *!*@* 7d Spam"
@@ -490,7 +490,7 @@ akick:
 
 # --- LEVELS -------------------------------------------------------------------
 levels:
-  syntax: "LEVELS <#channel> {LIST|SET <level> <value>|RESET}"
+  syntax: "LEVELS <#canal> <opció> [paràmetres]"
   example: "%command_prefix%LEVELS #canal LIST"
   examples:
     - "%command_prefix%LEVELS #canal SET OPDEOP 50"
@@ -816,7 +816,7 @@ unforbid:
 
 # --- HISTORY ---
 history:
-  syntax: "HISTORY <#channel> {ADD <message>|DEL <id>|VIEW [PAGE|ALL]|CLEAR}"
+  syntax: "HISTORY <#canal> <opció> [paràmetres]"
   example: "%command_prefix%HISTORY #canal ADD Revisió de moderació"
   examples:
     - "%command_prefix%HISTORY #canal DEL 42"
@@ -948,7 +948,7 @@ regmode:
 
 # --- CREG (IRCop) -------------------------------------------------------------
 creg:
-  syntax: "CREG {PENDING [page]|ACCEPT <#channel>|REJECT <#channel> <raó>}"
+  syntax: "CREG <opció> [paràmetres]"
   pending.syntax: "CREG PENDING [page]"
   pending.example: "%command_prefix%CREG PENDING"
   pending.short: "Llista les sol·licituds pendents en una pàgina limitada."

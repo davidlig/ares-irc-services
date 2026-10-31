@@ -59,7 +59,7 @@ help:
 
 # --- IRCOP --------------------------------------------------------------------
 ircop:
-  syntax: "IRCOP {ADD <nickname> <ruolo>|DEL <nickname>|LIST}"
+  syntax: "IRCOP <opzione> [parametri]"
   short: "Gestisce gli operatori IRC di rete."
   help: |-
     Gestisce gli operatori IRC di rete. ADD aggiunge un nickname registrato
@@ -144,7 +144,7 @@ role:
       done: "Operclass configurata per il ruolo %role%."
       cleared: "Operclass rimossa dal ruolo %role%."
       not_available: "L'operclass %operclass% non e disponibile nella rete. Operclass disponibili: %available%."
-  syntax: "ROLE {ADD <nome> [descrizione]|DEL <nome>|LIST|PERMS {{ADD|DEL} <ruolo> <permesso>|{LIST|CLEAR} <ruolo>}|MODES {VIEW <ruolo>|SET <ruolo> [modalità]}|VHOST {VIEW <ruolo>|SET <ruolo> [vhost]}}"
+  syntax: "ROLE <opzione> [parametri]"
   short: "Consente di gestire i ruoli degli operatori, i relativi permessi e la configurazione."
   help: |-
     Consente di gestire i ruoli degli operatori, i relativi permessi e la
@@ -152,7 +152,7 @@ role:
 
     I ruoli ADMIN, OPER e PREOPER sono protetti e non possono essere eliminati.
     Comando riservato agli utenti Root.
-  syntax_operclass: "ROLE {ADD <nome> [descrizione]|DEL <nome>|LIST|PERMS {{ADD|DEL} <ruolo> <permesso>|{LIST|CLEAR} <ruolo>}|MODES {VIEW <ruolo>|SET <ruolo> [modalità]}|VHOST {VIEW <ruolo>|SET <ruolo> [vhost]}|OPERCLASS {LIST|VIEW <nome>|SET <nome> [operclass]}}"
+  syntax_operclass: "ROLE <opzione> [parametri]"
   help_operclass: |-
     Consente di gestire i ruoli degli operatori, i relativi permessi e la configurazione.
 
@@ -325,7 +325,7 @@ kill:
 
 # --- GLINE --------------------------------------------------------------------
 gline:
-  syntax: "GLINE {ADD <maschera> <scadenza> <motivo>|DEL {<maschera>|<numero>}|LIST [maschera]}"
+  syntax: "GLINE <opzione> [parametri]"
   short: "Gestisce i G-line a livello di rete."
   help: |-
     Gestisce le G-line (ban globali) della rete.
@@ -389,7 +389,7 @@ gline:
 
 # --- BADMAIL ------------------------------------------------------------------
 badmail:
-  syntax: "BADMAIL {ADD <dominio> <motivo>|DEL {numero|ALL}|LIST <modello> [pagina]}"
+  syntax: "BADMAIL <opzione> [parametri]"
   short: "Gestire i domini email bloccati."
   help: |-
     Gestire i domini email bloccati.
@@ -456,7 +456,7 @@ global:
 # --- MOTD ---------------------------------------------------------------------
 motd:
   short: "Gestisce i messaggi MOTD inviati agli utenti alla connessione."
-  syntax: "MOTD {ADD <destinatario> {PRIVMSG|NOTICE} <scadenza> <messaggio>|DEL <id>|LIST|CLEAN}"
+  syntax: "MOTD <opzione> [parametri]"
   help: |-
     Gestisce le voci del messaggio del giorno (MOTD) inviate quando un utente
     si connette alla rete.

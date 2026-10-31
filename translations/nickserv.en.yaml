@@ -152,7 +152,7 @@ recover:
 
 # --- SET ----------------------------------------------------------------------
 set:
-  syntax: "SET {PASSWORD <new_password>|EMAIL <email> <token>|LANGUAGE <code>|TIMEZONE <timezone>|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
+  syntax: "SET <option> [parameters]"
   short: "Change your nickname options."
   help: |-
     Changes your nickname settings. You must be identified to change these
@@ -492,7 +492,7 @@ list:
 
 # --- HISTORY ---
 history:
-  syntax: "HISTORY <nickname> {ADD <message>|DEL <id>|VIEW [PAGE|ALL]|CLEAR}"
+  syntax: "HISTORY <nickname> <option> [parameters]"
   short: "View or manage nickname action history."
   help: |-
     Views and manages a nickname's action history. Suspensions, password or email
@@ -586,7 +586,7 @@ saregister:
 
 # --- SASET (IRCop) ------------------------------------------------------------
 saset:
-  syntax: "SASET <nickname> {PASSWORD <new_password>|EMAIL <new_email>|LANGUAGE <code>|TIMEZONE {<timezone>|OFF}|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
+  syntax: "SASET <nickname> <option> [parameters]"
   short: "Modify another nickname's settings."
   help: |-
     Allows an IRC operator to change another registered nickname's settings.
@@ -769,7 +769,7 @@ unforbid:
 
 # --- FORBIDVHOST (IRCop) ------------------------------------------------------
 forbidvhost:
-  syntax: "FORBIDVHOST {ADD <pattern>|DEL <pattern>|LIST}"
+  syntax: "FORBIDVHOST <option> [parameters]"
   short: "Manage forbidden vhost patterns."
   help: |-
     Manages patterns that prevent matching vhosts from being set with SET VHOST.

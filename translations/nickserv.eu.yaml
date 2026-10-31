@@ -153,7 +153,7 @@ recover:
 
 # --- SET ----------------------------------------------------------------------
 set:
-  syntax: "SET {PASSWORD <pasahitz_berria>|EMAIL <email> <token>|LANGUAGE <kodea>|TIMEZONE <ordu-zona>|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost-a]}"
+  syntax: "SET <aukera> [parametroak]"
   short: "Aldatu zure ezizenaren aukerak."
   help: |-
     Zure ezizenaren ezarpenak aldatzen ditu. Aukera hauek aldatzeko
@@ -497,7 +497,7 @@ list:
 
 # --- HISTORY ---
 history:
-  syntax: "HISTORY <ezizena> {ADD <mezua>|DEL <ida>|VIEW [PAGE|ALL]|CLEAR}"
+  syntax: "HISTORY <ezizena> <aukera> [parametroak]"
   short: "Ikusi edo kudeatu ezizenaren ekintza historia."
   help: |-
     Ezizen baten ekintza historia kudeatzen du.
@@ -614,7 +614,7 @@ saregister:
 
 # --- SASET (IRCop) ------------------------------------------------------------
 saset:
-  syntax: "SASET <ezizen> {PASSWORD <pasahitz_berria>|EMAIL <posta_berria>|LANGUAGE <kodea>|TIMEZONE {<ordu_zona>|OFF}|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
+  syntax: "SASET <ezizena> <aukera> [parametroak]"
   short: "Beste ezizen baten ezarpenak aldatu."
   help: |-
     IRC Operadore bati erregistratutako ezizen baten ezarpenak aldatzea ahalbidetzen
@@ -852,7 +852,7 @@ unforbid:
 
 # --- FORBIDVHOST (IRCop) ------------------------------------------------------
 forbidvhost:
-  syntax: "FORBIDVHOST {ADD <eredua>|DEL <eredua>|LIST}"
+  syntax: "FORBIDVHOST <aukera> [parametroak]"
   short: "Kudeatu debekatutako vhost ereduak."
   help: |-
     SET VHOST bidez bat datozen vhost-ak ezartzea eragozten duten ereduak

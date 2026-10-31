@@ -71,6 +71,31 @@ Use this spacing in every bot service, including new services:
 - Preserve natural wording and placeholders in all 14 locales:
   `ca de el en es eu fr gl it nl pl pt ro tr`.
 
+## Universal compact-parent and exact sub-option syntax convention
+
+For every parent command that provides sub-options across all services, parent command HELP
+displays a compact syntax summary instead of expanding every sub-option and its arguments into long
+syntax unions.
+
+- **Notation without command-wide targets**: `<COMMAND> <option> [parameters]`
+  (NickServ `SET`, `FORBIDVHOST`; ChanServ `CREG`; MemoServ `IGNORE`; OperServ `ROLE`, `GLINE`,
+  `BADMAIL`, `MOTD`, `IRCOP`).
+- **Notation with command-wide required targets**: Preserve required targets in their existing positions:
+  - `<COMMAND> <nickname> <option> [parameters]` (NickServ `SASET`, `HISTORY`).
+  - `<COMMAND> <#channel> <option> [parameters]` (ChanServ `SET`, `ACCESS`, `AKICK`, `LEVELS`, `HISTORY`).
+- **Option-specific arguments**: Option-specific targets (such as IGNORE's optional channel or nickname)
+  belong in detailed option HELP, not in the generic parent summary.
+- **Natural placeholder localization**: Localize argument placeholders naturally in each of the 14
+  supported locales (for example, Spanish uses `<opción>`, `[parámetros]`, `<apodo>`, and `<#canal>`),
+  while keeping command and option keywords literal uppercase. Do not copy English placeholders across catalogs.
+- **Unified compact syntax keys**: Parent commands use compact syntax directly in their `syntax` catalog
+  keys across all 14 locales, unifying syntax presentation across parent HELP pages and command
+  argument-validation errors without verbose unions.
+- **Detailed sub-option HELP**: Each detailed sub-option HELP page retains exact required and optional
+  arguments, context, and leaf value alternatives such as `{ON|OFF}`.
+- **Structural preservation**: Options lists, examples, navigation to `HELP <command> <option>`, spacing,
+  presentation styles, and command-ordering policies remain intact.
+
 ## Help prose length and line breaks
 
 - Keep each displayed explanatory HELP text line at or below **80 visible characters**; aim for 75–80 characters and wrap at word boundaries. Measure after excluding IRC formatting control bytes, but count visible spaces, punctuation, and placeholders as written.

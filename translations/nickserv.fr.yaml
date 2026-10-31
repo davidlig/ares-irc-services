@@ -153,7 +153,7 @@ recover:
 
 # --- SET ----------------------------------------------------------------------
 set:
-  syntax: "SET {PASSWORD <nouveau_motdepasse>|EMAIL <email> <token>|LANGUAGE <code>|TIMEZONE <fuseau_horaire>|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
+  syntax: "SET <option> [paramètres]"
   short: "Modifier les options de votre pseudo."
   help: |-
     Modifie les paramètres de votre pseudonyme. Vous devez être identifié pour
@@ -499,7 +499,7 @@ list:
 
 # --- HISTORY ---
 history:
-  syntax: "HISTORY <surnom> {ADD <message>|DEL <id>|VIEW [PAGE|ALL]|CLEAR}"
+  syntax: "HISTORY <surnom> <option> [paramètres]"
   short: "Consulter ou gérer l'historique des actions du surnom."
   help: |-
     Consulte et gère l’historique des actions d’un pseudonyme. Les suspensions,
@@ -595,7 +595,7 @@ saregister:
 
 # --- SASET (IRCop) ------------------------------------------------------------
 saset:
-  syntax: "SASET <surnom> {PASSWORD <nouveau_mdp>|EMAIL <nouvel_e-mail>|LANGUAGE <code>|TIMEZONE {<fuseau_horaire>|OFF}|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
+  syntax: "SASET <surnom> <option> [paramètres]"
   short: "Modifier les paramètres d'un autre surnom."
   help: |-
     Permet à un IRCop de modifier les paramètres d’un autre pseudonyme enregistré.
@@ -785,7 +785,7 @@ unforbid:
 
 # --- FORBIDVHOST (IRCop) ------------------------------------------------------
 forbidvhost:
-  syntax: "FORBIDVHOST {ADD <motif>|DEL <motif>|LIST}"
+  syntax: "FORBIDVHOST <option> [paramètres]"
   short: "Gérer les motifs de vhost interdits."
   help: |-
     Gère les motifs qui empêchent de définir un hôte virtuel correspondant avec SET

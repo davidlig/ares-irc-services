@@ -82,7 +82,7 @@ del:
 
 # --- IGNORE -------------------------------------------------------------------
 ignore:
-  syntax: "IGNORE {ADD [#canal] <nickname>|DEL [#canal] <nickname>|LIST [#canal]}"
+  syntax: "IGNORE <opção> [parâmetros]"
   short: "Gerir lista de ignorados para mensagens."
   help: |-
     Permite gerir os nicknames dos quais não pretende receber mensagens, na sua

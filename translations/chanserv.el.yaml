@@ -104,7 +104,7 @@ info:
 
 # --- SET ----------------------------------------------------------------------
 set:
-  syntax: "SET <#channel> {FOUNDER <ψευδώνυμο> [token]|SUCCESSOR [nickname]|DESC <description>|URL [url]|EMAIL [email]|ENTRYMSG [message]|TOPICLOCK {ON|OFF}|MLOCK {ON|OFF}|PRIVATE {ON|OFF}|SECURE {ON|OFF}|VERBOSE {ON|OFF}}"
+  syntax: "SET <#κανάλι> <επιλογή> [παράμετροι]"
   example: "%command_prefix%SET #κανάλι DESC Ένα κοινοτικό κανάλι"
   examples:
     - "%command_prefix%SET #κανάλι URL https://example.test"
@@ -317,7 +317,7 @@ status:
 
 # --- ACCESS -------------------------------------------------------------------
 access:
-  syntax: "ACCESS <#channel> {ADD <nickname> <level>|DEL <nickname>|LIST}"
+  syntax: "ACCESS <#κανάλι> <επιλογή> [παράμετροι]"
   example: "%command_prefix%ACCESS #κανάλι LIST"
   examples:
     - "%command_prefix%ACCESS #κανάλι ADD Αλίκη 100"
@@ -375,7 +375,7 @@ delaccess:
 
 # --- AKICK --------------------------------------------------------------------
 akick:
-  syntax: "AKICK <#channel> {ADD <mask> [expiry] [αιτιολογία]|DEL {<mask>|<number>}|LIST|VIEW {<mask>|<number>}|CLEAR|CHECK <ψευδώνυμο>|ENFORCE}"
+  syntax: "AKICK <#κανάλι> <επιλογή> [παράμετροι]"
   example: "%command_prefix%AKICK #κανάλι ADD *!*@* 0"
   examples:
     - "%command_prefix%AKICK #κανάλι ADD *!*@* 7d Spam"
@@ -495,7 +495,7 @@ akick:
 
 # --- LEVELS -------------------------------------------------------------------
 levels:
-  syntax: "LEVELS <#channel> {LIST|SET <level> <value>|RESET}"
+  syntax: "LEVELS <#κανάλι> <επιλογή> [παράμετροι]"
   example: "%command_prefix%LEVELS #κανάλι LIST"
   examples:
     - "%command_prefix%LEVELS #κανάλι SET OPDEOP 50"
@@ -859,7 +859,7 @@ unforbid:
 
 # --- HISTORY ---
 history:
-  syntax: "HISTORY <#channel> {ADD <message>|DEL <id>|VIEW [PAGE|ALL]|CLEAR}"
+  syntax: "HISTORY <#κανάλι> <επιλογή> [παράμετροι]"
   example: "%command_prefix%HISTORY #κανάλι ADD Έλεγχος συντονισμού"
   examples:
     - "%command_prefix%HISTORY #κανάλι DEL 42"
@@ -1009,7 +1009,7 @@ regmode:
 
 # --- CREG (IRCop) -------------------------------------------------------------
 creg:
-  syntax: "CREG {PENDING [page]|ACCEPT <#channel>|REJECT <#channel> <αιτία>}"
+  syntax: "CREG <επιλογή> [παράμετροι]"
   pending.syntax: "CREG PENDING [page]"
   pending.example: "%command_prefix%CREG PENDING"
   pending.short: "Εμφανίζει εκκρεμή αιτήματα σε περιορισμένη σελίδα."

@@ -30,7 +30,9 @@ use function count;
 use function dirname;
 use function implode;
 use function sprintf;
+use function strtolower;
 use function strtoupper;
+use function strtr;
 
 /**
  * @phpstan-type AnyServiceCommand NickServCommandInterface|ChanServCommandInterface|MemoServCommandInterface|OperServCommandInterface
@@ -218,6 +220,142 @@ final class ServicesCommandHelpAlignmentTest extends TestCase
         $this->assertDefinitionMetadata(new CommandArgumentDefinition('set.syntax', [new Argument('option')], variants: [
             'PASSWORD' => new CommandArgumentDefinition(''),
         ]), 'nickserv', 'SET');
+    }
+
+    #[Test]
+    public function verifiesAll16CommandsUseCompactSyntaxInAll14Locales(): void
+    {
+        self::assertNotNull(self::$translator);
+
+        $expectedPlaceholders = [
+            'ca' => ['opt' => '<opció>', 'param' => '[paràmetres]', 'nick' => '<sobrenom>', 'chan' => '<#canal>'],
+            'de' => ['opt' => '<Option>', 'param' => '[Parameter]', 'nick' => '<Nickname>', 'chan' => '<#Kanal>'],
+            'el' => ['opt' => '<επιλογή>', 'param' => '[παράμετροι]', 'nick' => '<ψευδώνυμο>', 'chan' => '<#κανάλι>'],
+            'en' => ['opt' => '<option>', 'param' => '[parameters]', 'nick' => '<nickname>', 'chan' => '<#channel>'],
+            'es' => ['opt' => '<opción>', 'param' => '[parámetros]', 'nick' => '<apodo>', 'chan' => '<#canal>'],
+            'eu' => ['opt' => '<aukera>', 'param' => '[parametroak]', 'nick' => '<ezizena>', 'chan' => '<#kanala>'],
+            'fr' => ['opt' => '<option>', 'param' => '[paramètres]', 'nick' => '<surnom>', 'chan' => '<#canal>'],
+            'gl' => ['opt' => '<opción>', 'param' => '[parámetros]', 'nick' => '<alcume>', 'chan' => '<#canle>'],
+            'it' => ['opt' => '<opzione>', 'param' => '[parametri]', 'nick' => '<nickname>', 'chan' => '<#canale>'],
+            'nl' => ['opt' => '<optie>', 'param' => '[parameters]', 'nick' => '<bijnaam>', 'chan' => '<#kanaal>'],
+            'pl' => ['opt' => '<opcja>', 'param' => '[parametry]', 'nick' => '<nick>', 'chan' => '<#kanał>'],
+            'pt' => ['opt' => '<opção>', 'param' => '[parâmetros]', 'nick' => '<nickname>', 'chan' => '<#canal>'],
+            'ro' => ['opt' => '<opțiune>', 'param' => '[parametri]', 'nick' => '<poreclă>', 'chan' => '<#canal>'],
+            'tr' => ['opt' => '<seçenek>', 'param' => '[parametreler]', 'nick' => '<rumuz>', 'chan' => '<#kanal>'],
+        ];
+
+        /** @var array<string, array<string, string>> $commandPatterns */
+        $commandPatterns = [
+            'nickserv' => [
+                'SET' => '%cmd% %opt% %param%',
+                'FORBIDVHOST' => '%cmd% %opt% %param%',
+                'SASET' => '%cmd% %nick% %opt% %param%',
+                'HISTORY' => '%cmd% %nick% %opt% %param%',
+            ],
+            'chanserv' => [
+                'SET' => '%cmd% %chan% %opt% %param%',
+                'ACCESS' => '%cmd% %chan% %opt% %param%',
+                'AKICK' => '%cmd% %chan% %opt% %param%',
+                'LEVELS' => '%cmd% %chan% %opt% %param%',
+                'HISTORY' => '%cmd% %chan% %opt% %param%',
+                'CREG' => '%cmd% %opt% %param%',
+            ],
+            'memoserv' => [
+                'IGNORE' => '%cmd% %opt% %param%',
+            ],
+            'operserv' => [
+                'ROLE' => '%cmd% %opt% %param%',
+                'GLINE' => '%cmd% %opt% %param%',
+                'BADMAIL' => '%cmd% %opt% %param%',
+                'MOTD' => '%cmd% %opt% %param%',
+                'IRCOP' => '%cmd% %opt% %param%',
+            ],
+        ];
+
+        $missingOrInvalid = [];
+        $totalChecked = 0;
+
+        foreach ($commandPatterns as $domain => $commands) {
+            foreach ($commands as $cmdName => $patternTemplate) {
+                $helpSyntaxKey = strtolower($cmdName) . '.help_syntax';
+                $syntaxKey = strtolower($cmdName) . '.syntax';
+
+                foreach (self::LOCALES as $locale) {
+                    ++$totalChecked;
+                    $p = $expectedPlaceholders[$locale];
+                    $expected = strtr($patternTemplate, [
+                        '%cmd%' => $cmdName,
+                        '%opt%' => $p['opt'],
+                        '%param%' => $p['param'],
+                        '%nick%' => $p['nick'],
+                        '%chan%' => $p['chan'],
+                    ]);
+
+                    $actual = self::$translator->trans($syntaxKey, [], $domain, $locale);
+                    if ($actual === $syntaxKey) {
+                        $missingOrInvalid[] = sprintf('%s: %s [%s] missing in %s', $domain, $cmdName, $syntaxKey, $locale);
+                        continue;
+                    }
+
+                    if ($actual !== $expected) {
+                        $missingOrInvalid[] = sprintf('%s: %s [%s] in %s expected "%s" but got "%s"', $domain, $cmdName, $syntaxKey, $locale, $expected, $actual);
+                    }
+
+                    // Verify redundant help_syntax key does not exist
+                    $helpSyntax = self::$translator->trans($helpSyntaxKey, [], $domain, $locale);
+                    self::assertSame($helpSyntaxKey, $helpSyntax, sprintf('%s: redundant [%s] must not exist in %s', $domain, $helpSyntaxKey, $locale));
+
+                    if ('operserv' === $domain && 'ROLE' === $cmdName) {
+                        $operclassSyntax = self::$translator->trans('role.syntax_operclass', [], 'operserv', $locale);
+                        self::assertSame($expected, $operclassSyntax, sprintf('role.syntax_operclass mismatch in %s', $locale));
+                    }
+                }
+            }
+        }
+
+        self::assertSame(16 * 14, $totalChecked, 'Expected exactly 16 commands across 14 locales = 224 checks.');
+        self::assertSame([], $missingOrInvalid, sprintf("Failures:\n%s", implode("\n", $missingOrInvalid)));
+    }
+
+    #[Test]
+    public function verifiesSubcommandHelpPreservesDetailedSyntaxAndValidationIsolation(): void
+    {
+        self::assertNotNull(self::$translator);
+
+        $commandMap = [
+            'nickserv' => ['SET', 'FORBIDVHOST', 'SASET', 'HISTORY'],
+            'chanserv' => ['SET', 'ACCESS', 'AKICK', 'LEVELS', 'HISTORY', 'CREG'],
+            'memoserv' => ['IGNORE'],
+            'operserv' => ['ROLE', 'GLINE', 'BADMAIL', 'MOTD', 'IRCOP'],
+        ];
+
+        foreach ($commandMap as $domain => $cmdNames) {
+            $registry = self::$registries[$domain];
+            foreach ($cmdNames as $cmdName) {
+                $cmd = $registry->find($cmdName);
+                self::assertNotNull($cmd, "Command $cmdName not found in $domain registry");
+
+                // Validation isolation: getSyntaxKey() must be the argument definition syntaxKey
+                $definition = $cmd->getArgumentDefinition();
+                self::assertSame($definition->syntaxKey, $cmd->getSyntaxKey(), "Validation definition mismatch for $domain $cmdName");
+                self::assertStringEndsWith('.syntax', $cmd->getSyntaxKey());
+                self::assertStringNotContainsString('.help_syntax', $cmd->getSyntaxKey());
+
+                // Detailed subhelp verification: each subcommand retains its specific syntax
+                $subcommands = $cmd->getSubCommandHelp();
+                self::assertNotEmpty($subcommands, "$domain $cmdName should have subcommands");
+                foreach ($subcommands as $sub) {
+                    self::assertStringEndsWith('.syntax', $sub['syntax_key']);
+                    self::assertStringNotContainsString('.help_syntax', $sub['syntax_key']);
+                    foreach (self::LOCALES as $locale) {
+                        $subSyntax = self::$translator->trans($sub['syntax_key'], [], $domain, $locale);
+                        self::assertNotSame($sub['syntax_key'], $subSyntax, "Missing sub syntax for {$sub['syntax_key']} in $locale");
+                        // Detailed subhelp syntax must start with the literal command or command+target
+                        self::assertStringStartsWith($cmdName, $subSyntax, "Subcommand syntax {$sub['syntax_key']} in $locale should start with $cmdName");
+                    }
+                }
+            }
+        }
     }
 
     /** @return list<string> */

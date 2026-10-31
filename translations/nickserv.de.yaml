@@ -157,7 +157,7 @@ recover:
 
 # --- SET ----------------------------------------------------------------------
 set:
-  syntax: "SET {PASSWORD <neues_passwort>|EMAIL <email> <token>|LANGUAGE <Code>|TIMEZONE <Zeitzone>|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
+  syntax: "SET <Option> [Parameter]"
   short: "Optionen deines Nicknames ändern."
   help: |-
     Ändert die Einstellungen deines Nicknames. Du musst identifiziert sein, um
@@ -500,7 +500,7 @@ list:
 
 # --- HISTORY ---
 history:
-  syntax: "HISTORY <nickname> {ADD <Nachricht>|DEL <id>|VIEW [PAGE|ALL]|CLEAR}"
+  syntax: "HISTORY <Nickname> <Option> [Parameter]"
   short: "Nickname-Aktionsverlauf anzeigen oder verwalten."
   help: |-
     Zeigt und verwaltet den Aktionsverlauf eines Nicknames. Sperren sowie Passwort-,
@@ -594,7 +594,7 @@ saregister:
 
 # --- SASET (IRCop) ------------------------------------------------------------
 saset:
-  syntax: "SASET <Nickname> {PASSWORD <neues_Passwort>|EMAIL <neue_E-Mail>|LANGUAGE <Code>|TIMEZONE {<Zeitzone>|OFF}|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [VHost]}"
+  syntax: "SASET <Nickname> <Option> [Parameter]"
   short: "Einstellungen eines anderen Nicknames ändern."
   help: |-
     Ermöglicht IRC-Operatoren, die Einstellungen eines anderen registrierten
@@ -786,7 +786,7 @@ unforbid:
 
 # --- FORBIDVHOST (IRCop) ------------------------------------------------------
 forbidvhost:
-  syntax: "FORBIDVHOST {ADD <Muster>|DEL <Muster>|LIST}"
+  syntax: "FORBIDVHOST <Option> [Parameter]"
   short: "Gesperrte VHost-Muster verwalten."
   help: |-
     Verwaltet Muster, die passende VHosts mit SET VHOST verhindern. * steht für

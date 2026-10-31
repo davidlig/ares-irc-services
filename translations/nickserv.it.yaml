@@ -151,7 +151,7 @@ recover:
 
 # --- SET ----------------------------------------------------------------------
 set:
-  syntax: "SET {PASSWORD <nuova_password>|EMAIL <email> <token>|LANGUAGE <codice>|TIMEZONE <fuso_orario>|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
+  syntax: "SET <opzione> [parametri]"
   short: "Cambiare le opzioni del tuo nickname."
   help: |-
     Modifica le impostazioni del tuo nickname. Per cambiare queste opzioni devi
@@ -492,7 +492,7 @@ list:
 
 # --- HISTORY ---
 history:
-  syntax: "HISTORY <nickname> {ADD <messaggio>|DEL <id>|VIEW [PAGE|ALL]|CLEAR}"
+  syntax: "HISTORY <nickname> <opzione> [parametri]"
   short: "Visualizza o gestisce la cronologia azioni del nickname."
   help: |-
     Consulta e gestisce la cronologia delle azioni di un nickname. Registra
@@ -586,7 +586,7 @@ saregister:
 
 # --- SASET (IRCop) ------------------------------------------------------------
 saset:
-  syntax: "SASET <nickname> {PASSWORD <nuova_password>|EMAIL <nuova_email>|LANGUAGE <codice>|TIMEZONE {<fuso_orario>|OFF}|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
+  syntax: "SASET <nickname> <opzione> [parametri]"
   short: "Modificare le impostazioni di un altro nickname."
   help: |-
     Consente a un IRCop di modificare le impostazioni di un altro nickname
@@ -772,7 +772,7 @@ unforbid:
 
 # --- FORBIDVHOST (IRCop) ------------------------------------------------------
 forbidvhost:
-  syntax: "FORBIDVHOST {ADD <pattern>|DEL <pattern>|LIST}"
+  syntax: "FORBIDVHOST <opzione> [parametri]"
   short: "Gestisce i pattern vhost vietati."
   help: |-
     Gestisce i modelli che impediscono di impostare vhost corrispondenti con SET

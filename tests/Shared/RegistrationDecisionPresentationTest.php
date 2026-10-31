@@ -75,7 +75,6 @@ final class RegistrationDecisionPresentationTest extends TestCase
         foreach (['EMAIL' => 'email', 'ENTRYMSG' => 'message'] as $option => $operand) {
             $validation = CommandArgumentValidator::validate($command->getArgumentDefinition(), ['#example', $option]);
             self::assertNull($validation->syntaxKey);
-            self::assertStringContainsString($option . ' [' . $operand . ']', self::$translator->trans('set.syntax', [], 'chanserv', 'el'));
             self::assertStringContainsString($option . ' [' . $operand . ']', self::$translator->trans('set.' . strtolower($option) . '.syntax', [], 'chanserv', 'el'));
         }
     }
@@ -86,27 +85,27 @@ final class RegistrationDecisionPresentationTest extends TestCase
         self::assertNotNull(self::$translator);
 
         self::assertSame(
-            'CREG {PENDING [página]|ACCEPT <#canal>|REJECT <#canal> <razón>}',
+            'CREG <opción> [parámetros]',
             self::$translator->trans('creg.syntax', [], 'chanserv', 'es'),
         );
         self::assertSame(
-            'ACCESS <#canal> {ADD <apodo> <nivel>|DEL <apodo>|LIST}',
+            'ACCESS <#canal> <opción> [parámetros]',
             self::$translator->trans('access.syntax', [], 'chanserv', 'es'),
         );
         self::assertSame(
-            'LEVELS <#canal> {LIST|SET <nivel> <valor>|RESET}',
+            'LEVELS <#canal> <opción> [parámetros]',
             self::$translator->trans('levels.syntax', [], 'chanserv', 'es'),
         );
-        self::assertStringContainsString(
-            'DEL {<máscara>|<número>}',
+        self::assertSame(
+            'AKICK <#canal> <opción> [parámetros]',
             self::$translator->trans('akick.syntax', [], 'chanserv', 'es'),
         );
-        self::assertStringContainsString(
-            'TIMEZONE {<zona>|OFF}',
+        self::assertSame(
+            'SASET <apodo> <opción> [parámetros]',
             self::$translator->trans('saset.syntax', [], 'nickserv', 'es'),
         );
-        self::assertStringContainsString(
-            'DEL {<máscara>|<número>}',
+        self::assertSame(
+            'GLINE <opción> [parámetros]',
             self::$translator->trans('gline.syntax', [], 'operserv', 'es'),
         );
 

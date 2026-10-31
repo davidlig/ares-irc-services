@@ -63,7 +63,7 @@ help:
 
 # --- IRCOP --------------------------------------------------------------------
 ircop:
-  syntax: "IRCOP {ADD <nickname> <rol>|DEL <nickname>|LIST}"
+  syntax: "IRCOP <opció> [paràmetres]"
   short: "Gestionar els operadors d'IRC de la xarxa."
   help: |-
     Gestiona els operadors d'IRC de la xarxa. ADD afegeix un sobrenom registrat
@@ -147,14 +147,14 @@ role:
       done: "S'ha configurat l'operclass per al rol %role%."
       cleared: "S'ha eliminat l'operclass del rol %role%."
       not_available: "L'operclass %operclass% no està disponible a la xarxa. Operclasses disponibles: %available%."
-  syntax: "ROLE {ADD <name> [description]|DEL <name>|LIST|PERMS {{ADD|DEL} <rol> <permís>|{LIST|CLEAR} <rol>}|MODES {VIEW <rol>|SET <rol> [modes]}|VHOST {VIEW <rol>|SET <rol> [vhost]}}"
+  syntax: "ROLE <opció> [paràmetres]"
   short: "Permet gestionar els rols d'operador, els seus permisos i la configuració."
   help: |-
     Permet gestionar els rols d'operador, els seus permisos i la configuració.
 
     Els rols ADMIN, OPER i PREOPER estan protegits i no es poden eliminar.
     Ordre exclusiva per a usuaris Root.
-  syntax_operclass: "ROLE {ADD <name> [description]|DEL <name>|LIST|PERMS {{ADD|DEL} <rol> <permís>|{LIST|CLEAR} <rol>}|MODES {VIEW <rol>|SET <rol> [modes]}|VHOST {VIEW <rol>|SET <rol> [vhost]}|OPERCLASS {LIST|VIEW <name>|SET <name> [operclass]}}"
+  syntax_operclass: "ROLE <opció> [paràmetres]"
   help_operclass: |-
     Permet gestionar els rols d'operador, els seus permisos i la configuració.
 
@@ -328,7 +328,7 @@ kill:
 
 # --- GLINE --------------------------------------------------------------------
 gline:
-  syntax: "GLINE {ADD <mask> <expiry> <motiu>|DEL {<mask>|<number>}|LIST [mask]}"
+  syntax: "GLINE <opció> [paràmetres]"
   short: "Gestionar les G-lines de tota la xarxa."
   help: |-
     Gestiona les G-lines (prohibicions globals) de la xarxa.
@@ -392,7 +392,7 @@ gline:
 
 # --- BADMAIL ------------------------------------------------------------------
 badmail:
-  syntax: "BADMAIL {ADD <domini> <motiu>|DEL {número|ALL}|LIST <patró> [pàgina]}"
+  syntax: "BADMAIL <opció> [paràmetres]"
   short: "Administrar dominis de correu bloquejats."
   help: |-
     Administrar dominis de correu bloquejats.
@@ -462,7 +462,7 @@ global:
 # --- MOTD ---------------------------------------------------------------------
 motd:
   short: "Gestionar els missatges MOTD enviats als usuaris en connectar-se."
-  syntax: "MOTD {ADD <destinació> {PRIVMSG|NOTICE} <expiry> <missatge>|DEL <id>|LIST|CLEAN}"
+  syntax: "MOTD <opció> [paràmetres]"
   help: |-
     Gestiona les entrades del missatge del dia (MOTD) que s'envien quan un usuari
     es connecta a la xarxa.

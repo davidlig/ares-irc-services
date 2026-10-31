@@ -152,7 +152,7 @@ recover:
 
 # --- SET ----------------------------------------------------------------------
 set:
-  syntax: "SET {PASSWORD <nowe_hasło>|EMAIL <email> <token>|LANGUAGE <kod>|TIMEZONE <strefa_czasowa>|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
+  syntax: "SET <opcja> [parametry]"
   short: "Zmień opcje swojego nicka."
   help: |-
     Zmienia ustawienia Twojego pseudonimu. Aby zmienić te opcje, musisz być
@@ -493,7 +493,7 @@ list:
 
 # --- HISTORY ---
 history:
-  syntax: "HISTORY <nick> {ADD <wiadomość>|DEL <id>|VIEW [PAGE|ALL]|CLEAR}"
+  syntax: "HISTORY <nick> <opcja> [parametry]"
   short: "Przeglądaj lub zarządzaj historią działań nicka."
   help: |-
     Wyświetla historię działań pseudonimu. Automatycznie zapisuje zawieszenia,
@@ -587,7 +587,7 @@ saregister:
 
 # --- SASET (IRCop) ------------------------------------------------------------
 saset:
-  syntax: "SASET <nick> {PASSWORD <nowe_hasło>|EMAIL <nowy_e-mail>|LANGUAGE <kod>|TIMEZONE {<strefa_czasowa>|OFF}|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
+  syntax: "SASET <nick> <opcja> [parametry]"
   short: "Modyfikuj ustawienia innego nicka."
   help: |-
     Pozwala IRCop zmienić ustawienia innego zarejestrowanego pseudonimu. Nie
@@ -771,7 +771,7 @@ unforbid:
 
 # --- FORBIDVHOST (IRCop) ------------------------------------------------------
 forbidvhost:
-  syntax: "FORBIDVHOST {ADD <wzorzec>|DEL <wzorzec>|LIST}"
+  syntax: "FORBIDVHOST <opcja> [parametry]"
   short: "Zarządzaj zabronionymi wzorcami vhost."
   help: |-
     Zarządza wzorcami blokującymi ustawianie hostów vhost pasujących do SET VHOST.

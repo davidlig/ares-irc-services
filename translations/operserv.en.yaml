@@ -59,7 +59,7 @@ help:
 
 # --- IRCOP --------------------------------------------------------------------
 ircop:
-  syntax: "IRCOP {ADD <nickname> <role>|DEL <nickname>|LIST}"
+  syntax: "IRCOP <option> [parameters]"
   short: "Manage network IRC operators."
   help: |-
     Manage network IRC operators. ADD adds a registered nickname
@@ -143,14 +143,14 @@ role:
       done: "Operclass configured for role %role%."
       cleared: "Operclass removed from role %role%."
       not_available: "Operclass %operclass% is not available on the network. Available operclasses: %available%."
-  syntax: "ROLE {ADD <name> [description]|DEL <name>|LIST|PERMS {{ADD|DEL} <role> <permission>|{LIST|CLEAR} <role>}|MODES {VIEW <role>|SET <role> [modes]}|VHOST {VIEW <role>|SET <role> [vhost]}}"
+  syntax: "ROLE <option> [parameters]"
   short: "Manages operator roles, their permissions and their settings."
   help: |-
     Manages operator roles, their permissions and their settings.
 
     The ADMIN, OPER and PREOPER roles are protected and cannot be deleted.
     Restricted to Root users.
-  syntax_operclass: "ROLE {ADD <name> [description]|DEL <name>|LIST|PERMS {{ADD|DEL} <role> <permission>|{LIST|CLEAR} <role>}|MODES {VIEW <role>|SET <role> [modes]}|VHOST {VIEW <role>|SET <role> [vhost]}|OPERCLASS {LIST|VIEW <name>|SET <name> [operclass]}}"
+  syntax_operclass: "ROLE <option> [parameters]"
   help_operclass: |-
     Manages operator roles, their permissions and their settings.
 
@@ -324,7 +324,7 @@ kill:
 
 # --- GLINE --------------------------------------------------------------------
 gline:
-  syntax: "GLINE {ADD <mask> <expiry> <reason>|DEL {<mask>|<number>}|LIST [mask]}"
+  syntax: "GLINE <option> [parameters]"
   short: "Manage network-wide G-lines."
   help: |-
     Manages network G-lines (global bans).
@@ -388,7 +388,7 @@ gline:
 
 # --- BADMAIL ------------------------------------------------------------------
 badmail:
-  syntax: "BADMAIL {ADD <domain> <reason>|DEL {number|ALL}|LIST <pattern> [page]}"
+  syntax: "BADMAIL <option> [parameters]"
   short: "Manage blocked email domains."
   help: |-
     Manage blocked email domains.
@@ -454,7 +454,7 @@ global:
 # --- MOTD ---------------------------------------------------------------------
 motd:
   short: "Manage connect MOTD messages sent to users on connect."
-  syntax: "MOTD {ADD <target> {PRIVMSG|NOTICE} <expiry> <message>|DEL <id>|LIST|CLEAN}"
+  syntax: "MOTD <option> [parameters]"
   help: |-
     Manages message-of-the-day (MOTD) entries sent when a user connects to the
     network.

@@ -60,7 +60,7 @@ help:
 
 # --- IRCOP --------------------------------------------------------------------
 ircop:
-  syntax: "IRCOP {ADD <poreclă> <rol>|DEL <poreclă>|LIST}"
+  syntax: "IRCOP <opțiune> [parametri]"
   short: "Gestionați operatorii IRC ai rețelei."
   help: |-
     Gestionează operatorii IRC ai rețelei. ADD adaugă o poreclă înregistrată
@@ -144,14 +144,14 @@ role:
       done: "Operclass configurată pentru rolul %role%."
       cleared: "Operclass eliminată pentru rolul %role%."
       not_available: "Operclass %operclass% nu este disponibila in retea. Operclasses disponibile: %available%."
-  syntax: "ROLE {ADD <nume> [descriere]|DEL <nume>|LIST|PERMS {{ADD|DEL} <rol> <permisiune>|{LIST|CLEAR} <rol>}|MODES {VIEW <rol>|SET <rol> [moduri]}|VHOST {VIEW <rol>|SET <rol> [vhost]}}"
+  syntax: "ROLE <opțiune> [parametri]"
   short: "Gestionează rolurile operatorilor, permisiunile și configurarea lor."
   help: |-
     Gestionează rolurile operatorilor, permisiunile și configurarea lor.
 
     Rolurile ADMIN, OPER și PREOPER sunt protejate și nu pot fi șterse.
     Comandă rezervată utilizatorilor Root.
-  syntax_operclass: "ROLE {ADD <nume> [descriere]|DEL <nume>|LIST|PERMS {{ADD|DEL} <rol> <permisiune>|{LIST|CLEAR} <rol>}|MODES {VIEW <rol>|SET <rol> [moduri]}|VHOST {VIEW <rol>|SET <rol> [vhost]}|OPERCLASS {LIST|VIEW <nume>|SET <nume> [operclass]}}"
+  syntax_operclass: "ROLE <opțiune> [parametri]"
   help_operclass: |-
     Gestionează rolurile de operator. ADD creează un nou rol, DEL îl șterge,
     LIST afișează toate rolurile, PERMS gestionează permisiunile unui rol, MODES gestionează modurile IRCOP,
@@ -327,7 +327,7 @@ kill:
 
 # --- GLINE --------------------------------------------------------------------
 gline:
-  syntax: "GLINE {ADD <mască> <expirare> <motiv>|DEL {<mască>|<număr>}|LIST [mască]}"
+  syntax: "GLINE <opțiune> [parametri]"
   short: "Gestionați G-line-urile la nivel de rețea."
   help: |-
     Gestionează G-line-uri (banuri globale) pentru rețea.
@@ -391,7 +391,7 @@ gline:
 
 # --- BADMAIL ------------------------------------------------------------------
 badmail:
-  syntax: "BADMAIL {ADD <domeniu> <motiv>|DEL {număr|ALL}|LIST <model> [pagină]}"
+  syntax: "BADMAIL <opțiune> [parametri]"
   short: "Administrează domeniile email blocate."
   help: |-
     Administrează domeniile email blocate.
@@ -457,7 +457,7 @@ global:
 # --- MOTD ---------------------------------------------------------------------
 motd:
   short: "Gestionați mesajele MOTD de conectare trimise utilizatorilor la conectare."
-  syntax: "MOTD {ADD <destinație> {PRIVMSG|NOTICE} <expirare> <mesaj>|DEL <id>|LIST|CLEAN}"
+  syntax: "MOTD <opțiune> [parametri]"
   help: |-
     Gestionează mesajele zilei (MOTD) trimise utilizatorilor când se conectează la
     rețea.

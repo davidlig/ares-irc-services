@@ -60,7 +60,7 @@ help:
 
 # --- IRCOP --------------------------------------------------------------------
 ircop:
-  syntax: "IRCOP {ADD <nickname> <ρόλος>|DEL <nickname>|LIST}"
+  syntax: "IRCOP <επιλογή> [παράμετροι]"
   short: "Διαχείριση IRC operators του δικτύου."
   help: |-
     Διαχείριση IRC operators του δικτύου. ADD προσθέτει ένα καταχωρημένο
@@ -145,7 +145,7 @@ role:
       done: "Η operclass ρυθμίστηκε για τον ρόλο %role%."
       cleared: "Η operclass αφαιρέθηκε από τον ρόλο %role%."
       not_available: "Η operclass %operclass% δεν είναι διαθέσιμη στο δίκτυο. Διαθέσιμες operclasses: %available%."
-  syntax: "ROLE {ADD <name> [description]|DEL <name>|LIST|PERMS {{ADD|DEL} <ρόλος> <permission>|{LIST|CLEAR} <ρόλος>}|MODES {VIEW <ρόλος>|SET <ρόλος> [modes]}|VHOST {VIEW <ρόλος>|SET <ρόλος> [pattern]}}"
+  syntax: "ROLE <επιλογή> [παράμετροι]"
   short: "Διαχείριση ρόλων operator."
   help: |-
     Διαχείριση ρόλων operator. ADD δημιουργεί νέο ρόλο, DEL τον αφαιρεί,
@@ -154,7 +154,7 @@ role:
     αναγκαστικού vhost για έναν ρόλο.
     Οι προστατευμένοι ρόλοι (ADMIN, OPER, PREOPER) δεν μπορούν να διαγραφούν.
     Αυτή η εντολή περιορίζεται σε Root χρήστες.
-  syntax_operclass: "ROLE {ADD <name> [description]|DEL <name>|LIST|PERMS {{ADD|DEL} <ρόλος> <permission>|{LIST|CLEAR} <ρόλος>}|MODES {VIEW <ρόλος>|SET <ρόλος> [modes]}|VHOST {VIEW <ρόλος>|SET <ρόλος> [pattern]}|OPERCLASS {LIST|VIEW <name>|SET <name> [operclass]}}"
+  syntax_operclass: "ROLE <επιλογή> [παράμετροι]"
   help_operclass: |-
     Διαχείριση ρόλων operator. ADD δημιουργεί νέο ρόλο, DEL τον αφαιρεί,
     LIST εμφανίζει όλους τους ρόλους, PERMS διαχειρίζεται άδειες για έναν ρόλο,
@@ -333,7 +333,7 @@ kill:
 
 # --- GLINE --------------------------------------------------------------------
 gline:
-  syntax: "GLINE {ADD <mask> <expiry> <αιτιολογία>|DEL {<mask>|<number>}|LIST [mask]}"
+  syntax: "GLINE <επιλογή> [παράμετροι]"
   short: "Διαχείριση G-lines σε όλο το δίκτυο."
   help: |-
     Διαχείριση G-lines σε όλο το δίκτυο (καθολικοί αποκλεισμοί).
@@ -402,7 +402,7 @@ gline:
 
 # --- BADMAIL ------------------------------------------------------------------
 badmail:
-  syntax: "BADMAIL {ADD <τομέας> <αιτιολογία>|DEL {αριθμός|ALL}|LIST <μοτίβο> [σελίδα]}"
+  syntax: "BADMAIL <επιλογή> [παράμετροι]"
   short: "Διαχείριση αποκλεισμένων τομέων email."
   help: |-
     Διαχείριση αποκλεισμένων τομέων email.
@@ -477,7 +477,7 @@ global:
 # --- MOTD ---------------------------------------------------------------------
 motd:
   short: "Διαχείριση μηνυμάτων MOTD που στέλνονται στους χρήστες κατά τη σύνδεση."
-  syntax: "MOTD {ADD <στόχος> {PRIVMSG|NOTICE} <expiry> <μήνυμα>|DEL <id>|LIST|CLEAN}"
+  syntax: "MOTD <επιλογή> [παράμετροι]"
   help: |-
     Διαχείριση καταχωρήσεων Message Of The Day που στέλνονται στους χρήστες όταν
     συνδέονται στο δίκτυο.
