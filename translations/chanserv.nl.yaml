@@ -72,8 +72,6 @@ info:
   topic_set_by_label: "Onderwerp door"
   options: "%label%%padding%: %options%"
   options_label: "Opties"
-  verbose: "%label%%padding%: %state%"
-  verbose_label: "Kanaalmeldingen"
   private: "De kanaalinformatie van %channel% is privé."
   no_expire: "%label%%padding%: Ja"
   no_expire_label: "Vervalt nooit"

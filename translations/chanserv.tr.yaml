@@ -71,8 +71,6 @@ info:
   topic_set_by_label: "Başlığı ayarlayan"
   options: "%label%%padding%: %options%"
   options_label: "Seçenekler"
-  verbose: "%label%%padding%: %state%"
-  verbose_label: "Kanal bildirimleri"
   private: "%channel% kanalının bilgileri özeldir."
   no_expire: "%label%%padding%: Evet"
   no_expire_label: "Hiç Sona Ermez"

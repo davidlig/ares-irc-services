@@ -72,8 +72,6 @@ info:
   topic_set_by_label: "Topic gesetzt von"
   options: "%label%%padding%: %options%"
   options_label: "Optionen"
-  verbose: "%label%%padding%: %state%"
-  verbose_label: "Aktivitätsmeldungen"
   private: "Die Kanalinformationen für %channel% sind privat."
   no_expire: "%label%%padding%: Ja"
   no_expire_label: "Läuft nie ab"

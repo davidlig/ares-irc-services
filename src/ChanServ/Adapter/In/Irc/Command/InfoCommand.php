@@ -25,7 +25,7 @@ use function str_contains;
  * INFO <#channel>.
  *
  * Shows channel info: founder, successor, url, email, description,
- * last used, last topic, TOPICLOCK, MLOCK, SECURE, IRCOPONLY.
+ * last used, last topic, TOPICLOCK, MLOCK, SECURE, IRCOPONLY, VERBOSE.
  */
 final readonly class InfoCommand implements ChanServCommandInterface
 {
@@ -184,7 +184,6 @@ final readonly class InfoCommand implements ChanServCommandInterface
         $this->presentContactDetails($context, $info);
         $this->presentMlockModes($context, $info);
         $this->presentEnabledOptions($context, $info);
-        $this->presentVerbose($context, $info);
         $this->presentNoExpire($context, $info);
         $this->presentFooter($context);
     }
@@ -270,17 +269,15 @@ final readonly class InfoCommand implements ChanServCommandInterface
         if ($info->ircopOnly) {
             $enabledOptions[] = 'IRCOPONLY';
         }
+        if ($info->verbose) {
+            $enabledOptions[] = 'VERBOSE';
+        }
 
         if ([] === $enabledOptions) {
             return;
         }
 
         $context->replyRaw(new ChanServDetailPresenter()->row($context, 'info.options', ['%options%' => implode(', ', $enabledOptions)]));
-    }
-
-    private function presentVerbose(ChanServContext $context, ChannelInfoView $info): void
-    {
-        $context->replyRaw(new ChanServDetailPresenter()->row($context, 'info.verbose', ['%state%' => $info->verbose ? 'ON' : 'OFF']));
     }
 
     private function presentNoExpire(ChanServContext $context, ChannelInfoView $info): void

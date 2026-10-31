@@ -72,8 +72,6 @@ info:
   topic_set_by_label: "Θέμα από"
   options: "%label%%padding%: %options%"
   options_label: "Επιλογές"
-  verbose: "%label%%padding%: %state%"
-  verbose_label: "Ειδοποιήσεις καναλιού"
   private: "Οι πληροφορίες του καναλιού %channel% είναι ιδιωτικές."
   no_expire: "%label%%padding%: Ναι"
   no_expire_label: "Ποτέ δεν λήγει"
