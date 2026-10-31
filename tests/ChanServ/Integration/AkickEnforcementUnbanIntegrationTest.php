@@ -75,7 +75,6 @@ use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\NullLogger;
 use ReflectionProperty;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -542,16 +541,13 @@ final class AkickEnforcementUnbanIntegrationTest extends TestCase
             $this->connectionHolder,
             $this->channelLookup,
             $applyOutgoing,
+            $applyOutgoingKick,
             $this->createStub(ServiceChannelRegistrationPort::class),
             $this->createStub(SendNoticePort::class),
             $uidGen,
             'services.example.com',
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             'ChanServ',
-            'ChanServ',
-            'Channel Registration Services',
-            new NullLogger(),
-            $applyOutgoingKick,
         );
         $this->chanServBot->onBurstComplete(new ServiceIntroductionRequestedEvent('001'));
 

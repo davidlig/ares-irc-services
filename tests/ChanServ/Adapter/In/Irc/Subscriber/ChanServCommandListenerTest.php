@@ -22,6 +22,7 @@ use App\ChanServ\Domain\Exception\ChannelNotRegisteredException;
 use App\ChanServ\Domain\Exception\InsufficientAccessException;
 use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
 use App\Irc\Application\Port\In\ActiveChannelModeSupportProviderInterface;
+use App\Irc\Application\Port\In\ApplyOutgoingChannelKickPort;
 use App\Irc\Application\Port\In\ApplyOutgoingChannelModesPort;
 use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
@@ -330,6 +331,7 @@ final class ChanServCommandListenerTest extends TestCase
         $connectionHolder = new ActiveConnectionHolder();
         $channelLookup = $this->createStub(ChannelLookupPort::class);
         $applyOutgoingChannelModes = $this->createStub(ApplyOutgoingChannelModesPort::class);
+        $applyOutgoingChannelKick = $this->createStub(ApplyOutgoingChannelKickPort::class);
         $channelRegistration = $this->createStub(ServiceChannelRegistrationPort::class);
         $sendNoticePort = $this->createStub(SendNoticePort::class);
         $uidGenerator = $this->createStub(ServiceUidGeneratorInterface::class);
@@ -339,6 +341,7 @@ final class ChanServCommandListenerTest extends TestCase
             $connectionHolder,
             $channelLookup,
             $applyOutgoingChannelModes,
+            $applyOutgoingChannelKick,
             $channelRegistration,
             $sendNoticePort,
             $uidGenerator,

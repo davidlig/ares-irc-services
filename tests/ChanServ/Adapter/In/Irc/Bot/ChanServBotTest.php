@@ -24,7 +24,6 @@ use App\Irc\Application\PublishedEvent\ServiceIntroductionRequestedEvent;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\NullLogger;
 
 #[CoversClass(ChanServBot::class)]
 final class ChanServBotTest extends TestCase
@@ -101,6 +100,7 @@ final class ChanServBotTest extends TestCase
             $this->connectionHolder,
             $this->channelLookup,
             $this->applyOutgoingChannelModes,
+            $this->applyOutgoingChannelKick,
             $this->channelRegistration,
             $sendNoticePort,
             $this->uidGenerator,
@@ -122,6 +122,7 @@ final class ChanServBotTest extends TestCase
             $this->connectionHolder,
             $this->channelLookup,
             $this->applyOutgoingChannelModes,
+            $this->applyOutgoingChannelKick,
             $this->channelRegistration,
             $sendNoticePort,
             $this->uidGenerator,
@@ -146,6 +147,7 @@ final class ChanServBotTest extends TestCase
             $this->connectionHolder,
             $channelLookup,
             $this->applyOutgoingChannelModes,
+            $this->applyOutgoingChannelKick,
             $this->channelRegistration,
             $sendNoticePort,
             $this->uidGenerator,
@@ -170,6 +172,7 @@ final class ChanServBotTest extends TestCase
             $this->connectionHolder,
             $channelLookup,
             $this->applyOutgoingChannelModes,
+            $this->applyOutgoingChannelKick,
             $this->channelRegistration,
             $sendNoticePort,
             $this->uidGenerator,
@@ -194,6 +197,7 @@ final class ChanServBotTest extends TestCase
             $this->connectionHolder,
             $channelLookup,
             $this->applyOutgoingChannelModes,
+            $this->applyOutgoingChannelKick,
             $this->channelRegistration,
             $sendNoticePort,
             $this->uidGenerator,
@@ -225,6 +229,7 @@ final class ChanServBotTest extends TestCase
             $this->connectionHolder,
             $channelLookup,
             $this->applyOutgoingChannelModes,
+            $this->applyOutgoingChannelKick,
             $this->channelRegistration,
             $sendNoticePort,
             $this->uidGenerator,
@@ -256,6 +261,7 @@ final class ChanServBotTest extends TestCase
             $this->connectionHolder,
             $channelLookup,
             $this->applyOutgoingChannelModes,
+            $this->applyOutgoingChannelKick,
             $this->channelRegistration,
             $sendNoticePort,
             $this->uidGenerator,
@@ -294,6 +300,7 @@ final class ChanServBotTest extends TestCase
             $this->connectionHolder,
             $this->createStub(ChannelLookupPort::class),
             $applyOutgoing,
+            $this->applyOutgoingChannelKick,
             $this->createStub(ServiceChannelRegistrationPort::class),
             $this->sendNoticePort,
             $this->uidGenerator,
@@ -498,49 +505,12 @@ final class ChanServBotTest extends TestCase
             $this->connectionHolder,
             $this->channelLookup,
             $this->applyOutgoingChannelModes,
-            $this->channelRegistration,
-            $this->sendNoticePort,
-            $this->uidGenerator,
-            self::HOSTNAME,
-            $this->channels,
-            'ChanServ',
-            'ChanServ',
-            'Channel Registration Services',
-            new NullLogger(),
             $applyOutgoingKick,
-        );
-        $bot->onBurstComplete(new ServiceIntroductionRequestedEvent('001'));
-
-        $bot->kickFromChannel('#channel', '001USER', 'Test reason');
-    }
-
-    #[Test]
-    public function kickFromChannelWhenApplyOutgoingKickNullDelegatesWithoutError(): void
-    {
-        $serviceActions = $this->createMock(ProtocolServiceActionsInterface::class);
-        $serviceActions->expects(self::once())->method('kickFromChannel')
-            ->with('001', '#channel', '001USER', 'Test reason', self::CHANSERV_UID);
-
-        $module = $this->createStub(ProtocolModuleInterface::class);
-        $module->method('getServiceActions')->willReturn($serviceActions);
-
-        $this->connectionHolder->onBurstComplete(new NetworkBurstCompleteEvent($this->createStub(ConnectionInterface::class), '001'));
-        $this->connectionHolder->setProtocolModule($module);
-
-        $bot = new ChanServBot(
-            $this->connectionHolder,
-            $this->channelLookup,
-            $this->applyOutgoingChannelModes,
             $this->channelRegistration,
             $this->sendNoticePort,
             $this->uidGenerator,
             self::HOSTNAME,
             $this->channels,
-            'ChanServ',
-            'ChanServ',
-            'Channel Registration Services',
-            new NullLogger(),
-            null,
         );
         $bot->onBurstComplete(new ServiceIntroductionRequestedEvent('001'));
 
@@ -612,16 +582,12 @@ final class ChanServBotTest extends TestCase
             $this->connectionHolder,
             $this->channelLookup,
             $this->applyOutgoingChannelModes,
+            $this->applyOutgoingChannelKick,
             $this->channelRegistration,
             $this->sendNoticePort,
             $this->uidGenerator,
             self::HOSTNAME,
             $this->channels,
-            'ChanServ',
-            'ChanServ',
-            'Channel Registration Services',
-            new NullLogger(),
-            $this->applyOutgoingChannelKick,
         );
 
         $this->bot->onBurstComplete(new ServiceIntroductionRequestedEvent('001'));

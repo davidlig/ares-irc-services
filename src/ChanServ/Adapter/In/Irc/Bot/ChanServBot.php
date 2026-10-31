@@ -41,6 +41,7 @@ final class ChanServBot implements ChanServNotifierInterface, ChannelServiceActi
         private readonly ActiveProtocolModuleHolderInterface $connectionHolder,
         private readonly ChannelLookupPort $channelLookup,
         private readonly ApplyOutgoingChannelModesPort $applyOutgoingChannelModes,
+        private readonly ApplyOutgoingChannelKickPort $applyOutgoingChannelKick,
         private readonly ServiceChannelRegistrationPort $channelRegistration,
         private readonly SendNoticePort $sendNoticePort,
         private readonly ServiceUidGeneratorInterface $uidGenerator,
@@ -50,7 +51,6 @@ final class ChanServBot implements ChanServNotifierInterface, ChannelServiceActi
         private readonly string $chanservIdent = 'ChanServ',
         private readonly string $chanservRealname = 'Channel Registration Services',
         private readonly LoggerInterface $logger = new NullLogger(),
-        private readonly ?ApplyOutgoingChannelKickPort $applyOutgoingChannelKick = null,
     ) {}
 
     public static function getSubscribedEvents(): array
@@ -174,7 +174,7 @@ final class ChanServBot implements ChanServNotifierInterface, ChannelServiceActi
         $sid = $this->connectionHolder->getServerSid() ?? '';
         if (null !== $module && '' !== $sid) {
             $module->getServiceActions()->kickFromChannel($sid, $channelName, $targetUid, $reason, $this->uid);
-            $this->applyOutgoingChannelKick?->applyOutgoingKick($channelName, $targetUid, $reason);
+            $this->applyOutgoingChannelKick->applyOutgoingKick($channelName, $targetUid, $reason);
         }
     }
 
