@@ -11,6 +11,7 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbBlockStateRepositoryInterf
 use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbConnectionLifecycleSubscriber;
 use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionController;
 use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionCoordinator;
+use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionLock;
 use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbProtocolHandler;
 use App\Irc\Domain\Server\ServerLink;
 use App\Irc\Domain\ValueObject\Hostname;
@@ -35,7 +36,9 @@ final class UdbConnectionLifecycleSubscriberTest extends TestCase
             $this->createStub(UdbBlockStateRepositoryInterface::class),
             new FakeUdbSnapshots(),
         );
-        $subscriber = new UdbConnectionLifecycleSubscriber($coordinator);
+        $lock = new UdbSessionLock(sys_get_temp_dir());
+        $handler = new UnrealUdbProtocolHandler('002', $coordinator, $lock);
+        $subscriber = new UdbConnectionLifecycleSubscriber($coordinator, $lock, $handler);
 
         $coordinator->setOwnName('services.example.net');
         $coordinator->onRemoteServer('001', 'ircd.example.net');
@@ -70,12 +73,13 @@ final class UdbConnectionLifecycleSubscriberTest extends TestCase
         $coordinator->method('onRemoteServer')->willReturnCallback(static function (string $sid, string $name) use (&$remoteIdentities): void {
             $remoteIdentities[] = [$sid, $name];
         });
-        $handler = new UnrealUdbProtocolHandler('002', $coordinator);
+        $lock = new UdbSessionLock(sys_get_temp_dir());
+        $handler = new UnrealUdbProtocolHandler('002', $coordinator, $lock);
         $connection = $this->createConnection();
         $handler->handleIncoming(new IRCMessage(command: 'PROTOCTL', params: ['SID=001']), $connection);
         $handler->handleIncoming(new IRCMessage(command: 'SERVER', params: ['old.example.net', '1']), $connection);
 
-        new UdbConnectionLifecycleSubscriber($coordinator, protocolHandler: $handler)
+        new UdbConnectionLifecycleSubscriber($coordinator, $lock, $handler)
             ->onConnectionLost(new ConnectionLostEvent($this->createServerLink(), 'connection reset'));
 
         $handler->handleIncoming(new IRCMessage(command: 'SERVER', params: ['new.example.net', '1']), $connection);

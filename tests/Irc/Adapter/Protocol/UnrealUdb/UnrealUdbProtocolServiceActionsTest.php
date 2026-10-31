@@ -70,12 +70,9 @@ final class UnrealUdbProtocolServiceActionsTest extends TestCase
     }
 
     #[Test]
-    public function getAvailableOperclassesDelegatesToSessionStateOrReturnsEmptyWhenNull(): void
+    public function getAvailableOperclassesDelegatesToSessionState(): void
     {
         $writer = $this->createStub(UdbRecordWriterInterface::class);
-        $actionsWithoutState = new UnrealUdbProtocolServiceActions($this->connectionHolder, $writer, null);
-        self::assertSame([], $actionsWithoutState->getAvailableOperclasses());
-
         $state = $this->createStub(UdbSessionStateInterface::class);
         $state->method('getAvailableOperclasses')->willReturn(['locop', 'netadmin']);
         $actionsWithState = new UnrealUdbProtocolServiceActions($this->connectionHolder, $writer, $state);
@@ -410,6 +407,7 @@ final class UnrealUdbProtocolServiceActionsTest extends TestCase
         $actions = new UnrealUdbProtocolServiceActions(
             $connectionHolder,
             $this->createUdbRecordWriter($connectionHolder),
+            $this->createReadySessionState(),
         );
 
         $actions->setUserAccount('001', '001ABCD', 'TestAccount');
@@ -436,6 +434,7 @@ final class UnrealUdbProtocolServiceActionsTest extends TestCase
         $actions = new UnrealUdbProtocolServiceActions(
             $this->connectionHolder,
             $writer,
+            $this->createReadySessionState(),
             clock: new MutableUdbClock(1_800_000_000),
         );
 
@@ -452,7 +451,7 @@ final class UnrealUdbProtocolServiceActionsTest extends TestCase
     {
         $writer = $this->createMock(UdbRecordWriterInterface::class);
         $writer->expects(self::once())->method('insert')->with('K', 'G::*@192.168.*::reason', 'Permanent ban');
-        $actions = new UnrealUdbProtocolServiceActions($this->connectionHolder, $writer);
+        $actions = new UnrealUdbProtocolServiceActions($this->connectionHolder, $writer, $this->createReadySessionState());
 
         $actions->addGline('001', '*', '192.168.*', 0, 'Permanent ban');
     }
@@ -488,8 +487,7 @@ final class UnrealUdbProtocolServiceActionsTest extends TestCase
 
         $actions->introducePseudoClient('001', 'GlobalBot', 'global', 'services.red', '001Z00001', 'Global Message Bot');
 
-        self::assertCount(1, $this->written);
-        self::assertMatchesRegularExpression('/^:001 UID GlobalBot 1 \d+ global services\.red 001Z00001 0 \+BDIopqR services\.red \* \* \* :Global Message Bot$/', $this->written[0]);
+        self::assertSame([':001 UID GlobalBot 1 1800000000 global services.red 001Z00001 0 +BDIopqR services.red * * * :Global Message Bot'], $this->written);
     }
 
     #[Test]
@@ -499,8 +497,7 @@ final class UnrealUdbProtocolServiceActionsTest extends TestCase
 
         $actions->introducePseudoClient('002', 'Announce', 'announce', 'irc.example.net', '002Z00005', 'Network Announcements');
 
-        self::assertCount(1, $this->written);
-        self::assertMatchesRegularExpression('/^:002 UID Announce 1 \d+ announce irc\.example\.net 002Z00005 0 \+BDIopqR irc\.example\.net \* \* \* :Network Announcements$/', $this->written[0]);
+        self::assertSame([':002 UID Announce 1 1800000000 announce irc.example.net 002Z00005 0 +BDIopqR irc.example.net * * * :Network Announcements'], $this->written);
     }
 
     #[Test]
@@ -583,11 +580,12 @@ final class UnrealUdbProtocolServiceActionsTest extends TestCase
         $sidProperty->setValue($this->connectionHolder, '001');
     }
 
-    private function createActions(): UnrealUdbProtocolServiceActions
+    private function createActions(?UdbSessionStateInterface $sessionState = null): UnrealUdbProtocolServiceActions
     {
         return new UnrealUdbProtocolServiceActions(
             $this->connectionHolder,
             $this->createUdbRecordWriter($this->connectionHolder),
+            $sessionState ?? $this->createReadySessionState(),
             clock: new MutableUdbClock(1_800_000_000),
         );
     }

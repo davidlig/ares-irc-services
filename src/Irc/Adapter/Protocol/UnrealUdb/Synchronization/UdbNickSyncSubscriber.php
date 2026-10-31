@@ -36,7 +36,7 @@ final class UdbNickSyncSubscriber implements EventSubscriberInterface
         private PasswordMigrationStateInterface $migrationState,
         private OperatorNetworkProjectionQuery $operators,
         private UdbRecordExporter $exporter,
-        private ?UdbSessionStateInterface $sessionState = null,
+        private UdbSessionStateInterface $sessionState,
     ) {}
 
     public static function getSubscribedEvents(): array
@@ -131,7 +131,7 @@ final class UdbNickSyncSubscriber implements EventSubscriberInterface
         }
 
         $operclass = $operator->operclass;
-        if (null === $operclass || '' === $operclass || (null !== $this->sessionState && !$this->sessionState->isOperclassGloballyAvailable($operclass))) {
+        if (null === $operclass || '' === $operclass || !$this->sessionState->isOperclassGloballyAvailable($operclass)) {
             $this->recordWriter->delete(self::BLOCK, $path);
 
             return;

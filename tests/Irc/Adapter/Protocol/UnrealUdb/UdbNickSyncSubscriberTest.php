@@ -351,11 +351,15 @@ final class UdbNickSyncSubscriberTest extends TestCase
         ?PasswordMigrationStateInterface $migrationState = null,
         ?OperatorNetworkProjectionQuery $ircopRepo = null,
         ?UdbRecordWriterInterface $writer = null,
+        ?UdbSessionStateInterface $sessionState = null,
     ): UdbNickSyncSubscriber {
         $defaultWriter = $this->createStub(UdbRecordWriterInterface::class);
         $defaultWriter->method('insert')->willReturn(true);
         $defaultWriter->method('delete')->willReturn(true);
         $writer ??= $defaultWriter;
+
+        $defaultSessionState = $this->createStub(UdbSessionStateInterface::class);
+        $defaultSessionState->method('isOperclassGloballyAvailable')->willReturn(true);
 
         return new UdbNickSyncSubscriber(
             $writer,
@@ -363,6 +367,7 @@ final class UdbNickSyncSubscriberTest extends TestCase
             $migrationState ?? $this->createStub(PasswordMigrationStateInterface::class),
             $ircopRepo ?? $this->createStub(OperatorNetworkProjectionQuery::class),
             $this->createExporter($repo, $ircopRepo),
+            $sessionState ?? $defaultSessionState,
         );
     }
 

@@ -46,7 +46,7 @@ final readonly class UnrealUdbProtocolServiceActions implements ProtocolServiceA
     public function __construct(
         private ActiveConnectionHolder $connectionHolder,
         private UdbRecordWriterInterface $recordWriter,
-        private ?UdbSessionStateInterface $sessionState = null,
+        private UdbSessionStateInterface $sessionState,
         private UnrealUdbServiceIntroductionFormatter $introductionFormatter = new UnrealUdbServiceIntroductionFormatter(),
         private LoggerInterface $logger = new NullLogger(),
         private UdbClock $clock = new SystemUdbClock(),
@@ -72,7 +72,7 @@ final readonly class UnrealUdbProtocolServiceActions implements ProtocolServiceA
             return;
         }
 
-        if (null === $this->sessionState || !$this->sessionState->isOperclassGloballyAvailable($operclass)) {
+        if (!$this->sessionState->isOperclassGloballyAvailable($operclass)) {
             $this->logger->warning('Refusing UDB operclass assignment not present in the READY OCLG view.', ['operclass' => $operclass]);
 
             return;
@@ -86,7 +86,7 @@ final readonly class UnrealUdbProtocolServiceActions implements ProtocolServiceA
      */
     public function getAvailableOperclasses(): array
     {
-        return $this->sessionState?->getAvailableOperclasses() ?? [];
+        return $this->sessionState->getAvailableOperclasses();
     }
 
     public function setUserVhost(string $serverSid, string $targetUid, string $vhost, string $cloakedHost = ''): void
@@ -202,7 +202,7 @@ final readonly class UnrealUdbProtocolServiceActions implements ProtocolServiceA
      */
     public function introducePseudoClient(string $serverSid, string $nick, string $ident, string $vhost, string $uid, string $realname): void
     {
-        $ts = time();
+        $ts = $this->clock->now();
         $line = sprintf(
             ':%s UID %s 1 %d %s %s %s 0 +BDIopqR %s * * * :%s',
             $serverSid,
