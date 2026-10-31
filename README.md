@@ -701,3 +701,5 @@ If `CAPAB` lines appear split or corrupted in logs, this was a buffering issue i
 ## License
 
 This project is licensed under the **GNU Affero General Public License v3.0 or later** (AGPL-3.0-or-later). See [LICENSE](LICENSE) for the full text.
+
+Pursuant to Section 7(b) of the GNU AGPLv3, additional terms apply regarding the preservation of original author attribution. See [ADDITIONAL_TERMS.md](ADDITIONAL_TERMS.md) for details.

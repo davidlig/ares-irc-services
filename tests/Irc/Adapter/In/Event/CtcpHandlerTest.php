@@ -79,7 +79,7 @@ final class CtcpHandlerTest extends TestCase
         $sendCtcp
             ->expects(self::once())
             ->method('sendCtcpReply')
-            ->with('002AAAAAA', $senderUid, 'VERSION', 'Ares IRC Services v2.4.0');
+            ->with('002AAAAAA', $senderUid, 'VERSION', 'Ares IRC Services v2.4.0 - David Abuín Fontán | https://ares-services.davidlig.net');
 
         $sendNotice = $this->createMock(SendNoticePort::class);
         $sendNotice
@@ -242,7 +242,7 @@ final class CtcpHandlerTest extends TestCase
         $sendCtcp
             ->expects(self::once())
             ->method('sendCtcpReply')
-            ->with('002AAAAAA', $senderUid, 'VERSION', 'Ares IRC Services v2.4.0');
+            ->with('002AAAAAA', $senderUid, 'VERSION', 'Ares IRC Services v2.4.0 - David Abuín Fontán | https://ares-services.davidlig.net');
 
         $sendNotice = $this->createMock(SendNoticePort::class);
         $sendNotice
@@ -280,7 +280,7 @@ final class CtcpHandlerTest extends TestCase
         $sendCtcp
             ->expects(self::once())
             ->method('sendCtcpReply')
-            ->with('002AAAAAA', $senderUid, 'VERSION', 'Ares IRC Services v2.4.0');
+            ->with('002AAAAAA', $senderUid, 'VERSION', 'Ares IRC Services v2.4.0 - David Abuín Fontán | https://ares-services.davidlig.net');
 
         $handler = $this->createHandler(
             sendCtcp: $sendCtcp,
@@ -308,7 +308,7 @@ final class CtcpHandlerTest extends TestCase
 
         $sendCtcp = $this->createMock(SendCtcpPort::class);
         $sendCtcp->expects(self::once())->method('sendCtcpReply')
-            ->with('002AAAAAA', $senderUid, 'VERSION', 'Ares IRC Services v2.4.0');
+            ->with('002AAAAAA', $senderUid, 'VERSION', 'Ares IRC Services v2.4.0 - David Abuín Fontán | https://ares-services.davidlig.net');
 
         $sendNotice = $this->createMock(SendNoticePort::class);
         $sendNotice->expects(self::atLeastOnce())->method('sendMessage')
@@ -372,7 +372,7 @@ final class CtcpHandlerTest extends TestCase
         $sendCtcp
             ->expects(self::once())
             ->method('sendCtcpReply')
-            ->with($serviceUid, $senderUid, 'VERSION', 'Ares IRC Services v2.4.0');
+            ->with($serviceUid, $senderUid, 'VERSION', 'Ares IRC Services v2.4.0 - David Abuín Fontán | https://ares-services.davidlig.net');
 
         $sendNotice = $this->createMock(SendNoticePort::class);
         $sendNotice
