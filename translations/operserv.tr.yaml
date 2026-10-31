@@ -59,7 +59,7 @@ help:
 
 # --- IRCOP --------------------------------------------------------------------
 ircop:
-  syntax: "IRCOP {ADD <nickname> <rol>|DEL <nickname>|LIST}"
+  syntax: "IRCOP <seçenek> [parametreler]"
   short: "Ağ IRC operatörlerini yönetin."
   help: |-
     Ağ IRC operatörlerini yönetin. ADD, kayıtlı bir rumuzu
@@ -143,14 +143,14 @@ role:
       done: "%role% rolü için operclass yapılandırıldı."
       cleared: "%role% rolünün operclass değeri silindi."
       not_available: "%operclass% operclass'i agda mevcut degil. Mevcut operclass'lar: %available%."
-  syntax: "ROLE {ADD <ad> [açıklama]|DEL <ad>|LIST|PERMS {{ADD|DEL} <rol> <izin>|{LIST|CLEAR} <rol>}|MODES {VIEW <rol>|SET <rol> [modlar]}|VHOST {VIEW <rol>|SET <rol> [sanal_host]}}"
+  syntax: "ROLE <seçenek> [parametreler]"
   short: "Operatör rollerini, izinlerini ve yapılandırmalarını yönetir."
   help: |-
     Operatör rollerini, izinlerini ve yapılandırmalarını yönetir.
 
     ADMIN, OPER ve PREOPER rolleri korumalıdır ve silinemez.
     Yalnızca Root kullanıcıları kullanabilir.
-  syntax_operclass: "ROLE {ADD <ad> [açıklama]|DEL <ad>|LIST|PERMS {{ADD|DEL} <rol> <izin>|{LIST|CLEAR} <rol>}|MODES {VIEW <rol>|SET <rol> [modlar]}|VHOST {VIEW <rol>|SET <rol> [sanal_host]}|OPERCLASS {LIST|VIEW <ad>|SET <ad> [operclass]}}"
+  syntax_operclass: "ROLE <seçenek> [parametreler]"
   help_operclass: |-
     Operatör rollerini, izinlerini ve yapılandırmalarını yönetir.
 
@@ -322,7 +322,7 @@ kill:
 
 # --- GLINE --------------------------------------------------------------------
 gline:
-  syntax: "GLINE {ADD <maske> <süre> <gerekçe>|DEL {<maske>|<numara>}|LIST [maske]}"
+  syntax: "GLINE <seçenek> [parametreler]"
   short: "Ağ genelindeki G-line'ları yönetin."
   help: |-
     Ağ genelindeki G-line yasaklarını yönetir.
@@ -388,7 +388,7 @@ gline:
 
 # --- BADMAIL ------------------------------------------------------------------
 badmail:
-  syntax: "BADMAIL {ADD <alan_adı> <gerekçe>|DEL {numara|ALL}|LIST <kalıp> [sayfa]}"
+  syntax: "BADMAIL <seçenek> [parametreler]"
   short: "Engellenen e-posta alan adlarını yönet."
   help: |-
     Engellenen e-posta alan adlarını yönet.
@@ -456,7 +456,7 @@ global:
 # --- MOTD ---------------------------------------------------------------------
 motd:
   short: "Bağlantıda kullanıcılara gönderilen MOTD mesajlarını yönetin."
-  syntax: "MOTD {ADD <hedef> {PRIVMSG|NOTICE} <süre> <mesaj>|DEL <id>|LIST|CLEAN}"
+  syntax: "MOTD <seçenek> [parametreler]"
   help: "Kullanıcı ağa bağlandığında gönderilen günün mesajı (MOTD) kayıtlarını yönetir."
   example: "%command_prefix%MOTD LIST"
   unknown_sub: "Bilinmeyen alt komut. Kullanın: %add%, %del%, %list%, %clean%"

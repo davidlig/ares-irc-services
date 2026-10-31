@@ -152,7 +152,7 @@ recover:
 
 # --- SET ----------------------------------------------------------------------
 set:
-  syntax: "SET {PASSWORD <new_password>|EMAIL <email> <token>|LANGUAGE <code>|TIMEZONE <timezone>|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
+  syntax: "SET <opció> [paràmetres]"
   short: "Canviar les opcions del teu sobrenom."
   help: |-
     Modifica la configuració del teu sobrenom. T'has d'haver identificat per canviar
@@ -496,7 +496,7 @@ list:
 
 # --- HISTORY ---
 history:
-  syntax: "HISTORY <nickname> {ADD <message>|DEL <id>|VIEW [PAGE|ALL]|CLEAR}"
+  syntax: "HISTORY <sobrenom> <opció> [paràmetres]"
   short: "Veure o gestionar l'historial d'accions del sobrenom."
   help: |-
     Consulta i gestiona l'historial d'accions d'un sobrenom. Registra automàticament
@@ -590,7 +590,7 @@ saregister:
 
 # --- SASET (IRCop) ------------------------------------------------------------
 saset:
-  syntax: "SASET <sobrenom> {PASSWORD <nova_contrasenya>|EMAIL <nou_correu>|LANGUAGE <codi>|TIMEZONE {<zona_horària>|OFF}|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
+  syntax: "SASET <sobrenom> <opció> [paràmetres]"
   short: "Modificar la configuració d'un altre sobrenom."
   help: |-
     Permet que un IRCop canviï la configuració d'un altre sobrenom registrat. No
@@ -777,7 +777,7 @@ unforbid:
 
 # --- FORBIDVHOST (IRCop) ------------------------------------------------------
 forbidvhost:
-  syntax: "FORBIDVHOST {ADD <pattern>|DEL <pattern>|LIST}"
+  syntax: "FORBIDVHOST <opció> [paràmetres]"
   short: "Gestionar els patrons de vhost prohibits."
   help: |-
     Gestiona els patrons que impedeixen hosts virtuals

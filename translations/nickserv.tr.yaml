@@ -152,7 +152,7 @@ recover:
 
 # --- SET ----------------------------------------------------------------------
 set:
-  syntax: "SET {PASSWORD <yeni_şifre>|EMAIL <email> <token>|LANGUAGE <kod>|TIMEZONE <zaman_dilimi>|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
+  syntax: "SET <seçenek> [parametreler]"
   short: "Rumuz seçeneklerinizi değiştirin."
   help: |-
     Takma adınızın ayarlarını değiştirir. Bu seçenekleri değiştirmek için
@@ -491,7 +491,7 @@ list:
 
 # --- HISTORY ---
 history:
-  syntax: "HISTORY <nickname> {ADD <mesaj>|DEL <id>|VIEW [PAGE|ALL]|CLEAR}"
+  syntax: "HISTORY <rumuz> <seçenek> [parametreler]"
   short: "Rumuz eylem geçmişini görüntüleyin veya yönetin."
   help: |-
     Takma adın işlem geçmişini görüntüler ve yönetir. Askıya alma, parola veya
@@ -586,7 +586,7 @@ saregister:
 
 # --- SASET (IRCop) ------------------------------------------------------------
 saset:
-  syntax: "SASET <rumuz> {PASSWORD <yeni_şifre>|EMAIL <yeni_e-posta>|LANGUAGE <kod>|TIMEZONE {<zaman_dilimi>|OFF}|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
+  syntax: "SASET <rumuz> <seçenek> [parametreler]"
   short: "Başka bir rumuzun ayarlarını değiştir."
   help: |-
     IRCop kullanıcısının başka bir kayıtlı takma adın ayarlarını değiştirmesini
@@ -772,7 +772,7 @@ unforbid:
 
 # --- FORBIDVHOST (IRCop) ------------------------------------------------------
 forbidvhost:
-  syntax: "FORBIDVHOST {ADD <kalıp>|DEL <kalıp>|LIST}"
+  syntax: "FORBIDVHOST <seçenek> [parametreler]"
   short: "Yasaklı vhost kalıplarını yönetin."
   help: |-
     SET VHOST ile eşleşen vhost ayarlarını engelleyen kalıpları yönetir. * herhangi

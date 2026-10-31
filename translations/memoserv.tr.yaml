@@ -82,7 +82,7 @@ del:
 
 # --- IGNORE -------------------------------------------------------------------
 ignore:
-  syntax: "IGNORE {ADD [#channel] <nickname>|DEL [#channel] <nickname>|LIST [#channel]}"
+  syntax: "IGNORE <seçenek> [parametreler]"
   short: "Mesajlar için yoksayma listesini yönetin."
   help: |-
     Hesabınızdan veya kayıtlı bir kanaldan mesaj almak istemediğiniz takma adları

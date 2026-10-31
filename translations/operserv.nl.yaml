@@ -59,7 +59,7 @@ help:
 
 # --- IRCOP --------------------------------------------------------------------
 ircop:
-  syntax: "IRCOP {ADD <bijnaam> <rol>|DEL <bijnaam>|LIST}"
+  syntax: "IRCOP <optie> [parameters]"
   short: "Beheer netwerk IRC-operators."
   help: |-
     Beheer netwerk IRC-operators. ADD voegt een geregistreerde bijnaam toe
@@ -144,7 +144,7 @@ role:
       done: "De operclass voor rol %role% is ingesteld."
       cleared: "De operclass voor rol %role% is verwijderd."
       not_available: "Operclass %operclass% is niet beschikbaar in het netwerk. Beschikbare operclasses: %available%."
-  syntax: "ROLE {ADD <naam> [beschrijving]|DEL <naam>|LIST|PERMS {{ADD|DEL} <rol> <permissie>|{LIST|CLEAR} <rol>}|MODES {VIEW <rol>|SET <rol> [modi]}|VHOST {VIEW <rol>|SET <rol> [vhost]}}"
+  syntax: "ROLE <optie> [parameters]"
   short: "Beheert operatorrollen, rechten en instellingen."
   help: |-
     Beheert operatorrollen, rechten en instellingen.
@@ -152,7 +152,7 @@ role:
     De rollen ADMIN, OPER en PREOPER zijn beschermd en kunnen niet verwijderd
     worden.
     Alleen voor Root-gebruikers.
-  syntax_operclass: "ROLE {ADD <naam> [beschrijving]|DEL <naam>|LIST|PERMS {{ADD|DEL} <rol> <permissie>|{LIST|CLEAR} <rol>}|MODES {VIEW <rol>|SET <rol> [modi]}|VHOST {VIEW <rol>|SET <rol> [vhost]}|OPERCLASS {LIST|VIEW <naam>|SET <naam> [operclass]}}"
+  syntax_operclass: "ROLE <optie> [parameters]"
   help_operclass: |-
     Beheer operatorrollen. ADD maakt een nieuwe rol aan, DEL verwijdert deze,
     LIST toont alle rollen, PERMS beheert permissies voor een rol, MODES beheert IRCOP-modi,
@@ -326,7 +326,7 @@ kill:
 
 # --- GLINE --------------------------------------------------------------------
 gline:
-  syntax: "GLINE {ADD <masker> <verloop> <reden>|DEL {<masker>|<nummer>}|LIST [masker]}"
+  syntax: "GLINE <optie> [parameters]"
   short: "Beheer netwerkbrede G-lines."
   help: |-
     Beheert netwerkbrede G-lines (bans).
@@ -390,7 +390,7 @@ gline:
 
 # --- BADMAIL ------------------------------------------------------------------
 badmail:
-  syntax: "BADMAIL {ADD <domein> <reden>|DEL {nummer|ALL}|LIST <patroon> [pagina]}"
+  syntax: "BADMAIL <optie> [parameters]"
   short: "Geblokkeerde e-maildomeinen beheren."
   help: |-
     Geblokkeerde e-maildomeinen beheren.
@@ -456,7 +456,7 @@ global:
 # --- MOTD ---------------------------------------------------------------------
 motd:
   short: "Beheer connect MOTD-berichten die naar gebruikers worden gestuurd bij verbinding."
-  syntax: "MOTD {ADD <doel> {PRIVMSG|NOTICE} <verloop> <bericht>|DEL <id>|LIST|CLEAN}"
+  syntax: "MOTD <optie> [parameters]"
   help: |-
     Beheert MOTD-vermeldingen (bericht van de dag) die bij verbinding naar
     gebruikers

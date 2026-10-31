@@ -152,7 +152,7 @@ recover:
 
 # --- SET ----------------------------------------------------------------------
 set:
-  syntax: "SET {PASSWORD <nueva_contraseña>|EMAIL <email> <token>|LANGUAGE <código>|TIMEZONE <zona>|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
+  syntax: "SET <opción> [parámetros]"
   short: "Cambiar opciones de tu apodo."
   help: |-
     Modifica la configuración de tu apodo. Debes estar identificado para cambiar
@@ -493,7 +493,7 @@ list:
 
 # --- HISTORY ---
 history:
-  syntax: "HISTORY <apodo> {ADD <mensaje>|DEL <id>|VIEW [PAGE|ALL]|CLEAR}"
+  syntax: "HISTORY <apodo> <opción> [parámetros]"
   short: "Ver o gestionar el historial de acciones de un apodo."
   help: |-
     Consulta y gestiona el historial de acciones de un apodo. Registra
@@ -587,7 +587,7 @@ saregister:
 
 # --- SASET (IRCop) ------------------------------------------------------------
 saset:
-  syntax: "SASET <apodo> {PASSWORD <nueva_contraseña>|EMAIL <nuevo_email>|LANGUAGE <código>|TIMEZONE {<zona>|OFF}|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
+  syntax: "SASET <apodo> <opción> [parámetros]"
   short: "Modifica la configuración de otro apodo."
   help: |-
     Permite a un IRCop cambiar la configuración de otro apodo registrado. No
@@ -771,7 +771,7 @@ unforbid:
 
 # --- FORBIDVHOST (IRCop) ------------------------------------------------------
 forbidvhost:
-  syntax: "FORBIDVHOST {ADD <patrón>|DEL <patrón>|LIST}"
+  syntax: "FORBIDVHOST <opción> [parámetros]"
   short: "Gestiona vhosts prohibidos."
   help: |-
     Gestiona los patrones que impiden establecer vhosts coincidentes con SET

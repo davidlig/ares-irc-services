@@ -103,7 +103,7 @@ info:
 
 # --- SET ----------------------------------------------------------------------
 set:
-  syntax: "SET <#channel> {FOUNDER <takma_ad> [token]|SUCCESSOR [nickname]|DESC <açıklama>|URL [url]|EMAIL [e-posta]|ENTRYMSG [mesaj]|TOPICLOCK {ON|OFF}|MLOCK {ON|OFF}|PRIVATE {ON|OFF}|SECURE {ON|OFF}|VERBOSE {ON|OFF}}"
+  syntax: "SET <#kanal> <seçenek> [parametreler]"
   example: "%command_prefix%SET #kanal DESC Bir topluluk kanalı"
   examples:
     - "%command_prefix%SET #kanal URL https://example.test"
@@ -311,7 +311,7 @@ status:
 
 # --- ACCESS -------------------------------------------------------------------
 access:
-  syntax: "ACCESS <#channel> {ADD <nickname> <seviye>|DEL <nickname>|LIST}"
+  syntax: "ACCESS <#kanal> <seçenek> [parametreler]"
   example: "%command_prefix%ACCESS #kanal LIST"
   examples:
     - "%command_prefix%ACCESS #kanal ADD Alicia 100"
@@ -371,7 +371,7 @@ delaccess:
 
 # --- AKICK --------------------------------------------------------------------
 akick:
-  syntax: "AKICK <#channel> {ADD <maske> [süre] [gerekçe]|DEL {<maske>|<numara>}|LIST|VIEW {<maske>|<numara>}|CLEAR|CHECK <takma_ad>|ENFORCE}"
+  syntax: "AKICK <#kanal> <seçenek> [parametreler]"
   example: "%command_prefix%AKICK #kanal ADD *!*@* 0"
   examples:
     - "%command_prefix%AKICK #kanal ADD *!*@* 7d Spam"
@@ -489,7 +489,7 @@ akick:
 
 # --- LEVELS -------------------------------------------------------------------
 levels:
-  syntax: "LEVELS <#channel> {LIST|SET <seviye> <değer>|RESET}"
+  syntax: "LEVELS <#kanal> <seçenek> [parametreler]"
   example: "%command_prefix%LEVELS #kanal LIST"
   examples:
     - "%command_prefix%LEVELS #kanal SET OPDEOP 50"
@@ -816,7 +816,7 @@ unforbid:
 
 # --- HISTORY ---
 history:
-  syntax: "HISTORY <#channel> {ADD <mesaj>|DEL <id>|VIEW [PAGE|ALL]|CLEAR}"
+  syntax: "HISTORY <#kanal> <seçenek> [parametreler]"
   example: "%command_prefix%HISTORY #kanal ADD Moderasyon incelemesi"
   examples:
     - "%command_prefix%HISTORY #kanal DEL 42"
@@ -949,7 +949,7 @@ regmode:
 
 # --- CREG (IRCop) -------------------------------------------------------------
 creg:
-  syntax: "CREG {PENDING [sayfa]|ACCEPT <#kanal>|REJECT <#kanal> <neden>}"
+  syntax: "CREG <seçenek> [parametreler]"
   pending.syntax: "CREG PENDING [sayfa]"
   pending.example: "%command_prefix%CREG PENDING"
   pending.short: "Bekleyen kayıt isteklerini listeleyin."

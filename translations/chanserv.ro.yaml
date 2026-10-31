@@ -105,7 +105,7 @@ info:
 
 # --- SET ----------------------------------------------------------------------
 set:
-  syntax: "SET <#canal> {FOUNDER <poreclă> [token]|SUCCESSOR [poreclă]|DESC <descriere>|URL [url]|EMAIL [e-mail]|ENTRYMSG [mesaj]|TOPICLOCK {ON|OFF}|MLOCK {ON|OFF}|PRIVATE {ON|OFF}|SECURE {ON|OFF}|VERBOSE {ON|OFF}}"
+  syntax: "SET <#canal> <opțiune> [parametri]"
   example: "%command_prefix%SET #canal DESC Un canal comunitar"
   examples:
     - "%command_prefix%SET #canal URL https://example.test"
@@ -319,7 +319,7 @@ status:
 
 # --- ACCESS -------------------------------------------------------------------
 access:
-  syntax: "ACCESS <#canal> {ADD <poreclă> <nivel>|DEL <poreclă>|LIST}"
+  syntax: "ACCESS <#canal> <opțiune> [parametri]"
   example: "%command_prefix%ACCESS #canal LIST"
   examples:
     - "%command_prefix%ACCESS #canal ADD Alice 100"
@@ -376,7 +376,7 @@ delaccess:
 
 # --- AKICK --------------------------------------------------------------------
 akick:
-  syntax: "AKICK <#canal> {ADD <mască> [expirare] [motiv]|DEL {<mască>|<număr>}|LIST|VIEW {<mască>|<număr>}|CLEAR|CHECK <poreclă>|ENFORCE}"
+  syntax: "AKICK <#canal> <opțiune> [parametri]"
   example: "%command_prefix%AKICK #canal ADD *!*@* 0"
   examples:
     - "%command_prefix%AKICK #canal ADD *!*@* 7d Spam"
@@ -494,7 +494,7 @@ akick:
 
 # --- LEVELS -------------------------------------------------------------------
 levels:
-  syntax: "LEVELS <#canal> {LIST|SET <nivel> <valoare>|RESET}"
+  syntax: "LEVELS <#canal> <opțiune> [parametri]"
   example: "%command_prefix%LEVELS #canal LIST"
   examples:
     - "%command_prefix%LEVELS #canal SET OPDEOP 50"
@@ -818,7 +818,7 @@ unforbid:
 
 # --- HISTORY ---
 history:
-  syntax: "HISTORY <#canal> {ADD <mesaj>|DEL <id>|VIEW [PAGE|ALL]|CLEAR}"
+  syntax: "HISTORY <#canal> <opțiune> [parametri]"
   example: "%command_prefix%HISTORY #canal ADD Revizuire moderare"
   examples:
     - "%command_prefix%HISTORY #canal DEL 42"
@@ -950,7 +950,7 @@ regmode:
 
 # --- CREG (IRCop) -------------------------------------------------------------
 creg:
-  syntax: "CREG {PENDING [pagină]|ACCEPT <#canal>|REJECT <#canal> <motiv>}"
+  syntax: "CREG <opțiune> [parametri]"
   pending.syntax: "CREG PENDING [pagină]"
   pending.example: "%command_prefix%CREG PENDING"
   pending.short: "Listează cererile de înregistrare în așteptare."

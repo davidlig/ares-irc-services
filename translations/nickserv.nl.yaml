@@ -153,7 +153,7 @@ recover:
 
 # --- SET ----------------------------------------------------------------------
 set:
-  syntax: "SET {PASSWORD <nieuw_wachtwoord>|EMAIL <email> <token>|LANGUAGE <code>|TIMEZONE <tijdzone>|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
+  syntax: "SET <optie> [parameters]"
   short: "Wijzig de opties van je bijnaam."
   help: |-
     Wijzigt de instellingen van je bijnaam. Je moet geïdentificeerd zijn om deze
@@ -494,7 +494,7 @@ list:
 
 # --- HISTORY ---
 history:
-  syntax: "HISTORY <bijnaam> {ADD <bericht>|DEL <id>|VIEW [PAGE|ALL]|CLEAR}"
+  syntax: "HISTORY <bijnaam> <optie> [parameters]"
   short: "Bekijk of beheer bijnaamactiegeschiedenis."
   help: |-
     Raadpleegt en beheert de actgeschiedenis van een bijnaam. Opschortingen en
@@ -589,7 +589,7 @@ saregister:
 
 # --- SASET (IRCop) ------------------------------------------------------------
 saset:
-  syntax: "SASET <bijnaam> {PASSWORD <nieuw_wachtwoord>|EMAIL <nieuwe_e-mail>|LANGUAGE <code>|TIMEZONE {<tijdzone>|OFF}|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
+  syntax: "SASET <bijnaam> <optie> [parameters]"
   short: "Instellingen van een andere bijnaam wijzigen."
   help: |-
     Hiermee kan een IRC-operator instellingen van een andere geregistreerde bijnaam
@@ -776,7 +776,7 @@ unforbid:
 
 # --- FORBIDVHOST (IRCop) ------------------------------------------------------
 forbidvhost:
-  syntax: "FORBIDVHOST {ADD <patroon>|DEL <patroon>|LIST}"
+  syntax: "FORBIDVHOST <optie> [parameters]"
   short: "Beheer verboden vhost-patronen."
   help: |-
     Beheert patronen die overeenkomende VHosts via SET VHOST blokkeren. * staat voor

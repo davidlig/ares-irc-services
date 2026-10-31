@@ -155,7 +155,7 @@ recover:
 
 # --- SET ----------------------------------------------------------------------
 set:
-  syntax: "SET {PASSWORD <parolă_nouă>|EMAIL <email> <token>|LANGUAGE <cod>|TIMEZONE <fus_orar>|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
+  syntax: "SET <opțiune> [parametri]"
   short: "Schimbați opțiunile poreclei dumneavoastră."
   help: |-
     Modifică setările poreclei tale. Trebuie să fii identificat pentru a schimba
@@ -497,7 +497,7 @@ list:
 
 # --- HISTORY ---
 history:
-  syntax: "HISTORY <poreclă> {ADD <mesaj>|DEL <id>|VIEW [PAGE|ALL]|CLEAR}"
+  syntax: "HISTORY <poreclă> <opțiune> [parametri]"
   short: "Vizualizați sau gestionați istoricul de acțiuni al poreclei."
   help: |-
     Consultă și gestionează istoricul acțiunilor unei porecle. Suspendările și
@@ -591,7 +591,7 @@ saregister:
 
 # --- SASET (IRCop) ------------------------------------------------------------
 saset:
-  syntax: "SASET <poreclă> {PASSWORD <parolă_nouă>|EMAIL <e-mail_nou>|LANGUAGE <cod>|TIMEZONE {<fus_orar>|OFF}|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
+  syntax: "SASET <poreclă> <opțiune> [parametri]"
   short: "Modifică setările altei porecle."
   help: |-
     Permite unui IRCop să schimbe setările altei porecle înregistrate. Poreclele
@@ -777,7 +777,7 @@ unforbid:
 
 # --- FORBIDVHOST (IRCop) ------------------------------------------------------
 forbidvhost:
-  syntax: "FORBIDVHOST {ADD <model>|DEL <model>|LIST}"
+  syntax: "FORBIDVHOST <opțiune> [parametri]"
   short: "Gestionați modelele de vhost interzise."
   help: |-
     Gestionează tiparele care împiedică setarea VHost-urilor corespunzătoare prin

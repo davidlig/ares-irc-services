@@ -83,7 +83,7 @@ del:
 
 # --- IGNORE -------------------------------------------------------------------
 ignore:
-  syntax: "IGNORE {ADD [#kanaal] <bijnaam>|DEL [#kanaal] <bijnaam>|LIST [#kanaal]}"
+  syntax: "IGNORE <optie> [parameters]"
   short: "Beheer negeerlijst voor berichten."
   help: |-
     Beheert bijnamen waarvan je geen berichten wilt ontvangen, voor je account of

@@ -156,7 +156,7 @@ recover:
 
 # --- SET ----------------------------------------------------------------------
 set:
-  syntax: "SET {PASSWORD <new_password>|EMAIL <email> <token>|LANGUAGE <code>|TIMEZONE <timezone>|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
+  syntax: "SET <επιλογή> [παράμετροι]"
   short: "Αλλάξτε τις επιλογές του ψευδωνύμου σας."
   help: |-
     Τροποποιεί τις ρυθμίσεις του ψευδωνύμου σας. Πρέπει να έχετε ταυτοποιηθεί για να
@@ -511,7 +511,7 @@ list:
 
 # --- HISTORY ---
 history:
-  syntax: "HISTORY <nickname> {ADD <message>|DEL <id>|VIEW [PAGE|ALL]|CLEAR}"
+  syntax: "HISTORY <ψευδώνυμο> <επιλογή> [παράμετροι]"
   short: "Προβολή ή διαχείριση ιστορικού ενεργειών ψευδωνύμου."
   help: |-
     Διαχείριση του ιστορικού ενεργειών για ένα ψευδώνυμο.
@@ -650,7 +650,7 @@ saregister:
 
 # --- SASET (IRCop) ------------------------------------------------------------
 saset:
-  syntax: "SASET <ψευδώνυμο> {PASSWORD <νέος_κωδικός>|EMAIL <νέο_email>|LANGUAGE <κωδικός>|TIMEZONE {<ζώνη_ώρας>|OFF}|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
+  syntax: "SASET <ψευδώνυμο> <επιλογή> [παράμετροι]"
   short: "Τροποποίηση ρυθμίσεων άλλου ψευδωνύμου."
   help: |-
     Επιτρέπει σε IRC Operator να τροποποιεί τις ρυθμίσεις ενός καταχωρημένου
@@ -909,7 +909,7 @@ unforbid:
 
 # --- FORBIDVHOST (IRCop) ------------------------------------------------------
 forbidvhost:
-  syntax: "FORBIDVHOST {ADD <pattern>|DEL <pattern>|LIST}"
+  syntax: "FORBIDVHOST <επιλογή> [παράμετροι]"
   short: "Διαχείριση απαγορευμένων μοτίβων vhost."
   help: |-
     Διαχειρίζεται μοτίβα που εμποδίζουν τον ορισμό vhost που ταιριάζουν με SET

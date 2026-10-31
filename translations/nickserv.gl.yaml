@@ -153,7 +153,7 @@ recover:
 
 # --- SET ----------------------------------------------------------------------
 set:
-  syntax: "SET {PASSWORD <novo_contrasinal>|EMAIL <email> <token>|LANGUAGE <código>|TIMEZONE <fuso_horario>|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
+  syntax: "SET <opción> [parámetros]"
   short: "Cambiar as opcións do teu alcume."
   help: |-
     Modifica a configuración do teu alcume. Debes identificarte para cambiarestas
@@ -493,7 +493,7 @@ list:
 
 # --- HISTORY ---
 history:
-  syntax: "HISTORY <alcume> {ADD <mensaxe>|DEL <id>|VIEW [PAGE|ALL]|CLEAR}"
+  syntax: "HISTORY <alcume> <opción> [parámetros]"
   short: "Ver ou xestionar o historial de accións do alcume."
   help: |-
     Consulta e xestiona o historial de accións dun alcume. Rexistra automaticamente
@@ -587,7 +587,7 @@ saregister:
 
 # --- SASET (IRCop) ------------------------------------------------------------
 saset:
-  syntax: "SASET <alcume> {PASSWORD <novo_contrasinal>|EMAIL <novo_correo>|LANGUAGE <código>|TIMEZONE {<fuso_horario>|OFF}|PRIVATE {ON|OFF}|MSG {ON|OFF}|VHOST [vhost]}"
+  syntax: "SASET <alcume> <opción> [parámetros]"
   short: "Modificar a configuración doutro alcume."
   help: |-
     Permite a un IRCop cambiar a configuración doutro alcume rexistrado. Non
@@ -772,7 +772,7 @@ unforbid:
 
 # --- FORBIDVHOST (IRCop) ------------------------------------------------------
 forbidvhost:
-  syntax: "FORBIDVHOST {ADD <patrón>|DEL <patrón>|LIST}"
+  syntax: "FORBIDVHOST <opción> [parámetros]"
   short: "Xestionar os patróns de vhost prohibidos."
   help: |-
     Xestiona os patróns que impiden establecer vhosts coincidentes con SET VHOST.
