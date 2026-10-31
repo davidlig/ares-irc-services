@@ -37,6 +37,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function array_filter;
 use function array_search;
+use function array_values;
 use function dirname;
 use function is_string;
 use function str_contains;
@@ -67,6 +68,58 @@ final class InfoCommandTest extends TestCase
 
         self::assertStringContainsString("\x0314Founder\x03\x0F", $messages[1]);
         self::assertStringContainsString("\x02FounderNick\x03\x0F", $messages[1]);
+    }
+
+    #[Test]
+    public function infoRendersVerboseInOptionsWhenEnabledWithTranslator(): void
+    {
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channel->configureTopicLock(true);
+        $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channels->method('findByChannelName')->willReturn($channel);
+        $accounts = $this->createStub(ChanUserAccountPort::class);
+        $accounts->method('findAccountById')->willReturn(new ChanAccountView(1, 'FounderNick', 'en'));
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void { $messages[] = $message; });
+        $translator = new Translator('en');
+        $translator->addLoader('irc', new IrcYamlTranslationLoader());
+        $translator->addResource('irc', dirname(__DIR__, 6) . '/translations/chanserv.en.yaml', 'en', 'chanserv');
+        $this->createCommand($channels, $accounts)->execute($this->createContext(['#Test'], $notifier, $translator));
+
+        $optionsRows = array_values(array_filter($messages, static fn (string $m): bool => str_contains($m, 'Options')));
+        self::assertCount(1, $optionsRows);
+        self::assertStringContainsString('TOPICLOCK, VERBOSE', $optionsRows[0]);
+        foreach ($messages as $message) {
+            self::assertStringNotContainsString('Verbose', $message);
+        }
+    }
+
+    #[Test]
+    public function infoOmitsVerboseFromOptionsWhenDisabledWithTranslator(): void
+    {
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channel->configureTopicLock(true);
+        $channel->configureVerbose(false);
+        $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channels->method('findByChannelName')->willReturn($channel);
+        $accounts = $this->createStub(ChanUserAccountPort::class);
+        $accounts->method('findAccountById')->willReturn(new ChanAccountView(1, 'FounderNick', 'en'));
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void { $messages[] = $message; });
+        $translator = new Translator('en');
+        $translator->addLoader('irc', new IrcYamlTranslationLoader());
+        $translator->addResource('irc', dirname(__DIR__, 6) . '/translations/chanserv.en.yaml', 'en', 'chanserv');
+        $this->createCommand($channels, $accounts)->execute($this->createContext(['#Test'], $notifier, $translator));
+
+        $optionsRows = array_values(array_filter($messages, static fn (string $m): bool => str_contains($m, 'Options')));
+        self::assertCount(1, $optionsRows);
+        self::assertStringContainsString('TOPICLOCK', $optionsRows[0]);
+        self::assertStringNotContainsString('VERBOSE', $optionsRows[0]);
+        foreach ($messages as $message) {
+            self::assertStringNotContainsString('Verbose', $message);
+        }
     }
 
     #[Test]
@@ -286,6 +339,7 @@ final class InfoCommandTest extends TestCase
     public function omitsOptionsWhenAllChannelOptionsAreOff(): void
     {
         $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channel->configureVerbose(false);
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $nickRepo = $this->createStub(ChanUserAccountPort::class);
@@ -301,6 +355,9 @@ final class InfoCommandTest extends TestCase
         $this->createCommand($channelRepo, $nickRepo)->execute($this->createContext(['#Test'], $notifier, $translator));
 
         self::assertNotContains('info.options', $messages);
+        foreach ($messages as $message) {
+            self::assertStringNotContainsString('info.verbose', $message);
+        }
     }
 
     #[Test]
@@ -310,6 +367,7 @@ final class InfoCommandTest extends TestCase
         $channel->configureTopicLock(true);
         $channel->configureMlock(true, '+nt');
         $channel->configureSecure(true);
+        $channel->configureVerbose(false);
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $nickRepo = $this->createStub(ChanUserAccountPort::class);
@@ -335,10 +393,78 @@ final class InfoCommandTest extends TestCase
     }
 
     #[Test]
+    public function showsVerboseAppendedAfterExistingEnabledOptionsWhenEnabled(): void
+    {
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channel->configureTopicLock(true);
+        $channel->configureMlock(true, '+nt');
+        $channel->configureSecure(true);
+        $channel->configureIrcopOnly(true);
+        $channel->configureVerbose(true);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $nickRepo = $this->createStub(ChanUserAccountPort::class);
+        $nickRepo->method('findAccountById')->willReturn(new ChanAccountView(1, 'FounderNick', 'en'));
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void {
+            $messages[] = $message;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static function (string $id, array $parameters = []): string {
+            if (str_ends_with($id, '_label')) {
+                return $id;
+            }
+            $options = $parameters['%options%'] ?? '';
+
+            return $id . ':' . (is_string($options) ? $options : '');
+        });
+
+        $this->createCommand($channelRepo, $nickRepo)->execute($this->createContext(['#Test'], $notifier, $translator));
+
+        self::assertContains('info.options:TOPICLOCK, MLOCK, SECURE, IRCOPONLY, VERBOSE', $messages);
+        foreach ($messages as $message) {
+            self::assertStringNotContainsString('info.verbose', $message);
+        }
+    }
+
+    #[Test]
+    public function showsVerboseAloneWhenOnlyVerboseIsEnabled(): void
+    {
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $nickRepo = $this->createStub(ChanUserAccountPort::class);
+        $nickRepo->method('findAccountById')->willReturn(new ChanAccountView(1, 'FounderNick', 'en'));
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void {
+            $messages[] = $message;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static function (string $id, array $parameters = []): string {
+            if (str_ends_with($id, '_label')) {
+                return $id;
+            }
+            $options = $parameters['%options%'] ?? '';
+
+            return $id . ':' . (is_string($options) ? $options : '');
+        });
+
+        $this->createCommand($channelRepo, $nickRepo)->execute($this->createContext(['#Test'], $notifier, $translator));
+
+        self::assertContains('info.options:VERBOSE', $messages);
+        foreach ($messages as $message) {
+            self::assertStringNotContainsString('info.verbose', $message);
+        }
+    }
+
+    #[Test]
     public function showsIrcopOnlyWhenEnabled(): void
     {
         $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
         $channel->configureIrcopOnly(true);
+        $channel->configureVerbose(false);
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $nickRepo = $this->createStub(ChanUserAccountPort::class);
@@ -364,7 +490,7 @@ final class InfoCommandTest extends TestCase
     }
 
     #[Test]
-    public function showsVerboseStateOnByDefaultAndOffWhenDisabled(): void
+    public function neverEmitsStandaloneVerboseRowWhenVerboseIsEnabled(): void
     {
         $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
@@ -381,18 +507,49 @@ final class InfoCommandTest extends TestCase
             if (str_ends_with($id, '_label')) {
                 return $id;
             }
-            $state = $parameters['%state%'] ?? '';
+            $options = $parameters['%options%'] ?? '';
 
-            return $id . ('' !== $state ? ':' . (is_string($state) ? $state : '') : '');
+            return $id . ':' . (is_string($options) ? $options : '');
         });
 
         $this->createCommand($channelRepo, $nickRepo)->execute($this->createContext(['#Test'], $notifier, $translator));
-        self::assertContains('info.verbose:ON', $messages);
 
-        $messages = [];
+        self::assertContains('info.options:VERBOSE', $messages);
+        foreach ($messages as $message) {
+            self::assertStringNotContainsString('info.verbose', $message);
+        }
+    }
+
+    #[Test]
+    public function neverEmitsStandaloneVerboseRowWhenVerboseIsDisabled(): void
+    {
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
         $channel->configureVerbose(false);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $nickRepo = $this->createStub(ChanUserAccountPort::class);
+        $nickRepo->method('findAccountById')->willReturn(new ChanAccountView(1, 'FounderNick', 'en'));
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void {
+            $messages[] = $message;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static function (string $id, array $parameters = []): string {
+            if (str_ends_with($id, '_label')) {
+                return $id;
+            }
+            $options = $parameters['%options%'] ?? '';
+
+            return $id . ':' . (is_string($options) ? $options : '');
+        });
+
         $this->createCommand($channelRepo, $nickRepo)->execute($this->createContext(['#Test'], $notifier, $translator));
-        self::assertContains('info.verbose:OFF', $messages);
+
+        self::assertNotContains('info.options:', $messages);
+        foreach ($messages as $message) {
+            self::assertStringNotContainsString('info.verbose', $message);
+        }
     }
 
     #[Test]

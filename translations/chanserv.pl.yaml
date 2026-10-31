@@ -72,8 +72,6 @@ info:
   topic_set_by_label: "Temat ustawiony przez"
   options: "%label%%padding%: %options%"
   options_label: "Opcje"
-  verbose: "%label%%padding%: %state%"
-  verbose_label: "Powiadomienia kanału"
   private: "Informacje o kanale %channel% są prywatne."
   no_expire: "%label%%padding%: Tak"
   no_expire_label: "Nigdy nie wygasa"

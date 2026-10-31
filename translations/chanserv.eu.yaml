@@ -72,8 +72,6 @@ info:
   topic_set_by_label: "Gaia ezarlea"
   options: "%label%%padding%: %options%"
   options_label: "Aukerak"
-  verbose: "%label%%padding%: %state%"
-  verbose_label: "Kanalaren jakinarazpenak"
   private: "%channel% kanalaren informazioa pribatua da."
   no_expire: "%label%%padding%: Bai"
   no_expire_label: "Iraungitzen ez da"
