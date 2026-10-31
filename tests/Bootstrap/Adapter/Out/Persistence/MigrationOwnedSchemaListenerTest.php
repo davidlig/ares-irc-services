@@ -18,6 +18,7 @@ use Doctrine\DBAL\Schema\Index;
 use Doctrine\DBAL\Schema\Index\IndexType;
 use Doctrine\DBAL\Schema\Name\OptionallyQualifiedName;
 use Doctrine\DBAL\Schema\Schema;
+use Doctrine\DBAL\Schema\SchemaConfig;
 use Doctrine\DBAL\Schema\Table;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\EntityManagerInterface;
@@ -106,6 +107,8 @@ final class MigrationOwnedSchemaListenerTest extends TestCase
 
     public function testPreservesExactSchemaWhenMultipleTablesWithSameNameExistInDifferentSchemas(): void
     {
+        $config = new SchemaConfig();
+        $config->setName('public');
         $column = Column::editor()->setUnquotedName('nickname_lower')->setTypeName(Types::STRING)->setLength(32)->create();
         $table = Table::editor()->setUnquotedName('registered_nicks', 'public')->addColumn($column)->create();
         $target = Schema::editor()->addTable($table)->create();
@@ -116,6 +119,7 @@ final class MigrationOwnedSchemaListenerTest extends TestCase
         )->create();
 
         $manager = $this->createStub(AbstractSchemaManager::class);
+        $manager->method('createSchemaConfig')->willReturn($config);
         $manager->method('introspectTableNames')->willReturn([
             OptionallyQualifiedName::unquoted('registered_nicks'),
             OptionallyQualifiedName::unquoted('registered_nicks', 'archive'),
@@ -137,6 +141,35 @@ final class MigrationOwnedSchemaListenerTest extends TestCase
 
         $actual = $event->getSchema()->getTable('public.registered_nicks');
         self::assertTrue($actual->hasIndex('idx_registered_nicks_list_pattern'));
+    }
+
+    public function testServiceSettingsDerivedFromConnectionDefaultSchemaNotOtherEntities(): void
+    {
+        $config = new SchemaConfig();
+        $config->setName('public');
+        $column = Column::editor()->setUnquotedName('id')->setTypeName(Types::INTEGER)->create();
+        $audit = Table::editor()->setUnquotedName('audit', 'archive')->addColumn($column)->create();
+        $nicks = Table::editor()->setUnquotedName('registered_nicks')->addColumn($column)->create();
+        $target = new Schema([], [], $config)->edit()->addTable($audit)->addTable($nicks)->create();
+
+        $manager = $this->createStub(AbstractSchemaManager::class);
+        $manager->method('createSchemaConfig')->willReturn($config);
+        $manager->method('introspectTableNames')->willReturn([]);
+
+        $connection = $this->createStub(Connection::class);
+        $connection->method('createSchemaManager')->willReturn($manager);
+        $connection->method('getDatabasePlatform')->willReturn(new PostgreSQLPlatform());
+
+        $em = $this->createStub(EntityManagerInterface::class);
+        $em->method('getConnection')->willReturn($connection);
+
+        $event = new GenerateSchemaEventArgs($em, $target);
+        new MigrationOwnedSchemaListener()->postGenerateSchema($event);
+
+        self::assertTrue($event->getSchema()->hasTable('service_settings'));
+        self::assertFalse($event->getSchema()->hasTable('archive.service_settings'));
+        $settings = $event->getSchema()->getTable('service_settings');
+        self::assertSame('public', $settings->getObjectName()->getQualifier()?->getValue());
     }
 
     /** @return iterable<string, array{AbstractPlatform}> */

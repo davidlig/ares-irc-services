@@ -80,14 +80,7 @@ final class MigrationOwnedSchemaListener
 
         // DBAL-only runtime settings still need a canonical schema for drift detection.
         if (!$schema->hasTable('service_settings')) {
-            $defaultQualifier = null;
-            foreach ($schema->getTables() as $existingTable) {
-                $qualifier = $existingTable->getObjectName()->getQualifier();
-                if (null !== $qualifier) {
-                    $defaultQualifier = $qualifier->getValue();
-                    break;
-                }
-            }
+            $defaultQualifier = '' !== $schema->getName() ? $schema->getName() : $manager->createSchemaConfig()->getName();
 
             $settings = Table::editor()->setUnquotedName('service_settings', $defaultQualifier);
             $settings->addColumn(Column::editor()->setUnquotedName('service_name')->setTypeName(Types::STRING)->setLength(32)->create());
