@@ -8,6 +8,7 @@ use Doctrine\DBAL\Platforms\AbstractMySQLPlatform;
 use Doctrine\DBAL\Platforms\SQLitePlatform;
 use Doctrine\DBAL\Schema\Column;
 use Doctrine\DBAL\Schema\Name\Identifier;
+use Doctrine\DBAL\Schema\Name\OptionallyQualifiedName;
 use Doctrine\DBAL\Schema\Name\UnquotedIdentifierFolding;
 use Doctrine\DBAL\Schema\PrimaryKeyConstraint;
 use Doctrine\DBAL\Schema\Table;
@@ -92,8 +93,17 @@ final class MigrationOwnedSchemaListener
                 continue;
             }
 
-            $schemaName = $matchedIsDefault ? null : $matchedTableName->getQualifier()?->getValue();
-            $actual = $manager->introspectTableByUnquotedName($targetName->getUnqualifiedName()->getValue(), $schemaName);
+            $isQuoted = ($targetName->getQualifier()?->isQuoted() ?? false)
+                || ($matchedTableName->getQualifier()?->isQuoted() ?? false)
+                || $targetName->getUnqualifiedName()->isQuoted()
+                || $matchedTableName->getUnqualifiedName()->isQuoted();
+
+            $schemaName = $matchedIsDefault ? null : ($matchedTableName->getQualifier()?->getValue() ?? $targetName->getQualifier()?->getValue());
+            $tableName = $targetName->getUnqualifiedName()->getValue();
+
+            $actual = $isQuoted
+                ? $manager->introspectTableByQuotedName($tableName, $schemaName)
+                : $manager->introspectTableByUnquotedName($tableName, $schemaName);
             $editor->modifyTable($targetName, static function (TableEditor $table) use ($actual, $target, $index, $mysql): void {
                 if ($mysql && $actual->hasColumn('list_search_key') && !$target->hasColumn('list_search_key')) {
                     $table->addColumn($actual->getColumn('list_search_key'));
@@ -107,8 +117,9 @@ final class MigrationOwnedSchemaListener
         // DBAL-only runtime settings still need a canonical schema for drift detection.
         if (!$schema->hasTable('service_settings')) {
             $defaultQualifier = '' !== $schema->getName() ? $schema->getName() : $manager->createSchemaConfig()->getName();
+            $qualifier = null !== $defaultQualifier ? Identifier::quoted($defaultQualifier) : null;
 
-            $settings = Table::editor()->setUnquotedName('service_settings', $defaultQualifier);
+            $settings = Table::editor()->setName(new OptionallyQualifiedName(Identifier::unquoted('service_settings'), $qualifier));
             $settings->addColumn(Column::editor()->setUnquotedName('service_name')->setTypeName(Types::STRING)->setLength(32)->create());
             $settings->addColumn(Column::editor()->setUnquotedName('setting_name')->setTypeName(Types::STRING)->setLength(64)->create());
             $settings->addColumn(Column::editor()->setUnquotedName('setting_value')->setTypeName(Types::JSON)->create());

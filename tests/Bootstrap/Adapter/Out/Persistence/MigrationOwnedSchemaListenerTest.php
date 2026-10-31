@@ -28,6 +28,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 use function array_map;
+use function implode;
 
 #[CoversClass(MigrationOwnedSchemaListener::class)]
 final class MigrationOwnedSchemaListenerTest extends TestCase
@@ -241,6 +242,76 @@ final class MigrationOwnedSchemaListenerTest extends TestCase
         self::assertFalse($event->getSchema()->hasTable('archive.service_settings'));
         $settings = $event->getSchema()->getTable('service_settings');
         self::assertSame('public', $settings->getObjectName()->getQualifier()?->getValue());
+        self::assertTrue($settings->getObjectName()->getQualifier()->isQuoted());
+        self::assertTrue($settings->isInDefaultNamespace('public'));
+    }
+
+    public function testPreservesSchemaQuotingWhenIntrospectingTableInQuotedSchema(): void
+    {
+        $config = new SchemaConfig();
+        $config->setName('public');
+        $column = Column::editor()->setUnquotedName('nickname_lower')->setTypeName(Types::STRING)->setLength(32)->create();
+        $table = Table::editor()->setQuotedName('registered_nicks', 'Archive')->addColumn($column)->create();
+        $target = new Schema([], [], $config)->edit()->addTable($table)->create();
+
+        $native = $table->edit()->addIndex(
+            Index::editor()->setUnquotedName('idx_registered_nicks_list_pattern')->setType(IndexType::REGULAR)->setUnquotedColumnNames('nickname_lower')
+        )->create();
+
+        $manager = $this->createStub(AbstractSchemaManager::class);
+        $manager->method('createSchemaConfig')->willReturn($config);
+        $manager->method('introspectTableNames')->willReturn([
+            OptionallyQualifiedName::quoted('registered_nicks', 'Archive'),
+        ]);
+        $manager->method('introspectTableByQuotedName')->willReturn($native);
+
+        $connection = $this->createStub(Connection::class);
+        $connection->method('createSchemaManager')->willReturn($manager);
+        $connection->method('getDatabasePlatform')->willReturn(new PostgreSQLPlatform());
+
+        $em = $this->createStub(EntityManagerInterface::class);
+        $em->method('getConnection')->willReturn($connection);
+
+        $event = new GenerateSchemaEventArgs($em, $target);
+        new MigrationOwnedSchemaListener()->postGenerateSchema($event);
+
+        $actual = $event->getSchema()->getTable('"Archive".registered_nicks');
+        self::assertTrue($actual->hasIndex('idx_registered_nicks_list_pattern'));
+    }
+
+    public function testServiceSettingsRemainsUnqualifiedAndDoesNotGenerateUnquotedSchemaPrefixInQuotedSchema(): void
+    {
+        $config = new SchemaConfig();
+        $config->setName('Tenant');
+        $platform = new PostgreSQLPlatform();
+
+        $column = Column::editor()->setUnquotedName('id')->setTypeName(Types::INTEGER)->create();
+        $table = Table::editor()->setUnquotedName('audit')->addColumn($column)->create();
+        $target = new Schema([], [], $config)->edit()->addTable($table)->create();
+
+        $manager = $this->createStub(AbstractSchemaManager::class);
+        $manager->method('createSchemaConfig')->willReturn($config);
+        $manager->method('introspectTableNames')->willReturn([]);
+
+        $connection = $this->createStub(Connection::class);
+        $connection->method('createSchemaManager')->willReturn($manager);
+        $connection->method('getDatabasePlatform')->willReturn($platform);
+
+        $em = $this->createStub(EntityManagerInterface::class);
+        $em->method('getConnection')->willReturn($connection);
+
+        $event = new GenerateSchemaEventArgs($em, $target);
+        new MigrationOwnedSchemaListener()->postGenerateSchema($event);
+
+        self::assertTrue($event->getSchema()->hasTable('service_settings'));
+        $settings = $event->getSchema()->getTable('service_settings');
+        self::assertSame('Tenant', $settings->getObjectName()->getQualifier()?->getValue());
+        self::assertTrue($settings->getObjectName()->getQualifier()->isQuoted());
+        self::assertTrue($settings->isInDefaultNamespace('Tenant'));
+
+        $sql = $platform->getCreateTableSQL($settings);
+        self::assertStringNotContainsString('Tenant.service_settings', implode("\n", $sql));
+        self::assertStringContainsString('"Tenant"', implode("\n", $sql));
     }
 
     /** @return iterable<string, array{AbstractPlatform}> */
