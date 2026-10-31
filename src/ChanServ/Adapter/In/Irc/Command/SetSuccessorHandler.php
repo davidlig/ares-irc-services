@@ -50,7 +50,7 @@ final readonly class SetSuccessorHandler implements SetOptionHandlerInterface
         $context->reply('set.successor.cleared', role: Role::Success);
         $sender = $context->sender;
         if (null !== $sender) {
-            $notice = $context->renderReply(Role::Success, 'set.successor.notice_channel_cleared', ['%from%' => new Fragment($sender->nick, Component::Actor)]);
+            $notice = $context->renderReply(Role::Information, 'set.successor.notice_channel_cleared', ['%from%' => new Fragment($sender->nick, Component::Actor)]);
             $context->getNotifier()->sendNoticeToChannel($channel->getName(), $notice);
         }
     }
@@ -60,7 +60,7 @@ final readonly class SetSuccessorHandler implements SetOptionHandlerInterface
         $context->reply('set.successor.updated', ['%nickname%' => new Fragment($nickname, Component::Emphasis)], Role::Success);
         $sender = $context->sender;
         if (null !== $sender) {
-            $notice = $context->renderReply(Role::Success, 'set.successor.notice_channel', [
+            $notice = $context->renderReply(Role::Information, 'set.successor.notice_channel', [
                 '%from%' => new Fragment($sender->nick, Component::Actor),
                 '%nickname%' => new Fragment($nickname, Component::Emphasis),
             ]);

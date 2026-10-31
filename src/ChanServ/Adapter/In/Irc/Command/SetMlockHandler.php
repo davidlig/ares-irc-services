@@ -63,12 +63,12 @@ final readonly class SetMlockHandler implements SetOptionHandlerInterface
 
         $nick = $context->sender->nick;
         if ('' !== $nick && $on) {
-            $context->getNotifier()->sendNoticeToChannel($channel->getName(), $context->renderReply(Role::Success, 'set.mlock.notice_on', [
+            $context->getNotifier()->sendNoticeToChannel($channel->getName(), $context->renderReply(Role::Information, 'set.mlock.notice_on', [
                 '%nickname%' => new Fragment($nick, Component::Actor),
                 '%modes%' => $modesDisplay,
             ]));
         } elseif ('' !== $nick) {
-            $context->getNotifier()->sendNoticeToChannel($channel->getName(), $context->renderReply(Role::Success, 'set.mlock.notice_off', ['%nickname%' => new Fragment($nick, Component::Actor)]));
+            $context->getNotifier()->sendNoticeToChannel($channel->getName(), $context->renderReply(Role::Information, 'set.mlock.notice_off', ['%nickname%' => new Fragment($nick, Component::Actor)]));
         }
     }
 

@@ -19,6 +19,7 @@ use App\ChanServ\Adapter\In\Irc\Command\SetSecureHandler;
 use App\ChanServ\Adapter\In\Irc\Command\SetSuccessorHandler;
 use App\ChanServ\Adapter\In\Irc\Command\SetTopiclockHandler;
 use App\ChanServ\Adapter\In\Irc\Command\SetUrlHandler;
+use App\ChanServ\Adapter\In\Irc\Command\SetVerboseHandler;
 use App\ChanServ\Adapter\In\Irc\MlockStateFromChannelResolver;
 use App\ChanServ\Application\Model\ChanAccountView;
 use App\ChanServ\Application\Port\Out\ChannelAccessRepositoryInterface;
@@ -259,10 +260,11 @@ final class SetCommandTest extends TestCase
             ),
         );
         $help = $cmd->getSubCommandHelp();
-        self::assertCount(10, $help);
+        self::assertCount(11, $help);
         self::assertSame('FOUNDER', $help[0]['name']);
         self::assertSame('SUCCESSOR', $help[1]['name']);
         self::assertSame('PRIVATE', $help[9]['name']);
+        self::assertSame('VERBOSE', $help[10]['name']);
     }
 
     #[Test]
@@ -662,6 +664,7 @@ final class SetCommandTest extends TestCase
             new SetMlockHandler($this->createStub(ConfigureChannelMlockHandlerInterface::class), new MlockStateFromChannelResolver()),
             new SetSecureHandler($configureSecure ?? $this->createStub(ConfigureChannelSecureHandlerInterface::class)),
             new SetPrivateHandler($settingUpdater),
+            new SetVerboseHandler($settingUpdater),
         );
     }
 

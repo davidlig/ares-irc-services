@@ -13,5 +13,7 @@ interface ChannelEntryNetworkQuery
 
     public function findMember(string $uid): ?ChannelEntryMember;
 
+    public function findMemberByNick(string $nickname): ?ChannelEntryMember;
+
     public function findChannel(string $channelName): ?ChannelEntryNetworkState;
 }

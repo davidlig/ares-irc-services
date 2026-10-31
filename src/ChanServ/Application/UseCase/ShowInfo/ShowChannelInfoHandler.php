@@ -63,6 +63,7 @@ final readonly class ShowChannelInfoHandler implements ShowChannelInfoHandlerInt
             suspendedReason: $channel->getSuspendedReason(),
             suspendedUntil: $channel->getSuspendedUntil(),
             privateInfoDenied: $privateInfoDenied,
+            verbose: $channel->isVerbose(),
         );
     }
 

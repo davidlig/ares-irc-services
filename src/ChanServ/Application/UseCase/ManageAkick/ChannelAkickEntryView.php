@@ -13,5 +13,9 @@ final readonly class ChannelAkickEntryView
         public ?string $reason,
         public ?string $creatorNickname,
         public ?DateTimeImmutable $expiresAt,
+        public ?DateTimeImmutable $createdAt = null,
+        public int $uses = 0,
+        public ?DateTimeImmutable $lastUsedAt = null,
+        public ?int $entryNumber = null,
     ) {}
 }

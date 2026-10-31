@@ -364,6 +364,38 @@ final class InfoCommandTest extends TestCase
     }
 
     #[Test]
+    public function showsVerboseStateOnByDefaultAndOffWhenDisabled(): void
+    {
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $nickRepo = $this->createStub(ChanUserAccountPort::class);
+        $nickRepo->method('findAccountById')->willReturn(new ChanAccountView(1, 'FounderNick', 'en'));
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void {
+            $messages[] = $message;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static function (string $id, array $parameters = []): string {
+            if (str_ends_with($id, '_label')) {
+                return $id;
+            }
+            $state = $parameters['%state%'] ?? '';
+
+            return $id . ('' !== $state ? ':' . (is_string($state) ? $state : '') : '');
+        });
+
+        $this->createCommand($channelRepo, $nickRepo)->execute($this->createContext(['#Test'], $notifier, $translator));
+        self::assertContains('info.verbose:ON', $messages);
+
+        $messages = [];
+        $channel->configureVerbose(false);
+        $this->createCommand($channelRepo, $nickRepo)->execute($this->createContext(['#Test'], $notifier, $translator));
+        self::assertContains('info.verbose:OFF', $messages);
+    }
+
+    #[Test]
     public function privateInfoDeniesUnidentifiedCallersBeforeAnyOtherOutput(): void
     {
         $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');

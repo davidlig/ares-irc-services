@@ -73,6 +73,8 @@ info:
   topic_set_by_label: "Subiect setat de"
   options: "%label%%padding%: %options%"
   options_label: "Opțiuni"
+  verbose: "%label%%padding%: %state%"
+  verbose_label: "Notificări canal"
   private: "Informațiile canalului %channel% sunt private."
   no_expire: "%label%%padding%: Da"
   no_expire_label: "Nu expiră niciodată"
@@ -103,7 +105,7 @@ info:
 
 # --- SET ----------------------------------------------------------------------
 set:
-  syntax: "SET <#canal> {FOUNDER <poreclă> [token]|SUCCESSOR [poreclă]|DESC <descriere>|URL [url]|EMAIL [e-mail]|ENTRYMSG [mesaj]|TOPICLOCK {ON|OFF}|MLOCK {ON|OFF}|PRIVATE {ON|OFF}|SECURE {ON|OFF}}"
+  syntax: "SET <#canal> {FOUNDER <poreclă> [token]|SUCCESSOR [poreclă]|DESC <descriere>|URL [url]|EMAIL [e-mail]|ENTRYMSG [mesaj]|TOPICLOCK {ON|OFF}|MLOCK {ON|OFF}|PRIVATE {ON|OFF}|SECURE {ON|OFF}|VERBOSE {ON|OFF}}"
   example: "%command_prefix%SET #canal DESC Un canal comunitar"
   examples:
     - "%command_prefix%SET #canal URL https://example.test"
@@ -259,6 +261,19 @@ set:
     notice_on: "%nickname% activează modul SECURE."
     notice_off: "%nickname% dezactivează modul SECURE."
 
+  # --- SET VERBOSE ---------------------------------------------------------
+  verbose:
+    syntax: "SET <#canal> VERBOSE {ON|OFF}"
+    example: "%command_prefix%SET #canal VERBOSE ON"
+    examples:
+      - "%command_prefix%SET #canal VERBOSE OFF"
+    short: "Comută notificările pentru acțiunile pe canal."
+    help: |-
+      Activează sau dezactivează transmisiile NOTICE către canal pentru acțiunile
+      efectuate pe acesta.
+    on: "Notificările acțiunilor pe canal au fost activate."
+    off: "Notificările acțiunilor pe canal au fost dezactivate."
+
 # --- STATUS -------------------------------------------------------------------
 status:
   syntax: "STATUS <#canal>"
@@ -361,16 +376,19 @@ delaccess:
 
 # --- AKICK --------------------------------------------------------------------
 akick:
-  syntax: "AKICK <#canal> {ADD <mască> [expirare] [motiv]|DEL {<mască>|<număr>}|LIST}"
+  syntax: "AKICK <#canal> {ADD <mască> [expirare] [motiv]|DEL {<mască>|<număr>}|LIST|VIEW {<mască>|<număr>}|CLEAR|CHECK <poreclă>|ENFORCE}"
   example: "%command_prefix%AKICK #canal ADD *!*@* 0"
   examples:
     - "%command_prefix%AKICK #canal ADD *!*@* 7d Spam"
     - "%command_prefix%AKICK #canal DEL *!*@*"
     - "%command_prefix%AKICK #canal DEL 2"
     - "%command_prefix%AKICK #canal LIST"
+    - "%command_prefix%AKICK #canal VIEW 1"
+    - "%command_prefix%AKICK #canal CLEAR"
+    - "%command_prefix%AKICK #canal CHECK Alice"
   short: "Gestionați lista de auto-kick."
   help: "Gestionează intrările de kick automat și expirarea lor opțională."
-  unknown_sub: "Subcomandă necunoscută %sub%. Folosiți ADD, DEL sau LIST."
+  unknown_sub: "Subcomandă necunoscută %sub%. Folosiți ADD, DEL, LIST, VIEW, CLEAR sau CHECK."
   invalid_mask: "Format de mască invalid. Folosiți poreclă!ident@host cu metacaractere (*)."
   dangerous_mask: "Masca %mask% este prea largă. Trebuie să conțină cel puțin 4 caractere alfanumerice."
   protected_user: "Porecla %nickname% are acces pe acest canal."
@@ -412,7 +430,67 @@ akick:
     help: "Afișează masca, motivul, expirarea și cine a adăugat."
     header: "Lista AKICK pentru %channel%"
     empty: "Canalul %channel% nu are intrări AKICK."
-    entry: "#%index% %mask% %reason% (de %nickname%, expiră: %expiration%)"
+    entry: "#%index% %mask% %reason% (de %nickname%, expiră: %expiration%, utilizări: %uses%)"
+
+  # --- AKICK VIEW ----------------------------------------------------------
+  view:
+    syntax: "AKICK <#canal> VIEW {<mască>|<număr>}"
+    example: "%command_prefix%AKICK #canal VIEW 1"
+    examples:
+      - "%command_prefix%AKICK #canal VIEW *!*@bad.host"
+    short: "Afișează metadatele detaliate ale unei intrări AKICK."
+    help: |-
+      Afișează motivul, autorul, data creării, data expirării,
+      numărul de utilizări și data ultimei utilizări pentru o intrare de autokick.
+    header: "Detalii AKICK pentru %channel%"
+    reason: "%label%%padding%: %reason%"
+    reason_label: "Motiv"
+    author: "%label%%padding%: %author%"
+    author_label: "Autor"
+    created: "%label%%padding%: %date%"
+    created_label: "Creat"
+    expires: "%label%%padding%: %date%"
+    expires_label: "Expiră"
+    uses: "%label%%padding%: %uses%"
+    uses_label: "Utilizări"
+    last_used: "%label%%padding%: %date%"
+    last_used_label: "Ultima utilizare"
+
+  # --- AKICK CLEAR ---------------------------------------------------------
+  clear:
+    syntax: "AKICK <#canal> CLEAR"
+    example: "%command_prefix%AKICK #canal CLEAR"
+    short: "Șterge toate intrările AKICK."
+    help: |-
+      Elimină toate intrările de autokick din canal.
+      Necesită nivel de fondator sau AKICK.
+    empty: "Canalul %channel% nu are intrări AKICK de șters."
+    done: "S-au șters %count% intrări AKICK din %channel%."
+    notice_channel: "%from% a șters %count% intrări AKICK din %channel%"
+
+  # --- AKICK CHECK ---------------------------------------------------------
+  check:
+    syntax: "AKICK <#canal> CHECK <poreclă>"
+    example: "%command_prefix%AKICK #canal CHECK Alice"
+    short: "Verifică dacă o poreclă se potrivește cu intrările AKICK."
+    help: |-
+      Verifică dacă un utilizator conectat se potrivește cu o intrare autokick din canal.
+    no_match: "%nickname% nu se potrivește cu nicio intrare AKICK din %channel%."
+    not_connected: "Utilizatorul %nickname% nu este conectat."
+    header: "Potriviri AKICK pentru %nickname% în %channel%"
+    entry: "#%index% %mask% %reason%"
+
+  # --- AKICK ENFORCE -------------------------------------------------------
+  enforce:
+    syntax: "AKICK <#canal> ENFORCE"
+    example: "%command_prefix%AKICK #canal ENFORCE"
+    short: "Aplică intrările AKICK utilizatorilor actuali ai canalului."
+    help: |-
+      Verifică utilizatorii din canal în raport cu lista AKICK
+      și banează și dă afară utilizatorii care se potrivesc.
+    no_matches: "Niciun utilizator din %channel% nu se potrivește cu lista AKICK."
+    done: "S-au aplicat %count% expulzări AKICK pe %channel%."
+    notice_channel: "%from% a aplicat expulzări AKICK pe %channel% (%count% utilizatori)"
 
 # --- LEVELS -------------------------------------------------------------------
 levels:
@@ -814,6 +892,8 @@ history.message:
   set_secure_off: "Opțiunea SECURE dezactivată"
   set_private_on: "Opțiunea PRIVATE activată"
   set_private_off: "Opțiunea PRIVATE dezactivată"
+  set_verbose_on: "Opțiunea VERBOSE activată"
+  set_verbose_off: "Opțiunea VERBOSE dezactivată"
   founder_changed: "Fondator schimbat din %old_founder% în %new_founder%"
   successor_changed: "Succesor schimbat din %old_successor% în %new_successor%"
   registration_approved: "Înregistrare de canal aprobată"
@@ -822,6 +902,8 @@ history.message:
   access_del: "Acces eliminat pentru %target_nickname%"
   akick_add: "AKICK adăugat: %mask%"
   akick_del: "AKICK eliminat: %mask%"
+  akick_clear: "Lista AKICK a fost ștearsă"
+  akick_enforce: "AKICK aplicat (%count% dați afară)"
   saregister: "Canal înregistrat administrativ"
 
 # --- HISTORY EXTRA FIELDS ---

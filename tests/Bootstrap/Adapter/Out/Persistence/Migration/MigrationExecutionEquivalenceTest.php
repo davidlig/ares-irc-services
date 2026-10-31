@@ -46,7 +46,7 @@ final class MigrationExecutionEquivalenceTest extends TestCase
         try {
             $paths = glob(dirname(__DIR__, 6) . '/migrations/Version*.php');
             self::assertIsArray($paths);
-            self::assertCount(35, $paths);
+            self::assertCount(36, $paths);
             $this->factory($connection)->getMetadataStorage()->ensureInitialized();
             foreach ($paths as $path) {
                 $class = 'App\\Migrations\\' . basename($path, '.php');
@@ -93,7 +93,7 @@ final class MigrationExecutionEquivalenceTest extends TestCase
             $before = $connection->fetchAllAssociative("SELECT type, name, sql FROM sqlite_master WHERE name NOT LIKE 'sqlite_%' ORDER BY type, name");
             $configuration = new MigratorConfiguration()->setDryRun(true);
             $sql = $factory->getMigrator()->migrate(new MigrationPlanList($plans, 'up'), $configuration);
-            self::assertCount(35, $sql);
+            self::assertCount(36, $sql);
             self::assertSame($before, $connection->fetchAllAssociative("SELECT type, name, sql FROM sqlite_master WHERE name NOT LIKE 'sqlite_%' ORDER BY type, name"));
             $downPlans = [];
             foreach (array_reverse($paths) as $path) {
@@ -101,7 +101,7 @@ final class MigrationExecutionEquivalenceTest extends TestCase
                 $downPlans[] = new MigrationPlan(new Version($class), $factory->getMigrationFactory()->createVersion($class), 'down');
             }
             $down = $factory->getMigrator()->migrate(new MigrationPlanList($downPlans, 'down'), $configuration);
-            self::assertCount(35, $down);
+            self::assertCount(36, $down);
             self::assertSame($before, $connection->fetchAllAssociative("SELECT type, name, sql FROM sqlite_master WHERE name NOT LIKE 'sqlite_%' ORDER BY type, name"));
             $expectedPlans = ['up' => $plans, 'down' => $downPlans];
             // The identical complete plan also installs and removes a fresh physical database.
@@ -112,7 +112,7 @@ final class MigrationExecutionEquivalenceTest extends TestCase
                     $class = 'App\\Migrations\\' . basename($path, '.php');
                     $actualPlans[] = new MigrationPlan(new Version($class), $factory->getMigrationFactory()->createVersion($class), $direction);
                 }
-                self::assertCount(35, $factory->getMigrator()->migrate(new MigrationPlanList($actualPlans, $direction), new MigratorConfiguration()));
+                self::assertCount(36, $factory->getMigrator()->migrate(new MigrationPlanList($actualPlans, $direction), new MigratorConfiguration()));
                 foreach ($actualPlans as $position => $actualPlan) {
                     $expectedQueries = $expectedPlans[$direction][$position]->getMigration()->getSql();
                     $actualQueries = $actualPlan->getMigration()->getSql();

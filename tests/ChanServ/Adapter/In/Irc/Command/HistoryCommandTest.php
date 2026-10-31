@@ -39,6 +39,8 @@ use ReflectionClass;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use UnexpectedValueException;
 
+use function strtr;
+
 #[CoversTrait(ChanServArgumentDefinitionSupport::class)]
 #[CoversClass(HistoryCommand::class)]
 #[CoversClass(ChannelHistoryEntryView::class)]
@@ -1075,6 +1077,52 @@ final class HistoryCommandTest extends TestCase
         $cmd->execute($context);
 
         self::assertContains('history.view.header', $messages);
+    }
+
+    #[Test]
+    public function executeViewTranslatesAkickEnforceMessageWithCount(): void
+    {
+        $channel = $this->createChannelWithId('#test', 1);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+
+        $entry = ChannelHistory::record(
+            new DateTimeImmutable(),
+            channelId: 1,
+            action: 'AKICK_ENFORCE',
+            performedBy: 'OperUser',
+            performedByNickId: null,
+            message: 'history.message.akick_enforce',
+            extraData: ['count' => '3'],
+        );
+        $entry = self::historyWithId($entry, 1);
+
+        $historyRepo = $this->createStub(ChannelHistoryRepositoryInterface::class);
+        $historyRepo->method('countByChannelId')->willReturn(1);
+        $historyRepo->method('findByChannelId')->willReturn([$entry]);
+
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static function (string $id, array $parameters = []): string {
+            return match ($id) {
+                'history.message.akick_enforce' => strtr('AKICK enforced (%count% kicked)', $parameters),
+                'history.view.entry' => strtr('#%id% %action% by %operator% — %message%', $parameters),
+                default => $id,
+            };
+        });
+
+        $messages = [];
+        $context = $this->createContext(
+            ['#test', 'VIEW'],
+            $messages,
+            channelRepo: $channelRepo,
+            historyRepo: $historyRepo,
+            translatorOverride: $translator,
+        );
+
+        $cmd = $this->createCommandWithRepos($channelRepo, $historyRepo);
+        $cmd->execute($context);
+
+        self::assertContains("#1 \x0303AKICK_ENFORCE\x03\x0F by OperUser — AKICK enforced (3 kicked)", $messages);
     }
 
     private function buildCommand(

@@ -13,5 +13,11 @@ final readonly class ChannelEntryMember
         public bool $identified,
         public bool $operator,
         public bool $service,
+        public ?string $displayMask = null,
     ) {}
+
+    public function getVisibleMask(): string
+    {
+        return $this->displayMask ?? $this->userMask;
+    }
 }

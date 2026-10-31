@@ -3632,7 +3632,7 @@ final class ChanServServiceTest extends TestCase
         $service->dispatch('UNBAN #test', $identified);
         $service->dispatch('UNBAN #test', $identified);
         self::assertSame(["\x0304✗\x03\x0F presentation.error.not_identified", "\x0304✗\x03\x0F presentation.error.syntax", "\x0304✗\x03\x0F presentation.error.syntax", "\x0304✗\x03\x0F presentation.error.syntax", "\x0303✔\x03\x0F unban.done", "\x0310ℹ\x03\x0F unban.no_matches"], $messages);
-        self::assertSame([['#test', "\x0303✔\x03\x0F unban.notice_channel"]], $channelNotices);
+        self::assertSame([['#test', "\x0310ℹ\x03\x0F unban.notice_channel"]], $channelNotices);
     }
 
     private function createServiceNicks(): ServiceNicknameRegistry

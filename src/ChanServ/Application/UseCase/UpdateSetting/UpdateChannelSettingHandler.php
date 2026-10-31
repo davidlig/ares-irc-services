@@ -39,6 +39,7 @@ final readonly class UpdateChannelSettingHandler implements UpdateChannelSetting
             ChannelSetting::Successor => $this->successor($command),
             ChannelSetting::TopicLock => $this->topicLock($command),
             ChannelSetting::Url => $this->url($command),
+            ChannelSetting::Verbose => $this->verbose($command),
         };
     }
 
@@ -144,6 +145,16 @@ final readonly class UpdateChannelSettingHandler implements UpdateChannelSetting
         $command->channel->configurePrivate('ON' === $command->value);
         $this->channels->save($command->channel);
         $this->record($command, 'SET_PRIVATE_' . ('ON' === $command->value ? 'ON' : 'OFF'));
+
+        return new UpdateChannelSettingResult(UpdateChannelSettingOutcome::Updated);
+    }
+
+    private function verbose(UpdateChannelSetting $command): UpdateChannelSettingResult
+    {
+        $enabled = 'ON' === $command->value;
+        $command->channel->configureVerbose($enabled);
+        $this->channels->save($command->channel);
+        $this->record($command, 'SET_VERBOSE_' . ($enabled ? 'ON' : 'OFF'));
 
         return new UpdateChannelSettingResult(UpdateChannelSettingOutcome::Updated);
     }

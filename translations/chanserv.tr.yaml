@@ -71,6 +71,8 @@ info:
   topic_set_by_label: "Başlığı ayarlayan"
   options: "%label%%padding%: %options%"
   options_label: "Seçenekler"
+  verbose: "%label%%padding%: %state%"
+  verbose_label: "Kanal bildirimleri"
   private: "%channel% kanalının bilgileri özeldir."
   no_expire: "%label%%padding%: Evet"
   no_expire_label: "Hiç Sona Ermez"
@@ -101,7 +103,7 @@ info:
 
 # --- SET ----------------------------------------------------------------------
 set:
-  syntax: "SET <#channel> {FOUNDER <takma_ad> [token]|SUCCESSOR [nickname]|DESC <açıklama>|URL [url]|EMAIL [e-posta]|ENTRYMSG [mesaj]|TOPICLOCK {ON|OFF}|MLOCK {ON|OFF}|PRIVATE {ON|OFF}|SECURE {ON|OFF}}"
+  syntax: "SET <#channel> {FOUNDER <takma_ad> [token]|SUCCESSOR [nickname]|DESC <açıklama>|URL [url]|EMAIL [e-posta]|ENTRYMSG [mesaj]|TOPICLOCK {ON|OFF}|MLOCK {ON|OFF}|PRIVATE {ON|OFF}|SECURE {ON|OFF}|VERBOSE {ON|OFF}}"
   example: "%command_prefix%SET #kanal DESC Bir topluluk kanalı"
   examples:
     - "%command_prefix%SET #kanal URL https://example.test"
@@ -252,6 +254,19 @@ set:
     notice_on: "%nickname% SECURE modunu etkinleştiriyor."
     notice_off: "%nickname% SECURE modunu devre dışı bırakıyor."
 
+  # --- SET VERBOSE ---------------------------------------------------------
+  verbose:
+    syntax: "SET <#channel> VERBOSE {ON|OFF}"
+    example: "%command_prefix%SET #kanal VERBOSE ON"
+    examples:
+      - "%command_prefix%SET #kanal VERBOSE OFF"
+    short: "Kanal işlem bildirimlerini aç/kapat."
+    help: |-
+      Kanalda gerçekleştirilen eylemler için kanala NOTICE yayınlarını
+      etkinleştirir veya devre dışı bırakır.
+    on: "Kanal işlem bildirimleri etkinleştirildi."
+    off: "Kanal işlem bildirimleri devre dışı bırakıldı."
+
 # --- STATUS -------------------------------------------------------------------
 status:
   syntax: "STATUS <#kanal>"
@@ -356,16 +371,19 @@ delaccess:
 
 # --- AKICK --------------------------------------------------------------------
 akick:
-  syntax: "AKICK <#channel> {ADD <maske> [süre] [gerekçe]|DEL {<maske>|<numara>}|LIST}"
+  syntax: "AKICK <#channel> {ADD <maske> [süre] [gerekçe]|DEL {<maske>|<numara>}|LIST|VIEW {<maske>|<numara>}|CLEAR|CHECK <takma_ad>|ENFORCE}"
   example: "%command_prefix%AKICK #kanal ADD *!*@* 0"
   examples:
     - "%command_prefix%AKICK #kanal ADD *!*@* 7d Spam"
     - "%command_prefix%AKICK #kanal DEL *!*@*"
     - "%command_prefix%AKICK #kanal DEL 2"
     - "%command_prefix%AKICK #kanal LIST"
+    - "%command_prefix%AKICK #kanal VIEW 1"
+    - "%command_prefix%AKICK #kanal CLEAR"
+    - "%command_prefix%AKICK #kanal CHECK Alice"
   short: "Otomatik atma listesini yönetin."
   help: "Kanalın otomatik atma kayıtlarını ve isteğe bağlı sürelerini yönetir."
-  unknown_sub: "Bilinmeyen alt komut %sub%. ADD, DEL veya LIST kullanın."
+  unknown_sub: "Bilinmeyen alt komut %sub%. ADD, DEL, LIST, VIEW, CLEAR veya CHECK kullanın."
   invalid_mask: "Geçersiz maske formatı. Joker karakterler (*) ile nick!ident@host kullanın."
   dangerous_mask: "%mask% maskesi çok geniş. En az 4 alfanümerik karakter içermelidir."
   protected_user: "%nickname% rumuzunun bu kanalda erişimi var."
@@ -407,7 +425,67 @@ akick:
     help: "Maske, gerekçe, süre ve ekleyeni gösterir."
     header: "%channel% için AKICK listesi"
     empty: "%channel% kanalının AKICK girişi yok."
-    entry: "#%index% %mask% %reason% (ekleyen: %nickname%, bitiş: %expiration%)"
+    entry: "#%index% %mask% %reason% (ekleyen: %nickname%, bitiş: %expiration%, kullanım: %uses%)"
+
+  # --- AKICK VIEW ----------------------------------------------------------
+  view:
+    syntax: "AKICK <#channel> VIEW {<maske>|<numara>}"
+    example: "%command_prefix%AKICK #kanal VIEW 1"
+    examples:
+      - "%command_prefix%AKICK #kanal VIEW *!*@bad.host"
+    short: "Ayrıntılı AKICK girişi meta verilerini görüntüle."
+    help: |-
+      Belirli bir otomatik atma girişi için neden, oluşturan, oluşturulma tarihi,
+      bitiş tarihi, kullanım sayısı ve son kullanım tarihini gösterir.
+    header: "%channel% için AKICK ayrıntıları"
+    reason: "%label%%padding%: %reason%"
+    reason_label: "Neden"
+    author: "%label%%padding%: %author%"
+    author_label: "Yazar"
+    created: "%label%%padding%: %date%"
+    created_label: "Oluşturulma"
+    expires: "%label%%padding%: %date%"
+    expires_label: "Bitiş"
+    uses: "%label%%padding%: %uses%"
+    uses_label: "Kullanım"
+    last_used: "%label%%padding%: %date%"
+    last_used_label: "Son kullanım"
+
+  # --- AKICK CLEAR ---------------------------------------------------------
+  clear:
+    syntax: "AKICK <#channel> CLEAR"
+    example: "%command_prefix%AKICK #kanal CLEAR"
+    short: "Tüm AKICK girişlerini temizle."
+    help: |-
+      Kanalın tüm otomatik atma girişlerini kaldırır.
+      Kanal kurucusu veya AKICK düzeyi gerektirir.
+    empty: "%channel% kanalında temizlenecek AKICK girişi yok."
+    done: "%channel% kanalından %count% AKICK girişi temizlendi."
+    notice_channel: "%from%, %channel% kanalından %count% AKICK girişini temizledi"
+
+  # --- AKICK CHECK ---------------------------------------------------------
+  check:
+    syntax: "AKICK <#channel> CHECK <takma_ad>"
+    example: "%command_prefix%AKICK #kanal CHECK Alice"
+    short: "Bir takma adın AKICK girişleriyle eşleşip eşleşmediğini kontrol et."
+    help: |-
+      Bağlı bir kullanıcının kanaldaki herhangi bir otomatik atma girişiyle eşleşip eşleşmediğini denetler.
+    no_match: "%nickname%, %channel% kanalındaki hiçbir AKICK girişiyle eşleşmiyor."
+    not_connected: "%nickname% kullanıcısı bağlı değil."
+    header: "%channel% kanalında %nickname% için AKICK eşleşmeleri"
+    entry: "#%index% %mask% %reason%"
+
+  # --- AKICK ENFORCE -------------------------------------------------------
+  enforce:
+    syntax: "AKICK <#channel> ENFORCE"
+    example: "%command_prefix%AKICK #channel ENFORCE"
+    short: "AKICK kayıtlarını mevcut kanal kullanıcılarına uygula."
+    help: |-
+      Kanaldaki kullanıcıları AKICK listesiyle karşılaştırır
+      ve eşleşenleri banlayıp atar.
+    no_matches: "%channel% kanalında AKICK listesiyle eşleşen kullanıcı yok."
+    done: "%channel% üzerinde %count% AKICK atma işlemi uygulandı."
+    notice_channel: "%from%, %channel% üzerinde AKICK uyguladı (%count% kullanıcı)"
 
 # --- LEVELS -------------------------------------------------------------------
 levels:
@@ -812,6 +890,8 @@ history.message:
   set_secure_off: "SECURE seçeneği devre dışı bırakıldı"
   set_private_on: "PRIVATE seçeneği etkinleştirildi"
   set_private_off: "PRIVATE seçeneği devre dışı bırakıldı"
+  set_verbose_on: "VERBOSE seçeneği etkinleştirildi"
+  set_verbose_off: "VERBOSE seçeneği devre dışı bırakıldı"
   founder_changed: "Kurucu %old_founder% yerine %new_founder% olarak değiştirildi"
   successor_changed: "Halef %old_successor% yerine %new_successor% olarak değiştirildi"
   registration_approved: "Kanal kaydı onaylandı"
@@ -820,6 +900,8 @@ history.message:
   access_del: "%target_nickname% için erişim kaldırıldı"
   akick_add: "AKICK eklendi: %mask%"
   akick_del: "AKICK kaldırıldı: %mask%"
+  akick_clear: "AKICK listesi temizlendi"
+  akick_enforce: "AKICK uygulandı (%count% atıldı)"
   saregister: "Kanal yönetimsel olarak kaydedildi"
 
 # --- HISTORY EXTRA FIELDS ---

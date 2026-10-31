@@ -45,7 +45,7 @@ final readonly class SetSecureHandler implements SetOptionHandlerInterface
         $nick = $context->sender->nick;
         if ('' !== $nick) {
             $key = $on ? 'set.secure.notice_on' : 'set.secure.notice_off';
-            $notice = $context->renderReply(Role::Success, $key, ['%nickname%' => new Fragment($nick, Component::Actor)]);
+            $notice = $context->renderReply(Role::Information, $key, ['%nickname%' => new Fragment($nick, Component::Actor)]);
             $context->getNotifier()->sendNoticeToChannel($channel->getName(), $notice);
         }
     }

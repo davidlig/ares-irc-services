@@ -184,6 +184,7 @@ final readonly class InfoCommand implements ChanServCommandInterface
         $this->presentContactDetails($context, $info);
         $this->presentMlockModes($context, $info);
         $this->presentEnabledOptions($context, $info);
+        $this->presentVerbose($context, $info);
         $this->presentNoExpire($context, $info);
         $this->presentFooter($context);
     }
@@ -275,6 +276,11 @@ final readonly class InfoCommand implements ChanServCommandInterface
         }
 
         $context->replyRaw(new ChanServDetailPresenter()->row($context, 'info.options', ['%options%' => implode(', ', $enabledOptions)]));
+    }
+
+    private function presentVerbose(ChanServContext $context, ChannelInfoView $info): void
+    {
+        $context->replyRaw(new ChanServDetailPresenter()->row($context, 'info.verbose', ['%state%' => $info->verbose ? 'ON' : 'OFF']));
     }
 
     private function presentNoExpire(ChanServContext $context, ChannelInfoView $info): void

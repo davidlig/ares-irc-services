@@ -1,0 +1,178 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Tests\ChanServ\Adapter\In\Irc\Command;
+
+use App\ChanServ\Adapter\In\Irc\ChanServCommandRegistry;
+use App\ChanServ\Adapter\In\Irc\ChanServContext;
+use App\ChanServ\Adapter\In\Irc\ChanServNotifierInterface;
+use App\ChanServ\Adapter\In\Irc\Command\SetVerboseHandler;
+use App\ChanServ\Application\Port\Out\ChannelHistoryRepositoryInterface;
+use App\ChanServ\Application\Port\Out\ChanUserAccountPort;
+use App\ChanServ\Application\Port\Out\EmailDomainPolicy;
+use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
+use App\ChanServ\Application\Service\ChannelHistoryService;
+use App\ChanServ\Application\UseCase\UpdateSetting\UpdateChannelSetting;
+use App\ChanServ\Application\UseCase\UpdateSetting\UpdateChannelSettingHandler;
+use App\ChanServ\Application\UseCase\UpdateSetting\UpdateChannelSettingResult;
+use App\ChanServ\Domain\Entity\RegisteredChannel;
+use App\Irc\Adapter\Protocol\NullChannelModeSupport;
+use App\Irc\Application\Port\In\ChannelLookupPort;
+use App\Irc\Application\Port\In\NetworkUserLookupPort;
+use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
+use App\Shared\Application\Port\EventBusInterface;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
+use Symfony\Contracts\Translation\TranslatorInterface;
+
+#[CoversClass(SetVerboseHandler::class)]
+#[CoversClass(UpdateChannelSetting::class)]
+#[CoversClass(UpdateChannelSettingHandler::class)]
+#[CoversClass(UpdateChannelSettingResult::class)]
+final class SetVerboseHandlerTest extends TestCase
+{
+    #[Test]
+    public function invalidValueRepliesSyntaxError(): void
+    {
+        $channel = $this->createStub(RegisteredChannel::class);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $handler = $this->createHandler($channelRepo);
+        $handler->handle($this->createContext($notifier, $translator, 'maybe'), $channel, 'maybe');
+
+        self::assertSame(["\x0304✗\x03\x0F presentation.error.syntax"], $messages);
+    }
+
+    #[Test]
+    public function onEnablesVerboseAndSavesAndReplies(): void
+    {
+        $channel = $this->createMock(RegisteredChannel::class);
+        $channel->expects(self::once())->method('configureVerbose')->with(true);
+        $channel->method('getName')->willReturn('#test');
+        $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->expects(self::once())->method('save')->with($channel);
+
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $handler = $this->createHandler($channelRepo);
+        $handler->handle($this->createContext($notifier, $translator, 'ON'), $channel, 'ON');
+
+        self::assertSame(["\x0303✔\x03\x0F set.verbose.on"], $messages);
+    }
+
+    #[Test]
+    public function offDisablesVerboseAndSavesAndReplies(): void
+    {
+        $channel = $this->createMock(RegisteredChannel::class);
+        $channel->expects(self::once())->method('configureVerbose')->with(false);
+        $channel->method('getName')->willReturn('#test');
+        $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->expects(self::once())->method('save')->with($channel);
+
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $handler = $this->createHandler($channelRepo);
+        $handler->handle($this->createContext($notifier, $translator, 'OFF'), $channel, 'OFF');
+
+        self::assertSame(["\x0303✔\x03\x0F set.verbose.off"], $messages);
+    }
+
+    #[Test]
+    public function missingSenderReturnsWithoutUpdating(): void
+    {
+        $channel = $this->createMock(RegisteredChannel::class);
+        $channel->expects(self::never())->method('configureVerbose');
+        $repo = $this->createMock(RegisteredChannelRepositoryInterface::class);
+        $repo->expects(self::never())->method('save');
+
+        $this->createHandler($repo)->handle(
+            $this->createContext(
+                $this->createStub(ChanServNotifierInterface::class),
+                $this->createStub(TranslatorInterface::class),
+                'ON',
+                true,
+            ),
+            $channel,
+            'ON',
+        );
+    }
+
+    private function createHandler(RegisteredChannelRepositoryInterface $channelRepo): SetVerboseHandler
+    {
+        $updater = new UpdateChannelSettingHandler(
+            $this->createStub(EmailDomainPolicy::class),
+            $channelRepo,
+            $this->createStub(ChanUserAccountPort::class),
+            $this->createStub(EventBusInterface::class),
+            new ChannelHistoryService($this->createStub(ChannelHistoryRepositoryInterface::class)),
+        );
+
+        return new SetVerboseHandler($updater);
+    }
+
+    private function createContext(
+        ChanServNotifierInterface $notifier,
+        TranslatorInterface $translator,
+        string $value,
+        bool $withoutSender = false,
+    ): ChanServContext {
+        return new ChanServContext(
+            $withoutSender ? null : new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
+            null,
+            'SET',
+            ['#test', 'VERBOSE', $value],
+            $notifier,
+            $translator,
+            'en',
+            'UTC',
+            'NOTICE',
+            new ChanServCommandRegistry([]),
+            $this->createStub(ChannelLookupPort::class),
+            new NullChannelModeSupport(),
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
+        );
+    }
+
+    private function createServiceNicks(): ServiceNicknameRegistry
+    {
+        $provider = new class('chanserv', 'ChanServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick) {}
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+
+        return new ServiceNicknameRegistry([$provider]);
+    }
+}

@@ -50,6 +50,23 @@ final class AkickPolicyTest extends TestCase
     }
 
     #[Test]
+    public function allMatchesReturnsAllActiveMatchingRules(): void
+    {
+        $now = new DateTimeImmutable('2026-09-07 12:00:00');
+        $rule1 = new AkickRule(new AkickMask('bad*!*@*'), 'first');
+        $rule2 = new AkickRule(new AkickMask('*!*@host'), 'second');
+        $expired = new AkickRule(new AkickMask('bad*!*@*'), 'expired', expiresAt: $now->modify('-1 second'));
+        $unrelated = new AkickRule(new AkickMask('other!*@*'), 'unrelated');
+        $policy = new AkickMatchPolicy();
+
+        $matches = $policy->allMatches([$rule1, $expired, $rule2, $unrelated], 'badnick!ident@host', $now, false);
+        self::assertSame([$rule1, $rule2], $matches);
+
+        // Operator is exempt
+        self::assertSame([], $policy->allMatches([$rule1, $rule2], 'badnick!ident@host', $now, true));
+    }
+
+    #[Test]
     public function missingReasonGetsStableFallback(): void
     {
         self::assertSame('AKICK: *!*@bad.host', new AkickRule(new AkickMask('*!*@bad.host'))->enforcementReason());

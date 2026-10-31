@@ -24,4 +24,25 @@ final readonly class AkickMatchPolicy
 
         return null;
     }
+
+    /**
+     * @param list<AkickRule> $rules
+     *
+     * @return list<AkickRule>
+     */
+    public function allMatches(array $rules, string $userMask, DateTimeImmutable $now, bool $ircOperator = false): array
+    {
+        if ($ircOperator) {
+            return [];
+        }
+
+        $matches = [];
+        foreach ($rules as $rule) {
+            if (!$rule->isExpiredAt($now) && $rule->mask->matches($userMask)) {
+                $matches[] = $rule;
+            }
+        }
+
+        return $matches;
+    }
 }

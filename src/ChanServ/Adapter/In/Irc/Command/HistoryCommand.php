@@ -303,7 +303,7 @@ final readonly class HistoryCommand implements ChanServCommandInterface, IrcopAu
         }
 
         $params = [];
-        foreach (['old_founder', 'new_founder', 'old_successor', 'new_successor', 'target_nickname', 'level', 'mask', 'option', 'old_value', 'new_value'] as $key) {
+        foreach (['old_founder', 'new_founder', 'old_successor', 'new_successor', 'target_nickname', 'level', 'mask', 'option', 'old_value', 'new_value', 'count'] as $key) {
             if (isset($extraData[$key])) {
                 $params['%' . $key . '%'] = $this->stringifyExtra($extraData[$key]);
             }

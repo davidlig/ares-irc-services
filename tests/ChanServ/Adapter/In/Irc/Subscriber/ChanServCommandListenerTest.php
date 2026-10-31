@@ -343,6 +343,7 @@ final class ChanServCommandListenerTest extends TestCase
             $sendNoticePort,
             $uidGenerator,
             'services.example.com',
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
             self::CHANSERV_NICK,
         );
 

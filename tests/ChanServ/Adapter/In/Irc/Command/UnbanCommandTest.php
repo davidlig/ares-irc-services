@@ -72,7 +72,7 @@ final class UnbanCommandTest extends TestCase
     /** @return iterable<string, array{UnbanChannelOutcome, string, bool, string|null}> */
     public static function outcomes(): iterable
     {
-        yield 'removed' => [UnbanChannelOutcome::Removed, "\x0303✔\x03\x0F unban.done", true, "\x0303✔\x03\x0F unban.notice_channel"];
+        yield 'removed' => [UnbanChannelOutcome::Removed, "\x0303✔\x03\x0F unban.done", true, "\x0310ℹ\x03\x0F unban.notice_channel"];
         yield 'empty' => [UnbanChannelOutcome::NoMatches, "\x0310ℹ\x03\x0F unban.no_matches", true, null];
         yield 'unavailable' => [UnbanChannelOutcome::Unavailable, "\x0304✗\x03\x0F unban.unavailable", false, null];
         yield 'absent' => [UnbanChannelOutcome::ChannelNotOnNetwork, "\x0304✗\x03\x0F unban.not_on_network", false, null];
@@ -122,7 +122,7 @@ final class UnbanCommandTest extends TestCase
         });
         $notifier = $this->createMock(ChanServNotifierInterface::class);
         $notifier->expects(self::once())->method('sendMessage')->with('001AAA', "\x0303✔\x03\x0F Canal #%count%: retirados 2", 'NOTICE');
-        $notifier->expects(self::once())->method('sendNoticeToChannel')->with('#%count%', "\x0303✔\x03\x0F \x0302Alice\x03\x0F ha utilizado UNBAN.");
+        $notifier->expects(self::once())->method('sendNoticeToChannel')->with('#%count%', "\x0310ℹ\x03\x0F \x0302Alice\x03\x0F ha utilizado UNBAN.");
         $context = $this->createContext(new SenderView('001AAA', 'Alice', 'i', 'h', 'c', '*', true), new ChanAccountView(1, 'Alice', 'en'), ['#%count%'], $notifier, $translator);
 
         self::assertTrue(new UnbanCommand($handler)->execute($context)->success);
@@ -139,8 +139,8 @@ final class UnbanCommandTest extends TestCase
         });
         $notifier = $this->createMock(ChanServNotifierInterface::class);
         $notifier->expects(self::once())->method('sendMessage')->with('001AAA', 'OK Removed 1 from #test', 'NOTICE');
-        $notifier->expects(self::once())->method('sendNoticeToChannel')->with('#test', 'OK Alice used UNBAN.');
-        $renderer = new IrcRenderer(new FixedStyleProvider(new PresentationStyle(markers: [Role::Success->value => 'OK'])));
+        $notifier->expects(self::once())->method('sendNoticeToChannel')->with('#test', 'INFO Alice used UNBAN.');
+        $renderer = new IrcRenderer(new FixedStyleProvider(new PresentationStyle(markers: [Role::Success->value => 'OK', Role::Information->value => 'INFO'])));
         $context = $this->createContext(new SenderView('001AAA', 'Alice', 'i', 'h', 'c', '*', true), new ChanAccountView(1, 'Alice', 'en'), ['#test'], $notifier, $translator, $renderer);
 
         self::assertTrue(new UnbanCommand($handler)->execute($context)->success);

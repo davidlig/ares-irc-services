@@ -36,6 +36,13 @@ final readonly class IrcChannelEntryNetworkQuery implements ChannelEntryNetworkQ
         return null === $user ? null : $this->toMember($user);
     }
 
+    public function findMemberByNick(string $nickname): ?ChannelEntryMember
+    {
+        $user = $this->users->findByNick($nickname);
+
+        return null === $user ? null : $this->toMember($user);
+    }
+
     public function findChannel(string $channelName): ?ChannelEntryNetworkState
     {
         $channel = $this->channels->findByChannelName($channelName);
@@ -74,6 +81,7 @@ final readonly class IrcChannelEntryNetworkQuery implements ChannelEntryNetworkQ
             identified: $user->isIdentified,
             operator: $user->isOper,
             service: 0 === strcasecmp($user->nick, $this->chanservNick),
+            displayMask: $user->toDisplayMask(),
         );
     }
 }

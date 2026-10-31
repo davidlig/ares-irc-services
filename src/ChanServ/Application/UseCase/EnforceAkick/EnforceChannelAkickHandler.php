@@ -14,6 +14,7 @@ use App\ChanServ\Domain\ValueObject\AkickMask;
 use App\ChanServ\Domain\ValueObject\AkickRule;
 use DateTimeImmutable;
 
+use function spl_object_id;
 use function strtolower;
 
 final readonly class EnforceChannelAkickHandler implements EnforceChannelAkickHandlerInterface
@@ -48,12 +49,15 @@ final readonly class EnforceChannelAkickHandler implements EnforceChannelAkickHa
         }
 
         $rules = [];
+        $ruleMap = [];
         foreach ($this->akicks->listByChannel($channel->getId()) as $akick) {
-            $rules[] = new AkickRule(
+            $rule = new AkickRule(
                 new AkickMask($akick->getMask()),
                 $akick->getReason(),
                 $akick->getExpiresAt(),
             );
+            $rules[] = $rule;
+            $ruleMap[spl_object_id($rule)] = $akick;
         }
 
         $enforced = 0;
@@ -61,6 +65,12 @@ final readonly class EnforceChannelAkickHandler implements EnforceChannelAkickHa
             $matching = $this->matchPolicy->firstMatch($rules, $member->userMask, $now, $member->operator);
             if (null === $matching) {
                 continue;
+            }
+
+            if (isset($ruleMap[spl_object_id($matching)])) {
+                $matchedAkick = $ruleMap[spl_object_id($matching)];
+                $matchedAkick->recordUsage($now);
+                $this->akicks->save($matchedAkick);
             }
 
             $this->actions->banAndKick(

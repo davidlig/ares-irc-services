@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Tests\ChanServ\Adapter\In\Irc\Bot;
 
 use App\ChanServ\Adapter\In\Irc\Bot\ChanServBot;
+use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
+use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
 use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
@@ -40,6 +42,8 @@ final class ChanServBotTest extends TestCase
     private SendNoticePort $sendNoticePort;
 
     private ServiceUidGeneratorInterface $uidGenerator;
+
+    private RegisteredChannelRepositoryInterface $channels;
 
     private ChanServBot $bot;
 
@@ -97,6 +101,7 @@ final class ChanServBotTest extends TestCase
             $sendNoticePort,
             $this->uidGenerator,
             self::HOSTNAME,
+            $this->channels,
         );
         $bot->onBurstComplete(new ServiceIntroductionRequestedEvent('001'));
 
@@ -117,6 +122,7 @@ final class ChanServBotTest extends TestCase
             $sendNoticePort,
             $this->uidGenerator,
             self::HOSTNAME,
+            $this->channels,
         );
         $bot->onBurstComplete(new ServiceIntroductionRequestedEvent('001'));
 
@@ -140,6 +146,7 @@ final class ChanServBotTest extends TestCase
             $sendNoticePort,
             $this->uidGenerator,
             self::HOSTNAME,
+            $this->channels,
         );
 
         $bot->sendNoticeToChannel('#channel', 'Hi');
@@ -163,6 +170,7 @@ final class ChanServBotTest extends TestCase
             $sendNoticePort,
             $this->uidGenerator,
             self::HOSTNAME,
+            $this->channels,
         );
 
         $bot->sendNoticeToChannel('#test', 'Hi');
@@ -186,6 +194,69 @@ final class ChanServBotTest extends TestCase
             $sendNoticePort,
             $this->uidGenerator,
             self::HOSTNAME,
+            $this->channels,
+        );
+        $bot->onBurstComplete(new ServiceIntroductionRequestedEvent('001'));
+
+        $bot->sendNoticeToChannel('#test', 'Hi');
+    }
+
+    #[Test]
+    public function sendNoticeToChannelSuppressesNoticeWhenChannelVerboseIsFalse(): void
+    {
+        $channelView = new ChannelView('#test', '', null, 5);
+        $channelLookup = $this->createStub(ChannelLookupPort::class);
+        $channelLookup->method('findByChannelName')->willReturn($channelView);
+
+        $channel = $this->createStub(RegisteredChannel::class);
+        $channel->method('isVerbose')->willReturn(false);
+
+        $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channels->method('findByChannelName')->willReturn($channel);
+
+        $sendNoticePort = $this->createMock(SendNoticePort::class);
+        $sendNoticePort->expects(self::never())->method('sendNoticeToChannel');
+
+        $bot = new ChanServBot(
+            $this->connectionHolder,
+            $channelLookup,
+            $this->applyOutgoingChannelModes,
+            $this->channelRegistration,
+            $sendNoticePort,
+            $this->uidGenerator,
+            self::HOSTNAME,
+            $channels,
+        );
+        $bot->onBurstComplete(new ServiceIntroductionRequestedEvent('001'));
+
+        $bot->sendNoticeToChannel('#test', 'Hi');
+    }
+
+    #[Test]
+    public function sendNoticeToChannelSendsNoticeWhenChannelVerboseIsTrue(): void
+    {
+        $channelView = new ChannelView('#test', '', null, 5);
+        $channelLookup = $this->createStub(ChannelLookupPort::class);
+        $channelLookup->method('findByChannelName')->willReturn($channelView);
+
+        $channel = $this->createStub(RegisteredChannel::class);
+        $channel->method('isVerbose')->willReturn(true);
+
+        $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channels->method('findByChannelName')->willReturn($channel);
+
+        $sendNoticePort = $this->createMock(SendNoticePort::class);
+        $sendNoticePort->expects(self::once())->method('sendNoticeToChannel')->with(self::CHANSERV_UID, '#test', 'Hi');
+
+        $bot = new ChanServBot(
+            $this->connectionHolder,
+            $channelLookup,
+            $this->applyOutgoingChannelModes,
+            $this->channelRegistration,
+            $sendNoticePort,
+            $this->uidGenerator,
+            self::HOSTNAME,
+            $channels,
         );
         $bot->onBurstComplete(new ServiceIntroductionRequestedEvent('001'));
 
@@ -223,6 +294,7 @@ final class ChanServBotTest extends TestCase
             $this->sendNoticePort,
             $this->uidGenerator,
             self::HOSTNAME,
+            $this->channels,
         );
 
         $bot->onBurstComplete(new ServiceIntroductionRequestedEvent('001'));
@@ -475,6 +547,7 @@ final class ChanServBotTest extends TestCase
         $this->sendNoticePort = $this->createStub(SendNoticePort::class);
         $this->uidGenerator = $this->createStub(ServiceUidGeneratorInterface::class);
         $this->uidGenerator->method('generateUid')->willReturn(self::CHANSERV_UID);
+        $this->channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
 
         $this->bot = new ChanServBot(
             $this->connectionHolder,
@@ -484,6 +557,7 @@ final class ChanServBotTest extends TestCase
             $this->sendNoticePort,
             $this->uidGenerator,
             self::HOSTNAME,
+            $this->channels,
         );
 
         $this->bot->onBurstComplete(new ServiceIntroductionRequestedEvent('001'));

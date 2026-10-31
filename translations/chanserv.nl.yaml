@@ -72,6 +72,8 @@ info:
   topic_set_by_label: "Onderwerp door"
   options: "%label%%padding%: %options%"
   options_label: "Opties"
+  verbose: "%label%%padding%: %state%"
+  verbose_label: "Kanaalmeldingen"
   private: "De kanaalinformatie van %channel% is privé."
   no_expire: "%label%%padding%: Ja"
   no_expire_label: "Vervalt nooit"
@@ -102,7 +104,7 @@ info:
 
 # --- SET ----------------------------------------------------------------------
 set:
-  syntax: "SET <#kanaal> {FOUNDER <bijnaam> [token]|SUCCESSOR [bijnaam]|DESC <beschrijving>|URL [url]|EMAIL [e-mail]|ENTRYMSG [bericht]|TOPICLOCK {ON|OFF}|MLOCK {ON|OFF}|PRIVATE {ON|OFF}|SECURE {ON|OFF}}"
+  syntax: "SET <#kanaal> {FOUNDER <bijnaam> [token]|SUCCESSOR [bijnaam]|DESC <beschrijving>|URL [url]|EMAIL [e-mail]|ENTRYMSG [bericht]|TOPICLOCK {ON|OFF}|MLOCK {ON|OFF}|PRIVATE {ON|OFF}|SECURE {ON|OFF}|VERBOSE {ON|OFF}}"
   example: "%command_prefix%SET #kanaal DESC Een gemeenschapskanaal"
   examples:
     - "%command_prefix%SET #kanaal URL https://example.test"
@@ -260,6 +262,19 @@ set:
     notice_on: "%nickname% schakelt SECURE-modus in."
     notice_off: "%nickname% schakelt SECURE-modus uit."
 
+  # --- SET VERBOSE ---------------------------------------------------------
+  verbose:
+    syntax: "SET <#kanaal> VERBOSE {ON|OFF}"
+    example: "%command_prefix%SET #kanaal VERBOSE ON"
+    examples:
+      - "%command_prefix%SET #kanaal VERBOSE OFF"
+    short: "Kanaalactiemeldingen in- of uitschakelen."
+    help: |-
+      Schakelt NOTICE-uitzendingen naar het kanaal in of uit voor acties
+      die op het kanaal worden uitgevoerd.
+    on: "Kanaalactiemeldingen ingeschakeld."
+    off: "Kanaalactiemeldingen uitgeschakeld."
+
 # --- STATUS -------------------------------------------------------------------
 status:
   syntax: "STATUS <#kanaal>"
@@ -361,16 +376,19 @@ delaccess:
 
 # --- AKICK --------------------------------------------------------------------
 akick:
-  syntax: "AKICK <#kanaal> {ADD <masker> [verloop] [reden]|DEL {<masker>|<nummer>}|LIST}"
+  syntax: "AKICK <#kanaal> {ADD <masker> [verloop] [reden]|DEL {<masker>|<nummer>}|LIST|VIEW {<masker>|<nummer>}|CLEAR|CHECK <bijnaam>|ENFORCE}"
   example: "%command_prefix%AKICK #kanaal ADD *!*@* 0"
   examples:
     - "%command_prefix%AKICK #kanaal ADD *!*@* 7d Spam"
     - "%command_prefix%AKICK #kanaal DEL *!*@*"
     - "%command_prefix%AKICK #kanaal DEL 2"
     - "%command_prefix%AKICK #kanaal LIST"
+    - "%command_prefix%AKICK #kanaal VIEW 1"
+    - "%command_prefix%AKICK #kanaal CLEAR"
+    - "%command_prefix%AKICK #kanaal CHECK Alice"
   short: "Beheer auto-kick-lijst."
   help: "Beheert automatische kick-vermeldingen en hun optionele vervaltijd."
-  unknown_sub: "Onbekende sub-opdracht %sub%. Gebruik ADD, DEL of LIST."
+  unknown_sub: "Onbekende sub-opdracht %sub%. Gebruik ADD, DEL, LIST, VIEW, CLEAR of CHECK."
   invalid_mask: "Ongeldig maskerformaat. Gebruik nick!ident@host met wildcards (*)."
   dangerous_mask: "Het masker %mask% is te breed. Het moet ten minste 4 alfanumerieke tekens bevatten."
   protected_user: "Bijnaam %nickname% heeft toegang in dit kanaal."
@@ -413,7 +431,67 @@ akick:
     help: "Toont masker, reden, verloop en wie heeft toegevoegd."
     header: "AKICK-lijst voor %channel%"
     empty: "Kanaal %channel% heeft geen AKICK-vermeldingen."
-    entry: "#%index% %mask% %reason% (door %nickname%, verloopt: %expiration%)"
+    entry: "#%index% %mask% %reason% (door %nickname%, verloopt: %expiration%, gebruiken: %uses%)"
+
+  # --- AKICK VIEW ----------------------------------------------------------
+  view:
+    syntax: "AKICK <#kanaal> VIEW {<masker>|<nummer>}"
+    example: "%command_prefix%AKICK #kanaal VIEW 1"
+    examples:
+      - "%command_prefix%AKICK #kanaal VIEW *!*@bad.host"
+    short: "Bekijk gedetailleerde AKICK-metagegevens."
+    help: |-
+      Toont reden, auteur, aanmaakdatum, vervaldatum,
+      gebruikersteller en datum van laatste gebruik voor een autokick-vermelding.
+    header: "AKICK-details voor %channel%"
+    reason: "%label%%padding%: %reason%"
+    reason_label: "Reden"
+    author: "%label%%padding%: %author%"
+    author_label: "Auteur"
+    created: "%label%%padding%: %date%"
+    created_label: "Aangemaakt"
+    expires: "%label%%padding%: %date%"
+    expires_label: "Vervalt"
+    uses: "%label%%padding%: %uses%"
+    uses_label: "Gebruiken"
+    last_used: "%label%%padding%: %date%"
+    last_used_label: "Laatst gebruikt"
+
+  # --- AKICK CLEAR ---------------------------------------------------------
+  clear:
+    syntax: "AKICK <#kanaal> CLEAR"
+    example: "%command_prefix%AKICK #kanaal CLEAR"
+    short: "Wis alle AKICK-vermeldingen."
+    help: |-
+      Verwijdert alle autokick-vermeldingen uit het kanaal.
+      Vereist kanaaloprichter of AKICK-niveau.
+    empty: "Kanaal %channel% heeft geen AKICK-vermeldingen om te wissen."
+    done: "%count% AKICK-vermeldingen gewist uit %channel%."
+    notice_channel: "%from% heeft %count% AKICK-vermeldingen gewist uit %channel%"
+
+  # --- AKICK CHECK ---------------------------------------------------------
+  check:
+    syntax: "AKICK <#kanaal> CHECK <bijnaam>"
+    example: "%command_prefix%AKICK #kanaal CHECK Alice"
+    short: "Controleer of een bijnaam overeenkomt met AKICK-vermeldingen."
+    help: |-
+      Controleert of een verbonden gebruiker overeenkomt met een autokick-vermelding in het kanaal.
+    no_match: "%nickname% komt niet overeen met AKICK-vermeldingen in %channel%."
+    not_connected: "Gebruiker %nickname% is niet verbonden."
+    header: "AKICK-overeenkomsten voor %nickname% in %channel%"
+    entry: "#%index% %mask% %reason%"
+
+  # --- AKICK ENFORCE -------------------------------------------------------
+  enforce:
+    syntax: "AKICK <#kanaal> ENFORCE"
+    example: "%command_prefix%AKICK #kanaal ENFORCE"
+    short: "AKICK-regels toepassen op huidige kanaalgebruikers."
+    help: |-
+      Controleert gebruikers in het kanaal tegen de AKICK-lijst
+      en bant en verwijdert overeenkomende gebruikers.
+    no_matches: "Geen gebruikers in %channel% komen overeen met de AKICK-lijst."
+    done: "%count% AKICK-verwijderingen toegepast op %channel%."
+    notice_channel: "%from% heeft AKICK toegepast op %channel% (%count% gebruikers)"
 
 # --- LEVELS -------------------------------------------------------------------
 levels:
@@ -817,6 +895,8 @@ history.message:
   set_secure_off: "Optie SECURE uitgeschakeld"
   set_private_on: "Optie PRIVATE ingeschakeld"
   set_private_off: "Optie PRIVATE uitgeschakeld"
+  set_verbose_on: "Optie VERBOSE ingeschakeld"
+  set_verbose_off: "Optie VERBOSE uitgeschakeld"
   founder_changed: "Oprichter gewijzigd van %old_founder% naar %new_founder%"
   successor_changed: "Opvolger gewijzigd van %old_successor% naar %new_successor%"
   registration_approved: "Kanaalregistratie goedgekeurd"
@@ -825,6 +905,8 @@ history.message:
   access_del: "Toegang verwijderd voor %target_nickname%"
   akick_add: "AKICK toegevoegd: %mask%"
   akick_del: "AKICK verwijderd: %mask%"
+  akick_clear: "AKICK-lijst gewist"
+  akick_enforce: "AKICK gehandhaafd (%count% verwijderd)"
   saregister: "Kanaal administratief geregistreerd"
 
 # --- HISTORY EXTRA FIELDS ---

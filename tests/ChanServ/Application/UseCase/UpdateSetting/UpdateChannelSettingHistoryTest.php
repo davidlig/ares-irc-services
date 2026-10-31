@@ -34,6 +34,8 @@ final class UpdateChannelSettingHistoryTest extends TestCase
         yield 'entry message' => [ChannelSetting::EntryMessage, 'Welcome here', 'SET_ENTRYMSG'];
         yield 'topic lock on' => [ChannelSetting::TopicLock, 'ON', 'SET_TOPICLOCK_ON'];
         yield 'private off' => [ChannelSetting::Private, 'OFF', 'SET_PRIVATE_OFF'];
+        yield 'verbose on' => [ChannelSetting::Verbose, 'ON', 'SET_VERBOSE_ON'];
+        yield 'verbose off' => [ChannelSetting::Verbose, 'OFF', 'SET_VERBOSE_OFF'];
     }
 
     #[Test]

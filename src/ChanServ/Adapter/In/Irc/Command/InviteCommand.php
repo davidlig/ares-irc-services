@@ -123,7 +123,7 @@ final readonly class InviteCommand implements ChanServCommandInterface
         ));
         $context->getNotifier()->inviteToChannel($channelName, $sender->uid, $result->channelCreationTimestamp);
         $context->reply('invite.done', ['%channel%' => new Fragment($channelName, Component::Emphasis)], Role::Success);
-        $notice = $context->renderReply(Role::Success, 'invite.notice_channel', ['%nickname%' => new Fragment($sender->nick, Component::Actor)]);
+        $notice = $context->renderReply(Role::Information, 'invite.notice_channel', ['%nickname%' => new Fragment($sender->nick, Component::Actor)]);
         $context->getNotifier()->sendNoticeToChannel($channelName, $notice);
 
         return CommandOutcome::success();

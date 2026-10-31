@@ -502,4 +502,114 @@ final class ChanServHistorySubscriberTest extends TestCase
 
         $subscriber->onChannelAkickChanged($event);
     }
+
+    #[Test]
+    public function onChannelAkickChangedAddWithoutReasonRecordsHistory(): void
+    {
+        $historyRepo = $this->createMock(ChannelHistoryRepositoryInterface::class);
+        $historyRepo->expects(self::once())
+            ->method('save')
+            ->with(self::callback(static function (ChannelHistory $history) {
+                self::assertSame(10, $history->getChannelId());
+                self::assertSame('AKICK_ADD', $history->getAction());
+                self::assertSame('history.message.akick_add', $history->getMessage());
+                $extraData = $history->getExtraData();
+                self::assertSame('*!*@bad.isp', $extraData['mask']);
+                self::assertArrayNotHasKey('reason', $extraData);
+
+                return true;
+            }));
+
+        $historyService = new ChannelHistoryService($historyRepo);
+        $accountPort = $this->createStub(ChanUserAccountPort::class);
+        $subscriber = new ChanServHistorySubscriber($historyService, $accountPort);
+
+        $event = new ChannelAkickChangedEvent(
+            channelId: 10,
+            channelName: '#test',
+            action: 'ADD',
+            mask: '*!*@bad.isp',
+            reason: null,
+            performedBy: 'Founder',
+            performedByNickId: 1,
+            performedByIp: '10.0.0.1',
+            performedByHost: 'founder@host',
+            occurredAt: new DateTimeImmutable(),
+        );
+
+        $subscriber->onChannelAkickChanged($event);
+    }
+
+    #[Test]
+    public function onChannelAkickChangedClearRecordsHistory(): void
+    {
+        $historyRepo = $this->createMock(ChannelHistoryRepositoryInterface::class);
+        $historyRepo->expects(self::once())
+            ->method('save')
+            ->with(self::callback(static function (ChannelHistory $history) {
+                self::assertSame(10, $history->getChannelId());
+                self::assertSame('AKICK_CLEAR', $history->getAction());
+                self::assertSame('history.message.akick_clear', $history->getMessage());
+                self::assertSame('10.0.0.1', $history->getExtraData()['ip']);
+                self::assertSame('founder@host', $history->getExtraData()['host']);
+
+                return true;
+            }));
+
+        $historyService = new ChannelHistoryService($historyRepo);
+        $accountPort = $this->createStub(ChanUserAccountPort::class);
+        $subscriber = new ChanServHistorySubscriber($historyService, $accountPort);
+
+        $event = new ChannelAkickChangedEvent(
+            channelId: 10,
+            channelName: '#test',
+            action: 'CLEAR',
+            mask: '*',
+            reason: null,
+            performedBy: 'Founder',
+            performedByNickId: 1,
+            performedByIp: '10.0.0.1',
+            performedByHost: 'founder@host',
+            occurredAt: new DateTimeImmutable(),
+        );
+
+        $subscriber->onChannelAkickChanged($event);
+    }
+
+    #[Test]
+    public function onChannelAkickChangedEnforceRecordsHistory(): void
+    {
+        $historyRepo = $this->createMock(ChannelHistoryRepositoryInterface::class);
+        $historyRepo->expects(self::once())
+            ->method('save')
+            ->with(self::callback(static function (ChannelHistory $history) {
+                self::assertSame(10, $history->getChannelId());
+                self::assertSame('AKICK_ENFORCE', $history->getAction());
+                self::assertSame('history.message.akick_enforce', $history->getMessage());
+                $extraData = $history->getExtraData();
+                self::assertSame('3', $extraData['count']);
+
+                return true;
+            }));
+
+        $historyService = new ChannelHistoryService($historyRepo);
+        $accountPort = $this->createStub(ChanUserAccountPort::class);
+        $subscriber = new ChanServHistorySubscriber($historyService, $accountPort);
+
+        $event = new ChannelAkickChangedEvent(
+            channelId: 10,
+            channelName: '#test',
+            action: 'ENFORCE',
+            mask: '*',
+            reason: null,
+            performedBy: 'Founder',
+            performedByNickId: 1,
+            performedByIp: '10.0.0.1',
+            performedByHost: 'founder@host',
+            occurredAt: new DateTimeImmutable(),
+            count: 3,
+        );
+
+        $subscriber->onChannelAkickChanged($event);
+    }
 }

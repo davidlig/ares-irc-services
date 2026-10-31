@@ -139,7 +139,7 @@ final class InviteCommandTest extends TestCase
         self::assertCount(1, $invites);
         self::assertSame('#test', $invites[0][0]);
         self::assertSame('UID1', $invites[0][1]);
-        self::assertSame([['#test', "\x0303✔\x03\x0F invite.notice_channel"]], $noticesToChannel);
+        self::assertSame([['#test', "\x0310ℹ\x03\x0F invite.notice_channel"]], $noticesToChannel);
     }
 
     #[Test]
