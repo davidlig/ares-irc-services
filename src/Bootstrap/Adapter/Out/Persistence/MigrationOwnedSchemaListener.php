@@ -6,7 +6,7 @@ namespace App\Bootstrap\Adapter\Out\Persistence;
 
 use Doctrine\DBAL\Platforms\AbstractMySQLPlatform;
 use Doctrine\DBAL\Schema\Column;
-use Doctrine\DBAL\Schema\Name\OptionallyQualifiedName;
+use Doctrine\DBAL\Schema\Name\Identifier;
 use Doctrine\DBAL\Schema\PrimaryKeyConstraint;
 use Doctrine\DBAL\Schema\Table;
 use Doctrine\DBAL\Schema\TableEditor;
@@ -31,14 +31,32 @@ final class MigrationOwnedSchemaListener
             'registered_nicks' => 'idx_registered_nicks_list_pattern',
             'registered_channels' => 'idx_registered_channels_list_pattern',
         ] as $name => $index) {
-            if (!$schema->hasTable($name)) {
+            $target = null;
+            if ($schema->hasTable($name)) {
+                $target = $schema->getTable($name);
+            } else {
+                foreach ($schema->getTables() as $candidate) {
+                    if ($candidate->getObjectName()->getUnqualifiedName()->equals(Identifier::unquoted($name), $folding)) {
+                        $target = $candidate;
+                        break;
+                    }
+                }
+            }
+
+            if (null === $target) {
                 continue;
             }
 
-            $targetName = OptionallyQualifiedName::unquoted($name);
+            $targetName = $target->getObjectName();
+            $targetQualifier = $targetName->getQualifier();
             $matchedTableName = null;
+
             foreach ($tableNames as $tableName) {
-                if ($tableName->getUnqualifiedName()->equals($targetName->getUnqualifiedName(), $folding)) {
+                if ((null === $targetQualifier) !== (null === $tableName->getQualifier())) {
+                    continue;
+                }
+
+                if ($tableName->equals($targetName, $folding)) {
                     $matchedTableName = $tableName;
                     break;
                 }
@@ -49,9 +67,8 @@ final class MigrationOwnedSchemaListener
             }
 
             $schemaName = $matchedTableName->getQualifier()?->getValue();
-            $actual = $manager->introspectTableByUnquotedName($name, $schemaName);
-            $target = $schema->getTable($name);
-            $editor->modifyTableByUnquotedName($name, static function (TableEditor $table) use ($actual, $target, $index, $mysql): void {
+            $actual = $manager->introspectTableByUnquotedName($targetName->getUnqualifiedName()->getValue(), $schemaName);
+            $editor->modifyTable($targetName, static function (TableEditor $table) use ($actual, $target, $index, $mysql): void {
                 if ($mysql && $actual->hasColumn('list_search_key') && !$target->hasColumn('list_search_key')) {
                     $table->addColumn($actual->getColumn('list_search_key'));
                 }
@@ -63,7 +80,16 @@ final class MigrationOwnedSchemaListener
 
         // DBAL-only runtime settings still need a canonical schema for drift detection.
         if (!$schema->hasTable('service_settings')) {
-            $settings = Table::editor()->setUnquotedName('service_settings');
+            $defaultQualifier = null;
+            foreach ($schema->getTables() as $existingTable) {
+                $qualifier = $existingTable->getObjectName()->getQualifier();
+                if (null !== $qualifier) {
+                    $defaultQualifier = $qualifier->getValue();
+                    break;
+                }
+            }
+
+            $settings = Table::editor()->setUnquotedName('service_settings', $defaultQualifier);
             $settings->addColumn(Column::editor()->setUnquotedName('service_name')->setTypeName(Types::STRING)->setLength(32)->create());
             $settings->addColumn(Column::editor()->setUnquotedName('setting_name')->setTypeName(Types::STRING)->setLength(64)->create());
             $settings->addColumn(Column::editor()->setUnquotedName('setting_value')->setTypeName(Types::JSON)->create());

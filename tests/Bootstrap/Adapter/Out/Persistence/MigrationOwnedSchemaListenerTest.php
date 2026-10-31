@@ -104,6 +104,40 @@ final class MigrationOwnedSchemaListenerTest extends TestCase
         self::assertFalse($event->getSchema()->getTable('registered_nicks')->hasIndex('idx_registered_nicks_list_pattern'));
     }
 
+    public function testPreservesExactSchemaWhenMultipleTablesWithSameNameExistInDifferentSchemas(): void
+    {
+        $column = Column::editor()->setUnquotedName('nickname_lower')->setTypeName(Types::STRING)->setLength(32)->create();
+        $table = Table::editor()->setUnquotedName('registered_nicks', 'public')->addColumn($column)->create();
+        $target = Schema::editor()->addTable($table)->create();
+
+        $archive = Table::editor()->setUnquotedName('registered_nicks', 'archive')->addColumn($column)->create();
+        $public = $table->edit()->addIndex(
+            Index::editor()->setUnquotedName('idx_registered_nicks_list_pattern')->setType(IndexType::REGULAR)->setUnquotedColumnNames('nickname_lower')
+        )->create();
+
+        $manager = $this->createStub(AbstractSchemaManager::class);
+        $manager->method('introspectTableNames')->willReturn([
+            OptionallyQualifiedName::unquoted('registered_nicks', 'archive'),
+            OptionallyQualifiedName::unquoted('registered_nicks', 'public'),
+        ]);
+        $manager->method('introspectTableByUnquotedName')->willReturnCallback(
+            static fn (string $name, ?string $schema = null): Table => 'archive' === $schema ? $archive : $public
+        );
+
+        $connection = $this->createStub(Connection::class);
+        $connection->method('createSchemaManager')->willReturn($manager);
+        $connection->method('getDatabasePlatform')->willReturn(new PostgreSQLPlatform());
+
+        $em = $this->createStub(EntityManagerInterface::class);
+        $em->method('getConnection')->willReturn($connection);
+
+        $event = new GenerateSchemaEventArgs($em, $target);
+        new MigrationOwnedSchemaListener()->postGenerateSchema($event);
+
+        $actual = $event->getSchema()->getTable('public.registered_nicks');
+        self::assertTrue($actual->hasIndex('idx_registered_nicks_list_pattern'));
+    }
+
     /** @return iterable<string, array{AbstractPlatform}> */
     public static function platforms(): iterable
     {
