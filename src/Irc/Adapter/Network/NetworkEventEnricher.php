@@ -55,7 +55,7 @@ use function time;
  * Single place that uses ChannelRepository and NetworkUserRepository for protocol→state.
  * Adapters no longer inject repos; they only parse and dispatch raw events.
  */
-final readonly class NetworkEventEnricher implements EventSubscriberInterface, ApplyOutgoingChannelModesApplicatorInterface
+final readonly class NetworkEventEnricher implements EventSubscriberInterface, ApplyOutgoingChannelModesApplicatorInterface, ApplyOutgoingChannelKickApplicatorInterface
 {
     public function __construct(
         private ChannelRepositoryInterface $channelRepository,
@@ -377,6 +377,28 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
         );
 
         $this->channelRepository->save($channel);
+    }
+
+    public function applyOutgoingKick(string $channelName, string $targetUid, string $reason): void
+    {
+        try {
+            $name = new ChannelName($channelName);
+        } catch (InvalidArgumentException) {
+            return;
+        }
+
+        $target = $this->resolveUser($targetUid);
+        if (null === $target) {
+            return;
+        }
+
+        $this->eventDispatcher->dispatch(new UserLeftChannelEvent(
+            $target->uid,
+            $target->getNick(),
+            $name,
+            $reason,
+            wasKicked: true,
+        ));
     }
 
     public function onUserMetadataReceived(UserMetadataReceivedEvent $event): void

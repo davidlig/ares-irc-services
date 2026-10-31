@@ -885,6 +885,89 @@ final class NetworkEventEnricherTest extends TestCase
     }
 
     #[Test]
+    public function applyOutgoingKickDispatchesUserLeftChannelEvent(): void
+    {
+        $user = new NetworkUser(
+            new Uid('001ABCDEF'),
+            new Nick('TargetNick'),
+            new Ident('ident'),
+            'host.example.com',
+            'host.example.com',
+            'host.example.com',
+            '',
+            new DateTimeImmutable(),
+            'Real Name',
+            '001',
+            '127.0.0.1',
+        );
+        $userRepo = $this->createStub(NetworkUserRepositoryInterface::class);
+        $userRepo->method('findByUid')->willReturn($user);
+
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())
+            ->method('dispatch')
+            ->with(self::callback(static function (object $event): bool {
+                return $event instanceof UserLeftChannelEvent
+                    && '001ABCDEF' === $event->uid->value
+                    && 'TargetNick' === $event->nick->value
+                    && '#test' === $event->channel->value
+                    && 'Kicked by ChanServ' === $event->reason
+                    && true === $event->wasKicked;
+            }));
+
+        $enricher = new NetworkEventEnricher(
+            $this->createStub(ChannelRepositoryInterface::class),
+            $userRepo,
+            $eventDispatcher,
+            $this->createStub(SkipIdentifiedModeStripRegistry::class),
+            $this->createStub(ActiveChannelModeSupportProviderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
+        );
+
+        $enricher->applyOutgoingKick('#test', '001ABCDEF', 'Kicked by ChanServ');
+    }
+
+    #[Test]
+    public function applyOutgoingKickInvalidChannelReturnsEarly(): void
+    {
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::never())->method('dispatch');
+
+        $enricher = new NetworkEventEnricher(
+            $this->createStub(ChannelRepositoryInterface::class),
+            $this->createStub(NetworkUserRepositoryInterface::class),
+            $eventDispatcher,
+            $this->createStub(SkipIdentifiedModeStripRegistry::class),
+            $this->createStub(ActiveChannelModeSupportProviderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
+        );
+
+        $enricher->applyOutgoingKick('invalid', '001ABCDEF', 'reason');
+    }
+
+    #[Test]
+    public function applyOutgoingKickUserNotFoundReturnsEarly(): void
+    {
+        $userRepo = $this->createStub(NetworkUserRepositoryInterface::class);
+        $userRepo->method('findByUid')->willReturn(null);
+        $userRepo->method('findByNick')->willReturn(null);
+
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::never())->method('dispatch');
+
+        $enricher = new NetworkEventEnricher(
+            $this->createStub(ChannelRepositoryInterface::class),
+            $userRepo,
+            $eventDispatcher,
+            $this->createStub(SkipIdentifiedModeStripRegistry::class),
+            $this->createStub(ActiveChannelModeSupportProviderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
+        );
+
+        $enricher->applyOutgoingKick('#test', '001ABCDEF', 'reason');
+    }
+
+    #[Test]
     public function onChannelJoinReceivedExistingChannelUpdatesAndDispatchesChannelSyncedEvent(): void
     {
         $existingChannel = new Channel(new ChannelName('#test'), '+n', new DateTimeImmutable('@0'));

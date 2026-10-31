@@ -1025,6 +1025,11 @@ services:
 
   App\Irc\Adapter\Network\ApplyOutgoingChannelModesApplicatorInterface: '@App\Irc\Adapter\Network\NetworkEventEnricher'
 
+  App\Irc\Application\Port\In\ApplyOutgoingChannelKickPort:
+    class: App\Irc\Adapter\In\Event\CoreApplyOutgoingChannelKickAdapter
+
+  App\Irc\Adapter\Network\ApplyOutgoingChannelKickApplicatorInterface: '@App\Irc\Adapter\Network\NetworkEventEnricher'
+
   App\Irc\Application\Port\In\ChannelSyncCompletedRegistryInterface:
     class: App\Irc\Adapter\Network\ChannelSyncCompletedRegistry
 
