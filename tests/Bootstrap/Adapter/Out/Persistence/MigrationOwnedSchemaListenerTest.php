@@ -87,6 +87,23 @@ final class MigrationOwnedSchemaListenerTest extends TestCase
         self::assertSame($settings->getColumns(), $event->getSchema()->getTable('service_settings')->getColumns());
     }
 
+    public function testSkipsWhenTableExistsInSchemaButNotInDatabase(): void
+    {
+        $column = Column::editor()->setUnquotedName('nickname_lower')->setTypeName(Types::STRING)->setLength(32)->create();
+        $table = Table::editor()->setUnquotedName('registered_nicks')->addColumn($column)->create();
+        $target = Schema::editor()->addTable($table)->create();
+        $manager = $this->createStub(AbstractSchemaManager::class);
+        $manager->method('introspectTableNames')->willReturn([]);
+        $connection = $this->createStub(Connection::class);
+        $connection->method('createSchemaManager')->willReturn($manager);
+        $connection->method('getDatabasePlatform')->willReturn(new SQLitePlatform());
+        $em = $this->createStub(EntityManagerInterface::class);
+        $em->method('getConnection')->willReturn($connection);
+        $event = new GenerateSchemaEventArgs($em, $target);
+        new MigrationOwnedSchemaListener()->postGenerateSchema($event);
+        self::assertFalse($event->getSchema()->getTable('registered_nicks')->hasIndex('idx_registered_nicks_list_pattern'));
+    }
+
     /** @return iterable<string, array{AbstractPlatform}> */
     public static function platforms(): iterable
     {

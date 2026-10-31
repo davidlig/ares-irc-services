@@ -205,18 +205,6 @@ class SocketConnection implements ConnectionInterface
         }
 
         if ('' !== $this->recvBuffer) {
-            if (strlen($this->recvBuffer) > $this->maxLineBytes) {
-                $this->status = ConnectionStatus::Error;
-                $this->socket?->close();
-                $this->recvBuffer = '';
-
-                $this->logger->error('Incoming IRC line exceeded maximum allowed buffer size.', [
-                    'max_line_bytes' => $this->maxLineBytes,
-                ]);
-
-                throw new RuntimeException(sprintf('Incoming line exceeded maximum buffer size of %d bytes.', $this->maxLineBytes));
-            }
-
             $line = $this->recvBuffer;
             $this->recvBuffer = '';
 
