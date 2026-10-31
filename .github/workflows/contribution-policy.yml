@@ -41,7 +41,7 @@ jobs:
       github.repository_owner_id == '561369' &&
       github.ref == 'refs/heads/main' &&
       (github.event_name != 'workflow_run' || github.event.workflow_run.repository.id == 1167938167)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 30
     permissions:
       contents: read
