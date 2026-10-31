@@ -117,6 +117,7 @@ final class MigrationOwnedSchemaListenerTest extends TestCase
 
         $manager = $this->createStub(AbstractSchemaManager::class);
         $manager->method('introspectTableNames')->willReturn([
+            OptionallyQualifiedName::unquoted('registered_nicks'),
             OptionallyQualifiedName::unquoted('registered_nicks', 'archive'),
             OptionallyQualifiedName::unquoted('registered_nicks', 'public'),
         ]);
