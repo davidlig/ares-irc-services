@@ -23,7 +23,7 @@ final readonly class StatusCommand implements ChanServCommandInterface
 
     public function __construct(
         private ShowRegistrationStatusHandler $handler,
-        private ?OperatorAuthorizationQuery $authorization = null,
+        private OperatorAuthorizationQuery $authorization,
     ) {}
 
     public function getName(): string
@@ -126,8 +126,7 @@ final readonly class StatusCommand implements ChanServCommandInterface
     {
         $requester = null !== $context->senderAccount && $context->senderAccount->id === $status->requesterAccountId;
         $nickname = $context->getSenderNickname();
-        $operator = null !== $this->authorization
-            && null !== $nickname
+        $operator = null !== $nickname
             && $this->authorization->ircOperator(new OperatorActor(
                 nickname: $nickname,
                 identifiedAccountId: $context->getSenderAccountId(),

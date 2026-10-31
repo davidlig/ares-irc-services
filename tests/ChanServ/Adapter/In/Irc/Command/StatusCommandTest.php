@@ -20,6 +20,7 @@ use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\OperServ\Adapter\Out\Security\ConfiguredRootIdentityRegistry;
+use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
 use App\OperServ\Application\Port\Out\OperatorRoleAccess;
 use App\OperServ\Application\Security\OperatorAuthorizationService;
 use App\OperServ\Application\Security\OperatorPermissionPolicy;
@@ -121,7 +122,10 @@ final class StatusCommandTest extends TestCase
     #[Test]
     public function exposesMetadataAndPresentsEveryNonRejectedLifecycleStatus(): void
     {
-        $command = new StatusCommand(new ShowRegistrationStatusHandler($this->createStub(RegisteredChannelRepositoryInterface::class)));
+        $command = new StatusCommand(
+            new ShowRegistrationStatusHandler($this->createStub(RegisteredChannelRepositoryInterface::class)),
+            $this->createStub(OperatorAuthorizationQuery::class),
+        );
         self::assertSame('STATUS', $command->getName());
         self::assertSame([], $command->getAliases());
         self::assertSame('status.syntax', $command->getArgumentDefinition()->syntaxKey);

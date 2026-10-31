@@ -50,6 +50,7 @@ final class DropCommandTest extends TestCase
             $this->createStub(DropNickHandlerInterface::class),
             $this->createStub(LoggerInterface::class),
             $this->clock(),
+            $this->createStub(AuthorizationCheckerInterface::class),
         );
 
         self::assertSame('DROP', $command->getName());
@@ -72,7 +73,7 @@ final class DropCommandTest extends TestCase
         $handler = $this->createMock(DropNickHandlerInterface::class);
         $handler->expects(self::never())->method('handle');
 
-        $command = new DropCommand($handler, $this->createStub(LoggerInterface::class), $this->clock());
+        $command = new DropCommand($handler, $this->createStub(LoggerInterface::class), $this->clock(), $this->createStub(AuthorizationCheckerInterface::class));
         $messages = [];
         $outcome = $command->execute($this->createContext(null, $messages, ['Target']));
 
@@ -126,7 +127,7 @@ final class DropCommandTest extends TestCase
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects(self::once())->method('info');
 
-        $command = new DropCommand($handler, $logger, $this->clock());
+        $command = new DropCommand($handler, $logger, $this->clock(), $this->createStub(AuthorizationCheckerInterface::class));
         $messages = [];
         $outcome = $command->execute($this->createContext($sender, $messages, ['TargetNick']));
 
@@ -146,7 +147,7 @@ final class DropCommandTest extends TestCase
         $handler = $this->createMock(DropNickHandlerInterface::class);
         $handler->expects(self::once())->method('handle')->willReturn($result);
 
-        $command = new DropCommand($handler, $this->createStub(LoggerInterface::class), $this->clock());
+        $command = new DropCommand($handler, $this->createStub(LoggerInterface::class), $this->clock(), $this->createStub(AuthorizationCheckerInterface::class));
         $messages = [];
         $outcome = $command->execute($this->createContext($sender, $messages, ['TargetNick']));
 
@@ -212,7 +213,7 @@ final class DropCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void { $messages[] = $message; });
         $renderer = new IrcRenderer(new FixedStyleProvider(PresentationStyle::default()));
         $context = new NickServContext(new SenderView('UID1', 'OperNick', 'i', 'h', 'c', 'ip'), null, 'DROP', ['Alice'], $notifier, $translator, 'es', 'UTC', 'NOTICE', new NickServCommandRegistry([]), new PendingVerificationRegistry(), new RecoveryTokenRegistry(), $this->createServiceNicks(), $renderer);
-        $command = new DropCommand($handler, $this->createStub(LoggerInterface::class), $this->clock());
+        $command = new DropCommand($handler, $this->createStub(LoggerInterface::class), $this->clock(), $this->createStub(AuthorizationCheckerInterface::class));
         $command->execute($context);
         $command->execute($context);
         self::assertStringStartsWith("\x0303✔\x03\x0F ", $messages[0]);

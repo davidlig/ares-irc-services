@@ -885,8 +885,8 @@ final class IrcopsDebugChannelProtectionSubscriberTest extends TestCase
             chanservNick: $chanservNick,
             debugChannel: $debugChannel,
             logger: $logger ?? $this->createStub(LoggerInterface::class),
-            registeredChannels: $registeredChannels,
-            operatorOnlyControl: $operatorOnlyControl,
+            registeredChannels: $registeredChannels ?? $this->createStub(ChannelProjectionQuery::class),
+            operatorOnlyControl: $operatorOnlyControl ?? $this->createStub(OperatorOnlyChannelControl::class),
         );
     }
 
