@@ -84,11 +84,6 @@ final readonly class ManageChannelAkickHandler implements ManageChannelAkickHand
             return new ManageChannelAkickResult(ManageChannelAkickOutcome::ListEmpty);
         }
 
-        if ($this->network->synchronizationComplete()) {
-            $toEnforce = array_values($this->akicks->listByChannel($channel->getId()));
-            $this->enforceRules($channel->getName(), [] !== $toEnforce ? $toEnforce : $stored, $command->now);
-        }
-
         $entries = [];
         foreach ($stored as $index => $akick) {
             $creatorId = $akick->getCreatorNickId();

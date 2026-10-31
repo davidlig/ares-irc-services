@@ -2256,7 +2256,7 @@ final class AkickCommandTest extends TestCase
     }
 
     #[Test]
-    public function listAppliesBansToMatchingChannelMembers(): void
+    public function listDoesNotApplyBansOrKicksToMatchingChannelMembers(): void
     {
         $sender = new SenderView('UID1', 'Founder', 'i', 'h', 'c', 'ip');
         $account = new ChanAccountView(1, 'User', 'en');
@@ -2349,10 +2349,8 @@ final class AkickCommandTest extends TestCase
         $cmd->execute($context);
 
         self::assertCount(2, $messages);
-        self::assertCount(1, $bans, 'Should apply ban for matching AKICK');
-        self::assertSame('+b', $bans[0]['modes']);
-        self::assertCount(1, $kicks, 'Should kick matching user');
-        self::assertSame('UID2', $kicks[0]['uid']);
+        self::assertEmpty($bans, 'Should not apply ban when listing AKICKs');
+        self::assertEmpty($kicks, 'Should not kick matching user when listing AKICKs');
     }
 
     #[Test]

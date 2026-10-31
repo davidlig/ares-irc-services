@@ -35,6 +35,7 @@ use App\ChanServ\Domain\Entity\ChannelAkick;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\Policy\AkickMatchPolicy;
 use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
+use App\Irc\Adapter\In\Event\CoreApplyOutgoingChannelKickAdapter;
 use App\Irc\Adapter\In\Event\CoreApplyOutgoingChannelModesAdapter;
 use App\Irc\Adapter\Network\ChannelModeStateSynchronizer;
 use App\Irc\Adapter\Network\InMemoryChannelRepository;
@@ -192,10 +193,11 @@ final class AkickEnforcementUnbanIntegrationTest extends TestCase
             'serviceUid' => '001CSRV',
         ], $this->recordedKicks[0]);
 
-        // 4. Verify ban was immediately recorded in channel state
+        // 4. Verify ban was immediately recorded in channel state and user was kicked from member list
         $networkChannel = $this->channelRepository->findByName(new ChannelName($channelName));
         self::assertNotNull($networkChannel);
         self::assertSame(['*!*@bad.host'], $networkChannel->getBans());
+        self::assertFalse($networkChannel->isMember(new Uid('001BAD')));
 
         // 5. User invokes UNBAN -> verify ban is matched and removed
         $unbanHandler = new UnbanChannelHandler(
@@ -528,6 +530,7 @@ final class AkickEnforcementUnbanIntegrationTest extends TestCase
         );
 
         $applyOutgoing = new CoreApplyOutgoingChannelModesAdapter($enricher);
+        $applyOutgoingKick = new CoreApplyOutgoingChannelKickAdapter($enricher);
         $this->channelLookup = new CoreChannelLookupAdapter($this->channelRepository);
         $this->userLookup = new CoreNetworkUserLookupAdapter($this->userRepository);
 
@@ -538,6 +541,7 @@ final class AkickEnforcementUnbanIntegrationTest extends TestCase
             $this->connectionHolder,
             $this->channelLookup,
             $applyOutgoing,
+            $applyOutgoingKick,
             $this->createStub(ServiceChannelRegistrationPort::class),
             $this->createStub(SendNoticePort::class),
             $uidGen,

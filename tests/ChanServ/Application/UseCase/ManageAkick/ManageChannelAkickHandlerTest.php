@@ -757,7 +757,7 @@ final class ManageChannelAkickHandlerTest extends TestCase
     }
 
     #[Test]
-    public function listWithSyncCompleteEnforcesRulesAndRecordsUsage(): void
+    public function listWithSyncCompleteDoesNotEnforceRulesNorMutateUsage(): void
     {
         $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('getId')->willReturn(1);
@@ -771,17 +771,14 @@ final class ManageChannelAkickHandlerTest extends TestCase
 
         $akicks = $this->createMock(ChannelAkickRepositoryInterface::class);
         $akicks->method('listByChannel')->willReturn([$akick]);
-        $akicks->expects(self::once())->method('save')->with($akick);
+        $akicks->expects(self::never())->method('save');
 
-        $member = new ChannelEntryMember('UID1', 'BadGuy', 'BadGuy!ident@bad.com', true, false, false);
-        $channelState = new ChannelEntryNetworkState('#test', [$member]);
-
-        $network = $this->createStub(ChannelEntryNetworkQuery::class);
+        $network = $this->createMock(ChannelEntryNetworkQuery::class);
         $network->method('synchronizationComplete')->willReturn(true);
-        $network->method('findChannel')->willReturn($channelState);
+        $network->expects(self::never())->method('findChannel');
 
         $actions = $this->createMock(AkickActions::class);
-        $actions->expects(self::once())->method('banAndKick')->with('#test', 'UID1', '*!*@bad.com', 'Spam');
+        $actions->expects(self::never())->method('banAndKick');
 
         $handler = $this->createHandler(channels: $channels, akicks: $akicks, network: $network, actions: $actions);
 
@@ -798,12 +795,11 @@ final class ManageChannelAkickHandlerTest extends TestCase
 
         self::assertSame(ManageChannelAkickOutcome::Listed, $result->outcome);
         self::assertCount(1, $result->entries);
-        self::assertSame(1, $akick->getUses());
-        self::assertSame($this->now, $akick->getLastUsedAt());
+        self::assertSame(0, $akick->getUses());
+        self::assertNull($akick->getLastUsedAt());
         $entry = $result->entries[0];
-        self::assertSame(1, $entry->uses);
-        self::assertNotNull($entry->lastUsedAt);
-        self::assertSame($akick->getLastUsedAt(), $entry->lastUsedAt);
+        self::assertSame(0, $entry->uses);
+        self::assertNull($entry->lastUsedAt);
         self::assertSame(1, $entry->entryNumber);
     }
 

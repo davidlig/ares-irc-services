@@ -68,8 +68,7 @@ change is deliberately specified and tested.
   is safe when its nickname part contains an alphanumeric character, or otherwise when the
   ident-and-host part contains at least four alphanumeric characters. An empty reason is absence.
 - When network synchronization is complete, AKICK ADD immediately applies the matching ban/kick to
-  current members. The LIST path also reapplies all current AKICK bans and kicks; this unusual
-  event-driven side effect is intentional and must be preserved.
+  current members. The LIST path is strictly read-only and does not reapply bans or kicks.
 - `NOJOIN=-1` disables enforcement. Otherwise users whose effective access is below NOJOIN are
   kicked. Unidentified users have level `-1`; IRC operators and ChanServ itself are exempt.
 - Join-time NOJOIN runs before rank enforcement. AKICK and NOJOIN also run after network

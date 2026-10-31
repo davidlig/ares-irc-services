@@ -7,6 +7,7 @@ namespace App\ChanServ\Adapter\In\Irc\Bot;
 use App\ChanServ\Adapter\In\Irc\ChanServNotifierInterface;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\Irc\Application\Port\In\ActiveProtocolModuleHolderInterface;
+use App\Irc\Application\Port\In\ApplyOutgoingChannelKickPort;
 use App\Irc\Application\Port\In\ApplyOutgoingChannelModesPort;
 use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\Irc\Application\Port\In\ChannelServiceActionsPort;
@@ -40,6 +41,7 @@ final class ChanServBot implements ChanServNotifierInterface, ChannelServiceActi
         private readonly ActiveProtocolModuleHolderInterface $connectionHolder,
         private readonly ChannelLookupPort $channelLookup,
         private readonly ApplyOutgoingChannelModesPort $applyOutgoingChannelModes,
+        private readonly ApplyOutgoingChannelKickPort $applyOutgoingChannelKick,
         private readonly ServiceChannelRegistrationPort $channelRegistration,
         private readonly SendNoticePort $sendNoticePort,
         private readonly ServiceUidGeneratorInterface $uidGenerator,
@@ -172,6 +174,7 @@ final class ChanServBot implements ChanServNotifierInterface, ChannelServiceActi
         $sid = $this->connectionHolder->getServerSid() ?? '';
         if (null !== $module && '' !== $sid) {
             $module->getServiceActions()->kickFromChannel($sid, $channelName, $targetUid, $reason, $this->uid);
+            $this->applyOutgoingChannelKick->applyOutgoingKick($channelName, $targetUid, $reason);
         }
     }
 
