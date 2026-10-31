@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Bootstrap\Adapter\Out\Persistence;
 
 use Doctrine\DBAL\Platforms\AbstractMySQLPlatform;
+use Doctrine\DBAL\Platforms\SQLitePlatform;
 use Doctrine\DBAL\Schema\Column;
 use Doctrine\DBAL\Schema\Name\Identifier;
+use Doctrine\DBAL\Schema\Name\UnquotedIdentifierFolding;
 use Doctrine\DBAL\Schema\PrimaryKeyConstraint;
 use Doctrine\DBAL\Schema\Table;
 use Doctrine\DBAL\Schema\TableEditor;
@@ -27,6 +29,11 @@ final class MigrationOwnedSchemaListener
         $editor = $schema->edit();
         $mysql = $platform instanceof AbstractMySQLPlatform;
 
+        $defaultSchema = '' !== $schema->getName() ? $schema->getName() : $manager->createSchemaConfig()->getName();
+        if (null === $defaultSchema && $platform instanceof SQLitePlatform) {
+            $defaultSchema = 'main';
+        }
+
         foreach ([
             'registered_nicks' => 'idx_registered_nicks_list_pattern',
             'registered_channels' => 'idx_registered_channels_list_pattern',
@@ -36,10 +43,16 @@ final class MigrationOwnedSchemaListener
                 $target = $schema->getTable($name);
             } else {
                 foreach ($schema->getTables() as $candidate) {
-                    if ($candidate->getObjectName()->getUnqualifiedName()->equals(Identifier::unquoted($name), $folding)) {
+                    if (!$candidate->getObjectName()->getUnqualifiedName()->equals(Identifier::unquoted($name), $folding)) {
+                        continue;
+                    }
+
+                    if ($this->isDefaultSchema($candidate->getObjectName()->getQualifier(), $defaultSchema, $folding)) {
                         $target = $candidate;
                         break;
                     }
+
+                    $target ??= $candidate;
                 }
             }
 
@@ -48,25 +61,38 @@ final class MigrationOwnedSchemaListener
             }
 
             $targetName = $target->getObjectName();
-            $targetQualifier = $targetName->getQualifier();
+            $targetIsDefault = $this->isDefaultSchema($targetName->getQualifier(), $defaultSchema, $folding);
             $matchedTableName = null;
+            $matchedIsDefault = false;
 
             foreach ($tableNames as $tableName) {
-                if ((null === $targetQualifier) !== (null === $tableName->getQualifier())) {
+                if (!$tableName->getUnqualifiedName()->equals($targetName->getUnqualifiedName(), $folding)) {
                     continue;
                 }
 
-                if ($tableName->equals($targetName, $folding)) {
-                    $matchedTableName = $tableName;
-                    break;
+                $tableIsDefault = $this->isDefaultSchema($tableName->getQualifier(), $defaultSchema, $folding);
+                if ($targetIsDefault !== $tableIsDefault) {
+                    continue;
                 }
+
+                if (!$targetIsDefault) {
+                    $targetQualifier = $targetName->getQualifier();
+                    $tableQualifier = $tableName->getQualifier();
+                    if (null === $targetQualifier || null === $tableQualifier || !$targetQualifier->equals($tableQualifier, $folding)) {
+                        continue;
+                    }
+                }
+
+                $matchedTableName = $tableName;
+                $matchedIsDefault = $tableIsDefault;
+                break;
             }
 
             if (null === $matchedTableName) {
                 continue;
             }
 
-            $schemaName = $matchedTableName->getQualifier()?->getValue();
+            $schemaName = $matchedIsDefault ? null : $matchedTableName->getQualifier()?->getValue();
             $actual = $manager->introspectTableByUnquotedName($targetName->getUnqualifiedName()->getValue(), $schemaName);
             $editor->modifyTable($targetName, static function (TableEditor $table) use ($actual, $target, $index, $mysql): void {
                 if ($mysql && $actual->hasColumn('list_search_key') && !$target->hasColumn('list_search_key')) {
@@ -91,5 +117,14 @@ final class MigrationOwnedSchemaListener
         }
 
         $event->setSchema($editor->create());
+    }
+
+    private function isDefaultSchema(?Identifier $qualifier, ?string $defaultSchema, UnquotedIdentifierFolding $folding): bool
+    {
+        if (null === $qualifier) {
+            return true;
+        }
+
+        return null !== $defaultSchema && '' !== $defaultSchema && $qualifier->equals(Identifier::unquoted($defaultSchema), $folding);
     }
 }
