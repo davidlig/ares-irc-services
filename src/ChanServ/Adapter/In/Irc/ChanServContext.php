@@ -34,6 +34,8 @@ use function trim;
 
 final readonly class ChanServContext implements IrcopAuthorizationSubject
 {
+    private IrcRenderer $renderer;
+
     public function __construct(
         public ?SenderView $sender,
         public ?ChanAccountView $senderAccount,
@@ -52,8 +54,10 @@ final readonly class ChanServContext implements IrcopAuthorizationSubject
         private NetworkUserLookupPort $userLookup,
         private ServiceNicknameRegistry $serviceNicks,
         public bool $isLevelFounder = false,
-        private ?IrcRenderer $renderer = null,
-    ) {}
+        ?IrcRenderer $renderer = null,
+    ) {
+        $this->renderer = $renderer ?? new IrcRenderer(new FixedStyleProvider(PresentationStyle::default()));
+    }
 
     public function getSender(): ?SenderView
     {
@@ -102,32 +106,24 @@ final readonly class ChanServContext implements IrcopAuthorizationSubject
     /** @param array<string, mixed> $params */
     public function renderReply(Role $role, string $key, array $params = []): string
     {
-        $renderer = $this->renderer ?? new IrcRenderer(new FixedStyleProvider(PresentationStyle::default()));
-
-        return $renderer->reply($role, $this->translateWithCommonFallback($key, []), $this->presentationParams($params));
+        return $this->renderer->reply($role, $this->translateWithCommonFallback($key, []), $this->presentationParams($params));
     }
 
     /** @param array<string, mixed> $params */
     public function renderComponent(Component $component, string $key, array $params = []): string
     {
-        $renderer = $this->renderer ?? new IrcRenderer(new FixedStyleProvider(PresentationStyle::default()));
-
-        return $renderer->component($component, $this->translateWithCommonFallback($key, []), $this->presentationParams($params));
+        return $this->renderer->component($component, $this->translateWithCommonFallback($key, []), $this->presentationParams($params));
     }
 
     /** @param array<string, mixed> $params */
     public function renderTextComponent(Component $component, string $template, array $params = []): string
     {
-        $renderer = $this->renderer ?? new IrcRenderer(new FixedStyleProvider(PresentationStyle::default()));
-
-        return $renderer->component($component, $template, $this->presentationParams($params));
+        return $this->renderer->component($component, $template, $this->presentationParams($params));
     }
 
     public function renderSeparator(int $width): string
     {
-        $renderer = $this->renderer ?? new IrcRenderer(new FixedStyleProvider(PresentationStyle::default()));
-
-        return $renderer->separator($width);
+        return $this->renderer->separator($width);
     }
 
     public function replyRaw(string $message): void
