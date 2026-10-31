@@ -1494,12 +1494,12 @@ final class NetworkEventEnricherTest extends TestCase
     }
 
     #[Test]
-    public function applyOutgoingChannelModesSkipsListModes(): void
+    public function applyOutgoingChannelModesAppliesListModes(): void
     {
         $channel = new Channel(new ChannelName('#chan'), '+n', new DateTimeImmutable('@0'));
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
         $channelRepo->method('findByName')->willReturn($channel);
-        $channelRepo->expects(self::once())->method('save');
+        $channelRepo->expects(self::exactly(2))->method('save');
 
         $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
         $modeSupport->method('getListModeLetters')->willReturn(['b', 'e', 'I']);
@@ -1519,6 +1519,12 @@ final class NetworkEventEnricherTest extends TestCase
         $enricher->applyOutgoingChannelModes('#chan', '+b', ['*!*@bad.host']);
 
         self::assertStringNotContainsString('b', $channel->getModes());
+        self::assertSame(['*!*@bad.host'], $channel->getBans());
+
+        $enricher->applyOutgoingChannelModes('#chan', '-b', ['*!*@bad.host']);
+
+        self::assertStringNotContainsString('b', $channel->getModes());
+        self::assertSame([], $channel->getBans());
     }
 
     #[Test]

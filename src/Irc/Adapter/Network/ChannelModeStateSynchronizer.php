@@ -163,8 +163,16 @@ final readonly class ChannelModeStateSynchronizer
                 $adding = false;
                 continue;
             }
-            if (null !== ChannelMemberRole::fromModeLetter($char) || in_array($char, $listLetters, true)) {
+            if (null !== ChannelMemberRole::fromModeLetter($char)) {
                 if ($paramIdx < count($params)) {
+                    ++$paramIdx;
+                }
+                continue;
+            }
+
+            if (in_array($char, $listLetters, true)) {
+                if ($paramIdx < count($params)) {
+                    $this->applyListMode($channel, $char, $params[$paramIdx], $adding);
                     ++$paramIdx;
                 }
                 continue;
