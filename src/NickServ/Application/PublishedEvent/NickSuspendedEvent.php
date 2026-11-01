@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace App\NickServ\Application\PublishedEvent;
 
+use App\NickServ\Application\Port\In\NickServEvent;
 use DateTimeImmutable;
 
 /**
  * Dispatched when a nickname is suspended.
  */
-final readonly class NickSuspendedEvent
+final readonly class NickSuspendedEvent implements NickServEvent
 {
     public function __construct(
         public int $nickId,
