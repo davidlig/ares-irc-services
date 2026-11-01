@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Application\PublishedEvent;
 
+use App\ChanServ\Application\Port\In\ChanServEvent;
 use DateTimeImmutable;
 
 /** Published after persistence succeeds; null restrictedUntil on rejection means indefinite. */
-final readonly class ChannelRegistrationDecisionEvent
+final readonly class ChannelRegistrationDecisionEvent implements ChanServEvent
 {
     public function __construct(
         public int $channelId,

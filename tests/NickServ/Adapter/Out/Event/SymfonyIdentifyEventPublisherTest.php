@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\NickServ\Adapter\Out\Event;
 
 use App\NickServ\Adapter\Out\Event\SymfonyIdentifyEventPublisher;
+use App\NickServ\Application\Port\In\NickServEvent;
 use App\NickServ\Application\PublishedEvent\NickPasswordHashAvailable;
 use App\Shared\Application\Port\EventBusInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -23,5 +24,14 @@ final class SymfonyIdentifyEventPublisherTest extends TestCase
 
         $publisher = new SymfonyIdentifyEventPublisher($bus);
         $publisher->publish($event);
+    }
+
+    #[Test]
+    public function acceptsContextEventsWithoutAConcreteTypeUnion(): void
+    {
+        $event = new class implements NickServEvent {};
+        $bus = $this->createMock(EventBusInterface::class);
+        $bus->expects(self::once())->method('dispatch')->with(self::identicalTo($event));
+        new SymfonyIdentifyEventPublisher($bus)->publish($event);
     }
 }

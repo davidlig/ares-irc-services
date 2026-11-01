@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Application\PublishedEvent;
 
+use App\ChanServ\Application\Port\In\ChanServEvent;
 use DateTimeImmutable;
 
 /**
  * Dispatched when a registered channel is suspended.
  */
-final readonly class ChannelSuspendedEvent
+final readonly class ChannelSuspendedEvent implements ChanServEvent
 {
     public function __construct(
         public int $channelId,

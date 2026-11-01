@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Application\PublishedEvent;
 
+use App\ChanServ\Application\Port\In\ChanServEvent;
 use DateTimeImmutable;
 
 /**
  * Dispatched when a channel pending deletion is restored.
  */
-final readonly class ChannelRestoredEvent
+final readonly class ChannelRestoredEvent implements ChanServEvent
 {
     public function __construct(
         public int $channelId,
