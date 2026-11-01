@@ -577,20 +577,20 @@ final class SocketConnectionTest extends TestCase
         async(static function () use ($server): void {
             $client = $server->accept();
             self::assertNotNull($client);
-            $client->write(str_repeat('A', 50));
+            $client->write(str_repeat('A', SocketConnection::MAX_LINE_BYTES / 2));
             delay(0.01);
-            $client->write(str_repeat('B', 50));
+            $client->write(str_repeat('B', SocketConnection::MAX_LINE_BYTES / 2));
             delay(0.01);
-            $client->write(str_repeat('C', 50));
+            $client->write('C');
             $client->close();
             $server->close();
         });
 
-        $conn = new SocketConnection('127.0.0.1', $port, false, 2, maxLineBytes: 80);
+        $conn = new SocketConnection('127.0.0.1', $port, false, 2);
         $conn->connect();
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Incoming line exceeded maximum buffer size of 80 bytes.');
+        $this->expectExceptionMessage('Incoming line exceeded maximum buffer size of ' . SocketConnection::MAX_LINE_BYTES . ' bytes.');
 
         try {
             $conn->readLine();
@@ -609,16 +609,16 @@ final class SocketConnectionTest extends TestCase
         async(static function () use ($server): void {
             $client = $server->accept();
             self::assertNotNull($client);
-            $client->write(str_repeat('Z', 100) . "\r\n");
+            $client->write(str_repeat('Z', SocketConnection::MAX_LINE_BYTES) . "\r\n");
             $client->close();
             $server->close();
         });
 
-        $conn = new SocketConnection('127.0.0.1', $port, false, 2, maxLineBytes: 64);
+        $conn = new SocketConnection('127.0.0.1', $port, false, 2);
         $conn->connect();
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Incoming line exceeded maximum buffer size of 64 bytes.');
+        $this->expectExceptionMessage('Incoming line exceeded maximum buffer size of ' . SocketConnection::MAX_LINE_BYTES . ' bytes.');
 
         try {
             $conn->readLine();
@@ -645,7 +645,7 @@ final class SocketConnectionTest extends TestCase
             $server->close();
         });
 
-        $conn = new SocketConnection('127.0.0.1', $port, false, 2, maxLineBytes: 1024);
+        $conn = new SocketConnection('127.0.0.1', $port, false, 2);
         $conn->connect();
 
         $line = $conn->readLine();
@@ -654,59 +654,115 @@ final class SocketConnectionTest extends TestCase
         $conn->disconnect();
     }
 
-    #[Test]
-    public function readLineAcceptsExactMaxLineBytesFragmentedBeforeNewline(): void
+    /** @return iterable<string, array{list<string>, list<string>}> */
+    public static function validBoundaryLines(): iterable
     {
-        $server = listen('127.0.0.1:0');
-        $port = $this->serverPort($server);
-        $expected = str_repeat('M', 64);
-
-        async(static function () use ($server, $expected): void {
-            $client = $server->accept();
-            self::assertNotNull($client);
-            $client->write($expected);
-            delay(0.01);
-            $client->write("\n");
-            $client->close();
-            $server->close();
-        });
-
-        $conn = new SocketConnection('127.0.0.1', $port, false, 2, maxLineBytes: 64);
-        $conn->connect();
-
-        $line = $conn->readLine();
-        self::assertSame($expected, $line);
-
-        $conn->disconnect();
+        $line = str_repeat('M', SocketConnection::MAX_LINE_BYTES);
+        yield 'LF together' => [[$line . "\n"], [$line]];
+        yield 'LF fragmented before newline' => [[$line, "\n"], [$line]];
+        $crlfPayload = str_repeat('C', SocketConnection::MAX_LINE_BYTES - 1);
+        yield 'CRLF split between CR and LF' => [[$crlfPayload . "\r", "\n"], [$crlfPayload]];
+        yield 'EOF exactly at limit' => [[$line], [$line]];
+        yield 'EOF with CR exactly at limit' => [[$crlfPayload . "\r"], [$crlfPayload]];
+        $first = str_repeat('A', SocketConnection::MAX_LINE_BYTES - 1);
+        $second = str_repeat('B', SocketConnection::MAX_LINE_BYTES);
+        yield 'chunk larger than limit with valid lines' => [[$first . "\r\n" . $second . "\nTHIRD\r\n"], [$first, $second, 'THIRD']];
+        $multibyte = str_repeat('é', SocketConnection::MAX_LINE_BYTES / 2);
+        yield 'limit counts bytes' => [[$multibyte, "\n"], [$multibyte]];
     }
 
+    /**
+     * @param list<string> $chunks
+     * @param list<string> $expectedLines
+     */
     #[Test]
-    public function readLineRejectsExactMaxLineBytesPlusOneFragmentedBeforeNewline(): void
+    #[DataProvider('validBoundaryLines')]
+    public function readLineAcceptsValidSizeBoundaries(array $chunks, array $expectedLines): void
     {
-        $server = listen('127.0.0.1:0');
-        $port = $this->serverPort($server);
-
-        async(static function () use ($server): void {
-            $client = $server->accept();
-            self::assertNotNull($client);
-            $client->write(str_repeat('M', 64));
-            delay(0.01);
-            $client->write("X\n");
-            $client->close();
-            $server->close();
+        $readable = true;
+        $socket = $this->createMock(Socket::class);
+        $socket->method('isClosed')->willReturn(false);
+        $socket->method('isReadable')->willReturnCallback(static function () use (&$readable): bool {
+            return $readable;
         });
+        $index = 0;
+        $socket->expects(self::exactly(count($chunks) + 1))->method('read')->willReturnCallback(static function () use ($chunks, &$index, &$readable): ?string {
+            $chunk = $chunks[$index++] ?? null;
+            if (null === $chunk) {
+                $readable = false;
+            }
 
-        $conn = new SocketConnection('127.0.0.1', $port, false, 2, maxLineBytes: 64);
-        $conn->connect();
-
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Incoming line exceeded maximum buffer size of 64 bytes.');
+            return $chunk;
+        });
+        $socket->expects(self::once())->method('close');
+        $connection = $this->connectWithSocket($socket);
 
         try {
-            $conn->readLine();
+            foreach ($expectedLines as $expected) {
+                self::assertSame($expected, $connection->readLine());
+                self::assertSame(ConnectionStatus::Connected, $connection->getStatus());
+            }
+            self::assertNull($connection->readLine());
+            // Returning trailing data at EOF retains the existing status semantics.
+            $lastChunk = $chunks[count($chunks) - 1];
+            $expectedStatus = str_contains($lastChunk, "\n") ? ConnectionStatus::Disconnected : ConnectionStatus::Connected;
+            self::assertSame($expectedStatus, $connection->getStatus());
+            self::assertFalse($connection->isConnected());
         } finally {
-            self::assertSame(ConnectionStatus::Error, $conn->getStatus());
-            $conn->disconnect();
+            $connection->disconnect();
+        }
+    }
+
+    /** @return iterable<string, array{list<string>}> */
+    public static function oversizedBoundaryLines(): iterable
+    {
+        $line = str_repeat('M', SocketConnection::MAX_LINE_BYTES);
+        yield 'LF plus one fragmented' => [[$line, "X\nVALID\n"]];
+        yield 'LF plus one together' => [[$line . "X\nVALID\n"]];
+        yield 'CR counts before fragmented LF' => [[$line . "\r", "\n"]];
+        yield 'CRLF plus one together' => [[$line . "\r\nVALID\n"]];
+        yield 'EOF plus one' => [[$line . 'X']];
+        yield 'incomplete line grows past limit' => [[$line, 'X']];
+        yield 'multibyte plus one byte' => [[str_repeat('é', SocketConnection::MAX_LINE_BYTES / 2) . "X\n"]];
+    }
+
+    /** @param list<string> $chunks */
+    #[Test]
+    #[DataProvider('oversizedBoundaryLines')]
+    public function readLineRejectsOversizedBoundariesWithObservableCleanup(array $chunks): void
+    {
+        $closed = false;
+        $socket = $this->createMock(Socket::class);
+        $socket->method('isClosed')->willReturnCallback(static function () use (&$closed): bool {
+            return $closed;
+        });
+        $socket->method('isReadable')->willReturn(true);
+        // A partial oversized line must be rejected before another read, even at EOF.
+        $reads = count($chunks);
+        if (strlen($chunks[0]) > SocketConnection::MAX_LINE_BYTES && false === strpos($chunks[0], "\n")) {
+            $reads = 1;
+        }
+        $socket->expects(self::exactly($reads))->method('read')->willReturn(...$chunks);
+        $socket->expects(self::once())->method('close')->willReturnCallback(static function () use (&$closed): void {
+            $closed = true;
+        });
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::once())->method('error')->with(
+            'Incoming IRC line exceeded maximum allowed buffer size.',
+            ['max_line_bytes' => SocketConnection::MAX_LINE_BYTES],
+        );
+        $connection = $this->connectWithSocket($socket, $logger);
+
+        try {
+            $connection->readLine();
+            self::fail('Expected oversized line rejection');
+        } catch (RuntimeException $exception) {
+            self::assertSame('Incoming line exceeded maximum buffer size of ' . SocketConnection::MAX_LINE_BYTES . ' bytes.', $exception->getMessage());
+            self::assertSame(ConnectionStatus::Error, $connection->getStatus());
+            self::assertTrue($closed);
+            self::assertFalse($connection->isConnected());
+            self::assertNull($connection->readLine(), 'Rejected content and buffered following lines must not be delivered');
+            self::assertSame(ConnectionStatus::Error, $connection->getStatus());
         }
     }
 
@@ -719,16 +775,16 @@ final class SocketConnectionTest extends TestCase
         async(static function () use ($server): void {
             $client = $server->accept();
             self::assertNotNull($client);
-            $client->write(str_repeat('E', 50));
+            $client->write(str_repeat('E', SocketConnection::MAX_LINE_BYTES + 1));
             $client->close();
             $server->close();
         });
 
-        $conn = new SocketConnection('127.0.0.1', $port, false, 2, maxLineBytes: 30);
+        $conn = new SocketConnection('127.0.0.1', $port, false, 2);
         $conn->connect();
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Incoming line exceeded maximum buffer size of 30 bytes.');
+        $this->expectExceptionMessage('Incoming line exceeded maximum buffer size of ' . SocketConnection::MAX_LINE_BYTES . ' bytes.');
 
         try {
             $conn->readLine();
@@ -933,6 +989,25 @@ final class SocketConnectionTest extends TestCase
             socketConnector($originalConnector);
             $connection->disconnect();
         }
+    }
+
+    private function connectWithSocket(Socket $socket, ?LoggerInterface $logger = null): SocketConnection
+    {
+        $connector = $this->createMock(SocketConnector::class);
+        $connector->expects(self::once())->method('connect')->willReturn($socket);
+        $originalConnector = socketConnector();
+        socketConnector($connector);
+        $connection = null === $logger
+            ? new SocketConnection('example.test', 7000)
+            : new SocketConnection('example.test', 7000, logger: $logger);
+
+        try {
+            $connection->connect();
+        } finally {
+            socketConnector($originalConnector);
+        }
+
+        return $connection;
     }
 
     private function connectionWithSocket(Socket $socket, ?LoggerInterface $logger = null): SocketConnection

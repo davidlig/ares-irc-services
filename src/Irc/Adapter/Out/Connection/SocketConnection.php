@@ -25,6 +25,7 @@ use function substr;
 
 class SocketConnection implements ConnectionInterface
 {
+    /** Maximum bytes before LF: 16 KiB, including CR when present, excluding LF. */
     public const int MAX_LINE_BYTES = 16 * 1024;
 
     private const int WRITE_CHUNK_BYTES = 16 * 1024;
@@ -42,7 +43,6 @@ class SocketConnection implements ConnectionInterface
         private readonly int $timeoutSeconds = 30,
         private readonly bool $tlsVerifyPeer = true,
         private readonly LoggerInterface $logger = new NullLogger(),
-        private readonly int $maxLineBytes = self::MAX_LINE_BYTES,
     ) {}
 
     public function connect(): void
@@ -153,17 +153,7 @@ class SocketConnection implements ConnectionInterface
         $newlinePos = strpos($this->recvBuffer, "\n");
 
         while (false === $newlinePos) {
-            if (strlen($this->recvBuffer) > $this->maxLineBytes) {
-                $this->status = ConnectionStatus::Error;
-                $this->socket?->close();
-                $this->recvBuffer = '';
-
-                $this->logger->error('Incoming IRC line exceeded maximum allowed buffer size.', [
-                    'max_line_bytes' => $this->maxLineBytes,
-                ]);
-
-                throw new RuntimeException(sprintf('Incoming line exceeded maximum buffer size of %d bytes.', $this->maxLineBytes));
-            }
+            $this->enforceLineLimit(strlen($this->recvBuffer));
 
             try {
                 $chunk = $this->socket?->read();
@@ -186,17 +176,7 @@ class SocketConnection implements ConnectionInterface
         }
 
         if (false !== $newlinePos) {
-            if ($newlinePos > $this->maxLineBytes) {
-                $this->status = ConnectionStatus::Error;
-                $this->socket?->close();
-                $this->recvBuffer = '';
-
-                $this->logger->error('Incoming IRC line exceeded maximum allowed buffer size.', [
-                    'max_line_bytes' => $this->maxLineBytes,
-                ]);
-
-                throw new RuntimeException(sprintf('Incoming line exceeded maximum buffer size of %d bytes.', $this->maxLineBytes));
-            }
+            $this->enforceLineLimit($newlinePos);
 
             $line = substr($this->recvBuffer, 0, $newlinePos);
             $this->recvBuffer = substr($this->recvBuffer, $newlinePos + 1);
@@ -228,6 +208,23 @@ class SocketConnection implements ConnectionInterface
     public function getStatus(): ConnectionStatus
     {
         return $this->status;
+    }
+
+    private function enforceLineLimit(int $lineBytes): void
+    {
+        if (self::MAX_LINE_BYTES >= $lineBytes) {
+            return;
+        }
+
+        $this->status = ConnectionStatus::Error;
+        $this->socket?->close();
+        $this->recvBuffer = '';
+
+        $this->logger->error('Incoming IRC line exceeded maximum allowed buffer size.', [
+            'max_line_bytes' => self::MAX_LINE_BYTES,
+        ]);
+
+        throw new RuntimeException(sprintf('Incoming line exceeded maximum buffer size of %d bytes.', self::MAX_LINE_BYTES));
     }
 
     /** @param list<string> $parts */
