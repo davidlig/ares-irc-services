@@ -207,6 +207,24 @@ final class UnrealStandaloneProtocolHandlerTest extends TestCase
         $handler->handleIncoming($msg, $connection);
     }
 
+    #[Test]
+    public function automaticModesFollowInventoryAndReconnectWithoutChangingWireOutput(): void
+    {
+        $handler = $this->createHandler('002');
+        $connection = $this->createStub(ConnectionInterface::class);
+        self::assertNull($handler->getAutomaticModes());
+        foreach (['PROTOCTL USERMODES=Bd', 'PROTOCTL SID=001', 'SERVER ircd.test 1 :IRCd', ':001 SID leaf.test 2 003 :Leaf'] as $line) {
+            $handler->handleIncoming(IRCMessage::fromRawLine($line), $connection);
+        }
+        self::assertNull($handler->getAutomaticModes());
+        $handler->handleIncoming(IRCMessage::fromRawLine(':003 SINFO 1 6100 B * * :IRCd'), $connection);
+        self::assertSame(['bot' => 'B'], $handler->getAutomaticModes());
+        $handler->handleIncoming(IRCMessage::fromRawLine(':001 SQUIT 003 :Split'), $connection);
+        self::assertSame(['bot' => 'B', 'channel-deaf' => 'd'], $handler->getAutomaticModes());
+        $handler->performHandshake($connection, $this->createServerLink());
+        self::assertNull($handler->getAutomaticModes());
+    }
+
     private function createHandler(string $sid = '001', ?EventDispatcherInterface $eventDispatcher = null): UnrealStandaloneProtocolHandler
     {
         return new UnrealStandaloneProtocolHandler(sid: $sid, eventDispatcher: $eventDispatcher);

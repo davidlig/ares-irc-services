@@ -15,6 +15,7 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbWireCodec;
 use App\Irc\Adapter\Runtime\SessionEventPump;
 use App\Irc\Adapter\Runtime\SessionEventPumpAwareInterface;
 use App\Irc\Adapter\Security\SensitiveDataRedactor;
+use App\Irc\Application\Port\In\NativeAutomaticModeSupport;
 use App\Irc\Domain\Server\ServerLink;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -41,7 +42,7 @@ use function time;
  * HEL selects the services FQDN (or asks with "?"), services offer the
  * authoritative six-block snapshot and serve divergent blocks.
  */
-final class UnrealUdbProtocolHandler implements ProtocolHandlerInterface, SessionEventPumpAwareInterface
+final class UnrealUdbProtocolHandler implements NativeAutomaticModeSupport, ProtocolHandlerInterface, SessionEventPumpAwareInterface
 {
     private const string PROTOCOL_NAME = 'unrealudb';
 
@@ -73,13 +74,22 @@ final class UnrealUdbProtocolHandler implements ProtocolHandlerInterface, Sessio
 
     private bool $remoteBurstComplete = false;
 
+    private readonly UnrealUdbAutomaticModeInventory $automaticModes;
+
     public function __construct(
         private readonly string $sid,
         private readonly UdbSessionController $coordinator,
         private readonly UdbSessionLock $lock,
         private readonly LoggerInterface $logger = new NullLogger(),
         private readonly ?EventDispatcherInterface $eventDispatcher = null,
-    ) {}
+    ) {
+        $this->automaticModes = new UnrealUdbAutomaticModeInventory($sid);
+    }
+
+    public function getAutomaticModes(): ?array
+    {
+        return $this->automaticModes->getAutomaticModes();
+    }
 
     public function getProtocolName(): string
     {
@@ -98,6 +108,7 @@ final class UnrealUdbProtocolHandler implements ProtocolHandlerInterface, Sessio
 
     public function resetRemoteIdentity(): void
     {
+        $this->automaticModes->reset();
         $this->remoteSid = null;
         $this->remoteServerName = null;
         $this->remoteBurstComplete = false;
@@ -140,6 +151,7 @@ final class UnrealUdbProtocolHandler implements ProtocolHandlerInterface, Sessio
 
     public function handleIncoming(IRCMessage $message, ConnectionInterface $connection): void
     {
+        $this->automaticModes->observe($message);
         $handleBeforeTick = 'PING' === $message->command || 'ERROR' === $message->command;
         if (!$handleBeforeTick) {
             $this->coordinator->tick($connection);
