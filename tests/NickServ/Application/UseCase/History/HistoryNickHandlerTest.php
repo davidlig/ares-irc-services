@@ -335,6 +335,41 @@ final class HistoryNickHandlerTest extends TestCase
     }
 
     #[Test]
+    public function returnsViewSuccessWithoutOverflowOnExtremeNumericPage(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(10);
+
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn($account);
+
+        $historyRepo = $this->createMock(NickHistoryRepositoryInterface::class);
+        $historyRepo->expects(self::once())->method('countByNickId')->with(10)->willReturn(25);
+
+        $handler = new HistoryNickHandler(
+            $nickRepo,
+            $historyRepo,
+            $this->createHistoryService($historyRepo),
+            $this->createTransactionBoundary(),
+            historyViewLimit: 10,
+        );
+
+        $result = $handler->handle(new HistoryNick(
+            nickname: 'TargetNick',
+            action: HistoryNickAction::View,
+            occurredAt: new DateTimeImmutable(),
+            page: PHP_INT_MAX,
+        ));
+
+        self::assertSame(HistoryNickOutcome::ViewSuccess, $result->outcome);
+        self::assertSame('TargetNick', $result->targetNick);
+        self::assertSame(25, $result->total);
+        self::assertSame(PHP_INT_MAX, $result->page);
+        self::assertSame(3, $result->totalPages);
+        self::assertSame([], $result->entries);
+    }
+
+    #[Test]
     public function returnsViewSuccessWithShowAll(): void
     {
         $account = $this->createStub(RegisteredNick::class);

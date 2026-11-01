@@ -27,4 +27,24 @@ final class IrcChannelEntryMessageDeliveryTest extends TestCase
         $renderer = new IrcRenderer(new FixedStyleProvider(new PresentationStyle([Component::ChannelTag->value => new Appearance('05', prefix: '<', suffix: '>')])));
         new IrcChannelEntryMessageDelivery($notices, $registry, $renderer)->deliver('#test', 'user', "%channel% \x02hello");
     }
+
+    public function testOmitsSendWhenChanServUidIsUnregistered(): void
+    {
+        $notices = $this->createMock(SendNoticePort::class);
+        $notices->expects(self::never())->method('sendNotice');
+        $registry = $this->createStub(ServiceUidRegistry::class);
+        $registry->method('getUid')->willReturn(null);
+        $renderer = new IrcRenderer(new FixedStyleProvider(PresentationStyle::default()));
+        new IrcChannelEntryMessageDelivery($notices, $registry, $renderer)->deliver('#test', 'user', 'hello');
+    }
+
+    public function testOmitsSendWhenChanServUidIsEmptyString(): void
+    {
+        $notices = $this->createMock(SendNoticePort::class);
+        $notices->expects(self::never())->method('sendNotice');
+        $registry = $this->createStub(ServiceUidRegistry::class);
+        $registry->method('getUid')->willReturn('');
+        $renderer = new IrcRenderer(new FixedStyleProvider(PresentationStyle::default()));
+        new IrcChannelEntryMessageDelivery($notices, $registry, $renderer)->deliver('#test', 'user', 'hello');
+    }
 }

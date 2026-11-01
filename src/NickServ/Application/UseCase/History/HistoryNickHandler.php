@@ -111,31 +111,37 @@ final readonly class HistoryNickHandler implements HistoryNickHandlerInterface
 
         $page = $command->page < 1 ? 1 : $command->page;
         $limit = $command->showAll ? null : $this->historyViewLimit;
-        $offset = $command->showAll ? 0 : ($page - 1) * $this->historyViewLimit;
-
-        $entries = $this->historyRepository->findByNickId($nickId, $limit, $offset);
-
         $totalPages = $command->showAll ? 1 : (int) ceil($total / $this->historyViewLimit);
-        $start = $command->showAll ? 1 : ($page - 1) * $this->historyViewLimit + 1;
-        $end = $command->showAll ? $total : min($page * $this->historyViewLimit, $total);
 
-        $views = [];
-        foreach ($entries as $entry) {
-            $operatorExists = true;
-            if (null !== $entry->getPerformedByNickId()) {
-                $operatorExists = null !== $this->nickRepository->findById($entry->getPerformedByNickId());
+        if (!$command->showAll && $page > $totalPages) {
+            $views = [];
+            $start = $total + 1;
+            $end = $total;
+        } else {
+            $offset = $command->showAll ? 0 : ($page - 1) * $this->historyViewLimit;
+            $entries = $this->historyRepository->findByNickId($nickId, $limit, $offset);
+
+            $start = $command->showAll ? 1 : ($page - 1) * $this->historyViewLimit + 1;
+            $end = $command->showAll ? $total : min($page * $this->historyViewLimit, $total);
+
+            $views = [];
+            foreach ($entries as $entry) {
+                $operatorExists = true;
+                if (null !== $entry->getPerformedByNickId()) {
+                    $operatorExists = null !== $this->nickRepository->findById($entry->getPerformedByNickId());
+                }
+
+                $views[] = new NickHistoryEntryView(
+                    id: $entry->getId(),
+                    performedAt: $entry->getPerformedAt(),
+                    action: $entry->getAction(),
+                    performedBy: $entry->getPerformedBy(),
+                    performedByNickId: $entry->getPerformedByNickId(),
+                    operatorExists: $operatorExists,
+                    message: $entry->getMessage(),
+                    extraData: $entry->getExtraData(),
+                );
             }
-
-            $views[] = new NickHistoryEntryView(
-                id: $entry->getId(),
-                performedAt: $entry->getPerformedAt(),
-                action: $entry->getAction(),
-                performedBy: $entry->getPerformedBy(),
-                performedByNickId: $entry->getPerformedByNickId(),
-                operatorExists: $operatorExists,
-                message: $entry->getMessage(),
-                extraData: $entry->getExtraData(),
-            );
         }
 
         return HistoryNickResult::viewSuccess(

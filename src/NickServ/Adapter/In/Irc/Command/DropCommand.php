@@ -32,7 +32,7 @@ final readonly class DropCommand implements NickServCommandInterface, IrcopAudit
         private DropNickHandlerInterface $handler,
         private LoggerInterface $logger,
         private Clock $clock,
-        private ?AuthorizationCheckerInterface $authorizationChecker = null,
+        private AuthorizationCheckerInterface $authorizationChecker,
     ) {}
 
     public function getName(): string
@@ -112,7 +112,7 @@ final readonly class DropCommand implements NickServCommandInterface, IrcopAudit
 
         $targetNick = $context->args[0];
         $force = isset($context->args[1]) && 0 === strcasecmp($context->args[1], 'force');
-        $forceAllowed = null !== $this->authorizationChecker && $this->authorizationChecker->isGranted(NickServPermission::DROP_FORCE, $context);
+        $forceAllowed = $this->authorizationChecker->isGranted(NickServPermission::DROP_FORCE, $context);
 
         $result = $this->handler->handle(new DropNick(
             targetNick: $targetNick,

@@ -41,8 +41,8 @@ final readonly class IrcopsDebugChannelProtectionSubscriber implements EventSubs
         private string $chanservNick,
         private ?string $debugChannel,
         private LoggerInterface $logger,
-        private ?ChannelProjectionQuery $registeredChannels = null,
-        private ?OperatorOnlyChannelControl $operatorOnlyControl = null,
+        private ChannelProjectionQuery $registeredChannels,
+        private OperatorOnlyChannelControl $operatorOnlyControl,
     ) {}
 
     public static function getSubscribedEvents(): array
@@ -82,11 +82,11 @@ final readonly class IrcopsDebugChannelProtectionSubscriber implements EventSubs
         if (null !== $this->debugChannel && '' !== $this->debugChannel) {
             $this->kickCurrentMembers($this->debugChannel);
         }
-        foreach ($this->registeredChannels?->all() ?? [] as $channel) {
+        foreach ($this->registeredChannels->all() as $channel) {
             if (!$channel->ircopOnly || $channel->forbidden || $channel->suspended || $channel->pendingDeletion) {
                 continue;
             }
-            $this->operatorOnlyControl?->activate($channel->name);
+            $this->operatorOnlyControl->activate($channel->name);
             if (null === $this->debugChannel || strtolower($channel->name) !== strtolower($this->debugChannel)) {
                 $this->kickCurrentMembers($channel->name);
             }
@@ -95,14 +95,14 @@ final readonly class IrcopsDebugChannelProtectionSubscriber implements EventSubs
 
     public function onIrcopOnlyUpdated(ChannelIrcopOnlyUpdatedEvent $event): void
     {
-        $channel = $this->registeredChannels?->findByName(strtolower($event->channelName));
+        $channel = $this->registeredChannels->findByName(strtolower($event->channelName));
         if (null !== $channel && $channel->ircopOnly && !$channel->forbidden && !$channel->suspended && !$channel->pendingDeletion) {
-            $this->operatorOnlyControl?->activate($channel->name);
+            $this->operatorOnlyControl->activate($channel->name);
             $this->kickCurrentMembers($channel->name);
 
             return;
         }
-        $this->operatorOnlyControl?->deactivate($event->channelName);
+        $this->operatorOnlyControl->deactivate($event->channelName);
     }
 
     public function onChannelSuspended(ChannelSuspendedEvent $event): void
@@ -112,7 +112,7 @@ final readonly class IrcopsDebugChannelProtectionSubscriber implements EventSubs
 
     public function onChannelUnsuspended(ChannelUnsuspendedEvent $event): void
     {
-        if ($this->registeredChannels?->findByName($event->channelNameLower)?->ircopOnly) {
+        if ($this->registeredChannels->findByName($event->channelNameLower)?->ircopOnly) {
             $this->onIrcopOnlyUpdated(new ChannelIrcopOnlyUpdatedEvent($event->channelName));
         }
     }
@@ -124,7 +124,7 @@ final readonly class IrcopsDebugChannelProtectionSubscriber implements EventSubs
 
     public function onChannelRestored(ChannelRestoredEvent $event): void
     {
-        if ($this->registeredChannels?->findByName($event->channelNameLower)?->ircopOnly) {
+        if ($this->registeredChannels->findByName($event->channelNameLower)?->ircopOnly) {
             $this->onIrcopOnlyUpdated(new ChannelIrcopOnlyUpdatedEvent($event->channelName));
         }
     }
@@ -132,15 +132,15 @@ final readonly class IrcopsDebugChannelProtectionSubscriber implements EventSubs
     public function onChannelDrop(ChannelDropEvent $event): void
     {
         if ($event->ircopOnly) {
-            $this->operatorOnlyControl?->deactivate($event->channelName);
+            $this->operatorOnlyControl->deactivate($event->channelName);
         }
     }
 
     public function onSettingsChanged(ChannelSettingsChangedEvent $event): void
     {
-        $channel = $this->registeredChannels?->findByName(strtolower($event->channelName));
+        $channel = $this->registeredChannels->findByName(strtolower($event->channelName));
         if (null !== $channel && $channel->ircopOnly && !$channel->forbidden && !$channel->suspended && !$channel->pendingDeletion) {
-            $this->operatorOnlyControl?->ensureMode($channel->name);
+            $this->operatorOnlyControl->ensureMode($channel->name);
         }
     }
 
@@ -149,15 +149,15 @@ final readonly class IrcopsDebugChannelProtectionSubscriber implements EventSubs
         if (null !== $this->debugChannel && '' !== $this->debugChannel && $channelName === strtolower($this->debugChannel)) {
             return true;
         }
-        $channel = $this->registeredChannels?->findByName($channelName);
+        $channel = $this->registeredChannels->findByName($channelName);
 
         return null !== $channel && $channel->ircopOnly && !$channel->forbidden && !$channel->suspended && !$channel->pendingDeletion;
     }
 
     private function deactivateIfConfigured(string $channelName): void
     {
-        if ($this->registeredChannels?->findByName(strtolower($channelName))?->ircopOnly) {
-            $this->operatorOnlyControl?->deactivate($channelName);
+        if ($this->registeredChannels->findByName(strtolower($channelName))?->ircopOnly) {
+            $this->operatorOnlyControl->deactivate($channelName);
         }
     }
 

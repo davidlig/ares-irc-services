@@ -79,30 +79,41 @@ final readonly class ManageChannelHistoryHandler implements ManageChannelHistory
         }
 
         $page = $command->page < 1 ? 1 : $command->page;
-        $limit = $command->showAll ? null : $this->historyViewLimit;
-        $offset = $command->showAll ? 0 : ($page - 1) * $this->historyViewLimit;
+        $totalPages = $command->showAll ? 1 : (int) ceil($total / $this->historyViewLimit);
         $entries = [];
-        foreach ($this->historyRepository->findByChannelId($channelId, $limit, $offset) as $entry) {
-            $operatorMissing = null !== $entry->getPerformedByNickId()
-                && null === $this->accountPort->findAccountById($entry->getPerformedByNickId());
-            $entries[] = new ChannelHistoryEntryView(
-                $entry->getId(),
-                $entry->getAction(),
-                $entry->getPerformedBy(),
-                $operatorMissing,
-                $entry->getPerformedAt(),
-                $entry->getMessage(),
-                $entry->getExtraData(),
-            );
+
+        if (!$command->showAll && $page > $totalPages) {
+            $start = $total + 1;
+            $end = $total;
+        } else {
+            $limit = $command->showAll ? null : $this->historyViewLimit;
+            $offset = $command->showAll ? 0 : ($page - 1) * $this->historyViewLimit;
+
+            foreach ($this->historyRepository->findByChannelId($channelId, $limit, $offset) as $entry) {
+                $operatorMissing = null !== $entry->getPerformedByNickId()
+                    && null === $this->accountPort->findAccountById($entry->getPerformedByNickId());
+                $entries[] = new ChannelHistoryEntryView(
+                    $entry->getId(),
+                    $entry->getAction(),
+                    $entry->getPerformedBy(),
+                    $operatorMissing,
+                    $entry->getPerformedAt(),
+                    $entry->getMessage(),
+                    $entry->getExtraData(),
+                );
+            }
+
+            $start = $command->showAll ? 1 : ($page - 1) * $this->historyViewLimit + 1;
+            $end = $command->showAll ? $total : min($page * $this->historyViewLimit, $total);
         }
 
         return new ManageChannelHistoryResult(
             ManageChannelHistoryOutcome::Viewed,
             entries: $entries,
             total: $total,
-            start: $command->showAll ? 1 : ($page - 1) * $this->historyViewLimit + 1,
-            end: $command->showAll ? $total : min($page * $this->historyViewLimit, $total),
-            totalPages: $command->showAll ? 1 : (int) ceil($total / $this->historyViewLimit),
+            start: $start,
+            end: $end,
+            totalPages: $totalPages,
             page: $page,
         );
     }

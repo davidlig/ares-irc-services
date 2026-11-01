@@ -22,19 +22,23 @@ final class IrcChannelEntryNetworkQueryTest extends TestCase
     #[Test]
     public function reportsWhetherNetworkSynchronizationIsComplete(): void
     {
-        $burstComplete = $this->createStub(BurstCompletePort::class);
-        $burstComplete->method('isComplete')->willReturn(true);
+        $incomplete = $this->createStub(BurstCompletePort::class);
+        $incomplete->method('isComplete')->willReturn(false);
+
+        $complete = $this->createStub(BurstCompletePort::class);
+        $complete->method('isComplete')->willReturn(true);
 
         self::assertFalse(new IrcChannelEntryNetworkQuery(
             $this->createStub(ChannelLookupPort::class),
             $this->createStub(NetworkUserLookupPort::class),
             'ChanServ',
+            $incomplete,
         )->synchronizationComplete());
         self::assertTrue(new IrcChannelEntryNetworkQuery(
             $this->createStub(ChannelLookupPort::class),
             $this->createStub(NetworkUserLookupPort::class),
             'ChanServ',
-            $burstComplete,
+            $complete,
         )->synchronizationComplete());
     }
 
@@ -46,7 +50,7 @@ final class IrcChannelEntryNetworkQueryTest extends TestCase
             ['missing', null],
             ['001A', $this->user('001A', 'cHaNsErV', identified: true, operator: true)],
         ]);
-        $query = new IrcChannelEntryNetworkQuery($this->createStub(ChannelLookupPort::class), $users, 'ChanServ');
+        $query = new IrcChannelEntryNetworkQuery($this->createStub(ChannelLookupPort::class), $users, 'ChanServ', $this->createStub(BurstCompletePort::class));
 
         self::assertNull($query->findMember('missing'));
         self::assertMember(
@@ -63,7 +67,7 @@ final class IrcChannelEntryNetworkQueryTest extends TestCase
             ['missing', null],
             ['Alice', $this->user('001A', 'Alice', identified: true, operator: false)],
         ]);
-        $query = new IrcChannelEntryNetworkQuery($this->createStub(ChannelLookupPort::class), $users, 'ChanServ');
+        $query = new IrcChannelEntryNetworkQuery($this->createStub(ChannelLookupPort::class), $users, 'ChanServ', $this->createStub(BurstCompletePort::class));
 
         self::assertNull($query->findMemberByNick('missing'));
         self::assertMember(
@@ -90,7 +94,7 @@ final class IrcChannelEntryNetworkQueryTest extends TestCase
             ['missing', null],
             ['001A', $this->user('001A', 'Member')],
         ]);
-        $query = new IrcChannelEntryNetworkQuery($channels, $users, 'ChanServ');
+        $query = new IrcChannelEntryNetworkQuery($channels, $users, 'ChanServ', $this->createStub(BurstCompletePort::class));
 
         self::assertNull($query->findChannel('#Missing'));
         $state = $query->findChannel('#Test');

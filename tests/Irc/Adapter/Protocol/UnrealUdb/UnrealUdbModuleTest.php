@@ -10,6 +10,7 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbBlockStateRepositoryInterf
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbRecordMutationStoreInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbRecordRepositoryInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionCoordinator;
+use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionLock;
 use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbChannelBanMatcher;
 use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbChannelModeSupport;
 use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbModule;
@@ -28,6 +29,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 use function class_implements;
+use function sys_get_temp_dir;
 
 #[CoversClass(UnrealUdbModule::class)]
 final class UnrealUdbModuleTest extends TestCase
@@ -46,15 +48,16 @@ final class UnrealUdbModuleTest extends TestCase
     #[Test]
     public function getHandlerReturnsInjectedHandler(): void
     {
+        $sessionState = $this->createReadySessionState();
         $connectionHolder = new ActiveConnectionHolder();
         $recordWriter = new UnrealUdbRecordWriter(
-            $this->createReadySessionState(),
+            $sessionState,
             $this->createStub(UdbRecordMutationStoreInterface::class),
         );
-        $handler = new UnrealUdbProtocolHandler('001', $this->createCoordinator());
+        $handler = new UnrealUdbProtocolHandler('001', $this->createCoordinator(), new UdbSessionLock(sys_get_temp_dir()));
         $module = new UnrealUdbModule(
             $handler,
-            new UnrealUdbProtocolServiceActions($connectionHolder, $recordWriter),
+            new UnrealUdbProtocolServiceActions($connectionHolder, $recordWriter, $sessionState),
             new UnrealUdbChannelModeSupport(),
             new UnrealUdbUserModeSupport(),
             new UnrealUdbNickReservation($recordWriter, $this->createStub(UdbRecordRepositoryInterface::class)),
@@ -123,14 +126,15 @@ final class UnrealUdbModuleTest extends TestCase
         $rawCommands->expects(self::once())->method('del')->with('N::nick')
             ->willReturn(UdbRawCommandResult::success('deleted'));
 
+        $sessionState = $this->createReadySessionState();
         $connectionHolder = new ActiveConnectionHolder();
         $recordWriter = new UnrealUdbRecordWriter(
-            $this->createReadySessionState(),
+            $sessionState,
             $this->createStub(UdbRecordMutationStoreInterface::class),
         );
         $module = new UnrealUdbModule(
-            new UnrealUdbProtocolHandler('001', $this->createCoordinator()),
-            new UnrealUdbProtocolServiceActions($connectionHolder, $recordWriter),
+            new UnrealUdbProtocolHandler('001', $this->createCoordinator(), new UdbSessionLock(sys_get_temp_dir())),
+            new UnrealUdbProtocolServiceActions($connectionHolder, $recordWriter, $sessionState),
             new UnrealUdbChannelModeSupport(),
             new UnrealUdbUserModeSupport(),
             new UnrealUdbNickReservation($recordWriter, $this->createStub(UdbRecordRepositoryInterface::class)),
@@ -158,13 +162,14 @@ final class UnrealUdbModuleTest extends TestCase
 
     private function createModule(): UnrealUdbModule
     {
+        $sessionState = $this->createReadySessionState();
         $connectionHolder = new ActiveConnectionHolder();
         $recordWriter = new UnrealUdbRecordWriter(
-            $this->createReadySessionState(),
+            $sessionState,
             $this->createStub(UdbRecordMutationStoreInterface::class),
         );
-        $handler = new UnrealUdbProtocolHandler('001', $this->createCoordinator());
-        $serviceActions = new UnrealUdbProtocolServiceActions($connectionHolder, $recordWriter);
+        $handler = new UnrealUdbProtocolHandler('001', $this->createCoordinator(), new UdbSessionLock(sys_get_temp_dir()));
+        $serviceActions = new UnrealUdbProtocolServiceActions($connectionHolder, $recordWriter, $sessionState);
         $channelModeSupport = new UnrealUdbChannelModeSupport();
         $userModeSupport = new UnrealUdbUserModeSupport();
         $nickReservation = new UnrealUdbNickReservation($recordWriter, $this->createStub(UdbRecordRepositoryInterface::class));

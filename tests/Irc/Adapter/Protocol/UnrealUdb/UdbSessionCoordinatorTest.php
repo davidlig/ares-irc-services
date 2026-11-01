@@ -20,6 +20,7 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Reconciliation\UdbSnapshotProviderInterfa
 use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbHelloBarrier;
 use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbPeerSession;
 use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionCoordinator;
+use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionLock;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbChannelSuspendReasonResolver;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbMutation;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbMutationQueue;
@@ -69,6 +70,7 @@ use function str_repeat;
 use function strlen;
 use function strtoupper;
 use function substr_count;
+use function sys_get_temp_dir;
 
 #[CoversClass(UdbSessionCoordinator::class)]
 #[CoversClass(UdbPeerSession::class)]
@@ -2092,7 +2094,7 @@ final class UdbSessionCoordinatorTest extends DoctrineIntegrationTestCase
         // Route through the real handler: its pre-dispatch tick replaces the
         // coordinator's mutable current connection, which must not rebind
         // the outstanding barrier's original transport identity.
-        $handler = new UnrealUdbProtocolHandler('002', $coordinator);
+        $handler = new UnrealUdbProtocolHandler('002', $coordinator, new UdbSessionLock(sys_get_temp_dir()));
         $foreign = $this->createStub(ConnectionInterface::class);
         $response = IRCMessage::fromRawLine(':ircd.example.net 402 ' . self::OWN_NAME . ' ' . $ping[1] . ' :No such server');
         $handler->handleIncoming($response, $foreign);
@@ -2125,7 +2127,7 @@ final class UdbSessionCoordinatorTest extends DoctrineIntegrationTestCase
         $coordinator->onRemoteServer('001', 'ircd.example.net');
         $connection = $this->captureConnection($coordinator);
         $coordinator->onLinkReady($connection);
-        $handler = new UnrealUdbProtocolHandler('002', $coordinator);
+        $handler = new UnrealUdbProtocolHandler('002', $coordinator, new UdbSessionLock(sys_get_temp_dir()));
         $handler->handleIncoming(IRCMessage::fromRawLine(':001 DB 002 HEL 4 ACK hub1.example ' . self::PEER_EPOCH . ' OCL OCLG'), $connection);
         self::assertNull($coordinator->getDeadlineWatcherId());
         $this->written = [];

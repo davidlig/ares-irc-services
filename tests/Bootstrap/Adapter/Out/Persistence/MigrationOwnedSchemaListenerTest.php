@@ -16,7 +16,9 @@ use Doctrine\DBAL\Schema\AbstractSchemaManager;
 use Doctrine\DBAL\Schema\Column;
 use Doctrine\DBAL\Schema\Index;
 use Doctrine\DBAL\Schema\Index\IndexType;
+use Doctrine\DBAL\Schema\Name\OptionallyQualifiedName;
 use Doctrine\DBAL\Schema\Schema;
+use Doctrine\DBAL\Schema\SchemaConfig;
 use Doctrine\DBAL\Schema\Table;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\EntityManagerInterface;
@@ -26,6 +28,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 use function array_map;
+use function implode;
 
 #[CoversClass(MigrationOwnedSchemaListener::class)]
 final class MigrationOwnedSchemaListenerTest extends TestCase
@@ -39,8 +42,8 @@ final class MigrationOwnedSchemaListenerTest extends TestCase
             ->addIndex(Index::editor()->setUnquotedName('idx_registered_nicks_list_pattern')->setType(IndexType::REGULAR)->setUnquotedColumnNames('nickname_lower'))->create();
         $target = Schema::editor()->addTable($table)->create();
         $manager = $this->createStub(AbstractSchemaManager::class);
-        $manager->method('listTableNames')->willReturn(['registered_nicks']);
-        $manager->method('introspectTable')->willReturn($native);
+        $manager->method('introspectTableNames')->willReturn([OptionallyQualifiedName::unquoted('registered_nicks')]);
+        $manager->method('introspectTableByUnquotedName')->willReturn($native);
         $connection = $this->createStub(Connection::class);
         $connection->method('createSchemaManager')->willReturn($manager);
         $connection->method('getDatabasePlatform')->willReturn($platform);
@@ -61,7 +64,7 @@ final class MigrationOwnedSchemaListenerTest extends TestCase
     public function testCanonicalGlobalSettingsSchemaIsProjectedOnEveryPlatform(AbstractPlatform $platform): void
     {
         $manager = $this->createStub(AbstractSchemaManager::class);
-        $manager->method('listTableNames')->willReturn([]);
+        $manager->method('introspectTableNames')->willReturn([]);
         $connection = $this->createStub(Connection::class);
         $connection->method('createSchemaManager')->willReturn($manager);
         $connection->method('getDatabasePlatform')->willReturn($platform);
@@ -84,6 +87,231 @@ final class MigrationOwnedSchemaListenerTest extends TestCase
         self::assertSame('json', $settings->getColumn('setting_value')->getTypeName());
         new MigrationOwnedSchemaListener()->postGenerateSchema($event);
         self::assertSame($settings->getColumns(), $event->getSchema()->getTable('service_settings')->getColumns());
+    }
+
+    public function testSkipsWhenTableExistsInSchemaButNotInDatabase(): void
+    {
+        $column = Column::editor()->setUnquotedName('nickname_lower')->setTypeName(Types::STRING)->setLength(32)->create();
+        $table = Table::editor()->setUnquotedName('registered_nicks')->addColumn($column)->create();
+        $target = Schema::editor()->addTable($table)->create();
+        $manager = $this->createStub(AbstractSchemaManager::class);
+        $manager->method('introspectTableNames')->willReturn([]);
+        $connection = $this->createStub(Connection::class);
+        $connection->method('createSchemaManager')->willReturn($manager);
+        $connection->method('getDatabasePlatform')->willReturn(new SQLitePlatform());
+        $em = $this->createStub(EntityManagerInterface::class);
+        $em->method('getConnection')->willReturn($connection);
+        $event = new GenerateSchemaEventArgs($em, $target);
+        new MigrationOwnedSchemaListener()->postGenerateSchema($event);
+        self::assertFalse($event->getSchema()->getTable('registered_nicks')->hasIndex('idx_registered_nicks_list_pattern'));
+    }
+
+    public function testPreservesExactSchemaWhenMultipleTablesWithSameNameExistInDifferentSchemas(): void
+    {
+        $config = new SchemaConfig();
+        $config->setName('public');
+        $column = Column::editor()->setUnquotedName('nickname_lower')->setTypeName(Types::STRING)->setLength(32)->create();
+        $table = Table::editor()->setUnquotedName('registered_nicks', 'public')->addColumn($column)->create();
+        $target = new Schema([], [], $config)->edit()->addTable($table)->create();
+
+        $archive = Table::editor()->setUnquotedName('registered_nicks', 'archive')->addColumn($column)->create();
+        $public = $table->edit()->addIndex(
+            Index::editor()->setUnquotedName('idx_registered_nicks_list_pattern')->setType(IndexType::REGULAR)->setUnquotedColumnNames('nickname_lower')
+        )->create();
+
+        $manager = $this->createStub(AbstractSchemaManager::class);
+        $manager->method('createSchemaConfig')->willReturn($config);
+        $manager->method('introspectTableNames')->willReturn([
+            OptionallyQualifiedName::unquoted('registered_nicks'),
+            OptionallyQualifiedName::unquoted('registered_nicks', 'archive'),
+        ]);
+        $manager->method('introspectTableByUnquotedName')->willReturnCallback(
+            static fn (string $name, ?string $schema = null): Table => 'archive' === $schema ? $archive : $public
+        );
+
+        $connection = $this->createStub(Connection::class);
+        $connection->method('createSchemaManager')->willReturn($manager);
+        $connection->method('getDatabasePlatform')->willReturn(new PostgreSQLPlatform());
+
+        $em = $this->createStub(EntityManagerInterface::class);
+        $em->method('getConnection')->willReturn($connection);
+
+        $event = new GenerateSchemaEventArgs($em, $target);
+        new MigrationOwnedSchemaListener()->postGenerateSchema($event);
+
+        $actual = $event->getSchema()->getTable('public.registered_nicks');
+        self::assertTrue($actual->hasIndex('idx_registered_nicks_list_pattern'));
+    }
+
+    public function testProjectsMigrationOwnedIndexesWhenTableExplicitlyPrefixedWithDefaultSchema(): void
+    {
+        $config = new SchemaConfig();
+        $config->setName('main');
+        $column = Column::editor()->setUnquotedName('nickname_lower')->setTypeName(Types::STRING)->setLength(32)->create();
+        $table = Table::editor()->setUnquotedName('registered_nicks', 'main')->addColumn($column)->create();
+        $other = Table::editor()->setUnquotedName('audit', 'main')->addColumn($column)->create();
+        $target = new Schema(tables: [$other, $table], namespaces: ['main'])->edit()->create();
+
+        $native = $table->edit()->addIndex(
+            Index::editor()->setUnquotedName('idx_registered_nicks_list_pattern')->setType(IndexType::REGULAR)->setUnquotedColumnNames('nickname_lower')
+        )->create();
+
+        $manager = $this->createStub(AbstractSchemaManager::class);
+        $manager->method('createSchemaConfig')->willReturn($config);
+        $manager->method('introspectTableNames')->willReturn([
+            OptionallyQualifiedName::unquoted('other_table'),
+            OptionallyQualifiedName::unquoted('registered_nicks', 'archive'),
+            OptionallyQualifiedName::unquoted('registered_nicks'),
+        ]);
+        $manager->method('introspectTableByUnquotedName')->willReturn($native);
+
+        $connection = $this->createStub(Connection::class);
+        $connection->method('createSchemaManager')->willReturn($manager);
+        $connection->method('getDatabasePlatform')->willReturn(new SQLitePlatform());
+
+        $em = $this->createStub(EntityManagerInterface::class);
+        $em->method('getConnection')->willReturn($connection);
+
+        $event = new GenerateSchemaEventArgs($em, $target);
+        new MigrationOwnedSchemaListener()->postGenerateSchema($event);
+
+        $actual = $event->getSchema()->getTable('main.registered_nicks');
+        self::assertTrue($actual->hasIndex('idx_registered_nicks_list_pattern'));
+    }
+
+    public function testProjectsMigrationOwnedIndexesWhenTableInNonDefaultSchema(): void
+    {
+        $config = new SchemaConfig();
+        $config->setName('public');
+        $column = Column::editor()->setUnquotedName('nickname_lower')->setTypeName(Types::STRING)->setLength(32)->create();
+        $table = Table::editor()->setUnquotedName('registered_nicks', 'archive')->addColumn($column)->create();
+        $other = Table::editor()->setUnquotedName('audit', 'archive')->addColumn($column)->create();
+        $target = new Schema([], [], $config)->edit()->addTable($other)->addTable($table)->create();
+
+        $native = $table->edit()->addIndex(
+            Index::editor()->setUnquotedName('idx_registered_nicks_list_pattern')->setType(IndexType::REGULAR)->setUnquotedColumnNames('nickname_lower')
+        )->create();
+
+        $manager = $this->createStub(AbstractSchemaManager::class);
+        $manager->method('createSchemaConfig')->willReturn($config);
+        $manager->method('introspectTableNames')->willReturn([
+            OptionallyQualifiedName::unquoted('registered_nicks'),
+            OptionallyQualifiedName::unquoted('registered_nicks', 'backup'),
+            OptionallyQualifiedName::unquoted('registered_nicks', 'archive'),
+        ]);
+        $manager->method('introspectTableByUnquotedName')->willReturn($native);
+
+        $connection = $this->createStub(Connection::class);
+        $connection->method('createSchemaManager')->willReturn($manager);
+        $connection->method('getDatabasePlatform')->willReturn(new PostgreSQLPlatform());
+
+        $em = $this->createStub(EntityManagerInterface::class);
+        $em->method('getConnection')->willReturn($connection);
+
+        $event = new GenerateSchemaEventArgs($em, $target);
+        new MigrationOwnedSchemaListener()->postGenerateSchema($event);
+
+        $actual = $event->getSchema()->getTable('archive.registered_nicks');
+        self::assertTrue($actual->hasIndex('idx_registered_nicks_list_pattern'));
+    }
+
+    public function testServiceSettingsDerivedFromConnectionDefaultSchemaNotOtherEntities(): void
+    {
+        $config = new SchemaConfig();
+        $config->setName('public');
+        $column = Column::editor()->setUnquotedName('id')->setTypeName(Types::INTEGER)->create();
+        $audit = Table::editor()->setUnquotedName('audit', 'archive')->addColumn($column)->create();
+        $nicks = Table::editor()->setUnquotedName('registered_nicks')->addColumn($column)->create();
+        $target = new Schema([], [], $config)->edit()->addTable($audit)->addTable($nicks)->create();
+
+        $manager = $this->createStub(AbstractSchemaManager::class);
+        $manager->method('createSchemaConfig')->willReturn($config);
+        $manager->method('introspectTableNames')->willReturn([]);
+
+        $connection = $this->createStub(Connection::class);
+        $connection->method('createSchemaManager')->willReturn($manager);
+        $connection->method('getDatabasePlatform')->willReturn(new PostgreSQLPlatform());
+
+        $em = $this->createStub(EntityManagerInterface::class);
+        $em->method('getConnection')->willReturn($connection);
+
+        $event = new GenerateSchemaEventArgs($em, $target);
+        new MigrationOwnedSchemaListener()->postGenerateSchema($event);
+
+        self::assertTrue($event->getSchema()->hasTable('service_settings'));
+        self::assertFalse($event->getSchema()->hasTable('archive.service_settings'));
+        $settings = $event->getSchema()->getTable('service_settings');
+        self::assertSame('public', $settings->getObjectName()->getQualifier()?->getValue());
+        self::assertTrue($settings->getObjectName()->getQualifier()->isQuoted());
+        self::assertTrue($settings->isInDefaultNamespace('public'));
+    }
+
+    public function testPreservesSchemaQuotingWhenIntrospectingTableInQuotedSchema(): void
+    {
+        $config = new SchemaConfig();
+        $config->setName('public');
+        $column = Column::editor()->setUnquotedName('nickname_lower')->setTypeName(Types::STRING)->setLength(32)->create();
+        $table = Table::editor()->setQuotedName('registered_nicks', 'Archive')->addColumn($column)->create();
+        $target = new Schema([], [], $config)->edit()->addTable($table)->create();
+
+        $native = $table->edit()->addIndex(
+            Index::editor()->setUnquotedName('idx_registered_nicks_list_pattern')->setType(IndexType::REGULAR)->setUnquotedColumnNames('nickname_lower')
+        )->create();
+
+        $manager = $this->createStub(AbstractSchemaManager::class);
+        $manager->method('createSchemaConfig')->willReturn($config);
+        $manager->method('introspectTableNames')->willReturn([
+            OptionallyQualifiedName::quoted('registered_nicks', 'Archive'),
+        ]);
+        $manager->method('introspectTableByQuotedName')->willReturn($native);
+
+        $connection = $this->createStub(Connection::class);
+        $connection->method('createSchemaManager')->willReturn($manager);
+        $connection->method('getDatabasePlatform')->willReturn(new PostgreSQLPlatform());
+
+        $em = $this->createStub(EntityManagerInterface::class);
+        $em->method('getConnection')->willReturn($connection);
+
+        $event = new GenerateSchemaEventArgs($em, $target);
+        new MigrationOwnedSchemaListener()->postGenerateSchema($event);
+
+        $actual = $event->getSchema()->getTable('"Archive".registered_nicks');
+        self::assertTrue($actual->hasIndex('idx_registered_nicks_list_pattern'));
+    }
+
+    public function testServiceSettingsRemainsUnqualifiedAndDoesNotGenerateUnquotedSchemaPrefixInQuotedSchema(): void
+    {
+        $config = new SchemaConfig();
+        $config->setName('Tenant');
+        $platform = new PostgreSQLPlatform();
+
+        $column = Column::editor()->setUnquotedName('id')->setTypeName(Types::INTEGER)->create();
+        $table = Table::editor()->setUnquotedName('audit')->addColumn($column)->create();
+        $target = new Schema([], [], $config)->edit()->addTable($table)->create();
+
+        $manager = $this->createStub(AbstractSchemaManager::class);
+        $manager->method('createSchemaConfig')->willReturn($config);
+        $manager->method('introspectTableNames')->willReturn([]);
+
+        $connection = $this->createStub(Connection::class);
+        $connection->method('createSchemaManager')->willReturn($manager);
+        $connection->method('getDatabasePlatform')->willReturn($platform);
+
+        $em = $this->createStub(EntityManagerInterface::class);
+        $em->method('getConnection')->willReturn($connection);
+
+        $event = new GenerateSchemaEventArgs($em, $target);
+        new MigrationOwnedSchemaListener()->postGenerateSchema($event);
+
+        self::assertTrue($event->getSchema()->hasTable('service_settings'));
+        $settings = $event->getSchema()->getTable('service_settings');
+        self::assertSame('Tenant', $settings->getObjectName()->getQualifier()?->getValue());
+        self::assertTrue($settings->getObjectName()->getQualifier()->isQuoted());
+        self::assertTrue($settings->isInDefaultNamespace('Tenant'));
+
+        $sql = $platform->getCreateTableSQL($settings);
+        self::assertStringNotContainsString('Tenant.service_settings', implode("\n", $sql));
+        self::assertStringContainsString('"Tenant"', implode("\n", $sql));
     }
 
     /** @return iterable<string, array{AbstractPlatform}> */

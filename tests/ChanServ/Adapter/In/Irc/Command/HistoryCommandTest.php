@@ -524,6 +524,33 @@ final class HistoryCommandTest extends TestCase
     }
 
     #[Test]
+    public function executeViewWithExtremePageNumberDoesNotOverflow(): void
+    {
+        $channel = $this->createChannelWithId('#test', 1);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+
+        $historyRepo = $this->createMock(ChannelHistoryRepositoryInterface::class);
+        $historyRepo->method('countByChannelId')->willReturn(100);
+        $historyRepo->expects(self::never())
+            ->method('findByChannelId');
+
+        $messages = [];
+        $context = $this->createContext(['#test', 'VIEW', '9223372036854775807'], $messages, channelRepo: $channelRepo, historyRepo: $historyRepo);
+
+        $cmd = $this->buildCommand(
+            $channelRepo,
+            $historyRepo,
+            new ChannelHistoryService($historyRepo),
+            $this->createStub(ChanUserAccountPort::class),
+            historyViewLimit: 5,
+        );
+        $cmd->execute($context);
+
+        self::assertContains('history.view.header', $messages);
+    }
+
+    #[Test]
     public function executeViewShowsPageHintWhenMorePagesExist(): void
     {
         $channel = $this->createChannelWithId('#test', 1);

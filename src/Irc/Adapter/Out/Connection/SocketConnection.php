@@ -25,6 +25,8 @@ use function substr;
 
 class SocketConnection implements ConnectionInterface
 {
+    public const int MAX_LINE_BYTES = 16 * 1024;
+
     private const int WRITE_CHUNK_BYTES = 16 * 1024;
 
     private ConnectionStatus $status = ConnectionStatus::Disconnected;
@@ -40,6 +42,7 @@ class SocketConnection implements ConnectionInterface
         private readonly int $timeoutSeconds = 30,
         private readonly bool $tlsVerifyPeer = true,
         private readonly LoggerInterface $logger = new NullLogger(),
+        private readonly int $maxLineBytes = self::MAX_LINE_BYTES,
     ) {}
 
     public function connect(): void
@@ -150,6 +153,18 @@ class SocketConnection implements ConnectionInterface
         $newlinePos = strpos($this->recvBuffer, "\n");
 
         while (false === $newlinePos) {
+            if (strlen($this->recvBuffer) > $this->maxLineBytes) {
+                $this->status = ConnectionStatus::Error;
+                $this->socket?->close();
+                $this->recvBuffer = '';
+
+                $this->logger->error('Incoming IRC line exceeded maximum allowed buffer size.', [
+                    'max_line_bytes' => $this->maxLineBytes,
+                ]);
+
+                throw new RuntimeException(sprintf('Incoming line exceeded maximum buffer size of %d bytes.', $this->maxLineBytes));
+            }
+
             try {
                 $chunk = $this->socket?->read();
             } catch (Throwable $e) {
@@ -171,6 +186,18 @@ class SocketConnection implements ConnectionInterface
         }
 
         if (false !== $newlinePos) {
+            if ($newlinePos > $this->maxLineBytes) {
+                $this->status = ConnectionStatus::Error;
+                $this->socket?->close();
+                $this->recvBuffer = '';
+
+                $this->logger->error('Incoming IRC line exceeded maximum allowed buffer size.', [
+                    'max_line_bytes' => $this->maxLineBytes,
+                ]);
+
+                throw new RuntimeException(sprintf('Incoming line exceeded maximum buffer size of %d bytes.', $this->maxLineBytes));
+            }
+
             $line = substr($this->recvBuffer, 0, $newlinePos);
             $this->recvBuffer = substr($this->recvBuffer, $newlinePos + 1);
 

@@ -57,6 +57,8 @@ use const PREG_SPLIT_NO_EMPTY;
  */
 final readonly class ChanServService
 {
+    private IrcRenderer $renderer;
+
     public function __construct(
         private ChanServCommandRegistry $commandRegistry,
         private RegisteredChannelRepositoryInterface $channelRepository,
@@ -75,8 +77,10 @@ final readonly class ChanServService
         private string $defaultLanguage = 'en',
         private string $defaultTimezone = 'UTC',
         private LoggerInterface $logger = new NullLogger(),
-        private ?IrcRenderer $renderer = null,
-    ) {}
+        ?IrcRenderer $renderer = null,
+    ) {
+        $this->renderer = $renderer ?? new IrcRenderer(new FixedStyleProvider(PresentationStyle::default()));
+    }
 
     /**
      * @param string     $rawText Full text of the PRIVMSG (e.g. "REGISTER #channel desc")
@@ -100,7 +104,7 @@ final readonly class ChanServService
             $messageType = $this->preferences->prefersPrivateMessages($sender->nick) ? 'PRIVMSG' : 'NOTICE';
             $this->notifier->sendMessage(
                 $sender->uid,
-                ($this->renderer ?? new IrcRenderer(new FixedStyleProvider(PresentationStyle::default())))->reply(
+                $this->renderer->reply(
                     Role::Error,
                     $this->translator->trans('presentation.unknown_command', [], 'common', $this->defaultLanguage),
                     [

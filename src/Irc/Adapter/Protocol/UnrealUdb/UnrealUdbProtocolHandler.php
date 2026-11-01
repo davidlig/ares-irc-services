@@ -76,7 +76,7 @@ final class UnrealUdbProtocolHandler implements ProtocolHandlerInterface, Sessio
     public function __construct(
         private readonly string $sid,
         private readonly UdbSessionController $coordinator,
-        private readonly UdbSessionLock $lock = new UdbSessionLock(''),
+        private readonly UdbSessionLock $lock,
         private readonly LoggerInterface $logger = new NullLogger(),
         private readonly ?EventDispatcherInterface $eventDispatcher = null,
     ) {}

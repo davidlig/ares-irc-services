@@ -21,12 +21,12 @@ final readonly class IrcChannelEntryNetworkQuery implements ChannelEntryNetworkQ
         private ChannelLookupPort $channels,
         private NetworkUserLookupPort $users,
         private string $chanservNick,
-        private ?BurstCompletePort $burstComplete = null,
+        private BurstCompletePort $burstComplete,
     ) {}
 
     public function synchronizationComplete(): bool
     {
-        return $this->burstComplete?->isComplete() ?? false;
+        return $this->burstComplete->isComplete();
     }
 
     public function findMember(string $uid): ?ChannelEntryMember

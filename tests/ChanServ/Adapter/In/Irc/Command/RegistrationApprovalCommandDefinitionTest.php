@@ -13,6 +13,7 @@ use App\ChanServ\Application\UseCase\ListPendingRegistrations\ListPendingRegistr
 use App\ChanServ\Application\UseCase\RegistrationMode\RegistrationModeHandlerInterface;
 use App\ChanServ\Application\UseCase\ReviewRegistration\ReviewRegistrationHandlerInterface;
 use App\ChanServ\Application\UseCase\ShowRegistrationStatus\ShowRegistrationStatusHandler;
+use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentValidator;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -47,7 +48,10 @@ final class RegistrationApprovalCommandDefinitionTest extends TestCase
     public function regmodeAndStatusDeclareContextualChannelSyntax(): void
     {
         $regmode = new RegmodeCommand($this->createStub(RegistrationModeHandlerInterface::class));
-        $status = new StatusCommand(new ShowRegistrationStatusHandler($this->createStub(RegisteredChannelRepositoryInterface::class)));
+        $status = new StatusCommand(
+            new ShowRegistrationStatusHandler($this->createStub(RegisteredChannelRepositoryInterface::class)),
+            $this->createStub(OperatorAuthorizationQuery::class),
+        );
 
         self::assertNull(CommandArgumentValidator::validate($regmode->getArgumentDefinition(), ['APPROVAL'])->syntaxKey);
         self::assertNull(CommandArgumentValidator::validate($regmode->getArgumentDefinition(), ['STATUS'])->syntaxKey);
