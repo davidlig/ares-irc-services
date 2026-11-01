@@ -38,6 +38,54 @@ final class InspIRCdCapabTest extends TestCase
     ];
 
     #[Test]
+    public function userModeDescriptorsPreserveNamesParametersAndRemappedLetters(): void
+    {
+        $capab = InspIRCdCapab::fromCapabLines([
+            'CAPAB USERMODES :simple:bot=b param-set:snomask=s simple:invisible=I',
+        ]);
+
+        self::assertSame(['b', 's', 'I'], $capab->getUserModes());
+        self::assertSame([
+            'bot' => ['letter' => 'b', 'kind' => 'simple'],
+            'snomask' => ['letter' => 's', 'kind' => 'param-set'],
+            'invisible' => ['letter' => 'I', 'kind' => 'simple'],
+        ], $capab->getUserModeDescriptors());
+        self::assertNull(InspIRCdCapab::fromCapabLines([])->getUserModeDescriptors());
+        self::assertNull(InspIRCdCapab::fromCapabLines(['CAPAB USERMODES'])->getUserModeDescriptors());
+        self::assertSame([], InspIRCdCapab::fromCapabLines(['CAPAB USERMODES :'])->getUserModeDescriptors());
+    }
+
+    #[Test]
+    public function userModeDescriptorsCombineDistinctFragmentsAndRejectConflictingFragments(): void
+    {
+        $capab = InspIRCdCapab::fromCapabLines([
+            'CAPAB USERMODES :simple:bot=B',
+            'CAPAB USERMODES :simple:invisible=i',
+        ]);
+        self::assertSame(['i'], $capab->getUserModes());
+        self::assertSame([
+            'bot' => ['letter' => 'B', 'kind' => 'simple'],
+            'invisible' => ['letter' => 'i', 'kind' => 'simple'],
+        ], $capab->getUserModeDescriptors());
+        self::assertNull(InspIRCdCapab::fromCapabLines([
+            'CAPAB USERMODES :simple:bot=B',
+            'CAPAB USERMODES :simple:invisible=B',
+        ])->getUserModeDescriptors());
+    }
+
+    #[Test]
+    public function userModeDescriptorsFailClosedOnMalformedOrAmbiguousInventory(): void
+    {
+        foreach ([
+            'bot=B', 'simple:bot=BB', 'simple:bot=+', 'unknown:bot=B',
+            'simple:bot=B simple:bot=b', 'simple:bot=B simple:oper=B',
+            'simple:=B', 'simple:bot=B malformed',
+        ] as $payload) {
+            self::assertNull(InspIRCdCapab::fromCapabLines(['CAPAB USERMODES :' . $payload])->getUserModeDescriptors());
+        }
+    }
+
+    #[Test]
     public function fromCapabLinesParsesRealWorldChanmodes(): void
     {
         $capab = InspIRCdCapab::fromCapabLines(self::REAL_WORLD_LINES);

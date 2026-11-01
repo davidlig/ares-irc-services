@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\Protocol\InspIRCd;
 
+use App\Irc\Adapter\Event\ConnectionLostEvent;
 use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
 use App\Irc\Adapter\Event\NetworkSyncCompleteEvent;
 use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
@@ -11,9 +12,11 @@ use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 use App\Irc\Adapter\Protocol\IRCMessage;
 use App\Irc\Adapter\Protocol\ProtocolHandlerInterface;
 use App\Irc\Adapter\Security\SensitiveDataRedactor;
+use App\Irc\Application\Port\In\AutomaticModeSupport;
 use App\Irc\Domain\Server\ServerLink;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 use function array_filter;
@@ -59,7 +62,7 @@ use function time;
  * The SID is a 3-character alphanumeric server identifier unique on the network.
  * Protocol 1206 (v4) does NOT include a hop-count before the SID (unlike 1205/v3).
  */
-final class InspIRCdProtocolHandler implements ProtocolHandlerInterface
+final class InspIRCdProtocolHandler implements ProtocolHandlerInterface, AutomaticModeSupport, EventSubscriberInterface
 {
     private const string PROTOCOL_NAME = 'inspircd';
 
@@ -67,6 +70,26 @@ final class InspIRCdProtocolHandler implements ProtocolHandlerInterface
 
     /** @var list<string> */
     private const array REQUIRED_MODULES = ['services', 'account', 'chghost', 'cloak'];
+
+    /** @var array<string, string> CAPAB name => ordinary-user semantic intention. */
+    private const array AUTOMATIC_MODE_NAMES = [
+        'invisible' => 'invisible',
+        'wallops' => 'wallops',
+        'bot' => 'bot',
+        'deaf_commonchan' => 'common-channel-only',
+        'deaf' => 'channel-deaf',
+        'privdeaf' => 'private-deaf',
+        'callerid' => 'caller-id',
+        'hidechans' => 'hide-channels',
+        'antiredirect' => 'anti-redirect',
+        'nohistory' => 'no-history',
+        'regdeaf' => 'registered-only',
+        'u_stripcolor' => 'strip-formatting',
+        'u_noctcp' => 'no-ctcp',
+    ];
+
+    /** @var array<string, string>|null */
+    private ?array $automaticModes = null;
 
     private bool $outgoingBurstSent = false;
 
@@ -92,6 +115,25 @@ final class InspIRCdProtocolHandler implements ProtocolHandlerInterface
         private readonly LoggerInterface $logger = new NullLogger(),
         private readonly ?EventDispatcherInterface $eventDispatcher = null,
     ) {}
+
+    public static function getSubscribedEvents(): array
+    {
+        return [ConnectionLostEvent::class => 'onConnectionLost'];
+    }
+
+    public function onConnectionLost(ConnectionLostEvent $event): void
+    {
+        $this->automaticModes = null;
+        $this->remoteCapabLines = [];
+        $this->remoteCapabActive = false;
+        $this->remoteProtocolVersion = null;
+        $this->remoteCapabValidated = false;
+    }
+
+    public function getAutomaticModes(): ?array
+    {
+        return $this->automaticModes;
+    }
 
     public function getProtocolName(): string
     {
@@ -132,6 +174,7 @@ final class InspIRCdProtocolHandler implements ProtocolHandlerInterface
             'sid' => $this->sid,
         ]);
 
+        $this->automaticModes = null;
         $this->outgoingBurstSent = false;
         $this->remoteSid = null;
         $this->remoteBurstComplete = false;
@@ -163,6 +206,7 @@ final class InspIRCdProtocolHandler implements ProtocolHandlerInterface
 
     private function handleError(IRCMessage $message): void
     {
+        $this->automaticModes = null;
         $reason = $message->trailing ?? ($message->params[0] ?? 'unknown');
         $this->logger->critical('Remote server sent ERROR — closing link.', [
             'reason' => SensitiveDataRedactor::redactIrcLine($reason),
@@ -178,6 +222,7 @@ final class InspIRCdProtocolHandler implements ProtocolHandlerInterface
         $subCommand = strtoupper($message->params[0] ?? '');
 
         if ('START' === $subCommand) {
+            $this->automaticModes = null;
             $this->remoteCapabLines = [];
             $this->remoteCapabActive = true;
             $this->remoteProtocolVersion = $message->params[1] ?? null;
@@ -205,11 +250,23 @@ final class InspIRCdProtocolHandler implements ProtocolHandlerInterface
 
     private function applyRemoteCapab(): void
     {
+        $capab = InspIRCdCapab::fromCapabLines($this->remoteCapabLines);
+        $descriptors = $capab->getUserModeDescriptors();
+        $this->automaticModes = null;
+        if (null !== $descriptors) {
+            $this->automaticModes = [];
+            foreach (self::AUTOMATIC_MODE_NAMES as $name => $semantic) {
+                $descriptor = $descriptors[$name] ?? null;
+                if (null !== $descriptor && 'simple' === $descriptor['kind']) {
+                    $this->automaticModes[$semantic] = $descriptor['letter'];
+                }
+            }
+        }
+
         if (null === $this->modeSupportFactory || [] === $this->remoteCapabLines) {
             return;
         }
 
-        $capab = InspIRCdCapab::fromCapabLines($this->remoteCapabLines);
         $newModeSupport = $this->modeSupportFactory->createFromCapab($capab);
 
         $module = $this->connectionHolder?->getProtocolModule();
@@ -267,6 +324,7 @@ final class InspIRCdProtocolHandler implements ProtocolHandlerInterface
             return;
         }
 
+        $this->automaticModes = null;
         $this->remoteCapabRejected = true;
         $this->logger->critical('Rejecting InspIRCd link before startup.', ['reason' => $reason]);
         $connection->disconnect();
