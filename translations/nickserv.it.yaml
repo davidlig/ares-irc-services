@@ -546,6 +546,8 @@ history:
 
 # --- HISTORY MESSAGES ---
 history.message:
+  modes_changed: "Preferenza delle modalità automatiche modificata da un operatore"
+  modes_cleared: "Preferenza delle modalità automatiche eliminata da un operatore"
   verify: "Account attivato"
   resend: "Email di verifica reinviata"
   noexpire_on: "Protezione dalla scadenza attivata"
@@ -561,6 +563,8 @@ history.message:
 
 # --- HISTORY EXTRA FIELDS ---
 history.extra:
+  old_modes: "Modalità precedenti: %value%"
+  new_modes: "Nuove modalità: %value%"
   old_email: "Vecchia email: %value%"
   new_email: "Nuova email: %value%"
   method: "Metodo: %value%"
@@ -652,6 +656,25 @@ saset:
     example: "%command_prefix%SASET Utente MSG ON"
     examples:
       - "%command_prefix%SASET Utente MSG OFF"
+
+  # --- SASET MODES ---------------------------------------------------------
+  modes:
+    syntax: "SASET <nickname> MODES [modalità]"
+    short: "Imposta le modalità automatiche di un nickname."
+    help: |-
+      Salva lettere di modalità senza segni, distinguendo maiuscole e minuscole.
+      Senza lettere, elimina la preferenza. Le modalità dipendono dal protocollo
+      e dai moduli. Applicate all’identificazione e subito se possibile, senza
+      blocco.
+    example: "%command_prefix%SASET User MODES B"
+    examples:
+      - "%command_prefix%SASET User MODES"
+    saved: "Modalità automatiche %modes% salvate per %nickname%."
+    cleared: "Preferenza delle modalità automatiche eliminata per %nickname%."
+    unchanged: "Le modalità automatiche di %nickname% non sono cambiate."
+    invalid: "Usa solo lettere di modalità supportate, senza segni né parametri."
+    unavailable: "Modalità disponibili sconosciute; attendi la sincronizzazione della rete."
+    not_registered: "Il nickname %nickname% non è registrato."
 
   # --- SASET VHOST ---------------------------------------------------------
   vhost:

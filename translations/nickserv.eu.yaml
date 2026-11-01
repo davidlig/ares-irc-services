@@ -574,6 +574,8 @@ history:
 
 # --- HISTORY MESSAGES ---
 history.message:
+  modes_changed: "Operadoreak modu automatikoen hobespena aldatu du"
+  modes_cleared: "Operadoreak modu automatikoen hobespena ezabatu du"
   verify: "Kontua aktibatu da"
   resend: "Egiaztapen-mezua berriz bidali da"
   noexpire_on: "Iraungitze-babesa aktibatu da"
@@ -589,6 +591,8 @@ history.message:
 
 # --- HISTORY EXTRA FIELDS ---
 history.extra:
+  old_modes: "Aurreko moduak: %value%"
+  new_modes: "Modu berriak: %value%"
   old_email: "Posta zaharra: %value%"
   new_email: "Posta berria: %value%"
   method: "Metodoa: %value%"
@@ -714,6 +718,25 @@ saset:
     example: "%command_prefix%SASET Erabiltzailea MSG ON"
     examples:
       - "%command_prefix%SASET Erabiltzailea MSG OFF"
+
+  # --- SASET MODES ---------------------------------------------------------
+  modes:
+    syntax: "SASET <goitizena> MODES [moduak]"
+    short: "Ezarri goitizenaren modu automatikoak."
+    help: |-
+      Gorde modu-letrak zeinurik gabe; maiuskulak eta minuskulak bereizten dira.
+      Utzi letrak hutsik ezabatzeko. Erabilgarritasuna protokoloaren eta moduluen
+      araberakoa da. Identifikatzean eta ahal bada berehala ezartzen dira; ez dira
+      blokeatzen.
+    example: "%command_prefix%SASET User MODES B"
+    examples:
+      - "%command_prefix%SASET User MODES"
+    saved: "%nickname% goitizenarentzat %modes% modu automatikoak gorde dira."
+    cleared: "%nickname% goitizenaren modu automatikoen hobespena ezabatu da."
+    unchanged: "%nickname% goitizenaren modu automatikoak ez dira aldatu."
+    invalid: "Erabili soilik onartutako modu-letrak, zeinurik eta parametrorik gabe."
+    unavailable: "Ez dakigu zein modu dauden erabilgarri; itxaron sarearen sinkronizazioari."
+    not_registered: "%nickname% goitizena ez dago erregistratuta."
 
   # --- SASET VHOST ---------------------------------------------------------
   vhost:

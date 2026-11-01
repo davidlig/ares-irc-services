@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\In\Event;
 
+use App\Irc\Adapter\Event\ConnectionLostEvent;
 use App\Irc\Adapter\Event\IrcMessageProcessedEvent;
 use App\Irc\Adapter\Event\MessageReceivedEvent;
 use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
@@ -14,6 +15,7 @@ use App\Irc\Application\PublishedEvent\ChannelSynchronizedEvent;
 use App\Irc\Application\PublishedEvent\ChannelTopicReceivedEvent as PublishedChannelTopicReceivedEvent;
 use App\Irc\Application\PublishedEvent\IrcMessageHandledEvent;
 use App\Irc\Application\PublishedEvent\IrcMessageHandlingStartedEvent;
+use App\Irc\Application\PublishedEvent\NetworkConnectionLostEvent;
 use App\Irc\Application\PublishedEvent\NetworkSynchronizationCompletedEvent;
 use App\Irc\Application\PublishedEvent\ServiceIntroductionRequestedEvent;
 use App\Irc\Application\PublishedEvent\UserDepartedChannelEvent;
@@ -39,6 +41,7 @@ final readonly class PublishedIrcEventBridge implements EventSubscriberInterface
     public static function getSubscribedEvents(): array
     {
         return [
+            ConnectionLostEvent::class => 'publishConnectionLost',
             MessageReceivedEvent::class => ['publishMessageHandlingStarted', 256],
             UserNickChangedEvent::class => ['publishNicknameChanged', -10],
             UserModeChangedEvent::class => ['publishModesChanged', -10],
@@ -54,6 +57,11 @@ final readonly class PublishedIrcEventBridge implements EventSubscriberInterface
             NetworkSyncCompleteEvent::class => ['publishNetworkSynchronizationCompleted', -256],
             IrcMessageProcessedEvent::class => ['publishMessageHandled', -200],
         ];
+    }
+
+    public function publishConnectionLost(): void
+    {
+        $this->eventDispatcher->dispatch(new NetworkConnectionLostEvent());
     }
 
     public function publishMessageHandlingStarted(): void

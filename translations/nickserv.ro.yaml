@@ -551,6 +551,8 @@ history:
 
 # --- HISTORY MESSAGES ---
 history.message:
+  modes_changed: "Preferința modurilor automate a fost schimbată de un operator"
+  modes_cleared: "Preferința modurilor automate a fost ștearsă de un operator"
   verify: "Cont activat"
   resend: "Email de verificare retrimis"
   noexpire_on: "Protecție împotriva expirării activată"
@@ -566,6 +568,8 @@ history.message:
 
 # --- HISTORY EXTRA FIELDS ---
 history.extra:
+  old_modes: "Moduri anterioare: %value%"
+  new_modes: "Moduri noi: %value%"
   old_email: "Vechi e-mail: %value%"
   new_email: "Nou e-mail: %value%"
   method: "Metodă: %value%"
@@ -654,6 +658,25 @@ saset:
     example: "%command_prefix%SASET Utilizator MSG ON"
     examples:
       - "%command_prefix%SASET Utilizator MSG OFF"
+
+  # --- SASET MODES ---------------------------------------------------------
+  modes:
+    syntax: "SASET <pseudonim> MODES [moduri]"
+    short: "Configurează modurile automate ale unui pseudonim."
+    help: |-
+      Salvează litere de mod fără semne, diferențiind majusculele de minuscule.
+      Omite literele pentru ștergere. Modurile depind de protocol și de module.
+      Se aplică la identificare și imediat dacă este posibil; nu blochează
+      modurile.
+    example: "%command_prefix%SASET User MODES B"
+    examples:
+      - "%command_prefix%SASET User MODES"
+    saved: "Modurile automate %modes% au fost salvate pentru %nickname%."
+    cleared: "Preferința modurilor automate a fost ștearsă pentru %nickname%."
+    unchanged: "Modurile automate pentru %nickname% nu s-au schimbat."
+    invalid: "Folosește numai litere de mod acceptate, fără semne sau parametri."
+    unavailable: "Modurile disponibile sunt necunoscute; așteaptă sincronizarea rețelei."
+    not_registered: "Pseudonimul %nickname% nu este înregistrat."
 
   # --- SASET VHOST ---------------------------------------------------------
   vhost:

@@ -34,16 +34,16 @@ use function substr;
 final readonly class InspIRCdCapab
 {
     /**
-     * @param array<string, int>    $prefixModes   prefix mode name → level (sorted ascending)
-     * @param list<string>          $listModes
-     * @param list<string>          $paramSetModes
-     * @param list<string>          $simpleModes
-     * @param list<string>          $modules
-     * @param list<string>          $modSupport
-     * @param list<string>          $userModes
+     * @param array<string, int>                                      $prefixModes         prefix mode name → level (sorted ascending)
+     * @param list<string>                                            $listModes
+     * @param list<string>                                            $paramSetModes
+     * @param list<string>                                            $simpleModes
+     * @param list<string>                                            $modules
+     * @param list<string>                                            $modSupport
+     * @param list<string>                                            $userModes
      * @param array<string, array{letter: string, kind: string}>|null $userModeDescriptors
-     * @param list<string>          $extbans
-     * @param array<string, string> $capabilities
+     * @param list<string>                                            $extbans
+     * @param array<string, string>                                   $capabilities
      */
     private function __construct(
         private array $prefixModes,

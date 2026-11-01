@@ -554,6 +554,8 @@ history:
 
 # --- HISTORY MESSAGES ---
 history.message:
+  modes_changed: "Automatische Moduseinstellung durch Operator geändert"
+  modes_cleared: "Automatische Moduseinstellung durch Operator gelöscht"
   verify: "Konto aktiviert"
   resend: "Bestätigungs-E-Mail erneut gesendet"
   noexpire_on: "Ablaufschutz aktiviert"
@@ -569,6 +571,8 @@ history.message:
 
 # --- HISTORY EXTRA FIELDS ---
 history.extra:
+  old_modes: "Vorherige Modi: %value%"
+  new_modes: "Neue Modi: %value%"
   old_email: "Alte E-Mail: %value%"
   new_email: "Neue E-Mail: %value%"
   method: "Methode: %value%"
@@ -664,6 +668,25 @@ saset:
     example: "%command_prefix%SASET Benutzer MSG ON"
     examples:
       - "%command_prefix%SASET Benutzer MSG OFF"
+
+  # --- SASET MODES ---------------------------------------------------------
+  modes:
+    syntax: "SASET <Nickname> MODES [Modi]"
+    short: "Automatische Nickname-Modi festlegen."
+    help: |-
+      Speichert Modusbuchstaben ohne Vorzeichen. Großschreibung beachten.
+      Ohne Buchstaben wird die Einstellung gelöscht. Protokoll und Module
+      bestimmen die Modi. Anwendung bei Anmeldung und wenn möglich sofort; keine
+      Modussperre.
+    example: "%command_prefix%SASET User MODES B"
+    examples:
+      - "%command_prefix%SASET User MODES"
+    saved: "Automatische Modi %modes% für %nickname% gespeichert."
+    cleared: "Automatische Moduseinstellung für %nickname% gelöscht."
+    unchanged: "Automatische Modi für %nickname% sind unverändert."
+    invalid: "Nur unterstützte Modusbuchstaben ohne Vorzeichen oder Parameter verwenden."
+    unavailable: "Verfügbare Modi sind unbekannt; auf Netzwerksynchronisierung warten."
+    not_registered: "Nickname %nickname% ist nicht registriert."
 
   # --- SASET VHOST ---------------------------------------------------------
   vhost:

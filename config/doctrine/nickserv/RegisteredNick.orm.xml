@@ -30,6 +30,7 @@
         <field name="lastConnectHost" type="string" length="256" nullable="true" column="last_connect_host"/>
         <field name="private" type="boolean" column="private"/>
         <field name="vhost" type="string" length="48" nullable="true" column="vhost" unique="true"/>
+        <field name="automaticModes" type="json" nullable="true" column="automatic_modes"/>
         <field name="timezone" type="string" length="64" nullable="true" column="timezone"/>
         <field name="msgPrivmsg" type="boolean" column="msg_privmsg"/>
         <field name="noExpire" type="boolean" column="no_expire">

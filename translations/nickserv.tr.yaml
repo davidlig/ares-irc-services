@@ -546,6 +546,8 @@ history:
 
 # --- HISTORY MESSAGES ---
 history.message:
+  modes_changed: "Otomatik kip tercihi bir operatör tarafından değiştirildi"
+  modes_cleared: "Otomatik kip tercihi bir operatör tarafından silindi"
   verify: "Hesap etkinleştirildi"
   resend: "Doğrulama e-postası yeniden gönderildi"
   noexpire_on: "Süre aşımı koruması etkinleştirildi"
@@ -561,6 +563,8 @@ history.message:
 
 # --- HISTORY EXTRA FIELDS ---
 history.extra:
+  old_modes: "Önceki kipler: %value%"
+  new_modes: "Yeni kipler: %value%"
   old_email: "Eski e-posta: %value%"
   new_email: "Yeni e-posta: %value%"
   method: "Yöntem: %value%"
@@ -653,6 +657,24 @@ saset:
     example: "%command_prefix%SASET Kullanıcı MSG ON"
     examples:
       - "%command_prefix%SASET Kullanıcı MSG OFF"
+
+  # --- SASET MODES ---------------------------------------------------------
+  modes:
+    syntax: "SASET <takma_ad> MODES [kipler]"
+    short: "Takma adın otomatik kiplerini ayarla."
+    help: |-
+      Kip harflerini işaretsiz ve büyük/küçük harfe duyarlı olarak kaydeder.
+      Silmek için harfleri atlayın. Kipler protokole ve yüklü modüllere bağlıdır.
+      Kimlik doğrulanınca ve mümkünse hemen uygulanır; kipleri kilitlemez.
+    example: "%command_prefix%SASET User MODES B"
+    examples:
+      - "%command_prefix%SASET User MODES"
+    saved: "%nickname% için %modes% otomatik kipleri kaydedildi."
+    cleared: "%nickname% için otomatik kip tercihi silindi."
+    unchanged: "%nickname% için otomatik kipler değişmedi."
+    invalid: "Yalnızca desteklenen kip harflerini, işaretsiz ve parametresiz kullanın."
+    unavailable: "Kullanılabilir kipler bilinmiyor; ağ eşitlemesini bekleyin."
+    not_registered: "%nickname% takma adı kayıtlı değil."
 
   # --- SASET VHOST ---------------------------------------------------------
   vhost:

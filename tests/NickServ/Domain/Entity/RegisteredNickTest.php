@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\NickServ\Domain\Entity;
 
 use App\NickServ\Domain\Entity\RegisteredNick;
+use App\NickServ\Domain\ValueObject\AutomaticModeProfile;
 use App\NickServ\Domain\ValueObject\NickStatus;
 use DateTimeImmutable;
 use InvalidArgumentException;
@@ -847,5 +848,16 @@ final class RegisteredNickTest extends TestCase
         self::assertTrue($nick->isRegistered());
         self::assertNull($nick->getEmail());
         self::assertNull($nick->getRescueTokenHash());
+    }
+
+    #[Test]
+    public function automaticModePreferencesStartEmptyAndAreReplacedSemantically(): void
+    {
+        $nick = RegisteredNick::createActive('Pedro', 'hash', null, 'en', new DateTimeImmutable());
+        self::assertSame([], $nick->getAutomaticModes()->intentions);
+        $nick->changeAutomaticModes(new AutomaticModeProfile(['bot', 'invisible']));
+        self::assertSame(['bot', 'invisible'], $nick->getAutomaticModes()->intentions);
+        $nick->changeAutomaticModes(new AutomaticModeProfile());
+        self::assertSame([], $nick->getAutomaticModes()->intentions);
     }
 }

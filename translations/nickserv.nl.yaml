@@ -549,6 +549,8 @@ history:
 
 # --- HISTORY MESSAGES ---
 history.message:
+  modes_changed: "Voorkeur voor automatische modi gewijzigd door een operator"
+  modes_cleared: "Voorkeur voor automatische modi gewist door een operator"
   verify: "Account geactiveerd"
   resend: "Verificatiemail opnieuw verzonden"
   noexpire_on: "Vervalbeveiliging ingeschakeld"
@@ -564,6 +566,8 @@ history.message:
 
 # --- HISTORY EXTRA FIELDS ---
 history.extra:
+  old_modes: "Vorige modi: %value%"
+  new_modes: "Nieuwe modi: %value%"
   old_email: "Oude e-mail: %value%"
   new_email: "Nieuwe e-mail: %value%"
   method: "Methode: %value%"
@@ -656,6 +660,25 @@ saset:
     example: "%command_prefix%SASET Gebruiker MSG ON"
     examples:
       - "%command_prefix%SASET Gebruiker MSG OFF"
+
+  # --- SASET MODES ---------------------------------------------------------
+  modes:
+    syntax: "SASET <bijnaam> MODES [modi]"
+    short: "Automatische modi voor een bijnaam instellen."
+    help: |-
+      Slaat hoofdlettergevoelige modusletters zonder tekens op.
+      Laat de letters weg om te wissen. Modi hangen af van protocol en modules.
+      Toepassing bij identificatie en zo mogelijk direct; dit vergrendelt geen
+      modi.
+    example: "%command_prefix%SASET User MODES B"
+    examples:
+      - "%command_prefix%SASET User MODES"
+    saved: "Automatische modi %modes% opgeslagen voor %nickname%."
+    cleared: "Voorkeur voor automatische modi gewist voor %nickname%."
+    unchanged: "Automatische modi voor %nickname% zijn ongewijzigd."
+    invalid: "Gebruik alleen ondersteunde modusletters zonder tekens of parameters."
+    unavailable: "Beschikbare modi zijn onbekend; wacht op netwerksynchronisatie."
+    not_registered: "Bijnaam %nickname% is niet geregistreerd."
 
   # --- SASET VHOST ---------------------------------------------------------
   vhost:

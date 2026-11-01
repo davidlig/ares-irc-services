@@ -17,7 +17,7 @@ use function str_repeat;
 final class UnrealUdbAutomaticModeInventoryTest extends TestCase
 {
     /**
-     * @param list<string> $lines
+     * @param list<string>               $lines
      * @param array<string, string>|null $expected
      */
     #[Test]

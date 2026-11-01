@@ -1,0 +1,12 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Irc\Application\Port\In;
+
+interface AutomaticModeDelivery
+{
+    public function usesNativeProfiles(): bool;
+
+    public function changeUserModes(string $uid, string $delta): bool;
+}

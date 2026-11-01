@@ -547,6 +547,8 @@ history:
 
 # --- HISTORY MESSAGES ---
 history.message:
+  modes_changed: "Operator zmienił ustawienie automatycznych trybów"
+  modes_cleared: "Operator usunął ustawienie automatycznych trybów"
   verify: "Konto aktywowane"
   resend: "Wiadomość weryfikacyjna wysłana ponownie"
   noexpire_on: "Ochrona przed wygaśnięciem włączona"
@@ -562,6 +564,8 @@ history.message:
 
 # --- HISTORY EXTRA FIELDS ---
 history.extra:
+  old_modes: "Poprzednie tryby: %value%"
+  new_modes: "Nowe tryby: %value%"
   old_email: "Poprzedni e-mail: %value%"
   new_email: "Nowy e-mail: %value%"
   method: "Metoda: %value%"
@@ -652,6 +656,24 @@ saset:
     example: "%command_prefix%SASET Użytkownik MSG ON"
     examples:
       - "%command_prefix%SASET Użytkownik MSG OFF"
+
+  # --- SASET MODES ---------------------------------------------------------
+  modes:
+    syntax: "SASET <pseudonim> MODES [tryby]"
+    short: "Ustaw automatyczne tryby pseudonimu."
+    help: |-
+      Zapisuje litery trybów bez znaków, z rozróżnianiem wielkości liter.
+      Pomiń litery, aby usunąć ustawienie. Tryby zależą od protokołu i modułów.
+      Stosowane po identyfikacji i od razu, jeśli to możliwe; nie blokują trybów.
+    example: "%command_prefix%SASET User MODES B"
+    examples:
+      - "%command_prefix%SASET User MODES"
+    saved: "Zapisano automatyczne tryby %modes% dla %nickname%."
+    cleared: "Usunięto ustawienie automatycznych trybów dla %nickname%."
+    unchanged: "Automatyczne tryby dla %nickname% nie uległy zmianie."
+    invalid: "Użyj tylko obsługiwanych liter trybów, bez znaków i parametrów."
+    unavailable: "Dostępne tryby są nieznane; poczekaj na synchronizację sieci."
+    not_registered: "Pseudonim %nickname% nie jest zarejestrowany."
 
   # --- SASET VHOST ---------------------------------------------------------
   vhost:

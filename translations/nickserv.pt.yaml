@@ -547,6 +547,8 @@ history:
 
 # --- HISTORY MESSAGES ---
 history.message:
+  modes_changed: "Preferência de modos automáticos alterada por um operador"
+  modes_cleared: "Preferência de modos automáticos limpa por um operador"
   verify: "Conta ativada"
   resend: "Email de verificação reenviado"
   noexpire_on: "Proteção contra expiração ativada"
@@ -562,6 +564,8 @@ history.message:
 
 # --- HISTORY EXTRA FIELDS ---
 history.extra:
+  old_modes: "Modos anteriores: %value%"
+  new_modes: "Novos modos: %value%"
   old_email: "Email anterior: %value%"
   new_email: "Novo email: %value%"
   method: "Método: %value%"
@@ -650,6 +654,24 @@ saset:
     example: "%command_prefix%SASET Utilizador MSG ON"
     examples:
       - "%command_prefix%SASET Utilizador MSG OFF"
+
+  # --- SASET MODES ---------------------------------------------------------
+  modes:
+    syntax: "SASET <alcunha> MODES [modos]"
+    short: "Define os modos automáticos de uma alcunha."
+    help: |-
+      Guarda letras de modo sem sinais, distinguindo maiúsculas e minúsculas.
+      Omite as letras para limpar. Os modos dependem do protocolo e dos módulos.
+      Aplicados na identificação e imediatamente se possível; não bloqueiam modos.
+    example: "%command_prefix%SASET User MODES B"
+    examples:
+      - "%command_prefix%SASET User MODES"
+    saved: "Modos automáticos %modes% guardados para %nickname%."
+    cleared: "Preferência de modos automáticos limpa para %nickname%."
+    unchanged: "Os modos automáticos de %nickname% não foram alterados."
+    invalid: "Usa apenas letras de modo suportadas, sem sinais nem parâmetros."
+    unavailable: "Os modos disponíveis são desconhecidos; aguarda a sincronização da rede."
+    not_registered: "A alcunha %nickname% não está registada."
 
   # --- SASET VHOST ---------------------------------------------------------
   vhost:

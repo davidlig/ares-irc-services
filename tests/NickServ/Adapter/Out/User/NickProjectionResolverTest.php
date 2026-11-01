@@ -8,6 +8,7 @@ use App\NickServ\Adapter\Out\User\NickProjectionResolver;
 use App\NickServ\Application\Port\In\NickProjection;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Domain\Entity\RegisteredNick;
+use App\NickServ\Domain\ValueObject\AutomaticModeProfile;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -130,6 +131,20 @@ final class NickProjectionResolverTest extends TestCase
         $repository->method('findById')->willReturn(null);
 
         self::assertNull(new NickProjectionResolver($repository)->findById(999));
+    }
+
+    #[Test]
+    public function projectsSemanticAutomaticPreferencesForBothIncrementalAndFullConsumers(): void
+    {
+        $nick = RegisteredNick::createActive('Pedro', 'hash', null, 'en', new DateTimeImmutable());
+        new ReflectionProperty(RegisteredNick::class, 'id')->setValue($nick, 12);
+        $nick->changeAutomaticModes(new AutomaticModeProfile(['bot', 'strip-formatting']));
+        $repository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repository->method('all')->willReturn([$nick]);
+        $repository->method('findById')->willReturn($nick);
+        $resolver = new NickProjectionResolver($repository);
+        self::assertSame(['bot', 'strip-formatting'], $resolver->findById(12)?->automaticModes);
+        self::assertSame(['bot', 'strip-formatting'], $resolver->all()[0]->automaticModes);
     }
 
     private static function assertProjection(NickProjection $expected, NickProjection $actual): void

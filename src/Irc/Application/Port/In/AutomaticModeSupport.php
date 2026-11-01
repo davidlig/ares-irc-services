@@ -10,7 +10,7 @@ interface AutomaticModeSupport
     /**
      * Null means that network support is not yet known.
      *
-     * @return array<string, string>|null Semantic intention => current mode letter.
+     * @return array<string, string>|null semantic intention => current mode letter
      */
     public function getAutomaticModes(): ?array;
 }

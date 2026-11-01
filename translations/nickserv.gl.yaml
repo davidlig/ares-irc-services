@@ -547,6 +547,8 @@ history:
 
 # --- HISTORY MESSAGES ---
 history.message:
+  modes_changed: "Preferencia de modos automáticos cambiada por un operador"
+  modes_cleared: "Preferencia de modos automáticos borrada por un operador"
   verify: "Conta activada"
   resend: "Correo de verificación reenviado"
   noexpire_on: "Protección de caducidade activada"
@@ -562,6 +564,8 @@ history.message:
 
 # --- HISTORY EXTRA FIELDS ---
 history.extra:
+  old_modes: "Modos anteriores: %value%"
+  new_modes: "Modos novos: %value%"
   old_email: "Correo-e anterior: %value%"
   new_email: "Novo correo-e: %value%"
   method: "Método: %value%"
@@ -650,6 +654,24 @@ saset:
     example: "%command_prefix%SASET Usuario MSG ON"
     examples:
       - "%command_prefix%SASET Usuario MSG OFF"
+
+  # --- SASET MODES ---------------------------------------------------------
+  modes:
+    syntax: "SASET <alcume> MODES [modos]"
+    short: "Configura os modos automáticos dun alcume."
+    help: |-
+      Garda letras de modo sen signos e distingue maiúsculas. Omíteas para borrar.
+      Os modos dispoñibles dependen do protocolo e dos módulos cargados.
+      Aplícanse ao identificarse e ao momento se é posible; non bloquean os modos.
+    example: "%command_prefix%SASET User MODES B"
+    examples:
+      - "%command_prefix%SASET User MODES"
+    saved: "Modos automáticos %modes% gardados para %nickname%."
+    cleared: "Preferencia de modos automáticos borrada para %nickname%."
+    unchanged: "Os modos automáticos de %nickname% non cambiaron."
+    invalid: "Usa só letras de modo admitidas, sen signos nin parámetros."
+    unavailable: "Descoñécense os modos dispoñibles; agarda pola sincronización da rede."
+    not_registered: "O alcume %nickname% non está rexistrado."
 
   # --- SASET VHOST ---------------------------------------------------------
   vhost:

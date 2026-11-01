@@ -555,6 +555,8 @@ history:
 
 # --- HISTORY MESSAGES ---
 history.message:
+  modes_changed: "Préférence de modes automatiques modifiée par un opérateur"
+  modes_cleared: "Préférence de modes automatiques effacée par un opérateur"
   verify: "Compte activé"
   resend: "Courriel de vérification renvoyé"
   noexpire_on: "Protection contre l’expiration activée"
@@ -570,6 +572,8 @@ history.message:
 
 # --- HISTORY EXTRA FIELDS ---
 history.extra:
+  old_modes: "Anciens modes : %value%"
+  new_modes: "Nouveaux modes : %value%"
   old_email: "Ancien e-mail : %value%"
   new_email: "Nouvel e-mail : %value%"
   method: "Méthode : %value%"
@@ -662,6 +666,25 @@ saset:
     example: "%command_prefix%SASET Utilisateur MSG ON"
     examples:
       - "%command_prefix%SASET Utilisateur MSG OFF"
+
+  # --- SASET MODES ---------------------------------------------------------
+  modes:
+    syntax: "SASET <pseudo> MODES [modes]"
+    short: "Définir les modes automatiques d’un pseudo."
+    help: |-
+      Enregistre des lettres de mode sans signe, en respectant leur casse.
+      Sans lettres, efface la préférence. Les modes dépendent du protocole
+      et des modules. Application à l’identification et si possible immédiatement,
+      sans verrouillage.
+    example: "%command_prefix%SASET User MODES B"
+    examples:
+      - "%command_prefix%SASET User MODES"
+    saved: "Modes automatiques %modes% enregistrés pour %nickname%."
+    cleared: "Préférence de modes automatiques effacée pour %nickname%."
+    unchanged: "Les modes automatiques de %nickname% sont inchangés."
+    invalid: "Utilisez uniquement des lettres de mode prises en charge, sans signe ni paramètre."
+    unavailable: "Les modes disponibles sont inconnus ; attendez la synchronisation du réseau."
+    not_registered: "Le pseudo %nickname% n’est pas enregistré."
 
   # --- SASET VHOST ---------------------------------------------------------
   vhost:

@@ -7,6 +7,7 @@ namespace App\Irc\Adapter\Protocol\UnrealUdb\Synchronization;
 use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionStateInterface;
 use App\NickServ\Application\Port\In\NickProjection;
 use App\NickServ\Application\Port\In\NickProjectionQuery;
+use App\NickServ\Application\PublishedEvent\NickAutomaticModesChangedEvent;
 use App\NickServ\Application\PublishedEvent\NickDropEvent;
 use App\NickServ\Application\PublishedEvent\NickPasswordHashAvailable;
 use App\NickServ\Application\PublishedEvent\NickSuspendedEvent;
@@ -15,7 +16,10 @@ use App\NickServ\Application\PublishedEvent\NickVhostChangedEvent;
 use App\OperServ\Application\Port\In\OperatorNetworkProjectionQuery;
 use App\OperServ\Application\PublishedEvent\OperIrcopChangedEvent;
 use App\OperServ\Application\PublishedEvent\OperRoleForcedVhostChangedEvent;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Throwable;
 
 use function sprintf;
 
@@ -37,6 +41,7 @@ final class UdbNickSyncSubscriber implements EventSubscriberInterface
         private OperatorNetworkProjectionQuery $operators,
         private UdbRecordExporter $exporter,
         private UdbSessionStateInterface $sessionState,
+        private LoggerInterface $logger = new NullLogger(),
     ) {}
 
     public static function getSubscribedEvents(): array
@@ -44,6 +49,7 @@ final class UdbNickSyncSubscriber implements EventSubscriberInterface
         return [
             NickPasswordHashAvailable::class => 'onPasswordHashAvailable',
             NickVhostChangedEvent::class => 'onVhostChanged',
+            NickAutomaticModesChangedEvent::class => 'onAutomaticModesChanged',
             NickSuspendedEvent::class => 'onNickSuspended',
             NickUnsuspendedEvent::class => 'onNickUnsuspended',
             NickDropEvent::class => 'onNickDrop',
@@ -91,6 +97,28 @@ final class UdbNickSyncSubscriber implements EventSubscriberInterface
         }
 
         $this->writeVhost($event->nickname, $account);
+    }
+
+    public function onAutomaticModesChanged(NickAutomaticModesChangedEvent $event): void
+    {
+        try {
+            $nick = $this->nicks->findById($event->nickId);
+            if (null === $nick) {
+                return;
+            }
+            $key = sprintf('%s::modes', $event->nickname);
+            $records = $this->exporter->nickRecords($nick);
+            $saved = isset($records[$key])
+                ? $this->recordWriter->insert(self::BLOCK, $key, $records[$key])
+                : $this->recordWriter->delete(self::BLOCK, $key);
+            if ($saved) {
+                return;
+            }
+        } catch (Throwable) {
+            // The SQL preference is already committed. Preserve later listeners;
+            // a future authoritative snapshot reconciles the native projection.
+        }
+        $this->logger->warning('Automatic nickname modes could not be projected.', ['nickname' => $event->nickname]);
     }
 
     public function onNickSuspended(NickSuspendedEvent $event): void

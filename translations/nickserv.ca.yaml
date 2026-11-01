@@ -550,6 +550,8 @@ history:
 
 # --- HISTORY MESSAGES ---
 history.message:
+  modes_changed: "Preferència de modes automàtics canviada per un operador"
+  modes_cleared: "Preferència de modes automàtics esborrada per un operador"
   verify: "Compte activat"
   resend: "Correu de verificació reenviat"
   noexpire_on: "Protecció de caducitat activada"
@@ -565,6 +567,8 @@ history.message:
 
 # --- HISTORY EXTRA FIELDS ---
 history.extra:
+  old_modes: "Modes anteriors: %value%"
+  new_modes: "Modes nous: %value%"
   old_email: "Correu anterior: %value%"
   new_email: "Correu nou: %value%"
   method: "Mètode: %value%"
@@ -657,6 +661,26 @@ saset:
     example: "%command_prefix%SASET Usuari MSG ON"
     examples:
       - "%command_prefix%SASET Usuari MSG OFF"
+
+  # --- SASET MODES ---------------------------------------------------------
+  modes:
+    syntax: "SASET <sobrenom> MODES [modes]"
+    short: "Configura els modes automàtics d’un sobrenom."
+    help: |-
+      Desa lletres de mode sense signes i distingeix majúscules. Omet-les per
+      esborrar.
+      Els modes disponibles depenen del protocol i dels mòduls carregats.
+      S’apliquen en identificar-se i immediatament si és possible; no són un
+      bloqueig.
+    example: "%command_prefix%SASET User MODES B"
+    examples:
+      - "%command_prefix%SASET User MODES"
+    saved: "Modes automàtics %modes% desats per a %nickname%."
+    cleared: "Preferència de modes automàtics esborrada per a %nickname%."
+    unchanged: "Els modes automàtics de %nickname% no han canviat."
+    invalid: "Fes servir només lletres de mode admeses, sense signes ni paràmetres."
+    unavailable: "Es desconeixen els modes disponibles; espera la sincronització de la xarxa."
+    not_registered: "El sobrenom %nickname% no està registrat."
 
   # --- SASET VHOST ---------------------------------------------------------
   vhost:

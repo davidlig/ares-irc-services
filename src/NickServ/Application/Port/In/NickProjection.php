@@ -8,6 +8,7 @@ use DateTimeImmutable;
 
 final readonly class NickProjection
 {
+    /** @param list<string> $automaticModes */
     public function __construct(
         public int $id,
         public string $nickname,
@@ -19,5 +20,6 @@ final readonly class NickProjection
         public bool $suspended = false,
         public ?string $suspensionReason = null,
         public ?DateTimeImmutable $suspendedUntil = null,
+        public array $automaticModes = [],
     ) {}
 }

@@ -546,6 +546,8 @@ history:
 
 # --- HISTORY MESSAGES ---
 history.message:
+  modes_changed: "Automatic mode preference changed by operator"
+  modes_cleared: "Automatic mode preference cleared by operator"
   verify: "Account activated"
   resend: "Verification email resent"
   noexpire_on: "Expiration protection enabled"
@@ -561,6 +563,8 @@ history.message:
 
 # --- HISTORY EXTRA FIELDS ---
 history.extra:
+  old_modes: "Previous modes: %value%"
+  new_modes: "New modes: %value%"
   old_email: "Old email: %value%"
   new_email: "New email: %value%"
   method: "Method: %value%"
@@ -651,6 +655,24 @@ saset:
     example: "%command_prefix%SASET User MSG ON"
     examples:
       - "%command_prefix%SASET User MSG OFF"
+
+  # --- SASET MODES ---------------------------------------------------------
+  modes:
+    syntax: "SASET <nickname> MODES [modes]"
+    short: "Set automatic nickname modes."
+    help: |-
+      Stores case-sensitive mode letters without signs. Omit them to clear.
+      Available modes depend on the protocol and loaded modules.
+      Applies on identification and immediately when possible; not a mode lock.
+    example: "%command_prefix%SASET User MODES B"
+    examples:
+      - "%command_prefix%SASET User MODES"
+    saved: "Automatic modes %modes% saved for %nickname%."
+    cleared: "Automatic mode preference cleared for %nickname%."
+    unchanged: "Automatic modes for %nickname% are unchanged."
+    invalid: "Use only supported mode letters without signs or parameters."
+    unavailable: "Mode availability is unknown; wait for network synchronization."
+    not_registered: "Nickname %nickname% is not registered."
 
   # --- SASET VHOST ---------------------------------------------------------
   vhost:

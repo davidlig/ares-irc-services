@@ -6,6 +6,7 @@ namespace App\Irc\Adapter\Protocol\UnrealUdb\Synchronization;
 
 use App\ChanServ\Application\Port\In\ChannelProjection;
 use App\ChanServ\Application\Port\In\ChannelProjectionQuery;
+use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbAutomaticModeProfile;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbBlock;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbSchema;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbValue;
@@ -14,6 +15,8 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbClock;
 use App\Irc\Adapter\Protocol\UnrealUdb\UdbChannelModesFormatter;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbPathCodec;
 use App\Irc\Application\Port\In\ActiveChannelModeSupportProviderInterface;
+use App\Irc\Application\Port\In\AutomaticModeDelivery;
+use App\Irc\Application\Port\In\AutomaticModeSupport;
 use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\NickServ\Application\Port\In\NickProjection;
 use App\NickServ\Application\Port\In\NickProjectionQuery;
@@ -47,6 +50,8 @@ final readonly class UdbRecordExporter
         private UdbChannelSuspendReasonResolver $suspendReasonResolver,
         private UdbChannelModesFormatter $modesFormatter = new UdbChannelModesFormatter(),
         private UdbClock $clock = new SystemUdbClock(),
+        private ?AutomaticModeSupport $automaticModeSupport = null,
+        private ?AutomaticModeDelivery $automaticModeDelivery = null,
     ) {}
 
     public function getChannelLookup(): ChannelLookupPort
@@ -197,6 +202,14 @@ final readonly class UdbRecordExporter
         $vhost = $this->effectiveVhost($nick);
         if (null !== $vhost) {
             $records[sprintf('%s::vhost', $nick->nickname)] = $vhost;
+        }
+
+        $automaticModes = UdbAutomaticModeProfile::encode(
+            $nick->automaticModes,
+            $this->automaticModeDelivery?->usesNativeProfiles() ? $this->automaticModeSupport?->getAutomaticModes() : null,
+        );
+        if (null !== $automaticModes) {
+            $records[sprintf('%s::modes', $nick->nickname)] = $automaticModes;
         }
 
         $operclass = $this->operators->findForNick($nick->id, $nick->nickname)?->operclass;

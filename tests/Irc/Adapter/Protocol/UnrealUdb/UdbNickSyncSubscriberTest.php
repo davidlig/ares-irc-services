@@ -15,6 +15,7 @@ use App\Irc\Application\Port\In\ActiveChannelModeSupportProviderInterface;
 use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\NickServ\Application\Port\In\NickProjection;
 use App\NickServ\Application\Port\In\NickProjectionQuery;
+use App\NickServ\Application\PublishedEvent\NickAutomaticModesChangedEvent;
 use App\NickServ\Application\PublishedEvent\NickDropEvent;
 use App\NickServ\Application\PublishedEvent\NickPasswordHashAvailable;
 use App\NickServ\Application\PublishedEvent\NickSuspendedEvent;
@@ -29,6 +30,8 @@ use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(UdbNickSyncSubscriber::class)]
@@ -42,6 +45,7 @@ final class UdbNickSyncSubscriberTest extends TestCase
         self::assertSame([
             NickPasswordHashAvailable::class => 'onPasswordHashAvailable',
             NickVhostChangedEvent::class => 'onVhostChanged',
+            NickAutomaticModesChangedEvent::class => 'onAutomaticModesChanged',
             NickSuspendedEvent::class => 'onNickSuspended',
             NickUnsuspendedEvent::class => 'onNickUnsuspended',
             NickDropEvent::class => 'onNickDrop',
@@ -344,6 +348,45 @@ final class UdbNickSyncSubscriberTest extends TestCase
 
         $sub = $this->createSubscriber(repo: $repo, writer: $writer);
         $sub->onOperIrcopChanged(new OperIrcopChangedEvent(7, 'oper1'));
+    }
+
+    #[Test]
+    public function automaticModeChangesUseTheSameNativeProjectionAsFullExportsAndClearTheRecord(): void
+    {
+        $time = new DateTimeImmutable();
+        foreach ([['bot', 'channel-deaf', 'invisible'], []] as $intentions) {
+            $nick = new NickProjection(7, 'nick', null, null, false, null, false, automaticModes: $intentions);
+            $repo = $this->createStub(NickProjectionQuery::class);
+            $repo->method('findById')->willReturn($nick);
+            $writer = $this->createMock(UdbRecordWriterInterface::class);
+            if ([] !== $intentions) {
+                $writer->expects(self::once())->method('insert')->with('N', 'nick::modes', '+Bd')->willReturn(true);
+                $writer->expects(self::never())->method('delete');
+            } else {
+                $writer->expects(self::once())->method('delete')->with('N', 'nick::modes')->willReturn(true);
+                $writer->expects(self::never())->method('insert');
+            }
+            $this->createSubscriber(repo: $repo, writer: $writer)->onAutomaticModesChanged(new NickAutomaticModesChangedEvent(7, 'nick', [], $intentions, 'Admin', 1, '*', '*', $time));
+        }
+        $writer = $this->createMock(UdbRecordWriterInterface::class);
+        $writer->expects(self::never())->method('insert');
+        $writer->expects(self::never())->method('delete');
+        $this->createSubscriber(writer: $writer)->onAutomaticModesChanged(new NickAutomaticModesChangedEvent(7, 'gone', [], ['bot'], 'Admin', 1, '*', '*', $time));
+    }
+
+    #[Test]
+    public function automaticModeDeliveryExceptionDoesNotAbortLaterSavedEventSubscribers(): void
+    {
+        $repo = $this->createStub(NickProjectionQuery::class);
+        $repo->method('findById')->willReturn(new NickProjection(7, 'nick', null, null, false, null, false, automaticModes: ['bot']));
+        $writer = $this->createMock(UdbRecordWriterInterface::class);
+        $writer->expects(self::once())->method('insert')->willThrowException(new RuntimeException('network failed'));
+        $dispatcher = new EventDispatcher();
+        $dispatcher->addSubscriber($this->createSubscriber(repo: $repo, writer: $writer));
+        $ran = false;
+        $dispatcher->addListener(NickAutomaticModesChangedEvent::class, static function () use (&$ran): void { $ran = true; }, -10);
+        $dispatcher->dispatch(new NickAutomaticModesChangedEvent(7, 'nick', [], ['bot'], 'Admin', 1, '*', '*', new DateTimeImmutable()));
+        self::assertTrue($ran);
     }
 
     private function createSubscriber(
