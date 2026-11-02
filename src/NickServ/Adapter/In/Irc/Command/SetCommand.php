@@ -14,9 +14,11 @@ use App\NickServ\Application\Service\NickServClientKeyResolver;
 use App\NickServ\Application\UseCase\Set\SetNickSetting;
 use App\NickServ\Application\UseCase\Set\SetNickSettingHandlerInterface;
 use App\NickServ\Application\UseCase\Set\SetNickSettingOption;
+use App\NickServ\Domain\Entity\RegisteredNick;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentValidator;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
 use App\Shared\Adapter\In\Irc\Presentation\Role;
 
 use function array_keys;
@@ -31,6 +33,22 @@ use function strtoupper;
 
 final readonly class SetCommand implements NickServCommandInterface
 {
+    public const array SUBCOMMAND_HELP_PARAMETERS = [
+        'PRIVATE' => [
+            'private_on' => ['value' => 'PRIVATE ON', 'component' => Component::Emphasis],
+            'private_off' => ['value' => 'PRIVATE OFF', 'component' => Component::Emphasis],
+        ],
+        'MSG' => [
+            'msg_on' => ['value' => 'MSG ON', 'component' => Component::Emphasis],
+            'privmsg' => ['value' => 'PRIVMSG', 'component' => Component::Emphasis],
+            'msg_off' => ['value' => 'MSG OFF', 'component' => Component::Emphasis],
+            'notice' => ['value' => 'NOTICE', 'component' => Component::Emphasis],
+        ],
+        'VHOST' => [
+            'set_vhost' => ['value' => 'SET VHOST', 'component' => Component::Emphasis],
+        ],
+    ];
+
     public function __construct(private SetNickSettingHandlerInterface $handler) {}
 
     public function getName(): string
@@ -96,7 +114,23 @@ final readonly class SetCommand implements NickServCommandInterface
             'help_key' => 'set.' . strtolower($option) . '.help',
             'syntax_key' => 'set.' . strtolower($option) . '.syntax',
             'example_key' => 'set.' . strtolower($option) . '.example',
+            'help_params' => self::subCommandHelpParameters($option),
         ], $options);
+    }
+
+    /** @return array<string, array{value: string, component: Component}> */
+    public static function subCommandHelpParameters(string $option): array
+    {
+        if ('LANGUAGE' !== $option) {
+            return self::SUBCOMMAND_HELP_PARAMETERS[$option] ?? [];
+        }
+
+        $parameters = [];
+        foreach (RegisteredNick::SUPPORTED_LANGUAGES as $language) {
+            $parameters['language_' . $language] = ['value' => $language, 'component' => Component::IndentedEmphasis];
+        }
+
+        return $parameters;
     }
 
     public function isOperOnly(): bool

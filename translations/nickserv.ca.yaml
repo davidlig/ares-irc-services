@@ -57,14 +57,16 @@ identify:
   short: "Identificar-vos com a propietari d'un sobrenom."
   help: |-
     Autentica la sessió amb %nickserv% fent servir el sobrenom i la contrasenya.
-    Després d'identificar-te correctament rebràs el mode registrat %emphasis_0%.
+    Després d'identificar-te correctament rebràs el mode registrat %registered_mode%.
     Si fas servir un sobrenom de convidat, es restaura el sobrenom registrat.
   example: "%command_prefix%IDENTIFY Ares la_meva_contrasenya123"
   native_syntax: "/NICK <nickname>:<password> | /NICK <nickname>!<password>"
   native_short: "Mostra la sintaxi d’autenticació nativa per canvi de sobrenom."
+  nickname_syntax: "/NICK <nickname>:<password>"
+  occupied_nickname_syntax: "/NICK <nickname>!<password>"
   native_help: |-
-    Fes servir %emphasis_0% o, si el
-    sobrenom està ocupat, %emphasis_1%.
+    Fes servir %nickname_syntax% o, si el
+    sobrenom està ocupat, %occupied_nickname_syntax%.
   native_example: "/NICK Ares:la_meva_contrasenya123"
   native_examples:
     - "/NICK Ares!la_meva_contrasenya123"
@@ -206,20 +208,20 @@ set:
     help: |-
       Canvia l'idioma que %nickserv% i altres serveis utilitzen quan us parlen.
       Idiomes disponibles:
-      %emphasis_0% (Català)
-      %emphasis_1% (Alemany)
-      %emphasis_2% (Grec)
-      %emphasis_3% (Anglès)
-      %emphasis_4% (Espanyol)
-      %emphasis_5% (Basc)
-      %emphasis_6% (Francès)
-      %emphasis_7% (Gallec)
-      %emphasis_8% (Italià)
-      %emphasis_9% (Neerlandès)
-      %emphasis_10% (Polonès)
-      %emphasis_11% (Portuguès)
-      %emphasis_12% (Romanès)
-      %emphasis_13% (Turc)
+      %language_ca% (Català)
+      %language_de% (Alemany)
+      %language_el% (Grec)
+      %language_en% (Anglès)
+      %language_es% (Espanyol)
+      %language_eu% (Basc)
+      %language_fr% (Francès)
+      %language_gl% (Gallec)
+      %language_it% (Italià)
+      %language_nl% (Neerlandès)
+      %language_pl% (Polonès)
+      %language_pt% (Portuguès)
+      %language_ro% (Romanès)
+      %language_tr% (Turc)
     example: "%command_prefix%SET LANGUAGE ca"
     success: "Idioma canviat a %language%."
     invalid: "Idioma no admès. Idiomes disponibles: %languages%."
@@ -245,8 +247,8 @@ set:
     short: "Mostra o amaga la informació del teu sobrenom."
     help: |-
       Controla la visibilitat de la informació del vostre sobrenom a l'ordre INFO.
-      Amb %emphasis_0% només vós i els operadors d'IRC podeu veure els vostres detalls.
-      Amb %emphasis_1% la vostra informació és pública per a tothom.
+      Amb %private_on% només vós i els operadors d'IRC podeu veure els vostres detalls.
+      Amb %private_off% la vostra informació és pública per a tothom.
     example: "%command_prefix%SET PRIVATE ON"
     examples:
       - "%command_prefix%SET PRIVATE OFF"
@@ -261,8 +263,8 @@ set:
     short: "Canvia la manera com els serveis es comuniquen amb tu."
     help: |-
       Controla com %nickserv% i la resta de serveis t'envien missatges.
-      Amb %emphasis_0%, les respostes s'envien com a %emphasis_1%.
-      Amb %emphasis_2%, les respostes s'envien com a %emphasis_3%.
+      Amb %msg_on%, les respostes s'envien com a %privmsg%.
+      Amb %msg_off%, les respostes s'envien com a %notice%.
     example: "%command_prefix%SET MSG ON"
     examples:
       - "%command_prefix%SET MSG OFF"
@@ -279,7 +281,7 @@ set:
       Estableix un nom d'amfitrió personalitzat que veuran altres usuaris quan
       t'hagis identificat.
 
-      Per eliminar-lo, executa %emphasis_0% sense indicar cap valor.
+      Per eliminar-lo, executa %set_vhost% sense indicar cap valor.
 
       Només s'admeten lletres (a-z, A-Z), dígits, guions i punts.
       Cada segment ha de començar i acabar amb una lletra o un dígit.
@@ -728,9 +730,9 @@ regmode:
   help: |-
     Configura el mode de registre dels comptes nous.
 
-    %emphasis_0% Envia el token de verificació al correu electrònic de l'usuari.
-    %emphasis_1% Lliura el token de verificació directament per IRC.
-    %emphasis_2% Mostra el mode de registre actual sense modificar-lo.
+    %email_mode% Envia el token de verificació al correu electrònic de l'usuari.
+    %token_mode% Lliura el token de verificació directament per IRC.
+    %status_mode% Mostra el mode de registre actual sense modificar-lo.
 
     Els registres pendents mantenen el mode amb què s'han iniciat.
 
@@ -906,37 +908,3 @@ rescue:
     Si no el vols canviar, ignora aquest missatge.
   replacement_unavailable: "La contrasenya s’ha restablert, però no s’ha pogut emetre un testimoni nou. L’actual continua sent vàlid."
   temporarily_unavailable: "El lliurament del testimoni de recuperació no està disponible temporalment. Torna-ho a provar més tard."
-
-# --- HELP FRAGMENTS -----------------------------------------------------------
-help_fragments:
-  identify_help_0: "+r"
-  set_language_help_0: "ca"
-  set_language_help_1: "de"
-  set_language_help_2: "el"
-  set_language_help_3: "en"
-  set_language_help_4: "es"
-  set_language_help_5: "eu"
-  set_language_help_6: "fr"
-  set_language_help_7: "gl"
-  set_language_help_8: "it"
-  set_language_help_9: "nl"
-  set_language_help_10: "pl"
-  set_language_help_11: "pt"
-  set_language_help_12: "ro"
-  set_language_help_13: "tr"
-  set_private_help_0: "PRIVATE ON"
-  set_private_help_1: "PRIVATE OFF"
-  set_msg_help_0: "MSG ON"
-  set_msg_help_1: "PRIVMSG"
-  set_msg_help_2: "MSG OFF"
-  set_msg_help_3: "NOTICE"
-  set_vhost_help_0: "SET VHOST"
-  regmode_help_0: "EMAIL:"
-  regmode_help_1: "TOKEN:"
-  regmode_help_2: "STATUS:"
-  identify_native_help_0: "/NICK <nickname>:<password>"
-  identify_native_help_1: "/NICK <nickname>!<password>"
-  suspend_help_0: "%d"
-  suspend_help_1: "%h"
-  suspend_help_2: "%m"
-  suspend_help_3: "0"

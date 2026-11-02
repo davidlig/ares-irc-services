@@ -57,15 +57,17 @@ identify:
   short: "Identificarse como o propietario dun alcume."
   help: |-
     Autentica a súa sesión con %nickserv% usando o seu alcume e contrasinal.
-    Despois dunha identificación exitosa recibirá o modo rexistrado %emphasis_0%
+    Despois dunha identificación exitosa recibirá o modo rexistrado %registered_mode%
     e, se estaba usando un alcume de convidado, restauraráselle o seu alcume
     rexistrado.
   example: "%command_prefix%IDENTIFY Ares meu_contrasinal123"
   native_syntax: "/NICK <alcume>:<contrasinal> | /NICK <alcume>!<contrasinal>"
   native_short: "Mostra a sintaxe de autenticación nativa por cambio de alcume."
+  nickname_syntax: "/NICK <alcume>:<contrasinal>"
+  occupied_nickname_syntax: "/NICK <alcume>!<contrasinal>"
   native_help: |-
     Este protocolo autentica as contas mediante cambios de alcume.
-    Usa %emphasis_0% ou, se o alcume está ocupado, %emphasis_1%.
+    Usa %nickname_syntax% ou, se o alcume está ocupado, %occupied_nickname_syntax%.
   native_example: "/NICK Ares:meu_contrasinal123"
   native_examples:
     - "/NICK Ares!meu_contrasinal123"
@@ -206,20 +208,20 @@ set:
     help: |-
       Cambia o idioma que %nickserv% e outros servizos usan ao falar con vostede.
       Idiomas dispoñibles:
-      %emphasis_0% (catalán)
-      %emphasis_1% (alemán)
-      %emphasis_2% (grego)
-      %emphasis_3% (inglés)
-      %emphasis_4% (español)
-      %emphasis_5% (éuscaro)
-      %emphasis_6% (francés)
-      %emphasis_7% (galego)
-      %emphasis_8% (italiano)
-      %emphasis_9% (neerlandés)
-      %emphasis_10% (polaco)
-      %emphasis_11% (portugués)
-      %emphasis_12% (romanés)
-      %emphasis_13% (turco)
+      %language_ca% (catalán)
+      %language_de% (alemán)
+      %language_el% (grego)
+      %language_en% (inglés)
+      %language_es% (español)
+      %language_eu% (éuscaro)
+      %language_fr% (francés)
+      %language_gl% (galego)
+      %language_it% (italiano)
+      %language_nl% (neerlandés)
+      %language_pl% (polaco)
+      %language_pt% (portugués)
+      %language_ro% (romanés)
+      %language_tr% (turco)
     example: "%command_prefix%SET LANGUAGE es"
     success: "Idioma cambiado a %language%."
     invalid: "Idioma non soportado. Idiomas dispoñibles: %languages%."
@@ -244,8 +246,8 @@ set:
     short: "Amosa ou oculta a información do teu alcume."
     help: |-
       Controla a visibilidade da información do seu alcume no comando INFO.
-      Con %emphasis_0% só vostede e os operadores de IRC poden ver os seus detalles.
-      Con %emphasis_1% a súa información é pública para todos.
+      Con %private_on% só vostede e os operadores de IRC poden ver os seus detalles.
+      Con %private_off% a súa información é pública para todos.
     example: "%command_prefix%SET PRIVATE ON"
     examples:
       - "%command_prefix%SET PRIVATE OFF"
@@ -260,8 +262,8 @@ set:
     short: "Cambia como se comunican contigo os servizos."
     help: |-
       Controla como %nickserv% e o resto dos servizos che envían mensaxes.
-      Con %emphasis_0%, as respostas envíanse como %emphasis_1%.
-      Con %emphasis_2%, as respostas envíanse como %emphasis_3%.
+      Con %msg_on%, as respostas envíanse como %privmsg%.
+      Con %msg_off%, as respostas envíanse como %notice%.
     example: "%command_prefix%SET MSG ON"
     examples:
       - "%command_prefix%SET MSG OFF"
@@ -278,7 +280,7 @@ set:
       Establece un nome de host personalizado que verán as demais persoas cando
       te identifiques.
 
-      Para eliminalo, executa %emphasis_0% sen indicar un valor.
+      Para eliminalo, executa %set_vhost% sen indicar un valor.
 
       Só se permiten letras (a-z, A-Z), díxitos, guións e puntos.
       Cada bloque debe comezar e rematar cunha letra ou un díxito.
@@ -719,9 +721,9 @@ regmode:
   help: |-
     Configura o modo de rexistro das novas contas.
 
-    %emphasis_0% Envía o token de verificación ao correo electrónico da persoa usuaria.
-    %emphasis_1% Entrega o token de verificación directamente por IRC.
-    %emphasis_2% Amosa o modo actual sen modificalo.
+    %email_mode% Envía o token de verificación ao correo electrónico da persoa usuaria.
+    %token_mode% Entrega o token de verificación directamente por IRC.
+    %status_mode% Amosa o modo actual sen modificalo.
 
     Os rexistros pendentes manteñen o modo co que se iniciaron.
 
@@ -899,37 +901,3 @@ rescue:
     Se non queres cambialo, ignora esta mensaxe.
   replacement_unavailable: "O contrasinal restableceuse, pero non se puido emitir un token novo. O actual segue sendo válido."
   temporarily_unavailable: "A entrega do token de recuperación non está dispoñible temporalmente. Téntao máis tarde."
-
-# --- HELP FRAGMENTS -----------------------------------------------------------
-help_fragments:
-  identify_help_0: "+r"
-  set_language_help_0: "ca"
-  set_language_help_1: "de"
-  set_language_help_2: "el"
-  set_language_help_3: "en"
-  set_language_help_4: "es"
-  set_language_help_5: "eu"
-  set_language_help_6: "fr"
-  set_language_help_7: "gl"
-  set_language_help_8: "it"
-  set_language_help_9: "nl"
-  set_language_help_10: "pl"
-  set_language_help_11: "pt"
-  set_language_help_12: "ro"
-  set_language_help_13: "tr"
-  set_private_help_0: "PRIVATE ON"
-  set_private_help_1: "PRIVATE OFF"
-  set_msg_help_0: "MSG ON"
-  set_msg_help_1: "PRIVMSG"
-  set_msg_help_2: "MSG OFF"
-  set_msg_help_3: "NOTICE"
-  set_vhost_help_0: "SET VHOST"
-  regmode_help_0: "EMAIL:"
-  regmode_help_1: "TOKEN:"
-  regmode_help_2: "STATUS:"
-  identify_native_help_0: "/NICK <alcume>:<contrasinal>"
-  identify_native_help_1: "/NICK <alcume>!<contrasinal>"
-  suspend_help_0: "%d"
-  suspend_help_1: "%h"
-  suspend_help_2: "%m"
-  suspend_help_3: "0"

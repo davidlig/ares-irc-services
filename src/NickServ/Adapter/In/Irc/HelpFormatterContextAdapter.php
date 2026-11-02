@@ -6,6 +6,7 @@ namespace App\NickServ\Adapter\In\Irc;
 
 use App\NickServ\Adapter\In\Irc\Help\HelpableCommandInterface;
 use App\NickServ\Adapter\In\Irc\Help\HelpFormatterContextInterface;
+use App\NickServ\Adapter\In\Irc\Help\HelpParameterResolver;
 use App\NickServ\Application\Port\Out\NickServOperatorAccess;
 use App\NickServ\Application\Security\NickServPermission;
 use App\Shared\Adapter\In\Irc\Presentation\Component;
@@ -13,7 +14,6 @@ use App\Shared\Adapter\In\Irc\Presentation\Fragment;
 use App\Shared\Adapter\In\Irc\Presentation\Role;
 
 use function is_string;
-use function str_replace;
 use function str_starts_with;
 use function strlen;
 use function strtolower;
@@ -36,6 +36,7 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
     public function __construct(
         private NickServContext $context,
         private NickServOperatorAccess $operatorAccess,
+        private HelpParameterResolver $parameterResolver = new HelpParameterResolver(),
     ) {}
 
     /**
@@ -56,33 +57,9 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
      */
     public function trans(string $key, array $params = []): string
     {
-        $inline = [
-            'identify.help' => 1, 'identify.native_help' => 2, 'set.language.help' => 14, 'set.private.help' => 2,
-            'set.msg.help' => 4, 'set.vhost.help' => 1, 'regmode.help' => 3,
-        ];
-        if (isset($inline[$key])) {
-            for ($i = 0; $i < $inline[$key]; ++$i) {
-                $fragmentKey = 'help_fragments.' . str_replace('.', '_', $key) . '_' . $i;
-                $fragmentComponent = match ($key) {
-                    'identify.native_help' => Component::Command,
-                    'set.language.help' => Component::IndentedEmphasis,
-                    'regmode.help' => Component::BulletedRow,
-                    default => Component::Emphasis,
-                };
-                $text = $this->context->trans($fragmentKey);
-                $params['emphasis_' . $i] = $this->context->hasHelpPresentation() ? new Fragment($text, $fragmentComponent) : $text;
-            }
-
-            return $this->context->formatHelp(Component::Text, $key, $params);
-        }
-
-        if ('suspend.help' === $key) {
-            for ($i = 0; $i < 4; ++$i) {
-                $text = $this->context->trans('help_fragments.suspend_help_' . $i);
-                $params['emphasis_' . $i] = $this->context->hasHelpPresentation() ? new Fragment($text, Component::Command) : $text;
-            }
-
-            return $this->context->formatHelp(Component::Text, $key, $params);
+        $resolved = $this->parameterResolver->resolve($params, $this->context->trans(...), $this->context->hasHelpPresentation());
+        if ($resolved !== $params) {
+            return $this->context->formatHelp(Component::Text, $key, $resolved);
         }
 
         if (!$this->context->hasHelpPresentation()) {

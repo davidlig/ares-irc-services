@@ -9,7 +9,12 @@ use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
 use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\NickServ\Adapter\In\Irc\Command\HelpCommand;
+use App\NickServ\Adapter\In\Irc\Command\IdentifyCommand;
 use App\NickServ\Adapter\In\Irc\Command\RegisterCommand;
+use App\NickServ\Adapter\In\Irc\Command\RegmodeCommand;
+use App\NickServ\Adapter\In\Irc\Command\SetCommand;
+use App\NickServ\Adapter\In\Irc\Command\SuspendCommand;
+use App\NickServ\Adapter\In\Irc\Help\HelpParameterResolver;
 use App\NickServ\Adapter\In\Irc\Help\UnifiedHelpFormatter;
 use App\NickServ\Adapter\In\Irc\HelpFormatterContextAdapter;
 use App\NickServ\Adapter\In\Irc\NickServCommandInterface;
@@ -21,6 +26,7 @@ use App\NickServ\Adapter\Out\InMemory\PendingVerificationRegistry;
 use App\NickServ\Adapter\Out\InMemory\RecoveryTokenRegistry;
 use App\NickServ\Application\Port\Out\NickServOperatorAccess;
 use App\NickServ\Application\UseCase\Register\RegisterNickHandlerInterface;
+use App\NickServ\Application\UseCase\Set\SetNickSettingHandlerInterface;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use App\Shared\Adapter\In\Irc\Presentation\Appearance;
@@ -47,10 +53,11 @@ use function implode;
 use function is_scalar;
 use function str_contains;
 use function str_repeat;
-use function str_replace;
+use function strtoupper;
 use function strtr;
 
 #[CoversClass(HelpCommand::class)]
+#[CoversClass(HelpParameterResolver::class)]
 #[CoversClass(HelpFormatterContextAdapter::class)]
 #[CoversClass(UnifiedHelpFormatter::class)]
 final class HelpCommandTest extends TestCase
@@ -1392,7 +1399,7 @@ final class HelpCommandTest extends TestCase
             $adapter = new HelpFormatterContextAdapter($context, $this->createStub(NickServOperatorAccess::class));
             $general = new NickServContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), null, 'HELP', [], $notifier, $translator, 'es', 'UTC', 'NOTICE', $registry, new PendingVerificationRegistry(), new RecoveryTokenRegistry(), $this->createServiceNicks(), $renderer);
             $this->createHelpCommand()->execute($general);
-            $rendered[] = [$messages[0], $adapter->trans('set.msg.help'), $messages[1], $adapter->trans('set.language.help'), $adapter->trans('regmode.help')];
+            $rendered[] = [$messages[0], $adapter->trans('set.msg.help', self::helpParameters('set.msg.help')), $messages[1], $adapter->trans('set.language.help', self::helpParameters('set.language.help')), $adapter->trans('regmode.help', self::helpParameters('regmode.help'))];
         }
         self::assertStringContainsString("  /msg CustomNick \x02\x0303REGISTER Clave\$egura_123\x03\x0F", $rendered[0][0]);
         self::assertStringContainsString('>> /msg CustomNick [REGISTER Clave$egura_123]', $rendered[1][0]);
@@ -1436,7 +1443,7 @@ final class HelpCommandTest extends TestCase
             $adapter = new HelpFormatterContextAdapter($context, $this->createStub(NickServOperatorAccess::class));
             $general = new NickServContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), null, 'HELP', [], $notifier, $translator, 'en', 'UTC', 'NOTICE', $registry, new PendingVerificationRegistry(), new RecoveryTokenRegistry(), $this->createServiceNicks(), $renderer);
             $this->createHelpCommand(30)->execute($general);
-            $rendered[] = [$messages[0], $adapter->trans('set.msg.help'), $messages[1], $adapter->trans('set.language.help'), $adapter->trans('regmode.help')];
+            $rendered[] = [$messages[0], $adapter->trans('set.msg.help', self::helpParameters('set.msg.help')), $messages[1], $adapter->trans('set.language.help', self::helpParameters('set.language.help')), $adapter->trans('regmode.help', self::helpParameters('regmode.help'))];
         }
         self::assertStringContainsString("  /msg CustomNick \x02\x0303REGISTER SafePa\$\$word_123\x03\x0F", $rendered[0][0]);
         self::assertStringContainsString('>> /msg CustomNick [REGISTER SafePa$$word_123]', $rendered[1][0]);
@@ -1463,12 +1470,14 @@ final class HelpCommandTest extends TestCase
             $context = new NickServContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), null, 'HELP', [], $notifier, $translator, $language, 'UTC', 'NOTICE', new NickServCommandRegistry([]), new PendingVerificationRegistry(), new RecoveryTokenRegistry(), $this->createServiceNicks(), $renderer);
             $this->createHelpCommand(30)->execute($context);
             self::assertStringContainsString('CustomNick', $messages[0], $language);
+            self::assertStringContainsString('%registered_mode%', $translator->trans('identify.help', [], 'nickserv'));
+            self::assertSame('help_fragments.identify_help_0', $translator->trans('help_fragments.identify_help_0', [], 'nickserv'));
             self::assertStringNotContainsString('%marker%', $messages[0], $language);
             self::assertStringNotContainsString('%duration%', $messages[0], $language);
             self::assertStringContainsString("\x1F\x030430", $messages[0], $language);
             $adapter = new HelpFormatterContextAdapter($context, $this->createStub(NickServOperatorAccess::class));
             foreach (['identify.help', 'identify.native_help', 'set.language.help', 'set.private.help', 'set.msg.help', 'set.vhost.help', 'regmode.help', 'suspend.help'] as $key) {
-                $text = $adapter->trans($key);
+                $text = $adapter->trans($key, self::helpParameters($key));
                 self::assertStringNotContainsString('%emphasis_', $text, $language . ': ' . $key);
                 self::assertStringNotContainsString('help_fragments.', $text, $language . ': ' . $key);
             }
@@ -1477,7 +1486,7 @@ final class HelpCommandTest extends TestCase
             $unknown = $adapter->trans('help.set_timezone.region_unknown', ['syntax' => 'HELP SET TIMEZONE']);
             self::assertStringContainsString('HELP SET TIMEZONE', $unknown, $language);
             if ('el' === $language) {
-                self::assertStringContainsString("\x02\x0303%d\x03\x0F", $adapter->trans('suspend.help'));
+                self::assertStringContainsString("\x02\x0303%d\x03\x0F", $adapter->trans('suspend.help', self::helpParameters('suspend.help')));
             }
         }
     }
@@ -1502,11 +1511,14 @@ final class HelpCommandTest extends TestCase
             self::assertStringNotContainsString('%duration%', $text);
         } else {
             $adapter = new HelpFormatterContextAdapter($context, $this->createStub(NickServOperatorAccess::class));
-            $text = $adapter->trans($key);
-            for ($i = 0; $i < $fragments; ++$i) {
-                if (str_contains($translator->trans($key, [], 'nickserv'), '%emphasis_' . $i . '%')) {
-                    self::assertStringContainsString($translator->trans('help_fragments.' . str_replace('.', '_', $key) . '_' . $i, [], 'nickserv'), $text);
+            $text = $adapter->trans($key, self::helpParameters($key));
+            $parameters = self::helpParameters($key);
+            self::assertCount($fragments, $parameters);
+            foreach ($parameters as $name => $fragment) {
+                if (str_contains($translator->trans($key, [], 'nickserv'), '%' . $name . '%')) {
+                    self::assertStringContainsString(isset($fragment['translate']) ? $translator->trans($fragment['value'], [], 'nickserv') : $fragment['value'], $text);
                 }
+                self::assertStringNotContainsString('%' . $name . '%', $text);
             }
             self::assertStringNotContainsString('%emphasis_', $text);
             self::assertStringNotContainsString('help_fragments.', $text);
@@ -1524,6 +1536,51 @@ final class HelpCommandTest extends TestCase
                 yield $language . ' ' . $key => [$language, $key, $fragments];
             }
         }
+    }
+
+    #[Test]
+    public function realSetHelpRoutesCommandOwnedParameters(): void
+    {
+        foreach ([false, true] as $styled) {
+            foreach (['LANGUAGE' => 'ca', 'PRIVATE' => 'PRIVATE ON', 'MSG' => 'PRIVMSG', 'VHOST' => 'SET VHOST'] as $option => $literal) {
+                $translator = new Translator('es');
+                $translator->addLoader('yaml', new IrcYamlTranslationLoader());
+                $translator->addResource('yaml', dirname(__DIR__, 6) . '/translations/nickserv.es.yaml', 'es', 'nickserv');
+                $command = new SetCommand($this->createStub(SetNickSettingHandlerInterface::class));
+                $messages = [];
+                $notifier = $this->createStub(NickServNotifierInterface::class);
+                $notifier->method('getNick')->willReturn('CustomNick');
+                $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void {
+                    $messages[] = $message;
+                });
+                $renderer = $styled ? new IrcRenderer(new FixedStyleProvider(PresentationStyle::default())) : null;
+                $context = new NickServContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), null, 'HELP', ['SET', $option], $notifier, $translator, 'es', 'UTC', 'NOTICE', new NickServCommandRegistry([$command]), new PendingVerificationRegistry(), new RecoveryTokenRegistry(), $this->createServiceNicks(), $renderer);
+
+                $this->createHelpCommand()->execute($context);
+
+                $text = implode("\n", $messages);
+                self::assertStringContainsString($literal, $text);
+                self::assertDoesNotMatchRegularExpression('/%(?:language_[a-z]+|private_on|private_off|msg_on|privmsg|msg_off|notice|set_vhost)%/', $text);
+                if ($styled) {
+                    self::assertStringContainsString("\x02", $text);
+                } else {
+                    self::assertStringNotContainsString("\x02", $text);
+                    self::assertStringNotContainsString("\x03", $text);
+                }
+            }
+        }
+    }
+
+    /** @return array<string, array{value: string, component: Component, translate?: bool}> */
+    private static function helpParameters(string $key): array
+    {
+        return match ($key) {
+            'identify.help' => IdentifyCommand::HELP_PARAMETERS,
+            'identify.native_help' => IdentifyCommand::NATIVE_HELP_PARAMETERS,
+            'regmode.help' => RegmodeCommand::HELP_PARAMETERS,
+            'suspend.help' => SuspendCommand::HELP_PARAMETERS,
+            default => SetCommand::subCommandHelpParameters(strtoupper(explode('.', $key)[1])),
+        };
     }
 
     private function createHelpCommand(int $inactivityExpiryDays = 0): HelpCommand

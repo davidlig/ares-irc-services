@@ -20,6 +20,7 @@ use App\NickServ\Application\UseCase\Identify\IdentifyNickOutcome;
 use App\NickServ\Application\UseCase\Identify\IdentifyNickResult;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\Presentation\Component;
 use App\Shared\Adapter\In\Irc\Presentation\Role;
 
 use function ceil;
@@ -27,6 +28,15 @@ use function strcasecmp;
 
 final readonly class IdentifyCommand implements NickServCommandInterface
 {
+    public const array HELP_PARAMETERS = [
+        'registered_mode' => ['value' => '+r', 'component' => Component::Emphasis],
+    ];
+
+    public const array NATIVE_HELP_PARAMETERS = [
+        'nickname_syntax' => ['value' => 'identify.nickname_syntax', 'component' => Component::Command, 'translate' => true],
+        'occupied_nickname_syntax' => ['value' => 'identify.occupied_nickname_syntax', 'component' => Component::Command, 'translate' => true],
+    ];
+
     public function __construct(
         private IdentifyNickHandlerInterface $handler,
         private NetworkUserLookupPort $userLookup,
@@ -105,7 +115,7 @@ final readonly class IdentifyCommand implements NickServCommandInterface
 
     public function getHelpParams(): array
     {
-        return [];
+        return $this->usesNativeAuthentication() ? self::NATIVE_HELP_PARAMETERS : self::HELP_PARAMETERS;
     }
 
     public function execute(NickServContext $context): null

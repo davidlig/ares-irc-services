@@ -71,7 +71,7 @@ interface NickServCommandInterface extends HelpableCommandInterface
      *
      * Return an empty array for commands without sub-options.
      *
-     * @return array<int, array{name: string, desc_key: string, help_key: string, syntax_key: string, example_key: string}>
+     * @return array<int, array{name: string, desc_key: string, help_key: string, syntax_key: string, example_key: string, help_params?: array<string, mixed>}>
      */
     public function getSubCommandHelp(): array;
 
