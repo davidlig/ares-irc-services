@@ -87,6 +87,8 @@ final class UdbNickSyncSubscriber implements EventSubscriberInterface
         if (null !== $vhost) {
             $this->recordWriter->insert(self::BLOCK, sprintf('%s::vhost', $event->nickname), $vhost);
         }
+
+        $this->writeAutomaticModes($event->nickId, $event->nickname, $nick);
     }
 
     public function onVhostChanged(NickVhostChangedEvent $event): void
@@ -101,24 +103,7 @@ final class UdbNickSyncSubscriber implements EventSubscriberInterface
 
     public function onAutomaticModesChanged(NickAutomaticModesChangedEvent $event): void
     {
-        try {
-            $nick = $this->nicks->findById($event->nickId);
-            if (null === $nick) {
-                return;
-            }
-            $key = sprintf('%s::modes', $event->nickname);
-            $records = $this->exporter->nickRecords($nick);
-            $saved = isset($records[$key])
-                ? $this->recordWriter->insert(self::BLOCK, $key, $records[$key])
-                : $this->recordWriter->delete(self::BLOCK, $key);
-            if ($saved) {
-                return;
-            }
-        } catch (Throwable) {
-            // The SQL preference is already committed. Preserve later listeners;
-            // a future authoritative snapshot reconciles the native projection.
-        }
-        $this->logger->warning('Automatic nickname modes could not be projected.', ['nickname' => $event->nickname]);
+        $this->writeAutomaticModes($event->nickId, $event->nickname);
     }
 
     public function onNickSuspended(NickSuspendedEvent $event): void
@@ -166,6 +151,28 @@ final class UdbNickSyncSubscriber implements EventSubscriberInterface
         }
 
         $this->recordWriter->insert(self::BLOCK, $path, $operclass);
+    }
+
+    private function writeAutomaticModes(int $nickId, string $nickname, ?NickProjection $nick = null): void
+    {
+        try {
+            $nick ??= $this->nicks->findById($nickId);
+            if (null === $nick) {
+                return;
+            }
+            $key = sprintf('%s::modes', $nickname);
+            $records = $this->exporter->nickRecords($nick);
+            $saved = isset($records[$key])
+                ? $this->recordWriter->insert(self::BLOCK, $key, $records[$key])
+                : $this->recordWriter->delete(self::BLOCK, $key);
+            if ($saved) {
+                return;
+            }
+        } catch (Throwable) {
+            // The SQL preference is already committed. Preserve later listeners;
+            // a future authoritative snapshot reconciles the native projection.
+        }
+        $this->logger->warning('Automatic nickname modes could not be projected.', ['nickname' => $nickname]);
     }
 
     private function writeVhost(string $nickname, NickProjection $account): void

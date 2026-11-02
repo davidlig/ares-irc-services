@@ -102,11 +102,20 @@ final class UdbNickSyncSubscriberTest extends TestCase
     public function onPasswordHashAvailableRefreshesVhostWhenNickExists(): void
     {
         $repo = $this->createStub(NickProjectionQuery::class);
-        $repo->method('findById')->willReturn($this->createNick('nick', 'nick.tld'));
+        $repo->method('findById')->willReturn(new NickProjection(
+            7,
+            'nick',
+            'argon2id:$argon2id$hash',
+            'nick.tld',
+            false,
+            null,
+            false,
+            automaticModes: ['bot', 'channel-deaf'],
+        ));
 
         $inserts = [];
         $writer = $this->createMock(UdbRecordWriterInterface::class);
-        $writer->expects($this->exactly(2))->method('insert')->willReturnCallback(
+        $writer->expects($this->exactly(3))->method('insert')->willReturnCallback(
             static function (string $block, string $path, string $value) use (&$inserts): bool {
                 $inserts[] = [$block, $path, $value];
 
@@ -121,6 +130,29 @@ final class UdbNickSyncSubscriberTest extends TestCase
         self::assertSame('nick::pass', $inserts[0][1]);
         self::assertStringStartsWith('crypt:$2y$', $inserts[0][2]);
         self::assertSame(['N', 'nick::vhost', 'nick.tld'], $inserts[1]);
+        self::assertSame(['N', 'nick::modes', '+Bd'], $inserts[2]);
+    }
+
+    #[Test]
+    public function onPasswordHashAvailableClearsAnIncompatibleAutomaticModeProjection(): void
+    {
+        $repo = $this->createStub(NickProjectionQuery::class);
+        $repo->method('findById')->willReturn(new NickProjection(
+            7,
+            'nick',
+            'argon2id:$argon2id$hash',
+            null,
+            false,
+            null,
+            false,
+            automaticModes: ['invisible'],
+        ));
+
+        $writer = $this->createMock(UdbRecordWriterInterface::class);
+        $writer->expects($this->once())->method('delete')->with('N', 'nick::modes')->willReturn(true);
+
+        $sub = $this->createSubscriber(repo: $repo, writer: $writer);
+        $sub->onPasswordHashAvailable(new NickPasswordHashAvailable(7, 'nick', null));
     }
 
     #[Test]
