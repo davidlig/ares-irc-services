@@ -19,13 +19,13 @@
 # --- ERROR --------------------------------------------------------------------
 error:
   invalid_channel: "Geçersiz kanal adı. %example% kullanın."
-  invalid_channel_example: "#channel"
+  invalid_channel_example: "#Ares_Help"
   generic: "Bir hata oluştu. Lütfen tekrar deneyin."
 
 # --- REGISTER -----------------------------------------------------------------
 register:
   syntax: "REGISTER <#channel> <açıklama>"
-  example: "%command_prefix%REGISTER #kanal Topluluk projesi"
+  example: "%command_prefix%REGISTER #Ares_Help Topluluk projesi"
   short: "Bir kanalı kaydedin."
   help: |-
     Kanalı kaydedip takma adına bağlar. %nickserv% ile kimliğini doğrula.
@@ -45,7 +45,7 @@ register:
 # --- INFO ---------------------------------------------------------------------
 info:
   syntax: "INFO <#channel>"
-  example: "%command_prefix%INFO #kanal"
+  example: "%command_prefix%INFO #Ares_Help"
   short: "Kanal bilgilerini gösterin."
   help: |-
     Kayıtlı bir kanalın sahibi, kayıt bilgileri, son etkinliği ve yapılandırma
@@ -102,10 +102,10 @@ info:
 # --- SET ----------------------------------------------------------------------
 set:
   syntax: "SET <#kanal> <seçenek> [parametreler]"
-  example: "%command_prefix%SET #kanal DESC Bir topluluk kanalı"
+  example: "%command_prefix%SET #Ares_Help DESC Bir topluluk kanalı"
   examples:
-    - "%command_prefix%SET #kanal URL https://example.test"
-    - "%command_prefix%SET #kanal MLOCK ON"
+    - "%command_prefix%SET #Ares_Help URL https://example.test"
+    - "%command_prefix%SET #Ares_Help MLOCK ON"
   short: "Kanal seçeneklerini değiştirin."
   help: |-
     Bir kanal seçeneğini değiştirir. Her seçeneğin yardımı gereksinimleri ve
@@ -117,9 +117,9 @@ set:
     token_required: "Mevcut kurucunun onaylanmış belirteciyle SET <#kanal> FOUNDER <takma_ad> <token> kullanın."
     token_unavailable: "Mevcut kurucunun onaylanmış kurtarma belirteci yok. Önce kimliğini doğrulamalı ve VERIFY kullanmalıdır."
     syntax: "SET <#kanal> FOUNDER <takma_ad> [token]"
-    example: "%command_prefix%SET #kanal FOUNDER Alicia"
+    example: "%command_prefix%SET #Ares_Help FOUNDER Ares"
     examples:
-      - "%command_prefix%SET #kanal FOUNDER Alicia token-confirmado"
+      - "%command_prefix%SET #Ares_Help FOUNDER Ares token-confirmado"
     short: "Kanalı başka bir kayıtlı rumuza devredin."
     help: |-
       Geçerli kurucunun tokenını doğruladıktan sonra kurucuyu değiştirir. Kurucu
@@ -137,9 +137,9 @@ set:
   # --- SET SUCCESSOR -------------------------------------------------------
   successor:
     syntax: "SET <#channel> SUCCESSOR [nickname]"
-    example: "%command_prefix%SET #kanal SUCCESSOR Alicia"
+    example: "%command_prefix%SET #Ares_Help SUCCESSOR Ares"
     examples:
-      - "%command_prefix%SET #kanal SUCCESSOR"
+      - "%command_prefix%SET #Ares_Help SUCCESSOR"
     short: "Kanal halefini ayarlayın."
     help: |-
       Bir takma adı kanalın halefi olarak atar. Takma ad belirtilmezse mevcut halef
@@ -155,7 +155,7 @@ set:
   # --- SET DESC ------------------------------------------------------------
   desc:
     syntax: "SET <#channel> DESC <açıklama>"
-    example: "%command_prefix%SET #kanal DESC Bir topluluk kanalı"
+    example: "%command_prefix%SET #Ares_Help DESC Bir topluluk kanalı"
     short: "Kanal açıklamasını değiştirin."
     help: "Kanal açıklamasını değiştirin (zorunlu)."
     updated: "Açıklama güncellendi."
@@ -163,9 +163,9 @@ set:
   # --- SET URL -------------------------------------------------------------
   url:
     syntax: "SET <#channel> URL [url]"
-    example: "%command_prefix%SET #kanal URL https://example.test"
+    example: "%command_prefix%SET #Ares_Help URL https://example.test"
     examples:
-      - "%command_prefix%SET #kanal URL"
+      - "%command_prefix%SET #Ares_Help URL"
     short: "Kanal URL'sini ayarlayın."
     help: "Kanalın web adresini değiştirir. Silmek için URL belirtmeyin."
     updated: "URL güncellendi."
@@ -174,9 +174,9 @@ set:
   # --- SET EMAIL -----------------------------------------------------------
   email:
     syntax: "SET <#kanal> EMAIL [e-posta]"
-    example: "%command_prefix%SET #kanal EMAIL equipo@example.test"
+    example: "%command_prefix%SET #Ares_Help EMAIL equipo@example.test"
     examples:
-      - "%command_prefix%SET #kanal EMAIL"
+      - "%command_prefix%SET #Ares_Help EMAIL"
     short: "Kanal e-postasını ayarlayın."
     help: |-
       Kanalın e-posta adresini değiştirir. Silmek için adres belirtmeyin.
@@ -189,9 +189,9 @@ set:
   # --- SET ENTRYMSG --------------------------------------------------------
   entrymsg:
     syntax: "SET <#kanal> ENTRYMSG [mesaj]"
-    example: "%command_prefix%SET #kanal ENTRYMSG Hoş geldiniz"
+    example: "%command_prefix%SET #Ares_Help ENTRYMSG Hoş geldiniz"
     examples:
-      - "%command_prefix%SET #kanal ENTRYMSG"
+      - "%command_prefix%SET #Ares_Help ENTRYMSG"
     short: "Kanal giriş mesajını ayarlayın."
     help: "Kanal giriş mesajını (NOTICE) ayarlar. Silmek için mesaj belirtmeyin."
     updated: "Giriş mesajı güncellendi."
@@ -200,9 +200,9 @@ set:
   # --- SET TOPICLOCK -------------------------------------------------------
   topiclock:
     syntax: "SET <#channel> TOPICLOCK {ON|OFF}"
-    example: "%command_prefix%SET #kanal TOPICLOCK ON"
+    example: "%command_prefix%SET #Ares_Help TOPICLOCK ON"
     examples:
-      - "%command_prefix%SET #kanal TOPICLOCK OFF"
+      - "%command_prefix%SET #Ares_Help TOPICLOCK OFF"
     short: "Kanal başlığını kilitleyin."
     help: |-
       Kanal konusunun değiştirilmesini engeller. Etkinleştirildiğinde mevcut konu
@@ -215,9 +215,9 @@ set:
   # --- SET MLOCK -----------------------------------------------------------
   mlock:
     syntax: "SET <#channel> MLOCK {ON|OFF}"
-    example: "%command_prefix%SET #kanal MLOCK ON"
+    example: "%command_prefix%SET #Ares_Help MLOCK ON"
     examples:
-      - "%command_prefix%SET #kanal MLOCK OFF"
+      - "%command_prefix%SET #Ares_Help MLOCK OFF"
     short: "Kanal modlarını kilitleyin."
     help: "Mevcut kanal modlarını (örn. +nt) kilitler. ON durumunda, modlar değiştirilemez."
     no_modes: "mod yok"
@@ -229,9 +229,9 @@ set:
   # --- SET PRIVATE ---------------------------------------------------------
   private:
     syntax: "SET <#channel> PRIVATE {ON|OFF}"
-    example: "%command_prefix%SET #kanal PRIVATE ON"
+    example: "%command_prefix%SET #Ares_Help PRIVATE ON"
     examples:
-      - "%command_prefix%SET #kanal PRIVATE OFF"
+      - "%command_prefix%SET #Ares_Help PRIVATE OFF"
     short: "Kanal bilgilerini erişimi olmayan kullanıcılardan gizleyin."
     help: |-
       Açık olduğunda kanal bilgilerini yalnızca kurucu ve erişimi olan kullanıcılar
@@ -242,9 +242,9 @@ set:
   # --- SET SECURE ----------------------------------------------------------
   secure:
     syntax: "SET <#channel> SECURE {ON|OFF}"
-    example: "%command_prefix%SET #kanal SECURE ON"
+    example: "%command_prefix%SET #Ares_Help SECURE ON"
     examples:
-      - "%command_prefix%SET #kanal SECURE OFF"
+      - "%command_prefix%SET #Ares_Help SECURE OFF"
     short: "Kanal rütbeleri için erişim listesi gerektirin."
     help: "Erişim listesinde olmayan takma adlara kanalda rütbe verilmesini engeller."
     on: "SECURE şimdi AÇIK."
@@ -255,9 +255,9 @@ set:
   # --- SET VERBOSE ---------------------------------------------------------
   verbose:
     syntax: "SET <#channel> VERBOSE {ON|OFF}"
-    example: "%command_prefix%SET #kanal VERBOSE ON"
+    example: "%command_prefix%SET #Ares_Help VERBOSE ON"
     examples:
-      - "%command_prefix%SET #kanal VERBOSE OFF"
+      - "%command_prefix%SET #Ares_Help VERBOSE OFF"
     short: "Kanal işlem bildirimlerini aç/kapat."
     help: |-
       Kanalda gerçekleştirilen eylemler için kanala NOTICE yayınlarını
@@ -268,7 +268,7 @@ set:
 # --- STATUS -------------------------------------------------------------------
 status:
   syntax: "STATUS <#kanal>"
-  example: "%command_prefix%STATUS #canal"
+  example: "%command_prefix%STATUS #Ares_Help"
   header: "Kanal durumu %channel%"
   short: "Kanal kayıt durumunu gösterin."
   help: |-
@@ -310,10 +310,10 @@ status:
 # --- ACCESS -------------------------------------------------------------------
 access:
   syntax: "ACCESS <#kanal> <seçenek> [parametreler]"
-  example: "%command_prefix%ACCESS #kanal LIST"
+  example: "%command_prefix%ACCESS #Ares_Help LIST"
   examples:
-    - "%command_prefix%ACCESS #kanal ADD Alicia 100"
-    - "%command_prefix%ACCESS #kanal DEL Alicia"
+    - "%command_prefix%ACCESS #Ares_Help ADD Ares 100"
+    - "%command_prefix%ACCESS #Ares_Help DEL Ares"
   short: "Erişim listesini yönetin."
   help: "Kanalın erişim listesini yönetir."
   unknown_sub: "Bilinmeyen alt komut %sub%. LIST, ADD veya DEL kullanın."
@@ -325,7 +325,7 @@ access:
   # --- ACCESS LIST ---------------------------------------------------------
   list:
     syntax: "ACCESS <#channel> LIST"
-    example: "%command_prefix%ACCESS #kanal LIST"
+    example: "%command_prefix%ACCESS #Ares_Help LIST"
     short: "Erişim listesini listele (ACCESSLIST seviyesi gerektirir)."
     help: "Her giriş için rumuz ve seviyeyi gösterir."
     header: "%channel% için erişim listesi"
@@ -335,7 +335,7 @@ access:
   # --- ACCESS ADD ----------------------------------------------------------
   add:
     syntax: "ACCESS <#channel> ADD <nickname> <seviye>"
-    example: "%command_prefix%ACCESS #kanal ADD Alicia 100"
+    example: "%command_prefix%ACCESS #Ares_Help ADD Ares 100"
     short: "Erişim seviyesi ekle veya güncelle (ACCESSCHANGE seviyesi gerektirir)."
     help: |-
       Seviye 1-499. Yalnızca kendi seviyenizin altındaki seviyeleri
@@ -346,7 +346,7 @@ access:
   # --- ACCESS DEL ----------------------------------------------------------
   del:
     syntax: "ACCESS <#channel> DEL <nickname>"
-    example: "%command_prefix%ACCESS #kanal DEL Alicia"
+    example: "%command_prefix%ACCESS #Ares_Help DEL Ares"
     short: "Erişim listesinden kaldır (ACCESSCHANGE seviyesi gerektirir)."
     help: "Yalnızca seviyesi sizinkinden düşük olan rumuzları kaldırabilirsiniz."
     not_in_list: "%nickname% erişim listesinde değil."
@@ -356,7 +356,7 @@ access:
 # --- DELACCESS ----------------------------------------------------------------
 delaccess:
   syntax: "DELACCESS <#channel>"
-  example: "%command_prefix%DELACCESS #kanal"
+  example: "%command_prefix%DELACCESS #Ares_Help"
   short: "Bir kanaldan kendi erişiminizi kaldırın."
   help: |-
     Kanalın erişim listesindeki kendi kaydınızı siler. Kimliğiniz doğrulanmış
@@ -370,15 +370,15 @@ delaccess:
 # --- AKICK --------------------------------------------------------------------
 akick:
   syntax: "AKICK <#kanal> <seçenek> [parametreler]"
-  example: "%command_prefix%AKICK #kanal ADD *!*@* 0"
+  example: "%command_prefix%AKICK #Ares_Help ADD *!*@* 0"
   examples:
-    - "%command_prefix%AKICK #kanal ADD *!*@* 7d Spam"
-    - "%command_prefix%AKICK #kanal DEL *!*@*"
-    - "%command_prefix%AKICK #kanal DEL 2"
-    - "%command_prefix%AKICK #kanal LIST"
-    - "%command_prefix%AKICK #kanal VIEW 1"
-    - "%command_prefix%AKICK #kanal CLEAR"
-    - "%command_prefix%AKICK #kanal CHECK Alice"
+    - "%command_prefix%AKICK #Ares_Help ADD *!*@* 7d Spam"
+    - "%command_prefix%AKICK #Ares_Help DEL *!*@*"
+    - "%command_prefix%AKICK #Ares_Help DEL 2"
+    - "%command_prefix%AKICK #Ares_Help LIST"
+    - "%command_prefix%AKICK #Ares_Help VIEW 1"
+    - "%command_prefix%AKICK #Ares_Help CLEAR"
+    - "%command_prefix%AKICK #Ares_Help CHECK Ares"
   short: "Otomatik atma listesini yönetin."
   help: "Kanalın otomatik atma kayıtlarını ve isteğe bağlı sürelerini yönetir."
   unknown_sub: "Bilinmeyen alt komut %sub%. ADD, DEL, LIST, VIEW, CLEAR veya CHECK kullanın."
@@ -390,9 +390,9 @@ akick:
   # --- AKICK ADD -----------------------------------------------------------
   add:
     syntax: "AKICK <#channel> ADD <maske> [süre] [gerekçe]"
-    example: "%command_prefix%AKICK #kanal ADD *!*@* 0"
+    example: "%command_prefix%AKICK #Ares_Help ADD *!*@* 0"
     examples:
-      - "%command_prefix%AKICK #kanal ADD *!*@* 7d Spam"
+      - "%command_prefix%AKICK #Ares_Help ADD *!*@* 7d Spam"
     short: "AKICK girişi ekleyin."
     help: |-
       Kanalın otomatik atma listesine bir maske ekler.
@@ -406,9 +406,9 @@ akick:
   # --- AKICK DEL -----------------------------------------------------------
   del:
     syntax: "AKICK <#channel> DEL {<maske>|<numara>}"
-    example: "%command_prefix%AKICK #kanal DEL *!*@*"
+    example: "%command_prefix%AKICK #Ares_Help DEL *!*@*"
     examples:
-      - "%command_prefix%AKICK #kanal DEL 2"
+      - "%command_prefix%AKICK #Ares_Help DEL 2"
     short: "AKICK girişini kaldırın."
     help: "Tam maske veya LIST'teki giriş numarası ile kaldırın."
     not_found: "AKICK %mask% bulunamadı."
@@ -418,7 +418,7 @@ akick:
   # --- AKICK LIST ----------------------------------------------------------
   list:
     syntax: "AKICK <#channel> LIST"
-    example: "%command_prefix%AKICK #kanal LIST"
+    example: "%command_prefix%AKICK #Ares_Help LIST"
     short: "AKICK girişlerini listeleyin."
     help: "Maske, gerekçe, süre ve ekleyeni gösterir."
     header: "%channel% için AKICK listesi"
@@ -428,9 +428,9 @@ akick:
   # --- AKICK VIEW ----------------------------------------------------------
   view:
     syntax: "AKICK <#channel> VIEW {<maske>|<numara>}"
-    example: "%command_prefix%AKICK #kanal VIEW 1"
+    example: "%command_prefix%AKICK #Ares_Help VIEW 1"
     examples:
-      - "%command_prefix%AKICK #kanal VIEW *!*@bad.host"
+      - "%command_prefix%AKICK #Ares_Help VIEW *!*@bad.host"
     short: "Ayrıntılı AKICK girişi meta verilerini görüntüle."
     help: |-
       Belirli bir otomatik atma girişi için neden, oluşturan, oluşturulma tarihi,
@@ -452,7 +452,7 @@ akick:
   # --- AKICK CLEAR ---------------------------------------------------------
   clear:
     syntax: "AKICK <#channel> CLEAR"
-    example: "%command_prefix%AKICK #kanal CLEAR"
+    example: "%command_prefix%AKICK #Ares_Help CLEAR"
     short: "Tüm AKICK girişlerini temizle."
     help: |-
       Kanalın tüm otomatik atma girişlerini kaldırır.
@@ -464,7 +464,7 @@ akick:
   # --- AKICK CHECK ---------------------------------------------------------
   check:
     syntax: "AKICK <#channel> CHECK <takma_ad>"
-    example: "%command_prefix%AKICK #kanal CHECK Alice"
+    example: "%command_prefix%AKICK #Ares_Help CHECK Ares"
     short: "Bir takma adın AKICK girişleriyle eşleşip eşleşmediğini kontrol et."
     help: |-
       Bağlı bir kullanıcının kanaldaki herhangi bir otomatik atma girişiyle eşleşip eşleşmediğini denetler.
@@ -476,7 +476,7 @@ akick:
   # --- AKICK ENFORCE -------------------------------------------------------
   enforce:
     syntax: "AKICK <#channel> ENFORCE"
-    example: "%command_prefix%AKICK #channel ENFORCE"
+    example: "%command_prefix%AKICK #Ares_Help ENFORCE"
     short: "AKICK kayıtlarını mevcut kanal kullanıcılarına uygula."
     help: |-
       Kanaldaki kullanıcıları AKICK listesiyle karşılaştırır
@@ -488,10 +488,10 @@ akick:
 # --- LEVELS -------------------------------------------------------------------
 levels:
   syntax: "LEVELS <#kanal> <seçenek> [parametreler]"
-  example: "%command_prefix%LEVELS #kanal LIST"
+  example: "%command_prefix%LEVELS #Ares_Help LIST"
   examples:
-    - "%command_prefix%LEVELS #kanal SET OPDEOP 50"
-    - "%command_prefix%LEVELS #kanal RESET"
+    - "%command_prefix%LEVELS #Ares_Help SET OPDEOP 50"
+    - "%command_prefix%LEVELS #Ares_Help RESET"
   short: "Kanal seviyelerini yapılandırın."
   help: |-
     Kanal işlemleri için gereken en düşük erişim düzeylerini yapılandırır. Düzeyleri
@@ -503,7 +503,7 @@ levels:
   # --- LEVELS LIST ---------------------------------------------------------
   list:
     syntax: "LEVELS <#channel> LIST"
-    example: "%command_prefix%LEVELS #kanal LIST"
+    example: "%command_prefix%LEVELS #Ares_Help LIST"
     short: "Seviye gereksinimlerini listeleyin."
     help: "Her seviye anahtarını ve değerini gösterir (ayarlanmamışsa varsayılanlar)."
     header: "%channel% için düzeyler"
@@ -511,7 +511,7 @@ levels:
   # --- LEVELS SET ----------------------------------------------------------
   set:
     syntax: "LEVELS <#channel> SET <seviye> <değer>"
-    example: "%command_prefix%LEVELS #kanal SET OPDEOP 50"
+    example: "%command_prefix%LEVELS #Ares_Help SET OPDEOP 50"
     short: "Bir seviye gereksinimi ayarlayın."
     help: "Değer -1 ila 499. Yalnızca kurucu."
     done: "%key% %value% olarak ayarlandı."
@@ -519,7 +519,7 @@ levels:
   # --- LEVELS RESET --------------------------------------------------------
   reset:
     syntax: "LEVELS <#channel> RESET"
-    example: "%command_prefix%LEVELS #kanal RESET"
+    example: "%command_prefix%LEVELS #Ares_Help RESET"
     short: "Tüm seviyeleri varsayılanlara sıfırlayın."
     help: "Tüm geçersiz kılmaları kaldırır. Yalnızca kurucu."
     done: "Tüm seviyeler varsayılanlara sıfırlandı."
@@ -527,7 +527,7 @@ levels:
 # --- INVITE -------------------------------------------------------------------
 invite:
   syntax: "INVITE <#channel>"
-  example: "%command_prefix%INVITE #kanal"
+  example: "%command_prefix%INVITE #Ares_Help"
   short: "Kendinizi kanala davet edin."
   help: "Kendinizi kanala davet edin."
   done: "%channel% kanalına davet edildiniz."
@@ -536,7 +536,7 @@ invite:
 # --- UNBAN --------------------------------------------------------------------
 unban:
   syntax: "UNBAN <#channel>"
-  example: "%command_prefix%UNBAN #kanal"
+  example: "%command_prefix%UNBAN #Ares_Help"
   short: "Sizi etkileyen yasakları kaldırır."
   help: "Mevcut kimliğinizle eşleşen tüm kanal yasaklarını, joker karakterler ve IP/CIDR maskeleri dahil kaldırır."
   done: "%channel% kanalında sizi etkileyen %count% yasak kaldırıldı"
@@ -548,7 +548,7 @@ unban:
 # --- ADMIN --------------------------------------------------------------------
 admin:
   syntax: "ADMIN <#channel> <nickname>"
-  example: "%command_prefix%ADMIN #kanal Alicia"
+  example: "%command_prefix%ADMIN #Ares_Help Ares"
   short: "Kanal admin modu verin."
   help: "Kanal admin modu verin. Yalnızca IRCd +a'yı destekliyorsa."
   done: "%nickname% adlı kullanıcıya kanal admini verildi."
@@ -559,7 +559,7 @@ admin:
 # --- DEADMIN ------------------------------------------------------------------
 deadmin:
   syntax: "DEADMIN <#channel> <nickname>"
-  example: "%command_prefix%DEADMIN #kanal Alicia"
+  example: "%command_prefix%DEADMIN #Ares_Help Ares"
   short: "Kanal admin modunu kaldırın."
   help: "Kanal admin modunu kaldırın."
   done: "%nickname% adlı kullanıcının admini alındı."
@@ -567,7 +567,7 @@ deadmin:
 # --- OP -----------------------------------------------------------------------
 op:
   syntax: "OP <#channel> <nickname>"
-  example: "%command_prefix%OP #kanal Alicia"
+  example: "%command_prefix%OP #Ares_Help Ares"
   short: "Kanal operatörü modu verin."
   help: "Kanal operatörü modu verin."
   done: "%nickname% adlı kullanıcıya kanal operatörü statüsü verildi."
@@ -577,7 +577,7 @@ op:
 # --- DEOP ---------------------------------------------------------------------
 deop:
   syntax: "DEOP <#channel> <nickname>"
-  example: "%command_prefix%DEOP #kanal Alicia"
+  example: "%command_prefix%DEOP #Ares_Help Ares"
   short: "Kanal operatörü modunu kaldırın."
   help: "Kanal operatörü modunu kaldırın."
   done: "%nickname% adlı kullanıcının op'u alındı."
@@ -585,7 +585,7 @@ deop:
 # --- HALFOP -------------------------------------------------------------------
 halfop:
   syntax: "HALFOP <#channel> <nickname>"
-  example: "%command_prefix%HALFOP #kanal Alicia"
+  example: "%command_prefix%HALFOP #Ares_Help Ares"
   short: "Kanaldaki kullanıcıya yarı-operatör modu verin."
   help: |-
     Kanaldaki kullanıcıya yarı-operatör modu verin. Yalnızca IRCd +h'ı
@@ -598,7 +598,7 @@ halfop:
 # --- DEHALFOP -----------------------------------------------------------------
 dehalfop:
   syntax: "DEHALFOP <#channel> <nickname>"
-  example: "%command_prefix%DEHALFOP #kanal Alicia"
+  example: "%command_prefix%DEHALFOP #Ares_Help Ares"
   short: "Kanaldaki yarı-operatör modunu kaldırın."
   help: "Kanaldaki yarı-operatör modunu kaldırın."
   done: "%nickname% adlı kullanıcının halfop'u alındı."
@@ -606,7 +606,7 @@ dehalfop:
 # --- VOICE --------------------------------------------------------------------
 voice:
   syntax: "VOICE <#channel> <nickname>"
-  example: "%command_prefix%VOICE #kanal Alicia"
+  example: "%command_prefix%VOICE #Ares_Help Ares"
   short: "Kanaldaki kullanıcıya voice modu verin."
   help: "Kanaldaki kullanıcıya voice modu verin."
   done: "%nickname% adlı kullanıcıya voice verildi."
@@ -616,7 +616,7 @@ voice:
 # --- DEVOICE ------------------------------------------------------------------
 devoice:
   syntax: "DEVOICE <#channel> <nickname>"
-  example: "%command_prefix%DEVOICE #kanal Alicia"
+  example: "%command_prefix%DEVOICE #Ares_Help Ares"
   short: "Kanaldaki voice modunu kaldırın."
   help: "Kanaldaki voice modunu kaldırın."
   done: "%nickname% adlı kullanıcının voice'u alındı."
@@ -667,9 +667,9 @@ help:
 # --- CLEARUSERS (IRCop) -------------------------------------------------------
 clearusers:
   syntax: "CLEARUSERS <#channel> [gerekçe]"
-  example: "%command_prefix%CLEARUSERS #kanal"
+  example: "%command_prefix%CLEARUSERS #Ares_Help"
   examples:
-    - "%command_prefix%CLEARUSERS #kanal flooding"
+    - "%command_prefix%CLEARUSERS #Ares_Help flooding"
   short: "Bir kanaldaki tüm kullanıcıları atın."
   help: |-
     Kanaldaki tüm kullanıcıları atar. Yalnızca IRCop kullanabilir; gerekçe
@@ -683,7 +683,7 @@ clearusers:
 # --- CLEARACCESS (IRCop) ------------------------------------------------------
 clearaccess:
   syntax: "CLEARACCESS <#channel>"
-  example: "%command_prefix%CLEARACCESS #kanal"
+  example: "%command_prefix%CLEARACCESS #Ares_Help"
   short: "Bir kanalın tüm erişim listesini temizleyin."
   help: "Kanalın tüm erişim kayıtlarını siler. Bu işlem geri alınamaz."
   success: "%channel% kanalından %count% erişim girişi temizlendi."
@@ -692,9 +692,9 @@ clearaccess:
 # --- IRCOPONLY (IRCop) --------------------------------------------------------
 ircoponly:
   syntax: "IRCOPONLY <#channel> {ON|OFF}"
-  example: "%command_prefix%IRCOPONLY #kanal ON"
+  example: "%command_prefix%IRCOPONLY #Ares_Help ON"
   examples:
-    - "%command_prefix%IRCOPONLY #kanal OFF"
+    - "%command_prefix%IRCOPONLY #Ares_Help OFF"
   short: "Bir kanalı IRC operatörleriyle sınırlandırın."
   help: |-
     Kanala yalnızca yetkili IRC operatörleri katılabilir. Bu kısıtlamayı %bot%
@@ -711,15 +711,15 @@ saregister:
 
     Belirtilen takma ad için varlık, doğrulama veya hız sınırları gerekmeden
     hemen kurucu olarak bir kanalı yönetimsel olarak kaydeder.
-  example: "%command_prefix%SAREGISTER #channel Alice Topluluk kanalı"
+  example: "%command_prefix%SAREGISTER #Ares_Help Ares Topluluk kanalı"
   success: "%channel% kanalı %founder% adına kaydedildi."
 
 # --- NOEXPIRE (IRCop) ---------------------------------------------------------
 noexpire:
   syntax: "NOEXPIRE <#channel> {ON|OFF}"
-  example: "%command_prefix%NOEXPIRE #Önemli ON"
+  example: "%command_prefix%NOEXPIRE #Ares_Help ON"
   examples:
-    - "%command_prefix%NOEXPIRE #Önemli OFF"
+    - "%command_prefix%NOEXPIRE #Ares_Help OFF"
   short: "Bir kanal için süre sonu korumasını ayarlayın veya kaldırın."
   help: |-
     Kanalın etkin olmama nedeniyle süresinin dolup dolmayacağını belirler.
@@ -732,9 +732,9 @@ noexpire:
 # --- DROP (IRCop) -------------------------------------------------------------
 drop:
   syntax: "DROP <#channel> [FORCE]"
-  example: "%command_prefix%DROP #kanal"
+  example: "%command_prefix%DROP #Ares_Help"
   examples:
-    - "%command_prefix%DROP #kanal FORCE"
+    - "%command_prefix%DROP #Ares_Help FORCE"
   short: "Kayıtlı bir kanalı bırakın."
   help: |-
     Kayıtlı bir kanalı veritabanından siler.
@@ -753,7 +753,7 @@ drop:
 # --- RESTORE (IRCop) ----------------------------------------------------------
 restore:
   syntax: "RESTORE <#channel>"
-  example: "%command_prefix%RESTORE #kanal"
+  example: "%command_prefix%RESTORE #Ares_Help"
   short: "Silinmeyi bekleyen bir kanalı geri yükle."
   help: "Elle silinmiş ve hâlâ bekleme süresinde olan bir kanalı geri yükler."
   success: "%channel% kanalı geri yüklendi."
@@ -762,9 +762,9 @@ restore:
 # --- SUSPEND (IRCop) ----------------------------------------------------------
 suspend:
   syntax: "SUSPEND <#channel> <süre> <gerekçe>"
-  example: "%command_prefix%SUSPEND #kanal 7d Kuralların ihlali"
+  example: "%command_prefix%SUSPEND #Ares_Help 7d Kuralların ihlali"
   examples:
-    - "%command_prefix%SUSPEND #kanal 0 Kuralların ihlali"
+    - "%command_prefix%SUSPEND #Ares_Help 0 Kuralların ihlali"
   short: "Bir kanalı askıya alın."
   help: |-
     Kayıtlı bir kanalı geçici olarak devre dışı bırakır. Süre biçimleri: 0 =
@@ -780,7 +780,7 @@ suspend:
 # --- UNSUSPEND (IRCop) --------------------------------------------------------
 unsuspend:
   syntax: "UNSUSPEND <#channel>"
-  example: "%command_prefix%UNSUSPEND #kanal"
+  example: "%command_prefix%UNSUSPEND #Ares_Help"
   short: "Kanal askısını kaldırın."
   help: |-
     Askıdaki kanalı yeniden etkinleştirir; modlarını ve kural uygulamasını geri
@@ -792,7 +792,7 @@ unsuspend:
 # --- FORBID (IRCop) -----------------------------------------------------------
 forbid:
   syntax: "FORBID <#channel> <gerekçe>"
-  example: "%command_prefix%FORBID #kanal Kuralların ihlali"
+  example: "%command_prefix%FORBID #Ares_Help Kuralların ihlali"
   short: "Bir kanalın kullanımını yasaklayın."
   help: |-
     Bir kanalın kullanımını yasaklar, tüm kullanıcıları atar ve yeniden
@@ -806,7 +806,7 @@ forbid:
 # --- UNFORBID (IRCop) ---------------------------------------------------------
 unforbid:
   syntax: "UNFORBID <#channel>"
-  example: "%command_prefix%UNFORBID #kanal"
+  example: "%command_prefix%UNFORBID #Ares_Help"
   short: "Kanal yasağını kaldırın."
   help: "Kanal yasağını kaldırır ve yeniden kaydedilmesine izin verir."
   success: "%channel% kanalı artık yasaklı değil."
@@ -815,20 +815,20 @@ unforbid:
 # --- HISTORY ---
 history:
   syntax: "HISTORY <#kanal> <seçenek> [parametreler]"
-  example: "%command_prefix%HISTORY #kanal ADD Moderasyon incelemesi"
+  example: "%command_prefix%HISTORY #Ares_Help ADD Moderasyon incelemesi"
   examples:
-    - "%command_prefix%HISTORY #kanal DEL 42"
-    - "%command_prefix%HISTORY #kanal VIEW"
-    - "%command_prefix%HISTORY #kanal VIEW 2"
-    - "%command_prefix%HISTORY #kanal VIEW ALL"
-    - "%command_prefix%HISTORY #kanal CLEAR"
+    - "%command_prefix%HISTORY #Ares_Help DEL 42"
+    - "%command_prefix%HISTORY #Ares_Help VIEW"
+    - "%command_prefix%HISTORY #Ares_Help VIEW 2"
+    - "%command_prefix%HISTORY #Ares_Help VIEW ALL"
+    - "%command_prefix%HISTORY #Ares_Help CLEAR"
   short: "Kanal eylem geçmişini görüntüleyin veya yönetin."
   help: "Kanal işlemlerinin geçmişini yönetir."
 
   # --- HISTORY ADD ---------------------------------------------------------
   add:
     syntax: "HISTORY <#channel> ADD <mesaj>"
-    example: "%command_prefix%HISTORY #kanal ADD Moderasyon incelemesi"
+    example: "%command_prefix%HISTORY #Ares_Help ADD Moderasyon incelemesi"
     short: "Manuel bir geçmiş girişi ekleyin."
     help: |-
       Kanalın geçmişine manuel bir giriş ekler.
@@ -837,17 +837,17 @@ history:
   # --- HISTORY DEL ---------------------------------------------------------
   del:
     syntax: "HISTORY <#channel> DEL <id>"
-    example: "%command_prefix%HISTORY #kanal DEL 42"
+    example: "%command_prefix%HISTORY #Ares_Help DEL 42"
     short: "Geçmişteki bir kaydı siler."
     help: "Bir geçmiş kaydını kimliğine göre siler."
 
   # --- HISTORY VIEW --------------------------------------------------------
   view:
     syntax: "HISTORY <#channel> VIEW [SAYFA|ALL]"
-    example: "%command_prefix%HISTORY #kanal VIEW"
+    example: "%command_prefix%HISTORY #Ares_Help VIEW"
     examples:
-      - "%command_prefix%HISTORY #kanal VIEW 2"
-      - "%command_prefix%HISTORY #kanal VIEW ALL"
+      - "%command_prefix%HISTORY #Ares_Help VIEW 2"
+      - "%command_prefix%HISTORY #Ares_Help VIEW ALL"
     short: "Kanal eylem geçmişini görüntüleyin."
     help: "Kanalın geçmiş kayıtlarını görüntüler."
     header: "%heading% için geçmiş (%start%-%end% / %total% gösteriliyor):"
@@ -860,7 +860,7 @@ history:
   # --- HISTORY CLEAR -------------------------------------------------------
   clear:
     syntax: "HISTORY <#channel> CLEAR"
-    example: "%command_prefix%HISTORY #kanal CLEAR"
+    example: "%command_prefix%HISTORY #Ares_Help CLEAR"
     short: "Bir kanal için tüm geçmiş girişlerini silin."
     help: "Kanalın tüm geçmiş kayıtlarını siler."
     success: "%channel% için %count% geçmiş girişi temizlendi."
@@ -953,11 +953,11 @@ creg:
   pending.short: "Bekleyen kayıt isteklerini listeleyin."
   pending.help: "Bekleyen istekleri sınırlı bir sayfada listeler."
   accept.syntax: "CREG ACCEPT <#kanal>"
-  accept.example: "%command_prefix%CREG ACCEPT #canal"
+  accept.example: "%command_prefix%CREG ACCEPT #Ares_Help"
   accept.short: "Bir kanal kayıt isteğini onaylayın."
   accept.help: "İstek sahibini yeniden doğrular ve bekleyen kaydı etkinleştirir."
   reject.syntax: "CREG REJECT <#kanal> <neden>"
-  reject.example: "%command_prefix%CREG REJECT #canal Motivo público"
+  reject.example: "%command_prefix%CREG REJECT #Ares_Help Motivo público"
   reject.short: "Bir kanal kayıt isteğini reddedin."
   reject.help: "İsteği zorunlu bir neden ve kısıtlamayla reddeder."
   example: "%command_prefix%CREG PENDING"

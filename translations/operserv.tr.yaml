@@ -67,7 +67,7 @@ ircop:
     DEL bir operatörü kaldırır. LIST tüm operatörleri gösterir.
     Mevcut rolleri görmek için ROLE LIST kullanın.
     Bu komut yalnızca hizmetlerde yapılandırılmış Root kullanıcıları içindir.
-  example: "%command_prefix%IRCOP ADD Ana OPER"
+  example: "%command_prefix%IRCOP ADD Ares OPER"
   examples:
     - "%command_prefix%IRCOP LIST"
   unknown_sub: "Bilinmeyen alt komut %sub%. ADD, DEL veya LIST kullanın."
@@ -84,7 +84,7 @@ ircop:
       Kayıtlı bir rumuzu ağ IRC operatörü olarak ekler.
       Mevcut rolleri görmek için ROLE LIST kullanın.
       Bu komut yalnızca Root kullanıcıları içindir.
-    example: "%command_prefix%IRCOP ADD Ana OPER"
+    example: "%command_prefix%IRCOP ADD Ares OPER"
     done: "%nickname%, %role% olarak eklendi."
     nick_not_active: "%nickname% rumuzu etkin bir kayıtlı rumuz değil."
 
@@ -95,7 +95,7 @@ ircop:
     help: |-
       Listeden bir ağ IRC operatörünü kaldırır.
       Bu komut yalnızca Root kullanıcıları içindir.
-    example: "%command_prefix%IRCOP DEL Ana"
+    example: "%command_prefix%IRCOP DEL Ares"
     done: "%nickname% IRC operatörlerinden kaldırıldı."
 
   # --- IRCOP LIST ----------------------------------------------------------
@@ -315,7 +315,7 @@ kill:
   help: |-
     Bir kullanıcının IRC ağındaki bağlantısını keser.
     IRCop ve Root kullanıcıları KILL edilemez.
-  example: "%command_prefix%KILL BadUser Kanallarda taşkınlık"
+  example: "%command_prefix%KILL Ares Kanallarda taşkınlık"
   protected_root: "Root kullanıcı %nickname% kill'lenemez."
   protected_ircop: "IRC operatörü %nickname% kill'lenemez."
   done: "%nickname% kullanıcısı kill'lendi (%reason%)."

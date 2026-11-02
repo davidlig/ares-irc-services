@@ -67,7 +67,7 @@ ircop:
     DEL elimina un operador. LIST mostra todos os operadores.
     Use ROLE LIST para ver os roles dispoñibles.
     Este comando está restrinxido aos usuarios Root configurados nos servizos.
-  example: "%command_prefix%IRCOP ADD Ana OPER"
+  example: "%command_prefix%IRCOP ADD Ares OPER"
   examples:
     - "%command_prefix%IRCOP LIST"
   unknown_sub: "Subcomando descoñecido %sub%. Use ADD, DEL ou LIST."
@@ -84,7 +84,7 @@ ircop:
       Engade un alcume rexistrado como operador de IRC da rede.
       Use ROLE LIST para ver os roles dispoñibles.
       Este comando está restrinxido aos usuarios Root.
-    example: "%command_prefix%IRCOP ADD Ana OPER"
+    example: "%command_prefix%IRCOP ADD Ares OPER"
     done: "Engadido %nickname% como %role%."
     nick_not_active: "O alcume %nickname% non é un alcume rexistrado activo."
 
@@ -95,7 +95,7 @@ ircop:
     help: |-
       Elimina un operador de IRC da rede da lista.
       Este comando está restrinxido aos usuarios Root.
-    example: "%command_prefix%IRCOP DEL Ana"
+    example: "%command_prefix%IRCOP DEL Ares"
     done: "Eliminado %nickname% dos operadores de IRC."
 
   # --- IRCOP LIST ----------------------------------------------------------
@@ -319,7 +319,7 @@ kill:
   help: |-
     Desconecta unha persoa usuaria da rede IRC.
     As IRCops e as persoas usuarias Root non poden recibir un KILL.
-  example: "%command_prefix%KILL BadUser Flooding en canales"
+  example: "%command_prefix%KILL Ares Flooding en canales"
   protected_root: "Non se pode matar o usuario Root %nickname%."
   protected_ircop: "Non se pode matar o operador de IRC %nickname%."
   done: "O usuario %nickname% foi matado (%reason%)."

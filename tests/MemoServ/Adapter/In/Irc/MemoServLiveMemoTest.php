@@ -137,7 +137,7 @@ final class MemoServLiveMemoTest extends DoctrineIntegrationTestCase
         $output = implode("\n", $this->messages());
         self::assertStringContainsString('DEL [#channel] {number|ALL}', $output);
         self::assertStringContainsString('/msg MemoBot DEL ALL', $output);
-        self::assertStringContainsString('/msg MemoBot DEL #help ALL', $output);
+        self::assertStringContainsString('/msg MemoBot DEL #Ares_Help ALL', $output);
     }
 
     protected function setUp(): void

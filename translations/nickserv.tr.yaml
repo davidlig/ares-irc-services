@@ -59,15 +59,15 @@ identify:
     Rumuz ve şifrenizi kullanarak oturumunuzu %nickserv% ile doğrular.
     Başarılı bir kimlik doğrulamadan sonra %emphasis_0% kayıtlı modunu alacaksınız
     ve, misafir rumuzu kullanıyorsanız, kayıtlı rumuzunuz geri yüklenecektir.
-  example: "%command_prefix%IDENTIFY Kullanıcı <parola>"
+  example: "%command_prefix%IDENTIFY Ares <parola>"
   native_syntax: "/NICK <nickname>:<şifre> | /NICK <nickname>!<şifre>"
   native_short: "Yerel rumuz kimlik doğrulama sözdizimini gösterir."
   native_help: |-
     Bu protokol hesapları rumuz değişiklikleriyle doğrular.
     %emphasis_0% kullanın veya rumuz kullanımdaysa %emphasis_1% kullanın.
-  native_example: "/NICK Kullanıcı:<parola>"
+  native_example: "/NICK Ares:<parola>"
   native_examples:
-    - "%command_prefix%/NICK Kullanıcı!<parola>"
+    - "%command_prefix%/NICK Ares!<parola>"
   native_authentication: "Bu protokol kimlik doğrulamayı rumuz değişiklikleriyle yönetir. %command_0% kullanın veya rumuz kullanımdaysa %command_1% kullanın."
   native_authentication_command_0: "/NICK <nickname>:<şifre>"
   native_authentication_command_1: "/NICK <nickname>!<şifre>"
@@ -136,9 +136,9 @@ recover:
     sonra kayıtlı tokenın yerini alır.
     Kayıtlı tokenı kullandığınızda VERIFY ile isteğe bağlı yenileme önerilir; mevcut
     tokenı korumak istiyorsanız bu mesajı yok sayın.
-  example: "%command_prefix%RECOVER Kullanıcı"
+  example: "%command_prefix%RECOVER Ares"
   examples:
-    - "%command_prefix%RECOVER Kullanıcı <alınan_token>"
+    - "%command_prefix%RECOVER Ares <alınan_token>"
   pending: "%nickname% takma adının kaydı beklemede. %command_0% kullanın. Token e-postayla gönderildiyse ve geçerli bir adres tanımlıysa %command_1% ile yenisini isteyebilirsiniz."
   pending_command_0: "VERIFY <token>"
   pending_command_1: "RESEND"
@@ -301,7 +301,7 @@ info:
 
     E-posta yalnızca kimliği doğrulanmış sahibine görünür.
     Takma ad gizliyse bilgileri yalnızca sahibi ve IRC operatörleri görebilir.
-  example: "%command_prefix%INFO Kullanıcı"
+  example: "%command_prefix%INFO Ares"
   private: "%nickname% rumuzunun bilgileri gizlidir."
   header: "%nickname% rumuzu için bilgi"
   status: "%label%              : %status%"
@@ -359,7 +359,7 @@ status:
   help: |-
     Bir takma adın güncel durumunu gösterir: kayıtlı, doğrulama bekliyor,
     asıya alınmış vb.
-  example: "%command_prefix%STATUS Kullanıcı"
+  example: "%command_prefix%STATUS Ares"
   header: "%nickname% rumuzunun durumu"
   unregistered: "  Durum           : Kayıtlı değil"
   not_registered_offline: "  Durum           : %state%"
@@ -459,7 +459,7 @@ userip:
   help: |-
     Bir takma adın gerçek IP adresini ve ana bilgisayar adını gösterir.
     Sorumlu kullanın: bu hassas bilgidir.
-  example: "%command_prefix%USERIP Kullanıcı"
+  example: "%command_prefix%USERIP Ares"
   result: "Rumuz: %nickname% | IP: %ip% | Host: %host%"
 
 # --- WHOIP (IRCop) ------------------------------------------------------------
@@ -498,17 +498,17 @@ history:
     e-posta değişiklikleri ve kurtarma işlemleri otomatik kaydedilir. VIEW sayfa
     başına
     üç kayıt gösterir; ALL tüm geçmişi gösterir.
-  example: "%command_prefix%HISTORY Kullanıcı VIEW"
+  example: "%command_prefix%HISTORY Ares VIEW"
   examples:
-    - "%command_prefix%HISTORY Kullanıcı VIEW ALL"
-    - "%command_prefix%HISTORY Kullanıcı ADD Elle eklenen not"
+    - "%command_prefix%HISTORY Ares VIEW ALL"
+    - "%command_prefix%HISTORY Ares ADD Elle eklenen not"
 
   # --- HISTORY ADD ---------------------------------------------------------
   add:
     syntax: "HISTORY <nickname> ADD <mesaj>"
     short: "Manuel bir geçmiş girişi ekleyin."
     help: "Takma ad geçmişine elle bir kayıt ekler."
-    example: "%command_prefix%HISTORY Kullanıcı ADD Spam nedeniyle bildirildi"
+    example: "%command_prefix%HISTORY Ares ADD Spam nedeniyle bildirildi"
     success: "%nickname% için geçmiş girişi eklendi."
 
   # --- HISTORY DEL ---------------------------------------------------------
@@ -516,7 +516,7 @@ history:
     syntax: "HISTORY <nickname> DEL <id>"
     short: "ID ile bir geçmiş girişini silin."
     help: "Geçmişteki belirli bir kaydı kimliğine göre siler."
-    example: "%command_prefix%HISTORY Kullanıcı DEL 42"
+    example: "%command_prefix%HISTORY Ares DEL 42"
 
   # --- HISTORY VIEW --------------------------------------------------------
   view:
@@ -525,10 +525,10 @@ history:
     help: |-
       Takma adın işlem geçmişini gösterir. Varsayılan olarak sayfa başına üç kayıt
       gösterilir. Tümünü görmek için ALL kullanın.
-    example: "%command_prefix%HISTORY Kullanıcı VIEW"
+    example: "%command_prefix%HISTORY Ares VIEW"
     examples:
-      - "%command_prefix%HISTORY Kullanıcı VIEW 2"
-      - "%command_prefix%HISTORY Kullanıcı VIEW ALL"
+      - "%command_prefix%HISTORY Ares VIEW 2"
+      - "%command_prefix%HISTORY Ares VIEW ALL"
     header: "%heading% için geçmiş (%start%-%end% / %total% gösteriliyor):"
     header_title: "%nickname%"
     entry: "#%id% [%date%] %action% - %operator% tarafından — %message%"
@@ -541,7 +541,7 @@ history:
     syntax: "HISTORY <nickname> CLEAR"
     short: "Bir rumuz için tüm geçmiş girişlerini silin."
     help: "Takma adın tüm geçmiş kayıtlarını geri alınamaz biçimde siler."
-    example: "%command_prefix%HISTORY Kullanıcı CLEAR"
+    example: "%command_prefix%HISTORY Ares CLEAR"
     success: "%nickname% için %count% geçmiş girişi temizlendi."
 
 # --- HISTORY MESSAGES ---
@@ -581,9 +581,9 @@ saregister:
 
     TOKEN modunda kurtarma belirteci operatöre yalnızca bir kez gösterilir.
     EMAIL modunda kurtarma belirteci belirtilen e-posta adresine gönderilir.
-  example: "%command_prefix%SAREGISTER Alice Şifre123"
+  example: "%command_prefix%SAREGISTER Ares Şifre123"
   examples:
-    - "%command_prefix%SAREGISTER Bob Şifre456 bob@ornek.tr"
+    - "%command_prefix%SAREGISTER Ares Şifre456 bob@ornek.tr"
   success_token: "%nickname% rumuzu kaydedildi. Kurtarma belirteci: %token%"
   success_email: "%nickname% rumuzu kaydedildi. Kurtarma belirteci %email% adresine gönderildi."
   invalid_nickname: "Geçersiz rumuz %nickname%."
@@ -595,9 +595,9 @@ saset:
   help: |-
     IRCop kullanıcısının başka bir kayıtlı takma adın ayarlarını değiştirmesini
     sağlar. Root, IRCop ve hizmet takma adları desteklenmez.
-  example: "%command_prefix%SASET Kullanıcı PRIVATE ON"
+  example: "%command_prefix%SASET Ares PRIVATE ON"
   examples:
-    - "%command_prefix%SASET Kullanıcı TIMEZONE OFF"
+    - "%command_prefix%SASET Ares TIMEZONE OFF"
   unknown_option: "Bilinmeyen seçenek %option%. Kullanılabilir seçenekler: %options%."
   cannot_modify_oper: "IRC Operatörü rumuzu değiştirilemez."
 
@@ -606,7 +606,7 @@ saset:
     syntax: "SASET <rumuz> PASSWORD <yeni_şifre>"
     short: "Bir rumuzun şifresini değiştir."
     help: "Başka bir takma adın parolasını değiştirir. Değişiklik hemen uygulanır."
-    example: "%command_prefix%SASET Kullanıcı PASSWORD GüvenliParola123"
+    example: "%command_prefix%SASET Ares PASSWORD GüvenliParola123"
 
   # --- SASET EMAIL ---------------------------------------------------------
   email:
@@ -616,7 +616,7 @@ saset:
       Başka bir takma adın e-posta adresini değiştirir. Değişiklik hemen uygulanır;
       kurtarma tokenı gerekmez ve onay e-postası gönderilmez.
       BADMAIL bu yönetimsel e-posta değişikliğini kısıtlamaz.
-    example: "%command_prefix%SASET Kullanıcı EMAIL kullanici@ornek.com"
+    example: "%command_prefix%SASET Ares EMAIL kullanici@ornek.com"
 
   # --- SASET LANGUAGE ------------------------------------------------------
   language:
@@ -625,7 +625,7 @@ saset:
     help: |-
       Başka bir takma adın dilini değiştirir. Bu komutta en (İngilizce) ve es
       (İspanyolca) kullanılabilir.
-    example: "%command_prefix%SASET Kullanıcı LANGUAGE es"
+    example: "%command_prefix%SASET Ares LANGUAGE es"
 
   # --- SASET TIMEZONE ------------------------------------------------------
   timezone:
@@ -634,18 +634,18 @@ saset:
     help: |-
       Başka bir takma adın saat dilimini ayarlar veya kaldırır. Kaldırmak için OFF
       kullanın.
-    example: "%command_prefix%SASET Kullanıcı TIMEZONE Europe/Madrid"
+    example: "%command_prefix%SASET Ares TIMEZONE Europe/Madrid"
     examples:
-      - "%command_prefix%SASET Kullanıcı TIMEZONE OFF"
+      - "%command_prefix%SASET Ares TIMEZONE OFF"
 
   # --- SASET PRIVATE -------------------------------------------------------
   private:
     syntax: "SASET <rumuz> PRIVATE {ON|OFF}"
     short: "Bir rumuzun gizliliğini değiştir."
     help: "Başka bir takma adın bilgilerinin gizliliğini açar veya kapatır."
-    example: "%command_prefix%SASET Kullanıcı PRIVATE ON"
+    example: "%command_prefix%SASET Ares PRIVATE ON"
     examples:
-      - "%command_prefix%SASET Kullanıcı PRIVATE OFF"
+      - "%command_prefix%SASET Ares PRIVATE OFF"
 
   # --- SASET MSG -----------------------------------------------------------
   msg:
@@ -654,9 +654,9 @@ saset:
     help: |-
       Başka bir takma ada yanıtların PRIVMSG (ON) veya NOTICE (OFF) olarak
       gönderilmesini ayarlar.
-    example: "%command_prefix%SASET Kullanıcı MSG ON"
+    example: "%command_prefix%SASET Ares MSG ON"
     examples:
-      - "%command_prefix%SASET Kullanıcı MSG OFF"
+      - "%command_prefix%SASET Ares MSG OFF"
 
   # --- SASET MODES ---------------------------------------------------------
   modes:
@@ -666,9 +666,9 @@ saset:
       Kip harflerini işaretsiz ve büyük/küçük harfe duyarlı olarak kaydeder.
       Silmek için harfleri atlayın. Kipler protokole ve yüklü modüllere bağlıdır.
       Kimlik doğrulanınca ve mümkünse hemen uygulanır; kipleri kilitlemez.
-    example: "%command_prefix%SASET User MODES B"
+    example: "%command_prefix%SASET Ares MODES B"
     examples:
-      - "%command_prefix%SASET User MODES"
+      - "%command_prefix%SASET Ares MODES"
     saved: "%nickname% için %modes% otomatik kipleri kaydedildi."
     cleared: "%nickname% için otomatik kip tercihi silindi."
     unchanged: "%nickname% için otomatik kipler değişmedi."
@@ -683,9 +683,9 @@ saset:
     help: |-
       Başka bir takma adın sanal ana bilgisayar adını ayarlar veya kaldırır.
       Kaldırmak için SASET <takma_ad> VHOST komutunu değersiz çalıştırın.
-    example: "%command_prefix%SASET Kullanıcı VHOST kullanici.ornek.org"
+    example: "%command_prefix%SASET Ares VHOST kullanici.ornek.org"
     examples:
-      - "%command_prefix%SASET Kullanıcı VHOST"
+      - "%command_prefix%SASET Ares VHOST"
 
 # --- RENAME (IRCop) -----------------------------------------------------------
 rename:
@@ -694,7 +694,7 @@ rename:
   help: |-
     Bağlı bir takma adın ağ tarafından tanımlanan önekle rastgele bir ada
     değiştirilmesini zorlar.
-  example: "%command_prefix%RENAME Sorunlu"
+  example: "%command_prefix%RENAME Ares"
   cannot_rename_root: "Root kullanıcı %nickname% yeniden adlandırılamaz."
   cannot_rename_oper: "IRC operatörü %nickname% yeniden adlandırılamaz."
   cannot_rename_service: "Hizmet rumuzu %nickname% yeniden adlandırılamaz."
@@ -707,9 +707,9 @@ noexpire:
   help: |-
     Takma adın etkin olmama nedeniyle süresinin dolup dolmayacağını denetler.
     ON süre dolmasını önler, OFF normal kuralları uygular.
-  example: "%command_prefix%NOEXPIRE Kullanıcı ON"
+  example: "%command_prefix%NOEXPIRE Ares ON"
   examples:
-    - "%command_prefix%NOEXPIRE Kullanıcı OFF"
+    - "%command_prefix%NOEXPIRE Ares OFF"
   success_on: "%nickname% rumuzu artık süre sonuna karşı korunuyor."
   success_off: "%nickname% rumuzu artık normal şekilde sona erecek."
   forbidden: "%nickname% rumuzu yasaklanmış."
@@ -744,9 +744,9 @@ suspend:
     Sahibinin kimliğini doğrulamasını engeller. Süre gün (d), saat (h), dakika (m)
     veya süresiz askı için 0 olarak belirtilebilir. IRC operatörleri ve Root
     kullanıcıları askıya alınamaz.
-  example: "%command_prefix%SUSPEND MalKullanıcı 7d #yardım kanalında spam"
+  example: "%command_prefix%SUSPEND Ares 7d #Ares_Help kanalında spam"
   examples:
-    - "%command_prefix%SUSPEND Sorunlu 0 Yasağı aşma"
+    - "%command_prefix%SUSPEND Ares 0 Yasağı aşma"
   success: "%nickname% rumuzu %duration% tarihine kadar askıya alındı."
   already_suspended: "%nickname% rumuzu zaten askıya alınmış."
   forbidden: "%nickname% rumuzu yasaklanmış ve askıya alınamaz."
@@ -762,7 +762,7 @@ unsuspend:
   syntax: "UNSUSPEND <nickname>"
   short: "Bir rumuzun askısını kaldırın."
   help: "Sahibinin yeniden kimlik doğrulaması yapabilmesi için etkin askıyı kaldırır."
-  example: "%command_prefix%UNSUSPEND Kullanıcı"
+  example: "%command_prefix%UNSUSPEND Ares"
   success: "%nickname% adlı kullanıcının askısı kaldırıldı."
   not_suspended: "%nickname% rumuzu askıya alınmamış."
 
@@ -775,7 +775,7 @@ forbid:
     Kayıtlıysa silinir; bağlıysa rastgele bir takma ada geçmesi zorlanır. Root,
     IRCop
     ve hizmet takma adları yasaklanamaz.
-  example: "%command_prefix%FORBID MalKullanıcı Tekrarlanan politika ihlalleri"
+  example: "%command_prefix%FORBID Ares Tekrarlanan politika ihlalleri"
   success: "%nickname% rumuzu yasaklandı."
   updated: "%nickname% için yasaklama gerekçesi güncellendi."
   reason_required: "Yasaklama için bir gerekçe belirtmelisiniz."
@@ -788,7 +788,7 @@ unforbid:
   syntax: "UNFORBID <nickname>"
   short: "Bir rumuz yasağını kaldırın."
   help: "Takma adın yeniden kullanılabilmesi için yasağı kaldırır."
-  example: "%command_prefix%UNFORBID YasaklıTakmaAd"
+  example: "%command_prefix%UNFORBID Ares"
   success: "%nickname% rumuzu artık yasaklı değil."
   not_forbidden: "%nickname% rumuzu yasaklı değil."
 
@@ -845,9 +845,9 @@ drop:
     adları veya kendi takma adınız silinemez.
   force:
     short: "Silinmeyi bekleyen takma adı kalıcı olarak siler."
-  example: "%command_prefix%DROP CuentaAntigua"
+  example: "%command_prefix%DROP Ares"
   examples:
-    - "%command_prefix%DROP CuentaAntigua FORCE"
+    - "%command_prefix%DROP Ares FORCE"
   suspended: "%nickname% rumuzu askıya alınmış. Önce askıyı kaldırın."
   forbidden: "%nickname% rumuzu yasaklanmış."
   cannot_drop_root: "Root kullanıcı %nickname% bırakılamaz."
@@ -863,7 +863,7 @@ restore:
   syntax: "RESTORE <nickname>"
   short: "Silinmeyi bekleyen bir rumuzu geri yükle."
   help: "Bekleme süresi devam ettiği müddetçe silinmeyi bekleyen takma adı geri yükler."
-  example: "%command_prefix%RESTORE CuentaAntigua"
+  example: "%command_prefix%RESTORE Ares"
   success: "%nickname% rumuzu geri yüklendi."
   not_pending_deletion: "%nickname% rumuzu silinmeyi beklemiyor."
 

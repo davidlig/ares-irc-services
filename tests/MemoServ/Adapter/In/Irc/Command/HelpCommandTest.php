@@ -100,8 +100,8 @@ final class HelpCommandTest extends TestCase
         $replies = [];
         $context = $this->createContext(new SenderView('UID', 'Nick', 'i', 'h', 'c', 'ip'), null, ['SEND'], $replies, [$this->createDummyCommand('SEND')], $translation, language: 'es', renderer: $renderer);
         new HelpCommand(new UnifiedHelpFormatter())->execute($context);
-        self::assertStringContainsString('  > /msg MemoServ [SEND Ana Hola, ¿puedes revisar el memo?]', $replies[0]);
-        self::assertStringContainsString('  > /msg MemoServ [SEND #ayuda Aviso para el canal]', $replies[0]);
+        self::assertStringContainsString('  > /msg MemoServ [SEND Ares Hola, ¿puedes revisar el memo?]', $replies[0]);
+        self::assertStringContainsString('  > /msg MemoServ [SEND #Ares_Help Aviso para el canal]', $replies[0]);
         self::assertStringNotContainsString('%command_prefix%', $replies[0]);
     }
 
@@ -134,8 +134,8 @@ final class HelpCommandTest extends TestCase
         $replies = [];
         $context = $this->createContext(new SenderView('UID', 'Nick', 'i', 'h', 'c', 'ip'), null, ['SEND'], $replies, [$this->createDummyCommand('SEND')], $translation, language: 'en', renderer: $renderer);
         new HelpCommand(new UnifiedHelpFormatter())->execute($context);
-        self::assertStringContainsString('  > /msg MemoServ [SEND Ana Hi, can you check the memo?]', $replies[0]);
-        self::assertStringContainsString('  > /msg MemoServ [SEND #help Notice for the channel]', $replies[0]);
+        self::assertStringContainsString('  > /msg MemoServ [SEND Ares Hi, can you check the memo?]', $replies[0]);
+        self::assertStringContainsString('  > /msg MemoServ [SEND #Ares_Help Notice for the channel]', $replies[0]);
         self::assertStringNotContainsString('%command_prefix%', $replies[0]);
     }
 

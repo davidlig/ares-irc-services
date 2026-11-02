@@ -67,7 +67,7 @@ ircop:
     DELek operadore bat kentzen du. LISTek operadore guztiak erakusten ditu.
     Erabili ROLE LIST rolak ikusteko.
     Komando hau zerbitzuetan konfiguratutako Root erabiltzaileentzat mugatuta dago.
-  example: "%command_prefix%IRCOP ADD Ane OPER"
+  example: "%command_prefix%IRCOP ADD Ares OPER"
   examples:
     - "%command_prefix%IRCOP LIST"
   unknown_sub: "Azpikomando ezezaguna %sub%. Erabili ADD, DEL edo LIST."
@@ -84,7 +84,7 @@ ircop:
       Ezizen erregistratu bat sareko IRC operadore gisa gehitzen du.
       Erabili ROLE LIST rolak ikusteko.
       Komando hau Root erabiltzaileentzat mugatuta dago.
-    example: "%command_prefix%IRCOP ADD Ane OPER"
+    example: "%command_prefix%IRCOP ADD Ares OPER"
     done: "%nickname% %role% gisa gehitu da."
     nick_not_active: "%nickname% ezizena ez da ezizen erregistratu aktibo bat."
 
@@ -95,7 +95,7 @@ ircop:
     help: |-
       Sareko IRC operadore bat zerrendatik kentzen du.
       Komando hau Root erabiltzaileentzat mugatuta dago.
-    example: "%command_prefix%IRCOP DEL Ane"
+    example: "%command_prefix%IRCOP DEL Ares"
     done: "%nickname% IRC operadoreetatik kendu da."
 
   # --- IRCOP LIST ----------------------------------------------------------
@@ -323,7 +323,7 @@ kill:
 
     Sintaxia: KILL <ezizena> <arrazoia>
     Adibidea: KILL ErabiltzaileGaiztoa Flood egiten kanaletan
-  example: "%command_prefix%KILL BadUser Flooding en canales"
+  example: "%command_prefix%KILL Ares Flooding en canales"
   protected_root: "Ezin da Root erabiltzaile %nickname% kill bidez deskonektatu."
   protected_ircop: "Ezin da IRC operadore %nickname% kill bidez deskonektatu."
   done: "%nickname% erabiltzailea kill bidez deskonektatu da (%reason%)."

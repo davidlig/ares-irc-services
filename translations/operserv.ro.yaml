@@ -68,7 +68,7 @@ ircop:
     DEL elimină un operator. LIST afișează toți operatorii.
     Folosiți ROLE LIST pentru a vedea rolurile disponibile.
     Această comandă este rezervată utilizatorilor Root configurați în servicii.
-  example: "%command_prefix%IRCOP ADD Ana OPER"
+  example: "%command_prefix%IRCOP ADD Ares OPER"
   examples:
     - "%command_prefix%IRCOP LIST"
   unknown_sub: "Subcomandă necunoscută %sub%. Folosiți ADD, DEL sau LIST."
@@ -85,7 +85,7 @@ ircop:
       Adaugă o poreclă înregistrată ca operator IRC al rețelei.
       Folosiți ROLE LIST pentru a vedea rolurile disponibile.
       Această comandă este rezervată utilizatorilor Root.
-    example: "%command_prefix%IRCOP ADD Ana OPER"
+    example: "%command_prefix%IRCOP ADD Ares OPER"
     done: "Adăugat %nickname% ca %role%."
     nick_not_active: "Porecla %nickname% nu este o poreclă înregistrată activă."
 
@@ -96,7 +96,7 @@ ircop:
     help: |-
       Elimină un operator IRC al rețelei din listă.
       Această comandă este rezervată utilizatorilor Root.
-    example: "%command_prefix%IRCOP DEL Ana"
+    example: "%command_prefix%IRCOP DEL Ares"
     done: "Eliminat %nickname% din operatorii IRC."
 
   # --- IRCOP LIST ----------------------------------------------------------
@@ -320,7 +320,7 @@ kill:
   help: |-
     Deconectează un utilizator de la rețeaua IRC.
     IRCop-ii și utilizatorii Root nu pot fi eliminați.
-  example: "%command_prefix%KILL BadUser Floodare pe canale"
+  example: "%command_prefix%KILL Ares Floodare pe canale"
   protected_root: "Nu se poate da kill utilizatorului Root %nickname%."
   protected_ircop: "Nu se poate da kill operatorului IRC %nickname%."
   done: "Utilizatorul %nickname% a primit kill (%reason%)."

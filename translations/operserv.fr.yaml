@@ -67,7 +67,7 @@ ircop:
     DEL retire un opérateur. LIST affiche tous les opérateurs.
     Utilisez ROLE LIST pour voir les rôles disponibles.
     Cette commande est réservée aux utilisateurs Root configurés dans les services.
-  example: "%command_prefix%IRCOP ADD Ana OPER"
+  example: "%command_prefix%IRCOP ADD Ares OPER"
   examples:
     - "%command_prefix%IRCOP LIST"
   unknown_sub: "Sous-commande inconnue %sub%. Utilisez ADD, DEL ou LIST."
@@ -84,7 +84,7 @@ ircop:
       Ajoute un surnom enregistré comme opérateur IRC du réseau.
       Utilisez ROLE LIST pour voir les rôles disponibles.
       Cette commande est réservée aux utilisateurs Root.
-    example: "%command_prefix%IRCOP ADD Ana OPER"
+    example: "%command_prefix%IRCOP ADD Ares OPER"
     done: "Ajouté %nickname% en tant que %role%."
     nick_not_active: "Le surnom %nickname% n'est pas un surnom enregistré actif."
 
@@ -95,7 +95,7 @@ ircop:
     help: |-
       Retire un opérateur IRC du réseau de la liste.
       Cette commande est réservée aux utilisateurs Root.
-    example: "%command_prefix%IRCOP DEL Ana"
+    example: "%command_prefix%IRCOP DEL Ares"
     done: "%nickname% retiré des opérateurs IRC."
 
   # --- IRCOP LIST ----------------------------------------------------------
@@ -318,7 +318,7 @@ kill:
   help: |-
     Déconnecte un utilisateur du réseau IRC.
     Les IRCops et les utilisateurs Root ne peuvent pas être expulsés.
-  example: "%command_prefix%KILL BadUser Flooding en canales"
+  example: "%command_prefix%KILL Ares Flooding en canales"
   protected_root: "Impossible de killer l'utilisateur Root %nickname%."
   protected_ircop: "Impossible de killer l'opérateur IRC %nickname%."
   done: "Utilisateur %nickname% a été killé (%reason%)."

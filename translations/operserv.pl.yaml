@@ -68,7 +68,7 @@ ircop:
     Użyj ROLE LIST aby zobaczyć dostępne role.
     Ta komenda jest dostępna tylko dla użytkowników Root skonfigurowanych w
     serwisach.
-  example: "%command_prefix%IRCOP ADD Ana OPER"
+  example: "%command_prefix%IRCOP ADD Ares OPER"
   examples:
     - "%command_prefix%IRCOP LIST"
   unknown_sub: "Nieznana podkomenda %sub%. Użyj ADD, DEL lub LIST."
@@ -85,7 +85,7 @@ ircop:
       Dodaje zarejestrowany nick jako operatora IRC sieci.
       Użyj ROLE LIST aby zobaczyć dostępne role.
       Ta komenda jest dostępna tylko dla użytkowników Root.
-    example: "%command_prefix%IRCOP ADD Ana OPER"
+    example: "%command_prefix%IRCOP ADD Ares OPER"
     done: "Dodano %nickname% jako %role%."
     nick_not_active: "Nick %nickname% nie jest aktywnym zarejestrowanym nickiem."
 
@@ -96,7 +96,7 @@ ircop:
     help: |-
       Usuwa operatora IRC sieci z listy.
       Ta komenda jest dostępna tylko dla użytkowników Root.
-    example: "%command_prefix%IRCOP DEL Ana"
+    example: "%command_prefix%IRCOP DEL Ares"
     done: "Usunięto %nickname% z operatorów IRC."
 
   # --- IRCOP LIST ----------------------------------------------------------
@@ -318,7 +318,7 @@ kill:
   help: |-
     Rozłącza użytkownika z sieci IRC.
     IRCops i użytkownicy Root nie mogą zostać wyrzuceni.
-  example: "%command_prefix%KILL BadUser Floodowanie kanałów"
+  example: "%command_prefix%KILL Ares Floodowanie kanałów"
   protected_root: "Nie można zabić użytkownika Root %nickname%."
   protected_ircop: "Nie można zabić operatora IRC %nickname%."
   done: "Użytkownik %nickname% został zabity (%reason%)."

@@ -60,15 +60,15 @@ identify:
     După o identificare reușită veți primi modul înregistrat %emphasis_0%
     și, dacă foloseați o poreclă de oaspete, porecla dumneavoastră înregistrată va
     fi restaurată.
-  example: "%command_prefix%IDENTIFY Utilizator <parolă>"
+  example: "%command_prefix%IDENTIFY Ares <parolă>"
   native_syntax: "/NICK <poreclă>:<parolă> | /NICK <poreclă>!<parolă>"
   native_short: "Afișează sintaxa nativă de autentificare a pseudonimului."
   native_help: |-
     Acest protocol autentifică conturile prin schimbarea pseudonimului.
     Folosește %emphasis_0% sau, dacă pseudonimul este ocupat, %emphasis_1%.
-  native_example: "/NICK Utilizator:<parolă>"
+  native_example: "/NICK Ares:<parolă>"
   native_examples:
-    - "%command_prefix%/NICK Utilizator!<parolă>"
+    - "%command_prefix%/NICK Ares!<parolă>"
   native_authentication: "Acest protocol gestionează autentificarea prin schimbarea pseudonimului. Folosește %command_0% sau, dacă pseudonimul este ocupat, %command_1%."
   native_authentication_command_0: "/NICK <poreclă>:<parolă>"
   native_authentication_command_1: "/NICK <poreclă>!<parolă>"
@@ -139,9 +139,9 @@ recover:
     pe cel salvat doar după verificare.
     După folosirea tokenului salvat, VERIFY oferă opțional un înlocuitor; ignoră
     mesajul dacă dorești să-l păstrezi pe cel actual.
-  example: "%command_prefix%RECOVER Utilizator"
+  example: "%command_prefix%RECOVER Ares"
   examples:
-    - "%command_prefix%RECOVER Utilizator <token_primit>"
+    - "%command_prefix%RECOVER Ares <token_primit>"
   pending: "Înregistrarea pentru %nickname% este în așteptare. Folosește %command_0%. %command_1% este disponibil doar cu REGMODE EMAIL și o adresă validă asociată."
   pending_command_0: "VERIFY <token>"
   pending_command_1: "RESEND"
@@ -307,7 +307,7 @@ info:
 
     E-mailul este vizibil doar proprietarului identificat. Pentru porecle private,
     informațiile sunt vizibile doar proprietarului și operatorilor IRC.
-  example: "%command_prefix%INFO Utilizator"
+  example: "%command_prefix%INFO Ares"
   private: "Informațiile poreclei %nickname% sunt private."
   header: "Informații pentru porecla %nickname%"
   status: "%label%                   : %status%"
@@ -365,7 +365,7 @@ status:
   help: |-
     Afișează starea curentă a unei porecle: înregistrată, în așteptarea verificării,
     suspendată etc.
-  example: "%command_prefix%STATUS Utilizator"
+  example: "%command_prefix%STATUS Ares"
   header: "Starea poreclei %nickname%"
   unregistered: "  Stare            : Neînregistrată"
   not_registered_offline: "  Stare            : %state%"
@@ -465,7 +465,7 @@ userip:
   help: |-
     Afișează adresa IP și numele gazdei reale ale unei porecle.
     Folosește responsabil aceste informații sensibile.
-  example: "%command_prefix%USERIP Utilizator"
+  example: "%command_prefix%USERIP Ares"
   result: "Poreclă: %nickname% | IP: %ip% | Host: %host%"
 
 # --- WHOIP (IRCop) ------------------------------------------------------------
@@ -503,17 +503,17 @@ history:
     Consultă și gestionează istoricul acțiunilor unei porecle. Suspendările și
     schimbările parolei, e-mailului ori recuperării sunt înregistrate automat.
     VIEW afișează trei intrări pe pagină; ALL afișează istoricul complet.
-  example: "%command_prefix%HISTORY Utilizator VIEW"
+  example: "%command_prefix%HISTORY Ares VIEW"
   examples:
-    - "%command_prefix%HISTORY Utilizator VIEW ALL"
-    - "%command_prefix%HISTORY Utilizator ADD Notă manuală"
+    - "%command_prefix%HISTORY Ares VIEW ALL"
+    - "%command_prefix%HISTORY Ares ADD Notă manuală"
 
   # --- HISTORY ADD ---------------------------------------------------------
   add:
     syntax: "HISTORY <poreclă> ADD <mesaj>"
     short: "Adăugați o intrare manuală în istoric."
     help: "Adaugă manual o intrare în istoricul poreclei."
-    example: "%command_prefix%HISTORY Utilizator ADD Raportat pentru spam"
+    example: "%command_prefix%HISTORY Ares ADD Raportat pentru spam"
     success: "Intrare în istoric adăugată pentru %nickname%."
 
   # --- HISTORY DEL ---------------------------------------------------------
@@ -521,7 +521,7 @@ history:
     syntax: "HISTORY <poreclă> DEL <id>"
     short: "Ștergeți o intrare din istoric după ID."
     help: "Șterge o intrare specifică din istoric după ID."
-    example: "%command_prefix%HISTORY Utilizator DEL 42"
+    example: "%command_prefix%HISTORY Ares DEL 42"
 
   # --- HISTORY VIEW --------------------------------------------------------
   view:
@@ -530,10 +530,10 @@ history:
     help: |-
       Afișează istoricul acțiunilor poreclei. Implicit, arată trei intrări pe pagină.
       Folosește ALL pentru a le vedea pe toate.
-    example: "%command_prefix%HISTORY Utilizator VIEW"
+    example: "%command_prefix%HISTORY Ares VIEW"
     examples:
-      - "%command_prefix%HISTORY Utilizator VIEW 2"
-      - "%command_prefix%HISTORY Utilizator VIEW ALL"
+      - "%command_prefix%HISTORY Ares VIEW 2"
+      - "%command_prefix%HISTORY Ares VIEW ALL"
     header: "%heading% (se afișează %start%-%end% din %total%):"
     header_title: "Istoric pentru %nickname%"
     entry: "#%id% [%date%] %action% de %operator% — %message%"
@@ -546,7 +546,7 @@ history:
     syntax: "HISTORY <poreclă> CLEAR"
     short: "Ștergeți toate intrările din istoricul unei porecle."
     help: "Șterge ireversibil toate intrările din istoricul poreclei."
-    example: "%command_prefix%HISTORY Utilizator CLEAR"
+    example: "%command_prefix%HISTORY Ares CLEAR"
     success: "S-au șters %count% intrări din istoricul poreclei %nickname%."
 
 # --- HISTORY MESSAGES ---
@@ -586,9 +586,9 @@ saregister:
 
     În modul TOKEN, tokenul de salvare este afișat o singură dată operatorului.
     În modul EMAIL, tokenul de salvare este trimis la adresa de e-mail specificată.
-  example: "%command_prefix%SAREGISTER Alice Parolă123"
+  example: "%command_prefix%SAREGISTER Ares Parolă123"
   examples:
-    - "%command_prefix%SAREGISTER Bob Parolă456 bob@exemplu.ro"
+    - "%command_prefix%SAREGISTER Ares Parolă456 bob@exemplu.ro"
   success_token: "Porecla %nickname% a fost înregistrată. Token de salvare: %token%"
   success_email: "Porecla %nickname% a fost înregistrată. Token de salvare trimis la %email%."
   invalid_nickname: "Poreclă nevalidă %nickname%."
@@ -600,9 +600,9 @@ saset:
   help: |-
     Permite unui IRCop să schimbe setările altei porecle înregistrate. Poreclele
     Root, IRCop și ale serviciilor nu sunt acceptate.
-  example: "%command_prefix%SASET Utilizator PRIVATE ON"
+  example: "%command_prefix%SASET Ares PRIVATE ON"
   examples:
-    - "%command_prefix%SASET Utilizator TIMEZONE OFF"
+    - "%command_prefix%SASET Ares TIMEZONE OFF"
   unknown_option: "Opțiune necunoscută %option%. Opțiuni disponibile: %options%."
   cannot_modify_oper: "Nu se poate modifica o poreclă de operator IRC."
 
@@ -611,7 +611,7 @@ saset:
     syntax: "SASET <poreclă> PASSWORD <parolă_nouă>"
     short: "Schimbă parola unei porecle."
     help: "Schimbă imediat parola altei porecle."
-    example: "%command_prefix%SASET Utilizator PASSWORD ClaveSegura123"
+    example: "%command_prefix%SASET Ares PASSWORD ClaveSegura123"
 
   # --- SASET EMAIL ---------------------------------------------------------
   email:
@@ -621,32 +621,32 @@ saset:
       Schimbă imediat e-mailul altei porecle. Nu este necesar tokenul de recuperare și
       nu se trimite un e-mail de confirmare.
       BADMAIL nu restricționează această schimbare administrativă de email.
-    example: "%command_prefix%SASET Utilizator EMAIL utilizator@exemplu.ro"
+    example: "%command_prefix%SASET Ares EMAIL utilizator@exemplu.ro"
 
   # --- SASET LANGUAGE ------------------------------------------------------
   language:
     syntax: "SASET <poreclă> LANGUAGE <cod>"
     short: "Schimbă limba unei porecle."
     help: "Schimbă limba altei porecle. Sunt disponibile en (engleză) și es (spaniolă)."
-    example: "%command_prefix%SASET Utilizator LANGUAGE es"
+    example: "%command_prefix%SASET Ares LANGUAGE es"
 
   # --- SASET TIMEZONE ------------------------------------------------------
   timezone:
     syntax: "SASET <poreclă> TIMEZONE {<fus_orar>|OFF}"
     short: "Schimbă fusul orar al unei porecle."
     help: "Setează sau elimină fusul orar al altei porecle. Folosește OFF pentru eliminare."
-    example: "%command_prefix%SASET Utilizator TIMEZONE Europe/Madrid"
+    example: "%command_prefix%SASET Ares TIMEZONE Europe/Madrid"
     examples:
-      - "%command_prefix%SASET Utilizator TIMEZONE OFF"
+      - "%command_prefix%SASET Ares TIMEZONE OFF"
 
   # --- SASET PRIVATE -------------------------------------------------------
   private:
     syntax: "SASET <poreclă> PRIVATE {ON|OFF}"
     short: "Schimbă confidențialitatea unei porecle."
     help: "Activează sau dezactivează confidențialitatea informațiilor altei porecle."
-    example: "%command_prefix%SASET Utilizator PRIVATE ON"
+    example: "%command_prefix%SASET Ares PRIVATE ON"
     examples:
-      - "%command_prefix%SASET Utilizator PRIVATE OFF"
+      - "%command_prefix%SASET Ares PRIVATE OFF"
 
   # --- SASET MSG -----------------------------------------------------------
   msg:
@@ -655,9 +655,9 @@ saset:
     help: |-
       Stabilește dacă altă poreclă primește răspunsurile ca PRIVMSG (ON) sau NOTICE
       (OFF).
-    example: "%command_prefix%SASET Utilizator MSG ON"
+    example: "%command_prefix%SASET Ares MSG ON"
     examples:
-      - "%command_prefix%SASET Utilizator MSG OFF"
+      - "%command_prefix%SASET Ares MSG OFF"
 
   # --- SASET MODES ---------------------------------------------------------
   modes:
@@ -668,9 +668,9 @@ saset:
       Omite literele pentru ștergere. Modurile depind de protocol și de module.
       Se aplică la identificare și imediat dacă este posibil; nu blochează
       modurile.
-    example: "%command_prefix%SASET User MODES B"
+    example: "%command_prefix%SASET Ares MODES B"
     examples:
-      - "%command_prefix%SASET User MODES"
+      - "%command_prefix%SASET Ares MODES"
     saved: "Modurile automate %modes% au fost salvate pentru %nickname%."
     cleared: "Preferința modurilor automate a fost ștearsă pentru %nickname%."
     unchanged: "Modurile automate pentru %nickname% nu s-au schimbat."
@@ -685,9 +685,9 @@ saset:
     help: |-
       Setează sau elimină gazda virtuală a altei porecle. Rulează SASET <poreclă>
       VHOST fără valoare pentru eliminare.
-    example: "%command_prefix%SASET Utilizator VHOST user.exemplu.ro"
+    example: "%command_prefix%SASET Ares VHOST user.exemplu.ro"
     examples:
-      - "%command_prefix%SASET Utilizator VHOST"
+      - "%command_prefix%SASET Ares VHOST"
 
 # --- RENAME (IRCop) -----------------------------------------------------------
 rename:
@@ -697,7 +697,7 @@ rename:
     Forțează o poreclă conectată să treacă la un nume aleatoriu cu un prefix
     stabilit
     de rețea.
-  example: "%command_prefix%RENAME Problematic"
+  example: "%command_prefix%RENAME Ares"
   cannot_rename_root: "Nu se poate redenumi utilizatorul root %nickname%."
   cannot_rename_oper: "Nu se poate redenumi operatorul IRC %nickname%."
   cannot_rename_service: "Nu se poate redenumi porecla de serviciu %nickname%."
@@ -710,9 +710,9 @@ noexpire:
   help: |-
     Controlează expirarea poreclei din cauza inactivității.
     ON previne expirarea, iar OFF aplică regulile normale.
-  example: "%command_prefix%NOEXPIRE Utilizator ON"
+  example: "%command_prefix%NOEXPIRE Ares ON"
   examples:
-    - "%command_prefix%NOEXPIRE Utilizator OFF"
+    - "%command_prefix%NOEXPIRE Ares OFF"
   success_on: "Porecla %nickname% este acum protejată împotriva expirării."
   success_off: "Porecla %nickname% va expira acum normal."
   forbidden: "Porecla %nickname% este interzisă."
@@ -747,9 +747,9 @@ suspend:
     Împiedică proprietarul să se identifice. Durata poate fi indicată în zile (d),
     ore (h), minute (m) sau 0 pentru suspendare permanentă. Operatorii IRC și
     utilizatorii Root nu pot fi suspendați.
-  example: "%command_prefix%SUSPEND UtilizatorRău 7d Spam en #ayuda"
+  example: "%command_prefix%SUSPEND Ares 7d Spam en #Ares_Help"
   examples:
-    - "%command_prefix%SUSPEND Problematic 0 Evitarea interdicției"
+    - "%command_prefix%SUSPEND Ares 0 Evitarea interdicției"
   success: "Porecla %nickname% a fost suspendată până la %duration%."
   already_suspended: "Porecla %nickname% este deja suspendată."
   forbidden: "Porecla %nickname% este interzisă și nu poate fi suspendată."
@@ -767,7 +767,7 @@ unsuspend:
   help: |-
     Elimină o suspendare activă, astfel încât proprietarul să se poată identifica
     din nou.
-  example: "%command_prefix%UNSUSPEND Utilizator"
+  example: "%command_prefix%UNSUSPEND Ares"
   success: "Suspendarea a fost ridicată pentru %nickname%."
   not_suspended: "Porecla %nickname% nu este suspendată."
 
@@ -781,7 +781,7 @@ forbid:
     mutat
     la o poreclă aleatorie. Poreclele Root, IRCop și ale serviciilor nu pot fi
     interzise.
-  example: "%command_prefix%FORBID UtilizatorRău Încălcări repetate ale politicii"
+  example: "%command_prefix%FORBID Ares Încălcări repetate ale politicii"
   success: "Porecla %nickname% a fost interzisă."
   updated: "Motivul interzicerii pentru %nickname% a fost actualizat."
   reason_required: "Trebuie să furnizați un motiv pentru interdicție."
@@ -794,7 +794,7 @@ unforbid:
   syntax: "UNFORBID <poreclă>"
   short: "Eliminați interdicția unei porecle."
   help: "Elimină interdicția, permițând folosirea din nou a poreclei."
-  example: "%command_prefix%UNFORBID PoreclăInterzisă"
+  example: "%command_prefix%UNFORBID Ares"
   success: "Porecla %nickname% nu mai este interzisă."
   not_forbidden: "Porecla %nickname% nu este interzisă."
 
@@ -854,9 +854,9 @@ drop:
     poreclele Root, IRCop, ale serviciilor sau propria ta poreclă.
   force:
     short: "Șterge definitiv o poreclă aflată în așteptarea ștergerii."
-  example: "%command_prefix%DROP ContVechi"
+  example: "%command_prefix%DROP Ares"
   examples:
-    - "%command_prefix%DROP ContVechi FORCE"
+    - "%command_prefix%DROP Ares FORCE"
   suspended: "Porecla %nickname% este suspendată. Anulați mai întâi suspendarea."
   forbidden: "Porecla %nickname% este interzisă."
   cannot_drop_root: "Nu se poate elimina utilizatorul root %nickname%."
@@ -874,7 +874,7 @@ restore:
   help: |-
     Restaurează o poreclă aflată în așteptarea ștergerii, cât timp este în perioada
     de grație.
-  example: "%command_prefix%RESTORE ContVechi"
+  example: "%command_prefix%RESTORE Ares"
   success: "Porecla %nickname% a fost restaurată."
   not_pending_deletion: "Porecla %nickname% nu este în așteptare de ștergere."
 

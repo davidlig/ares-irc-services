@@ -60,15 +60,15 @@ identify:
     Nach erfolgreicher Identifizierung erhalten Sie den registrierten Modus %emphasis_0%
     und, falls Sie einen Gast-Nick verwendet haben, wird Ihr registrierter Nick
     wiederhergestellt.
-  example: "%command_prefix%IDENTIFY Benutzer <Passwort>"
+  example: "%command_prefix%IDENTIFY Ares <Passwort>"
   native_syntax: "/NICK <nickname>:<Passwort> | /NICK <nickname>!<Passwort>"
   native_short: "Zeigt die native Syntax zur Nickname-Authentifizierung."
   native_help: |-
     Dieses Protokoll authentifiziert Konten durch Nickname-Wechsel.
     Verwende %emphasis_0% oder, wenn der Nickname belegt ist, %emphasis_1%.
-  native_example: "/NICK Benutzer:<Passwort>"
+  native_example: "/NICK Ares:<Passwort>"
   native_examples:
-    - "%command_prefix%/NICK Benutzer!<Passwort>"
+    - "%command_prefix%/NICK Ares!<Passwort>"
   native_authentication: "Dieses Protokoll verwaltet die Authentifizierung durch Nickname-Wechsel. Verwende %command_0% oder, wenn der Nickname belegt ist, %command_1%."
   native_authentication_command_0: "/NICK <nickname>:<Passwort>"
   native_authentication_command_1: "/NICK <nickname>!<Passwort>"
@@ -141,9 +141,9 @@ recover:
     Nach Verwendung des gespeicherten Tokens wird mit VERIFY optional ein Ersatz
     angeboten. Ignoriere diese Nachricht, wenn du das aktuelle Token behalten
     willst.
-  example: "%command_prefix%RECOVER Benutzer"
+  example: "%command_prefix%RECOVER Ares"
   examples:
-    - "%command_prefix%RECOVER Benutzer <erhaltenes_Token>"
+    - "%command_prefix%RECOVER Ares <erhaltenes_Token>"
   pending: "Die Registrierung von %nickname% steht aus. Verwende %command_0%. Wurde das Token per E-Mail gesendet und ist eine gültige Adresse hinterlegt, kannst du mit %command_1% ein neues anfordern."
   pending_command_0: "VERIFY <token>"
   pending_command_1: "RESEND"
@@ -310,7 +310,7 @@ info:
 
     Die E-Mail-Adresse ist nur für den identifizierten Eigentümer sichtbar.
     Bei privaten Nicknames sehen nur der Eigentümer und IRC-Operatoren die Daten.
-  example: "%command_prefix%INFO Benutzer"
+  example: "%command_prefix%INFO Ares"
   private: "Informationen zu Nickname %nickname% sind privat."
   header: "Informationen für Nickname %nickname%"
   status: "%label%                 : %status%"
@@ -368,7 +368,7 @@ status:
   help: |-
     Zeigt den aktuellen Status eines Nicknames: registriert, ausstehende
     Verifizierung, gesperrt usw.
-  example: "%command_prefix%STATUS Benutzer"
+  example: "%command_prefix%STATUS Ares"
   header: "Status von Nick %nickname%"
   unregistered: "  Status          : Nicht registriert"
   not_registered_offline: "  Status          : %state%"
@@ -468,7 +468,7 @@ userip:
   help: |-
     Zeigt die echte IP-Adresse und den Hostnamen eines Nicknames.
     Verwende diese sensible Information verantwortungsbewusst.
-  example: "%command_prefix%USERIP Benutzer"
+  example: "%command_prefix%USERIP Ares"
   result: "Nickname: %nickname% | IP: %ip% | Host: %host%"
 
 # --- WHOIP (IRCop) ------------------------------------------------------------
@@ -506,17 +506,17 @@ history:
     Zeigt und verwaltet den Aktionsverlauf eines Nicknames. Sperren sowie Passwort-,
     E-Mail- und Wiederherstellungsänderungen werden automatisch erfasst. VIEW zeigt
     drei Einträge pro Seite; ALL zeigt den vollständigen Verlauf.
-  example: "%command_prefix%HISTORY Benutzer VIEW"
+  example: "%command_prefix%HISTORY Ares VIEW"
   examples:
-    - "%command_prefix%HISTORY Benutzer VIEW ALL"
-    - "%command_prefix%HISTORY Benutzer ADD Manuelle Notiz"
+    - "%command_prefix%HISTORY Ares VIEW ALL"
+    - "%command_prefix%HISTORY Ares ADD Manuelle Notiz"
 
   # --- HISTORY ADD ---------------------------------------------------------
   add:
     syntax: "HISTORY <nickname> ADD <Nachricht>"
     short: "Einen manuellen Verlaufseintrag hinzufügen."
     help: "Fügt dem Nickname-Verlauf einen manuellen Eintrag hinzu."
-    example: "%command_prefix%HISTORY Benutzer ADD Als Spam gemeldet"
+    example: "%command_prefix%HISTORY Ares ADD Als Spam gemeldet"
     success: "Verlaufseintrag für %nickname% hinzugefügt."
 
   # --- HISTORY DEL ---------------------------------------------------------
@@ -524,7 +524,7 @@ history:
     syntax: "HISTORY <nickname> DEL <id>"
     short: "Einen Verlaufseintrag anhand der ID löschen."
     help: "Löscht einen bestimmten Verlaufseintrag anhand seiner ID."
-    example: "%command_prefix%HISTORY Benutzer DEL 42"
+    example: "%command_prefix%HISTORY Ares DEL 42"
 
   # --- HISTORY VIEW --------------------------------------------------------
   view:
@@ -533,10 +533,10 @@ history:
     help: |-
       Zeigt den Aktionsverlauf des Nicknames. Standardmäßig werden drei Einträge
       pro Seite angezeigt. Verwende ALL, um alle Einträge zu sehen.
-    example: "%command_prefix%HISTORY Benutzer VIEW"
+    example: "%command_prefix%HISTORY Ares VIEW"
     examples:
-      - "%command_prefix%HISTORY Benutzer VIEW 2"
-      - "%command_prefix%HISTORY Benutzer VIEW ALL"
+      - "%command_prefix%HISTORY Ares VIEW 2"
+      - "%command_prefix%HISTORY Ares VIEW ALL"
     header: "%heading% (zeigt %start%-%end% von %total%):"
     header_title: "Verlauf für %nickname%"
     entry: "#%id% [%date%] %action% von %operator% — %message%"
@@ -549,7 +549,7 @@ history:
     syntax: "HISTORY <nickname> CLEAR"
     short: "Alle Verlaufseinträge für einen Nickname löschen."
     help: "Löscht unwiderruflich alle Verlaufseinträge des Nicknames."
-    example: "%command_prefix%HISTORY Benutzer CLEAR"
+    example: "%command_prefix%HISTORY Ares CLEAR"
     success: "%count% Verlaufseinträge für %nickname% gelöscht."
 
 # --- HISTORY MESSAGES ---
@@ -589,9 +589,9 @@ saregister:
 
     Im TOKEN-Modus wird das Rettungstoken einmalig dem Operator angezeigt.
     Im EMAIL-Modus wird das Rettungstoken an die angegebene E-Mail-Adresse gesendet.
-  example: "%command_prefix%SAREGISTER Alice Passwort123"
+  example: "%command_prefix%SAREGISTER Ares Passwort123"
   examples:
-    - "%command_prefix%SAREGISTER Bob Passwort456 bob@example.de"
+    - "%command_prefix%SAREGISTER Ares Passwort456 bob@example.de"
   success_token: "Nickname %nickname% wurde registriert. Rettungstoken: %token%"
   success_email: "Nickname %nickname% wurde registriert. Rettungstoken an %email% gesendet."
   invalid_nickname: "Ungültiger Nickname %nickname%."
@@ -604,9 +604,9 @@ saset:
     Ermöglicht IRC-Operatoren, die Einstellungen eines anderen registrierten
     Nicknames zu ändern. Nicknames von Root, IRC-Operatoren und Diensten sind
     ausgeschlossen.
-  example: "%command_prefix%SASET Benutzer PRIVATE ON"
+  example: "%command_prefix%SASET Ares PRIVATE ON"
   examples:
-    - "%command_prefix%SASET Benutzer TIMEZONE OFF"
+    - "%command_prefix%SASET Ares TIMEZONE OFF"
   unknown_option: "Unbekannte Option %option%. Verfügbare Optionen: %options%."
   cannot_modify_oper: "Kann Nickname eines IRC-Operators nicht ändern."
 
@@ -615,7 +615,7 @@ saset:
     syntax: "SASET <Nickname> PASSWORD <neues_Passwort>"
     short: "Passwort eines Nicknames ändern."
     help: "Ändert das Passwort eines anderen Nicknames sofort."
-    example: "%command_prefix%SASET Benutzer PASSWORD ClaveSegura123"
+    example: "%command_prefix%SASET Ares PASSWORD ClaveSegura123"
 
   # --- SASET EMAIL ---------------------------------------------------------
   email:
@@ -625,7 +625,7 @@ saset:
       Ändert die E-Mail-Adresse eines anderen Nicknames sofort. Das Rettungstoken
       ist nicht erforderlich und es wird keine Bestätigungs-E-Mail gesendet.
       BADMAIL beschränkt diese administrative E-Mail-Änderung nicht.
-    example: "%command_prefix%SASET Benutzer EMAIL benutzer@beispiel.de"
+    example: "%command_prefix%SASET Ares EMAIL benutzer@beispiel.de"
 
   # --- SASET LANGUAGE ------------------------------------------------------
   language:
@@ -634,7 +634,7 @@ saset:
     help: |-
       Ändert die Sprache eines anderen Nicknames. Verfügbar sind en (Englisch)
       und es (Spanisch).
-    example: "%command_prefix%SASET Benutzer LANGUAGE es"
+    example: "%command_prefix%SASET Ares LANGUAGE es"
 
   # --- SASET TIMEZONE ------------------------------------------------------
   timezone:
@@ -643,9 +643,9 @@ saset:
     help: |-
       Legt die Zeitzone eines anderen Nicknames fest oder entfernt sie. Verwende OFF
       zum Entfernen.
-    example: "%command_prefix%SASET Benutzer TIMEZONE Europe/Madrid"
+    example: "%command_prefix%SASET Ares TIMEZONE Europe/Madrid"
     examples:
-      - "%command_prefix%SASET Benutzer TIMEZONE OFF"
+      - "%command_prefix%SASET Ares TIMEZONE OFF"
 
   # --- SASET PRIVATE -------------------------------------------------------
   private:
@@ -654,9 +654,9 @@ saset:
     help: |-
       Aktiviert oder deaktiviert den Datenschutz für die Informationen eines anderen
       Nicknames.
-    example: "%command_prefix%SASET Benutzer PRIVATE ON"
+    example: "%command_prefix%SASET Ares PRIVATE ON"
     examples:
-      - "%command_prefix%SASET Benutzer PRIVATE OFF"
+      - "%command_prefix%SASET Ares PRIVATE OFF"
 
   # --- SASET MSG -----------------------------------------------------------
   msg:
@@ -665,9 +665,9 @@ saset:
     help: |-
       Legt fest, ob ein anderer Nickname Antworten als PRIVMSG (ON) oder NOTICE (OFF)
       erhält.
-    example: "%command_prefix%SASET Benutzer MSG ON"
+    example: "%command_prefix%SASET Ares MSG ON"
     examples:
-      - "%command_prefix%SASET Benutzer MSG OFF"
+      - "%command_prefix%SASET Ares MSG OFF"
 
   # --- SASET MODES ---------------------------------------------------------
   modes:
@@ -678,9 +678,9 @@ saset:
       Ohne Buchstaben wird die Einstellung gelöscht. Protokoll und Module
       bestimmen die Modi. Anwendung bei Anmeldung und wenn möglich sofort; keine
       Modussperre.
-    example: "%command_prefix%SASET User MODES B"
+    example: "%command_prefix%SASET Ares MODES B"
     examples:
-      - "%command_prefix%SASET User MODES"
+      - "%command_prefix%SASET Ares MODES"
     saved: "Automatische Modi %modes% für %nickname% gespeichert."
     cleared: "Automatische Moduseinstellung für %nickname% gelöscht."
     unchanged: "Automatische Modi für %nickname% sind unverändert."
@@ -695,9 +695,9 @@ saset:
     help: |-
       Legt den virtuellen Host eines anderen Nicknames fest oder entfernt ihn.
       Führe zum Entfernen SASET <Nickname> VHOST ohne Wert aus.
-    example: "%command_prefix%SASET Benutzer VHOST usuario.ejemplo.org"
+    example: "%command_prefix%SASET Ares VHOST usuario.ejemplo.org"
     examples:
-      - "%command_prefix%SASET Benutzer VHOST"
+      - "%command_prefix%SASET Ares VHOST"
 
 # --- RENAME (IRCop) -----------------------------------------------------------
 rename:
@@ -706,7 +706,7 @@ rename:
   help: |-
     Zwingt einen verbundenen Nickname, zu einem zufälligen, vom Netzwerk
     mit Präfix versehenen Namen zu wechseln.
-  example: "%command_prefix%RENAME Problematisch"
+  example: "%command_prefix%RENAME Ares"
   cannot_rename_root: "Root-Benutzer %nickname% kann nicht umbenannt werden."
   cannot_rename_oper: "IRC-Operator %nickname% kann nicht umbenannt werden."
   cannot_rename_service: "Service-Nickname %nickname% kann nicht umbenannt werden."
@@ -719,9 +719,9 @@ noexpire:
   help: |-
     Legt fest, ob der Nickname wegen Inaktivität abläuft.
     ON verhindert den Ablauf, OFF wendet die normalen Regeln an.
-  example: "%command_prefix%NOEXPIRE Benutzer ON"
+  example: "%command_prefix%NOEXPIRE Ares ON"
   examples:
-    - "%command_prefix%NOEXPIRE Benutzer OFF"
+    - "%command_prefix%NOEXPIRE Ares OFF"
   success_on: "Nickname %nickname% ist jetzt vor Ablauf geschützt."
   success_off: "Nickname %nickname% läuft jetzt normal ab."
   forbidden: "Nickname %nickname% ist gesperrt."
@@ -757,9 +757,9 @@ suspend:
     (d), Stunden (h), Minuten (m) oder 0 für eine dauerhafte Sperre angegeben
     werden.
     IRC-Operatoren und Root-Benutzer können nicht gesperrt werden.
-  example: "%command_prefix%SUSPEND SchlechterBenutzer 7d Spam en #hilfe"
+  example: "%command_prefix%SUSPEND Ares 7d Spam en #Ares_Help"
   examples:
-    - "%command_prefix%SUSPEND Problematisch 0 Umgehung einer Sperre"
+    - "%command_prefix%SUSPEND Ares 0 Umgehung einer Sperre"
   success: "Nickname %nickname% wurde suspendiert bis %duration%."
   already_suspended: "Nickname %nickname% ist bereits suspendiert."
   forbidden: "Nickname %nickname% ist gesperrt und kann nicht suspendiert werden."
@@ -777,7 +777,7 @@ unsuspend:
   help: |-
     Hebt eine aktive Sperre auf, damit sich der Eigentümer wieder identifizieren
     kann.
-  example: "%command_prefix%UNSUSPEND Benutzer"
+  example: "%command_prefix%UNSUSPEND Ares"
   success: "Suspendierung wurde von %nickname% aufgehoben."
   not_suspended: "Nickname %nickname% ist nicht suspendiert."
 
@@ -790,7 +790,7 @@ forbid:
     verwenden kann. Ein registrierter Eintrag wird entfernt; bei Verbindung wird
     der Benutzer zu einem zufälligen Nickname gezwungen. Root, IRC-Operatoren und
     Dienste können nicht gesperrt werden.
-  example: "%command_prefix%FORBID SchlechterBenutzer Wiederholte Regelverstöße"
+  example: "%command_prefix%FORBID Ares Wiederholte Regelverstöße"
   success: "Nickname %nickname% wurde gesperrt."
   updated: "Begründung für die Sperre von %nickname% wurde aktualisiert."
   reason_required: "Sie müssen eine Begründung für die Sperrung angeben."
@@ -803,7 +803,7 @@ unforbid:
   syntax: "UNFORBID <nickname>"
   short: "Eine Nickname-Sperrung aufheben."
   help: "Hebt das Verbot auf, sodass der Nickname wieder verwendet werden kann."
-  example: "%command_prefix%UNFORBID VerbotenerNickname"
+  example: "%command_prefix%UNFORBID Ares"
   success: "Nickname %nickname% ist nicht mehr gesperrt."
   not_forbidden: "Nickname %nickname% ist nicht gesperrt."
 
@@ -862,9 +862,9 @@ drop:
     nicht gelöscht werden.
   force:
     short: "Löscht einen zur Löschung vorgemerkten Nickname endgültig."
-  example: "%command_prefix%DROP AltesKonto"
+  example: "%command_prefix%DROP Ares"
   examples:
-    - "%command_prefix%DROP AltesKonto FORCE"
+    - "%command_prefix%DROP Ares FORCE"
   suspended: "Nickname %nickname% ist suspendiert. Zuerst entsuspendieren."
   forbidden: "Nickname %nickname% ist gesperrt."
   cannot_drop_root: "Root-Benutzer %nickname% kann nicht gelöscht werden."
@@ -882,7 +882,7 @@ restore:
   help: |-
     Stellt einen zur Löschung vorgemerkten Nickname innerhalb der Schonfrist wieder
     her.
-  example: "%command_prefix%RESTORE AltesKonto"
+  example: "%command_prefix%RESTORE Ares"
   success: "Nickname %nickname% wurde wiederhergestellt."
   not_pending_deletion: "Nickname %nickname% steht nicht zur Löschung an."
 

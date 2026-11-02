@@ -335,7 +335,7 @@ final class HelpCommandTest extends TestCase
         self::assertStringContainsString("Sintaxis: \x02\x0303KILL <apodo> <razón>\x03\x0F", $rendered);
         self::assertStringContainsString('Ejemplos:', $rendered);
         self::assertStringContainsString("\n \n ■ \x02Ejemplos:", $rendered);
-        self::assertStringContainsString("/msg OperServ \x02\x0303KILL BadUser Flooding en canales\x03\x0F", $rendered);
+        self::assertStringContainsString("/msg OperServ \x02\x0303KILL Ares Flooding en canales\x03\x0F", $rendered);
         self::assertSame(1, substr_count($rendered, 'Sintaxis:'));
     }
 

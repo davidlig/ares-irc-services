@@ -23,9 +23,9 @@ send:
   help: |-
     Στέλνει ένα μήνυμα σε ένα καταχωρημένο ψευδώνυμο ή κανάλι. Ο παραλήπτης πρέπει
     να έχει ενεργοποιήσει την υπηρεσία μηνυμάτων (ENABLE).
-  example: "%command_prefix%SEND Άννα Γεια, μπορείς να ελέγξεις το μήνυμα;"
+  example: "%command_prefix%SEND Ares Γεια, μπορείς να ελέγξεις το μήνυμα;"
   examples:
-    - "%command_prefix%SEND #βοήθεια Ειδοποίηση για το κανάλι"
+    - "%command_prefix%SEND #Ares_Help Ειδοποίηση για το κανάλι"
   sent_nick: "Μήνυμα στάλθηκε στο %nickname%."
   sent_channel: "Μήνυμα στάλθηκε στο κανάλι %channel%."
   throttled: "Πρέπει να περιμένετε %seconds% δευτερόλεπτο(α) πριν στείλετε άλλο μήνυμα."
@@ -44,7 +44,7 @@ read:
     εισερχόμενά σας. Με #channel, απαιτεί επίπεδο MEMOREAD.
   example: "%command_prefix%READ 1"
   examples:
-    - "%command_prefix%READ #βοήθεια 2"
+    - "%command_prefix%READ #Ares_Help 2"
   header: "Μήνυμα #%index% από %from%:"
   footer: "%separator% %date%"
   not_found: "Το μήνυμα #%index% δεν βρέθηκε."
@@ -59,7 +59,7 @@ list:
     Χωρίς #channel = τα εισερχόμενά σας· με #channel απαιτεί MEMOREAD.
   example: "%command_prefix%LIST"
   examples:
-    - "%command_prefix%LIST #βοήθεια"
+    - "%command_prefix%LIST #Ares_Help"
   header: "Μηνύματα για %target%:"
   empty: "Δεν υπάρχουν μηνύματα για %target%."
 
@@ -73,8 +73,8 @@ del:
   example: "%command_prefix%DEL ALL"
   examples:
     - "%command_prefix%DEL 1"
-    - "%command_prefix%DEL #βοήθεια 2"
-    - "%command_prefix%DEL #βοήθεια ALL"
+    - "%command_prefix%DEL #Ares_Help 2"
+    - "%command_prefix%DEL #Ares_Help ALL"
   deleted: "Το μήνυμα #%index% διαγράφηκε."
   not_found: "Το μήνυμα #%index% δεν βρέθηκε."
   all_deleted: "Διαγράφηκαν όλα τα μηνύματα αυτής της θυρίδας."
@@ -87,10 +87,10 @@ ignore:
   help: |-
     ADD προσθέτει ένα ψευδώνυμο στη λίστα αγνόησής σας (ή του καναλιού)· DEL
     αφαιρεί· LIST εμφανίζει τη λίστα. Για κανάλια, ADD/DEL απαιτούν MEMOCHANGE.
-  example: "%command_prefix%IGNORE ADD Ana"
+  example: "%command_prefix%IGNORE ADD Ares"
   examples:
-    - "%command_prefix%IGNORE DEL #βοήθεια Ana"
-    - "%command_prefix%IGNORE LIST #βοήθεια"
+    - "%command_prefix%IGNORE DEL #Ares_Help Ares"
+    - "%command_prefix%IGNORE LIST #Ares_Help"
 
   # --- IGNORE ADD ----------------------------------------------------------
   add:
@@ -99,18 +99,18 @@ ignore:
     help: |-
       Τα μηνύματα από αυτό το ψευδώνυμο δεν θα γίνονται δεκτά στα εισερχόμενά σας (ή
       του καναλιού).
-    example: "%command_prefix%IGNORE ADD Ana"
+    example: "%command_prefix%IGNORE ADD Ares"
     examples:
-      - "%command_prefix%IGNORE ADD #βοήθεια Ana"
+      - "%command_prefix%IGNORE ADD #Ares_Help Ares"
 
   # --- IGNORE DEL ----------------------------------------------------------
   del:
     syntax: "IGNORE DEL [#channel] <nickname>"
     short: "Αφαίρεση ψευδωνύμου από τη λίστα αγνόησης."
     help: "Αφαιρεί το ψευδώνυμο από τη λίστα αγνόησης."
-    example: "%command_prefix%IGNORE DEL Ana"
+    example: "%command_prefix%IGNORE DEL Ares"
     examples:
-      - "%command_prefix%IGNORE DEL #βοήθεια Ana"
+      - "%command_prefix%IGNORE DEL #Ares_Help Ares"
 
   # --- IGNORE LIST ---------------------------------------------------------
   list:
@@ -119,7 +119,7 @@ ignore:
     help: "Εμφανίζει τη λίστα των ψευδωνύμων που εσείς (ή το κανάλι) αγνοείτε για μηνύματα."
     example: "%command_prefix%IGNORE LIST"
     examples:
-      - "%command_prefix%IGNORE LIST #βοήθεια"
+      - "%command_prefix%IGNORE LIST #Ares_Help"
   added: "Το %nickname% προστέθηκε στη λίστα αγνόησης."
   removed: "Το %nickname% αφαιρέθηκε από τη λίστα αγνόησης."
   already_ignored: "Το %nickname% είναι ήδη στη λίστα αγνόησης."
@@ -138,7 +138,7 @@ enable:
     ιδρυτής μπορεί να ενεργοποιήσει.
   example: "%command_prefix%ENABLE"
   examples:
-    - "%command_prefix%ENABLE #βοήθεια"
+    - "%command_prefix%ENABLE #Ares_Help"
   enabled_nick: "Η υπηρεσία μηνυμάτων ενεργοποιήθηκε για το ψευδώνυμό σας."
   enabled_channel: "Η υπηρεσία μηνυμάτων ενεργοποιήθηκε για το κανάλι %channel%."
   already_enabled_nick: "Η υπηρεσία μηνυμάτων είναι ήδη ενεργοποιημένη για το ψευδώνυμό σας."
@@ -154,7 +154,7 @@ disable:
     μόνο ο ιδρυτής μπορεί να απενεργοποιήσει.
   example: "%command_prefix%DISABLE"
   examples:
-    - "%command_prefix%DISABLE #βοήθεια"
+    - "%command_prefix%DISABLE #Ares_Help"
   disabled_nick: "Η υπηρεσία μηνυμάτων απενεργοποιήθηκε για το ψευδώνυμό σας."
   disabled_channel: "Η υπηρεσία μηνυμάτων απενεργοποιήθηκε για το κανάλι %channel%."
   already_disabled_nick: "Η υπηρεσία μηνυμάτων είναι ήδη απενεργοποιημένη για το ψευδώνυμό σας."

@@ -71,7 +71,7 @@ ircop:
     DEL treu un operador. LIST mostra tots els operadors.
     Utilitzeu ROLE LIST per veure els rols disponibles.
     Aquesta ordre està restringida als usuaris Root configurats als serveis.
-  example: "%command_prefix%IRCOP ADD Anna OPER"
+  example: "%command_prefix%IRCOP ADD Ares OPER"
   examples:
     - "%command_prefix%IRCOP LIST"
   unknown_sub: "Subordre desconeguda %sub%. Utilitzeu ADD, DEL o LIST."
@@ -88,7 +88,7 @@ ircop:
       Afegeix un sobrenom registrat com a operador d'IRC de xarxa.
       Utilitzeu ROLE LIST per veure els rols disponibles.
       Aquesta ordre està restringida als usuaris Root.
-    example: "%command_prefix%IRCOP ADD Anna OPER"
+    example: "%command_prefix%IRCOP ADD Ares OPER"
     done: "Afegit %nickname% com a %role%."
     nick_not_active: "El sobrenom %nickname% no és un sobrenom registrat actiu."
 
@@ -99,7 +99,7 @@ ircop:
     help: |-
       Treu un operador d'IRC de xarxa de la llista.
       Aquesta ordre està restringida als usuaris Root.
-    example: "%command_prefix%IRCOP DEL Anna"
+    example: "%command_prefix%IRCOP DEL Ares"
     done: "Tret %nickname% dels operadors d'IRC."
 
   # --- IRCOP LIST ----------------------------------------------------------
@@ -321,7 +321,7 @@ kill:
   help: |-
     Desconnecta un usuari de la xarxa IRC.
     No es pot expulsar amb KILL els IRCops ni els usuaris Root.
-  example: "%command_prefix%KILL UsuariDolent Inundació als canals"
+  example: "%command_prefix%KILL Ares Inundació als canals"
   protected_root: "No es pot matar l'usuari Root %nickname%."
   protected_ircop: "No es pot matar l'operador d'IRC %nickname%."
   done: "L'usuari %nickname% ha estat mort (%reason%)."
