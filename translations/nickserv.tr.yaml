@@ -694,7 +694,7 @@ rename:
   help: |-
     Bağlı bir takma adın ağ tarafından tanımlanan önekle rastgele bir ada
     değiştirilmesini zorlar.
-  example: "%command_prefix%RENAME Ares"
+  example: "%command_prefix%RENAME BadUser"
   cannot_rename_root: "Root kullanıcı %nickname% yeniden adlandırılamaz."
   cannot_rename_oper: "IRC operatörü %nickname% yeniden adlandırılamaz."
   cannot_rename_service: "Hizmet rumuzu %nickname% yeniden adlandırılamaz."
@@ -744,9 +744,9 @@ suspend:
     Sahibinin kimliğini doğrulamasını engeller. Süre gün (d), saat (h), dakika (m)
     veya süresiz askı için 0 olarak belirtilebilir. IRC operatörleri ve Root
     kullanıcıları askıya alınamaz.
-  example: "%command_prefix%SUSPEND Ares 7d #Ares_Help kanalında spam"
+  example: "%command_prefix%SUSPEND BadUser 7d #Ares_Help kanalında spam"
   examples:
-    - "%command_prefix%SUSPEND Ares 0 Yasağı aşma"
+    - "%command_prefix%SUSPEND BadUser 0 Yasağı aşma"
   success: "%nickname% rumuzu %duration% tarihine kadar askıya alındı."
   already_suspended: "%nickname% rumuzu zaten askıya alınmış."
   forbidden: "%nickname% rumuzu yasaklanmış ve askıya alınamaz."
@@ -775,7 +775,7 @@ forbid:
     Kayıtlıysa silinir; bağlıysa rastgele bir takma ada geçmesi zorlanır. Root,
     IRCop
     ve hizmet takma adları yasaklanamaz.
-  example: "%command_prefix%FORBID Ares Tekrarlanan politika ihlalleri"
+  example: "%command_prefix%FORBID BadUser Tekrarlanan politika ihlalleri"
   success: "%nickname% rumuzu yasaklandı."
   updated: "%nickname% için yasaklama gerekçesi güncellendi."
   reason_required: "Yasaklama için bir gerekçe belirtmelisiniz."
@@ -845,9 +845,9 @@ drop:
     adları veya kendi takma adınız silinemez.
   force:
     short: "Silinmeyi bekleyen takma adı kalıcı olarak siler."
-  example: "%command_prefix%DROP Ares"
+  example: "%command_prefix%DROP BadUser"
   examples:
-    - "%command_prefix%DROP Ares FORCE"
+    - "%command_prefix%DROP BadUser FORCE"
   suspended: "%nickname% rumuzu askıya alınmış. Önce askıyı kaldırın."
   forbidden: "%nickname% rumuzu yasaklanmış."
   cannot_drop_root: "Root kullanıcı %nickname% bırakılamaz."

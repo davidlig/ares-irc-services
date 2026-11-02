@@ -691,7 +691,7 @@ rename:
   help: |-
     Obriga um nickname ligado a mudar para um nome aleatório com um prefixo
     definido pela rede.
-  example: "%command_prefix%RENAME Ares"
+  example: "%command_prefix%RENAME BadUser"
   cannot_rename_root: "Não é possível renomear o utilizador root %nickname%."
   cannot_rename_oper: "Não é possível renomear o operador de IRC %nickname%."
   cannot_rename_service: "Não é possível renomear o nickname de serviço %nickname%."
@@ -741,9 +741,9 @@ suspend:
     Impede o proprietário de se identificar. A duração pode ser indicada em dias
     (d), horas (h), minutos (m) ou 0 para uma suspensão permanente. Não é possível
     suspender Operadores IRC nem utilizadores Root.
-  example: "%command_prefix%SUSPEND Ares 7d Spam en #Ares_Help"
+  example: "%command_prefix%SUSPEND BadUser 7d Spam en #Ares_Help"
   examples:
-    - "%command_prefix%SUSPEND Ares 0 Evasão do banimento"
+    - "%command_prefix%SUSPEND BadUser 0 Evasão do banimento"
   success: "O nickname %nickname% foi suspenso até %duration%."
   already_suspended: "O nickname %nickname% já está suspenso."
   forbidden: "O nickname %nickname% está proibido e não pode ser suspenso."
@@ -774,7 +774,7 @@ forbid:
     Se estiver registado, é eliminado; se estiver ligado, é obrigado a mudar para
     um nickname aleatório. Não é possível proibir utilizadores Root, IRCops ou
     serviços.
-  example: "%command_prefix%FORBID Ares Violaciones repetidas de política"
+  example: "%command_prefix%FORBID BadUser Violaciones repetidas de política"
   success: "O nickname %nickname% foi proibido."
   updated: "O motivo de proibição de %nickname% foi atualizado."
   reason_required: "Deve fornecer um motivo para a proibição."
@@ -847,9 +847,9 @@ drop:
     nickname.
   force:
     short: "Elimina permanentemente um nickname pendente de eliminação."
-  example: "%command_prefix%DROP Ares"
+  example: "%command_prefix%DROP BadUser"
   examples:
-    - "%command_prefix%DROP Ares FORCE"
+    - "%command_prefix%DROP BadUser FORCE"
   suspended: "O nickname %nickname% está suspenso. Remova a suspensão primeiro."
   forbidden: "O nickname %nickname% está proibido."
   cannot_drop_root: "Não é possível remover o utilizador root %nickname%."

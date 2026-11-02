@@ -318,7 +318,7 @@ kill:
   help: |-
     Disconnette un utente dalla rete IRC.
     Gli IRCop e gli utenti Root non possono essere espulsi con KILL.
-  example: "%command_prefix%KILL Ares Flood nei canali"
+  example: "%command_prefix%KILL BadUser Flood nei canali"
   protected_root: "Impossibile killare l'utente Root %nickname%."
   protected_ircop: "Impossibile killare l'IRC operator %nickname%."
   done: "Utente %nickname% è stato killato (%reason%)."

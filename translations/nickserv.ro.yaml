@@ -697,7 +697,7 @@ rename:
     Forțează o poreclă conectată să treacă la un nume aleatoriu cu un prefix
     stabilit
     de rețea.
-  example: "%command_prefix%RENAME Ares"
+  example: "%command_prefix%RENAME BadUser"
   cannot_rename_root: "Nu se poate redenumi utilizatorul root %nickname%."
   cannot_rename_oper: "Nu se poate redenumi operatorul IRC %nickname%."
   cannot_rename_service: "Nu se poate redenumi porecla de serviciu %nickname%."
@@ -747,9 +747,9 @@ suspend:
     Împiedică proprietarul să se identifice. Durata poate fi indicată în zile (d),
     ore (h), minute (m) sau 0 pentru suspendare permanentă. Operatorii IRC și
     utilizatorii Root nu pot fi suspendați.
-  example: "%command_prefix%SUSPEND Ares 7d Spam en #Ares_Help"
+  example: "%command_prefix%SUSPEND BadUser 7d Spam en #Ares_Help"
   examples:
-    - "%command_prefix%SUSPEND Ares 0 Evitarea interdicției"
+    - "%command_prefix%SUSPEND BadUser 0 Evitarea interdicției"
   success: "Porecla %nickname% a fost suspendată până la %duration%."
   already_suspended: "Porecla %nickname% este deja suspendată."
   forbidden: "Porecla %nickname% este interzisă și nu poate fi suspendată."
@@ -781,7 +781,7 @@ forbid:
     mutat
     la o poreclă aleatorie. Poreclele Root, IRCop și ale serviciilor nu pot fi
     interzise.
-  example: "%command_prefix%FORBID Ares Încălcări repetate ale politicii"
+  example: "%command_prefix%FORBID BadUser Încălcări repetate ale politicii"
   success: "Porecla %nickname% a fost interzisă."
   updated: "Motivul interzicerii pentru %nickname% a fost actualizat."
   reason_required: "Trebuie să furnizați un motiv pentru interdicție."
@@ -854,9 +854,9 @@ drop:
     poreclele Root, IRCop, ale serviciilor sau propria ta poreclă.
   force:
     short: "Șterge definitiv o poreclă aflată în așteptarea ștergerii."
-  example: "%command_prefix%DROP Ares"
+  example: "%command_prefix%DROP BadUser"
   examples:
-    - "%command_prefix%DROP Ares FORCE"
+    - "%command_prefix%DROP BadUser FORCE"
   suspended: "Porecla %nickname% este suspendată. Anulați mai întâi suspendarea."
   forbidden: "Porecla %nickname% este interzisă."
   cannot_drop_root: "Nu se poate elimina utilizatorul root %nickname%."

@@ -326,7 +326,7 @@ kill:
 
     Σύνταξη: KILL <ψευδώνυμο> <αιτιολογία>
     Παράδειγμα: KILL BadUser Flooding σε κανάλια
-  example: "%command_prefix%KILL Ares Κατάκλυση καναλιών"
+  example: "%command_prefix%KILL BadUser Κατάκλυση καναλιών"
   protected_root: "Δεν μπορεί να γίνει kill ο Root χρήστης %nickname%."
   protected_ircop: "Δεν μπορεί να γίνει kill ο IRC operator %nickname%."
   done: "Ο χρήστης %nickname% έχει γίνει kill (%reason%)."

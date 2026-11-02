@@ -319,7 +319,7 @@ kill:
   help: |-
     Verbreekt de verbinding van een gebruiker met het IRC-netwerk.
     IRC-operators en Root-gebruikers kunnen niet gekilld worden.
-  example: "%command_prefix%KILL Ares Kanaaloverlast"
+  example: "%command_prefix%KILL BadUser Kanaaloverlast"
   protected_root: "Kan Root-gebruiker %nickname% niet killen."
   protected_ircop: "Kan IRC-operator %nickname% niet killen."
   done: "Gebruiker %nickname% is gekilld (%reason%)."

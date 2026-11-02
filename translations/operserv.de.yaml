@@ -322,7 +322,7 @@ kill:
   help: |-
     Trennt einen Benutzer vom IRC-Netzwerk.
     IRC-Operatoren und Root-Benutzer können nicht gekillt werden.
-  example: "%command_prefix%KILL Ares Flooding en canales"
+  example: "%command_prefix%KILL BadUser Flooding en canales"
   protected_root: "Root-Benutzer %nickname% kann nicht gekillt werden."
   protected_ircop: "IRC-Operator %nickname% kann nicht gekillt werden."
   done: "Benutzer %nickname% wurde gekillt (%reason%)."

@@ -691,7 +691,7 @@ rename:
   help: |-
     Obriga un alcume conectado a cambiar a un nome aleatorio cun prefixo definido
     pola rede.
-  example: "%command_prefix%RENAME Ares"
+  example: "%command_prefix%RENAME BadUser"
   cannot_rename_root: "Non se pode renomear o usuario root %nickname%."
   cannot_rename_oper: "Non se pode renomear o operador de IRC %nickname%."
   cannot_rename_service: "Non se pode renomear o alcume de servizo %nickname%."
@@ -742,9 +742,9 @@ suspend:
     Impide que a persoa propietaria se identifique. A duración pode expresarse en
     días (d), horas (h), minutos (m) ou 0 para unha suspensión permanente. Non se
     poden suspender operadores IRC nin persoas usuarias Root.
-  example: "%command_prefix%SUSPEND Ares 7d Spam en #Ares_Help"
+  example: "%command_prefix%SUSPEND BadUser 7d Spam en #Ares_Help"
   examples:
-    - "%command_prefix%SUSPEND Ares 0 Evasión de prohibición"
+    - "%command_prefix%SUSPEND BadUser 0 Evasión de prohibición"
   success: "O alcume %nickname% foi suspendido ata %duration%."
   already_suspended: "O alcume %nickname% xa está suspendido."
   forbidden: "O alcume %nickname% está prohibido e non se pode suspender."
@@ -775,7 +775,7 @@ forbid:
     Se está rexistrado, elimínase; se está conectado, obrígaselle a cambiar a un
     alcume aleatorio. Non se poden prohibir persoas usuarias Root, IRCops nin
     servizos.
-  example: "%command_prefix%FORBID Ares Infraccións reiteradas das normas"
+  example: "%command_prefix%FORBID BadUser Infraccións reiteradas das normas"
   success: "O alcume %nickname% foi prohibido."
   updated: "O motivo de prohibición de %nickname% foi actualizado."
   reason_required: "Debe proporcionar un motivo para a prohibición."
@@ -848,9 +848,9 @@ drop:
     eliminar persoas usuarias Root, IRCops e servizos, nin o teu propio alcume.
   force:
     short: "Elimina permanentemente un alcume pendente de eliminación."
-  example: "%command_prefix%DROP Ares"
+  example: "%command_prefix%DROP BadUser"
   examples:
-    - "%command_prefix%DROP Ares FORCE"
+    - "%command_prefix%DROP BadUser FORCE"
   suspended: "O alcume %nickname% está suspendido. Reactíveo primeiro."
   forbidden: "O alcume %nickname% está prohibido."
   cannot_drop_root: "Non se pode eliminar o usuario root %nickname%."

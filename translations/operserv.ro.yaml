@@ -320,7 +320,7 @@ kill:
   help: |-
     Deconectează un utilizator de la rețeaua IRC.
     IRCop-ii și utilizatorii Root nu pot fi eliminați.
-  example: "%command_prefix%KILL Ares Floodare pe canale"
+  example: "%command_prefix%KILL BadUser Floodare pe canale"
   protected_root: "Nu se poate da kill utilizatorului Root %nickname%."
   protected_ircop: "Nu se poate da kill operatorului IRC %nickname%."
   done: "Utilizatorul %nickname% a primit kill (%reason%)."

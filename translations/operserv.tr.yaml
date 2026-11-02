@@ -315,7 +315,7 @@ kill:
   help: |-
     Bir kullanıcının IRC ağındaki bağlantısını keser.
     IRCop ve Root kullanıcıları KILL edilemez.
-  example: "%command_prefix%KILL Ares Kanallarda taşkınlık"
+  example: "%command_prefix%KILL BadUser Kanallarda taşkınlık"
   protected_root: "Root kullanıcı %nickname% kill'lenemez."
   protected_ircop: "IRC operatörü %nickname% kill'lenemez."
   done: "%nickname% kullanıcısı kill'lendi (%reason%)."

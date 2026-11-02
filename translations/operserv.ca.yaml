@@ -321,7 +321,7 @@ kill:
   help: |-
     Desconnecta un usuari de la xarxa IRC.
     No es pot expulsar amb KILL els IRCops ni els usuaris Root.
-  example: "%command_prefix%KILL Ares Inundació als canals"
+  example: "%command_prefix%KILL BadUser Inundació als canals"
   protected_root: "No es pot matar l'usuari Root %nickname%."
   protected_ircop: "No es pot matar l'operador d'IRC %nickname%."
   done: "L'usuari %nickname% ha estat mort (%reason%)."

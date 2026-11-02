@@ -706,7 +706,7 @@ rename:
   help: |-
     Zwingt einen verbundenen Nickname, zu einem zufälligen, vom Netzwerk
     mit Präfix versehenen Namen zu wechseln.
-  example: "%command_prefix%RENAME Ares"
+  example: "%command_prefix%RENAME BadUser"
   cannot_rename_root: "Root-Benutzer %nickname% kann nicht umbenannt werden."
   cannot_rename_oper: "IRC-Operator %nickname% kann nicht umbenannt werden."
   cannot_rename_service: "Service-Nickname %nickname% kann nicht umbenannt werden."
@@ -757,9 +757,9 @@ suspend:
     (d), Stunden (h), Minuten (m) oder 0 für eine dauerhafte Sperre angegeben
     werden.
     IRC-Operatoren und Root-Benutzer können nicht gesperrt werden.
-  example: "%command_prefix%SUSPEND Ares 7d Spam en #Ares_Help"
+  example: "%command_prefix%SUSPEND BadUser 7d Spam en #Ares_Help"
   examples:
-    - "%command_prefix%SUSPEND Ares 0 Umgehung einer Sperre"
+    - "%command_prefix%SUSPEND BadUser 0 Umgehung einer Sperre"
   success: "Nickname %nickname% wurde suspendiert bis %duration%."
   already_suspended: "Nickname %nickname% ist bereits suspendiert."
   forbidden: "Nickname %nickname% ist gesperrt und kann nicht suspendiert werden."
@@ -790,7 +790,7 @@ forbid:
     verwenden kann. Ein registrierter Eintrag wird entfernt; bei Verbindung wird
     der Benutzer zu einem zufälligen Nickname gezwungen. Root, IRC-Operatoren und
     Dienste können nicht gesperrt werden.
-  example: "%command_prefix%FORBID Ares Wiederholte Regelverstöße"
+  example: "%command_prefix%FORBID BadUser Wiederholte Regelverstöße"
   success: "Nickname %nickname% wurde gesperrt."
   updated: "Begründung für die Sperre von %nickname% wurde aktualisiert."
   reason_required: "Sie müssen eine Begründung für die Sperrung angeben."
@@ -862,9 +862,9 @@ drop:
     nicht gelöscht werden.
   force:
     short: "Löscht einen zur Löschung vorgemerkten Nickname endgültig."
-  example: "%command_prefix%DROP Ares"
+  example: "%command_prefix%DROP BadUser"
   examples:
-    - "%command_prefix%DROP Ares FORCE"
+    - "%command_prefix%DROP BadUser FORCE"
   suspended: "Nickname %nickname% ist suspendiert. Zuerst entsuspendieren."
   forbidden: "Nickname %nickname% ist gesperrt."
   cannot_drop_root: "Root-Benutzer %nickname% kann nicht gelöscht werden."

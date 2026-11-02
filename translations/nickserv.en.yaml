@@ -692,7 +692,7 @@ rename:
   help: |-
     Forces a connected nickname to change to a random name with a prefix
     defined by the network.
-  example: "%command_prefix%RENAME Ares"
+  example: "%command_prefix%RENAME BadUser"
   cannot_rename_root: "Cannot rename root user %nickname%."
   cannot_rename_oper: "Cannot rename IRC operator %nickname%."
   cannot_rename_service: "Cannot rename service nickname %nickname%."
@@ -742,9 +742,9 @@ suspend:
     Prevents the owner from identifying. Specify the duration in days (d),
     hours (h), minutes (m), or use 0 for a permanent suspension. IRC operators
     and Root users cannot be suspended.
-  example: "%command_prefix%SUSPEND Ares 7d Spam in #Ares_Help"
+  example: "%command_prefix%SUSPEND BadUser 7d Spam in #Ares_Help"
   examples:
-    - "%command_prefix%SUSPEND Ares 0 Ban evasion"
+    - "%command_prefix%SUSPEND BadUser 0 Ban evasion"
   success: "Nickname %nickname% has been suspended until %duration%."
   already_suspended: "Nickname %nickname% is already suspended."
   forbidden: "Nickname %nickname% is forbidden and cannot be suspended."
@@ -772,7 +772,7 @@ forbid:
     Permanently forbids a nickname so that nobody can register or use it. If
     registered, its registration is deleted; if connected, it is forced to change
     to a random nickname. Root users, IRC operators and services cannot be banned.
-  example: "%command_prefix%FORBID Ares Repeated policy violations"
+  example: "%command_prefix%FORBID BadUser Repeated policy violations"
   success: "Nickname %nickname% has been forbidden."
   updated: "Forbidden reason for %nickname% has been updated."
   reason_required: "You must provide a reason for the prohibition."
@@ -843,9 +843,9 @@ drop:
     operators, services and your own nickname cannot be deleted.
   force:
     short: "Permanently deletes a nickname that is pending deletion."
-  example: "%command_prefix%DROP Ares"
+  example: "%command_prefix%DROP BadUser"
   examples:
-    - "%command_prefix%DROP Ares FORCE"
+    - "%command_prefix%DROP BadUser FORCE"
   suspended: "Nickname %nickname% is suspended. Unsuspend first."
   forbidden: "Nickname %nickname% is forbidden."
   cannot_drop_root: "Cannot drop root user %nickname%."

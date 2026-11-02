@@ -317,7 +317,7 @@ kill:
   help: |-
     Disconnects a user from the IRC network.
     IRC operators and Root users cannot be killed.
-  example: "%command_prefix%KILL Ares Channel flooding"
+  example: "%command_prefix%KILL BadUser Channel flooding"
   protected_root: "Cannot kill Root user %nickname%."
   protected_ircop: "Cannot kill IRC operator %nickname%."
   done: "User %nickname% has been killed (%reason%)."

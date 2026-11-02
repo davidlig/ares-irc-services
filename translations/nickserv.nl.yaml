@@ -698,7 +698,7 @@ rename:
   help: |-
     Dwingt een verbonden bijnaam om te veranderen naar een willekeurige naam met
     een door het netwerk ingesteld voorvoegsel.
-  example: "%command_prefix%RENAME Ares"
+  example: "%command_prefix%RENAME BadUser"
   cannot_rename_root: "Kan rootgebruiker %nickname% niet hernoemen."
   cannot_rename_oper: "Kan IRC-operator %nickname% niet hernoemen."
   cannot_rename_service: "Kan service-bijnaam %nickname% niet hernoemen."
@@ -749,9 +749,9 @@ suspend:
     dagen (d), uren (h), minuten (m) of 0 voor een permanente opschorting.
     IRC-operators
     en Root-gebruikers kunnen niet worden opgeschort.
-  example: "%command_prefix%SUSPEND Ares 7d Spam en #Ares_Help"
+  example: "%command_prefix%SUSPEND BadUser 7d Spam en #Ares_Help"
   examples:
-    - "%command_prefix%SUSPEND Ares 0 Omzeilen van een ban"
+    - "%command_prefix%SUSPEND BadUser 0 Omzeilen van een ban"
   success: "Bijnaam %nickname% is geschorst tot %duration%."
   already_suspended: "Bijnaam %nickname% is al geschorst."
   forbidden: "Bijnaam %nickname% is verboden en kan niet worden geschorst."
@@ -780,7 +780,7 @@ forbid:
     Een geregistreerde bijnaam wordt verwijderd; een verbonden gebruiker wordt naar
     een willekeurige bijnaam verplaatst. Root, IRC-operators en services kunnen niet
     worden verboden.
-  example: "%command_prefix%FORBID Ares Herhaalde beleidsschendingen"
+  example: "%command_prefix%FORBID BadUser Herhaalde beleidsschendingen"
   success: "Bijnaam %nickname% is verboden."
   updated: "Verbodsreden voor %nickname% is bijgewerkt."
   reason_required: "U moet een reden opgeven voor het verbod."
@@ -851,9 +851,9 @@ drop:
     verwijderd.
   force:
     short: "Verwijdert een bijnaam die op verwijdering wacht definitief."
-  example: "%command_prefix%DROP Ares"
+  example: "%command_prefix%DROP BadUser"
   examples:
-    - "%command_prefix%DROP Ares FORCE"
+    - "%command_prefix%DROP BadUser FORCE"
   suspended: "Bijnaam %nickname% is geschorst. Hef eerst de schorsing op."
   forbidden: "Bijnaam %nickname% is verboden."
   cannot_drop_root: "Kan rootgebruiker %nickname% niet verwijderen."

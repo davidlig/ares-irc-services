@@ -756,7 +756,7 @@ rename:
   help: |-
     Konektatutako ezizen bat sareak zehaztutako aurrizkia duen ausazko izen
     batera aldatzera behartzen du.
-  example: "%command_prefix%RENAME Ares"
+  example: "%command_prefix%RENAME BadUser"
   cannot_rename_root: "Ezin da root erabiltzaile %nickname% izenaz aldatu."
   cannot_rename_oper: "Ezin da IRC operadore %nickname% izenaz aldatu."
   cannot_rename_service: "Ezin da zerbitzu ezizen %nickname% izenaz aldatu."
@@ -806,9 +806,9 @@ suspend:
     Jabeari identifikatzea eragozten dio. Iraupena egunetan (d), orduetan (h),
     minututan (m) edo 0 gisa adieraz daiteke, etenaldi iraunkorra izateko.
     Ezin dira IRC operadoreak edo Root erabiltzaileak eten.
-  example: "%command_prefix%SUSPEND Ares 7d Spam en #Ares_Help"
+  example: "%command_prefix%SUSPEND BadUser 7d Spam en #Ares_Help"
   examples:
-    - "%command_prefix%SUSPEND Ares 0 Debekua saihestea"
+    - "%command_prefix%SUSPEND BadUser 0 Debekua saihestea"
   success: "%nickname% ezizena %duration% arte eten da."
   already_suspended: "%nickname% ezizena jada etenda dago."
   forbidden: "%nickname% ezizena debekatua dago eta ezin da eten."
@@ -850,7 +850,7 @@ forbid:
 
     Sintaxia: FORBID <ezizena> <arrazoia>
     Adibidea: FORBID EzizenGaiztoa Behin eta berrizko politika urraketak
-  example: "%command_prefix%FORBID Ares Politika behin eta berriz urratzea"
+  example: "%command_prefix%FORBID BadUser Politika behin eta berriz urratzea"
   success: "%nickname% ezizena debekatu da."
   updated: "%nickname% ezizenaren debeku arrazoia eguneratu da."
   reason_required: "Debekurako arrazoi bat eman behar duzu."
@@ -936,9 +936,9 @@ drop:
     Adibidea: DROP KontuZaharra
   force:
     short: "Ezabatu ezabatzeko zain dagoen ezizena behin betiko."
-  example: "%command_prefix%DROP Ares"
+  example: "%command_prefix%DROP BadUser"
   examples:
-    - "%command_prefix%DROP Ares FORCE"
+    - "%command_prefix%DROP BadUser FORCE"
   suspended: "%nickname% ezizena etenda dago. Kendu etenaldia lehenik."
   forbidden: "%nickname% ezizena debekatua dago."
   cannot_drop_root: "Ezin da root erabiltzaile %nickname% ezabatu."

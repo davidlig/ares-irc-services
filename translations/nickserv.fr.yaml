@@ -704,7 +704,7 @@ rename:
   help: |-
     Force un pseudonyme connecté à prendre un nom aléatoire précédé d’un
     préfixe défini par le réseau.
-  example: "%command_prefix%RENAME Ares"
+  example: "%command_prefix%RENAME BadUser"
   cannot_rename_root: "Impossible de renommer l'utilisateur root %nickname%."
   cannot_rename_oper: "Impossible de renommer l'opérateur IRC %nickname%."
   cannot_rename_service: "Impossible de renommer le surnom de service %nickname%."
@@ -755,9 +755,9 @@ suspend:
     (d), heures (h), minutes (m), ou 0 pour une suspension permanente. Les
     opérateurs
     IRC et les utilisateurs Root ne peuvent pas être suspendus.
-  example: "%command_prefix%SUSPEND Ares 7d Spam sur #Ares_Help"
+  example: "%command_prefix%SUSPEND BadUser 7d Spam sur #Ares_Help"
   examples:
-    - "%command_prefix%SUSPEND Ares 0 Evasión de prohibición"
+    - "%command_prefix%SUSPEND BadUser 0 Evasión de prohibición"
   success: "Le surnom %nickname% a été suspendu jusqu'à %duration%."
   already_suspended: "Le surnom %nickname% est déjà suspendu."
   forbidden: "Le surnom %nickname% est interdit et ne peut pas être suspendu."
@@ -789,7 +789,7 @@ forbid:
     forcé à prendre un pseudonyme aléatoire. Les utilisateurs Root, IRCops et
     services
     ne peuvent pas être interdits.
-  example: "%command_prefix%FORBID Ares Violations répétées des règles"
+  example: "%command_prefix%FORBID BadUser Violations répétées des règles"
   success: "Le surnom %nickname% a été interdit."
   updated: "La raison d'interdiction pour %nickname% a été mise à jour."
   reason_required: "Vous devez fournir une raison pour l'interdiction."
@@ -863,9 +863,9 @@ drop:
     pseudonyme, ne peuvent pas être supprimés.
   force:
     short: "Supprime définitivement un pseudonyme en attente de suppression."
-  example: "%command_prefix%DROP Ares"
+  example: "%command_prefix%DROP BadUser"
   examples:
-    - "%command_prefix%DROP Ares FORCE"
+    - "%command_prefix%DROP BadUser FORCE"
   suspended: "Le surnom %nickname% est suspendu. Levez d'abord la suspension."
   forbidden: "Le surnom %nickname% est interdit."
   cannot_drop_root: "Impossible d'abandonner l'utilisateur root %nickname%."

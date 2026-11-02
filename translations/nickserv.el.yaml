@@ -792,7 +792,7 @@ rename:
   help: |-
     Αναγκάζει ένα συνδεδεμένο ψευδώνυμο να αλλάξει σε τυχαίο όνομα με πρόθεμα που
     έχει ορίσει το δίκτυο.
-  example: "%command_prefix%RENAME Ares"
+  example: "%command_prefix%RENAME BadUser"
   cannot_rename_root: "Δεν μπορεί να μετονομαστεί ο root χρήστης %nickname%."
   cannot_rename_oper: "Δεν μπορεί να μετονομαστεί ο IRC operator %nickname%."
   cannot_rename_service: "Δεν μπορεί να μετονομαστεί το ψευδώνυμο υπηρεσίας %nickname%."
@@ -864,9 +864,9 @@ suspend:
       SUSPEND BadUser 7d Spamming στο #help
       SUSPEND Abuser 30d Επαναλαμβανόμενο flood
       SUSPEND ProblemUser 0 Αποφυγή permaban
-  example: "%command_prefix%SUSPEND Ares 7d Spam en #Ares_Help"
+  example: "%command_prefix%SUSPEND BadUser 7d Spam en #Ares_Help"
   examples:
-    - "%command_prefix%SUSPEND Ares 0 Παράκαμψη αποκλεισμού"
+    - "%command_prefix%SUSPEND BadUser 0 Παράκαμψη αποκλεισμού"
   success: "Το ψευδώνυμο %nickname% έχει τεθεί σε αναστολή μέχρι %duration%."
   already_suspended: "Το ψευδώνυμο %nickname% είναι ήδη σε αναστολή."
   forbidden: "Το ψευδώνυμο %nickname% είναι απαγορευμένο και δεν μπορεί να τεθεί σε αναστολή."
@@ -909,7 +909,7 @@ forbid:
 
     Σύνταξη: FORBID <ψευδώνυμο> <αιτιολογία>
     Παράδειγμα: FORBID BadNick Επαναλαμβανόμενες παραβιάσεις πολιτικής
-  example: "%command_prefix%FORBID Ares Επαναλαμβανόμενες παραβιάσεις κανόνων"
+  example: "%command_prefix%FORBID BadUser Επαναλαμβανόμενες παραβιάσεις κανόνων"
   success: "Το ψευδώνυμο %nickname% έχει απαγορευτεί."
   updated: "Η αιτιολογία απαγόρευσης για το %nickname% έχει ενημερωθεί."
   reason_required: "Πρέπει να δώσετε αιτιολογία για την απαγόρευση."
@@ -1006,9 +1006,9 @@ drop:
     Παράδειγμα: DROP OldAccount
   force:
     short: "Διαγράφει οριστικά ένα ψευδώνυμο που εκκρεμεί προς διαγραφή."
-  example: "%command_prefix%DROP Ares"
+  example: "%command_prefix%DROP BadUser"
   examples:
-    - "%command_prefix%DROP Ares FORCE"
+    - "%command_prefix%DROP BadUser FORCE"
   suspended: "Το ψευδώνυμο %nickname% είναι σε αναστολή. Άρετε πρώτα την αναστολή."
   forbidden: "Το ψευδώνυμο %nickname% είναι απαγορευμένο."
   cannot_drop_root: "Δεν μπορεί να διαγραφεί ο root χρήστης %nickname%."
