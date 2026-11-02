@@ -15,8 +15,14 @@ use App\NickServ\Adapter\In\Irc\NickServNotifierInterface;
 use App\NickServ\Adapter\Out\InMemory\PendingVerificationRegistry;
 use App\NickServ\Adapter\Out\InMemory\RecoveryTokenRegistry;
 use App\NickServ\Application\Model\NicknameAuthenticationMode;
+use App\NickServ\Application\Port\Out\AutomaticModeActions;
+use App\NickServ\Application\Port\Out\AutomaticModeCatalog;
+use App\NickServ\Application\Port\Out\IdentifiedSessionTracker;
 use App\NickServ\Application\Port\Out\NicknameAuthenticationModeQuery;
+use App\NickServ\Application\Port\Out\NickNetworkUserLookup;
 use App\NickServ\Application\Port\Out\PendingNickRestoreRegistryInterface;
+use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
+use App\NickServ\Application\Service\AutomaticModeSessionService;
 use App\NickServ\Application\Service\NickServClientKeyResolver;
 use App\NickServ\Application\UseCase\Identify\IdentifyNick;
 use App\NickServ\Application\UseCase\Identify\IdentifyNickHandlerInterface;
@@ -39,6 +45,7 @@ final class IdentifyCommandTest extends TestCase
             $this->createStub(PendingNickRestoreRegistryInterface::class),
             new NickServClientKeyResolver(),
             $this->authenticationMode(),
+            $this->automaticModeSessions(),
         );
 
         self::assertSame('IDENTIFY', $command->getName());
@@ -64,6 +71,7 @@ final class IdentifyCommandTest extends TestCase
             $this->createStub(PendingNickRestoreRegistryInterface::class),
             new NickServClientKeyResolver(),
             $this->authenticationMode(NicknameAuthenticationMode::NativeNick),
+            $this->automaticModeSessions(),
         );
 
         self::assertSame(0, $command->getMinArgs());
@@ -91,6 +99,7 @@ final class IdentifyCommandTest extends TestCase
             $pendingRegistry,
             new NickServClientKeyResolver(),
             $this->authenticationMode(NicknameAuthenticationMode::NativeNick),
+            $this->automaticModeSessions(),
         );
 
         $messages = [];
@@ -119,6 +128,7 @@ final class IdentifyCommandTest extends TestCase
             $this->createStub(PendingNickRestoreRegistryInterface::class),
             new NickServClientKeyResolver(),
             $this->authenticationMode(),
+            $this->automaticModeSessions(),
         );
 
         $messages = [];
@@ -149,6 +159,7 @@ final class IdentifyCommandTest extends TestCase
             $this->createStub(PendingNickRestoreRegistryInterface::class),
             new NickServClientKeyResolver(),
             $this->authenticationMode(),
+            $this->automaticModeSessions(),
         );
 
         $messages = [];
@@ -171,6 +182,7 @@ final class IdentifyCommandTest extends TestCase
             $this->createStub(PendingNickRestoreRegistryInterface::class),
             new NickServClientKeyResolver(),
             $this->authenticationMode(),
+            $this->automaticModeSessions(),
         );
 
         /** @var list<array{0: string, 1: array<string, mixed>}> $calls */
@@ -223,7 +235,7 @@ final class IdentifyCommandTest extends TestCase
         $handler = $this->createStub(IdentifyNickHandlerInterface::class);
         $handler->method('handle')->willReturn(IdentifyNickResult::success('Alice', 'custom.vhost', 'en'));
 
-        $command = new IdentifyCommand($handler, $userLookup, $pendingRegistry, new NickServClientKeyResolver(), $this->authenticationMode());
+        $command = new IdentifyCommand($handler, $userLookup, $pendingRegistry, new NickServClientKeyResolver(), $this->authenticationMode(), $this->automaticModeSessions());
 
         $messages = [];
         $command->execute($this->createContext($sender, $messages, ['Alice', 'pass'], notifier: $notifier));
@@ -251,7 +263,7 @@ final class IdentifyCommandTest extends TestCase
         $handler = $this->createStub(IdentifyNickHandlerInterface::class);
         $handler->method('handle')->willReturn(IdentifyNickResult::success('Alice', null, 'es'));
 
-        $command = new IdentifyCommand($handler, $userLookup, $pendingRegistry, new NickServClientKeyResolver(), $this->authenticationMode());
+        $command = new IdentifyCommand($handler, $userLookup, $pendingRegistry, new NickServClientKeyResolver(), $this->authenticationMode(), $this->automaticModeSessions());
 
         $messages = [];
         $command->execute($this->createContext($sender, $messages, ['Alice', 'pass'], notifier: $notifier));
@@ -316,5 +328,16 @@ final class IdentifyCommandTest extends TestCase
         $query->method('current')->willReturn($mode);
 
         return $query;
+    }
+
+    private function automaticModeSessions(): AutomaticModeSessionService
+    {
+        return new AutomaticModeSessionService(
+            $this->createStub(IdentifiedSessionTracker::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NickNetworkUserLookup::class),
+            $this->createStub(AutomaticModeCatalog::class),
+            $this->createStub(AutomaticModeActions::class),
+        );
     }
 }

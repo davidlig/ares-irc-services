@@ -12,6 +12,7 @@ use App\NickServ\Adapter\Out\User\IrcNetworkUserMapper;
 use App\NickServ\Application\Model\NicknameAuthenticationMode;
 use App\NickServ\Application\Port\Out\NicknameAuthenticationModeQuery;
 use App\NickServ\Application\Port\Out\PendingNickRestoreRegistryInterface;
+use App\NickServ\Application\Service\AutomaticModeSessionService;
 use App\NickServ\Application\Service\NickServClientKeyResolver;
 use App\NickServ\Application\UseCase\Identify\IdentifyNick;
 use App\NickServ\Application\UseCase\Identify\IdentifyNickHandlerInterface;
@@ -32,6 +33,7 @@ final readonly class IdentifyCommand implements NickServCommandInterface
         private PendingNickRestoreRegistryInterface $pendingRegistry,
         private NickServClientKeyResolver $clientKeyResolver,
         private NicknameAuthenticationModeQuery $authenticationMode,
+        private AutomaticModeSessionService $automaticModes,
     ) {}
 
     public function getName(): string
@@ -198,6 +200,7 @@ final readonly class IdentifyCommand implements NickServCommandInterface
         }
 
         $context->getNotifier()->setUserAccount($sender->uid, $nickname);
+        $this->automaticModes->apply($sender->uid, $nickname);
 
         if (null !== $result->displayVhost && '' !== $result->displayVhost) {
             $context->getNotifier()->setUserVhost($sender->uid, $result->displayVhost, $sender->serverSid);
