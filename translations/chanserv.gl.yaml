@@ -25,7 +25,7 @@ error:
 # --- REGISTER -----------------------------------------------------------------
 register:
   syntax: "REGISTER <#canle> <descrición>"
-  example: "%command_prefix%REGISTER #Ares_Help Proxecto comunitario"
+  example: "%command_prefix%REGISTER #Ares_Help Canle de axuda"
   short: "Rexistrar unha canle."
   help: |-
     Rexistra unha canle e asóciana ao teu alcume. Debes estar
@@ -103,7 +103,7 @@ info:
 # --- SET ----------------------------------------------------------------------
 set:
   syntax: "SET <#canle> <opción> [parámetros]"
-  example: "%command_prefix%SET #Ares_Help DESC Unha canle comunitaria"
+  example: "%command_prefix%SET #Ares_Help DESC Canle de axuda"
   examples:
     - "%command_prefix%SET #Ares_Help URL https://example.test"
     - "%command_prefix%SET #Ares_Help MLOCK ON"
@@ -120,7 +120,7 @@ set:
     syntax: "SET <#canle> FOUNDER <alcume> [token]"
     example: "%command_prefix%SET #Ares_Help FOUNDER Ares"
     examples:
-      - "%command_prefix%SET #Ares_Help FOUNDER Ares token-confirmado"
+      - "%command_prefix%SET #Ares_Help FOUNDER Ares 65dec7d5370eaa57c5a4bde98e591ccb"
     short: "Transferir a canle a outro alcume rexistrado."
     help: |-
       Cambia a persoa fundadora tras validar o token da persoa fundadora actual.
@@ -156,7 +156,7 @@ set:
   # --- SET DESC ------------------------------------------------------------
   desc:
     syntax: "SET <#canle> DESC <descrición>"
-    example: "%command_prefix%SET #Ares_Help DESC Unha canle comunitaria"
+    example: "%command_prefix%SET #Ares_Help DESC Canle de axuda"
     short: "Cambiar a descrición da canle."
     help: "Cambia a descrición da canle (obrigatoria)."
     updated: "Descrición actualizada."
@@ -190,7 +190,7 @@ set:
   # --- SET ENTRYMSG --------------------------------------------------------
   entrymsg:
     syntax: "SET <#canle> ENTRYMSG [mensaxe]"
-    example: "%command_prefix%SET #Ares_Help ENTRYMSG Benvida"
+    example: "%command_prefix%SET #Ares_Help ENTRYMSG Benvido á canle de axuda"
     examples:
       - "%command_prefix%SET #Ares_Help ENTRYMSG"
     short: "Establecer a mensaxe de entrada da canle."
@@ -370,9 +370,9 @@ delaccess:
 # --- AKICK --------------------------------------------------------------------
 akick:
   syntax: "AKICK <#canle> <opción> [parámetros]"
-  example: "%command_prefix%AKICK #Ares_Help ADD *!*@* 0"
+  example: "%command_prefix%AKICK #Ares_Help ADD SonMalo!*@* 0"
   examples:
-    - "%command_prefix%AKICK #Ares_Help ADD *!*@* 7d Spam"
+    - "%command_prefix%AKICK #Ares_Help ADD SonMalo!*@* 7d Correo lixo"
     - "%command_prefix%AKICK #Ares_Help DEL *!*@*"
     - "%command_prefix%AKICK #Ares_Help DEL 2"
     - "%command_prefix%AKICK #Ares_Help LIST"
@@ -392,9 +392,9 @@ akick:
   # --- AKICK ADD -----------------------------------------------------------
   add:
     syntax: "AKICK <#canle> ADD <máscara> [caducidade] [motivo]"
-    example: "%command_prefix%AKICK #Ares_Help ADD *!*@* 0"
+    example: "%command_prefix%AKICK #Ares_Help ADD SonMalo!*@* 0"
     examples:
-      - "%command_prefix%AKICK #Ares_Help ADD *!*@* 7d Spam"
+      - "%command_prefix%AKICK #Ares_Help ADD SonMalo!*@* 7d Correo lixo"
     short: "Engadir entrada AKICK."
     help: |-
       Engade unha máscara á lista de expulsión automática da canle.
@@ -712,7 +712,7 @@ saregister:
 
     Rexistra administrativamente unha canle de xeito inmediato para o alcume
     especificado como fundador sen requirir presenza, verificación nin límites de frecuencia.
-  example: "%command_prefix%SAREGISTER #Ares_Help Ares Canle comunitaria"
+  example: "%command_prefix%SAREGISTER #Ares_Help Ares Canle de axuda"
   success: "A canle %channel% foi rexistrada para %founder%."
 
 # --- NOEXPIRE (IRCop) ---------------------------------------------------------

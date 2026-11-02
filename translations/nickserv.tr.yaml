@@ -59,15 +59,15 @@ identify:
     Rumuz ve şifrenizi kullanarak oturumunuzu %nickserv% ile doğrular.
     Başarılı bir kimlik doğrulamadan sonra %emphasis_0% kayıtlı modunu alacaksınız
     ve, misafir rumuzu kullanıyorsanız, kayıtlı rumuzunuz geri yüklenecektir.
-  example: "%command_prefix%IDENTIFY Ares <parola>"
+  example: "%command_prefix%IDENTIFY Ares benim_parolam123"
   native_syntax: "/NICK <nickname>:<şifre> | /NICK <nickname>!<şifre>"
   native_short: "Yerel rumuz kimlik doğrulama sözdizimini gösterir."
   native_help: |-
     Bu protokol hesapları rumuz değişiklikleriyle doğrular.
     %emphasis_0% kullanın veya rumuz kullanımdaysa %emphasis_1% kullanın.
-  native_example: "/NICK Ares:<parola>"
+  native_example: "/NICK Ares:benim_parolam123"
   native_examples:
-    - "%command_prefix%/NICK Ares!<parola>"
+    - "/NICK Ares!benim_parolam123"
   native_authentication: "Bu protokol kimlik doğrulamayı rumuz değişiklikleriyle yönetir. %command_0% kullanın veya rumuz kullanımdaysa %command_1% kullanın."
   native_authentication_command_0: "/NICK <nickname>:<şifre>"
   native_authentication_command_1: "/NICK <nickname>!<şifre>"

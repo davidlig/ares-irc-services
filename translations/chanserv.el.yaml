@@ -25,7 +25,7 @@ error:
 # --- REGISTER -----------------------------------------------------------------
 register:
   syntax: "REGISTER <#channel> <description>"
-  example: "%command_prefix%REGISTER #Ares_Help Κοινοτικό έργο"
+  example: "%command_prefix%REGISTER #Ares_Help Κανάλι βοήθειας"
   short: "Καταχώρηση καναλιού."
   help: |-
     Καταχωρίζει ένα κανάλι και το συνδέει με το ψευδώνυμό σας. Πρέπει
@@ -103,7 +103,7 @@ info:
 # --- SET ----------------------------------------------------------------------
 set:
   syntax: "SET <#κανάλι> <επιλογή> [παράμετροι]"
-  example: "%command_prefix%SET #Ares_Help DESC Ένα κοινοτικό κανάλι"
+  example: "%command_prefix%SET #Ares_Help DESC Κανάλι βοήθειας"
   examples:
     - "%command_prefix%SET #Ares_Help URL https://example.test"
     - "%command_prefix%SET #Ares_Help MLOCK ON"
@@ -120,7 +120,7 @@ set:
     syntax: "SET <#κανάλι> FOUNDER <ψευδώνυμο> [token]"
     example: "%command_prefix%SET #Ares_Help FOUNDER Ares"
     examples:
-      - "%command_prefix%SET #Ares_Help FOUNDER Ares επιβεβαιωμένο-διακριτικό"
+      - "%command_prefix%SET #Ares_Help FOUNDER Ares 65dec7d5370eaa57c5a4bde98e591ccb"
     short: "Μεταφορά καναλιού σε άλλο καταχωρημένο ψευδώνυμο."
     help: |-
       Αλλάζει τον ιδρυτή μετά την επικύρωση του διακριτικού του τρέχοντος ιδρυτή.
@@ -157,7 +157,7 @@ set:
   # --- SET DESC ------------------------------------------------------------
   desc:
     syntax: "SET <#channel> DESC <description>"
-    example: "%command_prefix%SET #Ares_Help DESC Ένα κοινοτικό κανάλι"
+    example: "%command_prefix%SET #Ares_Help DESC Κανάλι βοήθειας"
     short: "Αλλαγή περιγραφής καναλιού."
     help: "Αλλάξτε την περιγραφή του καναλιού (απαιτείται)."
     updated: "Η περιγραφή ενημερώθηκε."
@@ -191,7 +191,7 @@ set:
   # --- SET ENTRYMSG --------------------------------------------------------
   entrymsg:
     syntax: "SET <#κανάλι> ENTRYMSG [message]"
-    example: "%command_prefix%SET #Ares_Help ENTRYMSG Καλώς ορίσατε"
+    example: "%command_prefix%SET #Ares_Help ENTRYMSG Καλώς ήρθατε στο κανάλι βοήθειας"
     examples:
       - "%command_prefix%SET #Ares_Help ENTRYMSG"
     short: "Ορισμός μηνύματος εισόδου καναλιού."
@@ -374,9 +374,9 @@ delaccess:
 # --- AKICK --------------------------------------------------------------------
 akick:
   syntax: "AKICK <#κανάλι> <επιλογή> [παράμετροι]"
-  example: "%command_prefix%AKICK #Ares_Help ADD *!*@* 0"
+  example: "%command_prefix%AKICK #Ares_Help ADD EimaiKakos!*@* 0"
   examples:
-    - "%command_prefix%AKICK #Ares_Help ADD *!*@* 7d Spam"
+    - "%command_prefix%AKICK #Ares_Help ADD EimaiKakos!*@* 7d Ανεπιθύμητα μηνύματα"
     - "%command_prefix%AKICK #Ares_Help DEL *!*@*"
     - "%command_prefix%AKICK #Ares_Help DEL 2"
     - "%command_prefix%AKICK #Ares_Help LIST"
@@ -397,9 +397,9 @@ akick:
   # --- AKICK ADD -----------------------------------------------------------
   add:
     syntax: "AKICK <#channel> ADD <mask> [expiry] [αιτιολογία]"
-    example: "%command_prefix%AKICK #Ares_Help ADD *!*@* 0"
+    example: "%command_prefix%AKICK #Ares_Help ADD EimaiKakos!*@* 0"
     examples:
-      - "%command_prefix%AKICK #Ares_Help ADD *!*@* 7d Spam"
+      - "%command_prefix%AKICK #Ares_Help ADD EimaiKakos!*@* 7d Ανεπιθύμητα μηνύματα"
     short: "Προσθήκη καταχώρησης AKICK."
     help: |-
       Απαιτείται λήξη αν καθορίζεται αιτιολογία.
@@ -737,7 +737,7 @@ saregister:
 
     Καταχωρεί διοικητικά ένα κανάλι αμέσως στο καθορισμένο ψευδώνυμο
     ως ιδρυτή χωρίς να απαιτείται παρουσία, επαλήθευση ή όρια ρυθμού.
-  example: "%command_prefix%SAREGISTER #Ares_Help Ares Κοινοτικό κανάλι"
+  example: "%command_prefix%SAREGISTER #Ares_Help Ares Κανάλι βοήθειας"
   success: "Το κανάλι %channel% καταχωρήθηκε για τον/την %founder%."
 
 # --- NOEXPIRE (IRCop) ---------------------------------------------------------

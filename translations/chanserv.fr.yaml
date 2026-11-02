@@ -25,7 +25,7 @@ error:
 # --- REGISTER -----------------------------------------------------------------
 register:
   syntax: "REGISTER <#canal> <description>"
-  example: "%command_prefix%REGISTER #Ares_Help Projet communautaire"
+  example: "%command_prefix%REGISTER #Ares_Help Canal d’aide"
   short: "Enregistrer un canal."
   help: |-
     Enregistre un salon et l’associe à votre pseudo. Vous devez être
@@ -104,7 +104,7 @@ info:
 # --- SET ----------------------------------------------------------------------
 set:
   syntax: "SET <#canal> <option> [paramètres]"
-  example: "%command_prefix%SET #Ares_Help DESC Un salon communautaire"
+  example: "%command_prefix%SET #Ares_Help DESC Canal d’aide"
   examples:
     - "%command_prefix%SET #Ares_Help URL https://example.test"
     - "%command_prefix%SET #Ares_Help MLOCK ON"
@@ -121,7 +121,7 @@ set:
     syntax: "SET <#canal> FOUNDER <surnom> [jeton]"
     example: "%command_prefix%SET #Ares_Help FOUNDER Ares"
     examples:
-      - "%command_prefix%SET #Ares_Help FOUNDER Ares token-confirmado"
+      - "%command_prefix%SET #Ares_Help FOUNDER Ares 65dec7d5370eaa57c5a4bde98e591ccb"
     short: "Transférer le canal à un autre surnom enregistré."
     help: |-
       Change le fondateur après validation du jeton du fondateur actuel.
@@ -159,7 +159,7 @@ set:
   # --- SET DESC ------------------------------------------------------------
   desc:
     syntax: "SET <#canal> DESC <description>"
-    example: "%command_prefix%SET #Ares_Help DESC Un salon communautaire"
+    example: "%command_prefix%SET #Ares_Help DESC Canal d’aide"
     short: "Modifier la description du canal."
     help: "Modifie la description du canal (obligatoire)."
     updated: "Description mise à jour."
@@ -194,7 +194,7 @@ set:
   # --- SET ENTRYMSG --------------------------------------------------------
   entrymsg:
     syntax: "SET <#salon> ENTRYMSG [message]"
-    example: "%command_prefix%SET #Ares_Help ENTRYMSG Bienvenue"
+    example: "%command_prefix%SET #Ares_Help ENTRYMSG Bienvenue sur le canal d’aide"
     examples:
       - "%command_prefix%SET #Ares_Help ENTRYMSG"
     short: "Définir le message d'entrée du canal."
@@ -378,9 +378,9 @@ delaccess:
 # --- AKICK --------------------------------------------------------------------
 akick:
   syntax: "AKICK <#canal> <option> [paramètres]"
-  example: "%command_prefix%AKICK #Ares_Help ADD *!*@* 0"
+  example: "%command_prefix%AKICK #Ares_Help ADD JeSuisMechant!*@* 0"
   examples:
-    - "%command_prefix%AKICK #Ares_Help ADD *!*@* 7d Spam"
+    - "%command_prefix%AKICK #Ares_Help ADD JeSuisMechant!*@* 7d Messages indésirables"
     - "%command_prefix%AKICK #Ares_Help DEL *!*@*"
     - "%command_prefix%AKICK #Ares_Help DEL 2"
     - "%command_prefix%AKICK #Ares_Help LIST"
@@ -398,9 +398,9 @@ akick:
   # --- AKICK ADD -----------------------------------------------------------
   add:
     syntax: "AKICK <#canal> ADD <masque> [expiration] [raison]"
-    example: "%command_prefix%AKICK #Ares_Help ADD *!*@* 0"
+    example: "%command_prefix%AKICK #Ares_Help ADD JeSuisMechant!*@* 0"
     examples:
-      - "%command_prefix%AKICK #Ares_Help ADD *!*@* 7d Spam"
+      - "%command_prefix%AKICK #Ares_Help ADD JeSuisMechant!*@* 7d Messages indésirables"
     short: "Ajouter une entrée AKICK."
     help: |-
       Ajoute un masque à la liste d’expulsion automatique du salon.
@@ -719,7 +719,7 @@ saregister:
 
     Enregistre administrativement un canal immédiatement pour le pseudonyme
     spécifié en tant que fondateur, sans exiger de présence, de vérification ou de limite de débit.
-  example: "%command_prefix%SAREGISTER #Ares_Help Ares Salon communautaire"
+  example: "%command_prefix%SAREGISTER #Ares_Help Ares Canal d’aide"
   success: "Le canal %channel% a été enregistré pour %founder%."
 
 # --- NOEXPIRE (IRCop) ---------------------------------------------------------

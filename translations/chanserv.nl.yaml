@@ -25,7 +25,7 @@ error:
 # --- REGISTER -----------------------------------------------------------------
 register:
   syntax: "REGISTER <#kanaal> <beschrijving>"
-  example: "%command_prefix%REGISTER #Ares_Help Gemeenschapsproject"
+  example: "%command_prefix%REGISTER #Ares_Help Hulpkanaal"
   short: "Registreer een kanaal."
   help: |-
     Registreer een kanaal en koppel het aan je bijnaam. Identificeer jezelf met
@@ -103,7 +103,7 @@ info:
 # --- SET ----------------------------------------------------------------------
 set:
   syntax: "SET <#kanaal> <optie> [parameters]"
-  example: "%command_prefix%SET #Ares_Help DESC Een gemeenschapskanaal"
+  example: "%command_prefix%SET #Ares_Help DESC Hulpkanaal"
   examples:
     - "%command_prefix%SET #Ares_Help URL https://example.test"
     - "%command_prefix%SET #Ares_Help MLOCK ON"
@@ -120,7 +120,7 @@ set:
     syntax: "SET <#kanaal> FOUNDER <bijnaam> [token]"
     example: "%command_prefix%SET #Ares_Help FOUNDER Ares"
     examples:
-      - "%command_prefix%SET #Ares_Help FOUNDER Ares bevestigd-token"
+      - "%command_prefix%SET #Ares_Help FOUNDER Ares 65dec7d5370eaa57c5a4bde98e591ccb"
     short: "Draag kanaal over aan een andere geregistreerde bijnaam."
     help: |-
       Wijzigt de oprichter na controle van het token van de huidige oprichter. De
@@ -158,7 +158,7 @@ set:
   # --- SET DESC ------------------------------------------------------------
   desc:
     syntax: "SET <#kanaal> DESC <beschrijving>"
-    example: "%command_prefix%SET #Ares_Help DESC Een gemeenschapskanaal"
+    example: "%command_prefix%SET #Ares_Help DESC Hulpkanaal"
     short: "Wijzig kanaalbeschrijving."
     help: "Wijzig de kanaalbeschrijving (verplicht)."
     updated: "Beschrijving bijgewerkt."
@@ -193,7 +193,7 @@ set:
   # --- SET ENTRYMSG --------------------------------------------------------
   entrymsg:
     syntax: "SET <#kanaal> ENTRYMSG [bericht]"
-    example: "%command_prefix%SET #Ares_Help ENTRYMSG Welkom"
+    example: "%command_prefix%SET #Ares_Help ENTRYMSG Welkom in het hulpkanaal"
     examples:
       - "%command_prefix%SET #Ares_Help ENTRYMSG"
     short: "Stel kanaal-toegangsbericht in."
@@ -375,9 +375,9 @@ delaccess:
 # --- AKICK --------------------------------------------------------------------
 akick:
   syntax: "AKICK <#kanaal> <optie> [parameters]"
-  example: "%command_prefix%AKICK #Ares_Help ADD *!*@* 0"
+  example: "%command_prefix%AKICK #Ares_Help ADD IkBenSlecht!*@* 0"
   examples:
-    - "%command_prefix%AKICK #Ares_Help ADD *!*@* 7d Spam"
+    - "%command_prefix%AKICK #Ares_Help ADD IkBenSlecht!*@* 7d Spam"
     - "%command_prefix%AKICK #Ares_Help DEL *!*@*"
     - "%command_prefix%AKICK #Ares_Help DEL 2"
     - "%command_prefix%AKICK #Ares_Help LIST"
@@ -395,9 +395,9 @@ akick:
   # --- AKICK ADD -----------------------------------------------------------
   add:
     syntax: "AKICK <#kanaal> ADD <masker> [verloop] [reden]"
-    example: "%command_prefix%AKICK #Ares_Help ADD *!*@* 0"
+    example: "%command_prefix%AKICK #Ares_Help ADD IkBenSlecht!*@* 0"
     examples:
-      - "%command_prefix%AKICK #Ares_Help ADD *!*@* 7d Spam"
+      - "%command_prefix%AKICK #Ares_Help ADD IkBenSlecht!*@* 7d Spam"
     short: "Voeg AKICK-vermelding toe."
     help: |-
       Voegt een masker toe aan de automatische kick-lijst van het kanaal.
@@ -718,7 +718,7 @@ saregister:
 
     Registreert een kanaal onmiddellijk administratief voor de opgegeven bijnaam
     als oprichter zonder aanwezigheid, verificatie of snelheidslimieten te vereisen.
-  example: "%command_prefix%SAREGISTER #Ares_Help Ares Gemeenschapskanaal"
+  example: "%command_prefix%SAREGISTER #Ares_Help Ares Hulpkanaal"
   success: "Kanaal %channel% is geregistreerd voor %founder%."
 
 # --- NOEXPIRE (IRCop) ---------------------------------------------------------

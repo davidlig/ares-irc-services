@@ -25,7 +25,7 @@ error:
 # --- REGISTER -----------------------------------------------------------------
 register:
   syntax: "REGISTER <#kanala> <deskribapena>"
-  example: "%command_prefix%REGISTER #Ares_Help Komunitate-proiektua"
+  example: "%command_prefix%REGISTER #Ares_Help Laguntza kanala"
   short: "Erregistratu kanal bat."
   help: |-
     Kanala erregistratu eta zure goitizenarekin lotzen du. %nickserv% zerbitzuan
@@ -103,7 +103,7 @@ info:
 # --- SET ----------------------------------------------------------------------
 set:
   syntax: "SET <#kanala> <aukera> [parametroak]"
-  example: "%command_prefix%SET #Ares_Help DESC Komunitate-kanala"
+  example: "%command_prefix%SET #Ares_Help DESC Laguntza kanala"
   examples:
     - "%command_prefix%SET #Ares_Help URL https://example.test"
     - "%command_prefix%SET #Ares_Help MLOCK ON"
@@ -120,7 +120,7 @@ set:
     syntax: "SET <#kanala> FOUNDER <ezizena> [tokena]"
     example: "%command_prefix%SET #Ares_Help FOUNDER Ares"
     examples:
-      - "%command_prefix%SET #Ares_Help FOUNDER Ares token-berretsia"
+      - "%command_prefix%SET #Ares_Help FOUNDER Ares 65dec7d5370eaa57c5a4bde98e591ccb"
     short: "Transferitu kanala beste ezizen erregistratu batera."
     help: |-
       Uneko sortzailearen tokena balioztatu ondoren sortzailea aldatzen du.
@@ -157,7 +157,7 @@ set:
   # --- SET DESC ------------------------------------------------------------
   desc:
     syntax: "SET <#kanala> DESC <deskribapena>"
-    example: "%command_prefix%SET #Ares_Help DESC Komunitate-kanala"
+    example: "%command_prefix%SET #Ares_Help DESC Laguntza kanala"
     short: "Aldatu kanalaren deskribapena."
     help: "Aldatu kanalaren deskribapena (derrigorrezkoa)."
     updated: "Deskribapena eguneratu da."
@@ -192,7 +192,7 @@ set:
   # --- SET ENTRYMSG --------------------------------------------------------
   entrymsg:
     syntax: "SET <#kanala> ENTRYMSG [mezua]"
-    example: "%command_prefix%SET #Ares_Help ENTRYMSG Ongi etorri"
+    example: "%command_prefix%SET #Ares_Help ENTRYMSG Ongi etorri laguntza kanalera"
     examples:
       - "%command_prefix%SET #Ares_Help ENTRYMSG"
     short: "Ezarri kanalaren sarrera mezua."
@@ -370,9 +370,9 @@ delaccess:
 # --- AKICK --------------------------------------------------------------------
 akick:
   syntax: "AKICK <#kanala> <aukera> [parametroak]"
-  example: "%command_prefix%AKICK #Ares_Help ADD *!*@* 0"
+  example: "%command_prefix%AKICK #Ares_Help ADD GaiztoaNaiz!*@* 0"
   examples:
-    - "%command_prefix%AKICK #Ares_Help ADD *!*@* 7d Spam"
+    - "%command_prefix%AKICK #Ares_Help ADD GaiztoaNaiz!*@* 7d Nahi gabeko mezuak"
     - "%command_prefix%AKICK #Ares_Help DEL *!*@*"
     - "%command_prefix%AKICK #Ares_Help DEL 2"
     - "%command_prefix%AKICK #Ares_Help LIST"
@@ -390,9 +390,9 @@ akick:
   # --- AKICK ADD -----------------------------------------------------------
   add:
     syntax: "AKICK <#kanala> ADD <maskara> [iraungitzea] [arrazoia]"
-    example: "%command_prefix%AKICK #Ares_Help ADD *!*@* 0"
+    example: "%command_prefix%AKICK #Ares_Help ADD GaiztoaNaiz!*@* 0"
     examples:
-      - "%command_prefix%AKICK #Ares_Help ADD *!*@* 7d Spam"
+      - "%command_prefix%AKICK #Ares_Help ADD GaiztoaNaiz!*@* 7d Nahi gabeko mezuak"
     short: "Gehitu AKICK sarrera."
     help: |-
       Kanalaren auto-kick zerrendara maskara bat gehitzen du.
@@ -711,7 +711,7 @@ saregister:
 
     Kanal bat administratiboki erregistratzen du berehala zehaztutako ezizenarentzat
     sortzaile gisa, presentziarik, egiaztapenik edo maiztasun-mugarik eskatu gabe.
-  example: "%command_prefix%SAREGISTER #Ares_Help Ares Komunitate-kanala"
+  example: "%command_prefix%SAREGISTER #Ares_Help Ares Laguntza kanala"
   success: "%channel% kanala %founder% erabiltzailearentzat erregistratu da."
 
 # --- NOEXPIRE (IRCop) ---------------------------------------------------------

@@ -59,15 +59,15 @@ identify:
     Autentica tu sesión con %nickserv% indicando tu apodo y contraseña.
     Tras identificarte recibirás el modo registrado %emphasis_0% y, si estabas usando
     un apodo de invitado, recuperarás tu apodo registrado automáticamente.
-  example: "%command_prefix%IDENTIFY Ares <contraseña>"
+  example: "%command_prefix%IDENTIFY Ares mi_contraseña123"
   native_syntax: "/NICK <apodo>:<contraseña> | /NICK <apodo>!<contraseña>"
   native_short: "Muestra la sintaxis de autenticación nativa por cambio de apodo."
   native_help: |-
     Este protocolo autentica las cuentas mediante cambios de apodo.
     Usa %emphasis_0% o, si el apodo está ocupado, %emphasis_1%.
-  native_example: "/NICK Ares:<contraseña>"
+  native_example: "/NICK Ares:mi_contraseña123"
   native_examples:
-    - "%command_prefix%/NICK Ares!<contraseña>"
+    - "/NICK Ares!mi_contraseña123"
   native_authentication: "Este protocolo gestiona la autenticación mediante cambios de apodo. Usa %command_0% o, si el apodo está ocupado, %command_1%."
   native_authentication_command_0: "/NICK <apodo>:<contraseña>"
   native_authentication_command_1: "/NICK <apodo>!<contraseña>"

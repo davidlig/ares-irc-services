@@ -61,15 +61,15 @@ identify:
     Μετά από επιτυχή ταυτοποίηση θα λάβετε τη λειτουργία %emphasis_0%
     και, αν χρησιμοποιούσατε ψευδώνυμο επισκέπτη, το καταχωρημένο σας ψευδώνυμο θα
     αποκατασταθεί.
-  example: "%command_prefix%IDENTIFY Ares <κωδικός>"
+  example: "%command_prefix%IDENTIFY Ares kodikos123"
   native_syntax: "/NICK <nickname>:<password> | /NICK <nickname>!<password>"
   native_short: "Εμφανίζει τη σύνταξη εγγενούς ταυτοποίησης ψευδωνύμου."
   native_help: |-
     Αυτό το πρωτόκολλο ταυτοποιεί λογαριασμούς μέσω αλλαγών ψευδωνύμου.
     Χρησιμοποιήστε %emphasis_0% ή, αν το ψευδώνυμο χρησιμοποιείται, %emphasis_1%.
-  native_example: "/NICK Ares:<κωδικός>"
+  native_example: "/NICK Ares:kodikos123"
   native_examples:
-    - "%command_prefix%/NICK Ares!<κωδικός>"
+    - "/NICK Ares!kodikos123"
   native_authentication: "Αυτό το πρωτόκολλο διαχειρίζεται την ταυτοποίηση μέσω αλλαγών ψευδωνύμου. Χρησιμοποιήστε %command_0% ή, αν το ψευδώνυμο χρησιμοποιείται, %command_1%."
   native_authentication_command_0: "/NICK <nickname>:<password>"
   native_authentication_command_1: "/NICK <nickname>!<password>"

@@ -60,15 +60,15 @@ identify:
     Nach erfolgreicher Identifizierung erhalten Sie den registrierten Modus %emphasis_0%
     und, falls Sie einen Gast-Nick verwendet haben, wird Ihr registrierter Nick
     wiederhergestellt.
-  example: "%command_prefix%IDENTIFY Ares <Passwort>"
+  example: "%command_prefix%IDENTIFY Ares mein_passwort123"
   native_syntax: "/NICK <nickname>:<Passwort> | /NICK <nickname>!<Passwort>"
   native_short: "Zeigt die native Syntax zur Nickname-Authentifizierung."
   native_help: |-
     Dieses Protokoll authentifiziert Konten durch Nickname-Wechsel.
     Verwende %emphasis_0% oder, wenn der Nickname belegt ist, %emphasis_1%.
-  native_example: "/NICK Ares:<Passwort>"
+  native_example: "/NICK Ares:mein_passwort123"
   native_examples:
-    - "%command_prefix%/NICK Ares!<Passwort>"
+    - "/NICK Ares!mein_passwort123"
   native_authentication: "Dieses Protokoll verwaltet die Authentifizierung durch Nickname-Wechsel. Verwende %command_0% oder, wenn der Nickname belegt ist, %command_1%."
   native_authentication_command_0: "/NICK <nickname>:<Passwort>"
   native_authentication_command_1: "/NICK <nickname>!<Passwort>"

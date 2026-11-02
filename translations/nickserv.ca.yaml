@@ -59,15 +59,15 @@ identify:
     Autentica la sessió amb %nickserv% fent servir el sobrenom i la contrasenya.
     Després d'identificar-te correctament rebràs el mode registrat %emphasis_0%.
     Si fas servir un sobrenom de convidat, es restaura el sobrenom registrat.
-  example: "%command_prefix%IDENTIFY Ares <contrasenya>"
+  example: "%command_prefix%IDENTIFY Ares la_meva_contrasenya123"
   native_syntax: "/NICK <nickname>:<password> | /NICK <nickname>!<password>"
   native_short: "Mostra la sintaxi d’autenticació nativa per canvi de sobrenom."
   native_help: |-
     Fes servir %emphasis_0% o, si el
     sobrenom està ocupat, %emphasis_1%.
-  native_example: "/NICK Ares:<contrasenya>"
+  native_example: "/NICK Ares:la_meva_contrasenya123"
   native_examples:
-    - "%command_prefix%/NICK Ares!<contrasenya>"
+    - "/NICK Ares!la_meva_contrasenya123"
   native_authentication: "Aquest protocol gestiona l’autenticació mitjançant canvis de sobrenom. Utilitzeu %command_0% o, si el sobrenom està ocupat, %command_1%."
   native_authentication_command_0: "/NICK <nickname>:<password>"
   native_authentication_command_1: "/NICK <nickname>!<password>"

@@ -60,15 +60,15 @@ identify:
     passe.
     Après une identification réussie, vous recevrez le mode enregistré %emphasis_0%
     et, si vous utilisiez un surnom invité, votre surnom enregistré sera restauré.
-  example: "%command_prefix%IDENTIFY Ares <mot_de_passe>"
+  example: "%command_prefix%IDENTIFY Ares mon_mot_de_passe123"
   native_syntax: "/NICK <surnom>:<motdepasse> | /NICK <surnom>!<motdepasse>"
   native_short: "Affiche la syntaxe native d’authentification du pseudonyme."
   native_help: |-
     Ce protocole authentifie les comptes par changement de pseudonyme.
     Utilisez %emphasis_0% ou, si le pseudonyme est occupé, %emphasis_1%.
-  native_example: "/NICK Ares:<mot_de_passe>"
+  native_example: "/NICK Ares:mon_mot_de_passe123"
   native_examples:
-    - "%command_prefix%/NICK Ares!<mot_de_passe>"
+    - "/NICK Ares!mon_mot_de_passe123"
   native_authentication: "Ce protocole gère l’authentification par changement de pseudonyme. Utilisez %command_0% ou, si le pseudonyme est occupé, %command_1%."
   native_authentication_command_0: "/NICK <surnom>:<motdepasse>"
   native_authentication_command_1: "/NICK <surnom>!<motdepasse>"

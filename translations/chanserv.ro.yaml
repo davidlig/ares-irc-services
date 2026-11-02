@@ -25,7 +25,7 @@ error:
 # --- REGISTER -----------------------------------------------------------------
 register:
   syntax: "REGISTER <#canal> <descriere>"
-  example: "%command_prefix%REGISTER #Ares_Help Proiect comunitar"
+  example: "%command_prefix%REGISTER #Ares_Help Canal de ajutor"
   short: "Înregistrați un canal."
   help: |-
     Înregistrează un canal și asociază-l poreclei tale. Identifică-te cu
@@ -104,7 +104,7 @@ info:
 # --- SET ----------------------------------------------------------------------
 set:
   syntax: "SET <#canal> <opțiune> [parametri]"
-  example: "%command_prefix%SET #Ares_Help DESC Un canal comunitar"
+  example: "%command_prefix%SET #Ares_Help DESC Canal de ajutor"
   examples:
     - "%command_prefix%SET #Ares_Help URL https://example.test"
     - "%command_prefix%SET #Ares_Help MLOCK ON"
@@ -121,7 +121,7 @@ set:
     syntax: "SET <#canal> FOUNDER <poreclă> [token]"
     example: "%command_prefix%SET #Ares_Help FOUNDER Ares"
     examples:
-      - "%command_prefix%SET #Ares_Help FOUNDER Ares token-confirmat"
+      - "%command_prefix%SET #Ares_Help FOUNDER Ares 65dec7d5370eaa57c5a4bde98e591ccb"
     short: "Transferați canalul către o altă poreclă înregistrată."
     help: |-
       Schimbă fondatorul după validarea tokenului fondatorului curent. Excepția
@@ -158,7 +158,7 @@ set:
   # --- SET DESC ------------------------------------------------------------
   desc:
     syntax: "SET <#canal> DESC <descriere>"
-    example: "%command_prefix%SET #Ares_Help DESC Un canal comunitar"
+    example: "%command_prefix%SET #Ares_Help DESC Canal de ajutor"
     short: "Schimbați descrierea canalului."
     help: "Schimbați descrierea canalului (obligatorie)."
     updated: "Descrierea a fost actualizată."
@@ -192,7 +192,7 @@ set:
   # --- SET ENTRYMSG --------------------------------------------------------
   entrymsg:
     syntax: "SET <#canal> ENTRYMSG [mesaj]"
-    example: "%command_prefix%SET #Ares_Help ENTRYMSG Bun venit"
+    example: "%command_prefix%SET #Ares_Help ENTRYMSG Bun venit pe canalul de ajutor"
     examples:
       - "%command_prefix%SET #Ares_Help ENTRYMSG"
     short: "Setați mesajul de intrare al canalului."
@@ -375,9 +375,9 @@ delaccess:
 # --- AKICK --------------------------------------------------------------------
 akick:
   syntax: "AKICK <#canal> <opțiune> [parametri]"
-  example: "%command_prefix%AKICK #Ares_Help ADD *!*@* 0"
+  example: "%command_prefix%AKICK #Ares_Help ADD SuntRau!*@* 0"
   examples:
-    - "%command_prefix%AKICK #Ares_Help ADD *!*@* 7d Spam"
+    - "%command_prefix%AKICK #Ares_Help ADD SuntRau!*@* 7d Mesaje nesolicitate"
     - "%command_prefix%AKICK #Ares_Help DEL *!*@*"
     - "%command_prefix%AKICK #Ares_Help DEL 2"
     - "%command_prefix%AKICK #Ares_Help LIST"
@@ -395,9 +395,9 @@ akick:
   # --- AKICK ADD -----------------------------------------------------------
   add:
     syntax: "AKICK <#canal> ADD <mască> [expirare] [motiv]"
-    example: "%command_prefix%AKICK #Ares_Help ADD *!*@* 0"
+    example: "%command_prefix%AKICK #Ares_Help ADD SuntRau!*@* 0"
     examples:
-      - "%command_prefix%AKICK #Ares_Help ADD *!*@* 7d Spam"
+      - "%command_prefix%AKICK #Ares_Help ADD SuntRau!*@* 7d Mesaje nesolicitate"
     short: "Adăugați intrare AKICK."
     help: |-
       Adaugă o mască la lista de kick automat a canalului.
@@ -714,7 +714,7 @@ saregister:
 
     Înregistrează administrativ un canal imediat pentru porecla
     specificată ca fondator, fără a necesita prezență, verificare sau limite de frecvență.
-  example: "%command_prefix%SAREGISTER #Ares_Help Ares Canal comunitar"
+  example: "%command_prefix%SAREGISTER #Ares_Help Ares Canal de ajutor"
   success: "Canalul %channel% a fost înregistrat pentru %founder%."
 
 # --- NOEXPIRE (IRCop) ---------------------------------------------------------

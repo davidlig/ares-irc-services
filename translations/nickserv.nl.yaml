@@ -60,15 +60,15 @@ identify:
     Authenticeert uw sessie bij %nickserv% met uw bijnaam en wachtwoord.
     Na succesvolle identificatie ontvangt u de geregistreerde modus %emphasis_0%
     en, als u een gastbijnaam gebruikte, wordt uw geregistreerde bijnaam hersteld.
-  example: "%command_prefix%IDENTIFY Ares <wachtwoord>"
+  example: "%command_prefix%IDENTIFY Ares mijn_wachtwoord123"
   native_syntax: "/NICK <bijnaam>:<wachtwoord> | /NICK <bijnaam>!<wachtwoord>"
   native_short: "Toont de native syntaxis voor nickname-authenticatie."
   native_help: |-
     Dit protocol authenticeert accounts via nicknamewijzigingen.
     Gebruik %emphasis_0% of, als de nickname bezet is, %emphasis_1%.
-  native_example: "/NICK Ares:<wachtwoord>"
+  native_example: "/NICK Ares:mijn_wachtwoord123"
   native_examples:
-    - "%command_prefix%/NICK Ares!<wachtwoord>"
+    - "/NICK Ares!mijn_wachtwoord123"
   native_authentication: "Dit protocol beheert authenticatie via nicknamewijzigingen. Gebruik %command_0% of, als de nickname bezet is, %command_1%."
   native_authentication_command_0: "/NICK <bijnaam>:<wachtwoord>"
   native_authentication_command_1: "/NICK <bijnaam>!<wachtwoord>"

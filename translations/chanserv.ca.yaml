@@ -25,7 +25,7 @@ error:
 # --- REGISTER -----------------------------------------------------------------
 register:
   syntax: "REGISTER <#channel> <description>"
-  example: "%command_prefix%REGISTER #Ares_Help Projecte comunitari"
+  example: "%command_prefix%REGISTER #Ares_Help Canal d’ajuda"
   short: "Registrar un canal."
   help: |-
     Registra i associa un canal al teu sobrenom. T’has d’haver
@@ -104,7 +104,7 @@ info:
 # --- SET ----------------------------------------------------------------------
 set:
   syntax: "SET <#canal> <opció> [paràmetres]"
-  example: "%command_prefix%SET #Ares_Help DESC Un canal comunitari"
+  example: "%command_prefix%SET #Ares_Help DESC Canal d’ajuda"
   examples:
     - "%command_prefix%SET #Ares_Help URL https://example.test"
     - "%command_prefix%SET #Ares_Help MLOCK ON"
@@ -121,7 +121,7 @@ set:
     syntax: "SET <#canal> FOUNDER <sobrenom> [token]"
     example: "%command_prefix%SET #Ares_Help FOUNDER Ares"
     examples:
-      - "%command_prefix%SET #Ares_Help FOUNDER Ares token-confirmat"
+      - "%command_prefix%SET #Ares_Help FOUNDER Ares 65dec7d5370eaa57c5a4bde98e591ccb"
     short: "Transferir el canal a un altre sobrenom registrat."
     help: |-
       Canvia el fundador després de validar el token del fundador actual. Es manté
@@ -157,7 +157,7 @@ set:
   # --- SET DESC ------------------------------------------------------------
   desc:
     syntax: "SET <#channel> DESC <description>"
-    example: "%command_prefix%SET #Ares_Help DESC Un canal comunitari"
+    example: "%command_prefix%SET #Ares_Help DESC Canal d’ajuda"
     short: "Canviar la descripció del canal."
     help: "Canviar la descripció del canal (obligatòria)."
     updated: "Descripció actualitzada."
@@ -191,7 +191,7 @@ set:
   # --- SET ENTRYMSG --------------------------------------------------------
   entrymsg:
     syntax: "SET <#canal> ENTRYMSG [missatge]"
-    example: "%command_prefix%SET #Ares_Help ENTRYMSG Benvingut"
+    example: "%command_prefix%SET #Ares_Help ENTRYMSG Benvingut al canal d’ajuda"
     examples:
       - "%command_prefix%SET #Ares_Help ENTRYMSG"
     short: "Establir el missatge d'entrada del canal."
@@ -371,9 +371,9 @@ delaccess:
 # --- AKICK --------------------------------------------------------------------
 akick:
   syntax: "AKICK <#canal> <opció> [paràmetres]"
-  example: "%command_prefix%AKICK #Ares_Help ADD *!*@* 0"
+  example: "%command_prefix%AKICK #Ares_Help ADD SocDolent!*@* 0"
   examples:
-    - "%command_prefix%AKICK #Ares_Help ADD *!*@* 7d Spam"
+    - "%command_prefix%AKICK #Ares_Help ADD SocDolent!*@* 7d Correu brossa"
     - "%command_prefix%AKICK #Ares_Help DEL *!*@*"
     - "%command_prefix%AKICK #Ares_Help DEL 2"
     - "%command_prefix%AKICK #Ares_Help LIST"
@@ -391,9 +391,9 @@ akick:
   # --- AKICK ADD -----------------------------------------------------------
   add:
     syntax: "AKICK <#channel> ADD <mask> [expiry] [motiu]"
-    example: "%command_prefix%AKICK #Ares_Help ADD *!*@* 0"
+    example: "%command_prefix%AKICK #Ares_Help ADD SocDolent!*@* 0"
     examples:
-      - "%command_prefix%AKICK #Ares_Help ADD *!*@* 7d Spam"
+      - "%command_prefix%AKICK #Ares_Help ADD SocDolent!*@* 7d Correu brossa"
     short: "Afegir entrada AKICK."
     help: |-
       Afegeix una màscara a la llista d'expulsió automàtica del canal.
@@ -711,7 +711,7 @@ saregister:
 
     Registra administrativament un canal immediatament per al sobrenom
     especificat com a fundador sense requerir presència, verificació ni límits de freqüència.
-  example: "%command_prefix%SAREGISTER #Ares_Help Ares Canal comunitari"
+  example: "%command_prefix%SAREGISTER #Ares_Help Ares Canal d’ajuda"
   success: "El canal %channel% ha estat registrat per a %founder%."
 
 # --- NOEXPIRE (IRCop) ---------------------------------------------------------

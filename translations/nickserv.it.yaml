@@ -58,15 +58,15 @@ identify:
     Autentica la sua sessione con %nickserv% usando nickname e password.
     Dopo un'identificazione riuscita riceverà la modalità registrata %emphasis_0%
     e, se stava usando un nick ospite, il suo nick registrato sarà ripristinato.
-  example: "%command_prefix%IDENTIFY Ares <password>"
+  example: "%command_prefix%IDENTIFY Ares mia_password123"
   native_syntax: "/NICK <nickname>:<password> | /NICK <nickname>!<password>"
   native_short: "Mostra la sintassi nativa per l’autenticazione del nickname."
   native_help: |-
     Questo protocollo autentica gli account tramite cambi di nickname.
     Usa %emphasis_0% oppure, se il nickname è occupato, %emphasis_1%.
-  native_example: "/NICK Ares:<password>"
+  native_example: "/NICK Ares:mia_password123"
   native_examples:
-    - "%command_prefix%/NICK Ares!<password>"
+    - "/NICK Ares!mia_password123"
   native_authentication: "Questo protocollo gestisce l’autenticazione tramite cambi di nickname. Usa %command_0% oppure, se il nickname è occupato, %command_1%."
   native_authentication_command_0: "/NICK <nickname>:<password>"
   native_authentication_command_1: "/NICK <nickname>!<password>"

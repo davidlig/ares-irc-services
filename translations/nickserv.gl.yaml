@@ -60,15 +60,15 @@ identify:
     Despois dunha identificación exitosa recibirá o modo rexistrado %emphasis_0%
     e, se estaba usando un alcume de convidado, restauraráselle o seu alcume
     rexistrado.
-  example: "%command_prefix%IDENTIFY Ares <contrasinal>"
+  example: "%command_prefix%IDENTIFY Ares meu_contrasinal123"
   native_syntax: "/NICK <alcume>:<contrasinal> | /NICK <alcume>!<contrasinal>"
   native_short: "Mostra a sintaxe de autenticación nativa por cambio de alcume."
   native_help: |-
     Este protocolo autentica as contas mediante cambios de alcume.
     Usa %emphasis_0% ou, se o alcume está ocupado, %emphasis_1%.
-  native_example: "/NICK Ares:<contrasinal>"
+  native_example: "/NICK Ares:meu_contrasinal123"
   native_examples:
-    - "%command_prefix%/NICK Ares!<contrasinal>"
+    - "/NICK Ares!meu_contrasinal123"
   native_authentication: "Este protocolo xestiona a autenticación mediante cambios de alcume. Usa %command_0% ou, se o alcume está ocupado, %command_1%."
   native_authentication_command_0: "/NICK <alcume>:<contrasinal>"
   native_authentication_command_1: "/NICK <alcume>!<contrasinal>"

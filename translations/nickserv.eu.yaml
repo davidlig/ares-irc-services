@@ -60,15 +60,15 @@ identify:
     Identifikazio arrakastatsu baten ondoren %emphasis_0% modu erregistratua jasoko duzu
     eta, gonbidatu ezizen bat erabiltzen ari bazinen, zure ezizen erregistratua
     berreskuratuko da.
-  example: "%command_prefix%IDENTIFY Ares <pasahitza>"
+  example: "%command_prefix%IDENTIFY Ares nire_pasahitza123"
   native_syntax: "/NICK <ezizena>:<pasahitza> | /NICK <ezizena>!<pasahitza>"
   native_short: "Erakutsi ezizenaren jatorrizko autentifikazio-sintaxia."
   native_help: |-
     Protokolo honek kontuak ezizen-aldaketen bidez autentifikatzen ditu.
     Erabili %emphasis_0% edo, ezizena hartuta badago, %emphasis_1%.
-  native_example: "/NICK Ares:<pasahitza>"
+  native_example: "/NICK Ares:nire_pasahitza123"
   native_examples:
-    - "%command_prefix%/NICK Ares!<pasahitza>"
+    - "/NICK Ares!nire_pasahitza123"
   native_authentication: "Protokolo honek autentifikazioa ezizen-aldaketen bidez kudeatzen du. Erabili %command_0% edo, ezizena hartuta badago, %command_1%."
   native_authentication_command_0: "/NICK <ezizena>:<pasahitza>"
   native_authentication_command_1: "/NICK <ezizena>!<pasahitza>"

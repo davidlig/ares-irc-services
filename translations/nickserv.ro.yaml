@@ -60,15 +60,15 @@ identify:
     După o identificare reușită veți primi modul înregistrat %emphasis_0%
     și, dacă foloseați o poreclă de oaspete, porecla dumneavoastră înregistrată va
     fi restaurată.
-  example: "%command_prefix%IDENTIFY Ares <parolă>"
+  example: "%command_prefix%IDENTIFY Ares parola_mea123"
   native_syntax: "/NICK <poreclă>:<parolă> | /NICK <poreclă>!<parolă>"
   native_short: "Afișează sintaxa nativă de autentificare a pseudonimului."
   native_help: |-
     Acest protocol autentifică conturile prin schimbarea pseudonimului.
     Folosește %emphasis_0% sau, dacă pseudonimul este ocupat, %emphasis_1%.
-  native_example: "/NICK Ares:<parolă>"
+  native_example: "/NICK Ares:parola_mea123"
   native_examples:
-    - "%command_prefix%/NICK Ares!<parolă>"
+    - "/NICK Ares!parola_mea123"
   native_authentication: "Acest protocol gestionează autentificarea prin schimbarea pseudonimului. Folosește %command_0% sau, dacă pseudonimul este ocupat, %command_1%."
   native_authentication_command_0: "/NICK <poreclă>:<parolă>"
   native_authentication_command_1: "/NICK <poreclă>!<parolă>"
