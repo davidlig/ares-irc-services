@@ -57,14 +57,16 @@ identify:
   short: "Kendinizi bir rumuzun sahibi olarak tanımlayın."
   help: |-
     Rumuz ve şifrenizi kullanarak oturumunuzu %nickserv% ile doğrular.
-    Başarılı bir kimlik doğrulamadan sonra %emphasis_0% kayıtlı modunu alacaksınız
+    Başarılı bir kimlik doğrulamadan sonra %registered_mode% kayıtlı modunu alacaksınız
     ve, misafir rumuzu kullanıyorsanız, kayıtlı rumuzunuz geri yüklenecektir.
   example: "%command_prefix%IDENTIFY Ares benim_parolam123"
   native_syntax: "/NICK <nickname>:<şifre> | /NICK <nickname>!<şifre>"
   native_short: "Yerel rumuz kimlik doğrulama sözdizimini gösterir."
+  nickname_syntax: "/NICK <nickname>:<şifre>"
+  occupied_nickname_syntax: "/NICK <nickname>!<şifre>"
   native_help: |-
     Bu protokol hesapları rumuz değişiklikleriyle doğrular.
-    %emphasis_0% kullanın veya rumuz kullanımdaysa %emphasis_1% kullanın.
+    %nickname_syntax% kullanın veya rumuz kullanımdaysa %occupied_nickname_syntax% kullanın.
   native_example: "/NICK Ares:benim_parolam123"
   native_examples:
     - "/NICK Ares!benim_parolam123"
@@ -205,20 +207,20 @@ set:
     help: |-
       %nickserv% ve diğer hizmetlerin sizinle konuşurken kullandığı dili değiştirir.
       Kullanılabilir diller:
-      %emphasis_0% (Katalanca)
-      %emphasis_1% (Almanca)
-      %emphasis_2% (Yunanca)
-      %emphasis_3% (İngilizce)
-      %emphasis_4% (İspanyolca)
-      %emphasis_5% (Baskça)
-      %emphasis_6% (Fransızca)
-      %emphasis_7% (Galiçyaca)
-      %emphasis_8% (İtalyanca)
-      %emphasis_9% (Felemenkçe)
-      %emphasis_10% (Lehçe)
-      %emphasis_11% (Portekizce)
-      %emphasis_12% (Rumence)
-      %emphasis_13% (Türkçe)
+      %language_ca% (Katalanca)
+      %language_de% (Almanca)
+      %language_el% (Yunanca)
+      %language_en% (İngilizce)
+      %language_es% (İspanyolca)
+      %language_eu% (Baskça)
+      %language_fr% (Fransızca)
+      %language_gl% (Galiçyaca)
+      %language_it% (İtalyanca)
+      %language_nl% (Felemenkçe)
+      %language_pl% (Lehçe)
+      %language_pt% (Portekizce)
+      %language_ro% (Rumence)
+      %language_tr% (Türkçe)
     example: "%command_prefix%SET LANGUAGE es"
     success: "Dil %language% olarak değiştirildi."
     invalid: "Desteklenmeyen dil. Kullanılabilir diller: %languages%."
@@ -243,8 +245,8 @@ set:
     short: "Takma adınızın bilgilerini gösterir veya gizler."
     help: |-
       INFO komutunda rumuz bilgilerinizin görünürlüğünü kontrol eder.
-      %emphasis_0% ile bilgilerinizi yalnızca siz ve IRC Operatörleri görebilir.
-      %emphasis_1% ile bilgileriniz herkese açıktır.
+      %private_on% ile bilgilerinizi yalnızca siz ve IRC Operatörleri görebilir.
+      %private_off% ile bilgileriniz herkese açıktır.
     example: "%command_prefix%SET PRIVATE ON"
     examples:
       - "%command_prefix%SET PRIVATE OFF"
@@ -259,8 +261,8 @@ set:
     short: "Hizmetlerin sizinle nasıl iletişim kuracağını değiştirir."
     help: |-
       %nickserv% ve diğer hizmetlerin size nasıl mesaj göndereceğini belirler.
-      %emphasis_0% yanıtları %emphasis_1% olarak gönderir.
-      %emphasis_2% yanıtları %emphasis_3% olarak gönderir.
+      %msg_on% yanıtları %privmsg% olarak gönderir.
+      %msg_off% yanıtları %notice% olarak gönderir.
     example: "%command_prefix%SET MSG ON"
     examples:
       - "%command_prefix%SET MSG OFF"
@@ -277,7 +279,7 @@ set:
       Kimliğiniz doğrulandığında diğer kullanıcıların göreceği özel bir ana bilgisayar
       adı ayarlar.
 
-      Kaldırmak için değer belirtmeden %emphasis_0% komutunu çalıştırın.
+      Kaldırmak için değer belirtmeden %set_vhost% komutunu çalıştırın.
 
       Yalnızca harfler (a-z, A-Z), rakamlar, tire ve noktalar kullanılabilir.
       Her bölüm harf veya rakamla başlayıp bitmelidir.
@@ -722,9 +724,9 @@ regmode:
   help: |-
     Yeni hesaplar için kayıt modunu yapılandırır.
 
-    %emphasis_0% Doğrulama tokenını kullanıcının e-posta adresine gönderir.
-    %emphasis_1% Doğrulama tokenını doğrudan IRC üzerinden iletir.
-    %emphasis_2% Değişiklik yapmadan geçerli kayıt modunu gösterir.
+    %email_mode% Doğrulama tokenını kullanıcının e-posta adresine gönderir.
+    %token_mode% Doğrulama tokenını doğrudan IRC üzerinden iletir.
+    %status_mode% Değişiklik yapmadan geçerli kayıt modunu gösterir.
 
     Bekleyen kayıtlar başlatıldıkları modu korur.
 
@@ -894,37 +896,3 @@ rescue:
     Değiştirmek istemiyorsanız bu mesajı yok sayın.
   replacement_unavailable: "Parolanız sıfırlandı ancak yeni belirteç verilemedi. Mevcut belirteciniz geçerlidir."
   temporarily_unavailable: "Kurtarma belirteci teslimi geçici olarak kullanılamıyor. Daha sonra deneyin."
-
-# --- HELP FRAGMENTS -----------------------------------------------------------
-help_fragments:
-  identify_help_0: "+r"
-  set_language_help_0: "ca"
-  set_language_help_1: "de"
-  set_language_help_2: "el"
-  set_language_help_3: "en"
-  set_language_help_4: "es"
-  set_language_help_5: "eu"
-  set_language_help_6: "fr"
-  set_language_help_7: "gl"
-  set_language_help_8: "it"
-  set_language_help_9: "nl"
-  set_language_help_10: "pl"
-  set_language_help_11: "pt"
-  set_language_help_12: "ro"
-  set_language_help_13: "tr"
-  set_private_help_0: "PRIVATE AÇIK"
-  set_private_help_1: "PRIVATE KAPALI"
-  set_msg_help_0: "MSG ON"
-  set_msg_help_1: "PRIVMSG"
-  set_msg_help_2: "MSG OFF"
-  set_msg_help_3: "NOTICE"
-  set_vhost_help_0: "SET VHOST"
-  regmode_help_0: "EMAIL:"
-  regmode_help_1: "TOKEN:"
-  regmode_help_2: "STATUS:"
-  identify_native_help_0: "/NICK <nickname>:<şifre>"
-  identify_native_help_1: "/NICK <nickname>!<şifre>"
-  suspend_help_0: "%d"
-  suspend_help_1: "%h"
-  suspend_help_2: "%m"
-  suspend_help_3: "0"

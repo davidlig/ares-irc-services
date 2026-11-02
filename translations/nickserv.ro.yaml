@@ -57,15 +57,17 @@ identify:
   short: "Identificați-vă ca proprietar al unei porecle."
   help: |-
     Autentifică sesiunea dumneavoastră cu %nickserv% folosind porecla și parola.
-    După o identificare reușită veți primi modul înregistrat %emphasis_0%
+    După o identificare reușită veți primi modul înregistrat %registered_mode%
     și, dacă foloseați o poreclă de oaspete, porecla dumneavoastră înregistrată va
     fi restaurată.
   example: "%command_prefix%IDENTIFY Ares parola_mea123"
   native_syntax: "/NICK <poreclă>:<parolă> | /NICK <poreclă>!<parolă>"
   native_short: "Afișează sintaxa nativă de autentificare a pseudonimului."
+  nickname_syntax: "/NICK <poreclă>:<parolă>"
+  occupied_nickname_syntax: "/NICK <poreclă>!<parolă>"
   native_help: |-
     Acest protocol autentifică conturile prin schimbarea pseudonimului.
-    Folosește %emphasis_0% sau, dacă pseudonimul este ocupat, %emphasis_1%.
+    Folosește %nickname_syntax% sau, dacă pseudonimul este ocupat, %occupied_nickname_syntax%.
   native_example: "/NICK Ares:parola_mea123"
   native_examples:
     - "/NICK Ares!parola_mea123"
@@ -209,20 +211,20 @@ set:
       Schimbă limba pe care %nickserv% și celelalte servicii o folosesc când vă
       vorbesc.
       Limbi disponibile:
-      %emphasis_0% (catalană)
-      %emphasis_1% (germană)
-      %emphasis_2% (greacă)
-      %emphasis_3% (engleză)
-      %emphasis_4% (spaniolă)
-      %emphasis_5% (bască)
-      %emphasis_6% (franceză)
-      %emphasis_7% (galiciană)
-      %emphasis_8% (italiană)
-      %emphasis_9% (olandeză)
-      %emphasis_10% (poloneză)
-      %emphasis_11% (portugheză)
-      %emphasis_12% (română)
-      %emphasis_13% (turcă)
+      %language_ca% (catalană)
+      %language_de% (germană)
+      %language_el% (greacă)
+      %language_en% (engleză)
+      %language_es% (spaniolă)
+      %language_eu% (bască)
+      %language_fr% (franceză)
+      %language_gl% (galiciană)
+      %language_it% (italiană)
+      %language_nl% (olandeză)
+      %language_pl% (poloneză)
+      %language_pt% (portugheză)
+      %language_ro% (română)
+      %language_tr% (turcă)
     example: "%command_prefix%SET LANGUAGE es"
     success: "Limba a fost schimbată în %language%."
     invalid: "Limbă nesuportată. Limbi disponibile: %languages%."
@@ -248,8 +250,8 @@ set:
     short: "Afișează sau ascunde informațiile poreclei tale."
     help: |-
       Controlează vizibilitatea informațiilor poreclei dumneavoastră în comanda INFO.
-      Cu %emphasis_0% doar dumneavoastră și operatorii IRC puteți vizualiza detaliile.
-      Cu %emphasis_1% informațiile dumneavoastră sunt publice pentru toată lumea.
+      Cu %private_on% doar dumneavoastră și operatorii IRC puteți vizualiza detaliile.
+      Cu %private_off% informațiile dumneavoastră sunt publice pentru toată lumea.
     example: "%command_prefix%SET PRIVATE ON"
     examples:
       - "%command_prefix%SET PRIVATE OFF"
@@ -264,8 +266,8 @@ set:
     short: "Schimbă modul în care serviciile îți trimit mesaje."
     help: |-
       Controlează cum %nickserv% și celelalte servicii îți trimit mesaje.
-      Cu %emphasis_0%, răspunsurile sunt trimise ca %emphasis_1%.
-      Cu %emphasis_2%, răspunsurile sunt trimise ca %emphasis_3%.
+      Cu %msg_on%, răspunsurile sunt trimise ca %privmsg%.
+      Cu %msg_off%, răspunsurile sunt trimise ca %notice%.
     example: "%command_prefix%SET MSG ON"
     examples:
       - "%command_prefix%SET MSG OFF"
@@ -282,7 +284,7 @@ set:
       Setează un nume de gazdă personalizat, vizibil altor utilizatori când ești
       identificat.
 
-      Pentru eliminare, rulează %emphasis_0% fără valoare.
+      Pentru eliminare, rulează %set_vhost% fără valoare.
 
       Sunt permise litere (a-z, A-Z), cifre, cratime și puncte. Fiecare segment
       trebuie
@@ -725,9 +727,9 @@ regmode:
   help: |-
     Configurează modul de înregistrare pentru conturile noi.
 
-    %emphasis_0% Trimite tokenul de verificare la adresa de e-mail a utilizatorului.
-    %emphasis_1% Oferă tokenul de verificare direct prin IRC.
-    %emphasis_2% Afișează modul curent fără a-l modifica.
+    %email_mode% Trimite tokenul de verificare la adresa de e-mail a utilizatorului.
+    %token_mode% Oferă tokenul de verificare direct prin IRC.
+    %status_mode% Afișează modul curent fără a-l modifica.
 
     Înregistrările în așteptare păstrează modul folosit la inițiere.
 
@@ -905,37 +907,3 @@ rescue:
     Dacă nu dorești schimbarea, ignoră acest mesaj.
   replacement_unavailable: "Parola a fost resetată, dar nu s-a putut emite un token nou. Tokenul actual rămâne valid."
   temporarily_unavailable: "Livrarea tokenului de recuperare este temporar indisponibilă. Încearcă mai târziu."
-
-# --- HELP FRAGMENTS -----------------------------------------------------------
-help_fragments:
-  identify_help_0: "+r"
-  set_language_help_0: "ca"
-  set_language_help_1: "de"
-  set_language_help_2: "el"
-  set_language_help_3: "en"
-  set_language_help_4: "es"
-  set_language_help_5: "eu"
-  set_language_help_6: "fr"
-  set_language_help_7: "gl"
-  set_language_help_8: "it"
-  set_language_help_9: "nl"
-  set_language_help_10: "pl"
-  set_language_help_11: "pt"
-  set_language_help_12: "ro"
-  set_language_help_13: "tr"
-  set_private_help_0: "PRIVATE ON"
-  set_private_help_1: "PRIVATE OFF"
-  set_msg_help_0: "MSG ON"
-  set_msg_help_1: "PRIVMSG"
-  set_msg_help_2: "MSG OFF"
-  set_msg_help_3: "NOTICE"
-  set_vhost_help_0: "SET VHOST"
-  regmode_help_0: "EMAIL:"
-  regmode_help_1: "TOKEN:"
-  regmode_help_2: "STATUS:"
-  identify_native_help_0: "/NICK <poreclă>:<parolă>"
-  identify_native_help_1: "/NICK <poreclă>!<parolă>"
-  suspend_help_0: "%d"
-  suspend_help_1: "%h"
-  suspend_help_2: "%m"
-  suspend_help_3: "0"

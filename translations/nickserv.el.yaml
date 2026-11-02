@@ -58,15 +58,17 @@ identify:
   help: |-
     Πιστοποιεί τη συνεδρία σας με το %nickserv% χρησιμοποιώντας το ψευδώνυμο και τον
     κωδικό σας.
-    Μετά από επιτυχή ταυτοποίηση θα λάβετε τη λειτουργία %emphasis_0%
+    Μετά από επιτυχή ταυτοποίηση θα λάβετε τη λειτουργία %registered_mode%
     και, αν χρησιμοποιούσατε ψευδώνυμο επισκέπτη, το καταχωρημένο σας ψευδώνυμο θα
     αποκατασταθεί.
   example: "%command_prefix%IDENTIFY Ares kodikos123"
   native_syntax: "/NICK <nickname>:<password> | /NICK <nickname>!<password>"
   native_short: "Εμφανίζει τη σύνταξη εγγενούς ταυτοποίησης ψευδωνύμου."
+  nickname_syntax: "/NICK <nickname>:<password>"
+  occupied_nickname_syntax: "/NICK <nickname>!<password>"
   native_help: |-
     Αυτό το πρωτόκολλο ταυτοποιεί λογαριασμούς μέσω αλλαγών ψευδωνύμου.
-    Χρησιμοποιήστε %emphasis_0% ή, αν το ψευδώνυμο χρησιμοποιείται, %emphasis_1%.
+    Χρησιμοποιήστε %nickname_syntax% ή, αν το ψευδώνυμο χρησιμοποιείται, %occupied_nickname_syntax%.
   native_example: "/NICK Ares:kodikos123"
   native_examples:
     - "/NICK Ares!kodikos123"
@@ -211,20 +213,20 @@ set:
       Αλλάζει τη γλώσσα που το %nickserv% και άλλες υπηρεσίες χρησιμοποιούν όταν σας
       μιλούν.
       Διαθέσιμες γλώσσες:
-      %emphasis_0% (Καταλανικά)
-      %emphasis_1% (Γερμανικά)
-      %emphasis_2% (Ελληνικά)
-      %emphasis_3% (Αγγλικά)
-      %emphasis_4% (Ισπανικά)
-      %emphasis_5% (Βασκικά)
-      %emphasis_6% (Γαλλικά)
-      %emphasis_7% (Γαλικιακά)
-      %emphasis_8% (Ιταλικά)
-      %emphasis_9% (Ολλανδικά)
-      %emphasis_10% (Πολωνικά)
-      %emphasis_11% (Πορτογαλικά)
-      %emphasis_12% (Ρουμανικά)
-      %emphasis_13% (Τουρκικά)
+      %language_ca% (Καταλανικά)
+      %language_de% (Γερμανικά)
+      %language_el% (Ελληνικά)
+      %language_en% (Αγγλικά)
+      %language_es% (Ισπανικά)
+      %language_eu% (Βασκικά)
+      %language_fr% (Γαλλικά)
+      %language_gl% (Γαλικιακά)
+      %language_it% (Ιταλικά)
+      %language_nl% (Ολλανδικά)
+      %language_pl% (Πολωνικά)
+      %language_pt% (Πορτογαλικά)
+      %language_ro% (Ρουμανικά)
+      %language_tr% (Τουρκικά)
     example: "%command_prefix%SET LANGUAGE es"
     success: "Η γλώσσα άλλαξε σε %language%."
     invalid: "Μη υποστηριζόμενη γλώσσα. Διαθέσιμες γλώσσες: %languages%."
@@ -249,9 +251,9 @@ set:
     short: "Ενεργοποίηση ή απενεργοποίηση ιδιωτικότητας για τις πληροφορίες του ψευδωνύμου σας."
     help: |-
       Ελέγχει την ορατότητα των πληροφοριών του ψευδωνύμου σας στην εντολή INFO.
-      Με %emphasis_0% μόνο εσείς και οι IRC Operators μπορούν να δουν τις λεπτομέρειές
+      Με %private_on% μόνο εσείς και οι IRC Operators μπορούν να δουν τις λεπτομέρειές
       σας.
-      Με %emphasis_1% οι πληροφορίες σας είναι δημόσιες για όλους.
+      Με %private_off% οι πληροφορίες σας είναι δημόσιες για όλους.
     example: "%command_prefix%SET PRIVATE ON"
     examples:
       - "%command_prefix%SET PRIVATE OFF"
@@ -266,9 +268,9 @@ set:
     short: "Χρήση PRIVMSG (ON) ή NOTICE (OFF) για απαντήσεις υπηρεσιών."
     help: |-
       Ελέγχει πώς το %nickserv% και άλλες υπηρεσίες στέλνουν μηνύματα σε εσάς.
-      Με %emphasis_0% οι απαντήσεις στέλνονται ως %emphasis_1% (ορισμένοι clients μπορεί να
+      Με %msg_on% οι απαντήσεις στέλνονται ως %privmsg% (ορισμένοι clients μπορεί να
       ενεργοποιούν απαντήσεις ή ειδοποιήσεις).
-      Με %emphasis_2% οι απαντήσεις στέλνονται ως %emphasis_3% (προεπιλογή· συνήθως χωρίς
+      Με %msg_off% οι απαντήσεις στέλνονται ως %notice% (προεπιλογή· συνήθως χωρίς
       αυτόματη απάντηση).
     example: "%command_prefix%SET MSG ON"
     examples:
@@ -286,7 +288,7 @@ set:
       Ορίζει ένα προσαρμοσμένο hostname που βλέπουν οι άλλοι όταν είστε
       ταυτοποιημένοι.
 
-      Χρησιμοποιήστε %emphasis_0% χωρίς τιμή για εκκαθάριση.
+      Χρησιμοποιήστε %set_vhost% χωρίς τιμή για εκκαθάριση.
 
       Μόνο γράμματα (a-z, A-Z),
       ψηφία,
@@ -830,9 +832,9 @@ regmode:
   help: |-
     Ρυθμίζει τη λειτουργία εγγραφής για νέους λογαριασμούς.
 
-    %emphasis_0% Το διακριτικό επαλήθευσης αποστέλλεται στη διεύθυνση email του χρήστη.
-    %emphasis_1% Το διακριτικό παρέχεται απευθείας μέσω IRC.
-    %emphasis_2% Εμφανίζει την τρέχουσα λειτουργία χωρίς αλλαγές.
+    %email_mode% Το διακριτικό επαλήθευσης αποστέλλεται στη διεύθυνση email του χρήστη.
+    %token_mode% Το διακριτικό παρέχεται απευθείας μέσω IRC.
+    %status_mode% Εμφανίζει την τρέχουσα λειτουργία χωρίς αλλαγές.
 
     Οι εκκρεμείς εγγραφές διατηρούν τη λειτουργία με την οποία ξεκίνησαν.
 
@@ -853,8 +855,8 @@ suspend:
     Θέτει σε αναστολή ένα ψευδώνυμο, εμποδίζοντας τον κάτοχο από το να ταυτοποιηθεί.
     Η αναστολή μπορεί να είναι προσωρινή ή μόνιμη.
 
-    Μορφές διάρκειας: %emphasis_0% (ημέρες), %emphasis_1% (ώρες), %emphasis_2%
-    (λεπτά), ή %emphasis_3% (μόνιμη).
+    Μορφές διάρκειας: %days_format% (ημέρες), %hours_format% (ώρες), %minutes_format%
+    (λεπτά), ή %permanent_duration% (μόνιμη).
 
     Οι χρήστες σε αναστολή δεν μπορούν να ταυτοποιηθούν στο ψευδώνυμό τους.
     Οι IRC operators και οι root χρήστες δεν μπορούν να τεθούν σε αναστολή.
@@ -1057,37 +1059,3 @@ rescue:
     Αν δεν θέλεις αλλαγή, αγνόησε αυτό το μήνυμα.
   replacement_unavailable: "Ο κωδικός επαναφέρθηκε, αλλά δεν εκδόθηκε νέο διακριτικό. Το τρέχον διακριτικό παραμένει έγκυρο."
   temporarily_unavailable: "Η παράδοση διακριτικού ανάκτησης είναι προσωρινά μη διαθέσιμη. Δοκίμασε αργότερα."
-
-# --- HELP FRAGMENTS -----------------------------------------------------------
-help_fragments:
-  identify_help_0: "+r"
-  set_language_help_0: "ca"
-  set_language_help_1: "de"
-  set_language_help_2: "el"
-  set_language_help_3: "en"
-  set_language_help_4: "es"
-  set_language_help_5: "eu"
-  set_language_help_6: "fr"
-  set_language_help_7: "gl"
-  set_language_help_8: "it"
-  set_language_help_9: "nl"
-  set_language_help_10: "pl"
-  set_language_help_11: "pt"
-  set_language_help_12: "ro"
-  set_language_help_13: "tr"
-  set_private_help_0: "PRIVATE ON"
-  set_private_help_1: "PRIVATE OFF"
-  set_msg_help_0: "MSG ON"
-  set_msg_help_1: "PRIVMSG"
-  set_msg_help_2: "MSG OFF"
-  set_msg_help_3: "NOTICE"
-  set_vhost_help_0: "SET VHOST"
-  regmode_help_0: "EMAIL:"
-  regmode_help_1: "TOKEN:"
-  regmode_help_2: "STATUS:"
-  identify_native_help_0: "/NICK <nickname>:<password>"
-  identify_native_help_1: "/NICK <nickname>!<password>"
-  suspend_help_0: "%d"
-  suspend_help_1: "%h"
-  suspend_help_2: "%m"
-  suspend_help_3: "0"

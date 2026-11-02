@@ -59,7 +59,7 @@ final class IdentifyCommandTest extends TestCase
         self::assertSame([], $command->getSubCommandHelp());
         self::assertFalse($command->isOperOnly());
         self::assertNull($command->getRequiredPermission());
-        self::assertSame([], $command->getHelpParams());
+        self::assertSame(IdentifyCommand::HELP_PARAMETERS, $command->getHelpParams());
     }
 
     #[Test]

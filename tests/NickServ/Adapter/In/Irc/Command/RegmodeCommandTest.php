@@ -50,7 +50,7 @@ final class RegmodeCommandTest extends TestCase
         self::assertSame('regmode.short', $command->getShortDescKey());
         self::assertSame(67, $command->getOrder());
         self::assertSame([], $command->getSubCommandHelp());
-        self::assertSame([], $command->getHelpParams());
+        self::assertSame(RegmodeCommand::HELP_PARAMETERS, $command->getHelpParams());
         self::assertTrue($command->isOperOnly());
         self::assertSame(NickServPermission::REGMODE, $command->getRequiredPermission());
     }

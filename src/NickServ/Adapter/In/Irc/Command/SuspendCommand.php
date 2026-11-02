@@ -31,6 +31,13 @@ use function trim;
 
 final readonly class SuspendCommand implements NickServCommandInterface, IrcopAuditableCommandInterface
 {
+    public const array HELP_PARAMETERS = [
+        'days_format' => ['value' => '%d', 'component' => Component::Command],
+        'hours_format' => ['value' => '%h', 'component' => Component::Command],
+        'minutes_format' => ['value' => '%m', 'component' => Component::Command],
+        'permanent_duration' => ['value' => '0', 'component' => Component::Command],
+    ];
+
     public function __construct(private SuspendNickHandler $handler) {}
 
     public function getName(): string
@@ -99,7 +106,7 @@ final readonly class SuspendCommand implements NickServCommandInterface, IrcopAu
 
     public function getHelpParams(): array
     {
-        return [];
+        return self::HELP_PARAMETERS;
     }
 
     public function execute(NickServContext $context): CommandOutcome

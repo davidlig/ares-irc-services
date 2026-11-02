@@ -58,14 +58,16 @@ identify:
   short: "Identificeer uzelf als de eigenaar van een bijnaam."
   help: |-
     Authenticeert uw sessie bij %nickserv% met uw bijnaam en wachtwoord.
-    Na succesvolle identificatie ontvangt u de geregistreerde modus %emphasis_0%
+    Na succesvolle identificatie ontvangt u de geregistreerde modus %registered_mode%
     en, als u een gastbijnaam gebruikte, wordt uw geregistreerde bijnaam hersteld.
   example: "%command_prefix%IDENTIFY Ares mijn_wachtwoord123"
   native_syntax: "/NICK <bijnaam>:<wachtwoord> | /NICK <bijnaam>!<wachtwoord>"
   native_short: "Toont de native syntaxis voor nickname-authenticatie."
+  nickname_syntax: "/NICK <bijnaam>:<wachtwoord>"
+  occupied_nickname_syntax: "/NICK <bijnaam>!<wachtwoord>"
   native_help: |-
     Dit protocol authenticeert accounts via nicknamewijzigingen.
-    Gebruik %emphasis_0% of, als de nickname bezet is, %emphasis_1%.
+    Gebruik %nickname_syntax% of, als de nickname bezet is, %occupied_nickname_syntax%.
   native_example: "/NICK Ares:mijn_wachtwoord123"
   native_examples:
     - "/NICK Ares!mijn_wachtwoord123"
@@ -208,20 +210,20 @@ set:
       Wijzigt de taal die %nickserv% en andere services gebruiken wanneer ze met u
       praten.
       Beschikbare talen:
-      %emphasis_0% (Catalaans)
-      %emphasis_1% (Duits)
-      %emphasis_2% (Grieks)
-      %emphasis_3% (Engels)
-      %emphasis_4% (Spaans)
-      %emphasis_5% (Baskisch)
-      %emphasis_6% (Frans)
-      %emphasis_7% (Galicisch)
-      %emphasis_8% (Italiaans)
-      %emphasis_9% (Nederlands)
-      %emphasis_10% (Pools)
-      %emphasis_11% (Portugees)
-      %emphasis_12% (Roemeens)
-      %emphasis_13% (Turks)
+      %language_ca% (Catalaans)
+      %language_de% (Duits)
+      %language_el% (Grieks)
+      %language_en% (Engels)
+      %language_es% (Spaans)
+      %language_eu% (Baskisch)
+      %language_fr% (Frans)
+      %language_gl% (Galicisch)
+      %language_it% (Italiaans)
+      %language_nl% (Nederlands)
+      %language_pl% (Pools)
+      %language_pt% (Portugees)
+      %language_ro% (Roemeens)
+      %language_tr% (Turks)
     example: "%command_prefix%SET LANGUAGE es"
     success: "Taal gewijzigd naar %language%."
     invalid: "Niet-ondersteunde taal. Beschikbare talen: %languages%."
@@ -246,8 +248,8 @@ set:
     short: "Toont of verbergt informatie over je bijnaam."
     help: |-
       Bepaalt de zichtbaarheid van uw bijnaaminformatie in het INFO-commando.
-      Met %emphasis_0% kunnen alleen u en IRC Operators uw gegevens bekijken.
-      Met %emphasis_1% is uw informatie openbaar voor iedereen.
+      Met %private_on% kunnen alleen u en IRC Operators uw gegevens bekijken.
+      Met %private_off% is uw informatie openbaar voor iedereen.
     example: "%command_prefix%SET PRIVATE ON"
     examples:
       - "%command_prefix%SET PRIVATE OFF"
@@ -262,8 +264,8 @@ set:
     short: "Wijzigt hoe de services je berichten sturen."
     help: |-
       Bepaalt hoe %nickserv% en andere services je berichten sturen.
-      Met %emphasis_0% worden antwoorden als %emphasis_1% verstuurd.
-      Met %emphasis_2% worden antwoorden als %emphasis_3% verstuurd.
+      Met %msg_on% worden antwoorden als %privmsg% verstuurd.
+      Met %msg_off% worden antwoorden als %notice% verstuurd.
     example: "%command_prefix%SET MSG ON"
     examples:
       - "%command_prefix%SET MSG OFF"
@@ -280,7 +282,7 @@ set:
       Stelt een aangepaste hostnaam in die anderen zien wanneer je geïdentificeerd
       bent.
 
-      Voer %emphasis_0% zonder waarde uit om deze te verwijderen.
+      Voer %set_vhost% zonder waarde uit om deze te verwijderen.
 
       Alleen letters (a-z, A-Z), cijfers, koppeltekens en punten zijn toegestaan.
       Elk onderdeel moet beginnen en eindigen met een letter of cijfer.
@@ -726,9 +728,9 @@ regmode:
   help: |-
     Stelt de registratiemodus voor nieuwe accounts in.
 
-    %emphasis_0% Stuurt het verificatietoken naar het e-mailadres van de gebruiker.
-    %emphasis_1% Levert het verificatietoken rechtstreeks via IRC.
-    %emphasis_2% Toont de huidige modus zonder deze te wijzigen.
+    %email_mode% Stuurt het verificatietoken naar het e-mailadres van de gebruiker.
+    %token_mode% Levert het verificatietoken rechtstreeks via IRC.
+    %status_mode% Toont de huidige modus zonder deze te wijzigen.
 
     Registraties in behandeling behouden de modus waarmee ze zijn gestart.
 
@@ -900,37 +902,3 @@ rescue:
     Wil je het niet wijzigen, negeer dan dit bericht.
   replacement_unavailable: "Je wachtwoord is hersteld, maar een nieuw token kon niet worden uitgegeven. Je huidige token blijft geldig."
   temporarily_unavailable: "De uitgifte van hersteltokens is tijdelijk niet beschikbaar. Probeer het later opnieuw."
-
-# --- HELP FRAGMENTS -----------------------------------------------------------
-help_fragments:
-  identify_help_0: "+r"
-  set_language_help_0: "ca"
-  set_language_help_1: "de"
-  set_language_help_2: "el"
-  set_language_help_3: "en"
-  set_language_help_4: "es"
-  set_language_help_5: "eu"
-  set_language_help_6: "fr"
-  set_language_help_7: "gl"
-  set_language_help_8: "it"
-  set_language_help_9: "nl"
-  set_language_help_10: "pl"
-  set_language_help_11: "pt"
-  set_language_help_12: "ro"
-  set_language_help_13: "tr"
-  set_private_help_0: "PRIVATE ON"
-  set_private_help_1: "PRIVATE OFF"
-  set_msg_help_0: "MSG ON"
-  set_msg_help_1: "PRIVMSG"
-  set_msg_help_2: "MSG OFF"
-  set_msg_help_3: "NOTICE"
-  set_vhost_help_0: "SET VHOST"
-  regmode_help_0: "EMAIL:"
-  regmode_help_1: "TOKEN:"
-  regmode_help_2: "STATUS:"
-  identify_native_help_0: "/NICK <bijnaam>:<wachtwoord>"
-  identify_native_help_1: "/NICK <bijnaam>!<wachtwoord>"
-  suspend_help_0: "%d"
-  suspend_help_1: "%h"
-  suspend_help_2: "%m"
-  suspend_help_3: "0"

@@ -26,6 +26,12 @@ use function strtoupper;
 
 final readonly class RegmodeCommand implements NickServCommandInterface, IrcopAuditableCommandInterface
 {
+    public const array HELP_PARAMETERS = [
+        'email_mode' => ['value' => 'EMAIL:', 'component' => Component::BulletedRow],
+        'token_mode' => ['value' => 'TOKEN:', 'component' => Component::BulletedRow],
+        'status_mode' => ['value' => 'STATUS:', 'component' => Component::BulletedRow],
+    ];
+
     public function __construct(private RegistrationModeHandlerInterface $handler, private NickServOperatorAccess $operatorAccess) {}
 
     public function getName(): string
@@ -92,7 +98,7 @@ final readonly class RegmodeCommand implements NickServCommandInterface, IrcopAu
 
     public function getHelpParams(): array
     {
-        return [];
+        return self::HELP_PARAMETERS;
     }
 
     public function execute(NickServContext $context): CommandOutcome

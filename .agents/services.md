@@ -150,6 +150,13 @@ order in each locale; do not build sentences from English-ordered pieces. A comm
 plain `/msg <configured bot> ` followed by a Command fragment. Never search translated prose to
 guess emphasis or add controls to translations. User-provided values are not translation templates.
 
+NickServ commands own HELP parameters in `getHelpParams()`; sub-options declare them in optional
+`help_params` metadata. A descriptor contains `value` and a presentation `component`, with
+`translate: true` only for a localized template reference. The generic `HelpParameterResolver`
+resolves these references through a narrow translation callable and supplies styled fragments or
+plain text. It must not dispatch on command names or translation keys. Protocol literals belong
+in command metadata, while localized argument syntax stays in translations.
+
 HELP uses Header, Section, Group, CommandRow, Navigation, Syntax, Example, Separator and Expiration
 components. Neutral bold uses Emphasis, actionable syntax uses Command. Keep each service's
 formatter, groups, command registry, visibility, Root access and expiration policy inside the service.

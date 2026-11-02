@@ -232,11 +232,11 @@ final class SuspendCommandTest extends TestCase
     }
 
     #[Test]
-    public function getHelpParamsReturnsEmptyArray(): void
+    public function getHelpParamsDeclaresDurationFormats(): void
     {
         $cmd = $this->createCommand();
 
-        self::assertSame([], $cmd->getHelpParams());
+        self::assertSame(SuspendCommand::HELP_PARAMETERS, $cmd->getHelpParams());
     }
 
     #[Test]

@@ -57,15 +57,17 @@ identify:
   help: |-
     Zure saioa %nickserv% zerbitzuarekin autentikatzen du zure ezizena eta pasahitza
     erabiliz.
-    Identifikazio arrakastatsu baten ondoren %emphasis_0% modu erregistratua jasoko duzu
+    Identifikazio arrakastatsu baten ondoren %registered_mode% modu erregistratua jasoko duzu
     eta, gonbidatu ezizen bat erabiltzen ari bazinen, zure ezizen erregistratua
     berreskuratuko da.
   example: "%command_prefix%IDENTIFY Ares nire_pasahitza123"
   native_syntax: "/NICK <ezizena>:<pasahitza> | /NICK <ezizena>!<pasahitza>"
   native_short: "Erakutsi ezizenaren jatorrizko autentifikazio-sintaxia."
+  nickname_syntax: "/NICK <ezizena>:<pasahitza>"
+  occupied_nickname_syntax: "/NICK <ezizena>!<pasahitza>"
   native_help: |-
     Protokolo honek kontuak ezizen-aldaketen bidez autentifikatzen ditu.
-    Erabili %emphasis_0% edo, ezizena hartuta badago, %emphasis_1%.
+    Erabili %nickname_syntax% edo, ezizena hartuta badago, %occupied_nickname_syntax%.
   native_example: "/NICK Ares:nire_pasahitza123"
   native_examples:
     - "/NICK Ares!nire_pasahitza123"
@@ -207,20 +209,20 @@ set:
     help: |-
       %nickserv% eta beste zerbitzuek zurekin hitz egitean erabiltzen duten hizkuntza
       aldatzen du. Hizkuntza erabilgarriak:
-      %emphasis_0% (Katalana)
-      %emphasis_1% (Alemana)
-      %emphasis_2% (Greziera)
-      %emphasis_3% (Ingelesa)
-      %emphasis_4% (Gaztelania)
-      %emphasis_5% (Euskara)
-      %emphasis_6% (Frantsesa)
-      %emphasis_7% (Galiziera)
-      %emphasis_8% (Italiera)
-      %emphasis_9% (Nederlandera)
-      %emphasis_10% (Poloniera)
-      %emphasis_11% (Portugesa)
-      %emphasis_12% (Errumaniera)
-      %emphasis_13% (Turkiera)
+      %language_ca% (Katalana)
+      %language_de% (Alemana)
+      %language_el% (Greziera)
+      %language_en% (Ingelesa)
+      %language_es% (Gaztelania)
+      %language_eu% (Euskara)
+      %language_fr% (Frantsesa)
+      %language_gl% (Galiziera)
+      %language_it% (Italiera)
+      %language_nl% (Nederlandera)
+      %language_pl% (Poloniera)
+      %language_pt% (Portugesa)
+      %language_ro% (Errumaniera)
+      %language_tr% (Turkiera)
     example: "%command_prefix%SET LANGUAGE es"
     success: "Hizkuntza %language%(e)ra aldatu da."
     invalid: "Onartu gabeko hizkuntza. Hizkuntza erabilgarriak: %languages%."
@@ -245,9 +247,9 @@ set:
     short: "Gaitu edo desgaitu pribatutasuna zure ezizenaren informaziorako."
     help: |-
       Zure ezizenaren informazioaren ikusgarritasuna kontrolatzen du INFO komandoan.
-      %emphasis_0% dagoenean zuk eta IRC Operadoreek soilik ikus ditzakezue zure
+      %private_on% dagoenean zuk eta IRC Operadoreek soilik ikus ditzakezue zure
       xehetasunak.
-      %emphasis_1% dagoenean zure informazioa guztiontzat publikoa da.
+      %private_off% dagoenean zure informazioa guztiontzat publikoa da.
     example: "%command_prefix%SET PRIVATE ON"
     examples:
       - "%command_prefix%SET PRIVATE OFF"
@@ -263,9 +265,9 @@ set:
     help: |-
       %nickserv% eta beste zerbitzuek zuri mezuak nola bidaltzen dizkizuten
       kontrolatzen du.
-      %emphasis_0% dagoenean erantzunak %emphasis_1% gisa bidaltzen dira (bezero batzuek
+      %msg_on% dagoenean erantzunak %privmsg% gisa bidaltzen dira (bezero batzuek
       erantzunak edo jakinarazpenak aktiba ditzakete).
-      %emphasis_2% dagoenean erantzunak %emphasis_3% gisa bidaltzen dira (lehenetsia; normalean
+      %msg_off% dagoenean erantzunak %notice% gisa bidaltzen dira (lehenetsia; normalean
       ez du erantzun automatikorik).
     example: "%command_prefix%SET MSG ON"
     examples:
@@ -283,7 +285,7 @@ set:
       Identifikatuta zaudenean beste erabiltzaileek ikusiko duten ostalari-izen
       pertsonalizatua ezartzen du.
 
-      Kentzeko, exekutatu %emphasis_0% baliorik gabe.
+      Kentzeko, exekutatu %set_vhost% baliorik gabe.
 
       Letrak (a-z, A-Z), digituak, marratxoak eta puntuak soilik onartzen dira.
       Zati bakoitza letra edo digitu batekin hasi eta amaitu behar da. Ostalari-izenak
@@ -784,9 +786,9 @@ regmode:
   help: |-
     Kontu berrien erregistro-modua konfiguratzen du.
 
-    %emphasis_0% Egiaztapen-tokena erabiltzailearen posta-helbidera bidaltzen du.
-    %emphasis_1% Egiaztapen-tokena zuzenean IRC bidez ematen du.
-    %emphasis_2% Uneko erregistro-modua erakusten du, aldatu gabe.
+    %email_mode% Egiaztapen-tokena erabiltzailearen posta-helbidera bidaltzen du.
+    %token_mode% Egiaztapen-tokena zuzenean IRC bidez ematen du.
+    %status_mode% Uneko erregistro-modua erakusten du, aldatu gabe.
 
     Zain dauden erregistroek hasierako modua mantentzen dute.
 
@@ -987,37 +989,3 @@ rescue:
     Aldatu nahi ez baduzu, ez ikusi egin mezu honi.
   replacement_unavailable: "Pasahitza berrezarri da, baina ezin izan da token berririk eman. Oraingo tokenak balio du oraindik."
   temporarily_unavailable: "Berreskuratze-tokenaren bidalketa ez dago une honetan erabilgarri. Saiatu geroago."
-
-# --- HELP FRAGMENTS -----------------------------------------------------------
-help_fragments:
-  identify_help_0: "+r"
-  set_language_help_0: "ca"
-  set_language_help_1: "de"
-  set_language_help_2: "el"
-  set_language_help_3: "en"
-  set_language_help_4: "es"
-  set_language_help_5: "eu"
-  set_language_help_6: "fr"
-  set_language_help_7: "gl"
-  set_language_help_8: "it"
-  set_language_help_9: "nl"
-  set_language_help_10: "pl"
-  set_language_help_11: "pt"
-  set_language_help_12: "ro"
-  set_language_help_13: "tr"
-  set_private_help_0: "PRIVATE ON"
-  set_private_help_1: "PRIVATE OFF"
-  set_msg_help_0: "MSG ON"
-  set_msg_help_1: "PRIVMSG"
-  set_msg_help_2: "MSG OFF"
-  set_msg_help_3: "NOTICE"
-  set_vhost_help_0: "SET VHOST"
-  regmode_help_0: "EMAIL:"
-  regmode_help_1: "TOKEN:"
-  regmode_help_2: "STATUS:"
-  identify_native_help_0: "/NICK <ezizena>:<pasahitza>"
-  identify_native_help_1: "/NICK <ezizena>!<pasahitza>"
-  suspend_help_0: "%d"
-  suspend_help_1: "%h"
-  suspend_help_2: "%m"
-  suspend_help_3: "0"

@@ -57,15 +57,17 @@ identify:
   short: "Sich als Besitzer eines Nicknames identifizieren."
   help: |-
     Authentifiziert Ihre Sitzung bei %nickserv% mit Ihrem Nickname und Passwort.
-    Nach erfolgreicher Identifizierung erhalten Sie den registrierten Modus %emphasis_0%
+    Nach erfolgreicher Identifizierung erhalten Sie den registrierten Modus %registered_mode%
     und, falls Sie einen Gast-Nick verwendet haben, wird Ihr registrierter Nick
     wiederhergestellt.
   example: "%command_prefix%IDENTIFY Ares mein_passwort123"
   native_syntax: "/NICK <nickname>:<Passwort> | /NICK <nickname>!<Passwort>"
   native_short: "Zeigt die native Syntax zur Nickname-Authentifizierung."
+  nickname_syntax: "/NICK <nickname>:<Passwort>"
+  occupied_nickname_syntax: "/NICK <nickname>!<Passwort>"
   native_help: |-
     Dieses Protokoll authentifiziert Konten durch Nickname-Wechsel.
-    Verwende %emphasis_0% oder, wenn der Nickname belegt ist, %emphasis_1%.
+    Verwende %nickname_syntax% oder, wenn der Nickname belegt ist, %occupied_nickname_syntax%.
   native_example: "/NICK Ares:mein_passwort123"
   native_examples:
     - "/NICK Ares!mein_passwort123"
@@ -212,20 +214,20 @@ set:
       Ändert die Sprache, die %nickserv% und andere Services verwenden, wenn sie
       mit Ihnen sprechen.
       Verfügbare Sprachen:
-      %emphasis_0% (Katalanisch)
-      %emphasis_1% (Deutsch)
-      %emphasis_2% (Griechisch)
-      %emphasis_3% (Englisch)
-      %emphasis_4% (Spanisch)
-      %emphasis_5% (Baskisch)
-      %emphasis_6% (Französisch)
-      %emphasis_7% (Galicisch)
-      %emphasis_8% (Italienisch)
-      %emphasis_9% (Niederländisch)
-      %emphasis_10% (Polnisch)
-      %emphasis_11% (Portugiesisch)
-      %emphasis_12% (Rumänisch)
-      %emphasis_13% (Türkisch)
+      %language_ca% (Katalanisch)
+      %language_de% (Deutsch)
+      %language_el% (Griechisch)
+      %language_en% (Englisch)
+      %language_es% (Spanisch)
+      %language_eu% (Baskisch)
+      %language_fr% (Französisch)
+      %language_gl% (Galicisch)
+      %language_it% (Italienisch)
+      %language_nl% (Niederländisch)
+      %language_pl% (Polnisch)
+      %language_pt% (Portugiesisch)
+      %language_ro% (Rumänisch)
+      %language_tr% (Türkisch)
     example: "%command_prefix%SET LANGUAGE es"
     success: "Sprache auf %language% geändert."
     invalid: "Nicht unterstützte Sprache. Verfügbare Sprachen: %languages%."
@@ -250,8 +252,8 @@ set:
     short: "Blendet die Informationen deines Nicknames ein oder aus."
     help: |-
       Steuert die Sichtbarkeit Ihrer Nickname-Informationen im INFO-Befehl.
-      Mit %emphasis_0% können nur Sie und IRC-Operatoren Ihre Details einsehen.
-      Mit %emphasis_1% sind Ihre Informationen für jeden öffentlich.
+      Mit %private_on% können nur Sie und IRC-Operatoren Ihre Details einsehen.
+      Mit %private_off% sind Ihre Informationen für jeden öffentlich.
     example: "%command_prefix%SET PRIVATE ON"
     examples:
       - "%command_prefix%SET PRIVATE OFF"
@@ -266,8 +268,8 @@ set:
     short: "Ändert, wie die Dienste dir Nachrichten senden."
     help: |-
       Legt fest, wie %nickserv% und andere Dienste dir Nachrichten senden.
-      Bei %emphasis_0% werden Antworten als %emphasis_1% gesendet.
-      Bei %emphasis_2% werden Antworten als %emphasis_3% gesendet.
+      Bei %msg_on% werden Antworten als %privmsg% gesendet.
+      Bei %msg_off% werden Antworten als %notice% gesendet.
     example: "%command_prefix%SET MSG ON"
     examples:
       - "%command_prefix%SET MSG OFF"
@@ -284,7 +286,7 @@ set:
       Legt einen benutzerdefinierten Hostnamen fest, den andere Benutzer sehen,
       wenn du identifiziert bist.
 
-      Zum Entfernen führe %emphasis_0% ohne Wert aus.
+      Zum Entfernen führe %set_vhost% ohne Wert aus.
 
       Erlaubt sind Buchstaben (a-z, A-Z), Ziffern, Bindestriche und Punkte.
       Jeder Abschnitt muss mit einem Buchstaben oder einer Ziffer beginnen und enden.
@@ -734,9 +736,9 @@ regmode:
   help: |-
     Legt den Registrierungsmodus für neue Konten fest.
 
-    %emphasis_0% Sendet das Verifizierungstoken an die E-Mail-Adresse des Benutzers.
-    %emphasis_1% Übermittelt das Token direkt per IRC.
-    %emphasis_2% Zeigt den aktuellen Modus, ohne ihn zu ändern.
+    %email_mode% Sendet das Verifizierungstoken an die E-Mail-Adresse des Benutzers.
+    %token_mode% Übermittelt das Token direkt per IRC.
+    %status_mode% Zeigt den aktuellen Modus, ohne ihn zu ändern.
 
     Ausstehende Registrierungen behalten den bei Beginn verwendeten Modus.
 
@@ -913,37 +915,3 @@ rescue:
     Wenn du es nicht ändern möchtest, ignoriere diese Nachricht.
   replacement_unavailable: "Dein Passwort wurde zurückgesetzt, aber ein neues Token konnte nicht ausgegeben werden. Dein aktuelles Token bleibt gültig."
   temporarily_unavailable: "Die Ausgabe des Wiederherstellungstokens ist vorübergehend nicht verfügbar. Versuche es später erneut."
-
-# --- HELP FRAGMENTS -----------------------------------------------------------
-help_fragments:
-  identify_help_0: "+r"
-  set_language_help_0: "ca"
-  set_language_help_1: "de"
-  set_language_help_2: "el"
-  set_language_help_3: "en"
-  set_language_help_4: "es"
-  set_language_help_5: "eu"
-  set_language_help_6: "fr"
-  set_language_help_7: "gl"
-  set_language_help_8: "it"
-  set_language_help_9: "nl"
-  set_language_help_10: "pl"
-  set_language_help_11: "pt"
-  set_language_help_12: "ro"
-  set_language_help_13: "tr"
-  set_private_help_0: "PRIVATE ON"
-  set_private_help_1: "PRIVATE OFF"
-  set_msg_help_0: "MSG ON"
-  set_msg_help_1: "PRIVMSG"
-  set_msg_help_2: "MSG OFF"
-  set_msg_help_3: "NOTICE"
-  set_vhost_help_0: "SET VHOST"
-  regmode_help_0: "EMAIL:"
-  regmode_help_1: "TOKEN:"
-  regmode_help_2: "STATUS:"
-  identify_native_help_0: "/NICK <nickname>:<Passwort>"
-  identify_native_help_1: "/NICK <nickname>!<Passwort>"
-  suspend_help_0: "%d"
-  suspend_help_1: "%h"
-  suspend_help_2: "%m"
-  suspend_help_3: "0"

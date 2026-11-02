@@ -191,14 +191,14 @@ final readonly class UnifiedHelpFormatter
     }
 
     /**
-     * @param array{name: string, help_key: string, syntax_key: string, example_key: string, options_key?: string} $sub
+     * @param array{name: string, help_key: string, syntax_key: string, example_key: string, options_key?: string, help_params?: array<string, mixed>} $sub
      *
      * @return list<string>
      */
     public function renderSubCommandHelp(HelpFormatterContextInterface $context, string $parentName, array $sub): array
     {
         $lines = [$this->renderHeader($context, 'HELP ' . $parentName . ' ' . $sub['name']), ' '];
-        $lines[] = $this->preserveParagraphRows($context->trans($sub['help_key']));
+        $lines[] = $this->preserveParagraphRows($context->trans($sub['help_key'], $sub['help_params'] ?? []));
         $lines[] = ' ';
         $lines[] = $context->trans('help.syntax_label', [
             'syntax' => $context->trans($sub['syntax_key']),
