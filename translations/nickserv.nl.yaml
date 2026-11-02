@@ -60,15 +60,15 @@ identify:
     Authenticeert uw sessie bij %nickserv% met uw bijnaam en wachtwoord.
     Na succesvolle identificatie ontvangt u de geregistreerde modus %emphasis_0%
     en, als u een gastbijnaam gebruikte, wordt uw geregistreerde bijnaam hersteld.
-  example: "%command_prefix%IDENTIFY Gebruiker <wachtwoord>"
+  example: "%command_prefix%IDENTIFY Ares mijn_wachtwoord123"
   native_syntax: "/NICK <bijnaam>:<wachtwoord> | /NICK <bijnaam>!<wachtwoord>"
   native_short: "Toont de native syntaxis voor nickname-authenticatie."
   native_help: |-
     Dit protocol authenticeert accounts via nicknamewijzigingen.
     Gebruik %emphasis_0% of, als de nickname bezet is, %emphasis_1%.
-  native_example: "/NICK Gebruiker:<wachtwoord>"
+  native_example: "/NICK Ares:mijn_wachtwoord123"
   native_examples:
-    - "%command_prefix%/NICK Gebruiker!<wachtwoord>"
+    - "/NICK Ares!mijn_wachtwoord123"
   native_authentication: "Dit protocol beheert authenticatie via nicknamewijzigingen. Gebruik %command_0% of, als de nickname bezet is, %command_1%."
   native_authentication_command_0: "/NICK <bijnaam>:<wachtwoord>"
   native_authentication_command_1: "/NICK <bijnaam>!<wachtwoord>"
@@ -137,9 +137,9 @@ recover:
     opgeslagen token pas na verificatie.
     Na gebruik van het opgeslagen token wordt met VERIFY optioneel een vervanging
     aangeboden. Negeer dat bericht als je het huidige wilt behouden.
-  example: "%command_prefix%RECOVER Gebruiker"
+  example: "%command_prefix%RECOVER Ares"
   examples:
-    - "%command_prefix%RECOVER Gebruiker <ontvangen_token>"
+    - "%command_prefix%RECOVER Ares <ontvangen_token>"
   pending: "De registratie van %nickname% is in behandeling. Gebruik %command_0%. %command_1% is alleen beschikbaar bij REGMODE EMAIL en een geldig gekoppeld e-mailadres."
   pending_command_0: "VERIFY <token>"
   pending_command_1: "RESEND"
@@ -304,7 +304,7 @@ info:
 
     Het e-mailadres is alleen zichtbaar voor de geïdentificeerde eigenaar.
     Bij een privébijnaam zien alleen de eigenaar en IRC-operators de informatie.
-  example: "%command_prefix%INFO Gebruiker"
+  example: "%command_prefix%INFO Ares"
   private: "Informatie van bijnaam %nickname% is privé."
   header: "Informatie voor bijnaam %nickname%"
   status: "%label%               : %status%"
@@ -362,7 +362,7 @@ status:
   help: |-
     Toont de huidige status van een bijnaam: geregistreerd, wachtend op verificatie,
     geschorst, enzovoort.
-  example: "%command_prefix%STATUS Gebruiker"
+  example: "%command_prefix%STATUS Ares"
   header: "Status van bijnaam %nickname%"
   unregistered: "  Status          : Niet geregistreerd"
   not_registered_offline: "  Status          : %state%"
@@ -462,7 +462,7 @@ userip:
   help: |-
     Toont het echte IP-adres en de hostnaam van een bijnaam.
     Gebruik deze gevoelige informatie verantwoord.
-  example: "%command_prefix%USERIP Gebruiker"
+  example: "%command_prefix%USERIP Ares"
   result: "Bijnaam: %nickname% | IP: %ip% | Host: %host%"
 
 # --- WHOIP (IRCop) ------------------------------------------------------------
@@ -500,17 +500,17 @@ history:
     Raadpleegt en beheert de actgeschiedenis van een bijnaam. Opschortingen en
     wijzigingen van wachtwoord, e-mail of herstel worden automatisch vastgelegd.
     VIEW toont drie vermeldingen per pagina; ALL toont de volledige geschiedenis.
-  example: "%command_prefix%HISTORY Gebruiker VIEW"
+  example: "%command_prefix%HISTORY Ares VIEW"
   examples:
-    - "%command_prefix%HISTORY Gebruiker VIEW ALL"
-    - "%command_prefix%HISTORY Gebruiker ADD Handmatige notitie"
+    - "%command_prefix%HISTORY Ares VIEW ALL"
+    - "%command_prefix%HISTORY Ares ADD Handmatige notitie"
 
   # --- HISTORY ADD ---------------------------------------------------------
   add:
     syntax: "HISTORY <bijnaam> ADD <bericht>"
     short: "Voeg een handmatige geschiedenisvermelding toe."
     help: "Voegt handmatig een vermelding toe aan de bijnaamgeschiedenis."
-    example: "%command_prefix%HISTORY Gebruiker ADD Gemeld wegens spam"
+    example: "%command_prefix%HISTORY Ares ADD Gemeld wegens spam"
     success: "Geschiedenisvermelding toegevoegd voor %nickname%."
 
   # --- HISTORY DEL ---------------------------------------------------------
@@ -518,7 +518,7 @@ history:
     syntax: "HISTORY <bijnaam> DEL <id>"
     short: "Verwijder een geschiedenisvermelding op ID."
     help: "Verwijdert een specifieke geschiedenisvermelding op basis van ID."
-    example: "%command_prefix%HISTORY Gebruiker DEL 42"
+    example: "%command_prefix%HISTORY Ares DEL 42"
 
   # --- HISTORY VIEW --------------------------------------------------------
   view:
@@ -528,10 +528,10 @@ history:
       Toont de actgeschiedenis van een bijnaam. Standaard drie vermeldingen per
       pagina.
       Gebruik ALL om alles te tonen.
-    example: "%command_prefix%HISTORY Gebruiker VIEW"
+    example: "%command_prefix%HISTORY Ares VIEW"
     examples:
-      - "%command_prefix%HISTORY Gebruiker VIEW 2"
-      - "%command_prefix%HISTORY Gebruiker VIEW ALL"
+      - "%command_prefix%HISTORY Ares VIEW 2"
+      - "%command_prefix%HISTORY Ares VIEW ALL"
     header: "%heading% (toont %start%-%end% van %total%):"
     header_title: "Geschiedenis voor %nickname%"
     entry: "#%id% [%date%] %action% door %operator% — %message%"
@@ -544,11 +544,13 @@ history:
     syntax: "HISTORY <bijnaam> CLEAR"
     short: "Verwijder alle geschiedenisvermeldingen voor een bijnaam."
     help: "Verwijdert alle vermeldingen in de bijnaamgeschiedenis onherroepelijk."
-    example: "%command_prefix%HISTORY Gebruiker CLEAR"
+    example: "%command_prefix%HISTORY Ares CLEAR"
     success: "%count% geschiedenisvermeldingen gewist voor %nickname%."
 
 # --- HISTORY MESSAGES ---
 history.message:
+  modes_changed: "Voorkeur voor automatische modi gewijzigd door een operator"
+  modes_cleared: "Voorkeur voor automatische modi gewist door een operator"
   verify: "Account geactiveerd"
   resend: "Verificatiemail opnieuw verzonden"
   noexpire_on: "Vervalbeveiliging ingeschakeld"
@@ -564,6 +566,8 @@ history.message:
 
 # --- HISTORY EXTRA FIELDS ---
 history.extra:
+  old_modes: "Vorige modi: %value%"
+  new_modes: "Nieuwe modi: %value%"
   old_email: "Oude e-mail: %value%"
   new_email: "Nieuwe e-mail: %value%"
   method: "Methode: %value%"
@@ -580,9 +584,9 @@ saregister:
 
     In TOKEN-modus wordt het hersteltoken eenmalig aan de beheerder getoond.
     In EMAIL-modus wordt het hersteltoken naar het opgegeven e-mailadres verzonden.
-  example: "%command_prefix%SAREGISTER Alice Wachtwoord123"
+  example: "%command_prefix%SAREGISTER Ares Wachtwoord123"
   examples:
-    - "%command_prefix%SAREGISTER Bob Wachtwoord456 bob@voorbeeld.nl"
+    - "%command_prefix%SAREGISTER Ares Wachtwoord456 bob@voorbeeld.nl"
   success_token: "Bijnaam %nickname% is geregistreerd. Hersteltoken: %token%"
   success_email: "Bijnaam %nickname% is geregistreerd. Hersteltoken verzonden naar %email%."
   invalid_nickname: "Ongeldige bijnaam %nickname%."
@@ -594,9 +598,9 @@ saset:
   help: |-
     Hiermee kan een IRC-operator instellingen van een andere geregistreerde bijnaam
     wijzigen. Root-, IRC-operator- en servicebijnamen zijn uitgesloten.
-  example: "%command_prefix%SASET Gebruiker PRIVATE ON"
+  example: "%command_prefix%SASET Ares PRIVATE ON"
   examples:
-    - "%command_prefix%SASET Gebruiker TIMEZONE OFF"
+    - "%command_prefix%SASET Ares TIMEZONE OFF"
   unknown_option: "Onbekende optie %option%. Beschikbare opties: %options%."
   cannot_modify_oper: "Kan de bijnaam van een IRC-operator niet wijzigen."
 
@@ -605,7 +609,7 @@ saset:
     syntax: "SASET <bijnaam> PASSWORD <nieuw_wachtwoord>"
     short: "Wachtwoord van een bijnaam wijzigen."
     help: "Wijzigt het wachtwoord van een andere bijnaam onmiddellijk."
-    example: "%command_prefix%SASET Gebruiker PASSWORD ClaveSegura123"
+    example: "%command_prefix%SASET Ares PASSWORD ClaveSegura123"
 
   # --- SASET EMAIL ---------------------------------------------------------
   email:
@@ -615,7 +619,7 @@ saset:
       Wijzigt het e-mailadres van een andere bijnaam direct. Het herstel-token is niet
       nodig en er wordt geen bevestigingsmail verstuurd.
       BADMAIL beperkt deze administratieve e-mailwijziging niet.
-    example: "%command_prefix%SASET Gebruiker EMAIL gebruiker@voorbeeld.nl"
+    example: "%command_prefix%SASET Ares EMAIL gebruiker@voorbeeld.nl"
 
   # --- SASET LANGUAGE ------------------------------------------------------
   language:
@@ -624,7 +628,7 @@ saset:
     help: |-
       Wijzigt de taal van een andere bijnaam. Beschikbaar zijn en (Engels) en es
       (Spaans).
-    example: "%command_prefix%SASET Gebruiker LANGUAGE es"
+    example: "%command_prefix%SASET Ares LANGUAGE es"
 
   # --- SASET TIMEZONE ------------------------------------------------------
   timezone:
@@ -633,18 +637,18 @@ saset:
     help: |-
       Stelt de tijdzone van een andere bijnaam in of verwijdert deze. Gebruik OFF om
       te verwijderen.
-    example: "%command_prefix%SASET Gebruiker TIMEZONE Europe/Madrid"
+    example: "%command_prefix%SASET Ares TIMEZONE Europe/Madrid"
     examples:
-      - "%command_prefix%SASET Gebruiker TIMEZONE OFF"
+      - "%command_prefix%SASET Ares TIMEZONE OFF"
 
   # --- SASET PRIVATE -------------------------------------------------------
   private:
     syntax: "SASET <bijnaam> PRIVATE {ON|OFF}"
     short: "Privacy van een bijnaam wijzigen."
     help: "Schakelt de privacy van de informatie van een andere bijnaam in of uit."
-    example: "%command_prefix%SASET Gebruiker PRIVATE ON"
+    example: "%command_prefix%SASET Ares PRIVATE ON"
     examples:
-      - "%command_prefix%SASET Gebruiker PRIVATE OFF"
+      - "%command_prefix%SASET Ares PRIVATE OFF"
 
   # --- SASET MSG -----------------------------------------------------------
   msg:
@@ -653,9 +657,28 @@ saset:
     help: |-
       Stelt in of een andere bijnaam antwoorden als PRIVMSG (ON) of NOTICE (OFF)
       ontvangt.
-    example: "%command_prefix%SASET Gebruiker MSG ON"
+    example: "%command_prefix%SASET Ares MSG ON"
     examples:
-      - "%command_prefix%SASET Gebruiker MSG OFF"
+      - "%command_prefix%SASET Ares MSG OFF"
+
+  # --- SASET MODES ---------------------------------------------------------
+  modes:
+    syntax: "SASET <bijnaam> MODES [modi]"
+    short: "Automatische modi voor een bijnaam instellen."
+    help: |-
+      Slaat hoofdlettergevoelige modusletters zonder tekens op.
+      Laat de letters weg om te wissen. Modi hangen af van protocol en modules.
+      Toepassing bij identificatie en zo mogelijk direct; dit vergrendelt geen
+      modi.
+    example: "%command_prefix%SASET Ares MODES B"
+    examples:
+      - "%command_prefix%SASET Ares MODES"
+    saved: "Automatische modi %modes% opgeslagen voor %nickname%."
+    cleared: "Voorkeur voor automatische modi gewist voor %nickname%."
+    unchanged: "Automatische modi voor %nickname% zijn ongewijzigd."
+    invalid: "Gebruik alleen ondersteunde modusletters zonder tekens of parameters."
+    unavailable: "Beschikbare modi zijn onbekend; wacht op netwerksynchronisatie."
+    not_registered: "Bijnaam %nickname% is niet geregistreerd."
 
   # --- SASET VHOST ---------------------------------------------------------
   vhost:
@@ -664,9 +687,9 @@ saset:
     help: |-
       Stelt de virtuele host van een andere bijnaam in of verwijdert deze. Voer SASET
       <bijnaam> VHOST zonder waarde uit om deze te verwijderen.
-    example: "%command_prefix%SASET Gebruiker VHOST user.voorbeeld.nl"
+    example: "%command_prefix%SASET Ares VHOST user.voorbeeld.nl"
     examples:
-      - "%command_prefix%SASET Gebruiker VHOST"
+      - "%command_prefix%SASET Ares VHOST"
 
 # --- RENAME (IRCop) -----------------------------------------------------------
 rename:
@@ -675,7 +698,7 @@ rename:
   help: |-
     Dwingt een verbonden bijnaam om te veranderen naar een willekeurige naam met
     een door het netwerk ingesteld voorvoegsel.
-  example: "%command_prefix%RENAME Problematisch"
+  example: "%command_prefix%RENAME BadUser"
   cannot_rename_root: "Kan rootgebruiker %nickname% niet hernoemen."
   cannot_rename_oper: "Kan IRC-operator %nickname% niet hernoemen."
   cannot_rename_service: "Kan service-bijnaam %nickname% niet hernoemen."
@@ -688,9 +711,9 @@ noexpire:
   help: |-
     Bepaalt of een bijnaam door inactiviteit verloopt.
     ON voorkomt verval; OFF past de normale regels toe.
-  example: "%command_prefix%NOEXPIRE Gebruiker ON"
+  example: "%command_prefix%NOEXPIRE Ares ON"
   examples:
-    - "%command_prefix%NOEXPIRE Gebruiker OFF"
+    - "%command_prefix%NOEXPIRE Ares OFF"
   success_on: "Bijnaam %nickname% is nu beschermd tegen verloop."
   success_off: "Bijnaam %nickname% verloopt nu normaal."
   forbidden: "Bijnaam %nickname% is verboden."
@@ -726,9 +749,9 @@ suspend:
     dagen (d), uren (h), minuten (m) of 0 voor een permanente opschorting.
     IRC-operators
     en Root-gebruikers kunnen niet worden opgeschort.
-  example: "%command_prefix%SUSPEND SlechteGebruiker 7d Spam en #hulp"
+  example: "%command_prefix%SUSPEND BadUser 7d Spam en #Ares_Help"
   examples:
-    - "%command_prefix%SUSPEND Problematisch 0 Omzeilen van een ban"
+    - "%command_prefix%SUSPEND BadUser 0 Omzeilen van een ban"
   success: "Bijnaam %nickname% is geschorst tot %duration%."
   already_suspended: "Bijnaam %nickname% is al geschorst."
   forbidden: "Bijnaam %nickname% is verboden en kan niet worden geschorst."
@@ -744,7 +767,7 @@ unsuspend:
   syntax: "UNSUSPEND <bijnaam>"
   short: "Hef schorsing van een bijnaam op."
   help: "Heft een actieve opschorting op, zodat de eigenaar zich weer kan identificeren."
-  example: "%command_prefix%UNSUSPEND Gebruiker"
+  example: "%command_prefix%UNSUSPEND Ares"
   success: "De schorsing van %nickname% is opgeheven."
   not_suspended: "Bijnaam %nickname% is niet geschorst."
 
@@ -757,7 +780,7 @@ forbid:
     Een geregistreerde bijnaam wordt verwijderd; een verbonden gebruiker wordt naar
     een willekeurige bijnaam verplaatst. Root, IRC-operators en services kunnen niet
     worden verboden.
-  example: "%command_prefix%FORBID SlechteGebruiker Herhaalde beleidsschendingen"
+  example: "%command_prefix%FORBID BadUser Herhaalde beleidsschendingen"
   success: "Bijnaam %nickname% is verboden."
   updated: "Verbodsreden voor %nickname% is bijgewerkt."
   reason_required: "U moet een reden opgeven voor het verbod."
@@ -770,7 +793,7 @@ unforbid:
   syntax: "UNFORBID <bijnaam>"
   short: "Hef een bijnaamverbod op."
   help: "Heft het verbod op zodat de bijnaam weer gebruikt kan worden."
-  example: "%command_prefix%UNFORBID VerbodenBijnaam"
+  example: "%command_prefix%UNFORBID Ares"
   success: "Bijnaam %nickname% is niet langer verboden."
   not_forbidden: "Bijnaam %nickname% is niet verboden."
 
@@ -828,9 +851,9 @@ drop:
     verwijderd.
   force:
     short: "Verwijdert een bijnaam die op verwijdering wacht definitief."
-  example: "%command_prefix%DROP OudAccount"
+  example: "%command_prefix%DROP BadUser"
   examples:
-    - "%command_prefix%DROP OudAccount FORCE"
+    - "%command_prefix%DROP BadUser FORCE"
   suspended: "Bijnaam %nickname% is geschorst. Hef eerst de schorsing op."
   forbidden: "Bijnaam %nickname% is verboden."
   cannot_drop_root: "Kan rootgebruiker %nickname% niet verwijderen."
@@ -846,7 +869,7 @@ restore:
   syntax: "RESTORE <bijnaam>"
   short: "Een bijnaam die op verwijdering wacht herstellen."
   help: "Herstelt een bijnaam die op verwijdering wacht zolang de respijtperiode duurt."
-  example: "%command_prefix%RESTORE OudAccount"
+  example: "%command_prefix%RESTORE Ares"
   success: "Bijnaam %nickname% is hersteld."
   not_pending_deletion: "Bijnaam %nickname% staat niet op het punt verwijderd te worden."
 

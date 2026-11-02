@@ -68,7 +68,7 @@ ircop:
     DEL αφαιρεί έναν operator. LIST εμφανίζει όλους τους operators.
     Χρησιμοποιήστε ROLE LIST για να δείτε τους διαθέσιμους ρόλους.
     Αυτή η εντολή περιορίζεται σε Root χρήστες που έχουν διαμορφωθεί στις υπηρεσίες.
-  example: "%command_prefix%IRCOP ADD Ana OPER"
+  example: "%command_prefix%IRCOP ADD Ares OPER"
   examples:
     - "%command_prefix%IRCOP LIST"
   unknown_sub: "Άγνωστη υπο-εντολή %sub%. Χρησιμοποιήστε ADD, DEL ή LIST."
@@ -85,7 +85,7 @@ ircop:
       Προσθέτει ένα καταχωρημένο ψευδώνυμο ως IRC operator δικτύου.
       Χρησιμοποιήστε ROLE LIST για να δείτε τους διαθέσιμους ρόλους.
       Αυτή η εντολή περιορίζεται σε Root χρήστες.
-    example: "%command_prefix%IRCOP ADD Ana OPER"
+    example: "%command_prefix%IRCOP ADD Ares OPER"
     done: "Προστέθηκε ο/η %nickname% ως %role%."
     nick_not_active: "Το ψευδώνυμο %nickname% δεν είναι ενεργό καταχωρημένο ψευδώνυμο."
 
@@ -96,7 +96,7 @@ ircop:
     help: |-
       Αφαιρεί έναν IRC operator δικτύου από τη λίστα.
       Αυτή η εντολή περιορίζεται σε Root χρήστες.
-    example: "%command_prefix%IRCOP DEL Ana"
+    example: "%command_prefix%IRCOP DEL Ares"
     done: "Αφαιρέθηκε ο/η %nickname% από τους IRC operators."
 
   # --- IRCOP LIST ----------------------------------------------------------

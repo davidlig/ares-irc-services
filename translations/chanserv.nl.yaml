@@ -19,13 +19,13 @@
 # --- ERROR --------------------------------------------------------------------
 error:
   invalid_channel: "Ongeldige kanaalnaam. Gebruik %example%."
-  invalid_channel_example: "#kanaal"
+  invalid_channel_example: "#Ares_Help"
   generic: "Er is een fout opgetreden. Probeer het opnieuw."
 
 # --- REGISTER -----------------------------------------------------------------
 register:
   syntax: "REGISTER <#kanaal> <beschrijving>"
-  example: "%command_prefix%REGISTER #kanaal Gemeenschapsproject"
+  example: "%command_prefix%REGISTER #Ares_Help Hulpkanaal"
   short: "Registreer een kanaal."
   help: |-
     Registreer een kanaal en koppel het aan je bijnaam. Identificeer jezelf met
@@ -46,7 +46,7 @@ register:
 # --- INFO ---------------------------------------------------------------------
 info:
   syntax: "INFO <#kanaal>"
-  example: "%command_prefix%INFO #kanaal"
+  example: "%command_prefix%INFO #Ares_Help"
   short: "Toon kanaalinformatie."
   help: |-
     Toont uitgebreide informatie over een geregistreerd kanaal, zoals de eigenaar,
@@ -103,10 +103,10 @@ info:
 # --- SET ----------------------------------------------------------------------
 set:
   syntax: "SET <#kanaal> <optie> [parameters]"
-  example: "%command_prefix%SET #kanaal DESC Een gemeenschapskanaal"
+  example: "%command_prefix%SET #Ares_Help DESC Hulpkanaal"
   examples:
-    - "%command_prefix%SET #kanaal URL https://example.test"
-    - "%command_prefix%SET #kanaal MLOCK ON"
+    - "%command_prefix%SET #Ares_Help URL https://example.test"
+    - "%command_prefix%SET #Ares_Help MLOCK ON"
   short: "Wijzig kanaalopties."
   help: |-
     Wijzigt een kanaaloptie. De hulp bij elke optie beschrijft de vereisten en
@@ -118,9 +118,9 @@ set:
     token_required: "Gebruik SET <#kanaal> FOUNDER <bijnaam> <token> met het bevestigde token van de huidige oprichter."
     token_unavailable: "De huidige oprichter heeft geen bevestigd hersteltoken. Die moet zich eerst authenticeren en VERIFY gebruiken."
     syntax: "SET <#kanaal> FOUNDER <bijnaam> [token]"
-    example: "%command_prefix%SET #kanaal FOUNDER Alice"
+    example: "%command_prefix%SET #Ares_Help FOUNDER Ares"
     examples:
-      - "%command_prefix%SET #kanaal FOUNDER Alice bevestigd-token"
+      - "%command_prefix%SET #Ares_Help FOUNDER Ares 65dec7d5370eaa57c5a4bde98e591ccb"
     short: "Draag kanaal over aan een andere geregistreerde bijnaam."
     help: |-
       Wijzigt de oprichter na controle van het token van de huidige oprichter. De
@@ -139,9 +139,9 @@ set:
   # --- SET SUCCESSOR -------------------------------------------------------
   successor:
     syntax: "SET <#kanaal> SUCCESSOR [bijnaam]"
-    example: "%command_prefix%SET #kanaal SUCCESSOR Alice"
+    example: "%command_prefix%SET #Ares_Help SUCCESSOR Ares"
     examples:
-      - "%command_prefix%SET #kanaal SUCCESSOR"
+      - "%command_prefix%SET #Ares_Help SUCCESSOR"
     short: "Stel de kanaalopvolger in."
     help: |-
       Stelt een bijnaam in als opvolger van een kanaal. Laat de bijnaam weg om de
@@ -158,7 +158,7 @@ set:
   # --- SET DESC ------------------------------------------------------------
   desc:
     syntax: "SET <#kanaal> DESC <beschrijving>"
-    example: "%command_prefix%SET #kanaal DESC Een gemeenschapskanaal"
+    example: "%command_prefix%SET #Ares_Help DESC Hulpkanaal"
     short: "Wijzig kanaalbeschrijving."
     help: "Wijzig de kanaalbeschrijving (verplicht)."
     updated: "Beschrijving bijgewerkt."
@@ -166,9 +166,9 @@ set:
   # --- SET URL -------------------------------------------------------------
   url:
     syntax: "SET <#kanaal> URL [url]"
-    example: "%command_prefix%SET #kanaal URL https://example.test"
+    example: "%command_prefix%SET #Ares_Help URL https://example.test"
     examples:
-      - "%command_prefix%SET #kanaal URL"
+      - "%command_prefix%SET #Ares_Help URL"
     short: "Stel kanaal-URL in."
     help: "Wijzigt de website-URL van een kanaal. Laat de URL weg om deze te verwijderen."
     updated: "URL bijgewerkt."
@@ -177,9 +177,9 @@ set:
   # --- SET EMAIL -----------------------------------------------------------
   email:
     syntax: "SET <#kanaal> EMAIL [e-mail]"
-    example: "%command_prefix%SET #kanaal EMAIL team@example.test"
+    example: "%command_prefix%SET #Ares_Help EMAIL team@example.test"
     examples:
-      - "%command_prefix%SET #kanaal EMAIL"
+      - "%command_prefix%SET #Ares_Help EMAIL"
     short: "Stel kanaal-e-mail in."
     help: |-
       Wijzigt het e-mailadres van een kanaal. Laat e-mail weg om het te
@@ -193,9 +193,9 @@ set:
   # --- SET ENTRYMSG --------------------------------------------------------
   entrymsg:
     syntax: "SET <#kanaal> ENTRYMSG [bericht]"
-    example: "%command_prefix%SET #kanaal ENTRYMSG Welkom"
+    example: "%command_prefix%SET #Ares_Help ENTRYMSG Welkom in het hulpkanaal"
     examples:
-      - "%command_prefix%SET #kanaal ENTRYMSG"
+      - "%command_prefix%SET #Ares_Help ENTRYMSG"
     short: "Stel kanaal-toegangsbericht in."
     help: |-
       Stelt het welkomstbericht (NOTICE) in. Laat het bericht weg om het te
@@ -206,9 +206,9 @@ set:
   # --- SET TOPICLOCK -------------------------------------------------------
   topiclock:
     syntax: "SET <#kanaal> TOPICLOCK {ON|OFF}"
-    example: "%command_prefix%SET #kanaal TOPICLOCK ON"
+    example: "%command_prefix%SET #Ares_Help TOPICLOCK ON"
     examples:
-      - "%command_prefix%SET #kanaal TOPICLOCK OFF"
+      - "%command_prefix%SET #Ares_Help TOPICLOCK OFF"
     short: "Vergrendel kanaalonderwerp."
     help: |-
       Voorkomt wijzigingen aan het kanaalonderwerp. Bij inschakeling wordt het
@@ -221,9 +221,9 @@ set:
   # --- SET MLOCK -----------------------------------------------------------
   mlock:
     syntax: "SET <#kanaal> MLOCK {ON|OFF}"
-    example: "%command_prefix%SET #kanaal MLOCK ON"
+    example: "%command_prefix%SET #Ares_Help MLOCK ON"
     examples:
-      - "%command_prefix%SET #kanaal MLOCK OFF"
+      - "%command_prefix%SET #Ares_Help MLOCK OFF"
     short: "Vergrendel kanaalmodi."
     help: |-
       Vergrendelt de huidige kanaalmodi (bijv. +nt). Wanneer ON, kunnen modi niet
@@ -237,9 +237,9 @@ set:
   # --- SET PRIVATE ---------------------------------------------------------
   private:
     syntax: "SET <#kanaal> PRIVATE {ON|OFF}"
-    example: "%command_prefix%SET #kanaal PRIVATE ON"
+    example: "%command_prefix%SET #Ares_Help PRIVATE ON"
     examples:
-      - "%command_prefix%SET #kanaal PRIVATE OFF"
+      - "%command_prefix%SET #Ares_Help PRIVATE OFF"
     short: "Verberg kanaalinformatie voor gebruikers zonder toegang."
     help: |-
       Bij ON kunnen alleen de oprichter en gebruikers met toegang kanaalinformatie
@@ -250,9 +250,9 @@ set:
   # --- SET SECURE ----------------------------------------------------------
   secure:
     syntax: "SET <#kanaal> SECURE {ON|OFF}"
-    example: "%command_prefix%SET #kanaal SECURE ON"
+    example: "%command_prefix%SET #Ares_Help SECURE ON"
     examples:
-      - "%command_prefix%SET #kanaal SECURE OFF"
+      - "%command_prefix%SET #Ares_Help SECURE OFF"
     short: "Vereis toegangslijst voor kanaalrangen."
     help: "Voorkomt dat bijnamen buiten de toegangslijst kanaalrangen krijgen."
     on: "SECURE is nu ON."
@@ -263,9 +263,9 @@ set:
   # --- SET VERBOSE ---------------------------------------------------------
   verbose:
     syntax: "SET <#kanaal> VERBOSE {ON|OFF}"
-    example: "%command_prefix%SET #kanaal VERBOSE ON"
+    example: "%command_prefix%SET #Ares_Help VERBOSE ON"
     examples:
-      - "%command_prefix%SET #kanaal VERBOSE OFF"
+      - "%command_prefix%SET #Ares_Help VERBOSE OFF"
     short: "Kanaalactiemeldingen in- of uitschakelen."
     help: |-
       Schakelt NOTICE-uitzendingen naar het kanaal in of uit voor acties
@@ -276,7 +276,7 @@ set:
 # --- STATUS -------------------------------------------------------------------
 status:
   syntax: "STATUS <#kanaal>"
-  example: "%command_prefix%STATUS #canal"
+  example: "%command_prefix%STATUS #Ares_Help"
   header: "Status van kanaal %channel%"
   short: "Toon de registratiestatus van een kanaal."
   help: |-
@@ -318,10 +318,10 @@ status:
 # --- ACCESS -------------------------------------------------------------------
 access:
   syntax: "ACCESS <#kanaal> <optie> [parameters]"
-  example: "%command_prefix%ACCESS #kanaal LIST"
+  example: "%command_prefix%ACCESS #Ares_Help LIST"
   examples:
-    - "%command_prefix%ACCESS #kanaal ADD Alice 100"
-    - "%command_prefix%ACCESS #kanaal DEL Alice"
+    - "%command_prefix%ACCESS #Ares_Help ADD Ares 100"
+    - "%command_prefix%ACCESS #Ares_Help DEL Ares"
   short: "Beheer toegangslijst."
   help: "Beheert de toegangslijst van het kanaal."
   unknown_sub: "Onbekende sub-opdracht %sub%. Gebruik LIST, ADD of DEL."
@@ -333,7 +333,7 @@ access:
   # --- ACCESS LIST ---------------------------------------------------------
   list:
     syntax: "ACCESS <#kanaal> LIST"
-    example: "%command_prefix%ACCESS #kanaal LIST"
+    example: "%command_prefix%ACCESS #Ares_Help LIST"
     short: "Toon toegangslijst (vereist ACCESSLIST-niveau)."
     help: "Toont bijnaam en niveau voor elke vermelding."
     header: "Toegangslijst voor %channel%"
@@ -343,7 +343,7 @@ access:
   # --- ACCESS ADD ----------------------------------------------------------
   add:
     syntax: "ACCESS <#kanaal> ADD <bijnaam> <niveau>"
-    example: "%command_prefix%ACCESS #kanaal ADD Alice 100"
+    example: "%command_prefix%ACCESS #Ares_Help ADD Ares 100"
     short: "Voeg toegangsniveau toe of werk bij (vereist ACCESSCHANGE-niveau)."
     help: "Niveau 1-499. U kunt alleen niveaus lager dan uw eigen instellen."
     done: "%nickname% ingesteld op niveau %level%."
@@ -352,7 +352,7 @@ access:
   # --- ACCESS DEL ----------------------------------------------------------
   del:
     syntax: "ACCESS <#kanaal> DEL <bijnaam>"
-    example: "%command_prefix%ACCESS #kanaal DEL Alice"
+    example: "%command_prefix%ACCESS #Ares_Help DEL Ares"
     short: "Verwijder uit toegangslijst (vereist ACCESSCHANGE-niveau)."
     help: "U kunt alleen bijnamen verwijderen met een niveau lager dan uw eigen."
     not_in_list: "%nickname% staat niet in de toegangslijst."
@@ -362,7 +362,7 @@ access:
 # --- DELACCESS ----------------------------------------------------------------
 delaccess:
   syntax: "DELACCESS <#kanaal>"
-  example: "%command_prefix%DELACCESS #kanaal"
+  example: "%command_prefix%DELACCESS #Ares_Help"
   short: "Verwijder uw eigen toegang van een kanaal."
   help: |-
     Verwijdert je toegang uit de kanaallijst. Je moet geïdentificeerd zijn. De
@@ -375,15 +375,15 @@ delaccess:
 # --- AKICK --------------------------------------------------------------------
 akick:
   syntax: "AKICK <#kanaal> <optie> [parameters]"
-  example: "%command_prefix%AKICK #kanaal ADD *!*@* 0"
+  example: "%command_prefix%AKICK #Ares_Help ADD IkBenSlecht!*@* 0"
   examples:
-    - "%command_prefix%AKICK #kanaal ADD *!*@* 7d Spam"
-    - "%command_prefix%AKICK #kanaal DEL *!*@*"
-    - "%command_prefix%AKICK #kanaal DEL 2"
-    - "%command_prefix%AKICK #kanaal LIST"
-    - "%command_prefix%AKICK #kanaal VIEW 1"
-    - "%command_prefix%AKICK #kanaal CLEAR"
-    - "%command_prefix%AKICK #kanaal CHECK Alice"
+    - "%command_prefix%AKICK #Ares_Help ADD IkBenSlecht!*@* 7d Spam"
+    - "%command_prefix%AKICK #Ares_Help DEL *!*@*"
+    - "%command_prefix%AKICK #Ares_Help DEL 2"
+    - "%command_prefix%AKICK #Ares_Help LIST"
+    - "%command_prefix%AKICK #Ares_Help VIEW 1"
+    - "%command_prefix%AKICK #Ares_Help CLEAR"
+    - "%command_prefix%AKICK #Ares_Help CHECK Ares"
   short: "Beheer auto-kick-lijst."
   help: "Beheert automatische kick-vermeldingen en hun optionele vervaltijd."
   unknown_sub: "Onbekende sub-opdracht %sub%. Gebruik ADD, DEL, LIST, VIEW, CLEAR of CHECK."
@@ -395,9 +395,9 @@ akick:
   # --- AKICK ADD -----------------------------------------------------------
   add:
     syntax: "AKICK <#kanaal> ADD <masker> [verloop] [reden]"
-    example: "%command_prefix%AKICK #kanaal ADD *!*@* 0"
+    example: "%command_prefix%AKICK #Ares_Help ADD IkBenSlecht!*@* 0"
     examples:
-      - "%command_prefix%AKICK #kanaal ADD *!*@* 7d Spam"
+      - "%command_prefix%AKICK #Ares_Help ADD IkBenSlecht!*@* 7d Spam"
     short: "Voeg AKICK-vermelding toe."
     help: |-
       Voegt een masker toe aan de automatische kick-lijst van het kanaal.
@@ -412,9 +412,9 @@ akick:
   # --- AKICK DEL -----------------------------------------------------------
   del:
     syntax: "AKICK <#kanaal> DEL {<masker>|<nummer>}"
-    example: "%command_prefix%AKICK #kanaal DEL *!*@*"
+    example: "%command_prefix%AKICK #Ares_Help DEL *!*@*"
     examples:
-      - "%command_prefix%AKICK #kanaal DEL 2"
+      - "%command_prefix%AKICK #Ares_Help DEL 2"
     short: "Verwijder AKICK-vermelding."
     help: "Verwijder op exact masker of vermeldingsnummer van LIST."
     not_found: "AKICK %mask% niet gevonden."
@@ -424,7 +424,7 @@ akick:
   # --- AKICK LIST ----------------------------------------------------------
   list:
     syntax: "AKICK <#kanaal> LIST"
-    example: "%command_prefix%AKICK #kanaal LIST"
+    example: "%command_prefix%AKICK #Ares_Help LIST"
     short: "Toon AKICK-vermeldingen."
     help: "Toont masker, reden, verloop en wie heeft toegevoegd."
     header: "AKICK-lijst voor %channel%"
@@ -434,9 +434,9 @@ akick:
   # --- AKICK VIEW ----------------------------------------------------------
   view:
     syntax: "AKICK <#kanaal> VIEW {<masker>|<nummer>}"
-    example: "%command_prefix%AKICK #kanaal VIEW 1"
+    example: "%command_prefix%AKICK #Ares_Help VIEW 1"
     examples:
-      - "%command_prefix%AKICK #kanaal VIEW *!*@bad.host"
+      - "%command_prefix%AKICK #Ares_Help VIEW *!*@bad.host"
     short: "Bekijk gedetailleerde AKICK-metagegevens."
     help: |-
       Toont reden, auteur, aanmaakdatum, vervaldatum,
@@ -458,7 +458,7 @@ akick:
   # --- AKICK CLEAR ---------------------------------------------------------
   clear:
     syntax: "AKICK <#kanaal> CLEAR"
-    example: "%command_prefix%AKICK #kanaal CLEAR"
+    example: "%command_prefix%AKICK #Ares_Help CLEAR"
     short: "Wis alle AKICK-vermeldingen."
     help: |-
       Verwijdert alle autokick-vermeldingen uit het kanaal.
@@ -470,7 +470,7 @@ akick:
   # --- AKICK CHECK ---------------------------------------------------------
   check:
     syntax: "AKICK <#kanaal> CHECK <bijnaam>"
-    example: "%command_prefix%AKICK #kanaal CHECK Alice"
+    example: "%command_prefix%AKICK #Ares_Help CHECK Ares"
     short: "Controleer of een bijnaam overeenkomt met AKICK-vermeldingen."
     help: |-
       Controleert of een verbonden gebruiker overeenkomt met een autokick-vermelding in het kanaal.
@@ -482,7 +482,7 @@ akick:
   # --- AKICK ENFORCE -------------------------------------------------------
   enforce:
     syntax: "AKICK <#kanaal> ENFORCE"
-    example: "%command_prefix%AKICK #kanaal ENFORCE"
+    example: "%command_prefix%AKICK #Ares_Help ENFORCE"
     short: "AKICK-regels toepassen op huidige kanaalgebruikers."
     help: |-
       Controleert gebruikers in het kanaal tegen de AKICK-lijst
@@ -494,10 +494,10 @@ akick:
 # --- LEVELS -------------------------------------------------------------------
 levels:
   syntax: "LEVELS <#kanaal> <optie> [parameters]"
-  example: "%command_prefix%LEVELS #kanaal LIST"
+  example: "%command_prefix%LEVELS #Ares_Help LIST"
   examples:
-    - "%command_prefix%LEVELS #kanaal SET OPDEOP 50"
-    - "%command_prefix%LEVELS #kanaal RESET"
+    - "%command_prefix%LEVELS #Ares_Help SET OPDEOP 50"
+    - "%command_prefix%LEVELS #Ares_Help RESET"
   short: "Configureer kanaalniveaus."
   help: |-
     Stelt de minimale toegangslevels voor kanaalacties in. Alleen de oprichter
@@ -509,7 +509,7 @@ levels:
   # --- LEVELS LIST ---------------------------------------------------------
   list:
     syntax: "LEVELS <#kanaal> LIST"
-    example: "%command_prefix%LEVELS #kanaal LIST"
+    example: "%command_prefix%LEVELS #Ares_Help LIST"
     short: "Toon niveauvereisten."
     help: |-
       Toont elke niveausleutel en de waarde ervan (standaardwaarden indien niet
@@ -519,7 +519,7 @@ levels:
   # --- LEVELS SET ----------------------------------------------------------
   set:
     syntax: "LEVELS <#kanaal> SET <niveau> <waarde>"
-    example: "%command_prefix%LEVELS #kanaal SET OPDEOP 50"
+    example: "%command_prefix%LEVELS #Ares_Help SET OPDEOP 50"
     short: "Stel een niveauvereiste in."
     help: "Waarde -1 tot 499. Alleen oprichter."
     done: "%key% ingesteld op %value%."
@@ -527,7 +527,7 @@ levels:
   # --- LEVELS RESET --------------------------------------------------------
   reset:
     syntax: "LEVELS <#kanaal> RESET"
-    example: "%command_prefix%LEVELS #kanaal RESET"
+    example: "%command_prefix%LEVELS #Ares_Help RESET"
     short: "Herstel alle niveaus naar standaardwaarden."
     help: "Verwijdert alle overschrijvingen. Alleen oprichter."
     done: "Alle niveaus hersteld naar standaardwaarden."
@@ -535,7 +535,7 @@ levels:
 # --- INVITE -------------------------------------------------------------------
 invite:
   syntax: "INVITE <#kanaal>"
-  example: "%command_prefix%INVITE #kanaal"
+  example: "%command_prefix%INVITE #Ares_Help"
   short: "Nodig uzelf uit voor het kanaal."
   help: "Nodig uzelf uit voor het kanaal."
   done: "U bent uitgenodigd voor %channel%."
@@ -544,7 +544,7 @@ invite:
 # --- UNBAN --------------------------------------------------------------------
 unban:
   syntax: "UNBAN <#kanaal>"
-  example: "%command_prefix%UNBAN #kanaal"
+  example: "%command_prefix%UNBAN #Ares_Help"
   short: "Verwijder bans die jou treffen."
   help: "Verwijdert alle kanaalbans die overeenkomen met je huidige identiteit, inclusief jokertekens en IP/CIDR-maskers."
   done: "%count% ban(s) die jou treffen verwijderd uit %channel%"
@@ -556,7 +556,7 @@ unban:
 # --- ADMIN --------------------------------------------------------------------
 admin:
   syntax: "ADMIN <#kanaal> <bijnaam>"
-  example: "%command_prefix%ADMIN #kanaal Alice"
+  example: "%command_prefix%ADMIN #Ares_Help Ares"
   short: "Geef kanaal-admin-modus."
   help: "Geef kanaal-admin-modus. Alleen als IRCd +a ondersteunt."
   done: "%nickname% heeft kanaal-admin gekregen."
@@ -567,7 +567,7 @@ admin:
 # --- DEADMIN ------------------------------------------------------------------
 deadmin:
   syntax: "DEADMIN <#kanaal> <bijnaam>"
-  example: "%command_prefix%DEADMIN #kanaal Alice"
+  example: "%command_prefix%DEADMIN #Ares_Help Ares"
   short: "Verwijder kanaal-admin-modus."
   help: "Verwijder kanaal-admin-modus."
   done: "%nickname% is gedeadmint."
@@ -575,7 +575,7 @@ deadmin:
 # --- OP -----------------------------------------------------------------------
 op:
   syntax: "OP <#kanaal> <bijnaam>"
-  example: "%command_prefix%OP #kanaal Alice"
+  example: "%command_prefix%OP #Ares_Help Ares"
   short: "Geef kanaaloperator-modus."
   help: "Geef kanaaloperator-modus."
   done: "%nickname% heeft kanaaloperator-status gekregen."
@@ -585,7 +585,7 @@ op:
 # --- DEOP ---------------------------------------------------------------------
 deop:
   syntax: "DEOP <#kanaal> <bijnaam>"
-  example: "%command_prefix%DEOP #kanaal Alice"
+  example: "%command_prefix%DEOP #Ares_Help Ares"
   short: "Verwijder kanaaloperator-modus."
   help: "Verwijder kanaaloperator-modus."
   done: "%nickname% is gedeopt."
@@ -593,7 +593,7 @@ deop:
 # --- HALFOP -------------------------------------------------------------------
 halfop:
   syntax: "HALFOP <#kanaal> <bijnaam>"
-  example: "%command_prefix%HALFOP #kanaal Alice"
+  example: "%command_prefix%HALFOP #Ares_Help Ares"
   short: "Geef semi-operator-modus in het kanaal."
   help: "Geef semi-operator-modus in het kanaal. Alleen als IRCd +h ondersteunt."
   done: "%nickname% heeft halfop gekregen."
@@ -604,7 +604,7 @@ halfop:
 # --- DEHALFOP -----------------------------------------------------------------
 dehalfop:
   syntax: "DEHALFOP <#kanaal> <bijnaam>"
-  example: "%command_prefix%DEHALFOP #kanaal Alice"
+  example: "%command_prefix%DEHALFOP #Ares_Help Ares"
   short: "Verwijder semi-operator-modus in het kanaal."
   help: "Verwijder semi-operator-modus in het kanaal."
   done: "%nickname% is gedehalfopt."
@@ -612,7 +612,7 @@ dehalfop:
 # --- VOICE --------------------------------------------------------------------
 voice:
   syntax: "VOICE <#kanaal> <bijnaam>"
-  example: "%command_prefix%VOICE #kanaal Alice"
+  example: "%command_prefix%VOICE #Ares_Help Ares"
   short: "Geef voice-modus in het kanaal."
   help: "Geef voice-modus in het kanaal."
   done: "%nickname% heeft voice gekregen."
@@ -622,7 +622,7 @@ voice:
 # --- DEVOICE ------------------------------------------------------------------
 devoice:
   syntax: "DEVOICE <#kanaal> <bijnaam>"
-  example: "%command_prefix%DEVOICE #kanaal Alice"
+  example: "%command_prefix%DEVOICE #Ares_Help Ares"
   short: "Verwijder voice-modus in het kanaal."
   help: "Verwijder voice-modus in het kanaal."
   done: "%nickname% is gedevoiced."
@@ -673,9 +673,9 @@ help:
 # --- CLEARUSERS (IRCop) -------------------------------------------------------
 clearusers:
   syntax: "CLEARUSERS <#kanaal> [reden]"
-  example: "%command_prefix%CLEARUSERS #kanaal"
+  example: "%command_prefix%CLEARUSERS #Ares_Help"
   examples:
-    - "%command_prefix%CLEARUSERS #kanaal overstroming"
+    - "%command_prefix%CLEARUSERS #Ares_Help overstroming"
   short: "Kick alle gebruikers uit een kanaal."
   help: |-
     Verwijdert alle gebruikers uit het kanaal. Alleen IRC-operators mogen dit;
@@ -688,7 +688,7 @@ clearusers:
 # --- CLEARACCESS (IRCop) ------------------------------------------------------
 clearaccess:
   syntax: "CLEARACCESS <#kanaal>"
-  example: "%command_prefix%CLEARACCESS #kanaal"
+  example: "%command_prefix%CLEARACCESS #Ares_Help"
   short: "Wis de volledige toegangslijst van een kanaal."
   help: |-
     Verwijdert alle toegang vermeldingen van het kanaal. Dit kan niet ongedaan
@@ -699,9 +699,9 @@ clearaccess:
 # --- IRCOPONLY (IRCop) --------------------------------------------------------
 ircoponly:
   syntax: "IRCOPONLY <#kanaal> {ON|OFF}"
-  example: "%command_prefix%IRCOPONLY #kanaal ON"
+  example: "%command_prefix%IRCOPONLY #Ares_Help ON"
   examples:
-    - "%command_prefix%IRCOPONLY #kanaal OFF"
+    - "%command_prefix%IRCOPONLY #Ares_Help OFF"
   short: "Beperk een kanaal tot IRC-operators."
   help: |-
     Alleen bevoegde IRC-operators mogen in het kanaal blijven. %bot% handhaaft
@@ -718,15 +718,15 @@ saregister:
 
     Registreert een kanaal onmiddellijk administratief voor de opgegeven bijnaam
     als oprichter zonder aanwezigheid, verificatie of snelheidslimieten te vereisen.
-  example: "%command_prefix%SAREGISTER #kanaal Alice Gemeenschapskanaal"
+  example: "%command_prefix%SAREGISTER #Ares_Help Ares Hulpkanaal"
   success: "Kanaal %channel% is geregistreerd voor %founder%."
 
 # --- NOEXPIRE (IRCop) ---------------------------------------------------------
 noexpire:
   syntax: "NOEXPIRE <#kanaal> {ON|OFF}"
-  example: "%command_prefix%NOEXPIRE #Belangrijk ON"
+  example: "%command_prefix%NOEXPIRE #Ares_Help ON"
   examples:
-    - "%command_prefix%NOEXPIRE #Belangrijk OFF"
+    - "%command_prefix%NOEXPIRE #Ares_Help OFF"
   short: "Stel verloopbescherming in of verwijder deze voor een kanaal."
   help: |-
     Bepaalt of een kanaal door inactiviteit verloopt.
@@ -739,9 +739,9 @@ noexpire:
 # --- DROP (IRCop) -------------------------------------------------------------
 drop:
   syntax: "DROP <#kanaal> [FORCE]"
-  example: "%command_prefix%DROP #kanaal"
+  example: "%command_prefix%DROP #Ares_Help"
   examples:
-    - "%command_prefix%DROP #kanaal FORCE"
+    - "%command_prefix%DROP #Ares_Help FORCE"
   short: "Laat een geregistreerd kanaal vallen."
   help: |-
     Verwijdert een geregistreerd kanaal uit de database.
@@ -760,7 +760,7 @@ drop:
 # --- RESTORE (IRCop) ----------------------------------------------------------
 restore:
   syntax: "RESTORE <#kanaal>"
-  example: "%command_prefix%RESTORE #kanaal"
+  example: "%command_prefix%RESTORE #Ares_Help"
   short: "Een kanaal dat op verwijdering wacht herstellen."
   help: |-
     Herstelt een handmatig verwijderd kanaal als de respijtperiode nog niet is
@@ -771,9 +771,9 @@ restore:
 # --- SUSPEND (IRCop) ----------------------------------------------------------
 suspend:
   syntax: "SUSPEND <#kanaal> <duur> <reden>"
-  example: "%command_prefix%SUSPEND #kanaal 7d Regelovertreding"
+  example: "%command_prefix%SUSPEND #Ares_Help 7d Regelovertreding"
   examples:
-    - "%command_prefix%SUSPEND #kanaal 0 Regelovertreding"
+    - "%command_prefix%SUSPEND #Ares_Help 0 Regelovertreding"
   short: "Schors een kanaal."
   help: |-
     Schort een geregistreerd kanaal tijdelijk op. Duurformaten: 0 = permanent,
@@ -788,7 +788,7 @@ suspend:
 # --- UNSUSPEND (IRCop) --------------------------------------------------------
 unsuspend:
   syntax: "UNSUSPEND <#kanaal>"
-  example: "%command_prefix%UNSUSPEND #kanaal"
+  example: "%command_prefix%UNSUSPEND #Ares_Help"
   short: "Heef een kanaalschorsing op."
   help: "Hervat een opgeschort kanaal en herstelt de modi en handhaving."
   success: "Kanaal %channel% is niet langer geschorst."
@@ -798,7 +798,7 @@ unsuspend:
 # --- FORBID (IRCop) -----------------------------------------------------------
 forbid:
   syntax: "FORBID <#kanaal> <reden>"
-  example: "%command_prefix%FORBID #kanaal Regelovertreding"
+  example: "%command_prefix%FORBID #Ares_Help Regelovertreding"
   short: "Verbied een kanaal van gebruik."
   help: |-
     Verbiedt het gebruik van een kanaal, verwijdert alle gebruikers en voorkomt
@@ -811,7 +811,7 @@ forbid:
 # --- UNFORBID (IRCop) ---------------------------------------------------------
 unforbid:
   syntax: "UNFORBID <#kanaal>"
-  example: "%command_prefix%UNFORBID #kanaal"
+  example: "%command_prefix%UNFORBID #Ares_Help"
   short: "Hef een kanaalverbod op."
   help: "Heft een kanaalverbod op, zodat registratie weer mogelijk is."
   success: "Kanaal %channel% is niet langer verboden."
@@ -820,20 +820,20 @@ unforbid:
 # --- HISTORY ---
 history:
   syntax: "HISTORY <#kanaal> <optie> [parameters]"
-  example: "%command_prefix%HISTORY #kanaal ADD Moderatiecontrole"
+  example: "%command_prefix%HISTORY #Ares_Help ADD Moderatiecontrole"
   examples:
-    - "%command_prefix%HISTORY #kanaal DEL 42"
-    - "%command_prefix%HISTORY #kanaal VIEW"
-    - "%command_prefix%HISTORY #kanaal VIEW 2"
-    - "%command_prefix%HISTORY #kanaal VIEW ALL"
-    - "%command_prefix%HISTORY #kanaal CLEAR"
+    - "%command_prefix%HISTORY #Ares_Help DEL 42"
+    - "%command_prefix%HISTORY #Ares_Help VIEW"
+    - "%command_prefix%HISTORY #Ares_Help VIEW 2"
+    - "%command_prefix%HISTORY #Ares_Help VIEW ALL"
+    - "%command_prefix%HISTORY #Ares_Help CLEAR"
   short: "Bekijk of beheer kanaalactiegeschiedenis."
   help: "Beheert de act geschiedenis van een kanaal."
 
   # --- HISTORY ADD ---------------------------------------------------------
   add:
     syntax: "HISTORY <#kanaal> ADD <bericht>"
-    example: "%command_prefix%HISTORY #kanaal ADD Moderatiecontrole"
+    example: "%command_prefix%HISTORY #Ares_Help ADD Moderatiecontrole"
     short: "Voeg een handmatige geschiedenisvermelding toe."
     help: |-
       Voegt een handmatige vermelding toe aan de kanaalgeschiedenis.
@@ -842,17 +842,17 @@ history:
   # --- HISTORY DEL ---------------------------------------------------------
   del:
     syntax: "HISTORY <#kanaal> DEL <id>"
-    example: "%command_prefix%HISTORY #kanaal DEL 42"
+    example: "%command_prefix%HISTORY #Ares_Help DEL 42"
     short: "Verwijdert een vermelding uit de geschiedenis."
     help: "Verwijdert een geschiedenisitem op basis van het ID."
 
   # --- HISTORY VIEW --------------------------------------------------------
   view:
     syntax: "HISTORY <#kanaal> VIEW [PAGINA|ALL]"
-    example: "%command_prefix%HISTORY #kanaal VIEW"
+    example: "%command_prefix%HISTORY #Ares_Help VIEW"
     examples:
-      - "%command_prefix%HISTORY #kanaal VIEW 2"
-      - "%command_prefix%HISTORY #kanaal VIEW ALL"
+      - "%command_prefix%HISTORY #Ares_Help VIEW 2"
+      - "%command_prefix%HISTORY #Ares_Help VIEW ALL"
     short: "Bekijk kanaalactiegeschiedenis."
     help: "Toont de geschiedenisitems van het kanaal."
     header: "%heading% (toont %start%-%end% van %total%):"
@@ -865,7 +865,7 @@ history:
   # --- HISTORY CLEAR -------------------------------------------------------
   clear:
     syntax: "HISTORY <#kanaal> CLEAR"
-    example: "%command_prefix%HISTORY #kanaal CLEAR"
+    example: "%command_prefix%HISTORY #Ares_Help CLEAR"
     short: "Verwijder alle geschiedenisvermeldingen voor een kanaal."
     help: "Verwijdert alle geschiedenisitems van het kanaal."
     success: "%count% geschiedenisvermeldingen gewist voor %channel%."
@@ -957,11 +957,11 @@ creg:
   pending.short: "Toon openstaande registratieaanvragen."
   pending.help: "Toont openstaande aanvragen op een begrensde pagina."
   accept.syntax: "CREG ACCEPT <#kanaal>"
-  accept.example: "%command_prefix%CREG ACCEPT #canal"
+  accept.example: "%command_prefix%CREG ACCEPT #Ares_Help"
   accept.short: "Keur een kanaalregistratieaanvraag goed."
   accept.help: "Controleert de aanvrager opnieuw en activeert de registratie."
   reject.syntax: "CREG REJECT <#kanaal> <reden>"
-  reject.example: "%command_prefix%CREG REJECT #canal Motivo público"
+  reject.example: "%command_prefix%CREG REJECT #Ares_Help Motivo público"
   reject.short: "Wijs een kanaalregistratieaanvraag af."
   reject.help: "Wijst de aanvraag af met een verplichte reden en blokkering."
   example: "%command_prefix%CREG PENDING"

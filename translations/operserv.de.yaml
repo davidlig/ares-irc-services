@@ -69,7 +69,7 @@ ircop:
     Verwenden Sie ROLE LIST, um verfügbare Rollen zu sehen.
     Dieser Befehl ist Root-Benutzern vorbehalten, die in den Services konfiguriert
     sind.
-  example: "%command_prefix%IRCOP ADD Ana OPER"
+  example: "%command_prefix%IRCOP ADD Ares OPER"
   examples:
     - "%command_prefix%IRCOP LIST"
   unknown_sub: "Unbekannter Unterbefehl %sub%. Verwenden Sie ADD, DEL oder LIST."
@@ -86,7 +86,7 @@ ircop:
       Fügt einen registrierten Nickname als Netzwerk-IRC-Operator hinzu.
       Verwenden Sie ROLE LIST, um verfügbare Rollen zu sehen.
       Dieser Befehl ist Root-Benutzern vorbehalten.
-    example: "%command_prefix%IRCOP ADD Ana OPER"
+    example: "%command_prefix%IRCOP ADD Ares OPER"
     done: "%nickname% als %role% hinzugefügt."
     nick_not_active: "Nickname %nickname% ist kein aktiver registrierter Nickname."
 
@@ -97,7 +97,7 @@ ircop:
     help: |-
       Entfernt einen Netzwerk-IRC-Operator aus der Liste.
       Dieser Befehl ist Root-Benutzern vorbehalten.
-    example: "%command_prefix%IRCOP DEL Ana"
+    example: "%command_prefix%IRCOP DEL Ares"
     done: "%nickname% aus den IRC-Operatoren entfernt."
 
   # --- IRCOP LIST ----------------------------------------------------------

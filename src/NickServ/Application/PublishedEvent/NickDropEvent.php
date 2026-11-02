@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace App\NickServ\Application\PublishedEvent;
 
+use App\NickServ\Application\Port\In\NickServEvent;
 use DateTimeImmutable;
 
 /**
  * Dispatched when a registered nickname is dropped (e.g. due to inactivity or manual DROP).
  * Post-commit notification for external projections and effects after a nickname is dropped.
  */
-final readonly class NickDropEvent
+final readonly class NickDropEvent implements NickServEvent
 {
     public function __construct(
         public int $nickId,

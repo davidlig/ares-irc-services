@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace App\NickServ\Application\Event;
 
+use App\NickServ\Application\Port\In\NickServEvent;
 use DateTimeImmutable;
 
 /**
  * Dispatched when a nickname password is changed.
  * Covers SET PASSWORD, SASET PASSWORD, and RECOVER.
  */
-final readonly class NickPasswordChangedEvent
+final readonly class NickPasswordChangedEvent implements NickServEvent
 {
     public function __construct(
         public int $nickId,

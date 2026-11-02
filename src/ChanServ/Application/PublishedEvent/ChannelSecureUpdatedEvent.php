@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Application\PublishedEvent;
 
-final readonly class ChannelSecureUpdatedEvent
+use App\ChanServ\Application\Port\In\ChanServEvent;
+
+final readonly class ChannelSecureUpdatedEvent implements ChanServEvent
 {
     public function __construct(public string $channelName) {}
 }

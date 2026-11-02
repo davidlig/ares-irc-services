@@ -60,15 +60,15 @@ identify:
     Identifikazio arrakastatsu baten ondoren %emphasis_0% modu erregistratua jasoko duzu
     eta, gonbidatu ezizen bat erabiltzen ari bazinen, zure ezizen erregistratua
     berreskuratuko da.
-  example: "%command_prefix%IDENTIFY Erabiltzailea <pasahitza>"
+  example: "%command_prefix%IDENTIFY Ares nire_pasahitza123"
   native_syntax: "/NICK <ezizena>:<pasahitza> | /NICK <ezizena>!<pasahitza>"
   native_short: "Erakutsi ezizenaren jatorrizko autentifikazio-sintaxia."
   native_help: |-
     Protokolo honek kontuak ezizen-aldaketen bidez autentifikatzen ditu.
     Erabili %emphasis_0% edo, ezizena hartuta badago, %emphasis_1%.
-  native_example: "/NICK Erabiltzailea:<pasahitza>"
+  native_example: "/NICK Ares:nire_pasahitza123"
   native_examples:
-    - "%command_prefix%/NICK Erabiltzailea!<pasahitza>"
+    - "/NICK Ares!nire_pasahitza123"
   native_authentication: "Protokolo honek autentifikazioa ezizen-aldaketen bidez kudeatzen du. Erabili %command_0% edo, ezizena hartuta badago, %command_1%."
   native_authentication_command_0: "/NICK <ezizena>:<pasahitza>"
   native_authentication_command_1: "/NICK <ezizena>!<pasahitza>"
@@ -137,9 +137,9 @@ recover:
     posta-token balioduna edo berretsitakoa onartzen du. Postakoak gordetakoa
     balioztatu ondoren bakarrik ordezten du. Gordetakoak aukerako ordezkapena
     eskaintzen du VERIFY bidez; ez ikusi egin mezua mantentzeko.
-  example: "%command_prefix%RECOVER Erabiltzailea"
+  example: "%command_prefix%RECOVER Ares"
   examples:
-    - "%command_prefix%RECOVER Erabiltzailea <jasotako_tokena>"
+    - "%command_prefix%RECOVER Ares <jasotako_tokena>"
   pending: "%nickname% ezizenaren erregistroa zain dago. Erabili %command_0%. %command_1% erabilgarri dago REGMODE EMAIL denean eta baliozko posta-helbidea esleituta dagoenean bakarrik."
   pending_command_0: "VERIFY <token>"
   pending_command_1: "RESEND"
@@ -307,7 +307,7 @@ info:
     Posta jabeak identifikatuta daudenean soilik ikus dezake.
     PRIVATE ON dagoenean jabeak eta IRC Operadoreek soilik
     ikus dezakete informazioa.
-  example: "%command_prefix%INFO Erabiltzailea"
+  example: "%command_prefix%INFO Ares"
   private: "%nickname% ezizenaren informazioa pribatua da."
   header: "%nickname% ezizenaren informazioa"
   status: "%label%             : %status%"
@@ -365,7 +365,7 @@ status:
   help: |-
     Ezizen baten uneko egoera erakusten du: erregistratua, egiaztapena zain,
     etenda, edo debekatua.
-  example: "%command_prefix%STATUS Erabiltzailea"
+  example: "%command_prefix%STATUS Ares"
   header: "%nickname% ezizenaren egoera"
   unregistered: "  Egoera          : Erregistratu gabe"
   not_registered_offline: "  Egoera          : %state%"
@@ -465,7 +465,7 @@ userip:
   help: |-
     Ezizen baten benetako IP helbidea eta ostalari-izena erakusten ditu.
     Erabili arduraz: informazio sentikorra da.
-  example: "%command_prefix%USERIP Erabiltzailea"
+  example: "%command_prefix%USERIP Ares"
   result: "Ezizena: %nickname% | IPa: %ip% | Ostalaria: %host%"
 
 # --- WHOIP (IRCop) ------------------------------------------------------------
@@ -526,17 +526,17 @@ history:
     Erabili ADD eskuzko sarrera bat gehitzeko.
     Erabili DEL ID zehatz baten sarrera ezabatzeko.
     Erabili CLEAR historia sarrera guztiak ezabatzeko.
-  example: "%command_prefix%HISTORY Erabiltzailea VIEW"
+  example: "%command_prefix%HISTORY Ares VIEW"
   examples:
-    - "%command_prefix%HISTORY Erabiltzailea VIEW ALL"
-    - "%command_prefix%HISTORY Erabiltzailea ADD Nota manual"
+    - "%command_prefix%HISTORY Ares VIEW ALL"
+    - "%command_prefix%HISTORY Ares ADD Nota manual"
 
   # --- HISTORY ADD ---------------------------------------------------------
   add:
     syntax: "HISTORY <ezizena> ADD <mezua>"
     short: "Gehitu eskuzko historia sarrera bat."
     help: "Eskuzko sarrera bat gehitzen dio ezizenaren historiari."
-    example: "%command_prefix%HISTORY Erabiltzailea ADD Reportado por spam"
+    example: "%command_prefix%HISTORY Ares ADD Reportado por spam"
     success: "Historia sarrera gehitu da %nickname% ezizenarentzat."
 
   # --- HISTORY DEL ---------------------------------------------------------
@@ -544,7 +544,7 @@ history:
     syntax: "HISTORY <ezizena> DEL <ida>"
     short: "Ezabatu historia sarrera bat IDaren arabera."
     help: "Historiako sarrera zehatz bat ezabatzen du, IDa erabiliz."
-    example: "%command_prefix%HISTORY Erabiltzailea DEL 42"
+    example: "%command_prefix%HISTORY Ares DEL 42"
 
   # --- HISTORY VIEW --------------------------------------------------------
   view:
@@ -553,10 +553,10 @@ history:
     help: |-
       Ezizenaren ekintzen historia erakusten du. Lehenespenez hiru sarrera
       erakusten ditu orrialdeko. Erabili ALL denak ikusteko.
-    example: "%command_prefix%HISTORY Erabiltzailea VIEW"
+    example: "%command_prefix%HISTORY Ares VIEW"
     examples:
-      - "%command_prefix%HISTORY Erabiltzailea VIEW 2"
-      - "%command_prefix%HISTORY Erabiltzailea VIEW ALL"
+      - "%command_prefix%HISTORY Ares VIEW 2"
+      - "%command_prefix%HISTORY Ares VIEW ALL"
     header: "%heading% (%total%etik %start%-%end% erakusten):"
     header_title: "%nickname% ezizenaren historia"
     entry: "#%id% [%date%] %action% by %operator% — %message%"
@@ -569,11 +569,13 @@ history:
     syntax: "HISTORY <ezizena> CLEAR"
     short: "Ezabatu ezizen baten historia sarrera guztiak."
     help: "Ezizenaren historiako sarrera guztiak modu itzulezinean ezabatzen ditu."
-    example: "%command_prefix%HISTORY Erabiltzailea CLEAR"
+    example: "%command_prefix%HISTORY Ares CLEAR"
     success: "%count% historia sarrera garbitu dira %nickname% ezizenarentzat."
 
 # --- HISTORY MESSAGES ---
 history.message:
+  modes_changed: "Operadoreak modu automatikoen hobespena aldatu du"
+  modes_cleared: "Operadoreak modu automatikoen hobespena ezabatu du"
   verify: "Kontua aktibatu da"
   resend: "Egiaztapen-mezua berriz bidali da"
   noexpire_on: "Iraungitze-babesa aktibatu da"
@@ -589,6 +591,8 @@ history.message:
 
 # --- HISTORY EXTRA FIELDS ---
 history.extra:
+  old_modes: "Aurreko moduak: %value%"
+  new_modes: "Modu berriak: %value%"
   old_email: "Posta zaharra: %value%"
   new_email: "Posta berria: %value%"
   method: "Metodoa: %value%"
@@ -605,9 +609,9 @@ saregister:
 
     TOKEN moduan, erreskate-tokena behin erakusten zaio operadoreari.
     EMAIL moduan, erreskate-tokena zehaztutako helbide elektronikora bidaltzen da.
-  example: "%command_prefix%SAREGISTER Alice Pasahitza123"
+  example: "%command_prefix%SAREGISTER Ares Pasahitza123"
   examples:
-    - "%command_prefix%SAREGISTER Bob Pasahitza456 bob@adibidea.eus"
+    - "%command_prefix%SAREGISTER Ares Pasahitza456 bob@adibidea.eus"
   success_token: "%nickname% ezizena erregistratu da. Erreskate-tokena: %token%"
   success_email: "%nickname% ezizena erregistratu da. Erreskate-tokena %email% helbidera bidali da."
   invalid_nickname: "%nickname% ezizena ez da baliozkoa."
@@ -631,9 +635,9 @@ saset:
 
     Sintaxia: SASET <ezizen> <aukera> <balio>
     Adibidea: SASET Erabiltzaile PASSWORD pasahitzberria
-  example: "%command_prefix%SASET Erabiltzailea PRIVATE ON"
+  example: "%command_prefix%SASET Ares PRIVATE ON"
   examples:
-    - "%command_prefix%SASET Erabiltzailea TIMEZONE OFF"
+    - "%command_prefix%SASET Ares TIMEZONE OFF"
   unknown_option: "Aukera ezezaguna %option%. Aukera erabilgarriak: %options%."
   cannot_modify_oper: "Ezin da IRC Operadore baten ezizena aldatu."
 
@@ -647,7 +651,7 @@ saset:
 
       Sintaxia: SASET <ezizen> PASSWORD <pasahitz_berria>
       Adibidea: SASET Erabiltzaile PASSWORD pasahitzberria123
-    example: "%command_prefix%SASET Erabiltzailea PASSWORD ClaveSegura123"
+    example: "%command_prefix%SASET Ares PASSWORD ClaveSegura123"
 
   # --- SASET EMAIL ---------------------------------------------------------
   email:
@@ -660,7 +664,7 @@ saset:
       Sintaxia: SASET <ezizen> EMAIL <posta_berria>
       Adibidea: SASET Erabiltzaile EMAIL erabiltzaile@adibidea.com
       BADMAILek ez du administrazioaren posta-aldaketa hau mugatzen.
-    example: "%command_prefix%SASET Erabiltzailea EMAIL erabiltzailea@adibidea.com"
+    example: "%command_prefix%SASET Ares EMAIL erabiltzailea@adibidea.com"
 
   # --- SASET LANGUAGE ------------------------------------------------------
   language:
@@ -672,7 +676,7 @@ saset:
 
       Sintaxia: SASET <ezizen> LANGUAGE <kodea>
       Adibidea: SASET Erabiltzaile LANGUAGE eu
-    example: "%command_prefix%SASET Erabiltzailea LANGUAGE es"
+    example: "%command_prefix%SASET Ares LANGUAGE es"
 
   # --- SASET TIMEZONE ------------------------------------------------------
   timezone:
@@ -684,9 +688,9 @@ saset:
 
       Sintaxia: SASET <ezizen> TIMEZONE <ordu_zona>
       Adibidea: SASET Erabiltzaile TIMEZONE Europe/Madrid
-    example: "%command_prefix%SASET Erabiltzailea TIMEZONE Europe/Madrid"
+    example: "%command_prefix%SASET Ares TIMEZONE Europe/Madrid"
     examples:
-      - "%command_prefix%SASET Erabiltzailea TIMEZONE OFF"
+      - "%command_prefix%SASET Ares TIMEZONE OFF"
 
   # --- SASET PRIVATE -------------------------------------------------------
   private:
@@ -697,9 +701,9 @@ saset:
 
       Sintaxia: SASET <ezizen> PRIVATE {ON|OFF}
       Adibidea: SASET Erabiltzaile PRIVATE ON
-    example: "%command_prefix%SASET Erabiltzailea PRIVATE ON"
+    example: "%command_prefix%SASET Ares PRIVATE ON"
     examples:
-      - "%command_prefix%SASET Erabiltzailea PRIVATE OFF"
+      - "%command_prefix%SASET Ares PRIVATE OFF"
 
   # --- SASET MSG -----------------------------------------------------------
   msg:
@@ -711,9 +715,28 @@ saset:
 
       Sintaxia: SASET <ezizen> MSG {ON|OFF}
       Adibidea: SASET Erabiltzaile MSG ON
-    example: "%command_prefix%SASET Erabiltzailea MSG ON"
+    example: "%command_prefix%SASET Ares MSG ON"
     examples:
-      - "%command_prefix%SASET Erabiltzailea MSG OFF"
+      - "%command_prefix%SASET Ares MSG OFF"
+
+  # --- SASET MODES ---------------------------------------------------------
+  modes:
+    syntax: "SASET <goitizena> MODES [moduak]"
+    short: "Ezarri goitizenaren modu automatikoak."
+    help: |-
+      Gorde modu-letrak zeinurik gabe; maiuskulak eta minuskulak bereizten dira.
+      Utzi letrak hutsik ezabatzeko. Erabilgarritasuna protokoloaren eta moduluen
+      araberakoa da. Identifikatzean eta ahal bada berehala ezartzen dira; ez dira
+      blokeatzen.
+    example: "%command_prefix%SASET Ares MODES B"
+    examples:
+      - "%command_prefix%SASET Ares MODES"
+    saved: "%nickname% goitizenarentzat %modes% modu automatikoak gorde dira."
+    cleared: "%nickname% goitizenaren modu automatikoen hobespena ezabatu da."
+    unchanged: "%nickname% goitizenaren modu automatikoak ez dira aldatu."
+    invalid: "Erabili soilik onartutako modu-letrak, zeinurik eta parametrorik gabe."
+    unavailable: "Ez dakigu zein modu dauden erabilgarri; itxaron sarearen sinkronizazioari."
+    not_registered: "%nickname% goitizena ez dago erregistratuta."
 
   # --- SASET VHOST ---------------------------------------------------------
   vhost:
@@ -722,9 +745,9 @@ saset:
     help: |-
       Beste ezizen baten ostalari birtuala ezartzen edo kentzen du. Kentzeko,
       exekutatu SASET <ezizena> VHOST baliorik gabe.
-    example: "%command_prefix%SASET Erabiltzailea VHOST erabiltzailea.adibidea.org"
+    example: "%command_prefix%SASET Ares VHOST erabiltzailea.adibidea.org"
     examples:
-      - "%command_prefix%SASET Erabiltzailea VHOST"
+      - "%command_prefix%SASET Ares VHOST"
 
 # --- RENAME (IRCop) -----------------------------------------------------------
 rename:
@@ -733,7 +756,7 @@ rename:
   help: |-
     Konektatutako ezizen bat sareak zehaztutako aurrizkia duen ausazko izen
     batera aldatzera behartzen du.
-  example: "%command_prefix%RENAME ArazoSortzailea"
+  example: "%command_prefix%RENAME BadUser"
   cannot_rename_root: "Ezin da root erabiltzaile %nickname% izenaz aldatu."
   cannot_rename_oper: "Ezin da IRC operadore %nickname% izenaz aldatu."
   cannot_rename_service: "Ezin da zerbitzu ezizen %nickname% izenaz aldatu."
@@ -746,9 +769,9 @@ noexpire:
   help: |-
     Ezizena jarduerarik ezagatik iraungitzen den kontrolatzen du.
     ONek iraungitzea saihesten du; OFFek ohiko arauak aplikatzen ditu.
-  example: "%command_prefix%NOEXPIRE Erabiltzailea ON"
+  example: "%command_prefix%NOEXPIRE Ares ON"
   examples:
-    - "%command_prefix%NOEXPIRE Erabiltzailea OFF"
+    - "%command_prefix%NOEXPIRE Ares OFF"
   success_on: "%nickname% ezizena iraungitzetik babestuta dago orain."
   success_off: "%nickname% ezizena normal iraungiko da orain."
   forbidden: "%nickname% ezizena debekatua dago."
@@ -783,9 +806,9 @@ suspend:
     Jabeari identifikatzea eragozten dio. Iraupena egunetan (d), orduetan (h),
     minututan (m) edo 0 gisa adieraz daiteke, etenaldi iraunkorra izateko.
     Ezin dira IRC operadoreak edo Root erabiltzaileak eten.
-  example: "%command_prefix%SUSPEND ErabiltzaileGaiztoa 7d Spam en #laguntza"
+  example: "%command_prefix%SUSPEND BadUser 7d Spam en #Ares_Help"
   examples:
-    - "%command_prefix%SUSPEND ArazoSortzailea 0 Debekua saihestea"
+    - "%command_prefix%SUSPEND BadUser 0 Debekua saihestea"
   success: "%nickname% ezizena %duration% arte eten da."
   already_suspended: "%nickname% ezizena jada etenda dago."
   forbidden: "%nickname% ezizena debekatua dago eta ezin da eten."
@@ -806,7 +829,7 @@ unsuspend:
 
     Sintaxia: UNSUSPEND <ezizena>
     Adibidea: UNSUSPEND ErabiltzaileBat
-  example: "%command_prefix%UNSUSPEND Erabiltzailea"
+  example: "%command_prefix%UNSUSPEND Ares"
   success: "%nickname% ezizenaren etenaldia kendu da."
   not_suspended: "%nickname% ezizena ez dago etenda."
 
@@ -827,7 +850,7 @@ forbid:
 
     Sintaxia: FORBID <ezizena> <arrazoia>
     Adibidea: FORBID EzizenGaiztoa Behin eta berrizko politika urraketak
-  example: "%command_prefix%FORBID ErabiltzaileGaiztoa Politika behin eta berriz urratzea"
+  example: "%command_prefix%FORBID BadUser Politika behin eta berriz urratzea"
   success: "%nickname% ezizena debekatu da."
   updated: "%nickname% ezizenaren debeku arrazoia eguneratu da."
   reason_required: "Debekurako arrazoi bat eman behar duzu."
@@ -846,7 +869,7 @@ unforbid:
 
     Sintaxia: UNFORBID <ezizena>
     Adibidea: UNFORBID EzizenBat
-  example: "%command_prefix%UNFORBID DebekatutakoEzizena"
+  example: "%command_prefix%UNFORBID Ares"
   success: "%nickname% ezizena jada ez dago debekatuta."
   not_forbidden: "%nickname% ezizena ez dago debekatuta."
 
@@ -913,9 +936,9 @@ drop:
     Adibidea: DROP KontuZaharra
   force:
     short: "Ezabatu ezabatzeko zain dagoen ezizena behin betiko."
-  example: "%command_prefix%DROP KontuZaharra"
+  example: "%command_prefix%DROP BadUser"
   examples:
-    - "%command_prefix%DROP KontuZaharra FORCE"
+    - "%command_prefix%DROP BadUser FORCE"
   suspended: "%nickname% ezizena etenda dago. Kendu etenaldia lehenik."
   forbidden: "%nickname% ezizena debekatua dago."
   cannot_drop_root: "Ezin da root erabiltzaile %nickname% ezabatu."
@@ -933,7 +956,7 @@ restore:
   help: |-
     Eskuz ezabatutako eta oraindik grazia epearen barruan dagoen ezizena
     berreskuratzen du. IRCop baimena behar du: nickserv.restore.
-  example: "%command_prefix%RESTORE KontuZaharra"
+  example: "%command_prefix%RESTORE Ares"
   success: "%nickname% ezizena berreskuratu da."
   not_pending_deletion: "%nickname% ezizena ez dago ezabatzearen zain."
 

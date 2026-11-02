@@ -286,6 +286,41 @@ final class HistoryCommandTest extends TestCase
     }
 
     #[Test]
+    public function rendersAutomaticModeBeforeAndAfterFields(): void
+    {
+        $handler = $this->createStub(HistoryNickHandlerInterface::class);
+        $handler->method('handle')->willReturn(HistoryNickResult::viewSuccess(
+            targetNick: 'Target',
+            entries: [new NickHistoryEntryView(
+                id: 11,
+                performedAt: new DateTimeImmutable('2026-09-06 12:00:00 UTC'),
+                action: 'SASET_MODES_CLEAR',
+                performedBy: 'Admin',
+                performedByNickId: 1,
+                operatorExists: true,
+                message: 'history.message.modes_cleared',
+                extraData: ['old_modes' => 'bot, invisible', 'new_modes' => ''],
+            )],
+            start: 1,
+            end: 1,
+            total: 1,
+            page: 1,
+            totalPages: 1,
+            showAll: false,
+        ));
+        $messages = [];
+        $outcome = new HistoryCommand($handler, $this->clock())->execute($this->createContext(
+            new SenderView('UID1', 'Oper', 'ident', 'host', 'cloak', 'ip'),
+            $messages,
+            ['Target', 'VIEW'],
+        ));
+        self::assertFalse($outcome->success);
+        $output = implode("\n", $messages);
+        self::assertStringContainsString('history.extra.old_modes [%value%: bot, invisible]', $output);
+        self::assertStringContainsString('history.extra.new_modes [%value%: ]', $output);
+    }
+
+    #[Test]
     public function handlesViewShowAllOption(): void
     {
         $sender = new SenderView('UID1', 'Oper', 'ident', 'host', 'cloak', 'ip');

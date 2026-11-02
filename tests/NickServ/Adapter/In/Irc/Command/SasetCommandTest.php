@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Adapter\In\Irc\Command;
 
+use App\Bootstrap\Adapter\Out\Translation\IrcYamlTranslationLoader;
 use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
 use App\Irc\Application\Port\In\ServiceNicknameRegistry;
@@ -14,6 +15,9 @@ use App\NickServ\Adapter\In\Irc\NickServNotifierInterface;
 use App\NickServ\Adapter\Out\InMemory\PendingVerificationRegistry;
 use App\NickServ\Adapter\Out\InMemory\RecoveryTokenRegistry;
 use App\NickServ\Application\Security\NickServPermission;
+use App\NickServ\Application\UseCase\Set\SetAutomaticModesHandlerInterface;
+use App\NickServ\Application\UseCase\Set\SetAutomaticModesOutcome;
+use App\NickServ\Application\UseCase\Set\SetAutomaticModesResult;
 use App\NickServ\Application\UseCase\Set\SetNickSetting;
 use App\NickServ\Application\UseCase\Set\SetNickSettingHandlerInterface;
 use App\NickServ\Application\UseCase\Set\SetNickSettingOption;
@@ -25,6 +29,10 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function array_column;
+use function dirname;
+use function explode;
+use function in_array;
+use function mb_strlen;
 use function serialize;
 
 #[CoversClass(SasetCommand::class)]
@@ -46,8 +54,8 @@ final class SasetCommandTest extends TestCase
         self::assertTrue($command->isOperOnly());
         self::assertSame(NickServPermission::SASET, $command->getRequiredPermission());
         self::assertSame([], $command->getHelpParams());
-        self::assertCount(7, $command->getSubCommandHelp());
-        self::assertSame(['PASSWORD', 'EMAIL', 'LANGUAGE', 'TIMEZONE', 'PRIVATE', 'MSG', 'VHOST'], array_column($command->getSubCommandHelp(), 'name'));
+        self::assertCount(8, $command->getSubCommandHelp());
+        self::assertSame(['PASSWORD', 'EMAIL', 'LANGUAGE', 'TIMEZONE', 'PRIVATE', 'MSG', 'MODES', 'VHOST'], array_column($command->getSubCommandHelp(), 'name'));
     }
 
     #[Test]
@@ -78,7 +86,7 @@ final class SasetCommandTest extends TestCase
         ))->success);
         self::assertSame(['saset.unknown_option'], $messages);
         self::assertSame(['saset.unknown_option'], $translations);
-        self::assertSame('PASSWORD, EMAIL, LANGUAGE, TIMEZONE, PRIVATE, MSG, VHOST', $translationParameters[0]['%options%']);
+        self::assertSame('PASSWORD, EMAIL, LANGUAGE, TIMEZONE, PRIVATE, MSG, MODES, VHOST', $translationParameters[0]['%options%']);
     }
 
     #[Test]
@@ -212,6 +220,68 @@ final class SasetCommandTest extends TestCase
 
         self::assertFalse($outcome->success);
         self::assertSame(['saset.cannot_modify_oper'], $messages);
+    }
+
+    #[Test]
+    public function routesUnsignedModesAndBareClearWithoutTouchingOtherSettings(): void
+    {
+        $settings = $this->createMock(SetNickSettingHandlerInterface::class);
+        $settings->expects(self::never())->method('handle');
+        $automatic = $this->createMock(SetAutomaticModesHandlerInterface::class);
+        $automatic->expects(self::exactly(2))->method('handle')->willReturnCallback(
+            static fn ($actor, string $nickname, string $modes): SetAutomaticModesResult => new SetAutomaticModesResult(SetAutomaticModesOutcome::Changed, $modes),
+        );
+        $command = new SasetCommand($settings, $automatic);
+        $messages = [];
+        $outcome = $command->execute($this->context($this->sender(), ['Pedro', 'MODES', 'Bdi'], $messages));
+        self::assertTrue($outcome->success);
+        self::assertSame(['saset.modes.saved'], $messages);
+        $messages = [];
+        self::assertTrue($command->execute($this->context($this->sender(), ['Pedro', 'MODES'], $messages))->success);
+        self::assertSame(['saset.modes.cleared'], $messages);
+        $messages = [];
+        self::assertFalse($command->execute($this->context($this->sender(), ['Pedro', 'MODES', 'B', 'd'], $messages))->success);
+        self::assertSame(['error.syntax'], $messages);
+    }
+
+    #[Test]
+    public function presentsEveryAutomaticModeOutcomeAsSavedOrRejectedNotLiveApplied(): void
+    {
+        foreach (SetAutomaticModesOutcome::cases() as $outcome) {
+            $automatic = $this->createStub(SetAutomaticModesHandlerInterface::class);
+            $automatic->method('handle')->willReturn(new SetAutomaticModesResult($outcome, 'B'));
+            $command = new SasetCommand($this->createStub(SetNickSettingHandlerInterface::class), $automatic);
+            $messages = [];
+            $result = $command->execute($this->context($this->sender(), ['Pedro', 'MODES', 'B'], $messages));
+            self::assertSame(in_array($outcome, [SetAutomaticModesOutcome::Changed, SetAutomaticModesOutcome::Unchanged], true), $result->success);
+            self::assertCount(1, $messages);
+        }
+        $messages = [];
+        self::assertFalse(new SasetCommand($this->createStub(SetNickSettingHandlerInterface::class))->execute($this->context($this->sender(), ['Pedro', 'MODES', 'B'], $messages))->success);
+        self::assertSame(['saset.modes.unavailable'], $messages);
+    }
+
+    #[Test]
+    public function automaticModeCatalogKeysAndPhysicalHelpLinesExistInAllFourteenLocales(): void
+    {
+        $loader = new IrcYamlTranslationLoader();
+        foreach (['ca', 'de', 'el', 'en', 'es', 'eu', 'fr', 'gl', 'it', 'nl', 'pl', 'pt', 'ro', 'tr'] as $locale) {
+            $catalog = $loader->load(dirname(__DIR__, 6) . '/translations/nickserv.' . $locale . '.yaml', $locale, 'nickserv');
+            foreach (['syntax', 'short', 'help', 'example', 'saved', 'cleared', 'unchanged', 'invalid', 'unavailable', 'not_registered'] as $key) {
+                self::assertTrue($catalog->has('saset.modes.' . $key, 'nickserv'), $locale . ':' . $key);
+            }
+            foreach (['history.message.modes_changed', 'history.message.modes_cleared', 'history.extra.old_modes', 'history.extra.new_modes'] as $key) {
+                self::assertTrue($catalog->has($key, 'nickserv'), $locale . ':' . $key);
+            }
+            $help = $catalog->get('saset.modes.help', 'nickserv');
+            self::assertStringContainsString("\n", $help);
+            self::assertStringNotContainsString('\\n', $help);
+            foreach (explode("\n", $help) as $line) {
+                self::assertLessThanOrEqual(80, mb_strlen($line), $locale);
+            }
+            self::assertStringContainsString('%nickname%', $catalog->get('saset.modes.saved', 'nickserv'));
+            self::assertStringContainsString('%modes%', $catalog->get('saset.modes.saved', 'nickserv'));
+        }
     }
 
     /**

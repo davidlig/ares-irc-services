@@ -19,13 +19,13 @@
 # --- ERROR --------------------------------------------------------------------
 error:
   invalid_channel: "Nome de canle non válido. Use %example%."
-  invalid_channel_example: "#canle"
+  invalid_channel_example: "#Ares_Help"
   generic: "Produciuse un erro. Tenteo de novo."
 
 # --- REGISTER -----------------------------------------------------------------
 register:
   syntax: "REGISTER <#canle> <descrición>"
-  example: "%command_prefix%REGISTER #canle Proxecto comunitario"
+  example: "%command_prefix%REGISTER #Ares_Help Canle de axuda"
   short: "Rexistrar unha canle."
   help: |-
     Rexistra unha canle e asóciana ao teu alcume. Debes estar
@@ -46,7 +46,7 @@ register:
 # --- INFO ---------------------------------------------------------------------
 info:
   syntax: "INFO <#canle>"
-  example: "%command_prefix%INFO #canle"
+  example: "%command_prefix%INFO #Ares_Help"
   short: "Mostrar información da canle."
   help: |-
     Amosa información detallada dunha canle rexistrada, incluídos o propietario,
@@ -103,10 +103,10 @@ info:
 # --- SET ----------------------------------------------------------------------
 set:
   syntax: "SET <#canle> <opción> [parámetros]"
-  example: "%command_prefix%SET #canle DESC Unha canle comunitaria"
+  example: "%command_prefix%SET #Ares_Help DESC Canle de axuda"
   examples:
-    - "%command_prefix%SET #canle URL https://example.test"
-    - "%command_prefix%SET #canle MLOCK ON"
+    - "%command_prefix%SET #Ares_Help URL https://example.test"
+    - "%command_prefix%SET #Ares_Help MLOCK ON"
   short: "Cambiar as opcións da canle."
   help: |-
     Cambia unha opción da canle. A axuda de cada opción explica os seus requisitos
@@ -118,9 +118,9 @@ set:
     token_required: "Usa SET <#canle> FOUNDER <alcume> <token> co token confirmado do fundador actual."
     token_unavailable: "O fundador actual non ten un token de rescate confirmado. Debe autenticarse e usar VERIFY primeiro."
     syntax: "SET <#canle> FOUNDER <alcume> [token]"
-    example: "%command_prefix%SET #canle FOUNDER Alicia"
+    example: "%command_prefix%SET #Ares_Help FOUNDER Ares"
     examples:
-      - "%command_prefix%SET #canle FOUNDER Alicia token-confirmado"
+      - "%command_prefix%SET #Ares_Help FOUNDER Ares 65dec7d5370eaa57c5a4bde98e591ccb"
     short: "Transferir a canle a outro alcume rexistrado."
     help: |-
       Cambia a persoa fundadora tras validar o token da persoa fundadora actual.
@@ -138,9 +138,9 @@ set:
   # --- SET SUCCESSOR -------------------------------------------------------
   successor:
     syntax: "SET <#canle> SUCCESSOR [alcume]"
-    example: "%command_prefix%SET #canle SUCCESSOR Alicia"
+    example: "%command_prefix%SET #Ares_Help SUCCESSOR Ares"
     examples:
-      - "%command_prefix%SET #canle SUCCESSOR"
+      - "%command_prefix%SET #Ares_Help SUCCESSOR"
     short: "Establecer o sucesor da canle."
     help: |-
       Asigna un alcume como sucesor dunha canle. Se non se indica un alcume,
@@ -156,7 +156,7 @@ set:
   # --- SET DESC ------------------------------------------------------------
   desc:
     syntax: "SET <#canle> DESC <descrición>"
-    example: "%command_prefix%SET #canle DESC Unha canle comunitaria"
+    example: "%command_prefix%SET #Ares_Help DESC Canle de axuda"
     short: "Cambiar a descrición da canle."
     help: "Cambia a descrición da canle (obrigatoria)."
     updated: "Descrición actualizada."
@@ -164,9 +164,9 @@ set:
   # --- SET URL -------------------------------------------------------------
   url:
     syntax: "SET <#canle> URL [url]"
-    example: "%command_prefix%SET #canle URL https://example.test"
+    example: "%command_prefix%SET #Ares_Help URL https://example.test"
     examples:
-      - "%command_prefix%SET #canle URL"
+      - "%command_prefix%SET #Ares_Help URL"
     short: "Establecer o URL da canle."
     help: "Cambia o enderezo web da canle. Omite o URL para eliminalo."
     updated: "URL actualizado."
@@ -175,9 +175,9 @@ set:
   # --- SET EMAIL -----------------------------------------------------------
   email:
     syntax: "SET <#canle> EMAIL [correo]"
-    example: "%command_prefix%SET #canle EMAIL equipo@example.test"
+    example: "%command_prefix%SET #Ares_Help EMAIL equipo@example.test"
     examples:
-      - "%command_prefix%SET #canle EMAIL"
+      - "%command_prefix%SET #Ares_Help EMAIL"
     short: "Establecer o correo electrónico da canle."
     help: |-
       Cambia o correo electrónico da canle. Omite o correo para eliminalo.
@@ -190,9 +190,9 @@ set:
   # --- SET ENTRYMSG --------------------------------------------------------
   entrymsg:
     syntax: "SET <#canle> ENTRYMSG [mensaxe]"
-    example: "%command_prefix%SET #canle ENTRYMSG Benvida"
+    example: "%command_prefix%SET #Ares_Help ENTRYMSG Benvido á canle de axuda"
     examples:
-      - "%command_prefix%SET #canle ENTRYMSG"
+      - "%command_prefix%SET #Ares_Help ENTRYMSG"
     short: "Establecer a mensaxe de entrada da canle."
     help: "Establece a mensaxe de entrada (NOTICE). Omite a mensaxe para eliminala."
     updated: "Mensaxe de entrada actualizada."
@@ -201,9 +201,9 @@ set:
   # --- SET TOPICLOCK -------------------------------------------------------
   topiclock:
     syntax: "SET <#canle> TOPICLOCK {ON|OFF}"
-    example: "%command_prefix%SET #canle TOPICLOCK ON"
+    example: "%command_prefix%SET #Ares_Help TOPICLOCK ON"
     examples:
-      - "%command_prefix%SET #canle TOPICLOCK OFF"
+      - "%command_prefix%SET #Ares_Help TOPICLOCK OFF"
     short: "Bloquear o tema da canle."
     help: |-
       Impide cambiar o tema da canle. Ao activalo, gárdase e bloquéase o tema
@@ -216,9 +216,9 @@ set:
   # --- SET MLOCK -----------------------------------------------------------
   mlock:
     syntax: "SET <#canle> MLOCK {ON|OFF}"
-    example: "%command_prefix%SET #canle MLOCK ON"
+    example: "%command_prefix%SET #Ares_Help MLOCK ON"
     examples:
-      - "%command_prefix%SET #canle MLOCK OFF"
+      - "%command_prefix%SET #Ares_Help MLOCK OFF"
     short: "Bloquear os modos da canle."
     help: |-
       Bloquea os modos actuais da canle (p. ex. +nt). Cando está ON, os modos non se
@@ -232,9 +232,9 @@ set:
   # --- SET PRIVATE ---------------------------------------------------------
   private:
     syntax: "SET <#canle> PRIVATE {ON|OFF}"
-    example: "%command_prefix%SET #canle PRIVATE ON"
+    example: "%command_prefix%SET #Ares_Help PRIVATE ON"
     examples:
-      - "%command_prefix%SET #canle PRIVATE OFF"
+      - "%command_prefix%SET #Ares_Help PRIVATE OFF"
     short: "Agochar a información da canle aos usuarios sen acceso."
     help: |-
       Cando está activado, só a persoa fundadora e as persoas con acceso poden
@@ -245,9 +245,9 @@ set:
   # --- SET SECURE ----------------------------------------------------------
   secure:
     syntax: "SET <#canle> SECURE {ON|OFF}"
-    example: "%command_prefix%SET #canle SECURE ON"
+    example: "%command_prefix%SET #Ares_Help SECURE ON"
     examples:
-      - "%command_prefix%SET #canle SECURE OFF"
+      - "%command_prefix%SET #Ares_Help SECURE OFF"
     short: "Esixir lista de acceso para rangos de canle."
     help: "Impide asignar rangos na canle a alcumes que non estean na lista de acceso."
     on: "SECURE está agora ON."
@@ -258,9 +258,9 @@ set:
   # --- SET VERBOSE ---------------------------------------------------------
   verbose:
     syntax: "SET <#canle> VERBOSE {ON|OFF}"
-    example: "%command_prefix%SET #canle VERBOSE ON"
+    example: "%command_prefix%SET #Ares_Help VERBOSE ON"
     examples:
-      - "%command_prefix%SET #canle VERBOSE OFF"
+      - "%command_prefix%SET #Ares_Help VERBOSE OFF"
     short: "Alternar notificacións de accións da canle."
     help: |-
       Activa ou desactiva as emisións NOTICE á canle para as accións
@@ -271,7 +271,7 @@ set:
 # --- STATUS -------------------------------------------------------------------
 status:
   syntax: "STATUS <#channel>"
-  example: "%command_prefix%STATUS #channel"
+  example: "%command_prefix%STATUS #Ares_Help"
   header: "Estado da canle %channel%"
   short: "Amosar o estado do rexistro da canle."
   help: |-
@@ -313,10 +313,10 @@ status:
 # --- ACCESS -------------------------------------------------------------------
 access:
   syntax: "ACCESS <#canle> <opción> [parámetros]"
-  example: "%command_prefix%ACCESS #canle LIST"
+  example: "%command_prefix%ACCESS #Ares_Help LIST"
   examples:
-    - "%command_prefix%ACCESS #canle ADD Alicia 100"
-    - "%command_prefix%ACCESS #canle DEL Alicia"
+    - "%command_prefix%ACCESS #Ares_Help ADD Ares 100"
+    - "%command_prefix%ACCESS #Ares_Help DEL Ares"
   short: "Xestionar a lista de acceso."
   help: "Xestiona a lista de acceso da canle."
   unknown_sub: "Subcomando descoñecido %sub%. Use LIST, ADD ou DEL."
@@ -328,7 +328,7 @@ access:
   # --- ACCESS LIST ---------------------------------------------------------
   list:
     syntax: "ACCESS <#canle> LIST"
-    example: "%command_prefix%ACCESS #canle LIST"
+    example: "%command_prefix%ACCESS #Ares_Help LIST"
     short: "Listar a lista de acceso (require nivel ACCESSLIST)."
     help: "Mostra o alcume e nivel de cada entrada."
     header: "Lista de acceso de %channel%"
@@ -338,7 +338,7 @@ access:
   # --- ACCESS ADD ----------------------------------------------------------
   add:
     syntax: "ACCESS <#canle> ADD <alcume> <nivel>"
-    example: "%command_prefix%ACCESS #canle ADD Alicia 100"
+    example: "%command_prefix%ACCESS #Ares_Help ADD Ares 100"
     short: "Engadir ou actualizar nivel de acceso (require nivel ACCESSCHANGE)."
     help: "Nivel 1-499. Só pode establecer niveis inferiores ao seu propio."
     done: "%nickname% establecido no nivel %level%."
@@ -347,7 +347,7 @@ access:
   # --- ACCESS DEL ----------------------------------------------------------
   del:
     syntax: "ACCESS <#canle> DEL <alcume>"
-    example: "%command_prefix%ACCESS #canle DEL Alicia"
+    example: "%command_prefix%ACCESS #Ares_Help DEL Ares"
     short: "Eliminar da lista de acceso (require nivel ACCESSCHANGE)."
     help: "Só pode eliminar alcumes con nivel inferior ao seu propio."
     not_in_list: "%nickname% non está na lista de acceso."
@@ -357,7 +357,7 @@ access:
 # --- DELACCESS ----------------------------------------------------------------
 delaccess:
   syntax: "DELACCESS <#canle>"
-  example: "%command_prefix%DELACCESS #canle"
+  example: "%command_prefix%DELACCESS #Ares_Help"
   short: "Eliminar o seu propio acceso dunha canle."
   help: |-
     Elimina a túa entrada da lista de acceso da canle. Debes identificarte.
@@ -370,15 +370,15 @@ delaccess:
 # --- AKICK --------------------------------------------------------------------
 akick:
   syntax: "AKICK <#canle> <opción> [parámetros]"
-  example: "%command_prefix%AKICK #canle ADD *!*@* 0"
+  example: "%command_prefix%AKICK #Ares_Help ADD SonMalo!*@* 0"
   examples:
-    - "%command_prefix%AKICK #canle ADD *!*@* 7d Spam"
-    - "%command_prefix%AKICK #canle DEL *!*@*"
-    - "%command_prefix%AKICK #canle DEL 2"
-    - "%command_prefix%AKICK #canle LIST"
-    - "%command_prefix%AKICK #canle VIEW 1"
-    - "%command_prefix%AKICK #canle CLEAR"
-    - "%command_prefix%AKICK #canle CHECK Alice"
+    - "%command_prefix%AKICK #Ares_Help ADD SonMalo!*@* 7d Correo lixo"
+    - "%command_prefix%AKICK #Ares_Help DEL *!*@*"
+    - "%command_prefix%AKICK #Ares_Help DEL 2"
+    - "%command_prefix%AKICK #Ares_Help LIST"
+    - "%command_prefix%AKICK #Ares_Help VIEW 1"
+    - "%command_prefix%AKICK #Ares_Help CLEAR"
+    - "%command_prefix%AKICK #Ares_Help CHECK Ares"
   short: "Xestionar a lista de expulsión automática."
   help: |-
     Xestiona as entradas de expulsión automática da canle e a súa posible
@@ -392,9 +392,9 @@ akick:
   # --- AKICK ADD -----------------------------------------------------------
   add:
     syntax: "AKICK <#canle> ADD <máscara> [caducidade] [motivo]"
-    example: "%command_prefix%AKICK #canle ADD *!*@* 0"
+    example: "%command_prefix%AKICK #Ares_Help ADD SonMalo!*@* 0"
     examples:
-      - "%command_prefix%AKICK #canle ADD *!*@* 7d Spam"
+      - "%command_prefix%AKICK #Ares_Help ADD SonMalo!*@* 7d Correo lixo"
     short: "Engadir entrada AKICK."
     help: |-
       Engade unha máscara á lista de expulsión automática da canle.
@@ -409,9 +409,9 @@ akick:
   # --- AKICK DEL -----------------------------------------------------------
   del:
     syntax: "AKICK <#canle> DEL {<máscara>|<número>}"
-    example: "%command_prefix%AKICK #canle DEL *!*@*"
+    example: "%command_prefix%AKICK #Ares_Help DEL *!*@*"
     examples:
-      - "%command_prefix%AKICK #canle DEL 2"
+      - "%command_prefix%AKICK #Ares_Help DEL 2"
     short: "Eliminar entrada AKICK."
     help: "Elimina pola máscara exacta ou polo número de entrada de LIST."
     not_found: "AKICK %mask% non atopada."
@@ -421,7 +421,7 @@ akick:
   # --- AKICK LIST ----------------------------------------------------------
   list:
     syntax: "AKICK <#canle> LIST"
-    example: "%command_prefix%AKICK #canle LIST"
+    example: "%command_prefix%AKICK #Ares_Help LIST"
     short: "Listar entradas AKICK."
     help: "Mostra máscara, motivo, caducidade e quen a engadiu."
     header: "Lista AKICK de %channel%"
@@ -431,9 +431,9 @@ akick:
   # --- AKICK VIEW ----------------------------------------------------------
   view:
     syntax: "AKICK <#canle> VIEW {<máscara>|<número>}"
-    example: "%command_prefix%AKICK #canle VIEW 1"
+    example: "%command_prefix%AKICK #Ares_Help VIEW 1"
     examples:
-      - "%command_prefix%AKICK #canle VIEW *!*@bad.host"
+      - "%command_prefix%AKICK #Ares_Help VIEW *!*@bad.host"
     short: "Ver metadatos detallados dunha entrada AKICK."
     help: |-
       Mostra motivo, autor, data de creación, data de expiración,
@@ -455,7 +455,7 @@ akick:
   # --- AKICK CLEAR ---------------------------------------------------------
   clear:
     syntax: "AKICK <#canle> CLEAR"
-    example: "%command_prefix%AKICK #canle CLEAR"
+    example: "%command_prefix%AKICK #Ares_Help CLEAR"
     short: "Baleirar todas as entradas AKICK."
     help: |-
       Elimina todas as entradas de expulsión automática da canle.
@@ -467,7 +467,7 @@ akick:
   # --- AKICK CHECK ---------------------------------------------------------
   check:
     syntax: "AKICK <#canle> CHECK <alcume>"
-    example: "%command_prefix%AKICK #canle CHECK Alice"
+    example: "%command_prefix%AKICK #Ares_Help CHECK Ares"
     short: "Comprobar se un alcume coincide con entradas AKICK."
     help: |-
       Comproba se un usuario conectado coincide con algunha entrada de autokick da canle.
@@ -479,7 +479,7 @@ akick:
   # --- AKICK ENFORCE -------------------------------------------------------
   enforce:
     syntax: "AKICK <#canle> ENFORCE"
-    example: "%command_prefix%AKICK #canle ENFORCE"
+    example: "%command_prefix%AKICK #Ares_Help ENFORCE"
     short: "Aplica as entradas AKICK aos usuarios actuais da canle."
     help: |-
       Comproba se hai usuarios na canle que coincidan coa lista AKICK
@@ -491,10 +491,10 @@ akick:
 # --- LEVELS -------------------------------------------------------------------
 levels:
   syntax: "LEVELS <#canle> <opción> [parámetros]"
-  example: "%command_prefix%LEVELS #canle LIST"
+  example: "%command_prefix%LEVELS #Ares_Help LIST"
   examples:
-    - "%command_prefix%LEVELS #canle SET OPDEOP 50"
-    - "%command_prefix%LEVELS #canle RESET"
+    - "%command_prefix%LEVELS #Ares_Help SET OPDEOP 50"
+    - "%command_prefix%LEVELS #Ares_Help RESET"
   short: "Configurar os niveis da canle."
   help: |-
     Configura os niveis mínimos de acceso para as accións da canle. Só a persoa
@@ -506,7 +506,7 @@ levels:
   # --- LEVELS LIST ---------------------------------------------------------
   list:
     syntax: "LEVELS <#canle> LIST"
-    example: "%command_prefix%LEVELS #canle LIST"
+    example: "%command_prefix%LEVELS #Ares_Help LIST"
     short: "Listar os requisitos de nivel."
     help: "Mostra cada clave de nivel e o seu valor (predeterminado se non está definido)."
     header: "Niveis de %channel%"
@@ -514,7 +514,7 @@ levels:
   # --- LEVELS SET ----------------------------------------------------------
   set:
     syntax: "LEVELS <#canle> SET <nivel> <valor>"
-    example: "%command_prefix%LEVELS #canle SET OPDEOP 50"
+    example: "%command_prefix%LEVELS #Ares_Help SET OPDEOP 50"
     short: "Establecer un requisito de nivel."
     help: "Valor -1 a 499. Só fundador."
     done: "%key% establecido en %value%."
@@ -522,7 +522,7 @@ levels:
   # --- LEVELS RESET --------------------------------------------------------
   reset:
     syntax: "LEVELS <#canle> RESET"
-    example: "%command_prefix%LEVELS #canle RESET"
+    example: "%command_prefix%LEVELS #Ares_Help RESET"
     short: "Restablecer todos os niveis aos valores predeterminados."
     help: "Elimina todas as modificacións. Só fundador."
     done: "Todos os niveis restablecidos aos valores predeterminados."
@@ -530,7 +530,7 @@ levels:
 # --- INVITE -------------------------------------------------------------------
 invite:
   syntax: "INVITE <#canle>"
-  example: "%command_prefix%INVITE #canle"
+  example: "%command_prefix%INVITE #Ares_Help"
   short: "Convidarse a si mesmo á canle."
   help: "Convidarse a si mesmo á canle."
   done: "Foi convidado a %channel%."
@@ -539,7 +539,7 @@ invite:
 # --- UNBAN --------------------------------------------------------------------
 unban:
   syntax: "UNBAN <#canle>"
-  example: "%command_prefix%UNBAN #canle"
+  example: "%command_prefix%UNBAN #Ares_Help"
   short: "Retirar os vetos que che afectan."
   help: "Retira todos os vetos da canle que coincidan coa túa identidade actual, incluídos comodíns e máscaras IP/CIDR."
   done: "Retiráronse %count% veto(s) que che afectan en %channel%"
@@ -551,7 +551,7 @@ unban:
 # --- ADMIN --------------------------------------------------------------------
 admin:
   syntax: "ADMIN <#canle> <alcume>"
-  example: "%command_prefix%ADMIN #canle Alicia"
+  example: "%command_prefix%ADMIN #Ares_Help Ares"
   short: "Conceder o modo de administrador de canle."
   help: "Concede o modo de administrador de canle. Só se o IRCd soporta +a."
   done: "A %nickname% foille concedido administrador de canle."
@@ -562,7 +562,7 @@ admin:
 # --- DEADMIN ------------------------------------------------------------------
 deadmin:
   syntax: "DEADMIN <#canle> <alcume>"
-  example: "%command_prefix%DEADMIN #canle Alicia"
+  example: "%command_prefix%DEADMIN #Ares_Help Ares"
   short: "Retirar o modo de administrador de canle."
   help: "Retirar o modo de administrador de canle."
   done: "A %nickname% foille retirado administrador."
@@ -570,7 +570,7 @@ deadmin:
 # --- OP -----------------------------------------------------------------------
 op:
   syntax: "OP <#canle> <alcume>"
-  example: "%command_prefix%OP #canle Alicia"
+  example: "%command_prefix%OP #Ares_Help Ares"
   short: "Conceder o modo de operador de canle."
   help: "Conceder o modo de operador de canle."
   done: "A %nickname% foille concedido o estado de operador de canle."
@@ -580,7 +580,7 @@ op:
 # --- DEOP ---------------------------------------------------------------------
 deop:
   syntax: "DEOP <#canle> <alcume>"
-  example: "%command_prefix%DEOP #canle Alicia"
+  example: "%command_prefix%DEOP #Ares_Help Ares"
   short: "Retirar o modo de operador de canle."
   help: "Retirar o modo de operador de canle."
   done: "A %nickname% foille retirado o modo de operador."
@@ -588,7 +588,7 @@ deop:
 # --- HALFOP -------------------------------------------------------------------
 halfop:
   syntax: "HALFOP <#canle> <alcume>"
-  example: "%command_prefix%HALFOP #canle Alicia"
+  example: "%command_prefix%HALFOP #Ares_Help Ares"
   short: "Conceder o modo de semioperador na canle."
   help: "Concede o modo de semioperador na canle. Só se o IRCd soporta +h."
   done: "A %nickname% foille concedido halfop."
@@ -599,7 +599,7 @@ halfop:
 # --- DEHALFOP -----------------------------------------------------------------
 dehalfop:
   syntax: "DEHALFOP <#canle> <alcume>"
-  example: "%command_prefix%DEHALFOP #canle Alicia"
+  example: "%command_prefix%DEHALFOP #Ares_Help Ares"
   short: "Retirar o modo de semioperador na canle."
   help: "Retirar o modo de semioperador na canle."
   done: "A %nickname% foille retirado halfop."
@@ -607,7 +607,7 @@ dehalfop:
 # --- VOICE --------------------------------------------------------------------
 voice:
   syntax: "VOICE <#canle> <alcume>"
-  example: "%command_prefix%VOICE #canle Alicia"
+  example: "%command_prefix%VOICE #Ares_Help Ares"
   short: "Conceder o modo voice na canle."
   help: "Conceder o modo voice na canle."
   done: "A %nickname% foille concedido voice."
@@ -617,7 +617,7 @@ voice:
 # --- DEVOICE ------------------------------------------------------------------
 devoice:
   syntax: "DEVOICE <#canle> <alcume>"
-  example: "%command_prefix%DEVOICE #canle Alicia"
+  example: "%command_prefix%DEVOICE #Ares_Help Ares"
   short: "Retirar o modo voice na canle."
   help: "Retirar o modo voice na canle."
   done: "A %nickname% foille retirado voice."
@@ -669,9 +669,9 @@ help:
 # --- CLEARUSERS (IRCop) -------------------------------------------------------
 clearusers:
   syntax: "CLEARUSERS <#canle> [motivo]"
-  example: "%command_prefix%CLEARUSERS #canle"
+  example: "%command_prefix%CLEARUSERS #Ares_Help"
   examples:
-    - "%command_prefix%CLEARUSERS #canle flooding"
+    - "%command_prefix%CLEARUSERS #Ares_Help flooding"
   short: "Expulsar todos os usuarios dunha canle."
   help: |-
     Expulsa todas as persoas usuarias da canle. É exclusivo de IRCop; se non se
@@ -684,7 +684,7 @@ clearusers:
 # --- CLEARACCESS (IRCop) ------------------------------------------------------
 clearaccess:
   syntax: "CLEARACCESS <#canle>"
-  example: "%command_prefix%CLEARACCESS #canle"
+  example: "%command_prefix%CLEARACCESS #Ares_Help"
   short: "Limpar toda a lista de acceso dunha canle."
   help: "Elimina todas as entradas de acceso da canle. Esta acción é irreversible."
   success: "Limpadas %count% entradas de acceso de %channel%."
@@ -693,9 +693,9 @@ clearaccess:
 # --- IRCOPONLY (IRCop) --------------------------------------------------------
 ircoponly:
   syntax: "IRCOPONLY <#canle> {ON|OFF}"
-  example: "%command_prefix%IRCOPONLY #canle ON"
+  example: "%command_prefix%IRCOPONLY #Ares_Help ON"
   examples:
-    - "%command_prefix%IRCOPONLY #canle OFF"
+    - "%command_prefix%IRCOPONLY #Ares_Help OFF"
   short: "Restrinxir unha canle aos operadores IRC."
   help: |-
     Só as persoas operadoras IRC autorizadas poden permanecer na canle. %bot%
@@ -712,15 +712,15 @@ saregister:
 
     Rexistra administrativamente unha canle de xeito inmediato para o alcume
     especificado como fundador sen requirir presenza, verificación nin límites de frecuencia.
-  example: "%command_prefix%SAREGISTER #canle Alicia Canle comunitaria"
+  example: "%command_prefix%SAREGISTER #Ares_Help Ares Canle de axuda"
   success: "A canle %channel% foi rexistrada para %founder%."
 
 # --- NOEXPIRE (IRCop) ---------------------------------------------------------
 noexpire:
   syntax: "NOEXPIRE <#canle> {ON|OFF}"
-  example: "%command_prefix%NOEXPIRE #Importante ON"
+  example: "%command_prefix%NOEXPIRE #Ares_Help ON"
   examples:
-    - "%command_prefix%NOEXPIRE #Importante OFF"
+    - "%command_prefix%NOEXPIRE #Ares_Help OFF"
   short: "Establecer ou eliminar a protección contra caducidade dunha canle."
   help: |-
     Controla se a canle caduca por inactividade.
@@ -733,9 +733,9 @@ noexpire:
 # --- DROP (IRCop) -------------------------------------------------------------
 drop:
   syntax: "DROP <#canle> [FORCE]"
-  example: "%command_prefix%DROP #canle"
+  example: "%command_prefix%DROP #Ares_Help"
   examples:
-    - "%command_prefix%DROP #canle FORCE"
+    - "%command_prefix%DROP #Ares_Help FORCE"
   short: "Eliminar unha canle rexistrada."
   help: |-
     Elimina unha canle rexistrada da base de datos.
@@ -754,7 +754,7 @@ drop:
 # --- RESTORE (IRCop) ----------------------------------------------------------
 restore:
   syntax: "RESTORE <#canle>"
-  example: "%command_prefix%RESTORE #canle"
+  example: "%command_prefix%RESTORE #Ares_Help"
   short: "Restaurar un canal pendente de eliminación."
   help: |-
     Restaura unha canle eliminada manualmente que aínda estea dentro do período
@@ -765,9 +765,9 @@ restore:
 # --- SUSPEND (IRCop) ----------------------------------------------------------
 suspend:
   syntax: "SUSPEND <#canle> <duración> <motivo>"
-  example: "%command_prefix%SUSPEND #canle 7d Incumprimento das normas"
+  example: "%command_prefix%SUSPEND #Ares_Help 7d Incumprimento das normas"
   examples:
-    - "%command_prefix%SUSPEND #canle 0 Incumprimento das normas"
+    - "%command_prefix%SUSPEND #Ares_Help 0 Incumprimento das normas"
   short: "Suspender unha canle."
   help: |-
     Desactiva temporalmente unha canle rexistrada. Formatos de duración: 0 =
@@ -783,7 +783,7 @@ suspend:
 # --- UNSUSPEND (IRCop) --------------------------------------------------------
 unsuspend:
   syntax: "UNSUSPEND <#canle>"
-  example: "%command_prefix%UNSUSPEND #canle"
+  example: "%command_prefix%UNSUSPEND #Ares_Help"
   short: "Levantar unha suspensión de canle."
   help: |-
     Reactiva unha canle suspendida e restaura os seus modos e a aplicación das
@@ -795,7 +795,7 @@ unsuspend:
 # --- FORBID (IRCop) -----------------------------------------------------------
 forbid:
   syntax: "FORBID <#canle> <motivo>"
-  example: "%command_prefix%FORBID #canle Incumprimento das normas"
+  example: "%command_prefix%FORBID #Ares_Help Incumprimento das normas"
   short: "Prohibir que unha canle sexa usada."
   help: |-
     Prohibe o uso dunha canle, expulsa todas as persoas usuarias e impide que
@@ -809,7 +809,7 @@ forbid:
 # --- UNFORBID (IRCop) ---------------------------------------------------------
 unforbid:
   syntax: "UNFORBID <#canle>"
-  example: "%command_prefix%UNFORBID #canle"
+  example: "%command_prefix%UNFORBID #Ares_Help"
   short: "Eliminar unha prohibición de canle."
   help: "Retira a prohibición dunha canle para que se poida rexistrar de novo."
   success: "A canle %channel% xa non está prohibida."
@@ -818,20 +818,20 @@ unforbid:
 # --- HISTORY ---
 history:
   syntax: "HISTORY <#canle> <opción> [parámetros]"
-  example: "%command_prefix%HISTORY #canle ADD Revisión de moderación"
+  example: "%command_prefix%HISTORY #Ares_Help ADD Revisión de moderación"
   examples:
-    - "%command_prefix%HISTORY #canle DEL 42"
-    - "%command_prefix%HISTORY #canle VIEW"
-    - "%command_prefix%HISTORY #canle VIEW 2"
-    - "%command_prefix%HISTORY #canle VIEW ALL"
-    - "%command_prefix%HISTORY #canle CLEAR"
+    - "%command_prefix%HISTORY #Ares_Help DEL 42"
+    - "%command_prefix%HISTORY #Ares_Help VIEW"
+    - "%command_prefix%HISTORY #Ares_Help VIEW 2"
+    - "%command_prefix%HISTORY #Ares_Help VIEW ALL"
+    - "%command_prefix%HISTORY #Ares_Help CLEAR"
   short: "Ver ou xestionar o historial de accións da canle."
   help: "Xestiona o historial de accións da canle."
 
   # --- HISTORY ADD ---------------------------------------------------------
   add:
     syntax: "HISTORY <#canle> ADD <mensaxe>"
-    example: "%command_prefix%HISTORY #canle ADD Revisión de moderación"
+    example: "%command_prefix%HISTORY #Ares_Help ADD Revisión de moderación"
     short: "Engadir unha entrada manual ao historial."
     help: |-
       Engade unha entrada manual ao historial da canle.
@@ -840,17 +840,17 @@ history:
   # --- HISTORY DEL ---------------------------------------------------------
   del:
     syntax: "HISTORY <#canle> DEL <id>"
-    example: "%command_prefix%HISTORY #canle DEL 42"
+    example: "%command_prefix%HISTORY #Ares_Help DEL 42"
     short: "Elimina unha entrada do historial."
     help: "Elimina unha entrada do historial polo seu ID."
 
   # --- HISTORY VIEW --------------------------------------------------------
   view:
     syntax: "HISTORY <#canle> VIEW [PÁXINA|ALL]"
-    example: "%command_prefix%HISTORY #canle VIEW"
+    example: "%command_prefix%HISTORY #Ares_Help VIEW"
     examples:
-      - "%command_prefix%HISTORY #canle VIEW 2"
-      - "%command_prefix%HISTORY #canle VIEW ALL"
+      - "%command_prefix%HISTORY #Ares_Help VIEW 2"
+      - "%command_prefix%HISTORY #Ares_Help VIEW ALL"
     short: "Ver o historial de accións da canle."
     help: "Mostra as entradas do historial da canle."
     header: "%heading% (mostrando %start%-%end% de %total%):"
@@ -863,7 +863,7 @@ history:
   # --- HISTORY CLEAR -------------------------------------------------------
   clear:
     syntax: "HISTORY <#canle> CLEAR"
-    example: "%command_prefix%HISTORY #canle CLEAR"
+    example: "%command_prefix%HISTORY #Ares_Help CLEAR"
     short: "Eliminar todas as entradas do historial dunha canle."
     help: "Elimina todas as entradas do historial da canle."
     success: "Limpadas %count% entradas do historial de %channel%."
@@ -955,11 +955,11 @@ creg:
   pending.short: "Lista as solicitudes pendentes nunha páxina limitada."
   pending.help: "Lista as solicitudes pendentes nunha páxina limitada."
   accept.syntax: "CREG ACCEPT <#channel>"
-  accept.example: "%command_prefix%CREG ACCEPT #channel"
+  accept.example: "%command_prefix%CREG ACCEPT #Ares_Help"
   accept.short: "Aprobar unha solicitude de rexistro de canle."
   accept.help: "Volver validar a solicitude e activar o rexistro pendente."
   reject.syntax: "CREG REJECT <#channel> <razón>"
-  reject.example: "%command_prefix%CREG REJECT #channel Precisa un tema público"
+  reject.example: "%command_prefix%CREG REJECT #Ares_Help Precisa un tema público"
   reject.short: "Rexeitar unha solicitude de rexistro de canle."
   reject.help: "Rexeita unha solicitude cun razón obrigatorio e unha restrición."
   example: "%command_prefix%CREG PENDING"

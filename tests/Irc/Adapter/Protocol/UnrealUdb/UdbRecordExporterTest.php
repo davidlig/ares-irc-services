@@ -11,6 +11,8 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbChannelSuspendReasonRe
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbRecordExporter;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbPathCodec;
 use App\Irc\Application\Port\In\ActiveChannelModeSupportProviderInterface;
+use App\Irc\Application\Port\In\AutomaticModeDelivery;
+use App\Irc\Application\Port\In\AutomaticModeSupport;
 use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\Irc\Application\Port\In\ChannelModeSupportInterface;
 use App\NickServ\Application\Port\In\NickProjection;
@@ -45,6 +47,13 @@ final class UdbRecordExporterTest extends TestCase
     private UdbChannelSuspendReasonResolver $suspendReasonResolver;
 
     private UdbRecordExporter $exporter;
+
+    #[Test]
+    public function automaticModesProjectSemanticPreferencesWithoutReinterpretingLetters(): void
+    {
+        $nick = new NickProjection(42, 'Pedro', null, null, false, null, false, automaticModes: ['bot', 'channel-deaf', 'invisible', 'strip-formatting']);
+        self::assertSame(['Pedro::modes' => '+Bd'], $this->exporter->nickRecords($nick));
+    }
 
     #[Test]
     public function getChannelLookupReturnsConfiguredPort(): void
@@ -433,6 +442,22 @@ final class UdbRecordExporterTest extends TestCase
         $this->expectExceptionMessage('Current SQL export contains an invalid N-block record.');
 
         $this->exporter->encodedBlockRecords(UdbBlock::Nicks);
+    }
+
+    #[Test]
+    public function automaticModeProjectionFiltersOnlyKnownActiveNativeCapabilities(): void
+    {
+        $nick = new NickProjection(7, 'nick', null, null, false, null, false, automaticModes: ['bot', 'channel-deaf', 'invisible', 'strip-formatting']);
+        $this->nicks->method('all')->willReturn([$nick]);
+        foreach ([[true, ['channel-deaf' => 'd'], '+d'], [true, [], null], [true, null, '+Bd'], [false, [], '+Bd']] as [$native, $available, $expected]) {
+            $support = $this->createStub(AutomaticModeSupport::class);
+            $support->method('getAutomaticModes')->willReturn($available);
+            $delivery = $this->createStub(AutomaticModeDelivery::class);
+            $delivery->method('usesNativeProfiles')->willReturn($native);
+            $exporter = new UdbRecordExporter($this->nicks, $this->channels, $this->operators, $this->glines, $this->channelLookup, $this->createModeSupportProvider(), $this->suspendReasonResolver, automaticModeSupport: $support, automaticModeDelivery: $delivery);
+            self::assertSame($expected, $exporter->nickRecords($nick)['nick::modes'] ?? null);
+            self::assertSame($expected, $exporter->allNickRecords()['nick::modes'] ?? null);
+        }
     }
 
     protected function setUp(): void

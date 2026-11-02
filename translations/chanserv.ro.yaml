@@ -19,13 +19,13 @@
 # --- ERROR --------------------------------------------------------------------
 error:
   invalid_channel: "Nume de canal invalid. Folosiți %example%."
-  invalid_channel_example: "#canal"
+  invalid_channel_example: "#Ares_Help"
   generic: "A apărut o eroare. Vă rugăm să încercați din nou."
 
 # --- REGISTER -----------------------------------------------------------------
 register:
   syntax: "REGISTER <#canal> <descriere>"
-  example: "%command_prefix%REGISTER #canal Proiect comunitar"
+  example: "%command_prefix%REGISTER #Ares_Help Canal de ajutor"
   short: "Înregistrați un canal."
   help: |-
     Înregistrează un canal și asociază-l poreclei tale. Identifică-te cu
@@ -46,7 +46,7 @@ register:
 # --- INFO ---------------------------------------------------------------------
 info:
   syntax: "INFO <#canal>"
-  example: "%command_prefix%INFO #canal"
+  example: "%command_prefix%INFO #Ares_Help"
   short: "Afișați informațiile canalului."
   help: |-
     Afișează informații detaliate despre un canal înregistrat, inclusiv
@@ -104,10 +104,10 @@ info:
 # --- SET ----------------------------------------------------------------------
 set:
   syntax: "SET <#canal> <opțiune> [parametri]"
-  example: "%command_prefix%SET #canal DESC Un canal comunitar"
+  example: "%command_prefix%SET #Ares_Help DESC Canal de ajutor"
   examples:
-    - "%command_prefix%SET #canal URL https://example.test"
-    - "%command_prefix%SET #canal MLOCK ON"
+    - "%command_prefix%SET #Ares_Help URL https://example.test"
+    - "%command_prefix%SET #Ares_Help MLOCK ON"
   short: "Modificați opțiunile canalului."
   help: |-
     Modifică o opțiune a canalului. Ajutorul fiecărei opțiuni explică cerințele și
@@ -119,9 +119,9 @@ set:
     token_required: "Folosește SET <#canal> FOUNDER <poreclă> <token> cu tokenul confirmat al fondatorului actual."
     token_unavailable: "Fondatorul actual nu are token de salvare confirmat. Trebuie să se autentifice și să folosească VERIFY mai întâi."
     syntax: "SET <#canal> FOUNDER <poreclă> [token]"
-    example: "%command_prefix%SET #canal FOUNDER Alice"
+    example: "%command_prefix%SET #Ares_Help FOUNDER Ares"
     examples:
-      - "%command_prefix%SET #canal FOUNDER Alice token-confirmat"
+      - "%command_prefix%SET #Ares_Help FOUNDER Ares 65dec7d5370eaa57c5a4bde98e591ccb"
     short: "Transferați canalul către o altă poreclă înregistrată."
     help: |-
       Schimbă fondatorul după validarea tokenului fondatorului curent. Excepția
@@ -139,9 +139,9 @@ set:
   # --- SET SUCCESSOR -------------------------------------------------------
   successor:
     syntax: "SET <#canal> SUCCESSOR [poreclă]"
-    example: "%command_prefix%SET #canal SUCCESSOR Alice"
+    example: "%command_prefix%SET #Ares_Help SUCCESSOR Ares"
     examples:
-      - "%command_prefix%SET #canal SUCCESSOR"
+      - "%command_prefix%SET #Ares_Help SUCCESSOR"
     short: "Setați succesorul canalului."
     help: |-
       Stabilește o poreclă drept succesor al canalului. Omite porecla pentru a o
@@ -158,7 +158,7 @@ set:
   # --- SET DESC ------------------------------------------------------------
   desc:
     syntax: "SET <#canal> DESC <descriere>"
-    example: "%command_prefix%SET #canal DESC Un canal comunitar"
+    example: "%command_prefix%SET #Ares_Help DESC Canal de ajutor"
     short: "Schimbați descrierea canalului."
     help: "Schimbați descrierea canalului (obligatorie)."
     updated: "Descrierea a fost actualizată."
@@ -166,9 +166,9 @@ set:
   # --- SET URL -------------------------------------------------------------
   url:
     syntax: "SET <#canal> URL [url]"
-    example: "%command_prefix%SET #canal URL https://example.test"
+    example: "%command_prefix%SET #Ares_Help URL https://example.test"
     examples:
-      - "%command_prefix%SET #canal URL"
+      - "%command_prefix%SET #Ares_Help URL"
     short: "Setați URL-ul canalului."
     help: "Schimbă adresa web (URL) a canalului. Omite URL-ul pentru a-l șterge."
     updated: "URL-ul a fost actualizat."
@@ -177,9 +177,9 @@ set:
   # --- SET EMAIL -----------------------------------------------------------
   email:
     syntax: "SET <#canal> EMAIL [e-mail]"
-    example: "%command_prefix%SET #canal EMAIL echipa@example.test"
+    example: "%command_prefix%SET #Ares_Help EMAIL echipa@example.test"
     examples:
-      - "%command_prefix%SET #canal EMAIL"
+      - "%command_prefix%SET #Ares_Help EMAIL"
     short: "Setați e-mailul canalului."
     help: |-
       Schimbă adresa de e-mail a canalului. Omite e-mailul pentru a-l
@@ -192,9 +192,9 @@ set:
   # --- SET ENTRYMSG --------------------------------------------------------
   entrymsg:
     syntax: "SET <#canal> ENTRYMSG [mesaj]"
-    example: "%command_prefix%SET #canal ENTRYMSG Bun venit"
+    example: "%command_prefix%SET #Ares_Help ENTRYMSG Bun venit pe canalul de ajutor"
     examples:
-      - "%command_prefix%SET #canal ENTRYMSG"
+      - "%command_prefix%SET #Ares_Help ENTRYMSG"
     short: "Setați mesajul de intrare al canalului."
     help: "Stabilește mesajul de întâmpinare (NOTICE). Omite mesajul pentru a-l șterge."
     updated: "Mesajul de intrare a fost actualizat."
@@ -203,9 +203,9 @@ set:
   # --- SET TOPICLOCK -------------------------------------------------------
   topiclock:
     syntax: "SET <#canal> TOPICLOCK {ON|OFF}"
-    example: "%command_prefix%SET #canal TOPICLOCK ON"
+    example: "%command_prefix%SET #Ares_Help TOPICLOCK ON"
     examples:
-      - "%command_prefix%SET #canal TOPICLOCK OFF"
+      - "%command_prefix%SET #Ares_Help TOPICLOCK OFF"
     short: "Blocați subiectul canalului."
     help: |-
       Împiedică schimbarea topicului canalului. La activare, topicul curent este
@@ -218,9 +218,9 @@ set:
   # --- SET MLOCK -----------------------------------------------------------
   mlock:
     syntax: "SET <#canal> MLOCK {ON|OFF}"
-    example: "%command_prefix%SET #canal MLOCK ON"
+    example: "%command_prefix%SET #Ares_Help MLOCK ON"
     examples:
-      - "%command_prefix%SET #canal MLOCK OFF"
+      - "%command_prefix%SET #Ares_Help MLOCK OFF"
     short: "Blocați modurile canalului."
     help: |-
       Blochează modurile actuale ale canalului (de ex. +nt). Când este ON, modurile nu
@@ -234,9 +234,9 @@ set:
   # --- SET PRIVATE ---------------------------------------------------------
   private:
     syntax: "SET <#canal> PRIVATE {ON|OFF}"
-    example: "%command_prefix%SET #canal PRIVATE ON"
+    example: "%command_prefix%SET #Ares_Help PRIVATE ON"
     examples:
-      - "%command_prefix%SET #canal PRIVATE OFF"
+      - "%command_prefix%SET #Ares_Help PRIVATE OFF"
     short: "Ascunde informațiile canalului de utilizatorii fără acces."
     help: |-
       Când este ON, doar fondatorul și utilizatorii cu acces pot vedea informațiile
@@ -247,9 +247,9 @@ set:
   # --- SET SECURE ----------------------------------------------------------
   secure:
     syntax: "SET <#canal> SECURE {ON|OFF}"
-    example: "%command_prefix%SET #canal SECURE ON"
+    example: "%command_prefix%SET #Ares_Help SECURE ON"
     examples:
-      - "%command_prefix%SET #canal SECURE OFF"
+      - "%command_prefix%SET #Ares_Help SECURE OFF"
     short: "Solicitați lista de acces pentru ranguri de canal."
     help: |-
       Împiedică atribuirea rangurilor de canal poreclelor care nu sunt în lista de
@@ -262,9 +262,9 @@ set:
   # --- SET VERBOSE ---------------------------------------------------------
   verbose:
     syntax: "SET <#canal> VERBOSE {ON|OFF}"
-    example: "%command_prefix%SET #canal VERBOSE ON"
+    example: "%command_prefix%SET #Ares_Help VERBOSE ON"
     examples:
-      - "%command_prefix%SET #canal VERBOSE OFF"
+      - "%command_prefix%SET #Ares_Help VERBOSE OFF"
     short: "Comută notificările pentru acțiunile pe canal."
     help: |-
       Activează sau dezactivează transmisiile NOTICE către canal pentru acțiunile
@@ -275,7 +275,7 @@ set:
 # --- STATUS -------------------------------------------------------------------
 status:
   syntax: "STATUS <#canal>"
-  example: "%command_prefix%STATUS #canal"
+  example: "%command_prefix%STATUS #Ares_Help"
   header: "Starea canalului %channel%"
   short: "Afișează starea înregistrării canalului."
   help: |-
@@ -318,10 +318,10 @@ status:
 # --- ACCESS -------------------------------------------------------------------
 access:
   syntax: "ACCESS <#canal> <opțiune> [parametri]"
-  example: "%command_prefix%ACCESS #canal LIST"
+  example: "%command_prefix%ACCESS #Ares_Help LIST"
   examples:
-    - "%command_prefix%ACCESS #canal ADD Alice 100"
-    - "%command_prefix%ACCESS #canal DEL Alice"
+    - "%command_prefix%ACCESS #Ares_Help ADD Ares 100"
+    - "%command_prefix%ACCESS #Ares_Help DEL Ares"
   short: "Gestionați lista de acces."
   help: "Gestionează lista de acces a canalului."
   unknown_sub: "Subcomandă necunoscută %sub%. Folosiți LIST, ADD sau DEL."
@@ -333,7 +333,7 @@ access:
   # --- ACCESS LIST ---------------------------------------------------------
   list:
     syntax: "ACCESS <#canal> LIST"
-    example: "%command_prefix%ACCESS #canal LIST"
+    example: "%command_prefix%ACCESS #Ares_Help LIST"
     short: "Listați lista de acces (necesită nivel ACCESSLIST)."
     help: "Afișează porecla și nivelul pentru fiecare intrare."
     header: "Lista de acces pentru %channel%"
@@ -343,7 +343,7 @@ access:
   # --- ACCESS ADD ----------------------------------------------------------
   add:
     syntax: "ACCESS <#canal> ADD <poreclă> <nivel>"
-    example: "%command_prefix%ACCESS #canal ADD Alice 100"
+    example: "%command_prefix%ACCESS #Ares_Help ADD Ares 100"
     short: "Adăugați sau actualizați nivelul de acces (necesită nivel ACCESSCHANGE)."
     help: "Nivel 1-499. Puteți seta doar niveluri inferioare propriului nivel."
     done: "%nickname% setat la nivelul %level%."
@@ -352,7 +352,7 @@ access:
   # --- ACCESS DEL ----------------------------------------------------------
   del:
     syntax: "ACCESS <#canal> DEL <poreclă>"
-    example: "%command_prefix%ACCESS #canal DEL Alice"
+    example: "%command_prefix%ACCESS #Ares_Help DEL Ares"
     short: "Eliminați din lista de acces (necesită nivel ACCESSCHANGE)."
     help: "Puteți elimina doar porecle cu nivel inferior propriului nivel."
     not_in_list: "%nickname% nu se află în lista de acces."
@@ -362,7 +362,7 @@ access:
 # --- DELACCESS ----------------------------------------------------------------
 delaccess:
   syntax: "DELACCESS <#canal>"
-  example: "%command_prefix%DELACCESS #canal"
+  example: "%command_prefix%DELACCESS #Ares_Help"
   short: "Eliminați propriul acces dintr-un canal."
   help: |-
     Elimină intrarea ta din lista de acces a canalului. Trebuie să fii identificat.
@@ -375,15 +375,15 @@ delaccess:
 # --- AKICK --------------------------------------------------------------------
 akick:
   syntax: "AKICK <#canal> <opțiune> [parametri]"
-  example: "%command_prefix%AKICK #canal ADD *!*@* 0"
+  example: "%command_prefix%AKICK #Ares_Help ADD SuntRau!*@* 0"
   examples:
-    - "%command_prefix%AKICK #canal ADD *!*@* 7d Spam"
-    - "%command_prefix%AKICK #canal DEL *!*@*"
-    - "%command_prefix%AKICK #canal DEL 2"
-    - "%command_prefix%AKICK #canal LIST"
-    - "%command_prefix%AKICK #canal VIEW 1"
-    - "%command_prefix%AKICK #canal CLEAR"
-    - "%command_prefix%AKICK #canal CHECK Alice"
+    - "%command_prefix%AKICK #Ares_Help ADD SuntRau!*@* 7d Mesaje nesolicitate"
+    - "%command_prefix%AKICK #Ares_Help DEL *!*@*"
+    - "%command_prefix%AKICK #Ares_Help DEL 2"
+    - "%command_prefix%AKICK #Ares_Help LIST"
+    - "%command_prefix%AKICK #Ares_Help VIEW 1"
+    - "%command_prefix%AKICK #Ares_Help CLEAR"
+    - "%command_prefix%AKICK #Ares_Help CHECK Ares"
   short: "Gestionați lista de auto-kick."
   help: "Gestionează intrările de kick automat și expirarea lor opțională."
   unknown_sub: "Subcomandă necunoscută %sub%. Folosiți ADD, DEL, LIST, VIEW, CLEAR sau CHECK."
@@ -395,9 +395,9 @@ akick:
   # --- AKICK ADD -----------------------------------------------------------
   add:
     syntax: "AKICK <#canal> ADD <mască> [expirare] [motiv]"
-    example: "%command_prefix%AKICK #canal ADD *!*@* 0"
+    example: "%command_prefix%AKICK #Ares_Help ADD SuntRau!*@* 0"
     examples:
-      - "%command_prefix%AKICK #canal ADD *!*@* 7d Spam"
+      - "%command_prefix%AKICK #Ares_Help ADD SuntRau!*@* 7d Mesaje nesolicitate"
     short: "Adăugați intrare AKICK."
     help: |-
       Adaugă o mască la lista de kick automat a canalului.
@@ -411,9 +411,9 @@ akick:
   # --- AKICK DEL -----------------------------------------------------------
   del:
     syntax: "AKICK <#canal> DEL {<mască>|<număr>}"
-    example: "%command_prefix%AKICK #canal DEL *!*@*"
+    example: "%command_prefix%AKICK #Ares_Help DEL *!*@*"
     examples:
-      - "%command_prefix%AKICK #canal DEL 2"
+      - "%command_prefix%AKICK #Ares_Help DEL 2"
     short: "Eliminați intrare AKICK."
     help: "Eliminați după masca exactă sau numărul intrării din LIST."
     not_found: "AKICK %mask% nu a fost găsit."
@@ -423,7 +423,7 @@ akick:
   # --- AKICK LIST ----------------------------------------------------------
   list:
     syntax: "AKICK <#canal> LIST"
-    example: "%command_prefix%AKICK #canal LIST"
+    example: "%command_prefix%AKICK #Ares_Help LIST"
     short: "Listați intrările AKICK."
     help: "Afișează masca, motivul, expirarea și cine a adăugat."
     header: "Lista AKICK pentru %channel%"
@@ -433,9 +433,9 @@ akick:
   # --- AKICK VIEW ----------------------------------------------------------
   view:
     syntax: "AKICK <#canal> VIEW {<mască>|<număr>}"
-    example: "%command_prefix%AKICK #canal VIEW 1"
+    example: "%command_prefix%AKICK #Ares_Help VIEW 1"
     examples:
-      - "%command_prefix%AKICK #canal VIEW *!*@bad.host"
+      - "%command_prefix%AKICK #Ares_Help VIEW *!*@bad.host"
     short: "Afișează metadatele detaliate ale unei intrări AKICK."
     help: |-
       Afișează motivul, autorul, data creării, data expirării,
@@ -457,7 +457,7 @@ akick:
   # --- AKICK CLEAR ---------------------------------------------------------
   clear:
     syntax: "AKICK <#canal> CLEAR"
-    example: "%command_prefix%AKICK #canal CLEAR"
+    example: "%command_prefix%AKICK #Ares_Help CLEAR"
     short: "Șterge toate intrările AKICK."
     help: |-
       Elimină toate intrările de autokick din canal.
@@ -469,7 +469,7 @@ akick:
   # --- AKICK CHECK ---------------------------------------------------------
   check:
     syntax: "AKICK <#canal> CHECK <poreclă>"
-    example: "%command_prefix%AKICK #canal CHECK Alice"
+    example: "%command_prefix%AKICK #Ares_Help CHECK Ares"
     short: "Verifică dacă o poreclă se potrivește cu intrările AKICK."
     help: |-
       Verifică dacă un utilizator conectat se potrivește cu o intrare autokick din canal.
@@ -481,7 +481,7 @@ akick:
   # --- AKICK ENFORCE -------------------------------------------------------
   enforce:
     syntax: "AKICK <#canal> ENFORCE"
-    example: "%command_prefix%AKICK #canal ENFORCE"
+    example: "%command_prefix%AKICK #Ares_Help ENFORCE"
     short: "Aplică intrările AKICK utilizatorilor actuali ai canalului."
     help: |-
       Verifică utilizatorii din canal în raport cu lista AKICK
@@ -493,10 +493,10 @@ akick:
 # --- LEVELS -------------------------------------------------------------------
 levels:
   syntax: "LEVELS <#canal> <opțiune> [parametri]"
-  example: "%command_prefix%LEVELS #canal LIST"
+  example: "%command_prefix%LEVELS #Ares_Help LIST"
   examples:
-    - "%command_prefix%LEVELS #canal SET OPDEOP 50"
-    - "%command_prefix%LEVELS #canal RESET"
+    - "%command_prefix%LEVELS #Ares_Help SET OPDEOP 50"
+    - "%command_prefix%LEVELS #Ares_Help RESET"
   short: "Configurați nivelurile canalului."
   help: |-
     Configurează nivelurile minime de acces pentru acțiunile canalului. Numai
@@ -508,7 +508,7 @@ levels:
   # --- LEVELS LIST ---------------------------------------------------------
   list:
     syntax: "LEVELS <#canal> LIST"
-    example: "%command_prefix%LEVELS #canal LIST"
+    example: "%command_prefix%LEVELS #Ares_Help LIST"
     short: "Listați cerințele de nivel."
     help: "Afișează fiecare cheie de nivel și valoarea sa (implicită dacă nu este setată)."
     header: "Niveluri pentru %channel%"
@@ -516,7 +516,7 @@ levels:
   # --- LEVELS SET ----------------------------------------------------------
   set:
     syntax: "LEVELS <#canal> SET <nivel> <valoare>"
-    example: "%command_prefix%LEVELS #canal SET OPDEOP 50"
+    example: "%command_prefix%LEVELS #Ares_Help SET OPDEOP 50"
     short: "Setați o cerință de nivel."
     help: "Valoare de la -1 la 499. Doar fondatorul."
     done: "%key% setat la %value%."
@@ -524,7 +524,7 @@ levels:
   # --- LEVELS RESET --------------------------------------------------------
   reset:
     syntax: "LEVELS <#canal> RESET"
-    example: "%command_prefix%LEVELS #canal RESET"
+    example: "%command_prefix%LEVELS #Ares_Help RESET"
     short: "Resetați toate nivelurile la valorile implicite."
     help: "Elimină toate suprascrierile. Doar fondatorul."
     done: "Toate nivelurile au fost resetate la valorile implicite."
@@ -532,7 +532,7 @@ levels:
 # --- INVITE -------------------------------------------------------------------
 invite:
   syntax: "INVITE <#canal>"
-  example: "%command_prefix%INVITE #canal"
+  example: "%command_prefix%INVITE #Ares_Help"
   short: "Invitați-vă pe canal."
   help: "Invitați-vă pe canal."
   done: "Ați fost invitat pe %channel%."
@@ -541,7 +541,7 @@ invite:
 # --- UNBAN --------------------------------------------------------------------
 unban:
   syntax: "UNBAN <#canal>"
-  example: "%command_prefix%UNBAN #canal"
+  example: "%command_prefix%UNBAN #Ares_Help"
   short: "Elimină banurile care te afectează."
   help: "Elimină toate banurile canalului care corespund identității tale actuale, inclusiv metacaractere și măști IP/CIDR."
   done: "Au fost eliminate %count% banuri care te afectează pe %channel%"
@@ -553,7 +553,7 @@ unban:
 # --- ADMIN --------------------------------------------------------------------
 admin:
   syntax: "ADMIN <#canal> <poreclă>"
-  example: "%command_prefix%ADMIN #canal Alice"
+  example: "%command_prefix%ADMIN #Ares_Help Ares"
   short: "Acordați modul de admin de canal."
   help: "Acordați modul de admin de canal. Doar dacă IRCd-ul suportă +a."
   done: "Lui %nickname% i s-a acordat admin de canal."
@@ -564,7 +564,7 @@ admin:
 # --- DEADMIN ------------------------------------------------------------------
 deadmin:
   syntax: "DEADMIN <#canal> <poreclă>"
-  example: "%command_prefix%DEADMIN #canal Alice"
+  example: "%command_prefix%DEADMIN #Ares_Help Ares"
   short: "Retrageți modul de admin de canal."
   help: "Retrageți modul de admin de canal."
   done: "Lui %nickname% i s-a retras adminul de canal."
@@ -572,7 +572,7 @@ deadmin:
 # --- OP -----------------------------------------------------------------------
 op:
   syntax: "OP <#canal> <poreclă>"
-  example: "%command_prefix%OP #canal Alice"
+  example: "%command_prefix%OP #Ares_Help Ares"
   short: "Acordați modul de operator de canal."
   help: "Acordați modul de operator de canal."
   done: "Lui %nickname% i s-a acordat statutul de operator de canal."
@@ -582,7 +582,7 @@ op:
 # --- DEOP ---------------------------------------------------------------------
 deop:
   syntax: "DEOP <#canal> <poreclă>"
-  example: "%command_prefix%DEOP #canal Alice"
+  example: "%command_prefix%DEOP #Ares_Help Ares"
   short: "Retrageți modul de operator de canal."
   help: "Retrageți modul de operator de canal."
   done: "Lui %nickname% i s-a retras statutul de operator."
@@ -590,7 +590,7 @@ deop:
 # --- HALFOP -------------------------------------------------------------------
 halfop:
   syntax: "HALFOP <#canal> <poreclă>"
-  example: "%command_prefix%HALFOP #canal Alice"
+  example: "%command_prefix%HALFOP #Ares_Help Ares"
   short: "Acordați modul de semi-operator pe canal."
   help: "Acordați modul de semi-operator pe canal. Doar dacă IRCd-ul suportă +h."
   done: "Lui %nickname% i s-a acordat halfop."
@@ -601,7 +601,7 @@ halfop:
 # --- DEHALFOP -----------------------------------------------------------------
 dehalfop:
   syntax: "DEHALFOP <#canal> <poreclă>"
-  example: "%command_prefix%DEHALFOP #canal Alice"
+  example: "%command_prefix%DEHALFOP #Ares_Help Ares"
   short: "Retrageți modul de semi-operator pe canal."
   help: "Retrageți modul de semi-operator pe canal."
   done: "Lui %nickname% i s-a retras halfopul."
@@ -609,7 +609,7 @@ dehalfop:
 # --- VOICE --------------------------------------------------------------------
 voice:
   syntax: "VOICE <#canal> <poreclă>"
-  example: "%command_prefix%VOICE #canal Alice"
+  example: "%command_prefix%VOICE #Ares_Help Ares"
   short: "Acordați modul voice pe canal."
   help: "Acordați modul voice pe canal."
   done: "Lui %nickname% i s-a acordat voice."
@@ -619,7 +619,7 @@ voice:
 # --- DEVOICE ------------------------------------------------------------------
 devoice:
   syntax: "DEVOICE <#canal> <poreclă>"
-  example: "%command_prefix%DEVOICE #canal Alice"
+  example: "%command_prefix%DEVOICE #Ares_Help Ares"
   short: "Retrageți modul voice pe canal."
   help: "Retrageți modul voice pe canal."
   done: "Lui %nickname% i s-a retras voice-ul."
@@ -671,9 +671,9 @@ help:
 # --- CLEARUSERS (IRCop) -------------------------------------------------------
 clearusers:
   syntax: "CLEARUSERS <#canal> [motiv]"
-  example: "%command_prefix%CLEARUSERS #canal"
+  example: "%command_prefix%CLEARUSERS #Ares_Help"
   examples:
-    - "%command_prefix%CLEARUSERS #canal inundare"
+    - "%command_prefix%CLEARUSERS #Ares_Help inundare"
   short: "Eliminați prin kick toți utilizatorii dintr-un canal."
   help: |-
     Evacuează toți utilizatorii de pe canal. Comanda este rezervată IRCop; dacă
@@ -686,7 +686,7 @@ clearusers:
 # --- CLEARACCESS (IRCop) ------------------------------------------------------
 clearaccess:
   syntax: "CLEARACCESS <#canal>"
-  example: "%command_prefix%CLEARACCESS #canal"
+  example: "%command_prefix%CLEARACCESS #Ares_Help"
   short: "Ștergeți întreaga listă de acces a unui canal."
   help: "Elimină toate intrările de acces ale canalului. Acțiunea este ireversibilă."
   success: "S-au șters %count% intrări de acces din %channel%."
@@ -695,9 +695,9 @@ clearaccess:
 # --- IRCOPONLY (IRCop) --------------------------------------------------------
 ircoponly:
   syntax: "IRCOPONLY <#canal> {ON|OFF}"
-  example: "%command_prefix%IRCOPONLY #canal ON"
+  example: "%command_prefix%IRCOPONLY #Ares_Help ON"
   examples:
-    - "%command_prefix%IRCOPONLY #canal OFF"
+    - "%command_prefix%IRCOPONLY #Ares_Help OFF"
   short: "Restricționați un canal la operatorii IRC."
   help: |-
     Doar operatorii IRC autorizați pot rămâne pe canal. %bot% aplică această
@@ -714,15 +714,15 @@ saregister:
 
     Înregistrează administrativ un canal imediat pentru porecla
     specificată ca fondator, fără a necesita prezență, verificare sau limite de frecvență.
-  example: "%command_prefix%SAREGISTER #canal Alice Canal comunitar"
+  example: "%command_prefix%SAREGISTER #Ares_Help Ares Canal de ajutor"
   success: "Canalul %channel% a fost înregistrat pentru %founder%."
 
 # --- NOEXPIRE (IRCop) ---------------------------------------------------------
 noexpire:
   syntax: "NOEXPIRE <#canal> {ON|OFF}"
-  example: "%command_prefix%NOEXPIRE #Important ON"
+  example: "%command_prefix%NOEXPIRE #Ares_Help ON"
   examples:
-    - "%command_prefix%NOEXPIRE #Important OFF"
+    - "%command_prefix%NOEXPIRE #Ares_Help OFF"
   short: "Setați sau eliminați protecția împotriva expirării pentru un canal."
   help: |-
     Controlează expirarea canalului din cauza inactivității.
@@ -735,9 +735,9 @@ noexpire:
 # --- DROP (IRCop) -------------------------------------------------------------
 drop:
   syntax: "DROP <#canal> [FORCE]"
-  example: "%command_prefix%DROP #canal"
+  example: "%command_prefix%DROP #Ares_Help"
   examples:
-    - "%command_prefix%DROP #canal FORCE"
+    - "%command_prefix%DROP #Ares_Help FORCE"
   short: "Eliminați un canal înregistrat."
   help: |-
     Șterge un canal înregistrat din baza de date.
@@ -756,7 +756,7 @@ drop:
 # --- RESTORE (IRCop) ----------------------------------------------------------
 restore:
   syntax: "RESTORE <#canal>"
-  example: "%command_prefix%RESTORE #canal"
+  example: "%command_prefix%RESTORE #Ares_Help"
   short: "Restaurați un canal în așteptare de ștergere."
   help: "Restaurează un canal șters manual, dacă perioada de grație nu a expirat."
   success: "Canalul %channel% a fost restaurat."
@@ -765,9 +765,9 @@ restore:
 # --- SUSPEND (IRCop) ----------------------------------------------------------
 suspend:
   syntax: "SUSPEND <#canal> <durată> <motiv>"
-  example: "%command_prefix%SUSPEND #canal 7d Încălcarea regulilor"
+  example: "%command_prefix%SUSPEND #Ares_Help 7d Încălcarea regulilor"
   examples:
-    - "%command_prefix%SUSPEND #canal 0 Încălcarea regulilor"
+    - "%command_prefix%SUSPEND #Ares_Help 0 Încălcarea regulilor"
   short: "Suspendă un canal."
   help: |-
     Suspendă temporar un canal înregistrat. Formate de durată: 0 = permanent,
@@ -783,7 +783,7 @@ suspend:
 # --- UNSUSPEND (IRCop) --------------------------------------------------------
 unsuspend:
   syntax: "UNSUSPEND <#canal>"
-  example: "%command_prefix%UNSUSPEND #canal"
+  example: "%command_prefix%UNSUSPEND #Ares_Help"
   short: "Anulați suspendarea unui canal."
   help: |-
     Reactivează un canal suspendat și îi restabilește modurile și aplicarea
@@ -795,7 +795,7 @@ unsuspend:
 # --- FORBID (IRCop) -----------------------------------------------------------
 forbid:
   syntax: "FORBID <#canal> <motiv>"
-  example: "%command_prefix%FORBID #canal Încălcarea regulilor"
+  example: "%command_prefix%FORBID #Ares_Help Încălcarea regulilor"
   short: "Interziceți utilizarea unui canal."
   help: |-
     Interzice folosirea canalului, evacuând toți utilizatorii și împiedicându-i
@@ -808,7 +808,7 @@ forbid:
 # --- UNFORBID (IRCop) ---------------------------------------------------------
 unforbid:
   syntax: "UNFORBID <#canal>"
-  example: "%command_prefix%UNFORBID #canal"
+  example: "%command_prefix%UNFORBID #Ares_Help"
   short: "Anulați interzicerea unui canal."
   help: "Elimină interdicția canalului, permițând înregistrarea lui din nou."
   success: "Canalul %channel% nu mai este interzis."
@@ -817,20 +817,20 @@ unforbid:
 # --- HISTORY ---
 history:
   syntax: "HISTORY <#canal> <opțiune> [parametri]"
-  example: "%command_prefix%HISTORY #canal ADD Revizuire moderare"
+  example: "%command_prefix%HISTORY #Ares_Help ADD Revizuire moderare"
   examples:
-    - "%command_prefix%HISTORY #canal DEL 42"
-    - "%command_prefix%HISTORY #canal VIEW"
-    - "%command_prefix%HISTORY #canal VIEW 2"
-    - "%command_prefix%HISTORY #canal VIEW ALL"
-    - "%command_prefix%HISTORY #canal CLEAR"
+    - "%command_prefix%HISTORY #Ares_Help DEL 42"
+    - "%command_prefix%HISTORY #Ares_Help VIEW"
+    - "%command_prefix%HISTORY #Ares_Help VIEW 2"
+    - "%command_prefix%HISTORY #Ares_Help VIEW ALL"
+    - "%command_prefix%HISTORY #Ares_Help CLEAR"
   short: "Vizualizați sau gestionați istoricul de acțiuni al canalului."
   help: "Gestionează istoricul acțiunilor unui canal."
 
   # --- HISTORY ADD ---------------------------------------------------------
   add:
     syntax: "HISTORY <#canal> ADD <mesaj>"
-    example: "%command_prefix%HISTORY #canal ADD Revizuire moderare"
+    example: "%command_prefix%HISTORY #Ares_Help ADD Revizuire moderare"
     short: "Adăugați o intrare manuală în istoric."
     help: |-
       Adaugă o intrare manuală în istoricul canalului.
@@ -839,17 +839,17 @@ history:
   # --- HISTORY DEL ---------------------------------------------------------
   del:
     syntax: "HISTORY <#canal> DEL <id>"
-    example: "%command_prefix%HISTORY #canal DEL 42"
+    example: "%command_prefix%HISTORY #Ares_Help DEL 42"
     short: "Șterge o intrare din istoric."
     help: "Șterge o intrare din istoric după ID."
 
   # --- HISTORY VIEW --------------------------------------------------------
   view:
     syntax: "HISTORY <#canal> VIEW [PAGINĂ|ALL]"
-    example: "%command_prefix%HISTORY #canal VIEW"
+    example: "%command_prefix%HISTORY #Ares_Help VIEW"
     examples:
-      - "%command_prefix%HISTORY #canal VIEW 2"
-      - "%command_prefix%HISTORY #canal VIEW ALL"
+      - "%command_prefix%HISTORY #Ares_Help VIEW 2"
+      - "%command_prefix%HISTORY #Ares_Help VIEW ALL"
     short: "Vizualizați istoricul de acțiuni al canalului."
     help: "Afișează intrările din istoricul canalului."
     header: "%heading% (se afișează %start%-%end% din %total%):"
@@ -862,7 +862,7 @@ history:
   # --- HISTORY CLEAR -------------------------------------------------------
   clear:
     syntax: "HISTORY <#canal> CLEAR"
-    example: "%command_prefix%HISTORY #canal CLEAR"
+    example: "%command_prefix%HISTORY #Ares_Help CLEAR"
     short: "Ștergeți toate intrările din istoricul unui canal."
     help: "Șterge toate intrările din istoricul canalului."
     success: "S-au șters %count% intrări din istoricul canalului %channel%."
@@ -954,11 +954,11 @@ creg:
   pending.short: "Listează cererile de înregistrare în așteptare."
   pending.help: "Listează cererile în așteptare într-o pagină limitată."
   accept.syntax: "CREG ACCEPT <#canal>"
-  accept.example: "%command_prefix%CREG ACCEPT #canal"
+  accept.example: "%command_prefix%CREG ACCEPT #Ares_Help"
   accept.short: "Aprobă o cerere de înregistrare a canalului."
   accept.help: "Verifică din nou solicitantul și activează înregistrarea."
   reject.syntax: "CREG REJECT <#canal> <motiv>"
-  reject.example: "%command_prefix%CREG REJECT #canal Motivo público"
+  reject.example: "%command_prefix%CREG REJECT #Ares_Help Motivo público"
   reject.short: "Respinge o cerere de înregistrare a canalului."
   reject.help: "Respinge cererea cu motiv obligatoriu și restricție."
   example: "%command_prefix%CREG PENDING"

@@ -59,15 +59,15 @@ identify:
     Autentica la sessió amb %nickserv% fent servir el sobrenom i la contrasenya.
     Després d'identificar-te correctament rebràs el mode registrat %emphasis_0%.
     Si fas servir un sobrenom de convidat, es restaura el sobrenom registrat.
-  example: "%command_prefix%IDENTIFY Usuari <contrasenya>"
+  example: "%command_prefix%IDENTIFY Ares la_meva_contrasenya123"
   native_syntax: "/NICK <nickname>:<password> | /NICK <nickname>!<password>"
   native_short: "Mostra la sintaxi d’autenticació nativa per canvi de sobrenom."
   native_help: |-
     Fes servir %emphasis_0% o, si el
     sobrenom està ocupat, %emphasis_1%.
-  native_example: "/NICK Usuari:<contrasenya>"
+  native_example: "/NICK Ares:la_meva_contrasenya123"
   native_examples:
-    - "%command_prefix%/NICK Usuari!<contrasenya>"
+    - "/NICK Ares!la_meva_contrasenya123"
   native_authentication: "Aquest protocol gestiona l’autenticació mitjançant canvis de sobrenom. Utilitzeu %command_0% o, si el sobrenom està ocupat, %command_1%."
   native_authentication_command_0: "/NICK <nickname>:<password>"
   native_authentication_command_1: "/NICK <nickname>!<password>"
@@ -136,9 +136,9 @@ recover:
     provisional, substituirà el token desat només després de validar-lo.
     Quan facis servir el token desat, se t'oferirà un reemplaçament opcional
     amb VERIFY; ignora aquest missatge si vols conservar l'actual.
-  example: "%command_prefix%RECOVER Usuari"
+  example: "%command_prefix%RECOVER Ares"
   examples:
-    - "%command_prefix%RECOVER Usuari <token-rebut>"
+    - "%command_prefix%RECOVER Ares <token-rebut>"
   pending: "El registre de %nickname% està pendent. Fes servir %command_0%. Si el token s'ha enviat per correu i hi ha una adreça vàlida associada, en pots sol·licitar un altre amb %command_1%."
   pending_command_0: "VERIFY <token>"
   pending_command_1: "RESEND"
@@ -304,7 +304,7 @@ info:
     El correu només és visible per al propietari identificat.
     Si el sobrenom és privat, només el propietari i els operadors IRC
     poden veure'n la informació.
-  example: "%command_prefix%INFO Usuari"
+  example: "%command_prefix%INFO Ares"
   private: "La informació del sobrenom %nickname% és privada."
   header: "Informació del sobrenom %nickname%"
   status: "%label%                 : %status%"
@@ -362,7 +362,7 @@ status:
   help: |-
     Mostra l'estat actual d'un sobrenom: si està registrat,
     pendent de verificació, suspès, etc.
-  example: "%command_prefix%STATUS Usuari"
+  example: "%command_prefix%STATUS Ares"
   header: "Estat del sobrenom %nickname%"
   unregistered: "  Estat           : No registrat"
   not_registered_offline: "  Estat           : %state%"
@@ -463,7 +463,7 @@ userip:
   help: |-
     Mostra l'adreça IP i el nom d'amfitrió reals d'un sobrenom.
     Fes-la servir amb responsabilitat: és informació sensible.
-  example: "%command_prefix%USERIP Usuari"
+  example: "%command_prefix%USERIP Ares"
   result: "Sobrenom: %nickname% | IP: %ip% | Amfitrió: %host%"
 
 # --- WHOIP (IRCop) ------------------------------------------------------------
@@ -502,17 +502,17 @@ history:
     Consulta i gestiona l'historial d'accions d'un sobrenom. Registra automàticament
     les suspensions, els canvis de contrasenya o de correu i les recuperacions.
     VIEW mostra tres entrades per pàgina; ALL mostra tot l'historial.
-  example: "%command_prefix%HISTORY Usuari VIEW"
+  example: "%command_prefix%HISTORY Ares VIEW"
   examples:
-    - "%command_prefix%HISTORY Usuari VIEW ALL"
-    - "%command_prefix%HISTORY Usuari ADD Nota manual"
+    - "%command_prefix%HISTORY Ares VIEW ALL"
+    - "%command_prefix%HISTORY Ares ADD Nota manual"
 
   # --- HISTORY ADD ---------------------------------------------------------
   add:
     syntax: "HISTORY <nickname> ADD <message>"
     short: "Afegir una entrada manual a l'historial."
     help: "Afegeix una entrada manual a l'historial del sobrenom."
-    example: "%command_prefix%HISTORY Usuari ADD Avís per correu brossa"
+    example: "%command_prefix%HISTORY Ares ADD Avís per correu brossa"
     success: "Entrada d'historial afegida per a %nickname%."
 
   # --- HISTORY DEL ---------------------------------------------------------
@@ -520,7 +520,7 @@ history:
     syntax: "HISTORY <nickname> DEL <id>"
     short: "Esborrar una entrada de l'historial per ID."
     help: "Elimina una entrada concreta de l'historial pel seu ID."
-    example: "%command_prefix%HISTORY Usuari DEL 42"
+    example: "%command_prefix%HISTORY Ares DEL 42"
 
   # --- HISTORY VIEW --------------------------------------------------------
   view:
@@ -529,10 +529,10 @@ history:
     help: |-
       Mostra l'historial d'accions del sobrenom. Per defecte, mostra tres entrades
       per pàgina. Fes servir ALL per veure-les totes.
-    example: "%command_prefix%HISTORY Usuari VIEW"
+    example: "%command_prefix%HISTORY Ares VIEW"
     examples:
-      - "%command_prefix%HISTORY Usuari VIEW 2"
-      - "%command_prefix%HISTORY Usuari VIEW ALL"
+      - "%command_prefix%HISTORY Ares VIEW 2"
+      - "%command_prefix%HISTORY Ares VIEW ALL"
     header: "%heading% (mostrant %start%-%end% de %total%):"
     header_title: "Historial de %nickname%"
     entry: "#%id% [%date%] %action% per %operator% — %message%"
@@ -545,11 +545,13 @@ history:
     syntax: "HISTORY <nickname> CLEAR"
     short: "Esborrar totes les entrades d'historial d'un sobrenom."
     help: "Elimina irreversiblement totes les entrades de l'historial del sobrenom."
-    example: "%command_prefix%HISTORY Usuari CLEAR"
+    example: "%command_prefix%HISTORY Ares CLEAR"
     success: "S'han esborrat %count% entrades d'historial de %nickname%."
 
 # --- HISTORY MESSAGES ---
 history.message:
+  modes_changed: "Preferència de modes automàtics canviada per un operador"
+  modes_cleared: "Preferència de modes automàtics esborrada per un operador"
   verify: "Compte activat"
   resend: "Correu de verificació reenviat"
   noexpire_on: "Protecció de caducitat activada"
@@ -565,6 +567,8 @@ history.message:
 
 # --- HISTORY EXTRA FIELDS ---
 history.extra:
+  old_modes: "Modes anteriors: %value%"
+  new_modes: "Modes nous: %value%"
   old_email: "Correu anterior: %value%"
   new_email: "Correu nou: %value%"
   method: "Mètode: %value%"
@@ -581,9 +585,9 @@ saregister:
 
     En mode TOKEN, el codi de rescat es mostra una vegada a l'operador.
     En mode EMAIL, el codi de rescat s'envia a l'adreça de correu indicada.
-  example: "%command_prefix%SAREGISTER Alice Contrasenya123"
+  example: "%command_prefix%SAREGISTER Ares Contrasenya123"
   examples:
-    - "%command_prefix%SAREGISTER Bob Contrasenya456 bob@exemple.cat"
+    - "%command_prefix%SAREGISTER Ares Contrasenya456 bob@exemple.cat"
   success_token: "El sobrenom %nickname% ha estat registrat. Codi de rescat: %token%"
   success_email: "El sobrenom %nickname% ha estat registrat. Codi de rescat enviat a %email%."
   invalid_nickname: "Sobrenom no vàlid %nickname%."
@@ -595,9 +599,9 @@ saset:
   help: |-
     Permet que un IRCop canviï la configuració d'un altre sobrenom registrat. No
     admet sobrenoms de Root, IRCop ni serveis.
-  example: "%command_prefix%SASET Usuari PRIVATE ON"
+  example: "%command_prefix%SASET Ares PRIVATE ON"
   examples:
-    - "%command_prefix%SASET Usuari TIMEZONE OFF"
+    - "%command_prefix%SASET Ares TIMEZONE OFF"
   unknown_option: "Opció desconeguda %option%. Opcions disponibles: %options%."
   cannot_modify_oper: "No es pot modificar un sobrenom d'Operador d'IRC."
 
@@ -606,7 +610,7 @@ saset:
     syntax: "SASET <sobrenom> PASSWORD <nova_contrasenya>"
     short: "Canviar la contrasenya d'un sobrenom."
     help: "Canvia la contrasenya d'un altre sobrenom. El canvi és immediat."
-    example: "%command_prefix%SASET Usuari PASSWORD ClauSegura123"
+    example: "%command_prefix%SASET Ares PASSWORD ClauSegura123"
 
   # --- SASET EMAIL ---------------------------------------------------------
   email:
@@ -616,7 +620,7 @@ saset:
       Canvia el correu electrònic d'un altre sobrenom. El canvi és immediat i no
       requereix el token de recuperació ni envia cap correu de confirmació.
       BADMAIL no restringeix aquest canvi administratiu de correu.
-    example: "%command_prefix%SASET Usuari EMAIL usuari@exemple.com"
+    example: "%command_prefix%SASET Ares EMAIL usuari@exemple.com"
 
   # --- SASET LANGUAGE ------------------------------------------------------
   language:
@@ -625,7 +629,7 @@ saset:
     help: |-
       Canvia l'idioma d'un altre sobrenom. S'admeten
       en (anglès) i ca (català).
-    example: "%command_prefix%SASET Usuari LANGUAGE ca"
+    example: "%command_prefix%SASET Ares LANGUAGE ca"
 
   # --- SASET TIMEZONE ------------------------------------------------------
   timezone:
@@ -634,18 +638,18 @@ saset:
     help: |-
       Estableix o elimina la zona horària d'un altre
       sobrenom. Fes servir OFF per eliminar-la.
-    example: "%command_prefix%SASET Usuari TIMEZONE Europe/Madrid"
+    example: "%command_prefix%SASET Ares TIMEZONE Europe/Madrid"
     examples:
-      - "%command_prefix%SASET Usuari TIMEZONE OFF"
+      - "%command_prefix%SASET Ares TIMEZONE OFF"
 
   # --- SASET PRIVATE -------------------------------------------------------
   private:
     syntax: "SASET <sobrenom> PRIVATE {ON|OFF}"
     short: "Canviar la privadesa d'un sobrenom."
     help: "Activa o desactiva la privadesa de la informació d'un altre sobrenom."
-    example: "%command_prefix%SASET Usuari PRIVATE ON"
+    example: "%command_prefix%SASET Ares PRIVATE ON"
     examples:
-      - "%command_prefix%SASET Usuari PRIVATE OFF"
+      - "%command_prefix%SASET Ares PRIVATE OFF"
 
   # --- SASET MSG -----------------------------------------------------------
   msg:
@@ -654,9 +658,29 @@ saset:
     help: |-
       Estableix si un altre sobrenom rep respostes com a
       PRIVMSG (ON) o NOTICE (OFF).
-    example: "%command_prefix%SASET Usuari MSG ON"
+    example: "%command_prefix%SASET Ares MSG ON"
     examples:
-      - "%command_prefix%SASET Usuari MSG OFF"
+      - "%command_prefix%SASET Ares MSG OFF"
+
+  # --- SASET MODES ---------------------------------------------------------
+  modes:
+    syntax: "SASET <sobrenom> MODES [modes]"
+    short: "Configura els modes automàtics d’un sobrenom."
+    help: |-
+      Desa lletres de mode sense signes i distingeix majúscules. Omet-les per
+      esborrar.
+      Els modes disponibles depenen del protocol i dels mòduls carregats.
+      S’apliquen en identificar-se i immediatament si és possible; no són un
+      bloqueig.
+    example: "%command_prefix%SASET Ares MODES B"
+    examples:
+      - "%command_prefix%SASET Ares MODES"
+    saved: "Modes automàtics %modes% desats per a %nickname%."
+    cleared: "Preferència de modes automàtics esborrada per a %nickname%."
+    unchanged: "Els modes automàtics de %nickname% no han canviat."
+    invalid: "Fes servir només lletres de mode admeses, sense signes ni paràmetres."
+    unavailable: "Es desconeixen els modes disponibles; espera la sincronització de la xarxa."
+    not_registered: "El sobrenom %nickname% no està registrat."
 
   # --- SASET VHOST ---------------------------------------------------------
   vhost:
@@ -665,9 +689,9 @@ saset:
     help: |-
       Estableix o elimina l'host virtual d'un altre sobrenom.
       Per eliminar-lo, executa SASET <sobrenom> VHOST sense valor.
-    example: "%command_prefix%SASET Usuari VHOST usuari.exemple.org"
+    example: "%command_prefix%SASET Ares VHOST usuari.exemple.org"
     examples:
-      - "%command_prefix%SASET Usuari VHOST"
+      - "%command_prefix%SASET Ares VHOST"
 
 # --- RENAME (IRCop) -----------------------------------------------------------
 rename:
@@ -676,7 +700,7 @@ rename:
   help: |-
     Força un sobrenom connectat a canviar a un nom aleatori amb un prefix definit
     per la xarxa.
-  example: "%command_prefix%RENAME UsuariProblematic"
+  example: "%command_prefix%RENAME BadUser"
   cannot_rename_root: "No es pot reanomenar l'usuari root %nickname%."
   cannot_rename_oper: "No es pot reanomenar l'operador d'IRC %nickname%."
   cannot_rename_service: "No es pot reanomenar el sobrenom de servei %nickname%."
@@ -689,9 +713,9 @@ noexpire:
   help: |-
     Controla si el sobrenom caduca per inactivitat.
     ON n'evita la caducitat i OFF aplica les regles normals.
-  example: "%command_prefix%NOEXPIRE Usuari ON"
+  example: "%command_prefix%NOEXPIRE Ares ON"
   examples:
-    - "%command_prefix%NOEXPIRE Usuari OFF"
+    - "%command_prefix%NOEXPIRE Ares OFF"
   success_on: "El sobrenom %nickname% ara està protegit contra l'expiració."
   success_off: "El sobrenom %nickname% ara expirarà normalment."
   forbidden: "El sobrenom %nickname% està prohibit."
@@ -726,9 +750,9 @@ suspend:
     Impedeix que el propietari s'identifiqui. La durada es pot expressar en dies
     (d), hores (h), minuts (m) o 0 per a una suspensió permanent. No es poden
     suspendre operadors IRC ni usuaris Root.
-  example: "%command_prefix%SUSPEND UsuariDolent 7d Correu brossa a #ajuda"
+  example: "%command_prefix%SUSPEND BadUser 7d Correu brossa a #Ares_Help"
   examples:
-    - "%command_prefix%SUSPEND UsuariProblematic 0 Evasió de la prohibició"
+    - "%command_prefix%SUSPEND BadUser 0 Evasió de la prohibició"
   success: "El sobrenom %nickname% ha estat suspès fins a %duration%."
   already_suspended: "El sobrenom %nickname% ja està suspès."
   forbidden: "El sobrenom %nickname% està prohibit i no es pot suspendre."
@@ -744,7 +768,7 @@ unsuspend:
   syntax: "UNSUSPEND <nickname>"
   short: "Treure la suspensió d'un sobrenom."
   help: "Retira una suspensió activa perquè el propietari es pugui tornar a identificar."
-  example: "%command_prefix%UNSUSPEND Usuari"
+  example: "%command_prefix%UNSUSPEND Ares"
   success: "S'ha aixecat la suspensió de %nickname%."
   not_suspended: "El sobrenom %nickname% no està suspès."
 
@@ -758,7 +782,7 @@ forbid:
     s'elimina; si està connectat, se'l força a canviar a
     un sobrenom aleatori. No es poden prohibir usuaris
     Root, IRCops ni serveis.
-  example: "%command_prefix%FORBID UsuariDolent Incompliments reiterats de la política"
+  example: "%command_prefix%FORBID BadUser Incompliments reiterats de la política"
   success: "El sobrenom %nickname% ha estat prohibit."
   updated: "El motiu de prohibició de %nickname% ha estat actualitzat."
   reason_required: "Heu de proporcionar un motiu per a la prohibició."
@@ -771,7 +795,7 @@ unforbid:
   syntax: "UNFORBID <nickname>"
   short: "Treure una prohibició de sobrenom."
   help: "Retira la prohibició perquè es pugui tornar a fer servir el sobrenom."
-  example: "%command_prefix%UNFORBID SobrenomProhibit"
+  example: "%command_prefix%UNFORBID Ares"
   success: "El sobrenom %nickname% ja no està prohibit."
   not_forbidden: "El sobrenom %nickname% no està prohibit."
 
@@ -831,9 +855,9 @@ drop:
     eliminar usuaris Root, IRCops ni serveis, ni tampoc el teu propi sobrenom.
   force:
     short: "Elimina definitivament un sobrenom pendent d'eliminació."
-  example: "%command_prefix%DROP CompteAntic"
+  example: "%command_prefix%DROP BadUser"
   examples:
-    - "%command_prefix%DROP CompteAntic FORCE"
+    - "%command_prefix%DROP BadUser FORCE"
   suspended: "El sobrenom %nickname% està suspès. Traieu la suspensió primer."
   forbidden: "El sobrenom %nickname% està prohibit."
   cannot_drop_root: "No es pot eliminar l'usuari root %nickname%."
@@ -851,7 +875,7 @@ restore:
   help: |-
     Restaura un sobrenom pendent d'eliminació mentre encara sigui dins del període
     de gràcia.
-  example: "%command_prefix%RESTORE CompteAntic"
+  example: "%command_prefix%RESTORE Ares"
   success: "El sobrenom %nickname% ha estat restaurat."
   not_pending_deletion: "El sobrenom %nickname% no està pendent d'eliminació."
 

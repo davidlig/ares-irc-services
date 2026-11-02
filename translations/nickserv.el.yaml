@@ -61,15 +61,15 @@ identify:
     Μετά από επιτυχή ταυτοποίηση θα λάβετε τη λειτουργία %emphasis_0%
     και, αν χρησιμοποιούσατε ψευδώνυμο επισκέπτη, το καταχωρημένο σας ψευδώνυμο θα
     αποκατασταθεί.
-  example: "%command_prefix%IDENTIFY Χρήστης <κωδικός>"
+  example: "%command_prefix%IDENTIFY Ares kodikos123"
   native_syntax: "/NICK <nickname>:<password> | /NICK <nickname>!<password>"
   native_short: "Εμφανίζει τη σύνταξη εγγενούς ταυτοποίησης ψευδωνύμου."
   native_help: |-
     Αυτό το πρωτόκολλο ταυτοποιεί λογαριασμούς μέσω αλλαγών ψευδωνύμου.
     Χρησιμοποιήστε %emphasis_0% ή, αν το ψευδώνυμο χρησιμοποιείται, %emphasis_1%.
-  native_example: "/NICK Χρήστης:<κωδικός>"
+  native_example: "/NICK Ares:kodikos123"
   native_examples:
-    - "%command_prefix%/NICK Χρήστης!<κωδικός>"
+    - "/NICK Ares!kodikos123"
   native_authentication: "Αυτό το πρωτόκολλο διαχειρίζεται την ταυτοποίηση μέσω αλλαγών ψευδωνύμου. Χρησιμοποιήστε %command_0% ή, αν το ψευδώνυμο χρησιμοποιείται, %command_1%."
   native_authentication_command_0: "/NICK <nickname>:<password>"
   native_authentication_command_1: "/NICK <nickname>!<password>"
@@ -140,9 +140,9 @@ recover:
     διακριτικό email ή επιβεβαιωμένο. Το email αντικαθιστά το αποθηκευμένο μόνο μετά
     από επικύρωση. Το αποθηκευμένο προσφέρει προαιρετική αντικατάσταση με VERIFY·
     αγνόησε το μήνυμα για να το κρατήσεις.
-  example: "%command_prefix%RECOVER Χρήστης"
+  example: "%command_prefix%RECOVER Ares"
   examples:
-    - "%command_prefix%RECOVER Χρήστης <ληφθέν_διακριτικό>"
+    - "%command_prefix%RECOVER Ares <ληφθέν_διακριτικό>"
   pending: "Η εγγραφή του %nickname% εκκρεμεί. Χρησιμοποίησε %command_0%. Το %command_1% διατίθεται μόνο με REGMODE EMAIL και έγκυρη διεύθυνση email."
   pending_command_0: "VERIFY <token>"
   pending_command_1: "RESEND"
@@ -311,7 +311,7 @@ info:
     κατάσταση σύνδεσης, τελευταίο μήνυμα εξόδου και διεύθυνση email. Το email
     είναι ορατό μόνο στον κάτοχο όταν είναι ταυτοποιημένος. Με PRIVATE ON μόνο
     ο κάτοχος και οι IRC Operators μπορούν να δουν τις πληροφορίες.
-  example: "%command_prefix%INFO Χρήστης"
+  example: "%command_prefix%INFO Ares"
   private: "Οι πληροφορίες του ψευδωνύμου %nickname% είναι ιδιωτικές."
   header: "Πληροφορίες για το ψευδώνυμο %nickname%"
   status: "%label%       : %status%"
@@ -370,7 +370,7 @@ status:
     Εμφανίζει την τρέχουσα κατάσταση ενός ψευδωνύμου: καταχωρημένο, εκκρεμή
     επαλήθευση,
     σε αναστολή ή απαγορευμένο.
-  example: "%command_prefix%STATUS Χρήστης"
+  example: "%command_prefix%STATUS Ares"
   header: "Κατάσταση του ψευδωνύμου %nickname%"
   unregistered: "  Κατάσταση      : Μη καταχωρημένο"
   not_registered_offline: "  Κατάσταση      : %state%"
@@ -477,7 +477,7 @@ userip:
 
     Σύνταξη: USERIP <ψευδώνυμο>
     Παράδειγμα: USERIP SomeUser
-  example: "%command_prefix%USERIP Χρήστης"
+  example: "%command_prefix%USERIP Ares"
   result: "Ψευδώνυμο: %nickname% | IP: %ip% | Host: %host%"
 
 # --- WHOIP (IRCop) ------------------------------------------------------------
@@ -542,10 +542,10 @@ history:
     Χρησιμοποιήστε ADD για χειροκίνητη καταχώρηση.
     Χρησιμοποιήστε DEL για διαγραφή συγκεκριμένης καταχώρησης μέσω ID.
     Χρησιμοποιήστε CLEAR για διαγραφή όλων των καταχωρήσεων ιστορικού.
-  example: "%command_prefix%HISTORY Χρήστης VIEW"
+  example: "%command_prefix%HISTORY Ares VIEW"
   examples:
-    - "%command_prefix%HISTORY Χρήστης VIEW ALL"
-    - "%command_prefix%HISTORY Χρήστης ADD Χειροκίνητη σημείωση"
+    - "%command_prefix%HISTORY Ares VIEW ALL"
+    - "%command_prefix%HISTORY Ares ADD Χειροκίνητη σημείωση"
 
   # --- HISTORY ADD ---------------------------------------------------------
   add:
@@ -556,7 +556,7 @@ history:
 
       Σύνταξη: HISTORY <ψευδώνυμο> ADD <message>
       Παράδειγμα: HISTORY SomeNick ADD Ο χρήστης αναφέρθηκε για spam
-    example: "%command_prefix%HISTORY Χρήστης ADD Αναφέρθηκε για ανεπιθύμητα"
+    example: "%command_prefix%HISTORY Ares ADD Αναφέρθηκε για ανεπιθύμητα"
     success: "Η καταχώρηση ιστορικού προστέθηκε για %nickname%."
 
   # --- HISTORY DEL ---------------------------------------------------------
@@ -568,7 +568,7 @@ history:
 
       Σύνταξη: HISTORY <ψευδώνυμο> DEL <id>
       Παράδειγμα: HISTORY SomeNick DEL 42
-    example: "%command_prefix%HISTORY Χρήστης DEL 42"
+    example: "%command_prefix%HISTORY Ares DEL 42"
 
   # --- HISTORY VIEW --------------------------------------------------------
   view:
@@ -584,10 +584,10 @@ history:
       Προεπιλεγμένα εμφανίζει 3 καταχωρήσεις κάθε φορά.
       Χρησιμοποιήστε VIEW 2 για τη δεύτερη σελίδα.
       Χρησιμοποιήστε VIEW ALL για πλήρες ιστορικό.
-    example: "%command_prefix%HISTORY Χρήστης VIEW"
+    example: "%command_prefix%HISTORY Ares VIEW"
     examples:
-      - "%command_prefix%HISTORY Χρήστης VIEW 2"
-      - "%command_prefix%HISTORY Χρήστης VIEW ALL"
+      - "%command_prefix%HISTORY Ares VIEW 2"
+      - "%command_prefix%HISTORY Ares VIEW ALL"
     header: "%heading% (εμφάνιση %start%-%end% από %total%):"
     header_title: "Ιστορικό για %nickname%"
     entry: "#%id% [%date%] %action% από %operator% — %message%"
@@ -605,11 +605,13 @@ history:
 
       Σύνταξη: HISTORY <ψευδώνυμο> CLEAR
       Παράδειγμα: HISTORY SomeNick CLEAR
-    example: "%command_prefix%HISTORY Χρήστης CLEAR"
+    example: "%command_prefix%HISTORY Ares CLEAR"
     success: "Εκκαθαρίστηκαν %count% καταχωρήσεις ιστορικού για %nickname%."
 
 # --- HISTORY MESSAGES ---
 history.message:
+  modes_changed: "Η προτίμηση αυτόματων λειτουργιών άλλαξε από χειριστή"
+  modes_cleared: "Η προτίμηση αυτόματων λειτουργιών διαγράφηκε από χειριστή"
   verify: "Ο λογαριασμός ενεργοποιήθηκε"
   resend: "Το email επαλήθευσης στάλθηκε ξανά"
   noexpire_on: "Η προστασία λήξης ενεργοποιήθηκε"
@@ -625,6 +627,8 @@ history.message:
 
 # --- HISTORY EXTRA FIELDS ---
 history.extra:
+  old_modes: "Προηγούμενες λειτουργίες: %value%"
+  new_modes: "Νέες λειτουργίες: %value%"
   old_email: "Προηγούμενο email: %value%"
   new_email: "Νέο email: %value%"
   method: "Μέθοδος: %value%"
@@ -641,9 +645,9 @@ saregister:
 
     Στη λειτουργία TOKEN, το διακριτικό διάσωσης εμφανίζεται μία φορά στον διαχειριστή.
     Στη λειτουργία EMAIL, το διακριτικό διάσωσης αποστέλλεται στην καθορισμένη διεύθυνση email.
-  example: "%command_prefix%SAREGISTER Alice Κωδικός123"
+  example: "%command_prefix%SAREGISTER Ares Κωδικός123"
   examples:
-    - "%command_prefix%SAREGISTER Bob Κωδικός456 bob@example.gr"
+    - "%command_prefix%SAREGISTER Ares Κωδικός456 bob@example.gr"
   success_token: "Το ψευδώνυμο %nickname% καταχωρήθηκε. Διακριτικό διάσωσης: %token%"
   success_email: "Το ψευδώνυμο %nickname% καταχωρήθηκε. Το διακριτικό διάσωσης στάλθηκε στο %email%."
   invalid_nickname: "Μη έγκυρο ψευδώνυμο %nickname%."
@@ -666,9 +670,9 @@ saset:
 
     Σύνταξη: SASET <ψευδώνυμο> <επιλογή> <τιμή>
     Παράδειγμα: SASET Χρήστης PASSWORD νέοςκωδικός
-  example: "%command_prefix%SASET Χρήστης PRIVATE ON"
+  example: "%command_prefix%SASET Ares PRIVATE ON"
   examples:
-    - "%command_prefix%SASET Χρήστης TIMEZONE OFF"
+    - "%command_prefix%SASET Ares TIMEZONE OFF"
   unknown_option: "Άγνωστη επιλογή %option%. Διαθέσιμες επιλογές: %options%."
   cannot_modify_oper: "Δεν μπορεί να τροποποιηθεί ψευδώνυμο IRC Operator."
 
@@ -682,7 +686,7 @@ saset:
 
       Σύνταξη: SASET <ψευδώνυμο> PASSWORD <νέος_κωδικός>
       Παράδειγμα: SASET Χρήστης PASSWORD νέοςκωδικός123
-    example: "%command_prefix%SASET Χρήστης PASSWORD ClaveSegura123"
+    example: "%command_prefix%SASET Ares PASSWORD ClaveSegura123"
 
   # --- SASET EMAIL ---------------------------------------------------------
   email:
@@ -695,7 +699,7 @@ saset:
       Σύνταξη: SASET <ψευδώνυμο> EMAIL <νέο_email>
       Παράδειγμα: SASET Χρήστης EMAIL χρήστης@παράδειγμα.com
       Το BADMAIL δεν περιορίζει αυτή τη διοικητική αλλαγή email.
-    example: "%command_prefix%SASET Χρήστης EMAIL user@example.gr"
+    example: "%command_prefix%SASET Ares EMAIL user@example.gr"
 
   # --- SASET LANGUAGE ------------------------------------------------------
   language:
@@ -707,7 +711,7 @@ saset:
 
       Σύνταξη: SASET <ψευδώνυμο> LANGUAGE <κωδικός>
       Παράδειγμα: SASET Χρήστης LANGUAGE el
-    example: "%command_prefix%SASET Χρήστης LANGUAGE es"
+    example: "%command_prefix%SASET Ares LANGUAGE es"
 
   # --- SASET TIMEZONE ------------------------------------------------------
   timezone:
@@ -719,9 +723,9 @@ saset:
 
       Σύνταξη: SASET <ψευδώνυμο> TIMEZONE <ζώνη_ώρας>
       Παράδειγμα: SASET Χρήστης TIMEZONE Europe/Athens
-    example: "%command_prefix%SASET Χρήστης TIMEZONE Europe/Madrid"
+    example: "%command_prefix%SASET Ares TIMEZONE Europe/Madrid"
     examples:
-      - "%command_prefix%SASET Χρήστης TIMEZONE OFF"
+      - "%command_prefix%SASET Ares TIMEZONE OFF"
 
   # --- SASET PRIVATE -------------------------------------------------------
   private:
@@ -732,9 +736,9 @@ saset:
 
       Σύνταξη: SASET <ψευδώνυμο> PRIVATE {ON|OFF}
       Παράδειγμα: SASET Χρήστης PRIVATE ON
-    example: "%command_prefix%SASET Χρήστης PRIVATE ON"
+    example: "%command_prefix%SASET Ares PRIVATE ON"
     examples:
-      - "%command_prefix%SASET Χρήστης PRIVATE OFF"
+      - "%command_prefix%SASET Ares PRIVATE OFF"
 
   # --- SASET MSG -----------------------------------------------------------
   msg:
@@ -745,9 +749,30 @@ saset:
 
       Σύνταξη: SASET <ψευδώνυμο> MSG {ON|OFF}
       Παράδειγμα: SASET Χρήστης MSG ON
-    example: "%command_prefix%SASET Χρήστης MSG ON"
+    example: "%command_prefix%SASET Ares MSG ON"
     examples:
-      - "%command_prefix%SASET Χρήστης MSG OFF"
+      - "%command_prefix%SASET Ares MSG OFF"
+
+  # --- SASET MODES ---------------------------------------------------------
+  modes:
+    syntax: "SASET <ψευδώνυμο> MODES [λειτουργίες]"
+    short: "Ορίζει αυτόματες λειτουργίες ψευδωνύμου."
+    help: |-
+      Αποθηκεύει γράμματα λειτουργιών χωρίς πρόσημα, με διάκριση πεζών και
+      κεφαλαίων.
+      Χωρίς γράμματα διαγράφει την προτίμηση. Η διαθεσιμότητα εξαρτάται από τα
+      αρθρώματα.
+      Εφαρμόζονται στην ταυτοποίηση και άμεσα όταν γίνεται· δεν κλειδώνουν τις
+      λειτουργίες.
+    example: "%command_prefix%SASET Ares MODES B"
+    examples:
+      - "%command_prefix%SASET Ares MODES"
+    saved: "Αποθηκεύτηκαν οι αυτόματες λειτουργίες %modes% για το %nickname%."
+    cleared: "Διαγράφηκε η προτίμηση αυτόματων λειτουργιών για το %nickname%."
+    unchanged: "Οι αυτόματες λειτουργίες του %nickname% δεν άλλαξαν."
+    invalid: "Χρησιμοποιήστε μόνο υποστηριζόμενα γράμματα, χωρίς πρόσημα ή παραμέτρους."
+    unavailable: "Οι διαθέσιμες λειτουργίες είναι άγνωστες· περιμένετε τον συγχρονισμό δικτύου."
+    not_registered: "Το ψευδώνυμο %nickname% δεν είναι καταχωρισμένο."
 
   # --- SASET VHOST ---------------------------------------------------------
   vhost:
@@ -756,9 +781,9 @@ saset:
     help: |-
       Ορίζει ή αφαιρεί το εικονικό host άλλου ψευδωνύμου. Εκτελέστε SASET <ψευδώνυμο>
       VHOST χωρίς τιμή για να το αφαιρέσετε.
-    example: "%command_prefix%SASET Χρήστης VHOST user.example.gr"
+    example: "%command_prefix%SASET Ares VHOST user.example.gr"
     examples:
-      - "%command_prefix%SASET Χρήστης VHOST"
+      - "%command_prefix%SASET Ares VHOST"
 
 # --- RENAME (IRCop) -----------------------------------------------------------
 rename:
@@ -767,7 +792,7 @@ rename:
   help: |-
     Αναγκάζει ένα συνδεδεμένο ψευδώνυμο να αλλάξει σε τυχαίο όνομα με πρόθεμα που
     έχει ορίσει το δίκτυο.
-  example: "%command_prefix%RENAME Προβληματικός"
+  example: "%command_prefix%RENAME BadUser"
   cannot_rename_root: "Δεν μπορεί να μετονομαστεί ο root χρήστης %nickname%."
   cannot_rename_oper: "Δεν μπορεί να μετονομαστεί ο IRC operator %nickname%."
   cannot_rename_service: "Δεν μπορεί να μετονομαστεί το ψευδώνυμο υπηρεσίας %nickname%."
@@ -790,9 +815,9 @@ noexpire:
     Παραδείγματα:
       NOEXPIRE ImportantUser ON
       NOEXPIRE ImportantUser OFF
-  example: "%command_prefix%NOEXPIRE Χρήστης ON"
+  example: "%command_prefix%NOEXPIRE Ares ON"
   examples:
-    - "%command_prefix%NOEXPIRE Χρήστης OFF"
+    - "%command_prefix%NOEXPIRE Ares OFF"
   success_on: "Το ψευδώνυμο %nickname% είναι τώρα προστατευμένο από λήξη."
   success_off: "Το ψευδώνυμο %nickname% θα λήγει τώρα κανονικά."
   forbidden: "Το ψευδώνυμο %nickname% είναι απαγορευμένο."
@@ -839,9 +864,9 @@ suspend:
       SUSPEND BadUser 7d Spamming στο #help
       SUSPEND Abuser 30d Επαναλαμβανόμενο flood
       SUSPEND ProblemUser 0 Αποφυγή permaban
-  example: "%command_prefix%SUSPEND ΚακόςΧρήστης 7d Spam en #βοήθεια"
+  example: "%command_prefix%SUSPEND BadUser 7d Spam en #Ares_Help"
   examples:
-    - "%command_prefix%SUSPEND Προβληματικός 0 Παράκαμψη αποκλεισμού"
+    - "%command_prefix%SUSPEND BadUser 0 Παράκαμψη αποκλεισμού"
   success: "Το ψευδώνυμο %nickname% έχει τεθεί σε αναστολή μέχρι %duration%."
   already_suspended: "Το ψευδώνυμο %nickname% είναι ήδη σε αναστολή."
   forbidden: "Το ψευδώνυμο %nickname% είναι απαγορευμένο και δεν μπορεί να τεθεί σε αναστολή."
@@ -862,7 +887,7 @@ unsuspend:
 
     Σύνταξη: UNSUSPEND <ψευδώνυμο>
     Παράδειγμα: UNSUSPEND SomeUser
-  example: "%command_prefix%UNSUSPEND Χρήστης"
+  example: "%command_prefix%UNSUSPEND Ares"
   success: "Η αναστολή έχει αρθεί από %nickname%."
   not_suspended: "Το ψευδώνυμο %nickname% δεν είναι σε αναστολή."
 
@@ -884,7 +909,7 @@ forbid:
 
     Σύνταξη: FORBID <ψευδώνυμο> <αιτιολογία>
     Παράδειγμα: FORBID BadNick Επαναλαμβανόμενες παραβιάσεις πολιτικής
-  example: "%command_prefix%FORBID ΚακόςΧρήστης Επαναλαμβανόμενες παραβιάσεις κανόνων"
+  example: "%command_prefix%FORBID BadUser Επαναλαμβανόμενες παραβιάσεις κανόνων"
   success: "Το ψευδώνυμο %nickname% έχει απαγορευτεί."
   updated: "Η αιτιολογία απαγόρευσης για το %nickname% έχει ενημερωθεί."
   reason_required: "Πρέπει να δώσετε αιτιολογία για την απαγόρευση."
@@ -903,7 +928,7 @@ unforbid:
 
     Σύνταξη: UNFORBID <ψευδώνυμο>
     Παράδειγμα: UNFORBID SomeNick
-  example: "%command_prefix%UNFORBID ΑπαγορευμένοΨευδώνυμο"
+  example: "%command_prefix%UNFORBID Ares"
   success: "Το ψευδώνυμο %nickname% δεν είναι πλέον απαγορευμένο."
   not_forbidden: "Το ψευδώνυμο %nickname% δεν είναι απαγορευμένο."
 
@@ -981,9 +1006,9 @@ drop:
     Παράδειγμα: DROP OldAccount
   force:
     short: "Διαγράφει οριστικά ένα ψευδώνυμο που εκκρεμεί προς διαγραφή."
-  example: "%command_prefix%DROP ΠαλιόςΛογαριασμός"
+  example: "%command_prefix%DROP BadUser"
   examples:
-    - "%command_prefix%DROP ΠαλιόςΛογαριασμός FORCE"
+    - "%command_prefix%DROP BadUser FORCE"
   suspended: "Το ψευδώνυμο %nickname% είναι σε αναστολή. Άρετε πρώτα την αναστολή."
   forbidden: "Το ψευδώνυμο %nickname% είναι απαγορευμένο."
   cannot_drop_root: "Δεν μπορεί να διαγραφεί ο root χρήστης %nickname%."
@@ -1001,7 +1026,7 @@ restore:
   help: |-
     Επαναφέρει ένα ψευδώνυμο που διαγράφηκε χειροκίνητα και βρίσκεται ακόμα εντός
     της περιόδου χάριτος. Απαιτεί άδεια IRCop: nickserv.restore.
-  example: "%command_prefix%RESTORE ΠαλιόςΛογαριασμός"
+  example: "%command_prefix%RESTORE Ares"
   success: "Το ψευδώνυμο %nickname% έχει επαναφερθεί."
   not_pending_deletion: "Το ψευδώνυμο %nickname% δεν είναι σε αναμονή διαγραφής."
 

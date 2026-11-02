@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Irc\Adapter\Protocol\InspIRCd;
 
+use App\Irc\Adapter\Event\ConnectionLostEvent;
 use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
 use App\Irc\Adapter\Event\NetworkSyncCompleteEvent;
 use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
@@ -44,6 +45,74 @@ final class InspIRCdProtocolHandlerTest extends TestCase
 {
     /** @var list<string> */
     private array $effects = [];
+
+    #[Test]
+    public function automaticModesExposeOnlyApprovedSimpleSemanticsAndPreserveRemapping(): void
+    {
+        $handler = $this->createHandler();
+        $connection = $this->createStub(ConnectionInterface::class);
+        self::assertNull($handler->getAutomaticModes());
+        $this->sendRequiredCapab($handler, $connection, extraLines: [
+            'CAPAB USERMODES :simple:invisible=I simple:wallops=w simple:bot=b simple:deaf_commonchan=c simple:deaf=d simple:privdeaf=D simple:callerid=g simple:hidechans=i simple:antiredirect=L simple:nohistory=N simple:regdeaf=R simple:u_stripcolor=S simple:u_noctcp=T simple:oper=o simple:showwhois=W simple:sslqueries=z simple:cloak=x param-set:snomask=s',
+        ]);
+        self::assertSame([
+            'invisible' => 'I', 'wallops' => 'w', 'bot' => 'b', 'common-channel-only' => 'c',
+            'channel-deaf' => 'd', 'private-deaf' => 'D', 'caller-id' => 'g', 'hide-channels' => 'i',
+            'anti-redirect' => 'L', 'no-history' => 'N', 'registered-only' => 'R',
+            'strip-formatting' => 'S', 'no-ctcp' => 'T',
+        ], $handler->getAutomaticModes());
+    }
+
+    #[Test]
+    public function automaticModesDistinguishUnknownEmptyAndParameterizedInventories(): void
+    {
+        $handler = $this->createHandler();
+        $connection = $this->createStub(ConnectionInterface::class);
+        $this->sendRequiredCapab($handler, $connection);
+        self::assertNull($handler->getAutomaticModes());
+        $this->sendRequiredCapab($handler, $connection, extraLines: ['CAPAB USERMODES :']);
+        self::assertSame([], $handler->getAutomaticModes());
+        $this->sendRequiredCapab($handler, $connection, extraLines: ['CAPAB USERMODES :param:bot=B simple:oper=o']);
+        self::assertSame([], $handler->getAutomaticModes());
+        $this->sendRequiredCapab($handler, $connection, extraLines: ['CAPAB USERMODES :simple:bot=B invalid']);
+        self::assertNull($handler->getAutomaticModes());
+    }
+
+    #[Test]
+    public function automaticModesDoNotRequireTheChannelModeFactory(): void
+    {
+        $handler = new InspIRCdProtocolHandler();
+        $connection = $this->createStub(ConnectionInterface::class);
+        $this->sendRequiredCapab($handler, $connection, extraLines: ['CAPAB USERMODES :simple:bot=B']);
+        self::assertSame(['bot' => 'B'], $handler->getAutomaticModes());
+    }
+
+    #[Test]
+    public function automaticModesResetOnNegotiationHandshakeLossAndRemoteError(): void
+    {
+        $handler = $this->createHandler();
+        $connection = $this->createStub(ConnectionInterface::class);
+        $lines = ['CAPAB USERMODES :simple:bot=B'];
+        $this->sendRequiredCapab($handler, $connection, extraLines: $lines);
+        self::assertSame(['bot' => 'B'], $handler->getAutomaticModes());
+        $handler->handleIncoming(new IRCMessage(command: 'CAPAB', params: ['START', '1206']), $connection);
+        self::assertNull($handler->getAutomaticModes());
+        $this->sendRequiredCapab($handler, $connection, extraLines: $lines);
+        $handler->performHandshake($connection, $this->createServerLink());
+        self::assertNull($handler->getAutomaticModes());
+        $this->sendRequiredCapab($handler, $connection, extraLines: $lines);
+        $handler->onConnectionLost(new ConnectionLostEvent($this->createServerLink(), null));
+        self::assertNull($handler->getAutomaticModes());
+        $this->sendRequiredCapab($handler, $connection, extraLines: $lines);
+        $handler->handleIncoming(new IRCMessage(command: 'ERROR', trailing: 'closed'), $connection);
+        self::assertNull($handler->getAutomaticModes());
+        $this->sendRequiredCapab($handler, $connection, extraLines: $lines);
+        $this->sendRequiredCapab($handler, $connection, version: '1205', extraLines: $lines);
+        self::assertNull($handler->getAutomaticModes());
+        self::assertSame([
+            ConnectionLostEvent::class => 'onConnectionLost',
+        ], $handler::getSubscribedEvents());
+    }
 
     #[Test]
     public function getProtocolNameReturnsInspircd(): void

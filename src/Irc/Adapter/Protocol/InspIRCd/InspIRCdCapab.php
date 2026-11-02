@@ -12,6 +12,7 @@ use function array_values;
 use function asort;
 use function explode;
 use function in_array;
+use function preg_match;
 use function strlen;
 use function strpos;
 use function strtolower;
@@ -33,15 +34,16 @@ use function substr;
 final readonly class InspIRCdCapab
 {
     /**
-     * @param array<string, int>    $prefixModes   prefix mode name → level (sorted ascending)
-     * @param list<string>          $listModes
-     * @param list<string>          $paramSetModes
-     * @param list<string>          $simpleModes
-     * @param list<string>          $modules
-     * @param list<string>          $modSupport
-     * @param list<string>          $userModes
-     * @param list<string>          $extbans
-     * @param array<string, string> $capabilities
+     * @param array<string, int>                                      $prefixModes         prefix mode name → level (sorted ascending)
+     * @param list<string>                                            $listModes
+     * @param list<string>                                            $paramSetModes
+     * @param list<string>                                            $simpleModes
+     * @param list<string>                                            $modules
+     * @param list<string>                                            $modSupport
+     * @param list<string>                                            $userModes
+     * @param array<string, array{letter: string, kind: string}>|null $userModeDescriptors
+     * @param list<string>                                            $extbans
+     * @param array<string, string>                                   $capabilities
      */
     private function __construct(
         private array $prefixModes,
@@ -51,6 +53,7 @@ final readonly class InspIRCdCapab
         private array $modules,
         private array $modSupport,
         private array $userModes,
+        private ?array $userModeDescriptors,
         private array $extbans,
         private array $capabilities,
     ) {}
@@ -103,6 +106,7 @@ final readonly class InspIRCdCapab
             modules: $modules,
             modSupport: $modSupport,
             userModes: $userModes,
+            userModeDescriptors: self::parseUserModeDescriptors($lines),
             extbans: $extbans,
             capabilities: $capabilities,
         );
@@ -177,6 +181,12 @@ final readonly class InspIRCdCapab
     public function getUserModes(): array
     {
         return $this->userModes;
+    }
+
+    /** @return array<string, array{letter: string, kind: string}>|null */
+    public function getUserModeDescriptors(): ?array
+    {
+        return $this->userModeDescriptors;
     }
 
     /** @return list<string> */
@@ -323,6 +333,44 @@ final readonly class InspIRCdCapab
         }
 
         return $modes;
+    }
+
+    /**
+     * Keep semantic names and parameter requirements without changing the legacy letter list.
+     * Missing, malformed or conflicting inventories are not safe for automatic assignments.
+     *
+     * @param list<string> $lines
+     *
+     * @return array<string, array{letter: string, kind: string}>|null
+     */
+    private static function parseUserModeDescriptors(array $lines): ?array
+    {
+        $descriptors = null;
+        $letters = [];
+        foreach ($lines as $line) {
+            $message = IRCMessage::fromRawLine($line);
+            if ('CAPAB' !== $message->command || 'usermodes' !== strtolower($message->params[0] ?? '')) {
+                continue;
+            }
+
+            if (null === $message->trailing) {
+                return null;
+            }
+            $descriptors ??= [];
+            foreach (self::parseSpaceList($message->trailing) as $part) {
+                if (1 !== preg_match('/\A(simple|param|param-set):([A-Za-z0-9_-]+)=([A-Za-z])\z/', $part, $matches)) {
+                    return null;
+                }
+                [, $kind, $name, $letter] = $matches;
+                if (isset($descriptors[$name]) || isset($letters[$letter])) {
+                    return null;
+                }
+                $descriptors[$name] = ['letter' => $letter, 'kind' => $kind];
+                $letters[$letter] = true;
+            }
+        }
+
+        return $descriptors;
     }
 
     /**

@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace App\NickServ\Application\PublishedEvent;
 
+use App\NickServ\Application\Port\In\NickServEvent;
 use DateTimeImmutable;
 
 /** Dispatched inside the database transaction exclusively for persistent cleanup. */
-final readonly class NickDropCleanupEvent
+final readonly class NickDropCleanupEvent implements NickServEvent
 {
     public function __construct(
         public int $nickId,

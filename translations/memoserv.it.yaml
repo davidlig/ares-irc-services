@@ -23,9 +23,9 @@ send:
   help: |-
     Invia un messaggio a un nickname o a un canale registrato. Il destinatario deve
     avere attivo il servizio memo (ENABLE).
-  example: "%command_prefix%SEND Anna Ciao, puoi rivedere il memo?"
+  example: "%command_prefix%SEND Ares Ciao, puoi rivedere il memo?"
   examples:
-    - "%command_prefix%SEND #aiuto Avviso per il canale"
+    - "%command_prefix%SEND #Ares_Help Avviso per il canale"
   sent_nick: "Messaggio inviato a %nickname%."
   sent_channel: "Messaggio inviato al canale %channel%."
   throttled: "Deve attendere %seconds% secondo/i prima di inviare un altro messaggio."
@@ -44,7 +44,7 @@ read:
     del tuo nickname. Con #canale, richiede il livello MEMOREAD.
   example: "%command_prefix%READ 1"
   examples:
-    - "%command_prefix%READ #aiuto 2"
+    - "%command_prefix%READ #Ares_Help 2"
   header: "Messaggio #%index% da %from%:"
   footer: "%separator% %date%"
   not_found: "Messaggio #%index% non trovato."
@@ -59,7 +59,7 @@ list:
     tua casella; con #canale richiede MEMOREAD.
   example: "%command_prefix%LIST"
   examples:
-    - "%command_prefix%LIST #aiuto"
+    - "%command_prefix%LIST #Ares_Help"
   header: "Messaggi per %target%:"
   empty: "Nessun messaggio per %target%."
 
@@ -73,8 +73,8 @@ del:
   example: "%command_prefix%DEL ALL"
   examples:
     - "%command_prefix%DEL 1"
-    - "%command_prefix%DEL #aiuto 2"
-    - "%command_prefix%DEL #aiuto ALL"
+    - "%command_prefix%DEL #Ares_Help 2"
+    - "%command_prefix%DEL #Ares_Help ALL"
   deleted: "Messaggio #%index% eliminato."
   not_found: "Messaggio #%index% non trovato."
   all_deleted: "Tutti i messaggi in questa casella sono stati eliminati."
@@ -88,10 +88,10 @@ ignore:
     Gestisce i nickname da cui non vuoi ricevere messaggi, sia nel tuo account sia
     in un canale registrato. Per modificare la lista di un canale serve il permesso
     MEMOCHANGE.
-  example: "%command_prefix%IGNORE ADD Anna"
+  example: "%command_prefix%IGNORE ADD BadUser"
   examples:
-    - "%command_prefix%IGNORE DEL #aiuto Anna"
-    - "%command_prefix%IGNORE LIST #aiuto"
+    - "%command_prefix%IGNORE DEL #Ares_Help Ares"
+    - "%command_prefix%IGNORE LIST #Ares_Help"
 
   # --- IGNORE ADD ----------------------------------------------------------
   add:
@@ -100,18 +100,18 @@ ignore:
     help: |-
       I messaggi da questo nickname non saranno accettati per la sua casella (o quella
       del canale).
-    example: "%command_prefix%IGNORE ADD Anna"
+    example: "%command_prefix%IGNORE ADD BadUser"
     examples:
-      - "%command_prefix%IGNORE ADD #aiuto Anna"
+      - "%command_prefix%IGNORE ADD #Ares_Help Ares"
 
   # --- IGNORE DEL ----------------------------------------------------------
   del:
     syntax: "IGNORE DEL [#canale] <nickname>"
     short: "Rimuove un nickname dalla lista."
     help: "Rimuove il nickname dalla lista ignore."
-    example: "%command_prefix%IGNORE DEL Anna"
+    example: "%command_prefix%IGNORE DEL Ares"
     examples:
-      - "%command_prefix%IGNORE DEL #aiuto Anna"
+      - "%command_prefix%IGNORE DEL #Ares_Help Ares"
 
   # --- IGNORE LIST ---------------------------------------------------------
   list:
@@ -120,7 +120,7 @@ ignore:
     help: "Mostra la lista dei nickname che lei (o il canale) ignora per i messaggi."
     example: "%command_prefix%IGNORE LIST"
     examples:
-      - "%command_prefix%IGNORE LIST #aiuto"
+      - "%command_prefix%IGNORE LIST #Ares_Help"
   added: "%nickname% aggiunto alla lista ignore."
   removed: "%nickname% rimosso dalla lista ignore."
   already_ignored: "%nickname% è già nella lista ignore."
@@ -139,7 +139,7 @@ enable:
     il fondatore.
   example: "%command_prefix%ENABLE"
   examples:
-    - "%command_prefix%ENABLE #aiuto"
+    - "%command_prefix%ENABLE #Ares_Help"
   enabled_nick: "Servizio messaggi abilitato per il suo nickname."
   enabled_channel: "Servizio messaggi abilitato per il canale %channel%."
   already_enabled_nick: "Il servizio messaggi è già abilitato per il suo nickname."
@@ -155,7 +155,7 @@ disable:
     può disattivarla solo il fondatore.
   example: "%command_prefix%DISABLE"
   examples:
-    - "%command_prefix%DISABLE #aiuto"
+    - "%command_prefix%DISABLE #Ares_Help"
   disabled_nick: "Servizio messaggi disabilitato per il suo nickname."
   disabled_channel: "Servizio messaggi disabilitato per il canale %channel%."
   already_disabled_nick: "Il servizio messaggi è già disabilitato per il suo nickname."

@@ -19,13 +19,13 @@
 # --- ERROR --------------------------------------------------------------------
 error:
   invalid_channel: "Kanal izen baliogabea. Erabili %example%."
-  invalid_channel_example: "#kanala"
+  invalid_channel_example: "#Ares_Help"
   generic: "Errore bat gertatu da. Saiatu berriro."
 
 # --- REGISTER -----------------------------------------------------------------
 register:
   syntax: "REGISTER <#kanala> <deskribapena>"
-  example: "%command_prefix%REGISTER #kanala Komunitate-proiektua"
+  example: "%command_prefix%REGISTER #Ares_Help Laguntza kanala"
   short: "Erregistratu kanal bat."
   help: |-
     Kanala erregistratu eta zure goitizenarekin lotzen du. %nickserv% zerbitzuan
@@ -46,7 +46,7 @@ register:
 # --- INFO ---------------------------------------------------------------------
 info:
   syntax: "INFO <#kanala>"
-  example: "%command_prefix%INFO #kanala"
+  example: "%command_prefix%INFO #Ares_Help"
   short: "Erakutsi kanalaren informazioa."
   help: |-
     Erregistratutako kanal baten informazio zehatza erakusten du: jabea,
@@ -103,10 +103,10 @@ info:
 # --- SET ----------------------------------------------------------------------
 set:
   syntax: "SET <#kanala> <aukera> [parametroak]"
-  example: "%command_prefix%SET #kanala DESC Komunitate-kanala"
+  example: "%command_prefix%SET #Ares_Help DESC Laguntza kanala"
   examples:
-    - "%command_prefix%SET #kanala URL https://example.test"
-    - "%command_prefix%SET #kanala MLOCK ON"
+    - "%command_prefix%SET #Ares_Help URL https://example.test"
+    - "%command_prefix%SET #Ares_Help MLOCK ON"
   short: "Aldatu kanalaren aukerak."
   help: |-
     Kanalaren aukera bat aldatzen du. Aukera bakoitzaren laguntzak haren
@@ -118,9 +118,9 @@ set:
     token_required: "Erabili SET <#kanala> FOUNDER <ezizena> <token> egungo sortzailearen token berretsiarekin."
     token_unavailable: "Egungo sortzaileak ez du erreskate-token berretsirik. Lehenik autentifikatu eta VERIFY erabili behar du."
     syntax: "SET <#kanala> FOUNDER <ezizena> [tokena]"
-    example: "%command_prefix%SET #kanala FOUNDER Ane"
+    example: "%command_prefix%SET #Ares_Help FOUNDER Ares"
     examples:
-      - "%command_prefix%SET #kanala FOUNDER Ane token-berretsia"
+      - "%command_prefix%SET #Ares_Help FOUNDER Ares 65dec7d5370eaa57c5a4bde98e591ccb"
     short: "Transferitu kanala beste ezizen erregistratu batera."
     help: |-
       Uneko sortzailearen tokena balioztatu ondoren sortzailea aldatzen du.
@@ -139,9 +139,9 @@ set:
   # --- SET SUCCESSOR -------------------------------------------------------
   successor:
     syntax: "SET <#kanala> SUCCESSOR [ezizena]"
-    example: "%command_prefix%SET #kanala SUCCESSOR Ane"
+    example: "%command_prefix%SET #Ares_Help SUCCESSOR Ares"
     examples:
-      - "%command_prefix%SET #kanala SUCCESSOR"
+      - "%command_prefix%SET #Ares_Help SUCCESSOR"
     short: "Ezarri kanalaren ondorengoa."
     help: |-
       Ezizen bat kanalaren ondorengo gisa ezartzen du. Ezizenik ez emanez gero,
@@ -157,7 +157,7 @@ set:
   # --- SET DESC ------------------------------------------------------------
   desc:
     syntax: "SET <#kanala> DESC <deskribapena>"
-    example: "%command_prefix%SET #kanala DESC Komunitate-kanala"
+    example: "%command_prefix%SET #Ares_Help DESC Laguntza kanala"
     short: "Aldatu kanalaren deskribapena."
     help: "Aldatu kanalaren deskribapena (derrigorrezkoa)."
     updated: "Deskribapena eguneratu da."
@@ -165,9 +165,9 @@ set:
   # --- SET URL -------------------------------------------------------------
   url:
     syntax: "SET <#kanala> URL [urla]"
-    example: "%command_prefix%SET #kanala URL https://example.test"
+    example: "%command_prefix%SET #Ares_Help URL https://example.test"
     examples:
-      - "%command_prefix%SET #kanala URL"
+      - "%command_prefix%SET #Ares_Help URL"
     short: "Ezarri kanalaren URLa."
     help: "Kanalaren web-helbidea (URLa) aldatzen du. Utzi URLa hutsik ezabatzeko."
     updated: "URLa eguneratu da."
@@ -176,9 +176,9 @@ set:
   # --- SET EMAIL -----------------------------------------------------------
   email:
     syntax: "SET <#kanala> EMAIL [posta]"
-    example: "%command_prefix%SET #kanala EMAIL talde@example.test"
+    example: "%command_prefix%SET #Ares_Help EMAIL talde@example.test"
     examples:
-      - "%command_prefix%SET #kanala EMAIL"
+      - "%command_prefix%SET #Ares_Help EMAIL"
     short: "Ezarri kanalaren posta elektronikoa."
     help: |-
       Kanalaren posta-helbidea aldatzen du. Utzi posta hutsik ezabatzeko.
@@ -192,9 +192,9 @@ set:
   # --- SET ENTRYMSG --------------------------------------------------------
   entrymsg:
     syntax: "SET <#kanala> ENTRYMSG [mezua]"
-    example: "%command_prefix%SET #kanala ENTRYMSG Ongi etorri"
+    example: "%command_prefix%SET #Ares_Help ENTRYMSG Ongi etorri laguntza kanalera"
     examples:
-      - "%command_prefix%SET #kanala ENTRYMSG"
+      - "%command_prefix%SET #Ares_Help ENTRYMSG"
     short: "Ezarri kanalaren sarrera mezua."
     help: "Sarrera-mezua (NOTICE) ezartzen du. Utzi mezua hutsik ezabatzeko."
     updated: "Sarrera mezua eguneratu da."
@@ -203,9 +203,9 @@ set:
   # --- SET TOPICLOCK -------------------------------------------------------
   topiclock:
     syntax: "SET <#kanala> TOPICLOCK {ON|OFF}"
-    example: "%command_prefix%SET #kanala TOPICLOCK ON"
+    example: "%command_prefix%SET #Ares_Help TOPICLOCK ON"
     examples:
-      - "%command_prefix%SET #kanala TOPICLOCK OFF"
+      - "%command_prefix%SET #Ares_Help TOPICLOCK OFF"
     short: "Blokeatu kanalaren gaia."
     help: "Kanaleko gaia aldatzea blokeatzen du. Aktibatzean, uneko gaia ezartzen du."
     on: "Gaiaren blokeoa orain ON dago."
@@ -216,9 +216,9 @@ set:
   # --- SET MLOCK -----------------------------------------------------------
   mlock:
     syntax: "SET <#kanala> MLOCK {ON|OFF}"
-    example: "%command_prefix%SET #kanala MLOCK ON"
+    example: "%command_prefix%SET #Ares_Help MLOCK ON"
     examples:
-      - "%command_prefix%SET #kanala MLOCK OFF"
+      - "%command_prefix%SET #Ares_Help MLOCK OFF"
     short: "Blokeatu kanalaren moduak."
     help: |-
       Uneko kanal moduak blokeatzen ditu (adib. +nt). ON dagoenean, moduak ezin dira
@@ -232,9 +232,9 @@ set:
   # --- SET PRIVATE ---------------------------------------------------------
   private:
     syntax: "SET <#kanala> PRIVATE {ON|OFF}"
-    example: "%command_prefix%SET #kanala PRIVATE ON"
+    example: "%command_prefix%SET #Ares_Help PRIVATE ON"
     examples:
-      - "%command_prefix%SET #kanala PRIVATE OFF"
+      - "%command_prefix%SET #Ares_Help PRIVATE OFF"
     short: "Ezkutatu kanalaren informazioa sarbiderik gabeko erabiltzaileei."
     help: |-
       ON dagoenean, sortzaileak eta sarbidea duten erabiltzaileek soilik ikus dezakete
@@ -245,9 +245,9 @@ set:
   # --- SET SECURE ----------------------------------------------------------
   secure:
     syntax: "SET <#kanala> SECURE {ON|OFF}"
-    example: "%command_prefix%SET #kanala SECURE ON"
+    example: "%command_prefix%SET #Ares_Help SECURE ON"
     examples:
-      - "%command_prefix%SET #kanala SECURE OFF"
+      - "%command_prefix%SET #Ares_Help SECURE OFF"
     short: "Eskatu sarbide zerrenda kanal mailetarako."
     help: "Sarbide-zerrendan ez dauden ezizenei kanaleko mailak esleitzea blokeatzen du."
     on: "SECURE orain ON dago."
@@ -258,9 +258,9 @@ set:
   # --- SET VERBOSE ---------------------------------------------------------
   verbose:
     syntax: "SET <#kanala> VERBOSE {ON|OFF}"
-    example: "%command_prefix%SET #kanala VERBOSE ON"
+    example: "%command_prefix%SET #Ares_Help VERBOSE ON"
     examples:
-      - "%command_prefix%SET #kanala VERBOSE OFF"
+      - "%command_prefix%SET #Ares_Help VERBOSE OFF"
     short: "Kanaleko ekintza-jakinarazpenak txandakatu."
     help: |-
       Kanalean egindako ekintzetarako kanalera NOTICE difusioak
@@ -271,7 +271,7 @@ set:
 # --- STATUS -------------------------------------------------------------------
 status:
   syntax: "STATUS <#channel>"
-  example: "%command_prefix%STATUS #channel"
+  example: "%command_prefix%STATUS #Ares_Help"
   header: "Kanalaren egoera %channel%"
   short: "Kanalaren erregistro-egoera erakutsi."
   help: |-
@@ -313,10 +313,10 @@ status:
 # --- ACCESS -------------------------------------------------------------------
 access:
   syntax: "ACCESS <#kanala> <aukera> [parametroak]"
-  example: "%command_prefix%ACCESS #kanala LIST"
+  example: "%command_prefix%ACCESS #Ares_Help LIST"
   examples:
-    - "%command_prefix%ACCESS #kanala ADD Ane 100"
-    - "%command_prefix%ACCESS #kanala DEL Ane"
+    - "%command_prefix%ACCESS #Ares_Help ADD Ares 100"
+    - "%command_prefix%ACCESS #Ares_Help DEL Ares"
   short: "Kudeatu sarbide zerrenda."
   help: "Kanalaren sarbide-zerrenda kudeatzen du."
   unknown_sub: "Azpikomando ezezaguna %sub%. Erabili LIST, ADD edo DEL."
@@ -328,7 +328,7 @@ access:
   # --- ACCESS LIST ---------------------------------------------------------
   list:
     syntax: "ACCESS <#kanala> LIST"
-    example: "%command_prefix%ACCESS #kanala LIST"
+    example: "%command_prefix%ACCESS #Ares_Help LIST"
     short: "Zerrendatu sarbide zerrenda (ACCESSLIST maila behar da)."
     help: "Ezizena eta maila erakusten ditu sarrera bakoitzeko."
     header: "%channel% kanalaren sarbide zerrenda"
@@ -338,7 +338,7 @@ access:
   # --- ACCESS ADD ----------------------------------------------------------
   add:
     syntax: "ACCESS <#kanala> ADD <ezizena> <maila>"
-    example: "%command_prefix%ACCESS #kanala ADD Ane 100"
+    example: "%command_prefix%ACCESS #Ares_Help ADD Ares 100"
     short: "Gehitu edo eguneratu sarbide maila (ACCESSCHANGE maila behar da)."
     help: "Maila 1-499. Zurea baino maila baxuagoak soilik ezar ditzakezu."
     done: "%nickname% %level% mailara ezarri da."
@@ -347,7 +347,7 @@ access:
   # --- ACCESS DEL ----------------------------------------------------------
   del:
     syntax: "ACCESS <#kanala> DEL <ezizena>"
-    example: "%command_prefix%ACCESS #kanala DEL Ane"
+    example: "%command_prefix%ACCESS #Ares_Help DEL Ares"
     short: "Kendu sarbide zerrendatik (ACCESSCHANGE maila behar da)."
     help: "Zurea baino maila baxuagoa duten ezizenak soilik ken ditzakezu."
     not_in_list: "%nickname% ez dago sarbide zerrendan."
@@ -357,7 +357,7 @@ access:
 # --- DELACCESS ----------------------------------------------------------------
 delaccess:
   syntax: "DELACCESS <#kanala>"
-  example: "%command_prefix%DELACCESS #kanala"
+  example: "%command_prefix%DELACCESS #Ares_Help"
   short: "Kendu zure sarbidea kanal batetik."
   help: |-
     Kanalaren sarbide-zerrendatik zure sarrera ezabatzen du. Identifikatuta
@@ -370,15 +370,15 @@ delaccess:
 # --- AKICK --------------------------------------------------------------------
 akick:
   syntax: "AKICK <#kanala> <aukera> [parametroak]"
-  example: "%command_prefix%AKICK #kanala ADD *!*@* 0"
+  example: "%command_prefix%AKICK #Ares_Help ADD GaiztoaNaiz!*@* 0"
   examples:
-    - "%command_prefix%AKICK #kanala ADD *!*@* 7d Spam"
-    - "%command_prefix%AKICK #kanala DEL *!*@*"
-    - "%command_prefix%AKICK #kanala DEL 2"
-    - "%command_prefix%AKICK #kanala LIST"
-    - "%command_prefix%AKICK #kanala VIEW 1"
-    - "%command_prefix%AKICK #kanala CLEAR"
-    - "%command_prefix%AKICK #kanala CHECK Alice"
+    - "%command_prefix%AKICK #Ares_Help ADD GaiztoaNaiz!*@* 7d Nahi gabeko mezuak"
+    - "%command_prefix%AKICK #Ares_Help DEL *!*@*"
+    - "%command_prefix%AKICK #Ares_Help DEL 2"
+    - "%command_prefix%AKICK #Ares_Help LIST"
+    - "%command_prefix%AKICK #Ares_Help VIEW 1"
+    - "%command_prefix%AKICK #Ares_Help CLEAR"
+    - "%command_prefix%AKICK #Ares_Help CHECK Ares"
   short: "Kudeatu auto-kick zerrenda."
   help: "Auto-kick sarrerak eta haien aukerako iraungitzea kudeatzen ditu."
   unknown_sub: "Azpikomando ezezaguna %sub%. Erabili ADD, DEL, LIST, VIEW, CLEAR edo CHECK."
@@ -390,9 +390,9 @@ akick:
   # --- AKICK ADD -----------------------------------------------------------
   add:
     syntax: "AKICK <#kanala> ADD <maskara> [iraungitzea] [arrazoia]"
-    example: "%command_prefix%AKICK #kanala ADD *!*@* 0"
+    example: "%command_prefix%AKICK #Ares_Help ADD GaiztoaNaiz!*@* 0"
     examples:
-      - "%command_prefix%AKICK #kanala ADD *!*@* 7d Spam"
+      - "%command_prefix%AKICK #Ares_Help ADD GaiztoaNaiz!*@* 7d Nahi gabeko mezuak"
     short: "Gehitu AKICK sarrera."
     help: |-
       Kanalaren auto-kick zerrendara maskara bat gehitzen du.
@@ -407,9 +407,9 @@ akick:
   # --- AKICK DEL -----------------------------------------------------------
   del:
     syntax: "AKICK <#kanala> DEL {<maskara>|<zenbakia>}"
-    example: "%command_prefix%AKICK #kanala DEL *!*@*"
+    example: "%command_prefix%AKICK #Ares_Help DEL *!*@*"
     examples:
-      - "%command_prefix%AKICK #kanala DEL 2"
+      - "%command_prefix%AKICK #Ares_Help DEL 2"
     short: "Kendu AKICK sarrera."
     help: "Kendu maskara zehatzaren edo LISTeko sarrera zenbakiaren arabera."
     not_found: "AKICK %mask% ez da aurkitu."
@@ -419,7 +419,7 @@ akick:
   # --- AKICK LIST ----------------------------------------------------------
   list:
     syntax: "AKICK <#kanala> LIST"
-    example: "%command_prefix%AKICK #kanala LIST"
+    example: "%command_prefix%AKICK #Ares_Help LIST"
     short: "Zerrendatu AKICK sarrerak."
     help: "Maskara, arrazoia, iraungitzea eta nork gehitu zuen erakusten ditu."
     header: "%channel% kanalaren AKICK zerrenda"
@@ -429,9 +429,9 @@ akick:
   # --- AKICK VIEW ----------------------------------------------------------
   view:
     syntax: "AKICK <#kanala> VIEW {<maskara>|<zenbakia>}"
-    example: "%command_prefix%AKICK #kanala VIEW 1"
+    example: "%command_prefix%AKICK #Ares_Help VIEW 1"
     examples:
-      - "%command_prefix%AKICK #kanala VIEW *!*@bad.host"
+      - "%command_prefix%AKICK #Ares_Help VIEW *!*@bad.host"
     short: "Ikusi AKICK sarreraren metadatu zehatzak."
     help: |-
       Arrazoia, egilea, sortze-data, iraungitze-data, erabilpen-kontagailua
@@ -453,7 +453,7 @@ akick:
   # --- AKICK CLEAR ---------------------------------------------------------
   clear:
     syntax: "AKICK <#kanala> CLEAR"
-    example: "%command_prefix%AKICK #kanala CLEAR"
+    example: "%command_prefix%AKICK #Ares_Help CLEAR"
     short: "Garbitu AKICK sarrera guztiak."
     help: |-
       Kanaleko automatikoki botatzeko sarrera guztiak ezabatzen ditu.
@@ -465,7 +465,7 @@ akick:
   # --- AKICK CHECK ---------------------------------------------------------
   check:
     syntax: "AKICK <#kanala> CHECK <ezizena>"
-    example: "%command_prefix%AKICK #kanala CHECK Alice"
+    example: "%command_prefix%AKICK #Ares_Help CHECK Ares"
     short: "Egiaztatu ezizen batek AKICK sarrerekin bat egiten duen."
     help: |-
       Konektatutako erabiltzaile batek kanaleko autokick sarreraren batekin bat egiten duen egiaztatzen du.
@@ -477,7 +477,7 @@ akick:
   # --- AKICK ENFORCE -------------------------------------------------------
   enforce:
     syntax: "AKICK <#kanala> ENFORCE"
-    example: "%command_prefix%AKICK #kanala ENFORCE"
+    example: "%command_prefix%AKICK #Ares_Help ENFORCE"
     short: "Aplikatu AKICK sarrerak kanaleko uneko erabiltzaileei."
     help: |-
       Kanaleko erabiltzaileak AKICK zerrendarekin alderatzen ditu
@@ -489,10 +489,10 @@ akick:
 # --- LEVELS -------------------------------------------------------------------
 levels:
   syntax: "LEVELS <#kanala> <aukera> [parametroak]"
-  example: "%command_prefix%LEVELS #kanala LIST"
+  example: "%command_prefix%LEVELS #Ares_Help LIST"
   examples:
-    - "%command_prefix%LEVELS #kanala SET OPDEOP 50"
-    - "%command_prefix%LEVELS #kanala RESET"
+    - "%command_prefix%LEVELS #Ares_Help SET OPDEOP 50"
+    - "%command_prefix%LEVELS #Ares_Help RESET"
   short: "Konfiguratu kanal mailak."
   help: |-
     Kanal-ekintzetarako gutxieneko sarbide-mailak konfiguratzen ditu. Sortzaileak
@@ -504,7 +504,7 @@ levels:
   # --- LEVELS LIST ---------------------------------------------------------
   list:
     syntax: "LEVELS <#kanala> LIST"
-    example: "%command_prefix%LEVELS #kanala LIST"
+    example: "%command_prefix%LEVELS #Ares_Help LIST"
     short: "Zerrendatu maila eskakizunak."
     help: |-
       Maila giltza bakoitza eta bere balioa erakusten ditu (lehenetsiak ezarrita ez
@@ -514,7 +514,7 @@ levels:
   # --- LEVELS SET ----------------------------------------------------------
   set:
     syntax: "LEVELS <#kanala> SET <maila> <balioa>"
-    example: "%command_prefix%LEVELS #kanala SET OPDEOP 50"
+    example: "%command_prefix%LEVELS #Ares_Help SET OPDEOP 50"
     short: "Ezarri maila eskakizun bat."
     help: "Balioa -1etik 499ra. Sortzailearentzat soilik."
     done: "%key% %value%(e)ra ezarri da."
@@ -522,7 +522,7 @@ levels:
   # --- LEVELS RESET --------------------------------------------------------
   reset:
     syntax: "LEVELS <#kanala> RESET"
-    example: "%command_prefix%LEVELS #kanala RESET"
+    example: "%command_prefix%LEVELS #Ares_Help RESET"
     short: "Leheneratu maila guztiak lehenetsitara."
     help: "Baliogabetze guztiak kentzen ditu. Sortzailearentzat soilik."
     done: "Maila guztiak lehenetsitara leheneratu dira."
@@ -530,7 +530,7 @@ levels:
 # --- INVITE -------------------------------------------------------------------
 invite:
   syntax: "INVITE <#kanala>"
-  example: "%command_prefix%INVITE #kanala"
+  example: "%command_prefix%INVITE #Ares_Help"
   short: "Gonbidatu zeure burua kanalera."
   help: "Gonbidatu zeure burua kanalera."
   done: "%channel% kanalera gonbidatua izan zara."
@@ -539,7 +539,7 @@ invite:
 # --- UNBAN --------------------------------------------------------------------
 unban:
   syntax: "UNBAN <#kanala>"
-  example: "%command_prefix%UNBAN #kanala"
+  example: "%command_prefix%UNBAN #Ares_Help"
   short: "Zuri eragiten dizuten debekuak kendu."
   help: "Zure uneko identitatearekin bat datozen kanaleko debeku guztiak kentzen ditu, komodinak eta IP/CIDR maskarak barne."
   done: "Zuri eragiten dizuten %count% debeku kendu dira %channel% kanalean"
@@ -551,7 +551,7 @@ unban:
 # --- ADMIN --------------------------------------------------------------------
 admin:
   syntax: "ADMIN <#kanala> <ezizena>"
-  example: "%command_prefix%ADMIN #kanala Ane"
+  example: "%command_prefix%ADMIN #Ares_Help Ares"
   short: "Eman kanal admin modua."
   help: "Eman kanal admin modua. IRCdk +a onartzen badu soilik."
   done: "%nickname%(r)i kanal admin eman zaio."
@@ -562,7 +562,7 @@ admin:
 # --- DEADMIN ------------------------------------------------------------------
 deadmin:
   syntax: "DEADMIN <#kanala> <ezizena>"
-  example: "%command_prefix%DEADMIN #kanala Ane"
+  example: "%command_prefix%DEADMIN #Ares_Help Ares"
   short: "Kendu kanal admin modua."
   help: "Kendu kanal admin modua."
   done: "%nickname%(r)i admin modua kendu zaio."
@@ -570,7 +570,7 @@ deadmin:
 # --- OP -----------------------------------------------------------------------
 op:
   syntax: "OP <#kanala> <ezizena>"
-  example: "%command_prefix%OP #kanala Ane"
+  example: "%command_prefix%OP #Ares_Help Ares"
   short: "Eman kanal operadore modua."
   help: "Eman kanal operadore modua."
   done: "%nickname%(r)i kanal operadore estatusa eman zaio."
@@ -580,7 +580,7 @@ op:
 # --- DEOP ---------------------------------------------------------------------
 deop:
   syntax: "DEOP <#kanala> <ezizena>"
-  example: "%command_prefix%DEOP #kanala Ane"
+  example: "%command_prefix%DEOP #Ares_Help Ares"
   short: "Kendu kanal operadore modua."
   help: "Kendu kanal operadore modua."
   done: "%nickname%(r)i operadore modua kendu zaio."
@@ -588,7 +588,7 @@ deop:
 # --- HALFOP -------------------------------------------------------------------
 halfop:
   syntax: "HALFOP <#kanala> <ezizena>"
-  example: "%command_prefix%HALFOP #kanala Ane"
+  example: "%command_prefix%HALFOP #Ares_Help Ares"
   short: "Eman erdi-operadore modua kanalean."
   help: "Eman erdi-operadore modua kanalean. IRCdk +h onartzen badu soilik."
   done: "%nickname%(r)i halfop eman zaio."
@@ -599,7 +599,7 @@ halfop:
 # --- DEHALFOP -----------------------------------------------------------------
 dehalfop:
   syntax: "DEHALFOP <#kanala> <ezizena>"
-  example: "%command_prefix%DEHALFOP #kanala Ane"
+  example: "%command_prefix%DEHALFOP #Ares_Help Ares"
   short: "Kendu erdi-operadore modua kanalean."
   help: "Kendu erdi-operadore modua kanalean."
   done: "%nickname%(r)i halfop modua kendu zaio."
@@ -607,7 +607,7 @@ dehalfop:
 # --- VOICE --------------------------------------------------------------------
 voice:
   syntax: "VOICE <#kanala> <ezizena>"
-  example: "%command_prefix%VOICE #kanala Ane"
+  example: "%command_prefix%VOICE #Ares_Help Ares"
   short: "Eman voice modua kanalean."
   help: "Eman voice modua kanalean."
   done: "%nickname%(r)i voice eman zaio."
@@ -617,7 +617,7 @@ voice:
 # --- DEVOICE ------------------------------------------------------------------
 devoice:
   syntax: "DEVOICE <#kanala> <ezizena>"
-  example: "%command_prefix%DEVOICE #kanala Ane"
+  example: "%command_prefix%DEVOICE #Ares_Help Ares"
   short: "Kendu voice modua kanalean."
   help: "Kendu voice modua kanalean."
   done: "%nickname%(r)i voice kendu zaio."
@@ -668,9 +668,9 @@ help:
 # --- CLEARUSERS (IRCop) -------------------------------------------------------
 clearusers:
   syntax: "CLEARUSERS <#kanala> [arrazoia]"
-  example: "%command_prefix%CLEARUSERS #kanala"
+  example: "%command_prefix%CLEARUSERS #Ares_Help"
   examples:
-    - "%command_prefix%CLEARUSERS #kanala flooding"
+    - "%command_prefix%CLEARUSERS #Ares_Help flooding"
   short: "Kanporatu erabiltzaile guztiak kanal batetik."
   help: |-
     Kanaleko erabiltzaile guztiak kanporatzen ditu. IRCop-ek soilik erabil dezake;
@@ -683,7 +683,7 @@ clearusers:
 # --- CLEARACCESS (IRCop) ------------------------------------------------------
 clearaccess:
   syntax: "CLEARACCESS <#kanala>"
-  example: "%command_prefix%CLEARACCESS #kanala"
+  example: "%command_prefix%CLEARACCESS #Ares_Help"
   short: "Garbitu kanal baten sarbide zerrenda osoa."
   help: "Kanaleko sarbide-sarrera guztiak ezabatzen ditu. Ekintza hau atzeraezina da."
   success: "%count% sarbide sarrera garbitu dira %channel% kanaletik."
@@ -692,9 +692,9 @@ clearaccess:
 # --- IRCOPONLY (IRCop) --------------------------------------------------------
 ircoponly:
   syntax: "IRCOPONLY <#kanala> {ON|OFF}"
-  example: "%command_prefix%IRCOPONLY #kanala ON"
+  example: "%command_prefix%IRCOPONLY #Ares_Help ON"
   examples:
-    - "%command_prefix%IRCOPONLY #kanala OFF"
+    - "%command_prefix%IRCOPONLY #Ares_Help OFF"
   short: "Mugatu kanal bat IRC operadoreetara."
   help: |-
     Baimendutako IRC operadoreak soilik egon daitezke kanalean. %bot% arduratzen da
@@ -711,15 +711,15 @@ saregister:
 
     Kanal bat administratiboki erregistratzen du berehala zehaztutako ezizenarentzat
     sortzaile gisa, presentziarik, egiaztapenik edo maiztasun-mugarik eskatu gabe.
-  example: "%command_prefix%SAREGISTER #kanala Alice Komunitate-kanala"
+  example: "%command_prefix%SAREGISTER #Ares_Help Ares Laguntza kanala"
   success: "%channel% kanala %founder% erabiltzailearentzat erregistratu da."
 
 # --- NOEXPIRE (IRCop) ---------------------------------------------------------
 noexpire:
   syntax: "NOEXPIRE <#kanala> {ON|OFF}"
-  example: "%command_prefix%NOEXPIRE #Garrantzitsua ON"
+  example: "%command_prefix%NOEXPIRE #Ares_Help ON"
   examples:
-    - "%command_prefix%NOEXPIRE #Garrantzitsua OFF"
+    - "%command_prefix%NOEXPIRE #Ares_Help OFF"
   short: "Ezarri edo kendu iraungitze babesa kanal batentzat."
   help: |-
     Kanal bat jarduerarik ezagatik iraungitzen den kontrolatzen du.
@@ -732,9 +732,9 @@ noexpire:
 # --- DROP (IRCop) -------------------------------------------------------------
 drop:
   syntax: "DROP <#kanala> [FORCE]"
-  example: "%command_prefix%DROP #kanala"
+  example: "%command_prefix%DROP #Ares_Help"
   examples:
-    - "%command_prefix%DROP #kanala FORCE"
+    - "%command_prefix%DROP #Ares_Help FORCE"
   short: "Ezabatu erregistratutako kanal bat."
   help: |-
     Erregistratutako kanal bat datu-basetik ezabatzen du.
@@ -753,7 +753,7 @@ drop:
 # --- RESTORE (IRCop) ----------------------------------------------------------
 restore:
   syntax: "RESTORE <#kanala>"
-  example: "%command_prefix%RESTORE #kanala"
+  example: "%command_prefix%RESTORE #Ares_Help"
   short: "Ezabatzearen zain dagoen kanala berreskuratu."
   help: |-
     Eskuz ezabatu den eta oraindik grazia-epearen barruan dagoen kanala leheneratzen
@@ -764,9 +764,9 @@ restore:
 # --- SUSPEND (IRCop) ----------------------------------------------------------
 suspend:
   syntax: "SUSPEND <#kanala> <iraupena> <arrazoia>"
-  example: "%command_prefix%SUSPEND #kanala 7d Arauak urratzea"
+  example: "%command_prefix%SUSPEND #Ares_Help 7d Arauak urratzea"
   examples:
-    - "%command_prefix%SUSPEND #kanala 0 Arauak urratzea"
+    - "%command_prefix%SUSPEND #Ares_Help 0 Arauak urratzea"
   short: "Etten du kanal bat."
   help: |-
     Erregistratutako kanala aldi baterako desaktibatzen du. Iraupen-formatuak: 0 =
@@ -782,7 +782,7 @@ suspend:
 # --- UNSUSPEND (IRCop) --------------------------------------------------------
 unsuspend:
   syntax: "UNSUSPEND <#kanala>"
-  example: "%command_prefix%UNSUSPEND #kanala"
+  example: "%command_prefix%UNSUSPEND #Ares_Help"
   short: "Kendu kanalaren etenaldia."
   help: "Etendako kanal bat berraktibatzen du, haren moduak eta betearazpena leheneratuz."
   success: "%channel% kanala jada ez dago etenda."
@@ -792,7 +792,7 @@ unsuspend:
 # --- FORBID (IRCop) -----------------------------------------------------------
 forbid:
   syntax: "FORBID <#kanala> <arrazoia>"
-  example: "%command_prefix%FORBID #kanala Arauak urratzea"
+  example: "%command_prefix%FORBID #Ares_Help Arauak urratzea"
   short: "Debekatu kanal bat erabilia izatea."
   help: |-
     Kanalaren erabilera debekatzen du, erabiltzaile guztiak kanporatuz eta
@@ -806,7 +806,7 @@ forbid:
 # --- UNFORBID (IRCop) ---------------------------------------------------------
 unforbid:
   syntax: "UNFORBID <#kanala>"
-  example: "%command_prefix%UNFORBID #kanala"
+  example: "%command_prefix%UNFORBID #Ares_Help"
   short: "Kendu kanal debekua."
   help: "Kanalaren debekua kentzen du, berriro erregistratu ahal izateko."
   success: "%channel% kanala jada ez dago debekatuta."
@@ -815,20 +815,20 @@ unforbid:
 # --- HISTORY ---
 history:
   syntax: "HISTORY <#kanala> <aukera> [parametroak]"
-  example: "%command_prefix%HISTORY #kanala ADD Moderazio-berrikuspena"
+  example: "%command_prefix%HISTORY #Ares_Help ADD Moderazio-berrikuspena"
   examples:
-    - "%command_prefix%HISTORY #kanala DEL 42"
-    - "%command_prefix%HISTORY #kanala VIEW"
-    - "%command_prefix%HISTORY #kanala VIEW 2"
-    - "%command_prefix%HISTORY #kanala VIEW ALL"
-    - "%command_prefix%HISTORY #kanala CLEAR"
+    - "%command_prefix%HISTORY #Ares_Help DEL 42"
+    - "%command_prefix%HISTORY #Ares_Help VIEW"
+    - "%command_prefix%HISTORY #Ares_Help VIEW 2"
+    - "%command_prefix%HISTORY #Ares_Help VIEW ALL"
+    - "%command_prefix%HISTORY #Ares_Help CLEAR"
   short: "Ikusi edo kudeatu kanalaren ekintza historia."
   help: "Kanaleko ekintzen historia kudeatzen du."
 
   # --- HISTORY ADD ---------------------------------------------------------
   add:
     syntax: "HISTORY <#kanala> ADD <mezua>"
-    example: "%command_prefix%HISTORY #kanala ADD Moderazio-berrikuspena"
+    example: "%command_prefix%HISTORY #Ares_Help ADD Moderazio-berrikuspena"
     short: "Gehitu eskuzko historia sarrera bat."
     help: |-
       Eskuzko sarrera bat gehitzen du kanalaren historiara.
@@ -837,17 +837,17 @@ history:
   # --- HISTORY DEL ---------------------------------------------------------
   del:
     syntax: "HISTORY <#kanala> DEL <ida>"
-    example: "%command_prefix%HISTORY #kanala DEL 42"
+    example: "%command_prefix%HISTORY #Ares_Help DEL 42"
     short: "Ezabatu historiako sarrera bat."
     help: "IDaren bidez historia-sarrera bat ezabatzen du."
 
   # --- HISTORY VIEW --------------------------------------------------------
   view:
     syntax: "HISTORY <#kanala> VIEW [ORRIA|ALL]"
-    example: "%command_prefix%HISTORY #kanala VIEW"
+    example: "%command_prefix%HISTORY #Ares_Help VIEW"
     examples:
-      - "%command_prefix%HISTORY #kanala VIEW 2"
-      - "%command_prefix%HISTORY #kanala VIEW ALL"
+      - "%command_prefix%HISTORY #Ares_Help VIEW 2"
+      - "%command_prefix%HISTORY #Ares_Help VIEW ALL"
     short: "Ikusi kanalaren ekintza historia."
     help: "Kanalaren historia-sarrerak erakusten ditu."
     header: "%heading% (%total%etik %start%-%end% erakusten):"
@@ -860,7 +860,7 @@ history:
   # --- HISTORY CLEAR -------------------------------------------------------
   clear:
     syntax: "HISTORY <#kanala> CLEAR"
-    example: "%command_prefix%HISTORY #kanala CLEAR"
+    example: "%command_prefix%HISTORY #Ares_Help CLEAR"
     short: "Ezabatu kanal baten historia sarrera guztiak."
     help: "Kanalaren historia-sarrera guztiak ezabatzen ditu."
     success: "%count% historia sarrera garbitu dira %channel% kanalean."
@@ -952,11 +952,11 @@ creg:
   pending.short: "Zain dauden eskaerak orrialde mugatu batean zerrendatzen ditu."
   pending.help: "Zain dauden eskaerak orrialde mugatu batean zerrendatzen ditu."
   accept.syntax: "CREG ACCEPT <#channel>"
-  accept.example: "%command_prefix%CREG ACCEPT #channel"
+  accept.example: "%command_prefix%CREG ACCEPT #Ares_Help"
   accept.short: "Kanal-erregistro eskaera bat onartu."
   accept.help: "Eskaera berriz balioztatu eta zain dagoen erregistroa aktibatzen du."
   reject.syntax: "CREG REJECT <#channel> <arrazoia>"
-  reject.example: "%command_prefix%CREG REJECT #channel Gai publiko bat behar du"
+  reject.example: "%command_prefix%CREG REJECT #Ares_Help Gai publiko bat behar du"
   reject.short: "Kanal-erregistro eskaera bat ukatu."
   reject.help: "Eskaera arrazoia eta murrizketa eskatuz ukatzen du."
   example: "%command_prefix%CREG PENDING"

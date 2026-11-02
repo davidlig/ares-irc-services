@@ -180,7 +180,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
         $lines = new UnifiedHelpFormatter()->renderCommandHelp($adapter, $command);
         self::assertContains(" ■ \x02Options:\x03\x0F", $lines);
         self::assertContains("\x0310ℹ\x03\x0F Use /msg Channels \x02\x0303HELP SET <option>\x03\x0F for more information.", $lines);
-        self::assertContains("  /msg Channels \x02\x0303SET #channel DESC A community channel\x03\x0F", $lines);
+        self::assertContains("  /msg Channels \x02\x0303SET #Ares_Help DESC Help channel\x03\x0F", $lines);
         self::assertSame("\x0314" . str_repeat('─', 29) . "\x03\x0F", $lines[array_key_last($lines)]);
         self::assertSame('en', $adapter->getLanguage());
         self::assertSame('/msg OtherBot HELP', $adapter->renderExample('/msg OtherBot HELP'));

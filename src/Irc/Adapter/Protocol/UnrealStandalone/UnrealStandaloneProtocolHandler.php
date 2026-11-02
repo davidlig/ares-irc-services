@@ -10,6 +10,7 @@ use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 use App\Irc\Adapter\Protocol\IRCMessage;
 use App\Irc\Adapter\Protocol\ProtocolHandlerInterface;
 use App\Irc\Adapter\Security\SensitiveDataRedactor;
+use App\Irc\Application\Port\In\AutomaticModeSupport;
 use App\Irc\Domain\Server\ServerLink;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -22,7 +23,7 @@ use function substr;
 use function time;
 
 /** Implements the standalone UnrealIRCd 4.x / 5.x / 6.x server protocol. */
-final class UnrealStandaloneProtocolHandler implements ProtocolHandlerInterface
+final class UnrealStandaloneProtocolHandler implements AutomaticModeSupport, ProtocolHandlerInterface
 {
     private const string PROTOCOL_NAME = 'unreal';
 
@@ -52,11 +53,20 @@ final class UnrealStandaloneProtocolHandler implements ProtocolHandlerInterface
 
     private bool $remoteBurstComplete = false;
 
+    private readonly UnrealStandaloneAutomaticModeInventory $automaticModes;
+
     public function __construct(
         private readonly string $sid = '001',
         private readonly LoggerInterface $logger = new NullLogger(),
         private readonly ?EventDispatcherInterface $eventDispatcher = null,
-    ) {}
+    ) {
+        $this->automaticModes = new UnrealStandaloneAutomaticModeInventory($sid);
+    }
+
+    public function getAutomaticModes(): ?array
+    {
+        return $this->automaticModes->getAutomaticModes();
+    }
 
     public function getProtocolName(): string
     {
@@ -80,6 +90,7 @@ final class UnrealStandaloneProtocolHandler implements ProtocolHandlerInterface
 
     public function performHandshake(ConnectionInterface $connection, ServerLink $link): void
     {
+        $this->automaticModes->reset();
         $this->remoteSid = null;
         $this->remoteBurstComplete = false;
 
@@ -110,6 +121,7 @@ final class UnrealStandaloneProtocolHandler implements ProtocolHandlerInterface
 
     public function handleIncoming(IRCMessage $message, ConnectionInterface $connection): void
     {
+        $this->automaticModes->observe($message);
         match ($message->command) {
             'ERROR' => $this->handleError($message),
             'PING' => $this->handlePing($message, $connection),

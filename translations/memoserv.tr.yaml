@@ -23,9 +23,9 @@ send:
   help: |-
     Kayıtlı bir takma ada veya kanala mesaj gönderir. Alıcının mesaj hizmeti
     etkinleştirilmiş olmalıdır (ENABLE).
-  example: "%command_prefix%SEND Ana Merhaba, notu kontrol edebilir misin?"
+  example: "%command_prefix%SEND Ares Merhaba, notu kontrol edebilir misin?"
   examples:
-    - "%command_prefix%SEND #yardım Kanal için duyuru"
+    - "%command_prefix%SEND #Ares_Help Kanal için duyuru"
   sent_nick: "Mesaj %nickname% adlı kullanıcıya gönderildi."
   sent_channel: "Mesaj %channel% kanalına gönderildi."
   throttled: "Başka bir mesaj göndermeden önce %seconds% saniye beklemelisiniz."
@@ -44,7 +44,7 @@ read:
     #kanal ile MEMOREAD düzeyi gerekir.
   example: "%command_prefix%READ 1"
   examples:
-    - "%command_prefix%READ #yardım 2"
+    - "%command_prefix%READ #Ares_Help 2"
   header: "Mesaj #%index%, gönderen: %from%:"
   footer: "%separator% %date%"
   not_found: "#%index% numaralı mesaj bulunamadı."
@@ -59,7 +59,7 @@ list:
     #kanal varsa MEMOREAD gerekir.
   example: "%command_prefix%LIST"
   examples:
-    - "%command_prefix%LIST #yardım"
+    - "%command_prefix%LIST #Ares_Help"
   header: "%target% için mesajlar:"
   empty: "%target% için mesaj yok."
 
@@ -73,8 +73,8 @@ del:
   example: "%command_prefix%DEL ALL"
   examples:
     - "%command_prefix%DEL 1"
-    - "%command_prefix%DEL #yardım 2"
-    - "%command_prefix%DEL #yardım ALL"
+    - "%command_prefix%DEL #Ares_Help 2"
+    - "%command_prefix%DEL #Ares_Help ALL"
   deleted: "#%index% numaralı mesaj silindi."
   not_found: "#%index% numaralı mesaj bulunamadı."
   all_deleted: "Bu gelen kutusundaki tüm mesajlar silindi."
@@ -87,10 +87,10 @@ ignore:
   help: |-
     Hesabınızdan veya kayıtlı bir kanaldan mesaj almak istemediğiniz takma adları
     yönetir. Kanal listesini değiştirmek için MEMOCHANGE izni gerekir.
-  example: "%command_prefix%IGNORE ADD Ana"
+  example: "%command_prefix%IGNORE ADD BadUser"
   examples:
-    - "%command_prefix%IGNORE DEL #yardım Ana"
-    - "%command_prefix%IGNORE LIST #yardım"
+    - "%command_prefix%IGNORE DEL #Ares_Help Ares"
+    - "%command_prefix%IGNORE LIST #Ares_Help"
 
   # --- IGNORE ADD ----------------------------------------------------------
   add:
@@ -99,18 +99,18 @@ ignore:
     help: |-
       Bu rumuzdan gelen mesajlar gelen kutunuz (veya kanalın) için kabul
       edilmeyecektir.
-    example: "%command_prefix%IGNORE ADD Ana"
+    example: "%command_prefix%IGNORE ADD BadUser"
     examples:
-      - "%command_prefix%IGNORE ADD #yardım Ana"
+      - "%command_prefix%IGNORE ADD #Ares_Help Ares"
 
   # --- IGNORE DEL ----------------------------------------------------------
   del:
     syntax: "IGNORE DEL [#channel] <nickname>"
     short: "Listeden bir takma adı siler."
     help: "Rumuzu yoksayma listesinden kaldırır."
-    example: "%command_prefix%IGNORE DEL Ana"
+    example: "%command_prefix%IGNORE DEL Ares"
     examples:
-      - "%command_prefix%IGNORE DEL #yardım Ana"
+      - "%command_prefix%IGNORE DEL #Ares_Help Ares"
 
   # --- IGNORE LIST ---------------------------------------------------------
   list:
@@ -119,7 +119,7 @@ ignore:
     help: "Mesajlar için sizin (veya kanalın) yoksaydığı rumuzların listesini gösterir."
     example: "%command_prefix%IGNORE LIST"
     examples:
-      - "%command_prefix%IGNORE LIST #yardım"
+      - "%command_prefix%IGNORE LIST #Ares_Help"
   added: "%nickname% yoksayma listesine eklendi."
   removed: "%nickname% yoksayma listesinden kaldırıldı."
   already_ignored: "%nickname% zaten yoksayma listesinde."
@@ -138,7 +138,7 @@ enable:
     etkinleştirebilir.
   example: "%command_prefix%ENABLE"
   examples:
-    - "%command_prefix%ENABLE #yardım"
+    - "%command_prefix%ENABLE #Ares_Help"
   enabled_nick: "Rumuzunuz için mesaj hizmeti etkinleştirildi."
   enabled_channel: "%channel% kanalı için mesaj hizmeti etkinleştirildi."
   already_enabled_nick: "Rumuzunuz için mesaj hizmeti zaten etkin."
@@ -154,7 +154,7 @@ disable:
     yalnızca kurucu devre dışı bırakabilir.
   example: "%command_prefix%DISABLE"
   examples:
-    - "%command_prefix%DISABLE #yardım"
+    - "%command_prefix%DISABLE #Ares_Help"
   disabled_nick: "Rumuzunuz için mesaj hizmeti devre dışı bırakıldı."
   disabled_channel: "%channel% kanalı için mesaj hizmeti devre dışı bırakıldı."
   already_disabled_nick: "Rumuzunuz için mesaj hizmeti zaten devre dışı."

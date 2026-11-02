@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\NickServ\Domain\Entity;
 
+use App\NickServ\Domain\ValueObject\AutomaticModeProfile;
 use App\NickServ\Domain\ValueObject\NickStatus;
 use DateTimeImmutable;
 use DateTimeZone;
@@ -85,6 +86,9 @@ class RegisteredNick
 
     /** Custom virtual host (displayed hostname). Null = use default/cloak. */
     private ?string $vhost = null;
+
+    /** @var list<string>|null */
+    private ?array $automaticModes = null;
 
     /** PHP timezone identifier for date display (e.g. Europe/Madrid). Null = use services default. */
     private ?string $timezone = null;
@@ -512,6 +516,16 @@ class RegisteredNick
         }
 
         $this->timezone = $tz;
+    }
+
+    public function getAutomaticModes(): AutomaticModeProfile
+    {
+        return new AutomaticModeProfile($this->automaticModes ?? []);
+    }
+
+    public function changeAutomaticModes(AutomaticModeProfile $profile): void
+    {
+        $this->automaticModes = [] === $profile->intentions ? null : $profile->intentions;
     }
 
     private static function assertValidEmail(?string $email): void

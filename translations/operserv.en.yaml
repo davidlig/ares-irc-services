@@ -67,7 +67,7 @@ ircop:
     DEL removes an operator. LIST shows all operators.
     Use ROLE LIST to see available roles.
     This command is restricted to Root users configured in services.
-  example: "%command_prefix%IRCOP ADD Ana OPER"
+  example: "%command_prefix%IRCOP ADD Ares OPER"
   examples:
     - "%command_prefix%IRCOP LIST"
   unknown_sub: "Unknown subcommand %sub%. Use ADD, DEL, or LIST."
@@ -84,7 +84,7 @@ ircop:
       Adds a registered nickname as a network IRC operator.
       Use ROLE LIST to see available roles.
       This command is restricted to Root users.
-    example: "%command_prefix%IRCOP ADD Ana OPER"
+    example: "%command_prefix%IRCOP ADD Ares OPER"
     done: "Added %nickname% as %role%."
     nick_not_active: "Nickname %nickname% is not an active registered nickname."
 
@@ -95,7 +95,7 @@ ircop:
     help: |-
       Removes a network IRC operator from the list.
       This command is restricted to Root users.
-    example: "%command_prefix%IRCOP DEL Ana"
+    example: "%command_prefix%IRCOP DEL Ares"
     done: "Removed %nickname% from IRC operators."
 
   # --- IRCOP LIST ----------------------------------------------------------

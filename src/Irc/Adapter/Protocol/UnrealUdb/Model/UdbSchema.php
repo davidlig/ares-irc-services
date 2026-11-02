@@ -70,7 +70,7 @@ final class UdbSchema
      * (modules.default.conf). 'o' is strictly forbidden by UDB (N::modes).
      * Extend this list only when the IRCd loads additional usermode modules.
      */
-    public const array USER_MODES = ['i', 's', 'w', 'B', 'S', 'T', 'G', 'W', 'p', 'q', 'R', 'Z', 'D'];
+    public const array USER_MODES = ['i', 's', 'w', 'B', 'S', 'T', 'G', 'W', 'p', 'q', 'R', 'Z', 'D', 'd'];
 
     private const array NICK_KEYS = [
         'access', 'pass', 'vhost', 'forbid', 'suspend', 'oper', 'modes', 'snomasks', 'swhois',

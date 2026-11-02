@@ -12,13 +12,16 @@ use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
 use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\Irc\Application\PublishedEvent\CommandExecutedEvent;
+use App\NickServ\Adapter\In\Irc\Command\HelpCommand;
 use App\NickServ\Adapter\In\Irc\Command\SasetCommand;
 use App\NickServ\Adapter\In\Irc\Command\SetCommand;
+use App\NickServ\Adapter\In\Irc\Help\UnifiedHelpFormatter;
 use App\NickServ\Adapter\In\Irc\NickServCommandInterface;
 use App\NickServ\Adapter\In\Irc\NickServCommandRegistry;
 use App\NickServ\Adapter\In\Irc\NickServContext;
 use App\NickServ\Adapter\In\Irc\NickServNotifierInterface;
 use App\NickServ\Adapter\In\Irc\NickServService;
+use App\NickServ\Adapter\In\Irc\TimezoneHelpProvider;
 use App\NickServ\Adapter\Out\InMemory\PendingVerificationRegistry;
 use App\NickServ\Adapter\Out\InMemory\RecoveryTokenRegistry;
 use App\NickServ\Adapter\Out\InMemory\SessionLanguageRegistry;
@@ -26,8 +29,12 @@ use App\NickServ\Adapter\Out\User\UserLanguageResolver;
 use App\NickServ\Adapter\Out\User\UserMessageTypeResolver;
 use App\NickServ\Application\Port\Out\AuthorizationCheckerInterface;
 use App\NickServ\Application\Port\Out\AuthorizationContextInterface;
+use App\NickServ\Application\Port\Out\NickServOperatorAccess;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\Security\NickServPermission;
+use App\NickServ\Application\UseCase\Set\SetAutomaticModesHandlerInterface;
+use App\NickServ\Application\UseCase\Set\SetAutomaticModesOutcome;
+use App\NickServ\Application\UseCase\Set\SetAutomaticModesResult;
 use App\NickServ\Application\UseCase\Set\SetNickSettingHandlerInterface;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
@@ -36,15 +43,18 @@ use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
 use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
 use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
 use App\Shared\Application\Port\EventBusInterface;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use ReflectionProperty;
 use RuntimeException;
 use Symfony\Component\Translation\Loader\ArrayLoader;
 use Symfony\Component\Translation\Translator;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function implode;
 use function is_string;
 
 final class NickServTestContextHolder
@@ -1443,6 +1453,55 @@ final class NickServServiceTest extends TestCase
             $service->dispatch("{$allowedCommand} arg", $sender);
 
             self::assertNotNull($contextHolder->context, "Command {$allowedCommand} should be allowed for pending deletion account");
+        }
+    }
+
+    #[Test]
+    public function automaticModesUseTheExistingSasetPermissionForExecutionAndDetailedHelp(): void
+    {
+        foreach ([true, false] as $allowed) {
+            $messages = [];
+            $repository = $this->createStub(RegisteredNickRepositoryInterface::class);
+            $account = RegisteredNick::createActive('Admin', 'hash', null, 'en', new DateTimeImmutable());
+            new ReflectionProperty(RegisteredNick::class, 'id')->setValue($account, 1);
+            $repository->method('findByNick')->willReturn($account);
+            $authorization = $this->createStub(AuthorizationCheckerInterface::class);
+            $authorization->method('isGranted')->willReturn($allowed);
+            $access = $this->createStub(NickServOperatorAccess::class);
+            $access->method('isIrcop')->willReturn(true);
+            $access->method('hasPermission')->willReturn($allowed);
+            $automatic = $this->createMock(SetAutomaticModesHandlerInterface::class);
+            $automatic->expects($allowed ? self::once() : self::never())->method('handle')->willReturn(new SetAutomaticModesResult(SetAutomaticModesOutcome::Changed, 'B'));
+            $settings = $this->createMock(SetNickSettingHandlerInterface::class);
+            $settings->expects(self::never())->method('handle');
+            $help = new HelpCommand(new UnifiedHelpFormatter(), new TimezoneHelpProvider(), $access);
+            $registry = new NickServCommandRegistry([new SasetCommand($settings, $automatic), $help]);
+            $notifier = $this->createStub(NickServNotifierInterface::class);
+            $notifier->method('getNick')->willReturn('NickServ');
+            $notifier->method('sendMessage')->willReturnCallback(static function (string $uid, string $text) use (&$messages): void { $messages[] = $text; });
+            $translator = new Translator('en');
+            $translator->addLoader('irc', new IrcYamlTranslationLoader());
+            foreach (['nickserv', 'common'] as $domain) {
+                $translator->addResource('irc', __DIR__ . '/../../../../../translations/' . $domain . '.en.yaml', 'en', $domain);
+            }
+            $service = new NickServService($this->createStub(AuthorizationContextInterface::class), $authorization, $registry, $repository, new UserLanguageResolver($repository, new SessionLanguageRegistry(), 'en'), $notifier, new UserMessageTypeResolver($repository), $translator, new PendingVerificationRegistry(), new RecoveryTokenRegistry(), $this->createServiceNicks(), $this->createStub(EventBusInterface::class));
+            $sender = new SenderView('UID', 'Admin', 'id', 'host', 'cloak', '*', true, true, '001');
+            $service->dispatch('SASET Pedro MODES B', $sender);
+            $output = implode("\n", $messages);
+            if ($allowed) {
+                self::assertStringContainsString('saved', $output);
+            } else {
+                self::assertStringNotContainsString('saved', $output);
+            }
+            $messages = [];
+            $service->dispatch('HELP SASET MODES', $sender);
+            $output = implode("\n", $messages);
+            if ($allowed) {
+                self::assertStringContainsString('mode letters', $output);
+                self::assertStringContainsString('MODES', $output);
+            } else {
+                self::assertStringNotContainsString('mode letters', $output);
+            }
         }
     }
 

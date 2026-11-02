@@ -2522,3 +2522,14 @@ services:
 
   App\Shared\Adapter\In\Irc\Presentation\StyleProvider:
     alias: App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider
+
+  App\Irc\Application\Port\In\AutomaticModeSupport:
+    alias: App\Irc\Adapter\ServiceBridge\SelectedAutomaticModeSupport
+  App\Irc\Application\Port\In\AutomaticModeDelivery:
+    alias: App\Irc\Adapter\ServiceBridge\SelectedAutomaticModeSupport
+  App\NickServ\Application\Port\Out\AutomaticModeCatalog:
+    alias: App\NickServ\Adapter\Out\User\IrcAutomaticModes
+  App\NickServ\Application\Port\Out\AutomaticModeActions:
+    alias: App\NickServ\Adapter\Out\User\IrcAutomaticModes
+  App\NickServ\Application\UseCase\Set\SetAutomaticModesHandlerInterface:
+    alias: App\NickServ\Application\UseCase\Set\SetAutomaticModesHandler

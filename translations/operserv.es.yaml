@@ -55,7 +55,7 @@ ircop:
     DEL elimina un operador. LIST muestra todos los operadores.
     Usa ROLE LIST para ver los roles disponibles.
     Este comando está restringido a usuarios Root configurados en los servicios.
-  example: "%command_prefix%IRCOP ADD Ana OPER"
+  example: "%command_prefix%IRCOP ADD Ares OPER"
   examples:
     - "%command_prefix%IRCOP LIST"
 
@@ -73,7 +73,7 @@ ircop:
       Añade un apodo registrado como operador de red.
       Usa ROLE LIST para ver los roles disponibles.
       Este comando está restringido a usuarios Root.
-    example: "%command_prefix%IRCOP ADD Ana OPER"
+    example: "%command_prefix%IRCOP ADD Ares OPER"
     done: "Añadido %nickname% como %role%."
     nick_not_active: "El apodo %nickname% no es un apodo registrado activo."
 
@@ -84,7 +84,7 @@ ircop:
     help: |-
       Elimina un operador de red de la lista.
       Este comando está restringido a usuarios Root.
-    example: "%command_prefix%IRCOP DEL Ana"
+    example: "%command_prefix%IRCOP DEL Ares"
     done: "Eliminado %nickname% de operadores."
 
   # --- IRCOP LIST ----------------------------------------------------------

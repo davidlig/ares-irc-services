@@ -225,6 +225,16 @@ final class SetCommandTest extends TestCase
         ))->success);
     }
 
+    #[Test]
+    public function automaticModesRemainUnavailableToOrdinarySet(): void
+    {
+        $handler = $this->createMock(SetNickSettingHandlerInterface::class);
+        $handler->expects(self::never())->method('handle');
+        $messages = [];
+        self::assertFalse(new SetCommand($handler)->execute($this->context($this->sender(), ['MODES', 'B'], $messages))->success);
+        self::assertSame(['set.unknown_option'], $messages);
+    }
+
     /**
      * @param list<string>               $args
      * @param list<string>               $messages

@@ -68,7 +68,7 @@ ircop:
     Gebruik ROLE LIST om beschikbare rollen te zien.
     Dit commando is voorbehouden aan Root-gebruikers die in de services zijn
     geconfigureerd.
-  example: "%command_prefix%IRCOP ADD Ana OPER"
+  example: "%command_prefix%IRCOP ADD Ares OPER"
   examples:
     - "%command_prefix%IRCOP LIST"
   unknown_sub: "Onbekende sub-opdracht %sub%. Gebruik ADD, DEL of LIST."
@@ -85,7 +85,7 @@ ircop:
       Voegt een geregistreerde bijnaam toe als netwerk IRC-operator.
       Gebruik ROLE LIST om beschikbare rollen te zien.
       Dit commando is voorbehouden aan Root-gebruikers.
-    example: "%command_prefix%IRCOP ADD Ana OPER"
+    example: "%command_prefix%IRCOP ADD Ares OPER"
     done: "%nickname% toegevoegd als %role%."
     nick_not_active: "Bijnaam %nickname% is geen actieve geregistreerde bijnaam."
 
@@ -96,7 +96,7 @@ ircop:
     help: |-
       Verwijdert een netwerk IRC-operator uit de lijst.
       Dit commando is voorbehouden aan Root-gebruikers.
-    example: "%command_prefix%IRCOP DEL Ana"
+    example: "%command_prefix%IRCOP DEL Ares"
     done: "%nickname% verwijderd uit IRC-operators."
 
   # --- IRCOP LIST ----------------------------------------------------------

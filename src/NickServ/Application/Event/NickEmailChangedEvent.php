@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace App\NickServ\Application\Event;
 
+use App\NickServ\Application\Port\In\NickServEvent;
 use DateTimeImmutable;
 
 /**
  * Dispatched when a nickname email is changed.
  * Covers SET EMAIL and SASET EMAIL.
  */
-final readonly class NickEmailChangedEvent
+final readonly class NickEmailChangedEvent implements NickServEvent
 {
     public function __construct(
         public int $nickId,

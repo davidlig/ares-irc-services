@@ -11,6 +11,8 @@ use App\NickServ\Adapter\In\Irc\NickServCommandInterface;
 use App\NickServ\Adapter\In\Irc\NickServContext;
 use App\NickServ\Application\Model\NickOperationActor;
 use App\NickServ\Application\Security\NickServPermission;
+use App\NickServ\Application\UseCase\Set\SetAutomaticModesHandlerInterface;
+use App\NickServ\Application\UseCase\Set\SetAutomaticModesOutcome;
 use App\NickServ\Application\UseCase\Set\SetNickSetting;
 use App\NickServ\Application\UseCase\Set\SetNickSettingHandlerInterface;
 use App\NickServ\Application\UseCase\Set\SetNickSettingOption;
@@ -23,7 +25,9 @@ use function array_keys;
 use function array_map;
 use function array_slice;
 use function base64_decode;
+use function count;
 use function implode;
+use function in_array;
 use function inet_ntop;
 use function sprintf;
 use function strtolower;
@@ -31,7 +35,7 @@ use function strtoupper;
 
 final readonly class SasetCommand implements NickServCommandInterface, IrcopAuditableCommandInterface
 {
-    public function __construct(private SetNickSettingHandlerInterface $handler) {}
+    public function __construct(private SetNickSettingHandlerInterface $handler, private ?SetAutomaticModesHandlerInterface $automaticModes = null) {}
 
     public function getName(): string
     {
@@ -55,6 +59,7 @@ final readonly class SasetCommand implements NickServCommandInterface, IrcopAudi
             'TIMEZONE' => new CommandArgumentDefinition('saset.timezone.syntax', [new Argument('value', rest: true)]),
             'PRIVATE' => new CommandArgumentDefinition('saset.private.syntax', [new Argument('value', rest: true)]),
             'MSG' => new CommandArgumentDefinition('saset.msg.syntax', [new Argument('value', rest: true)]),
+            'MODES' => new CommandArgumentDefinition('saset.modes.syntax', [new Argument('value', optional: true)]),
             'VHOST' => new CommandArgumentDefinition('saset.vhost.syntax', [new Argument('value', optional: true, rest: true)]),
         ], unknownVariant: new CommandArgumentDefinition('saset.syntax', [new Argument('value', rest: true)]));
     }
@@ -133,6 +138,15 @@ final readonly class SasetCommand implements NickServCommandInterface, IrcopAudi
 
         $targetNickname = $context->args[0];
         $rawOption = strtoupper($context->args[1]);
+        if ('MODES' === $rawOption) {
+            if (count($context->args) > 3) {
+                $context->replySyntax('saset.modes.syntax');
+
+                return CommandOutcome::rejected();
+            }
+
+            return $this->executeModes($context);
+        }
         $option = SetNickSettingOption::tryFrom($rawOption);
         if (null === $option) {
             $context->replyEmphasized('saset.unknown_option', [
@@ -172,6 +186,37 @@ final readonly class SasetCommand implements NickServCommandInterface, IrcopAudi
                 default => $value,
             }],
         ));
+    }
+
+    private function executeModes(NickServContext $context): CommandOutcome
+    {
+        $sender = $context->sender;
+        if (null === $sender || null === $this->automaticModes) {
+            $context->reply('saset.modes.unavailable', [], Role::Error);
+
+            return CommandOutcome::rejected();
+        }
+        $value = $context->args[2] ?? '';
+        $result = $this->automaticModes->handle(new NickOperationActor(
+            $sender->nick,
+            $context->senderAccount?->getId(),
+            $sender->uid,
+            $sender->serverSid,
+            sprintf('%s@%s', $sender->ident, $sender->hostname),
+            self::decodeIp($sender->ipBase64),
+        ), $context->args[0], $value);
+        $success = in_array($result->outcome, [SetAutomaticModesOutcome::Changed, SetAutomaticModesOutcome::Unchanged], true);
+        $key = match ($result->outcome) {
+            SetAutomaticModesOutcome::Changed => '' === $result->modes ? 'saset.modes.cleared' : 'saset.modes.saved',
+            SetAutomaticModesOutcome::Unchanged => 'saset.modes.unchanged',
+            SetAutomaticModesOutcome::InvalidModes => 'saset.modes.invalid',
+            SetAutomaticModesOutcome::Unavailable => 'saset.modes.unavailable',
+            SetAutomaticModesOutcome::Root, SetAutomaticModesOutcome::Ircop, SetAutomaticModesOutcome::Service => 'saset.cannot_modify_oper',
+            SetAutomaticModesOutcome::NotRegistered => 'saset.modes.not_registered',
+        };
+        $context->replyEmphasized($key, ['nickname' => $context->args[0], 'modes' => $result->modes], $success ? Role::Success : Role::Error, ['nickname', 'modes']);
+
+        return $success ? CommandOutcome::success(new IrcopAuditData(target: $context->args[0], extra: ['option' => 'MODES', 'value' => $result->modes])) : CommandOutcome::rejected();
     }
 
     private static function decodeIp(string $ipBase64): string

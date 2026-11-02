@@ -7,6 +7,7 @@ namespace App\Tests\NickServ\Adapter\Out\Persistence\Doctrine;
 use App\NickServ\Adapter\Out\Persistence\Doctrine\RegisteredNickDoctrineRepository;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Domain\Entity\RegisteredNick;
+use App\NickServ\Domain\ValueObject\AutomaticModeProfile;
 use App\NickServ\Domain\ValueObject\NickStatus;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
 use DateTimeImmutable;
@@ -680,6 +681,23 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
 
         self::assertCount(1, $result);
         self::assertSame('ExpiredDrop', $result[0]->getNickname());
+    }
+
+    #[Test]
+    public function automaticModesRoundTripSemanticIntentionsAndClearToNull(): void
+    {
+        $nick = RegisteredNick::createActive('ModeUser', 'hash', null, 'en', new DateTimeImmutable());
+        $nick->changeAutomaticModes(new AutomaticModeProfile(['strip-formatting', 'bot']));
+        $this->repository->save($nick);
+        $this->flushAndClear();
+        $found = $this->repository->findByNick('ModeUser');
+        self::assertNotNull($found);
+        self::assertSame(['bot', 'strip-formatting'], $found->getAutomaticModes()->intentions);
+        $found->changeAutomaticModes(new AutomaticModeProfile());
+        $this->repository->save($found);
+        $this->flushAndClear();
+        self::assertNull($this->entityManager->getConnection()->fetchOne("SELECT automatic_modes FROM registered_nicks WHERE nickname_lower = 'modeuser'"));
+        self::assertSame([], $this->repository->findByNick('ModeUser')?->getAutomaticModes()->intentions);
     }
 
     protected function setUp(): void

@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\NickServ\Application\PublishedEvent;
 
-final readonly class NickPasswordHashAvailable
+use App\NickServ\Application\Port\In\NickServEvent;
+
+final readonly class NickPasswordHashAvailable implements NickServEvent
 {
     public function __construct(
         public ?int $nickId,

@@ -348,6 +348,12 @@ final readonly class HistoryCommand implements NickServCommandInterface, IrcopAu
         if (isset($extraData['new_email'])) {
             $parts[] = $context->trans('history.extra.new_email', ['%value%' => $this->stringifyExtra($extraData['new_email'])]);
         }
+        if (isset($extraData['old_modes'])) {
+            $parts[] = $context->trans('history.extra.old_modes', ['%value%' => $this->stringifyExtra($extraData['old_modes'])]);
+        }
+        if (isset($extraData['new_modes'])) {
+            $parts[] = $context->trans('history.extra.new_modes', ['%value%' => $this->stringifyExtra($extraData['new_modes'])]);
+        }
         if (isset($extraData['method'])) {
             $parts[] = $context->trans('history.extra.method', ['%value%' => $this->stringifyExtra($extraData['method'])]);
         }

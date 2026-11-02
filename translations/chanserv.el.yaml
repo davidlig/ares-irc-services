@@ -19,13 +19,13 @@
 # --- ERROR --------------------------------------------------------------------
 error:
   invalid_channel: "Μη έγκυρο όνομα καναλιού. Χρησιμοποιήστε %example%."
-  invalid_channel_example: "#channel"
+  invalid_channel_example: "#Ares_Help"
   generic: "Παρουσιάστηκε σφάλμα. Παρακαλώ δοκιμάστε ξανά."
 
 # --- REGISTER -----------------------------------------------------------------
 register:
   syntax: "REGISTER <#channel> <description>"
-  example: "%command_prefix%REGISTER #κανάλι Κοινοτικό έργο"
+  example: "%command_prefix%REGISTER #Ares_Help Κανάλι βοήθειας"
   short: "Καταχώρηση καναλιού."
   help: |-
     Καταχωρίζει ένα κανάλι και το συνδέει με το ψευδώνυμό σας. Πρέπει
@@ -46,7 +46,7 @@ register:
 # --- INFO ---------------------------------------------------------------------
 info:
   syntax: "INFO <#channel>"
-  example: "%command_prefix%INFO #κανάλι"
+  example: "%command_prefix%INFO #Ares_Help"
   short: "Εμφάνιση πληροφοριών καναλιού."
   help: |-
     Εμφανίζει ιδρυτή, ημερομηνία καταχώρησης, διάδοχο, URL, email, περιγραφή,
@@ -103,10 +103,10 @@ info:
 # --- SET ----------------------------------------------------------------------
 set:
   syntax: "SET <#κανάλι> <επιλογή> [παράμετροι]"
-  example: "%command_prefix%SET #κανάλι DESC Ένα κοινοτικό κανάλι"
+  example: "%command_prefix%SET #Ares_Help DESC Κανάλι βοήθειας"
   examples:
-    - "%command_prefix%SET #κανάλι URL https://example.test"
-    - "%command_prefix%SET #κανάλι MLOCK ON"
+    - "%command_prefix%SET #Ares_Help URL https://example.test"
+    - "%command_prefix%SET #Ares_Help MLOCK ON"
   short: "Αλλαγή επιλογών καναλιού."
   help: |-
     Αλλάζει μια επιλογή καναλιού. Η βοήθεια κάθε επιλογής εξηγεί τις απαιτήσεις και
@@ -118,9 +118,9 @@ set:
     token_required: "Χρησιμοποίησε SET <#κανάλι> FOUNDER <ψευδώνυμο> <token> με το επιβεβαιωμένο διακριτικό του τρέχοντος ιδρυτή."
     token_unavailable: "Ο τρέχων ιδρυτής δεν έχει επιβεβαιωμένο διακριτικό διάσωσης. Πρέπει πρώτα να συνδεθεί και να χρησιμοποιήσει VERIFY."
     syntax: "SET <#κανάλι> FOUNDER <ψευδώνυμο> [token]"
-    example: "%command_prefix%SET #κανάλι FOUNDER Αλίκη"
+    example: "%command_prefix%SET #Ares_Help FOUNDER Ares"
     examples:
-      - "%command_prefix%SET #κανάλι FOUNDER Αλίκη επιβεβαιωμένο-διακριτικό"
+      - "%command_prefix%SET #Ares_Help FOUNDER Ares 65dec7d5370eaa57c5a4bde98e591ccb"
     short: "Μεταφορά καναλιού σε άλλο καταχωρημένο ψευδώνυμο."
     help: |-
       Αλλάζει τον ιδρυτή μετά την επικύρωση του διακριτικού του τρέχοντος ιδρυτή.
@@ -139,9 +139,9 @@ set:
   # --- SET SUCCESSOR -------------------------------------------------------
   successor:
     syntax: "SET <#channel> SUCCESSOR [nickname]"
-    example: "%command_prefix%SET #κανάλι SUCCESSOR Αλίκη"
+    example: "%command_prefix%SET #Ares_Help SUCCESSOR Ares"
     examples:
-      - "%command_prefix%SET #κανάλι SUCCESSOR"
+      - "%command_prefix%SET #Ares_Help SUCCESSOR"
     short: "Ορισμός διαδόχου καναλιού."
     help: |-
       Ορίζει ένα ψευδώνυμο ως διάδοχο καναλιού. Παραλείψτε το ψευδώνυμο για
@@ -157,7 +157,7 @@ set:
   # --- SET DESC ------------------------------------------------------------
   desc:
     syntax: "SET <#channel> DESC <description>"
-    example: "%command_prefix%SET #κανάλι DESC Ένα κοινοτικό κανάλι"
+    example: "%command_prefix%SET #Ares_Help DESC Κανάλι βοήθειας"
     short: "Αλλαγή περιγραφής καναλιού."
     help: "Αλλάξτε την περιγραφή του καναλιού (απαιτείται)."
     updated: "Η περιγραφή ενημερώθηκε."
@@ -165,9 +165,9 @@ set:
   # --- SET URL -------------------------------------------------------------
   url:
     syntax: "SET <#channel> URL [url]"
-    example: "%command_prefix%SET #κανάλι URL https://example.test"
+    example: "%command_prefix%SET #Ares_Help URL https://example.test"
     examples:
-      - "%command_prefix%SET #κανάλι URL"
+      - "%command_prefix%SET #Ares_Help URL"
     short: "Ορισμός URL καναλιού."
     help: "Αλλάξτε την ιστοσελίδα (URL) του καναλιού. Παραλείψτε το url για εκκαθάριση."
     updated: "Το URL ενημερώθηκε."
@@ -176,9 +176,9 @@ set:
   # --- SET EMAIL -----------------------------------------------------------
   email:
     syntax: "SET <#κανάλι> EMAIL [email]"
-    example: "%command_prefix%SET #κανάλι EMAIL team@example.test"
+    example: "%command_prefix%SET #Ares_Help EMAIL team@example.test"
     examples:
-      - "%command_prefix%SET #κανάλι EMAIL"
+      - "%command_prefix%SET #Ares_Help EMAIL"
     short: "Ορισμός email καναλιού."
     help: |-
       Αλλάζει τη διεύθυνση email του καναλιού. Παραλείψτε το email για
@@ -191,9 +191,9 @@ set:
   # --- SET ENTRYMSG --------------------------------------------------------
   entrymsg:
     syntax: "SET <#κανάλι> ENTRYMSG [message]"
-    example: "%command_prefix%SET #κανάλι ENTRYMSG Καλώς ορίσατε"
+    example: "%command_prefix%SET #Ares_Help ENTRYMSG Καλώς ήρθατε στο κανάλι βοήθειας"
     examples:
-      - "%command_prefix%SET #κανάλι ENTRYMSG"
+      - "%command_prefix%SET #Ares_Help ENTRYMSG"
     short: "Ορισμός μηνύματος εισόδου καναλιού."
     help: "Ορίζει το μήνυμα εισόδου (NOTICE). Παραλείψτε το μήνυμα για διαγραφή."
     updated: "Το μήνυμα εισόδου ενημερώθηκε."
@@ -202,9 +202,9 @@ set:
   # --- SET TOPICLOCK -------------------------------------------------------
   topiclock:
     syntax: "SET <#channel> TOPICLOCK {ON|OFF}"
-    example: "%command_prefix%SET #κανάλι TOPICLOCK ON"
+    example: "%command_prefix%SET #Ares_Help TOPICLOCK ON"
     examples:
-      - "%command_prefix%SET #κανάλι TOPICLOCK OFF"
+      - "%command_prefix%SET #Ares_Help TOPICLOCK OFF"
     short: "Κλείδωμα θέματος καναλιού."
     help: |-
       Αποτρέπει την αλλαγή του θέματος του καναλιού. Όταν είναι ON, το τρέχον θέμα
@@ -217,9 +217,9 @@ set:
   # --- SET MLOCK -----------------------------------------------------------
   mlock:
     syntax: "SET <#channel> MLOCK {ON|OFF}"
-    example: "%command_prefix%SET #κανάλι MLOCK ON"
+    example: "%command_prefix%SET #Ares_Help MLOCK ON"
     examples:
-      - "%command_prefix%SET #κανάλι MLOCK OFF"
+      - "%command_prefix%SET #Ares_Help MLOCK OFF"
     short: "Κλείδωμα λειτουργιών καναλιού."
     help: |-
       Κλειδώνει τις τρέχουσες λειτουργίες καναλιού (π.χ. +nt). Όταν είναι ON, οι
@@ -233,9 +233,9 @@ set:
   # --- SET PRIVATE ---------------------------------------------------------
   private:
     syntax: "SET <#κανάλι> PRIVATE {ON|OFF}"
-    example: "%command_prefix%SET #κανάλι PRIVATE ON"
+    example: "%command_prefix%SET #Ares_Help PRIVATE ON"
     examples:
-      - "%command_prefix%SET #κανάλι PRIVATE OFF"
+      - "%command_prefix%SET #Ares_Help PRIVATE OFF"
     short: "Απόκρυψη πληροφοριών καναλιού."
     help: |-
       Όταν είναι ON, μόνο ο ιδρυτής και οι χρήστες με πρόσβαση μπορούν να δουν τις
@@ -246,9 +246,9 @@ set:
   # --- SET SECURE ----------------------------------------------------------
   secure:
     syntax: "SET <#channel> SECURE {ON|OFF}"
-    example: "%command_prefix%SET #κανάλι SECURE ON"
+    example: "%command_prefix%SET #Ares_Help SECURE ON"
     examples:
-      - "%command_prefix%SET #κανάλι SECURE OFF"
+      - "%command_prefix%SET #Ares_Help SECURE OFF"
     short: "Απαίτηση λίστας πρόσβασης για βαθμίδες καναλιού."
     help: |-
       Όταν είναι ON, μόνο χρήστες στη λίστα πρόσβασης μπορούν να λάβουν βαθμίδες
@@ -261,9 +261,9 @@ set:
   # --- SET VERBOSE ---------------------------------------------------------
   verbose:
     syntax: "SET <#channel> VERBOSE {ON|OFF}"
-    example: "%command_prefix%SET #κανάλι VERBOSE ON"
+    example: "%command_prefix%SET #Ares_Help VERBOSE ON"
     examples:
-      - "%command_prefix%SET #κανάλι VERBOSE OFF"
+      - "%command_prefix%SET #Ares_Help VERBOSE OFF"
     short: "Εναλλαγή ειδοποιήσεων ενεργειών καναλιού."
     help: |-
       Ενεργοποιεί ή απενεργοποιεί τις εκπομπές NOTICE στο κανάλι για ενέργειες
@@ -274,7 +274,7 @@ set:
 # --- STATUS -------------------------------------------------------------------
 status:
   syntax: "STATUS <#channel>"
-  example: "%command_prefix%STATUS #channel"
+  example: "%command_prefix%STATUS #Ares_Help"
   header: "Κατάσταση καναλιού %channel%"
   short: "Προβολή κατάστασης εγγραφής καναλιού."
   help: |-
@@ -316,10 +316,10 @@ status:
 # --- ACCESS -------------------------------------------------------------------
 access:
   syntax: "ACCESS <#κανάλι> <επιλογή> [παράμετροι]"
-  example: "%command_prefix%ACCESS #κανάλι LIST"
+  example: "%command_prefix%ACCESS #Ares_Help LIST"
   examples:
-    - "%command_prefix%ACCESS #κανάλι ADD Αλίκη 100"
-    - "%command_prefix%ACCESS #κανάλι DEL Αλίκη"
+    - "%command_prefix%ACCESS #Ares_Help ADD Ares 100"
+    - "%command_prefix%ACCESS #Ares_Help DEL Ares"
   short: "Διαχείριση λίστας πρόσβασης."
   help: "Διαχειρίζεται τη λίστα πρόσβασης του καναλιού."
   unknown_sub: "Άγνωστη υπο-εντολή %sub%. Χρησιμοποιήστε LIST, ADD, ή DEL."
@@ -331,7 +331,7 @@ access:
   # --- ACCESS LIST ---------------------------------------------------------
   list:
     syntax: "ACCESS <#channel> LIST"
-    example: "%command_prefix%ACCESS #κανάλι LIST"
+    example: "%command_prefix%ACCESS #Ares_Help LIST"
     short: "Λίστα πρόσβασης (απαιτεί επίπεδο ACCESSLIST)."
     help: "Εμφανίζει ψευδώνυμο και επίπεδο για κάθε καταχώρηση."
     header: "Λίστα πρόσβασης για %channel%"
@@ -341,7 +341,7 @@ access:
   # --- ACCESS ADD ----------------------------------------------------------
   add:
     syntax: "ACCESS <#channel> ADD <nickname> <level>"
-    example: "%command_prefix%ACCESS #κανάλι ADD Αλίκη 100"
+    example: "%command_prefix%ACCESS #Ares_Help ADD Ares 100"
     short: "Προσθήκη ή ενημέρωση επιπέδου πρόσβασης (απαιτεί επίπεδο ACCESSCHANGE)."
     help: "Επίπεδο 1-499. Μπορείτε να ορίσετε μόνο επίπεδα χαμηλότερα από το δικό σας."
     done: "%nickname% ορίστηκε σε επίπεδο %level%."
@@ -350,7 +350,7 @@ access:
   # --- ACCESS DEL ----------------------------------------------------------
   del:
     syntax: "ACCESS <#channel> DEL <nickname>"
-    example: "%command_prefix%ACCESS #κανάλι DEL Αλίκη"
+    example: "%command_prefix%ACCESS #Ares_Help DEL Ares"
     short: "Αφαίρεση από τη λίστα πρόσβασης (απαιτεί επίπεδο ACCESSCHANGE)."
     help: "Μπορείτε να αφαιρέσετε μόνο ψευδώνυμα με επίπεδο χαμηλότερο από το δικό σας."
     not_in_list: "Το %nickname% δεν είναι στη λίστα πρόσβασης."
@@ -360,7 +360,7 @@ access:
 # --- DELACCESS ----------------------------------------------------------------
 delaccess:
   syntax: "DELACCESS <#channel>"
-  example: "%command_prefix%DELACCESS #κανάλι"
+  example: "%command_prefix%DELACCESS #Ares_Help"
   short: "Αφαίρεση της δικής σας πρόσβασης από ένα κανάλι."
   help: |-
     Αφαιρεί την καταχώρηση πρόσβασής σας από τη λίστα πρόσβασης του καναλιού. Πρέπει
@@ -374,15 +374,15 @@ delaccess:
 # --- AKICK --------------------------------------------------------------------
 akick:
   syntax: "AKICK <#κανάλι> <επιλογή> [παράμετροι]"
-  example: "%command_prefix%AKICK #κανάλι ADD *!*@* 0"
+  example: "%command_prefix%AKICK #Ares_Help ADD EimaiKakos!*@* 0"
   examples:
-    - "%command_prefix%AKICK #κανάλι ADD *!*@* 7d Spam"
-    - "%command_prefix%AKICK #κανάλι DEL *!*@*"
-    - "%command_prefix%AKICK #κανάλι DEL 2"
-    - "%command_prefix%AKICK #κανάλι LIST"
-    - "%command_prefix%AKICK #κανάλι VIEW 1"
-    - "%command_prefix%AKICK #κανάλι CLEAR"
-    - "%command_prefix%AKICK #κανάλι CHECK Alice"
+    - "%command_prefix%AKICK #Ares_Help ADD EimaiKakos!*@* 7d Ανεπιθύμητα μηνύματα"
+    - "%command_prefix%AKICK #Ares_Help DEL *!*@*"
+    - "%command_prefix%AKICK #Ares_Help DEL 2"
+    - "%command_prefix%AKICK #Ares_Help LIST"
+    - "%command_prefix%AKICK #Ares_Help VIEW 1"
+    - "%command_prefix%AKICK #Ares_Help CLEAR"
+    - "%command_prefix%AKICK #Ares_Help CHECK Ares"
   short: "Διαχείριση λίστας auto-kick."
   help: |-
     ADD <μάσκα> [expiry] [αιτιολογία]: προσθήκη καταχώρησης.
@@ -397,9 +397,9 @@ akick:
   # --- AKICK ADD -----------------------------------------------------------
   add:
     syntax: "AKICK <#channel> ADD <mask> [expiry] [αιτιολογία]"
-    example: "%command_prefix%AKICK #κανάλι ADD *!*@* 0"
+    example: "%command_prefix%AKICK #Ares_Help ADD EimaiKakos!*@* 0"
     examples:
-      - "%command_prefix%AKICK #κανάλι ADD *!*@* 7d Spam"
+      - "%command_prefix%AKICK #Ares_Help ADD EimaiKakos!*@* 7d Ανεπιθύμητα μηνύματα"
     short: "Προσθήκη καταχώρησης AKICK."
     help: |-
       Απαιτείται λήξη αν καθορίζεται αιτιολογία.
@@ -412,9 +412,9 @@ akick:
   # --- AKICK DEL -----------------------------------------------------------
   del:
     syntax: "AKICK <#channel> DEL {<mask>|<number>}"
-    example: "%command_prefix%AKICK #κανάλι DEL *!*@*"
+    example: "%command_prefix%AKICK #Ares_Help DEL *!*@*"
     examples:
-      - "%command_prefix%AKICK #κανάλι DEL 2"
+      - "%command_prefix%AKICK #Ares_Help DEL 2"
     short: "Αφαίρεση καταχώρησης AKICK."
     help: "Αφαίρεση με ακριβή μάσκα ή αριθμό καταχώρησης από το LIST."
     not_found: "Το AKICK %mask% δεν βρέθηκε."
@@ -424,7 +424,7 @@ akick:
   # --- AKICK LIST ----------------------------------------------------------
   list:
     syntax: "AKICK <#channel> LIST"
-    example: "%command_prefix%AKICK #κανάλι LIST"
+    example: "%command_prefix%AKICK #Ares_Help LIST"
     short: "Λίστα καταχωρήσεων AKICK."
     help: "Εμφανίζει μάσκα, αιτιολογία, λήξη και ποιος πρόσθεσε."
     header: "Λίστα AKICK για %channel%"
@@ -434,9 +434,9 @@ akick:
   # --- AKICK VIEW ----------------------------------------------------------
   view:
     syntax: "AKICK <#channel> VIEW {<mask>|<number>}"
-    example: "%command_prefix%AKICK #κανάλι VIEW 1"
+    example: "%command_prefix%AKICK #Ares_Help VIEW 1"
     examples:
-      - "%command_prefix%AKICK #κανάλι VIEW *!*@bad.host"
+      - "%command_prefix%AKICK #Ares_Help VIEW *!*@bad.host"
     short: "Προβολή λεπτομερών μεταδεδομένων εγγραφής AKICK."
     help: |-
       Εμφανίζει αιτία, δημιουργό, ημερομηνία δημιουργίας, ημερομηνία λήξης,
@@ -458,7 +458,7 @@ akick:
   # --- AKICK CLEAR ---------------------------------------------------------
   clear:
     syntax: "AKICK <#channel> CLEAR"
-    example: "%command_prefix%AKICK #κανάλι CLEAR"
+    example: "%command_prefix%AKICK #Ares_Help CLEAR"
     short: "Εκκαθάριση όλων των εγγραφών AKICK."
     help: |-
       Αφαιρεί όλες τις εγγραφές αυτόματου kick από το κανάλι.
@@ -470,7 +470,7 @@ akick:
   # --- AKICK CHECK ---------------------------------------------------------
   check:
     syntax: "AKICK <#channel> CHECK <ψευδώνυμο>"
-    example: "%command_prefix%AKICK #κανάλι CHECK Alice"
+    example: "%command_prefix%AKICK #Ares_Help CHECK Ares"
     short: "Έλεγχος αν ένα ψευδώνυμο ταιριάζει με εγγραφές AKICK."
     help: |-
       Ελέγχει αν ένας συνδεδεμένος χρήστης ταιριάζει με εγγραφή autokick στο κανάλι.
@@ -482,7 +482,7 @@ akick:
   # --- AKICK ENFORCE -------------------------------------------------------
   enforce:
     syntax: "AKICK <#channel> ENFORCE"
-    example: "%command_prefix%AKICK #channel ENFORCE"
+    example: "%command_prefix%AKICK #Ares_Help ENFORCE"
     short: "Εφαρμογή εγγραφών AKICK στους τρέχοντες χρήστες του καναλιού."
     help: |-
       Ελέγχει τους συνδεδεμένους χρήστες στο κανάλι έναντι της λίστας AKICK
@@ -494,10 +494,10 @@ akick:
 # --- LEVELS -------------------------------------------------------------------
 levels:
   syntax: "LEVELS <#κανάλι> <επιλογή> [παράμετροι]"
-  example: "%command_prefix%LEVELS #κανάλι LIST"
+  example: "%command_prefix%LEVELS #Ares_Help LIST"
   examples:
-    - "%command_prefix%LEVELS #κανάλι SET OPDEOP 50"
-    - "%command_prefix%LEVELS #κανάλι RESET"
+    - "%command_prefix%LEVELS #Ares_Help SET OPDEOP 50"
+    - "%command_prefix%LEVELS #Ares_Help RESET"
   short: "Διαμόρφωση επιπέδων καναλιού."
   help: |-
     LIST: εμφάνιση απαιτήσεων επιπέδου (OPDEOP, VOICEDEVOICE, κλπ.). SET: ορισμός
@@ -510,7 +510,7 @@ levels:
   # --- LEVELS LIST ---------------------------------------------------------
   list:
     syntax: "LEVELS <#channel> LIST"
-    example: "%command_prefix%LEVELS #κανάλι LIST"
+    example: "%command_prefix%LEVELS #Ares_Help LIST"
     short: "Λίστα απαιτήσεων επιπέδου."
     help: |-
       Εμφανίζει κάθε κλειδί επιπέδου και την τιμή του (προεπιλογές αν δεν έχει
@@ -520,7 +520,7 @@ levels:
   # --- LEVELS SET ----------------------------------------------------------
   set:
     syntax: "LEVELS <#channel> SET <level> <value>"
-    example: "%command_prefix%LEVELS #κανάλι SET OPDEOP 50"
+    example: "%command_prefix%LEVELS #Ares_Help SET OPDEOP 50"
     short: "Ορισμός απαίτησης επιπέδου."
     help: "Τιμή -1 έως 499. Μόνο ο ιδρυτής."
     done: "%key% ορίστηκε σε %value%."
@@ -528,7 +528,7 @@ levels:
   # --- LEVELS RESET --------------------------------------------------------
   reset:
     syntax: "LEVELS <#channel> RESET"
-    example: "%command_prefix%LEVELS #κανάλι RESET"
+    example: "%command_prefix%LEVELS #Ares_Help RESET"
     short: "Επαναφορά όλων των επιπέδων στις προεπιλογές."
     help: "Αφαιρεί όλες τις παρακάμψεις. Μόνο ο ιδρυτής."
     done: "Όλα τα επίπεδα επαναφέρθηκαν στις προεπιλογές."
@@ -536,7 +536,7 @@ levels:
 # --- INVITE -------------------------------------------------------------------
 invite:
   syntax: "INVITE <#channel>"
-  example: "%command_prefix%INVITE #κανάλι"
+  example: "%command_prefix%INVITE #Ares_Help"
   short: "Προσκαλέστε τον εαυτό σας στο κανάλι."
   help: "Προσκαλέστε τον εαυτό σας στο κανάλι."
   done: "Έχετε προσκληθεί στο %channel%."
@@ -545,7 +545,7 @@ invite:
 # --- UNBAN --------------------------------------------------------------------
 unban:
   syntax: "UNBAN <#channel>"
-  example: "%command_prefix%UNBAN #κανάλι"
+  example: "%command_prefix%UNBAN #Ares_Help"
   short: "Αφαίρεση αποκλεισμών που σε επηρεάζουν."
   help: "Αφαιρεί όλους τους αποκλεισμούς του καναλιού που αντιστοιχούν στην τρέχουσα ταυτότητά σου, μαζί με μπαλαντέρ και μάσκες IP/CIDR."
   done: "Αφαιρέθηκαν %count% αποκλεισμοί που σε επηρεάζουν στο %channel%"
@@ -557,7 +557,7 @@ unban:
 # --- ADMIN --------------------------------------------------------------------
 admin:
   syntax: "ADMIN <#channel> <nickname>"
-  example: "%command_prefix%ADMIN #κανάλι Αλίκη"
+  example: "%command_prefix%ADMIN #Ares_Help Ares"
   short: "Δώστε λειτουργία admin καναλιού."
   help: "Δώστε λειτουργία admin καναλιού. Μόνο αν το IRCd υποστηρίζει +a."
   done: "Στο %nickname% δόθηκε admin καναλιού."
@@ -568,7 +568,7 @@ admin:
 # --- DEADMIN ------------------------------------------------------------------
 deadmin:
   syntax: "DEADMIN <#channel> <nickname>"
-  example: "%command_prefix%DEADMIN #κανάλι Αλίκη"
+  example: "%command_prefix%DEADMIN #Ares_Help Ares"
   short: "Αφαίρεση λειτουργίας admin καναλιού."
   help: "Αφαίρεση λειτουργίας admin καναλιού."
   done: "Αφαιρέθηκε το admin από τον/την %nickname%."
@@ -576,7 +576,7 @@ deadmin:
 # --- OP -----------------------------------------------------------------------
 op:
   syntax: "OP <#channel> <nickname>"
-  example: "%command_prefix%OP #κανάλι Αλίκη"
+  example: "%command_prefix%OP #Ares_Help Ares"
   short: "Δώστε κατάσταση operator καναλιού."
   help: "Δώστε κατάσταση operator καναλιού."
   done: "Στο %nickname% δόθηκε κατάσταση operator καναλιού."
@@ -586,7 +586,7 @@ op:
 # --- DEOP ---------------------------------------------------------------------
 deop:
   syntax: "DEOP <#channel> <nickname>"
-  example: "%command_prefix%DEOP #κανάλι Αλίκη"
+  example: "%command_prefix%DEOP #Ares_Help Ares"
   short: "Αφαίρεση κατάστασης operator καναλιού."
   help: "Αφαίρεση κατάστασης operator καναλιού."
   done: "Αφαιρέθηκε το op από τον/την %nickname%."
@@ -594,7 +594,7 @@ deop:
 # --- HALFOP -------------------------------------------------------------------
 halfop:
   syntax: "HALFOP <#channel> <nickname>"
-  example: "%command_prefix%HALFOP #κανάλι Αλίκη"
+  example: "%command_prefix%HALFOP #Ares_Help Ares"
   short: "Δώστε λειτουργία semi-operator στο κανάλι."
   help: "Δώστε λειτουργία semi-operator στο κανάλι. Μόνο αν το IRCd υποστηρίζει +h."
   done: "Στο %nickname% δόθηκε halfop."
@@ -605,7 +605,7 @@ halfop:
 # --- DEHALFOP -----------------------------------------------------------------
 dehalfop:
   syntax: "DEHALFOP <#channel> <nickname>"
-  example: "%command_prefix%DEHALFOP #κανάλι Αλίκη"
+  example: "%command_prefix%DEHALFOP #Ares_Help Ares"
   short: "Αφαίρεση λειτουργίας semi-operator στο κανάλι."
   help: "Αφαίρεση λειτουργίας semi-operator στο κανάλι."
   done: "Αφαιρέθηκε το halfop από τον/την %nickname%."
@@ -613,7 +613,7 @@ dehalfop:
 # --- VOICE --------------------------------------------------------------------
 voice:
   syntax: "VOICE <#channel> <nickname>"
-  example: "%command_prefix%VOICE #κανάλι Αλίκη"
+  example: "%command_prefix%VOICE #Ares_Help Ares"
   short: "Δώστε λειτουργία voice στο κανάλι."
   help: "Δώστε λειτουργία voice στο κανάλι."
   done: "Στο %nickname% δόθηκε voice."
@@ -623,7 +623,7 @@ voice:
 # --- DEVOICE ------------------------------------------------------------------
 devoice:
   syntax: "DEVOICE <#channel> <nickname>"
-  example: "%command_prefix%DEVOICE #κανάλι Αλίκη"
+  example: "%command_prefix%DEVOICE #Ares_Help Ares"
   short: "Αφαίρεση λειτουργίας voice στο κανάλι."
   help: "Αφαίρεση λειτουργίας voice στο κανάλι."
   done: "Αφαιρέθηκε το voice από τον/την %nickname%."
@@ -675,9 +675,9 @@ help:
 # --- CLEARUSERS (IRCop) -------------------------------------------------------
 clearusers:
   syntax: "CLEARUSERS <#channel> [αιτιολογία]"
-  example: "%command_prefix%CLEARUSERS #κανάλι"
+  example: "%command_prefix%CLEARUSERS #Ares_Help"
   examples:
-    - "%command_prefix%CLEARUSERS #κανάλι κατάκλυση"
+    - "%command_prefix%CLEARUSERS #Ares_Help κατάκλυση"
   short: "Kick όλων των χρηστών από ένα κανάλι."
   help: |-
     Κάνει kick όλους τους χρήστες από το καθορισμένο κανάλι.
@@ -701,7 +701,7 @@ clearusers:
 # --- CLEARACCESS (IRCop) ------------------------------------------------------
 clearaccess:
   syntax: "CLEARACCESS <#channel>"
-  example: "%command_prefix%CLEARACCESS #κανάλι"
+  example: "%command_prefix%CLEARACCESS #Ares_Help"
   short: "Εκκαθάριση ολόκληρης της λίστας πρόσβασης ενός καναλιού."
   help: |-
     Αφαιρεί όλες τις καταχωρήσεις πρόσβασης από τη λίστα πρόσβασης ενός καναλιού.
@@ -718,9 +718,9 @@ clearaccess:
 # --- IRCOPONLY (IRCop) --------------------------------------------------------
 ircoponly:
   syntax: "IRCOPONLY <#channel> {ON|OFF}"
-  example: "%command_prefix%IRCOPONLY #κανάλι ON"
+  example: "%command_prefix%IRCOPONLY #Ares_Help ON"
   examples:
-    - "%command_prefix%IRCOPONLY #κανάλι OFF"
+    - "%command_prefix%IRCOPONLY #Ares_Help OFF"
   short: "Περιορίστε ένα κανάλι στους χειριστές IRC."
   help: |-
     Μόνο εξουσιοδοτημένοι χειριστές IRC μπορούν να παραμείνουν στο κανάλι. Το %bot%
@@ -737,15 +737,15 @@ saregister:
 
     Καταχωρεί διοικητικά ένα κανάλι αμέσως στο καθορισμένο ψευδώνυμο
     ως ιδρυτή χωρίς να απαιτείται παρουσία, επαλήθευση ή όρια ρυθμού.
-  example: "%command_prefix%SAREGISTER #channel Alice Κοινοτικό κανάλι"
+  example: "%command_prefix%SAREGISTER #Ares_Help Ares Κανάλι βοήθειας"
   success: "Το κανάλι %channel% καταχωρήθηκε για τον/την %founder%."
 
 # --- NOEXPIRE (IRCop) ---------------------------------------------------------
 noexpire:
   syntax: "NOEXPIRE <#channel> {ON|OFF}"
-  example: "%command_prefix%NOEXPIRE #Σημαντικό ON"
+  example: "%command_prefix%NOEXPIRE #Ares_Help ON"
   examples:
-    - "%command_prefix%NOEXPIRE #Σημαντικό OFF"
+    - "%command_prefix%NOEXPIRE #Ares_Help OFF"
   short: "Ορισμός ή αφαίρεση προστασίας λήξης για ένα κανάλι."
   help: |-
     Ελέγχει αν ένα κανάλι θα λήξει λόγω αδράνειας.
@@ -768,9 +768,9 @@ noexpire:
 # --- DROP (IRCop) -------------------------------------------------------------
 drop:
   syntax: "DROP <#channel> [FORCE]"
-  example: "%command_prefix%DROP #κανάλι"
+  example: "%command_prefix%DROP #Ares_Help"
   examples:
-    - "%command_prefix%DROP #κανάλι FORCE"
+    - "%command_prefix%DROP #Ares_Help FORCE"
   short: "Διαγραφή καταχωρημένου καναλιού."
   help: |-
     Διαγράφει ένα εγγεγραμμένο κανάλι από τη βάση δεδομένων.
@@ -789,7 +789,7 @@ drop:
 # --- RESTORE (IRCop) ----------------------------------------------------------
 restore:
   syntax: "RESTORE <#channel>"
-  example: "%command_prefix%RESTORE #κανάλι"
+  example: "%command_prefix%RESTORE #Ares_Help"
   short: "Επαναφορά καναλιού σε αναμονή διαγραφής."
   help: |-
     Επαναφέρει ένα κανάλι που διαγράφηκε χειροκίνητα και βρίσκεται ακόμα εντός της
@@ -800,9 +800,9 @@ restore:
 # --- SUSPEND (IRCop) ----------------------------------------------------------
 suspend:
   syntax: "SUSPEND <#channel> <duration> <αιτιολογία>"
-  example: "%command_prefix%SUSPEND #κανάλι 7d Παραβίαση κανόνων"
+  example: "%command_prefix%SUSPEND #Ares_Help 7d Παραβίαση κανόνων"
   examples:
-    - "%command_prefix%SUSPEND #κανάλι 0 Παραβίαση κανόνων"
+    - "%command_prefix%SUSPEND #Ares_Help 0 Παραβίαση κανόνων"
   short: "Αναστολή καναλιού."
   help: |-
     Απενεργοποιεί προσωρινά ένα καταχωρημένο κανάλι. Μορφές διάρκειας: 0 = μόνιμη,
@@ -819,7 +819,7 @@ suspend:
 # --- UNSUSPEND (IRCop) --------------------------------------------------------
 unsuspend:
   syntax: "UNSUSPEND <#channel>"
-  example: "%command_prefix%UNSUSPEND #κανάλι"
+  example: "%command_prefix%UNSUSPEND #Ares_Help"
   short: "Άρση αναστολής καναλιού."
   help: |-
     Επανενεργοποιεί ένα κανάλι σε αναστολή, αποκαθιστώντας τις λειτουργίες και την
@@ -832,7 +832,7 @@ unsuspend:
 # --- FORBID (IRCop) -----------------------------------------------------------
 forbid:
   syntax: "FORBID <#channel> <αιτιολογία>"
-  example: "%command_prefix%FORBID #κανάλι Παραβίαση κανόνων"
+  example: "%command_prefix%FORBID #Ares_Help Παραβίαση κανόνων"
   short: "Απαγόρευση χρήσης καναλιού."
   help: |-
     Αποτρέπει τη χρήση ενός καναλιού από οποιονδήποτε.
@@ -847,7 +847,7 @@ forbid:
 # --- UNFORBID (IRCop) ---------------------------------------------------------
 unforbid:
   syntax: "UNFORBID <#channel>"
-  example: "%command_prefix%UNFORBID #κανάλι"
+  example: "%command_prefix%UNFORBID #Ares_Help"
   short: "Άρση απαγόρευσης καναλιού."
   help: |-
     Αφαιρεί την απαγόρευση ενός καναλιού, επιτρέποντας την εκ νέου καταχώρησή του.
@@ -858,13 +858,13 @@ unforbid:
 # --- HISTORY ---
 history:
   syntax: "HISTORY <#κανάλι> <επιλογή> [παράμετροι]"
-  example: "%command_prefix%HISTORY #κανάλι ADD Έλεγχος συντονισμού"
+  example: "%command_prefix%HISTORY #Ares_Help ADD Έλεγχος συντονισμού"
   examples:
-    - "%command_prefix%HISTORY #κανάλι DEL 42"
-    - "%command_prefix%HISTORY #κανάλι VIEW"
-    - "%command_prefix%HISTORY #κανάλι VIEW 2"
-    - "%command_prefix%HISTORY #κανάλι VIEW ALL"
-    - "%command_prefix%HISTORY #κανάλι CLEAR"
+    - "%command_prefix%HISTORY #Ares_Help DEL 42"
+    - "%command_prefix%HISTORY #Ares_Help VIEW"
+    - "%command_prefix%HISTORY #Ares_Help VIEW 2"
+    - "%command_prefix%HISTORY #Ares_Help VIEW ALL"
+    - "%command_prefix%HISTORY #Ares_Help CLEAR"
   short: "Προβολή ή διαχείριση ιστορικού ενεργειών καναλιού."
   help: |-
     Διαχείριση του ιστορικού ενεργειών για ένα κανάλι.
@@ -889,7 +889,7 @@ history:
   # --- HISTORY ADD ---------------------------------------------------------
   add:
     syntax: "HISTORY <#channel> ADD <message>"
-    example: "%command_prefix%HISTORY #κανάλι ADD Έλεγχος συντονισμού"
+    example: "%command_prefix%HISTORY #Ares_Help ADD Έλεγχος συντονισμού"
     short: "Προσθήκη χειροκίνητης καταχώρησης ιστορικού."
     help: |-
       Προσθέτει μια χειροκίνητη καταχώρηση στο ιστορικό του καναλιού.
@@ -898,17 +898,17 @@ history:
   # --- HISTORY DEL ---------------------------------------------------------
   del:
     syntax: "HISTORY <#channel> DEL <id>"
-    example: "%command_prefix%HISTORY #κανάλι DEL 42"
+    example: "%command_prefix%HISTORY #Ares_Help DEL 42"
     short: "Διαγραφή καταχώρησης ιστορικού μέσω ID."
     help: "Διαγράφει μια καταχώρηση ιστορικού με το ID της."
 
   # --- HISTORY VIEW --------------------------------------------------------
   view:
     syntax: "HISTORY <#channel> VIEW [PAGE|ALL]"
-    example: "%command_prefix%HISTORY #κανάλι VIEW"
+    example: "%command_prefix%HISTORY #Ares_Help VIEW"
     examples:
-      - "%command_prefix%HISTORY #κανάλι VIEW 2"
-      - "%command_prefix%HISTORY #κανάλι VIEW ALL"
+      - "%command_prefix%HISTORY #Ares_Help VIEW 2"
+      - "%command_prefix%HISTORY #Ares_Help VIEW ALL"
     short: "Προβολή ιστορικού ενεργειών καναλιού."
     help: "Εμφανίζει τις καταχωρήσεις ιστορικού του καναλιού."
     header: "%heading% (εμφάνιση %start%-%end% από %total%):"
@@ -921,7 +921,7 @@ history:
   # --- HISTORY CLEAR -------------------------------------------------------
   clear:
     syntax: "HISTORY <#channel> CLEAR"
-    example: "%command_prefix%HISTORY #κανάλι CLEAR"
+    example: "%command_prefix%HISTORY #Ares_Help CLEAR"
     short: "Διαγραφή όλων των καταχωρήσεων ιστορικού για ένα κανάλι."
     help: "Διαγράφει όλες τις καταχωρήσεις ιστορικού του καναλιού."
     success: "Εκκαθαρίστηκαν %count% καταχωρήσεις ιστορικού για %channel%."
@@ -1013,11 +1013,11 @@ creg:
   pending.short: "Εμφανίζει εκκρεμή αιτήματα σε περιορισμένη σελίδα."
   pending.help: "Εμφανίζει εκκρεμή αιτήματα σε περιορισμένη σελίδα."
   accept.syntax: "CREG ACCEPT <#channel>"
-  accept.example: "%command_prefix%CREG ACCEPT #channel"
+  accept.example: "%command_prefix%CREG ACCEPT #Ares_Help"
   accept.short: "Εγκρίνει αίτημα εγγραφής καναλιού."
   accept.help: "Ελέγχει ξανά το αίτημα και ενεργοποιεί την εγγραφή."
   reject.syntax: "CREG REJECT <#channel> <αιτία>"
-  reject.example: "%command_prefix%CREG REJECT #channel Απαιτείται δημόσιο θέμα"
+  reject.example: "%command_prefix%CREG REJECT #Ares_Help Απαιτείται δημόσιο θέμα"
   reject.short: "Απορρίπτει αίτημα εγγραφής καναλιού."
   reject.help: "Απορρίπτει αίτημα με υποχρεωτική αιτία και περιορισμό."
   example: "%command_prefix%CREG PENDING"

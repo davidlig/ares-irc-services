@@ -60,15 +60,15 @@ identify:
     Despois dunha identificación exitosa recibirá o modo rexistrado %emphasis_0%
     e, se estaba usando un alcume de convidado, restauraráselle o seu alcume
     rexistrado.
-  example: "%command_prefix%IDENTIFY Usuario <contrasinal>"
+  example: "%command_prefix%IDENTIFY Ares meu_contrasinal123"
   native_syntax: "/NICK <alcume>:<contrasinal> | /NICK <alcume>!<contrasinal>"
   native_short: "Mostra a sintaxe de autenticación nativa por cambio de alcume."
   native_help: |-
     Este protocolo autentica as contas mediante cambios de alcume.
     Usa %emphasis_0% ou, se o alcume está ocupado, %emphasis_1%.
-  native_example: "/NICK Usuario:<contrasinal>"
+  native_example: "/NICK Ares:meu_contrasinal123"
   native_examples:
-    - "%command_prefix%/NICK Usuario!<contrasinal>"
+    - "/NICK Ares!meu_contrasinal123"
   native_authentication: "Este protocolo xestiona a autenticación mediante cambios de alcume. Usa %command_0% ou, se o alcume está ocupado, %command_1%."
   native_authentication_command_0: "/NICK <alcume>:<contrasinal>"
   native_authentication_command_1: "/NICK <alcume>!<contrasinal>"
@@ -137,9 +137,9 @@ recover:
     substituirá o gardado só despois de validalo.
     Ao usar o token gardado ofrécesche unha substitución opcional con VERIFY; ignora
     a mensaxe se queres conservar o actual.
-  example: "%command_prefix%RECOVER Usuario"
+  example: "%command_prefix%RECOVER Ares"
   examples:
-    - "%command_prefix%RECOVER Usuario <token_recibido>"
+    - "%command_prefix%RECOVER Ares <token_recibido>"
   pending: "O rexistro de %nickname% está pendente. Usa %command_0%. Se o token se enviou por correo e hai un enderezo válido asociado, podes solicitar outro con %command_1%."
   pending_command_0: "VERIFY <token>"
   pending_command_1: "RESEND"
@@ -303,7 +303,7 @@ info:
     O correo só é visible para a persoa propietaria identificada.
     Se o alcume é privado, só a súa persoa propietaria e os operadores IRC poden
     consultar a información.
-  example: "%command_prefix%INFO Usuario"
+  example: "%command_prefix%INFO Ares"
   private: "A información do alcume %nickname% é privada."
   header: "Información do alcume %nickname%"
   status: "%label%            : %status%"
@@ -361,7 +361,7 @@ status:
   help: |-
     Amosa o estado actual dun alcume: se está rexistrado, pendente de
     verificación, suspendido, etc.
-  example: "%command_prefix%STATUS Usuario"
+  example: "%command_prefix%STATUS Ares"
   header: "Estado do alcume %nickname%"
   unregistered: "  Estado          : Non rexistrado"
   not_registered_offline: "  Estado          : %state%"
@@ -461,7 +461,7 @@ userip:
   help: |-
     Amosa o enderezo IP e o nome de host reais dun alcume.
     Úsao con responsabilidade: é información sensible.
-  example: "%command_prefix%USERIP Usuario"
+  example: "%command_prefix%USERIP Ares"
   result: "Alcume: %nickname% | IP: %ip% | Host: %host%"
 
 # --- WHOIP (IRCop) ------------------------------------------------------------
@@ -499,17 +499,17 @@ history:
     Consulta e xestiona o historial de accións dun alcume. Rexistra automaticamente
     suspensións, cambios de contrasinal ou correo e recuperacións. VIEW amosa tres
     entradas por páxina; ALL amosa o historial completo.
-  example: "%command_prefix%HISTORY Usuario VIEW"
+  example: "%command_prefix%HISTORY Ares VIEW"
   examples:
-    - "%command_prefix%HISTORY Usuario VIEW ALL"
-    - "%command_prefix%HISTORY Usuario ADD Nota manual"
+    - "%command_prefix%HISTORY Ares VIEW ALL"
+    - "%command_prefix%HISTORY Ares ADD Nota manual"
 
   # --- HISTORY ADD ---------------------------------------------------------
   add:
     syntax: "HISTORY <alcume> ADD <mensaxe>"
     short: "Engadir unha entrada manual ao historial."
     help: "Engade unha entrada manual ao historial do alcume."
-    example: "%command_prefix%HISTORY Usuario ADD Denunciado por spam"
+    example: "%command_prefix%HISTORY Ares ADD Denunciado por spam"
     success: "Entrada do historial engadida para %nickname%."
 
   # --- HISTORY DEL ---------------------------------------------------------
@@ -517,7 +517,7 @@ history:
     syntax: "HISTORY <alcume> DEL <id>"
     short: "Eliminar unha entrada do historial polo ID."
     help: "Elimina unha entrada concreta do historial polo seu ID."
-    example: "%command_prefix%HISTORY Usuario DEL 42"
+    example: "%command_prefix%HISTORY Ares DEL 42"
 
   # --- HISTORY VIEW --------------------------------------------------------
   view:
@@ -526,10 +526,10 @@ history:
     help: |-
       Amosa o historial de accións do alcume. Por defecto amosa tres entradas por
       páxina. Usa ALL para velas todas.
-    example: "%command_prefix%HISTORY Usuario VIEW"
+    example: "%command_prefix%HISTORY Ares VIEW"
     examples:
-      - "%command_prefix%HISTORY Usuario VIEW 2"
-      - "%command_prefix%HISTORY Usuario VIEW ALL"
+      - "%command_prefix%HISTORY Ares VIEW 2"
+      - "%command_prefix%HISTORY Ares VIEW ALL"
     header: "%heading% (mostrando %start%-%end% de %total%):"
     header_title: "Historial de %nickname%"
     entry: "#%id% [%date%] %action% por %operator% — %message%"
@@ -542,11 +542,13 @@ history:
     syntax: "HISTORY <alcume> CLEAR"
     short: "Eliminar todas as entradas do historial dun alcume."
     help: "Elimina de forma irreversible todas as entradas do historial do alcume."
-    example: "%command_prefix%HISTORY Usuario CLEAR"
+    example: "%command_prefix%HISTORY Ares CLEAR"
     success: "Limpadas %count% entradas do historial de %nickname%."
 
 # --- HISTORY MESSAGES ---
 history.message:
+  modes_changed: "Preferencia de modos automáticos cambiada por un operador"
+  modes_cleared: "Preferencia de modos automáticos borrada por un operador"
   verify: "Conta activada"
   resend: "Correo de verificación reenviado"
   noexpire_on: "Protección de caducidade activada"
@@ -562,6 +564,8 @@ history.message:
 
 # --- HISTORY EXTRA FIELDS ---
 history.extra:
+  old_modes: "Modos anteriores: %value%"
+  new_modes: "Modos novos: %value%"
   old_email: "Correo-e anterior: %value%"
   new_email: "Novo correo-e: %value%"
   method: "Método: %value%"
@@ -578,9 +582,9 @@ saregister:
 
     En modo TOKEN, o código de rescate móstrase unha vez ao operador.
     En modo EMAIL, o código de rescate envíase ao enderezo de correo indicado.
-  example: "%command_prefix%SAREGISTER Alice Contrasinal123"
+  example: "%command_prefix%SAREGISTER Ares Contrasinal123"
   examples:
-    - "%command_prefix%SAREGISTER Bob Contrasinal456 bob@exemplo.gal"
+    - "%command_prefix%SAREGISTER Ares Contrasinal456 bob@exemplo.gal"
   success_token: "O alcume %nickname% foi rexistrado. Código de rescate: %token%"
   success_email: "O alcume %nickname% foi rexistrado. Código de rescate enviado a %email%."
   invalid_nickname: "Alcume non válido %nickname%."
@@ -592,9 +596,9 @@ saset:
   help: |-
     Permite a un IRCop cambiar a configuración doutro alcume rexistrado. Non
     admite alcumes Root, IRCop nin de servizos.
-  example: "%command_prefix%SASET Usuario PRIVATE ON"
+  example: "%command_prefix%SASET Ares PRIVATE ON"
   examples:
-    - "%command_prefix%SASET Usuario TIMEZONE OFF"
+    - "%command_prefix%SASET Ares TIMEZONE OFF"
   unknown_option: "Opción descoñecida %option%. Opcións dispoñibles: %options%."
   cannot_modify_oper: "Non se pode modificar un alcume de Operador de IRC."
 
@@ -603,7 +607,7 @@ saset:
     syntax: "SASET <alcume> PASSWORD <novo_contrasinal>"
     short: "Cambiar o contrasinal dun alcume."
     help: "Cambia o contrasinal doutro alcume. O cambio é inmediato."
-    example: "%command_prefix%SASET Usuario PASSWORD ChaveSegura123"
+    example: "%command_prefix%SASET Ares PASSWORD ChaveSegura123"
 
   # --- SASET EMAIL ---------------------------------------------------------
   email:
@@ -613,7 +617,7 @@ saset:
       Cambia o correo electrónico doutro alcume. O cambio é inmediato e non require
       o token de rescate nin envía un correo de confirmación.
       BADMAIL non restrinxe este cambio administrativo de correo.
-    example: "%command_prefix%SASET Usuario EMAIL usuario@exemplo.com"
+    example: "%command_prefix%SASET Ares EMAIL usuario@exemplo.com"
 
   # --- SASET LANGUAGE ------------------------------------------------------
   language:
@@ -622,34 +626,52 @@ saset:
     help: |-
       Cambia o idioma doutro alcume. Neste comando están dispoñibles en (inglés)
       e es (castelán).
-    example: "%command_prefix%SASET Usuario LANGUAGE es"
+    example: "%command_prefix%SASET Ares LANGUAGE es"
 
   # --- SASET TIMEZONE ------------------------------------------------------
   timezone:
     syntax: "SASET <alcume> TIMEZONE {<fuso_horario>|OFF}"
     short: "Cambiar o fuso horario dun alcume."
     help: "Establece ou elimina o fuso horario doutro alcume. Usa OFF para eliminalo."
-    example: "%command_prefix%SASET Usuario TIMEZONE Europe/Madrid"
+    example: "%command_prefix%SASET Ares TIMEZONE Europe/Madrid"
     examples:
-      - "%command_prefix%SASET Usuario TIMEZONE OFF"
+      - "%command_prefix%SASET Ares TIMEZONE OFF"
 
   # --- SASET PRIVATE -------------------------------------------------------
   private:
     syntax: "SASET <alcume> PRIVATE {ON|OFF}"
     short: "Cambiar a privacidade dun alcume."
     help: "Activa ou desactiva a privacidade da información doutro alcume."
-    example: "%command_prefix%SASET Usuario PRIVATE ON"
+    example: "%command_prefix%SASET Ares PRIVATE ON"
     examples:
-      - "%command_prefix%SASET Usuario PRIVATE OFF"
+      - "%command_prefix%SASET Ares PRIVATE OFF"
 
   # --- SASET MSG -----------------------------------------------------------
   msg:
     syntax: "SASET <alcume> MSG {ON|OFF}"
     short: "Cambiar a preferencia de mensaxes dun alcume."
     help: "Establece se outro alcume recibe respostas como PRIVMSG (ON) ou NOTICE (OFF)."
-    example: "%command_prefix%SASET Usuario MSG ON"
+    example: "%command_prefix%SASET Ares MSG ON"
     examples:
-      - "%command_prefix%SASET Usuario MSG OFF"
+      - "%command_prefix%SASET Ares MSG OFF"
+
+  # --- SASET MODES ---------------------------------------------------------
+  modes:
+    syntax: "SASET <alcume> MODES [modos]"
+    short: "Configura os modos automáticos dun alcume."
+    help: |-
+      Garda letras de modo sen signos e distingue maiúsculas. Omíteas para borrar.
+      Os modos dispoñibles dependen do protocolo e dos módulos cargados.
+      Aplícanse ao identificarse e ao momento se é posible; non bloquean os modos.
+    example: "%command_prefix%SASET Ares MODES B"
+    examples:
+      - "%command_prefix%SASET Ares MODES"
+    saved: "Modos automáticos %modes% gardados para %nickname%."
+    cleared: "Preferencia de modos automáticos borrada para %nickname%."
+    unchanged: "Os modos automáticos de %nickname% non cambiaron."
+    invalid: "Usa só letras de modo admitidas, sen signos nin parámetros."
+    unavailable: "Descoñécense os modos dispoñibles; agarda pola sincronización da rede."
+    not_registered: "O alcume %nickname% non está rexistrado."
 
   # --- SASET VHOST ---------------------------------------------------------
   vhost:
@@ -658,9 +680,9 @@ saset:
     help: |-
       Establece ou elimina o host virtual doutro alcume. Executa SASET <alcume> VHOST
       sen valor para eliminalo.
-    example: "%command_prefix%SASET Usuario VHOST usuario.exemplo.org"
+    example: "%command_prefix%SASET Ares VHOST usuario.exemplo.org"
     examples:
-      - "%command_prefix%SASET Usuario VHOST"
+      - "%command_prefix%SASET Ares VHOST"
 
 # --- RENAME (IRCop) -----------------------------------------------------------
 rename:
@@ -669,7 +691,7 @@ rename:
   help: |-
     Obriga un alcume conectado a cambiar a un nome aleatorio cun prefixo definido
     pola rede.
-  example: "%command_prefix%RENAME Problematico"
+  example: "%command_prefix%RENAME BadUser"
   cannot_rename_root: "Non se pode renomear o usuario root %nickname%."
   cannot_rename_oper: "Non se pode renomear o operador de IRC %nickname%."
   cannot_rename_service: "Non se pode renomear o alcume de servizo %nickname%."
@@ -682,9 +704,9 @@ noexpire:
   help: |-
     Controla se o alcume caduca por inactividade.
     ON evita a caducidade e OFF aplica as regras habituais.
-  example: "%command_prefix%NOEXPIRE Usuario ON"
+  example: "%command_prefix%NOEXPIRE Ares ON"
   examples:
-    - "%command_prefix%NOEXPIRE Usuario OFF"
+    - "%command_prefix%NOEXPIRE Ares OFF"
   success_on: "O alcume %nickname% está agora protexido contra a caducidade."
   success_off: "O alcume %nickname% caducará normalmente agora."
   forbidden: "O alcume %nickname% está prohibido."
@@ -720,9 +742,9 @@ suspend:
     Impide que a persoa propietaria se identifique. A duración pode expresarse en
     días (d), horas (h), minutos (m) ou 0 para unha suspensión permanente. Non se
     poden suspender operadores IRC nin persoas usuarias Root.
-  example: "%command_prefix%SUSPEND MalUsuario 7d Spam en #axuda"
+  example: "%command_prefix%SUSPEND BadUser 7d Spam en #Ares_Help"
   examples:
-    - "%command_prefix%SUSPEND Problematico 0 Evasión de prohibición"
+    - "%command_prefix%SUSPEND BadUser 0 Evasión de prohibición"
   success: "O alcume %nickname% foi suspendido ata %duration%."
   already_suspended: "O alcume %nickname% xa está suspendido."
   forbidden: "O alcume %nickname% está prohibido e non se pode suspender."
@@ -740,7 +762,7 @@ unsuspend:
   help: |-
     Retira unha suspensión activa para que a persoa propietaria poida volver
     a identificarse.
-  example: "%command_prefix%UNSUSPEND Usuario"
+  example: "%command_prefix%UNSUSPEND Ares"
   success: "A suspensión foi levantada de %nickname%."
   not_suspended: "O alcume %nickname% non está suspendido."
 
@@ -753,7 +775,7 @@ forbid:
     Se está rexistrado, elimínase; se está conectado, obrígaselle a cambiar a un
     alcume aleatorio. Non se poden prohibir persoas usuarias Root, IRCops nin
     servizos.
-  example: "%command_prefix%FORBID MalUsuario Infraccións reiteradas das normas"
+  example: "%command_prefix%FORBID BadUser Infraccións reiteradas das normas"
   success: "O alcume %nickname% foi prohibido."
   updated: "O motivo de prohibición de %nickname% foi actualizado."
   reason_required: "Debe proporcionar un motivo para a prohibición."
@@ -766,7 +788,7 @@ unforbid:
   syntax: "UNFORBID <alcume>"
   short: "Eliminar unha prohibición de alcume."
   help: "Retira a prohibición para que o alcume poida volver usarse."
-  example: "%command_prefix%UNFORBID AlcumeProhibido"
+  example: "%command_prefix%UNFORBID Ares"
   success: "O alcume %nickname% xa non está prohibido."
   not_forbidden: "O alcume %nickname% non está prohibido."
 
@@ -826,9 +848,9 @@ drop:
     eliminar persoas usuarias Root, IRCops e servizos, nin o teu propio alcume.
   force:
     short: "Elimina permanentemente un alcume pendente de eliminación."
-  example: "%command_prefix%DROP CuentaAntigua"
+  example: "%command_prefix%DROP BadUser"
   examples:
-    - "%command_prefix%DROP CuentaAntigua FORCE"
+    - "%command_prefix%DROP BadUser FORCE"
   suspended: "O alcume %nickname% está suspendido. Reactíveo primeiro."
   forbidden: "O alcume %nickname% está prohibido."
   cannot_drop_root: "Non se pode eliminar o usuario root %nickname%."
@@ -846,7 +868,7 @@ restore:
   help: |-
     Restaura un alcume pendente de eliminación mentres siga dentro do período
     de graza.
-  example: "%command_prefix%RESTORE CuentaAntigua"
+  example: "%command_prefix%RESTORE Ares"
   success: "O alcume %nickname% foi restaurado."
   not_pending_deletion: "O alcume %nickname% non está pendente de eliminación."
 
