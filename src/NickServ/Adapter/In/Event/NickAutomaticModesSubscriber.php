@@ -9,6 +9,7 @@ use App\Irc\Application\PublishedEvent\UserJoinedNetworkAppEvent;
 use App\Irc\Application\PublishedEvent\UserLeftNetworkEvent;
 use App\Irc\Application\PublishedEvent\UserModesChangedEvent;
 use App\NickServ\Application\Port\Out\IdentifiedSessionTracker;
+use App\NickServ\Application\Port\Out\NickNetworkUserLookup;
 use App\NickServ\Application\PublishedEvent\NickAutomaticModesChangedEvent;
 use App\NickServ\Application\PublishedEvent\NickIdentifiedEvent;
 use App\NickServ\Application\PublishedEvent\UserDeidentifiedEvent;
@@ -24,6 +25,7 @@ final readonly class NickAutomaticModesSubscriber implements EventSubscriberInte
         private AutomaticModeSessionService $sessions,
         private IdentifiedSessionTracker $identities,
         private NickHistoryService $history,
+        private NickNetworkUserLookup $users,
     ) {}
 
     public static function getSubscribedEvents(): array
@@ -71,6 +73,10 @@ final readonly class NickAutomaticModesSubscriber implements EventSubscriberInte
     public function onModesChanged(UserModesChangedEvent $event): void
     {
         $this->sessions->observe($event->uid, $event->modeDelta);
+        $user = $this->users->findByUid($event->uid);
+        if (null !== $user && !$user->isIdentified) {
+            $this->sessions->remove($event->uid);
+        }
     }
 
     public function onJoined(UserJoinedNetworkAppEvent $event): void

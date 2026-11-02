@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Integration;
 
+use App\Irc\Adapter\In\Event\PublishedIrcEventBridge;
 use App\Irc\Adapter\Network\InMemoryChannelRepository;
 use App\Irc\Adapter\Network\InMemoryNetworkUserRepository;
 use App\Irc\Adapter\Network\LocalUserModeSync;
@@ -16,6 +17,7 @@ use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\SendNoticePort;
 use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\Irc\Application\Port\In\ServiceUidGeneratorInterface;
+use App\Irc\Domain\Event\UserModeChangedEvent;
 use App\Irc\Domain\Network\NetworkUser;
 use App\Irc\Domain\ValueObject\Ident;
 use App\Irc\Domain\ValueObject\Nick;
@@ -97,7 +99,7 @@ final class AutomaticModeIdentifyLifecycleTest extends DoctrineIntegrationTestCa
         $automaticModeActions = $this->createStub(AutomaticModeActions::class);
         $automaticModeActions->method('usesNativeProfiles')->willReturn(false);
         $automaticModeActions->method('change')->willReturnCallback(static function (string $uid, string $delta) use (&$modeChanges, $nickNetworkLookup): bool {
-            self::assertTrue($nickNetworkLookup->findByUid($uid)?->isIdentified);
+            self::assertSame('+' === $delta[0], $nickNetworkLookup->findByUid($uid)?->isIdentified);
             $modeChanges[] = $delta;
 
             return true;
@@ -115,6 +117,7 @@ final class AutomaticModeIdentifyLifecycleTest extends DoctrineIntegrationTestCa
             $automaticModes,
             $sessions,
             new NickHistoryService($this->createStub(NickHistoryRepositoryInterface::class)),
+            $nickNetworkLookup,
         ));
         $preSyncState = [];
         $dispatcher->addListener(NickIdentifiedEvent::class, static function (NickIdentifiedEvent $event) use (&$preSyncState, &$modeChanges, $networkLookup): void {
@@ -219,6 +222,17 @@ final class AutomaticModeIdentifyLifecycleTest extends DoctrineIntegrationTestCa
         self::assertTrue($networkLookup->findByUid('001USER')?->isIdentified);
         self::assertSame('Guest123', $networkLookup->findByUid('001USER')->nick);
         self::assertTrue($pendingRegistry->peek('001USER'));
-        self::assertSame(['+B'], $modeChanges);
+        $changesBeforeIdentityLoss = $modeChanges;
+        self::assertSame(['+B'], $changesBeforeIdentityLoss);
+
+        $dispatcher->addSubscriber(new PublishedIrcEventBridge($dispatcher));
+        $dispatcher->dispatch(new UserModeChangedEvent(new Uid('001USER'), '+B-r+r'));
+        self::assertTrue($networkLookup->findByUid('001USER')->isIdentified);
+        $changesAfterCombinedDelta = $modeChanges;
+        self::assertSame(['+B'], $changesAfterCombinedDelta);
+        $dispatcher->dispatch(new UserModeChangedEvent(new Uid('001USER'), '+i-r'));
+        self::assertFalse($networkLookup->findByUid('001USER')->isIdentified);
+        self::assertSame('Guest123', $networkLookup->findByUid('001USER')->nick);
+        self::assertSame(['+B', '-B'], $modeChanges);
     }
 }

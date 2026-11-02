@@ -160,7 +160,7 @@ final class UdbNickSyncSubscriber implements EventSubscriberInterface
             if (null === $nick) {
                 return;
             }
-            $key = sprintf('%s::modes', $nickname);
+            $key = sprintf('%s::modes', $nick->nickname);
             $records = $this->exporter->nickRecords($nick);
             $saved = isset($records[$key])
                 ? $this->recordWriter->insert(self::BLOCK, $key, $records[$key])

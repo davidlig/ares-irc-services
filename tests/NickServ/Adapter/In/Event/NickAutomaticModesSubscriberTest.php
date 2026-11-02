@@ -37,6 +37,8 @@ final class NickAutomaticModesSubscriberTest extends TestCase
     /** @var list<string> */
     private array $calls = [];
 
+    private ?NetworkUser $user;
+
     /** @var list<NickHistory> */
     private array $history = [];
 
@@ -94,6 +96,35 @@ final class NickAutomaticModesSubscriberTest extends TestCase
         self::assertSame(['+B'], $this->calls);
     }
 
+    public function testNetworkIdentityLossRevokesOnlyModesStillOwnedAfterTheWholeDelta(): void
+    {
+        foreach (['-r', '+i-r', '-r+i', '-r+r', '-Br+B'] as $delta) {
+            $this->calls = [];
+            $dispatcher = $this->dispatcher();
+            $dispatcher->dispatch(new NickIdentifiedEvent(12, 'Pedro', 'UID'));
+            $identified = '-r+r' === $delta;
+            $this->user = new NetworkUser('UID', 'Pedro', 'id', 'host', 'cloak', '*', $identified);
+            $dispatcher->dispatch(new UserModesChangedEvent('UID', $delta));
+            self::assertSame($identified || '-Br+B' === $delta ? ['+B'] : ['+B', '-B'], $this->calls, $delta);
+            $dispatcher->dispatch(new UserDeidentifiedEvent('UID', 12, 'Pedro'));
+            self::assertSame($identified ? ['+B', '-B'] : ('-Br+B' === $delta ? ['+B'] : ['+B', '-B']), $this->calls, $delta);
+        }
+    }
+
+    public function testMissingNetworkUserDoesNotTriggerModeRemoval(): void
+    {
+        $dispatcher = $this->dispatcher();
+        $dispatcher->dispatch(new NickIdentifiedEvent(12, 'Pedro', 'UID'));
+        $this->user = null;
+        $dispatcher->dispatch(new UserModesChangedEvent('UID', '-r'));
+        self::assertSame(['+B'], $this->calls);
+    }
+
+    private function currentUser(): ?NetworkUser
+    {
+        return $this->user;
+    }
+
     private function dispatcher(): EventDispatcher
     {
         $nick = RegisteredNick::createActive('Pedro', 'hash', null, 'en', new DateTimeImmutable());
@@ -101,7 +132,8 @@ final class NickAutomaticModesSubscriberTest extends TestCase
         $nicks = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nicks->method('findByNick')->willReturn($nick);
         $users = $this->createStub(NickNetworkUserLookup::class);
-        $users->method('findByUid')->willReturn(new NetworkUser('UID', 'Pedro', 'id', 'host', 'cloak', '*', true));
+        $this->user = new NetworkUser('UID', 'Pedro', 'id', 'host', 'cloak', '*', true);
+        $users->method('findByUid')->willReturnCallback($this->currentUser(...));
         $identities = $this->createStub(IdentifiedSessionTracker::class);
         $identities->method('findNick')->willReturn('Pedro');
         $identities->method('findUidByNick')->willReturnCallback(static fn (string $nick): ?string => 'Pedro' === $nick ? 'UID' : null);
@@ -118,7 +150,7 @@ final class NickAutomaticModesSubscriberTest extends TestCase
             $this->history[] = $entry;
         });
         $dispatcher = new EventDispatcher();
-        $dispatcher->addSubscriber(new NickAutomaticModesSubscriber(new AutomaticModeSessionService($identities, $nicks, $users, $catalog, $actions), $identities, new NickHistoryService($history)));
+        $dispatcher->addSubscriber(new NickAutomaticModesSubscriber(new AutomaticModeSessionService($identities, $nicks, $users, $catalog, $actions), $identities, new NickHistoryService($history), $users));
 
         return $dispatcher;
     }

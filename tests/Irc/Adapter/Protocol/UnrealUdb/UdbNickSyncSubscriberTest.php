@@ -134,6 +134,18 @@ final class UdbNickSyncSubscriberTest extends TestCase
     }
 
     #[Test]
+    public function passwordRecoveryUsesCanonicalNicknameForAutomaticModes(): void
+    {
+        $repo = $this->createStub(NickProjectionQuery::class);
+        $repo->method('findById')->willReturn(new NickProjection(7, 'Pedro', null, null, false, null, false, automaticModes: ['bot']));
+        $writer = $this->createMock(UdbRecordWriterInterface::class);
+        $writer->expects(self::once())->method('insert')->with('N', 'Pedro::modes', '+B')->willReturn(true);
+        $writer->expects(self::never())->method('delete');
+
+        $this->createSubscriber(repo: $repo, writer: $writer)->onPasswordHashAvailable(new NickPasswordHashAvailable(7, 'pedro', null));
+    }
+
+    #[Test]
     public function onPasswordHashAvailableClearsAnIncompatibleAutomaticModeProjection(): void
     {
         $repo = $this->createStub(NickProjectionQuery::class);
