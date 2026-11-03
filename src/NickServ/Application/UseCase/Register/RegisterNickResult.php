@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\NickServ\Application\UseCase\Register;
 
+use App\NickServ\Application\Service\PasswordPolicy;
+
 final readonly class RegisterNickResult
 {
     private function __construct(
@@ -13,7 +15,13 @@ final readonly class RegisterNickResult
         public ?string $guestPrefix = null,
         public int $retryAfterSeconds = 0,
         public ?string $token = null,
+        public ?PasswordPolicy $passwordPolicy = null,
     ) {}
+
+    public static function passwordRejected(PasswordPolicy $policy): self
+    {
+        return new self(RegisterNickOutcome::PasswordRejected, passwordPolicy: $policy);
+    }
 
     public static function verificationRequired(string $email): self
     {

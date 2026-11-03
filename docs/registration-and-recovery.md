@@ -195,7 +195,7 @@ records nor success notices.
 Requester replies, authorization, quotas and HISTORY remain unchanged; CREG ACCEPT/REJECT
 retain their existing audit/debug behavior.
 
-## Recovery-password generation policy
+## New-password policy
 
 Configure NickServ through `.env`:
 
@@ -221,6 +221,9 @@ Length counts UTF-8 characters, not transport bytes. Spaces and IRC controls do
 not satisfy the symbol requirement. Passwords are never case-folded or normalized
 by this policy, and existing command syntax is unchanged.
 
-Recovery replacement passwords use the listed printable ASCII alphabet and satisfy
-both settings. Existing credentials and authentication remain unchanged. Link
-passwords and verification/recovery tokens are outside this policy.
+The common Application policy applies to REGISTER, SAREGISTER, SET PASSWORD and
+SASET PASSWORD before credential changes or success side effects. Recovery creates
+replacement passwords with a cryptographically secure printable ASCII alphabet
+that satisfies both settings. Existing credentials continue to authenticate without
+revalidation or forced resets. Permissions and HISTORY policies are unchanged.
+Link passwords, database secrets and verification/recovery tokens are not affected.

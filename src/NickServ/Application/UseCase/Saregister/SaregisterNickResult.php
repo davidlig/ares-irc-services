@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\NickServ\Application\UseCase\Saregister;
 
+use App\NickServ\Application\Service\PasswordPolicy;
+
 final readonly class SaregisterNickResult
 {
     private function __construct(
@@ -12,7 +14,13 @@ final readonly class SaregisterNickResult
         public ?string $email = null,
         public ?string $token = null,
         public ?string $guestPrefix = null,
+        public ?PasswordPolicy $passwordPolicy = null,
     ) {}
+
+    public static function passwordRejected(PasswordPolicy $policy): self
+    {
+        return new self(SaregisterNickOutcome::PasswordRejected, passwordPolicy: $policy);
+    }
 
     public static function registeredToken(string $nickname, string $token): self
     {

@@ -908,3 +908,11 @@ rescue:
     Si no el vols canviar, ignora aquest missatge.
   replacement_unavailable: "La contrasenya s’ha restablert, però no s’ha pogut emetre un testimoni nou. L’actual continua sent vàlid."
   temporarily_unavailable: "El lliurament del testimoni de recuperació no està disponible temporalment. Torna-ho a provar més tard."
+
+# --- PASSWORD POLICY ----------------------------------------------------------
+password_policy:
+  rejected:
+    none: "La contrasenya nova ha de tenir almenys %minimum% caràcters."
+    low: "La contrasenya nova ha de tenir almenys %minimum% caràcters. Inclou almenys una lletra (a-z o A-Z) i un dígit (0-9)."
+    mid: "La contrasenya nova ha de tenir almenys %minimum% caràcters. Inclou almenys una minúscula (a-z), una majúscula (A-Z) i un dígit (0-9)."
+    high: "La contrasenya nova ha de tenir almenys %minimum% caràcters. Inclou almenys una minúscula (a-z), una majúscula (A-Z), un dígit (0-9) i un símbol: !@#$%&*+-_=.?"

@@ -902,3 +902,11 @@ rescue:
     Se non vuoi cambiarlo, ignora questo messaggio.
   replacement_unavailable: "La password è stata reimpostata, ma non è stato possibile emettere un nuovo token. Quello attuale rimane valido."
   temporarily_unavailable: "La consegna del token di recupero è temporaneamente indisponibile. Riprova più tardi."
+
+# --- PASSWORD POLICY ----------------------------------------------------------
+password_policy:
+  rejected:
+    none: "La nuova password deve contenere almeno %minimum% caratteri."
+    low: "La nuova password deve contenere almeno %minimum% caratteri. Includi almeno una lettera (a-z o A-Z) e una cifra (0-9)."
+    mid: "La nuova password deve contenere almeno %minimum% caratteri. Includi almeno una minuscola (a-z), una maiuscola (A-Z) e una cifra (0-9)."
+    high: "La nuova password deve contenere almeno %minimum% caratteri. Includi almeno una minuscola (a-z), una maiuscola (A-Z), una cifra (0-9) e un simbolo: !@#$%&*+-_=.?"

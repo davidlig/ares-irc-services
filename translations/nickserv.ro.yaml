@@ -907,3 +907,11 @@ rescue:
     Dacă nu dorești schimbarea, ignoră acest mesaj.
   replacement_unavailable: "Parola a fost resetată, dar nu s-a putut emite un token nou. Tokenul actual rămâne valid."
   temporarily_unavailable: "Livrarea tokenului de recuperare este temporar indisponibilă. Încearcă mai târziu."
+
+# --- PASSWORD POLICY ----------------------------------------------------------
+password_policy:
+  rejected:
+    none: "Noua parolă trebuie să conțină cel puțin %minimum% caractere."
+    low: "Noua parolă trebuie să conțină cel puțin %minimum% caractere. Include cel puțin o literă (a-z sau A-Z) și o cifră (0-9)."
+    mid: "Noua parolă trebuie să conțină cel puțin %minimum% caractere. Include cel puțin o literă mică (a-z), o literă mare (A-Z) și o cifră (0-9)."
+    high: "Noua parolă trebuie să conțină cel puțin %minimum% caractere. Include cel puțin o literă mică (a-z), o literă mare (A-Z), o cifră (0-9) și un simbol: !@#$%&*+-_=.?"

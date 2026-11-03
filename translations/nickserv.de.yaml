@@ -915,3 +915,11 @@ rescue:
     Wenn du es nicht ändern möchtest, ignoriere diese Nachricht.
   replacement_unavailable: "Dein Passwort wurde zurückgesetzt, aber ein neues Token konnte nicht ausgegeben werden. Dein aktuelles Token bleibt gültig."
   temporarily_unavailable: "Die Ausgabe des Wiederherstellungstokens ist vorübergehend nicht verfügbar. Versuche es später erneut."
+
+# --- PASSWORD POLICY ----------------------------------------------------------
+password_policy:
+  rejected:
+    none: "Das neue Passwort muss mindestens %minimum% Zeichen enthalten."
+    low: "Das neue Passwort muss mindestens %minimum% Zeichen enthalten. Verwende mindestens einen Buchstaben (a-z oder A-Z) und eine Ziffer (0-9)."
+    mid: "Das neue Passwort muss mindestens %minimum% Zeichen enthalten. Verwende mindestens einen Kleinbuchstaben (a-z), einen Großbuchstaben (A-Z) und eine Ziffer (0-9)."
+    high: "Das neue Passwort muss mindestens %minimum% Zeichen enthalten. Verwende mindestens einen Kleinbuchstaben (a-z), einen Großbuchstaben (A-Z), eine Ziffer (0-9) und ein Symbol: !@#$%&*+-_=.?"

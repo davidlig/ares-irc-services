@@ -24,6 +24,7 @@ final class SetNickSettingPresentation
     public static function present(NickServContext $context, SetNickSettingResult $result): bool
     {
         return match ($result->outcome) {
+            SetNickSettingOutcome::PasswordRejected => PasswordPolicyPresentation::reject($context, $result->passwordPolicy),
             SetNickSettingOutcome::Changed => self::presentChanged($context, $result),
             SetNickSettingOutcome::SessionLanguageChanged => self::reply($context, 'set.language.success', ['language' => $result->value]),
             SetNickSettingOutcome::EmailConfirmationSent => self::presentEmailConfirmation($context, $result),

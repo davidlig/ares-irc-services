@@ -902,3 +902,11 @@ rescue:
     Wil je het niet wijzigen, negeer dan dit bericht.
   replacement_unavailable: "Je wachtwoord is hersteld, maar een nieuw token kon niet worden uitgegeven. Je huidige token blijft geldig."
   temporarily_unavailable: "De uitgifte van hersteltokens is tijdelijk niet beschikbaar. Probeer het later opnieuw."
+
+# --- PASSWORD POLICY ----------------------------------------------------------
+password_policy:
+  rejected:
+    none: "Het nieuwe wachtwoord moet minstens %minimum% tekens bevatten."
+    low: "Het nieuwe wachtwoord moet minstens %minimum% tekens bevatten. Gebruik minstens één letter (a-z of A-Z) en één cijfer (0-9)."
+    mid: "Het nieuwe wachtwoord moet minstens %minimum% tekens bevatten. Gebruik minstens één kleine letter (a-z), één hoofdletter (A-Z) en één cijfer (0-9)."
+    high: "Het nieuwe wachtwoord moet minstens %minimum% tekens bevatten. Gebruik minstens één kleine letter (a-z), één hoofdletter (A-Z), één cijfer (0-9) en één symbool: !@#$%&*+-_=.?"

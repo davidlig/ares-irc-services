@@ -900,3 +900,11 @@ rescue:
     Se não o quiser alterar, ignore esta mensagem.
   replacement_unavailable: "A palavra-passe foi reposta, mas não foi possível emitir um novo token. O token atual continua válido."
   temporarily_unavailable: "A entrega do token de recuperação está temporariamente indisponível. Tente mais tarde."
+
+# --- PASSWORD POLICY ----------------------------------------------------------
+password_policy:
+  rejected:
+    none: "A nova palavra-passe deve ter pelo menos %minimum% caracteres."
+    low: "A nova palavra-passe deve ter pelo menos %minimum% caracteres. Inclua pelo menos uma letra (a-z ou A-Z) e um algarismo (0-9)."
+    mid: "A nova palavra-passe deve ter pelo menos %minimum% caracteres. Inclua pelo menos uma minúscula (a-z), uma maiúscula (A-Z) e um algarismo (0-9)."
+    high: "A nova palavra-passe deve ter pelo menos %minimum% caracteres. Inclua pelo menos uma minúscula (a-z), uma maiúscula (A-Z), um algarismo (0-9) e um símbolo: !@#$%&*+-_=.?"

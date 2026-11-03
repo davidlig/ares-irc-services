@@ -13,6 +13,7 @@ use App\NickServ\Application\Port\Out\RegistrationModeQuery;
 use App\NickServ\Application\Port\Out\RegistrationThrottle;
 use App\NickServ\Application\Port\Out\RescueTokenCodec;
 use App\NickServ\Application\Port\Out\TemporaryRescueTokenStore;
+use App\NickServ\Application\Service\PasswordPolicy;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\NickServ\Domain\ValueObject\NickStatus;
 use App\NickServ\Domain\ValueObject\RegistrationMode;
@@ -41,6 +42,7 @@ final readonly class RegisterNickHandler implements RegisterNickHandlerInterface
         private int $minimumIntervalSeconds,
         private int $verificationTokenTtlSeconds = 3600,
         private string $guestPrefix = 'Guest-',
+        private PasswordPolicy $passwordPolicy = new PasswordPolicy(),
     ) {}
 
     public function handle(RegisterNick $command): RegisterNickResult
@@ -82,6 +84,10 @@ final readonly class RegisterNickHandler implements RegisterNickHandlerInterface
                 NickStatus::PendingDeletion => RegisterNickResult::pendingDeletion($command->nickname),
                 default => RegisterNickResult::alreadyRegistered($command->nickname),
             };
+        }
+
+        if (!$this->passwordPolicy->isSatisfiedBy($command->password)) {
+            return RegisterNickResult::passwordRejected($this->passwordPolicy);
         }
 
         $passwordHash = $this->passwordHasher->hash($command->password);

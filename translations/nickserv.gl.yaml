@@ -901,3 +901,11 @@ rescue:
     Se non queres cambialo, ignora esta mensaxe.
   replacement_unavailable: "O contrasinal restableceuse, pero non se puido emitir un token novo. O actual segue sendo válido."
   temporarily_unavailable: "A entrega do token de recuperación non está dispoñible temporalmente. Téntao máis tarde."
+
+# --- PASSWORD POLICY ----------------------------------------------------------
+password_policy:
+  rejected:
+    none: "O novo contrasinal debe ter polo menos %minimum% caracteres."
+    low: "O novo contrasinal debe ter polo menos %minimum% caracteres. Inclúe polo menos unha letra (a-z ou A-Z) e un díxito (0-9)."
+    mid: "O novo contrasinal debe ter polo menos %minimum% caracteres. Inclúe polo menos unha minúscula (a-z), unha maiúscula (A-Z) e un díxito (0-9)."
+    high: "O novo contrasinal debe ter polo menos %minimum% caracteres. Inclúe polo menos unha minúscula (a-z), unha maiúscula (A-Z), un díxito (0-9) e un símbolo: !@#$%&*+-_=.?"

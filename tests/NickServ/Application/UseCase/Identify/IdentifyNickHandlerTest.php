@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Application\UseCase\Identify;
 
+use App\NickServ\Adapter\Out\Security\PhpPasswordHasher;
 use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\ForcedVhostCheckerInterface;
 use App\NickServ\Application\Port\Out\IdentifiedSessionTracker;
@@ -354,6 +355,18 @@ final class IdentifyNickHandlerTest extends TestCase
         self::assertSame(IdentifyNickOutcome::InvalidCredentials, $handler->handle($this->createCommand('Alice', 'wrong'))->outcome);
         self::assertSame(IdentifyNickOutcome::AlreadyIdentified, $handler->handle($this->createCommand('Alice', 'correct'))->outcome);
         self::assertNull($account->getRescueTokenHash());
+    }
+
+    #[Test]
+    public function existingShortPasswordStillAuthenticatesWithoutRewritingHash(): void
+    {
+        $hasher = new PhpPasswordHasher();
+        $hash = $hasher->hash('abc');
+        $account = RegisteredNick::createActive('alice', $hash, null, 'en', $this->now(), str_repeat('a', 64));
+        new ReflectionProperty($account, 'id')->setValue($account, 1);
+        $result = $this->createHandlerForAccount($account, passwordHasher: $hasher)->handle($this->createCommand('alice', 'abc'));
+        self::assertSame(IdentifyNickOutcome::Success, $result->outcome);
+        self::assertSame($hash, $account->getPasswordHash());
     }
 
     private function createCommand(string $nickname, string $password = 'secret'): IdentifyNick

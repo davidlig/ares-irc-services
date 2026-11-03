@@ -989,3 +989,11 @@ rescue:
     Aldatu nahi ez baduzu, ez ikusi egin mezu honi.
   replacement_unavailable: "Pasahitza berrezarri da, baina ezin izan da token berririk eman. Oraingo tokenak balio du oraindik."
   temporarily_unavailable: "Berreskuratze-tokenaren bidalketa ez dago une honetan erabilgarri. Saiatu geroago."
+
+# --- PASSWORD POLICY ----------------------------------------------------------
+password_policy:
+  rejected:
+    none: "Pasahitz berriak gutxienez %minimum% karaktere izan behar ditu."
+    low: "Pasahitz berriak gutxienez %minimum% karaktere izan behar ditu. Sartu gutxienez letra bat (a-z edo A-Z) eta zenbaki bat (0-9)."
+    mid: "Pasahitz berriak gutxienez %minimum% karaktere izan behar ditu. Sartu gutxienez letra xehe bat (a-z), letra larri bat (A-Z) eta zenbaki bat (0-9)."
+    high: "Pasahitz berriak gutxienez %minimum% karaktere izan behar ditu. Sartu gutxienez letra xehe bat (a-z), letra larri bat (A-Z), zenbaki bat (0-9) eta ikur bat: !@#$%&*+-_=.?"

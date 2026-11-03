@@ -896,3 +896,11 @@ rescue:
     Jeśli nie chcesz go zmieniać, zignoruj tę wiadomość.
   replacement_unavailable: "Hasło zostało zresetowane, ale nie udało się wydać nowego tokenu. Obecny token pozostaje ważny."
   temporarily_unavailable: "Wydawanie tokenu odzyskiwania jest chwilowo niedostępne. Spróbuj później."
+
+# --- PASSWORD POLICY ----------------------------------------------------------
+password_policy:
+  rejected:
+    none: "Nowe hasło musi zawierać co najmniej %minimum% znaków."
+    low: "Nowe hasło musi zawierać co najmniej %minimum% znaków. Użyj co najmniej jednej litery (a-z lub A-Z) i jednej cyfry (0-9)."
+    mid: "Nowe hasło musi zawierać co najmniej %minimum% znaków. Użyj co najmniej jednej małej litery (a-z), jednej wielkiej litery (A-Z) i jednej cyfry (0-9)."
+    high: "Nowe hasło musi zawierać co najmniej %minimum% znaków. Użyj co najmniej jednej małej litery (a-z), jednej wielkiej litery (A-Z), jednej cyfry (0-9) i jednego symbolu: !@#$%&*+-_=.?"

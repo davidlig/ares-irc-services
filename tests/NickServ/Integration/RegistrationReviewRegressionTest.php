@@ -22,6 +22,7 @@ use App\NickServ\Application\Port\Out\NicknameAuthenticationModeQuery;
 use App\NickServ\Application\Port\Out\PasswordHasher;
 use App\NickServ\Application\Port\Out\RegistrationEventPublisher;
 use App\NickServ\Application\Port\Out\RegistrationMailSender;
+use App\NickServ\Application\Port\Out\RescueTokenCodec;
 use App\NickServ\Application\Port\Out\ResendMailSender;
 use App\NickServ\Application\Port\Out\ResendThrottle;
 use App\NickServ\Application\Service\NickHistoryService;
@@ -50,6 +51,35 @@ use function str_repeat;
 final class RegistrationReviewRegressionTest extends DoctrineIntegrationTestCase
 {
     #[Test]
+    public function rejectedPasswordLeavesSqlAndSuccessEffectsUntouched(): void
+    {
+        $db = $this->entityManager->getConnection();
+        $before = hash('sha256', serialize($db->fetchAllAssociative('SELECT * FROM registered_nicks')));
+        $hasher = $this->createMock(PasswordHasher::class);
+        $hasher->expects(self::never())->method('hash');
+        $tokens = $this->createMock(RescueTokenCodec::class);
+        $tokens->expects(self::never())->method('generate');
+        $mail = $this->createMock(RegistrationMailSender::class);
+        $mail->expects(self::never())->method('sendVerification');
+        $clock = $this->createStub(Clock::class);
+        $clock->method('now')->willReturn(new DateTimeImmutable('2026-11-03T18:00:00Z'));
+        $handler = new RegisterNickHandler(
+            $this->createStub(EmailDomainPolicy::class),
+            new DoctrineRegisterNickRepository($this->entityManager),
+            $hasher,
+            $tokens,
+            $clock,
+            new InMemoryTemporaryRescueTokenStore(),
+            new DoctrineRegistrationPolicyRepository($db),
+            new InMemoryRegistrationThrottle(new RegisterThrottleRegistry()),
+            $mail,
+            300
+        );
+        self::assertSame(RegisterNickOutcome::PasswordRejected, $handler->handle(new RegisterNick('Rejected', 'abcdefg', null, 'en', 'ip:new'))->outcome);
+        self::assertSame($before, hash('sha256', serialize($db->fetchAllAssociative('SELECT * FROM registered_nicks'))));
+    }
+
+    #[Test]
     public function capacityFailureBlocksSameIpOnlyAfterSqlPersistence(): void
     {
         $now = new DateTimeImmutable('2026-10-22T12:00:00Z');
@@ -65,18 +95,18 @@ final class RegistrationReviewRegressionTest extends DoctrineIntegrationTestCase
         $mail = $this->createMock(RegistrationMailSender::class);
         $mail->expects(self::never())->method('sendVerification');
         $register = new RegisterNickHandler($this->createStub(EmailDomainPolicy::class), new DoctrineRegisterNickRepository($this->entityManager), $hasher, $codec, $clock, $store, $policy, new InMemoryRegistrationThrottle(new RegisterThrottleRegistry()), $mail, 300);
-        self::assertSame(RegisterNickOutcome::TemporarilyUnavailable, $register->handle(new RegisterNick('First', 'pw', null, 'en', 'ip:one'))->outcome);
+        self::assertSame(RegisterNickOutcome::TemporarilyUnavailable, $register->handle(new RegisterNick('First', 'password', null, 'en', 'ip:one'))->outcome);
         $count = $db->fetchOne('SELECT COUNT(*) FROM registered_nicks');
         self::assertIsInt($count);
         self::assertSame(1, $count);
         self::assertNull($db->fetchOne('SELECT token FROM registered_nicks'));
         $digest = static fn () => hash('sha256', serialize($db->fetchAllAssociative('SELECT * FROM registered_nicks ORDER BY id')));
         $before = $digest();
-        $blocked = $register->handle(new RegisterNick('Second', 'pw', null, 'en', 'ip:one'));
+        $blocked = $register->handle(new RegisterNick('Second', 'password', null, 'en', 'ip:one'));
         self::assertSame(RegisterNickOutcome::Throttled, $blocked->outcome);
         self::assertSame(300, $blocked->retryAfterSeconds);
         self::assertSame($before, $digest());
-        self::assertSame(RegisterNickOutcome::TemporarilyUnavailable, $register->handle(new RegisterNick('OtherIp', 'pw', null, 'en', 'ip:two'))->outcome);
+        self::assertSame(RegisterNickOutcome::TemporarilyUnavailable, $register->handle(new RegisterNick('OtherIp', 'password', null, 'en', 'ip:two'))->outcome);
         $count = $db->fetchOne('SELECT COUNT(*) FROM registered_nicks');
         self::assertIsInt($count);
         self::assertSame(2, $count);
@@ -101,18 +131,18 @@ final class RegistrationReviewRegressionTest extends DoctrineIntegrationTestCase
         $mail = $this->createMock(RegistrationMailSender::class);
         $mail->expects(self::exactly(2))->method('sendVerification')->willThrowException(new RuntimeException('synthetic mail failure'));
         $register = new RegisterNickHandler($this->createStub(EmailDomainPolicy::class), new DoctrineRegisterNickRepository($this->entityManager), $hasher, $codec, $clock, $store, $policy, new InMemoryRegistrationThrottle(new RegisterThrottleRegistry()), $mail, 300);
-        self::assertSame(RegisterNickOutcome::MailDeliveryFailed, $register->handle(new RegisterNick('First', 'pw', 'first@example.test', 'en', 'ip:one'))->outcome);
+        self::assertSame(RegisterNickOutcome::MailDeliveryFailed, $register->handle(new RegisterNick('First', 'password', 'first@example.test', 'en', 'ip:one'))->outcome);
         $count = $db->fetchOne('SELECT COUNT(*) FROM registered_nicks');
         self::assertIsInt($count);
         self::assertSame(1, $count);
         self::assertNull($db->fetchOne('SELECT token FROM registered_nicks'));
         $digest = static fn () => hash('sha256', serialize($db->fetchAllAssociative('SELECT * FROM registered_nicks ORDER BY id')));
         $before = $digest();
-        $blocked = $register->handle(new RegisterNick('Second', 'pw', 'second@example.test', 'en', 'ip:one'));
+        $blocked = $register->handle(new RegisterNick('Second', 'password', 'second@example.test', 'en', 'ip:one'));
         self::assertSame(RegisterNickOutcome::Throttled, $blocked->outcome);
         self::assertSame(300, $blocked->retryAfterSeconds);
         self::assertSame($before, $digest());
-        self::assertSame(RegisterNickOutcome::MailDeliveryFailed, $register->handle(new RegisterNick('OtherIp', 'pw', 'other@example.test', 'en', 'ip:two'))->outcome);
+        self::assertSame(RegisterNickOutcome::MailDeliveryFailed, $register->handle(new RegisterNick('OtherIp', 'password', 'other@example.test', 'en', 'ip:two'))->outcome);
         $count = $db->fetchOne('SELECT COUNT(*) FROM registered_nicks');
         self::assertIsInt($count);
         self::assertSame(2, $count);

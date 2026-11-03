@@ -896,3 +896,11 @@ rescue:
     Değiştirmek istemiyorsanız bu mesajı yok sayın.
   replacement_unavailable: "Parolanız sıfırlandı ancak yeni belirteç verilemedi. Mevcut belirteciniz geçerlidir."
   temporarily_unavailable: "Kurtarma belirteci teslimi geçici olarak kullanılamıyor. Daha sonra deneyin."
+
+# --- PASSWORD POLICY ----------------------------------------------------------
+password_policy:
+  rejected:
+    none: "Yeni parola en az %minimum% karakter içermelidir."
+    low: "Yeni parola en az %minimum% karakter içermelidir. En az bir harf (a-z veya A-Z) ve bir rakam (0-9) ekleyin."
+    mid: "Yeni parola en az %minimum% karakter içermelidir. En az bir küçük harf (a-z), bir büyük harf (A-Z) ve bir rakam (0-9) ekleyin."
+    high: "Yeni parola en az %minimum% karakter içermelidir. En az bir küçük harf (a-z), bir büyük harf (A-Z), bir rakam (0-9) ve bir sembol ekleyin: !@#$%&*+-_=.?"

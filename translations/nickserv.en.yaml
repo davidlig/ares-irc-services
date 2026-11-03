@@ -896,3 +896,11 @@ rescue:
     If you do not want to change it, ignore this message.
   replacement_unavailable: "Your password was reset, but a replacement token could not be issued. Your current recovery token is still valid."
   temporarily_unavailable: "Recovery token delivery is temporarily unavailable. Try again later."
+
+# --- PASSWORD POLICY ----------------------------------------------------------
+password_policy:
+  rejected:
+    none: "The new password must contain at least %minimum% characters."
+    low: "The new password must contain at least %minimum% characters. Include at least one letter (a-z or A-Z) and one digit (0-9)."
+    mid: "The new password must contain at least %minimum% characters. Include at least one lowercase letter (a-z), one uppercase letter (A-Z) and one digit (0-9)."
+    high: "The new password must contain at least %minimum% characters. Include at least one lowercase letter (a-z), one uppercase letter (A-Z), one digit (0-9) and one symbol: !@#$%&*+-_=.?"

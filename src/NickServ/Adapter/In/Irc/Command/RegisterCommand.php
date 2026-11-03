@@ -116,6 +116,9 @@ final readonly class RegisterCommand implements NickServCommandInterface
     private function present(NickServContext $context, RegisterNickResult $result): void
     {
         switch ($result->outcome) {
+            case RegisterNickOutcome::PasswordRejected:
+                PasswordPolicyPresentation::reject($context, $result->passwordPolicy);
+                break;
             case RegisterNickOutcome::TokenVerificationRequired:
                 $context->replyRescueToken('rescue.issued', $result->token, null);
                 break;

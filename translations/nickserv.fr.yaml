@@ -916,3 +916,11 @@ rescue:
     Si vous ne souhaitez pas le changer, ignorez ce message.
   replacement_unavailable: "Votre mot de passe est réinitialisé, mais aucun nouveau jeton n’a pu être émis. Votre jeton actuel reste valable."
   temporarily_unavailable: "La remise du jeton de récupération est temporairement indisponible. Réessayez plus tard."
+
+# --- PASSWORD POLICY ----------------------------------------------------------
+password_policy:
+  rejected:
+    none: "Le nouveau mot de passe doit contenir au moins %minimum% caractères."
+    low: "Le nouveau mot de passe doit contenir au moins %minimum% caractères. Incluez au moins une lettre (a-z ou A-Z) et un chiffre (0-9)."
+    mid: "Le nouveau mot de passe doit contenir au moins %minimum% caractères. Incluez au moins une minuscule (a-z), une majuscule (A-Z) et un chiffre (0-9)."
+    high: "Le nouveau mot de passe doit contenir au moins %minimum% caractères. Incluez au moins une minuscule (a-z), une majuscule (A-Z), un chiffre (0-9) et un symbole : !@#$%&*+-_=.?"
