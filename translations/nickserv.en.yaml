@@ -30,6 +30,9 @@ register:
     keep it somewhere safe.
     The %duration% expiry applies only before validation.
     Administratively blocked email domains cannot be used.
+    Minimum: %password_minimum% characters.
+    Complexity: %password_complexity%.
+    %password_requirements%
   example: "%command_prefix%REGISTER SafePa$$word_123"
   examples:
     - "%command_prefix%REGISTER SafePa$$word_123 user@example.com"
@@ -169,9 +172,11 @@ set:
     syntax: "SET PASSWORD <new_password>"
     short: "Change your nickname password."
     help: |-
-      Changes the password for your nickname. The new password takes
-      effect immediately. Choose a strong password of at least 6 characters
-      that you do not use on other services.
+      Changes your nickname’s login password. The change takes effect immediately.
+      Do not reuse it on other services.
+      Minimum: %password_minimum% characters.
+      Complexity: %password_complexity%.
+      %password_requirements%
     example: "%command_prefix%SET PASSWORD SafePa$$word_123"
     success: "Your password has been updated successfully."
 
@@ -583,6 +588,9 @@ saregister:
 
     In TOKEN mode, the rescue token is displayed once to the operator.
     In EMAIL mode, the rescue token is sent to the specified email address.
+    Minimum: %password_minimum% characters.
+    Complexity: %password_complexity%.
+    %password_requirements%
   example: "%command_prefix%SAREGISTER Ares SecretPass123"
   examples:
     - "%command_prefix%SAREGISTER Ares SecretPass456 bob@example.com"
@@ -607,7 +615,11 @@ saset:
   password:
     syntax: "SASET <nickname> PASSWORD <new_password>"
     short: "Change a nickname's password."
-    help: "Changes another nickname's password. The change takes effect immediately."
+    help: |-
+      Changes another nickname’s password. The change takes effect immediately.
+      Minimum: %password_minimum% characters.
+      Complexity: %password_complexity%.
+      %password_requirements%
     example: "%command_prefix%SASET Ares PASSWORD StrongPassword123"
 
   # --- SASET EMAIL ---------------------------------------------------------
@@ -904,3 +916,13 @@ password_policy:
     low: "The new password must contain at least %minimum% characters. Include at least one letter (a-z or A-Z) and one digit (0-9)."
     mid: "The new password must contain at least %minimum% characters. Include at least one lowercase letter (a-z), one uppercase letter (A-Z) and one digit (0-9)."
     high: "The new password must contain at least %minimum% characters. Include at least one lowercase letter (a-z), one uppercase letter (A-Z), one digit (0-9) and one symbol: !@#$%&*+-_=.?"
+  requirements:
+    none: |-
+      No composition requirements; the minimum length still applies.
+    low: |-
+      One letter (a-z or A-Z) and one digit (0-9).
+    mid: |-
+      One lowercase letter (a-z), one uppercase letter (A-Z) and one digit (0-9).
+    high: |-
+      One lowercase letter (a-z), one uppercase letter (A-Z), one digit (0-9)
+      and one symbol from this set: !@#$%&*+-_=.?

@@ -30,6 +30,9 @@ register:
     Păstrează-l într-un loc sigur.
     Durata de expirare %duration% se aplică doar înainte de verificare.
     Domeniile email blocate administrativ nu sunt permise.
+    Minimum: %password_minimum% caractere.
+    Complexitate: %password_complexity%.
+    %password_requirements%
   example: "%command_prefix%REGISTER Parolă$Sigură_123"
   examples:
     - "%command_prefix%REGISTER Parolă$Sigură_123 utilizator@exemplu.ro"
@@ -172,9 +175,11 @@ set:
     syntax: "SET PASSWORD <parolă_nouă>"
     short: "Schimbați parola poreclei dumneavoastră."
     help: |-
-      Schimbă parola pentru porecla dumneavoastră. Noua parolă intră în
-      vigoare imediat. Alegeți o parolă puternică de cel puțin 6 caractere
-      pe care să nu o folosiți la alte servicii.
+      Schimbă parola de acces a poreclei tale. Modificarea este imediată.
+      Nu o reutiliza la alte servicii.
+      Minimum: %password_minimum% caractere.
+      Complexitate: %password_complexity%.
+      %password_requirements%
     example: "%command_prefix%SET PASSWORD Parolă$Sigură_123"
     success: "Parola dumneavoastră a fost actualizată cu succes."
 
@@ -588,6 +593,9 @@ saregister:
 
     În modul TOKEN, tokenul de salvare este afișat o singură dată operatorului.
     În modul EMAIL, tokenul de salvare este trimis la adresa de e-mail specificată.
+    Minimum: %password_minimum% caractere.
+    Complexitate: %password_complexity%.
+    %password_requirements%
   example: "%command_prefix%SAREGISTER Ares Parolă123"
   examples:
     - "%command_prefix%SAREGISTER Ares Parolă456 bob@exemplu.ro"
@@ -612,7 +620,11 @@ saset:
   password:
     syntax: "SASET <poreclă> PASSWORD <parolă_nouă>"
     short: "Schimbă parola unei porecle."
-    help: "Schimbă imediat parola altei porecle."
+    help: |-
+      Schimbă parola altei porecle. Modificarea este imediată.
+      Minimum: %password_minimum% caractere.
+      Complexitate: %password_complexity%.
+      %password_requirements%
     example: "%command_prefix%SASET Ares PASSWORD ClaveSegura123"
 
   # --- SASET EMAIL ---------------------------------------------------------
@@ -915,3 +927,13 @@ password_policy:
     low: "Noua parolă trebuie să conțină cel puțin %minimum% caractere. Include cel puțin o literă (a-z sau A-Z) și o cifră (0-9)."
     mid: "Noua parolă trebuie să conțină cel puțin %minimum% caractere. Include cel puțin o literă mică (a-z), o literă mare (A-Z) și o cifră (0-9)."
     high: "Noua parolă trebuie să conțină cel puțin %minimum% caractere. Include cel puțin o literă mică (a-z), o literă mare (A-Z), o cifră (0-9) și un simbol: !@#$%&*+-_=.?"
+  requirements:
+    none: |-
+      Fără cerințe de compoziție; lungimea minimă rămâne obligatorie.
+    low: |-
+      O literă (a-z sau A-Z) și o cifră (0-9).
+    mid: |-
+      O literă mică (a-z), o literă mare (A-Z) și o cifră (0-9).
+    high: |-
+      O literă mică (a-z), o literă mare (A-Z), o cifră (0-9)
+      și un simbol din acest set: !@#$%&*+-_=.?

@@ -233,7 +233,7 @@ Existing credentials continue to authenticate without revalidation or forced
 resets. Permissions and HISTORY policies are unchanged.
 Link passwords, database secrets and verification/recovery tokens are not affected.
 
-Spanish HELP displays the configured policy. Other locale HELP alignment is the
-next local work unit, following approval of the Spanish preview. Ordinary error
-replies exist in all 14 supported languages. Composition profiles are optional
-rules, not strength scores.
+HELP for REGISTER, SAREGISTER, SET PASSWORD and SASET PASSWORD displays the
+configured policy in all 14 supported languages following approval of the Spanish
+preview. Requirement descriptions and ordinary error replies are also localized.
+Other command HELP prose has not been broadly migrated. Composition profiles are optional rules, not strength scores.

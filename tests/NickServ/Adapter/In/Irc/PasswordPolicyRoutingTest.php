@@ -137,10 +137,10 @@ final class PasswordPolicyRoutingTest extends TestCase
     }
 
     #[DataProvider('helpCommands')]
-    public function testSpanishHelpUsesConfiguredPolicy(string $command, string $complexity): void
+    public function testLocalizedHelpUsesConfiguredPolicy(string $command, string $complexity, string $locale): void
     {
         $messages = [];
-        [$service] = $this->service(new PasswordPolicy(17, $complexity), $messages, null);
+        [$service] = $this->service(new PasswordPolicy(17, $complexity), $messages, null, locale: $locale);
         $service->dispatch($command, $this->sender());
         $output = implode("\n", $messages);
         self::assertStringContainsString('17', $output);
@@ -150,17 +150,19 @@ final class PasswordPolicyRoutingTest extends TestCase
         if ('high' === $complexity) {
             self::assertStringContainsString(PasswordPolicy::SYMBOLS, $output);
         }
-        if ('none' === $complexity) {
+        if ('none' === $complexity && 'es' === $locale) {
             self::assertStringContainsString('Sin requisitos de composición', $output);
         }
     }
 
-    /** @return iterable<array{string, string}> */
+    /** @return iterable<array{string, string, string}> */
     public static function helpCommands(): iterable
     {
         foreach (['HELP REGISTER', 'HELP SAREGISTER', 'HELP SET PASSWORD', 'HELP SASET PASSWORD'] as $command) {
             foreach (['none', 'low', 'mid', 'high'] as $complexity) {
-                yield [$command, $complexity];
+                foreach (RegisteredNick::SUPPORTED_LANGUAGES as $locale) {
+                    yield [$command, $complexity, $locale];
+                }
             }
         }
     }
@@ -170,9 +172,9 @@ final class PasswordPolicyRoutingTest extends TestCase
      *
      * @return array{NickServService, RegisteredNick, object{count: int}}
      */
-    private function service(PasswordPolicy $policy, array &$messages, ?bool $accepted, string $expectedPassword = ''): array
+    private function service(PasswordPolicy $policy, array &$messages, ?bool $accepted, string $expectedPassword = '', string $locale = 'es'): array
     {
-        $account = RegisteredNick::createActive('Target', 'old-hash', null, 'es', new DateTimeImmutable(), str_repeat('a', 64));
+        $account = RegisteredNick::createActive('Target', 'old-hash', null, $locale, new DateTimeImmutable(), str_repeat('a', 64));
         new ReflectionProperty($account, 'id')->setValue($account, 1);
         $writes = new class {
             public int $count = 0;
@@ -260,9 +262,9 @@ final class PasswordPolicyRoutingTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void { $messages[] = $message; });
         $auth = $this->createStub(AuthorizationCheckerInterface::class);
         $auth->method('isGranted')->willReturn(true);
-        $translator = new Translator('es');
+        $translator = new Translator($locale);
         $translator->addLoader('irc', new IrcYamlTranslationLoader());
-        $translator->addResource('irc', dirname(__DIR__, 5) . '/translations/nickserv.es.yaml', 'es', 'nickserv');
+        $translator->addResource('irc', dirname(__DIR__, 5) . '/translations/nickserv.' . $locale . '.yaml', $locale, 'nickserv');
         $provider = $this->createStub(ServiceNicknameProviderInterface::class);
         $provider->method('getServiceKey')->willReturn('nickserv');
         $provider->method('getNickname')->willReturn('NickServ');
@@ -273,7 +275,7 @@ final class PasswordPolicyRoutingTest extends TestCase
             $auth,
             $registry,
             $repository,
-            new UserLanguageResolver($repository, new SessionLanguageRegistry(), 'es'),
+            new UserLanguageResolver($repository, new SessionLanguageRegistry(), $locale),
             $notifier,
             new UserMessageTypeResolver($repository),
             $translator,

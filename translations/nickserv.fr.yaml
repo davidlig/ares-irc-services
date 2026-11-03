@@ -30,6 +30,9 @@ register:
     conservez-le en lieu sûr.
     La durée de validité de %duration% ne s’applique qu’avant sa validation.
     Les domaines de courriel bloqués par l’administration sont refusés.
+    Longueur minimale : %password_minimum% caractères.
+    Complexité : %password_complexity%.
+    %password_requirements%
   example: "%command_prefix%REGISTER MotDePasse$ur_123"
   examples:
     - "%command_prefix%REGISTER MotDePasse$ur_123 utilisateur@exemple.com"
@@ -170,9 +173,11 @@ set:
     syntax: "SET PASSWORD <nouveau_motdepasse>"
     short: "Changer le mot de passe de votre surnom."
     help: |-
-      Change le mot de passe de votre surnom. Le nouveau mot de passe
-      prend effet immédiatement. Choisissez un mot de passe robuste d'au moins
-      6 caractères que vous n'utilisez pas sur d'autres services.
+      Modifie le mot de passe de ton pseudonyme. Le changement est immédiat.
+      Ne le réutilise pas sur d’autres services.
+      Longueur minimale : %password_minimum% caractères.
+      Complexité : %password_complexity%.
+      %password_requirements%
     example: "%command_prefix%SET PASSWORD MotDePasse$ur_123"
     success: "Votre mot de passe a été mis à jour avec succès."
 
@@ -592,6 +597,9 @@ saregister:
 
     En mode TOKEN, le jeton de secours est affiché une seule fois à l'opérateur.
     En mode EMAIL, le jeton de secours est envoyé à l'adresse e-mail spécifiée.
+    Longueur minimale : %password_minimum% caractères.
+    Complexité : %password_complexity%.
+    %password_requirements%
   example: "%command_prefix%SAREGISTER Ares MotDePasse123"
   examples:
     - "%command_prefix%SAREGISTER Ares MotDePasse456 bob@exemple.fr"
@@ -616,7 +624,11 @@ saset:
   password:
     syntax: "SASET <surnom> PASSWORD <nouveau_mdp>"
     short: "Changer le mot de passe d'un surnom."
-    help: "Modifie le mot de passe d’un autre pseudonyme. Le changement est immédiat."
+    help: |-
+      Modifie le mot de passe d’un autre pseudonyme. Le changement est immédiat.
+      Longueur minimale : %password_minimum% caractères.
+      Complexité : %password_complexity%.
+      %password_requirements%
     example: "%command_prefix%SASET Ares PASSWORD MotDePasseSolide123"
 
   # --- SASET EMAIL ---------------------------------------------------------
@@ -924,3 +936,13 @@ password_policy:
     low: "Le nouveau mot de passe doit contenir au moins %minimum% caractères. Incluez au moins une lettre (a-z ou A-Z) et un chiffre (0-9)."
     mid: "Le nouveau mot de passe doit contenir au moins %minimum% caractères. Incluez au moins une minuscule (a-z), une majuscule (A-Z) et un chiffre (0-9)."
     high: "Le nouveau mot de passe doit contenir au moins %minimum% caractères. Incluez au moins une minuscule (a-z), une majuscule (A-Z), un chiffre (0-9) et un symbole : !@#$%&*+-_=.?"
+  requirements:
+    none: |-
+      Aucune exigence de composition ; la longueur minimale reste obligatoire.
+    low: |-
+      Une lettre (a-z ou A-Z) et un chiffre (0-9).
+    mid: |-
+      Une minuscule (a-z), une majuscule (A-Z) et un chiffre (0-9).
+    high: |-
+      Une minuscule (a-z), une majuscule (A-Z), un chiffre (0-9)
+      et un symbole parmi : !@#$%&*+-_=.?

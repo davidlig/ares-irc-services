@@ -30,6 +30,9 @@ register:
     gárdao nun lugar seguro.
     A caducidade de %duration% só se aplica antes de validalo.
     Non se admiten dominios de correo bloqueados administrativamente.
+    Mínimo: %password_minimum% caracteres.
+    Complexidade: %password_complexity%.
+    %password_requirements%
   example: "%command_prefix%REGISTER Chave$egura_123"
   examples:
     - "%command_prefix%REGISTER Chave$egura_123 usuario@exemplo.com"
@@ -170,9 +173,11 @@ set:
     syntax: "SET PASSWORD <novo_contrasinal>"
     short: "Cambiar o contrasinal do seu alcume."
     help: |-
-      Cambia o contrasinal do seu alcume. O novo contrasinal ten
-      efecto inmediato. Escolla un contrasinal seguro de polo menos 6 caracteres
-      que non use noutros servizos.
+      Cambia o contrasinal de acceso ao teu alcume. O cambio é inmediato.
+      Non o reutilices noutros servizos.
+      Mínimo: %password_minimum% caracteres.
+      Complexidade: %password_complexity%.
+      %password_requirements%
     example: "%command_prefix%SET PASSWORD Chave$egura_123"
     success: "O seu contrasinal foi actualizado con éxito."
 
@@ -584,6 +589,9 @@ saregister:
 
     En modo TOKEN, o código de rescate móstrase unha vez ao operador.
     En modo EMAIL, o código de rescate envíase ao enderezo de correo indicado.
+    Mínimo: %password_minimum% caracteres.
+    Complexidade: %password_complexity%.
+    %password_requirements%
   example: "%command_prefix%SAREGISTER Ares Contrasinal123"
   examples:
     - "%command_prefix%SAREGISTER Ares Contrasinal456 bob@exemplo.gal"
@@ -608,7 +616,11 @@ saset:
   password:
     syntax: "SASET <alcume> PASSWORD <novo_contrasinal>"
     short: "Cambiar o contrasinal dun alcume."
-    help: "Cambia o contrasinal doutro alcume. O cambio é inmediato."
+    help: |-
+      Cambia o contrasinal doutro alcume. O cambio é inmediato.
+      Mínimo: %password_minimum% caracteres.
+      Complexidade: %password_complexity%.
+      %password_requirements%
     example: "%command_prefix%SASET Ares PASSWORD ChaveSegura123"
 
   # --- SASET EMAIL ---------------------------------------------------------
@@ -909,3 +921,13 @@ password_policy:
     low: "O novo contrasinal debe ter polo menos %minimum% caracteres. Inclúe polo menos unha letra (a-z ou A-Z) e un díxito (0-9)."
     mid: "O novo contrasinal debe ter polo menos %minimum% caracteres. Inclúe polo menos unha minúscula (a-z), unha maiúscula (A-Z) e un díxito (0-9)."
     high: "O novo contrasinal debe ter polo menos %minimum% caracteres. Inclúe polo menos unha minúscula (a-z), unha maiúscula (A-Z), un díxito (0-9) e un símbolo: !@#$%&*+-_=.?"
+  requirements:
+    none: |-
+      Sen requisitos de composición; mantense a lonxitude mínima.
+    low: |-
+      Unha letra (a-z ou A-Z) e un díxito (0-9).
+    mid: |-
+      Unha minúscula (a-z), unha maiúscula (A-Z) e un díxito (0-9).
+    high: |-
+      Unha minúscula (a-z), unha maiúscula (A-Z), un díxito (0-9)
+      e un símbolo deste conxunto: !@#$%&*+-_=.?

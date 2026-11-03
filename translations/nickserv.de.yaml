@@ -30,6 +30,9 @@ register:
     Bewahre ihn sicher auf.
     Die Gültigkeitsdauer von %duration% gilt nur vor der Bestätigung.
     Administrativ gesperrte E-Mail-Domains sind nicht zulässig.
+    Mindestlänge: %password_minimum% Zeichen.
+    Komplexität: %password_complexity%.
+    %password_requirements%
   example: "%command_prefix%REGISTER Sicheres$Passwort_123"
   examples:
     - "%command_prefix%REGISTER Sicheres$Passwort_123 benutzer@beispiel.de"
@@ -174,9 +177,11 @@ set:
     syntax: "SET PASSWORD <neues_passwort>"
     short: "Ihr Nickname-Passwort ändern."
     help: |-
-      Ändert das Passwort für Ihren Nickname. Das neue Passwort wird
-      sofort wirksam. Wählen Sie ein starkes Passwort mit mindestens 6 Zeichen,
-      das Sie nicht bei anderen Diensten verwenden.
+      Ändert das Zugangspasswort deines Nicknames. Die Änderung gilt sofort.
+      Verwende es nicht bei anderen Diensten.
+      Mindestlänge: %password_minimum% Zeichen.
+      Komplexität: %password_complexity%.
+      %password_requirements%
     example: "%command_prefix%SET PASSWORD Sicheres$Passwort_123"
     success: "Ihr Passwort wurde erfolgreich aktualisiert."
 
@@ -591,6 +596,9 @@ saregister:
 
     Im TOKEN-Modus wird das Rettungstoken einmalig dem Operator angezeigt.
     Im EMAIL-Modus wird das Rettungstoken an die angegebene E-Mail-Adresse gesendet.
+    Mindestlänge: %password_minimum% Zeichen.
+    Komplexität: %password_complexity%.
+    %password_requirements%
   example: "%command_prefix%SAREGISTER Ares Passwort123"
   examples:
     - "%command_prefix%SAREGISTER Ares Passwort456 bob@example.de"
@@ -616,7 +624,11 @@ saset:
   password:
     syntax: "SASET <Nickname> PASSWORD <neues_Passwort>"
     short: "Passwort eines Nicknames ändern."
-    help: "Ändert das Passwort eines anderen Nicknames sofort."
+    help: |-
+      Ändert das Passwort eines anderen Nicknames. Die Änderung gilt sofort.
+      Mindestlänge: %password_minimum% Zeichen.
+      Komplexität: %password_complexity%.
+      %password_requirements%
     example: "%command_prefix%SASET Ares PASSWORD ClaveSegura123"
 
   # --- SASET EMAIL ---------------------------------------------------------
@@ -923,3 +935,14 @@ password_policy:
     low: "Das neue Passwort muss mindestens %minimum% Zeichen enthalten. Verwende mindestens einen Buchstaben (a-z oder A-Z) und eine Ziffer (0-9)."
     mid: "Das neue Passwort muss mindestens %minimum% Zeichen enthalten. Verwende mindestens einen Kleinbuchstaben (a-z), einen Großbuchstaben (A-Z) und eine Ziffer (0-9)."
     high: "Das neue Passwort muss mindestens %minimum% Zeichen enthalten. Verwende mindestens einen Kleinbuchstaben (a-z), einen Großbuchstaben (A-Z), eine Ziffer (0-9) und ein Symbol: !@#$%&*+-_=.?"
+  requirements:
+    none: |-
+      Keine Zeichenvorgaben; die Mindestlänge gilt weiterhin.
+    low: |-
+      Ein Buchstabe (a-z oder A-Z) und eine Ziffer (0-9).
+    mid: |-
+      Ein Kleinbuchstabe (a-z), ein Großbuchstabe (A-Z)
+      und eine Ziffer (0-9).
+    high: |-
+      Ein Kleinbuchstabe (a-z), ein Großbuchstabe (A-Z), eine Ziffer (0-9)
+      und ein Symbol aus dieser Zeichenmenge: !@#$%&*+-_=.?

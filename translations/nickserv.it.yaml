@@ -29,6 +29,9 @@ register:
     recupero permanente: conservalo in un luogo sicuro. La scadenza di %duration%
     si applica solo prima della convalida.
     I domini email bloccati amministrativamente non sono consentiti.
+    Minimo: %password_minimum% caratteri.
+    Complessità: %password_complexity%.
+    %password_requirements%
   example: "%command_prefix%REGISTER Password$Sicura_123"
   examples:
     - "%command_prefix%REGISTER Password$Sicura_123 utente@esempio.com"
@@ -168,9 +171,11 @@ set:
     syntax: "SET PASSWORD <nuova_password>"
     short: "Cambia la password del suo nickname."
     help: |-
-      Cambia la password per il suo nickname. La nuova password ha
-      effetto immediato. Scelga una password sicura di almeno 6 caratteri
-      che non usi su altri servizi.
+      Cambia la password di accesso al tuo nickname. La modifica è immediata.
+      Non riutilizzarla su altri servizi.
+      Minimo: %password_minimum% caratteri.
+      Complessità: %password_complexity%.
+      %password_requirements%
     example: "%command_prefix%SET PASSWORD Password$Sicura_123"
     success: "La sua password è stata aggiornata con successo."
 
@@ -581,8 +586,13 @@ saregister:
     Registra amministrativamente un nickname immediatamente senza richiedere
     la verifica dell'utente né limiti di frequenza.
 
-    In modalità TOKEN, il token di recupero viene mostrato una sola volta all'operatore.
-    In modalità EMAIL, il token di recupero viene inviato all'indirizzo email specificato.
+    In modalità TOKEN, il token di recupero viene mostrato una sola volta
+    all'operatore.
+    In modalità EMAIL, il token di recupero viene inviato all'indirizzo email
+    specificato.
+    Minimo: %password_minimum% caratteri.
+    Complessità: %password_complexity%.
+    %password_requirements%
   example: "%command_prefix%SAREGISTER Ares Password123"
   examples:
     - "%command_prefix%SAREGISTER Ares Password456 bob@esempio.it"
@@ -608,7 +618,11 @@ saset:
   password:
     syntax: "SASET <nickname> PASSWORD <nuova_password>"
     short: "Cambiare la password di un nickname."
-    help: "Cambia la password di un altro nickname. La modifica è immediata."
+    help: |-
+      Cambia la password di un altro nickname. La modifica è immediata.
+      Minimo: %password_minimum% caratteri.
+      Complessità: %password_complexity%.
+      %password_requirements%
     example: "%command_prefix%SASET Ares PASSWORD ClaveSegura123"
 
   # --- SASET EMAIL ---------------------------------------------------------
@@ -910,3 +924,13 @@ password_policy:
     low: "La nuova password deve contenere almeno %minimum% caratteri. Includi almeno una lettera (a-z o A-Z) e una cifra (0-9)."
     mid: "La nuova password deve contenere almeno %minimum% caratteri. Includi almeno una minuscola (a-z), una maiuscola (A-Z) e una cifra (0-9)."
     high: "La nuova password deve contenere almeno %minimum% caratteri. Includi almeno una minuscola (a-z), una maiuscola (A-Z), una cifra (0-9) e un simbolo: !@#$%&*+-_=.?"
+  requirements:
+    none: |-
+      Nessun requisito di composizione; la lunghezza minima resta obbligatoria.
+    low: |-
+      Una lettera (a-z o A-Z) e una cifra (0-9).
+    mid: |-
+      Una minuscola (a-z), una maiuscola (A-Z) e una cifra (0-9).
+    high: |-
+      Una minuscola (a-z), una maiuscola (A-Z), una cifra (0-9)
+      e un simbolo di questo insieme: !@#$%&*+-_=.?
