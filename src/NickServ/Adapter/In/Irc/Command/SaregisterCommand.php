@@ -10,6 +10,7 @@ use App\Irc\Application\Port\In\Command\IrcopAuditData;
 use App\NickServ\Adapter\In\Irc\NickServCommandInterface;
 use App\NickServ\Adapter\In\Irc\NickServContext;
 use App\NickServ\Application\Security\NickServPermission;
+use App\NickServ\Application\Service\PasswordPolicy;
 use App\NickServ\Application\UseCase\Saregister\SaregisterNick;
 use App\NickServ\Application\UseCase\Saregister\SaregisterNickHandlerInterface;
 use App\NickServ\Application\UseCase\Saregister\SaregisterNickOutcome;
@@ -23,7 +24,7 @@ use App\Shared\Adapter\In\Irc\Presentation\Role;
 
 final readonly class SaregisterCommand implements NickServCommandInterface, IrcopAuditableCommandInterface
 {
-    public function __construct(private SaregisterNickHandlerInterface $handler) {}
+    public function __construct(private SaregisterNickHandlerInterface $handler, private PasswordPolicy $passwordPolicy = new PasswordPolicy()) {}
 
     public function getName(): string
     {
@@ -91,7 +92,7 @@ final readonly class SaregisterCommand implements NickServCommandInterface, Irco
 
     public function getHelpParams(): array
     {
-        return [];
+        return PasswordPolicyPresentation::helpParameters($this->passwordPolicy);
     }
 
     public function execute(NickServContext $context): CommandOutcome

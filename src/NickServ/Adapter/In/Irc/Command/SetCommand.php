@@ -11,6 +11,7 @@ use App\NickServ\Application\Model\NetworkUser;
 use App\NickServ\Application\Model\NickOperationActor;
 use App\NickServ\Application\Security\NickServPermission;
 use App\NickServ\Application\Service\NickServClientKeyResolver;
+use App\NickServ\Application\Service\PasswordPolicy;
 use App\NickServ\Application\UseCase\Set\SetNickSetting;
 use App\NickServ\Application\UseCase\Set\SetNickSettingHandlerInterface;
 use App\NickServ\Application\UseCase\Set\SetNickSettingOption;
@@ -49,7 +50,7 @@ final readonly class SetCommand implements NickServCommandInterface
         ],
     ];
 
-    public function __construct(private SetNickSettingHandlerInterface $handler) {}
+    public function __construct(private SetNickSettingHandlerInterface $handler, private PasswordPolicy $passwordPolicy = new PasswordPolicy()) {}
 
     public function getName(): string
     {
@@ -108,13 +109,13 @@ final readonly class SetCommand implements NickServCommandInterface
     {
         $options = array_keys($this->getArgumentDefinition()->variants);
 
-        return array_map(static fn (string $option): array => [
+        return array_map(fn (string $option): array => [
             'name' => $option,
             'desc_key' => 'set.' . strtolower($option) . '.short',
             'help_key' => 'set.' . strtolower($option) . '.help',
             'syntax_key' => 'set.' . strtolower($option) . '.syntax',
             'example_key' => 'set.' . strtolower($option) . '.example',
-            'help_params' => self::subCommandHelpParameters($option),
+            'help_params' => 'PASSWORD' === $option ? PasswordPolicyPresentation::helpParameters($this->passwordPolicy) : self::subCommandHelpParameters($option),
         ], $options);
     }
 

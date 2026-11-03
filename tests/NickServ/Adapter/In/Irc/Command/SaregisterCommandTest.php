@@ -43,7 +43,8 @@ final class SaregisterCommandTest extends TestCase
         self::assertSame('saregister.short', $command->getShortDescKey());
         self::assertSame(63, $command->getOrder());
         self::assertSame([], $command->getSubCommandHelp());
-        self::assertSame([], $command->getHelpParams());
+        self::assertSame(8, $command->getHelpParams()['password_minimum']);
+        self::assertSame('none', $command->getHelpParams()['password_complexity']);
         self::assertTrue($command->isOperOnly());
         self::assertSame(NickServPermission::SAREGISTER, $command->getRequiredPermission());
     }

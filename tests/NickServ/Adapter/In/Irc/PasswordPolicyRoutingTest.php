@@ -136,6 +136,35 @@ final class PasswordPolicyRoutingTest extends TestCase
         }
     }
 
+    #[DataProvider('helpCommands')]
+    public function testSpanishHelpUsesConfiguredPolicy(string $command, string $complexity): void
+    {
+        $messages = [];
+        [$service] = $this->service(new PasswordPolicy(17, $complexity), $messages, null);
+        $service->dispatch($command, $this->sender());
+        $output = implode("\n", $messages);
+        self::assertStringContainsString('17', $output);
+        self::assertStringContainsString($complexity, $output);
+        self::assertStringNotContainsString('%password_', $output);
+        self::assertStringNotContainsString('password_policy.requirements', $output);
+        if ('high' === $complexity) {
+            self::assertStringContainsString(PasswordPolicy::SYMBOLS, $output);
+        }
+        if ('none' === $complexity) {
+            self::assertStringContainsString('Sin requisitos de composición', $output);
+        }
+    }
+
+    /** @return iterable<array{string, string}> */
+    public static function helpCommands(): iterable
+    {
+        foreach (['HELP REGISTER', 'HELP SAREGISTER', 'HELP SET PASSWORD', 'HELP SASET PASSWORD'] as $command) {
+            foreach (['none', 'low', 'mid', 'high'] as $complexity) {
+                yield [$command, $complexity];
+            }
+        }
+    }
+
     /**
      * @param list<string> $messages
      *
@@ -223,8 +252,8 @@ final class PasswordPolicyRoutingTest extends TestCase
         $operatorAccess->method('isRoot')->willReturn(true);
         $operatorAccess->method('hasPermission')->willReturn(true);
         $registry = new NickServCommandRegistry([
-            new RegisterCommand($register, 3600), new SaregisterCommand($saregister),
-            new SetCommand($set), new SasetCommand($set),
+            new RegisterCommand($register, 3600, $policy), new SaregisterCommand($saregister, $policy),
+            new SetCommand($set, $policy), new SasetCommand($set, passwordPolicy: $policy),
             new HelpCommand(new UnifiedHelpFormatter(), new TimezoneHelpProvider(), $operatorAccess),
         ]);
         $notifier = $this->createStub(NickServNotifierInterface::class);

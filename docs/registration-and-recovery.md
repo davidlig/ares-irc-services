@@ -227,3 +227,7 @@ replacement passwords with a cryptographically secure printable ASCII alphabet
 that satisfies both settings. Existing credentials continue to authenticate without
 revalidation or forced resets. Permissions and HISTORY policies are unchanged.
 Link passwords, database secrets and verification/recovery tokens are not affected.
+
+Spanish HELP displays the configured policy; the other HELP locales remain pending
+explicit approval of the Spanish preview. Ordinary error replies exist in all 14
+supported languages. Composition profiles are optional rules, not strength scores.

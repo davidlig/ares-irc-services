@@ -49,7 +49,8 @@ final class RegisterCommandTest extends TestCase
         self::assertSame([], $command->getSubCommandHelp());
         self::assertFalse($command->isOperOnly());
         self::assertNull($command->getRequiredPermission());
-        self::assertSame(['duration_seconds' => 3600], $command->getHelpParams());
+        self::assertSame(3600, $command->getHelpParams()['duration_seconds']);
+        self::assertSame(8, $command->getHelpParams()['password_minimum']);
     }
 
     #[Test]
@@ -57,7 +58,7 @@ final class RegisterCommandTest extends TestCase
     {
         $command = new RegisterCommand($this->createStub(RegisterNickHandlerInterface::class), verificationTokenTtlSeconds: 300);
 
-        self::assertSame(['duration_seconds' => 300], $command->getHelpParams());
+        self::assertSame(300, $command->getHelpParams()['duration_seconds']);
     }
 
     #[Test]

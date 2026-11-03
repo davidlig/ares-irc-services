@@ -11,6 +11,7 @@ use App\NickServ\Adapter\In\Irc\NickServCommandInterface;
 use App\NickServ\Adapter\In\Irc\NickServContext;
 use App\NickServ\Application\Model\NickOperationActor;
 use App\NickServ\Application\Security\NickServPermission;
+use App\NickServ\Application\Service\PasswordPolicy;
 use App\NickServ\Application\UseCase\Set\SetAutomaticModesHandlerInterface;
 use App\NickServ\Application\UseCase\Set\SetAutomaticModesOutcome;
 use App\NickServ\Application\UseCase\Set\SetNickSetting;
@@ -35,7 +36,7 @@ use function strtoupper;
 
 final readonly class SasetCommand implements NickServCommandInterface, IrcopAuditableCommandInterface
 {
-    public function __construct(private SetNickSettingHandlerInterface $handler, private ?SetAutomaticModesHandlerInterface $automaticModes = null) {}
+    public function __construct(private SetNickSettingHandlerInterface $handler, private ?SetAutomaticModesHandlerInterface $automaticModes = null, private PasswordPolicy $passwordPolicy = new PasswordPolicy()) {}
 
     public function getName(): string
     {
@@ -98,12 +99,13 @@ final readonly class SasetCommand implements NickServCommandInterface, IrcopAudi
     {
         $options = array_keys($this->getArgumentDefinition()->variants);
 
-        return array_map(static fn (string $option): array => [
+        return array_map(fn (string $option): array => [
             'name' => $option,
             'desc_key' => 'saset.' . strtolower($option) . '.short',
             'help_key' => 'saset.' . strtolower($option) . '.help',
             'syntax_key' => 'saset.' . strtolower($option) . '.syntax',
             'example_key' => 'saset.' . strtolower($option) . '.example',
+            'help_params' => 'PASSWORD' === $option ? PasswordPolicyPresentation::helpParameters($this->passwordPolicy) : [],
         ], $options);
     }
 
