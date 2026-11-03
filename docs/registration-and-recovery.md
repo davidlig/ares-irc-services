@@ -194,3 +194,33 @@ and, when configured, one notice. Failed attempts produce neither success audit
 records nor success notices.
 Requester replies, authorization, quotas and HISTORY remain unchanged; CREG ACCEPT/REJECT
 retain their existing audit/debug behavior.
+
+## Recovery-password generation policy
+
+Configure NickServ through `.env`:
+
+```dotenv
+NICKSERV_PASSWORD_MIN_LENGTH=8
+NICKSERV_PASSWORD_COMPLEXITY=none
+```
+
+Unset variables default to `8` and `none`. The minimum must be a positive integer;
+complexity must be exactly `none`, `low`, `mid` or `high`. Invalid values fail
+configuration rather than disabling validation.
+
+| Level | Required characters, in addition to minimum length |
+| --- | --- |
+| `none` | No composition requirement; minimum length still applies. |
+| `low` | One ASCII letter (`a-z` or `A-Z`) and one digit (`0-9`). |
+| `mid` | One lowercase ASCII letter, one uppercase ASCII letter and one digit. |
+| `high` | All `mid` requirements and one symbol from `!@#$%&*+-_=.?`. |
+
+Categories are not an input allowlist. Other characters are not silently stripped
+or forbidden by this policy, but do not satisfy an ASCII category requirement.
+Length counts UTF-8 characters, not transport bytes. Spaces and IRC controls do
+not satisfy the symbol requirement. Passwords are never case-folded or normalized
+by this policy, and existing command syntax is unchanged.
+
+Recovery replacement passwords use the listed printable ASCII alphabet and satisfy
+both settings. Existing credentials and authentication remain unchanged. Link
+passwords and verification/recovery tokens are outside this policy.
