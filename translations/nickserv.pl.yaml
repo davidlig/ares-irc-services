@@ -30,6 +30,9 @@ register:
     przechowuj go w bezpiecznym miejscu.
     Czas ważności %duration% dotyczy wyłącznie okresu przed weryfikacją.
     Administracyjnie zablokowane domeny email nie są dozwolone.
+    Minimum: %password_minimum% znaków.
+    Złożoność: %password_complexity%.
+    %password_requirements%
   example: "%command_prefix%REGISTER Hasło$bezpieczne_123"
   examples:
     - "%command_prefix%REGISTER Hasło$bezpieczne_123 uzytkownik@przyklad.com"
@@ -169,9 +172,11 @@ set:
     syntax: "SET PASSWORD <nowe_hasło>"
     short: "Zmień hasło swojego nicka."
     help: |-
-      Zmienia hasło dla Twojego nicka. Nowe hasło obowiązuje
-      natychmiast. Wybierz silne hasło o długości co najmniej 6 znaków,
-      którego nie używasz w innych serwisach.
+      Zmienia hasło dostępu do Twojego nicka. Zmiana jest natychmiastowa.
+      Nie używaj tego hasła w innych serwisach.
+      Minimum: %password_minimum% znaków.
+      Złożoność: %password_complexity%.
+      %password_requirements%
     example: "%command_prefix%SET PASSWORD Hasło$bezpieczne_123"
     success: "Twoje hasło zostało pomyślnie zaktualizowane."
 
@@ -584,6 +589,9 @@ saregister:
 
     W trybie TOKEN token ratunkowy jest wyświetlany operatorowi tylko raz.
     W trybie EMAIL token ratunkowy jest wysyłany na podany adres e-mail.
+    Minimum: %password_minimum% znaków.
+    Złożoność: %password_complexity%.
+    %password_requirements%
   example: "%command_prefix%SAREGISTER Ares Hasło123"
   examples:
     - "%command_prefix%SAREGISTER Ares Hasło456 bob@przyklad.pl"
@@ -608,7 +616,11 @@ saset:
   password:
     syntax: "SASET <nick> PASSWORD <nowe_hasło>"
     short: "Zmień hasło nicka."
-    help: "Zmienia hasło innego pseudonimu. Zmiana jest natychmiastowa."
+    help: |-
+      Zmienia hasło innego nicka. Zmiana jest natychmiastowa.
+      Minimum: %password_minimum% znaków.
+      Złożoność: %password_complexity%.
+      %password_requirements%
     example: "%command_prefix%SASET Ares PASSWORD BezpieczneHaslo123"
 
   # --- SASET EMAIL ---------------------------------------------------------
@@ -896,3 +908,21 @@ rescue:
     Jeśli nie chcesz go zmieniać, zignoruj tę wiadomość.
   replacement_unavailable: "Hasło zostało zresetowane, ale nie udało się wydać nowego tokenu. Obecny token pozostaje ważny."
   temporarily_unavailable: "Wydawanie tokenu odzyskiwania jest chwilowo niedostępne. Spróbuj później."
+
+# --- PASSWORD POLICY ----------------------------------------------------------
+password_policy:
+  rejected:
+    none: "Nowe hasło musi zawierać co najmniej %minimum% znaków."
+    low: "Nowe hasło musi zawierać co najmniej %minimum% znaków. Użyj co najmniej jednej litery (a-z lub A-Z) i jednej cyfry (0-9)."
+    mid: "Nowe hasło musi zawierać co najmniej %minimum% znaków. Użyj co najmniej jednej małej litery (a-z), jednej wielkiej litery (A-Z) i jednej cyfry (0-9)."
+    high: "Nowe hasło musi zawierać co najmniej %minimum% znaków. Użyj co najmniej jednej małej litery (a-z), jednej wielkiej litery (A-Z), jednej cyfry (0-9) i jednego symbolu: !@#$%&*+-_=.?"
+  requirements:
+    none: |-
+      Brak wymagań dotyczących składu; minimalna długość nadal obowiązuje.
+    low: |-
+      Jedna litera (a-z lub A-Z) i jedna cyfra (0-9).
+    mid: |-
+      Jedna mała litera (a-z), jedna wielka litera (A-Z) i jedna cyfra (0-9).
+    high: |-
+      Jedna mała litera (a-z), jedna wielka litera (A-Z), jedna cyfra (0-9)
+      i jeden symbol z tego zestawu: !@#$%&*+-_=.?

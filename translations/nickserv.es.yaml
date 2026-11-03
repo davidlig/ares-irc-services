@@ -30,6 +30,8 @@ register:
     Guárdalo en un lugar seguro.
     La caducidad de %duration% solo se aplica antes de validarlo.
     No se admiten dominios de correo bloqueados administrativamente.
+    Mínimo: %password_minimum% caracteres. Complejidad: %password_complexity%.
+    %password_requirements%
   example: "%command_prefix%REGISTER Clave$egura_123"
   examples:
     - "%command_prefix%REGISTER Clave$egura_123 usuario@ejemplo.com"
@@ -170,8 +172,9 @@ set:
     short: "Cambia la contraseña de tu apodo."
     help: |-
       Cambia la contraseña de acceso a tu apodo. La nueva contraseña entra en
-      vigor de inmediato. Elige una contraseña segura de al menos 6 caracteres
-      que no uses en otros servicios.
+      vigor de inmediato. No la reutilices en otros servicios.
+      Mínimo: %password_minimum% caracteres. Complejidad: %password_complexity%.
+      %password_requirements%
     example: "%command_prefix%SET PASSWORD Clave$egura_123"
     success: "Tu contraseña ha sido actualizada correctamente."
 
@@ -584,6 +587,8 @@ saregister:
 
     En modo TOKEN, el código de rescate se muestra una vez al operador.
     En modo EMAIL, el código de rescate se envía a la dirección de correo indicada.
+    Mínimo: %password_minimum% caracteres. Complejidad: %password_complexity%.
+    %password_requirements%
   example: "%command_prefix%SAREGISTER Ares Contraseña123"
   examples:
     - "%command_prefix%SAREGISTER Ares Contraseña456 bob@ejemplo.com"
@@ -608,7 +613,10 @@ saset:
   password:
     syntax: "SASET <apodo> PASSWORD <nueva_contraseña>"
     short: "Cambia la contraseña de un apodo."
-    help: "Cambia la contraseña de otro apodo. El cambio es inmediato."
+    help: |-
+      Cambia la contraseña de otro apodo. El cambio es inmediato.
+      Mínimo: %password_minimum% caracteres. Complejidad: %password_complexity%.
+      %password_requirements%
     example: "%command_prefix%SASET Ares PASSWORD ClaveSegura123"
 
   # --- SASET EMAIL ---------------------------------------------------------
@@ -903,3 +911,19 @@ rescue:
     Si no quieres cambiarlo, ignora este mensaje.
   replacement_unavailable: "Tu contraseña se ha restablecido, pero no se pudo emitir un token nuevo. Tu token de recuperación actual sigue siendo válido."
   temporarily_unavailable: "La entrega del token de recuperación no está disponible temporalmente. Inténtalo más tarde."
+
+# --- PASSWORD POLICY ----------------------------------------------------------
+password_policy:
+  rejected:
+    none: "La nueva contraseña debe tener al menos %minimum% caracteres."
+    low: "La nueva contraseña debe tener al menos %minimum% caracteres. Incluye al menos una letra (a-z o A-Z) y un número (0-9)."
+    mid: "La nueva contraseña debe tener al menos %minimum% caracteres. Incluye al menos una minúscula (a-z), una mayúscula (A-Z) y un número (0-9)."
+    high: "La nueva contraseña debe tener al menos %minimum% caracteres. Incluye al menos una minúscula (a-z), una mayúscula (A-Z), un número (0-9) y un símbolo: !@#$%&*+-_=.?"
+  requirements:
+    none: "Sin requisitos de composición; se mantiene la longitud mínima."
+    low: "Una letra (a-z o A-Z) y un número (0-9)."
+    mid: |-
+      Una minúscula (a-z), una mayúscula (A-Z) y un número (0-9).
+    high: |-
+      Una minúscula (a-z), una mayúscula (A-Z), un número (0-9)
+      y un símbolo de este conjunto: !@#$%&*+-_=.?

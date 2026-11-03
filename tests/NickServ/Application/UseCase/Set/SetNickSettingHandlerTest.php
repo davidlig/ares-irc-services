@@ -110,7 +110,7 @@ final class SetNickSettingHandlerTest extends TestCase
             $this->input(SetNickSettingOption::Password, ''),
         )->outcome);
         self::assertSame(SetNickSettingOutcome::Changed, $handler->handle(
-            $this->input(SetNickSettingOption::Password, 'secret'),
+            $this->input(SetNickSettingOption::Password, 'newsecret'),
         )->outcome);
         self::assertSame('new-hash', $account->getPasswordHash());
     }

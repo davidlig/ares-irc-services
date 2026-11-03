@@ -10,6 +10,7 @@ use App\Irc\Application\Port\In\Command\IrcopAuditData;
 use App\NickServ\Adapter\In\Irc\NickServCommandInterface;
 use App\NickServ\Adapter\In\Irc\NickServContext;
 use App\NickServ\Application\Security\NickServPermission;
+use App\NickServ\Application\Service\PasswordPolicy;
 use App\NickServ\Application\UseCase\Saregister\SaregisterNick;
 use App\NickServ\Application\UseCase\Saregister\SaregisterNickHandlerInterface;
 use App\NickServ\Application\UseCase\Saregister\SaregisterNickOutcome;
@@ -23,7 +24,7 @@ use App\Shared\Adapter\In\Irc\Presentation\Role;
 
 final readonly class SaregisterCommand implements NickServCommandInterface, IrcopAuditableCommandInterface
 {
-    public function __construct(private SaregisterNickHandlerInterface $handler) {}
+    public function __construct(private SaregisterNickHandlerInterface $handler, private PasswordPolicy $passwordPolicy = new PasswordPolicy()) {}
 
     public function getName(): string
     {
@@ -91,7 +92,7 @@ final readonly class SaregisterCommand implements NickServCommandInterface, Irco
 
     public function getHelpParams(): array
     {
-        return [];
+        return PasswordPolicyPresentation::helpParameters($this->passwordPolicy);
     }
 
     public function execute(NickServContext $context): CommandOutcome
@@ -124,6 +125,7 @@ final readonly class SaregisterCommand implements NickServCommandInterface, Irco
     private function present(NickServContext $context, SaregisterNickResult $result): CommandOutcome
     {
         return match ($result->outcome) {
+            SaregisterNickOutcome::PasswordRejected => $this->rejectPassword($context, $result),
             SaregisterNickOutcome::RegisteredToken => $this->presentRegisteredToken($context, $result),
             SaregisterNickOutcome::RegisteredEmail => $this->presentRegisteredEmail($context, $result),
             SaregisterNickOutcome::InvalidNickname => $this->rejectWithFragment($context, 'saregister.invalid_nickname', 'nickname', $result->nickname ?? ''),
@@ -141,6 +143,13 @@ final readonly class SaregisterCommand implements NickServCommandInterface, Irco
             SaregisterNickOutcome::AlreadyRegistered => $this->rejectWithFragment($context, 'register.already_registered', 'nickname', $result->nickname ?? ''),
             SaregisterNickOutcome::MailDeliveryFailed => $this->rejectCommon($context, 'error.mail_failed'),
         };
+    }
+
+    private function rejectPassword(NickServContext $context, SaregisterNickResult $result): CommandOutcome
+    {
+        PasswordPolicyPresentation::reject($context, $result->passwordPolicy);
+
+        return CommandOutcome::rejected();
     }
 
     private function presentRegisteredToken(NickServContext $context, SaregisterNickResult $result): CommandOutcome

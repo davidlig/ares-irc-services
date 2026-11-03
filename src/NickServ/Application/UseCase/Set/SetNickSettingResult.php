@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\NickServ\Application\UseCase\Set;
 
+use App\NickServ\Application\Service\PasswordPolicy;
+
 final readonly class SetNickSettingResult
 {
     public function __construct(
@@ -14,5 +16,6 @@ final readonly class SetNickSettingResult
         public ?string $currentEmail = null,
         public ?string $newEmail = null,
         public int $retryAfterSeconds = 0,
+        public ?PasswordPolicy $passwordPolicy = null,
     ) {}
 }

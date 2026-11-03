@@ -55,6 +55,10 @@ parameters:
   # Minimum seconds between REGISTER attempts per host/IP (default 300 = 5 minutes, anti-bot)
   nickserv.register_min_interval_default: 300
   nickserv.register_min_interval: "%env(int:default:nickserv.register_min_interval_default:NICKSERV_REGISTER_MIN_INTERVAL)%"
+  nickserv.password_min_length_default: 8
+  env(NICKSERV_PASSWORD_MIN_LENGTH): "%nickserv.password_min_length_default%"
+  nickserv.password_min_length: "%env(positive_int:NICKSERV_PASSWORD_MIN_LENGTH)%"
+  nickserv.password_complexity: "%env(optional_password_complexity:NICKSERV_PASSWORD_COMPLEXITY)%"
   nickserv.verification_token_ttl_seconds: 3600
   # Provisional RECOVER email challenge; confirmed recoveryToken has no TTL.
   nickserv.recover_token_ttl_seconds_default: 3600
@@ -2533,3 +2537,8 @@ services:
     alias: App\NickServ\Adapter\Out\User\IrcAutomaticModes
   App\NickServ\Application\UseCase\Set\SetAutomaticModesHandlerInterface:
     alias: App\NickServ\Application\UseCase\Set\SetAutomaticModesHandler
+
+  App\NickServ\Application\Service\PasswordPolicy:
+    arguments:
+      $minimumLength: "%nickserv.password_min_length%"
+      $complexity: "%nickserv.password_complexity%"

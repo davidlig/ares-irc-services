@@ -9,19 +9,16 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
-use function ctype_xdigit;
 use function strlen;
 
 #[CoversClass(SecureRecoveryPasswordGenerator::class)]
 final class SecureRecoveryPasswordGeneratorTest extends TestCase
 {
     #[Test]
-    public function generatesTwelveHexCharacters(): void
+    public function generatesExactlyTwelveLowercaseHexCharacters(): void
     {
-        $generator = new SecureRecoveryPasswordGenerator();
-        $password = $generator->generate();
-
+        $password = new SecureRecoveryPasswordGenerator()->generate();
         self::assertSame(12, strlen($password));
-        self::assertTrue(ctype_xdigit($password));
+        self::assertMatchesRegularExpression('/^[0-9a-f]{12}$/D', $password);
     }
 }

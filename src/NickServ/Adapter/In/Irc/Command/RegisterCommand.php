@@ -7,6 +7,7 @@ namespace App\NickServ\Adapter\In\Irc\Command;
 use App\Irc\Application\Port\In\SenderView;
 use App\NickServ\Adapter\In\Irc\NickServCommandInterface;
 use App\NickServ\Adapter\In\Irc\NickServContext;
+use App\NickServ\Application\Service\PasswordPolicy;
 use App\NickServ\Application\UseCase\Register\RegisterNick;
 use App\NickServ\Application\UseCase\Register\RegisterNickHandlerInterface;
 use App\NickServ\Application\UseCase\Register\RegisterNickOutcome;
@@ -25,6 +26,7 @@ final readonly class RegisterCommand implements NickServCommandInterface
     public function __construct(
         private RegisterNickHandlerInterface $handler,
         private int $verificationTokenTtlSeconds,
+        private PasswordPolicy $passwordPolicy = new PasswordPolicy(),
     ) {}
 
     public function getName(): string
@@ -92,7 +94,7 @@ final readonly class RegisterCommand implements NickServCommandInterface
 
     public function getHelpParams(): array
     {
-        return ['duration_seconds' => $this->verificationTokenTtlSeconds];
+        return ['duration_seconds' => $this->verificationTokenTtlSeconds, ...PasswordPolicyPresentation::helpParameters($this->passwordPolicy)];
     }
 
     public function execute(NickServContext $context): null
@@ -116,6 +118,9 @@ final readonly class RegisterCommand implements NickServCommandInterface
     private function present(NickServContext $context, RegisterNickResult $result): void
     {
         switch ($result->outcome) {
+            case RegisterNickOutcome::PasswordRejected:
+                PasswordPolicyPresentation::reject($context, $result->passwordPolicy);
+                break;
             case RegisterNickOutcome::TokenVerificationRequired:
                 $context->replyRescueToken('rescue.issued', $result->token, null);
                 break;

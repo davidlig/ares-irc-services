@@ -30,6 +30,9 @@ register:
     guarda'l en un lloc segur.
     La caducitat de %duration% només s'aplica abans de validar-lo.
     No s’admeten dominis de correu bloquejats administrativament.
+    Mínim: %password_minimum% caràcters.
+    Complexitat: %password_complexity%.
+    %password_requirements%
   example: "%command_prefix%REGISTER Clau$egura_123"
   examples:
     - "%command_prefix%REGISTER Clau$egura_123 usuari@exemple.com"
@@ -169,9 +172,11 @@ set:
     syntax: "SET PASSWORD <new_password>"
     short: "Canviar la contrasenya del vostre sobrenom."
     help: |-
-      Canvia la contrasenya del vostre sobrenom. La nova contrasenya
-      té efecte immediatament. Trieu una contrasenya forta d'almenys 6 caràcters
-      que no utilitzeu en altres serveis.
+      Canvia la contrasenya d’accés al teu sobrenom. El canvi és immediat.
+      No la reutilitzis en altres serveis.
+      Mínim: %password_minimum% caràcters.
+      Complexitat: %password_complexity%.
+      %password_requirements%
     example: "%command_prefix%SET PASSWORD Clau$egura_123"
     success: "La vostra contrasenya s'ha actualitzat correctament."
 
@@ -587,6 +592,9 @@ saregister:
 
     En mode TOKEN, el codi de rescat es mostra una vegada a l'operador.
     En mode EMAIL, el codi de rescat s'envia a l'adreça de correu indicada.
+    Mínim: %password_minimum% caràcters.
+    Complexitat: %password_complexity%.
+    %password_requirements%
   example: "%command_prefix%SAREGISTER Ares Contrasenya123"
   examples:
     - "%command_prefix%SAREGISTER Ares Contrasenya456 bob@exemple.cat"
@@ -611,7 +619,11 @@ saset:
   password:
     syntax: "SASET <sobrenom> PASSWORD <nova_contrasenya>"
     short: "Canviar la contrasenya d'un sobrenom."
-    help: "Canvia la contrasenya d'un altre sobrenom. El canvi és immediat."
+    help: |-
+      Canvia la contrasenya d’un altre sobrenom. El canvi és immediat.
+      Mínim: %password_minimum% caràcters.
+      Complexitat: %password_complexity%.
+      %password_requirements%
     example: "%command_prefix%SASET Ares PASSWORD ClauSegura123"
 
   # --- SASET EMAIL ---------------------------------------------------------
@@ -908,3 +920,21 @@ rescue:
     Si no el vols canviar, ignora aquest missatge.
   replacement_unavailable: "La contrasenya s’ha restablert, però no s’ha pogut emetre un testimoni nou. L’actual continua sent vàlid."
   temporarily_unavailable: "El lliurament del testimoni de recuperació no està disponible temporalment. Torna-ho a provar més tard."
+
+# --- PASSWORD POLICY ----------------------------------------------------------
+password_policy:
+  rejected:
+    none: "La contrasenya nova ha de tenir almenys %minimum% caràcters."
+    low: "La contrasenya nova ha de tenir almenys %minimum% caràcters. Inclou almenys una lletra (a-z o A-Z) i un dígit (0-9)."
+    mid: "La contrasenya nova ha de tenir almenys %minimum% caràcters. Inclou almenys una minúscula (a-z), una majúscula (A-Z) i un dígit (0-9)."
+    high: "La contrasenya nova ha de tenir almenys %minimum% caràcters. Inclou almenys una minúscula (a-z), una majúscula (A-Z), un dígit (0-9) i un símbol: !@#$%&*+-_=.?"
+  requirements:
+    none: |-
+      Sense requisits de composició; es manté la longitud mínima.
+    low: |-
+      Una lletra (a-z o A-Z) i un dígit (0-9).
+    mid: |-
+      Una minúscula (a-z), una majúscula (A-Z) i un dígit (0-9).
+    high: |-
+      Una minúscula (a-z), una majúscula (A-Z), un dígit (0-9)
+      i un símbol d’aquest conjunt: !@#$%&*+-_=.?

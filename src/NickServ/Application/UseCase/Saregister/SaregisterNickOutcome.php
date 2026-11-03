@@ -6,6 +6,7 @@ namespace App\NickServ\Application\UseCase\Saregister;
 
 enum SaregisterNickOutcome
 {
+    case PasswordRejected;
     case RegisteredToken;
     case RegisteredEmail;
     case InvalidNickname;

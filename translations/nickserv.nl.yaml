@@ -31,6 +31,9 @@ register:
     Bewaar het op een veilige plaats.
     De geldigheidsduur van %duration% geldt alleen vóór verificatie.
     Administratief geblokkeerde e-maildomeinen zijn niet toegestaan.
+    Minimum: %password_minimum% tekens.
+    Complexiteit: %password_complexity%.
+    %password_requirements%
   example: "%command_prefix%REGISTER Veilig$Wachtwoord_123"
   examples:
     - "%command_prefix%REGISTER Veilig$Wachtwoord_123 gebruiker@voorbeeld.nl"
@@ -170,9 +173,11 @@ set:
     syntax: "SET PASSWORD <nieuw_wachtwoord>"
     short: "Wijzig uw bijnaamwachtwoord."
     help: |-
-      Wijzigt het wachtwoord voor uw bijnaam. Het nieuwe wachtwoord wordt
-      direct van kracht. Kies een sterk wachtwoord van minimaal 6 tekens
-      dat u niet op andere services gebruikt.
+      Wijzigt het inlogwachtwoord van je bijnaam. De wijziging geldt meteen.
+      Gebruik het niet opnieuw bij andere diensten.
+      Minimum: %password_minimum% tekens.
+      Complexiteit: %password_complexity%.
+      %password_requirements%
     example: "%command_prefix%SET PASSWORD Veilig$Wachtwoord_123"
     success: "Uw wachtwoord is succesvol bijgewerkt."
 
@@ -586,6 +591,9 @@ saregister:
 
     In TOKEN-modus wordt het hersteltoken eenmalig aan de beheerder getoond.
     In EMAIL-modus wordt het hersteltoken naar het opgegeven e-mailadres verzonden.
+    Minimum: %password_minimum% tekens.
+    Complexiteit: %password_complexity%.
+    %password_requirements%
   example: "%command_prefix%SAREGISTER Ares Wachtwoord123"
   examples:
     - "%command_prefix%SAREGISTER Ares Wachtwoord456 bob@voorbeeld.nl"
@@ -610,7 +618,11 @@ saset:
   password:
     syntax: "SASET <bijnaam> PASSWORD <nieuw_wachtwoord>"
     short: "Wachtwoord van een bijnaam wijzigen."
-    help: "Wijzigt het wachtwoord van een andere bijnaam onmiddellijk."
+    help: |-
+      Wijzigt het wachtwoord van een andere bijnaam. De wijziging geldt meteen.
+      Minimum: %password_minimum% tekens.
+      Complexiteit: %password_complexity%.
+      %password_requirements%
     example: "%command_prefix%SASET Ares PASSWORD ClaveSegura123"
 
   # --- SASET EMAIL ---------------------------------------------------------
@@ -902,3 +914,21 @@ rescue:
     Wil je het niet wijzigen, negeer dan dit bericht.
   replacement_unavailable: "Je wachtwoord is hersteld, maar een nieuw token kon niet worden uitgegeven. Je huidige token blijft geldig."
   temporarily_unavailable: "De uitgifte van hersteltokens is tijdelijk niet beschikbaar. Probeer het later opnieuw."
+
+# --- PASSWORD POLICY ----------------------------------------------------------
+password_policy:
+  rejected:
+    none: "Het nieuwe wachtwoord moet minstens %minimum% tekens bevatten."
+    low: "Het nieuwe wachtwoord moet minstens %minimum% tekens bevatten. Gebruik minstens één letter (a-z of A-Z) en één cijfer (0-9)."
+    mid: "Het nieuwe wachtwoord moet minstens %minimum% tekens bevatten. Gebruik minstens één kleine letter (a-z), één hoofdletter (A-Z) en één cijfer (0-9)."
+    high: "Het nieuwe wachtwoord moet minstens %minimum% tekens bevatten. Gebruik minstens één kleine letter (a-z), één hoofdletter (A-Z), één cijfer (0-9) en één symbool: !@#$%&*+-_=.?"
+  requirements:
+    none: |-
+      Geen samenstellingseisen; de minimale lengte blijft gelden.
+    low: |-
+      Een letter (a-z of A-Z) en een cijfer (0-9).
+    mid: |-
+      Een kleine letter (a-z), een hoofdletter (A-Z) en een cijfer (0-9).
+    high: |-
+      Een kleine letter (a-z), een hoofdletter (A-Z), een cijfer (0-9)
+      en een symbool uit deze verzameling: !@#$%&*+-_=.?

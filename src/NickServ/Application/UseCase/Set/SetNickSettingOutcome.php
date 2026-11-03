@@ -6,6 +6,7 @@ namespace App\NickServ\Application\UseCase\Set;
 
 enum SetNickSettingOutcome
 {
+    case PasswordRejected;
     case Changed;
     case TokenRequired;
     case CredentialUnavailable;

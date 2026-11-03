@@ -15,6 +15,7 @@ use App\NickServ\Application\Port\Out\RescueTokenCodec;
 use App\NickServ\Application\Port\Out\SaregisterMailSender;
 use App\NickServ\Application\PublishedEvent\NickPasswordHashAvailable;
 use App\NickServ\Application\Service\NickHistoryService;
+use App\NickServ\Application\Service\PasswordPolicy;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\NickServ\Domain\ValueObject\NickStatus;
 use App\NickServ\Domain\ValueObject\RegistrationMode;
@@ -40,6 +41,7 @@ final readonly class SaregisterNickHandler implements SaregisterNickHandlerInter
         private SaregisterMailSender $mailSender,
         private NicknamePolicyInterface $nicknamePolicy,
         private string $guestPrefix = 'Guest-',
+        private PasswordPolicy $passwordPolicy = new PasswordPolicy(),
     ) {}
 
     public function handle(SaregisterNick $command): SaregisterNickResult
@@ -83,6 +85,10 @@ final readonly class SaregisterNickHandler implements SaregisterNickHandlerInter
                 NickStatus::PendingDeletion => SaregisterNickResult::pendingDeletion($command->nickname),
                 default => SaregisterNickResult::alreadyRegistered($command->nickname),
             };
+        }
+
+        if (!$this->passwordPolicy->isSatisfiedBy($command->password)) {
+            return SaregisterNickResult::passwordRejected($this->passwordPolicy);
         }
 
         $token = $this->tokenGenerator->generate();

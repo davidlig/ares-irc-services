@@ -29,6 +29,9 @@ register:
     berreskuratze-token iraunkorra izango da: gorde leku seguruan. %duration%ko
     iraungitzea balioztatu aurretik bakarrik aplikatzen da.
     Administrazioak blokeatutako posta-domeinuak ez dira onartzen.
+    Gutxienekoa: %password_minimum% karaktere.
+    Konplexutasuna: %password_complexity%.
+    %password_requirements%
   example: "%command_prefix%REGISTER Pasahitz$Segurua_123"
   examples:
     - "%command_prefix%REGISTER Pasahitz$Segurua_123 erabiltzailea@adibidea.com"
@@ -170,9 +173,11 @@ set:
     syntax: "SET PASSWORD <pasahitz_berria>"
     short: "Aldatu zure ezizenaren pasahitza."
     help: |-
-      Zure ezizenaren pasahitza aldatzen du. Pasahitz berriak
-      berehala eragiten du. Aukeratu gutxienez 6 karaktereko pasahitz sendo bat
-      beste zerbitzuetan erabiltzen ez duzuna.
+      Zure ezizenaren sarbide-pasahitza aldatzen du. Aldaketa berehalakoa da.
+      Ez berrerabili beste zerbitzuetan.
+      Gutxienekoa: %password_minimum% karaktere.
+      Konplexutasuna: %password_complexity%.
+      %password_requirements%
     example: "%command_prefix%SET PASSWORD Pasahitz$Segurua_123"
     success: "Zure pasahitza arrakastaz eguneratu da."
 
@@ -611,6 +616,9 @@ saregister:
 
     TOKEN moduan, erreskate-tokena behin erakusten zaio operadoreari.
     EMAIL moduan, erreskate-tokena zehaztutako helbide elektronikora bidaltzen da.
+    Gutxienekoa: %password_minimum% karaktere.
+    Konplexutasuna: %password_complexity%.
+    %password_requirements%
   example: "%command_prefix%SAREGISTER Ares Pasahitza123"
   examples:
     - "%command_prefix%SAREGISTER Ares Pasahitza456 bob@adibidea.eus"
@@ -648,11 +656,10 @@ saset:
     syntax: "SASET <ezizen> PASSWORD <pasahitz_berria>"
     short: "Ezizen baten pasahitza aldatu."
     help: |-
-      Beste ezizen baten pasahitza aldatzen du.
-      Aldaketa berehalakoa da.
-
-      Sintaxia: SASET <ezizen> PASSWORD <pasahitz_berria>
-      Adibidea: SASET Erabiltzaile PASSWORD pasahitzberria123
+      Beste ezizen baten pasahitza aldatzen du. Aldaketa berehalakoa da.
+      Gutxienekoa: %password_minimum% karaktere.
+      Konplexutasuna: %password_complexity%.
+      %password_requirements%
     example: "%command_prefix%SASET Ares PASSWORD ClaveSegura123"
 
   # --- SASET EMAIL ---------------------------------------------------------
@@ -989,3 +996,21 @@ rescue:
     Aldatu nahi ez baduzu, ez ikusi egin mezu honi.
   replacement_unavailable: "Pasahitza berrezarri da, baina ezin izan da token berririk eman. Oraingo tokenak balio du oraindik."
   temporarily_unavailable: "Berreskuratze-tokenaren bidalketa ez dago une honetan erabilgarri. Saiatu geroago."
+
+# --- PASSWORD POLICY ----------------------------------------------------------
+password_policy:
+  rejected:
+    none: "Pasahitz berriak gutxienez %minimum% karaktere izan behar ditu."
+    low: "Pasahitz berriak gutxienez %minimum% karaktere izan behar ditu. Sartu gutxienez letra bat (a-z edo A-Z) eta zenbaki bat (0-9)."
+    mid: "Pasahitz berriak gutxienez %minimum% karaktere izan behar ditu. Sartu gutxienez letra xehe bat (a-z), letra larri bat (A-Z) eta zenbaki bat (0-9)."
+    high: "Pasahitz berriak gutxienez %minimum% karaktere izan behar ditu. Sartu gutxienez letra xehe bat (a-z), letra larri bat (A-Z), zenbaki bat (0-9) eta ikur bat: !@#$%&*+-_=.?"
+  requirements:
+    none: |-
+      Ez dago osaera-baldintzarik; gutxieneko luzera mantentzen da.
+    low: |-
+      Letra bat (a-z edo A-Z) eta zenbaki bat (0-9).
+    mid: |-
+      Letra xehe bat (a-z), letra larri bat (A-Z) eta zenbaki bat (0-9).
+    high: |-
+      Letra xehe bat (a-z), letra larri bat (A-Z), zenbaki bat (0-9)
+      eta multzo honetako ikur bat: !@#$%&*+-_=.?

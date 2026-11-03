@@ -6,6 +6,7 @@ namespace App\NickServ\Application\UseCase\Register;
 
 enum RegisterNickOutcome
 {
+    case PasswordRejected;
     case VerificationRequired;
     case TokenVerificationRequired;
     case TemporarilyUnavailable;

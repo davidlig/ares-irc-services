@@ -194,3 +194,46 @@ and, when configured, one notice. Failed attempts produce neither success audit
 records nor success notices.
 Requester replies, authorization, quotas and HISTORY remain unchanged; CREG ACCEPT/REJECT
 retain their existing audit/debug behavior.
+
+## New-password policy
+
+Configure NickServ through `.env`:
+
+```dotenv
+NICKSERV_PASSWORD_MIN_LENGTH=8
+# NICKSERV_PASSWORD_COMPLEXITY=low
+```
+
+The minimum defaults to `8` when unset and must be a positive integer.
+Composition is disabled while the complexity line is commented/undefined.
+Uncomment the example to enable `low`, or select `mid` or `high`. These are the
+only explicit values; `none`, empty and unknown values fail configuration.
+The internal disabled state is named `none`, not a supported environment value.
+
+| Level | Required characters, in addition to minimum length |
+| --- | --- |
+| Undefined/commented | No composition requirement; minimum length still applies. |
+| `low` | One ASCII letter (`a-z` or `A-Z`) and one digit (`0-9`). |
+| `mid` | One lowercase ASCII letter, one uppercase ASCII letter and one digit. |
+| `high` | All `mid` requirements and one symbol from `!@#$%&*+-_=.?`. |
+
+Categories are not an input allowlist. Other characters are not silently stripped
+or forbidden by this policy, but do not satisfy an ASCII category requirement.
+Length counts UTF-8 characters, not transport bytes. Spaces and IRC controls do
+not satisfy the symbol requirement. Passwords are never case-folded or normalized
+by this policy, and existing command syntax is unchanged.
+
+The common Application policy applies to REGISTER, SAREGISTER, SET PASSWORD and
+SASET PASSWORD before credential changes or success side effects.
+Recovery is an explicit exception: `bin2hex(random_bytes(6))` produces exactly
+12 lowercase hexadecimal characters, independent of both settings, even with a
+minimum greater than 12 or `high` complexity. Recovery tokens and authorization
+are unchanged; no additional password change is forced.
+Existing credentials continue to authenticate without revalidation or forced
+resets. Permissions and HISTORY policies are unchanged.
+Link passwords, database secrets and verification/recovery tokens are not affected.
+
+HELP for REGISTER, SAREGISTER, SET PASSWORD and SASET PASSWORD displays the
+configured policy in all 14 supported languages following approval of the Spanish
+preview. Requirement descriptions and ordinary error replies are also localized.
+Other command HELP prose has not been broadly migrated. Composition profiles are optional rules, not strength scores.

@@ -23,6 +23,7 @@ use App\NickServ\Application\PublishedEvent\NickPasswordHashAvailable;
 use App\NickServ\Application\PublishedEvent\NickVhostChangedEvent;
 use App\NickServ\Application\Service\NickProtectabilityStatus;
 use App\NickServ\Application\Service\NickTargetValidator;
+use App\NickServ\Application\Service\PasswordPolicy;
 use App\NickServ\Application\Service\VhostDisplayResolver;
 use App\NickServ\Application\Service\VhostValidator;
 use App\NickServ\Domain\Entity\RegisteredNick;
@@ -56,6 +57,7 @@ final readonly class SetNickSettingHandler implements SetNickSettingHandlerInter
         private NickNetworkActions $networkActions,
         private ForcedVhostCheckerInterface $forcedVhostChecker,
         private ForbiddenVhostRepositoryInterface $forbiddenVhosts,
+        private PasswordPolicy $passwordPolicy = new PasswordPolicy(),
     ) {}
 
     public function handle(SetNickSetting $input): SetNickSettingResult
@@ -107,6 +109,10 @@ final readonly class SetNickSettingHandler implements SetNickSettingHandlerInter
     {
         if ('' === $input->value) {
             return $this->result(SetNickSettingOutcome::MissingValue, $input);
+        }
+
+        if (!$this->passwordPolicy->isSatisfiedBy($input->value)) {
+            return new SetNickSettingResult(SetNickSettingOutcome::PasswordRejected, $input->option, $input->targetNickname, passwordPolicy: $this->passwordPolicy);
         }
 
         $account->changePassword($this->passwordHasher->hash($input->value));

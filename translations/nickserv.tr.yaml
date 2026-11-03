@@ -30,6 +30,9 @@ register:
     güvenli bir yerde saklayın.
     %duration% süresi yalnızca doğrulama öncesinde geçerlidir.
     Yönetim tarafından engellenen e-posta alan adları kullanılamaz.
+    En az uzunluk: %password_minimum% karakter.
+    Karmaşıklık: %password_complexity%.
+    %password_requirements%
   example: "%command_prefix%REGISTER Güvenli$Parola_123"
   examples:
     - "%command_prefix%REGISTER Güvenli$Parola_123 kullanici@ornek.com"
@@ -169,9 +172,11 @@ set:
     syntax: "SET PASSWORD <yeni_şifre>"
     short: "Rumuz şifrenizi değiştirin."
     help: |-
-      Rumuzunuzun şifresini değiştirir. Yeni şifre hemen geçerli olur.
-      En az 6 karakterden oluşan, başka hizmetlerde kullanmadığınız
-      güçlü bir şifre seçin.
+      Takma adının giriş parolasını değiştirir. Değişiklik hemen uygulanır.
+      Bu parolayı başka hizmetlerde kullanma.
+      En az uzunluk: %password_minimum% karakter.
+      Karmaşıklık: %password_complexity%.
+      %password_requirements%
     example: "%command_prefix%SET PASSWORD Güvenli$Parola_123"
     success: "Şifreniz başarıyla güncellendi."
 
@@ -583,6 +588,9 @@ saregister:
 
     TOKEN modunda kurtarma belirteci operatöre yalnızca bir kez gösterilir.
     EMAIL modunda kurtarma belirteci belirtilen e-posta adresine gönderilir.
+    En az uzunluk: %password_minimum% karakter.
+    Karmaşıklık: %password_complexity%.
+    %password_requirements%
   example: "%command_prefix%SAREGISTER Ares Şifre123"
   examples:
     - "%command_prefix%SAREGISTER Ares Şifre456 bob@ornek.tr"
@@ -607,7 +615,11 @@ saset:
   password:
     syntax: "SASET <rumuz> PASSWORD <yeni_şifre>"
     short: "Bir rumuzun şifresini değiştir."
-    help: "Başka bir takma adın parolasını değiştirir. Değişiklik hemen uygulanır."
+    help: |-
+      Başka bir takma adın parolasını değiştirir. Değişiklik hemen uygulanır.
+      En az uzunluk: %password_minimum% karakter.
+      Karmaşıklık: %password_complexity%.
+      %password_requirements%
     example: "%command_prefix%SASET Ares PASSWORD GüvenliParola123"
 
   # --- SASET EMAIL ---------------------------------------------------------
@@ -896,3 +908,21 @@ rescue:
     Değiştirmek istemiyorsanız bu mesajı yok sayın.
   replacement_unavailable: "Parolanız sıfırlandı ancak yeni belirteç verilemedi. Mevcut belirteciniz geçerlidir."
   temporarily_unavailable: "Kurtarma belirteci teslimi geçici olarak kullanılamıyor. Daha sonra deneyin."
+
+# --- PASSWORD POLICY ----------------------------------------------------------
+password_policy:
+  rejected:
+    none: "Yeni parola en az %minimum% karakter içermelidir."
+    low: "Yeni parola en az %minimum% karakter içermelidir. En az bir harf (a-z veya A-Z) ve bir rakam (0-9) ekleyin."
+    mid: "Yeni parola en az %minimum% karakter içermelidir. En az bir küçük harf (a-z), bir büyük harf (A-Z) ve bir rakam (0-9) ekleyin."
+    high: "Yeni parola en az %minimum% karakter içermelidir. En az bir küçük harf (a-z), bir büyük harf (A-Z), bir rakam (0-9) ve bir sembol ekleyin: !@#$%&*+-_=.?"
+  requirements:
+    none: |-
+      İçerik şartı yoktur; en az uzunluk şartı geçerlidir.
+    low: |-
+      Bir harf (a-z veya A-Z) ve bir rakam (0-9).
+    mid: |-
+      Bir küçük harf (a-z), bir büyük harf (A-Z) ve bir rakam (0-9).
+    high: |-
+      Bir küçük harf (a-z), bir büyük harf (A-Z), bir rakam (0-9)
+      ve şu kümeden bir sembol: !@#$%&*+-_=.?
