@@ -201,16 +201,18 @@ Configure NickServ through `.env`:
 
 ```dotenv
 NICKSERV_PASSWORD_MIN_LENGTH=8
-NICKSERV_PASSWORD_COMPLEXITY=none
+# NICKSERV_PASSWORD_COMPLEXITY=low
 ```
 
-Unset variables default to `8` and `none`. The minimum must be a positive integer;
-complexity must be exactly `none`, `low`, `mid` or `high`. Invalid values fail
-configuration rather than disabling validation.
+The minimum defaults to `8` when unset and must be a positive integer.
+Composition is disabled while the complexity line is commented/undefined.
+Uncomment the example to enable `low`, or select `mid` or `high`. These are the
+only explicit values; `none`, empty and unknown values fail configuration.
+The internal disabled state is named `none`, not a supported environment value.
 
 | Level | Required characters, in addition to minimum length |
 | --- | --- |
-| `none` | No composition requirement; minimum length still applies. |
+| Undefined/commented | No composition requirement; minimum length still applies. |
 | `low` | One ASCII letter (`a-z` or `A-Z`) and one digit (`0-9`). |
 | `mid` | One lowercase ASCII letter, one uppercase ASCII letter and one digit. |
 | `high` | All `mid` requirements and one symbol from `!@#$%&*+-_=.?`. |
@@ -222,12 +224,16 @@ not satisfy the symbol requirement. Passwords are never case-folded or normalize
 by this policy, and existing command syntax is unchanged.
 
 The common Application policy applies to REGISTER, SAREGISTER, SET PASSWORD and
-SASET PASSWORD before credential changes or success side effects. Recovery creates
-replacement passwords with a cryptographically secure printable ASCII alphabet
-that satisfies both settings. Existing credentials continue to authenticate without
-revalidation or forced resets. Permissions and HISTORY policies are unchanged.
+SASET PASSWORD before credential changes or success side effects.
+Recovery is an explicit exception: `bin2hex(random_bytes(6))` produces exactly
+12 lowercase hexadecimal characters, independent of both settings, even with a
+minimum greater than 12 or `high` complexity. Recovery tokens and authorization
+are unchanged; no additional password change is forced.
+Existing credentials continue to authenticate without revalidation or forced
+resets. Permissions and HISTORY policies are unchanged.
 Link passwords, database secrets and verification/recovery tokens are not affected.
 
-Spanish HELP displays the configured policy; the other HELP locales remain pending
-explicit approval of the Spanish preview. Ordinary error replies exist in all 14
-supported languages. Composition profiles are optional rules, not strength scores.
+Spanish HELP displays the configured policy. Other locale HELP alignment is the
+next local work unit, following approval of the Spanish preview. Ordinary error
+replies exist in all 14 supported languages. Composition profiles are optional
+rules, not strength scores.

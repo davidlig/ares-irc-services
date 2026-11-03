@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Bootstrap\DependencyInjection;
 
 use App\Kernel;
+use App\NickServ\Adapter\Out\Random\SecureRecoveryPasswordGenerator;
 use App\NickServ\Application\Service\PasswordPolicy;
 use Exception;
 use PHPUnit\Framework\Attributes\CoversNothing;
@@ -41,6 +42,9 @@ final class PasswordPolicyConfigurationTest extends TestCase
             self::assertInstanceOf(PasswordPolicy::class, $policy);
             self::assertSame(null === $minimum ? 8 : (int) $minimum, $policy->minimumLength);
             self::assertSame($complexity ?? 'none', $policy->complexity);
+            $generator = $container->get(SecureRecoveryPasswordGenerator::class);
+            self::assertInstanceOf(SecureRecoveryPasswordGenerator::class, $generator);
+            self::assertMatchesRegularExpression('/^[0-9a-f]{12}$/D', $generator->generate());
         } finally {
             $kernel->shutdown();
             $_ENV = $oldEnv;
@@ -53,6 +57,9 @@ final class PasswordPolicyConfigurationTest extends TestCase
     {
         yield [null, null, true];
         yield ['19', 'high', true];
+        yield ['8', 'low', true];
+        yield ['8', 'mid', true];
+        yield ['8', 'none', false];
         yield ['0', 'none', false];
         yield ['-1', 'none', false];
         yield ['1.5', 'none', false];

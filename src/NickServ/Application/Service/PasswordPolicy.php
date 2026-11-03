@@ -49,10 +49,10 @@ final readonly class PasswordPolicy
     public function requiredCharacterSets(): array
     {
         return match ($this->complexity) {
-            'none' => [],
             'low' => [self::LOWERCASE . self::UPPERCASE, self::DIGITS],
             'mid' => [self::LOWERCASE, self::UPPERCASE, self::DIGITS],
-            default => [self::LOWERCASE, self::UPPERCASE, self::DIGITS, self::SYMBOLS],
+            'high' => [self::LOWERCASE, self::UPPERCASE, self::DIGITS, self::SYMBOLS],
+            default => [],
         };
     }
 }

@@ -136,7 +136,6 @@ recover:
   short: "Recupera tu apodo si has perdido la contraseña."
   help: |-
     Sin token, solicita por correo un token provisional.
-    La contraseña generada cumple la política de contraseñas de la red.
     También puedes proporcionar un token de recuperación válido; si es
     provisional, sustituye al guardado solo después de validarlo.
     Al usar el token guardado se ofrece un reemplazo opcional
