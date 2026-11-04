@@ -216,6 +216,7 @@ All variables live in `.env.local`. Required variables are marked with ⚠.
 | `IRC_SERVICES_VHOST` | `services.davidlig.net` | Virtual host for service pseudo-clients |
 | `SERVICES_DEFAULT_LANGUAGE` | `en` | Default language for service replies (`ca`, `de`, `el`, `en`, `es`, `eu`, `fr`, `gl`, `it`, `nl`, `pl`, `pt`, `ro`, `tr`) |
 | `SERVICES_DEFAULT_TIMEZONE` | `UTC` | Default timezone for date display |
+| `SERVICES_TRIBUTE_MODE` | `full` | CTCP VERSION tribute notices: `full` includes ASCII art; `minimal` omits ASCII art while retaining the tribute and signature |
 
 ### Antiflood
 
@@ -268,6 +269,8 @@ retrying, and use the deployment backup and maintenance procedure.
 | `NICKSERV_RECOVER_TOKEN_TTL` | `3600` | Provisional recovery-email token TTL; confirmed recoveryToken does not expire |
 | `NICKSERV_RECOVER_MIN_INTERVAL` | `600` | Minimum seconds between recovery-email requests per nick |
 | `NICKSERV_REGISTER_MIN_INTERVAL` | `600` | Seconds between REGISTER attempts per host/IP |
+| `NICKSERV_PASSWORD_MIN_LENGTH` | `8` | Positive integer minimum length in UTF-8 characters for user-supplied new passwords; existing passwords are unaffected |
+| `NICKSERV_PASSWORD_COMPLEXITY` | Unset (disabled) | Optional composition policy: `low`, `mid` or `high` (see below); minimum length still applies |
 | `NICKSERV_IDENTIFY_MAX_FAILED_ATTEMPTS` | `5` | Failed attempts before lockout |
 | `NICKSERV_IDENTIFY_FAILED_WINDOW_SECONDS` | `900` | Window to count failed attempts |
 | `NICKSERV_IDENTIFY_LOCKOUT_SECONDS` | `600` | Lockout duration |
@@ -276,6 +279,15 @@ retrying, and use the deployment backup and maintenance procedure.
 | `NICKSERV_LIST_PAGE_SIZE` | `50` | Matching registrations per IRCop LIST page |
 | `NICKSERV_HISTORY_RETENTION_DAYS` | `30` | Days to keep action history (`0` = forever) |
 | `NICKSERV_HISTORY_VIEW_LIMIT` | `40` | Max history entries per page |
+
+`NICKSERV_PASSWORD_COMPLEXITY` is disabled when unset. When enabled:
+
+- `low`: at least one ASCII letter (`a-z` or `A-Z`) and one digit (`0-9`).
+- `mid`: at least one lowercase ASCII letter (`a-z`), one uppercase ASCII letter (`A-Z`) and one digit (`0-9`).
+- `high`: all `mid` requirements plus at least one symbol from `!@#$%&*+-_=.?`.
+
+Explicitly empty or unknown values are invalid. This policy applies to user-supplied new
+passwords; recovery-generated passwords are exempt.
 
 ### ChanServ
 
