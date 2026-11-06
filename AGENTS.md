@@ -552,4 +552,7 @@ Use the narrowest meaningful scope:
 - `ci`
 - `agents`
 
+Never commit local planning, scratchpads, or ODD task documents (`odd/`). The `odd/` directory is
+reserved for local runtime orchestration tracking and must remain untracked and excluded by `odd/.gitignore`.
+
 Never mention an AI agent in commit messages.
