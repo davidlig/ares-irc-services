@@ -27,7 +27,7 @@ final class CtcpVersionResponderTest extends TestCase
     public function getVersionResponseReturnsExpectedString(): void
     {
         self::assertSame(
-            'Ares IRC Services v2.4.0 - David Abuín Fontán | https://ares-services.davidlig.net',
+            'Ares IRC Services v2.5.0 - David Abuín Fontán | https://ares-services.davidlig.net',
             $this->responder->getVersionResponse(),
         );
     }
@@ -96,7 +96,7 @@ final class CtcpVersionResponderTest extends TestCase
         $responder = new CtcpVersionResponder(
             $this->createTranslator($spanishTribute),
             $this->createLanguageResolver(),
-            'v2.4.0',
+            'v2.5.0',
         );
 
         $lines = $responder->getAsciiArtLines('es');
@@ -112,7 +112,7 @@ final class CtcpVersionResponderTest extends TestCase
         $responder = new CtcpVersionResponder(
             $this->createTranslator($tributeWithEscapedCodes),
             $this->createLanguageResolver(),
-            'v2.4.0',
+            'v2.5.0',
         );
 
         $lines = $responder->getAsciiArtLines('en');
@@ -144,7 +144,7 @@ final class CtcpVersionResponderTest extends TestCase
         $responder = new CtcpVersionResponder(
             $this->createTranslator("Line 1\nLine 2"),
             $this->languageResolver,
-            'v2.4.0',
+            'v2.5.0',
             'MINIMAL',
         );
 
@@ -169,7 +169,7 @@ final class CtcpVersionResponderTest extends TestCase
         $responder = new CtcpVersionResponder(
             $this->createTranslator(),
             $this->languageResolver,
-            'v2.4.0',
+            'v2.5.0',
             '  minimal  ',
         );
 
@@ -186,7 +186,7 @@ final class CtcpVersionResponderTest extends TestCase
         $responder = new CtcpVersionResponder(
             $this->createTranslator(),
             $this->languageResolver,
-            'v2.4.0',
+            'v2.5.0',
             'UNKNOWN_MODE',
         );
 
@@ -203,7 +203,7 @@ final class CtcpVersionResponderTest extends TestCase
         $this->responder = new CtcpVersionResponder(
             $this->createTranslator(),
             $this->languageResolver,
-            'v2.4.0',
+            'v2.5.0',
         );
     }
 
