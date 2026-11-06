@@ -1,3 +1,37 @@
+## [2.5.0] - 2026-11-06
+
+### Features
+
+- Centralize live global runtime settings in a common `service_settings` table with JSON payloads and consumer-owned typed ports.
+- Add persistent NickServ registration modes (`REGMODE TOKEN` / `REGMODE DIRECT`), rescue credentials, and IP rate-limiting.
+- Add ChanServ channel registration approval workflow (`REGMODE DIRECT` / `REGMODE MANUAL`, `APPROVE`, `REJECT`), quota exemptions, and distinct auditing.
+- Add operator `SAREGISTER` commands for NickServ and ChanServ to register nicknames and channels on behalf of users with administrative overrides.
+- Add NickServ `SASET MODES` to persist and automatically apply user modes upon identification, with capability-aware discovery for InspIRCd and UnrealIRCd / UnrealUdb.
+- Enforce configurable new-password policy (minimum length and optional complexity) across services while exempting rescue passwords, with localized guidance in all 14 supported languages.
+- Enhance ChanServ `AKICK` with `CLEAR`, `VIEW`, and `CHECK` subcommands, usage counters, last used timestamps, and a `SET VERBOSE {ON|OFF}` channel setting.
+- Make ChanServ `AKICK LIST` read-only to prevent side-effect enforcement during listings.
+- Add ChanServ `UNBAN` command to remove matching channel bans for a mask or user.
+- Add MemoServ `DEL ALL` support, live notice delivery on message arrival, and generalized sender snapshots for decision memos.
+- Add OperServ `BADMAIL` command to manage and enforce global blocked email domain policies across NickServ and ChanServ registrations.
+- Introduce theme-driven IRC presentation styles (`PresentationStyle`, `Role`, `Fragment`) across service responses.
+- Implement pure service argument validation grammar with contextual syntax across NickServ, ChanServ, MemoServ, and OperServ.
+- Add explicit NickServ and ChanServ `HISTORY` recording policies for administrative and lifecycle actions.
+- Include author credits and official website in CTCP `VERSION` responses and service announcements.
+
+### Bug Fixes
+
+- Enforce maximum socket line buffer limits and handle fragmented line delivery safely.
+- Redact credentials, rescue tokens, and link passwords in error logs and diagnostics.
+- Preserve InspIRCd native channel timestamps, key conflict resolution, and required link capabilities.
+- Harden UnrealUdb session locking, snapshot reconciliation, topic locks, and SJOIN owner prefix parsing.
+- Unify compact command syntax across all commands with sub-options in all 14 supported languages.
+- Preserve database schema identifier quoting and normalize DBAL 4.5 introspection compatibility.
+
+### Upgrade
+
+- Back up the services database and run database migrations (`doctrine:migrations:migrate`) before starting services to apply new tables and schema updates (`Version20261021000001` through `Version20261101000001`).
+- Check `.env.dist` and configure optional password complexity or registration mode defaults as needed.
+
 ## [2.4.1] - 2026-10-12
 
 ### Bug Fixes
