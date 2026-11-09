@@ -34,4 +34,13 @@ interface NetworkUserRepositoryInterface
      * Updates the virtual host for a user (called after sending CHGHOST).
      */
     public function updateVirtualHost(Uid $uid, string $vhost): void;
+
+    /**
+     * Finds all connected users belonging to the specified server SIDs.
+     *
+     * @param string[] $serverSids
+     *
+     * @return NetworkUser[]
+     */
+    public function findByServerSids(array $serverSids): array;
 }

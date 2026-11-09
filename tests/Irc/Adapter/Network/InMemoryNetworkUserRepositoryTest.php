@@ -160,12 +160,78 @@ final class InMemoryNetworkUserRepositoryTest extends TestCase
         self::assertNull($this->repository->findByUid(new Uid('NONEXISTENT')));
     }
 
+    #[Test]
+    public function findByServerSidsReturnsUsersOnMatchingServers(): void
+    {
+        $user1 = $this->createUser('001AAAA', 'User1', '001');
+        $user2 = $this->createUser('002BBBB', 'User2', '002');
+        $user3 = $this->createUser('003CCCC', 'User3', '003');
+        $user4 = $this->createUser('004DDDD', 'User4', '002');
+
+        $this->repository->add($user1);
+        $this->repository->add($user2);
+        $this->repository->add($user3);
+        $this->repository->add($user4);
+
+        $matchingSingle = $this->repository->findByServerSids(['001']);
+        self::assertCount(1, $matchingSingle);
+        self::assertContains($user1, $matchingSingle);
+
+        $matchingMultiple = $this->repository->findByServerSids(['002', '003']);
+        self::assertCount(3, $matchingMultiple);
+        self::assertContains($user2, $matchingMultiple);
+        self::assertContains($user3, $matchingMultiple);
+        self::assertContains($user4, $matchingMultiple);
+    }
+
+    #[Test]
+    public function findByServerSidsReturnsEmptyWhenNoUsersMatch(): void
+    {
+        $user = $this->createUser('001AAAA', 'User1', '001');
+        $this->repository->add($user);
+
+        self::assertSame([], $this->repository->findByServerSids(['NONEXISTENT']));
+        self::assertSame([], $this->repository->findByServerSids([]));
+    }
+
+    #[Test]
+    public function removeByUidUpdatesServerSidIndex(): void
+    {
+        $user1 = $this->createUser('001AAAA', 'User1', '002');
+        $user2 = $this->createUser('002BBBB', 'User2', '002');
+        $this->repository->add($user1);
+        $this->repository->add($user2);
+
+        $this->repository->removeByUid(new Uid('001AAAA'));
+
+        $matching = $this->repository->findByServerSids(['002']);
+        self::assertCount(1, $matching);
+        self::assertSame([$user2], $matching);
+
+        $this->repository->removeByUid(new Uid('002BBBB'));
+        self::assertSame([], $this->repository->findByServerSids(['002']));
+    }
+
+    #[Test]
+    public function addOverwritesUserAndUpdatesServerSidIndex(): void
+    {
+        $user1 = $this->createUser('001AAAA', 'User1', '001');
+        $user2 = $this->createUser('001AAAA', 'User1Renamed', '002');
+
+        $this->repository->add($user1);
+        self::assertSame([$user1], $this->repository->findByServerSids(['001']));
+
+        $this->repository->add($user2);
+        self::assertSame([], $this->repository->findByServerSids(['001']));
+        self::assertSame([$user2], $this->repository->findByServerSids(['002']));
+    }
+
     protected function setUp(): void
     {
         $this->repository = new InMemoryNetworkUserRepository();
     }
 
-    private function createUser(string $uid, string $nick): NetworkUser
+    private function createUser(string $uid, string $nick, string $serverSid = '001'): NetworkUser
     {
         return new NetworkUser(
             uid: new Uid($uid),
@@ -177,7 +243,7 @@ final class InMemoryNetworkUserRepositoryTest extends TestCase
             modes: '+i',
             connectedAt: new DateTimeImmutable(),
             realName: 'Test User',
-            serverSid: '001',
+            serverSid: $serverSid,
             ipBase64: 'dGVzdA==',
         );
     }

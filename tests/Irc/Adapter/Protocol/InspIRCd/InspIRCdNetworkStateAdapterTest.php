@@ -132,10 +132,132 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
         $eventDispatcher->expects(self::once())->method('dispatch')
             ->with(self::callback(static fn ($event): bool => $event instanceof ServerDelinkedEvent
                     && '002' === $event->serverSid
-                    && 'Split' === $event->reason));
+                    && 'Split' === $event->reason
+                    && ['002'] === $event->serverSids));
 
         $adapter = new InspIRCdNetworkStateAdapter($eventDispatcher);
         $adapter->handleMessage(new IRCMessage('SQUIT', null, ['002'], 'Split'));
+    }
+
+    #[Test]
+    public function handleSquitResolvesServerTreeAndDelinksDescendantsBySid(): void
+    {
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $adapter = new InspIRCdNetworkStateAdapter($eventDispatcher);
+
+        $adapter->handleMessage(new IRCMessage('SERVER', null, ['hub.example.net', 'password', '0A1'], 'Hub'));
+        $adapter->handleMessage(new IRCMessage('SERVER', '0A1', ['leaf1.example.net', 'password', '0A2'], 'Leaf 1'));
+        $adapter->handleMessage(new IRCMessage('SERVER', '0A2', ['leaf2.example.net', 'password', '0A3'], 'Leaf 2'));
+        $adapter->handleMessage(new IRCMessage('SERVER', '0A1', ['leaf3.example.net', 'password', '0A4'], 'Leaf 3'));
+
+        $capturedEvent = null;
+        $eventDispatcher->expects(self::once())->method('dispatch')
+            ->with(self::callback(static function ($event) use (&$capturedEvent): bool {
+                if ($event instanceof ServerDelinkedEvent) {
+                    $capturedEvent = $event;
+
+                    return true;
+                }
+
+                return false;
+            }));
+
+        $adapter->handleMessage(new IRCMessage('SQUIT', null, ['0A2'], 'Netsplit'));
+
+        self::assertInstanceOf(ServerDelinkedEvent::class, $capturedEvent);
+        self::assertSame('0A2', $capturedEvent->serverSid);
+        self::assertSame('Netsplit', $capturedEvent->reason);
+        self::assertEqualsCanonicalizing(['0A2', '0A3'], $capturedEvent->serverSids);
+    }
+
+    #[Test]
+    public function handleSquitResolvesServerTreeAndDelinksDescendantsByName(): void
+    {
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $adapter = new InspIRCdNetworkStateAdapter($eventDispatcher);
+
+        $adapter->handleMessage(new IRCMessage('SERVER', null, ['hub.example.net', 'password', '0A1'], 'Hub'));
+        $adapter->handleMessage(new IRCMessage('SERVER', '0A1', ['leaf1.example.net', 'password', '0A2'], 'Leaf 1'));
+        $adapter->handleMessage(new IRCMessage('SERVER', '0A2', ['leaf2.example.net', 'password', '0A3'], 'Leaf 2'));
+        $adapter->handleMessage(new IRCMessage('SERVER', '0A1', ['leaf3.example.net', 'password', '0A4'], 'Leaf 3'));
+
+        $capturedEvent = null;
+        $eventDispatcher->expects(self::once())->method('dispatch')
+            ->with(self::callback(static function ($event) use (&$capturedEvent): bool {
+                if ($event instanceof ServerDelinkedEvent) {
+                    $capturedEvent = $event;
+
+                    return true;
+                }
+
+                return false;
+            }));
+
+        $adapter->handleMessage(new IRCMessage('SQUIT', null, ['leaf1.example.net'], 'Netsplit'));
+
+        self::assertInstanceOf(ServerDelinkedEvent::class, $capturedEvent);
+        self::assertSame('0A2', $capturedEvent->serverSid);
+        self::assertSame('Netsplit', $capturedEvent->reason);
+        self::assertEqualsCanonicalizing(['0A2', '0A3'], $capturedEvent->serverSids);
+    }
+
+    #[Test]
+    public function handleSquitDelinksAllServersWhenDirectServerSplits(): void
+    {
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $adapter = new InspIRCdNetworkStateAdapter($eventDispatcher);
+
+        $adapter->handleMessage(new IRCMessage('SERVER', null, ['hub.example.net', 'password', '0A1'], 'Hub'));
+        $adapter->handleMessage(new IRCMessage('SERVER', '0A1', ['leaf1.example.net', 'password', '0A2'], 'Leaf 1'));
+        $adapter->handleMessage(new IRCMessage('SERVER', '0A2', ['leaf2.example.net', 'password', '0A3'], 'Leaf 2'));
+
+        $capturedEvent = null;
+        $eventDispatcher->expects(self::once())->method('dispatch')
+            ->with(self::callback(static function ($event) use (&$capturedEvent): bool {
+                if ($event instanceof ServerDelinkedEvent) {
+                    $capturedEvent = $event;
+
+                    return true;
+                }
+
+                return false;
+            }));
+
+        $adapter->handleMessage(new IRCMessage('SQUIT', null, ['hub.example.net'], 'Uplink lost'));
+
+        self::assertInstanceOf(ServerDelinkedEvent::class, $capturedEvent);
+        self::assertSame('0A1', $capturedEvent->serverSid);
+        self::assertEqualsCanonicalizing(['0A1', '0A2', '0A3'], $capturedEvent->serverSids);
+    }
+
+    #[Test]
+    public function errorResetsServerTree(): void
+    {
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $adapter = new InspIRCdNetworkStateAdapter($eventDispatcher);
+
+        $adapter->handleMessage(new IRCMessage('SERVER', null, ['hub.example.net', 'password', '0A1'], 'Hub'));
+        $adapter->handleMessage(new IRCMessage('SERVER', '0A1', ['leaf1.example.net', 'password', '0A2'], 'Leaf 1'));
+        $adapter->handleMessage(new IRCMessage('ERROR', null, [], 'Closing Link'));
+
+        $capturedEvent = null;
+        $eventDispatcher->expects(self::once())->method('dispatch')
+            ->with(self::callback(static function ($event) use (&$capturedEvent): bool {
+                if ($event instanceof ServerDelinkedEvent) {
+                    $capturedEvent = $event;
+
+                    return true;
+                }
+
+                return false;
+            }));
+
+        $adapter->handleMessage(new IRCMessage('SQUIT', null, ['leaf1.example.net'], 'Split'));
+
+        self::assertInstanceOf(ServerDelinkedEvent::class, $capturedEvent);
+        // Because server tree was reset, leaf1.example.net is not recognized as 0A2
+        self::assertSame('leaf1.example.net', $capturedEvent->serverSid);
+        self::assertSame(['leaf1.example.net'], $capturedEvent->serverSids);
     }
 
     #[Test]
@@ -1521,5 +1643,25 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
 
         $adapter = new InspIRCdNetworkStateAdapter($eventDispatcher);
         $adapter->handleMessage(new IRCMessage('IJOIN', '994AAAAAQ', ['invalid', '0'], null));
+    }
+
+    #[Test]
+    public function handleServerWithInvalidOrMissingParentDoesNotTrackServer(): void
+    {
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $adapter = new InspIRCdNetworkStateAdapter($eventDispatcher);
+
+        $adapter->handleMessage(new IRCMessage('SERVER', 'UNKNOWN', ['leaf.example.net', 'pass', '0A2'], 'Leaf'));
+        $adapter->handleMessage(new IRCMessage('SERVER', '', ['leaf.example.net', 'pass', '0A2'], 'Leaf'));
+        $adapter->handleMessage(new IRCMessage('SERVER', '0A1', ['', 'pass', '0A2'], 'Leaf'));
+        $adapter->handleMessage(new IRCMessage('SERVER', '0A1', ['leaf.example.net', 'pass', ''], 'Leaf'));
+        $adapter->handleMessage(new IRCMessage('SERVER', null, ['', 'pass', ''], 'Direct Empty'));
+
+        $eventDispatcher->expects(self::once())->method('dispatch')
+            ->with(self::callback(static fn ($event): bool => $event instanceof ServerDelinkedEvent
+                && 'leaf.example.net' === $event->serverSid
+                && ['leaf.example.net'] === $event->serverSids));
+
+        $adapter->handleMessage(new IRCMessage('SQUIT', null, ['leaf.example.net'], 'Split'));
     }
 }

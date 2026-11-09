@@ -34,7 +34,7 @@ final class ServerDelinkedSubscriberTest extends TestCase
     #[Test]
     public function getSubscribedEventsReturnsCorrectEvent(): void
     {
-        $this->userRepository->expects(self::never())->method('all');
+        $this->userRepository->expects(self::never())->method('findByServerSids');
         $this->eventDispatcher->expects(self::never())->method('dispatch');
         $this->logger->expects(self::never())->method('info');
 
@@ -48,11 +48,11 @@ final class ServerDelinkedSubscriberTest extends TestCase
     {
         $user1 = $this->createUser('001ABC123', 'Alice', '002');
         $user2 = $this->createUser('001DEF456', 'Bob', '002');
-        $user3 = $this->createUser('001GHI789', 'Charlie', '003');
 
         $this->userRepository->expects(self::once())
-            ->method('all')
-            ->willReturn([$user1, $user2, $user3]);
+            ->method('findByServerSids')
+            ->with(['002'])
+            ->willReturn([$user1, $user2]);
 
         $event = new ServerDelinkedEvent('002', 'Server split');
 
@@ -74,13 +74,42 @@ final class ServerDelinkedSubscriberTest extends TestCase
     }
 
     #[Test]
-    public function onServerDelinkedDoesNothingWhenNoAffectedUsers(): void
+    public function onServerDelinkedDispatchesQuitEventsForMultipleSplitServers(): void
     {
-        $user1 = $this->createUser('001ABC123', 'Alice', '003');
+        $user1 = $this->createUser('001ABC123', 'Alice', '002');
+        $user2 = $this->createUser('001DEF456', 'Bob', '003');
 
         $this->userRepository->expects(self::once())
-            ->method('all')
-            ->willReturn([$user1]);
+            ->method('findByServerSids')
+            ->with(['002', '003'])
+            ->willReturn([$user1, $user2]);
+
+        $event = new ServerDelinkedEvent('002', 'Server split', ['002', '003']);
+
+        $index = 0;
+        $this->eventDispatcher->expects(self::exactly(2))
+            ->method('dispatch')
+            ->with(self::callback(static function (UserQuitNetworkEvent $quitEvent) use ($user1, $user2, &$index): bool {
+                $expectedUids = [$user1->uid->value, $user2->uid->value];
+                $result = $quitEvent->uid->value === $expectedUids[$index];
+                ++$index;
+
+                return $result;
+            }));
+
+        $this->logger->expects(self::once())
+            ->method('info');
+
+        $this->subscriber->onServerDelinked($event);
+    }
+
+    #[Test]
+    public function onServerDelinkedDoesNothingWhenNoAffectedUsers(): void
+    {
+        $this->userRepository->expects(self::once())
+            ->method('findByServerSids')
+            ->with(['002'])
+            ->willReturn([]);
 
         $event = new ServerDelinkedEvent('002', 'Server split');
 
@@ -99,7 +128,8 @@ final class ServerDelinkedSubscriberTest extends TestCase
         $user = $this->createUser('001ABC123', 'Alice', '002');
 
         $this->userRepository->expects(self::once())
-            ->method('all')
+            ->method('findByServerSids')
+            ->with(['002'])
             ->willReturn([$user]);
 
         $event = new ServerDelinkedEvent('002', '');
@@ -116,7 +146,8 @@ final class ServerDelinkedSubscriberTest extends TestCase
     public function onServerDelinkedDoesNothingWhenUserListEmpty(): void
     {
         $this->userRepository->expects(self::once())
-            ->method('all')
+            ->method('findByServerSids')
+            ->with(['002'])
             ->willReturn([]);
 
         $event = new ServerDelinkedEvent('002', 'Server split');
