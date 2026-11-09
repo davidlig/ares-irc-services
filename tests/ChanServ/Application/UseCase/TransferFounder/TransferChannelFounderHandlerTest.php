@@ -82,7 +82,7 @@ final class TransferChannelFounderHandlerTest extends TestCase
         $accounts = $this->createStub(ChanUserAccountPort::class);
         $accounts->method('findAccountByNick')->willReturn($target);
         $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
-        $channels->expects(self::never())->method('findByFounderNickId');
+        $channels->expects(self::never())->method('countByFounderNickId');
 
         $result = $this->handler(channels: $channels, accounts: $accounts)->handle(
             $this->command(channel: $this->channel(successorNickId: $successorNickId)),
@@ -98,11 +98,7 @@ final class TransferChannelFounderHandlerTest extends TestCase
         $accounts = $this->createStub(ChanUserAccountPort::class);
         $accounts->method('findAccountByNick')->willReturn($this->target());
         $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
-        $channels->method('findByFounderNickId')->willReturn([
-            $this->createStub(RegisteredChannel::class),
-            $this->createStub(RegisteredChannel::class),
-            $this->createStub(RegisteredChannel::class),
-        ]);
+        $channels->method('countByFounderNickId')->willReturn(3);
 
         $result = $this->handler(channels: $channels, accounts: $accounts, maxChannels: 3)->handle($this->command());
 
@@ -136,7 +132,7 @@ final class TransferChannelFounderHandlerTest extends TestCase
         $events = $this->createMock(ChanServEventPublisher::class);
         $events->expects(self::never())->method('publish');
         $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
-        $channels->method('findByFounderNickId')->willReturn([]);
+        $channels->method('countByFounderNickId')->willReturn(0);
         $channels->expects(self::never())->method('save');
         $result = $this->handler(channels: $channels, accounts: $this->accounts($this->target()), tokens: $tokens, events: $events)->handle($this->command(token: 'wrong'));
         self::assertSame($expected, $result->outcome);
@@ -148,7 +144,7 @@ final class TransferChannelFounderHandlerTest extends TestCase
         $channel = $this->mockChannel();
         $channel->expects(self::once())->method('changeFounder')->with(20);
         $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
-        $channels->method('findByFounderNickId')->willReturn([]);
+        $channels->method('countByFounderNickId')->willReturn(0);
         $channels->expects(self::once())->method('save')->with($channel);
         $tokens = $this->createMock(FounderRescueTokenValidator::class);
         $tokens->expects(self::once())->method('validate')->with(10, 'valid-token', 'ip:client')->willReturn(new FounderRescueTokenResult(FounderRescueTokenOutcome::Valid));
@@ -173,7 +169,7 @@ final class TransferChannelFounderHandlerTest extends TestCase
         $channel = $this->mockChannel();
         $channel->expects(self::once())->method('changeFounder')->with(20);
         $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
-        $channels->expects(self::once())->method('findByFounderNickId')->willReturn([]);
+        $channels->expects(self::once())->method('countByFounderNickId')->willReturn(0);
         $channels->expects(self::once())->method('save')->with($channel);
         $entry = $this->createStub(ChannelAccess::class);
         $access = $this->createMock(ChannelAccessRepositoryInterface::class);
@@ -235,7 +231,7 @@ final class TransferChannelFounderHandlerTest extends TestCase
     ): TransferChannelFounderHandler {
         if (null === $channels) {
             $defaultChannels = $this->createStub(RegisteredChannelRepositoryInterface::class);
-            $defaultChannels->method('findByFounderNickId')->willReturn([]);
+            $defaultChannels->method('countByFounderNickId')->willReturn(0);
             $channels = $defaultChannels;
         }
 

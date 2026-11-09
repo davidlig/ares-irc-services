@@ -127,6 +127,25 @@ final class ChanServAccessHelperTest extends TestCase
     }
 
     #[Test]
+    public function requireLevelReturnsTheEffectiveLevelItAlreadyLoaded(): void
+    {
+        $channel = $this->createStub(RegisteredChannel::class);
+        $channel->method('getId')->willReturn(1);
+        $channel->method('isFounder')->willReturn(false);
+        $access = $this->createStub(ChannelAccess::class);
+        $access->method('getLevel')->willReturn(400);
+        $accessRepo = $this->createMock(ChannelAccessRepositoryInterface::class);
+        $accessRepo->expects(self::once())->method('findByChannelAndNick')->with(1, 10)->willReturn($access);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $levelRepo->method('findByChannelAndKey')->willReturn(new ChannelLevel(1, ChannelLevel::KEY_ACCESSCHANGE, 300));
+
+        $helper = new ChanServAccessHelper($accessRepo, $levelRepo);
+
+        self::assertSame(400, $helper->requireLevel($channel, 10, ChannelLevel::KEY_ACCESSCHANGE, '#test', 'ACCESS ADD'));
+        self::assertTrue($helper->canManageLevel($channel, 10, 300, 400));
+    }
+
+    #[Test]
     public function canManageLevelReturnsTrueWhenManagerLevelHigher(): void
     {
         $channel = $this->createStub(RegisteredChannel::class);

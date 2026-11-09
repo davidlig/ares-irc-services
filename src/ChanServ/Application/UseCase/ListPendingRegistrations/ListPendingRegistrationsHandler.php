@@ -7,7 +7,8 @@ namespace App\ChanServ\Application\UseCase\ListPendingRegistrations;
 use App\ChanServ\Application\Port\Out\ChanUserAccountPort;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 
-use function count;
+use function array_values;
+use function max;
 
 final readonly class ListPendingRegistrationsHandler
 {
@@ -37,24 +38,20 @@ final readonly class ListPendingRegistrationsHandler
     {
         $offset = ($page - 1) * $pageSize;
         $found = [];
-        $index = 0;
-        foreach ($this->channels->iterateAll() as $channel) {
-            if (!$channel->isPendingRegistration()) {
-                continue;
-            }
-            if ($index++ < $offset) {
-                continue;
-            }
+        $channels = $this->channels->findPendingPage(max(0, $offset), max(1, $pageSize));
+        $ids = [];
+        foreach ($channels as $channel) {
+            $ids[$channel->getFounderNickId()] = $channel->getFounderNickId();
+        }
+        $nicknames = [] === $ids ? [] : $this->accounts->findNicknamesByIds(array_values($ids));
+        foreach ($channels as $channel) {
             $found[] = new PendingRegistrationView(
                 $channel->getName(),
                 $channel->getFounderNickId(),
-                $this->accounts->findNicknameById($channel->getFounderNickId()),
+                $nicknames[$channel->getFounderNickId()] ?? null,
                 $channel->getDescription(),
                 $channel->getCreatedAt(),
             );
-            if ($pageSize <= count($found)) {
-                break;
-            }
         }
 
         return $found;

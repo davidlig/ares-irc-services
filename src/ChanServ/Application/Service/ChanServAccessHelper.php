@@ -52,21 +52,23 @@ final readonly class ChanServAccessHelper
     /**
      * Throws InsufficientAccessException if the nick's level is below the required level key.
      */
-    public function requireLevel(RegisteredChannel $channel, int $nickId, string $levelKey, string $channelName, string $operation): void
+    public function requireLevel(RegisteredChannel $channel, int $nickId, string $levelKey, string $channelName, string $operation): int
     {
         $required = $this->getLevelValue($channel->getId(), $levelKey);
         $userLevel = $this->effectiveAccessLevel($channel, $nickId, true);
         if ($userLevel < $required) {
             throw InsufficientAccessException::forOperation($channelName, $operation);
         }
+
+        return $userLevel;
     }
 
     /**
      * For ACCESS ADD/DEL: user can only manage nicks with level strictly below their own.
      */
-    public function canManageLevel(RegisteredChannel $channel, int $managerNickId, int $targetLevel): bool
+    public function canManageLevel(RegisteredChannel $channel, int $managerNickId, int $targetLevel, ?int $managerAccessLevel = null): bool
     {
-        $managerLevel = $this->effectiveAccessLevel($channel, $managerNickId, true);
+        $managerLevel = $managerAccessLevel ?? $this->effectiveAccessLevel($channel, $managerNickId, true);
 
         return $this->accessPolicy->canManageLevel(
             AccessLevel::fromEffective($managerLevel),

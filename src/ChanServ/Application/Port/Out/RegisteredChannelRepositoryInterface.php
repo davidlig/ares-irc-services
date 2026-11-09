@@ -26,6 +26,13 @@ interface RegisteredChannelRepositoryInterface
     /** @return RegisteredChannel[] */
     public function findByFounderNickId(int $founderNickId): array;
 
+    public function countByFounderNickId(int $founderNickId, bool $excludeRejected = false): int;
+
+    public function countPendingRegistrations(): int;
+
+    /** @return list<RegisteredChannel> Pending registrations ordered by name and ID. */
+    public function findPendingPage(int $offset, int $limit): array;
+
     /** @return RegisteredChannel[] Founder associations ordered by name, excluding pending/rejected registrations. */
     public function findEstablishedByFounderNickId(int $founderNickId): array;
 

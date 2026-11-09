@@ -112,9 +112,9 @@ final class CregCommandTest extends TestCase
     {
         $pending = RegisteredChannel::createPendingRegistration(new DateTimeImmutable('2026-10-26T12:00:00+00:00'), '#test', 7, 'Description');
         $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
-        $channels->method('iterateAll')->willReturn([$pending]);
+        $channels->method('findPendingPage')->willReturn([$pending]);
         $accounts = $this->createStub(ChanUserAccountPort::class);
-        $accounts->method('findNicknameById')->willReturn('Requester');
+        $accounts->method('findNicknamesByIds')->willReturn([7 => 'Requester']);
         $review = $this->createMock(ReviewRegistrationHandlerInterface::class);
         $review->expects(self::never())->method('handle');
         [$command, $context, $messages] = $this->context(['PENDING'], $channels, $accounts, $review);

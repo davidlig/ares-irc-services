@@ -26,6 +26,9 @@ use App\ChanServ\Domain\ValueObject\AkickRule;
 use DateTimeImmutable;
 use InvalidArgumentException;
 
+use function array_filter;
+use function array_map;
+use function array_unique;
 use function array_values;
 use function count;
 use function ctype_digit;
@@ -84,13 +87,17 @@ final readonly class ManageChannelAkickHandler implements ManageChannelAkickHand
             return new ManageChannelAkickResult(ManageChannelAkickOutcome::ListEmpty);
         }
 
+        $nicknamesById = $this->resolveNicknames(array_map(
+            static fn (ChannelAkick $akick): ?int => $akick->getCreatorNickId(),
+            $stored,
+        ));
         $entries = [];
         foreach ($stored as $index => $akick) {
             $creatorId = $akick->getCreatorNickId();
             $entries[] = new ChannelAkickEntryView(
                 $akick->getMask(),
                 $akick->getReason(),
-                null === $creatorId ? null : $this->accounts->findNicknameById($creatorId),
+                null === $creatorId ? null : ($nicknamesById[$creatorId] ?? null),
                 $akick->getExpiresAt(),
                 $akick->getCreatedAt(),
                 $akick->getUses(),
@@ -239,10 +246,11 @@ final readonly class ManageChannelAkickHandler implements ManageChannelAkickHand
         }
 
         $creatorId = $akick->getCreatorNickId();
+        $nicknamesById = $this->resolveNicknames([$creatorId]);
         $view = new ChannelAkickEntryView(
             mask: $akick->getMask(),
             reason: $akick->getReason(),
-            creatorNickname: null === $creatorId ? null : $this->accounts->findNicknameById($creatorId),
+            creatorNickname: null === $creatorId ? null : ($nicknamesById[$creatorId] ?? null),
             expiresAt: $akick->getExpiresAt(),
             createdAt: $akick->getCreatedAt(),
             uses: $akick->getUses(),
@@ -300,6 +308,11 @@ final readonly class ManageChannelAkickHandler implements ManageChannelAkickHand
             );
         }
 
+        $creatorIds = [];
+        foreach ($matches as $match) {
+            $creatorIds[] = ($ruleMap[spl_object_id($match)] ?? null)?->getCreatorNickId();
+        }
+        $nicknamesById = $this->resolveNicknames($creatorIds);
         $entries = [];
         foreach ($matches as $match) {
             $akick = $ruleMap[spl_object_id($match)] ?? null;
@@ -307,7 +320,7 @@ final readonly class ManageChannelAkickHandler implements ManageChannelAkickHand
             $entries[] = new ChannelAkickEntryView(
                 mask: $match->mask->value,
                 reason: $match->reason,
-                creatorNickname: null === $creatorId ? null : $this->accounts->findNicknameById($creatorId),
+                creatorNickname: null === $creatorId ? null : ($nicknamesById[$creatorId] ?? null),
                 expiresAt: $match->expiresAt,
                 createdAt: $akick?->getCreatedAt(),
                 uses: $akick?->getUses() ?? 0,
@@ -361,26 +374,31 @@ final readonly class ManageChannelAkickHandler implements ManageChannelAkickHand
     /** @return list<string> */
     private function protectedNicknames(RegisteredChannel $channel): array
     {
-        $nicknames = [];
-        $founder = $this->accounts->findNicknameById($channel->getFounderNickId());
-        if (null !== $founder) {
-            $nicknames[] = $founder;
-        }
-        $successorId = $channel->getSuccessorNickId();
-        if (null !== $successorId) {
-            $successor = $this->accounts->findNicknameById($successorId);
-            if (null !== $successor) {
-                $nicknames[] = $successor;
-            }
-        }
+        $nickIds = [$channel->getFounderNickId(), $channel->getSuccessorNickId()];
         foreach ($this->access->listByChannel($channel->getId()) as $entry) {
-            $nickname = $this->accounts->findNicknameById($entry->getNickId());
+            $nickIds[] = $entry->getNickId();
+        }
+
+        $nicknamesById = $this->resolveNicknames($nickIds);
+        $nicknames = [];
+        foreach ($nickIds as $nickId) {
+            $nickname = null === $nickId ? null : ($nicknamesById[$nickId] ?? null);
             if (null !== $nickname) {
                 $nicknames[] = $nickname;
             }
         }
 
         return $nicknames;
+    }
+
+    /** @param list<?int> $ids
+     * @return array<int, string>
+     */
+    private function resolveNicknames(array $ids): array
+    {
+        $ids = array_values(array_unique(array_filter($ids, static fn (?int $id): bool => null !== $id)));
+
+        return [] === $ids ? [] : $this->accounts->findNicknamesByIds($ids);
     }
 
     private function findByItem(int $channelId, string $item): ?ChannelAkick

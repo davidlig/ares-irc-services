@@ -41,6 +41,37 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
     private RegisteredChannelRepositoryInterface $repository;
 
     #[Test]
+    public function pendingPagesAndCountsPreserveIterationOrder(): void
+    {
+        $at = new DateTimeImmutable();
+        $this->entityManager->persist(RegisteredChannel::createPendingRegistration($at, '#z', 1, 'z'));
+        $this->entityManager->persist(RegisteredChannel::register($at, '#middle', 2, 'active'));
+        $this->entityManager->persist(RegisteredChannel::createPendingRegistration($at, '#A', 3, 'a'));
+        $this->flushAndClear();
+
+        self::assertSame(2, $this->repository->countPendingRegistrations());
+        self::assertSame(['#A'], array_map(static fn (RegisteredChannel $c): string => $c->getName(), $this->repository->findPendingPage(0, 1)));
+        self::assertSame(['#z'], array_map(static fn (RegisteredChannel $c): string => $c->getName(), $this->repository->findPendingPage(1, 1)));
+    }
+
+    #[Test]
+    public function founderCountCanExcludeRejectedRegistrations(): void
+    {
+        $at = new DateTimeImmutable();
+        $this->entityManager->persist(RegisteredChannel::register($at, '#active', 7, 'active'));
+        $this->entityManager->persist(RegisteredChannel::createPendingRegistration($at, '#pending', 7, 'pending'));
+        $rejected = RegisteredChannel::createPendingRegistration($at, '#rejected', 7, 'rejected');
+        $rejected->rejectRegistration('No', 9, 'Op', $at, null);
+        $this->entityManager->persist($rejected);
+        $this->entityManager->persist(RegisteredChannel::register($at, '#other', 8, 'other'));
+        $this->flushAndClear();
+
+        self::assertSame(3, $this->repository->countByFounderNickId(7));
+        self::assertSame(2, $this->repository->countByFounderNickId(7, true));
+        self::assertSame(0, $this->repository->countByFounderNickId(99));
+    }
+
+    #[Test]
     #[DataProvider('listPlatforms')]
     public function countUsesThePlatformSearchKeyAndRetainsTheLiteralLikeCheck(string $engine): void
     {

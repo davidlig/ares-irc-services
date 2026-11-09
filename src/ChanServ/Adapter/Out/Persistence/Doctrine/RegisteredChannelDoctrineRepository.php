@@ -95,6 +95,36 @@ final readonly class RegisteredChannelDoctrineRepository implements RegisteredCh
         return array_filter($result, static fn ($row): bool => $row instanceof RegisteredChannel);
     }
 
+    public function countByFounderNickId(int $founderNickId, bool $excludeRejected = false): int
+    {
+        $query = $this->em->createQueryBuilder()->select('COUNT(c.id)')
+            ->from(RegisteredChannel::class, 'c')->where('c.founderNickId = :founder')
+            ->setParameter('founder', $founderNickId);
+        if ($excludeRejected) {
+            $query->andWhere('c.status != :rejected')->setParameter('rejected', ChannelStatus::Rejected);
+        }
+
+        return (int) $query->getQuery()->getSingleScalarResult();
+    }
+
+    public function countPendingRegistrations(): int
+    {
+        return (int) $this->em->createQueryBuilder()->select('COUNT(c.id)')
+            ->from(RegisteredChannel::class, 'c')->where('c.status = :status')
+            ->setParameter('status', ChannelStatus::Pending)->getQuery()->getSingleScalarResult();
+    }
+
+    public function findPendingPage(int $offset, int $limit): array
+    {
+        /** @var list<RegisteredChannel> $result */
+        $result = $this->em->createQueryBuilder()->select('c')->from(RegisteredChannel::class, 'c')
+            ->where('c.status = :status')->setParameter('status', ChannelStatus::Pending)
+            ->orderBy('c.name', 'ASC')->addOrderBy('c.id', 'ASC')
+            ->setFirstResult(max(0, $offset))->setMaxResults(max(0, $limit))->getQuery()->getResult();
+
+        return $result;
+    }
+
     /**
      * @return RegisteredChannel[]
      */

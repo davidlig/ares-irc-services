@@ -119,7 +119,7 @@ final class RegmodeCommandTest extends TestCase
             static fn (string $nick): ChanAccountView => new ChanAccountView(9, $nick, 'en'),
         );
         $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
-        $channels->expects(self::exactly(2))->method('iterateAll')->willReturn([]);
+        $channels->expects(self::exactly(2))->method('findPendingPage')->willReturn([]);
         $channels->expects(self::never())->method('findByChannelName');
         $review = $this->createMock(ReviewRegistrationHandlerInterface::class);
         $review->expects(self::never())->method('handle');
