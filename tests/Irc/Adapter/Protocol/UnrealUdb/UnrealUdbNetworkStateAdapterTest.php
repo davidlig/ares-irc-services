@@ -148,10 +148,136 @@ final class UnrealUdbNetworkStateAdapterTest extends TestCase
         $eventDispatcher->expects(self::once())->method('dispatch')
             ->with(self::callback(static fn ($event): bool => $event instanceof ServerDelinkedEvent
                     && '002' === $event->serverSid
-                    && 'Split' === $event->reason));
+                    && 'Split' === $event->reason
+                    && ['002'] === $event->serverSids));
 
         $adapter = new UnrealUdbNetworkStateAdapter($eventDispatcher);
         $adapter->handleMessage(new IRCMessage('SQUIT', null, ['002'], 'Split'));
+    }
+
+    #[Test]
+    public function handleSquitResolvesServerTreeAndDelinksDescendantsBySid(): void
+    {
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $adapter = new UnrealUdbNetworkStateAdapter($eventDispatcher);
+
+        $adapter->handleMessage(new IRCMessage('PROTOCTL', null, ['NOQUIT', 'SID=001']));
+        $adapter->handleMessage(new IRCMessage('SERVER', null, ['hub.example.net', '1'], 'Hub'));
+        $adapter->handleMessage(new IRCMessage('SID', '001', ['leaf1.example.net', '1', '002'], 'Leaf 1'));
+        $adapter->handleMessage(new IRCMessage('SID', '002', ['leaf2.example.net', '2', '003'], 'Leaf 2'));
+        $adapter->handleMessage(new IRCMessage('SID', '001', ['leaf3.example.net', '1', '004'], 'Leaf 3'));
+
+        $capturedEvent = null;
+        $eventDispatcher->expects(self::once())->method('dispatch')
+            ->with(self::callback(static function ($event) use (&$capturedEvent): bool {
+                if ($event instanceof ServerDelinkedEvent) {
+                    $capturedEvent = $event;
+
+                    return true;
+                }
+
+                return false;
+            }));
+
+        $adapter->handleMessage(new IRCMessage('SQUIT', null, ['002'], 'Netsplit'));
+
+        self::assertInstanceOf(ServerDelinkedEvent::class, $capturedEvent);
+        self::assertSame('002', $capturedEvent->serverSid);
+        self::assertSame('Netsplit', $capturedEvent->reason);
+        self::assertEqualsCanonicalizing(['002', '003'], $capturedEvent->serverSids);
+    }
+
+    #[Test]
+    public function handleSquitResolvesServerTreeAndDelinksDescendantsByName(): void
+    {
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $adapter = new UnrealUdbNetworkStateAdapter($eventDispatcher);
+
+        $adapter->handleMessage(new IRCMessage('PROTOCTL', null, ['NOQUIT', 'SID=001']));
+        $adapter->handleMessage(new IRCMessage('SERVER', null, ['hub.example.net', '1'], 'Hub'));
+        $adapter->handleMessage(new IRCMessage('SID', '001', ['leaf1.example.net', '1', '002'], 'Leaf 1'));
+        $adapter->handleMessage(new IRCMessage('SID', '002', ['leaf2.example.net', '2', '003'], 'Leaf 2'));
+        $adapter->handleMessage(new IRCMessage('SID', '001', ['leaf3.example.net', '1', '004'], 'Leaf 3'));
+
+        $capturedEvent = null;
+        $eventDispatcher->expects(self::once())->method('dispatch')
+            ->with(self::callback(static function ($event) use (&$capturedEvent): bool {
+                if ($event instanceof ServerDelinkedEvent) {
+                    $capturedEvent = $event;
+
+                    return true;
+                }
+
+                return false;
+            }));
+
+        $adapter->handleMessage(new IRCMessage('SQUIT', null, ['leaf1.example.net'], 'Netsplit'));
+
+        self::assertInstanceOf(ServerDelinkedEvent::class, $capturedEvent);
+        self::assertSame('002', $capturedEvent->serverSid);
+        self::assertSame('Netsplit', $capturedEvent->reason);
+        self::assertEqualsCanonicalizing(['002', '003'], $capturedEvent->serverSids);
+    }
+
+    #[Test]
+    public function handleSquitDelinksAllServersWhenDirectServerSplits(): void
+    {
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $adapter = new UnrealUdbNetworkStateAdapter($eventDispatcher);
+
+        $adapter->handleMessage(new IRCMessage('PROTOCTL', null, ['NOQUIT', 'SID=001']));
+        $adapter->handleMessage(new IRCMessage('SERVER', null, ['hub.example.net', '1'], 'Hub'));
+        $adapter->handleMessage(new IRCMessage('SID', '001', ['leaf1.example.net', '1', '002'], 'Leaf 1'));
+        $adapter->handleMessage(new IRCMessage('SID', '002', ['leaf2.example.net', '2', '003'], 'Leaf 2'));
+
+        $capturedEvent = null;
+        $eventDispatcher->expects(self::once())->method('dispatch')
+            ->with(self::callback(static function ($event) use (&$capturedEvent): bool {
+                if ($event instanceof ServerDelinkedEvent) {
+                    $capturedEvent = $event;
+
+                    return true;
+                }
+
+                return false;
+            }));
+
+        $adapter->handleMessage(new IRCMessage('SQUIT', null, ['hub.example.net'], 'Uplink lost'));
+
+        self::assertInstanceOf(ServerDelinkedEvent::class, $capturedEvent);
+        self::assertSame('001', $capturedEvent->serverSid);
+        self::assertEqualsCanonicalizing(['001', '002', '003'], $capturedEvent->serverSids);
+    }
+
+    #[Test]
+    public function errorResetsServerTree(): void
+    {
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $adapter = new UnrealUdbNetworkStateAdapter($eventDispatcher);
+
+        $adapter->handleMessage(new IRCMessage('PROTOCTL', null, ['NOQUIT', 'SID=001']));
+        $adapter->handleMessage(new IRCMessage('SERVER', null, ['hub.example.net', '1'], 'Hub'));
+        $adapter->handleMessage(new IRCMessage('SID', '001', ['leaf1.example.net', '1', '002'], 'Leaf 1'));
+        $adapter->handleMessage(new IRCMessage('ERROR', null, [], 'Closing Link'));
+
+        $capturedEvent = null;
+        $eventDispatcher->expects(self::once())->method('dispatch')
+            ->with(self::callback(static function ($event) use (&$capturedEvent): bool {
+                if ($event instanceof ServerDelinkedEvent) {
+                    $capturedEvent = $event;
+
+                    return true;
+                }
+
+                return false;
+            }));
+
+        $adapter->handleMessage(new IRCMessage('SQUIT', null, ['leaf1.example.net'], 'Split'));
+
+        self::assertInstanceOf(ServerDelinkedEvent::class, $capturedEvent);
+        // Because server tree was reset, leaf1.example.net is not recognized as 002
+        self::assertSame('leaf1.example.net', $capturedEvent->serverSid);
+        self::assertSame(['leaf1.example.net'], $capturedEvent->serverSids);
     }
 
     #[Test]
@@ -1236,5 +1362,46 @@ final class UnrealUdbNetworkStateAdapterTest extends TestCase
 
         $adapter = new UnrealUdbNetworkStateAdapter($eventDispatcher);
         $adapter->handleMessage(new IRCMessage('SVSMODE', '001', ['001ABC', '+r'], null));
+    }
+
+    #[Test]
+    public function handleProtoctlWithNonMatchingPrefixIsIgnored(): void
+    {
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $adapter = new UnrealUdbNetworkStateAdapter($eventDispatcher);
+
+        $adapter->handleMessage(new IRCMessage('PROTOCTL', null, ['SID=001']));
+        $adapter->handleMessage(new IRCMessage('PROTOCTL', 'UNKNOWN', ['SID=999']));
+        $adapter->handleMessage(new IRCMessage('SERVER', null, ['hub.example.net', '1'], 'Hub'));
+        $adapter->handleMessage(new IRCMessage('SID', '001', ['leaf.example.net', '1', '002'], 'Leaf'));
+
+        $eventDispatcher->expects(self::once())->method('dispatch')
+            ->with(self::callback(static fn ($event): bool => $event instanceof ServerDelinkedEvent
+                && '002' === $event->serverSid));
+
+        $adapter->handleMessage(new IRCMessage('SQUIT', null, ['leaf.example.net'], 'Split'));
+    }
+
+    #[Test]
+    public function handleServerWithInvalidParentOrKeyDoesNotTrackServer(): void
+    {
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $adapter = new UnrealUdbNetworkStateAdapter($eventDispatcher);
+
+        $adapter->handleMessage(new IRCMessage('PROTOCTL', null, ['SID=001']));
+        $adapter->handleMessage(new IRCMessage('SERVER', null, ['hub.example.net', '1'], 'Hub'));
+        $adapter->handleMessage(new IRCMessage('SERVER', null, ['', '1'], 'Empty'));
+        $adapter->handleMessage(new IRCMessage('SID', 'UNKNOWN', ['leaf.example.net', '1', '002'], 'Leaf'));
+        $adapter->handleMessage(new IRCMessage('SID', '', ['leaf.example.net', '1', '002'], 'Leaf'));
+        $adapter->handleMessage(new IRCMessage('SID', '001', ['', '1', '002'], 'Leaf'));
+        $adapter->handleMessage(new IRCMessage('SID', '001', ['leaf.example.net'], 'Too few params'));
+        $adapter->handleMessage(new IRCMessage('SID', '001', ['leaf.example.net', '1', 'INVALID_SID'], 'Leaf'));
+
+        $eventDispatcher->expects(self::once())->method('dispatch')
+            ->with(self::callback(static fn ($event): bool => $event instanceof ServerDelinkedEvent
+                && 'leaf.example.net' === $event->serverSid
+                && ['leaf.example.net'] === $event->serverSids));
+
+        $adapter->handleMessage(new IRCMessage('SQUIT', null, ['leaf.example.net'], 'Split'));
     }
 }

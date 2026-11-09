@@ -31,7 +31,11 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
+use function array_keys;
+use function array_merge;
+use function array_pop;
 use function array_slice;
+use function array_unique;
 use function array_values;
 use function count;
 use function explode;
@@ -44,6 +48,7 @@ use function str_starts_with;
 use function strcmp;
 use function strlen;
 use function strpos;
+use function strtolower;
 use function substr;
 use function trim;
 
@@ -54,6 +59,13 @@ use function trim;
 final class UnrealStandaloneNetworkStateAdapter implements NetworkStateAdapterInterface
 {
     private const string PROTOCOL = 'unreal';
+
+    private ?string $directSid = null;
+
+    private ?string $directName = null;
+
+    /** @var array<string, array{name: string, parent: string}> keyed by SID */
+    private array $servers = [];
 
     public function __construct(
         private readonly EventDispatcherInterface $eventDispatcher,
@@ -68,6 +80,9 @@ final class UnrealStandaloneNetworkStateAdapter implements NetworkStateAdapterIn
     public function handleMessage(IRCMessage $message): void
     {
         match ($message->command) {
+            'PROTOCTL' => $this->handleProtoctl($message),
+            'SERVER', 'SID' => $this->handleServer($message),
+            'ERROR' => $this->resetServerTree(),
             'UID' => $this->handleUid($message),
             'NICK' => $this->handleNick($message),
             'QUIT' => $this->handleQuit($message),
@@ -188,18 +203,113 @@ final class UnrealStandaloneNetworkStateAdapter implements NetworkStateAdapterIn
 
     /**
      * SQUIT: server removed from network. Format :<source> SQUIT <server_sid> :<reason>
-     * server_sid is the SID of the server that left (e.g. "002").
+     * server_sid is the SID or server name of the server that left (e.g. "002").
      */
     private function handleSquit(IRCMessage $message): void
     {
-        $serverSid = $message->params[0] ?? '';
+        $target = $message->params[0] ?? '';
         $reason = $message->trailing ?? '';
 
-        if ('' === $serverSid) {
+        if ('' === $target) {
             return;
         }
 
-        $this->eventDispatcher->dispatch(new ServerDelinkedEvent($serverSid, $reason));
+        $resolvedSid = $this->resolve($target);
+        if (null !== $this->directSid && $resolvedSid === $this->directSid) {
+            $delinkedSids = array_values(array_unique(array_merge([$this->directSid], array_keys($this->servers))));
+            $this->resetServerTree();
+            $this->eventDispatcher->dispatch(new ServerDelinkedEvent($resolvedSid, $reason, $delinkedSids));
+
+            return;
+        }
+
+        if (null !== $resolvedSid) {
+            $delinkedSids = [];
+            $pending = [$resolvedSid];
+            while (null !== ($removed = array_pop($pending))) {
+                $delinkedSids[] = $removed;
+                unset($this->servers[$removed]);
+                foreach ($this->servers as $id => $server) {
+                    if ($server['parent'] === $removed) {
+                        $pending[] = $id;
+                    }
+                }
+            }
+
+            $this->eventDispatcher->dispatch(new ServerDelinkedEvent($resolvedSid, $reason, $delinkedSids));
+
+            return;
+        }
+
+        $this->eventDispatcher->dispatch(new ServerDelinkedEvent($target, $reason, [$target]));
+    }
+
+    private function handleProtoctl(IRCMessage $message): void
+    {
+        if (null !== $message->prefix && (null === $this->directSid || $this->resolve($message->prefix) !== $this->directSid)) {
+            return;
+        }
+
+        foreach ($message->params as $parameter) {
+            if (str_starts_with($parameter, 'SID=')) {
+                $sid = substr($parameter, 4);
+                if (1 === preg_match('/^[0-9][A-Z0-9]{2}$/D', $sid)) {
+                    $this->directSid = $sid;
+                }
+            }
+        }
+    }
+
+    private function handleServer(IRCMessage $message): void
+    {
+        $name = $message->params[0] ?? '';
+        if ('SERVER' === $message->command && null === $message->prefix) {
+            if ('' !== $name) {
+                $this->directName = strtolower($name);
+            }
+
+            return;
+        }
+
+        $parent = $this->resolve($message->prefix ?? '');
+        if (null === $parent || '' === $name || count($message->params) < 2) {
+            return;
+        }
+
+        $key = 'SID' === $message->command ? ($message->params[2] ?? '') : strtolower($name);
+        if ('SID' === $message->command && 1 !== preg_match('/^[0-9][A-Z0-9]{2}$/D', $key)) {
+            return;
+        }
+
+        if ('' !== $key && !isset($this->servers[$key])) {
+            $this->servers[$key] = ['name' => strtolower($name), 'parent' => $parent];
+        }
+    }
+
+    private function resetServerTree(): void
+    {
+        $this->directSid = null;
+        $this->directName = null;
+        $this->servers = [];
+    }
+
+    private function resolve(string $identity): ?string
+    {
+        if ('' === $identity) {
+            return null;
+        }
+
+        if (null !== $this->directSid && ($identity === $this->directSid || strtolower($identity) === $this->directName)) {
+            return $this->directSid;
+        }
+
+        foreach ($this->servers as $key => $server) {
+            if ($identity === $key || strtolower($identity) === $server['name']) {
+                return $key;
+            }
+        }
+
+        return null;
     }
 
     private function handleSjoin(IRCMessage $message): void

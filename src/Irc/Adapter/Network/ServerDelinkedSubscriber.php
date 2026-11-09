@@ -39,13 +39,7 @@ final readonly class ServerDelinkedSubscriber implements EventSubscriberInterfac
 
     public function onServerDelinked(ServerDelinkedEvent $event): void
     {
-        $users = $this->userRepository->all();
-        $affected = [];
-        foreach ($users as $user) {
-            if ($user->serverSid === $event->serverSid) {
-                $affected[] = $user;
-            }
-        }
+        $affected = $this->userRepository->findByServerSids($event->serverSids);
 
         if ([] === $affected) {
             return;
