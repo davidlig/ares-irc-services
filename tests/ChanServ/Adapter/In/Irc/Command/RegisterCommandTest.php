@@ -155,7 +155,7 @@ final class RegisterCommandTest extends TestCase
         $account = new ChanAccountView(1, 'User', 'en');
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('existsByChannelName')->willReturn(false);
-        $channelRepo->method('findByFounderNickId')->willReturn([]);
+        $channelRepo->method('countByFounderNickId')->willReturn(0);
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $throttle = new ChannelRegisterThrottleRegistry();
         $messages = [];
@@ -236,7 +236,7 @@ final class RegisterCommandTest extends TestCase
         $account = new ChanAccountView(1, 'User', 'en');
         $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('existsByChannelName')->willReturn(false);
-        $channelRepo->method('findByFounderNickId')->willReturn([]);
+        $channelRepo->method('countByFounderNickId')->willReturn(0);
         $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function (RegisteredChannel $channel): void {
             $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
             $ref->setValue($channel, 1);
@@ -267,7 +267,7 @@ final class RegisterCommandTest extends TestCase
         $account = new ChanAccountView(1, 'User', 'en');
         $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('existsByChannelName')->willReturn(false);
-        $channelRepo->method('findByFounderNickId')->willReturn([]);
+        $channelRepo->method('countByFounderNickId')->willReturn(0);
         $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function (RegisteredChannel $channel): void {
             $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
             $ref->setValue($channel, 77);
@@ -310,7 +310,7 @@ final class RegisterCommandTest extends TestCase
         $account = new ChanAccountView(1, 'User', 'en');
         $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('existsByChannelName')->willReturn(false);
-        $channelRepo->method('findByFounderNickId')->willReturn([]);
+        $channelRepo->method('countByFounderNickId')->willReturn(0);
         $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function (RegisteredChannel $channel): void {
             $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
             $ref->setValue($channel, 1);
@@ -375,7 +375,7 @@ final class RegisterCommandTest extends TestCase
         $account = new ChanAccountView(10, 'User', 'en');
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('existsByChannelName')->willReturn(false);
-        $channelRepo->method('findByFounderNickId')->willReturn([]);
+        $channelRepo->method('countByFounderNickId')->willReturn(0);
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $throttle = new ChannelRegisterThrottleRegistry();
         $throttle->recordRegistration(10);
@@ -404,7 +404,7 @@ final class RegisterCommandTest extends TestCase
         $existing = $this->createStub(RegisteredChannel::class);
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('existsByChannelName')->willReturn(false);
-        $channelRepo->method('findByFounderNickId')->willReturn([$existing, $existing, $existing]);
+        $channelRepo->method('countByFounderNickId')->willReturn(3);
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $throttle = new ChannelRegisterThrottleRegistry();
         $channelView = $this->channelViewWithSenderPrefix('#test');
@@ -431,7 +431,7 @@ final class RegisterCommandTest extends TestCase
         $account = new ChanAccountView(10, 'User', 'en');
         $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('existsByChannelName')->willReturn(false);
-        $channelRepo->method('findByFounderNickId')->willReturn([]);
+        $channelRepo->method('countByFounderNickId')->willReturn(0);
         $channelRepo->expects(self::once())->method('save')->with(self::callback(static function ($ch): bool {
             if (!$ch instanceof RegisteredChannel
                 || '#test' !== strtolower($ch->getName())
@@ -470,7 +470,7 @@ final class RegisterCommandTest extends TestCase
         $account = new ChanAccountView(10, 'User', 'en');
         $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('existsByChannelName')->willReturn(false);
-        $channelRepo->method('findByFounderNickId')->willReturn([]);
+        $channelRepo->method('countByFounderNickId')->willReturn(0);
         $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function (RegisteredChannel $channel): void {
             $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
             $ref->setValue($channel, 42);
@@ -570,7 +570,7 @@ final class RegisterCommandTest extends TestCase
         $account = new ChanAccountView(10, 'User', 'en');
         $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('existsByChannelName')->willReturn(false);
-        $channelRepo->method('findByFounderNickId')->willReturn([]);
+        $channelRepo->method('countByFounderNickId')->willReturn(0);
         $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function (RegisteredChannel $channel): void {
             $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
             $ref->setValue($channel, 1);
@@ -658,7 +658,7 @@ final class RegisterCommandTest extends TestCase
         $account = new ChanAccountView(10, 'User', 'en');
         $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('existsByChannelName')->willReturn(false);
-        $channelRepo->method('findByFounderNickId')->willReturn([]);
+        $channelRepo->method('countByFounderNickId')->willReturn(0);
         $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function (RegisteredChannel $channel): void {
             $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
             $ref->setValue($channel, 1);
@@ -691,7 +691,7 @@ final class RegisterCommandTest extends TestCase
         $account = new ChanAccountView(10, 'User', 'en');
         $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepo->expects(self::once())->method('existsByChannelName')->with('#testchan')->willReturn(false);
-        $channelRepo->method('findByFounderNickId')->willReturn([]);
+        $channelRepo->method('countByFounderNickId')->willReturn(0);
         $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function (RegisteredChannel $channel): void {
             $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
             $ref->setValue($channel, 1);
@@ -894,7 +894,7 @@ final class RegisterCommandTest extends TestCase
         $throttle->recordRegistration(10);
         $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('existsByChannelName')->willReturn(false);
-        $channelRepo->method('findByFounderNickId')->willReturn([]);
+        $channelRepo->method('countByFounderNickId')->willReturn(0);
         $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function (RegisteredChannel $channel): void {
             $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
             $ref->setValue($channel, 1);
@@ -927,7 +927,7 @@ final class RegisterCommandTest extends TestCase
         $throttle->recordRegistration(10);
         $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('existsByChannelName')->willReturn(false);
-        $channelRepo->method('findByFounderNickId')->willReturn([]);
+        $channelRepo->method('countByFounderNickId')->willReturn(0);
         $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function (RegisteredChannel $channel): void {
             $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
             $ref->setValue($channel, 1);
@@ -964,7 +964,7 @@ final class RegisterCommandTest extends TestCase
         $existing = $this->createStub(RegisteredChannel::class);
         $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('existsByChannelName')->willReturn(false);
-        $channelRepo->method('findByFounderNickId')->willReturn([$existing, $existing, $existing]);
+        $channelRepo->method('countByFounderNickId')->willReturn(3);
         $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function (RegisteredChannel $channel): void {
             $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
             $ref->setValue($channel, 1);
@@ -997,7 +997,7 @@ final class RegisterCommandTest extends TestCase
         $existing = $this->createStub(RegisteredChannel::class);
         $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('existsByChannelName')->willReturn(false);
-        $channelRepo->method('findByFounderNickId')->willReturn([$existing, $existing, $existing]);
+        $channelRepo->method('countByFounderNickId')->willReturn(3);
         $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function (RegisteredChannel $channel): void {
             $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
             $ref->setValue($channel, 1);
@@ -1030,7 +1030,7 @@ final class RegisterCommandTest extends TestCase
         $throttle = new ChannelRegisterThrottleRegistry();
         $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('existsByChannelName')->willReturn(false);
-        $channelRepo->method('findByFounderNickId')->willReturn([]);
+        $channelRepo->method('countByFounderNickId')->willReturn(0);
         $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function (RegisteredChannel $channel): void {
             $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
             $ref->setValue($channel, 1);
@@ -1063,7 +1063,7 @@ final class RegisterCommandTest extends TestCase
         $throttle = new ChannelRegisterThrottleRegistry();
         $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('existsByChannelName')->willReturn(false);
-        $channelRepo->method('findByFounderNickId')->willReturn([]);
+        $channelRepo->method('countByFounderNickId')->willReturn(0);
         $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function (RegisteredChannel $channel): void {
             $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
             $ref->setValue($channel, 1);
@@ -1123,7 +1123,7 @@ final class RegisterCommandTest extends TestCase
         $existing = $this->createStub(RegisteredChannel::class);
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('existsByChannelName')->willReturn(false);
-        $channelRepo->method('findByFounderNickId')->willReturn([$existing, $existing, $existing]);
+        $channelRepo->method('countByFounderNickId')->willReturn(3);
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $throttle = new ChannelRegisterThrottleRegistry();
         $channelView = $this->channelViewWithSenderPrefix('#test');

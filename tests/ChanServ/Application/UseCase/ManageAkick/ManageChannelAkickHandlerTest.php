@@ -20,6 +20,7 @@ use App\ChanServ\Application\UseCase\ManageAkick\ManageChannelAkick;
 use App\ChanServ\Application\UseCase\ManageAkick\ManageChannelAkickAction;
 use App\ChanServ\Application\UseCase\ManageAkick\ManageChannelAkickHandler;
 use App\ChanServ\Application\UseCase\ManageAkick\ManageChannelAkickOutcome;
+use App\ChanServ\Domain\Entity\ChannelAccess;
 use App\ChanServ\Domain\Entity\ChannelAkick;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\Exception\ChannelNotRegisteredException;
@@ -365,8 +366,9 @@ final class ManageChannelAkickHandlerTest extends TestCase
         $akicks = $this->createStub(ChannelAkickRepositoryInterface::class);
         $akicks->method('findByChannelAndMask')->willReturn($akick);
 
-        $accounts = $this->createStub(ChanUserAccountPort::class);
-        $accounts->method('findNicknameById')->willReturn('CreatorNick');
+        $accounts = $this->createMock(ChanUserAccountPort::class);
+        $accounts->expects(self::once())->method('findNicknamesByIds')->with([2])->willReturn([2 => 'CreatorNick']);
+        $accounts->expects(self::never())->method('findNicknameById');
 
         $handler = $this->createHandler(channels: $channels, akicks: $akicks, accounts: $accounts);
 
@@ -409,8 +411,9 @@ final class ManageChannelAkickHandlerTest extends TestCase
         $akicks = $this->createStub(ChannelAkickRepositoryInterface::class);
         $akicks->method('listByChannel')->willReturn([$akick1, $akick2]);
 
-        $accounts = $this->createStub(ChanUserAccountPort::class);
-        $accounts->method('findNicknameById')->willReturnMap([[2, 'FirstCreator'], [3, 'SecondCreator']]);
+        $accounts = $this->createMock(ChanUserAccountPort::class);
+        $accounts->expects(self::once())->method('findNicknamesByIds')->with([3])->willReturn([3 => 'SecondCreator']);
+        $accounts->expects(self::never())->method('findNicknameById');
 
         $handler = $this->createHandler(channels: $channels, akicks: $akicks, accounts: $accounts);
 
@@ -562,8 +565,9 @@ final class ManageChannelAkickHandlerTest extends TestCase
         $akicks = $this->createStub(ChannelAkickRepositoryInterface::class);
         $akicks->method('listByChannel')->willReturn([$akick1, $akick2, $akick3]);
 
-        $accounts = $this->createStub(ChanUserAccountPort::class);
-        $accounts->method('findNicknameById')->willReturn('Founder');
+        $accounts = $this->createMock(ChanUserAccountPort::class);
+        $accounts->expects(self::once())->method('findNicknamesByIds')->with([2])->willReturn([2 => 'Founder']);
+        $accounts->expects(self::never())->method('findNicknameById');
 
         $handler = $this->createHandler(channels: $channels, akicks: $akicks, accounts: $accounts, network: $network);
 
@@ -611,8 +615,9 @@ final class ManageChannelAkickHandlerTest extends TestCase
         $akicks = $this->createStub(ChannelAkickRepositoryInterface::class);
         $akicks->method('listByChannel')->willReturn([$akick1, $akick2, $akick3]);
 
-        $accounts = $this->createStub(ChanUserAccountPort::class);
-        $accounts->method('findNicknameById')->willReturn('Founder');
+        $accounts = $this->createMock(ChanUserAccountPort::class);
+        $accounts->expects(self::once())->method('findNicknamesByIds')->with([2])->willReturn([2 => 'Founder']);
+        $accounts->expects(self::never())->method('findNicknameById');
 
         $handler = $this->createHandler(channels: $channels, akicks: $akicks, accounts: $accounts, network: $network);
 
@@ -766,12 +771,17 @@ final class ManageChannelAkickHandlerTest extends TestCase
         $channels->method('findByChannelName')->willReturn($channel);
 
         $akick = ChannelAkick::create($this->now, 1, 2, '*!*@bad.com', 'Spam');
+        $akickWithoutNickname = ChannelAkick::create($this->now, 1, 3, '*!*@other.com', 'Other');
         self::assertSame(0, $akick->getUses());
         self::assertNull($akick->getLastUsedAt());
 
         $akicks = $this->createMock(ChannelAkickRepositoryInterface::class);
-        $akicks->method('listByChannel')->willReturn([$akick]);
+        $akicks->method('listByChannel')->willReturn([$akick, $akickWithoutNickname]);
         $akicks->expects(self::never())->method('save');
+
+        $accounts = $this->createMock(ChanUserAccountPort::class);
+        $accounts->expects(self::once())->method('findNicknamesByIds')->with([2, 3])->willReturn([2 => 'Creator']);
+        $accounts->expects(self::never())->method('findNicknameById');
 
         $network = $this->createMock(ChannelEntryNetworkQuery::class);
         $network->method('synchronizationComplete')->willReturn(true);
@@ -780,7 +790,7 @@ final class ManageChannelAkickHandlerTest extends TestCase
         $actions = $this->createMock(AkickActions::class);
         $actions->expects(self::never())->method('banAndKick');
 
-        $handler = $this->createHandler(channels: $channels, akicks: $akicks, network: $network, actions: $actions);
+        $handler = $this->createHandler(channels: $channels, akicks: $akicks, accounts: $accounts, network: $network, actions: $actions);
 
         $result = $handler->handle(new ManageChannelAkick(
             '#test',
@@ -794,13 +804,60 @@ final class ManageChannelAkickHandlerTest extends TestCase
         ));
 
         self::assertSame(ManageChannelAkickOutcome::Listed, $result->outcome);
-        self::assertCount(1, $result->entries);
+        self::assertCount(2, $result->entries);
         self::assertSame(0, $akick->getUses());
         self::assertNull($akick->getLastUsedAt());
         $entry = $result->entries[0];
         self::assertSame(0, $entry->uses);
         self::assertNull($entry->lastUsedAt);
         self::assertSame(1, $entry->entryNumber);
+        self::assertSame('Creator', $entry->creatorNickname);
+        self::assertNull($result->entries[1]->creatorNickname);
+        self::assertSame(2, $result->entries[1]->entryNumber);
+    }
+
+    #[Test]
+    public function addResolvesProtectedNicknamesWithOneBatchAndPreservesFounderPriority(): void
+    {
+        $channel = $this->createStub(RegisteredChannel::class);
+        $channel->method('getId')->willReturn(1);
+        $channel->method('getFounderNickId')->willReturn(10);
+        $channel->method('getSuccessorNickId')->willReturn(11);
+        $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channels->method('findByChannelName')->willReturn($channel);
+
+        $accessEntry = new ChannelAccess(1, 12, 100);
+        $access = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $access->method('listByChannel')->willReturn([$accessEntry]);
+
+        $accounts = $this->createMock(ChanUserAccountPort::class);
+        $accounts->expects(self::once())->method('findNicknamesByIds')->with([10, 11, 12])->willReturn([
+            10 => 'Founder',
+            11 => 'Successor',
+            12 => 'FounderAccessAlias',
+        ]);
+        $accounts->expects(self::never())->method('findNicknameById');
+
+        $akicks = $this->createMock(ChannelAkickRepositoryInterface::class);
+        $akicks->expects(self::never())->method('countByChannel');
+        $akicks->expects(self::never())->method('save');
+
+        $handler = $this->createHandler(channels: $channels, akicks: $akicks, accounts: $accounts, access: $access);
+        $result = $handler->handle(new ManageChannelAkick(
+            '#test',
+            ManageChannelAkickAction::Add,
+            10,
+            true,
+            'Founder',
+            'ip',
+            'host',
+            $this->now,
+            item: 'Founder!*@*',
+            validRequest: true,
+        ));
+
+        self::assertSame(ManageChannelAkickOutcome::ProtectedUser, $result->outcome);
+        self::assertSame('Founder', $result->protectedNickname);
     }
 
     #[Test]

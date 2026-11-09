@@ -52,6 +52,7 @@ use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function array_column;
 use function assert;
 use function count;
 use function is_string;
@@ -641,6 +642,7 @@ final class AkickCommandTest extends TestCase
 
         $nickRepo = $this->createStub(ChanUserAccountPort::class);
         $nickRepo->method('findNicknameById')->willReturnMap([[2, 'Founder'], [1, 'User']]);
+        $nickRepo->method('findNicknamesByIds')->willReturn(array_column([[2, 'Founder'], [1, 'User']], 1, 0));
 
         $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
@@ -687,6 +689,7 @@ final class AkickCommandTest extends TestCase
 
         $nickRepo = $this->createStub(ChanUserAccountPort::class);
         $nickRepo->method('findNicknameById')->willReturn('User');
+        $nickRepo->method('findNicknamesByIds')->willReturn([1 => 'User', 2 => 'User', 9 => 'User']);
 
         $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
@@ -1035,6 +1038,7 @@ final class AkickCommandTest extends TestCase
 
         $nickRepo = $this->createStub(ChanUserAccountPort::class);
         $nickRepo->method('findNicknameById')->willReturn('Founder');
+        $nickRepo->method('findNicknamesByIds')->willReturn([1 => 'Founder', 2 => 'Founder', 9 => 'Founder']);
 
         $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
@@ -1080,6 +1084,7 @@ final class AkickCommandTest extends TestCase
 
         $nickRepo = $this->createStub(ChanUserAccountPort::class);
         $nickRepo->method('findNicknameById')->willReturn(null);
+        $nickRepo->method('findNicknamesByIds')->willReturn([]);
 
         $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
@@ -1793,7 +1798,7 @@ final class AkickCommandTest extends TestCase
         $channelRepo = $this->createChannelMock(1, 1);
 
         $nickRepo = $this->createStub(ChanUserAccountPort::class);
-        $nickRepo->method('findNicknameById')->willReturnMap([[1, 'Founder']]);
+        $nickRepo->method('findNicknamesByIds')->willReturn([1 => 'Founder']);
 
         $akickRepo = $this->createStub(ChannelAkickRepositoryInterface::class);
         $akickRepo->method('countByChannel')->willReturn(0);
@@ -1835,7 +1840,7 @@ final class AkickCommandTest extends TestCase
         $channelRepo = $this->createChannelMock(1, 1);
 
         $nickRepo = $this->createStub(ChanUserAccountPort::class);
-        $nickRepo->method('findNicknameById')->willReturnMap([[1, 'Alice']]);
+        $nickRepo->method('findNicknamesByIds')->willReturn([1 => 'Alice']);
 
         $akickRepo = $this->createStub(ChannelAkickRepositoryInterface::class);
         $akickRepo->method('countByChannel')->willReturn(0);
@@ -1885,7 +1890,7 @@ final class AkickCommandTest extends TestCase
         $channelRepo->method('findByChannelName')->willReturn($channel);
 
         $nickRepo = $this->createStub(ChanUserAccountPort::class);
-        $nickRepo->method('findNicknameById')->willReturnMap([[1, 'Founder'], [2, 'Bob']]);
+        $nickRepo->method('findNicknamesByIds')->willReturn([1 => 'Founder', 2 => 'Bob']);
 
         $akickRepo = $this->createStub(ChannelAkickRepositoryInterface::class);
         $akickRepo->method('countByChannel')->willReturn(0);
@@ -1930,7 +1935,7 @@ final class AkickCommandTest extends TestCase
         $access->method('getNickId')->willReturn(5);
 
         $nickRepo = $this->createStub(ChanUserAccountPort::class);
-        $nickRepo->method('findNicknameById')->willReturnMap([[1, 'Founder'], [5, 'Charley']]);
+        $nickRepo->method('findNicknamesByIds')->willReturn([1 => 'Founder', 5 => 'Charley']);
 
         $akickRepo = $this->createStub(ChannelAkickRepositoryInterface::class);
         $akickRepo->method('countByChannel')->willReturn(0);
@@ -1973,6 +1978,7 @@ final class AkickCommandTest extends TestCase
 
         $nickRepo = $this->createStub(ChanUserAccountPort::class);
         $nickRepo->method('findNicknameById')->willReturnMap([[1, 'Founder']]);
+        $nickRepo->method('findNicknamesByIds')->willReturn(array_column([[1, 'Founder']], 1, 0));
 
         $akickRepo = $this->createStub(ChannelAkickRepositoryInterface::class);
         $akickRepo->method('countByChannel')->willReturn(0);
@@ -2016,6 +2022,7 @@ final class AkickCommandTest extends TestCase
 
         $nickRepo = $this->createStub(ChanUserAccountPort::class);
         $nickRepo->method('findNicknameById')->willReturnMap([[1, 'Founder']]);
+        $nickRepo->method('findNicknamesByIds')->willReturn(array_column([[1, 'Founder']], 1, 0));
 
         $akickRepo = $this->createStub(ChannelAkickRepositoryInterface::class);
         $akickRepo->method('countByChannel')->willReturn(0);
@@ -2060,6 +2067,7 @@ final class AkickCommandTest extends TestCase
 
         $nickRepo = $this->createStub(ChanUserAccountPort::class);
         $nickRepo->method('findNicknameById')->willReturnMap([[1, 'Founder']]);
+        $nickRepo->method('findNicknamesByIds')->willReturn(array_column([[1, 'Founder']], 1, 0));
 
         $akickRepo = $this->createStub(ChannelAkickRepositoryInterface::class);
         $akickRepo->method('countByChannel')->willReturn(0);
@@ -2106,6 +2114,7 @@ final class AkickCommandTest extends TestCase
 
         $nickRepo = $this->createStub(ChanUserAccountPort::class);
         $nickRepo->method('findNicknameById')->willReturn('TestNick');
+        $nickRepo->method('findNicknamesByIds')->willReturn([1 => 'TestNick', 2 => 'TestNick', 9 => 'TestNick']);
 
         $akickRepo = $this->createStub(ChannelAkickRepositoryInterface::class);
         $akickRepo->method('listByChannel')->willReturnOnConsecutiveCalls([$akick], []);
@@ -2187,6 +2196,7 @@ final class AkickCommandTest extends TestCase
 
         $nickRepo = $this->createStub(ChanUserAccountPort::class);
         $nickRepo->method('findNicknameById')->willReturn('TestNick');
+        $nickRepo->method('findNicknamesByIds')->willReturn([1 => 'TestNick', 2 => 'TestNick', 9 => 'TestNick']);
 
         $akickRepo = $this->createStub(ChannelAkickRepositoryInterface::class);
         $akickRepo->method('listByChannel')->willReturn([$akick]);
@@ -2271,6 +2281,7 @@ final class AkickCommandTest extends TestCase
 
         $nickRepo = $this->createStub(ChanUserAccountPort::class);
         $nickRepo->method('findNicknameById')->willReturn('TestNick');
+        $nickRepo->method('findNicknamesByIds')->willReturn([1 => 'TestNick', 2 => 'TestNick', 9 => 'TestNick']);
 
         $akickRepo = $this->createStub(ChannelAkickRepositoryInterface::class);
         $akickRepo->method('listByChannel')->willReturn([$akick]);
@@ -2369,6 +2380,7 @@ final class AkickCommandTest extends TestCase
 
         $nickRepo = $this->createStub(ChanUserAccountPort::class);
         $nickRepo->method('findNicknameById')->willReturn('TestNick');
+        $nickRepo->method('findNicknamesByIds')->willReturn([1 => 'TestNick', 2 => 'TestNick', 9 => 'TestNick']);
 
         $akickRepo = $this->createStub(ChannelAkickRepositoryInterface::class);
         $akickRepo->method('listByChannel')->willReturn([$akick]);
@@ -2745,7 +2757,7 @@ final class AkickCommandTest extends TestCase
         $akickRepo->method('listByChannel')->willReturn([$akick]);
 
         $nickRepo = $this->createStub(ChanUserAccountPort::class);
-        $nickRepo->method('findNicknameById')->willReturn('AuthorNick');
+        $nickRepo->method('findNicknamesByIds')->willReturn([2 => 'AuthorNick']);
 
         $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
@@ -2799,7 +2811,7 @@ final class AkickCommandTest extends TestCase
         $akickRepo->method('findByChannelAndMask')->willReturn($akick);
 
         $nickRepo = $this->createStub(ChanUserAccountPort::class);
-        $nickRepo->method('findNicknameById')->willReturn('AuthorNick');
+        $nickRepo->method('findNicknamesByIds')->willReturn([2 => 'AuthorNick']);
 
         $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
@@ -2974,6 +2986,7 @@ final class AkickCommandTest extends TestCase
 
         $nickRepo = $this->createStub(ChanUserAccountPort::class);
         $nickRepo->method('findNicknameById')->willReturn('Author');
+        $nickRepo->method('findNicknamesByIds')->willReturn([1 => 'Author', 2 => 'Author', 9 => 'Author']);
 
         $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
@@ -3028,6 +3041,7 @@ final class AkickCommandTest extends TestCase
 
         $nickRepo = $this->createStub(ChanUserAccountPort::class);
         $nickRepo->method('findNicknameById')->willReturn('Author');
+        $nickRepo->method('findNicknamesByIds')->willReturn([1 => 'Author', 2 => 'Author', 9 => 'Author']);
 
         $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);

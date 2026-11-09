@@ -751,9 +751,8 @@ final class HistoryCommandTest extends TestCase
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
 
-        $operNick = $this->createNickWithId('KnownOper', 999);
-        $nickRepo = $this->createStub(ChanUserAccountPort::class);
-        $nickRepo->method('findAccountById')->willReturn($operNick);
+        $nickRepo = $this->createMock(ChanUserAccountPort::class);
+        $nickRepo->expects(self::once())->method('findNicknamesByIds')->with([999])->willReturn([999 => 'KnownOper']);
 
         $history1 = ChannelHistory::record(
             new DateTimeImmutable(),

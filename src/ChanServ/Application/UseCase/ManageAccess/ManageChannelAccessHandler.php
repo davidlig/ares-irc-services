@@ -15,6 +15,7 @@ use App\ChanServ\Domain\Entity\ChannelLevel;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\Exception\ChannelNotRegisteredException;
 
+use function array_values;
 use function strtolower;
 
 final readonly class ManageChannelAccessHandler implements ManageChannelAccessHandlerInterface
@@ -52,9 +53,15 @@ final readonly class ManageChannelAccessHandler implements ManageChannelAccessHa
         }
 
         $entries = [];
-        foreach ($this->access->listByChannel($channel->getId()) as $entry) {
-            $account = $this->accounts->findAccountById($entry->getNickId());
-            $entries[] = new ChannelAccessEntryView($account->nickname ?? (string) $entry->getNickId(), $entry->getLevel());
+        $accessEntries = $this->access->listByChannel($channel->getId());
+        $nicknameIds = [];
+        foreach ($accessEntries as $entry) {
+            $nicknameIds[$entry->getNickId()] = $entry->getNickId();
+        }
+        $nicknames = [] === $nicknameIds ? [] : $this->accounts->findNicknamesByIds(array_values($nicknameIds));
+        foreach ($accessEntries as $entry) {
+            $nickId = $entry->getNickId();
+            $entries[] = new ChannelAccessEntryView($nicknames[$nickId] ?? (string) $nickId, $entry->getLevel());
         }
 
         return new ManageChannelAccessResult([] === $entries ? ManageChannelAccessOutcome::ListEmpty : ManageChannelAccessOutcome::Listed, $entries);
@@ -62,9 +69,9 @@ final readonly class ManageChannelAccessHandler implements ManageChannelAccessHa
 
     private function add(RegisteredChannel $channel, ManageChannelAccess $command, int $actorNickId): ManageChannelAccessResult
     {
-        if (!$command->founderEquivalent) {
-            $this->accessPolicy->requireLevel($channel, $actorNickId, ChannelLevel::KEY_ACCESSCHANGE, $command->channelName, 'ACCESS ADD');
-        }
+        $actorLevel = $command->founderEquivalent
+            ? null
+            : $this->accessPolicy->requireLevel($channel, $actorNickId, ChannelLevel::KEY_ACCESSCHANGE, $command->channelName, 'ACCESS ADD');
 
         if (null === $command->targetNickname || '' === $command->targetNickname || null === $command->level) {
             return new ManageChannelAccessResult(ManageChannelAccessOutcome::InvalidRequest);
@@ -80,8 +87,7 @@ final readonly class ManageChannelAccessHandler implements ManageChannelAccessHa
         }
         $level = $command->level;
         $existing = $this->access->findByChannelAndNick($channel->getId(), $target->id);
-        if (!$command->founderEquivalent) {
-            $actorLevel = $this->accessPolicy->effectiveAccessLevel($channel, $actorNickId, true);
+        if (null !== $actorLevel) {
             if ($level >= $actorLevel) {
                 return new ManageChannelAccessResult(ManageChannelAccessOutcome::CannotManageLevel, targetNickname: $nickname, level: $level);
             }
@@ -89,7 +95,7 @@ final readonly class ManageChannelAccessHandler implements ManageChannelAccessHa
         if ($channel->isFounder($target->id)) {
             return new ManageChannelAccessResult(ManageChannelAccessOutcome::FounderNotAllowed, targetNickname: $nickname);
         }
-        if (!$command->founderEquivalent && null !== $existing && !$this->accessPolicy->canManageLevel($channel, $actorNickId, $existing->getLevel())) {
+        if (null !== $actorLevel && null !== $existing && !$this->accessPolicy->canManageLevel($channel, $actorNickId, $existing->getLevel(), $actorLevel)) {
             return new ManageChannelAccessResult(ManageChannelAccessOutcome::CannotManageLevel, targetNickname: $nickname, level: $level);
         }
         if (null === $existing && $this->access->countByChannel($channel->getId()) >= ChannelAccess::MAX_ENTRIES_PER_CHANNEL) {
@@ -121,9 +127,9 @@ final readonly class ManageChannelAccessHandler implements ManageChannelAccessHa
 
     private function delete(RegisteredChannel $channel, ManageChannelAccess $command, int $actorNickId): ManageChannelAccessResult
     {
-        if (!$command->founderEquivalent) {
-            $this->accessPolicy->requireLevel($channel, $actorNickId, ChannelLevel::KEY_ACCESSCHANGE, $command->channelName, 'ACCESS DEL');
-        }
+        $actorLevel = $command->founderEquivalent
+            ? null
+            : $this->accessPolicy->requireLevel($channel, $actorNickId, ChannelLevel::KEY_ACCESSCHANGE, $command->channelName, 'ACCESS DEL');
 
         if (null === $command->targetNickname || '' === $command->targetNickname) {
             return new ManageChannelAccessResult(ManageChannelAccessOutcome::InvalidRequest);
@@ -138,7 +144,7 @@ final readonly class ManageChannelAccessHandler implements ManageChannelAccessHa
         if (null === $existing) {
             return new ManageChannelAccessResult(ManageChannelAccessOutcome::EntryNotFound, targetNickname: $nickname);
         }
-        if (!$command->founderEquivalent && !$this->accessPolicy->canManageLevel($channel, $actorNickId, $existing->getLevel())) {
+        if (null !== $actorLevel && !$this->accessPolicy->canManageLevel($channel, $actorNickId, $existing->getLevel(), $actorLevel)) {
             return new ManageChannelAccessResult(ManageChannelAccessOutcome::CannotManageLevel, targetNickname: $nickname);
         }
 

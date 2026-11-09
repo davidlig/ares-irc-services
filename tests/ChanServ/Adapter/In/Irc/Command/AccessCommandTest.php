@@ -167,13 +167,11 @@ final class AccessCommandTest extends TestCase
         $channel = $this->createChannelMock(1, 1);
         $access1 = new ChannelAccess(1, 10, 100);
         $access2 = new ChannelAccess(1, 20, 50);
-        $nick10 = new ChanAccountView(10, 'NickTen', 'en');
-        $nick20 = new ChanAccountView(20, 'NickTwenty', 'en');
 
         [$channelRepo, $accessRepo, $nickRepo, $accessHelper] = $this->createStubReposAndHelper();
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $accessRepo->method('listByChannel')->willReturn([$access1, $access2]);
-        $nickRepo->method('findAccountById')->willReturnMap([[10, $nick10], [20, $nick20]]);
+        $nickRepo->method('findNicknamesByIds')->willReturn([10 => 'NickTen', 20 => 'NickTwenty']);
 
         $messages = [];
         $notifier = $this->createStub(ChanServNotifierInterface::class);
@@ -914,12 +912,11 @@ final class AccessCommandTest extends TestCase
         $account = new ChanAccountView(1, 'Founder', 'en');
         $channel = $this->createChannelMock(1, 1);
         $access1 = new ChannelAccess(1, 10, 100);
-        $nick10 = new ChanAccountView(10, 'NickTen', 'en');
 
         [$channelRepo, $accessRepo, $nickRepo, $accessHelper] = $this->createStubReposAndHelper();
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $accessRepo->method('listByChannel')->willReturn([$access1]);
-        $nickRepo->method('findAccountById')->willReturnMap([[10, $nick10]]);
+        $nickRepo->method('findNicknamesByIds')->willReturn([10 => 'NickTen']);
 
         $messages = [];
         $notifier = $this->createStub(ChanServNotifierInterface::class);

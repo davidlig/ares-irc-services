@@ -15,6 +15,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 use function array_map;
+use function array_slice;
 
 #[CoversClass(ListPendingRegistrationsHandler::class)]
 #[CoversClass(PendingRegistrationView::class)]
@@ -63,12 +64,9 @@ final class ListPendingRegistrationsHandlerTest extends TestCase
         $rejected->rejectRegistration('No', 9, 'Op', new DateTimeImmutable(), null);
         $second = RegisteredChannel::createPendingRegistration(new DateTimeImmutable(), '#second', 4, 'second description');
         $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
-        $channels->method('iterateAll')->willReturn([$active, $first, $rejected, $second]);
+        $channels->method('findPendingPage')->willReturnCallback(static fn (int $offset, int $limit): array => array_slice([$first, $second], $offset, $limit));
         $accounts = $this->createStub(ChanUserAccountPort::class);
-        $accounts->method('findNicknameById')->willReturnCallback(static fn (int $id): ?string => match ($id) {
-            2 => 'First',
-            default => null,
-        });
+        $accounts->method('findNicknamesByIds')->willReturn([2 => 'First']);
         $handler = new ListPendingRegistrationsHandler($channels, $accounts);
 
         self::assertSame(['#first', '#second'], array_map(static fn ($view): string => $view->channelName, $handler->page(1, 2)));

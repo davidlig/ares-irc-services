@@ -11,6 +11,7 @@ use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\Service\ChannelHistoryService;
 use UnexpectedValueException;
 
+use function array_values;
 use function ceil;
 use function is_int;
 use function min;
@@ -89,9 +90,18 @@ final readonly class ManageChannelHistoryHandler implements ManageChannelHistory
             $limit = $command->showAll ? null : $this->historyViewLimit;
             $offset = $command->showAll ? 0 : ($page - 1) * $this->historyViewLimit;
 
-            foreach ($this->historyRepository->findByChannelId($channelId, $limit, $offset) as $entry) {
+            $historyEntries = $this->historyRepository->findByChannelId($channelId, $limit, $offset);
+            $ids = [];
+            foreach ($historyEntries as $entry) {
+                $id = $entry->getPerformedByNickId();
+                if (null !== $id) {
+                    $ids[$id] = $id;
+                }
+            }
+            $nicknames = [] === $ids ? [] : $this->accountPort->findNicknamesByIds(array_values($ids));
+            foreach ($historyEntries as $entry) {
                 $operatorMissing = null !== $entry->getPerformedByNickId()
-                    && null === $this->accountPort->findAccountById($entry->getPerformedByNickId());
+                    && !isset($nicknames[$entry->getPerformedByNickId()]);
                 $entries[] = new ChannelHistoryEntryView(
                     $entry->getId(),
                     $entry->getAction(),

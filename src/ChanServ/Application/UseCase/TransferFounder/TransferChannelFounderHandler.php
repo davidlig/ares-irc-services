@@ -14,7 +14,6 @@ use App\ChanServ\Domain\Policy\FounderTransferPolicy;
 use App\ChanServ\Domain\ValueObject\FounderTransferDecision;
 use LogicException;
 
-use function count;
 use function trim;
 
 final readonly class TransferChannelFounderHandler implements TransferChannelFounderHandlerInterface
@@ -53,7 +52,7 @@ final readonly class TransferChannelFounderHandler implements TransferChannelFou
         }
 
         $decision = $this->policy->decideChannelLimit(
-            count($this->channels->findByFounderNickId($target->id)),
+            $this->channels->countByFounderNickId($target->id),
             $this->maxChannelsPerNick,
         );
         if (FounderTransferDecision::Allowed !== $decision) {

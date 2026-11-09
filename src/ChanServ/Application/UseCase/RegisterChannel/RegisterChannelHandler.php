@@ -16,9 +16,7 @@ use App\ChanServ\Domain\Exception\ChannelAlreadyRegisteredException;
 use App\ChanServ\Domain\ValueObject\RegistrationMode;
 use App\Shared\Application\Port\EventBusInterface;
 
-use function array_filter;
 use function ceil;
-use function count;
 use function strtolower;
 
 final readonly class RegisterChannelHandler implements RegisterChannelHandlerInterface
@@ -84,11 +82,7 @@ final readonly class RegisterChannelHandler implements RegisterChannelHandlerInt
                 return RegisterChannelResult::throttled((int) ceil($remainingSeconds / 60));
             }
 
-            $ownedChannels = $this->channelRepository->findByFounderNickId($command->accountId);
-            $registeredCount = count(array_filter(
-                $ownedChannels,
-                fn (RegisteredChannel $owned): bool => !$owned->isRejectedRegistration() && (null === $expiredRejectedChannel || $owned->getId() !== $expiredRejectedChannel->getId()),
-            ));
+            $registeredCount = $this->channelRepository->countByFounderNickId($command->accountId, true);
             if ($registeredCount >= $this->maxChannelsPerNick) {
                 return RegisterChannelResult::founderLimitExceeded($this->maxChannelsPerNick);
             }
