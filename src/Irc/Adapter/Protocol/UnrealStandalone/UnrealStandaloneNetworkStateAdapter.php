@@ -71,6 +71,7 @@ final class UnrealStandaloneNetworkStateAdapter implements NetworkStateAdapterIn
             'UID' => $this->handleUid($message),
             'NICK' => $this->handleNick($message),
             'QUIT' => $this->handleQuit($message),
+            'KILL' => $this->handleKill($message),
             'SQUIT' => $this->handleSquit($message),
             'SJOIN' => $this->handleSjoin($message),
             'PART' => $this->handlePart($message),
@@ -161,6 +162,16 @@ final class UnrealStandaloneNetworkStateAdapter implements NetworkStateAdapterIn
         }
 
         $this->eventDispatcher->dispatch(new UserNickChangeReceivedEvent($sourceId, $newNickStr));
+    }
+
+    private function handleKill(IRCMessage $message): void
+    {
+        $target = $message->params[0] ?? '';
+        if ('' === $target) {
+            return;
+        }
+
+        $this->eventDispatcher->dispatch(new UserQuitReceivedEvent($target, $message->trailing ?? ''));
     }
 
     private function handleQuit(IRCMessage $message): void

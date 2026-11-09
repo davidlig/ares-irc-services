@@ -6,6 +6,7 @@ namespace App\Tests\NickServ\Adapter\In\Irc\Subscriber;
 
 use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
 use App\Irc\Application\Port\In\LocalUserModeSyncPort;
+use App\Irc\Application\Port\In\LocalUserQuitSyncPort;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\SendNoticePort;
@@ -244,6 +245,7 @@ final class NickServCommandListenerTest extends TestCase
             $this->createStub(LocalUserModeSyncPort::class),
             $uidGenerator,
             'services.example.com',
+            $this->createStub(LocalUserQuitSyncPort::class),
             'NickServ',
         );
 

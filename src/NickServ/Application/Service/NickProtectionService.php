@@ -122,6 +122,7 @@ final readonly class NickProtectionService
         }
 
         $this->identifiedRegistry->remove($uid);
+        $this->sessionLanguageRegistry->remove($uid);
 
         if (null === $account) {
             return;

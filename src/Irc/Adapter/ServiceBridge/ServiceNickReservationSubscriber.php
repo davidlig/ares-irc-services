@@ -6,6 +6,7 @@ namespace App\Irc\Adapter\ServiceBridge;
 
 use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
 use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
+use App\Irc\Application\Port\In\LocalUserQuitSyncPort;
 use App\Irc\Application\Port\In\ManagedServiceNickReservationLookup;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\ProtocolServiceActionsInterface;
@@ -44,6 +45,7 @@ final readonly class ServiceNickReservationSubscriber implements EventSubscriber
         private NetworkUserLookupPort $userLookup,
         private iterable $serviceListeners,
         private ServiceNickReservationInventory $inventory,
+        private LocalUserQuitSyncPort $localUserQuitSync,
         private LoggerInterface $logger = new NullLogger(),
     ) {}
 
@@ -192,6 +194,7 @@ final readonly class ServiceNickReservationSubscriber implements EventSubscriber
         ]);
 
         $serviceActions->killUser($serverSid, $existingUser->uid, 'Service nickname reserved');
+        $this->localUserQuitSync->apply($existingUser->uid, 'Service nickname reserved');
         $this->logger->info('Sent KILL for service nickname collision', ['nick' => $nick, 'uid' => $existingUser->uid]);
     }
 }
