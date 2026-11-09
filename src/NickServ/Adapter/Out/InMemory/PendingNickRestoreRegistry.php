@@ -34,6 +34,11 @@ final class PendingNickRestoreRegistry implements PendingNickRestoreRegistryInte
         return ($this->pending[$uid] ?? 0) > 0;
     }
 
+    public function remove(string $uid): void
+    {
+        unset($this->pending[$uid]);
+    }
+
     /**
      * Decrements the counter and returns true if the UID had pending tokens.
      * Idempotent: safe to call even if the UID was never marked.

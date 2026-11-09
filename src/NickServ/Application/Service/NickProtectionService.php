@@ -109,6 +109,7 @@ final readonly class NickProtectionService
         string $ipBase64,
         DateTimeImmutable $occurredAt,
     ): void {
+        $this->pendingRegistry->remove($uid);
         $account = $this->nickRepository->findByNick($nick);
         $registeredNick = null;
 

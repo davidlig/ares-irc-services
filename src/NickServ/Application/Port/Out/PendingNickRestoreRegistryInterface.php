@@ -23,4 +23,6 @@ interface PendingNickRestoreRegistryInterface
      * Returns true and removes the entry if the UID was pending.
      */
     public function consume(string $uid): bool;
+
+    public function remove(string $uid): void;
 }

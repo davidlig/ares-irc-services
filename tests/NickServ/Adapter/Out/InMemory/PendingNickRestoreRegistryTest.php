@@ -101,6 +101,20 @@ final class PendingNickRestoreRegistryTest extends TestCase
         self::assertTrue($this->registry->peek('001CCCC'));
     }
 
+    #[Test]
+    public function removeClearsEveryPendingMarkForOnlyTheSelectedUid(): void
+    {
+        $this->registry->mark('001AAAA');
+        $this->registry->mark('001AAAA');
+        $this->registry->mark('001BBBB');
+        $this->registry->remove('001AAAA');
+        $this->registry->remove('001AAAA');
+
+        self::assertFalse($this->registry->peek('001AAAA'));
+        self::assertFalse($this->registry->consume('001AAAA'));
+        self::assertTrue($this->registry->consume('001BBBB'));
+    }
+
     protected function setUp(): void
     {
         $this->registry = new PendingNickRestoreRegistry();
