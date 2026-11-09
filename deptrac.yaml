@@ -149,7 +149,7 @@ deptrac:
     - name: External
       collectors:
         - type: classNameRegex
-          value: '#^(?:Amp|Doctrine|Psr|Revolt|Symfony)\\#'
+          value: '#^(?:Amp|Doctrine|Monolog|Psr|Revolt|Symfony)\\#'
 
   ruleset:
     Irc Domain:
