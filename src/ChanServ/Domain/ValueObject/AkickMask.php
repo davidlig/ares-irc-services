@@ -7,7 +7,6 @@ namespace App\ChanServ\Domain\ValueObject;
 use InvalidArgumentException;
 
 use function ctype_alnum;
-use function fnmatch;
 use function str_contains;
 use function str_replace;
 use function str_split;
@@ -22,16 +21,47 @@ final readonly class AkickMask
 
     public const int MIN_ALPHANUMERIC_CHARACTERS = 4;
 
+    private string $pattern;
+
     public function __construct(public string $value)
     {
         if ('' === $value || self::MAX_LENGTH < strlen($value) || !str_contains($value, '!') || !str_contains($value, '@')) {
             throw new InvalidArgumentException('AKICK mask must be a non-empty nick!ident@host pattern of at most 255 characters.');
         }
+
+        $this->pattern = strtolower($value);
     }
 
     public function matches(string $userMask): bool
     {
-        return fnmatch(strtolower($this->value), strtolower($userMask));
+        $subject = strtolower($userMask);
+        $patternLength = strlen($this->pattern);
+        $subjectLength = strlen($subject);
+        $patternIndex = 0;
+        $subjectIndex = 0;
+        $lastStar = -1;
+        $starMatchEnd = 0;
+
+        while ($subjectIndex < $subjectLength) {
+            if ($patternIndex < $patternLength && ('?' === $this->pattern[$patternIndex] || ('*' !== $this->pattern[$patternIndex] && $this->pattern[$patternIndex] === $subject[$subjectIndex]))) {
+                ++$patternIndex;
+                ++$subjectIndex;
+            } elseif ($patternIndex < $patternLength && '*' === $this->pattern[$patternIndex]) {
+                $lastStar = $patternIndex++;
+                $starMatchEnd = $subjectIndex;
+            } elseif (-1 !== $lastStar) {
+                $patternIndex = $lastStar + 1;
+                $subjectIndex = ++$starMatchEnd;
+            } else {
+                return false;
+            }
+        }
+
+        while ($patternIndex < $patternLength && '*' === $this->pattern[$patternIndex]) {
+            ++$patternIndex;
+        }
+
+        return $patternIndex === $patternLength;
     }
 
     public function nicknamePattern(): string

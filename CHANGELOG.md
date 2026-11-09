@@ -20,6 +20,8 @@
 
 ### Bug Fixes
 
+- Match ChanServ AKICK masks using only `*` and `?` wildcards; brackets and backslashes are literal, so previous fnmatch character classes no longer apply. Skip and log invalid stored rules during enforcement.
+
 - Enforce maximum socket line buffer limits and handle fragmented line delivery safely.
 - Redact credentials, rescue tokens, and link passwords in error logs and diagnostics.
 - Preserve InspIRCd native channel timestamps, key conflict resolution, and required link capabilities.

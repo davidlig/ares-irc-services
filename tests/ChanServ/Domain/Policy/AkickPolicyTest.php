@@ -38,6 +38,33 @@ final class AkickPolicyTest extends TestCase
     }
 
     #[Test]
+    public function matchingTreatsBracketsAndBackslashesAsLiteralWhilePreservingWildcards(): void
+    {
+        $now = new DateTimeImmutable('2026-09-07 12:00:00');
+        $policy = new AkickMatchPolicy();
+        $brackets = new AkickRule(new AkickMask('[Foo]!*@*'));
+        $backslash = new AkickRule(new AkickMask('a\\b!*@*'));
+        $wildcard = new AkickRule(new AkickMask('Bad?!*@*.example'));
+
+        self::assertSame($brackets, $policy->firstMatch([$brackets], '[foo]!u@h', $now, false));
+        self::assertNull($policy->firstMatch([$brackets], 'f!u@h', $now, false));
+        self::assertSame($backslash, $policy->firstMatch([$backslash], 'A\\B!u@h', $now, false));
+        self::assertSame([$brackets], $policy->allMatches([$brackets], '[Foo]!u@h', $now, false));
+        self::assertSame($wildcard, $policy->firstMatch([$wildcard], 'bad1!u@host.example', $now, false));
+    }
+
+    #[Test]
+    public function repeatedWildcardsDoNotExhaustTheMatcher(): void
+    {
+        $mask = new AkickMask(str_repeat('*a', 20) . '!*@*');
+
+        self::assertTrue($mask->matches(str_repeat('a', 25) . '!u@host'));
+        self::assertFalse($mask->matches(str_repeat('a', 19) . '!u@host'));
+        self::assertTrue(new AkickMask('nick!u@*')->matches('nick!u@'));
+        self::assertTrue(new AkickMask('nick!u@*')->matches('nick!u@*suffix'));
+    }
+
+    #[Test]
     public function expirationAtExactInstantIsStillValidAndOperatorsAreExempt(): void
     {
         $now = new DateTimeImmutable('2026-09-07 12:00:00');

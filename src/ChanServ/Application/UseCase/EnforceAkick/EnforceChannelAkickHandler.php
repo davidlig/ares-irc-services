@@ -7,14 +7,17 @@ namespace App\ChanServ\Application\UseCase\EnforceAkick;
 use App\ChanServ\Application\Port\Out\AkickActions;
 use App\ChanServ\Application\Port\Out\ChannelAkickRepositoryInterface;
 use App\ChanServ\Application\Port\Out\ChannelEntryNetworkQuery;
+use App\ChanServ\Application\Port\Out\ChanServActivitySink;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\Policy\AkickMatchPolicy;
 use App\ChanServ\Domain\ValueObject\AkickMask;
 use App\ChanServ\Domain\ValueObject\AkickRule;
 use DateTimeImmutable;
+use InvalidArgumentException;
 
 use function spl_object_id;
+use function sprintf;
 use function strtolower;
 
 final readonly class EnforceChannelAkickHandler implements EnforceChannelAkickHandlerInterface
@@ -25,6 +28,7 @@ final readonly class EnforceChannelAkickHandler implements EnforceChannelAkickHa
         private ChannelEntryNetworkQuery $network,
         private AkickActions $actions,
         private AkickMatchPolicy $matchPolicy,
+        private ChanServActivitySink $activity,
     ) {}
 
     public function handle(EnforceChannelAkick $command): int
@@ -51,11 +55,16 @@ final readonly class EnforceChannelAkickHandler implements EnforceChannelAkickHa
         $rules = [];
         $ruleMap = [];
         foreach ($this->akicks->listByChannel($channel->getId()) as $akick) {
-            $rule = new AkickRule(
-                new AkickMask($akick->getMask()),
-                $akick->getReason(),
-                $akick->getExpiresAt(),
-            );
+            try {
+                $rule = new AkickRule(
+                    new AkickMask($akick->getMask()),
+                    $akick->getReason(),
+                    $akick->getExpiresAt(),
+                );
+            } catch (InvalidArgumentException) {
+                $this->activity->warning(sprintf('Skipping invalid AKICK rule for channel ID %d.', $channel->getId()));
+                continue;
+            }
             $rules[] = $rule;
             $ruleMap[spl_object_id($rule)] = $akick;
         }

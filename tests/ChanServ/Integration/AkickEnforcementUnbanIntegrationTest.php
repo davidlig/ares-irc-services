@@ -22,6 +22,7 @@ use App\ChanServ\Application\Model\ChanAccountView;
 use App\ChanServ\Application\Port\Out\ChannelAccessRepositoryInterface;
 use App\ChanServ\Application\Port\Out\ChannelAkickRepositoryInterface;
 use App\ChanServ\Application\Port\Out\ChannelLevelRepositoryInterface;
+use App\ChanServ\Application\Port\Out\ChanServActivitySink;
 use App\ChanServ\Application\Port\Out\ChanUserAccountPort;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\Service\ChanServAccessHelper;
@@ -164,6 +165,7 @@ final class AkickEnforcementUnbanIntegrationTest extends TestCase
             $this->entryNetworkQuery,
             $this->akickActions,
             new AkickMatchPolicy(),
+            $this->createStub(ChanServActivitySink::class),
         );
 
         $subscriber = new ChanServAkickEnforceSubscriber(
@@ -275,6 +277,7 @@ final class AkickEnforcementUnbanIntegrationTest extends TestCase
             $this->entryNetworkQuery,
             $this->akickActions,
             new AkickMatchPolicy(),
+            $this->createStub(ChanServActivitySink::class),
         );
 
         $syncHandler = new SynchronizeAllChannelAkicksHandler(
@@ -386,6 +389,7 @@ final class AkickEnforcementUnbanIntegrationTest extends TestCase
             $this->entryNetworkQuery,
             $this->akickActions,
             new AkickMatchPolicy(),
+            $this->createStub(ChanServActivitySink::class),
         );
 
         $subscriber = new ChanServAkickEnforceSubscriber(
