@@ -94,6 +94,25 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
     }
 
     #[Test]
+    public function handleKillWithoutTargetDispatchesNothing(): void
+    {
+        $dispatcher = $this->createMock(EventDispatcherInterface::class);
+        $dispatcher->expects(self::never())->method('dispatch');
+        new InspIRCdNetworkStateAdapter($dispatcher)->handleMessage(new IRCMessage('KILL', 'server', [], 'reason'));
+    }
+
+    #[Test]
+    public function handleKillDispatchesQuitForTarget(): void
+    {
+        $dispatcher = $this->createMock(EventDispatcherInterface::class);
+        $dispatcher->expects(self::once())->method('dispatch')
+            ->with(self::callback(static fn ($event): bool => $event instanceof UserQuitReceivedEvent
+                && 'abc123' === $event->sourceId && 'Killed' === $event->reason));
+        $adapter = new InspIRCdNetworkStateAdapter($dispatcher);
+        $adapter->handleMessage(new IRCMessage('KILL', 'server', ['abc123'], 'Killed'));
+    }
+
+    #[Test]
     public function handleQuitDispatchesUserQuitReceivedEvent(): void
     {
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);

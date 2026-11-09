@@ -9,6 +9,7 @@ use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 use App\Irc\Adapter\ServiceBridge\ServiceNickReservationInventory;
 use App\Irc\Adapter\ServiceBridge\ServiceNickReservationSubscriber;
+use App\Irc\Application\Port\In\LocalUserQuitSyncPort;
 use App\Irc\Application\Port\In\ManagedServiceNickReservationLookup;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\ProtocolModuleInterface;
@@ -75,6 +76,7 @@ final class ServiceNickReservationSubscriberTest extends TestCase
             $userLookup,
             [$listener1, $listener2, $listener3],
             $this->createStub(ServiceNickReservationInventory::class),
+            $this->createStub(LocalUserQuitSyncPort::class),
             new NullLogger(),
         );
 
@@ -96,6 +98,9 @@ final class ServiceNickReservationSubscriberTest extends TestCase
         $connectionHolder = new ActiveConnectionHolder();
 
         $reservation = $this->createStub(ServiceNickReservationInterface::class);
+
+        $sync = $this->createMock(LocalUserQuitSyncPort::class);
+        $sync->expects(self::once())->method('apply')->with('001USER1', 'Service nickname reserved');
 
         $serviceActions = $this->createMock(ProtocolServiceActionsInterface::class);
         $serviceActions->expects(self::once())
@@ -135,6 +140,7 @@ final class ServiceNickReservationSubscriberTest extends TestCase
             $userLookup,
             [$listener],
             $this->createStub(ServiceNickReservationInventory::class),
+            $sync,
             new NullLogger(),
         );
 
@@ -158,6 +164,7 @@ final class ServiceNickReservationSubscriberTest extends TestCase
             $userLookup,
             [$listener],
             $this->createStub(ServiceNickReservationInventory::class),
+            $this->createStub(LocalUserQuitSyncPort::class),
             new NullLogger(),
         );
 
@@ -190,6 +197,7 @@ final class ServiceNickReservationSubscriberTest extends TestCase
             $userLookup,
             [$listener],
             $this->createStub(ServiceNickReservationInventory::class),
+            $this->createStub(LocalUserQuitSyncPort::class),
             new NullLogger(),
         );
 
@@ -576,6 +584,7 @@ final class ServiceNickReservationSubscriberTest extends TestCase
             $this->createStub(NetworkUserLookupPort::class),
             $listeners,
             $inventory,
+            $this->createStub(LocalUserQuitSyncPort::class),
             $logger,
         );
     }
