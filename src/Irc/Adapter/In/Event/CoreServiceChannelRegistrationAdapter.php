@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\In\Event;
 
+use App\Irc\Adapter\Network\ChannelSyncCompletedRegistry;
 use App\Irc\Application\Port\In\ServiceChannelRegistrationPort;
 use App\Irc\Domain\Network\Channel;
 use App\Irc\Domain\Network\ChannelMemberRole;
@@ -29,6 +30,7 @@ final readonly class CoreServiceChannelRegistrationAdapter implements ServiceCha
 {
     public function __construct(
         private ChannelRepositoryInterface $channelRepository,
+        private ChannelSyncCompletedRegistry $syncRegistry,
         private LoggerInterface $logger = new NullLogger(),
     ) {}
 
@@ -109,6 +111,7 @@ final readonly class CoreServiceChannelRegistrationAdapter implements ServiceCha
 
         if ($channel->getMemberCount() < 1) {
             $this->channelRepository->remove($name);
+            $this->syncRegistry->remove($name->value);
 
             $this->logger->debug('Removed empty service channel from local repository', [
                 'channel' => $channelName,

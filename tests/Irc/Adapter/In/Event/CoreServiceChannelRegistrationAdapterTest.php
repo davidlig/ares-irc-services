@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Irc\Adapter\In\Event;
 
 use App\Irc\Adapter\In\Event\CoreServiceChannelRegistrationAdapter;
+use App\Irc\Adapter\Network\ChannelSyncCompletedRegistry;
 use App\Irc\Domain\Network\Channel;
 use App\Irc\Domain\Network\ChannelMemberRole;
 use App\Irc\Domain\Repository\ChannelRepositoryInterface;
@@ -26,6 +27,8 @@ final class CoreServiceChannelRegistrationAdapterTest extends TestCase
     private ChannelRepositoryInterface $repository;
 
     private CoreServiceChannelRegistrationAdapter $adapter;
+
+    private ChannelSyncCompletedRegistry $registry;
 
     #[Test]
     public function registerServiceChannelJoinCreatesNewChannelWhenNotExists(): void
@@ -156,10 +159,12 @@ final class CoreServiceChannelRegistrationAdapterTest extends TestCase
     {
         $this->adapter->registerServiceChannelJoin('#ircops', '001CS', 'o', 1700000000);
 
+        $this->registry->markSyncCompleted('#IRCOPS');
         $this->adapter->unregisterServiceChannelPart('#ircops', '001CS');
 
         $channel = $this->repository->findByName(new ChannelName('#ircops'));
         self::assertNull($channel);
+        self::assertFalse($this->registry->isSyncCompleted('#ircops'));
     }
 
     #[Test]
@@ -217,8 +222,10 @@ final class CoreServiceChannelRegistrationAdapterTest extends TestCase
             }
         };
 
+        $this->registry = new ChannelSyncCompletedRegistry();
         $this->adapter = new CoreServiceChannelRegistrationAdapter(
             $this->repository,
+            $this->registry,
             new NullLogger(),
         );
     }

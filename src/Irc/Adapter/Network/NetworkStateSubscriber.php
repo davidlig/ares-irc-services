@@ -14,6 +14,7 @@ use App\Irc\Domain\Event\UserLeftChannelEvent;
 use App\Irc\Domain\Event\UserModeChangedEvent;
 use App\Irc\Domain\Event\UserNickChangedEvent;
 use App\Irc\Domain\Event\UserQuitNetworkEvent;
+use App\Irc\Domain\Network\Channel;
 use App\Irc\Domain\Repository\ChannelRepositoryInterface;
 use App\Irc\Domain\Repository\NetworkUserRepositoryInterface;
 use App\Irc\Domain\ValueObject\ChannelName;
@@ -34,6 +35,7 @@ final readonly class NetworkStateSubscriber implements EventSubscriberInterface
     public function __construct(
         private NetworkUserRepositoryInterface $userRepository,
         private ChannelRepositoryInterface $channelRepository,
+        private ChannelSyncCompletedRegistry $syncRegistry,
         private LoggerInterface $logger = new NullLogger(),
     ) {}
 
@@ -74,7 +76,7 @@ final readonly class NetworkStateSubscriber implements EventSubscriberInterface
             $channel = $this->channelRepository->findByName(new ChannelName($channelNameStr));
             if (null !== $channel) {
                 $channel->removeMember($event->uid);
-                $this->channelRepository->save($channel);
+                $this->saveOrRemoveChannel($channel);
             }
         }
 
@@ -134,7 +136,7 @@ final readonly class NetworkStateSubscriber implements EventSubscriberInterface
         $channel = $this->channelRepository->findByName($event->channel);
         if (null !== $channel) {
             $channel->removeMember($event->uid);
-            $this->channelRepository->save($channel);
+            $this->saveOrRemoveChannel($channel);
         }
     }
 
@@ -146,5 +148,17 @@ final readonly class NetworkStateSubscriber implements EventSubscriberInterface
     public function onChannelTopicChanged(ChannelTopicChangedEvent $event): void
     {
         $this->channelRepository->save($event->channel);
+    }
+
+    private function saveOrRemoveChannel(Channel $channel): void
+    {
+        if (0 === $channel->getMemberCount()) {
+            $this->channelRepository->remove($channel->name);
+            $this->syncRegistry->remove($channel->name->value);
+
+            return;
+        }
+
+        $this->channelRepository->save($channel);
     }
 }
