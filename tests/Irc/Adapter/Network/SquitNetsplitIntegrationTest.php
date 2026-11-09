@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Irc\Adapter\Network;
 
+use App\Irc\Adapter\Network\ChannelSyncCompletedRegistry;
 use App\Irc\Adapter\Network\InMemoryChannelRepository;
 use App\Irc\Adapter\Network\InMemoryNetworkUserRepository;
 use App\Irc\Adapter\Network\NetworkStateSubscriber;
@@ -37,9 +38,10 @@ final class SquitNetsplitIntegrationTest extends TestCase
         $dispatcher = new EventDispatcher();
         $userRepo = new InMemoryNetworkUserRepository();
         $channelRepo = new InMemoryChannelRepository();
+        $registry = new ChannelSyncCompletedRegistry();
 
         $dispatcher->addSubscriber(new ServerDelinkedSubscriber($userRepo, $dispatcher));
-        $dispatcher->addSubscriber(new NetworkStateSubscriber($userRepo, $channelRepo));
+        $dispatcher->addSubscriber(new NetworkStateSubscriber($userRepo, $channelRepo, $registry));
 
         $adapter = new InspIRCdNetworkStateAdapter($dispatcher);
 
@@ -56,6 +58,7 @@ final class SquitNetsplitIntegrationTest extends TestCase
         $adapter->handleMessage(new IRCMessage('UID', '0A4', ['0A4DDDDDD', '1700000000', 'UserD', 'h4', 'c4', 'u4', 'u4', '127.0.0.1', '1700000000', '+i'], 'User D'));
 
         $chanName = new ChannelName('#test');
+        $registry->markSyncCompleted($chanName->value);
         $channel = new Channel($chanName, '+nt', new DateTimeImmutable('@1700000000'));
         $channelRepo->save($channel);
 
@@ -114,6 +117,8 @@ final class SquitNetsplitIntegrationTest extends TestCase
         $adapter->handleMessage(new IRCMessage('SQUIT', null, ['hub.example.net'], 'Hub down'));
         self::assertSame([], $userRepo->all());
         self::assertCount(0, $channel->getMembers());
+        self::assertNull($channelRepo->findByName($chanName));
+        self::assertFalse($registry->isSyncCompleted($chanName->value));
     }
 
     #[Test]
@@ -122,9 +127,10 @@ final class SquitNetsplitIntegrationTest extends TestCase
         $dispatcher = new EventDispatcher();
         $userRepo = new InMemoryNetworkUserRepository();
         $channelRepo = new InMemoryChannelRepository();
+        $registry = new ChannelSyncCompletedRegistry();
 
         $dispatcher->addSubscriber(new ServerDelinkedSubscriber($userRepo, $dispatcher));
-        $dispatcher->addSubscriber(new NetworkStateSubscriber($userRepo, $channelRepo));
+        $dispatcher->addSubscriber(new NetworkStateSubscriber($userRepo, $channelRepo, $registry));
 
         $adapter = new UnrealStandaloneNetworkStateAdapter($dispatcher);
 
@@ -142,6 +148,7 @@ final class SquitNetsplitIntegrationTest extends TestCase
         $adapter->handleMessage(new IRCMessage('UID', '004', ['UserD', '1', '1700000000', 'u4', 'h4', '004DDDDDD', '0', '+i', '*', '*', 'dGVzdA=='], 'User D'));
 
         $chanName = new ChannelName('#test');
+        $registry->markSyncCompleted($chanName->value);
         $channel = new Channel($chanName, '+nt', new DateTimeImmutable('@1700000000'));
         $channelRepo->save($channel);
 
@@ -200,6 +207,8 @@ final class SquitNetsplitIntegrationTest extends TestCase
         $adapter->handleMessage(new IRCMessage('SQUIT', null, ['hub.example.net'], 'Hub down'));
         self::assertSame([], $userRepo->all());
         self::assertCount(0, $channel->getMembers());
+        self::assertNull($channelRepo->findByName($chanName));
+        self::assertFalse($registry->isSyncCompleted($chanName->value));
     }
 
     #[Test]
@@ -208,9 +217,10 @@ final class SquitNetsplitIntegrationTest extends TestCase
         $dispatcher = new EventDispatcher();
         $userRepo = new InMemoryNetworkUserRepository();
         $channelRepo = new InMemoryChannelRepository();
+        $registry = new ChannelSyncCompletedRegistry();
 
         $dispatcher->addSubscriber(new ServerDelinkedSubscriber($userRepo, $dispatcher));
-        $dispatcher->addSubscriber(new NetworkStateSubscriber($userRepo, $channelRepo));
+        $dispatcher->addSubscriber(new NetworkStateSubscriber($userRepo, $channelRepo, $registry));
 
         $adapter = new UnrealUdbNetworkStateAdapter($dispatcher);
 
@@ -228,6 +238,7 @@ final class SquitNetsplitIntegrationTest extends TestCase
         $adapter->handleMessage(new IRCMessage('UID', '004', ['UserD', '1', '1700000000', 'u4', 'h4', '004DDDDDD', '0', '+i', '*', '*', 'dGVzdA=='], 'User D'));
 
         $chanName = new ChannelName('#test');
+        $registry->markSyncCompleted($chanName->value);
         $channel = new Channel($chanName, '+nt', new DateTimeImmutable('@1700000000'));
         $channelRepo->save($channel);
 
@@ -286,5 +297,7 @@ final class SquitNetsplitIntegrationTest extends TestCase
         $adapter->handleMessage(new IRCMessage('SQUIT', null, ['hub.example.net'], 'Hub down'));
         self::assertSame([], $userRepo->all());
         self::assertCount(0, $channel->getMembers());
+        self::assertNull($channelRepo->findByName($chanName));
+        self::assertFalse($registry->isSyncCompleted($chanName->value));
     }
 }
