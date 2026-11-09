@@ -23,6 +23,11 @@ final class ChannelSyncCompletedRegistry implements ChannelSyncCompletedRegistry
         $this->completedAt[strtolower($channelName)] = microtime(true);
     }
 
+    public function remove(string $channelName): void
+    {
+        unset($this->completedAt[strtolower($channelName)]);
+    }
+
     public function isSyncCompleted(string $channelName): bool
     {
         return isset($this->completedAt[strtolower($channelName)]);

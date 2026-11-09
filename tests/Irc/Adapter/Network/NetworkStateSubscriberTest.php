@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Irc\Adapter\Network;
 
+use App\Irc\Adapter\Network\ChannelSyncCompletedRegistry;
 use App\Irc\Adapter\Network\NetworkStateSubscriber;
 use App\Irc\Domain\Event\ChannelModesChangedEvent;
 use App\Irc\Domain\Event\ChannelSyncedEvent;
@@ -86,6 +87,7 @@ final class NetworkStateSubscriberTest extends TestCase
         $user = $this->createMock(NetworkUser::class);
         $user->expects(self::atLeastOnce())->method('getChannelNames')->willReturn(['#test', '#other']);
         $channel = new Channel(new ChannelName('#test'), '', new DateTimeImmutable('@0'));
+        $channel->syncMember(new Uid('001OTHER'), ChannelMemberRole::None);
 
         $this->userRepository->expects(self::once())
             ->method('findByUid')
@@ -135,6 +137,53 @@ final class NetworkStateSubscriberTest extends TestCase
 
         $event = new UserQuitNetworkEvent($uid, $nick, 'Quit message');
         $this->subscriber->onUserQuitNetwork($event);
+    }
+
+    #[Test]
+    public function lastDepartureRemovesChannelAndSyncMarker(): void
+    {
+        $uid = new Uid('001ABC123');
+        $name = new ChannelName('#test');
+        $channel = new Channel($name, '+nt', new DateTimeImmutable('@123'));
+        $channel->syncMember($uid, ChannelMemberRole::Op);
+        $registry = new ChannelSyncCompletedRegistry();
+        $registry->markSyncCompleted('#TEST');
+        $subscriber = new NetworkStateSubscriber($this->userRepository, $this->channelRepository, $registry, $this->logger);
+        $this->userRepository->expects(self::once())->method('findByUid')->willReturn(null);
+        $this->logger->expects(self::never())->method('info');
+        $this->channelRepository->method('findByName')->willReturn($channel);
+        $this->channelRepository->expects(self::once())->method('remove')->with($name);
+        $this->channelRepository->expects(self::never())->method('save');
+
+        $subscriber->onUserLeftChannel(new UserLeftChannelEvent($uid, new Nick('TestUser'), $name, 'Leaving', false));
+
+        self::assertFalse($registry->isSyncCompleted('#test'));
+        self::assertNull($registry->getSyncCompletedAt('#test'));
+    }
+
+    #[Test]
+    public function lastQuitRemovesChannelAndSyncMarker(): void
+    {
+        $uid = new Uid('001ABC123');
+        $name = new ChannelName('#test');
+        $channel = new Channel($name, '+nt', new DateTimeImmutable('@123'));
+        $channel->syncMember($uid, ChannelMemberRole::Op);
+        $user = $this->createUser('001ABC123', 'TestUser');
+        $user->addChannel($name);
+        $registry = new ChannelSyncCompletedRegistry();
+        $registry->markSyncCompleted('#test');
+        $subscriber = new NetworkStateSubscriber($this->userRepository, $this->channelRepository, $registry, $this->logger);
+        $this->userRepository->expects(self::once())->method('findByUid')->willReturn($user);
+        $this->userRepository->expects(self::once())->method('removeByUid')->with($uid);
+        $this->logger->expects(self::once())->method('info');
+        $this->channelRepository->method('findByName')->willReturn($channel);
+        $this->channelRepository->expects(self::once())->method('remove')->with($name);
+        $this->channelRepository->expects(self::never())->method('save');
+
+        $subscriber->onUserQuitNetwork(new UserQuitNetworkEvent($uid, new Nick('TestUser'), 'Quit'));
+
+        self::assertFalse($registry->isSyncCompleted('#test'));
+        self::assertNull($registry->getSyncCompletedAt('#test'));
     }
 
     #[Test]
@@ -320,6 +369,7 @@ final class NetworkStateSubscriberTest extends TestCase
             ->with($channelName)
             ->willReturn($channel);
 
+        $channel->method('getMemberCount')->willReturn(1);
         $channel->expects(self::once())
             ->method('removeMember')
             ->with($uid);
@@ -370,6 +420,7 @@ final class NetworkStateSubscriberTest extends TestCase
         $this->subscriber = new NetworkStateSubscriber(
             $this->userRepository,
             $this->channelRepository,
+            new ChannelSyncCompletedRegistry(),
             $this->logger,
         );
     }

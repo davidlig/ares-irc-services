@@ -1040,6 +1040,9 @@ services:
   App\Irc\Application\Port\In\ChannelSyncCompletedRegistryInterface:
     class: App\Irc\Adapter\Network\ChannelSyncCompletedRegistry
 
+  App\Irc\Adapter\Network\ChannelSyncCompletedRegistry:
+    alias: App\Irc\Application\Port\In\ChannelSyncCompletedRegistryInterface
+
   App\Irc\Adapter\Network\ChannelSyncCompletedMarkerSubscriber:
     arguments:
       $registry: '@App\Irc\Application\Port\In\ChannelSyncCompletedRegistryInterface'

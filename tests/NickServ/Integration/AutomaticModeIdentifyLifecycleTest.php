@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\NickServ\Integration;
 
 use App\Irc\Adapter\In\Event\PublishedIrcEventBridge;
+use App\Irc\Adapter\Network\ChannelSyncCompletedRegistry;
 use App\Irc\Adapter\Network\InMemoryChannelRepository;
 use App\Irc\Adapter\Network\InMemoryNetworkUserRepository;
 use App\Irc\Adapter\Network\LocalUserModeSync;
@@ -91,6 +92,7 @@ final class AutomaticModeIdentifyLifecycleTest extends DoctrineIntegrationTestCa
         $dispatcher->addSubscriber(new NetworkStateSubscriber(
             $networkUsers,
             new InMemoryChannelRepository(),
+            new ChannelSyncCompletedRegistry(),
         ));
         $networkLookup = new CoreNetworkUserLookupAdapter($networkUsers);
         $sessions = new IdentifiedSessionRegistry();
