@@ -9,9 +9,14 @@ use App\NickServ\Domain\Entity\ForbiddenVhost;
 use DateTimeImmutable;
 
 use function array_any;
+use function array_filter;
+use function array_values;
 
-readonly class ForbiddenVhostService
+final class ForbiddenVhostService
 {
+    /** @var ForbiddenVhost[]|null */
+    private ?array $forbiddenVhosts = null;
+
     public function __construct(
         private ForbiddenVhostRepositoryInterface $repository,
     ) {}
@@ -20,6 +25,10 @@ readonly class ForbiddenVhostService
     {
         $forbidden = ForbiddenVhost::create($pattern, $creatorNickId, $createdAt);
         $this->repository->save($forbidden);
+
+        if (null !== $this->forbiddenVhosts) {
+            $this->forbiddenVhosts[] = $forbidden;
+        }
 
         return $forbidden;
     }
@@ -34,14 +43,19 @@ readonly class ForbiddenVhostService
 
         $this->repository->remove($forbidden);
 
+        if (null !== $this->forbiddenVhosts) {
+            $this->forbiddenVhosts = array_values(array_filter(
+                $this->forbiddenVhosts,
+                static fn (ForbiddenVhost $cached): bool => $cached->getPattern() !== $pattern,
+            ));
+        }
+
         return true;
     }
 
     public function matchesForbiddenPattern(string $vhost): bool
     {
-        $forbiddenList = $this->repository->findAll();
-
-        return array_any($forbiddenList, static fn ($forbidden) => $forbidden->matches($vhost));
+        return array_any($this->forbiddenVhosts(), static fn (ForbiddenVhost $forbidden): bool => $forbidden->matches($vhost));
     }
 
     /**
@@ -55,5 +69,11 @@ readonly class ForbiddenVhostService
     public function count(): int
     {
         return $this->repository->countAll();
+    }
+
+    /** @return ForbiddenVhost[] */
+    private function forbiddenVhosts(): array
+    {
+        return $this->forbiddenVhosts ??= $this->repository->findAll();
     }
 }

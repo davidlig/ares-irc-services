@@ -120,6 +120,54 @@ final class ForbiddenVhostServiceTest extends TestCase
     }
 
     #[Test]
+    public function cachesForbiddenPatternsAcrossMatches(): void
+    {
+        $this->repository
+            ->expects(self::once())
+            ->method('findAll')
+            ->willReturn([ForbiddenVhost::create('*.blocked', null, new DateTimeImmutable())]);
+
+        self::assertTrue($this->service->matchesForbiddenPattern('one.blocked'));
+        self::assertFalse($this->service->matchesForbiddenPattern('allowed.example'));
+    }
+
+    #[Test]
+    public function addingForbiddenPatternMakesItImmediatelyMatchAfterCacheWarmup(): void
+    {
+        $this->repository
+            ->expects(self::once())
+            ->method('findAll')
+            ->willReturn([]);
+        $this->repository->expects(self::once())->method('save');
+
+        self::assertFalse($this->service->matchesForbiddenPattern('new.blocked'));
+        $this->service->forbid('*.blocked', null, new DateTimeImmutable());
+
+        self::assertTrue($this->service->matchesForbiddenPattern('new.blocked'));
+    }
+
+    #[Test]
+    public function removingForbiddenPatternStopsMatchingAfterCacheWarmup(): void
+    {
+        $forbidden = ForbiddenVhost::create('*.blocked', null, new DateTimeImmutable());
+        $this->repository
+            ->expects(self::once())
+            ->method('findAll')
+            ->willReturn([$forbidden]);
+        $this->repository
+            ->expects(self::once())
+            ->method('findByPattern')
+            ->with('*.blocked')
+            ->willReturn($forbidden);
+        $this->repository->expects(self::once())->method('remove')->with($forbidden);
+
+        self::assertTrue($this->service->matchesForbiddenPattern('new.blocked'));
+        self::assertTrue($this->service->unforbid('*.blocked'));
+
+        self::assertFalse($this->service->matchesForbiddenPattern('new.blocked'));
+    }
+
+    #[Test]
     public function getAllReturnsAllForbiddenPatterns(): void
     {
         $forbidden1 = ForbiddenVhost::create('*.pirated.com', 1, new DateTimeImmutable());

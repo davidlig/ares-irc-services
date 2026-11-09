@@ -22,6 +22,7 @@ use App\NickServ\Application\Port\Out\NickServEventPublisher;
 use App\NickServ\Application\Port\Out\PasswordHasher;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\Port\Out\SessionLanguageTracker;
+use App\NickServ\Application\Service\ForbiddenVhostService;
 use App\NickServ\Application\Service\NickTargetValidator;
 use App\NickServ\Application\Service\VhostDisplayResolver;
 use App\NickServ\Application\Service\VhostValidator;
@@ -247,6 +248,23 @@ final class SetNickSettingHandlerTest extends TestCase
     }
 
     #[Test]
+    public function cachesForbiddenVhostsAcrossWarmSetVhostRequests(): void
+    {
+        $account = $this->account();
+        $repository = $this->repositoryReturning($account);
+        $forbidden = $this->createMock(ForbiddenVhostRepositoryInterface::class);
+        $forbidden->expects(self::once())->method('findAll')->willReturn([]);
+        $handler = $this->handler($repository, forbidden: $forbidden);
+
+        self::assertSame(SetNickSettingOutcome::Changed, $handler->handle(
+            $this->input(SetNickSettingOption::Vhost, 'first.example'),
+        )->outcome);
+        self::assertSame(SetNickSettingOutcome::Changed, $handler->handle(
+            $this->input(SetNickSettingOption::Vhost, 'second.example'),
+        )->outcome);
+    }
+
+    #[Test]
     public function setsAndClearsOwnerVhostOnNetwork(): void
     {
         $account = $this->account();
@@ -350,7 +368,7 @@ final class SetNickSettingHandlerTest extends TestCase
             $lookup ?? $this->createStub(NickNetworkUserLookup::class),
             $network ?? $this->createStub(NickNetworkActions::class),
             $forced ?? $this->createStub(ForcedVhostCheckerInterface::class),
-            $forbidden ?? $this->createStub(ForbiddenVhostRepositoryInterface::class),
+            new ForbiddenVhostService($forbidden ?? $this->createStub(ForbiddenVhostRepositoryInterface::class)),
         );
     }
 
