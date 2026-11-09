@@ -9,6 +9,7 @@ use App\ChanServ\Application\Model\ChannelEntryNetworkState;
 use App\ChanServ\Application\Port\Out\AkickActions;
 use App\ChanServ\Application\Port\Out\ChannelAkickRepositoryInterface;
 use App\ChanServ\Application\Port\Out\ChannelEntryNetworkQuery;
+use App\ChanServ\Application\Port\Out\ChanServActivitySink;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\UseCase\EnforceAkick\EnforceChannelAkick;
 use App\ChanServ\Application\UseCase\EnforceAkick\EnforceChannelAkickHandler;
@@ -22,6 +23,8 @@ use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+
+use function str_repeat;
 
 #[CoversClass(ChannelEntryMember::class)]
 #[CoversClass(ChannelEntryNetworkState::class)]
@@ -76,6 +79,36 @@ final class EnforceChannelAkickHandlerTest extends TestCase
             $this->member('001B', 'oper!ident@example.test', operator: true),
             $this->member('001C', 'safe!ident@safe.test'),
         ], $this->now));
+    }
+
+    #[Test]
+    public function invalidStoredRulesAreLoggedAndRemainingRulesAreEnforced(): void
+    {
+        $invalidMask = $this->createStub(ChannelAkick::class);
+        $invalidMask->method('getMask')->willReturn('corrupt');
+        $invalidReason = $this->createStub(ChannelAkick::class);
+        $invalidReason->method('getMask')->willReturn('nick!*@*');
+        $invalidReason->method('getReason')->willReturn(str_repeat('x', 256));
+        $valid = ChannelAkick::create($this->now, 1, 2, '[Foo]!*@*');
+        $akicks = $this->createMock(ChannelAkickRepositoryInterface::class);
+        $akicks->method('listByChannel')->willReturn([$invalidMask, $invalidReason, $valid]);
+        $akicks->expects(self::once())->method('save')->with($valid);
+        $actions = $this->createMock(AkickActions::class);
+        $actions->expects(self::once())->method('banAndKick')->with('#Test', '001A', '[Foo]!*@*', 'AKICK: [Foo]!*@*');
+        $activity = $this->createMock(ChanServActivitySink::class);
+        $activity->expects(self::exactly(2))->method('warning')->with('Skipping invalid AKICK rule for channel ID 1.');
+        $handler = new EnforceChannelAkickHandler(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $akicks,
+            $this->createStub(ChannelEntryNetworkQuery::class),
+            $actions,
+            new AkickMatchPolicy(),
+            $activity,
+        );
+
+        self::assertSame(1, $handler->handleKnownChannel($this->channel(), [$this->member('001A', '[Foo]!u@h')], $this->now));
+        self::assertSame(1, $valid->getUses());
+        self::assertSame($this->now, $valid->getLastUsedAt());
     }
 
     #[Test]
@@ -186,7 +219,7 @@ final class EnforceChannelAkickHandlerTest extends TestCase
         ChannelEntryNetworkQuery $network,
         AkickActions $actions,
     ): EnforceChannelAkickHandler {
-        return new EnforceChannelAkickHandler($channels, $akicks, $network, $actions, new AkickMatchPolicy());
+        return new EnforceChannelAkickHandler($channels, $akicks, $network, $actions, new AkickMatchPolicy(), $this->createStub(ChanServActivitySink::class));
     }
 
     private function channel(string $name = '#Test', bool $blocked = false): RegisteredChannel
