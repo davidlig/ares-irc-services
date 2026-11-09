@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\ChanServ\Adapter\Out\InMemory;
 
 use App\ChanServ\Application\Port\Out\FounderChangeTokenPort;
+use App\Irc\Application\Port\In\Maintenance\InMemoryPrunableInterface;
+use Closure;
 use DateTimeImmutable;
 
 use function hash_equals;
@@ -14,13 +16,18 @@ use function hash_equals;
  * Key: channelId. Value: newFounderNickId, token, expiresAt.
  * Populated when founder runs SET FOUNDER #channel newnick; consumed with token.
  */
-final class FounderChangeTokenRegistry implements FounderChangeTokenPort
+final class FounderChangeTokenRegistry implements FounderChangeTokenPort, InMemoryPrunableInterface
 {
+    private const int REQUEST_RETENTION_SECONDS = 86400;
+
     /** @var array<int, array{newFounderNickId: int, token: string, expiresAt: DateTimeImmutable}> */
     private array $entries = [];
 
     /** @var array<int, DateTimeImmutable> */
     private array $lastRequestAt = [];
+
+    /** @param ?Closure(): DateTimeImmutable $clock */
+    public function __construct(private readonly ?Closure $clock = null) {}
 
     public function store(int $channelId, int $newFounderNickId, string $token, DateTimeImmutable $expiresAt): void
     {
@@ -40,7 +47,7 @@ final class FounderChangeTokenRegistry implements FounderChangeTokenPort
         if (null === $entry) {
             return null;
         }
-        if ($entry['expiresAt'] < new DateTimeImmutable()) {
+        if ($entry['expiresAt'] < $this->now()) {
             unset($this->entries[$channelId]);
 
             return null;
@@ -56,7 +63,33 @@ final class FounderChangeTokenRegistry implements FounderChangeTokenPort
 
     public function recordRequest(int $channelId): void
     {
-        $this->lastRequestAt[$channelId] = new DateTimeImmutable();
+        $this->lastRequestAt[$channelId] = $this->now();
+    }
+
+    public function prune(): int
+    {
+        $now = $this->now();
+        $cutoff = $now->modify('-' . self::REQUEST_RETENTION_SECONDS . ' seconds');
+        $removed = 0;
+        foreach ($this->entries as $channelId => $entry) {
+            if ($entry['expiresAt'] < $now) {
+                unset($this->entries[$channelId]);
+                ++$removed;
+            }
+        }
+        foreach ($this->lastRequestAt as $channelId => $requestedAt) {
+            if ($requestedAt < $cutoff) {
+                unset($this->lastRequestAt[$channelId]);
+                ++$removed;
+            }
+        }
+
+        return $removed;
+    }
+
+    private function now(): DateTimeImmutable
+    {
+        return null !== $this->clock ? ($this->clock)() : new DateTimeImmutable();
     }
 
     /**

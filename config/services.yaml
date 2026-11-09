@@ -1289,7 +1289,8 @@ services:
   App\ChanServ\Application\Port\Out\ChannelRegisterThrottlePort:
     alias: App\ChanServ\Adapter\Out\InMemory\ChannelRegisterThrottleRegistry
 
-  App\ChanServ\Adapter\Out\InMemory\FounderChangeTokenRegistry: ~
+  App\ChanServ\Adapter\Out\InMemory\FounderChangeTokenRegistry:
+    tags: ["maintenance.prunable"]
   App\ChanServ\Application\Port\Out\FounderChangeTokenPort:
     alias: App\ChanServ\Adapter\Out\InMemory\FounderChangeTokenRegistry
 

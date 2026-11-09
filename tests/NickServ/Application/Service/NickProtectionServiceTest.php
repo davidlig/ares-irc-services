@@ -7,6 +7,7 @@ namespace App\Tests\NickServ\Application\Service;
 use App\Irc\Application\Port\In\NickChangePreservesIdentificationInterface;
 use App\Irc\Application\Port\In\ProtocolModuleInterface;
 use App\NickServ\Adapter\Out\InMemory\IdentifiedSessionRegistry;
+use App\NickServ\Adapter\Out\InMemory\PendingNickRestoreRegistry;
 use App\NickServ\Adapter\Out\InMemory\SessionLanguageRegistry;
 use App\NickServ\Application\Model\NetworkUser;
 use App\NickServ\Application\Model\NicknameAuthenticationMode;
@@ -304,6 +305,10 @@ final class NickProtectionServiceTest extends TestCase
         $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $repo->method('findByNick')->willReturn(null);
         $identifiedRegistry = new IdentifiedSessionRegistry();
+        $pendingRegistry = new PendingNickRestoreRegistry();
+        $pendingRegistry->mark('UID1');
+        $pendingRegistry->mark('UID1');
+        $pendingRegistry->mark('UID2');
 
         $service = new NickProtectionService(
             $repo,
@@ -312,7 +317,7 @@ final class NickProtectionServiceTest extends TestCase
             new BurstState(),
             $identifiedRegistry,
             new SessionLanguageRegistry(),
-            $this->createStub(PendingNickRestoreRegistryInterface::class),
+            $pendingRegistry,
             $this->createStub(NickProtectionNotifier::class),
             $this->createStub(NickServEventPublisher::class),
             $this->createStub(ForbiddenNickService::class),
@@ -325,6 +330,8 @@ final class NickProtectionServiceTest extends TestCase
         $service->onUserQuit('UID1', 'UnknownNick', 'Bye', 'ident', 'host', 'real.host', 'AAA=', new DateTimeImmutable());
 
         self::assertNull($identifiedRegistry->findNick('UID1'));
+        self::assertFalse($pendingRegistry->peek('UID1'));
+        self::assertTrue($pendingRegistry->peek('UID2'));
     }
 
     #[Test]

@@ -8,7 +8,8 @@ use App\NickServ\Application\Port\In\IdentifiedSessionQuery;
 use App\NickServ\Application\Port\Out\IdentifiedSessionTracker;
 use Psr\Log\LoggerInterface;
 
-use function array_find_key;
+use function array_key_first;
+use function asort;
 use function count;
 use function strtolower;
 
@@ -26,6 +27,14 @@ final class IdentifiedSessionRegistry implements IdentifiedSessionQuery, Identif
     /** @var array<string, string> uid → registered nick */
     private array $sessions;
 
+    /** @var array<string, array<string, int>> lowercase nick → UIDs ordered by session registration */
+    private array $uidsByNick = [];
+
+    /** @var array<string, int> */
+    private array $sessionOrder = [];
+
+    private int $nextOrder = 0;
+
     public function __construct(
         private readonly ?LoggerInterface $logger = null,
     ) {
@@ -34,7 +43,15 @@ final class IdentifiedSessionRegistry implements IdentifiedSessionQuery, Identif
 
     public function register(string $uid, string $registeredNick): void
     {
+        if (isset($this->sessions[$uid])) {
+            $this->removeFromNickIndex($uid, $this->sessions[$uid]);
+        } else {
+            $this->sessionOrder[$uid] = $this->nextOrder++;
+        }
         $this->sessions[$uid] = $registeredNick;
+        $lowerNick = strtolower($registeredNick);
+        $this->uidsByNick[$lowerNick][$uid] = $this->sessionOrder[$uid];
+        asort($this->uidsByNick[$lowerNick]);
         $this->logger?->debug('IdentifiedSessionRegistry: registered session', ['uid' => $uid, 'nick' => $registeredNick, 'total' => count($this->sessions)]);
     }
 
@@ -57,13 +74,16 @@ final class IdentifiedSessionRegistry implements IdentifiedSessionQuery, Identif
         $lowerNick = strtolower($registeredNick);
         $this->logger?->debug('IdentifiedSessionRegistry: searching for nick', ['search' => $registeredNick, 'total' => count($this->sessions)]);
 
-        return array_find_key($this->sessions, static fn ($nick) => strtolower($nick) === $lowerNick);
+        return isset($this->uidsByNick[$lowerNick]) ? array_key_first($this->uidsByNick[$lowerNick]) : null;
     }
 
     /** Removes the UID entry (called on quit to free memory). */
     public function remove(string $uid): void
     {
-        unset($this->sessions[$uid]);
+        if (isset($this->sessions[$uid])) {
+            $this->removeFromNickIndex($uid, $this->sessions[$uid]);
+            unset($this->sessions[$uid], $this->sessionOrder[$uid]);
+        }
     }
 
     /**
@@ -78,11 +98,20 @@ final class IdentifiedSessionRegistry implements IdentifiedSessionQuery, Identif
 
         foreach ($this->sessions as $uid => $nick) {
             if (!$isConnected($uid)) {
-                unset($this->sessions[$uid]);
+                $this->remove($uid);
                 ++$removed;
             }
         }
 
         return $removed;
+    }
+
+    private function removeFromNickIndex(string $uid, string $nick): void
+    {
+        $lowerNick = strtolower($nick);
+        unset($this->uidsByNick[$lowerNick][$uid]);
+        if ([] === $this->uidsByNick[$lowerNick]) {
+            unset($this->uidsByNick[$lowerNick]);
+        }
     }
 }

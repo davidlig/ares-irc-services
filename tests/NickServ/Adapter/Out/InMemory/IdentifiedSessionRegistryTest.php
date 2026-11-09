@@ -13,6 +13,25 @@ use PHPUnit\Framework\TestCase;
 final class IdentifiedSessionRegistryTest extends TestCase
 {
     #[Test]
+    public function lookupRetainsSessionOrderAcrossReidentificationRemovalAndPruning(): void
+    {
+        $registry = new IdentifiedSessionRegistry();
+        $registry->register('first', 'Other');
+        $registry->register('second', 'Nick');
+        $registry->register('first', 'NICK');
+        self::assertSame('first', $registry->findUidByNick('nick'));
+        self::assertNull($registry->findUidByNick('other'));
+        $registry->remove('first');
+        self::assertSame('second', $registry->findUidByNick('nick'));
+        $registry->register('first', 'Nick');
+        $registry->pruneDisconnected(static fn (string $uid): bool => 'second' !== $uid);
+        self::assertSame('first', $registry->findUidByNick('nick'));
+        $registry->register('first', 'Else');
+        self::assertNull($registry->findUidByNick('nick'));
+        self::assertSame('first', $registry->findUidByNick('else'));
+    }
+
+    #[Test]
     public function identifiesTheExactSessionWithMultipleConnectionsAndCaseInsensitiveAccount(): void
     {
         $registry = new IdentifiedSessionRegistry();
