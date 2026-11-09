@@ -73,6 +73,7 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
             'UID' => $this->handleUid($message),
             'NICK' => $this->handleNick($message),
             'QUIT' => $this->handleQuit($message),
+            'KILL' => $this->handleKill($message),
             'SQUIT' => $this->handleSquit($message),
             'FJOIN' => $this->handleFjoin($message),
             'IJOIN' => $this->handleIjoin($message),
@@ -209,6 +210,16 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
         }
 
         $this->eventDispatcher->dispatch(new UserNickChangeReceivedEvent($sourceId, $newNickStr));
+    }
+
+    private function handleKill(IRCMessage $message): void
+    {
+        $target = $message->params[0] ?? '';
+        if ('' === $target) {
+            return;
+        }
+
+        $this->eventDispatcher->dispatch(new UserQuitReceivedEvent($target, $message->trailing ?? ''));
     }
 
     private function handleQuit(IRCMessage $message): void

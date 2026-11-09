@@ -5,12 +5,13 @@ declare(strict_types=1);
 namespace App\OperServ\Adapter\Out\Irc;
 
 use App\Irc\Application\Port\In\ActiveProtocolModuleHolderInterface;
+use App\Irc\Application\Port\In\LocalUserQuitSyncPort;
 use App\OperServ\Application\Port\Out\KillNetworkUser;
 
 /** Performs the protocol-specific KILL only when an active protocol connection exists. */
 final readonly class ActiveConnectionKillNetworkUser implements KillNetworkUser
 {
-    public function __construct(private ActiveProtocolModuleHolderInterface $connection) {}
+    public function __construct(private ActiveProtocolModuleHolderInterface $connection, private LocalUserQuitSyncPort $localUserQuitSync) {}
 
     public function kill(string $targetUid, string $reason): bool
     {
@@ -21,6 +22,7 @@ final readonly class ActiveConnectionKillNetworkUser implements KillNetworkUser
         }
 
         $module->getServiceActions()->killUser($serverSid, $targetUid, $reason);
+        $this->localUserQuitSync->apply($targetUid, $reason);
 
         return true;
     }

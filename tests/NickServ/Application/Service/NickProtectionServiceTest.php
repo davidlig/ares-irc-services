@@ -300,7 +300,7 @@ final class NickProtectionServiceTest extends TestCase
     }
 
     #[Test]
-    public function onUserQuitWhenNoAccountDoesNothing(): void
+    public function onUserQuitWhenNoAccountClearsSessionState(): void
     {
         $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $repo->method('findByNick')->willReturn(null);
@@ -309,6 +309,9 @@ final class NickProtectionServiceTest extends TestCase
         $pendingRegistry->mark('UID1');
         $pendingRegistry->mark('UID1');
         $pendingRegistry->mark('UID2');
+        $identifiedRegistry->register('UID1', 'Account');
+        $languages = new SessionLanguageRegistry();
+        $languages->register('UID1', 'es');
 
         $service = new NickProtectionService(
             $repo,
@@ -316,7 +319,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->createStub(NickNetworkActions::class),
             new BurstState(),
             $identifiedRegistry,
-            new SessionLanguageRegistry(),
+            $languages,
             $pendingRegistry,
             $this->createStub(NickProtectionNotifier::class),
             $this->createStub(NickServEventPublisher::class),
@@ -332,6 +335,7 @@ final class NickProtectionServiceTest extends TestCase
         self::assertNull($identifiedRegistry->findNick('UID1'));
         self::assertFalse($pendingRegistry->peek('UID1'));
         self::assertTrue($pendingRegistry->peek('UID2'));
+        self::assertNull($languages->find('UID1'));
     }
 
     #[Test]

@@ -999,6 +999,9 @@ services:
   App\Irc\Adapter\Subscriber\CoreToAppEventBridge:
     tags: ["kernel.event_subscriber"]
 
+  App\Irc\Application\Port\In\LocalUserQuitSyncPort:
+    alias: App\Irc\Adapter\Network\LocalUserQuitSync
+
   App\Irc\Adapter\Network\LocalUserModeSync: ~
 
   App\Irc\Application\Port\In\LocalUserModeSyncPort:
