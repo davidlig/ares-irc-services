@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Irc\Adapter\Network;
 
 use App\Irc\Adapter\In\Event\PublishedIrcEventBridge;
+use App\Irc\Adapter\Network\ChannelSyncCompletedRegistry;
 use App\Irc\Adapter\Network\InMemoryChannelRepository;
 use App\Irc\Adapter\Network\InMemoryNetworkUserRepository;
 use App\Irc\Adapter\Network\LocalUserQuitSync;
@@ -75,7 +76,8 @@ final class KillLifecycleTest extends TestCase
             $vhost = new NickService\IdentifiedUserVhostSyncService($repo, $actions, new NickService\VhostDisplayResolver(), $this->createStub(NickPort\ForcedVhostCheckerInterface::class), $policy);
             $clock = $this->createStub(NickPort\Clock::class);
             $clock->method('now')->willReturn(new DateTimeImmutable());
-            $events->addSubscriber(new NetworkStateSubscriber($users, $channels));
+            $registry = new ChannelSyncCompletedRegistry();
+            $events->addSubscriber(new NetworkStateSubscriber($users, $channels, $registry));
             $events->addSubscriber(new NetworkEventEnricher($channels, $users, $events, $this->createStub(IrcPort\SkipIdentifiedModeStripRegistry::class), $this->createStub(IrcPort\ActiveChannelModeSupportProviderInterface::class), $this->createStub(IrcPort\ActiveProtocolModuleHolderInterface::class)));
             $events->addSubscriber(new PublishedIrcEventBridge($events));
             $events->addSubscriber(new NickProtectionSubscriber($protection, $vhost, $burst, $this->createStub(IrcPort\NetworkUserLookupPort::class), $this->createStub(IrcPort\ActiveProtocolModuleHolderInterface::class), $clock, $this->createStub(SyncNetworkIdentificationHandlerInterface::class)));
@@ -88,6 +90,7 @@ final class KillLifecycleTest extends TestCase
             $channel = new Channel($name, '', new DateTimeImmutable());
             $channel->syncMember($uid, ChannelMemberRole::None);
             $channels->save($channel);
+            $registry->markSyncCompleted($name->value);
             $identified->register($uid->value, 'Account');
             $languages->register($uid->value, 'es');
             $quitCount = 0;
@@ -121,6 +124,8 @@ final class KillLifecycleTest extends TestCase
             self::assertNull($users->findByUid($uid), $source);
             self::assertNull($users->findByNick($nick), $source);
             self::assertNull($channel->getMember($uid), $source);
+            self::assertNull($channels->findByName($name), $source);
+            self::assertFalse($registry->isSyncCompleted($name->value), $source);
             self::assertNull($identified->findNick($uid->value), $source);
             self::assertNull($languages->find($uid->value), $source);
             self::assertSame(1, $quitCount, $source);

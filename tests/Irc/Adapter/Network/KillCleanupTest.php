@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Irc\Adapter\Network;
 
+use App\Irc\Adapter\Network\ChannelSyncCompletedRegistry;
 use App\Irc\Adapter\Network\InMemoryChannelRepository;
 use App\Irc\Adapter\Network\InMemoryNetworkUserRepository;
 use App\Irc\Adapter\Network\LocalUserQuitSync;
@@ -42,7 +43,8 @@ final class KillCleanupTest extends TestCase
         $users = new InMemoryNetworkUserRepository();
         $channels = new InMemoryChannelRepository();
         $dispatcher = new EventDispatcher();
-        $dispatcher->addSubscriber(new NetworkStateSubscriber($users, $channels));
+        $registry = new ChannelSyncCompletedRegistry();
+        $dispatcher->addSubscriber(new NetworkStateSubscriber($users, $channels, $registry));
         $dispatcher->addSubscriber(new NetworkEventEnricher($channels, $users, $dispatcher, $this->createStub(SkipIdentifiedModeStripRegistry::class), $this->createStub(ActiveChannelModeSupportProviderInterface::class), $this->createStub(ActiveProtocolModuleHolderInterface::class)));
         $uid = new Uid('001ABC123');
         $nick = new Nick('Example');
@@ -53,6 +55,7 @@ final class KillCleanupTest extends TestCase
         $channel = new Channel($name, '', new DateTimeImmutable());
         $channel->syncMember($uid, ChannelMemberRole::None);
         $channels->save($channel);
+        $registry->markSyncCompleted($name->value);
         $quits = 0;
         $dispatcher->addListener(UserQuitNetworkEvent::class, static function () use (&$quits): void { ++$quits; });
         new LocalUserQuitSync($dispatcher)->apply($uid->value, 'reason');
@@ -60,6 +63,8 @@ final class KillCleanupTest extends TestCase
         self::assertNull($users->findByUid($uid));
         self::assertNull($users->findByNick($nick));
         self::assertNull($channel->getMember($uid));
+        self::assertNull($channels->findByName($name));
+        self::assertFalse($registry->isSyncCompleted($name->value));
         self::assertSame(1, $quits);
     }
 }
