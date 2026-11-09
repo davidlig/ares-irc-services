@@ -19,6 +19,7 @@ final class ServerDelinkedEventTest extends TestCase
 
         self::assertSame('002', $event->serverSid);
         self::assertSame('Remote host closed the connection', $event->reason);
+        self::assertSame(['002'], $event->serverSids);
     }
 
     #[Test]
@@ -27,5 +28,25 @@ final class ServerDelinkedEventTest extends TestCase
         $event = new ServerDelinkedEvent('001');
 
         self::assertSame('', $event->reason);
+        self::assertSame(['001'], $event->serverSids);
+    }
+
+    #[Test]
+    public function serverSidsPopulatedExplicitlyAndDeduplicated(): void
+    {
+        $event = new ServerDelinkedEvent('002', 'split', ['002', '003', '002']);
+
+        self::assertSame('002', $event->serverSid);
+        self::assertSame('split', $event->reason);
+        self::assertSame(['002', '003'], $event->serverSids);
+    }
+
+    #[Test]
+    public function serverSidsEmptyWhenSidEmptyAndListEmpty(): void
+    {
+        $event = new ServerDelinkedEvent('');
+
+        self::assertSame('', $event->serverSid);
+        self::assertSame([], $event->serverSids);
     }
 }

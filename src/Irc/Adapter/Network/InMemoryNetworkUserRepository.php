@@ -21,10 +21,23 @@ class InMemoryNetworkUserRepository implements NetworkUserRepositoryInterface
     /** @var array<string, string> lowercase nick => UID (for O(1) findByNick) */
     private array $byNick = [];
 
+    /** @var array<string, array<string, string>> serverSid => [uid => uid] */
+    private array $byServerSid = [];
+
     public function add(NetworkUser $user): void
     {
+        $existing = $this->users[$user->uid->value] ?? null;
+        if (null !== $existing) {
+            unset($this->byNick[strtolower($existing->getNick()->value)]);
+            unset($this->byServerSid[$existing->serverSid][$existing->uid->value]);
+            if ([] === ($this->byServerSid[$existing->serverSid] ?? [])) {
+                unset($this->byServerSid[$existing->serverSid]);
+            }
+        }
+
         $this->users[$user->uid->value] = $user;
         $this->byNick[strtolower($user->getNick()->value)] = $user->uid->value;
+        $this->byServerSid[$user->serverSid][$user->uid->value] = $user->uid->value;
     }
 
     public function removeByUid(Uid $uid): void
@@ -32,6 +45,10 @@ class InMemoryNetworkUserRepository implements NetworkUserRepositoryInterface
         $user = $this->users[$uid->value] ?? null;
         if (null !== $user) {
             unset($this->byNick[strtolower($user->getNick()->value)]);
+            unset($this->byServerSid[$user->serverSid][$uid->value]);
+            if ([] === ($this->byServerSid[$user->serverSid] ?? [])) {
+                unset($this->byServerSid[$user->serverSid]);
+            }
         }
         unset($this->users[$uid->value]);
     }
@@ -77,5 +94,25 @@ class InMemoryNetworkUserRepository implements NetworkUserRepositoryInterface
         if (null !== $user) {
             $user->updateVirtualHost($vhost);
         }
+    }
+
+    /**
+     * @param string[] $serverSids
+     *
+     * @return NetworkUser[]
+     */
+    public function findByServerSids(array $serverSids): array
+    {
+        $result = [];
+        foreach ($serverSids as $serverSid) {
+            $uids = $this->byServerSid[$serverSid] ?? [];
+            foreach ($uids as $uid) {
+                if (isset($this->users[$uid])) {
+                    $result[] = $this->users[$uid];
+                }
+            }
+        }
+
+        return $result;
     }
 }
