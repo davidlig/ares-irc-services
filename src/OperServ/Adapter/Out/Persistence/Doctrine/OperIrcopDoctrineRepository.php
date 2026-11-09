@@ -7,6 +7,7 @@ namespace App\OperServ\Adapter\Out\Persistence\Doctrine;
 use App\OperServ\Domain\Entity\OperIrcop;
 use App\OperServ\Domain\Repository\OperIrcopRepositoryInterface;
 use Doctrine\ORM\EntityManagerInterface;
+use UnexpectedValueException;
 
 final readonly class OperIrcopDoctrineRepository implements OperIrcopRepositoryInterface
 {
@@ -20,6 +21,21 @@ final readonly class OperIrcopDoctrineRepository implements OperIrcopRepositoryI
     public function findByNickId(int $nickId): ?OperIrcop
     {
         return $this->em->getRepository(OperIrcop::class)->findOneBy(['nickId' => $nickId]);
+    }
+
+    public function findByNickIdWithRolePermissions(int $nickId): ?OperIrcop
+    {
+        $result = $this->em->createQuery(
+            'SELECT i, r, p FROM App\\OperServ\\Domain\\Entity\\OperIrcop i JOIN i.role r LEFT JOIN r.permissions p WHERE i.nickId = :nickId'
+        )
+            ->setParameter('nickId', $nickId)
+            ->getOneOrNullResult();
+
+        if (null === $result || $result instanceof OperIrcop) {
+            return $result;
+        }
+
+        throw new UnexpectedValueException('Authorization query did not return an IRCOP assignment.');
     }
 
     public function findAll(): array

@@ -6,6 +6,7 @@ namespace App\OperServ\Adapter\Out\Projection;
 
 use App\OperServ\Application\Port\Out\OperatorAssignmentRecord;
 use App\OperServ\Application\Port\Out\OperatorAssignmentStore;
+use App\OperServ\Application\Port\Out\OperatorPermissionCache as OperatorPermissionCachePort;
 use App\OperServ\Application\Port\Out\OperatorRoleRecord;
 use App\OperServ\Domain\Entity\OperIrcop;
 use App\OperServ\Domain\Entity\OperPermission;
@@ -20,7 +21,11 @@ use function array_values;
 
 final readonly class DoctrineOperatorAssignmentStore implements OperatorAssignmentStore
 {
-    public function __construct(private OperIrcopRepositoryInterface $assignments, private OperRoleRepositoryInterface $roles) {}
+    public function __construct(
+        private OperIrcopRepositoryInterface $assignments,
+        private OperRoleRepositoryInterface $roles,
+        private OperatorPermissionCachePort $permissionCache,
+    ) {}
 
     public function findByNickId(int $id): ?OperatorAssignmentRecord
     {
@@ -44,6 +49,7 @@ final readonly class DoctrineOperatorAssignmentStore implements OperatorAssignme
             $current->changeRole($legacy);
             $this->assignments->save($current);
         }
+        $this->permissionCache->invalidate($id);
     }
 
     public function remove(int $id): void
@@ -51,6 +57,7 @@ final readonly class DoctrineOperatorAssignmentStore implements OperatorAssignme
         $current = $this->assignments->findByNickId($id);
         if (null !== $current) {
             $this->assignments->remove($current);
+            $this->permissionCache->invalidate($id);
         }
     }
 

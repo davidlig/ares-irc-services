@@ -8,6 +8,7 @@ use App\NickServ\Application\PublishedEvent\NickDropCleanupEvent;
 use App\OperServ\Adapter\In\Event\OperServNickDropCleanupSubscriber;
 use App\OperServ\Application\Port\Out\GlineRepository;
 use App\OperServ\Application\Port\Out\MotdRepository;
+use App\OperServ\Application\Port\Out\OperatorPermissionCache;
 use App\OperServ\Domain\Repository\OperIrcopRepositoryInterface;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -40,6 +41,8 @@ final class OperServNickDropCleanupSubscriberTest extends TestCase
         $operIrcopRepo = $this->createMock(OperIrcopRepositoryInterface::class);
         $glineRepo = $this->createMock(GlineRepository::class);
         $motdRepo = $this->createMock(MotdRepository::class);
+        $permissionCache = $this->createMock(OperatorPermissionCache::class);
+        $permissionCache->expects(self::once())->method('invalidate')->with(12345);
 
         $operIrcopRepo
             ->expects(self::once())
@@ -60,7 +63,7 @@ final class OperServNickDropCleanupSubscriberTest extends TestCase
             ->method('deleteByCreatorAccountId')
             ->with(12345);
 
-        $subscriber = new OperServNickDropCleanupSubscriber($operIrcopRepo, $glineRepo, $motdRepo);
+        $subscriber = new OperServNickDropCleanupSubscriber($operIrcopRepo, $glineRepo, $motdRepo, $permissionCache);
         $subscriber->onNickDrop($event);
     }
 
@@ -78,6 +81,7 @@ final class OperServNickDropCleanupSubscriberTest extends TestCase
         $operIrcopRepo = $this->createMock(OperIrcopRepositoryInterface::class);
         $glineRepo = $this->createMock(GlineRepository::class);
         $motdRepo = $this->createMock(MotdRepository::class);
+        $permissionCache = $this->createStub(OperatorPermissionCache::class);
 
         $operIrcopRepo
             ->expects(self::once())
@@ -98,7 +102,7 @@ final class OperServNickDropCleanupSubscriberTest extends TestCase
             ->method('deleteByCreatorAccountId')
             ->with(999);
 
-        $subscriber = new OperServNickDropCleanupSubscriber($operIrcopRepo, $glineRepo, $motdRepo);
+        $subscriber = new OperServNickDropCleanupSubscriber($operIrcopRepo, $glineRepo, $motdRepo, $permissionCache);
         $subscriber->onNickDrop($event);
     }
 
@@ -116,6 +120,7 @@ final class OperServNickDropCleanupSubscriberTest extends TestCase
         $operIrcopRepo = $this->createMock(OperIrcopRepositoryInterface::class);
         $glineRepo = $this->createMock(GlineRepository::class);
         $motdRepo = $this->createMock(MotdRepository::class);
+        $permissionCache = $this->createStub(OperatorPermissionCache::class);
 
         $operIrcopRepo
             ->expects(self::once())
@@ -136,7 +141,7 @@ final class OperServNickDropCleanupSubscriberTest extends TestCase
             ->method('deleteByCreatorAccountId')
             ->with(42);
 
-        $subscriber = new OperServNickDropCleanupSubscriber($operIrcopRepo, $glineRepo, $motdRepo);
+        $subscriber = new OperServNickDropCleanupSubscriber($operIrcopRepo, $glineRepo, $motdRepo, $permissionCache);
         $subscriber->onNickDrop($event);
     }
 }

@@ -6,13 +6,19 @@ namespace App\Tests\OperServ\Adapter\Out\Persistence\Doctrine;
 
 use App\OperServ\Adapter\Out\Persistence\Doctrine\OperIrcopDoctrineRepository;
 use App\OperServ\Domain\Entity\OperIrcop;
+use App\OperServ\Domain\Entity\OperPermission;
 use App\OperServ\Domain\Entity\OperRole;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
 use DateTimeImmutable;
+use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\Query;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use ReflectionProperty;
+use UnexpectedValueException;
+
+use function array_map;
 
 #[CoversClass(OperIrcopDoctrineRepository::class)]
 #[Group('integration')]
@@ -62,6 +68,42 @@ final class OperIrcopDoctrineRepositoryTest extends DoctrineIntegrationTestCase
 
         self::assertNotNull($found);
         self::assertSame(200, $found->getNickId());
+    }
+
+    #[Test]
+    public function loadsAssignmentRoleAndPermissionsTogetherForAuthorization(): void
+    {
+        $role = $this->createOperRole('Admin');
+        $permission = OperPermission::create('operserv.help');
+        $role->addPermission($permission);
+        $this->entityManager->persist($permission);
+        $this->entityManager->flush();
+        $this->repository->save(OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 250, role: $role));
+        $this->flushAndClear();
+
+        $found = $this->repository->findByNickIdWithRolePermissions(250);
+
+        self::assertNotNull($found);
+        self::assertSame('ADMIN', $found->getRole()->getName());
+        self::assertSame(['operserv.help'], array_map(
+            static fn (OperPermission $entry): string => $entry->getName(),
+            $found->getRole()->getPermissions(),
+        ));
+    }
+
+    #[Test]
+    public function rejectsUnexpectedHydrationResultType(): void
+    {
+        $query = $this->createMock(Query::class);
+        $query->expects(self::once())->method('setParameter')->with('nickId', 250)->willReturnSelf();
+        $query->expects(self::once())->method('getOneOrNullResult')->willReturn('unexpected');
+        $entityManager = $this->createMock(EntityManagerInterface::class);
+        $entityManager->expects(self::once())->method('createQuery')->willReturn($query);
+
+        $this->expectException(UnexpectedValueException::class);
+        $this->expectExceptionMessage('Authorization query did not return an IRCOP assignment.');
+
+        new OperIrcopDoctrineRepository($entityManager)->findByNickIdWithRolePermissions(250);
     }
 
     #[Test]
