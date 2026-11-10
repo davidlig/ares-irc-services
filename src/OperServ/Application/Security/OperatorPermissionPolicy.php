@@ -26,11 +26,8 @@ final readonly class OperatorPermissionPolicy
             return AuthorizationDecision::denied();
         }
 
-        if (!$this->roleAccess->hasAssignedRole($actor->identifiedAccountId)) {
-            return AuthorizationDecision::denied();
-        }
-
-        if (!$this->roleAccess->hasPermission($actor->identifiedAccountId, $permission)) {
+        if (!$this->roleAccess->hasAssignedRole($actor->identifiedAccountId)
+            || !$this->roleAccess->hasPermission($actor->identifiedAccountId, $permission)) {
             return AuthorizationDecision::denied();
         }
 

@@ -2228,7 +2228,10 @@ services:
   App\OperServ\Adapter\Out\Projection\DoctrineOperatorRoleAccess:
     arguments:
       $operators: '@App\OperServ\Domain\Repository\OperIrcopRepositoryInterface'
-      $roles: '@App\OperServ\Domain\Repository\OperRoleRepositoryInterface'
+      $cache: '@App\OperServ\Application\Port\Out\OperatorPermissionCache'
+
+  App\OperServ\Application\Port\Out\OperatorPermissionCache:
+    alias: App\OperServ\Adapter\Out\Projection\OperatorPermissionCache
 
   App\OperServ\Application\Port\Out\OperatorRoleAccess:
     alias: App\OperServ\Adapter\Out\Projection\DoctrineOperatorRoleAccess

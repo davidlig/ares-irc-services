@@ -6,6 +6,7 @@ namespace App\Tests\OperServ\Adapter\Out\Projection;
 
 use App\OperServ\Adapter\Out\Projection\DoctrineOperatorAssignmentStore;
 use App\OperServ\Application\Port\Out\OperatorAssignmentRecord;
+use App\OperServ\Application\Port\Out\OperatorPermissionCache as OperatorPermissionCachePort;
 use App\OperServ\Application\Port\Out\OperatorRoleRecord;
 use App\OperServ\Domain\Entity\OperIrcop;
 use App\OperServ\Domain\Entity\OperPermission;
@@ -75,11 +76,31 @@ final class DoctrineOperatorAssignmentStoreTest extends TestCase
                 && $addedAt == $assignment->getAddedAt(),
         ));
 
-        new DoctrineOperatorAssignmentStore($assignments, $roles)->assign(
+        $this->storeWithRole($assignments, $roles)->assign(
             42,
             new OperatorRoleRecord(7, 'ADMIN', '', false),
             1,
             $addedAt,
+        );
+    }
+
+    #[Test]
+    public function invalidatesNickPermissionSnapshotAfterAssignment(): void
+    {
+        $role = self::role(7, 'ADMIN');
+        $roles = $this->createStub(OperRoleRepositoryInterface::class);
+        $roles->method('findByName')->willReturn($role);
+        $assignments = $this->createMock(OperIrcopRepositoryInterface::class);
+        $assignments->expects(self::once())->method('findByNickId')->with(42)->willReturn(null);
+        $assignments->expects(self::once())->method('save');
+        $cache = $this->createMock(OperatorPermissionCachePort::class);
+        $cache->expects(self::once())->method('invalidate')->with(42);
+
+        new DoctrineOperatorAssignmentStore($assignments, $roles, $cache)->assign(
+            42,
+            new OperatorRoleRecord(7, 'ADMIN', '', false),
+            null,
+            new DateTimeImmutable('2026-01-01T00:00:00+00:00'),
         );
     }
 
@@ -95,7 +116,7 @@ final class DoctrineOperatorAssignmentStoreTest extends TestCase
         $assignments->expects(self::once())->method('findByNickId')->with(42)->willReturn($current);
         $assignments->expects(self::once())->method('save')->with($current);
 
-        new DoctrineOperatorAssignmentStore($assignments, $roles)->assign(
+        $this->storeWithRole($assignments, $roles)->assign(
             42,
             new OperatorRoleRecord(7, 'ADMIN', '', false),
             null,
@@ -115,6 +136,7 @@ final class DoctrineOperatorAssignmentStoreTest extends TestCase
         new DoctrineOperatorAssignmentStore(
             $this->createStub(OperIrcopRepositoryInterface::class),
             $roles,
+            $this->createStub(OperatorPermissionCachePort::class),
         )->assign(42, new OperatorRoleRecord(7, 'MISSING', '', false), null, new DateTimeImmutable('2026-01-01T00:00:00+00:00'));
     }
 
@@ -128,7 +150,9 @@ final class DoctrineOperatorAssignmentStoreTest extends TestCase
             [43, null],
         ]);
         $assignments->expects(self::once())->method('remove')->with($current);
-        $store = $this->store($assignments);
+        $cache = $this->createMock(OperatorPermissionCachePort::class);
+        $cache->expects(self::once())->method('invalidate')->with(42);
+        $store = new DoctrineOperatorAssignmentStore($assignments, $this->createStub(OperRoleRepositoryInterface::class), $cache);
 
         $store->remove(42);
         $store->remove(43);
@@ -139,7 +163,13 @@ final class DoctrineOperatorAssignmentStoreTest extends TestCase
         return new DoctrineOperatorAssignmentStore(
             $assignments,
             $this->createStub(OperRoleRepositoryInterface::class),
+            $this->createStub(OperatorPermissionCachePort::class),
         );
+    }
+
+    private function storeWithRole(OperIrcopRepositoryInterface $assignments, OperRoleRepositoryInterface $roles): DoctrineOperatorAssignmentStore
+    {
+        return new DoctrineOperatorAssignmentStore($assignments, $roles, $this->createStub(OperatorPermissionCachePort::class));
     }
 
     private static function role(int $id, string $name): OperRole

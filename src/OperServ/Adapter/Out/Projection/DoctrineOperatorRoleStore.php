@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\OperServ\Adapter\Out\Projection;
 
+use App\OperServ\Application\Port\Out\OperatorPermissionCache as OperatorPermissionCachePort;
 use App\OperServ\Application\Port\Out\OperatorRoleRecord;
 use App\OperServ\Application\Port\Out\OperatorRoleStore;
 use App\OperServ\Domain\Entity\OperPermission;
 use App\OperServ\Domain\Entity\OperRole;
+use App\OperServ\Domain\Repository\OperIrcopRepositoryInterface;
 use App\OperServ\Domain\Repository\OperPermissionRepositoryInterface;
 use App\OperServ\Domain\Repository\OperRoleRepositoryInterface;
 use LogicException;
@@ -17,7 +19,12 @@ use function array_values;
 
 final readonly class DoctrineOperatorRoleStore implements OperatorRoleStore
 {
-    public function __construct(private OperRoleRepositoryInterface $roles, private OperPermissionRepositoryInterface $permissions) {}
+    public function __construct(
+        private OperRoleRepositoryInterface $roles,
+        private OperPermissionRepositoryInterface $permissions,
+        private OperIrcopRepositoryInterface $operators,
+        private OperatorPermissionCachePort $permissionCache,
+    ) {}
 
     public function findByName(string $name): ?OperatorRoleRecord
     {
@@ -43,6 +50,7 @@ final readonly class DoctrineOperatorRoleStore implements OperatorRoleStore
     {
         $role = $this->roles->findByName($name);
         if (null !== $role) {
+            $this->invalidateRoleAssignments($role);
             $this->roles->remove($role);
         }
     }
@@ -53,14 +61,17 @@ final readonly class DoctrineOperatorRoleStore implements OperatorRoleStore
         $role = $this->require($roleName);
         foreach ($role->getPermissions() as $p) {
             $role->removePermission($p);
-        }foreach ($permissions as $name) {
+        }
+        foreach ($permissions as $name) {
             $p = $this->permissions->findByName($name);
             if (null === $p) {
                 $p = OperPermission::create($name);
                 $this->permissions->save($p);
             }
             $role->addPermission($p);
-        }$this->roles->save($role);
+        }
+        $this->roles->save($role);
+        $this->invalidateRoleAssignments($role);
     }
 
     public function setUserModes(string $roleName, array $modes): void
@@ -68,6 +79,7 @@ final readonly class DoctrineOperatorRoleStore implements OperatorRoleStore
         $role = $this->require($roleName);
         $role->changeUserModes($modes);
         $this->roles->save($role);
+        $this->invalidateRoleAssignments($role);
     }
 
     public function setForcedVhostPattern(string $roleName, ?string $pattern): void
@@ -75,6 +87,7 @@ final readonly class DoctrineOperatorRoleStore implements OperatorRoleStore
         $role = $this->require($roleName);
         $role->changeForcedVhostPattern($pattern);
         $this->roles->save($role);
+        $this->invalidateRoleAssignments($role);
     }
 
     public function setOperclass(string $roleName, ?string $operclass): void
@@ -82,11 +95,19 @@ final readonly class DoctrineOperatorRoleStore implements OperatorRoleStore
         $role = $this->require($roleName);
         $role->changeOperclass($operclass);
         $this->roles->save($role);
+        $this->invalidateRoleAssignments($role);
     }
 
     private function require(string $name): OperRole
     {
         return $this->roles->findByName($name) ?? throw new LogicException('Role disappeared during mutation.');
+    }
+
+    private function invalidateRoleAssignments(OperRole $role): void
+    {
+        foreach ($this->operators->findByRoleId($role->getId()) as $operator) {
+            $this->permissionCache->invalidate($operator->getNickId());
+        }
     }
 
     private function record(OperRole $role): OperatorRoleRecord

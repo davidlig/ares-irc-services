@@ -7,6 +7,7 @@ namespace App\OperServ\Adapter\In\Event;
 use App\NickServ\Application\PublishedEvent\NickDropCleanupEvent;
 use App\OperServ\Application\Port\Out\GlineRepository;
 use App\OperServ\Application\Port\Out\MotdRepository;
+use App\OperServ\Application\Port\Out\OperatorPermissionCache;
 use App\OperServ\Domain\Repository\OperIrcopRepositoryInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -23,6 +24,7 @@ final readonly class OperServNickDropCleanupSubscriber implements EventSubscribe
         private OperIrcopRepositoryInterface $operIrcopRepository,
         private GlineRepository $glineRepository,
         private MotdRepository $motdRepository,
+        private ?OperatorPermissionCache $operatorPermissionCache = null,
     ) {}
 
     public static function getSubscribedEvents(): array
@@ -35,6 +37,7 @@ final readonly class OperServNickDropCleanupSubscriber implements EventSubscribe
     public function onNickDrop(NickDropCleanupEvent $event): void
     {
         $this->operIrcopRepository->deleteByNickId($event->nickId);
+        $this->operatorPermissionCache?->invalidate($event->nickId);
         $this->operIrcopRepository->clearAddedById($event->nickId);
 
         $this->glineRepository->clearCreatorAccountId($event->nickId);

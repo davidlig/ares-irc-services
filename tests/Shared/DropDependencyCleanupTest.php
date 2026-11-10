@@ -52,6 +52,7 @@ use App\OperServ\Adapter\In\Event\OperServNickDropCleanupSubscriber;
 use App\OperServ\Adapter\Out\Persistence\Doctrine\DoctrineGlineRepository;
 use App\OperServ\Adapter\Out\Persistence\Doctrine\DoctrineMotdRepository;
 use App\OperServ\Adapter\Out\Persistence\Doctrine\OperIrcopDoctrineRepository;
+use App\OperServ\Adapter\Out\Projection\OperatorPermissionCache;
 use App\OperServ\Application\Model\MessageDelivery;
 use App\OperServ\Domain\Entity\OperIrcop;
 use App\OperServ\Domain\Entity\OperRole;
@@ -244,6 +245,7 @@ final class DropDependencyCleanupTest extends DoctrineIntegrationTestCase
             new OperIrcopDoctrineRepository($this->entityManager),
             new DoctrineGlineRepository($this->entityManager),
             new DoctrineMotdRepository($this->entityManager),
+            new OperatorPermissionCache(),
         ));
         $dispatcher->addSubscriber(new ChanServNickDropCleanupSubscriber(new CleanupDroppedNickDataHandler(
             $accessRepository,

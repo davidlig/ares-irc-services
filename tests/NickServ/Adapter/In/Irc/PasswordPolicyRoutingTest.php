@@ -50,6 +50,7 @@ use App\NickServ\Application\Port\Out\RescueTokenCodec;
 use App\NickServ\Application\Port\Out\SaregisterMailSender;
 use App\NickServ\Application\Port\Out\SessionLanguageTracker;
 use App\NickServ\Application\Port\Out\TemporaryRescueTokenStore;
+use App\NickServ\Application\Service\ForbiddenVhostService;
 use App\NickServ\Application\Service\NickHistoryService;
 use App\NickServ\Application\Service\NickTargetValidator;
 use App\NickServ\Application\Service\PasswordPolicy;
@@ -247,7 +248,7 @@ final class PasswordPolicyRoutingTest extends TestCase
             $this->createStub(NickNetworkUserLookup::class),
             $this->createStub(NickNetworkActions::class),
             $this->createStub(ForcedVhostCheckerInterface::class),
-            $this->createStub(ForbiddenVhostRepositoryInterface::class),
+            new ForbiddenVhostService($this->createStub(ForbiddenVhostRepositoryInterface::class)),
             $policy
         );
         $operatorAccess = $this->createStub(NickServOperatorAccess::class);

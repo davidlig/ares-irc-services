@@ -11,7 +11,6 @@ use App\NickServ\Application\Port\In\RescueTokenValidationOutcome;
 use App\NickServ\Application\Port\In\RescueTokenValidator;
 use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\EmailDomainPolicy;
-use App\NickServ\Application\Port\Out\ForbiddenVhostRepositoryInterface;
 use App\NickServ\Application\Port\Out\ForcedVhostCheckerInterface;
 use App\NickServ\Application\Port\Out\NickNetworkActions;
 use App\NickServ\Application\Port\Out\NickNetworkUserLookup;
@@ -21,6 +20,7 @@ use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\Port\Out\SessionLanguageTracker;
 use App\NickServ\Application\PublishedEvent\NickPasswordHashAvailable;
 use App\NickServ\Application\PublishedEvent\NickVhostChangedEvent;
+use App\NickServ\Application\Service\ForbiddenVhostService;
 use App\NickServ\Application\Service\NickProtectabilityStatus;
 use App\NickServ\Application\Service\NickTargetValidator;
 use App\NickServ\Application\Service\PasswordPolicy;
@@ -29,7 +29,6 @@ use App\NickServ\Application\Service\VhostValidator;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use InvalidArgumentException;
 
-use function array_any;
 use function explode;
 use function filter_var;
 use function in_array;
@@ -56,7 +55,7 @@ final readonly class SetNickSettingHandler implements SetNickSettingHandlerInter
         private NickNetworkUserLookup $networkUsers,
         private NickNetworkActions $networkActions,
         private ForcedVhostCheckerInterface $forcedVhostChecker,
-        private ForbiddenVhostRepositoryInterface $forbiddenVhosts,
+        private ForbiddenVhostService $forbiddenVhosts,
         private PasswordPolicy $passwordPolicy = new PasswordPolicy(),
     ) {}
 
@@ -339,10 +338,7 @@ final readonly class SetNickSettingHandler implements SetNickSettingHandlerInter
 
     private function isForbiddenVhost(string $vhost): bool
     {
-        return array_any(
-            $this->forbiddenVhosts->findAll(),
-            static fn ($forbidden): bool => $forbidden->matches($vhost),
-        );
+        return $this->forbiddenVhosts->matchesForbiddenPattern($vhost);
     }
 
     private function applyVhostToNetwork(SetNickSetting $input, RegisteredNick $account, string $vhost): void
