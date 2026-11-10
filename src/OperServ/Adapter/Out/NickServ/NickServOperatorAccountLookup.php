@@ -28,4 +28,9 @@ final readonly class NickServOperatorAccountLookup implements OperatorAccountLoo
     {
         return $this->accounts->findNicknameById($id);
     }
+
+    public function findNicknamesByIds(array $ids): array
+    {
+        return $this->accounts->findNicknamesByIds($ids);
+    }
 }

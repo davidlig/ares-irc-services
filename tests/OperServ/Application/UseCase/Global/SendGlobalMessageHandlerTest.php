@@ -158,6 +158,11 @@ final readonly class GlobalTestAccounts implements OperatorAccountLookup
         return null;
     }
 
+    public function findNicknamesByIds(array $ids): array
+    {
+        return [];
+    }
+
     public function findByNickname(string $nickname): ?OperatorAccountData
     {
         return null;

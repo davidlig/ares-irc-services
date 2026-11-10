@@ -64,6 +64,25 @@ final class DoctrineGlineRepositoryTest extends TestCase
         self::assertSame('*@host.test', $entries[0]->mask);
     }
 
+    #[Test]
+    public function findsOneGlineByZeroBasedIndexInNewestFirstOrder(): void
+    {
+        $gline = $this->gline(7);
+        $query = $this->createMock(Query::class);
+        $query->expects(self::once())->method('setFirstResult')->with(3)->willReturnSelf();
+        $query->expects(self::once())->method('setMaxResults')->with(1)->willReturnSelf();
+        $query->expects(self::once())->method('getResult')->willReturn([$gline]);
+        $entityManager = $this->createMock(EntityManagerInterface::class);
+        $entityManager->expects(self::once())->method('createQuery')
+            ->with(sprintf('SELECT g FROM %s g ORDER BY g.createdAt DESC', Gline::class))
+            ->willReturn($query);
+
+        $entry = new DoctrineGlineRepository($entityManager)->findByIndex(3);
+
+        self::assertNotNull($entry);
+        self::assertSame(7, $entry->id);
+    }
+
     /** @return iterable<string, array{string, string, string}> */
     public static function boundedQueryProvider(): iterable
     {

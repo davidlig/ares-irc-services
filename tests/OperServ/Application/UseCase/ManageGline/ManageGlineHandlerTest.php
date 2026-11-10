@@ -26,7 +26,9 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
 
+use function array_fill_keys;
 use function array_filter;
+use function array_intersect_key;
 use function array_values;
 use function count;
 
@@ -100,19 +102,49 @@ final class ManageGlineHandlerTest extends TestCase
         self::assertSame(['ident@host.test'], $network->removed);
         self::assertSame('GLINE DEL', $audit->records[0]->operation);
         self::assertNull($audit->records[0]->reason);
+        self::assertSame([0], $repository->indexedLookups);
     }
 
     #[Test]
     public function listsEntriesWithCreatorNicknames(): void
     {
         $entry = new GlineEntry('*@host.test', 7, null, new DateTimeImmutable('2026-09-01'), null);
-        $repository = new RecordingGlineRepository(entries: [$entry]);
+        $missingCreator = new GlineEntry('*@other.test', 8, null, new DateTimeImmutable('2026-08-01'), null);
+        $repeatedCreator = new GlineEntry('*@third.test', 7, null, new DateTimeImmutable('2026-07-01'), null);
+        $repository = new RecordingGlineRepository(entries: [$entry, $missingCreator, $repeatedCreator]);
 
-        $result = $this->handler($repository, new RecordingGlineNetworkActions(), new RecordingGlineAuditRecorder(), accountNicknames: [7 => 'Creator'])->handle(new ManageGline(GlineAction::List, 'Oper', 44, new DateTimeImmutable()));
+        $users = new GlineTestUserLookup([], [7 => 'Creator'], [7 => 'Creator']);
+        $result = new ManageGlineHandler($repository, $users, new GlineTestProtectedSubjects([]), new RecordingGlineNetworkActions(), new RecordingGlineAuditRecorder())
+            ->handle(new ManageGline(GlineAction::List, 'Oper', 44, new DateTimeImmutable()));
 
         self::assertSame(ManageGlineOutcome::Listed, $result->outcome);
         self::assertSame('Creator', $result->entries[0]->creatorNickname);
         self::assertSame('*@host.test', $result->entries[0]->mask);
+        self::assertNull($result->entries[1]->creatorNickname);
+        self::assertSame('Creator', $result->entries[2]->creatorNickname);
+        self::assertSame([[7, 8]], $users->batchNicknameRequests);
+    }
+
+    #[Test]
+    public function listsEntriesWithoutCreatorIdsWithoutBatchLookup(): void
+    {
+        $entry = new GlineEntry('*@host.test', null, 'reason', new DateTimeImmutable('2026-09-01'), null);
+        $users = new GlineTestUserLookup([], []);
+        $handler = new ManageGlineHandler(
+            new RecordingGlineRepository(entries: [$entry]),
+            $users,
+            new GlineTestProtectedSubjects([]),
+            new RecordingGlineNetworkActions(),
+            new RecordingGlineAuditRecorder(),
+        );
+
+        $result = $handler->handle(new ManageGline(GlineAction::List, 'Oper', 44, new DateTimeImmutable()));
+
+        self::assertSame(ManageGlineOutcome::Listed, $result->outcome);
+        self::assertSame('*@host.test', $result->entries[0]->mask);
+        self::assertSame('reason', $result->entries[0]->reason);
+        self::assertNull($result->entries[0]->creatorNickname);
+        self::assertSame([], $users->batchNicknameRequests);
     }
 
     /** @param array<string, GlineUser> $users */
@@ -250,6 +282,9 @@ final class RecordingGlineRepository implements GlineRepository
     /** @var list<GlineEntry> */
     public array $removed = [];
 
+    /** @var list<int> */
+    public array $indexedLookups = [];
+
     /** @param list<GlineEntry> $entries */
     public function __construct(array $entries = [])
     {
@@ -270,6 +305,13 @@ final class RecordingGlineRepository implements GlineRepository
     public function findAll(): array
     {
         return $this->entries;
+    }
+
+    public function findByIndex(int $index): ?GlineEntry
+    {
+        $this->indexedLookups[] = $index;
+
+        return $this->entries[$index] ?? null;
     }
 
     public function findByMaskPattern(string $pattern): array
@@ -330,13 +372,17 @@ final class RecordingGlineNetworkActions implements GlineNetworkActions
     }
 }
 
-final readonly class GlineTestUserLookup implements GlineUserLookup
+final class GlineTestUserLookup implements GlineUserLookup
 {
+    /** @var list<list<int>> */
+    public array $batchNicknameRequests = [];
+
     /**
      * @param array<string, GlineUser> $users
      * @param array<int, string>       $accountNicknames
+     * @param array<int, string>       $batchNicknames
      */
-    public function __construct(private array $users, private array $accountNicknames) {}
+    public function __construct(private array $users, private array $accountNicknames, private array $batchNicknames = []) {}
 
     public function findByNickname(string $nickname): ?GlineUser
     {
@@ -346,6 +392,18 @@ final readonly class GlineTestUserLookup implements GlineUserLookup
     public function findNicknameByAccountId(int $accountId): ?string
     {
         return $this->accountNicknames[$accountId] ?? null;
+    }
+
+    /**
+     * @param list<int> $accountIds
+     *
+     * @return array<int, string>
+     */
+    public function findNicknamesByAccountIds(array $accountIds): array
+    {
+        $this->batchNicknameRequests[] = $accountIds;
+
+        return array_intersect_key($this->batchNicknames, array_fill_keys($accountIds, true));
     }
 }
 

@@ -40,7 +40,12 @@ final readonly class OperIrcopDoctrineRepository implements OperIrcopRepositoryI
 
     public function findAll(): array
     {
-        return $this->em->getRepository(OperIrcop::class)->findBy([], ['addedAt' => 'DESC', 'id' => 'DESC']);
+        /** @var list<OperIrcop> $assignments */
+        $assignments = $this->em->createQuery(
+            'SELECT i, r, p FROM App\OperServ\Domain\Entity\OperIrcop i JOIN i.role r LEFT JOIN r.permissions p ORDER BY i.addedAt DESC, i.id DESC'
+        )->getResult();
+
+        return $assignments;
     }
 
     public function findByRoleId(int $roleId): array

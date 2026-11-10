@@ -27,6 +27,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function array_fill_keys;
+use function array_intersect_key;
 use function array_values;
 
 #[CoversClass(IrcopListEntry::class)]
@@ -166,9 +168,10 @@ final class ManageIrcopHandlerTest extends TestCase
             7 => new OperatorAssignmentRecord(7, $role, $addedAt),
             8 => new OperatorAssignmentRecord(8, $role, $addedAt),
         ]);
+        $accounts = new MemoryOperatorAccountLookup(accountNicknames: [7 => 'Alice']);
 
         $result = $this->handler(
-            new MemoryOperatorAccountLookup(accountNicknames: [7 => 'Alice']),
+            $accounts,
             $assignments,
             new MemoryIrcopRoleStore(),
             new RecordingOperatorAssignmentProjection($operations),
@@ -178,6 +181,7 @@ final class ManageIrcopHandlerTest extends TestCase
         self::assertSame(IrcopOutcome::Listed, $result->outcome);
         self::assertSame('Alice', $result->entries[0]->nickname);
         self::assertSame('8', $result->entries[1]->nickname);
+        self::assertSame([[7, 8]], $accounts->batchNicknameRequests);
         self::assertSame([], $operations->entries);
     }
 
@@ -243,8 +247,11 @@ final class IrcopOperationLog
     public array $entries = [];
 }
 
-final readonly class MemoryOperatorAccountLookup implements OperatorAccountLookup
+final class MemoryOperatorAccountLookup implements OperatorAccountLookup
 {
+    /** @var list<list<int>> */
+    public array $batchNicknameRequests = [];
+
     /**
      * @param array<string, OperatorAccountData> $accounts
      * @param array<int, string>                 $accountNicknames
@@ -264,6 +271,13 @@ final readonly class MemoryOperatorAccountLookup implements OperatorAccountLooku
     public function findNicknameById(int $id): ?string
     {
         return $this->accountNicknames[$id] ?? null;
+    }
+
+    public function findNicknamesByIds(array $ids): array
+    {
+        $this->batchNicknameRequests[] = $ids;
+
+        return array_intersect_key($this->accountNicknames, array_fill_keys($ids, true));
     }
 }
 

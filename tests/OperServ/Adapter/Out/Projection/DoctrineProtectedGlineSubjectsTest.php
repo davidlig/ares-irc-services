@@ -29,12 +29,11 @@ final class DoctrineProtectedGlineSubjectsTest extends TestCase
         $operator = OperIrcop::create($addedAt, 2, $role);
         $missing = OperIrcop::create($addedAt, 3, $role);
         $operators = $this->createStub(OperIrcopRepositoryInterface::class);
-        $operators->method('findAll')->willReturn([$duplicate, $operator, $missing]);
-        $accounts = $this->createStub(NickAccountQuery::class);
-        $accounts->method('findNicknameById')->willReturnMap([
-            [1, 'root'],
-            [2, 'NetAdmin'],
-            [3, null],
+        $operators->method('findAll')->willReturn([$duplicate, $operator, $missing, $duplicate]);
+        $accounts = $this->createMock(NickAccountQuery::class);
+        $accounts->expects(self::once())->method('findNicknamesByIds')->with([1, 2, 3])->willReturn([
+            1 => 'root',
+            2 => 'NetAdmin',
         ]);
 
         self::assertSame(
