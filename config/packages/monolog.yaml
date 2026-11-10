@@ -18,13 +18,13 @@ monolog:
       channels: [maintenance]
 
     # -----------------------------------------------------------------------
-    # IRC channel — debug level, daily rotation, 30-day retention
-    # Captures every incoming/outgoing message and connection event.
+    # IRC channel — configurable level, daily rotation, 30-day retention
+    # Debug includes incoming messages; info retains link lifecycle events.
     # -----------------------------------------------------------------------
     irc_rotating:
       type: rotating_file
       path: "%kernel.logs_dir%/irc.log"
-      level: debug
+      level: "%env(IRC_LOG_LEVEL)%"
       max_files: 30
       channels: [irc]
 

@@ -16,12 +16,12 @@ use App\Irc\Domain\ValueObject\LinkPassword;
 use App\Irc\Domain\ValueObject\Port;
 use App\Irc\Domain\ValueObject\ServerName;
 use Monolog\Handler\TestHandler;
+use Monolog\Level;
 use Monolog\Logger;
 use Monolog\LogRecord;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
 
 use function array_pop;
 use function serialize;
@@ -29,7 +29,7 @@ use function serialize;
 #[CoversClass(IRCEventSubscriber::class)]
 final class IRCEventSubscriberTest extends TestCase
 {
-    private LoggerInterface $logger;
+    private Logger $logger;
 
     private TestHandler $handler;
 
@@ -97,6 +97,18 @@ final class IRCEventSubscriberTest extends TestCase
         $serialized = serialize($this->record());
         self::assertStringNotContainsString('lost-pass-secret', $serialized);
         self::assertStringContainsString('PASS :******', $serialized);
+    }
+
+    #[Test]
+    public function incomingMessagesAreNotLoggedWhenDebugIsDisabled(): void
+    {
+        $logger = $this->createMock(Logger::class);
+        $logger->expects(self::once())->method('isHandling')->with(Level::Debug)->willReturn(false);
+        $logger->expects(self::never())->method('debug');
+
+        new IRCEventSubscriber($logger)->onIncomingMessage(new IncomingIrcMessageEvent(
+            new IRCMessage(command: 'PASS', params: ['secret']),
+        ));
     }
 
     #[Test]

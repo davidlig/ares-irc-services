@@ -9,7 +9,8 @@ use App\Irc\Adapter\Event\ConnectionLostEvent;
 use App\Irc\Adapter\Event\IncomingIrcMessageEvent;
 use App\Irc\Adapter\Security\SensitiveDataRedactor;
 use DateTimeInterface;
-use Psr\Log\LoggerInterface;
+use Monolog\Level;
+use Monolog\Logger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 use function in_array;
@@ -26,7 +27,7 @@ use function preg_replace;
 final readonly class IRCEventSubscriber implements EventSubscriberInterface
 {
     public function __construct(
-        private LoggerInterface $logger,
+        private Logger $logger,
     ) {}
 
     /**
@@ -65,6 +66,10 @@ final readonly class IRCEventSubscriber implements EventSubscriberInterface
 
     public function onIncomingMessage(IncomingIrcMessageEvent $event): void
     {
+        if (!$this->logger->isHandling(Level::Debug)) {
+            return;
+        }
+
         $message = SensitiveDataRedactor::redactIrcMessage($event->message);
         $trailing = $message->trailing;
         $raw = $message->toRawLine();

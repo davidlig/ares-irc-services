@@ -1,3 +1,9 @@
+## [Unreleased]
+
+### Upgrade
+
+- Production IRC logs now default to `info` and no longer include per-line debug traffic. Set `IRC_LOG_LEVEL=debug` to restore redacted incoming line logs.
+
 ## [2.5.0] - 2026-11-06
 
 ### Features

@@ -206,6 +206,7 @@ All variables live in `.env.local`. Required variables are marked with ⚠.
 | `IRC_PROTOCOL` | `unreal` | ⚠ `unreal`, `unrealudb`, or `inspircd` |
 | `IRC_USE_TLS` | `false` | `true` to wrap the link in TLS |
 | `IRC_SERVER_SID` | `002` | ⚠ 3-digit numeric (Unreal) or 3-char alphanum (InspIRCd) |
+| `IRC_LOG_LEVEL` | `info` in production; `debug` in dev/test | Minimum IRC log level. Set to `debug` in production to enable redacted incoming line logs. |
 
 > **UIDs are auto-generated** from the SID prefix by `ServiceUidGenerator`. You do **not** need to set `NICKSERV_UID`, `CHANSERV_UID`, `MEMOSERV_UID`, or `OPERSERV_UID` anymore.
 
