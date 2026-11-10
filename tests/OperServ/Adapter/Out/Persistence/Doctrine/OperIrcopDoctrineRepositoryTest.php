@@ -21,8 +21,6 @@ use UnexpectedValueException;
 
 use function array_map;
 
-use function array_map;
-
 #[CoversClass(OperIrcopDoctrineRepository::class)]
 #[Group('integration')]
 final class OperIrcopDoctrineRepositoryTest extends DoctrineIntegrationTestCase
