@@ -29,6 +29,15 @@ final class NickServOperatorAccountLookupTest extends TestCase
     }
 
     #[Test]
+    public function delegatesBatchNicknameLookupsToThePublicNickservQuery(): void
+    {
+        $accounts = $this->createMock(NickAccountQuery::class);
+        $accounts->expects(self::once())->method('findNicknamesByIds')->with([4, 7])->willReturn([4 => 'A', 7 => 'B']);
+
+        self::assertSame([4 => 'A', 7 => 'B'], new NickServOperatorAccountLookup($accounts)->findNicknamesByIds([4, 7]));
+    }
+
+    #[Test]
     public function mapsAnExistingAccountToTheOperServBoundary(): void
     {
         $accounts = $this->createStub(NickAccountQuery::class);

@@ -292,14 +292,10 @@ final class HistoryNickHandlerTest extends TestCase
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(10);
 
-        $operatorAccount = $this->createStub(RegisteredNick::class);
-
         $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $nickRepo->expects(self::once())->method('findByNick')->with('TargetNick')->willReturn($account);
-        $nickRepo->expects(self::exactly(2))->method('findById')->willReturnMap([
-            [1, $operatorAccount],
-            [999, null],
-        ]);
+        $nickRepo->expects(self::never())->method('findById');
+        $nickRepo->expects(self::once())->method('findNicknamesByIds')->with([1, 999])->willReturn([1 => 'Oper']);
 
         $entry1 = $this->createEntry(id: 1, nickId: 10, performedByNickId: 1);
         $entry2 = $this->createEntry(id: 2, nickId: 10, performedByNickId: 999);

@@ -16,6 +16,8 @@ use App\OperServ\Application\Port\Out\ProtectedGlineSubjects;
 use App\OperServ\Domain\Policy\GlineMaskPolicy;
 use App\Shared\Application\Time\RelativeExpiryParser;
 
+use function array_unique;
+use function array_values;
 use function ctype_digit;
 use function fnmatch;
 use function strpos;
@@ -125,12 +127,22 @@ final readonly class ManageGlineHandler implements ManageGlineHandlerInterface
             return new ManageGlineResult(ManageGlineOutcome::ListEmpty);
         }
 
+        $creatorIds = [];
+        foreach ($glines as $gline) {
+            if (null !== $gline->creatorAccountId) {
+                $creatorIds[] = $gline->creatorAccountId;
+            }
+        }
+        $nicknamesByAccountId = [] === $creatorIds
+            ? []
+            : $this->users->findNicknamesByAccountIds(array_values(array_unique($creatorIds)));
+
         $entries = [];
         foreach ($glines as $gline) {
             $entries[] = new GlineListEntry(
                 $gline->mask,
                 $gline->reason,
-                null === $gline->creatorAccountId ? null : $this->users->findNicknameByAccountId($gline->creatorAccountId),
+                null === $gline->creatorAccountId ? null : ($nicknamesByAccountId[$gline->creatorAccountId] ?? null),
                 $gline->expiresAt,
             );
         }
@@ -174,7 +186,7 @@ final readonly class ManageGlineHandler implements ManageGlineHandlerInterface
             return null;
         }
 
-        return $this->glines->findAll()[$index] ?? null;
+        return $this->glines->findByIndex($index);
     }
 
     /** @param array<string, bool|float|int|string|null> $metadata */

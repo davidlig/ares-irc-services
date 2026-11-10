@@ -11,4 +11,9 @@ interface OperatorAccountLookup
     public function findByNickname(string $nickname): ?OperatorAccountData;
 
     public function findNicknameById(int $id): ?string;
+
+    /** @param list<int> $ids
+     * @return array<int, string> Nicknames keyed by account ID
+     */
+    public function findNicknamesByIds(array $ids): array;
 }

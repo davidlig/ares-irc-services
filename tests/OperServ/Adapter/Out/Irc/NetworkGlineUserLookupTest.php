@@ -52,4 +52,16 @@ final class NetworkGlineUserLookupTest extends TestCase
             new NetworkGlineUserLookup($this->createStub(NetworkUserLookupPort::class), $accounts)->findNicknameByAccountId(42),
         );
     }
+
+    #[Test]
+    public function delegatesBatchAccountNicknameLookup(): void
+    {
+        $accounts = $this->createMock(NickAccountQuery::class);
+        $accounts->expects(self::once())->method('findNicknamesByIds')->with([4, 7])->willReturn([4 => 'Alice', 7 => 'Bob']);
+
+        self::assertSame(
+            [4 => 'Alice', 7 => 'Bob'],
+            new NetworkGlineUserLookup($this->createStub(NetworkUserLookupPort::class), $accounts)->findNicknamesByAccountIds([4, 7]),
+        );
+    }
 }

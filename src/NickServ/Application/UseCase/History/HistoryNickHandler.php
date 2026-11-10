@@ -10,6 +10,7 @@ use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\Service\NickHistoryService;
 use LogicException;
 
+use function array_values;
 use function ceil;
 use function is_int;
 use function min;
@@ -121,6 +122,15 @@ final readonly class HistoryNickHandler implements HistoryNickHandlerInterface
             $offset = $command->showAll ? 0 : ($page - 1) * $this->historyViewLimit;
             $entries = $this->historyRepository->findByNickId($nickId, $limit, $offset);
 
+            $operatorIds = [];
+            foreach ($entries as $entry) {
+                $operatorId = $entry->getPerformedByNickId();
+                if (null !== $operatorId) {
+                    $operatorIds[$operatorId] = $operatorId;
+                }
+            }
+            $operators = [] === $operatorIds ? [] : $this->nickRepository->findNicknamesByIds(array_values($operatorIds));
+
             $start = $command->showAll ? 1 : ($page - 1) * $this->historyViewLimit + 1;
             $end = $command->showAll ? $total : min($page * $this->historyViewLimit, $total);
 
@@ -128,7 +138,7 @@ final readonly class HistoryNickHandler implements HistoryNickHandlerInterface
             foreach ($entries as $entry) {
                 $operatorExists = true;
                 if (null !== $entry->getPerformedByNickId()) {
-                    $operatorExists = null !== $this->nickRepository->findById($entry->getPerformedByNickId());
+                    $operatorExists = isset($operators[$entry->getPerformedByNickId()]);
                 }
 
                 $views[] = new NickHistoryEntryView(

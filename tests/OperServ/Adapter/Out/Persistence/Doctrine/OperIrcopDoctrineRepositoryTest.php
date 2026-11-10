@@ -11,6 +11,7 @@ use App\OperServ\Domain\Entity\OperRole;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\PersistentCollection;
 use Doctrine\ORM\Query;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
@@ -110,6 +111,32 @@ final class OperIrcopDoctrineRepositoryTest extends DoctrineIntegrationTestCase
     public function findAllReturnsEmptyArrayWhenNone(): void
     {
         self::assertSame([], $this->repository->findAll());
+    }
+
+    #[Test]
+    public function findAllPreloadsDistinctRolesAndPermissions(): void
+    {
+        $permission = OperPermission::create('operserv.gline');
+        $this->entityManager->persist($permission);
+        $first = $this->createOperRole('First');
+        $second = $this->createOperRole('Second');
+        $first->addPermission($permission);
+        $this->entityManager->persist(OperIrcop::create(new DateTimeImmutable('2026-01-01'), 1, $first));
+        $this->entityManager->persist(OperIrcop::create(new DateTimeImmutable('2026-01-02'), 2, $second));
+        $this->flushAndClear();
+
+        $assignments = $this->repository->findAll();
+        self::assertCount(2, $assignments);
+        self::assertSame([2, 1], array_map(static fn (OperIrcop $entry): int => $entry->getNickId(), $assignments));
+        $permissions = new ReflectionProperty(OperRole::class, 'permissions');
+        foreach ($assignments as $assignment) {
+            $role = $assignment->getRole();
+            self::assertFalse($this->entityManager->isUninitializedObject($role));
+            $collection = $permissions->getValue($role);
+            self::assertInstanceOf(PersistentCollection::class, $collection);
+            self::assertTrue($collection->isInitialized());
+        }
+        self::assertSame('operserv.gline', $assignments[1]->getRole()->getPermissions()[0]->getName());
     }
 
     #[Test]

@@ -37,6 +37,18 @@ final readonly class DoctrineGlineRepository implements GlineRepository
         return $this->entries($glines);
     }
 
+    public function findByIndex(int $index): ?GlineEntry
+    {
+        /** @var list<mixed> $glines */
+        $glines = $this->entityManager
+            ->createQuery(sprintf('SELECT g FROM %s g ORDER BY g.createdAt DESC', Gline::class))
+            ->setFirstResult($index)
+            ->setMaxResults(1)
+            ->getResult();
+
+        return $this->entries($glines)[0] ?? null;
+    }
+
     public function findByMaskPattern(string $pattern): array
     {
         /** @var list<mixed> $glines */

@@ -27,4 +27,9 @@ final readonly class NetworkGlineUserLookup implements GlineUserLookup
     {
         return $this->accounts->findNicknameById($accountId);
     }
+
+    public function findNicknamesByAccountIds(array $accountIds): array
+    {
+        return $this->accounts->findNicknamesByIds($accountIds);
+    }
 }

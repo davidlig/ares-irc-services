@@ -13,6 +13,9 @@ interface GlineRepository
     /** @return list<GlineEntry> */
     public function findAll(): array;
 
+    /** Find a zero-based entry from the createdAt DESC result set. */
+    public function findByIndex(int $index): ?GlineEntry;
+
     /** @return list<GlineEntry> */
     public function findByMaskPattern(string $pattern): array;
 

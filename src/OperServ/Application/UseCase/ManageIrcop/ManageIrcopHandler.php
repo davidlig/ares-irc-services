@@ -10,8 +10,13 @@ use App\OperServ\Application\Port\In\CommandAuditRecorder;
 use App\OperServ\Application\Port\In\OperatorAuthorizationAttribute;
 use App\OperServ\Application\Port\Out\OperatorAccountLookup;
 use App\OperServ\Application\Port\Out\OperatorAssignmentNetworkProjection;
+use App\OperServ\Application\Port\Out\OperatorAssignmentRecord;
 use App\OperServ\Application\Port\Out\OperatorAssignmentStore;
 use App\OperServ\Application\Port\Out\OperatorRoleStore;
+
+use function array_map;
+use function array_unique;
+use function array_values;
 
 final readonly class ManageIrcopHandler implements ManageIrcopHandlerInterface
 {
@@ -81,9 +86,16 @@ final readonly class ManageIrcopHandler implements ManageIrcopHandlerInterface
 
     private function list(): ManageIrcopResult
     {
+        $assignments = $this->assignments->all();
+        $nickIds = array_values(array_unique(array_map(
+            static fn (OperatorAssignmentRecord $assignment): int => $assignment->nickId,
+            $assignments,
+        )));
+        $nicknamesById = [] === $nickIds ? [] : $this->accounts->findNicknamesByIds($nickIds);
+
         $entries = [];
-        foreach ($this->assignments->all() as $assignment) {
-            $nick = $this->accounts->findNicknameById($assignment->nickId) ?? (string) $assignment->nickId;
+        foreach ($assignments as $assignment) {
+            $nick = $nicknamesById[$assignment->nickId] ?? (string) $assignment->nickId;
             $entries[] = new IrcopListEntry($nick, $assignment->role->name, $assignment->addedAt);
         }
 
