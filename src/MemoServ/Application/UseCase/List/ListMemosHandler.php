@@ -10,6 +10,9 @@ use App\MemoServ\Application\Port\Out\MemoRepositoryInterface;
 use App\MemoServ\Application\Port\Out\MemoUserAccountPort;
 use LogicException;
 
+use function array_unique;
+use function array_values;
+use function count;
 use function strtolower;
 
 final readonly class ListMemosHandler implements ListMemosHandlerInterface
@@ -42,17 +45,40 @@ final readonly class ListMemosHandler implements ListMemosHandlerInterface
             return ListMemosResult::empty($targetLabel);
         }
 
+        $orderedMemos = array_values($memos);
+        $senderNickIds = [];
+        $senderNickPositions = [];
+        $senderDisplays = [];
+        foreach ($orderedMemos as $memo) {
+            $senderName = $memo->getSenderName();
+            if (null !== $senderName) {
+                $senderDisplays[] = $senderName;
+                continue;
+            }
+
+            $senderNickId = $memo->getSenderNickId();
+            if (null === $senderNickId) {
+                throw new LogicException('Memo sender representation is missing.');
+            }
+            $senderNickPositions[$senderNickId][] = count($senderDisplays);
+            $senderDisplays[] = (string) $senderNickId;
+            $senderNickIds[] = $senderNickId;
+        }
+        $senderNicknames = [] === $senderNickIds
+            ? []
+            : $this->userAccountPort->findNicknamesByIds(array_values(array_unique($senderNickIds)));
+
+        foreach ($senderNickPositions as $senderNickId => $positions) {
+            $senderDisplay = $senderNicknames[$senderNickId] ?? (string) $senderNickId;
+            foreach ($positions as $position) {
+                $senderDisplays[$position] = $senderDisplay;
+            }
+        }
+
         $items = [];
         $index = 1;
-        foreach ($memos as $memo) {
-            $senderDisplay = $memo->getSenderName();
-            if (null === $senderDisplay) {
-                $senderNickId = $memo->getSenderNickId();
-                if (null === $senderNickId) {
-                    throw new LogicException('Memo sender representation is missing.');
-                }
-                $senderDisplay = $this->userAccountPort->findNicknameById($senderNickId) ?? (string) $senderNickId;
-            }
+        foreach ($orderedMemos as $memoIndex => $memo) {
+            $senderDisplay = $senderDisplays[$memoIndex];
             $items[] = new MemoListItem($index, $senderDisplay, $memo->getCreatedAt(), $memo->getMessage(), $memo->isRead());
             ++$index;
         }

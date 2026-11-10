@@ -76,6 +76,20 @@ final class NickServMemoUserAccountAdapterTest extends TestCase
     }
 
     #[Test]
+    public function findNicknamesByIdsReturnsNicknamesKeyedByAccountId(): void
+    {
+        $query = $this->createMock(NickAccountQuery::class);
+        $query->expects(self::once())
+            ->method('findNicknamesByIds')
+            ->with([42, 99])
+            ->willReturn([42 => 'Charlie']);
+
+        $adapter = new NickServMemoUserAccountAdapter($query);
+
+        self::assertSame([42 => 'Charlie'], $adapter->findNicknamesByIds([42, 99]));
+    }
+
+    #[Test]
     public function getLanguageReturnsLanguageFromQuery(): void
     {
         $query = $this->createMock(NickAccountQuery::class);

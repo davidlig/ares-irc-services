@@ -29,6 +29,11 @@ final readonly class NickServMemoUserAccountAdapter implements MemoUserAccountPo
         return $this->nickAccountQuery->findNicknameById($id);
     }
 
+    public function findNicknamesByIds(array $ids): array
+    {
+        return $this->nickAccountQuery->findNicknamesByIds($ids);
+    }
+
     public function getLanguage(int $id): string
     {
         return $this->nickAccountQuery->getLanguage($id);

@@ -9,9 +9,14 @@ use App\MemoServ\Application\Port\Out\MemoRepositoryInterface;
 use App\MemoServ\Domain\Entity\Memo;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
 use DateTimeImmutable;
+use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\Query;
+use Doctrine\ORM\QueryBuilder;
+use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
+use stdClass;
 
 #[CoversClass(MemoDoctrineRepository::class)]
 #[Group('integration')]
@@ -273,9 +278,120 @@ final class MemoDoctrineRepositoryTest extends DoctrineIntegrationTestCase
         self::assertCount(1, $this->repository->findByTargetChannel(20));
     }
 
+    #[Test]
+    public function deleteByTargetNickDeletesOnlyInboxAndReturnsAffectedCount(): void
+    {
+        $inboxMemo = new Memo(targetNickId: 1, targetChannelId: null, senderNickId: 2, message: 'Inbox', createdAt: new DateTimeImmutable());
+        $sentMemo = new Memo(targetNickId: 2, targetChannelId: null, senderNickId: 1, message: 'Sent', createdAt: new DateTimeImmutable());
+        $this->repository->save($inboxMemo);
+        $this->repository->save($sentMemo);
+        $this->flushAndClear();
+
+        self::assertSame(1, $this->repository->deleteByTargetNick(1));
+        $this->flushAndClear();
+
+        self::assertSame([], $this->repository->findByTargetNick(1));
+        self::assertCount(1, $this->repository->findByTargetNick(2));
+        self::assertSame(0, $this->repository->deleteByTargetNick(1));
+    }
+
+    #[Test]
+    public function deleteByTargetChannelDeletesOnlyChannelInboxAndReturnsAffectedCount(): void
+    {
+        $targetMemo = new Memo(targetNickId: null, targetChannelId: 10, senderNickId: 1, message: 'Target', createdAt: new DateTimeImmutable());
+        $otherMemo = new Memo(targetNickId: null, targetChannelId: 20, senderNickId: 1, message: 'Other', createdAt: new DateTimeImmutable());
+        $this->repository->save($targetMemo);
+        $this->repository->save($otherMemo);
+        $this->flushAndClear();
+
+        self::assertSame(1, $this->repository->deleteByTargetChannel(10));
+        $this->flushAndClear();
+
+        self::assertSame([], $this->repository->findByTargetChannel(10));
+        self::assertCount(1, $this->repository->findByTargetChannel(20));
+        self::assertSame(0, $this->repository->deleteByTargetChannel(10));
+    }
+
+    #[Test]
+    public function findByTargetNickAndIndexRejectsUnexpectedQueryResult(): void
+    {
+        $repository = $this->repositoryWithUnexpectedIndexResult();
+
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('Memo index query returned an unexpected result.');
+
+        $repository->findByTargetNickAndIndex(1, 1);
+    }
+
+    #[Test]
+    public function findByTargetChannelAndIndexRejectsUnexpectedQueryResult(): void
+    {
+        $repository = $this->repositoryWithUnexpectedIndexResult();
+
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('Memo index query returned an unexpected result.');
+
+        $repository->findByTargetChannelAndIndex(1, 1);
+    }
+
+    #[Test]
+    public function deleteByTargetNickRejectsUnexpectedAffectedRowResult(): void
+    {
+        $repository = $this->repositoryWithUnexpectedDeleteResult();
+
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('Memo delete query did not return an affected row count.');
+
+        $repository->deleteByTargetNick(1);
+    }
+
+    #[Test]
+    public function deleteByTargetChannelRejectsUnexpectedAffectedRowResult(): void
+    {
+        $repository = $this->repositoryWithUnexpectedDeleteResult();
+
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('Memo delete query did not return an affected row count.');
+
+        $repository->deleteByTargetChannel(1);
+    }
+
     protected function setUp(): void
     {
         parent::setUp();
         $this->repository = new MemoDoctrineRepository($this->entityManager);
+    }
+
+    private function repositoryWithUnexpectedIndexResult(): MemoDoctrineRepository
+    {
+        $query = $this->createStub(Query::class);
+        $query->method('getOneOrNullResult')->willReturn(new stdClass());
+
+        $queryBuilder = $this->createStub(QueryBuilder::class);
+        $queryBuilder->method('select')->willReturnSelf();
+        $queryBuilder->method('from')->willReturnSelf();
+        $queryBuilder->method('where')->willReturnSelf();
+        $queryBuilder->method('setParameter')->willReturnSelf();
+        $queryBuilder->method('orderBy')->willReturnSelf();
+        $queryBuilder->method('setFirstResult')->willReturnSelf();
+        $queryBuilder->method('setMaxResults')->willReturnSelf();
+        $queryBuilder->method('getQuery')->willReturn($query);
+
+        $entityManager = $this->createStub(EntityManagerInterface::class);
+        $entityManager->method('createQueryBuilder')->willReturn($queryBuilder);
+
+        return new MemoDoctrineRepository($entityManager);
+    }
+
+    private function repositoryWithUnexpectedDeleteResult(): MemoDoctrineRepository
+    {
+        $query = $this->createStub(Query::class);
+        $query->method('setParameter')->willReturnSelf();
+        $query->method('execute')->willReturn(new stdClass());
+
+        $entityManager = $this->createStub(EntityManagerInterface::class);
+        $entityManager->method('createQuery')->willReturn($query);
+
+        return new MemoDoctrineRepository($entityManager);
     }
 }

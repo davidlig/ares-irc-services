@@ -132,16 +132,14 @@ final class DelMemoHandlerTest extends TestCase
     #[Test]
     public function deletesOnlyPersonalInboxForAll(): void
     {
-        $memos = [new Memo(1, null, 2, 'One', new DateTimeImmutable()), new Memo(1, null, 3, 'Two', new DateTimeImmutable())];
         $repository = $this->createMock(MemoRepositoryInterface::class);
-        $repository->expects(self::once())->method('findByTargetNick')->with(1)->willReturn($memos);
+        $repository->expects(self::once())->method('deleteByTargetNick')->with(1)->willReturn(2);
+        $repository->expects(self::never())->method('findByTargetNick');
         $repository->expects(self::never())->method('deleteAllForNick');
-        $deleted = [];
-        $repository->expects(self::exactly(2))->method('delete')->willReturnCallback(static function (Memo $memo) use (&$deleted): void { $deleted[] = $memo; });
+        $repository->expects(self::never())->method('delete');
         $this->memoRepository = $repository;
         $result = $this->createHandler()->handle(new DelMemo(1, null, 0, all: true));
         self::assertSame(DelMemoOutcome::AllDeleted, $result->outcome);
-        self::assertSame($memos, $deleted);
     }
 
     #[Test]
@@ -151,11 +149,9 @@ final class DelMemoHandlerTest extends TestCase
         $channel->method('findChannelByName')->willReturn(new MemoChannelView(5, '#Ares'));
         $channel->method('canManageChannelMemos')->willReturn(true);
         $this->channelPort = $channel;
-        $memo = new Memo(null, 5, 2, 'One', new DateTimeImmutable());
         $repository = $this->createMock(MemoRepositoryInterface::class);
-        $repository->expects(self::exactly(2))->method('findByTargetChannel')->with(5)->willReturnOnConsecutiveCalls([$memo], []);
-        $repository->method('findByTargetNick')->willReturn([]);
-        $repository->expects(self::once())->method('delete')->with($memo);
+        $repository->expects(self::exactly(2))->method('deleteByTargetChannel')->with(5)->willReturnOnConsecutiveCalls(1, 0);
+        $repository->expects(self::never())->method('delete');
         $this->memoRepository = $repository;
         $deleted = $this->createHandler()->handle(new DelMemo(1, '#ares', 0, all: true));
         $emptyChannel = $this->createHandler()->handle(new DelMemo(1, '#ares', 0, all: true));

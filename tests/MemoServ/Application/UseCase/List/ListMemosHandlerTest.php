@@ -40,11 +40,8 @@ final class ListMemosHandlerTest extends TestCase
         $memoRepo->method('findByTargetNick')->willReturn([$memo1, $memo2]);
         $this->memoRepository = $memoRepo;
 
-        $userAccountPort = $this->createStub(MemoUserAccountPort::class);
-        $userAccountPort->method('findNicknameById')->willReturnMap([
-            [2, 'Bob'],
-            [3, 'Charlie'],
-        ]);
+        $userAccountPort = $this->createMock(MemoUserAccountPort::class);
+        $userAccountPort->expects(self::once())->method('findNicknamesByIds')->with([2, 3])->willReturn([2 => 'Bob', 3 => 'Charlie']);
         $this->userAccountPort = $userAccountPort;
 
         $handler = $this->createHandler();
@@ -70,7 +67,7 @@ final class ListMemosHandlerTest extends TestCase
         $this->memoRepository = $memoRepo;
 
         $userAccountPort = $this->createStub(MemoUserAccountPort::class);
-        $userAccountPort->method('findNicknameById')->willReturn(null);
+        $userAccountPort->method('findNicknamesByIds')->willReturn([]);
         $this->userAccountPort = $userAccountPort;
 
         $handler = $this->createHandler();
@@ -88,7 +85,7 @@ final class ListMemosHandlerTest extends TestCase
         $repository->method('findByTargetNick')->willReturn([$memo]);
         $this->memoRepository = $repository;
         $accounts = $this->createMock(MemoUserAccountPort::class);
-        $accounts->expects(self::never())->method('findNicknameById');
+        $accounts->expects(self::never())->method('findNicknamesByIds');
         $this->userAccountPort = $accounts;
 
         $result = $this->createHandler()->handle(new ListMemos(1, 'Alice'));
@@ -123,8 +120,8 @@ final class ListMemosHandlerTest extends TestCase
         $memoRepo->method('findByTargetChannel')->willReturn([$memo]);
         $this->memoRepository = $memoRepo;
 
-        $userAccountPort = $this->createStub(MemoUserAccountPort::class);
-        $userAccountPort->method('findNicknameById')->willReturn('Bob');
+        $userAccountPort = $this->createMock(MemoUserAccountPort::class);
+        $userAccountPort->expects(self::once())->method('findNicknamesByIds')->with([2])->willReturn([2 => 'Bob']);
         $this->userAccountPort = $userAccountPort;
 
         $handler = $this->createHandler();
