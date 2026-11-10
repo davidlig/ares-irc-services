@@ -44,6 +44,12 @@ interface MemoRepositoryInterface
      */
     public function findByTargetChannelAndIndex(int $channelId, int $index): ?Memo;
 
+    /** Delete and return the number of memos addressed to this nickname. */
+    public function deleteByTargetNick(int $nickId): int;
+
+    /** Delete and return the number of memos addressed to this channel. */
+    public function deleteByTargetChannel(int $channelId): int;
+
     /**
      * Delete all memos where target_nick_id = nickId or sender_nick_id = nickId.
      */

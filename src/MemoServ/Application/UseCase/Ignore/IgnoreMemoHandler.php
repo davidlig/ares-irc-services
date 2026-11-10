@@ -10,6 +10,8 @@ use App\MemoServ\Application\Port\Out\MemoIgnoreRepositoryInterface;
 use App\MemoServ\Application\Port\Out\MemoUserAccountPort;
 use App\MemoServ\Domain\Entity\MemoIgnore;
 
+use function array_unique;
+use function array_values;
 use function strtolower;
 
 final readonly class IgnoreMemoHandler implements IgnoreMemoHandlerInterface
@@ -111,20 +113,36 @@ final readonly class IgnoreMemoHandler implements IgnoreMemoHandlerInterface
     {
         if (null !== $channel) {
             $list = $this->memoIgnoreRepository->listByTargetChannel($channel->id);
-            $nicks = [];
-            foreach ($list as $item) {
-                $nicks[] = $this->userAccountPort->findNicknameById($item->getIgnoredNickId()) ?? (string) $item->getIgnoredNickId();
-            }
+            $nicks = $this->resolveIgnoredNicknames($list);
 
             return IgnoreMemoResult::listChannel($channel->name, $nicks);
         }
 
         $list = $this->memoIgnoreRepository->listByTargetNick($command->senderNickId);
-        $nicks = [];
-        foreach ($list as $item) {
-            $nicks[] = $this->userAccountPort->findNicknameById($item->getIgnoredNickId()) ?? (string) $item->getIgnoredNickId();
-        }
+        $nicks = $this->resolveIgnoredNicknames($list);
 
         return IgnoreMemoResult::listNick($nicks);
+    }
+
+    /** @param MemoIgnore[] $list
+     * @return list<string>
+     */
+    private function resolveIgnoredNicknames(array $list): array
+    {
+        $ids = [];
+        foreach ($list as $item) {
+            $ids[] = $item->getIgnoredNickId();
+        }
+        $nicknames = [] === $ids
+            ? []
+            : $this->userAccountPort->findNicknamesByIds(array_values(array_unique($ids)));
+
+        $nicks = [];
+        foreach ($list as $item) {
+            $id = $item->getIgnoredNickId();
+            $nicks[] = $nicknames[$id] ?? (string) $id;
+        }
+
+        return $nicks;
     }
 }

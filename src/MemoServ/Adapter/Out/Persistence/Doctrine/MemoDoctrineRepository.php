@@ -7,8 +7,9 @@ namespace App\MemoServ\Adapter\Out\Persistence\Doctrine;
 use App\MemoServ\Application\Port\Out\MemoRepositoryInterface;
 use App\MemoServ\Domain\Entity\Memo;
 use Doctrine\ORM\EntityManagerInterface;
+use LogicException;
 
-use function count;
+use function is_int;
 
 final readonly class MemoDoctrineRepository implements MemoRepositoryInterface
 {
@@ -94,24 +95,80 @@ final readonly class MemoDoctrineRepository implements MemoRepositoryInterface
 
     public function findByTargetNickAndIndex(int $nickId, int $index): ?Memo
     {
-        $list = $this->findByTargetNick($nickId);
-        $oneBased = $index - 1;
-        if ($oneBased < 0 || $oneBased >= count($list)) {
+        if ($index < 1) {
             return null;
         }
 
-        return $list[$oneBased];
+        $result = $this->em->createQueryBuilder()
+            ->select('m')
+            ->from(Memo::class, 'm')
+            ->where('m.targetNickId = :nickId')
+            ->setParameter('nickId', $nickId)
+            ->orderBy('m.createdAt', 'ASC')
+            ->setFirstResult($index - 1)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+
+        if (null === $result || $result instanceof Memo) {
+            return $result;
+        }
+
+        throw new LogicException('Memo index query returned an unexpected result.');
     }
 
     public function findByTargetChannelAndIndex(int $channelId, int $index): ?Memo
     {
-        $list = $this->findByTargetChannel($channelId);
-        $oneBased = $index - 1;
-        if ($oneBased < 0 || $oneBased >= count($list)) {
+        if ($index < 1) {
             return null;
         }
 
-        return $list[$oneBased];
+        $result = $this->em->createQueryBuilder()
+            ->select('m')
+            ->from(Memo::class, 'm')
+            ->where('m.targetChannelId = :channelId')
+            ->setParameter('channelId', $channelId)
+            ->orderBy('m.createdAt', 'ASC')
+            ->setFirstResult($index - 1)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+
+        if (null === $result || $result instanceof Memo) {
+            return $result;
+        }
+
+        throw new LogicException('Memo index query returned an unexpected result.');
+    }
+
+    public function deleteByTargetNick(int $nickId): int
+    {
+        $affectedRows = $this->em->createQuery(
+            'DELETE FROM App\\MemoServ\\Domain\\Entity\\Memo m WHERE m.targetNickId = :nickId'
+        )
+            ->setParameter('nickId', $nickId)
+            ->execute();
+
+        if (!is_int($affectedRows)) {
+            throw new LogicException('Memo delete query did not return an affected row count.');
+        }
+
+        return $affectedRows;
+    }
+
+    public function deleteByTargetChannel(int $channelId): int
+    {
+        $affectedRows = $this->em->createQuery(
+            'DELETE FROM App\\MemoServ\\Domain\\Entity\\Memo m WHERE m.targetChannelId = :channelId'
+        )
+            ->setParameter('channelId', $channelId)
+            ->execute();
+
+        if (!is_int($affectedRows)) {
+            throw new LogicException('Memo delete query did not return an affected row count.');
+        }
+
+        return $affectedRows;
     }
 
     public function deleteAllForNick(int $nickId): void

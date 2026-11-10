@@ -12,5 +12,10 @@ interface MemoUserAccountPort
 
     public function findNicknameById(int $id): ?string;
 
+    /** @param list<int> $ids
+     * @return array<int, string> nicknames keyed by account ID
+     */
+    public function findNicknamesByIds(array $ids): array;
+
     public function getLanguage(int $id): string;
 }

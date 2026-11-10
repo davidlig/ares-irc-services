@@ -322,8 +322,8 @@ final class IgnoreMemoHandlerTest extends TestCase
         $memoIgnore->method('listByTargetNick')->willReturn([$ignore1, $ignore2]);
         $this->memoIgnoreRepository = $memoIgnore;
 
-        $userAccountPort = $this->createStub(MemoUserAccountPort::class);
-        $userAccountPort->method('findNicknameById')->willReturnCallback(static fn (int $id): ?string => 2 === $id ? 'Bob' : null);
+        $userAccountPort = $this->createMock(MemoUserAccountPort::class);
+        $userAccountPort->expects(self::once())->method('findNicknamesByIds')->with([2, 3])->willReturn([2 => 'Bob']);
         $this->userAccountPort = $userAccountPort;
 
         $handler = $this->createHandler();
@@ -331,6 +331,23 @@ final class IgnoreMemoHandlerTest extends TestCase
 
         self::assertSame(IgnoreMemoOutcome::ListNick, $result->outcome);
         self::assertSame(['Bob', '3'], $result->ignoredNicks);
+    }
+
+    #[Test]
+    public function listNickIgnoresReturnsEmptyWithoutLookingUpNicknames(): void
+    {
+        $memoIgnore = $this->createStub(MemoIgnoreRepositoryInterface::class);
+        $memoIgnore->method('listByTargetNick')->willReturn([]);
+        $this->memoIgnoreRepository = $memoIgnore;
+
+        $userAccountPort = $this->createMock(MemoUserAccountPort::class);
+        $userAccountPort->expects(self::never())->method('findNicknamesByIds');
+        $this->userAccountPort = $userAccountPort;
+
+        $result = $this->createHandler()->handle(new IgnoreMemo(1, IgnoreMemoAction::List));
+
+        self::assertSame(IgnoreMemoOutcome::ListNick, $result->outcome);
+        self::assertSame([], $result->ignoredNicks);
     }
 
     #[Test]
@@ -346,8 +363,8 @@ final class IgnoreMemoHandlerTest extends TestCase
         $memoIgnore->method('listByTargetChannel')->willReturn([$ignore1]);
         $this->memoIgnoreRepository = $memoIgnore;
 
-        $userAccountPort = $this->createStub(MemoUserAccountPort::class);
-        $userAccountPort->method('findNicknameById')->willReturn('Bob');
+        $userAccountPort = $this->createMock(MemoUserAccountPort::class);
+        $userAccountPort->expects(self::once())->method('findNicknamesByIds')->with([2])->willReturn([2 => 'Bob']);
         $this->userAccountPort = $userAccountPort;
 
         $handler = $this->createHandler();
