@@ -6,6 +6,7 @@ namespace App\OperServ\Adapter\Out\Persistence\Doctrine;
 
 use App\OperServ\Adapter\Out\Persistence\Doctrine\Entity\MotdRecord;
 use App\OperServ\Application\Model\MessageDelivery;
+use App\OperServ\Application\Port\Out\MotdCounterFlusher;
 use App\OperServ\Application\Port\Out\MotdEntry;
 use App\OperServ\Application\Port\Out\MotdRepository;
 use DateTimeImmutable;
@@ -17,9 +18,21 @@ use function array_values;
 use function sprintf;
 
 /** Final Doctrine adapter for every OperServ MOTD persistence capability. */
-final readonly class DoctrineMotdRepository implements MotdRepository
+final class DoctrineMotdRepository implements MotdRepository, MotdCounterFlusher
 {
-    public function __construct(private EntityManagerInterface $entityManager) {}
+    /** @var array<int, int> */
+    private array $pendingShown = [];
+
+    private bool $flushingShown = false;
+
+    /** @var list<MotdEntry>|null */
+    private ?array $activeMotds = null;
+
+    private ?DateTimeImmutable $activeAt = null;
+
+    private ?DateTimeImmutable $nextExpiry = null;
+
+    public function __construct(private readonly EntityManagerInterface $entityManager) {}
 
     public function add(
         string $text,
@@ -39,6 +52,7 @@ final readonly class DoctrineMotdRepository implements MotdRepository
         );
         $this->entityManager->persist($motd);
         $this->entityManager->flush();
+        $this->invalidateActive();
 
         return $this->entry($motd);
     }
@@ -47,7 +61,7 @@ final readonly class DoctrineMotdRepository implements MotdRepository
     {
         $motd = $this->entityManager->find(MotdRecord::class, $id);
 
-        return $motd instanceof MotdRecord ? $this->entry($motd) : null;
+        return $motd instanceof MotdRecord ? $this->withPendingCounts([$this->entry($motd)])[0] : null;
     }
 
     public function findAll(): array
@@ -55,11 +69,16 @@ final readonly class DoctrineMotdRepository implements MotdRepository
         /** @var list<mixed> $motds */
         $motds = $this->entityManager->getRepository(MotdRecord::class)->findBy([], ['createdAt' => 'DESC']);
 
-        return $this->entries($motds);
+        return $this->withPendingCounts($this->entries($motds));
     }
 
     public function findActiveAt(DateTimeImmutable $at): array
     {
+        if (null !== $this->activeMotds && null !== $this->activeAt
+            && $at >= $this->activeAt && (null === $this->nextExpiry || $at < $this->nextExpiry)) {
+            return $this->withPendingCounts($this->activeMotds);
+        }
+
         /** @var list<mixed> $motds */
         $motds = $this->entityManager
             ->createQuery(sprintf(
@@ -71,11 +90,22 @@ final readonly class DoctrineMotdRepository implements MotdRepository
             ->setParameter('at', $at)
             ->getResult();
 
-        return $this->entries($motds);
+        $entries = $this->entries($motds);
+        $this->activeAt = $at;
+        $this->nextExpiry = null;
+        foreach ($entries as $entry) {
+            if (null !== $entry->expiresAt && (null === $this->nextExpiry || $entry->expiresAt < $this->nextExpiry)) {
+                $this->nextExpiry = $entry->expiresAt;
+            }
+        }
+        $this->activeMotds = $entries;
+
+        return $this->withPendingCounts($entries);
     }
 
     public function findExpiredAt(DateTimeImmutable $at): array
     {
+        $this->invalidateActive();
         /** @var list<mixed> $motds */
         $motds = $this->entityManager
             ->createQuery(sprintf(
@@ -87,7 +117,7 @@ final readonly class DoctrineMotdRepository implements MotdRepository
             ->setParameter('at', $at)
             ->getResult();
 
-        return $this->entries($motds);
+        return $this->withPendingCounts($this->entries($motds));
     }
 
     public function remove(MotdEntry $entry): void
@@ -99,17 +129,45 @@ final readonly class DoctrineMotdRepository implements MotdRepository
 
         $this->entityManager->remove($motd);
         $this->entityManager->flush();
+        unset($this->pendingShown[$entry->id]);
+        $this->invalidateActive();
     }
 
     public function recordShown(int $id): void
     {
-        $motd = $this->entityManager->find(MotdRecord::class, $id);
-        if (!$motd instanceof MotdRecord) {
+        $this->pendingShown[$id] = ($this->pendingShown[$id] ?? 0) + 1;
+    }
+
+    public function flushShownCounts(): void
+    {
+        if ($this->flushingShown || [] === $this->pendingShown) {
             return;
         }
-
-        $motd->recordShown();
-        $this->entityManager->flush();
+        $this->flushingShown = true;
+        try {
+            $this->invalidateActive();
+            foreach ($this->pendingShown as $id => $count) {
+                $updated = $this->entityManager->getConnection()->executeStatement(
+                    'UPDATE motd SET shown_count = shown_count + ? WHERE id = ?',
+                    [$count, $id],
+                );
+                $remaining = $this->pendingShown[$id] - $count;
+                if (0 < $remaining) {
+                    $this->pendingShown[$id] = $remaining;
+                } else {
+                    unset($this->pendingShown[$id]);
+                }
+                if (0 === $updated) {
+                    continue;
+                }
+                $motd = $this->entityManager->find(MotdRecord::class, $id);
+                if ($motd instanceof MotdRecord) {
+                    $this->entityManager->refresh($motd);
+                }
+            }
+        } finally {
+            $this->flushingShown = false;
+        }
     }
 
     public function deleteByCreatorAccountId(int $accountId): void
@@ -118,6 +176,14 @@ final readonly class DoctrineMotdRepository implements MotdRepository
             ->createQuery(sprintf('DELETE FROM %s m WHERE m.creatorNickId = :accountId', MotdRecord::class))
             ->setParameter('accountId', $accountId)
             ->execute();
+        $this->invalidateActive();
+    }
+
+    private function invalidateActive(): void
+    {
+        $this->activeMotds = null;
+        $this->activeAt = null;
+        $this->nextExpiry = null;
     }
 
     private function entry(MotdRecord $motd): MotdEntry
@@ -133,6 +199,24 @@ final readonly class DoctrineMotdRepository implements MotdRepository
             $motd->getShownCount(),
             $motd->getCreatorNickId(),
         );
+    }
+
+    /** @param list<MotdEntry> $entries
+     * @return list<MotdEntry>
+     */
+    private function withPendingCounts(array $entries): array
+    {
+        return array_map(fn (MotdEntry $entry): MotdEntry => new MotdEntry(
+            $entry->id,
+            $entry->text,
+            $entry->botNickname,
+            $entry->delivery,
+            $entry->enabled,
+            $entry->createdAt,
+            $entry->expiresAt,
+            $entry->shownCount + ($this->pendingShown[$entry->id] ?? 0),
+            $entry->creatorAccountId,
+        ), $entries);
     }
 
     private function storageValue(MessageDelivery $delivery): string

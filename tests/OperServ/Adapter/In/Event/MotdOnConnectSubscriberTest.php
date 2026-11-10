@@ -61,6 +61,42 @@ final class MotdOnConnectSubscriberTest extends TestCase
     }
 
     #[Test]
+    public function eachConnectUsesOneActiveSnapshotForDelivery(): void
+    {
+        $motd = $this->motd('Hi', 'NickServ', 'PRIVMSG');
+        $repository = $this->createMock(MotdRepository::class);
+        $repository->expects(self::exactly(2))->method('findActiveAt')->willReturn([$motd]);
+        $repository->expects(self::never())->method('findAll');
+        $registry = $this->createStub(ServiceUidRegistry::class);
+        $registry->method('getUidByNickname')->willReturn('001NS');
+        $sender = $this->createMock(SendNoticePort::class);
+        $sender->expects(self::once())->method('sendMessage')->with('001NS', '001ABC', 'Hi', 'PRIVMSG');
+
+        $subscriber = $this->sub(r: $repository, u: $registry, s: $sender);
+        $subscriber->onSyncComplete();
+        $subscriber->onUserJoined(new UserJoinedNetworkAppEvent($this->dto()));
+    }
+
+    #[Test]
+    public function eachConnectRequestsAnActiveSnapshot(): void
+    {
+        $motd = $this->motd('Hi', 'NickServ', 'PRIVMSG');
+        $repository = $this->createMock(MotdRepository::class);
+        $repository->expects(self::exactly(3))->method('findActiveAt')->willReturn([$motd]);
+        $repository->expects(self::never())->method('findAll');
+        $registry = $this->createStub(ServiceUidRegistry::class);
+        $registry->method('getUidByNickname')->willReturn('001NS');
+        $sender = $this->createMock(SendNoticePort::class);
+        $sender->expects(self::exactly(2))->method('sendMessage')
+            ->with('001NS', '001ABC', 'Hi', 'PRIVMSG');
+
+        $subscriber = $this->sub(r: $repository, u: $registry, s: $sender);
+        $subscriber->onSyncComplete();
+        $subscriber->onUserJoined(new UserJoinedNetworkAppEvent($this->dto()));
+        $subscriber->onUserJoined(new UserJoinedNetworkAppEvent($this->dto()));
+    }
+
+    #[Test]
     public function serviceNickSends(): void
     {
         $m = $this->motd('Hi', 'NickServ', 'PRIVMSG');
@@ -224,15 +260,13 @@ final class MotdOnConnectSubscriberTest extends TestCase
         $a = $this->motd('A', 'test!bot@h.com', 'PRIVMSG');
         $r = $this->createStub(MotdRepository::class);
 
-        $activeCalls = [[$a], [$a], []];
+        $activeCalls = [[$a], []];
         $ai = 0;
         $r->method('findActiveAt')->willReturnCallback(
             static function () use (&$activeCalls, &$ai): array {
                 return $activeCalls[$ai++];
             },
         );
-
-        $r->method('findAll')->willReturn([]);
 
         $u = $this->createStub(ServiceUidRegistry::class);
         $u->method('getUidByNickname')->willReturn(null);

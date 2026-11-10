@@ -16,6 +16,7 @@ use App\NickServ\Application\Port\In\NickAccountQuery;
 use App\NickServ\Application\Port\In\NickCollisionResolver;
 use App\OperServ\Adapter\Out\Irc\PseudoClientUidGenerator;
 use App\OperServ\Application\Model\MessageDelivery;
+use App\OperServ\Application\Port\Out\MotdEntry;
 use App\OperServ\Application\Port\Out\MotdRepository;
 use App\OperServ\Domain\ValueObject\GlobalMessageMask;
 use DateTimeImmutable;
@@ -81,7 +82,8 @@ final class MotdOnConnectSubscriber implements EventSubscriberInterface
     public function onSyncComplete(): void
     {
         $this->isSynced = true;
-        $this->ensurePseudoClients();
+        $now = new DateTimeImmutable();
+        $this->ensurePseudoClients($this->motdRepository->findActiveAt($now), $now);
     }
 
     public function onUserJoined(UserJoinedNetworkAppEvent $event): void
@@ -90,20 +92,21 @@ final class MotdOnConnectSubscriber implements EventSubscriberInterface
             return;
         }
 
-        $this->ensurePseudoClients();
-        $this->cleanupStale();
-        $this->sendMotds($event);
+        $now = new DateTimeImmutable();
+        $activeMotds = $this->motdRepository->findActiveAt($now);
+        $this->ensurePseudoClients($activeMotds, $now);
+        $this->cleanupStale($activeMotds);
+        $this->sendMotds($event, $activeMotds);
     }
 
     /**
      * Ensures every active MOTD (mask format) has a pseudo-client connected.
      * Idempotent — safe to call multiple times (sync, user join, late add).
+     *
+     * @param list<MotdEntry> $activeMotds
      */
-    private function ensurePseudoClients(): void
+    private function ensurePseudoClients(array $activeMotds, DateTimeImmutable $now): void
     {
-        $now = new DateTimeImmutable();
-        $activeMotds = $this->motdRepository->findActiveAt($now);
-
         foreach ($activeMotds as $motd) {
             $botSpec = $motd->botNickname;
 
@@ -193,16 +196,14 @@ final class MotdOnConnectSubscriber implements EventSubscriberInterface
     /**
      * Removes stale MOTD IDs from pseudo-clients. Quits the pseudo-client
      * only when no active MOTDs reference it anymore.
+     *
+     * @param list<MotdEntry> $activeMotds
      */
-    private function cleanupStale(): void
+    private function cleanupStale(array $activeMotds): void
     {
-        $all = $this->motdRepository->findAll();
         $activeMap = [];
-        $now = new DateTimeImmutable();
-        foreach ($all as $motd) {
-            if ($motd->enabled && !$motd->isExpiredAt($now)) {
-                $activeMap[$motd->id] = true;
-            }
+        foreach ($activeMotds as $motd) {
+            $activeMap[$motd->id] = true;
         }
 
         $toQuit = [];
@@ -225,10 +226,9 @@ final class MotdOnConnectSubscriber implements EventSubscriberInterface
         }
     }
 
-    private function sendMotds(UserJoinedNetworkAppEvent $event): void
+    /** @param list<MotdEntry> $activeMotds */
+    private function sendMotds(UserJoinedNetworkAppEvent $event, array $activeMotds): void
     {
-        $activeMotds = $this->motdRepository->findActiveAt(new DateTimeImmutable());
-
         foreach ($activeMotds as $motd) {
             $botSpec = $motd->botNickname;
 
