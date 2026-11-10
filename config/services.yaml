@@ -2294,6 +2294,12 @@ services:
   App\OperServ\Application\Port\Out\MotdRepository:
     alias: App\OperServ\Adapter\Out\Persistence\Doctrine\DoctrineMotdRepository
 
+  App\OperServ\Application\Port\Out\MotdCounterFlusher:
+    alias: App\OperServ\Adapter\Out\Persistence\Doctrine\DoctrineMotdRepository
+
+  App\OperServ\Adapter\In\Maintenance\FlushMotdCountersTask:
+    tags: ["maintenance.task"]
+
   App\OperServ\Adapter\In\Irc\Command\MotdCommand:
     tags: ["operserv.command.new"]
 

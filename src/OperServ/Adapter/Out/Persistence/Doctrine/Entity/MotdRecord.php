@@ -84,9 +84,4 @@ class MotdRecord
     {
         return $this->shownCount;
     }
-
-    public function recordShown(): void
-    {
-        ++$this->shownCount;
-    }
 }
