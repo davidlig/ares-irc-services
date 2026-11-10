@@ -15,6 +15,7 @@ use App\ChanServ\Application\UseCase\EnforceMlock\MlockEnforcementTrigger;
 use App\ChanServ\Application\UseCase\EnforceMlock\SynchronizeAllChannelMlocksHandler;
 use App\Irc\Application\PublishedEvent\ChannelSettingsChangedEvent;
 use App\Irc\Application\PublishedEvent\ChannelSynchronizedEvent;
+use App\Irc\Application\PublishedEvent\ExistingChannelJoinObservedEvent;
 use App\Irc\Application\PublishedEvent\NetworkSynchronizationCompletedEvent;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -31,6 +32,7 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
         self::assertSame([
             NetworkSynchronizationCompletedEvent::class => ['onNetworkSynchronizationCompleted', -10],
             ChannelSynchronizedEvent::class => ['onChannelSynced', -10],
+            ExistingChannelJoinObservedEvent::class => ['onExistingChannelJoinObserved', -10],
             ChannelSettingsChangedEvent::class => ['onChannelModesChanged', 255],
             ChannelMlockUpdatedEvent::class => ['onMlockUpdated', 0],
         ], ChanServMlockEnforceSubscriber::getSubscribedEvents());
@@ -41,7 +43,7 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
     {
         $commands = [];
         $handler = $this->createMock(EnforceChannelMlockHandlerInterface::class);
-        $handler->expects(self::exactly(3))->method('handle')
+        $handler->expects(self::exactly(4))->method('handle')
             ->willReturnCallback(static function (EnforceChannelMlock $command) use (&$commands): MlockEnforcementResult {
                 $commands[] = $command;
 
@@ -51,11 +53,13 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
 
         $subscriber->onChannelSynced(new ChannelSynchronizedEvent('#Synced'));
         $subscriber->onChannelModesChanged(new ChannelSettingsChangedEvent('#Modes'));
+        $subscriber->onExistingChannelJoinObserved(new ExistingChannelJoinObservedEvent('#JoinModes', false));
         $subscriber->onMlockUpdated(new ChannelMlockUpdatedEvent('#Configured'));
 
         self::assertSame([
             ['#Synced', MlockEnforcementTrigger::ChannelSynchronized],
             ['#Modes', MlockEnforcementTrigger::ModesChanged],
+            ['#JoinModes', MlockEnforcementTrigger::ChannelSynchronized],
             ['#Configured', MlockEnforcementTrigger::LockUpdated],
         ], array_map(
             static fn (EnforceChannelMlock $command): array => [$command->channelName, $command->trigger],

@@ -6,6 +6,7 @@ namespace App\Tests\ChanServ\Adapter\In\Event;
 
 use App\ChanServ\Adapter\In\Event\ChanServRejoinSubscriber;
 use App\ChanServ\Adapter\Out\Network\IrcChannelRegistrationNetworkActions;
+use App\ChanServ\Application\Port\In\ChannelRegistrationLifecycle;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\Service\ChannelRegistrationService;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
@@ -15,6 +16,7 @@ use App\Irc\Application\Port\In\ChannelModeSupportInterface;
 use App\Irc\Application\Port\In\ChannelServiceActionsPort;
 use App\Irc\Application\Port\In\ChannelView;
 use App\Irc\Application\PublishedEvent\ChannelSynchronizedEvent;
+use App\Irc\Application\PublishedEvent\ExistingChannelJoinObservedEvent;
 use App\Irc\Application\PublishedEvent\NetworkSynchronizationCompletedEvent;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -59,6 +61,7 @@ final class ChanServRejoinSubscriberTest extends TestCase
                     ['onSyncCompleteReconcilePermanentMode', 9],
                 ],
                 ChannelSynchronizedEvent::class => ['onChannelSyncedSetRegistered', 10],
+                ExistingChannelJoinObservedEvent::class => ['onExistingChannelJoinObserved', 10],
             ],
             ChanServRejoinSubscriber::getSubscribedEvents(),
         );
@@ -100,6 +103,21 @@ final class ChanServRejoinSubscriberTest extends TestCase
 
         $event = new ChannelSynchronizedEvent('#test', channelSetupApplicable: true);
         $this->subscriber->onChannelSyncedSetRegistered($event);
+    }
+
+    #[Test]
+    public function existingJoinReconcilesRegisteredMode(): void
+    {
+        $this->channelRepository->expects(self::never())->method('findByChannelName');
+        $this->channelLookup->expects(self::never())->method('findByChannelName');
+        $this->modeSupportProvider->expects(self::never())->method('getSupport');
+        $this->modeSupport->expects(self::never())->method('getChannelRegisteredModeLetter');
+        $this->channelServiceActions->expects(self::never())->method('setChannelModes');
+        $this->logger->expects(self::never())->method('warning');
+        $lifecycle = $this->createMock(ChannelRegistrationLifecycle::class);
+        $lifecycle->expects(self::once())->method('channelSynchronized')->with('#test');
+
+        new ChanServRejoinSubscriber($lifecycle)->onExistingChannelJoinObserved(new ExistingChannelJoinObservedEvent('#test', false));
     }
 
     #[Test]

@@ -9,4 +9,6 @@ use App\ChanServ\Application\Model\ChannelRankNetworkState;
 interface ChannelRankNetworkQuery
 {
     public function findChannel(string $channelName): ?ChannelRankNetworkState;
+
+    public function findMember(string $channelName, string $uid): ?ChannelRankNetworkState;
 }

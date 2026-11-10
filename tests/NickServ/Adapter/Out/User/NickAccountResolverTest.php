@@ -11,6 +11,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function array_keys;
+
 #[CoversClass(NickAccountResolver::class)]
 final class NickAccountResolverTest extends TestCase
 {
@@ -80,6 +82,33 @@ final class NickAccountResolverTest extends TestCase
         self::assertTrue($data->registered);
 
         self::assertNull($resolver->findAccountByNick('bob'));
+    }
+
+    #[Test]
+    public function findAccountsByNicksUsesOneLookupAndPreservesAccountDetails(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(10);
+        $account->method('getNickname')->willReturn('Alice');
+        $account->method('getLanguage')->willReturn('fr');
+        $account->method('getTimezone')->willReturn(null);
+        $account->method('isRegistered')->willReturn(false);
+        $account->method('isSuspended')->willReturn(true);
+        $account->method('getEmail')->willReturn('alice@example.com');
+        $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $repo->expects(self::once())->method('findByNicks')->with(['alice', 'missing'])->willReturn([$account]);
+        $resolver = new NickAccountResolver($repo);
+
+        self::assertSame([], $resolver->findAccountsByNicks([]));
+        $result = $resolver->findAccountsByNicks(['ALICE', 'Alice', 'Missing']);
+        self::assertSame(['alice'], array_keys($result));
+        self::assertSame(10, $result['alice']->id);
+        self::assertSame('Alice', $result['alice']->nickname);
+        self::assertSame('fr', $result['alice']->language);
+        self::assertSame('UTC', $result['alice']->timezone);
+        self::assertFalse($result['alice']->registered);
+        self::assertTrue($result['alice']->suspended);
+        self::assertSame('alice@example.com', $result['alice']->email);
     }
 
     #[Test]

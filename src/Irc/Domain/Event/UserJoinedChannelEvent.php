@@ -17,5 +17,6 @@ final readonly class UserJoinedChannelEvent
         public Uid $uid,
         public ChannelName $channel,
         public ChannelMemberRole $role,
+        public bool $reconcileRanks = false,
     ) {}
 }

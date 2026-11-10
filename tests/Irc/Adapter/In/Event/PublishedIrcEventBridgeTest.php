@@ -15,6 +15,7 @@ use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 use App\Irc\Application\PublishedEvent\ChannelSettingsChangedEvent;
 use App\Irc\Application\PublishedEvent\ChannelSynchronizedEvent;
 use App\Irc\Application\PublishedEvent\ChannelTopicReceivedEvent as PublishedChannelTopicReceivedEvent;
+use App\Irc\Application\PublishedEvent\ExistingChannelJoinObservedEvent as PublishedExistingChannelJoinObservedEvent;
 use App\Irc\Application\PublishedEvent\IrcMessageHandledEvent;
 use App\Irc\Application\PublishedEvent\IrcMessageHandlingStartedEvent;
 use App\Irc\Application\PublishedEvent\NetworkConnectionLostEvent;
@@ -27,6 +28,7 @@ use App\Irc\Application\PublishedEvent\UserModesChangedEvent;
 use App\Irc\Application\PublishedEvent\UserNicknameChangedEvent;
 use App\Irc\Domain\Event\ChannelModesChangedEvent;
 use App\Irc\Domain\Event\ChannelSyncedEvent;
+use App\Irc\Domain\Event\ExistingChannelJoinObservedEvent;
 use App\Irc\Domain\Event\UserJoinedChannelEvent;
 use App\Irc\Domain\Event\UserLeftChannelEvent;
 use App\Irc\Domain\Event\UserModeChangedEvent;
@@ -46,6 +48,8 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 #[CoversClass(PublishedIrcEventBridge::class)]
 #[CoversClass(ChannelSettingsChangedEvent::class)]
 #[CoversClass(ChannelSynchronizedEvent::class)]
+#[CoversClass(PublishedExistingChannelJoinObservedEvent::class)]
+#[CoversClass(ExistingChannelJoinObservedEvent::class)]
 #[CoversClass(PublishedChannelTopicReceivedEvent::class)]
 #[CoversClass(IrcMessageHandledEvent::class)]
 #[CoversClass(IrcMessageHandlingStartedEvent::class)]
@@ -70,6 +74,7 @@ final class PublishedIrcEventBridgeTest extends TestCase
             UserJoinedChannelEvent::class => ['publishUserJoinedChannel', -10],
             UserLeftChannelEvent::class => ['publishUserDepartedChannel', 10],
             ChannelSyncedEvent::class => ['publishChannelSynchronized', -4],
+            ExistingChannelJoinObservedEvent::class => ['publishExistingChannelJoinObserved', -4],
             ChannelTopicReceivedEvent::class => ['publishChannelTopicReceived', 0],
             ChannelModesChangedEvent::class => ['publishChannelSettingsChanged', -1],
             NetworkBurstCompleteEvent::class => [
@@ -140,12 +145,13 @@ final class PublishedIrcEventBridgeTest extends TestCase
         $bridge = $this->bridgeExpecting(static fn (object $event): bool => $event instanceof PublishedUserJoinedChannelEvent
             && '001ABC' === $event->uid
             && '#test' === $event->channelName
-            && 'op' === $event->initialRole);
+            && 'op' === $event->initialRole && $event->reconcileRanks);
 
         $bridge->publishUserJoinedChannel(new UserJoinedChannelEvent(
             new Uid('001ABC'),
             new ChannelName('#test'),
             ChannelMemberRole::Op,
+            true,
         ));
     }
 
@@ -180,6 +186,16 @@ final class PublishedIrcEventBridgeTest extends TestCase
         self::assertSame('#test', $events[1]->channelName);
         self::assertInstanceOf(ChannelSettingsChangedEvent::class, $events[2]);
         self::assertSame('#test', $events[2]->channelName);
+    }
+
+    #[Test]
+    public function publishesExistingChannelJoinWithSetupFlag(): void
+    {
+        $bridge = $this->bridgeExpecting(static fn (object $event): bool => $event instanceof PublishedExistingChannelJoinObservedEvent
+            && '#test' === $event->channelName && !$event->channelSetupApplicable);
+        $channel = new Channel(new ChannelName('#test'), '', new DateTimeImmutable('@0'));
+
+        $bridge->publishExistingChannelJoinObserved(new ExistingChannelJoinObservedEvent($channel, false));
     }
 
     #[Test]

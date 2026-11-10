@@ -11,6 +11,7 @@ use App\ChanServ\Application\Model\ChannelTopicNetworkState;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\UseCase\ApplyStoredTopic\ApplyStoredChannelTopic;
 use App\ChanServ\Application\UseCase\ApplyStoredTopic\ApplyStoredChannelTopicHandler;
+use App\ChanServ\Application\UseCase\ApplyStoredTopic\ApplyStoredChannelTopicHandlerInterface;
 use App\ChanServ\Application\UseCase\ApplyStoredTopic\StoredTopicApplicationTrigger;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\Irc\Application\Port\In\ChannelLookupPort;
@@ -19,6 +20,7 @@ use App\Irc\Application\Port\In\ChannelSyncCompletedRegistryInterface;
 use App\Irc\Application\Port\In\ChannelView;
 use App\Irc\Application\Port\In\UidResolverInterface;
 use App\Irc\Application\PublishedEvent\ChannelSynchronizedEvent;
+use App\Irc\Application\PublishedEvent\ExistingChannelJoinObservedEvent;
 use App\Irc\Application\PublishedEvent\NetworkSynchronizationCompletedEvent;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -52,6 +54,7 @@ final class ChanServTopicApplySubscriberTest extends TestCase
         self::assertSame(
             [
                 ChannelSynchronizedEvent::class => ['onChannelSynced', -20],
+                ExistingChannelJoinObservedEvent::class => ['onExistingChannelJoinObserved', -20],
                 NetworkSynchronizationCompletedEvent::class => ['onSyncComplete', -20],
             ],
             ChanServTopicApplySubscriber::getSubscribedEvents(),
@@ -78,6 +81,22 @@ final class ChanServTopicApplySubscriberTest extends TestCase
 
         $event = new ChannelSynchronizedEvent('#test', channelSetupApplicable: true);
         $this->subscriber->onChannelSynced($event);
+    }
+
+    #[Test]
+    public function existingJoinPreservesTopicSetupFlag(): void
+    {
+        $this->channelRepository->expects(self::never())->method('findByChannelName');
+        $this->channelLookup->expects(self::never())->method('findByChannelName');
+        $this->channelServiceActions->expects(self::never())->method('setChannelTopic');
+        $handler = $this->createMock(ApplyStoredChannelTopicHandlerInterface::class);
+        $handler->expects(self::once())->method('handle')->with(self::callback(
+            static fn (ApplyStoredChannelTopic $command): bool => '#test' === $command->channelName
+                && !$command->channelSetupApplicable
+                && StoredTopicApplicationTrigger::ChannelSynchronized === $command->trigger,
+        ));
+
+        new ChanServTopicApplySubscriber($handler)->onExistingChannelJoinObserved(new ExistingChannelJoinObservedEvent('#test', false));
     }
 
     #[Test]

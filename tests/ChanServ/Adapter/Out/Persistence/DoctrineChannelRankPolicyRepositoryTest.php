@@ -23,6 +23,22 @@ use function iterator_to_array;
 final class DoctrineChannelRankPolicyRepositoryTest extends TestCase
 {
     #[Test]
+    public function itLoadsOnlyTheRequestedMembersAccess(): void
+    {
+        $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channels->method('findByChannelName')->willReturn($this->channel(7, '#Case', 11, false, false));
+        $access = $this->createMock(ChannelAccessRepositoryInterface::class);
+        $access->expects(self::never())->method('listByChannel');
+        $access->expects(self::once())->method('findByChannelAndNick')->with(7, 21)->willReturn(new ChannelAccess(7, 21, 300));
+        $policy = new DoctrineChannelRankPolicyRepository($channels, $access, $this->createStub(ChannelLevelRepositoryInterface::class), $this->createStub(EntityManagerInterface::class))
+            ->findByNameForNick('#Case', 21);
+
+        self::assertNotNull($policy);
+        self::assertSame(300, $policy->storedAccessFor(21));
+        self::assertNull($policy->storedAccessFor(22));
+    }
+
+    #[Test]
     public function itNormalizesLookupAndLoadsOnlyTheRankPolicySnapshot(): void
     {
         $channel = $this->channel(7, '#Case', 11, true, true);

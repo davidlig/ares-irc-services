@@ -17,6 +17,7 @@ use App\NickServ\Application\Port\In\NickAccountQuery;
 
 use function in_array;
 use function strcasecmp;
+use function strtolower;
 
 final readonly class IrcChannelRankNetworkQuery implements ChannelRankNetworkQuery
 {
@@ -45,10 +46,44 @@ final readonly class IrcChannelRankNetworkQuery implements ChannelRankNetworkQue
         );
     }
 
+    public function findMember(string $channelName, string $uid): ?ChannelRankNetworkState
+    {
+        $view = $this->channels->findMember($channelName, $uid);
+        if (null === $view) {
+            return null;
+        }
+
+        $entry = $view->members[0] ?? null;
+        $user = null === $entry ? null : ($this->users->findByUid($entry['uid']) ?? $this->users->findByNick($entry['uid']));
+        $member = null;
+        if (null !== $user) {
+            $account = $this->registeredNicks->findAccountByNick($user->nick);
+            $ranks = [];
+            foreach ($entry['prefixLetters'] ?? [$entry['roleLetter']] as $letter) {
+                $rank = $this->rankMapper->fromLetter($letter);
+                if (null !== $rank && !in_array($rank, $ranks, true)) {
+                    $ranks[] = $rank;
+                }
+            }
+            $member = new ChannelMember(
+                $user->uid,
+                $user->nick,
+                $user->isIdentified,
+                $user->isOper,
+                0 === strcasecmp($user->nick, $this->chanservNick),
+                null !== $account && $account->registered ? $account->id : null,
+                $ranks
+            );
+        }
+
+        return new ChannelRankNetworkState($view->name, null === $member ? [] : [$member], $this->supportedRanks($this->modeSupportProvider->getSupport()));
+    }
+
     /** @return list<ChannelMember> */
     private function members(ChannelView $view): array
     {
-        $members = [];
+        $resolved = [];
+        $nicknames = [];
         foreach ($view->members as $entry) {
             $uid = $entry['uid'];
             if ('' === $uid) {
@@ -58,7 +93,14 @@ final readonly class IrcChannelRankNetworkQuery implements ChannelRankNetworkQue
             if (null === $user) {
                 continue;
             }
-            $account = $this->registeredNicks->findAccountByNick($user->nick);
+            $resolved[] = [$entry, $user];
+            $nicknames[] = $user->nick;
+        }
+
+        $accounts = $this->registeredNicks->findAccountsByNicks($nicknames);
+        $members = [];
+        foreach ($resolved as [$entry, $user]) {
+            $account = $accounts[strtolower($user->nick)] ?? null;
             $accountId = null !== $account && $account->registered ? $account->id : null;
             $letters = $entry['prefixLetters'] ?? [$entry['roleLetter']];
             $ranks = [];

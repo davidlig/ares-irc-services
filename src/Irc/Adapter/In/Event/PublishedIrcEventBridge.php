@@ -13,6 +13,7 @@ use App\Irc\Adapter\Network\Event\ChannelTopicReceivedEvent;
 use App\Irc\Application\PublishedEvent\ChannelSettingsChangedEvent;
 use App\Irc\Application\PublishedEvent\ChannelSynchronizedEvent;
 use App\Irc\Application\PublishedEvent\ChannelTopicReceivedEvent as PublishedChannelTopicReceivedEvent;
+use App\Irc\Application\PublishedEvent\ExistingChannelJoinObservedEvent as PublishedExistingChannelJoinObservedEvent;
 use App\Irc\Application\PublishedEvent\IrcMessageHandledEvent;
 use App\Irc\Application\PublishedEvent\IrcMessageHandlingStartedEvent;
 use App\Irc\Application\PublishedEvent\NetworkConnectionLostEvent;
@@ -25,6 +26,7 @@ use App\Irc\Application\PublishedEvent\UserModesChangedEvent;
 use App\Irc\Application\PublishedEvent\UserNicknameChangedEvent;
 use App\Irc\Domain\Event\ChannelModesChangedEvent;
 use App\Irc\Domain\Event\ChannelSyncedEvent;
+use App\Irc\Domain\Event\ExistingChannelJoinObservedEvent;
 use App\Irc\Domain\Event\UserJoinedChannelEvent;
 use App\Irc\Domain\Event\UserLeftChannelEvent;
 use App\Irc\Domain\Event\UserModeChangedEvent;
@@ -49,6 +51,7 @@ final readonly class PublishedIrcEventBridge implements EventSubscriberInterface
             UserJoinedChannelEvent::class => ['publishUserJoinedChannel', -10],
             UserLeftChannelEvent::class => ['publishUserDepartedChannel', 10],
             ChannelSyncedEvent::class => ['publishChannelSynchronized', -4],
+            ExistingChannelJoinObservedEvent::class => ['publishExistingChannelJoinObserved', -4],
             ChannelTopicReceivedEvent::class => ['publishChannelTopicReceived', 0],
             ChannelModesChangedEvent::class => ['publishChannelSettingsChanged', -1],
             NetworkBurstCompleteEvent::class => [
@@ -102,6 +105,7 @@ final readonly class PublishedIrcEventBridge implements EventSubscriberInterface
             $event->uid->value,
             $event->channel->value,
             '' === $event->role->value ? null : $event->role->value,
+            $event->reconcileRanks,
         ));
     }
 
@@ -128,6 +132,14 @@ final readonly class PublishedIrcEventBridge implements EventSubscriberInterface
             $event->topic,
             $event->setterNick,
             $event->sourceUid,
+        ));
+    }
+
+    public function publishExistingChannelJoinObserved(ExistingChannelJoinObservedEvent $event): void
+    {
+        $this->eventDispatcher->dispatch(new PublishedExistingChannelJoinObservedEvent(
+            $event->channel->name->value,
+            $event->channelSetupApplicable,
         ));
     }
 

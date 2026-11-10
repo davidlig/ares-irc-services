@@ -9,6 +9,7 @@ use App\Irc\Application\Port\In\ChannelModeView;
 use App\Irc\Application\Port\In\ChannelView;
 use App\Irc\Domain\Repository\ChannelRepositoryInterface;
 use App\Irc\Domain\ValueObject\ChannelName;
+use App\Irc\Domain\ValueObject\Uid;
 use InvalidArgumentException;
 
 /**
@@ -53,6 +54,27 @@ final readonly class CoreChannelLookupAdapter implements ChannelLookupPort
             timestamp: $channel->getCreatedAt()->getTimestamp(),
             modeParams: $channel->getModeParams(),
         );
+    }
+
+    public function findMember(string $channelName, string $uid): ?ChannelView
+    {
+        try {
+            $channel = $this->channelRepository->findByName(new ChannelName($channelName));
+            $id = new Uid($uid);
+        } catch (InvalidArgumentException) {
+            return null;
+        }
+        if (null === $channel) {
+            return null;
+        }
+        $member = $channel->getMember($id);
+        $members = null === $member ? [] : [[
+            'uid' => $member->uid->value,
+            'roleLetter' => $member->role->toModeLetter(),
+            'prefixLetters' => $member->prefixLetters,
+        ]];
+
+        return new ChannelView($channel->name->value, $channel->getModes(), $channel->getTopic(), $channel->getMemberCount(), $members);
     }
 
     /**

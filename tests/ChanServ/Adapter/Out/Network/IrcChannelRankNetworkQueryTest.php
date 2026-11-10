@@ -23,12 +23,43 @@ use PHPUnit\Framework\TestCase;
 final class IrcChannelRankNetworkQueryTest extends TestCase
 {
     #[Test]
+    public function itResolvesOnlyTheRequestedMemberForSingleMemberEvents(): void
+    {
+        $channels = $this->createMock(ChannelLookupPort::class);
+        $channels->expects(self::once())->method('findMember')->with('#test', 'U1')->willReturn(new ChannelView(
+            name: '#test',
+            modes: '',
+            topic: null,
+            memberCount: 3,
+            members: [['uid' => 'U1', 'roleLetter' => 'o']],
+        ));
+        $channels->expects(self::never())->method('findByChannelName');
+        $users = $this->createStub(NetworkUserLookupPort::class);
+        $users->method('findByUid')->willReturn(new SenderView('U1', 'Alice', 'a', 'host', 'cloak', '', true));
+        $accounts = $this->createStub(NickAccountQuery::class);
+        $accounts->method('findAccountByNick')->willReturn(new NickAccountData(42, 'Alice', 'en'));
+        $support = $this->createStub(ChannelModeSupportInterface::class);
+        $support->method('getSupportedPrefixModes')->willReturn(['o']);
+        $provider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
+        $provider->method('getSupport')->willReturn($support);
+
+        $result = new IrcChannelRankNetworkQuery($channels, $users, $accounts, $provider, new ChannelRankModeMapper(), 'ChanServ')
+            ->findMember('#test', 'U1');
+
+        self::assertNotNull($result);
+        self::assertCount(1, $result->members);
+        self::assertSame(42, $result->members[0]->registeredNickId);
+        self::assertSame([ChannelRank::Operator], $result->supportedRanks);
+    }
+
+    #[Test]
     public function itReturnsNullWhenTheNetworkChannelDoesNotExist(): void
     {
         $channels = $this->createStub(ChannelLookupPort::class);
         $channels->method('findByChannelName')->willReturn(null);
 
         self::assertNull($this->query($channels)->findChannel('#missing'));
+        self::assertNull($this->query($channels)->findMember('#missing', 'U1'));
     }
 
     #[Test]
@@ -65,15 +96,13 @@ final class IrcChannelRankNetworkQueryTest extends TestCase
             static fn (string $nick): ?SenderView => 'Alias' === $nick ? $unidentifiedService : null,
         );
 
-        $registeredNicks = $this->createStub(NickAccountQuery::class);
-        $registeredNicks->method('findAccountByNick')->willReturnCallback(
-            static fn (string $nick): ?NickAccountData => match ($nick) {
-                'Alice' => new NickAccountData(42, 'Alice', 'en'),
-                'cHaNsErV' => new NickAccountData(99, 'ChanServ', 'en'),
-                'PendingNick' => new NickAccountData(100, 'PendingNick', 'en', registered: false),
-                default => null,
-            },
-        );
+        $registeredNicks = $this->createMock(NickAccountQuery::class);
+        $registeredNicks->expects(self::once())->method('findAccountsByNicks')
+            ->with(['Alice', 'cHaNsErV', 'PendingNick'])->willReturn([
+                'alice' => new NickAccountData(42, 'Alice', 'en'),
+                'chanserv' => new NickAccountData(99, 'ChanServ', 'en'),
+                'pendingnick' => new NickAccountData(100, 'PendingNick', 'en', registered: false),
+            ]);
 
         $support = $this->createMock(ChannelModeSupportInterface::class);
         $support->expects(self::once())->method('getSupportedPrefixModes')->willReturn(['q', 'o', 'x', 'v']);

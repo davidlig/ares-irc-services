@@ -8,6 +8,7 @@ use App\ChanServ\Application\UseCase\ApplyStoredTopic\ApplyStoredChannelTopic;
 use App\ChanServ\Application\UseCase\ApplyStoredTopic\ApplyStoredChannelTopicHandlerInterface;
 use App\ChanServ\Application\UseCase\ApplyStoredTopic\StoredTopicApplicationTrigger;
 use App\Irc\Application\PublishedEvent\ChannelSynchronizedEvent;
+use App\Irc\Application\PublishedEvent\ExistingChannelJoinObservedEvent;
 use App\Irc\Application\PublishedEvent\NetworkSynchronizationCompletedEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -20,11 +21,21 @@ final readonly class ChanServTopicApplySubscriber implements EventSubscriberInte
     {
         return [
             ChannelSynchronizedEvent::class => ['onChannelSynced', -20],
+            ExistingChannelJoinObservedEvent::class => ['onExistingChannelJoinObserved', -20],
             NetworkSynchronizationCompletedEvent::class => ['onSyncComplete', -20],
         ];
     }
 
     public function onChannelSynced(ChannelSynchronizedEvent $event): void
+    {
+        $this->handler->handle(new ApplyStoredChannelTopic(
+            StoredTopicApplicationTrigger::ChannelSynchronized,
+            $event->channelName,
+            $event->channelSetupApplicable,
+        ));
+    }
+
+    public function onExistingChannelJoinObserved(ExistingChannelJoinObservedEvent $event): void
     {
         $this->handler->handle(new ApplyStoredChannelTopic(
             StoredTopicApplicationTrigger::ChannelSynchronized,

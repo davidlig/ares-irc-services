@@ -26,6 +26,7 @@ use App\Irc\Application\Port\In\SkipIdentifiedModeStripRegistry;
 use App\Irc\Domain\Event\ChannelModesChangedEvent;
 use App\Irc\Domain\Event\ChannelSyncedEvent;
 use App\Irc\Domain\Event\ChannelTopicChangedEvent;
+use App\Irc\Domain\Event\ExistingChannelJoinObservedEvent;
 use App\Irc\Domain\Event\UserHostChangedEvent;
 use App\Irc\Domain\Event\UserJoinedChannelEvent;
 use App\Irc\Domain\Event\UserLeftChannelEvent;
@@ -1007,13 +1008,14 @@ final class NetworkEventEnricherTest extends TestCase
 
         self::assertInstanceOf(ChannelSyncedEvent::class, $dispatched[0]);
         self::assertInstanceOf(UserJoinedChannelEvent::class, $dispatched[1]);
+        self::assertFalse($dispatched[1]->reconcileRanks);
         self::assertSame('001NEW', $dispatched[1]->uid->value);
     }
 
     #[Test]
     public function onChannelJoinReceivedDispatchesUserJoinedChannelEventForExistingChannel(): void
     {
-        $existingChannel = new Channel(new ChannelName('#test'), '+n', new DateTimeImmutable('@0'));
+        $existingChannel = new Channel(new ChannelName('#test'), '+n', new DateTimeImmutable('@1704067200'));
 
         $channelRepo = $this->createStub(ChannelRepositoryInterface::class);
         $channelRepo->method('findByName')->willReturn($existingChannel);
@@ -1039,7 +1041,7 @@ final class NetworkEventEnricherTest extends TestCase
         $event = new ChannelJoinReceivedEvent(
             new ChannelName('#test'),
             1704067200,
-            '+nt',
+            '+n',
             [['uid' => new Uid('001ABC'), 'role' => ChannelMemberRole::Op, 'prefixLetters' => ['o']]],
             [],
             [],
@@ -1047,8 +1049,123 @@ final class NetworkEventEnricherTest extends TestCase
         $enricher->onChannelJoinReceived($event);
 
         self::assertCount(2, $dispatched);
-        self::assertInstanceOf(ChannelSyncedEvent::class, $dispatched[0]);
+        self::assertInstanceOf(ExistingChannelJoinObservedEvent::class, $dispatched[0]);
+        self::assertTrue($dispatched[0]->channelSetupApplicable);
         self::assertInstanceOf(UserJoinedChannelEvent::class, $dispatched[1]);
+        self::assertTrue($dispatched[1]->reconcileRanks);
+    }
+
+    #[Test]
+    public function newerTimestampJoinDoesNotResynchronizeTheExistingChannel(): void
+    {
+        $channel = new Channel(new ChannelName('#test'), '+n', new DateTimeImmutable('@1704067200'));
+        $channel->syncMember(new Uid('001OLD'), ChannelMemberRole::Op, ['o']);
+        $repo = $this->createMock(ChannelRepositoryInterface::class);
+        $repo->method('findByName')->willReturn($channel);
+        $repo->expects(self::once())->method('save')->with($channel);
+        $events = [];
+        $dispatcher = $this->createMock(EventDispatcherInterface::class);
+        $dispatcher->expects(self::exactly(2))->method('dispatch')->willReturnCallback(
+            static function (object $event) use (&$events): object {
+                $events[] = $event;
+
+                return $event;
+            },
+        );
+        $enricher = new NetworkEventEnricher(
+            $repo,
+            $this->createStub(NetworkUserRepositoryInterface::class),
+            $dispatcher,
+            $this->createStub(SkipIdentifiedModeStripRegistry::class),
+            $this->createStub(ActiveChannelModeSupportProviderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
+        );
+        $enricher->onChannelJoinReceived(new ChannelJoinReceivedEvent(
+            new ChannelName('#test'),
+            1704067201,
+            '+t',
+            [['uid' => new Uid('001NEW'), 'role' => ChannelMemberRole::Voice]],
+        ));
+
+        self::assertInstanceOf(ExistingChannelJoinObservedEvent::class, $events[0]);
+        self::assertFalse($events[0]->channelSetupApplicable);
+        self::assertInstanceOf(UserJoinedChannelEvent::class, $events[1]);
+        self::assertSame(1704067200, $channel->getCreatedAt()->getTimestamp());
+        self::assertSame('+n', $channel->getModes());
+        self::assertTrue($channel->isMember(new Uid('001NEW')));
+    }
+
+    #[Test]
+    public function olderTimestampJoinResynchronizesTheExistingChannel(): void
+    {
+        $channel = new Channel(new ChannelName('#test'), '+n', new DateTimeImmutable('@1704067200'));
+        $repo = $this->createStub(ChannelRepositoryInterface::class);
+        $repo->method('findByName')->willReturn($channel);
+        $events = [];
+        $dispatcher = $this->createMock(EventDispatcherInterface::class);
+        $dispatcher->expects(self::exactly(2))->method('dispatch')->willReturnCallback(
+            static function (object $event) use (&$events): object {
+                $events[] = $event;
+
+                return $event;
+            },
+        );
+        $enricher = new NetworkEventEnricher(
+            $repo,
+            $this->createStub(NetworkUserRepositoryInterface::class),
+            $dispatcher,
+            $this->createStub(SkipIdentifiedModeStripRegistry::class),
+            $this->createStub(ActiveChannelModeSupportProviderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
+        );
+        $enricher->onChannelJoinReceived(new ChannelJoinReceivedEvent(
+            new ChannelName('#test'),
+            1704067199,
+            '+t',
+            [['uid' => new Uid('001NEW'), 'role' => ChannelMemberRole::Voice]],
+        ));
+
+        self::assertInstanceOf(ChannelSyncedEvent::class, $events[0]);
+        self::assertInstanceOf(UserJoinedChannelEvent::class, $events[1]);
+        self::assertSame(1704067199, $channel->getCreatedAt()->getTimestamp());
+        self::assertSame('+t', $channel->getModes());
+        self::assertTrue($channel->isMember(new Uid('001NEW')));
+    }
+
+    #[Test]
+    public function equalTimestampModeMergeReconcilesWithoutResynchronizing(): void
+    {
+        $channel = new Channel(new ChannelName('#test'), '+n', new DateTimeImmutable('@1704067200'));
+        $repo = $this->createStub(ChannelRepositoryInterface::class);
+        $repo->method('findByName')->willReturn($channel);
+        $events = [];
+        $dispatcher = $this->createMock(EventDispatcherInterface::class);
+        $dispatcher->expects(self::exactly(2))->method('dispatch')->willReturnCallback(
+            static function (object $event) use (&$events): object {
+                $events[] = $event;
+
+                return $event;
+            },
+        );
+        $enricher = new NetworkEventEnricher(
+            $repo,
+            $this->createStub(NetworkUserRepositoryInterface::class),
+            $dispatcher,
+            $this->createStub(SkipIdentifiedModeStripRegistry::class),
+            $this->createStub(ActiveChannelModeSupportProviderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
+        );
+        $enricher->onChannelJoinReceived(new ChannelJoinReceivedEvent(
+            new ChannelName('#test'),
+            1704067200,
+            '+t',
+            [['uid' => new Uid('001NEW'), 'role' => ChannelMemberRole::Voice]],
+        ));
+
+        self::assertInstanceOf(ExistingChannelJoinObservedEvent::class, $events[0]);
+        self::assertInstanceOf(UserJoinedChannelEvent::class, $events[1]);
+        self::assertStringContainsString('t', $channel->getModes());
+        self::assertTrue($channel->isMember(new Uid('001NEW')));
     }
 
     #[Test]

@@ -25,6 +25,25 @@ use function iterator_to_array;
 final class CoreChannelLookupAdapterTest extends TestCase
 {
     #[Test]
+    public function findMemberReturnsOnlyTheRequestedMember(): void
+    {
+        $channel = new Channel(new ChannelName('#test'), '+n', new DateTimeImmutable('@1'));
+        $channel->syncMember(new Uid('U1'), ChannelMemberRole::Op, ['o', 'v']);
+        $channel->syncMember(new Uid('U2'), ChannelMemberRole::Voice);
+        $repo = $this->createStub(ChannelRepositoryInterface::class);
+        $repo->method('findByName')->willReturn($channel);
+        $adapter = new CoreChannelLookupAdapter($repo);
+
+        $view = $adapter->findMember('#test', 'U1');
+        self::assertNotNull($view);
+        self::assertSame(2, $view->memberCount);
+        self::assertSame([['uid' => 'U1', 'roleLetter' => 'o', 'prefixLetters' => ['o', 'v']]], $view->members);
+        self::assertSame([], $adapter->findMember('#test', 'missing')?->members);
+        self::assertNull($adapter->findMember('invalid', 'U1'));
+        self::assertNull($adapter->findMember('#test', ''));
+    }
+
+    #[Test]
     public function findByChannelNameReturnsNullForInvalidChannelName(): void
     {
         $repo = $this->createMock(ChannelRepositoryInterface::class);
@@ -43,6 +62,7 @@ final class CoreChannelLookupAdapterTest extends TestCase
         $adapter = new CoreChannelLookupAdapter($repo);
 
         self::assertNull($adapter->findByChannelName('#nonexistent'));
+        self::assertNull($adapter->findMember('#nonexistent', 'U1'));
     }
 
     #[Test]

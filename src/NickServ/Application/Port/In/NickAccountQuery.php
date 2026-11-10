@@ -17,6 +17,13 @@ interface NickAccountQuery
 
     public function findAccountByNick(string $nickname): ?NickAccountData;
 
+    /**
+     * @param list<string> $nicknames
+     *
+     * @return array<string, NickAccountData> accounts keyed by lowercase nickname
+     */
+    public function findAccountsByNicks(array $nicknames): array;
+
     public function findAccountById(int $id): ?NickAccountData;
 
     public function getLanguage(int $id): string;
