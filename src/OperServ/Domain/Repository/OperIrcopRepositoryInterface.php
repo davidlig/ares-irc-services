@@ -12,6 +12,11 @@ interface OperIrcopRepositoryInterface
 
     public function findByNickId(int $nickId): ?OperIrcop;
 
+    /** @param list<int> $nickIds
+     * @return list<OperIrcop>
+     */
+    public function findByNickIds(array $nickIds): array;
+
     /** Load the assignment, its role, and permissions in one query for authorization. */
     public function findByNickIdWithRolePermissions(int $nickId): ?OperIrcop;
 

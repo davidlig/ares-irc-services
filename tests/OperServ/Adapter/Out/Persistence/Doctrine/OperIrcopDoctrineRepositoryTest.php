@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\OperServ\Adapter\Out\Persistence\Doctrine;
 
+use App\OperServ\Adapter\Out\Persistence\Doctrine\BurstIrcopCache;
 use App\OperServ\Adapter\Out\Persistence\Doctrine\OperIrcopDoctrineRepository;
 use App\OperServ\Domain\Entity\OperIrcop;
 use App\OperServ\Domain\Entity\OperPermission;
@@ -17,15 +18,19 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use ReflectionProperty;
+use stdClass;
 use UnexpectedValueException;
 
 use function array_map;
 
 #[CoversClass(OperIrcopDoctrineRepository::class)]
+#[CoversClass(BurstIrcopCache::class)]
 #[Group('integration')]
 final class OperIrcopDoctrineRepositoryTest extends DoctrineIntegrationTestCase
 {
     private OperIrcopDoctrineRepository $repository;
+
+    private BurstIrcopCache $burstCache;
 
     #[Test]
     public function findReturnsNullWhenNotFound(): void
@@ -72,6 +77,50 @@ final class OperIrcopDoctrineRepositoryTest extends DoctrineIntegrationTestCase
     }
 
     #[Test]
+    public function findByNickIdsLoadsOnlyRequestedAssignmentsWithTheirRoles(): void
+    {
+        $role = $this->createOperRole('Admin');
+        $first = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 201, role: $role);
+        $second = OperIrcop::create(new DateTimeImmutable('2026-01-02T00:00:00+00:00'), nickId: 202, role: $role);
+        $other = OperIrcop::create(new DateTimeImmutable('2026-01-03T00:00:00+00:00'), nickId: 203, role: $role);
+        $this->entityManager->persist($first);
+        $this->entityManager->persist($second);
+        $this->entityManager->persist($other);
+        $this->entityManager->flush();
+        $this->entityManager->clear();
+
+        $assignments = $this->repository->findByNickIds([201, 202, 999999]);
+
+        self::assertCount(2, $assignments);
+        self::assertSame([201, 202], array_map(static fn (OperIrcop $entry): int => $entry->getNickId(), $assignments));
+        foreach ($assignments as $assignment) {
+            self::assertFalse($this->entityManager->isUninitializedObject($assignment->getRole()));
+        }
+    }
+
+    #[Test]
+    public function findByNickIdsReturnsEmptyForEmptyInput(): void
+    {
+        self::assertSame([], $this->repository->findByNickIds([]));
+    }
+
+    #[Test]
+    public function batchSnapshotCachesMissingAssignmentsAndInvalidatesAfterWrites(): void
+    {
+        $token = new stdClass();
+        $this->burstCache->beginBatch($token);
+        $this->burstCache->primeBatch($token, [], [901]);
+        self::assertNull($this->repository->findByNickId(901));
+
+        $role = $this->createOperRole('Admin');
+        $assignment = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 901, role: $role);
+        $this->repository->save($assignment);
+
+        self::assertSame($assignment, $this->repository->findByNickId(901));
+        $this->burstCache->finishBatch($token);
+    }
+
+    #[Test]
     public function loadsAssignmentRoleAndPermissionsTogetherForAuthorization(): void
     {
         $role = $this->createOperRole('Admin');
@@ -104,7 +153,7 @@ final class OperIrcopDoctrineRepositoryTest extends DoctrineIntegrationTestCase
         $this->expectException(UnexpectedValueException::class);
         $this->expectExceptionMessage('Authorization query did not return an IRCOP assignment.');
 
-        new OperIrcopDoctrineRepository($entityManager)->findByNickIdWithRolePermissions(250);
+        new OperIrcopDoctrineRepository($entityManager, new BurstIrcopCache())->findByNickIdWithRolePermissions(250);
     }
 
     #[Test]
@@ -322,7 +371,8 @@ final class OperIrcopDoctrineRepositoryTest extends DoctrineIntegrationTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->repository = new OperIrcopDoctrineRepository($this->entityManager);
+        $this->burstCache = new BurstIrcopCache();
+        $this->repository = new OperIrcopDoctrineRepository($this->entityManager, $this->burstCache);
     }
 
     private function setAddedAt(OperIrcop $ircop, DateTimeImmutable $time): void

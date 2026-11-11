@@ -6,6 +6,7 @@ namespace App\Tests\MemoServ\Adapter\Out\Persistence\Doctrine;
 
 use App\MemoServ\Adapter\Out\Persistence\Doctrine\MemoDoctrineRepository;
 use App\MemoServ\Application\Port\Out\MemoRepositoryInterface;
+use App\MemoServ\Application\UseCase\GetPendingNickNotice\BurstMemoNoticeCache;
 use App\MemoServ\Domain\Entity\Memo;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
 use DateTimeImmutable;
@@ -14,11 +15,13 @@ use Doctrine\ORM\Query;
 use Doctrine\ORM\QueryBuilder;
 use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use stdClass;
 
 #[CoversClass(MemoDoctrineRepository::class)]
+#[CoversClass(BurstMemoNoticeCache::class)]
 #[Group('integration')]
 final class MemoDoctrineRepositoryTest extends DoctrineIntegrationTestCase
 {
@@ -122,6 +125,94 @@ final class MemoDoctrineRepositoryTest extends DoctrineIntegrationTestCase
         $this->flushAndClear();
 
         self::assertSame(2, $this->repository->countUnreadByTargetNick(1));
+    }
+
+    #[Test]
+    public function batchUnreadCountsAreGroupedAndCacheInvalidatesForNickMutations(): void
+    {
+        $cache = new BurstMemoNoticeCache();
+        $repository = new MemoDoctrineRepository($this->entityManager, $cache);
+        $repository->save(new Memo(1, null, 2, 'Unread', new DateTimeImmutable()));
+        $repository->save(new Memo(1, null, 2, 'Read', new DateTimeImmutable()));
+        $repository->save(new Memo(2, null, 1, 'Other', new DateTimeImmutable()));
+        $readMemo = $repository->findByTargetNickAndIndex(1, 2);
+        self::assertNotNull($readMemo);
+        $readMemo->markAsRead(new DateTimeImmutable());
+        $repository->save($readMemo);
+        $this->flushAndClear();
+
+        self::assertSame([1 => 1, 2 => 1], $repository->countUnreadByTargetNickIds([1, 2, 999]));
+        self::assertSame([], $repository->countUnreadByTargetNickIds([]));
+
+        $cache->beginBatch([1, 2], [1 => 1, 2 => 1], new stdClass());
+        $repository->save(new Memo(1, null, 2, 'New', new DateTimeImmutable()));
+        self::assertNull($cache->countFor(1));
+        self::assertSame(2, $repository->countUnreadByTargetNickIds([1, 2])[1]);
+
+        $cache->replaceActiveCounts([1 => 2, 2 => 1]);
+        $readDuringBatch = new Memo(1, null, 2, 'Mark read', new DateTimeImmutable());
+        $repository->save($readDuringBatch);
+        $cache->replaceActiveCounts([1 => 3, 2 => 1]);
+        $readDuringBatch->markAsRead(new DateTimeImmutable());
+        $repository->save($readDuringBatch);
+        self::assertNull($cache->countFor(1));
+        $cache->replaceActiveCounts([1 => 2, 2 => 1]);
+        $repository->deleteByTargetNick(1);
+        self::assertNull($cache->countFor(1));
+        $cache->replaceActiveCounts([1 => 0, 2 => 1]);
+        $memo = new Memo(1, null, 2, 'Delete me', new DateTimeImmutable());
+        $repository->save($memo);
+        $cache->replaceActiveCounts([1 => 1, 2 => 1]);
+        $repository->delete($memo);
+        self::assertNull($cache->countFor(1));
+        $cache->replaceActiveCounts([1 => 0, 2 => 1]);
+        $repository->deleteAllForNick(2);
+        self::assertNull($cache->countFor(2));
+    }
+
+    #[Test]
+    public function countUnreadByTargetNickIdsGroupsCountsAndOmitsReadMemos(): void
+    {
+        $this->repository->save(new Memo(1, null, 2, 'First', new DateTimeImmutable()));
+        $this->repository->save(new Memo(1, null, 2, 'Read', new DateTimeImmutable()));
+        $this->repository->save(new Memo(2, null, 1, 'Second', new DateTimeImmutable()));
+        $readMemo = $this->repository->findByTargetNickAndIndex(1, 2);
+        self::assertNotNull($readMemo);
+        $readMemo->markAsRead(new DateTimeImmutable());
+        $this->repository->save($readMemo);
+        $this->flushAndClear();
+
+        self::assertSame([1 => 1, 2 => 1], $this->repository->countUnreadByTargetNickIds([1, 2, 999]));
+        self::assertSame([], $this->repository->countUnreadByTargetNickIds([]));
+    }
+
+    /** @param array<mixed> $row */
+    #[Test]
+    #[DataProvider('invalidGroupedRows')]
+    public function groupedUnreadCountsRejectMalformedRows(array $row): void
+    {
+        $query = $this->createStub(Query::class);
+        $query->method('getArrayResult')->willReturn([$row]);
+        $builder = $this->createStub(QueryBuilder::class);
+        $builder->method('select')->willReturnSelf();
+        $builder->method('from')->willReturnSelf();
+        $builder->method('where')->willReturnSelf();
+        $builder->method('andWhere')->willReturnSelf();
+        $builder->method('setParameter')->willReturnSelf();
+        $builder->method('groupBy')->willReturnSelf();
+        $builder->method('getQuery')->willReturn($query);
+        $entityManager = $this->createStub(EntityManagerInterface::class);
+        $entityManager->method('createQueryBuilder')->willReturn($builder);
+
+        $this->expectException(LogicException::class);
+        new MemoDoctrineRepository($entityManager)->countUnreadByTargetNickIds([1]);
+    }
+
+    /** @return iterable<string, array{array<mixed>}> */
+    public static function invalidGroupedRows(): iterable
+    {
+        yield 'missing field' => [['nickId' => 1]];
+        yield 'invalid value' => [['nickId' => 'bad', 'unreadCount' => 1]];
     }
 
     #[Test]
@@ -359,7 +450,7 @@ final class MemoDoctrineRepositoryTest extends DoctrineIntegrationTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->repository = new MemoDoctrineRepository($this->entityManager);
+        $this->repository = new MemoDoctrineRepository($this->entityManager, new BurstMemoNoticeCache());
     }
 
     private function repositoryWithUnexpectedIndexResult(): MemoDoctrineRepository
@@ -380,7 +471,7 @@ final class MemoDoctrineRepositoryTest extends DoctrineIntegrationTestCase
         $entityManager = $this->createStub(EntityManagerInterface::class);
         $entityManager->method('createQueryBuilder')->willReturn($queryBuilder);
 
-        return new MemoDoctrineRepository($entityManager);
+        return new MemoDoctrineRepository($entityManager, new BurstMemoNoticeCache());
     }
 
     private function repositoryWithUnexpectedDeleteResult(): MemoDoctrineRepository
@@ -392,6 +483,6 @@ final class MemoDoctrineRepositoryTest extends DoctrineIntegrationTestCase
         $entityManager = $this->createStub(EntityManagerInterface::class);
         $entityManager->method('createQuery')->willReturn($query);
 
-        return new MemoDoctrineRepository($entityManager);
+        return new MemoDoctrineRepository($entityManager, new BurstMemoNoticeCache());
     }
 }

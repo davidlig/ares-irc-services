@@ -12,6 +12,9 @@ interface RegisteredNickRepositoryInterface
 {
     public function save(RegisteredNick $nick): void;
 
+    /** @param list<RegisteredNick> $nicks Managed accounts with updated activity. */
+    public function saveActivityBatch(array $nicks): void;
+
     public function delete(RegisteredNick $nick): void;
 
     public function findByNick(string $nickname): ?RegisteredNick;
@@ -22,6 +25,11 @@ interface RegisteredNickRepositoryInterface
      * @return list<RegisteredNick>
      */
     public function findByNicks(array $nicknames): array;
+
+    /** @param list<string> $nicknames
+     * @return list<RegisteredNick>
+     */
+    public function findByNicknamesLower(array $nicknames): array;
 
     public function findById(int $id): ?RegisteredNick;
 

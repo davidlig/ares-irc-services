@@ -5,24 +5,35 @@ declare(strict_types=1);
 namespace App\MemoServ\Adapter\Out\Persistence\Doctrine;
 
 use App\MemoServ\Application\Port\Out\MemoRepositoryInterface;
+use App\MemoServ\Application\UseCase\GetPendingNickNotice\BurstMemoNoticeCache;
 use App\MemoServ\Domain\Entity\Memo;
 use Doctrine\ORM\EntityManagerInterface;
 use LogicException;
 
+use function array_key_exists;
+use function ctype_digit;
+use function is_array;
 use function is_int;
+use function is_string;
 
 final readonly class MemoDoctrineRepository implements MemoRepositoryInterface
 {
-    public function __construct(private EntityManagerInterface $em) {}
+    public function __construct(private EntityManagerInterface $em, private ?BurstMemoNoticeCache $noticeCache = null) {}
 
     public function save(Memo $memo): void
     {
+        if (null !== $memo->getTargetNickId()) {
+            $this->noticeCache?->invalidateCounts();
+        }
         $this->em->persist($memo);
         $this->em->flush();
     }
 
     public function delete(Memo $memo): void
     {
+        if (null !== $memo->getTargetNickId()) {
+            $this->noticeCache?->invalidateCounts();
+        }
         $this->em->remove($memo);
         $this->em->flush();
     }
@@ -57,6 +68,40 @@ final readonly class MemoDoctrineRepository implements MemoRepositoryInterface
             ->setParameter('nickId', $nickId)
             ->getQuery()
             ->getSingleScalarResult();
+    }
+
+    public function countUnreadByTargetNickIds(array $nickIds): array
+    {
+        if ([] === $nickIds) {
+            return [];
+        }
+
+        $rows = $this->em->createQueryBuilder()
+            ->select('m.targetNickId AS nickId, COUNT(m.id) AS unreadCount')
+            ->from(Memo::class, 'm')
+            ->where('m.targetNickId IN (:nickIds)')
+            ->andWhere('m.readAt IS NULL')
+            ->setParameter('nickIds', $nickIds)
+            ->groupBy('m.targetNickId')
+            ->getQuery()
+            ->getArrayResult();
+
+        $counts = [];
+        foreach ($rows as $row) {
+            if (!is_array($row) || !array_key_exists('nickId', $row) || !array_key_exists('unreadCount', $row)) {
+                throw new LogicException('Memo grouped unread count query returned an invalid row.');
+            }
+            $nickId = $row['nickId'];
+            $unreadCount = $row['unreadCount'];
+            if ((!is_int($nickId) && (!is_string($nickId) || !ctype_digit($nickId)))
+                || (!is_int($unreadCount) && (!is_string($unreadCount) || !ctype_digit($unreadCount)))
+            ) {
+                throw new LogicException('Memo grouped unread count query returned an invalid row.');
+            }
+            $counts[(int) $nickId] = (int) $unreadCount;
+        }
+
+        return $counts;
     }
 
     public function countUnreadByTargetChannel(int $channelId): int
@@ -143,6 +188,7 @@ final readonly class MemoDoctrineRepository implements MemoRepositoryInterface
 
     public function deleteByTargetNick(int $nickId): int
     {
+        $this->noticeCache?->invalidateCounts();
         $affectedRows = $this->em->createQuery(
             'DELETE FROM App\\MemoServ\\Domain\\Entity\\Memo m WHERE m.targetNickId = :nickId'
         )
@@ -173,6 +219,7 @@ final readonly class MemoDoctrineRepository implements MemoRepositoryInterface
 
     public function deleteAllForNick(int $nickId): void
     {
+        $this->noticeCache?->invalidateCounts();
         $this->em->createQuery(
             'DELETE FROM App\MemoServ\Domain\Entity\Memo m WHERE m.targetNickId = :nickId OR m.senderNickId = :nickId'
         )

@@ -9,6 +9,7 @@ use App\Irc\Application\Port\In\NativeNicknameAuthenticationInterface;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\NickChangePreservesIdentificationInterface;
 use App\Irc\Application\PublishedEvent\IrcMessageHandledEvent;
+use App\Irc\Application\PublishedEvent\NetworkConnectionLostEvent;
 use App\Irc\Application\PublishedEvent\NetworkSynchronizationCompletedEvent;
 use App\Irc\Application\PublishedEvent\UserJoinedNetworkAppEvent;
 use App\Irc\Application\PublishedEvent\UserLeftNetworkEvent;
@@ -16,15 +17,23 @@ use App\Irc\Application\PublishedEvent\UserModesChangedEvent;
 use App\Irc\Application\PublishedEvent\UserNicknameChangedEvent;
 use App\NickServ\Adapter\Out\User\IrcNetworkUserMapper;
 use App\NickServ\Application\Port\Out\Clock;
+use App\NickServ\Application\Port\Out\NickServEventPublisher;
 use App\NickServ\Application\Port\Out\PendingNickProtectionRegistryInterface;
+use App\NickServ\Application\PublishedEvent\NickBurstBatchFinishedEvent;
+use App\NickServ\Application\PublishedEvent\NickBurstBatchStartedEvent;
 use App\NickServ\Application\Service\BurstState;
 use App\NickServ\Application\Service\IdentifiedUserVhostSyncService;
 use App\NickServ\Application\Service\NickProtectionService;
+use App\NickServ\Application\Service\PendingNickActivities;
 use App\NickServ\Application\UseCase\SyncNetworkIdentification\SyncNetworkIdentification;
 use App\NickServ\Application\UseCase\SyncNetworkIdentification\SyncNetworkIdentificationHandlerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
+use function array_chunk;
+use function array_map;
+use function array_values;
 use function str_contains;
+use function strtolower;
 
 /**
  * Subscriber: forwards Application-layer events to NickServ services.
@@ -43,6 +52,8 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
         private Clock $clock,
         private SyncNetworkIdentificationHandlerInterface $syncNetworkIdentification,
         private ?PendingNickProtectionRegistryInterface $pendingProtectionRegistry = null,
+        private PendingNickActivities $pendingQuitActivities = new PendingNickActivities(),
+        private ?NickServEventPublisher $batchEventPublisher = null,
     ) {}
 
     /**
@@ -59,6 +70,7 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
             UserModesChangedEvent::class => ['onUserModeChanged', 0],
             NetworkSynchronizationCompletedEvent::class => ['onBurstComplete', -256],
             IrcMessageHandledEvent::class => ['onIrcMessageProcessed', -200],
+            NetworkConnectionLostEvent::class => ['onConnectionLost', 0],
         ];
     }
 
@@ -101,9 +113,31 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
         $this->burstState->markComplete();
         $pending = $this->burstState->takePending();
 
-        foreach ($pending as $user) {
-            $this->identifiedUserVhostSync->syncVhostForUser($user);
-            $this->nickProtectionService->enforceProtection($user, $occurredAt);
+        foreach (array_chunk($pending, 200) as $batch) {
+            $accounts = [];
+            foreach ($this->identifiedUserVhostSync->findAccountsForBurst(array_map(static fn ($user): string => $user->nick, $batch)) as $account) {
+                $accounts[strtolower($account->getNickname())] = $account;
+            }
+            $activityBatch = new PendingNickActivities();
+            $ids = array_map(static fn ($account): int => $account->getId(), array_values($accounts));
+            $batchStarted = new NickBurstBatchStartedEvent($ids);
+            try {
+                $this->batchEventPublisher?->publish($batchStarted);
+                foreach ($batch as $user) {
+                    $account = $accounts[strtolower($user->nick)] ?? null;
+                    $this->identifiedUserVhostSync->syncVhostForLoadedUser($user, $account);
+                    $this->nickProtectionService->enforceProtectionWithAccount($user, $occurredAt, $account, $activityBatch);
+                }
+            } finally {
+                try {
+                    $activities = $activityBatch->all();
+                    if ([] !== $activities) {
+                        $this->nickProtectionService->saveActivities($activities);
+                    }
+                } finally {
+                    $this->batchEventPublisher?->publish(new NickBurstBatchFinishedEvent($batchStarted->token));
+                }
+            }
         }
     }
 
@@ -175,7 +209,7 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
     {
         $this->pendingProtectionRegistry?->cancel($event->uid);
 
-        $this->nickProtectionService->onUserQuit(
+        $account = $this->nickProtectionService->onUserQuit(
             $event->uid,
             $event->nickname,
             $event->reason,
@@ -184,11 +218,17 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
             $event->hostname,
             $event->ipBase64,
             $this->clock->now(),
+            true,
         );
+        if (null !== $account) {
+            $this->pendingQuitActivities->add($account);
+        }
     }
 
     public function onIrcMessageProcessed(IrcMessageHandledEvent $event): void
     {
+        $this->flushQuitActivities();
+
         if (null === $this->pendingProtectionRegistry) {
             return;
         }
@@ -205,6 +245,23 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
             }
 
             $this->nickProtectionService->enforceProtection(IrcNetworkUserMapper::map($senderView), $this->clock->now());
+        }
+    }
+
+    public function onConnectionLost(NetworkConnectionLostEvent $event): void
+    {
+        $this->flushQuitActivities();
+    }
+
+    private function flushQuitActivities(): void
+    {
+        $accounts = $this->pendingQuitActivities->all();
+        if ([] !== $accounts) {
+            try {
+                $this->nickProtectionService->saveActivities($accounts);
+            } finally {
+                $this->pendingQuitActivities->clear();
+            }
         }
     }
 

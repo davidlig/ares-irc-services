@@ -21,6 +21,7 @@ use Doctrine\ORM\NativeQuery;
 use Doctrine\ORM\Query;
 use Doctrine\ORM\Query\ResultSetMapping;
 use Doctrine\ORM\QueryBuilder;
+use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
@@ -156,6 +157,55 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
     }
 
     #[Test]
+    public function saveActivityBatchPreservesIndividualActivityAndQuitDetails(): void
+    {
+        $alice = $this->createRegisteredNick('Alice', 'alice@example.com');
+        $bob = $this->createRegisteredNick('Bob', 'bob@example.com');
+        $this->repository->save($alice);
+        $this->repository->save($bob);
+        $alice->markSeen(new DateTimeImmutable('2026-01-01 01:02:03'));
+        $bob->markSeen(new DateTimeImmutable('2026-01-01 01:02:04'));
+        $alice->updateQuitMessage('split (a@host)');
+        $bob->updateQuitMessage('split (b@host)');
+        $alice->updateLastConnection('192.0.2.1', 'alice.example');
+        $bob->updateLastConnection('192.0.2.2', 'bob.example');
+
+        $this->repository->saveActivityBatch([$alice, $bob]);
+        $this->entityManager->clear();
+
+        $alice = $this->repository->findByNick('Alice');
+        $bob = $this->repository->findByNick('Bob');
+        self::assertNotNull($alice);
+        self::assertNotNull($bob);
+        self::assertSame('2026-01-01 01:02:03', $alice->getLastSeenAt()?->format('Y-m-d H:i:s'));
+        self::assertSame('2026-01-01 01:02:04', $bob->getLastSeenAt()?->format('Y-m-d H:i:s'));
+        self::assertSame('split (a@host)', $alice->getLastQuitMessage());
+        self::assertSame('split (b@host)', $bob->getLastQuitMessage());
+        self::assertSame('192.0.2.1', $alice->getLastConnectIp());
+        self::assertSame('192.0.2.2', $bob->getLastConnectIp());
+        self::assertSame('alice.example', $alice->getLastConnectHost());
+        self::assertSame('bob.example', $bob->getLastConnectHost());
+    }
+
+    #[Test]
+    public function saveActivityBatchAcceptsAnEmptyBatch(): void
+    {
+        $this->repository->saveActivityBatch([]);
+
+        self::assertTrue($this->entityManager->isOpen());
+    }
+
+    #[Test]
+    public function saveActivityBatchRejectsUnmanagedAccounts(): void
+    {
+        $nick = $this->createRegisteredNick('Alice', 'alice@example.com');
+        $nick->markSeen(new DateTimeImmutable());
+
+        $this->expectException(LogicException::class);
+        $this->repository->saveActivityBatch([$nick]);
+    }
+
+    #[Test]
     public function findByNickIsCaseInsensitive(): void
     {
         $nick = $this->createRegisteredNick('TestUser', 'test@example.com');
@@ -176,6 +226,18 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
 
         self::assertSame([], $this->repository->findByNicks([]));
         $accounts = $this->repository->findByNicks(['ALICE', 'alice', 'Missing']);
+        self::assertCount(1, $accounts);
+        self::assertSame('Alice', $accounts[0]->getNickname());
+    }
+
+    #[Test]
+    public function findByNicknamesLowerReturnsTheSameCaseInsensitiveMatches(): void
+    {
+        $this->repository->save($this->createRegisteredNick('Alice', 'alice@example.com'));
+        $this->flushAndClear();
+
+        self::assertSame([], $this->repository->findByNicknamesLower([]));
+        $accounts = $this->repository->findByNicknamesLower(['ALICE', 'alice', 'missing']);
         self::assertCount(1, $accounts);
         self::assertSame('Alice', $accounts[0]->getNickname());
     }
