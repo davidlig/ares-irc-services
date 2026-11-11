@@ -109,6 +109,11 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
         return $accounts;
     }
 
+    public function findByNicknamesLower(array $nicknames): array
+    {
+        return $this->findByNicks($nicknames);
+    }
+
     public function findById(int $id): ?RegisteredNick
     {
         $nick = $this->em->find(RegisteredNick::class, $id);

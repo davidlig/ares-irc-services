@@ -17,7 +17,10 @@ use App\Irc\Application\PublishedEvent\UserModesChangedEvent;
 use App\Irc\Application\PublishedEvent\UserNicknameChangedEvent;
 use App\NickServ\Adapter\Out\User\IrcNetworkUserMapper;
 use App\NickServ\Application\Port\Out\Clock;
+use App\NickServ\Application\Port\Out\NickServEventPublisher;
 use App\NickServ\Application\Port\Out\PendingNickProtectionRegistryInterface;
+use App\NickServ\Application\PublishedEvent\NickBurstBatchFinishedEvent;
+use App\NickServ\Application\PublishedEvent\NickBurstBatchStartedEvent;
 use App\NickServ\Application\Service\BurstState;
 use App\NickServ\Application\Service\IdentifiedUserVhostSyncService;
 use App\NickServ\Application\Service\NickProtectionService;
@@ -28,6 +31,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 use function array_chunk;
 use function array_map;
+use function array_values;
 use function str_contains;
 use function strtolower;
 
@@ -49,6 +53,7 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
         private SyncNetworkIdentificationHandlerInterface $syncNetworkIdentification,
         private ?PendingNickProtectionRegistryInterface $pendingProtectionRegistry = null,
         private PendingNickActivities $pendingQuitActivities = new PendingNickActivities(),
+        private ?NickServEventPublisher $batchEventPublisher = null,
     ) {}
 
     /**
@@ -114,16 +119,23 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
                 $accounts[strtolower($account->getNickname())] = $account;
             }
             $activityBatch = new PendingNickActivities();
+            $ids = array_map(static fn ($account): int => $account->getId(), array_values($accounts));
+            $batchStarted = new NickBurstBatchStartedEvent($ids);
             try {
+                $this->batchEventPublisher?->publish($batchStarted);
                 foreach ($batch as $user) {
                     $account = $accounts[strtolower($user->nick)] ?? null;
                     $this->identifiedUserVhostSync->syncVhostForLoadedUser($user, $account);
                     $this->nickProtectionService->enforceProtectionWithAccount($user, $occurredAt, $account, $activityBatch);
                 }
             } finally {
-                $activities = $activityBatch->all();
-                if ([] !== $activities) {
-                    $this->nickProtectionService->saveActivities($activities);
+                try {
+                    $activities = $activityBatch->all();
+                    if ([] !== $activities) {
+                        $this->nickProtectionService->saveActivities($activities);
+                    }
+                } finally {
+                    $this->batchEventPublisher?->publish(new NickBurstBatchFinishedEvent($batchStarted->token));
                 }
             }
         }

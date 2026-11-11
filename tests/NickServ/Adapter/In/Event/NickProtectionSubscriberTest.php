@@ -18,7 +18,11 @@ use App\Irc\Application\PublishedEvent\UserJoinedNetworkDTO;
 use App\Irc\Application\PublishedEvent\UserLeftNetworkEvent;
 use App\Irc\Application\PublishedEvent\UserModesChangedEvent;
 use App\Irc\Application\PublishedEvent\UserNicknameChangedEvent;
+use App\MemoServ\Adapter\In\Event\NickBurstMemoCacheSubscriber;
+use App\MemoServ\Application\Port\Out\MemoRepositoryInterface;
+use App\MemoServ\Application\UseCase\GetPendingNickNotice\BurstMemoNoticeCache;
 use App\NickServ\Adapter\In\Event\NickProtectionSubscriber;
+use App\NickServ\Adapter\Out\Event\SymfonyNickServEventPublisher;
 use App\NickServ\Adapter\Out\InMemory\IdentifiedSessionRegistry;
 use App\NickServ\Adapter\Out\InMemory\SessionLanguageRegistry;
 use App\NickServ\Application\Model\NetworkUser;
@@ -35,6 +39,8 @@ use App\NickServ\Application\Port\Out\NickServEventPublisher;
 use App\NickServ\Application\Port\Out\PendingNickProtectionRegistryInterface;
 use App\NickServ\Application\Port\Out\PendingNickRestoreRegistryInterface;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
+use App\NickServ\Application\PublishedEvent\NickBurstBatchFinishedEvent;
+use App\NickServ\Application\PublishedEvent\NickBurstBatchStartedEvent;
 use App\NickServ\Application\PublishedEvent\NickIdentifiedEvent;
 use App\NickServ\Application\Service\BurstState;
 use App\NickServ\Application\Service\ForbiddenNickService;
@@ -46,6 +52,12 @@ use App\NickServ\Application\UseCase\IssueMigrationRescueToken\IssueMigrationRes
 use App\NickServ\Application\UseCase\SyncNetworkIdentification\SyncNetworkIdentification;
 use App\NickServ\Application\UseCase\SyncNetworkIdentification\SyncNetworkIdentificationHandlerInterface;
 use App\NickServ\Domain\Entity\RegisteredNick;
+use App\OperServ\Adapter\In\Event\NickBurstIrcopCacheSubscriber;
+use App\OperServ\Adapter\Out\Persistence\Doctrine\BurstIrcopCache;
+use App\OperServ\Domain\Entity\OperIrcop;
+use App\OperServ\Domain\Entity\OperRole;
+use App\OperServ\Domain\Repository\OperIrcopRepositoryInterface;
+use App\Shared\Application\Port\EventBusInterface;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -53,11 +65,14 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
 use RuntimeException;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 use function count;
 
 #[CoversClass(NickProtectionSubscriber::class)]
 #[CoversClass(PendingNickActivities::class)]
+#[CoversClass(IdentifiedUserVhostSyncService::class)]
+#[CoversClass(NickProtectionService::class)]
 final class NickProtectionSubscriberTest extends TestCase
 {
     private BurstState $burstState;
@@ -227,7 +242,7 @@ final class NickProtectionSubscriberTest extends TestCase
         $this->networkUserLookup->expects(self::never())->method('findByUid');
         $this->burstState->addPending(new NetworkUser('001AAA', 'First', 'i', 'h', 'c', 'ip'));
         $this->burstState->addPending(new NetworkUser('001AAB', 'Second', 'i', 'h', 'c', 'ip'));
-        $nickRepository->expects(self::once())->method('findByNicks')
+        $nickRepository->expects(self::once())->method('findByNicknamesLower')
             ->with(['First', 'Second'])->willReturn([]);
         $nickRepository->expects(self::never())->method('findByNick');
         $this->notifier->expects(self::exactly(2))->method('setUserVhost');
@@ -248,7 +263,7 @@ final class NickProtectionSubscriberTest extends TestCase
         $account->changeVhost('alice.example');
         new ReflectionProperty(RegisteredNick::class, 'id')->setValue($account, 42);
         $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
-        $repo->expects(self::once())->method('findByNicks')->with(['ALICE'])->willReturn([$account]);
+        $repo->expects(self::once())->method('findByNicknamesLower')->with(['ALICE'])->willReturn([$account]);
         $repo->expects(self::never())->method('findByNick');
         $repo->expects(self::once())->method('saveActivityBatch')->with([$account]);
         $publisher = $this->createMock(NickServEventPublisher::class);
@@ -278,7 +293,7 @@ final class NickProtectionSubscriberTest extends TestCase
         new ReflectionProperty(RegisteredNick::class, 'id')->setValue($alice, 1);
         new ReflectionProperty(RegisteredNick::class, 'id')->setValue($bob, 2);
         $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
-        $repo->method('findByNicks')->willReturn([$alice, $bob]);
+        $repo->method('findByNicknamesLower')->willReturn([$alice, $bob]);
         $repo->expects(self::never())->method('save');
         $repo->expects(self::once())->method('saveActivityBatch')->with([$alice, $bob]);
         $publisher = $this->createMock(NickServEventPublisher::class);
@@ -304,7 +319,7 @@ final class NickProtectionSubscriberTest extends TestCase
         $alice->activate();
         new ReflectionProperty(RegisteredNick::class, 'id')->setValue($alice, 1);
         $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
-        $repo->method('findByNicks')->willReturn([$alice]);
+        $repo->method('findByNicknamesLower')->willReturn([$alice]);
         $repo->expects(self::once())->method('saveActivityBatch')->with([$alice]);
         $publisher = $this->createMock(NickServEventPublisher::class);
         $publisher->expects(self::once())->method('publish')->willThrowException(new RuntimeException('listener failed'));
@@ -318,13 +333,71 @@ final class NickProtectionSubscriberTest extends TestCase
     }
 
     #[Test]
+    public function onBurstCompletePublishesBoundedBatchLifecycle(): void
+    {
+        $this->networkUserLookup->expects(self::never())->method('findByUid');
+        $this->notifier->expects(self::never())->method('setUserVhost');
+        $alice = RegisteredNick::createPending('Alice', 'hash', 'a@example.com', 'en', $this->now, $this->now);
+        new ReflectionProperty(RegisteredNick::class, 'id')->setValue($alice, 1);
+        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repo->method('findByNicknamesLower')->willReturn([$alice]);
+        $events = [];
+        $publisher = $this->createMock(NickServEventPublisher::class);
+        $publisher->expects(self::exactly(2))->method('publish')->willReturnCallback(
+            static function ($event) use (&$events): void { $events[] = $event; },
+        );
+        $this->initializeSubscriber($repo, null, $publisher);
+        $this->networkUserLookup->expects(self::never())->method('findByUid');
+        $this->notifier->expects(self::once())->method('setUserVhost');
+        $this->burstState->addPending(new NetworkUser('001AAA', 'Alice', 'i', 'h', 'c', 'ip'));
+
+        $this->subscriber->onBurstComplete(new NetworkSynchronizationCompletedEvent('001'));
+
+        self::assertInstanceOf(NickBurstBatchStartedEvent::class, $events[0]);
+        self::assertSame([1], $events[0]->nickIds);
+        self::assertInstanceOf(NickBurstBatchFinishedEvent::class, $events[1]);
+        self::assertSame($events[0]->token, $events[1]->token);
+    }
+
+    #[Test]
+    public function onBurstCompleteEndsBatchWhenPreloadingFails(): void
+    {
+        $this->networkUserLookup->expects(self::never())->method('findByUid');
+        $this->notifier->expects(self::never())->method('setUserVhost');
+        $events = [];
+        $publisher = $this->createMock(NickServEventPublisher::class);
+        $publisher->expects(self::exactly(2))->method('publish')->willReturnCallback(
+            static function ($event) use (&$events): void {
+                $events[] = $event;
+                if ($event instanceof NickBurstBatchStartedEvent) {
+                    throw new RuntimeException('preload failed');
+                }
+            },
+        );
+        $this->initializeSubscriber($this->createStub(RegisteredNickRepositoryInterface::class), null, $publisher);
+        $this->networkUserLookup->expects(self::never())->method('findByUid');
+        $this->notifier->expects(self::never())->method('setUserVhost');
+        $this->burstState->addPending(new NetworkUser('001AAA', 'Alice', 'i', 'h', 'c', 'ip'));
+
+        try {
+            $this->subscriber->onBurstComplete(new NetworkSynchronizationCompletedEvent('001'));
+            self::fail('A preload failure must propagate.');
+        } catch (RuntimeException $e) {
+            self::assertSame('preload failed', $e->getMessage());
+        }
+        self::assertInstanceOf(NickBurstBatchStartedEvent::class, $events[0]);
+        self::assertInstanceOf(NickBurstBatchFinishedEvent::class, $events[1]);
+        self::assertSame($events[0]->token, $events[1]->token);
+    }
+
+    #[Test]
     public function onBurstCompleteBoundsNicknameLookupBatches(): void
     {
         $this->networkUserLookup->expects(self::never())->method('findByUid');
         $this->notifier->expects(self::never())->method('setUserVhost');
         $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $sizes = [];
-        $repo->expects(self::exactly(2))->method('findByNicks')->willReturnCallback(
+        $repo->expects(self::exactly(2))->method('findByNicknamesLower')->willReturnCallback(
             static function (array $nicknames) use (&$sizes): array {
                 $sizes[] = count($nicknames);
 
@@ -1097,7 +1170,7 @@ final class NickProtectionSubscriberTest extends TestCase
         $this->initializeSubscriber($this->createStub(RegisteredNickRepositoryInterface::class));
     }
 
-    private function initializeSubscriber(RegisteredNickRepositoryInterface $nickRepository, ?NickServEventPublisher $publisher = null): void
+    private function initializeSubscriber(RegisteredNickRepositoryInterface $nickRepository, ?NickServEventPublisher $publisher = null, ?NickServEventPublisher $batchPublisher = null): void
     {
         $this->burstState = new BurstState();
         $this->networkUserLookup = $this->createMock(NetworkUserLookupPort::class);
@@ -1151,6 +1224,7 @@ final class NickProtectionSubscriberTest extends TestCase
             $connectionHolder,
             $this->clock,
             $this->syncNetworkIdentification,
+            batchEventPublisher: $batchPublisher,
         );
     }
 

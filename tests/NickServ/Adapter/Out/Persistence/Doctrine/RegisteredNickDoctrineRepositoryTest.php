@@ -231,6 +231,18 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
     }
 
     #[Test]
+    public function findByNicknamesLowerReturnsTheSameCaseInsensitiveMatches(): void
+    {
+        $this->repository->save($this->createRegisteredNick('Alice', 'alice@example.com'));
+        $this->flushAndClear();
+
+        self::assertSame([], $this->repository->findByNicknamesLower([]));
+        $accounts = $this->repository->findByNicknamesLower(['ALICE', 'alice', 'missing']);
+        self::assertCount(1, $accounts);
+        self::assertSame('Alice', $accounts[0]->getNickname());
+    }
+
+    #[Test]
     public function findByNickReturnsNullWhenNotFound(): void
     {
         self::assertNull($this->repository->findByNick('NonExistent'));

@@ -50,7 +50,7 @@ final readonly class IdentifiedUserVhostSyncService
      */
     public function findAccountsForBurst(array $nicknames): array
     {
-        return $this->nickRepository->findByNicks($nicknames);
+        return $this->nickRepository->findByNicknamesLower($nicknames);
     }
 
     public function syncVhostForLoadedUser(NetworkUser $user, ?RegisteredNick $account): void
