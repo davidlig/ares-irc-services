@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\ChanServ\Adapter\In\Event;
 
 use App\ChanServ\Adapter\In\Event\ChanServBurstChannelSnapshotSubscriber;
+use App\ChanServ\Application\Model\BurstRankEventScope;
 use App\ChanServ\Application\Port\Out\RegisteredChannelBurstSnapshot;
 use App\Irc\Application\PublishedEvent\NetworkConnectionEstablishedEvent;
 use App\Irc\Application\PublishedEvent\NetworkConnectionLostEvent;
@@ -27,7 +28,7 @@ final class ChanServBurstChannelSnapshotSubscriberTest extends TestCase
         $snapshot = $this->createMock(RegisteredChannelBurstSnapshot::class);
         $snapshot->expects(self::once())->method('beginBurst');
         $snapshot->expects(self::exactly(2))->method('endBurst');
-        $subscriber = new ChanServBurstChannelSnapshotSubscriber($snapshot);
+        $subscriber = new ChanServBurstChannelSnapshotSubscriber($snapshot, new BurstRankEventScope());
         $subscriber->onConnect();
         $subscriber->onEnd();
         $subscriber->onEnd();

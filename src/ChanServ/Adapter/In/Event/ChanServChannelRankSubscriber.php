@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Adapter\In\Event;
 
+use App\ChanServ\Application\Model\BurstRankEventScope;
+use App\ChanServ\Application\Port\Out\RegisteredChannelBurstSnapshot;
 use App\ChanServ\Application\PublishedEvent\ChannelFounderChangedEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelSecureEnabledEvent;
 use App\ChanServ\Application\UseCase\EnforceRanks\EnforceChannelRanks;
@@ -16,7 +18,6 @@ use App\Irc\Application\PublishedEvent\ChannelMemberRankGrantedEvent;
 use App\Irc\Application\PublishedEvent\ChannelSynchronizedEvent;
 use App\Irc\Application\PublishedEvent\IrcMessageHandledEvent;
 use App\Irc\Application\PublishedEvent\IrcMessageHandlingStartedEvent;
-use App\Irc\Application\PublishedEvent\NetworkSynchronizationCompletedEvent;
 use App\Irc\Application\PublishedEvent\UserDepartedChannelEvent;
 use App\Irc\Application\PublishedEvent\UserJoinedChannelEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -29,6 +30,8 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
         private SynchronizeAllChannelRanksHandler $synchronizeAllChannelRanks,
         private PendingChannelRankSynchronizations $pending,
         private BurstCompletePort $burstComplete,
+        private BurstRankEventScope $burstRanks,
+        private RegisteredChannelBurstSnapshot $burstChannels,
     ) {}
 
     public static function getSubscribedEvents(): array
@@ -38,7 +41,6 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
             IrcMessageHandledEvent::class => ['onIrcMessageHandled', -255],
             UserJoinedChannelEvent::class => ['onUserJoinedChannel', 0],
             UserDepartedChannelEvent::class => ['onUserLeftChannel', 0],
-            NetworkSynchronizationCompletedEvent::class => ['onNetworkSynchronizationCompleted', 0],
             ChannelSynchronizedEvent::class => ['onChannelSynced', 0],
             ChannelSecureEnabledEvent::class => ['onChannelSecureEnabled', 0],
             ChannelFounderChangedEvent::class => ['onChannelFounderChanged', 0],
@@ -74,6 +76,24 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
 
     public function onUserLeftChannel(UserDepartedChannelEvent $event): void
     {
+        if ($this->burstRanks->active()) {
+            $snapshot = $this->burstRanks->channel($event->channelName);
+            if (null !== $snapshot) {
+                [$policy, $network] = $snapshot;
+                $result = $this->enforceChannelRanks->handleKnownPolicyAndNetwork(
+                    new EnforceChannelRanks($event->channelName, RankEnforcementTrigger::MemberLeft, $event->uid),
+                    $policy,
+                    $network,
+                    true,
+                );
+                if ($result->activityTouched) {
+                    $this->burstRanks->markActivity($event->channelName);
+                }
+            }
+
+            return;
+        }
+
         $this->enforceChannelRanks->handle(new EnforceChannelRanks(
             $event->channelName,
             RankEnforcementTrigger::MemberLeft,
@@ -89,6 +109,10 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
     public function onChannelSynced(ChannelSynchronizedEvent $event): void
     {
         if (!$this->burstComplete->isComplete()) {
+            if (false !== $this->burstChannels->contains($event->channelName)) {
+                $this->burstRanks->markActivity($event->channelName);
+            }
+
             return;
         }
 

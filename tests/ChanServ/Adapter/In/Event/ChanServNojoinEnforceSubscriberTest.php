@@ -22,7 +22,6 @@ final class ChanServNojoinEnforceSubscriberTest extends TestCase
     {
         self::assertSame([
             UserJoinedChannelEvent::class => ['onUserJoined', 10],
-            NetworkSynchronizationCompletedEvent::class => ['onSyncComplete', 10],
         ], ChanServNojoinEnforceSubscriber::getSubscribedEvents());
 
         $handler = $this->createMock(EnforceChannelNojoinHandlerInterface::class);

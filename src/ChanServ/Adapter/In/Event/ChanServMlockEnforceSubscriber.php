@@ -12,7 +12,6 @@ use App\ChanServ\Application\UseCase\EnforceMlock\SynchronizeAllChannelMlocksHan
 use App\Irc\Application\PublishedEvent\ChannelSettingsChangedEvent;
 use App\Irc\Application\PublishedEvent\ChannelSynchronizedEvent;
 use App\Irc\Application\PublishedEvent\ExistingChannelJoinObservedEvent;
-use App\Irc\Application\PublishedEvent\NetworkSynchronizationCompletedEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /** Translates IRC events to the ChanServ MLOCK enforcement use case. */
@@ -26,7 +25,6 @@ final readonly class ChanServMlockEnforceSubscriber implements EventSubscriberIn
     public static function getSubscribedEvents(): array
     {
         return [
-            NetworkSynchronizationCompletedEvent::class => ['onNetworkSynchronizationCompleted', -10],
             ChannelSynchronizedEvent::class => ['onChannelSynced', -10],
             ExistingChannelJoinObservedEvent::class => ['onExistingChannelJoinObserved', -10],
             ChannelSettingsChangedEvent::class => ['onChannelModesChanged', 255],

@@ -18,7 +18,7 @@ final class ChanServForbiddenChannelBurstSubscriberTest extends TestCase
     public function subscribesToCorrectEventAtPriorityTen(): void
     {
         self::assertSame(
-            [NetworkSynchronizationCompletedEvent::class => ['onNetworkSyncComplete', 10]],
+            [],
             ChanServForbiddenChannelBurstSubscriber::getSubscribedEvents(),
         );
     }

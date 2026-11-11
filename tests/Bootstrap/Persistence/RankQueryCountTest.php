@@ -12,7 +12,9 @@ use App\ChanServ\Adapter\Out\Persistence\Doctrine\ChannelAccessDoctrineRepositor
 use App\ChanServ\Adapter\Out\Persistence\Doctrine\ChannelLevelDoctrineRepository;
 use App\ChanServ\Adapter\Out\Persistence\Doctrine\RegisteredChannelDoctrineRepository;
 use App\ChanServ\Adapter\Out\Persistence\DoctrineChannelRankPolicyRepository;
+use App\ChanServ\Application\Model\BurstRankEventScope;
 use App\ChanServ\Application\Port\Out\ChannelRankActions;
+use App\ChanServ\Application\Port\Out\RegisteredChannelBurstSnapshot;
 use App\ChanServ\Application\UseCase\EnforceRanks\EnforceChannelRanksHandler;
 use App\ChanServ\Application\UseCase\EnforceRanks\SynchronizeAllChannelRanksHandler;
 use App\ChanServ\Domain\Policy\AutomaticRankPolicy;
@@ -106,7 +108,7 @@ final class RankQueryCountTest extends TestCase
             $dispatcher->addSubscriber(new PublishedIrcEventBridge($dispatcher));
             $burst = $this->createStub(BurstCompletePort::class);
             $burst->method('isComplete')->willReturn(true);
-            $dispatcher->addSubscriber(new ChanServChannelRankSubscriber($handler, new SynchronizeAllChannelRanksHandler($policy, $handler), new PendingChannelRankSynchronizations(), $burst));
+            $dispatcher->addSubscriber(new ChanServChannelRankSubscriber($handler, new SynchronizeAllChannelRanksHandler($policy, $handler), new PendingChannelRankSynchronizations(), $burst, new BurstRankEventScope(), $this->createStub(RegisteredChannelBurstSnapshot::class)));
             $channelName = new ChannelName('#test');
             $channel = new Channel($channelName, '', new DateTimeImmutable('@100'));
             $channel->syncMember(new Uid('U1'), ChannelMemberRole::None);

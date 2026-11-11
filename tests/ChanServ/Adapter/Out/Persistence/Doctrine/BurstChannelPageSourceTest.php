@@ -7,6 +7,7 @@ namespace App\Tests\ChanServ\Adapter\Out\Persistence\Doctrine;
 use App\ChanServ\Adapter\Out\Persistence\Doctrine\BurstChannelPageSource;
 use App\ChanServ\Adapter\Out\Persistence\Doctrine\ChannelAkickDoctrineRepository;
 use App\ChanServ\Adapter\Out\Persistence\Doctrine\RegisteredChannelDoctrineRepository;
+use App\ChanServ\Application\Model\BurstChannelPage;
 use App\ChanServ\Domain\Entity\ChannelAccess;
 use App\ChanServ\Domain\Entity\ChannelAkick;
 use App\ChanServ\Domain\Entity\ChannelLevel;
@@ -21,6 +22,7 @@ use function array_map;
 use function iterator_to_array;
 
 #[CoversClass(BurstChannelPageSource::class)]
+#[CoversClass(BurstChannelPage::class)]
 final class BurstChannelPageSourceTest extends DoctrineIntegrationTestCase
 {
     #[Test]

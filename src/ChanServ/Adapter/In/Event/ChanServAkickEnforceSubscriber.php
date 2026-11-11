@@ -27,7 +27,6 @@ final readonly class ChanServAkickEnforceSubscriber implements EventSubscriberIn
     {
         return [
             UserJoinedChannelEvent::class => ['onUserJoined', 0],
-            NetworkSynchronizationCompletedEvent::class => ['onSyncComplete', 0],
         ];
     }
 

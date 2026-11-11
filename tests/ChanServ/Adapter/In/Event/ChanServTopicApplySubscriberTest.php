@@ -57,7 +57,6 @@ final class ChanServTopicApplySubscriberTest extends TestCase
             [
                 ChannelSynchronizedEvent::class => ['onChannelSynced', -20],
                 ExistingChannelJoinObservedEvent::class => ['onExistingChannelJoinObserved', -20],
-                NetworkSynchronizationCompletedEvent::class => ['onSyncComplete', -20],
             ],
             ChanServTopicApplySubscriber::getSubscribedEvents(),
         );

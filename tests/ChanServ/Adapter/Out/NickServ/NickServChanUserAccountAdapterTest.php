@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\ChanServ\Adapter\Out\NickServ;
 
 use App\ChanServ\Adapter\Out\NickServ\NickServChanUserAccountAdapter;
+use App\NickServ\Application\Port\In\NickAccountBatchQuery;
 use App\NickServ\Application\Port\In\NickAccountData;
 use App\NickServ\Application\Port\In\NickAccountQuery;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -19,11 +20,12 @@ final class NickServChanUserAccountAdapterTest extends TestCase
     #[Test]
     public function batchAccountsAreMappedInOneLookup(): void
     {
-        $query = $this->createMock(NickAccountQuery::class);
-        $query->expects(self::once())->method('findAccountsByNicks')->with(['Alice', 'Bob'])->willReturn([
+        $query = $this->createStub(NickAccountQuery::class);
+        $batch = $this->createMock(NickAccountBatchQuery::class);
+        $batch->expects(self::once())->method('findAccountsByNicks')->with(['Alice', 'Bob'])->willReturn([
             'alice' => new NickAccountData(42, 'Alice', 'es', 'Europe/Madrid', true, false, 'alice@example.com'),
         ]);
-        $views = new NickServChanUserAccountAdapter($query)->findAccountsByNicks(['Alice', 'Bob']);
+        $views = new NickServChanUserAccountAdapter($query, $batch)->findAccountsByNicks(['Alice', 'Bob']);
         self::assertSame(['alice'], array_keys($views));
         self::assertSame(42, $views['alice']->id);
         self::assertSame('es', $views['alice']->language);
@@ -49,7 +51,7 @@ final class NickServChanUserAccountAdapterTest extends TestCase
             ->with('Alice')
             ->willReturn($data);
 
-        $adapter = new NickServChanUserAccountAdapter($query);
+        $adapter = new NickServChanUserAccountAdapter($query, $this->createStub(NickAccountBatchQuery::class));
         $view = $adapter->findAccountByNick('Alice');
 
         self::assertNotNull($view);
@@ -71,7 +73,7 @@ final class NickServChanUserAccountAdapterTest extends TestCase
             ->with('Bob')
             ->willReturn(null);
 
-        $adapter = new NickServChanUserAccountAdapter($query);
+        $adapter = new NickServChanUserAccountAdapter($query, $this->createStub(NickAccountBatchQuery::class));
         $view = $adapter->findAccountByNick('Bob');
 
         self::assertNull($view);
@@ -95,7 +97,7 @@ final class NickServChanUserAccountAdapterTest extends TestCase
             ->with(99)
             ->willReturn($data);
 
-        $adapter = new NickServChanUserAccountAdapter($query);
+        $adapter = new NickServChanUserAccountAdapter($query, $this->createStub(NickAccountBatchQuery::class));
         $view = $adapter->findAccountById(99);
 
         self::assertNotNull($view);
@@ -117,7 +119,7 @@ final class NickServChanUserAccountAdapterTest extends TestCase
             ->with(123)
             ->willReturn(null);
 
-        $adapter = new NickServChanUserAccountAdapter($query);
+        $adapter = new NickServChanUserAccountAdapter($query, $this->createStub(NickAccountBatchQuery::class));
         $view = $adapter->findAccountById(123);
 
         self::assertNull($view);
@@ -132,7 +134,7 @@ final class NickServChanUserAccountAdapterTest extends TestCase
             ->with('Alice')
             ->willReturn(42);
 
-        $adapter = new NickServChanUserAccountAdapter($query);
+        $adapter = new NickServChanUserAccountAdapter($query, $this->createStub(NickAccountBatchQuery::class));
         self::assertSame(42, $adapter->findIdByNick('Alice'));
     }
 
@@ -145,7 +147,7 @@ final class NickServChanUserAccountAdapterTest extends TestCase
             ->with(42)
             ->willReturn('Alice');
 
-        $adapter = new NickServChanUserAccountAdapter($query);
+        $adapter = new NickServChanUserAccountAdapter($query, $this->createStub(NickAccountBatchQuery::class));
         self::assertSame('Alice', $adapter->findNicknameById(42));
     }
 
@@ -159,7 +161,7 @@ final class NickServChanUserAccountAdapterTest extends TestCase
             ->willReturn([10 => 'Alice']);
         $query->expects(self::never())->method('findNicknameById');
 
-        $adapter = new NickServChanUserAccountAdapter($query);
+        $adapter = new NickServChanUserAccountAdapter($query, $this->createStub(NickAccountBatchQuery::class));
 
         self::assertSame([10 => 'Alice'], $adapter->findNicknamesByIds([10, 0, 20, 10]));
         self::assertSame([], $adapter->findNicknamesByIds([]));

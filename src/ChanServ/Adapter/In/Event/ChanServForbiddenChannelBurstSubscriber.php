@@ -14,7 +14,7 @@ final readonly class ChanServForbiddenChannelBurstSubscriber implements EventSub
 
     public static function getSubscribedEvents(): array
     {
-        return [NetworkSynchronizationCompletedEvent::class => ['onNetworkSyncComplete', 10]];
+        return [];
     }
 
     public function onNetworkSyncComplete(NetworkSynchronizationCompletedEvent $event): void
