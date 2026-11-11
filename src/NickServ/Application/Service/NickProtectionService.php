@@ -148,8 +148,12 @@ final readonly class NickProtectionService
 
     public function enforceProtection(NetworkUser $user, DateTimeImmutable $occurredAt): void
     {
+        $this->enforceProtectionWithAccount($user, $occurredAt, $this->nickRepository->findByNick($user->nick));
+    }
+
+    public function enforceProtectionWithAccount(NetworkUser $user, DateTimeImmutable $occurredAt, ?RegisteredNick $account): void
+    {
         $nick = $user->nick;
-        $account = $this->nickRepository->findByNick($nick);
 
         if (null === $account) {
             return;

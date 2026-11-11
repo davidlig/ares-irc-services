@@ -24,7 +24,10 @@ use App\NickServ\Application\UseCase\SyncNetworkIdentification\SyncNetworkIdenti
 use App\NickServ\Application\UseCase\SyncNetworkIdentification\SyncNetworkIdentificationHandlerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
+use function array_chunk;
+use function array_map;
 use function str_contains;
+use function strtolower;
 
 /**
  * Subscriber: forwards Application-layer events to NickServ services.
@@ -101,9 +104,16 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
         $this->burstState->markComplete();
         $pending = $this->burstState->takePending();
 
-        foreach ($pending as $user) {
-            $this->identifiedUserVhostSync->syncVhostForUser($user);
-            $this->nickProtectionService->enforceProtection($user, $occurredAt);
+        foreach (array_chunk($pending, 200) as $batch) {
+            $accounts = [];
+            foreach ($this->identifiedUserVhostSync->findAccountsForBurst(array_map(static fn ($user): string => $user->nick, $batch)) as $account) {
+                $accounts[strtolower($account->getNickname())] = $account;
+            }
+            foreach ($batch as $user) {
+                $account = $accounts[strtolower($user->nick)] ?? null;
+                $this->identifiedUserVhostSync->syncVhostForLoadedUser($user, $account);
+                $this->nickProtectionService->enforceProtectionWithAccount($user, $occurredAt, $account);
+            }
         }
     }
 

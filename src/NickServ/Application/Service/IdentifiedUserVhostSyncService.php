@@ -41,6 +41,20 @@ final readonly class IdentifiedUserVhostSyncService
      */
     public function syncVhostForUser(NetworkUser $user): void
     {
+        $account = $user->isIdentified ? $this->nickRepository->findByNick($user->nick) : null;
+        $this->syncVhostForLoadedUser($user, $account);
+    }
+
+    /** @param list<string> $nicknames
+     * @return list<RegisteredNick>
+     */
+    public function findAccountsForBurst(array $nicknames): array
+    {
+        return $this->nickRepository->findByNicks($nicknames);
+    }
+
+    public function syncVhostForLoadedUser(NetworkUser $user, ?RegisteredNick $account): void
+    {
         if (!$user->isIdentified) {
             if (!$this->protocolHandlesVhostServerSide()) {
                 $this->notifier->setUserVhost($user->uid, '', $user->serverSid);
@@ -48,8 +62,6 @@ final readonly class IdentifiedUserVhostSyncService
 
             return;
         }
-
-        $account = $this->nickRepository->findByNick($user->nick);
 
         if (null === $account || !$account->isRegistered()) {
             return;

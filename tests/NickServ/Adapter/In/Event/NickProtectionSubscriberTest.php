@@ -34,6 +34,7 @@ use App\NickServ\Application\Port\Out\NickServEventPublisher;
 use App\NickServ\Application\Port\Out\PendingNickProtectionRegistryInterface;
 use App\NickServ\Application\Port\Out\PendingNickRestoreRegistryInterface;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
+use App\NickServ\Application\PublishedEvent\NickIdentifiedEvent;
 use App\NickServ\Application\Service\BurstState;
 use App\NickServ\Application\Service\ForbiddenNickService;
 use App\NickServ\Application\Service\IdentifiedUserVhostSyncService;
@@ -48,6 +49,9 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use ReflectionProperty;
+
+use function count;
 
 #[CoversClass(NickProtectionSubscriber::class)]
 final class NickProtectionSubscriberTest extends TestCase
@@ -206,6 +210,82 @@ final class NickProtectionSubscriberTest extends TestCase
         $this->subscriber->onBurstComplete($event);
 
         self::assertTrue($this->burstState->isComplete());
+    }
+
+    #[Test]
+    public function onBurstCompleteLoadsNicknamesInOneBatch(): void
+    {
+        $this->networkUserLookup->expects(self::never())->method('findByUid');
+        $this->notifier->expects(self::never())->method('setUserVhost');
+        $nickRepository = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $this->initializeSubscriber($nickRepository);
+        $this->networkUserLookup->expects(self::never())->method('findByUid');
+        $this->burstState->addPending(new NetworkUser('001AAA', 'First', 'i', 'h', 'c', 'ip'));
+        $this->burstState->addPending(new NetworkUser('001AAB', 'Second', 'i', 'h', 'c', 'ip'));
+        $nickRepository->expects(self::once())->method('findByNicks')
+            ->with(['First', 'Second'])->willReturn([]);
+        $nickRepository->expects(self::never())->method('findByNick');
+        $this->notifier->expects(self::exactly(2))->method('setUserVhost');
+
+        $this->subscriber->onBurstComplete(new NetworkSynchronizationCompletedEvent('001'));
+
+        self::assertTrue($this->burstState->isComplete());
+        self::assertSame([], $this->burstState->takePending());
+    }
+
+    #[Test]
+    public function onBurstCompleteUsesLoadedAccountForVhostAndIdentification(): void
+    {
+        $this->networkUserLookup->expects(self::never())->method('findByUid');
+        $this->notifier->expects(self::never())->method('setUserVhost');
+        $account = RegisteredNick::createPending('Alice', 'hash', 'alice@example.com', 'en', $this->now, $this->now);
+        $account->activate();
+        $account->changeVhost('alice.example');
+        new ReflectionProperty(RegisteredNick::class, 'id')->setValue($account, 42);
+        $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $repo->expects(self::once())->method('findByNicks')->with(['ALICE'])->willReturn([$account]);
+        $repo->expects(self::never())->method('findByNick');
+        $repo->expects(self::once())->method('save')->with(self::identicalTo($account));
+        $publisher = $this->createMock(NickServEventPublisher::class);
+        $publisher->expects(self::once())->method('publish')->with(self::callback(
+            static fn ($event): bool => $event instanceof NickIdentifiedEvent
+                && 42 === $event->nickId && '001AAA' === $event->uid && $event->implicit,
+        ));
+        $this->initializeSubscriber($repo, $publisher);
+        $this->networkUserLookup->expects(self::never())->method('findByUid');
+        $this->notifier->expects(self::once())->method('setUserVhost')->with('001AAA', 'alice.example', '001');
+        $this->burstState->addPending(new NetworkUser('001AAA', 'ALICE', 'i', 'h', 'c', 'ip', true, false, '001'));
+
+        $this->subscriber->onBurstComplete(new NetworkSynchronizationCompletedEvent('001'));
+
+        self::assertSame($this->now, $account->getLastSeenAt());
+    }
+
+    #[Test]
+    public function onBurstCompleteBoundsNicknameLookupBatches(): void
+    {
+        $this->networkUserLookup->expects(self::never())->method('findByUid');
+        $this->notifier->expects(self::never())->method('setUserVhost');
+        $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $sizes = [];
+        $repo->expects(self::exactly(2))->method('findByNicks')->willReturnCallback(
+            static function (array $nicknames) use (&$sizes): array {
+                $sizes[] = count($nicknames);
+
+                return [];
+            },
+        );
+        $repo->expects(self::never())->method('findByNick');
+        $this->initializeSubscriber($repo);
+        $this->networkUserLookup->expects(self::never())->method('findByUid');
+        $this->notifier->expects(self::exactly(201))->method('setUserVhost');
+        for ($i = 0; $i < 201; ++$i) {
+            $this->burstState->addPending(new NetworkUser((string) $i, 'Nick' . $i, 'i', 'h', 'c', 'ip'));
+        }
+
+        $this->subscriber->onBurstComplete(new NetworkSynchronizationCompletedEvent('001'));
+
+        self::assertSame([200, 1], $sizes);
     }
 
     #[Test]
@@ -888,6 +968,11 @@ final class NickProtectionSubscriberTest extends TestCase
 
     protected function setUp(): void
     {
+        $this->initializeSubscriber($this->createStub(RegisteredNickRepositoryInterface::class));
+    }
+
+    private function initializeSubscriber(RegisteredNickRepositoryInterface $nickRepository, ?NickServEventPublisher $publisher = null): void
+    {
         $this->burstState = new BurstState();
         $this->networkUserLookup = $this->createMock(NetworkUserLookupPort::class);
         $this->notifier = $this->createMock(NickNetworkActions::class);
@@ -896,7 +981,6 @@ final class NickProtectionSubscriberTest extends TestCase
         $this->clock->method('now')->willReturn($this->now);
         $this->syncNetworkIdentification = new RecordingSyncNetworkIdentificationHandler();
 
-        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $userLookup = $this->createStub(NickNetworkUserLookup::class);
         $translator = $this->createStub(NickProtectionNotifier::class);
         $pendingRegistry = $this->createStub(PendingNickRestoreRegistryInterface::class);
@@ -910,7 +994,7 @@ final class NickProtectionSubscriberTest extends TestCase
             new SessionLanguageRegistry(),
             $pendingRegistry,
             $translator,
-            $this->createStub(NickServEventPublisher::class),
+            $publisher ?? $this->createStub(NickServEventPublisher::class),
             $this->createStub(ForbiddenNickService::class),
             $this->createStub(NickChangeIdentificationPolicy::class),
             $this->guestNicknameGenerator(),
