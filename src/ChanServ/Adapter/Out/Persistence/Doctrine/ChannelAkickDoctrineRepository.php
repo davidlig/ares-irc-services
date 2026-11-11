@@ -22,6 +22,14 @@ final readonly class ChannelAkickDoctrineRepository implements ChannelAkickRepos
         $this->em->flush();
     }
 
+    public function saveAll(array $akicks): void
+    {
+        foreach ($akicks as $akick) {
+            $this->em->persist($akick);
+        }
+        $this->em->flush();
+    }
+
     public function remove(ChannelAkick $akick): void
     {
         $this->em->remove($akick);

@@ -23,6 +23,7 @@ use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 
 use function str_repeat;
 
@@ -92,7 +93,7 @@ final class EnforceChannelAkickHandlerTest extends TestCase
         $valid = ChannelAkick::create($this->now, 1, 2, '[Foo]!*@*');
         $akicks = $this->createMock(ChannelAkickRepositoryInterface::class);
         $akicks->method('listByChannel')->willReturn([$invalidMask, $invalidReason, $valid]);
-        $akicks->expects(self::once())->method('save')->with($valid);
+        $akicks->expects(self::once())->method('saveAll')->with([$valid]);
         $actions = $this->createMock(AkickActions::class);
         $actions->expects(self::once())->method('banAndKick')->with('#Test', '001A', '[Foo]!*@*', 'AKICK: [Foo]!*@*');
         $activity = $this->createMock(ChanServActivitySink::class);
@@ -120,7 +121,7 @@ final class EnforceChannelAkickHandlerTest extends TestCase
 
         $akicks = $this->createMock(ChannelAkickRepositoryInterface::class);
         $akicks->method('listByChannel')->willReturn([$akick]);
-        $akicks->expects(self::once())->method('save')->with($akick);
+        $akicks->expects(self::once())->method('saveAll')->with([$akick]);
 
         $actions = $this->createStub(AkickActions::class);
 
@@ -133,6 +134,58 @@ final class EnforceChannelAkickHandlerTest extends TestCase
 
         $handler->handleKnownChannel($this->channel(), [$this->member('001A', 'nick!ident@example.test')], $this->now);
 
+        self::assertSame(1, $akick->getUses());
+        self::assertSame($this->now, $akick->getLastUsedAt());
+    }
+
+    #[Test]
+    public function multipleMatchesPersistUsageOncePerChannel(): void
+    {
+        $akick = ChannelAkick::create($this->now, 1, 2, '*!*@example.test');
+        $other = ChannelAkick::create($this->now, 1, 2, '*!*@other.test');
+        $akicks = $this->createMock(ChannelAkickRepositoryInterface::class);
+        $akicks->method('listByChannel')->willReturn([$akick, $other]);
+        $akicks->expects(self::once())->method('saveAll')->with([$akick, $other]);
+        $actions = $this->createMock(AkickActions::class);
+        $actions->expects(self::exactly(3))->method('banAndKick');
+
+        self::assertSame(3, $this->handler(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $akicks,
+            $this->createStub(ChannelEntryNetworkQuery::class),
+            $actions,
+        )->handleKnownChannel($this->channel(), [
+            $this->member('001A', 'first!i@example.test'),
+            $this->member('001B', 'second!i@example.test'),
+            $this->member('001C', 'third!i@other.test'),
+        ], $this->now));
+        self::assertSame(2, $akick->getUses());
+        self::assertSame(1, $other->getUses());
+        self::assertSame($this->now, $akick->getLastUsedAt());
+        self::assertSame($this->now, $other->getLastUsedAt());
+    }
+
+    #[Test]
+    public function itPersistsRecordedUsageWhenNetworkActionFails(): void
+    {
+        $akick = ChannelAkick::create($this->now, 1, 2, '*!*@example.test');
+        $akicks = $this->createMock(ChannelAkickRepositoryInterface::class);
+        $akicks->method('listByChannel')->willReturn([$akick]);
+        $akicks->expects(self::once())->method('saveAll')->with([$akick]);
+        $actions = $this->createStub(AkickActions::class);
+        $actions->method('banAndKick')->willThrowException(new RuntimeException('network failed'));
+        $handler = $this->handler(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $akicks,
+            $this->createStub(ChannelEntryNetworkQuery::class),
+            $actions,
+        );
+        try {
+            $handler->handleKnownChannel($this->channel(), [$this->member('001A', 'nick!i@example.test')], $this->now);
+            self::fail('The network error must propagate.');
+        } catch (RuntimeException $error) {
+            self::assertSame('network failed', $error->getMessage());
+        }
         self::assertSame(1, $akick->getUses());
         self::assertSame($this->now, $akick->getLastUsedAt());
     }
