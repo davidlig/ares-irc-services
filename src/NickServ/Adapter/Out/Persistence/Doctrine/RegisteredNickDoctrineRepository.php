@@ -40,7 +40,7 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
         $this->em->flush();
     }
 
-    public function saveQuitBatch(array $nicks): void
+    public function saveActivityBatch(array $nicks): void
     {
         if ([] === $nicks) {
             return;
@@ -51,7 +51,7 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
             $ids = [];
             foreach ($nicks as $index => $nick) {
                 if (!$this->em->contains($nick) || null === $nick->getLastSeenAt()) {
-                    throw new LogicException('Quit activity requires managed accounts with a last-seen timestamp.');
+                    throw new LogicException('Activity batching requires managed accounts with a last-seen timestamp.');
                 }
                 $ids[] = $nick->getId();
                 $cases[] = sprintf('WHEN n.id = :id%d THEN :seen%d', $index, $index);
@@ -69,7 +69,7 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
             $query->execute();
             foreach ($nicks as $nick) {
                 // The bulk update bypasses change tracking. Keep the snapshot synchronized
-                // so the following transaction flush writes the other quit fields only.
+                // so the following transaction flush writes any other changed fields only.
                 $this->em->getUnitOfWork()->setOriginalEntityProperty(spl_object_id($nick), 'lastSeenAt', $nick->getLastSeenAt());
             }
         });

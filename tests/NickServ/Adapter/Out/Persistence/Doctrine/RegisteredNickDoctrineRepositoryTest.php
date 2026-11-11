@@ -157,7 +157,7 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
     }
 
     #[Test]
-    public function saveQuitBatchPreservesIndividualActivityAndQuitDetails(): void
+    public function saveActivityBatchPreservesIndividualActivityAndQuitDetails(): void
     {
         $alice = $this->createRegisteredNick('Alice', 'alice@example.com');
         $bob = $this->createRegisteredNick('Bob', 'bob@example.com');
@@ -170,7 +170,7 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
         $alice->updateLastConnection('192.0.2.1', 'alice.example');
         $bob->updateLastConnection('192.0.2.2', 'bob.example');
 
-        $this->repository->saveQuitBatch([$alice, $bob]);
+        $this->repository->saveActivityBatch([$alice, $bob]);
         $this->entityManager->clear();
 
         $alice = $this->repository->findByNick('Alice');
@@ -188,21 +188,21 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
     }
 
     #[Test]
-    public function saveQuitBatchAcceptsAnEmptyBatch(): void
+    public function saveActivityBatchAcceptsAnEmptyBatch(): void
     {
-        $this->repository->saveQuitBatch([]);
+        $this->repository->saveActivityBatch([]);
 
         self::assertTrue($this->entityManager->isOpen());
     }
 
     #[Test]
-    public function saveQuitBatchRejectsUnmanagedAccounts(): void
+    public function saveActivityBatchRejectsUnmanagedAccounts(): void
     {
         $nick = $this->createRegisteredNick('Alice', 'alice@example.com');
         $nick->markSeen(new DateTimeImmutable());
 
         $this->expectException(LogicException::class);
-        $this->repository->saveQuitBatch([$nick]);
+        $this->repository->saveActivityBatch([$nick]);
     }
 
     #[Test]

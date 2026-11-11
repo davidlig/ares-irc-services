@@ -8,7 +8,7 @@ use App\NickServ\Domain\Entity\RegisteredNick;
 
 use function array_values;
 
-final class PendingQuitActivities
+final class PendingNickActivities
 {
     /** @var array<int, RegisteredNick> */
     private array $accounts = [];

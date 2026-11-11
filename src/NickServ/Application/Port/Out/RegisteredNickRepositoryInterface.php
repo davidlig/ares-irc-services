@@ -12,8 +12,8 @@ interface RegisteredNickRepositoryInterface
 {
     public function save(RegisteredNick $nick): void;
 
-    /** @param list<RegisteredNick> $nicks Managed accounts with updated quit activity. */
-    public function saveQuitBatch(array $nicks): void;
+    /** @param list<RegisteredNick> $nicks Managed accounts with updated activity. */
+    public function saveActivityBatch(array $nicks): void;
 
     public function delete(RegisteredNick $nick): void;
 

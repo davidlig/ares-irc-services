@@ -40,7 +40,7 @@ use App\NickServ\Application\Service\BurstState;
 use App\NickServ\Application\Service\ForbiddenNickService;
 use App\NickServ\Application\Service\IdentifiedUserVhostSyncService;
 use App\NickServ\Application\Service\NickProtectionService;
-use App\NickServ\Application\Service\PendingQuitActivities;
+use App\NickServ\Application\Service\PendingNickActivities;
 use App\NickServ\Application\Service\VhostDisplayResolver;
 use App\NickServ\Application\UseCase\IssueMigrationRescueToken\IssueMigrationRescueTokenHandlerInterface;
 use App\NickServ\Application\UseCase\SyncNetworkIdentification\SyncNetworkIdentification;
@@ -57,7 +57,7 @@ use RuntimeException;
 use function count;
 
 #[CoversClass(NickProtectionSubscriber::class)]
-#[CoversClass(PendingQuitActivities::class)]
+#[CoversClass(PendingNickActivities::class)]
 final class NickProtectionSubscriberTest extends TestCase
 {
     private BurstState $burstState;
@@ -250,7 +250,7 @@ final class NickProtectionSubscriberTest extends TestCase
         $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $repo->expects(self::once())->method('findByNicks')->with(['ALICE'])->willReturn([$account]);
         $repo->expects(self::never())->method('findByNick');
-        $repo->expects(self::once())->method('save')->with(self::identicalTo($account));
+        $repo->expects(self::once())->method('saveActivityBatch')->with([$account]);
         $publisher = $this->createMock(NickServEventPublisher::class);
         $publisher->expects(self::once())->method('publish')->with(self::callback(
             static fn ($event): bool => $event instanceof NickIdentifiedEvent
@@ -264,6 +264,57 @@ final class NickProtectionSubscriberTest extends TestCase
         $this->subscriber->onBurstComplete(new NetworkSynchronizationCompletedEvent('001'));
 
         self::assertSame($this->now, $account->getLastSeenAt());
+    }
+
+    #[Test]
+    public function onBurstCompleteSavesIdentifiedActivityOncePerBatch(): void
+    {
+        $this->networkUserLookup->expects(self::never())->method('findByUid');
+        $this->notifier->expects(self::never())->method('setUserVhost');
+        $alice = RegisteredNick::createPending('Alice', 'hash', 'a@example.com', 'en', $this->now, $this->now);
+        $bob = RegisteredNick::createPending('Bob', 'hash', 'b@example.com', 'en', $this->now, $this->now);
+        $alice->activate();
+        $bob->activate();
+        new ReflectionProperty(RegisteredNick::class, 'id')->setValue($alice, 1);
+        new ReflectionProperty(RegisteredNick::class, 'id')->setValue($bob, 2);
+        $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $repo->method('findByNicks')->willReturn([$alice, $bob]);
+        $repo->expects(self::never())->method('save');
+        $repo->expects(self::once())->method('saveActivityBatch')->with([$alice, $bob]);
+        $publisher = $this->createMock(NickServEventPublisher::class);
+        $publisher->expects(self::exactly(2))->method('publish');
+        $this->initializeSubscriber($repo, $publisher);
+        $this->networkUserLookup->expects(self::never())->method('findByUid');
+        $this->notifier->expects(self::never())->method('setUserVhost');
+        $this->burstState->addPending(new NetworkUser('001AAA', 'Alice', 'i', 'h', 'c', 'ip', true));
+        $this->burstState->addPending(new NetworkUser('001AAB', 'Bob', 'i', 'h', 'c', 'ip', true));
+
+        $this->subscriber->onBurstComplete(new NetworkSynchronizationCompletedEvent('001'));
+
+        self::assertSame($this->now, $alice->getLastSeenAt());
+        self::assertSame($this->now, $bob->getLastSeenAt());
+    }
+
+    #[Test]
+    public function onBurstCompletePersistsActivityWhenAnIdentificationListenerFails(): void
+    {
+        $this->networkUserLookup->expects(self::never())->method('findByUid');
+        $this->notifier->expects(self::never())->method('setUserVhost');
+        $alice = RegisteredNick::createPending('Alice', 'hash', 'a@example.com', 'en', $this->now, $this->now);
+        $alice->activate();
+        new ReflectionProperty(RegisteredNick::class, 'id')->setValue($alice, 1);
+        $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $repo->method('findByNicks')->willReturn([$alice]);
+        $repo->expects(self::once())->method('saveActivityBatch')->with([$alice]);
+        $publisher = $this->createMock(NickServEventPublisher::class);
+        $publisher->expects(self::once())->method('publish')->willThrowException(new RuntimeException('listener failed'));
+        $this->initializeSubscriber($repo, $publisher);
+        $this->networkUserLookup->expects(self::never())->method('findByUid');
+        $this->notifier->expects(self::never())->method('setUserVhost');
+        $this->burstState->addPending(new NetworkUser('001AAA', 'Alice', 'i', 'h', 'c', 'ip', true));
+
+        $this->expectExceptionMessage('listener failed');
+        $this->subscriber->onBurstComplete(new NetworkSynchronizationCompletedEvent('001'));
     }
 
     #[Test]
@@ -608,7 +659,7 @@ final class NickProtectionSubscriberTest extends TestCase
         $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $repo->method('findByNick')->willReturnMap([['Alice', $alice], ['Bob', $bob]]);
         $repo->expects(self::never())->method('save');
-        $repo->expects(self::once())->method('saveQuitBatch')->with([$alice, $bob]);
+        $repo->expects(self::once())->method('saveActivityBatch')->with([$alice, $bob]);
         $this->initializeSubscriber($repo);
         $this->networkUserLookup->expects(self::never())->method('findByUid');
         $this->notifier->expects(self::never())->method('setUserVhost');
@@ -632,7 +683,7 @@ final class NickProtectionSubscriberTest extends TestCase
         $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $repo->method('findByNick')->willReturn($alice);
         $repo->expects(self::never())->method('save');
-        $repo->expects(self::once())->method('saveQuitBatch')->with([$alice]);
+        $repo->expects(self::once())->method('saveActivityBatch')->with([$alice]);
         $this->initializeSubscriber($repo);
         $this->networkUserLookup->expects(self::never())->method('findByUid');
         $this->notifier->expects(self::never())->method('setUserVhost');
@@ -651,7 +702,7 @@ final class NickProtectionSubscriberTest extends TestCase
         new ReflectionProperty(RegisteredNick::class, 'id')->setValue($alice, 1);
         $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $repo->method('findByNick')->willReturn($alice);
-        $repo->expects(self::once())->method('saveQuitBatch')->willThrowException(new RuntimeException('write failed'));
+        $repo->expects(self::once())->method('saveActivityBatch')->willThrowException(new RuntimeException('write failed'));
         $this->initializeSubscriber($repo);
         $this->networkUserLookup->expects(self::never())->method('findByUid');
         $this->notifier->expects(self::never())->method('setUserVhost');

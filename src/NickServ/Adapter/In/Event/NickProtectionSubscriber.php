@@ -21,7 +21,7 @@ use App\NickServ\Application\Port\Out\PendingNickProtectionRegistryInterface;
 use App\NickServ\Application\Service\BurstState;
 use App\NickServ\Application\Service\IdentifiedUserVhostSyncService;
 use App\NickServ\Application\Service\NickProtectionService;
-use App\NickServ\Application\Service\PendingQuitActivities;
+use App\NickServ\Application\Service\PendingNickActivities;
 use App\NickServ\Application\UseCase\SyncNetworkIdentification\SyncNetworkIdentification;
 use App\NickServ\Application\UseCase\SyncNetworkIdentification\SyncNetworkIdentificationHandlerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -48,7 +48,7 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
         private Clock $clock,
         private SyncNetworkIdentificationHandlerInterface $syncNetworkIdentification,
         private ?PendingNickProtectionRegistryInterface $pendingProtectionRegistry = null,
-        private PendingQuitActivities $pendingQuitActivities = new PendingQuitActivities(),
+        private PendingNickActivities $pendingQuitActivities = new PendingNickActivities(),
     ) {}
 
     /**
@@ -113,10 +113,18 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
             foreach ($this->identifiedUserVhostSync->findAccountsForBurst(array_map(static fn ($user): string => $user->nick, $batch)) as $account) {
                 $accounts[strtolower($account->getNickname())] = $account;
             }
-            foreach ($batch as $user) {
-                $account = $accounts[strtolower($user->nick)] ?? null;
-                $this->identifiedUserVhostSync->syncVhostForLoadedUser($user, $account);
-                $this->nickProtectionService->enforceProtectionWithAccount($user, $occurredAt, $account);
+            $activityBatch = new PendingNickActivities();
+            try {
+                foreach ($batch as $user) {
+                    $account = $accounts[strtolower($user->nick)] ?? null;
+                    $this->identifiedUserVhostSync->syncVhostForLoadedUser($user, $account);
+                    $this->nickProtectionService->enforceProtectionWithAccount($user, $occurredAt, $account, $activityBatch);
+                }
+            } finally {
+                $activities = $activityBatch->all();
+                if ([] !== $activities) {
+                    $this->nickProtectionService->saveActivities($activities);
+                }
             }
         }
     }
@@ -238,7 +246,7 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
         $accounts = $this->pendingQuitActivities->all();
         if ([] !== $accounts) {
             try {
-                $this->nickProtectionService->saveQuitActivities($accounts);
+                $this->nickProtectionService->saveActivities($accounts);
             } finally {
                 $this->pendingQuitActivities->clear();
             }

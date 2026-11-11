@@ -152,9 +152,9 @@ final readonly class NickProtectionService
     }
 
     /** @param list<RegisteredNick> $accounts */
-    public function saveQuitActivities(array $accounts): void
+    public function saveActivities(array $accounts): void
     {
-        $this->nickRepository->saveQuitBatch($accounts);
+        $this->nickRepository->saveActivityBatch($accounts);
     }
 
     public function enforceProtection(NetworkUser $user, DateTimeImmutable $occurredAt): void
@@ -162,7 +162,7 @@ final readonly class NickProtectionService
         $this->enforceProtectionWithAccount($user, $occurredAt, $this->nickRepository->findByNick($user->nick));
     }
 
-    public function enforceProtectionWithAccount(NetworkUser $user, DateTimeImmutable $occurredAt, ?RegisteredNick $account): void
+    public function enforceProtectionWithAccount(NetworkUser $user, DateTimeImmutable $occurredAt, ?RegisteredNick $account, ?PendingNickActivities $activityBatch = null): void
     {
         $nick = $user->nick;
 
@@ -188,7 +188,7 @@ final readonly class NickProtectionService
         }
 
         if ($user->isIdentified) {
-            $this->handleIdentifiedEnforcement($account, $user, $nick, $occurredAt);
+            $this->handleIdentifiedEnforcement($account, $user, $nick, $occurredAt, $activityBatch);
         } else {
             $this->enforceGuestRename($account, $user, $nick);
         }
@@ -349,7 +349,7 @@ final readonly class NickProtectionService
         return false;
     }
 
-    private function handleIdentifiedEnforcement(RegisteredNick $account, NetworkUser $user, string $nick, DateTimeImmutable $occurredAt): void
+    private function handleIdentifiedEnforcement(RegisteredNick $account, NetworkUser $user, string $nick, DateTimeImmutable $occurredAt, ?PendingNickActivities $activityBatch): void
     {
         $identifiedNick = $this->identifiedRegistry->findNick($user->uid);
 
@@ -365,7 +365,7 @@ final readonly class NickProtectionService
         }
 
         if (null !== $identifiedNick && 0 === strcasecmp($identifiedNick, $account->getNickname())) {
-            $this->markIdentifiedAndDispatch($account, $user, $occurredAt);
+            $this->markIdentifiedAndDispatch($account, $user, $occurredAt, $activityBatch);
 
             return;
         }
@@ -380,10 +380,14 @@ final readonly class NickProtectionService
         $this->enforceGuestRename($account, $user, $nick);
     }
 
-    private function markIdentifiedAndDispatch(RegisteredNick $account, NetworkUser $user, DateTimeImmutable $occurredAt): void
+    private function markIdentifiedAndDispatch(RegisteredNick $account, NetworkUser $user, DateTimeImmutable $occurredAt, ?PendingNickActivities $activityBatch): void
     {
         $account->markSeen($occurredAt);
-        $this->nickRepository->save($account);
+        if (null === $activityBatch) {
+            $this->nickRepository->save($account);
+        } else {
+            $activityBatch->add($account);
+        }
 
         // Register the session so IrcopModeApplier can find it
         $this->identifiedRegistry->register($user->uid, $account->getNickname());
