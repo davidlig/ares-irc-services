@@ -83,6 +83,36 @@ final class EnforceChannelAkickHandlerTest extends TestCase
     }
 
     #[Test]
+    public function preloadedAkicksAvoidPerChannelLookup(): void
+    {
+        $akick = ChannelAkick::create($this->now, 1, 2, '*!*@example.test');
+        $akicks = $this->createMock(ChannelAkickRepositoryInterface::class);
+        $akicks->expects(self::never())->method('listByChannel');
+        $akicks->expects(self::once())->method('saveAll')->with([$akick]);
+        $actions = $this->createMock(AkickActions::class);
+        $actions->expects(self::once())->method('banAndKick')->with('#Test', '001A', '*!*@example.test', 'AKICK: *!*@example.test');
+        self::assertSame(1, $this->handler(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $akicks,
+            $this->createStub(ChannelEntryNetworkQuery::class),
+            $actions,
+        )->handleKnownChannelWithAkicks($this->channel(), [$this->member('001A', 'nick!i@example.test')], $this->now, [$akick]));
+    }
+
+    #[Test]
+    public function preloadedAkicksSkipBlockedChannels(): void
+    {
+        $actions = $this->createMock(AkickActions::class);
+        $actions->expects(self::never())->method('banAndKick');
+        self::assertSame(0, $this->handler(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(ChannelAkickRepositoryInterface::class),
+            $this->createStub(ChannelEntryNetworkQuery::class),
+            $actions,
+        )->handleKnownChannelWithAkicks($this->channel(blocked: true), [], $this->now, []));
+    }
+
+    #[Test]
     public function invalidStoredRulesAreLoggedAndRemainingRulesAreEnforced(): void
     {
         $invalidMask = $this->createStub(ChannelAkick::class);

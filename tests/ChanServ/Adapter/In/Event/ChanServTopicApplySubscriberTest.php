@@ -8,6 +8,8 @@ use App\ChanServ\Adapter\In\Event\ChanServTopicApplySubscriber;
 use App\ChanServ\Adapter\Out\Network\IrcChannelTopicActions;
 use App\ChanServ\Adapter\Out\Network\IrcChannelTopicNetworkQuery;
 use App\ChanServ\Application\Model\ChannelTopicNetworkState;
+use App\ChanServ\Application\Port\Out\ChannelTopicActions;
+use App\ChanServ\Application\Port\Out\ChannelTopicNetworkQuery;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\UseCase\ApplyStoredTopic\ApplyStoredChannelTopic;
 use App\ChanServ\Application\UseCase\ApplyStoredTopic\ApplyStoredChannelTopicHandler;
@@ -59,6 +61,22 @@ final class ChanServTopicApplySubscriberTest extends TestCase
             ],
             ChanServTopicApplySubscriber::getSubscribedEvents(),
         );
+    }
+
+    #[Test]
+    public function knownChannelSynchronizesTopicWithoutRepositoryLookup(): void
+    {
+        $channel = $this->createStub(RegisteredChannel::class);
+        $channel->method('getName')->willReturn('#known');
+        $channel->method('getTopic')->willReturn('Stored');
+        $network = $this->createStub(ChannelTopicNetworkQuery::class);
+        $network->method('findChannel')->willReturn(new ChannelTopicNetworkState('#known', 'Old'));
+        $actions = $this->createMock(ChannelTopicActions::class);
+        $actions->expects(self::once())->method('setTopic')->with('#known', 'Stored');
+        $this->channelRepository->expects(self::never())->method('findByChannelName');
+        $this->channelLookup->expects(self::never())->method('findByChannelName');
+        $this->channelServiceActions->expects(self::never())->method('setChannelTopic');
+        new ApplyStoredChannelTopicHandler($this->channelRepository, $network, $actions)->synchronizeKnownChannel($channel);
     }
 
     #[Test]

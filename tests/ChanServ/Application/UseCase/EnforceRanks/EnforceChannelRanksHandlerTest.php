@@ -41,6 +41,23 @@ final class EnforceChannelRanksHandlerTest extends TestCase
     }
 
     #[Test]
+    public function preloadedRankStateAvoidsFurtherNetworkLookup(): void
+    {
+        $member = $this->member(identified: true, nickId: 20);
+        $network = $this->createMock(ChannelRankNetworkQuery::class);
+        $network->expects(self::never())->method('findChannel');
+        $actions = $this->createMock(ChannelRankActions::class);
+        $actions->expects(self::once())->method('apply');
+        $result = $this->handler($this->policyRepository($this->policy()), $network, $actions)->handleKnownPolicyAndNetwork(
+            $this->command(),
+            $this->policy(access: [20 => 300]),
+            new ChannelRankNetworkState('#test', [$member], [ChannelRank::Operator]),
+        );
+        self::assertSame(RankEnforcementOutcome::Applied, $result->outcome);
+        self::assertSame(1, $result->changeCount);
+    }
+
+    #[Test]
     public function joinReconciliationPreservesUnsupportedInitialRankRemoval(): void
     {
         $member = $this->member(ranks: [ChannelRank::Owner]);

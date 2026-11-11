@@ -52,6 +52,11 @@ final readonly class EnforceChannelRanksHandler implements EnforceChannelRanksHa
         return $this->handlePolicy($command, $channel, null, false);
     }
 
+    public function handleKnownPolicyAndNetwork(EnforceChannelRanks $command, ChannelRankPolicy $channel, ?ChannelRankNetworkState $network): RankEnforcementResult
+    {
+        return $this->handlePolicy($command, $channel, $network, true);
+    }
+
     private function isSingleMember(EnforceChannelRanks $command): bool
     {
         return RankEnforcementTrigger::MemberJoined === $command->trigger

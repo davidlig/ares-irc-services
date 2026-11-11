@@ -23,17 +23,17 @@ final readonly class DoctrineChannelMlockPolicyRepository implements ChannelMloc
     {
         $channel = $this->channels->findByChannelName(strtolower($channelName));
 
-        return null === $channel ? null : $this->snapshot($channel);
+        return null === $channel ? null : $this->forChannel($channel);
     }
 
     public function all(): iterable
     {
         foreach ($this->channels->iterateAll() as $channel) {
-            yield $this->snapshot($channel);
+            yield $this->forChannel($channel);
         }
     }
 
-    private function snapshot(RegisteredChannel $channel): ChannelMlockPolicy
+    public function forChannel(RegisteredChannel $channel): ChannelMlockPolicy
     {
         return new ChannelMlockPolicy(
             name: $channel->getName(),

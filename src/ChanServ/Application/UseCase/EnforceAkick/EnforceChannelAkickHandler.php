@@ -53,9 +53,18 @@ final readonly class EnforceChannelAkickHandler implements EnforceChannelAkickHa
             return 0;
         }
 
+        return $this->handleKnownChannelWithAkicks($channel, $members, $now, array_values($this->akicks->listByChannel($channel->getId())));
+    }
+
+    public function handleKnownChannelWithAkicks(RegisteredChannel $channel, array $members, DateTimeImmutable $now, array $akicks): int
+    {
+        if ($channel->isBlocked()) {
+            return 0;
+        }
+
         $rules = [];
         $ruleMap = [];
-        foreach ($this->akicks->listByChannel($channel->getId()) as $akick) {
+        foreach ($akicks as $akick) {
             try {
                 $rule = new AkickRule(
                     new AkickMask($akick->getMask()),
