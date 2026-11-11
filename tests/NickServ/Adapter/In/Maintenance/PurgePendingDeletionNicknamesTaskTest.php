@@ -38,6 +38,22 @@ final class PurgePendingDeletionNicknamesTaskTest extends TestCase
     }
 
     #[Test]
+    public function runDoesNothingWhenNoPendingDeletionNicksExist(): void
+    {
+        $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $repo->expects(self::once())
+            ->method('findPendingDeletionBefore')
+            ->with($this->now()->modify('-7 days'), 100)
+            ->willReturn([]);
+
+        $dropService = $this->createMock(NickDropService::class);
+        $dropService->expects(self::never())->method('hardDropNick');
+
+        $task = new PurgePendingDeletionNicknamesTask($repo, $dropService, $this->clock(), 3600, 7);
+        $task->run();
+    }
+
+    #[Test]
     public function runHardDropsExpiredPendingDeletionNicks(): void
     {
         $nick = $this->createStub(RegisteredNick::class);

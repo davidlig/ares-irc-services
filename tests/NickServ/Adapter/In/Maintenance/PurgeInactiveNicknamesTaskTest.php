@@ -70,6 +70,28 @@ final class PurgeInactiveNicknamesTaskTest extends TestCase
     }
 
     #[Test]
+    public function runDoesNothingWhenNoInactiveNicksExist(): void
+    {
+        $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $repo->expects(self::once())
+            ->method('findRegisteredInactiveSince')
+            ->with($this->now()->modify('-90 days'), 100)
+            ->willReturn([]);
+
+        $dropService = $this->createMock(NickDropService::class);
+        $dropService->expects(self::never())->method('dropNick');
+
+        $task = new PurgeInactiveNicknamesTask(
+            $repo,
+            $dropService,
+            $this->clock(),
+            3600,
+            90,
+        );
+        $task->run();
+    }
+
+    #[Test]
     public function runCallsDropServiceForEachInactiveNick(): void
     {
         $nick = $this->createStub(RegisteredNick::class);

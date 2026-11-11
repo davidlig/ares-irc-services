@@ -26,6 +26,7 @@ final class NickProjectionResolverTest extends TestCase
     #[Test]
     public function projectsAllFromScalarArrayDqlQueryWithoutHydratingEntities(): void
     {
+        $suspendedUntil = new DateTimeImmutable('2026-10-01 12:00:00 UTC');
         $rows = [
             [
                 'id' => 42,
@@ -64,8 +65,28 @@ final class NickProjectionResolverTest extends TestCase
                 'vhost' => null,
                 'status' => NickStatus::Suspended,
                 'reason' => 'abuse',
-                'suspendedUntil' => new DateTimeImmutable('2026-10-01 12:00:00 UTC'),
+                'suspendedUntil' => $suspendedUntil,
                 'automaticModes' => [],
+            ],
+            [
+                'id' => 10,
+                'nickname' => 'SuspendedStringDate',
+                'passwordHash' => 'hash',
+                'vhost' => null,
+                'status' => NickStatus::Suspended->value,
+                'reason' => 'spam',
+                'suspendedUntil' => '2026-11-01 00:00:00 UTC',
+                'automaticModes' => null,
+            ],
+            [
+                'id' => 11,
+                'nickname' => 'SuspendedInvalidDate',
+                'passwordHash' => null,
+                'vhost' => null,
+                'status' => NickStatus::Suspended->value,
+                'reason' => 'other',
+                'suspendedUntil' => 12345,
+                'automaticModes' => null,
             ],
         ];
 
@@ -87,7 +108,7 @@ final class NickProjectionResolverTest extends TestCase
         $resolver = new NickProjectionResolver($repository, $em);
         $all = $resolver->all();
 
-        self::assertCount(4, $all);
+        self::assertCount(6, $all);
         self::assertSame(42, $all[0]->id);
         self::assertSame('Alice', $all[0]->nickname);
         self::assertSame('$2y$12$hash', $all[0]->passwordHash);
@@ -107,7 +128,17 @@ final class NickProjectionResolverTest extends TestCase
         self::assertSame(9, $all[3]->id);
         self::assertTrue($all[3]->suspended);
         self::assertSame('abuse', $all[3]->suspensionReason);
-        self::assertSame(new DateTimeImmutable('2026-10-01 12:00:00 UTC'), $all[3]->suspendedUntil);
+        self::assertSame($suspendedUntil, $all[3]->suspendedUntil);
+
+        self::assertSame(10, $all[4]->id);
+        self::assertTrue($all[4]->suspended);
+        self::assertSame('spam', $all[4]->suspensionReason);
+        self::assertSame(new DateTimeImmutable('2026-11-01 00:00:00 UTC')->getTimestamp(), $all[4]->suspendedUntil?->getTimestamp());
+
+        self::assertSame(11, $all[5]->id);
+        self::assertTrue($all[5]->suspended);
+        self::assertSame('other', $all[5]->suspensionReason);
+        self::assertNull($all[5]->suspendedUntil);
     }
 
     #[Test]
