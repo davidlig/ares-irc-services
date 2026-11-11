@@ -28,6 +28,11 @@ interface MemoRepositoryInterface
 
     public function countUnreadByTargetNick(int $nickId): int;
 
+    /** @param list<int> $nickIds
+     * @return array<int, int> counts keyed by nickname ID; IDs with no unread memos are omitted
+     */
+    public function countUnreadByTargetNickIds(array $nickIds): array;
+
     public function countUnreadByTargetChannel(int $channelId): int;
 
     public function countByTargetNick(int $nickId): int;

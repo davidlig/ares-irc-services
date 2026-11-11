@@ -14,6 +14,7 @@ use Doctrine\ORM\Query;
 use Doctrine\ORM\QueryBuilder;
 use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use stdClass;
@@ -122,6 +123,51 @@ final class MemoDoctrineRepositoryTest extends DoctrineIntegrationTestCase
         $this->flushAndClear();
 
         self::assertSame(2, $this->repository->countUnreadByTargetNick(1));
+    }
+
+    #[Test]
+    public function countUnreadByTargetNickIdsGroupsCountsAndOmitsReadMemos(): void
+    {
+        $this->repository->save(new Memo(1, null, 2, 'First', new DateTimeImmutable()));
+        $this->repository->save(new Memo(1, null, 2, 'Read', new DateTimeImmutable()));
+        $this->repository->save(new Memo(2, null, 1, 'Second', new DateTimeImmutable()));
+        $readMemo = $this->repository->findByTargetNickAndIndex(1, 2);
+        self::assertNotNull($readMemo);
+        $readMemo->markAsRead(new DateTimeImmutable());
+        $this->repository->save($readMemo);
+        $this->flushAndClear();
+
+        self::assertSame([1 => 1, 2 => 1], $this->repository->countUnreadByTargetNickIds([1, 2, 999]));
+        self::assertSame([], $this->repository->countUnreadByTargetNickIds([]));
+    }
+
+    /** @param array<mixed> $row */
+    #[Test]
+    #[DataProvider('invalidGroupedRows')]
+    public function groupedUnreadCountsRejectMalformedRows(array $row): void
+    {
+        $query = $this->createStub(Query::class);
+        $query->method('getArrayResult')->willReturn([$row]);
+        $builder = $this->createStub(QueryBuilder::class);
+        $builder->method('select')->willReturnSelf();
+        $builder->method('from')->willReturnSelf();
+        $builder->method('where')->willReturnSelf();
+        $builder->method('andWhere')->willReturnSelf();
+        $builder->method('setParameter')->willReturnSelf();
+        $builder->method('groupBy')->willReturnSelf();
+        $builder->method('getQuery')->willReturn($query);
+        $entityManager = $this->createStub(EntityManagerInterface::class);
+        $entityManager->method('createQueryBuilder')->willReturn($builder);
+
+        $this->expectException(LogicException::class);
+        new MemoDoctrineRepository($entityManager)->countUnreadByTargetNickIds([1]);
+    }
+
+    /** @return iterable<string, array{array<mixed>}> */
+    public static function invalidGroupedRows(): iterable
+    {
+        yield 'missing field' => [['nickId' => 1]];
+        yield 'invalid value' => [['nickId' => 'bad', 'unreadCount' => 1]];
     }
 
     #[Test]
