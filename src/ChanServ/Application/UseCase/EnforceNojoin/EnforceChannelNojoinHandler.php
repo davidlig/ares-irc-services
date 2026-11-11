@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Application\UseCase\EnforceNojoin;
 
+use App\ChanServ\Application\Model\ChanAccountView;
+use App\ChanServ\Application\Model\ChannelEntryMember;
 use App\ChanServ\Application\Port\Out\ChannelAccessRepositoryInterface;
 use App\ChanServ\Application\Port\Out\ChannelEntryNetworkQuery;
 use App\ChanServ\Application\Port\Out\ChannelLevelRepositoryInterface;
@@ -52,6 +54,38 @@ final readonly class EnforceChannelNojoinHandler implements EnforceChannelNojoin
 
         $override = $this->levels->findByChannelAndKey($channel->getId(), ChannelLevel::KEY_NOJOIN);
         $requiredAccess = $override?->getValue() ?? ChannelLevel::getDefault(ChannelLevel::KEY_NOJOIN);
+
+        return $this->enforceMembers(
+            $channel,
+            $members,
+            $requiredAccess,
+            fn (string $nickname): ?ChanAccountView => $this->accounts->findAccountByNick($nickname),
+            fn (int $nickId): ?int => $this->access->findByChannelAndNick($channel->getId(), $nickId)?->getLevel(),
+        );
+    }
+
+    public function handleKnownChannelWithSnapshot(RegisteredChannel $channel, array $members, int $requiredAccess, array $accounts, array $access): int
+    {
+        if ($channel->isBlocked()) {
+            return 0;
+        }
+
+        return $this->enforceMembers(
+            $channel,
+            $members,
+            $requiredAccess,
+            static fn (string $nickname): ?ChanAccountView => $accounts[strtolower($nickname)] ?? null,
+            static fn (int $nickId): ?int => $access[$nickId] ?? null,
+        );
+    }
+
+    /**
+     * @param list<ChannelEntryMember>           $members
+     * @param callable(string): ?ChanAccountView $findAccount
+     * @param callable(int): ?int                $findAccess
+     */
+    private function enforceMembers(RegisteredChannel $channel, array $members, int $requiredAccess, callable $findAccount, callable $findAccess): int
+    {
         if (0 > $requiredAccess) {
             return 0;
         }
@@ -62,12 +96,12 @@ final readonly class EnforceChannelNojoinHandler implements EnforceChannelNojoin
                 continue;
             }
 
-            $account = $this->accounts->findAccountByNick($member->nickname);
+            $account = $findAccount($member->nickname);
             $identified = $member->identified && null !== $account;
             $founder = $identified && $channel->isFounder($account->id);
             $storedAccess = null;
             if ($identified && !$founder) {
-                $storedAccess = $this->access->findByChannelAndNick($channel->getId(), $account->id)?->getLevel();
+                $storedAccess = $findAccess($account->id);
             }
 
             $effectiveAccess = $this->accessPolicy->effectiveLevel($identified, $founder, $storedAccess);

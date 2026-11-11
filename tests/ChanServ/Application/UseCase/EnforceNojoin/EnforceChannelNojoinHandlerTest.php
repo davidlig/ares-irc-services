@@ -45,6 +45,35 @@ final class EnforceChannelNojoinHandlerTest extends TestCase
     }
 
     #[Test]
+    public function preloadedNojoinPolicyAvoidsPerMemberLookups(): void
+    {
+        $accounts = $this->createMock(ChanUserAccountPort::class);
+        $accounts->expects(self::never())->method('findAccountByNick');
+        $access = $this->createMock(ChannelAccessRepositoryInterface::class);
+        $access->expects(self::never())->method('findByChannelAndNick');
+        $actions = $this->createMock(NojoinActions::class);
+        $actions->expects(self::once())->method('kick')->with('#Test', '001A', 'Member', 99, 100, 'fr');
+        $handler = $this->handler(access: $access, accounts: $accounts, actions: $actions);
+        self::assertSame(1, $handler->handleKnownChannelWithSnapshot(
+            $this->channel(founderId: 10),
+            [$this->member('001A', 'Member', identified: true)],
+            100,
+            ['member' => new ChanAccountView(20, 'Member', 'fr')],
+            [20 => 99],
+        ));
+    }
+
+    #[Test]
+    public function preloadedNojoinSkipsBlockedAndDisabledChannels(): void
+    {
+        $actions = $this->createMock(NojoinActions::class);
+        $actions->expects(self::never())->method('kick');
+        $handler = $this->handler(actions: $actions);
+        self::assertSame(0, $handler->handleKnownChannelWithSnapshot($this->channel(blocked: true), [], 100, [], []));
+        self::assertSame(0, $handler->handleKnownChannelWithSnapshot($this->channel(), [], -1, [], []));
+    }
+
+    #[Test]
     public function disabledNojoinDoesNotInspectMembers(): void
     {
         $levels = $this->createStub(ChannelLevelRepositoryInterface::class);

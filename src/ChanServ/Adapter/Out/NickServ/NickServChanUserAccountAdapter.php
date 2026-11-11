@@ -6,6 +6,7 @@ namespace App\ChanServ\Adapter\Out\NickServ;
 
 use App\ChanServ\Application\Model\ChanAccountView;
 use App\ChanServ\Application\Port\Out\ChanUserAccountPort;
+use App\NickServ\Application\Port\In\NickAccountBatchQuery;
 use App\NickServ\Application\Port\In\NickAccountData;
 use App\NickServ\Application\Port\In\NickAccountQuery;
 
@@ -15,7 +16,7 @@ use function array_values;
 
 final readonly class NickServChanUserAccountAdapter implements ChanUserAccountPort
 {
-    public function __construct(private NickAccountQuery $nickAccountQuery) {}
+    public function __construct(private NickAccountQuery $nickAccountQuery, private NickAccountBatchQuery $batchAccounts) {}
 
     public function findAccountByNick(string $nickname): ?ChanAccountView
     {
@@ -25,6 +26,16 @@ final readonly class NickServChanUserAccountAdapter implements ChanUserAccountPo
         }
 
         return $this->toView($account);
+    }
+
+    public function findAccountsByNicks(array $nicknames): array
+    {
+        $views = [];
+        foreach ($this->batchAccounts->findAccountsByNicks($nicknames) as $nickname => $account) {
+            $views[$nickname] = $this->toView($account);
+        }
+
+        return $views;
     }
 
     public function findAccountById(int $id): ?ChanAccountView

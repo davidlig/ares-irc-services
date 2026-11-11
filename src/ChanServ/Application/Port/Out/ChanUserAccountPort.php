@@ -10,6 +10,13 @@ interface ChanUserAccountPort
 {
     public function findAccountByNick(string $nickname): ?ChanAccountView;
 
+    /**
+     * @param list<string> $nicknames
+     *
+     * @return array<string, ChanAccountView> keyed by lowercase nickname
+     */
+    public function findAccountsByNicks(array $nicknames): array;
+
     public function findAccountById(int $id): ?ChanAccountView;
 
     public function findIdByNick(string $nickname): ?int;

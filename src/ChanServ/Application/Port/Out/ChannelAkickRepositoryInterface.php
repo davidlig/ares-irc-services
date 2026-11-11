@@ -10,6 +10,9 @@ interface ChannelAkickRepositoryInterface
 {
     public function save(ChannelAkick $akick): void;
 
+    /** @param list<ChannelAkick> $akicks */
+    public function saveAll(array $akicks): void;
+
     public function remove(ChannelAkick $akick): void;
 
     public function findById(int $id): ?ChannelAkick;

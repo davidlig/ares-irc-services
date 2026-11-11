@@ -57,6 +57,16 @@ final readonly class ChannelRegistrationService implements ChannelRegistrationLi
         $this->networkActions->reconcilePermanentMode($registeredNames, $eligibleChannelNames);
     }
 
+    public function reconcileKnownChannels(array $registeredNames, array $eligibleChannelNames): void
+    {
+        if ($this->networkActions->supportsRegisteredMode()) {
+            $this->networkActions->reconcileRegisteredMode($registeredNames, $eligibleChannelNames);
+        }
+        if ($this->networkActions->supportsPermanentMode()) {
+            $this->networkActions->reconcilePermanentMode($registeredNames, $eligibleChannelNames);
+        }
+    }
+
     /**
      * @return array{array<string, true>, list<string>}
      */

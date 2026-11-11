@@ -17,10 +17,6 @@ final readonly class ChanServRejoinSubscriber implements EventSubscriberInterfac
     public static function getSubscribedEvents(): array
     {
         return [
-            NetworkSynchronizationCompletedEvent::class => [
-                ['onSyncCompleteReconcileRegisteredMode', 10],
-                ['onSyncCompleteReconcilePermanentMode', 9],
-            ],
             ChannelSynchronizedEvent::class => ['onChannelSyncedSetRegistered', 10],
             ExistingChannelJoinObservedEvent::class => ['onExistingChannelJoinObserved', 10],
         ];

@@ -56,10 +56,6 @@ final class ChanServRejoinSubscriberTest extends TestCase
 
         self::assertSame(
             [
-                NetworkSynchronizationCompletedEvent::class => [
-                    ['onSyncCompleteReconcileRegisteredMode', 10],
-                    ['onSyncCompleteReconcilePermanentMode', 9],
-                ],
                 ChannelSynchronizedEvent::class => ['onChannelSyncedSetRegistered', 10],
                 ExistingChannelJoinObservedEvent::class => ['onExistingChannelJoinObserved', 10],
             ],

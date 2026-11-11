@@ -6,7 +6,11 @@ namespace App\Tests\ChanServ\Adapter\In\Event;
 
 use App\ChanServ\Adapter\In\Event\ChanServChannelRankSubscriber;
 use App\ChanServ\Adapter\In\Event\PendingChannelRankSynchronizations;
+use App\ChanServ\Application\Model\BurstRankEventScope;
+use App\ChanServ\Application\Model\ChannelRankNetworkState;
+use App\ChanServ\Application\Model\ChannelRankPolicy;
 use App\ChanServ\Application\Port\Out\ChannelRankPolicyRepository;
+use App\ChanServ\Application\Port\Out\RegisteredChannelBurstSnapshot;
 use App\ChanServ\Application\PublishedEvent\ChannelFounderChangedEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelSecureEnabledEvent;
 use App\ChanServ\Application\UseCase\EnforceRanks\EnforceChannelRanks;
@@ -15,12 +19,13 @@ use App\ChanServ\Application\UseCase\EnforceRanks\RankEnforcementOutcome;
 use App\ChanServ\Application\UseCase\EnforceRanks\RankEnforcementResult;
 use App\ChanServ\Application\UseCase\EnforceRanks\RankEnforcementTrigger;
 use App\ChanServ\Application\UseCase\EnforceRanks\SynchronizeAllChannelRanksHandler;
+use App\ChanServ\Domain\ValueObject\ChannelLevelSet;
 use App\ChanServ\Domain\ValueObject\ChannelRank;
+use App\Irc\Application\Port\In\BurstCompletePort;
 use App\Irc\Application\PublishedEvent\ChannelMemberRankGrantedEvent;
 use App\Irc\Application\PublishedEvent\ChannelSynchronizedEvent;
 use App\Irc\Application\PublishedEvent\IrcMessageHandledEvent;
 use App\Irc\Application\PublishedEvent\IrcMessageHandlingStartedEvent;
-use App\Irc\Application\PublishedEvent\NetworkSynchronizationCompletedEvent;
 use App\Irc\Application\PublishedEvent\UserDepartedChannelEvent;
 use App\Irc\Application\PublishedEvent\UserJoinedChannelEvent;
 use DateTimeImmutable;
@@ -42,7 +47,6 @@ final class ChanServChannelRankSubscriberTest extends TestCase
             IrcMessageHandledEvent::class => ['onIrcMessageHandled', -255],
             UserJoinedChannelEvent::class => ['onUserJoinedChannel', 0],
             UserDepartedChannelEvent::class => ['onUserLeftChannel', 0],
-            NetworkSynchronizationCompletedEvent::class => ['onNetworkSynchronizationCompleted', 0],
             ChannelSynchronizedEvent::class => ['onChannelSynced', 0],
             ChannelSecureEnabledEvent::class => ['onChannelSecureEnabled', 0],
             ChannelFounderChangedEvent::class => ['onChannelFounderChanged', 0],
@@ -85,6 +89,80 @@ final class ChanServChannelRankSubscriberTest extends TestCase
             $commands,
         ));
         self::assertTrue($commands[0]->reconcileOnJoin);
+    }
+
+    #[Test]
+    public function departuresDuringBurstReconciliationUseTheCurrentSnapshot(): void
+    {
+        $handler = $this->createMock(EnforceChannelRanksHandlerInterface::class);
+        $handler->expects(self::never())->method('handle');
+        $handler->expects(self::once())->method('handleKnownPolicyAndNetwork')->willReturn(new RankEnforcementResult(RankEnforcementOutcome::Applied, activityTouched: true));
+        $scope = new BurstRankEventScope();
+        $scope->begin();
+        $scope->setChannel(new ChannelRankPolicy(1, '#test', 10, false, false, ChannelLevelSet::defaults(), []), new ChannelRankNetworkState('#test', [], []));
+        $policies = $this->createStub(ChannelRankPolicyRepository::class);
+        $burst = $this->createStub(BurstCompletePort::class);
+        $subscriber = new ChanServChannelRankSubscriber($handler, new SynchronizeAllChannelRanksHandler($policies, $handler), new PendingChannelRankSynchronizations(), $burst, $scope, $this->createStub(RegisteredChannelBurstSnapshot::class));
+        $subscriber->onUserLeftChannel(new UserDepartedChannelEvent('U1', '#test'));
+        self::assertTrue($scope->needsActivity('#test'));
+    }
+
+    #[Test]
+    public function departuresWithoutCurrentBurstPolicyDoNotQueryRanks(): void
+    {
+        $handler = $this->createMock(EnforceChannelRanksHandlerInterface::class);
+        $handler->expects(self::never())->method('handle');
+        $handler->expects(self::never())->method('handleKnownPolicyAndNetwork');
+        $scope = new BurstRankEventScope();
+        $scope->begin();
+        $subscriber = new ChanServChannelRankSubscriber(
+            $handler,
+            new SynchronizeAllChannelRanksHandler($this->createStub(ChannelRankPolicyRepository::class), $handler),
+            new PendingChannelRankSynchronizations(),
+            $this->createStub(BurstCompletePort::class),
+            $scope,
+            $this->createStub(RegisteredChannelBurstSnapshot::class),
+        );
+        $subscriber->onUserLeftChannel(new UserDepartedChannelEvent('U1', '#forbidden'));
+        self::assertFalse($scope->needsActivity('#forbidden'));
+    }
+
+    #[Test]
+    public function burstChannelActivityIsRecordedOnlyForRegisteredNames(): void
+    {
+        $handler = $this->createMock(EnforceChannelRanksHandlerInterface::class);
+        $handler->expects(self::never())->method('handle');
+        $policies = $this->createStub(ChannelRankPolicyRepository::class);
+        $burst = $this->createStub(BurstCompletePort::class);
+        $burst->method('isComplete')->willReturn(false);
+        $snapshot = $this->createStub(RegisteredChannelBurstSnapshot::class);
+        $snapshot->method('contains')->willReturnMap([['#registered', true], ['#unknown', false]]);
+        $scope = new BurstRankEventScope();
+        $subscriber = new ChanServChannelRankSubscriber($handler, new SynchronizeAllChannelRanksHandler($policies, $handler), new PendingChannelRankSynchronizations(), $burst, $scope, $snapshot);
+        $subscriber->onChannelSynced(new ChannelSynchronizedEvent('#registered'));
+        $subscriber->onChannelSynced(new ChannelSynchronizedEvent('#unknown'));
+        self::assertTrue($scope->needsActivity('#registered'));
+        self::assertFalse($scope->needsActivity('#unknown'));
+    }
+
+    #[Test]
+    public function itDefersChannelSynchronizationRankEnforcementDuringBurst(): void
+    {
+        $handler = $this->createMock(EnforceChannelRanksHandlerInterface::class);
+        $handler->expects(self::never())->method('handle');
+        $policies = $this->createStub(ChannelRankPolicyRepository::class);
+        $burst = $this->createStub(BurstCompletePort::class);
+        $burst->method('isComplete')->willReturn(false);
+        $subscriber = new ChanServChannelRankSubscriber(
+            $handler,
+            new SynchronizeAllChannelRanksHandler($policies, $handler),
+            new PendingChannelRankSynchronizations(),
+            $burst,
+            new BurstRankEventScope(),
+            $this->createStub(RegisteredChannelBurstSnapshot::class),
+        );
+
+        $subscriber->onChannelSynced(new ChannelSynchronizedEvent('#burst'));
     }
 
     #[Test]
@@ -166,10 +244,16 @@ final class ChanServChannelRankSubscriberTest extends TestCase
             $policies = $policyStub;
         }
 
+        $burst = $this->createStub(BurstCompletePort::class);
+        $burst->method('isComplete')->willReturn(true);
+
         return new ChanServChannelRankSubscriber(
             $handler,
             new SynchronizeAllChannelRanksHandler($policies, $handler),
             new PendingChannelRankSynchronizations(),
+            $burst,
+            new BurstRankEventScope(),
+            $this->createStub(RegisteredChannelBurstSnapshot::class),
         );
     }
 

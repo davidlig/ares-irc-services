@@ -25,7 +25,6 @@ final readonly class ChanServNojoinEnforceSubscriber implements EventSubscriberI
     {
         return [
             UserJoinedChannelEvent::class => ['onUserJoined', 10],
-            NetworkSynchronizationCompletedEvent::class => ['onSyncComplete', 10],
         ];
     }
 

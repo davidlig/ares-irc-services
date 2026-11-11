@@ -12,6 +12,8 @@ interface ForbiddenChannelEnforcement
 
     public function enforceAllForbiddenChannels(): void;
 
+    public function enforceKnownForbiddenChannel(string $channelName): void;
+
     public function enforceForbiddenUserJoin(string $channelName, string $userUid): void;
 
     public function enforceConfiguredForbiddenChannel(string $channelName): void;

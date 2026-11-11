@@ -16,6 +16,7 @@ use App\ChanServ\Domain\ValueObject\AkickRule;
 use DateTimeImmutable;
 use InvalidArgumentException;
 
+use function array_values;
 use function spl_object_id;
 use function sprintf;
 use function strtolower;
@@ -52,9 +53,18 @@ final readonly class EnforceChannelAkickHandler implements EnforceChannelAkickHa
             return 0;
         }
 
+        return $this->handleKnownChannelWithAkicks($channel, $members, $now, array_values($this->akicks->listByChannel($channel->getId())));
+    }
+
+    public function handleKnownChannelWithAkicks(RegisteredChannel $channel, array $members, DateTimeImmutable $now, array $akicks): int
+    {
+        if ($channel->isBlocked()) {
+            return 0;
+        }
+
         $rules = [];
         $ruleMap = [];
-        foreach ($this->akicks->listByChannel($channel->getId()) as $akick) {
+        foreach ($akicks as $akick) {
             try {
                 $rule = new AkickRule(
                     new AkickMask($akick->getMask()),
@@ -70,25 +80,32 @@ final readonly class EnforceChannelAkickHandler implements EnforceChannelAkickHa
         }
 
         $enforced = 0;
-        foreach ($members as $member) {
-            $matching = $this->matchPolicy->firstMatch($rules, $member->userMask, $now, $member->operator);
-            if (null === $matching) {
-                continue;
-            }
+        $used = [];
+        try {
+            foreach ($members as $member) {
+                $matching = $this->matchPolicy->firstMatch($rules, $member->userMask, $now, $member->operator);
+                if (null === $matching) {
+                    continue;
+                }
 
-            if (isset($ruleMap[spl_object_id($matching)])) {
-                $matchedAkick = $ruleMap[spl_object_id($matching)];
-                $matchedAkick->recordUsage($now);
-                $this->akicks->save($matchedAkick);
-            }
+                if (isset($ruleMap[spl_object_id($matching)])) {
+                    $matchedAkick = $ruleMap[spl_object_id($matching)];
+                    $matchedAkick->recordUsage($now);
+                    $used[spl_object_id($matchedAkick)] = $matchedAkick;
+                }
 
-            $this->actions->banAndKick(
-                $channel->getName(),
-                $member->uid,
-                $matching->mask->value,
-                $matching->enforcementReason(),
-            );
-            ++$enforced;
+                $this->actions->banAndKick(
+                    $channel->getName(),
+                    $member->uid,
+                    $matching->mask->value,
+                    $matching->enforcementReason(),
+                );
+                ++$enforced;
+            }
+        } finally {
+            if ([] !== $used) {
+                $this->akicks->saveAll(array_values($used));
+            }
         }
 
         return $enforced;

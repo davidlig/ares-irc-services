@@ -1342,6 +1342,19 @@ services:
   App\ChanServ\Application\Port\Out\ChannelLevelRepositoryInterface:
     alias: App\ChanServ\Adapter\Out\Persistence\Doctrine\ChannelLevelDoctrineRepository
 
+  App\ChanServ\Adapter\In\Event\ChanServBurstChannelSnapshotSubscriber: ~
+  App\ChanServ\Adapter\In\Event\ChanServBurstSynchronizationSubscriber: ~
+  App\ChanServ\Application\UseCase\SynchronizeBurst\SynchronizeBurstChannels:
+    alias: App\ChanServ\Application\UseCase\SynchronizeBurst\SynchronizeBurstChannelsHandler
+  App\NickServ\Application\Port\In\NickAccountBatchQuery:
+    alias: App\NickServ\Adapter\Out\Persistence\Doctrine\NickAccountBatchDoctrineQuery
+  App\ChanServ\Application\Port\Out\BurstChannelActivity:
+    alias: App\ChanServ\Adapter\Out\Persistence\Doctrine\BurstChannelActivityWriter
+  App\ChanServ\Application\Port\Out\BurstChannelPages:
+    alias: App\ChanServ\Adapter\Out\Persistence\Doctrine\BurstChannelPageSource
+  App\ChanServ\Application\Port\Out\RegisteredChannelBurstSnapshot:
+    alias: App\ChanServ\Adapter\Out\Persistence\Doctrine\RegisteredChannelDoctrineRepository
+
   App\ChanServ\Adapter\Out\Persistence\Doctrine\RegisteredChannelDoctrineRepository: ~
   App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface:
     alias: App\ChanServ\Adapter\Out\Persistence\Doctrine\RegisteredChannelDoctrineRepository

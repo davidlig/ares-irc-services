@@ -51,14 +51,7 @@ final readonly class ApplyStoredChannelTopicHandler implements ApplyStoredChanne
         $this->actions->setTopic($command->channelName, $storedTopic);
     }
 
-    private function synchronizeAll(): void
-    {
-        foreach ($this->channels->iterateAll() as $registered) {
-            $this->synchronize($registered);
-        }
-    }
-
-    private function synchronize(RegisteredChannel $registered): void
+    public function synchronizeKnownChannel(RegisteredChannel $registered): void
     {
         if ($registered->isBlocked()) {
             return;
@@ -75,5 +68,12 @@ final readonly class ApplyStoredChannelTopicHandler implements ApplyStoredChanne
         }
 
         $this->actions->setTopic($network->channelName, $storedTopic);
+    }
+
+    private function synchronizeAll(): void
+    {
+        foreach ($this->channels->iterateAll() as $registered) {
+            $this->synchronizeKnownChannel($registered);
+        }
     }
 }

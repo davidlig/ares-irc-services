@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Adapter\Out\Network;
 
+use App\ChanServ\Application\Model\ChanAccountView;
 use App\ChanServ\Application\Model\ChannelMember;
 use App\ChanServ\Application\Model\ChannelRankNetworkState;
 use App\ChanServ\Application\Port\Out\ChannelRankNetworkQuery;
@@ -13,6 +14,7 @@ use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\Irc\Application\Port\In\ChannelModeSupportInterface;
 use App\Irc\Application\Port\In\ChannelView;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
+use App\NickServ\Application\Port\In\NickAccountData;
 use App\NickServ\Application\Port\In\NickAccountQuery;
 
 use function in_array;
@@ -43,6 +45,20 @@ final readonly class IrcChannelRankNetworkQuery implements ChannelRankNetworkQue
             name: $view->name,
             members: $this->members($view),
             supportedRanks: $this->supportedRanks($support),
+        );
+    }
+
+    public function findChannelWithAccounts(string $channelName, array $accounts): ?ChannelRankNetworkState
+    {
+        $view = $this->channels->findByChannelName($channelName);
+        if (null === $view) {
+            return null;
+        }
+
+        return new ChannelRankNetworkState(
+            name: $view->name,
+            members: $this->members($view, $accounts),
+            supportedRanks: $this->supportedRanks($this->modeSupportProvider->getSupport()),
         );
     }
 
@@ -79,8 +95,12 @@ final readonly class IrcChannelRankNetworkQuery implements ChannelRankNetworkQue
         return new ChannelRankNetworkState($view->name, null === $member ? [] : [$member], $this->supportedRanks($this->modeSupportProvider->getSupport()));
     }
 
-    /** @return list<ChannelMember> */
-    private function members(ChannelView $view): array
+    /**
+     * @param array<string, ChanAccountView|NickAccountData>|null $accounts
+     *
+     * @return list<ChannelMember>
+     */
+    private function members(ChannelView $view, ?array $accounts = null): array
     {
         $resolved = [];
         $nicknames = [];
@@ -97,7 +117,7 @@ final readonly class IrcChannelRankNetworkQuery implements ChannelRankNetworkQue
             $nicknames[] = $user->nick;
         }
 
-        $accounts = $this->registeredNicks->findAccountsByNicks($nicknames);
+        $accounts ??= $this->registeredNicks->findAccountsByNicks($nicknames);
         $members = [];
         foreach ($resolved as [$entry, $user]) {
             $account = $accounts[strtolower($user->nick)] ?? null;

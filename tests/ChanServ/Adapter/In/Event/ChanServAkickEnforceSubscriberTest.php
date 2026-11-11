@@ -23,7 +23,6 @@ final class ChanServAkickEnforceSubscriberTest extends TestCase
     {
         self::assertSame([
             UserJoinedChannelEvent::class => ['onUserJoined', 0],
-            NetworkSynchronizationCompletedEvent::class => ['onSyncComplete', 0],
         ], ChanServAkickEnforceSubscriber::getSubscribedEvents());
 
         $handler = $this->createMock(EnforceChannelAkickHandlerInterface::class);

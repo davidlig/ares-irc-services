@@ -45,6 +45,18 @@ final class ChannelAkickDoctrineRepositoryTest extends DoctrineIntegrationTestCa
     }
 
     #[Test]
+    public function saveAllPersistsMultipleAkicks(): void
+    {
+        $first = ChannelAkick::create(new DateTimeImmutable(), 1, 100, '*!*@first.test');
+        $second = ChannelAkick::create(new DateTimeImmutable(), 1, 100, '*!*@second.test');
+        $this->repository->saveAll([$first, $second]);
+        $this->flushAndClear();
+
+        self::assertSame('*!*@first.test', $this->repository->findById($first->getId())?->getMask());
+        self::assertSame('*!*@second.test', $this->repository->findById($second->getId())?->getMask());
+    }
+
+    #[Test]
     public function saveWithNullReason(): void
     {
         $akick = ChannelAkick::create(

@@ -40,6 +40,18 @@ final class DoctrineChannelMlockPolicyRepositoryTest extends TestCase
     }
 
     #[Test]
+    public function itMapsAKnownChannelWithoutARepositoryLookup(): void
+    {
+        $channel = $this->channel(7, '#Known', false, true, '+k', ['k' => 'secret']);
+        $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
+        $channels->expects(self::never())->method('findByChannelName');
+        $policy = new DoctrineChannelMlockPolicyRepository($channels)->forChannel($channel);
+        self::assertSame('#Known', $policy->name);
+        self::assertTrue($policy->modeLock->active);
+        self::assertSame('secret', $policy->modeLock->settings[0]->parameter);
+    }
+
+    #[Test]
     public function itReturnsNullWhenTheChannelIsUnknown(): void
     {
         $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);

@@ -22,7 +22,6 @@ final readonly class ChanServTopicApplySubscriber implements EventSubscriberInte
         return [
             ChannelSynchronizedEvent::class => ['onChannelSynced', -20],
             ExistingChannelJoinObservedEvent::class => ['onExistingChannelJoinObserved', -20],
-            NetworkSynchronizationCompletedEvent::class => ['onSyncComplete', -20],
         ];
     }
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Adapter\Out\Persistence\Doctrine;
 
+use App\ChanServ\Application\Port\Out\RegisteredChannelBurstSnapshot;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\ValueObject\ChannelStatus;
@@ -12,37 +13,74 @@ use Doctrine\DBAL\Platforms\AbstractMySQLPlatform;
 use Doctrine\DBAL\Platforms\SQLitePlatform;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Query\ResultSetMappingBuilder;
+use UnexpectedValueException;
 
 use function array_filter;
 use function array_values;
 use function count;
 use function is_numeric;
+use function is_string;
 use function max;
 use function str_contains;
 use function strtolower;
 use function strtr;
 
-final readonly class RegisteredChannelDoctrineRepository implements RegisteredChannelRepositoryInterface
+final class RegisteredChannelDoctrineRepository implements RegisteredChannelRepositoryInterface, RegisteredChannelBurstSnapshot
 {
     private const int PAGE_SIZE = 500;
 
-    public function __construct(private EntityManagerInterface $em) {}
+    /** @var array<string, true>|null */
+    private ?array $burstNames = null;
+
+    public function __construct(private readonly EntityManagerInterface $em) {}
+
+    public function beginBurst(): void
+    {
+        $this->burstNames = null;
+        $names = [];
+        foreach ($this->em->getConnection()->fetchFirstColumn('SELECT name_lower FROM registered_channels') as $name) {
+            if (!is_string($name)) {
+                throw new UnexpectedValueException('Invalid registered channel name in burst snapshot.');
+            }
+            $names[$name] = true;
+        }
+        $this->burstNames = $names;
+    }
+
+    public function endBurst(): void
+    {
+        $this->burstNames = null;
+    }
+
+    public function contains(string $channelName): ?bool
+    {
+        return null === $this->burstNames ? null : isset($this->burstNames[strtolower($channelName)]);
+    }
 
     public function save(RegisteredChannel $channel): void
     {
         $this->em->persist($channel);
         $this->em->flush();
+        if (null !== $this->burstNames) {
+            $this->burstNames[strtolower($channel->getName())] = true;
+        }
     }
 
     public function delete(RegisteredChannel $channel): void
     {
         $this->em->remove($channel);
         $this->em->flush();
+        if (null !== $this->burstNames) {
+            unset($this->burstNames[strtolower($channel->getName())]);
+        }
     }
 
     public function findByChannelName(string $channelName): ?RegisteredChannel
     {
         $nameLower = strtolower($channelName);
+        if (null !== $this->burstNames && !isset($this->burstNames[$nameLower])) {
+            return null;
+        }
 
         return $this->em
             ->getRepository(RegisteredChannel::class)

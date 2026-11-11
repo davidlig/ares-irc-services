@@ -16,7 +16,6 @@ use App\ChanServ\Application\UseCase\EnforceMlock\SynchronizeAllChannelMlocksHan
 use App\Irc\Application\PublishedEvent\ChannelSettingsChangedEvent;
 use App\Irc\Application\PublishedEvent\ChannelSynchronizedEvent;
 use App\Irc\Application\PublishedEvent\ExistingChannelJoinObservedEvent;
-use App\Irc\Application\PublishedEvent\NetworkSynchronizationCompletedEvent;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -30,7 +29,6 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
     public function itSubscribesToTheExactEventContractAndPriorities(): void
     {
         self::assertSame([
-            NetworkSynchronizationCompletedEvent::class => ['onNetworkSynchronizationCompleted', -10],
             ChannelSynchronizedEvent::class => ['onChannelSynced', -10],
             ExistingChannelJoinObservedEvent::class => ['onExistingChannelJoinObserved', -10],
             ChannelSettingsChangedEvent::class => ['onChannelModesChanged', 255],
