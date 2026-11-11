@@ -11,6 +11,7 @@ use App\ChanServ\Application\UseCase\EnforceRanks\EnforceChannelRanksHandlerInte
 use App\ChanServ\Application\UseCase\EnforceRanks\RankEnforcementTrigger;
 use App\ChanServ\Application\UseCase\EnforceRanks\SynchronizeAllChannelRanksHandler;
 use App\ChanServ\Domain\ValueObject\ChannelRank;
+use App\Irc\Application\Port\In\BurstCompletePort;
 use App\Irc\Application\PublishedEvent\ChannelMemberRankGrantedEvent;
 use App\Irc\Application\PublishedEvent\ChannelSynchronizedEvent;
 use App\Irc\Application\PublishedEvent\IrcMessageHandledEvent;
@@ -27,6 +28,7 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
         private EnforceChannelRanksHandlerInterface $enforceChannelRanks,
         private SynchronizeAllChannelRanksHandler $synchronizeAllChannelRanks,
         private PendingChannelRankSynchronizations $pending,
+        private BurstCompletePort $burstComplete,
     ) {}
 
     public static function getSubscribedEvents(): array
@@ -86,6 +88,10 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
 
     public function onChannelSynced(ChannelSynchronizedEvent $event): void
     {
+        if (!$this->burstComplete->isComplete()) {
+            return;
+        }
+
         $this->enforceChannelRanks->handle(new EnforceChannelRanks(
             $event->channelName,
             RankEnforcementTrigger::ChannelSynchronized,

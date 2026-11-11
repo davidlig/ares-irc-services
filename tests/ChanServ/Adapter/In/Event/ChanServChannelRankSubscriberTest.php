@@ -16,6 +16,7 @@ use App\ChanServ\Application\UseCase\EnforceRanks\RankEnforcementResult;
 use App\ChanServ\Application\UseCase\EnforceRanks\RankEnforcementTrigger;
 use App\ChanServ\Application\UseCase\EnforceRanks\SynchronizeAllChannelRanksHandler;
 use App\ChanServ\Domain\ValueObject\ChannelRank;
+use App\Irc\Application\Port\In\BurstCompletePort;
 use App\Irc\Application\PublishedEvent\ChannelMemberRankGrantedEvent;
 use App\Irc\Application\PublishedEvent\ChannelSynchronizedEvent;
 use App\Irc\Application\PublishedEvent\IrcMessageHandledEvent;
@@ -85,6 +86,24 @@ final class ChanServChannelRankSubscriberTest extends TestCase
             $commands,
         ));
         self::assertTrue($commands[0]->reconcileOnJoin);
+    }
+
+    #[Test]
+    public function itDefersChannelSynchronizationRankEnforcementDuringBurst(): void
+    {
+        $handler = $this->createMock(EnforceChannelRanksHandlerInterface::class);
+        $handler->expects(self::never())->method('handle');
+        $policies = $this->createStub(ChannelRankPolicyRepository::class);
+        $burst = $this->createStub(BurstCompletePort::class);
+        $burst->method('isComplete')->willReturn(false);
+        $subscriber = new ChanServChannelRankSubscriber(
+            $handler,
+            new SynchronizeAllChannelRanksHandler($policies, $handler),
+            new PendingChannelRankSynchronizations(),
+            $burst,
+        );
+
+        $subscriber->onChannelSynced(new ChannelSynchronizedEvent('#burst'));
     }
 
     #[Test]
@@ -166,10 +185,14 @@ final class ChanServChannelRankSubscriberTest extends TestCase
             $policies = $policyStub;
         }
 
+        $burst = $this->createStub(BurstCompletePort::class);
+        $burst->method('isComplete')->willReturn(true);
+
         return new ChanServChannelRankSubscriber(
             $handler,
             new SynchronizeAllChannelRanksHandler($policies, $handler),
             new PendingChannelRankSynchronizations(),
+            $burst,
         );
     }
 

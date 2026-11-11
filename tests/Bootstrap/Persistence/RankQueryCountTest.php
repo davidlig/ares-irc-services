@@ -25,6 +25,7 @@ use App\Irc\Adapter\Network\Event\ChannelPartReceivedEvent;
 use App\Irc\Adapter\Network\NetworkEventEnricher;
 use App\Irc\Application\Port\In\ActiveChannelModeSupportProviderInterface;
 use App\Irc\Application\Port\In\ActiveProtocolModuleHolderInterface;
+use App\Irc\Application\Port\In\BurstCompletePort;
 use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\Irc\Application\Port\In\ChannelModeSupportInterface;
 use App\Irc\Application\Port\In\ChannelView;
@@ -103,7 +104,9 @@ final class RankQueryCountTest extends TestCase
             $handler = new EnforceChannelRanksHandler($policy, $network, $this->createStub(ChannelRankActions::class), new ChannelAccessPolicy(), new AutomaticRankPolicy(), new RankReconciliationPolicy());
             $dispatcher = new EventDispatcher();
             $dispatcher->addSubscriber(new PublishedIrcEventBridge($dispatcher));
-            $dispatcher->addSubscriber(new ChanServChannelRankSubscriber($handler, new SynchronizeAllChannelRanksHandler($policy, $handler), new PendingChannelRankSynchronizations()));
+            $burst = $this->createStub(BurstCompletePort::class);
+            $burst->method('isComplete')->willReturn(true);
+            $dispatcher->addSubscriber(new ChanServChannelRankSubscriber($handler, new SynchronizeAllChannelRanksHandler($policy, $handler), new PendingChannelRankSynchronizations(), $burst));
             $channelName = new ChannelName('#test');
             $channel = new Channel($channelName, '', new DateTimeImmutable('@100'));
             $channel->syncMember(new Uid('U1'), ChannelMemberRole::None);
