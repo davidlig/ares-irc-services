@@ -13,6 +13,9 @@ interface ChannelLookupPort
 {
     public function findByChannelName(string $channelName): ?ChannelView;
 
+    /** Returns the channel with at most the requested member, or null if the channel is absent. */
+    public function findMember(string $channelName, string $uid): ?ChannelView;
+
     /**
      * @return ChannelView[] All channels currently on the network
      */

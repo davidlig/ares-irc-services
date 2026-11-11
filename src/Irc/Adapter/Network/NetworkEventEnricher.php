@@ -23,6 +23,7 @@ use App\Irc\Application\Port\In\SkipIdentifiedModeStripRegistry;
 use App\Irc\Domain\Event\ChannelModesChangedEvent;
 use App\Irc\Domain\Event\ChannelSyncedEvent;
 use App\Irc\Domain\Event\ChannelTopicChangedEvent;
+use App\Irc\Domain\Event\ExistingChannelJoinObservedEvent;
 use App\Irc\Domain\Event\UserHostChangedEvent;
 use App\Irc\Domain\Event\UserJoinedChannelEvent;
 use App\Irc\Domain\Event\UserLeftChannelEvent;
@@ -201,11 +202,11 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
                     }
                 }
                 $this->channelRepository->save($channel);
-                $this->eventDispatcher->dispatch(new ChannelSyncedEvent($channel, $channelSetupApplicable));
+                $this->eventDispatcher->dispatch(new ExistingChannelJoinObservedEvent($channel, $channelSetupApplicable));
                 foreach ($event->members as $member) {
                     $joinedMember = $channel->getMember($member['uid']);
                     $role = null !== $joinedMember ? $joinedMember->role : ChannelMemberRole::None;
-                    $this->eventDispatcher->dispatch(new UserJoinedChannelEvent($member['uid'], $event->channelName, $role));
+                    $this->eventDispatcher->dispatch(new UserJoinedChannelEvent($member['uid'], $event->channelName, $role, true));
                 }
 
                 return;
@@ -287,11 +288,15 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
             $this->eventDispatcher->dispatch(new ChannelSyncedEvent($channel, $channelSetupApplicable));
         } else {
             $this->channelRepository->save($channel);
-            $this->eventDispatcher->dispatch(new ChannelSyncedEvent($channel, $channelSetupApplicable));
+            if ($channel->getCreatedAt()->getTimestamp() !== $existingTimestamp) {
+                $this->eventDispatcher->dispatch(new ChannelSyncedEvent($channel, $channelSetupApplicable));
+            } else {
+                $this->eventDispatcher->dispatch(new ExistingChannelJoinObservedEvent($channel, $channelSetupApplicable));
+            }
             foreach ($joinedUids as $uid) {
                 $member = $channel->getMember($uid);
                 $role = null !== $member ? $member->role : ChannelMemberRole::None;
-                $this->eventDispatcher->dispatch(new UserJoinedChannelEvent($uid, $event->channelName, $role));
+                $this->eventDispatcher->dispatch(new UserJoinedChannelEvent($uid, $event->channelName, $role, $channel->getCreatedAt()->getTimestamp() === $existingTimestamp));
             }
         }
     }

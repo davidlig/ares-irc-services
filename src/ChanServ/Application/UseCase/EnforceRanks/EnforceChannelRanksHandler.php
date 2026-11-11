@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\ChanServ\Application\UseCase\EnforceRanks;
 
 use App\ChanServ\Application\Model\ChannelMember;
+use App\ChanServ\Application\Model\ChannelRankNetworkState;
 use App\ChanServ\Application\Model\ChannelRankPolicy;
 use App\ChanServ\Application\Model\MemberRankChange;
 use App\ChanServ\Application\Port\Out\ChannelRankActions;
@@ -18,6 +19,7 @@ use App\ChanServ\Domain\ValueObject\RankChange;
 
 use function array_map;
 use function count;
+use function in_array;
 
 final readonly class EnforceChannelRanksHandler implements EnforceChannelRanksHandlerInterface
 {
@@ -32,21 +34,40 @@ final readonly class EnforceChannelRanksHandler implements EnforceChannelRanksHa
 
     public function handle(EnforceChannelRanks $command): RankEnforcementResult
     {
-        $channel = $this->channelPolicies->findByName($command->channelName);
+        $single = $this->isSingleMember($command);
+        $networkChannel = $single ? $this->network->findMember($command->channelName, (string) $command->uid) : null;
+        $member = $networkChannel?->member((string) $command->uid);
+        $channel = $single
+            ? $this->channelPolicies->findByNameForNick($command->channelName, $member?->registeredNickId)
+            : $this->channelPolicies->findByName($command->channelName);
         if (null === $channel) {
             return new RankEnforcementResult(RankEnforcementOutcome::ChannelUnavailable);
         }
 
-        return $this->handleKnownPolicy($command, $channel);
+        return $this->handlePolicy($command, $channel, $networkChannel, $single);
     }
 
     public function handleKnownPolicy(EnforceChannelRanks $command, ChannelRankPolicy $channel): RankEnforcementResult
+    {
+        return $this->handlePolicy($command, $channel, null, false);
+    }
+
+    private function isSingleMember(EnforceChannelRanks $command): bool
+    {
+        return RankEnforcementTrigger::MemberJoined === $command->trigger
+            || RankEnforcementTrigger::MemberLeft === $command->trigger
+            || RankEnforcementTrigger::LiveRankGranted === $command->trigger;
+    }
+
+    private function handlePolicy(EnforceChannelRanks $command, ChannelRankPolicy $channel, ?ChannelRankNetworkState $networkChannel, bool $networkLoaded): RankEnforcementResult
     {
         if ($channel->blocked) {
             return new RankEnforcementResult(RankEnforcementOutcome::ChannelBlocked);
         }
 
-        $networkChannel = $this->network->findChannel($channel->name);
+        if (!$networkLoaded) {
+            $networkChannel = $this->network->findChannel($channel->name);
+        }
         if (null === $networkChannel) {
             if (RankEnforcementTrigger::ChannelSynchronized === $command->trigger) {
                 $this->channelPolicies->touchLastUsed($channel->id);
@@ -142,6 +163,17 @@ final readonly class EnforceChannelRanksHandler implements EnforceChannelRanksHa
         array $supportedRanks,
     ): array {
         $desired = $this->desiredRank($channel, $member, $supportedRanks);
+
+        if (RankEnforcementTrigger::MemberJoined === $command->trigger && $command->reconcileOnJoin) {
+            $changes = $this->reconciliationPolicy->forFullSync($member->currentRanks, $desired, $supportedRanks);
+            foreach ($this->reconciliationPolicy->forJoin($command->joinedRank, $member->currentRanks, $desired, $channel->secure) as $joinChange) {
+                if (!in_array($joinChange, $changes)) {
+                    $changes[] = $joinChange;
+                }
+            }
+
+            return $changes;
+        }
 
         return match ($command->trigger) {
             RankEnforcementTrigger::MemberJoined => $this->reconciliationPolicy->forJoin(

@@ -14,6 +14,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Query\ResultSetMappingBuilder;
 
 use function array_filter;
+use function array_map;
 use function array_unique;
 use function array_values;
 use function is_array;
@@ -48,6 +49,24 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
         return $this->em
             ->getRepository(RegisteredNick::class)
             ->findOneBy(['nicknameLower' => strtolower($nickname)]);
+    }
+
+    public function findByNicks(array $nicknames): array
+    {
+        $nicknames = array_values(array_unique(array_map(strtolower(...), $nicknames)));
+        if ([] === $nicknames) {
+            return [];
+        }
+
+        /** @var list<RegisteredNick> $accounts */
+        $accounts = $this->em->createQueryBuilder()
+            ->select('n')
+            ->from(RegisteredNick::class, 'n')
+            ->where('n.nicknameLower IN (:nicknames)')
+            ->setParameter('nicknames', $nicknames)
+            ->getQuery()->getResult();
+
+        return $accounts;
     }
 
     public function findById(int $id): ?RegisteredNick

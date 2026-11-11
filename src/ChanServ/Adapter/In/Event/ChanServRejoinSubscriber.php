@@ -6,6 +6,7 @@ namespace App\ChanServ\Adapter\In\Event;
 
 use App\ChanServ\Application\Port\In\ChannelRegistrationLifecycle;
 use App\Irc\Application\PublishedEvent\ChannelSynchronizedEvent;
+use App\Irc\Application\PublishedEvent\ExistingChannelJoinObservedEvent;
 use App\Irc\Application\PublishedEvent\NetworkSynchronizationCompletedEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -21,10 +22,16 @@ final readonly class ChanServRejoinSubscriber implements EventSubscriberInterfac
                 ['onSyncCompleteReconcilePermanentMode', 9],
             ],
             ChannelSynchronizedEvent::class => ['onChannelSyncedSetRegistered', 10],
+            ExistingChannelJoinObservedEvent::class => ['onExistingChannelJoinObserved', 10],
         ];
     }
 
     public function onChannelSyncedSetRegistered(ChannelSynchronizedEvent $event): void
+    {
+        $this->registrationLifecycle->channelSynchronized($event->channelName);
+    }
+
+    public function onExistingChannelJoinObserved(ExistingChannelJoinObservedEvent $event): void
     {
         $this->registrationLifecycle->channelSynchronized($event->channelName);
     }

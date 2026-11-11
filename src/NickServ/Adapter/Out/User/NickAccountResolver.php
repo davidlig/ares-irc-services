@@ -7,10 +7,13 @@ namespace App\NickServ\Adapter\Out\User;
 use App\NickServ\Application\Port\In\NickAccountData;
 use App\NickServ\Application\Port\In\NickAccountQuery;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
+use App\NickServ\Domain\Entity\RegisteredNick;
 
 use function array_filter;
+use function array_map;
 use function array_unique;
 use function array_values;
+use function strtolower;
 
 final readonly class NickAccountResolver implements NickAccountQuery
 {
@@ -46,15 +49,22 @@ final readonly class NickAccountResolver implements NickAccountQuery
             return null;
         }
 
-        return new NickAccountData(
-            id: $account->getId(),
-            nickname: $account->getNickname(),
-            language: $account->getLanguage(),
-            timezone: $account->getTimezone() ?? 'UTC',
-            registered: $account->isRegistered(),
-            suspended: $account->isSuspended(),
-            email: $account->getEmail(),
-        );
+        return $this->toData($account);
+    }
+
+    public function findAccountsByNicks(array $nicknames): array
+    {
+        $nicknames = array_values(array_unique(array_map(strtolower(...), $nicknames)));
+        if ([] === $nicknames) {
+            return [];
+        }
+
+        $accounts = [];
+        foreach ($this->nickRepository->findByNicks($nicknames) as $account) {
+            $accounts[strtolower($account->getNickname())] = $this->toData($account);
+        }
+
+        return $accounts;
     }
 
     public function findAccountById(int $id): ?NickAccountData
@@ -64,6 +74,18 @@ final readonly class NickAccountResolver implements NickAccountQuery
             return null;
         }
 
+        return $this->toData($account);
+    }
+
+    public function getLanguage(int $id): string
+    {
+        $account = $this->nickRepository->findById($id);
+
+        return $account?->getLanguage() ?? $this->defaultLanguage;
+    }
+
+    private function toData(RegisteredNick $account): NickAccountData
+    {
         return new NickAccountData(
             id: $account->getId(),
             nickname: $account->getNickname(),
@@ -73,12 +95,5 @@ final readonly class NickAccountResolver implements NickAccountQuery
             suspended: $account->isSuspended(),
             email: $account->getEmail(),
         );
-    }
-
-    public function getLanguage(int $id): string
-    {
-        $account = $this->nickRepository->findById($id);
-
-        return $account?->getLanguage() ?? $this->defaultLanguage;
     }
 }

@@ -34,6 +34,59 @@ use function count;
 final class EnforceChannelRanksHandlerTest extends TestCase
 {
     #[Test]
+    public function knownPolicyCanRunFullSynchronization(): void
+    {
+        $handler = $this->handler($this->policyRepository($this->policy()), $this->network([]), $this->createStub(ChannelRankActions::class));
+        self::assertSame(RankEnforcementOutcome::NoChanges, $handler->handleKnownPolicy($this->command(), $this->policy())->outcome);
+    }
+
+    #[Test]
+    public function joinReconciliationPreservesUnsupportedInitialRankRemoval(): void
+    {
+        $member = $this->member(ranks: [ChannelRank::Owner]);
+        $actions = $this->createMock(ChannelRankActions::class);
+        $actions->expects(self::once())->method('apply')->with('#test', self::callback(static fn (array $changes): bool => 1 === count($changes)
+            && $changes[0] instanceof MemberRankChange && ChannelRank::Owner === $changes[0]->change->rank));
+        $result = $this->handler($this->policyRepository($this->policy(secure: true)), $this->network([$member], [ChannelRank::Operator]), $actions)
+            ->handle(new EnforceChannelRanks('#test', RankEnforcementTrigger::MemberJoined, '001A', joinedRank: ChannelRank::Owner, reconcileOnJoin: true));
+        self::assertSame(RankEnforcementOutcome::Applied, $result->outcome);
+    }
+
+    #[Test]
+    public function joinReplacingFullSyncRevokesEveryExcessRank(): void
+    {
+        $member = $this->member(identified: true, nickId: 20, ranks: [ChannelRank::Owner, ChannelRank::Administrator, ChannelRank::Operator]);
+        $actions = $this->createMock(ChannelRankActions::class);
+        $actions->expects(self::once())->method('apply')->with('#test', self::callback(static function (array $changes): bool {
+            return 2 === count($changes)
+                && $changes[0] instanceof MemberRankChange
+                && $changes[1] instanceof MemberRankChange
+                && ChannelRank::Owner === $changes[0]->change->rank
+                && ChannelRank::Administrator === $changes[1]->change->rank;
+        }));
+
+        $this->handler($this->policyRepository($this->policy(secure: true, access: [20 => 300])), $this->network([$member]), $actions)
+            ->handle(new EnforceChannelRanks('#test', RankEnforcementTrigger::MemberJoined, '001A', joinedRank: ChannelRank::Owner, reconcileOnJoin: true));
+    }
+
+    #[Test]
+    public function singleMemberEventsAvoidWholeChannelSnapshots(): void
+    {
+        $member = $this->member(identified: true, nickId: 20);
+        $network = $this->createMock(ChannelRankNetworkQuery::class);
+        $network->expects(self::once())->method('findMember')->with('#test', '001A')
+            ->willReturn(new ChannelRankNetworkState('#test', [$member], [ChannelRank::Operator]));
+        $network->expects(self::never())->method('findChannel');
+        $policies = $this->createMock(ChannelRankPolicyRepository::class);
+        $policies->expects(self::once())->method('findByNameForNick')->with('#test', 20)->willReturn($this->policy(access: [20 => 300]));
+        $policies->expects(self::never())->method('findByName');
+
+        $result = $this->handler($policies, $network, $this->createStub(ChannelRankActions::class))
+            ->handle(new EnforceChannelRanks('#test', RankEnforcementTrigger::LiveRankGranted, '001A'));
+        self::assertSame(RankEnforcementOutcome::NoChanges, $result->outcome);
+    }
+
+    #[Test]
     public function reportsUnavailableAndBlockedChannelsBeforeNetworkLookup(): void
     {
         $policies = $this->createStub(ChannelRankPolicyRepository::class);
@@ -82,7 +135,7 @@ final class EnforceChannelRanksHandlerTest extends TestCase
         $member = $this->member(identified: true, nickId: 10);
         $network = $this->network([$member], [ChannelRank::Administrator, ChannelRank::Operator]);
         $policies = $this->createMock(ChannelRankPolicyRepository::class);
-        $policies->method('findByName')->willReturn($this->policy(founder: 10));
+        $policies->method('findByNameForNick')->willReturn($this->policy(founder: 10));
         $policies->expects(self::once())->method('touchLastUsed')->with(1);
         $actions = $this->createMock(ChannelRankActions::class);
         $actions->expects(self::once())->method('apply')->with(
@@ -276,7 +329,7 @@ final class EnforceChannelRanksHandlerTest extends TestCase
     {
         $member = $this->member(identified: true, nickId: 20);
         $policies = $this->createMock(ChannelRankPolicyRepository::class);
-        $policies->method('findByName')->willReturn($this->policy(access: [20 => 300]));
+        $policies->method('findByNameForNick')->willReturn($this->policy(access: [20 => 300]));
         $policies->expects(self::once())->method('touchLastUsed')->with(1);
         $handler = $this->handler($policies, $this->network([$member]), $this->createStub(ChannelRankActions::class));
 
@@ -326,7 +379,9 @@ final class EnforceChannelRanksHandlerTest extends TestCase
     private function network(array $members, array $supported = [ChannelRank::Owner, ChannelRank::Administrator, ChannelRank::Operator, ChannelRank::HalfOperator, ChannelRank::Voice]): ChannelRankNetworkQuery
     {
         $network = $this->createStub(ChannelRankNetworkQuery::class);
-        $network->method('findChannel')->willReturn(new ChannelRankNetworkState('#test', $members, $supported));
+        $state = new ChannelRankNetworkState('#test', $members, $supported);
+        $network->method('findChannel')->willReturn($state);
+        $network->method('findMember')->willReturn($state);
 
         return $network;
     }
@@ -335,6 +390,7 @@ final class EnforceChannelRanksHandlerTest extends TestCase
     {
         $repository = $this->createStub(ChannelRankPolicyRepository::class);
         $repository->method('findByName')->willReturn($policy);
+        $repository->method('findByNameForNick')->willReturn($policy);
 
         return $repository;
     }

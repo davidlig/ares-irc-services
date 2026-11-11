@@ -10,6 +10,8 @@ interface ChannelRankPolicyRepository
 {
     public function findByName(string $channelName): ?ChannelRankPolicy;
 
+    public function findByNameForNick(string $channelName, ?int $nickId): ?ChannelRankPolicy;
+
     /** @return iterable<ChannelRankPolicy> */
     public function all(): iterable;
 

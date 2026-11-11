@@ -11,6 +11,7 @@ use App\ChanServ\Application\UseCase\EnforceMlock\MlockEnforcementTrigger;
 use App\ChanServ\Application\UseCase\EnforceMlock\SynchronizeAllChannelMlocksHandler;
 use App\Irc\Application\PublishedEvent\ChannelSettingsChangedEvent;
 use App\Irc\Application\PublishedEvent\ChannelSynchronizedEvent;
+use App\Irc\Application\PublishedEvent\ExistingChannelJoinObservedEvent;
 use App\Irc\Application\PublishedEvent\NetworkSynchronizationCompletedEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -27,6 +28,7 @@ final readonly class ChanServMlockEnforceSubscriber implements EventSubscriberIn
         return [
             NetworkSynchronizationCompletedEvent::class => ['onNetworkSynchronizationCompleted', -10],
             ChannelSynchronizedEvent::class => ['onChannelSynced', -10],
+            ExistingChannelJoinObservedEvent::class => ['onExistingChannelJoinObserved', -10],
             ChannelSettingsChangedEvent::class => ['onChannelModesChanged', 255],
             ChannelMlockUpdatedEvent::class => ['onMlockUpdated', 0],
         ];
@@ -38,6 +40,14 @@ final readonly class ChanServMlockEnforceSubscriber implements EventSubscriberIn
     }
 
     public function onChannelSynced(ChannelSynchronizedEvent $event): void
+    {
+        $this->enforceChannelMlock->handle(new EnforceChannelMlock(
+            $event->channelName,
+            MlockEnforcementTrigger::ChannelSynchronized,
+        ));
+    }
+
+    public function onExistingChannelJoinObserved(ExistingChannelJoinObservedEvent $event): void
     {
         $this->enforceChannelMlock->handle(new EnforceChannelMlock(
             $event->channelName,

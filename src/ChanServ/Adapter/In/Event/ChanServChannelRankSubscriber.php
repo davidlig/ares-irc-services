@@ -66,6 +66,7 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
             RankEnforcementTrigger::MemberJoined,
             $event->uid,
             joinedRank: $this->initialRank($event->initialRole),
+            reconcileOnJoin: $event->reconcileRanks,
         ));
     }
 

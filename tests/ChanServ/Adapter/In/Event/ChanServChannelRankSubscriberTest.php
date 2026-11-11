@@ -65,7 +65,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         $policies->expects(self::once())->method('all')->willReturn([]);
         $subscriber = $this->subscriber($handler, policies: $policies);
 
-        $subscriber->onUserJoinedChannel(new UserJoinedChannelEvent('001AAAA', '#CasePreserved', 'admin'));
+        $subscriber->onUserJoinedChannel(new UserJoinedChannelEvent('001AAAA', '#CasePreserved', 'admin', true));
         $subscriber->onUserLeftChannel(new UserDepartedChannelEvent('001BBBB', '#Departed'));
         $subscriber->onChannelSynced(new ChannelSynchronizedEvent('#Synced'));
         $subscriber->onNetworkSynchronizationCompleted();
@@ -84,6 +84,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
             ],
             $commands,
         ));
+        self::assertTrue($commands[0]->reconcileOnJoin);
     }
 
     #[Test]

@@ -16,6 +16,13 @@ interface RegisteredNickRepositoryInterface
 
     public function findByNick(string $nickname): ?RegisteredNick;
 
+    /**
+     * @param list<string> $nicknames
+     *
+     * @return list<RegisteredNick>
+     */
+    public function findByNicks(array $nicknames): array;
+
     public function findById(int $id): ?RegisteredNick;
 
     /** @param list<int> $ids

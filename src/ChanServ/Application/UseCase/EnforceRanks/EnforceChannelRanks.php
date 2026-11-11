@@ -14,5 +14,6 @@ final readonly class EnforceChannelRanks
         public ?string $uid = null,
         public ?ChannelRank $grantedRank = null,
         public ?ChannelRank $joinedRank = null,
+        public bool $reconcileOnJoin = false,
     ) {}
 }
