@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\MemoServ\Adapter\Out\Persistence\Doctrine;
 
 use App\MemoServ\Application\Port\Out\MemoRepositoryInterface;
+use App\MemoServ\Application\UseCase\GetPendingNickNotice\BurstMemoNoticeCache;
 use App\MemoServ\Domain\Entity\Memo;
 use Doctrine\ORM\EntityManagerInterface;
 use LogicException;
@@ -17,16 +18,22 @@ use function is_string;
 
 final readonly class MemoDoctrineRepository implements MemoRepositoryInterface
 {
-    public function __construct(private EntityManagerInterface $em) {}
+    public function __construct(private EntityManagerInterface $em, private ?BurstMemoNoticeCache $noticeCache = null) {}
 
     public function save(Memo $memo): void
     {
+        if (null !== $memo->getTargetNickId()) {
+            $this->noticeCache?->invalidateCounts();
+        }
         $this->em->persist($memo);
         $this->em->flush();
     }
 
     public function delete(Memo $memo): void
     {
+        if (null !== $memo->getTargetNickId()) {
+            $this->noticeCache?->invalidateCounts();
+        }
         $this->em->remove($memo);
         $this->em->flush();
     }
@@ -181,6 +188,7 @@ final readonly class MemoDoctrineRepository implements MemoRepositoryInterface
 
     public function deleteByTargetNick(int $nickId): int
     {
+        $this->noticeCache?->invalidateCounts();
         $affectedRows = $this->em->createQuery(
             'DELETE FROM App\\MemoServ\\Domain\\Entity\\Memo m WHERE m.targetNickId = :nickId'
         )
@@ -211,6 +219,7 @@ final readonly class MemoDoctrineRepository implements MemoRepositoryInterface
 
     public function deleteAllForNick(int $nickId): void
     {
+        $this->noticeCache?->invalidateCounts();
         $this->em->createQuery(
             'DELETE FROM App\MemoServ\Domain\Entity\Memo m WHERE m.targetNickId = :nickId OR m.senderNickId = :nickId'
         )

@@ -391,6 +391,54 @@ final class NickProtectionSubscriberTest extends TestCase
     }
 
     #[Test]
+    public function burstLifecyclePrefetchesBothConsumersForEachIdentification(): void
+    {
+        $this->networkUserLookup->expects(self::never())->method('findByUid');
+        $this->notifier->expects(self::never())->method('setUserVhost');
+        $alice = RegisteredNick::createPending('Alice', 'hash', 'a@example.com', 'en', $this->now, $this->now);
+        $bob = RegisteredNick::createPending('Bob', 'hash', 'b@example.com', 'en', $this->now, $this->now);
+        $alice->activate();
+        $bob->activate();
+        new ReflectionProperty(RegisteredNick::class, 'id')->setValue($alice, 1);
+        new ReflectionProperty(RegisteredNick::class, 'id')->setValue($bob, 2);
+        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNicknamesLower')->willReturn([$alice, $bob]);
+        $nickRepo->expects(self::once())->method('saveActivityBatch')->with([$alice, $bob]);
+        $role = OperRole::create('Admin');
+        $assignment = OperIrcop::create($this->now, 1, $role);
+        $operRepo = $this->createMock(OperIrcopRepositoryInterface::class);
+        $operRepo->expects(self::once())->method('findByNickIds')->with([1, 2])->willReturn([$assignment]);
+        $memoRepo = $this->createMock(MemoRepositoryInterface::class);
+        $memoRepo->expects(self::once())->method('countUnreadByTargetNickIds')->with([1, 2])->willReturn([1 => 3]);
+        $operCache = new BurstIrcopCache();
+        $memoCache = new BurstMemoNoticeCache();
+        $dispatcher = new EventDispatcher();
+        $dispatcher->addSubscriber(new NickBurstIrcopCacheSubscriber($operRepo, $operCache));
+        $dispatcher->addSubscriber(new NickBurstMemoCacheSubscriber($memoRepo, $memoCache));
+        $observed = [];
+        $dispatcher->addListener(
+            NickIdentifiedEvent::class,
+            static function (NickIdentifiedEvent $event) use (&$observed, $operCache, $memoCache): void {
+                $observed[] = [$event->nickId, $operCache->lookup($event->nickId), $memoCache->countFor($event->nickId)];
+            },
+        );
+        $bus = $this->createStub(EventBusInterface::class);
+        $bus->method('dispatch')->willReturnCallback(static function (object $event) use ($dispatcher): void { $dispatcher->dispatch($event); });
+        $publisher = new SymfonyNickServEventPublisher($bus);
+        $this->initializeSubscriber($nickRepo, $publisher, $publisher);
+        $this->networkUserLookup->expects(self::never())->method('findByUid');
+        $this->notifier->expects(self::never())->method('setUserVhost');
+        $this->burstState->addPending(new NetworkUser('001AAA', 'Alice', 'i', 'h', 'c', 'ip', true));
+        $this->burstState->addPending(new NetworkUser('001AAB', 'Bob', 'i', 'h', 'c', 'ip', true));
+
+        $this->subscriber->onBurstComplete(new NetworkSynchronizationCompletedEvent('001'));
+
+        self::assertSame([[1, [true, $assignment], 3], [2, [true, null], 0]], $observed);
+        self::assertSame([false, null], $operCache->lookup(1));
+        self::assertNull($memoCache->countFor(1));
+    }
+
+    #[Test]
     public function onBurstCompleteBoundsNicknameLookupBatches(): void
     {
         $this->networkUserLookup->expects(self::never())->method('findByUid');
