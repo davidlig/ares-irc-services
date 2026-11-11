@@ -12,6 +12,7 @@ use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\PublishedEvent\NickUnsuspendedEvent;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use DateTimeImmutable;
+use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -63,7 +64,7 @@ final class UnsuspendExpiredSuspensionsTaskTest extends TestCase
         $nick2->suspend('Expired ban', new DateTimeImmutable('-1 day'));
 
         $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
-        $nickRepo->expects(self::once())->method('findExpiredSuspensions')->with($this->now())->willReturn([$nick1, $nick2]);
+        $nickRepo->expects(self::once())->method('findExpiredSuspensions')->with($this->now(), 100)->willReturn([$nick1, $nick2]);
         $savedIds = [];
         $nickRepo->expects(self::exactly(2))->method('save')
             ->willReturnCallback(static function (RegisteredNick $nick) use (&$savedIds): void {
@@ -98,6 +99,68 @@ final class UnsuspendExpiredSuspensionsTaskTest extends TestCase
         self::assertSame([1, 2], $publishedIds);
         self::assertFalse($nick1->isSuspended());
         self::assertFalse($nick2->isSuspended());
+    }
+
+    #[Test]
+    public function runCarriesRemainingSuspensionsToNextCycleAndClearsEntityManager(): void
+    {
+        $nicks = [
+            $this->createNickWithId('Sus1', 1),
+            $this->createNickWithId('Sus2', 2),
+        ];
+        $nicks[0]->suspend('Ban', new DateTimeImmutable('-1 hour'));
+        $nicks[1]->suspend('Ban', new DateTimeImmutable('-1 hour'));
+
+        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepo->expects(self::once())->method('findExpiredSuspensions')->with($this->now(), 2)->willReturn($nicks);
+        $nickRepo->expects(self::exactly(2))->method('save');
+
+        $em = $this->createMock(EntityManagerInterface::class);
+        $em->expects(self::once())->method('clear');
+
+        $task = new UnsuspendExpiredSuspensionsTask(
+            $nickRepo,
+            $this->createStub(ServiceDebugNotifierInterface::class),
+            new NullLogger(),
+            $this->clock(),
+            $this->createStub(NickServEventPublisher::class),
+            self::SERVER_NAME,
+            3600,
+            $em,
+            batchSize: 2,
+            maxBatchesPerCycle: 1,
+        );
+        $task->run();
+    }
+
+    #[Test]
+    public function runClearsEntityManagerBetweenBatches(): void
+    {
+        $nick1 = $this->createNickWithId('Sus1', 1);
+        $nick1->suspend('Ban', new DateTimeImmutable('-1 hour'));
+        $nick2 = $this->createNickWithId('Sus2', 2);
+        $nick2->suspend('Ban', new DateTimeImmutable('-1 hour'));
+
+        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepo->expects(self::exactly(2))->method('findExpiredSuspensions')->with($this->now(), 1)->willReturnOnConsecutiveCalls([$nick1], [$nick2]);
+        $nickRepo->expects(self::exactly(2))->method('save');
+
+        $em = $this->createMock(EntityManagerInterface::class);
+        $em->expects(self::exactly(2))->method('clear');
+
+        $task = new UnsuspendExpiredSuspensionsTask(
+            $nickRepo,
+            $this->createStub(ServiceDebugNotifierInterface::class),
+            new NullLogger(),
+            $this->clock(),
+            $this->createStub(NickServEventPublisher::class),
+            self::SERVER_NAME,
+            3600,
+            $em,
+            batchSize: 1,
+            maxBatchesPerCycle: 2,
+        );
+        $task->run();
     }
 
     #[Test]

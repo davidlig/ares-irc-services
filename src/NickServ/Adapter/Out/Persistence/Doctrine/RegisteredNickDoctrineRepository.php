@@ -218,7 +218,7 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
         return null !== $this->findByNick($nickname);
     }
 
-    public function findRegisteredInactiveSince(DateTimeImmutable $threshold): array
+    public function findRegisteredInactiveSince(DateTimeImmutable $threshold, ?int $limit = null): array
     {
         $qb = $this->em->createQueryBuilder();
         $qb->select('n')
@@ -226,8 +226,13 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
             ->where('n.status = :status')
             ->andWhere('n.lastSeenAt < :threshold')
             ->andWhere('n.noExpire = false')
+            ->orderBy('n.id', 'ASC')
             ->setParameter('status', NickStatus::Registered)
             ->setParameter('threshold', $threshold->format('Y-m-d H:i:s'));
+
+        if (null !== $limit && $limit > 0) {
+            $qb->setMaxResults($limit);
+        }
 
         /** @var array<mixed> $result */
         $result = $qb->getQuery()->getResult();
@@ -261,7 +266,7 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
             ->findBy(['status' => $status]);
     }
 
-    public function findExpiredSuspensions(DateTimeImmutable $now): array
+    public function findExpiredSuspensions(DateTimeImmutable $now, ?int $limit = null): array
     {
         $qb = $this->em->createQueryBuilder();
         $qb->select('n')
@@ -269,8 +274,13 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
             ->where('n.status = :status')
             ->andWhere('n.suspendedUntil IS NOT NULL')
             ->andWhere('n.suspendedUntil < :now')
+            ->orderBy('n.id', 'ASC')
             ->setParameter('status', NickStatus::Suspended)
             ->setParameter('now', $now->format('Y-m-d H:i:s'));
+
+        if (null !== $limit && $limit > 0) {
+            $qb->setMaxResults($limit);
+        }
 
         /** @var array<mixed> $result */
         $result = $qb->getQuery()->getResult();
@@ -279,7 +289,7 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
         return array_values(array_filter($result, static fn ($row): bool => $row instanceof RegisteredNick));
     }
 
-    public function findPendingDeletionBefore(DateTimeImmutable $threshold): array
+    public function findPendingDeletionBefore(DateTimeImmutable $threshold, ?int $limit = null): array
     {
         $qb = $this->em->createQueryBuilder();
         $qb->select('n')
@@ -287,8 +297,13 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
             ->where('n.status = :status')
             ->andWhere('n.pendingDeletionAt IS NOT NULL')
             ->andWhere('n.pendingDeletionAt <= :threshold')
+            ->orderBy('n.id', 'ASC')
             ->setParameter('status', NickStatus::PendingDeletion)
             ->setParameter('threshold', $threshold->format('Y-m-d H:i:s'));
+
+        if (null !== $limit && $limit > 0) {
+            $qb->setMaxResults($limit);
+        }
 
         /** @var array<mixed> $result */
         $result = $qb->getQuery()->getResult();

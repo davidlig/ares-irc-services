@@ -10,12 +10,18 @@ use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\NickServEventPublisher;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\PublishedEvent\NickUnsuspendedEvent;
+use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 
+use function count;
 use function sprintf;
 
 final readonly class UnsuspendExpiredSuspensionsTask implements MaintenanceTaskInterface
 {
+    private const int DEFAULT_BATCH_SIZE = 100;
+
+    private const int DEFAULT_MAX_BATCHES = 1;
+
     public function __construct(
         private RegisteredNickRepositoryInterface $nickRepository,
         private ServiceDebugNotifierInterface $debugNotifier,
@@ -24,6 +30,9 @@ final readonly class UnsuspendExpiredSuspensionsTask implements MaintenanceTaskI
         private NickServEventPublisher $eventPublisher,
         private string $serverName,
         private int $intervalSeconds,
+        private ?EntityManagerInterface $entityManager = null,
+        private int $batchSize = self::DEFAULT_BATCH_SIZE,
+        private int $maxBatchesPerCycle = self::DEFAULT_MAX_BATCHES,
     ) {}
 
     public function getName(): string
@@ -43,36 +52,46 @@ final readonly class UnsuspendExpiredSuspensionsTask implements MaintenanceTaskI
 
     public function run(): void
     {
-        $expired = $this->nickRepository->findExpiredSuspensions($this->clock->now());
+        $batches = 0;
 
-        foreach ($expired as $nick) {
-            $nickname = $nick->getNickname();
-            $nickId = $nick->getId();
+        do {
+            $expired = $this->nickRepository->findExpiredSuspensions($this->clock->now(), $this->batchSize);
+            if ([] === $expired) {
+                break;
+            }
 
-            $nick->unsuspend();
-            $this->nickRepository->save($nick);
-            $this->eventPublisher->publish(new NickUnsuspendedEvent(
-                nickId: $nickId,
-                nickname: $nickname,
-                performedBy: $this->serverName,
-                performedByNickId: null,
-                performedByIp: '*',
-                performedByHost: '*',
-                occurredAt: $this->clock->now(),
-            ));
+            foreach ($expired as $nick) {
+                $nickname = $nick->getNickname();
+                $nickId = $nick->getId();
 
-            $this->debugNotifier->log(
-                operator: $this->serverName,
-                command: 'UNSUSPEND',
-                target: $nickname,
-            );
+                $nick->unsuspend();
+                $this->nickRepository->save($nick);
+                $this->eventPublisher->publish(new NickUnsuspendedEvent(
+                    nickId: $nickId,
+                    nickname: $nickname,
+                    performedBy: $this->serverName,
+                    performedByNickId: null,
+                    performedByIp: '*',
+                    performedByHost: '*',
+                    occurredAt: $this->clock->now(),
+                ));
 
-            $this->logger->info(sprintf(
-                'Maintenance [%s]: auto-unsuspended nick %s (id %d).',
-                $this->getName(),
-                $nickname,
-                $nickId,
-            ));
-        }
+                $this->debugNotifier->log(
+                    operator: $this->serverName,
+                    command: 'UNSUSPEND',
+                    target: $nickname,
+                );
+
+                $this->logger->info(sprintf(
+                    'Maintenance [%s]: auto-unsuspended nick %s (id %d).',
+                    $this->getName(),
+                    $nickname,
+                    $nickId,
+                ));
+            }
+
+            $this->entityManager?->clear();
+            ++$batches;
+        } while (count($expired) === $this->batchSize && $batches < $this->maxBatchesPerCycle);
     }
 }

@@ -31,6 +31,7 @@ use function array_map;
 use function array_slice;
 use function count;
 use function max;
+use function sprintf;
 use function str_contains;
 use function str_ends_with;
 use function strtolower;
@@ -757,6 +758,69 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
 
         self::assertCount(1, $result);
         self::assertSame('ExpiredDrop', $result[0]->getNickname());
+    }
+
+    #[Test]
+    public function findRegisteredInactiveSinceHonorsLimitAndOrdersByIdAscending(): void
+    {
+        $nick1 = $this->createRegisteredNick('Inactive1', 'in1@example.com');
+        $nick2 = $this->createRegisteredNick('Inactive2', 'in2@example.com');
+        $nick3 = $this->createRegisteredNick('Inactive3', 'in3@example.com');
+        $this->repository->save($nick1);
+        $this->repository->save($nick2);
+        $this->repository->save($nick3);
+        $this->flushAndClear();
+
+        $this->entityManager->createQuery(sprintf(
+            "UPDATE %s n SET n.lastSeenAt = :ts WHERE n.nicknameLower IN ('inactive1', 'inactive2', 'inactive3')",
+            RegisteredNick::class,
+        ))->setParameter('ts', new DateTimeImmutable('-60 days')->format('Y-m-d H:i:s'))->execute();
+        $this->flushAndClear();
+
+        $results = $this->repository->findRegisteredInactiveSince(new DateTimeImmutable('-30 days'), 2);
+
+        self::assertCount(2, $results);
+        self::assertTrue($results[0]->getId() < $results[1]->getId());
+    }
+
+    #[Test]
+    public function findExpiredSuspensionsHonorsLimitAndOrdersByIdAscending(): void
+    {
+        $nick1 = $this->createRegisteredNick('Sus1', 'sus1@example.com');
+        $nick1->suspend('Reason', new DateTimeImmutable('-2 hours'));
+        $nick2 = $this->createRegisteredNick('Sus2', 'sus2@example.com');
+        $nick2->suspend('Reason', new DateTimeImmutable('-1 hour'));
+        $nick3 = $this->createRegisteredNick('Sus3', 'sus3@example.com');
+        $nick3->suspend('Reason', new DateTimeImmutable('-3 hours'));
+        $this->repository->save($nick1);
+        $this->repository->save($nick2);
+        $this->repository->save($nick3);
+        $this->flushAndClear();
+
+        $results = $this->repository->findExpiredSuspensions(new DateTimeImmutable(), 2);
+
+        self::assertCount(2, $results);
+        self::assertTrue($results[0]->getId() < $results[1]->getId());
+    }
+
+    #[Test]
+    public function findPendingDeletionBeforeHonorsLimitAndOrdersByIdAscending(): void
+    {
+        $nick1 = $this->createRegisteredNick('Drop1', 'drop1@example.com');
+        $nick1->markPendingDeletion(new DateTimeImmutable('-10 days'));
+        $nick2 = $this->createRegisteredNick('Drop2', 'drop2@example.com');
+        $nick2->markPendingDeletion(new DateTimeImmutable('-9 days'));
+        $nick3 = $this->createRegisteredNick('Drop3', 'drop3@example.com');
+        $nick3->markPendingDeletion(new DateTimeImmutable('-8 days'));
+        $this->repository->save($nick1);
+        $this->repository->save($nick2);
+        $this->repository->save($nick3);
+        $this->flushAndClear();
+
+        $results = $this->repository->findPendingDeletionBefore(new DateTimeImmutable('-7 days'), 2);
+
+        self::assertCount(2, $results);
+        self::assertTrue($results[0]->getId() < $results[1]->getId());
     }
 
     #[Test]
