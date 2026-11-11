@@ -4,12 +4,16 @@ declare(strict_types=1);
 
 namespace App\Tests\Bootstrap\Persistence;
 
+use App\ChanServ\Adapter\Out\Persistence\Doctrine\ChannelAkickDoctrineRepository;
+use App\ChanServ\Adapter\Out\Persistence\Doctrine\ChannelHistoryDoctrineRepository;
 use App\ChanServ\Adapter\Out\Persistence\Doctrine\RegisteredChannelDoctrineRepository;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\ValueObject\ChannelStatus;
+use App\MemoServ\Adapter\Out\Persistence\Doctrine\MemoIgnoreDoctrineRepository;
 use App\NickServ\Adapter\Out\Persistence\Doctrine\RegisteredNickDoctrineRepository;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\NickServ\Domain\ValueObject\NickStatus;
+use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Logging\Middleware;
@@ -72,6 +76,40 @@ final class DatabaseQueryOptimizationTest extends TestCase
     private array $snapshotColumns = [];
 
     #[Test]
+    public function emailLookupUsesIndexedNormalizedKeyAndPreservesOriginalAddress(): void
+    {
+        $this->migrate('latest');
+        $this->insertPair(1, 'Mixed', null, 1);
+        $this->connection->executeStatement("UPDATE registered_nicks SET email = 'Mixed@Example.com' WHERE id = 1");
+        $this->logger->enabled = true;
+        $found = new RegisteredNickDoctrineRepository($this->entityManager)->findByEmail('MIXED@EXAMPLE.COM');
+        $this->logger->enabled = false;
+        self::assertSame('Mixed@Example.com', $found?->getEmail());
+        self::assertStringContainsString('email_search_key', $this->logger->queries[0]['sql']);
+    }
+
+    #[Test]
+    public function migrationBackfillsMissingLastSeenWithoutChangingInactiveResults(): void
+    {
+        $this->migrate('App\\Migrations\\Version20261101000001');
+        $this->insertPair(1, 'Old', null, 1);
+        $this->insertPair(2, 'SeenLater', null, 1);
+        $this->connection->executeStatement("UPDATE registered_nicks SET registered_at = '2020-01-01 00:00:00', last_seen_at = NULL WHERE id = 1");
+        $this->connection->executeStatement("UPDATE registered_nicks SET registered_at = '1901-01-01 00:00:00', last_seen_at = NULL WHERE id = 2");
+        $repository = new RegisteredNickDoctrineRepository($this->entityManager);
+        $threshold = new DateTimeImmutable('2021-01-01 00:00:00');
+        self::assertSame(2, self::databaseInteger($this->connection->fetchOne("SELECT COUNT(*) FROM registered_nicks WHERE status = 'registered' AND no_expire = FALSE AND COALESCE(last_seen_at, registered_at) < '2021-01-01 00:00:00'")));
+        $this->migrate('latest');
+        $this->entityManager->clear();
+        self::assertCount(2, $repository->findRegisteredInactiveSince($threshold));
+        self::assertSame('2020-01-01 00:00:00', $this->connection->fetchOne('SELECT last_seen_at FROM registered_nicks WHERE id = 1'));
+        $this->connection->executeStatement("UPDATE registered_nicks SET last_seen_at = '2025-01-01 00:00:00' WHERE id = 2");
+        $this->migrate('App\\Migrations\\Version20261101000001');
+        self::assertNull($this->connection->fetchOne('SELECT last_seen_at FROM registered_nicks WHERE id = 1'));
+        self::assertSame('2025-01-01 00:00:00', $this->connection->fetchOne('SELECT last_seen_at FROM registered_nicks WHERE id = 2'));
+    }
+
+    #[Test]
     public function migratedRepositoriesPreserveResultsAndUseSelectiveIndexes(): void
     {
         $this->seedEdgeCases();
@@ -79,13 +117,17 @@ final class DatabaseQueryOptimizationTest extends TestCase
         $this->migrate('latest');
         self::assertSame($before, $this->snapshot());
         $this->assertIndexesPresent();
+        $this->assertIssue172IndexesPresent();
         $this->assertListMatchingAndLifecycleVisibility();
         $this->assertWhoipEquivalence();
 
         $this->seedCardinality();
+        $this->connection->executeStatement("UPDATE registered_nicks SET email = 'FindMe@Example.com' WHERE id = 12345");
         $before = $this->snapshot();
         $this->refreshStatistics();
         $this->assertSelectivePlans();
+        $this->assertKeysetPlan();
+        $this->assertMaintenancePlans();
         $this->removeFixtureStatistics();
         self::assertTrue($this->connection->createSchemaManager()->introspectSchema()->hasTable('registered_nicks'), 'Optimized indexes must remain compatible with later Doctrine schema migrations.');
 
@@ -105,6 +147,7 @@ final class DatabaseQueryOptimizationTest extends TestCase
         $config->setMetadataDriverImpl(new SimplifiedXmlDriver([
             __DIR__ . '/../../../config/doctrine/nickserv' => 'App\\NickServ\\Domain\\Entity',
             __DIR__ . '/../../../config/doctrine/chanserv' => 'App\\ChanServ\\Domain\\Entity',
+            __DIR__ . '/../../../config/doctrine/memoserv' => 'App\\MemoServ\\Domain\\Entity',
         ]));
         $config->setProxyDir(__DIR__ . '/../../../var/cache/test/Proxies');
         $config->setProxyNamespace('App\\Tests\\Proxies');
@@ -175,7 +218,7 @@ final class DatabaseQueryOptimizationTest extends TestCase
         ]);
         $this->connection->insert('registered_channels', [
             'id' => $id, 'name' => '#' . $name, 'name_lower' => '#' . $key,
-            'founder_nick_id' => 1, 'description' => 'Fixture', 'entrymsg' => '',
+            'founder_nick_id' => $id, 'description' => 'Fixture', 'entrymsg' => '',
             'topic_lock' => 0, 'mlock_active' => 0, 'mlock' => '', 'mlock_params' => '{}', 'secure' => 0,
             'created_at' => '2026-09-27 00:00:00',
             'status' => ChannelStatus::cases()[$state % count(ChannelStatus::cases())]->value,
@@ -190,6 +233,11 @@ final class DatabaseQueryOptimizationTest extends TestCase
         for ($i = 100; $i < 50100; ++$i) {
             $this->insertPair($i, sprintf('load%05d', $i), 12345 === $i ? '203.0.113.9' : null, 0);
         }
+        for ($i = 1; $i <= 3000; ++$i) {
+            $this->connection->insert('channel_akick', ['id' => $i, 'channel_id' => $i, 'mask' => '*!*@example', 'created_at' => '2020-01-01 00:00:00', 'expires_at' => 1 === $i ? '2020-01-01 00:00:00' : null]);
+            $this->connection->insert('channel_history', ['id' => $i, 'channel_id' => $i, 'action' => 'TEST', 'performed_by' => 'Test', 'performed_at' => '2020-01-01 00:00:00', 'message' => 'Test']);
+            $this->connection->insert('memo_ignores', ['id' => $i, 'target_nick_id' => $i, 'ignored_nick_id' => $i + 10000]);
+        }
         $this->connection->commit();
         self::assertSame(0, $this->connection->getTransactionNestingLevel());
     }
@@ -198,7 +246,7 @@ final class DatabaseQueryOptimizationTest extends TestCase
     private function snapshot(): array
     {
         $result = [];
-        foreach (['registered_nicks', 'registered_channels'] as $table) {
+        foreach (['registered_nicks', 'registered_channels', 'channel_akick', 'channel_history', 'memo_ignores'] as $table) {
             if (!isset($this->snapshotColumns[$table])) {
                 $columns = array_keys($this->connection->createSchemaManager()->listTableColumns($table));
                 $columns = array_values(array_diff($columns, ['list_search_key']));
@@ -234,6 +282,22 @@ final class DatabaseQueryOptimizationTest extends TestCase
                 } else {
                     self::assertNotContains($index, $actual);
                 }
+            }
+        }
+    }
+
+    private function assertIssue172IndexesPresent(): void
+    {
+        foreach ([
+            'registered_channels' => ['idx_channels_founder_status'],
+            'registered_nicks' => ['idx_nicks_email_search', 'idx_nicks_status_suspended', 'idx_nicks_status_inactive'],
+            'channel_akick' => ['idx_channel_akicks_expires'],
+            'channel_history' => ['idx_channel_history_channel_performed'],
+            'memo_ignores' => ['idx_memo_ignores_ignored_nick'],
+        ] as $table => $indexes) {
+            $actual = $this->connection->createSchemaManager()->listTableIndexes($table);
+            foreach ($indexes as $index) {
+                self::assertArrayHasKey($index, $actual);
             }
         }
     }
@@ -291,7 +355,7 @@ final class DatabaseQueryOptimizationTest extends TestCase
             self::assertSame([], $this->connection->fetchFirstColumn("SELECT name FROM sqlite_master WHERE name IN ('sqlite_stat1', 'sqlite_stat4')"));
             $this->createdSqliteStatistics = true;
         }
-        foreach (['registered_nicks', 'registered_channels'] as $table) {
+        foreach (['registered_nicks', 'registered_channels', 'channel_akick', 'channel_history', 'memo_ignores'] as $table) {
             if ($this->connection->getDatabasePlatform() instanceof AbstractMySQLPlatform) {
                 // ANALYZE TABLE yields a status rowset; PDO::exec leaves it pending.
                 $result = $this->connection->executeQuery('ANALYZE TABLE ' . $table);
@@ -325,6 +389,12 @@ final class DatabaseQueryOptimizationTest extends TestCase
         $this->logger->enabled = true;
         $nickRepository = new RegisteredNickDoctrineRepository($this->entityManager);
         $nickRepository->findNicknamesByLastConnectIp('203.0.113.9');
+        $nickRepository->findByEmail('FINDME@example.com');
+        $nickRepository->findExpiredSuspensions(new DateTimeImmutable('2026-01-01'));
+        $nickRepository->findRegisteredInactiveSince(new DateTimeImmutable('2026-01-01'));
+        $channelRepository = new RegisteredChannelDoctrineRepository($this->entityManager);
+        $channelRepository->findByFounderNickId(999999);
+        $channelRepository->findEstablishedByFounderNickId(999999);
         foreach ([[$nickRepository, ''], [new RegisteredChannelDoctrineRepository($this->entityManager), '#']] as [$repository, $prefix]) {
             foreach (['load12345', 'load1234*'] as $pattern) {
                 $repository->countByPattern($prefix . $pattern);
@@ -332,15 +402,21 @@ final class DatabaseQueryOptimizationTest extends TestCase
             }
         }
         $this->logger->enabled = false;
-        self::assertCount(9, $this->logger->queries);
+        self::assertCount(14, $this->logger->queries);
         foreach ($this->logger->queries as $query) {
             $platform = $this->connection->getDatabasePlatform();
             $explain = $platform instanceof SQLitePlatform ? 'EXPLAIN QUERY PLAN ' : 'EXPLAIN ';
             $rows = $this->connection->fetchAllAssociative($explain . $query['sql'], $query['params'], $query['types']);
             $plan = json_encode($rows, JSON_THROW_ON_ERROR);
-            $index = str_contains($query['sql'], 'last_connect_ip =')
-                ? 'idx_registered_nicks_whoip'
-                : (str_contains($query['sql'], 'registered_channels') ? 'idx_registered_channels_list_pattern' : 'idx_registered_nicks_list_pattern');
+            $index = match (true) {
+                str_contains($query['sql'], 'last_connect_ip =') => 'idx_registered_nicks_whoip',
+                str_contains($query['sql'], 'email_search_key') => 'idx_nicks_email_search',
+                str_contains($query['sql'], 'suspended_until IS NOT NULL') => 'idx_nicks_status_suspended',
+                str_contains($query['sql'], 'last_seen_at <') => 'idx_nicks_status_inactive',
+                str_contains($query['sql'], 'founder_nick_id =') => 'idx_channels_founder_status',
+                str_contains($query['sql'], 'registered_channels') => 'idx_registered_channels_list_pattern',
+                default => 'idx_registered_nicks_list_pattern',
+            };
             if ($platform instanceof AbstractMySQLPlatform) {
                 self::assertSame($index, $rows[0]['key'], $plan);
                 self::assertContains($rows[0]['type'], ['ref', 'range'], $plan);
@@ -348,6 +424,50 @@ final class DatabaseQueryOptimizationTest extends TestCase
                 self::assertStringContainsString($index, $plan);
                 self::assertMatchesRegularExpression($platform instanceof SQLitePlatform ? '/SEARCH/' : '/Index (Only )?Scan|Bitmap Index Scan/', $plan);
             }
+        }
+    }
+
+    private function assertKeysetPlan(): void
+    {
+        $this->logger->clear();
+        $this->logger->enabled = true;
+        $count = 0;
+        $ids = [];
+        foreach (new RegisteredChannelDoctrineRepository($this->entityManager)->iterateAll() as $channel) {
+            $ids[] = $channel->getId();
+            if (++$count > 500) {
+                break;
+            }
+        }
+        $this->logger->enabled = false;
+        self::assertSame(501, $count);
+        self::assertCount(2, $this->logger->queries);
+        $sql = $this->connection->getDatabasePlatform()->modifyLimitQuery('SELECT id FROM registered_channels ORDER BY name ASC, id ASC', 501);
+        self::assertSame(array_map(self::databaseInteger(...), $this->connection->fetchFirstColumn($sql)), $ids);
+        $query = $this->logger->queries[1];
+        $platform = $this->connection->getDatabasePlatform();
+        $rows = $this->connection->fetchAllAssociative(($platform instanceof SQLitePlatform ? 'EXPLAIN QUERY PLAN ' : 'EXPLAIN ') . $query['sql'], $query['params'], $query['types']);
+        $plan = json_encode($rows, JSON_THROW_ON_ERROR);
+        self::assertStringContainsString('idx_registered_channels_name_id', $plan);
+        if (!$platform instanceof SQLitePlatform && !$platform instanceof AbstractMySQLPlatform) {
+            self::assertStringContainsString('Index Cond:', $plan);
+        }
+    }
+
+    private function assertMaintenancePlans(): void
+    {
+        $this->logger->clear();
+        $this->logger->enabled = true;
+        self::assertCount(1, new ChannelAkickDoctrineRepository($this->entityManager)->findExpired());
+        self::assertCount(1, new ChannelHistoryDoctrineRepository($this->entityManager)->findByChannelId(1, 10));
+        new MemoIgnoreDoctrineRepository($this->entityManager)->deleteAllForNick(999999);
+        $this->logger->enabled = false;
+        self::assertCount(3, $this->logger->queries);
+        $platform = $this->connection->getDatabasePlatform();
+        foreach (['idx_channel_akicks_expires', 'idx_channel_history_channel_performed', 'idx_memo_ignores_ignored_nick'] as $i => $index) {
+            $query = $this->logger->queries[$i];
+            $rows = $this->connection->fetchAllAssociative(($platform instanceof SQLitePlatform ? 'EXPLAIN QUERY PLAN ' : 'EXPLAIN ') . $query['sql'], $query['params'], $query['types']);
+            self::assertStringContainsString($index, json_encode($rows, JSON_THROW_ON_ERROR));
         }
     }
 }

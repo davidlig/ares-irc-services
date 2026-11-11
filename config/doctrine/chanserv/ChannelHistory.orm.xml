@@ -6,6 +6,7 @@
     <entity name="App\ChanServ\Domain\Entity\ChannelHistory" table="channel_history">
         <indexes>
             <index name="idx_ch_history_channel_id" columns="channel_id"/>
+            <index name="idx_channel_history_channel_performed" columns="channel_id,performed_at"/>
             <index name="idx_ch_history_performed_at" columns="performed_at"/>
         </indexes>
         <id name="id" type="integer" column="id">

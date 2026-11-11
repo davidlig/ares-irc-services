@@ -112,15 +112,14 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
 
     public function findByEmail(string $email): ?RegisteredNick
     {
-        $qb = $this->em->createQueryBuilder();
-        $qb->select('n')
-            ->from(RegisteredNick::class, 'n')
-            ->where('LOWER(n.email) = LOWER(:email)')
-            ->andWhere('n.email IS NOT NULL')
+        $mapping = new ResultSetMappingBuilder($this->em);
+        $mapping->addRootEntityFromClassMetadata(RegisteredNick::class, 'n');
+        $sql = 'SELECT ' . $mapping->generateSelectClause()
+            . ' FROM registered_nicks n WHERE n.email_search_key = LOWER(:email)';
+        $sql = $this->em->getConnection()->getDatabasePlatform()->modifyLimitQuery($sql, 1);
+        $result = $this->em->createNativeQuery($sql, $mapping)
             ->setParameter('email', $email)
-            ->setMaxResults(1);
-
-        $result = $qb->getQuery()->getOneOrNullResult();
+            ->getOneOrNullResult();
 
         return $result instanceof RegisteredNick ? $result : null;
     }
@@ -136,7 +135,7 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
         $qb->select('n')
             ->from(RegisteredNick::class, 'n')
             ->where('n.status = :status')
-            ->andWhere('COALESCE(n.lastSeenAt, n.registeredAt) < :threshold')
+            ->andWhere('n.lastSeenAt < :threshold')
             ->andWhere('n.noExpire = false')
             ->setParameter('status', NickStatus::Registered)
             ->setParameter('threshold', $threshold->format('Y-m-d H:i:s'));

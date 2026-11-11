@@ -75,5 +75,8 @@ abstract class DoctrineIntegrationTestCase extends TestCase
         $schemaTool = new SchemaTool($this->entityManager);
         $metadata = $this->entityManager->getMetadataFactory()->getAllMetadata();
         $schemaTool->createSchema($metadata);
+        $this->entityManager->getConnection()->executeStatement(
+            'ALTER TABLE registered_nicks ADD COLUMN email_search_key VARCHAR(255) GENERATED ALWAYS AS (LOWER(email)) VIRTUAL',
+        );
     }
 }

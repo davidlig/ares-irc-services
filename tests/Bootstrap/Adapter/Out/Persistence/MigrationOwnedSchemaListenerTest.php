@@ -33,6 +33,30 @@ use function implode;
 #[CoversClass(MigrationOwnedSchemaListener::class)]
 final class MigrationOwnedSchemaListenerTest extends TestCase
 {
+    public function testProjectsMigrationOwnedEmailSearchColumnAndIndex(): void
+    {
+        $table = Table::editor()->setUnquotedName('registered_nicks')
+            ->addColumn(Column::editor()->setUnquotedName('email')->setTypeName(Types::STRING)->setLength(255)->create())->create();
+        $native = $table->edit()
+            ->addColumn(Column::editor()->setUnquotedName('email_search_key')->setTypeName(Types::STRING)->setLength(255)->create())
+            ->addIndex(Index::editor()->setUnquotedName('idx_nicks_email_search')->setType(IndexType::REGULAR)->setUnquotedColumnNames('email_search_key'))->create();
+        $manager = $this->createStub(AbstractSchemaManager::class);
+        $manager->method('introspectTableNames')->willReturn([OptionallyQualifiedName::unquoted('registered_nicks')]);
+        $manager->method('introspectTableByUnquotedName')->willReturn($native);
+        $connection = $this->createStub(Connection::class);
+        $connection->method('createSchemaManager')->willReturn($manager);
+        $connection->method('getDatabasePlatform')->willReturn(new SQLitePlatform());
+        $em = $this->createStub(EntityManagerInterface::class);
+        $em->method('getConnection')->willReturn($connection);
+        $event = new GenerateSchemaEventArgs($em, Schema::editor()->addTable($table)->create());
+        $listener = new MigrationOwnedSchemaListener();
+        $listener->postGenerateSchema($event);
+        self::assertTrue($event->getSchema()->getTable('registered_nicks')->hasColumn('email_search_key'));
+        self::assertTrue($event->getSchema()->getTable('registered_nicks')->hasIndex('idx_nicks_email_search'));
+        $listener->postGenerateSchema($event);
+        self::assertTrue($event->getSchema()->getTable('registered_nicks')->hasIndex('idx_nicks_email_search'));
+    }
+
     #[DataProvider('platforms')]
     public function testOnlyMigrationOwnedNativeAssetsAreProjected(AbstractPlatform $platform): void
     {

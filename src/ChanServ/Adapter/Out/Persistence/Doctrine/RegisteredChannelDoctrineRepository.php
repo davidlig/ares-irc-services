@@ -279,7 +279,7 @@ final readonly class RegisteredChannelDoctrineRepository implements RegisteredCh
                 $qb->andWhere($filter);
             }
             if (null !== $lastName) {
-                $qb->andWhere('(c.name > :lastName OR (c.name = :lastName AND c.id > :lastId))')
+                $qb->andWhere('c.name >= :lastName AND (c.name > :lastName OR c.id > :lastId)')
                     ->setParameter('lastName', $lastName)
                     ->setParameter('lastId', $lastId);
             }

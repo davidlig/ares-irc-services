@@ -21,6 +21,11 @@ final class QueryCaptureLogger extends AbstractLogger
     /** @var list<array{sql: string, params: list<mixed>, types: list<ParameterType>}> */
     public array $queries = [];
 
+    public function clear(): void
+    {
+        $this->queries = [];
+    }
+
     public function log(mixed $level, string|Stringable $message, array $context = []): void
     {
         if (!$this->enabled || !isset($context['sql'])) {

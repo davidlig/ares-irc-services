@@ -6,6 +6,7 @@
     <entity name="App\ChanServ\Domain\Entity\ChannelAkick" table="channel_akick">
         <indexes>
             <index name="idx_channel_akick_channel_id" columns="channel_id"/>
+            <index name="idx_channel_akicks_expires" columns="expires_at"/>
             <index name="idx_channel_akick_creator_nick_id" columns="creator_nick_id"/>
         </indexes>
         <id name="id" type="integer" column="id">

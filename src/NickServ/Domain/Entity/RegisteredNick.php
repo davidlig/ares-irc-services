@@ -122,6 +122,7 @@ class RegisteredNick
         $nick->email = $email;
         $nick->language = self::normalizeLanguage($language);
         $nick->registeredAt = $registeredAt;
+        $nick->lastSeenAt = $registeredAt;
         $nick->expiresAt = $expiresAt;
 
         return $nick;
@@ -147,6 +148,7 @@ class RegisteredNick
         $nick->email = $email;
         $nick->language = self::normalizeLanguage($language);
         $nick->registeredAt = $registeredAt;
+        $nick->lastSeenAt = $registeredAt;
         if (null !== $rescueTokenHash) {
             $nick->replaceRescueTokenHash($rescueTokenHash);
         }

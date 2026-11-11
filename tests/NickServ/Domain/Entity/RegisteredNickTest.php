@@ -21,6 +21,17 @@ use function str_repeat;
 final class RegisteredNickTest extends TestCase
 {
     #[Test]
+    public function registrationsInitiallyUseRegistrationTimeAsLastSeen(): void
+    {
+        $registeredAt = new DateTimeImmutable('2026-01-02 03:04:05');
+        $pending = RegisteredNick::createPending('Pending', 'hash', 'p@example.com', 'en', new DateTimeImmutable('2026-01-03'), $registeredAt);
+        $active = RegisteredNick::createActive('Active', 'hash', 'a@example.com', 'en', $registeredAt);
+
+        self::assertSame($registeredAt, $pending->getLastSeenAt());
+        self::assertSame($registeredAt, $active->getLastSeenAt());
+    }
+
+    #[Test]
     public function createPendingSetsInitialState(): void
     {
         $expiresAt = new DateTimeImmutable('+1 hour');
@@ -420,7 +431,7 @@ final class RegisteredNickTest extends TestCase
             new DateTimeImmutable(),
         );
 
-        self::assertNull($nick->getLastSeenAt());
+        self::assertSame($nick->getRegisteredAt(), $nick->getLastSeenAt());
         self::assertNull($nick->getLastQuitMessage());
 
         $nick->markSeen(new DateTimeImmutable());
