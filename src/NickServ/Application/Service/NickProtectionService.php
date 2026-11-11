@@ -108,7 +108,8 @@ final readonly class NickProtectionService
         string $hostname,
         string $ipBase64,
         DateTimeImmutable $occurredAt,
-    ): void {
+        bool $deferPersistence = false,
+    ): ?RegisteredNick {
         $this->pendingRegistry->remove($uid);
         $account = $this->nickRepository->findByNick($nick);
         $registeredNick = null;
@@ -126,7 +127,7 @@ final readonly class NickProtectionService
         $this->sessionLanguageRegistry->remove($uid);
 
         if (null === $account) {
-            return;
+            return null;
         }
 
         $account->markSeen($occurredAt);
@@ -143,7 +144,17 @@ final readonly class NickProtectionService
             $account->updateLastConnection($ip, $hostname);
         }
 
-        $this->nickRepository->save($account);
+        if (!$deferPersistence) {
+            $this->nickRepository->save($account);
+        }
+
+        return $account;
+    }
+
+    /** @param list<RegisteredNick> $accounts */
+    public function saveQuitActivities(array $accounts): void
+    {
+        $this->nickRepository->saveQuitBatch($accounts);
     }
 
     public function enforceProtection(NetworkUser $user, DateTimeImmutable $occurredAt): void

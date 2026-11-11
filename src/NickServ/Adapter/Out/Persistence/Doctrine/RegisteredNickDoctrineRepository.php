@@ -10,17 +10,22 @@ use App\NickServ\Domain\ValueObject\NickStatus;
 use DateTimeImmutable;
 use Doctrine\DBAL\Platforms\AbstractMySQLPlatform;
 use Doctrine\DBAL\Platforms\SQLitePlatform;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Query\ResultSetMappingBuilder;
+use LogicException;
 
 use function array_filter;
 use function array_map;
 use function array_unique;
 use function array_values;
+use function implode;
 use function is_array;
 use function is_numeric;
 use function is_string;
 use function max;
+use function spl_object_id;
+use function sprintf;
 use function str_contains;
 use function strtolower;
 use function strtr;
@@ -33,6 +38,41 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
     {
         $this->em->persist($nick);
         $this->em->flush();
+    }
+
+    public function saveQuitBatch(array $nicks): void
+    {
+        if ([] === $nicks) {
+            return;
+        }
+
+        $this->em->wrapInTransaction(function () use ($nicks): void {
+            $cases = [];
+            $ids = [];
+            foreach ($nicks as $index => $nick) {
+                if (!$this->em->contains($nick) || null === $nick->getLastSeenAt()) {
+                    throw new LogicException('Quit activity requires managed accounts with a last-seen timestamp.');
+                }
+                $ids[] = $nick->getId();
+                $cases[] = sprintf('WHEN n.id = :id%d THEN :seen%d', $index, $index);
+            }
+            $query = $this->em->createQuery(sprintf(
+                'UPDATE %s n SET n.lastSeenAt = CASE %s ELSE n.lastSeenAt END WHERE n.id IN (:ids)',
+                RegisteredNick::class,
+                implode(' ', $cases),
+            ));
+            $query->setParameter('ids', $ids);
+            foreach ($nicks as $index => $nick) {
+                $query->setParameter('id' . $index, $nick->getId());
+                $query->setParameter('seen' . $index, $nick->getLastSeenAt(), Types::DATETIME_IMMUTABLE);
+            }
+            $query->execute();
+            foreach ($nicks as $nick) {
+                // The bulk update bypasses change tracking. Keep the snapshot synchronized
+                // so the following transaction flush writes the other quit fields only.
+                $this->em->getUnitOfWork()->setOriginalEntityProperty(spl_object_id($nick), 'lastSeenAt', $nick->getLastSeenAt());
+            }
+        });
     }
 
     public function delete(RegisteredNick $nick): void

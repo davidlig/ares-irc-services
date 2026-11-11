@@ -11,6 +11,7 @@ use App\Irc\Application\Port\In\NickChangePreservesIdentificationInterface;
 use App\Irc\Application\Port\In\ProtocolModuleInterface;
 use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\PublishedEvent\IrcMessageHandledEvent;
+use App\Irc\Application\PublishedEvent\NetworkConnectionLostEvent;
 use App\Irc\Application\PublishedEvent\NetworkSynchronizationCompletedEvent;
 use App\Irc\Application\PublishedEvent\UserJoinedNetworkAppEvent;
 use App\Irc\Application\PublishedEvent\UserJoinedNetworkDTO;
@@ -39,6 +40,7 @@ use App\NickServ\Application\Service\BurstState;
 use App\NickServ\Application\Service\ForbiddenNickService;
 use App\NickServ\Application\Service\IdentifiedUserVhostSyncService;
 use App\NickServ\Application\Service\NickProtectionService;
+use App\NickServ\Application\Service\PendingQuitActivities;
 use App\NickServ\Application\Service\VhostDisplayResolver;
 use App\NickServ\Application\UseCase\IssueMigrationRescueToken\IssueMigrationRescueTokenHandlerInterface;
 use App\NickServ\Application\UseCase\SyncNetworkIdentification\SyncNetworkIdentification;
@@ -50,10 +52,12 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
+use RuntimeException;
 
 use function count;
 
 #[CoversClass(NickProtectionSubscriber::class)]
+#[CoversClass(PendingQuitActivities::class)]
 final class NickProtectionSubscriberTest extends TestCase
 {
     private BurstState $burstState;
@@ -85,6 +89,7 @@ final class NickProtectionSubscriberTest extends TestCase
                 UserModesChangedEvent::class => ['onUserModeChanged', 0],
                 NetworkSynchronizationCompletedEvent::class => ['onBurstComplete', -256],
                 IrcMessageHandledEvent::class => ['onIrcMessageProcessed', -200],
+                NetworkConnectionLostEvent::class => ['onConnectionLost', 0],
             ],
             $events,
         );
@@ -589,6 +594,76 @@ final class NickProtectionSubscriberTest extends TestCase
         );
 
         $this->subscriber->onUserQuit($event);
+    }
+
+    #[Test]
+    public function quitsArePersistedOnceAtTheEndOfTheIrcLine(): void
+    {
+        $this->networkUserLookup->expects(self::never())->method('findByUid');
+        $this->notifier->expects(self::never())->method('setUserVhost');
+        $alice = RegisteredNick::createPending('Alice', 'hash', 'a@example.com', 'en', $this->now, $this->now);
+        $bob = RegisteredNick::createPending('Bob', 'hash', 'b@example.com', 'en', $this->now, $this->now);
+        new ReflectionProperty(RegisteredNick::class, 'id')->setValue($alice, 1);
+        new ReflectionProperty(RegisteredNick::class, 'id')->setValue($bob, 2);
+        $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $repo->method('findByNick')->willReturnMap([['Alice', $alice], ['Bob', $bob]]);
+        $repo->expects(self::never())->method('save');
+        $repo->expects(self::once())->method('saveQuitBatch')->with([$alice, $bob]);
+        $this->initializeSubscriber($repo);
+        $this->networkUserLookup->expects(self::never())->method('findByUid');
+        $this->notifier->expects(self::never())->method('setUserVhost');
+
+        $this->subscriber->onUserQuit(new UserLeftNetworkEvent('001AAA', 'Alice', 'split', 'a', 'host'));
+        $this->subscriber->onUserQuit(new UserLeftNetworkEvent('001AAB', 'Bob', 'split', 'b', 'host'));
+        $this->subscriber->onUserQuit(new UserLeftNetworkEvent('001AAC', 'Alice', 'later', 'a', 'host'));
+        self::assertSame('later (a@host)', $alice->getLastQuitMessage());
+        self::assertSame('split (b@host)', $bob->getLastQuitMessage());
+        $this->subscriber->onIrcMessageProcessed(new IrcMessageHandledEvent());
+        $this->subscriber->onIrcMessageProcessed(new IrcMessageHandledEvent());
+    }
+
+    #[Test]
+    public function connectionLossFlushesAnInterruptedLinesQuitActivities(): void
+    {
+        $this->networkUserLookup->expects(self::never())->method('findByUid');
+        $this->notifier->expects(self::never())->method('setUserVhost');
+        $alice = RegisteredNick::createPending('Alice', 'hash', 'a@example.com', 'en', $this->now, $this->now);
+        new ReflectionProperty(RegisteredNick::class, 'id')->setValue($alice, 1);
+        $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $repo->method('findByNick')->willReturn($alice);
+        $repo->expects(self::never())->method('save');
+        $repo->expects(self::once())->method('saveQuitBatch')->with([$alice]);
+        $this->initializeSubscriber($repo);
+        $this->networkUserLookup->expects(self::never())->method('findByUid');
+        $this->notifier->expects(self::never())->method('setUserVhost');
+
+        $this->subscriber->onUserQuit(new UserLeftNetworkEvent('001AAA', 'Alice', 'split', 'a', 'host'));
+        $this->subscriber->onConnectionLost(new NetworkConnectionLostEvent());
+        $this->subscriber->onConnectionLost(new NetworkConnectionLostEvent());
+    }
+
+    #[Test]
+    public function failedQuitFlushIsNotRetriedOnConnectionLoss(): void
+    {
+        $this->networkUserLookup->expects(self::never())->method('findByUid');
+        $this->notifier->expects(self::never())->method('setUserVhost');
+        $alice = RegisteredNick::createPending('Alice', 'hash', 'a@example.com', 'en', $this->now, $this->now);
+        new ReflectionProperty(RegisteredNick::class, 'id')->setValue($alice, 1);
+        $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $repo->method('findByNick')->willReturn($alice);
+        $repo->expects(self::once())->method('saveQuitBatch')->willThrowException(new RuntimeException('write failed'));
+        $this->initializeSubscriber($repo);
+        $this->networkUserLookup->expects(self::never())->method('findByUid');
+        $this->notifier->expects(self::never())->method('setUserVhost');
+        $this->subscriber->onUserQuit(new UserLeftNetworkEvent('001AAA', 'Alice', 'split'));
+
+        try {
+            $this->subscriber->onIrcMessageProcessed(new IrcMessageHandledEvent());
+            self::fail('The persistence failure must propagate.');
+        } catch (RuntimeException $e) {
+            self::assertSame('write failed', $e->getMessage());
+        }
+        $this->subscriber->onConnectionLost(new NetworkConnectionLostEvent());
     }
 
     #[Test]

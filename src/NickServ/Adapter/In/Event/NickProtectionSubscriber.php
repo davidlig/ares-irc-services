@@ -9,6 +9,7 @@ use App\Irc\Application\Port\In\NativeNicknameAuthenticationInterface;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\NickChangePreservesIdentificationInterface;
 use App\Irc\Application\PublishedEvent\IrcMessageHandledEvent;
+use App\Irc\Application\PublishedEvent\NetworkConnectionLostEvent;
 use App\Irc\Application\PublishedEvent\NetworkSynchronizationCompletedEvent;
 use App\Irc\Application\PublishedEvent\UserJoinedNetworkAppEvent;
 use App\Irc\Application\PublishedEvent\UserLeftNetworkEvent;
@@ -20,6 +21,7 @@ use App\NickServ\Application\Port\Out\PendingNickProtectionRegistryInterface;
 use App\NickServ\Application\Service\BurstState;
 use App\NickServ\Application\Service\IdentifiedUserVhostSyncService;
 use App\NickServ\Application\Service\NickProtectionService;
+use App\NickServ\Application\Service\PendingQuitActivities;
 use App\NickServ\Application\UseCase\SyncNetworkIdentification\SyncNetworkIdentification;
 use App\NickServ\Application\UseCase\SyncNetworkIdentification\SyncNetworkIdentificationHandlerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -46,6 +48,7 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
         private Clock $clock,
         private SyncNetworkIdentificationHandlerInterface $syncNetworkIdentification,
         private ?PendingNickProtectionRegistryInterface $pendingProtectionRegistry = null,
+        private PendingQuitActivities $pendingQuitActivities = new PendingQuitActivities(),
     ) {}
 
     /**
@@ -62,6 +65,7 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
             UserModesChangedEvent::class => ['onUserModeChanged', 0],
             NetworkSynchronizationCompletedEvent::class => ['onBurstComplete', -256],
             IrcMessageHandledEvent::class => ['onIrcMessageProcessed', -200],
+            NetworkConnectionLostEvent::class => ['onConnectionLost', 0],
         ];
     }
 
@@ -185,7 +189,7 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
     {
         $this->pendingProtectionRegistry?->cancel($event->uid);
 
-        $this->nickProtectionService->onUserQuit(
+        $account = $this->nickProtectionService->onUserQuit(
             $event->uid,
             $event->nickname,
             $event->reason,
@@ -194,11 +198,17 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
             $event->hostname,
             $event->ipBase64,
             $this->clock->now(),
+            true,
         );
+        if (null !== $account) {
+            $this->pendingQuitActivities->add($account);
+        }
     }
 
     public function onIrcMessageProcessed(IrcMessageHandledEvent $event): void
     {
+        $this->flushQuitActivities();
+
         if (null === $this->pendingProtectionRegistry) {
             return;
         }
@@ -215,6 +225,23 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
             }
 
             $this->nickProtectionService->enforceProtection(IrcNetworkUserMapper::map($senderView), $this->clock->now());
+        }
+    }
+
+    public function onConnectionLost(NetworkConnectionLostEvent $event): void
+    {
+        $this->flushQuitActivities();
+    }
+
+    private function flushQuitActivities(): void
+    {
+        $accounts = $this->pendingQuitActivities->all();
+        if ([] !== $accounts) {
+            try {
+                $this->nickProtectionService->saveQuitActivities($accounts);
+            } finally {
+                $this->pendingQuitActivities->clear();
+            }
         }
     }
 
