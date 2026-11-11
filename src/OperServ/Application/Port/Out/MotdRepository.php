@@ -32,6 +32,9 @@ interface MotdRepository
 
     public function remove(MotdEntry $entry): void;
 
+    /** @param list<int> $ids */
+    public function deleteByIds(array $ids): int;
+
     public function recordShown(int $id): void;
 
     public function deleteByCreatorAccountId(int $accountId): void;

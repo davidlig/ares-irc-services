@@ -236,6 +236,23 @@ final class DoctrineMotdRepositoryTest extends TestCase
     }
 
     #[Test]
+    public function deletesByIdsWithBulkDqlAndReturnsCount(): void
+    {
+        $query = $this->createMock(Query::class);
+        $query->expects(self::once())->method('setParameter')->with('ids', [10, 20])->willReturnSelf();
+        $query->expects(self::once())->method('execute')->willReturn(2);
+        $entityManager = $this->createMock(EntityManagerInterface::class);
+        $entityManager->expects(self::once())->method('createQuery')
+            ->with(sprintf('DELETE FROM %s m WHERE m.id IN (:ids)', MotdRecord::class))
+            ->willReturn($query);
+
+        $adapter = new DoctrineMotdRepository($entityManager);
+        $adapter->recordShown(10);
+        self::assertSame(2, $adapter->deleteByIds([10, -1, 20, 0]));
+        self::assertSame(0, $adapter->deleteByIds([]));
+    }
+
+    #[Test]
     public function removesExistingMotdAndIgnoresMissingOne(): void
     {
         $motd = $this->record(7);

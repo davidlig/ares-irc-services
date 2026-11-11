@@ -14,6 +14,7 @@ use LogicException;
 use function array_filter;
 use function array_map;
 use function array_values;
+use function is_numeric;
 use function sprintf;
 use function strtolower;
 
@@ -106,6 +107,21 @@ final readonly class DoctrineGlineRepository implements GlineRepository
 
         $this->entityManager->remove($gline);
         $this->entityManager->flush();
+    }
+
+    public function deleteByIds(array $ids): int
+    {
+        $ids = array_values(array_filter($ids, static fn (int $id): bool => $id > 0));
+        if ([] === $ids) {
+            return 0;
+        }
+
+        $result = $this->entityManager
+            ->createQuery(sprintf('DELETE FROM %s g WHERE g.id IN (:ids)', Gline::class))
+            ->setParameter('ids', $ids)
+            ->execute();
+
+        return is_numeric($result) ? (int) $result : 0;
     }
 
     public function clearCreatorAccountId(int $accountId): void

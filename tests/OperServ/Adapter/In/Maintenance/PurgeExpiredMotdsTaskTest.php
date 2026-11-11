@@ -53,7 +53,8 @@ final class PurgeExpiredMotdsTaskTest extends TestCase
 
         $motdRepository = $this->createMock(MotdRepository::class);
         $motdRepository->expects(self::once())->method('findExpiredAt')->willReturn([$expired]);
-        $motdRepository->expects(self::once())->method('remove')->with($expired);
+        $motdRepository->expects(self::never())->method('remove');
+        $motdRepository->expects(self::once())->method('deleteByIds')->with([1]);
 
         $debugNotifier = $this->createMock(ServiceDebugNotifierInterface::class);
         $debugNotifier->expects(self::once())->method('notify')
@@ -69,6 +70,7 @@ final class PurgeExpiredMotdsTaskTest extends TestCase
         $motdRepository = $this->createMock(MotdRepository::class);
         $motdRepository->expects(self::once())->method('findExpiredAt')->willReturn([]);
         $motdRepository->expects(self::never())->method('remove');
+        $motdRepository->expects(self::never())->method('deleteByIds');
 
         $debugNotifier = $this->createMock(ServiceDebugNotifierInterface::class);
         $debugNotifier->expects(self::never())->method('notify');

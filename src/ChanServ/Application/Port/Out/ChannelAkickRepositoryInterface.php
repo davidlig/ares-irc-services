@@ -28,6 +28,9 @@ interface ChannelAkickRepositoryInterface
 
     public function deleteByChannelId(int $channelId): int;
 
+    /** @param list<int> $ids */
+    public function deleteByIds(array $ids): int;
+
     /**
      * @return ChannelAkick[] All AKICK entries that have expired
      */

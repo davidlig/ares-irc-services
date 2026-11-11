@@ -15,6 +15,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use function array_filter;
 use function array_map;
 use function array_values;
+use function is_numeric;
 use function sprintf;
 
 /** Final Doctrine adapter for every OperServ MOTD persistence capability. */
@@ -131,6 +132,26 @@ final class DoctrineMotdRepository implements MotdRepository, MotdCounterFlusher
         $this->entityManager->flush();
         unset($this->pendingShown[$entry->id]);
         $this->invalidateActive();
+    }
+
+    public function deleteByIds(array $ids): int
+    {
+        $ids = array_values(array_filter($ids, static fn (int $id): bool => $id > 0));
+        if ([] === $ids) {
+            return 0;
+        }
+
+        $result = $this->entityManager
+            ->createQuery(sprintf('DELETE FROM %s m WHERE m.id IN (:ids)', MotdRecord::class))
+            ->setParameter('ids', $ids)
+            ->execute();
+
+        foreach ($ids as $id) {
+            unset($this->pendingShown[$id]);
+        }
+        $this->invalidateActive();
+
+        return is_numeric($result) ? (int) $result : 0;
     }
 
     public function recordShown(int $id): void

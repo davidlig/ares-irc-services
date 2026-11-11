@@ -46,19 +46,24 @@ final readonly class PurgeExpiredMotdsTask implements MaintenanceTaskInterface
     public function run(): void
     {
         $expired = $this->motdRepository->findExpiredAt(new DateTimeImmutable());
+        if ([] === $expired) {
+            return;
+        }
 
+        $ids = [];
         foreach ($expired as $motd) {
-            $motdId = $motd->id;
+            $ids[] = $motd->id;
 
             $this->debugNotifier->notify($this->formatFinalizedMessage($motd));
-            $this->motdRepository->remove($motd);
 
             $this->logger->info(sprintf(
                 'Maintenance [%s]: removed expired MOTD id %d.',
                 $this->getName(),
-                $motdId,
+                $motd->id,
             ));
         }
+
+        $this->motdRepository->deleteByIds($ids);
     }
 
     private function formatFinalizedMessage(MotdEntry $motd): string

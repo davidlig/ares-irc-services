@@ -180,6 +180,22 @@ final class DoctrineGlineRepositoryTest extends TestCase
     }
 
     #[Test]
+    public function deletesByIdsWithBulkDqlAndReturnsCount(): void
+    {
+        $query = $this->createMock(Query::class);
+        $query->expects(self::once())->method('setParameter')->with('ids', [10, 20])->willReturnSelf();
+        $query->expects(self::once())->method('execute')->willReturn(2);
+        $entityManager = $this->createMock(EntityManagerInterface::class);
+        $entityManager->expects(self::once())->method('createQuery')
+            ->with(sprintf('DELETE FROM %s g WHERE g.id IN (:ids)', Gline::class))
+            ->willReturn($query);
+
+        $adapter = new DoctrineGlineRepository($entityManager);
+        self::assertSame(2, $adapter->deleteByIds([10, -1, 20, 0]));
+        self::assertSame(0, $adapter->deleteByIds([]));
+    }
+
+    #[Test]
     public function removesLegacyEntryWithoutIdentifierByMask(): void
     {
         $gline = $this->gline(7);

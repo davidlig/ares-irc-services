@@ -104,9 +104,8 @@ final readonly class ManageMotdHandler implements ManageMotdHandlerInterface
             return new ManageMotdResult(ManageMotdOutcome::CleanEmpty);
         }
 
-        foreach ($entries as $entry) {
-            $this->motds->remove($entry);
-        }
+        $ids = array_map(static fn (MotdEntry $e): int => $e->id, $entries);
+        $this->motds->deleteByIds($ids);
         $this->recordAudit($command, 'MOTD CLEAN', null, ['removed_count' => count($entries)]);
 
         return new ManageMotdResult(ManageMotdOutcome::Cleaned, removedCount: count($entries));

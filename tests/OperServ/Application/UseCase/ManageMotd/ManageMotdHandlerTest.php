@@ -22,6 +22,8 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function count;
+
 use const DATE_ATOM;
 
 #[CoversClass(ManageMotdHandler::class)]
@@ -164,10 +166,13 @@ final class ManageMotdHandlerTest extends TestCase
         $second = $this->entry(2);
         $repository = $this->createMock(MotdRepository::class);
         $repository->expects(self::once())->method('findExpiredAt')->with($this->now)->willReturn([$first, $second]);
-        $removed = [];
-        $repository->expects(self::exactly(2))->method('remove')->willReturnCallback(
-            static function (MotdEntry $entry) use (&$removed): void {
-                $removed[] = $entry->id;
+        $repository->expects(self::never())->method('remove');
+        $deleted = [];
+        $repository->expects(self::once())->method('deleteByIds')->with([1, 2])->willReturnCallback(
+            static function (array $ids) use (&$deleted): int {
+                $deleted = $ids;
+
+                return count($ids);
             },
         );
         $audit = $this->createMock(CommandAuditRecorder::class);
@@ -180,7 +185,7 @@ final class ManageMotdHandlerTest extends TestCase
 
         self::assertSame(ManageMotdOutcome::Cleaned, $result->outcome);
         self::assertSame(2, $result->removedCount);
-        self::assertSame([1, 2], $removed);
+        self::assertSame([1, 2], $deleted);
     }
 
     #[Test]
