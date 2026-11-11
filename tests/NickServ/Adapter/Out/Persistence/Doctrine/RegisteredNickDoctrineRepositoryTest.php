@@ -531,6 +531,7 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
         $this->entityManager->createQueryBuilder()
             ->update(RegisteredNick::class, 'n')
             ->set('n.registeredAt', ':date')
+            ->set('n.lastSeenAt', ':date')
             ->where('n.nicknameLower = :name')
             ->setParameter('date', new DateTimeImmutable('-60 days')->format('Y-m-d H:i:s'))
             ->setParameter('name', 'inactive')

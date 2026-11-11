@@ -4,6 +4,9 @@
                   xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping
                           https://www.doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
     <entity name="App\MemoServ\Domain\Entity\MemoIgnore" table="memo_ignores">
+        <indexes>
+            <index name="idx_memo_ignores_ignored_nick" columns="ignored_nick_id"/>
+        </indexes>
         <unique-constraints>
             <unique-constraint name="uniq_memo_ignore_target_ignored" columns="target_nick_id,target_channel_id,ignored_nick_id"/>
         </unique-constraints>

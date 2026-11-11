@@ -20,7 +20,7 @@ final class ValidateSchemaCommand extends DoctrineValidateSchemaCommand
         $configuration = $em->getConnection()->getConfiguration();
         $previousFilter = $configuration->getSchemaAssetsFilter();
         $configuration->setSchemaAssetsFilter(static fn (string $name): bool => !in_array($name, [
-            'doctrine_migration_versions', 'service_nick_reservations',
+            'doctrine_migration_versions', 'service_nick_reservations', 'migration_172_last_seen_backup',
             'udb_staged_generations', 'udb_staged_mutations', 'udb_staged_records', 'udb_staged_transfers',
         ], true) && $previousFilter($name));
         $listener = new MigrationOwnedSchemaListener();

@@ -108,6 +108,12 @@ final class MigrationOwnedSchemaListener
                 if ($mysql && $actual->hasColumn('list_search_key') && !$target->hasColumn('list_search_key')) {
                     $table->addColumn($actual->getColumn('list_search_key'));
                 }
+                if ($actual->hasColumn('email_search_key') && !$target->hasColumn('email_search_key')) {
+                    $table->addColumn($actual->getColumn('email_search_key'));
+                }
+                if ($actual->hasIndex('idx_nicks_email_search') && !$target->hasIndex('idx_nicks_email_search')) {
+                    $table->addIndex($actual->getIndex('idx_nicks_email_search'));
+                }
                 if ($actual->hasIndex($index) && !$target->hasIndex($index)) {
                     $table->addIndex($actual->getIndex($index));
                 }
