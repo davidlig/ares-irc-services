@@ -20,7 +20,7 @@ final readonly class IrcChannelTopicNetworkQuery implements ChannelTopicNetworkQ
 
     public function findChannel(string $channelName): ?ChannelTopicNetworkState
     {
-        $channel = $this->channels->findByChannelName($channelName);
+        $channel = $this->channels->findSummary($channelName);
 
         return null === $channel ? null : new ChannelTopicNetworkState($channel->name, $channel->topic);
     }

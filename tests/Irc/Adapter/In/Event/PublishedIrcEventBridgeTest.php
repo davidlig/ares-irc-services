@@ -6,6 +6,7 @@ namespace App\Tests\Irc\Adapter\In\Event;
 
 use App\Irc\Adapter\Event\ConnectionEstablishedEvent;
 use App\Irc\Adapter\Event\ConnectionLostEvent;
+use App\Irc\Adapter\Event\IncomingIrcMessageEvent;
 use App\Irc\Adapter\Event\IrcMessageProcessedEvent;
 use App\Irc\Adapter\Event\MessageReceivedEvent;
 use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
@@ -19,6 +20,8 @@ use App\Irc\Application\PublishedEvent\ChannelTopicReceivedEvent as PublishedCha
 use App\Irc\Application\PublishedEvent\ExistingChannelJoinObservedEvent as PublishedExistingChannelJoinObservedEvent;
 use App\Irc\Application\PublishedEvent\IrcMessageHandledEvent;
 use App\Irc\Application\PublishedEvent\IrcMessageHandlingStartedEvent;
+use App\Irc\Application\PublishedEvent\IrcMessageProcessingFinishedEvent;
+use App\Irc\Application\PublishedEvent\IrcMessageProcessingStartedEvent;
 use App\Irc\Application\PublishedEvent\NetworkConnectionEstablishedEvent;
 use App\Irc\Application\PublishedEvent\NetworkConnectionLostEvent;
 use App\Irc\Application\PublishedEvent\NetworkSynchronizationCompletedEvent;
@@ -55,6 +58,8 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 #[CoversClass(PublishedChannelTopicReceivedEvent::class)]
 #[CoversClass(IrcMessageHandledEvent::class)]
 #[CoversClass(IrcMessageHandlingStartedEvent::class)]
+#[CoversClass(IrcMessageProcessingStartedEvent::class)]
+#[CoversClass(IrcMessageProcessingFinishedEvent::class)]
 #[CoversClass(NetworkConnectionEstablishedEvent::class)]
 #[CoversClass(NetworkSynchronizationCompletedEvent::class)]
 #[CoversClass(ServiceIntroductionRequestedEvent::class)]
@@ -71,6 +76,7 @@ final class PublishedIrcEventBridgeTest extends TestCase
         self::assertSame([
             ConnectionEstablishedEvent::class => 'publishConnectionEstablished',
             ConnectionLostEvent::class => 'publishConnectionLost',
+            IncomingIrcMessageEvent::class => ['publishMessageProcessingStarted', 1024],
             MessageReceivedEvent::class => ['publishMessageHandlingStarted', 256],
             UserNickChangedEvent::class => ['publishNicknameChanged', -10],
             UserModeChangedEvent::class => ['publishModesChanged', -10],
@@ -85,7 +91,10 @@ final class PublishedIrcEventBridgeTest extends TestCase
                 ['publishServiceIntroductionRequested', 100],
             ],
             NetworkSyncCompleteEvent::class => ['publishNetworkSynchronizationCompleted', -256],
-            IrcMessageProcessedEvent::class => ['publishMessageHandled', -200],
+            IrcMessageProcessedEvent::class => [
+                ['publishMessageHandled', -200],
+                ['publishMessageProcessingFinished', -257],
+            ],
         ], PublishedIrcEventBridge::getSubscribedEvents());
     }
 
@@ -102,6 +111,14 @@ final class PublishedIrcEventBridgeTest extends TestCase
         $bridge = $this->bridgeExpecting(static fn (object $event): bool => $event instanceof IrcMessageHandlingStartedEvent);
 
         $bridge->publishMessageHandlingStarted();
+    }
+
+    #[Test]
+    public function publishesMessageProcessingStartBeforeLineSubscribersRun(): void
+    {
+        $bridge = $this->bridgeExpecting(static fn (object $event): bool => $event instanceof IrcMessageProcessingStartedEvent);
+
+        $bridge->publishMessageProcessingStarted();
     }
 
     #[Test]
@@ -253,6 +270,14 @@ final class PublishedIrcEventBridgeTest extends TestCase
         $bridge = $this->bridgeExpecting(static fn (object $event): bool => $event instanceof IrcMessageHandledEvent);
 
         $bridge->publishMessageHandled(new IrcMessageProcessedEvent());
+    }
+
+    #[Test]
+    public function publishesMessageProcessingFinishAfterTheEntityManagerClearPriority(): void
+    {
+        $bridge = $this->bridgeExpecting(static fn (object $event): bool => $event instanceof IrcMessageProcessingFinishedEvent);
+
+        $bridge->publishMessageProcessingFinished();
     }
 
     #[Test]

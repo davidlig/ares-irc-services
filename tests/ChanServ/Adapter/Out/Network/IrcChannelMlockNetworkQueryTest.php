@@ -23,7 +23,7 @@ final class IrcChannelMlockNetworkQueryTest extends TestCase
     public function itReturnsNullWhenTheNetworkChannelDoesNotExist(): void
     {
         $channels = $this->createStub(ChannelLookupPort::class);
-        $channels->method('findByChannelName')->willReturn(null);
+        $channels->method('findSummary')->willReturn(null);
 
         self::assertNull($this->query($channels)->findChannel('#missing'));
     }
@@ -32,7 +32,7 @@ final class IrcChannelMlockNetworkQueryTest extends TestCase
     public function itMapsOnlySettingsAndModeCapabilities(): void
     {
         $channels = $this->createStub(ChannelLookupPort::class);
-        $channels->method('findByChannelName')->willReturn(new ChannelView(
+        $channels->method('findSummary')->willReturn(new ChannelView(
             name: '#Case',
             modes: '+nkKrPbI',
             topic: null,

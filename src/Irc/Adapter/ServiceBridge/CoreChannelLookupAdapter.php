@@ -56,6 +56,27 @@ final readonly class CoreChannelLookupAdapter implements ChannelLookupPort
         );
     }
 
+    public function findSummary(string $channelName): ?ChannelView
+    {
+        try {
+            $channel = $this->channelRepository->findByName(new ChannelName($channelName));
+        } catch (InvalidArgumentException) {
+            return null;
+        }
+        if (null === $channel) {
+            return null;
+        }
+
+        return new ChannelView(
+            name: $channel->name->value,
+            modes: $channel->getModes(),
+            topic: $channel->getTopic(),
+            memberCount: $channel->getMemberCount(),
+            timestamp: $channel->getCreatedAt()->getTimestamp(),
+            modeParams: $channel->getModeParams(),
+        );
+    }
+
     public function findMember(string $channelName, string $uid): ?ChannelView
     {
         try {
