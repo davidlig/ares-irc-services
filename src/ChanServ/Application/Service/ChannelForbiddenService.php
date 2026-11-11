@@ -206,6 +206,11 @@ readonly class ChannelForbiddenService implements ForbiddenChannelEnforcement
         }
     }
 
+    public function enforceKnownForbiddenChannel(string $channelName): void
+    {
+        $this->enforceForbiddenChannel($channelName);
+    }
+
     public function enforceForbiddenUserJoin(string $channelName, string $userUid): void
     {
         $channel = $this->channelRepository->findByChannelName($channelName);
