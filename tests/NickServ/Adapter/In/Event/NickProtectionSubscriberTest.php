@@ -73,6 +73,8 @@ use function count;
 #[CoversClass(PendingNickActivities::class)]
 #[CoversClass(IdentifiedUserVhostSyncService::class)]
 #[CoversClass(NickProtectionService::class)]
+#[CoversClass(NickBurstBatchStartedEvent::class)]
+#[CoversClass(NickBurstBatchFinishedEvent::class)]
 final class NickProtectionSubscriberTest extends TestCase
 {
     private BurstState $burstState;
