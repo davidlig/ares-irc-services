@@ -9,9 +9,15 @@ use App\OperServ\Domain\Repository\OperIrcopRepositoryInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use UnexpectedValueException;
 
+use function array_unique;
+use function array_values;
+
 final readonly class OperIrcopDoctrineRepository implements OperIrcopRepositoryInterface
 {
-    public function __construct(private EntityManagerInterface $em) {}
+    public function __construct(
+        private EntityManagerInterface $em,
+        private BurstIrcopCache $burstCache = new BurstIrcopCache(),
+    ) {}
 
     public function find(int $id): ?OperIrcop
     {
@@ -20,7 +26,29 @@ final readonly class OperIrcopDoctrineRepository implements OperIrcopRepositoryI
 
     public function findByNickId(int $nickId): ?OperIrcop
     {
+        [$found, $ircop] = $this->burstCache->lookup($nickId);
+        if ($found) {
+            return $ircop;
+        }
+
         return $this->em->getRepository(OperIrcop::class)->findOneBy(['nickId' => $nickId]);
+    }
+
+    public function findByNickIds(array $nickIds): array
+    {
+        $nickIds = array_values(array_unique($nickIds));
+        if ([] === $nickIds) {
+            return [];
+        }
+
+        /** @var list<OperIrcop> $assignments */
+        $assignments = $this->em->createQuery(
+            'SELECT i, r FROM App\\OperServ\\Domain\\Entity\\OperIrcop i JOIN i.role r WHERE i.nickId IN (:nickIds)'
+        )
+            ->setParameter('nickIds', $nickIds)
+            ->getResult();
+
+        return $assignments;
     }
 
     public function findByNickIdWithRolePermissions(int $nickId): ?OperIrcop
@@ -55,12 +83,14 @@ final readonly class OperIrcopDoctrineRepository implements OperIrcopRepositoryI
 
     public function save(OperIrcop $ircop): void
     {
+        $this->burstCache->invalidate();
         $this->em->persist($ircop);
         $this->em->flush();
     }
 
     public function remove(OperIrcop $ircop): void
     {
+        $this->burstCache->invalidate();
         $this->em->remove($ircop);
         $this->em->flush();
     }
@@ -77,6 +107,7 @@ final readonly class OperIrcopDoctrineRepository implements OperIrcopRepositoryI
 
     public function deleteByNickId(int $nickId): void
     {
+        $this->burstCache->invalidate();
         $this->em
             ->createQuery(
                 'DELETE FROM App\OperServ\Domain\Entity\OperIrcop i WHERE i.nickId = :nickId'
@@ -87,6 +118,7 @@ final readonly class OperIrcopDoctrineRepository implements OperIrcopRepositoryI
 
     public function clearAddedById(int $nickId): void
     {
+        $this->burstCache->invalidate();
         $this->em
             ->createQuery(
                 'UPDATE App\OperServ\Domain\Entity\OperIrcop i SET i.addedById = NULL WHERE i.addedById = :nickId'
