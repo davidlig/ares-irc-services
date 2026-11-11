@@ -60,7 +60,13 @@ final class BurstBatchQueryCountTest extends TestCase
     #[Test]
     public function lookupCountIsIndependentOfChannelsAndMembersWithinOnePage(): void
     {
-        self::assertSame($this->queryCount(5, 1), $this->queryCount(100, 5));
+        $small = $this->queryCount(5, 1);
+        $large = $this->queryCount(100, 5);
+        $twoPages = $this->queryCount(201, 5);
+        $threePages = $this->queryCount(401, 5);
+        self::assertSame($small, $large);
+        self::assertGreaterThan($large, $twoPages);
+        self::assertSame($twoPages - $large, $threePages - $twoPages);
     }
 
     private function queryCount(int $channelCount, int $membersPerChannel): int
@@ -116,6 +122,9 @@ final class BurstBatchQueryCountTest extends TestCase
         $logger->enabled = true;
         $handler->handle(new DateTimeImmutable('2026-02-01 UTC'));
         self::assertSame([], $em->getUnitOfWork()->getIdentityMap()[RegisteredNick::class] ?? []);
+        foreach ($em->getUnitOfWork()->getIdentityMap() as $entities) {
+            self::assertSame([], $entities);
+        }
         $logger->enabled = false;
         $count = count($logger->queries);
         $em->close();
