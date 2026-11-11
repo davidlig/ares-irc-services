@@ -1342,6 +1342,10 @@ services:
   App\ChanServ\Application\Port\Out\ChannelLevelRepositoryInterface:
     alias: App\ChanServ\Adapter\Out\Persistence\Doctrine\ChannelLevelDoctrineRepository
 
+  App\ChanServ\Adapter\In\Event\ChanServBurstChannelSnapshotSubscriber: ~
+  App\ChanServ\Application\Port\Out\RegisteredChannelBurstSnapshot:
+    alias: App\ChanServ\Adapter\Out\Persistence\Doctrine\RegisteredChannelDoctrineRepository
+
   App\ChanServ\Adapter\Out\Persistence\Doctrine\RegisteredChannelDoctrineRepository: ~
   App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface:
     alias: App\ChanServ\Adapter\Out\Persistence\Doctrine\RegisteredChannelDoctrineRepository

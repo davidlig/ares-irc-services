@@ -22,6 +22,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
+use UnexpectedValueException;
 
 use function array_map;
 use function array_slice;
@@ -39,6 +40,52 @@ use function strtr;
 final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationTestCase
 {
     private RegisteredChannelRepositoryInterface $repository;
+
+    #[Test]
+    public function burstSnapshotShortCircuitsUnknownNamesAndTracksRegistrations(): void
+    {
+        $connection = $this->createMock(Connection::class);
+        $connection->expects(self::once())->method('fetchFirstColumn')->with('SELECT name_lower FROM registered_channels')->willReturn(['#known']);
+        $em = $this->createMock(EntityManagerInterface::class);
+        $em->method('getConnection')->willReturn($connection);
+        $em->expects(self::never())->method('getRepository');
+        $repository = new RegisteredChannelDoctrineRepository($em);
+        $repository->beginBurst();
+
+        self::assertNull($repository->findByChannelName('#Missing'));
+        self::assertFalse($repository->existsByChannelName('#MISSING'));
+    }
+
+    #[Test]
+    public function burstSnapshotTracksChangesAndEndsWithoutStaleNames(): void
+    {
+        $repository = new RegisteredChannelDoctrineRepository($this->entityManager);
+        $original = RegisteredChannel::register(new DateTimeImmutable(), '#Original', 1, 'original');
+        $repository->save($original);
+        $repository->beginBurst();
+        self::assertNotNull($repository->findByChannelName('#ORIGINAL'));
+        self::assertNull($repository->findByChannelName('#new'));
+
+        $new = RegisteredChannel::register(new DateTimeImmutable(), '#New', 1, 'new');
+        $repository->save($new);
+        self::assertNotNull($repository->findByChannelName('#NEW'));
+        $repository->delete($original);
+        self::assertNull($repository->findByChannelName('#original'));
+        $repository->endBurst();
+        self::assertNotNull($repository->findByChannelName('#new'));
+        self::assertNull($repository->findByChannelName('#original'));
+    }
+
+    #[Test]
+    public function burstSnapshotRejectsInvalidDatabaseName(): void
+    {
+        $connection = $this->createStub(Connection::class);
+        $connection->method('fetchFirstColumn')->willReturn([null]);
+        $em = $this->createStub(EntityManagerInterface::class);
+        $em->method('getConnection')->willReturn($connection);
+        $this->expectException(UnexpectedValueException::class);
+        new RegisteredChannelDoctrineRepository($em)->beginBurst();
+    }
 
     #[Test]
     public function pendingPagesAndCountsPreserveIterationOrder(): void
