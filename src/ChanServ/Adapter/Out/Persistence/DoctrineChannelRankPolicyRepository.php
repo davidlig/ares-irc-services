@@ -18,12 +18,17 @@ use function strtolower;
 
 final readonly class DoctrineChannelRankPolicyRepository implements ChannelRankPolicyRepository
 {
+    private ChannelActivityBuffer $activityBuffer;
+
     public function __construct(
         private RegisteredChannelRepositoryInterface $channels,
         private ChannelAccessRepositoryInterface $access,
         private ChannelLevelRepositoryInterface $levels,
         private EntityManagerInterface $em,
-    ) {}
+        ?ChannelActivityBuffer $activityBuffer = null,
+    ) {
+        $this->activityBuffer = $activityBuffer ?? new ChannelActivityBuffer($this->em->getConnection());
+    }
 
     public function findByName(string $channelName): ?ChannelRankPolicy
     {
@@ -48,13 +53,7 @@ final readonly class DoctrineChannelRankPolicyRepository implements ChannelRankP
 
     public function touchLastUsed(int $channelId): void
     {
-        $channel = $this->channels->findByIds([$channelId])[0] ?? null;
-        if (null === $channel) {
-            return;
-        }
-
-        $channel->touchLastUsed(new DateTimeImmutable());
-        $this->channels->save($channel);
+        $this->activityBuffer->record($channelId, new DateTimeImmutable());
     }
 
     private function snapshot(RegisteredChannel $channel, bool $detachComponents, bool $singleMember = false, ?int $nickId = null): ChannelRankPolicy

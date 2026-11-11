@@ -1543,6 +1543,9 @@ services:
     tags: ["chanserv.command"]
 
   # Maintenance Tasks
+  App\ChanServ\Adapter\In\Maintenance\FlushChannelActivityTask:
+    tags: ["maintenance.task"]
+
   App\ChanServ\Adapter\In\Maintenance\PurgeExpiredAkickTask:
     arguments:
       $logger: "@monolog.logger.maintenance"

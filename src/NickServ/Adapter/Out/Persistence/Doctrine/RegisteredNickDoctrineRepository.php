@@ -14,8 +14,10 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Query\ResultSetMappingBuilder;
 use LogicException;
+use WeakMap;
 
 use function array_filter;
+use function array_key_exists;
 use function array_map;
 use function array_unique;
 use function array_values;
@@ -32,10 +34,16 @@ use function strtr;
 
 class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterface
 {
+    /** @var WeakMap<EntityManagerInterface, array<string, RegisteredNick|null>>|null */
+    private static ?WeakMap $lookupCache = null;
+
+    private static bool $lookupCacheActive = false;
+
     public function __construct(private readonly EntityManagerInterface $em) {}
 
     public function save(RegisteredNick $nick): void
     {
+        $this->invalidateLookup($nick->getNicknameLower());
         $this->em->persist($nick);
         $this->em->flush();
     }
@@ -77,8 +85,10 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
 
     public function delete(RegisteredNick $nick): void
     {
+        $this->invalidateLookup($nick->getNicknameLower());
         $entity = $this->em->contains($nick) ? $nick : $this->findById($nick->getId());
         if (null !== $entity) {
+            $this->invalidateLookup($entity->getNicknameLower());
             $this->em->remove($entity);
             $this->em->flush();
         }
@@ -86,9 +96,43 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
 
     public function findByNick(string $nickname): ?RegisteredNick
     {
-        return $this->em
+        $nicknameLower = strtolower($nickname);
+        if (!self::$lookupCacheActive) {
+            return $this->em
+                ->getRepository(RegisteredNick::class)
+                ->findOneBy(['nicknameLower' => $nicknameLower]);
+        }
+
+        $cache = self::$lookupCache ??= new WeakMap();
+        $byNickname = $cache[$this->em] ?? [];
+        if (array_key_exists($nicknameLower, $byNickname)) {
+            $cached = $byNickname[$nicknameLower];
+            if (null === $cached || $this->em->contains($cached)) {
+                return $cached;
+            }
+
+            unset($byNickname[$nicknameLower]);
+        }
+
+        $nick = $this->em
             ->getRepository(RegisteredNick::class)
-            ->findOneBy(['nicknameLower' => strtolower($nickname)]);
+            ->findOneBy(['nicknameLower' => $nicknameLower]);
+        $byNickname[$nicknameLower] = $nick;
+        $cache[$this->em] = $byNickname;
+
+        return $nick;
+    }
+
+    public static function beginLookupCacheLine(): void
+    {
+        self::resetLookupCache();
+        self::$lookupCacheActive = true;
+    }
+
+    public static function resetLookupCache(): void
+    {
+        self::$lookupCache = null;
+        self::$lookupCacheActive = false;
     }
 
     public function findByNicks(array $nicknames): array
@@ -205,6 +249,8 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
             ->setParameter('now', $now->format('Y-m-d H:i:s'))
             ->execute();
 
+        self::$lookupCache = null;
+
         return is_numeric($result) ? (int) $result : 0;
     }
 
@@ -298,6 +344,18 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
         $nicknames = $queryBuilder->getQuery()->getSingleColumnResult();
 
         return $nicknames;
+    }
+
+    private function invalidateLookup(string $nicknameLower): void
+    {
+        $cache = self::$lookupCache;
+        if (null === $cache || !isset($cache[$this->em])) {
+            return;
+        }
+
+        $byNickname = $cache[$this->em];
+        unset($byNickname[$nicknameLower]);
+        $cache[$this->em] = $byNickname;
     }
 
     /** @return array{string, array<string, string>} */

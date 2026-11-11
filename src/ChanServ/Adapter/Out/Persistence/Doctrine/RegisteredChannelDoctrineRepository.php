@@ -14,8 +14,10 @@ use Doctrine\DBAL\Platforms\SQLitePlatform;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Query\ResultSetMappingBuilder;
 use UnexpectedValueException;
+use WeakMap;
 
 use function array_filter;
+use function array_key_exists;
 use function array_values;
 use function count;
 use function is_numeric;
@@ -31,6 +33,11 @@ final class RegisteredChannelDoctrineRepository implements RegisteredChannelRepo
 
     /** @var array<string, true>|null */
     private ?array $burstNames = null;
+
+    /** @var WeakMap<EntityManagerInterface, array<string, RegisteredChannel|null>>|null */
+    private static ?WeakMap $lookupCache = null;
+
+    private static bool $lookupCacheActive = false;
 
     public function __construct(private readonly EntityManagerInterface $em) {}
 
@@ -59,6 +66,7 @@ final class RegisteredChannelDoctrineRepository implements RegisteredChannelRepo
 
     public function save(RegisteredChannel $channel): void
     {
+        $this->invalidateLookup($channel->getNameLower());
         $this->em->persist($channel);
         $this->em->flush();
         if (null !== $this->burstNames) {
@@ -68,6 +76,7 @@ final class RegisteredChannelDoctrineRepository implements RegisteredChannelRepo
 
     public function delete(RegisteredChannel $channel): void
     {
+        $this->invalidateLookup($channel->getNameLower());
         $this->em->remove($channel);
         $this->em->flush();
         if (null !== $this->burstNames) {
@@ -82,9 +91,42 @@ final class RegisteredChannelDoctrineRepository implements RegisteredChannelRepo
             return null;
         }
 
-        return $this->em
+        if (!self::$lookupCacheActive) {
+            return $this->em
+                ->getRepository(RegisteredChannel::class)
+                ->findOneBy(['nameLower' => $nameLower]);
+        }
+
+        $cache = self::$lookupCache ??= new WeakMap();
+        $byName = $cache[$this->em] ?? [];
+        if (array_key_exists($nameLower, $byName)) {
+            $cached = $byName[$nameLower];
+            if (null === $cached || $this->em->contains($cached)) {
+                return $cached;
+            }
+
+            unset($byName[$nameLower]);
+        }
+
+        $channel = $this->em
             ->getRepository(RegisteredChannel::class)
             ->findOneBy(['nameLower' => $nameLower]);
+        $byName[$nameLower] = $channel;
+        $cache[$this->em] = $byName;
+
+        return $channel;
+    }
+
+    public static function beginLookupCacheLine(): void
+    {
+        self::resetLookupCache();
+        self::$lookupCacheActive = true;
+    }
+
+    public static function resetLookupCache(): void
+    {
+        self::$lookupCache = null;
+        self::$lookupCacheActive = false;
     }
 
     public function countByPattern(string $pattern): int
@@ -249,6 +291,18 @@ final class RegisteredChannelDoctrineRepository implements RegisteredChannelRepo
 
         /* @var array<RegisteredChannel> */
         return array_values(array_filter($result, static fn ($row): bool => $row instanceof RegisteredChannel));
+    }
+
+    private function invalidateLookup(string $nameLower): void
+    {
+        $cache = self::$lookupCache;
+        if (null === $cache || !isset($cache[$this->em])) {
+            return;
+        }
+
+        $byName = $cache[$this->em];
+        unset($byName[$nameLower]);
+        $cache[$this->em] = $byName;
     }
 
     /**

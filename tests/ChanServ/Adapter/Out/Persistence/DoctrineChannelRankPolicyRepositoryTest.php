@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\ChanServ\Adapter\Out\Persistence;
 
+use App\ChanServ\Adapter\Out\Persistence\ChannelActivityBuffer;
 use App\ChanServ\Adapter\Out\Persistence\DoctrineChannelRankPolicyRepository;
 use App\ChanServ\Application\Port\Out\ChannelAccessRepositoryInterface;
 use App\ChanServ\Application\Port\Out\ChannelLevelRepositoryInterface;
@@ -12,11 +13,13 @@ use App\ChanServ\Domain\Entity\ChannelAccess;
 use App\ChanServ\Domain\Entity\ChannelLevel;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\ValueObject\ChannelLevel as PolicyLevel;
+use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function in_array;
 use function iterator_to_array;
 
 #[CoversClass(DoctrineChannelRankPolicyRepository::class)]
@@ -30,7 +33,7 @@ final class DoctrineChannelRankPolicyRepositoryTest extends TestCase
         $access = $this->createMock(ChannelAccessRepositoryInterface::class);
         $access->expects(self::never())->method('listByChannel');
         $access->expects(self::once())->method('findByChannelAndNick')->with(7, 21)->willReturn(new ChannelAccess(7, 21, 300));
-        $policy = new DoctrineChannelRankPolicyRepository($channels, $access, $this->createStub(ChannelLevelRepositoryInterface::class), $this->createStub(EntityManagerInterface::class))
+        $policy = new DoctrineChannelRankPolicyRepository($channels, $access, $this->createStub(ChannelLevelRepositoryInterface::class), $this->createStub(EntityManagerInterface::class), $this->activityBuffer())
             ->findByNameForNick('#Case', 21);
 
         self::assertNotNull($policy);
@@ -55,7 +58,7 @@ final class DoctrineChannelRankPolicyRepositoryTest extends TestCase
             new ChannelAccess(7, 22, 100),
         ]);
 
-        $policy = new DoctrineChannelRankPolicyRepository($channels, $access, $levels, $this->createStub(EntityManagerInterface::class))->findByName('#CASE');
+        $policy = new DoctrineChannelRankPolicyRepository($channels, $access, $levels, $this->createStub(EntityManagerInterface::class), $this->activityBuffer())->findByName('#CASE');
 
         self::assertNotNull($policy);
         self::assertSame(7, $policy->id);
@@ -79,7 +82,7 @@ final class DoctrineChannelRankPolicyRepositoryTest extends TestCase
         $levels = $this->createMock(ChannelLevelRepositoryInterface::class);
         $levels->expects(self::never())->method('listByChannel');
 
-        self::assertNull(new DoctrineChannelRankPolicyRepository($channels, $access, $levels, $this->createStub(EntityManagerInterface::class))->findByName('#missing'));
+        self::assertNull(new DoctrineChannelRankPolicyRepository($channels, $access, $levels, $this->createStub(EntityManagerInterface::class), $this->activityBuffer())->findByName('#missing'));
     }
 
     #[Test]
@@ -97,7 +100,7 @@ final class DoctrineChannelRankPolicyRepositoryTest extends TestCase
         $em = $this->createMock(EntityManagerInterface::class);
         $em->expects(self::exactly(4))->method('detach');
 
-        $policies = iterator_to_array(new DoctrineChannelRankPolicyRepository($channels, $access, $levels, $em)->all());
+        $policies = iterator_to_array(new DoctrineChannelRankPolicyRepository($channels, $access, $levels, $em, $this->activityBuffer())->all());
 
         self::assertCount(2, $policies);
         self::assertSame('#one', $policies[0]->name);
@@ -105,25 +108,19 @@ final class DoctrineChannelRankPolicyRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function itTouchesAndSavesAnExistingChannel(): void
-    {
-        $channel = $this->createMock(RegisteredChannel::class);
-        $channel->expects(self::once())->method('touchLastUsed');
-        $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
-        $channels->expects(self::once())->method('findByIds')->with([7])->willReturn([$channel]);
-        $channels->expects(self::once())->method('save')->with($channel);
-
-        $this->repository($channels)->touchLastUsed(7);
-    }
-
-    #[Test]
-    public function itIgnoresTouchForADeletedChannel(): void
+    public function itBuffersChannelActivityWithoutLoadingOrSavingTheChannelOnTouch(): void
     {
         $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
-        $channels->expects(self::once())->method('findByIds')->with([99])->willReturn([]);
+        $channels->expects(self::never())->method('findByIds');
         $channels->expects(self::never())->method('save');
+        $connection = $this->createMock(Connection::class);
+        $connection->expects(self::once())->method('executeStatement')
+            ->with(self::stringContains('WHERE id IN ('), self::callback(static fn (array $params): bool => in_array(7, $params, true)), self::anything())
+            ->willReturn(1);
+        $buffer = new ChannelActivityBuffer($connection);
 
-        $this->repository($channels)->touchLastUsed(99);
+        $this->repository($channels, $buffer)->touchLastUsed(7);
+        $buffer->flush();
     }
 
     private function channel(int $id, string $name, int $founder, bool $secure, bool $blocked): RegisteredChannel
@@ -141,13 +138,19 @@ final class DoctrineChannelRankPolicyRepositoryTest extends TestCase
         return $channel;
     }
 
-    private function repository(RegisteredChannelRepositoryInterface $channels): DoctrineChannelRankPolicyRepository
+    private function repository(RegisteredChannelRepositoryInterface $channels, ?ChannelActivityBuffer $buffer = null): DoctrineChannelRankPolicyRepository
     {
         return new DoctrineChannelRankPolicyRepository(
             $channels,
             $this->createStub(ChannelAccessRepositoryInterface::class),
             $this->createStub(ChannelLevelRepositoryInterface::class),
             $this->createStub(EntityManagerInterface::class),
+            $buffer ?? $this->activityBuffer(),
         );
+    }
+
+    private function activityBuffer(): ChannelActivityBuffer
+    {
+        return new ChannelActivityBuffer($this->createStub(Connection::class));
     }
 }

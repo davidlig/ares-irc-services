@@ -50,7 +50,7 @@ final class ChanServTopicApplySubscriberTest extends TestCase
     public function subscribesToCorrectEvents(): void
     {
         $this->channelRepository->expects(self::never())->method('findByChannelName');
-        $this->channelLookup->expects(self::never())->method('findByChannelName');
+        $this->channelLookup->expects(self::never())->method('findSummary');
         $this->channelServiceActions->expects(self::never())->method('setChannelTopic');
 
         self::assertSame(
@@ -94,7 +94,7 @@ final class ChanServTopicApplySubscriberTest extends TestCase
             ->expects(self::once())
             ->method('setChannelTopic')
             ->with('#test', 'Stored topic from DB');
-        $this->channelLookup->expects(self::never())->method('findByChannelName');
+        $this->channelLookup->expects(self::never())->method('findSummary');
 
         $event = new ChannelSynchronizedEvent('#test', channelSetupApplicable: true);
         $this->subscriber->onChannelSynced($event);
@@ -104,7 +104,7 @@ final class ChanServTopicApplySubscriberTest extends TestCase
     public function existingJoinPreservesTopicSetupFlag(): void
     {
         $this->channelRepository->expects(self::never())->method('findByChannelName');
-        $this->channelLookup->expects(self::never())->method('findByChannelName');
+        $this->channelLookup->expects(self::never())->method('findSummary');
         $this->channelServiceActions->expects(self::never())->method('setChannelTopic');
         $handler = $this->createMock(ApplyStoredChannelTopicHandlerInterface::class);
         $handler->expects(self::once())->method('handle')->with(self::callback(
@@ -128,7 +128,7 @@ final class ChanServTopicApplySubscriberTest extends TestCase
         $this->channelServiceActions
             ->expects(self::never())
             ->method('setChannelTopic');
-        $this->channelLookup->expects(self::never())->method('findByChannelName');
+        $this->channelLookup->expects(self::never())->method('findSummary');
 
         $event = new ChannelSynchronizedEvent('#test', channelSetupApplicable: true);
         $this->subscriber->onChannelSynced($event);
@@ -149,7 +149,7 @@ final class ChanServTopicApplySubscriberTest extends TestCase
         $this->channelServiceActions
             ->expects(self::never())
             ->method('setChannelTopic');
-        $this->channelLookup->expects(self::never())->method('findByChannelName');
+        $this->channelLookup->expects(self::never())->method('findSummary');
 
         $event = new ChannelSynchronizedEvent('#test', channelSetupApplicable: true);
         $this->subscriber->onChannelSynced($event);
@@ -171,7 +171,7 @@ final class ChanServTopicApplySubscriberTest extends TestCase
             ->expects(self::once())
             ->method('setChannelTopic')
             ->with('#test', 'Same topic');
-        $this->channelLookup->expects(self::never())->method('findByChannelName');
+        $this->channelLookup->expects(self::never())->method('findSummary');
 
         $event = new ChannelSynchronizedEvent('#test', channelSetupApplicable: true);
         $this->subscriber->onChannelSynced($event);
@@ -194,7 +194,7 @@ final class ChanServTopicApplySubscriberTest extends TestCase
         $view = new ChannelView('#test', '+nt', 'Same topic', 1);
         $this->channelLookup
             ->expects(self::once())
-            ->method('findByChannelName')
+            ->method('findSummary')
             ->with('#test')
             ->willReturn($view);
 
@@ -223,7 +223,7 @@ final class ChanServTopicApplySubscriberTest extends TestCase
         $view = new ChannelView('#test', '+nt', 'Current topic from network', 1);
         $this->channelLookup
             ->expects(self::once())
-            ->method('findByChannelName')
+            ->method('findSummary')
             ->with('#test')
             ->willReturn($view);
 
@@ -252,7 +252,7 @@ final class ChanServTopicApplySubscriberTest extends TestCase
 
         $this->channelLookup
             ->expects(self::once())
-            ->method('findByChannelName')
+            ->method('findSummary')
             ->with('#test')
             ->willReturn(null);
 
@@ -286,7 +286,7 @@ final class ChanServTopicApplySubscriberTest extends TestCase
 
         $this->channelLookup
             ->expects(self::exactly(2))
-            ->method('findByChannelName')
+            ->method('findSummary')
             ->willReturnMap([
                 ['#channel1', $view1],
                 ['#channel2', $view2],
@@ -314,7 +314,7 @@ final class ChanServTopicApplySubscriberTest extends TestCase
 
         $this->channelLookup
             ->expects(self::once())
-            ->method('findByChannelName')
+            ->method('findSummary')
             ->with('#channel1')
             ->willReturn(null);
 
@@ -340,7 +340,7 @@ final class ChanServTopicApplySubscriberTest extends TestCase
 
         $this->channelLookup
             ->expects(self::never())
-            ->method('findByChannelName');
+            ->method('findSummary');
 
         $this->channelServiceActions
             ->expects(self::never())
@@ -366,7 +366,7 @@ final class ChanServTopicApplySubscriberTest extends TestCase
 
         $this->channelLookup
             ->expects(self::once())
-            ->method('findByChannelName')
+            ->method('findSummary')
             ->with('#channel1')
             ->willReturn($view);
 
@@ -388,7 +388,7 @@ final class ChanServTopicApplySubscriberTest extends TestCase
 
         $this->channelLookup
             ->expects(self::never())
-            ->method('findByChannelName');
+            ->method('findSummary');
 
         $this->channelServiceActions
             ->expects(self::never())
@@ -414,7 +414,7 @@ final class ChanServTopicApplySubscriberTest extends TestCase
             ->expects(self::once())
             ->method('setChannelTopic')
             ->with('#test', 'Stored topic from DB');
-        $this->channelLookup->expects(self::never())->method('findByChannelName');
+        $this->channelLookup->expects(self::never())->method('findSummary');
 
         $event = new ChannelSynchronizedEvent('#test', channelSetupApplicable: true);
         $this->subscriber->onChannelSynced($event);
@@ -436,7 +436,7 @@ final class ChanServTopicApplySubscriberTest extends TestCase
             ->expects(self::once())
             ->method('setChannelTopic')
             ->with('#test', 'Stored topic');
-        $this->channelLookup->expects(self::never())->method('findByChannelName');
+        $this->channelLookup->expects(self::never())->method('findSummary');
 
         $event = new ChannelSynchronizedEvent('#test', channelSetupApplicable: true);
         $this->subscriber->onChannelSynced($event);
@@ -457,7 +457,7 @@ final class ChanServTopicApplySubscriberTest extends TestCase
         $this->channelServiceActions
             ->expects(self::never())
             ->method('setChannelTopic');
-        $this->channelLookup->expects(self::never())->method('findByChannelName');
+        $this->channelLookup->expects(self::never())->method('findSummary');
 
         $event = new ChannelSynchronizedEvent('#test', channelSetupApplicable: true);
         $this->subscriber->onChannelSynced($event);
@@ -479,7 +479,7 @@ final class ChanServTopicApplySubscriberTest extends TestCase
         $this->channelServiceActions
             ->expects(self::never())
             ->method('setChannelTopic');
-        $this->channelLookup->expects(self::never())->method('findByChannelName');
+        $this->channelLookup->expects(self::never())->method('findSummary');
 
         $event = new NetworkSynchronizationCompletedEvent('001');
         $this->subscriber->onSyncComplete($event);

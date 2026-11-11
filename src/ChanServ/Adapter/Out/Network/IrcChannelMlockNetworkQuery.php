@@ -32,7 +32,7 @@ final readonly class IrcChannelMlockNetworkQuery implements ChannelMlockNetworkQ
 
     public function findChannel(string $channelName): ?ChannelMlockNetworkState
     {
-        $view = $this->channels->findByChannelName($channelName);
+        $view = $this->channels->findSummary($channelName);
         if (null === $view) {
             return null;
         }
