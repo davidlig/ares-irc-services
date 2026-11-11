@@ -58,6 +58,24 @@ final class EnforceChannelRanksHandlerTest extends TestCase
     }
 
     #[Test]
+    public function snapshotDepartureDefersActivityWriteWhenMemberHasRank(): void
+    {
+        $policy = $this->policy(access: [20 => 300]);
+        $member = $this->member(identified: true, nickId: 20);
+        $policies = $this->createMock(ChannelRankPolicyRepository::class);
+        $policies->expects(self::never())->method('touchLastUsed');
+        $network = $this->createStub(ChannelRankNetworkQuery::class);
+        $result = $this->handler($policies, $network, $this->createStub(ChannelRankActions::class))->handleKnownPolicyAndNetwork(
+            new EnforceChannelRanks('#test', RankEnforcementTrigger::MemberLeft, '001A'),
+            $policy,
+            new ChannelRankNetworkState('#test', [$member], [ChannelRank::Operator]),
+            true,
+        );
+        self::assertTrue($result->activityTouched);
+        self::assertSame(RankEnforcementOutcome::Applied, $result->outcome);
+    }
+
+    #[Test]
     public function joinReconciliationPreservesUnsupportedInitialRankRemoval(): void
     {
         $member = $this->member(ranks: [ChannelRank::Owner]);

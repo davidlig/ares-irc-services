@@ -62,7 +62,10 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
         $repository = new RegisteredChannelDoctrineRepository($this->entityManager);
         $original = RegisteredChannel::register(new DateTimeImmutable(), '#Original', 1, 'original');
         $repository->save($original);
+        self::assertNull($repository->contains('#Original'));
         $repository->beginBurst();
+        self::assertTrue($repository->contains('#ORIGINAL'));
+        self::assertFalse($repository->contains('#new'));
         self::assertNotNull($repository->findByChannelName('#ORIGINAL'));
         self::assertNull($repository->findByChannelName('#new'));
 
@@ -72,6 +75,7 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
         $repository->delete($original);
         self::assertNull($repository->findByChannelName('#original'));
         $repository->endBurst();
+        self::assertNull($repository->contains('#new'));
         self::assertNotNull($repository->findByChannelName('#new'));
         self::assertNull($repository->findByChannelName('#original'));
     }

@@ -13,5 +13,5 @@ interface EnforceChannelRanksHandlerInterface
 
     public function handleKnownPolicy(EnforceChannelRanks $command, ChannelRankPolicy $channel): RankEnforcementResult;
 
-    public function handleKnownPolicyAndNetwork(EnforceChannelRanks $command, ChannelRankPolicy $channel, ?ChannelRankNetworkState $network): RankEnforcementResult;
+    public function handleKnownPolicyAndNetwork(EnforceChannelRanks $command, ChannelRankPolicy $channel, ?ChannelRankNetworkState $network, bool $deferActivity = false): RankEnforcementResult;
 }

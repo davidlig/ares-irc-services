@@ -52,9 +52,9 @@ final readonly class EnforceChannelRanksHandler implements EnforceChannelRanksHa
         return $this->handlePolicy($command, $channel, null, false);
     }
 
-    public function handleKnownPolicyAndNetwork(EnforceChannelRanks $command, ChannelRankPolicy $channel, ?ChannelRankNetworkState $network): RankEnforcementResult
+    public function handleKnownPolicyAndNetwork(EnforceChannelRanks $command, ChannelRankPolicy $channel, ?ChannelRankNetworkState $network, bool $deferActivity = false): RankEnforcementResult
     {
-        return $this->handlePolicy($command, $channel, $network, true);
+        return $this->handlePolicy($command, $channel, $network, true, $deferActivity);
     }
 
     private function isSingleMember(EnforceChannelRanks $command): bool
@@ -64,7 +64,7 @@ final readonly class EnforceChannelRanksHandler implements EnforceChannelRanksHa
             || RankEnforcementTrigger::LiveRankGranted === $command->trigger;
     }
 
-    private function handlePolicy(EnforceChannelRanks $command, ChannelRankPolicy $channel, ?ChannelRankNetworkState $networkChannel, bool $networkLoaded): RankEnforcementResult
+    private function handlePolicy(EnforceChannelRanks $command, ChannelRankPolicy $channel, ?ChannelRankNetworkState $networkChannel, bool $networkLoaded, bool $deferActivity = false): RankEnforcementResult
     {
         if ($channel->blocked) {
             return new RankEnforcementResult(RankEnforcementOutcome::ChannelBlocked);
@@ -92,6 +92,7 @@ final readonly class EnforceChannelRanksHandler implements EnforceChannelRanksHa
                 $channel,
                 $networkChannel->member((string) $command->uid),
                 $networkChannel->supportedRanks,
+                $deferActivity,
             );
         }
 
@@ -197,6 +198,7 @@ final readonly class EnforceChannelRanksHandler implements EnforceChannelRanksHa
         ChannelRankPolicy $channel,
         ?ChannelMember $member,
         array $supportedRanks,
+        bool $deferActivity,
     ): RankEnforcementResult {
         if (null === $member) {
             return new RankEnforcementResult(RankEnforcementOutcome::MemberUnavailable);
@@ -206,7 +208,9 @@ final readonly class EnforceChannelRanksHandler implements EnforceChannelRanksHa
             return new RankEnforcementResult(RankEnforcementOutcome::NoChanges);
         }
 
-        $this->channelPolicies->touchLastUsed($channel->id);
+        if (!$deferActivity) {
+            $this->channelPolicies->touchLastUsed($channel->id);
+        }
 
         return new RankEnforcementResult(RankEnforcementOutcome::Applied, activityTouched: true);
     }

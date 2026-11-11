@@ -52,6 +52,11 @@ final class RegisteredChannelDoctrineRepository implements RegisteredChannelRepo
         $this->burstNames = null;
     }
 
+    public function contains(string $channelName): ?bool
+    {
+        return null === $this->burstNames ? null : isset($this->burstNames[strtolower($channelName)]);
+    }
+
     public function save(RegisteredChannel $channel): void
     {
         $this->em->persist($channel);
