@@ -11,9 +11,26 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function array_keys;
+
 #[CoversClass(NickServChanUserAccountAdapter::class)]
 final class NickServChanUserAccountAdapterTest extends TestCase
 {
+    #[Test]
+    public function batchAccountsAreMappedInOneLookup(): void
+    {
+        $query = $this->createMock(NickAccountQuery::class);
+        $query->expects(self::once())->method('findAccountsByNicks')->with(['Alice', 'Bob'])->willReturn([
+            'alice' => new NickAccountData(42, 'Alice', 'es', 'Europe/Madrid', true, false, 'alice@example.com'),
+        ]);
+        $views = new NickServChanUserAccountAdapter($query)->findAccountsByNicks(['Alice', 'Bob']);
+        self::assertSame(['alice'], array_keys($views));
+        self::assertSame(42, $views['alice']->id);
+        self::assertSame('es', $views['alice']->language);
+        self::assertSame('Europe/Madrid', $views['alice']->timezone);
+        self::assertSame('alice@example.com', $views['alice']->email);
+    }
+
     #[Test]
     public function findAccountByNickReturnsViewWhenFound(): void
     {

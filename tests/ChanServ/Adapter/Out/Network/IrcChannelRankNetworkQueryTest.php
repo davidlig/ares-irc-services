@@ -6,6 +6,7 @@ namespace App\Tests\ChanServ\Adapter\Out\Network;
 
 use App\ChanServ\Adapter\Out\Network\ChannelRankModeMapper;
 use App\ChanServ\Adapter\Out\Network\IrcChannelRankNetworkQuery;
+use App\ChanServ\Application\Model\ChanAccountView;
 use App\ChanServ\Domain\ValueObject\ChannelRank;
 use App\Irc\Application\Port\In\ActiveChannelModeSupportProviderInterface;
 use App\Irc\Application\Port\In\ChannelLookupPort;
@@ -22,6 +23,27 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(IrcChannelRankNetworkQuery::class)]
 final class IrcChannelRankNetworkQueryTest extends TestCase
 {
+    #[Test]
+    public function itReusesPageAccountsForRankMembers(): void
+    {
+        $channels = $this->createStub(ChannelLookupPort::class);
+        $channels->method('findByChannelName')->willReturn(new ChannelView('#test', '', null, 1, [['uid' => 'U1', 'roleLetter' => 'o']]));
+        $users = $this->createStub(NetworkUserLookupPort::class);
+        $users->method('findByUid')->willReturn(new SenderView('U1', 'Alice', 'a', 'host', 'cloak', '', true));
+        $accounts = $this->createMock(NickAccountQuery::class);
+        $accounts->expects(self::never())->method('findAccountsByNicks');
+        $support = $this->createStub(ChannelModeSupportInterface::class);
+        $support->method('getSupportedPrefixModes')->willReturn(['o']);
+        $provider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
+        $provider->method('getSupport')->willReturn($support);
+        $network = new IrcChannelRankNetworkQuery($channels, $users, $accounts, $provider, new ChannelRankModeMapper(), 'ChanServ');
+
+        $state = $network->findChannelWithAccounts('#test', ['alice' => new ChanAccountView(42, 'Alice', 'es')]);
+        self::assertNotNull($state);
+        self::assertSame(42, $state->members[0]->registeredNickId);
+        self::assertSame([ChannelRank::Operator], $state->members[0]->currentRanks);
+    }
+
     #[Test]
     public function itResolvesOnlyTheRequestedMemberForSingleMemberEvents(): void
     {
@@ -59,6 +81,7 @@ final class IrcChannelRankNetworkQueryTest extends TestCase
         $channels->method('findByChannelName')->willReturn(null);
 
         self::assertNull($this->query($channels)->findChannel('#missing'));
+        self::assertNull($this->query($channels)->findChannelWithAccounts('#missing', []));
         self::assertNull($this->query($channels)->findMember('#missing', 'U1'));
     }
 

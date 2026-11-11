@@ -27,6 +27,16 @@ final readonly class NickServChanUserAccountAdapter implements ChanUserAccountPo
         return $this->toView($account);
     }
 
+    public function findAccountsByNicks(array $nicknames): array
+    {
+        $views = [];
+        foreach ($this->nickAccountQuery->findAccountsByNicks($nicknames) as $nickname => $account) {
+            $views[$nickname] = $this->toView($account);
+        }
+
+        return $views;
+    }
+
     public function findAccountById(int $id): ?ChanAccountView
     {
         $account = $this->nickAccountQuery->findAccountById($id);
