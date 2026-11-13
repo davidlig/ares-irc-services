@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Irc\Domain\Network;
 
+use App\Irc\Domain\ValueObject\CaseMapping;
 use App\Irc\Domain\ValueObject\ChannelName;
 use App\Irc\Domain\ValueObject\Uid;
 use DateTimeImmutable;
@@ -25,13 +26,13 @@ class Channel
     /** @var array<string, ChannelMember> keyed by UID string */
     private array $members = [];
 
-    /** @var string[] ban masks */
+    /** @var array<string, string> folded mask => original ban mask */
     private array $bans = [];
 
-    /** @var string[] ban exemption masks */
+    /** @var array<string, string> folded mask => original exemption */
     private array $exempts = [];
 
-    /** @var string[] invite exception masks */
+    /** @var array<string, string> folded mask => original invite exception */
     private array $inviteExceptions = [];
 
     private ?string $topic = null;
@@ -45,6 +46,7 @@ class Channel
         public readonly ChannelName $name,
         string $modes,
         private DateTimeImmutable $createdAt,
+        private CaseMapping $caseMapping = CaseMapping::Ascii,
     ) {
         $this->modes = $modes;
     }
@@ -175,14 +177,13 @@ class Channel
 
     public function addBan(string $mask): void
     {
-        if (!in_array($mask, $this->bans, true)) {
-            $this->bans[] = $mask;
-        }
+        $key = $this->caseMapping->fold($mask);
+        $this->bans[$key] ??= $mask;
     }
 
     public function removeBan(string $mask): void
     {
-        $this->bans = array_filter($this->bans, static fn (string $m): bool => $mask !== $m);
+        unset($this->bans[$this->caseMapping->fold($mask)]);
     }
 
     /** @return string[] */
@@ -193,14 +194,13 @@ class Channel
 
     public function addExempt(string $mask): void
     {
-        if (!in_array($mask, $this->exempts, true)) {
-            $this->exempts[] = $mask;
-        }
+        $key = $this->caseMapping->fold($mask);
+        $this->exempts[$key] ??= $mask;
     }
 
     public function removeExempt(string $mask): void
     {
-        $this->exempts = array_filter($this->exempts, static fn (string $m): bool => $mask !== $m);
+        unset($this->exempts[$this->caseMapping->fold($mask)]);
     }
 
     /** @return string[] */
@@ -211,23 +211,30 @@ class Channel
 
     public function addInviteException(string $mask): void
     {
-        if (!in_array($mask, $this->inviteExceptions, true)) {
-            $this->inviteExceptions[] = $mask;
-        }
+        $key = $this->caseMapping->fold($mask);
+        $this->inviteExceptions[$key] ??= $mask;
     }
 
     public function removeInviteException(string $mask): void
     {
-        $this->inviteExceptions = array_filter(
-            $this->inviteExceptions,
-            static fn (string $m): bool => $mask !== $m
-        );
+        unset($this->inviteExceptions[$this->caseMapping->fold($mask)]);
     }
 
     /** @return string[] */
     public function getInviteExceptions(): array
     {
         return array_values($this->inviteExceptions);
+    }
+
+    public function useCaseMapping(CaseMapping $mapping): void
+    {
+        if ($mapping === $this->caseMapping) {
+            return;
+        }
+        $this->caseMapping = $mapping;
+        $this->bans = $this->reindexMasks($this->bans);
+        $this->exempts = $this->reindexMasks($this->exempts);
+        $this->inviteExceptions = $this->reindexMasks($this->inviteExceptions);
     }
 
     /**
@@ -242,5 +249,20 @@ class Channel
             'members' => $this->getMemberCount(),
             'createdAt' => $this->createdAt->format(DateTimeInterface::ATOM),
         ];
+    }
+
+    /**
+     * @param array<string, string> $masks
+     *
+     * @return array<string, string>
+     */
+    private function reindexMasks(array $masks): array
+    {
+        $indexed = [];
+        foreach ($masks as $mask) {
+            $indexed[$this->caseMapping->fold($mask)] ??= $mask;
+        }
+
+        return $indexed;
     }
 }
