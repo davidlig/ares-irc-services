@@ -52,7 +52,7 @@ interface RegisteredNickRepositoryInterface
      *
      * @return RegisteredNick[]
      */
-    public function findRegisteredInactiveSince(DateTimeImmutable $threshold): array;
+    public function findRegisteredInactiveSince(DateTimeImmutable $threshold, ?int $limit = null): array;
 
     /**
      * Removes all PENDING entries whose expiresAt is in the past.
@@ -66,14 +66,14 @@ interface RegisteredNickRepositoryInterface
      *
      * @return RegisteredNick[]
      */
-    public function findExpiredSuspensions(DateTimeImmutable $now): array;
+    public function findExpiredSuspensions(DateTimeImmutable $now, ?int $limit = null): array;
 
     /**
      * Returns nicks manually dropped before the threshold and ready for hard deletion.
      *
      * @return RegisteredNick[]
      */
-    public function findPendingDeletionBefore(DateTimeImmutable $threshold): array;
+    public function findPendingDeletionBefore(DateTimeImmutable $threshold, ?int $limit = null): array;
 
     /** @return RegisteredNick[] */
     public function findByStatus(NickStatus $status): array;

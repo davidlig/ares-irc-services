@@ -42,13 +42,16 @@ final readonly class PurgeExpiredAkickTask implements MaintenanceTaskInterface
     public function run(): void
     {
         $expired = $this->akickRepository->findExpired();
+        if ([] === $expired) {
+            return;
+        }
 
+        $ids = [];
         foreach ($expired as $akick) {
             $channelId = $akick->getChannelId();
             $mask = $akick->getMask();
             $akickId = $akick->getId();
-
-            $this->akickRepository->remove($akick);
+            $ids[] = $akickId;
 
             $this->logger->info(sprintf(
                 'Maintenance [%s]: removed expired AKICK %s (id %d) from channel %d.',
@@ -58,5 +61,7 @@ final readonly class PurgeExpiredAkickTask implements MaintenanceTaskInterface
                 $channelId,
             ));
         }
+
+        $this->akickRepository->deleteByIds($ids);
     }
 }

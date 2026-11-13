@@ -31,6 +31,7 @@ use function array_filter;
 use function array_intersect_key;
 use function array_values;
 use function count;
+use function in_array;
 
 use const DATE_ATOM;
 
@@ -348,6 +349,23 @@ final class RecordingGlineRepository implements GlineRepository
     public function remove(GlineEntry $entry): void
     {
         $this->removed[] = $entry;
+    }
+
+    public function deleteByIds(array $ids): int
+    {
+        $count = 0;
+        $remaining = [];
+        foreach ($this->entries as $entry) {
+            if (in_array($entry->id, $ids, true)) {
+                $this->removed[] = $entry;
+                ++$count;
+            } else {
+                $remaining[] = $entry;
+            }
+        }
+        $this->entries = $remaining;
+
+        return $count;
     }
 
     public function clearCreatorAccountId(int $accountId): void {}

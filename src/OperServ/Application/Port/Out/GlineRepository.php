@@ -31,5 +31,8 @@ interface GlineRepository
 
     public function remove(GlineEntry $entry): void;
 
+    /** @param list<int> $ids */
+    public function deleteByIds(array $ids): int;
+
     public function clearCreatorAccountId(int $accountId): void;
 }

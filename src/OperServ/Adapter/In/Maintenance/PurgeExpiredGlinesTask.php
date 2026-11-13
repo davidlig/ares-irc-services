@@ -45,7 +45,11 @@ final readonly class PurgeExpiredGlinesTask implements MaintenanceTaskInterface
     {
         $occurredAt = new DateTimeImmutable();
         $expired = $this->glineRepository->findExpiredAt($occurredAt);
+        if ([] === $expired) {
+            return;
+        }
 
+        $ids = [];
         foreach ($expired as $gline) {
             $mask = $gline->mask;
             $glineId = $gline->id;
@@ -53,7 +57,7 @@ final readonly class PurgeExpiredGlinesTask implements MaintenanceTaskInterface
                 throw new LogicException('Persisted GLINE entry must have an identifier.');
             }
 
-            $this->glineRepository->remove($gline);
+            $ids[] = $glineId;
 
             $this->eventDispatcher->dispatch(new GlineRemovedEvent(
                 glineId: $glineId,
@@ -77,5 +81,7 @@ final readonly class PurgeExpiredGlinesTask implements MaintenanceTaskInterface
                 $glineId,
             ));
         }
+
+        $this->glineRepository->deleteByIds($ids);
     }
 }

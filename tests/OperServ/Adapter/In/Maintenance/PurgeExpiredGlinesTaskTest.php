@@ -17,6 +17,8 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 
+use function count;
+
 #[CoversClass(PurgeExpiredGlinesTask::class)]
 #[CoversClass(GlineRemovedEvent::class)]
 final class PurgeExpiredGlinesTaskTest extends TestCase
@@ -62,7 +64,8 @@ final class PurgeExpiredGlinesTaskTest extends TestCase
 
         $glineRepo = $this->createMock(GlineRepository::class);
         $glineRepo->expects(self::once())->method('findExpiredAt')->willReturn([$expiredGline1, $expiredGline2]);
-        $glineRepo->expects(self::exactly(2))->method('remove');
+        $glineRepo->expects(self::never())->method('remove');
+        $glineRepo->expects(self::once())->method('deleteByIds')->with([101, 102]);
 
         $debugNotifier = $this->createMock(ServiceDebugNotifierInterface::class);
         $debugNotifier->expects(self::exactly(2))->method('log')
@@ -124,12 +127,15 @@ final class PurgeExpiredGlinesTaskTest extends TestCase
     {
         $expiredGline = new GlineEntry('*@isp.com', null, null, new DateTimeImmutable('-2 hours'), new DateTimeImmutable('-1 hour'), 999);
 
-        $removed = [];
-        $glineRepo = $this->createStub(GlineRepository::class);
-        $glineRepo->method('findExpiredAt')->willReturn([$expiredGline]);
-        $glineRepo->method('remove')
-            ->willReturnCallback(static function (GlineEntry $gline) use (&$removed): void {
-                $removed[] = $gline;
+        $deletedIds = [];
+        $glineRepo = $this->createMock(GlineRepository::class);
+        $glineRepo->expects(self::once())->method('findExpiredAt')->willReturn([$expiredGline]);
+        $glineRepo->expects(self::never())->method('remove');
+        $glineRepo->expects(self::once())->method('deleteByIds')
+            ->willReturnCallback(static function (array $ids) use (&$deletedIds): int {
+                $deletedIds = $ids;
+
+                return count($ids);
             });
 
         $debugNotifier = $this->createMock(ServiceDebugNotifierInterface::class);
@@ -152,7 +158,7 @@ final class PurgeExpiredGlinesTaskTest extends TestCase
         $task = new PurgeExpiredGlinesTask($glineRepo, $debugNotifier, $eventDispatcher, new NullLogger(), self::SERVER_NAME, 3600);
         $task->run();
 
-        self::assertCount(1, $removed);
+        self::assertSame([999], $deletedIds);
         self::assertCount(1, $events);
         self::assertInstanceOf(GlineRemovedEvent::class, $events[0]);
         self::assertSame(999, $events[0]->glineId);

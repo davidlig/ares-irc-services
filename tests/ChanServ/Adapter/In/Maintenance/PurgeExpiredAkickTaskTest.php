@@ -13,6 +13,8 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
+use function count;
+
 #[CoversClass(PurgeExpiredAkickTask::class)]
 final class PurgeExpiredAkickTaskTest extends TestCase
 {
@@ -60,7 +62,8 @@ final class PurgeExpiredAkickTaskTest extends TestCase
 
         $akickRepo = $this->createMock(ChannelAkickRepositoryInterface::class);
         $akickRepo->expects(self::once())->method('findExpired')->willReturn([$expiredAkick1, $expiredAkick2]);
-        $akickRepo->expects(self::exactly(2))->method('remove');
+        $akickRepo->expects(self::never())->method('remove');
+        $akickRepo->expects(self::once())->method('deleteByIds')->with([101, 102]);
 
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects(self::exactly(2))->method('info');
@@ -75,6 +78,7 @@ final class PurgeExpiredAkickTaskTest extends TestCase
         $akickRepo = $this->createMock(ChannelAkickRepositoryInterface::class);
         $akickRepo->expects(self::once())->method('findExpired')->willReturn([]);
         $akickRepo->expects(self::never())->method('remove');
+        $akickRepo->expects(self::never())->method('deleteByIds');
 
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects(self::never())->method('info');
@@ -92,12 +96,15 @@ final class PurgeExpiredAkickTaskTest extends TestCase
         $expiredAkick->method('getMask')->willReturn('*!*@*.isp.com');
         $expiredAkick->method('getId')->willReturn(999);
 
-        $removed = [];
-        $akickRepo = $this->createStub(ChannelAkickRepositoryInterface::class);
-        $akickRepo->method('findExpired')->willReturn([$expiredAkick]);
-        $akickRepo->method('remove')
-            ->willReturnCallback(static function (ChannelAkick $akick) use (&$removed): void {
-                $removed[] = $akick;
+        $deletedIds = [];
+        $akickRepo = $this->createMock(ChannelAkickRepositoryInterface::class);
+        $akickRepo->expects(self::once())->method('findExpired')->willReturn([$expiredAkick]);
+        $akickRepo->expects(self::never())->method('remove');
+        $akickRepo->expects(self::once())->method('deleteByIds')
+            ->willReturnCallback(static function (array $ids) use (&$deletedIds): int {
+                $deletedIds = $ids;
+
+                return count($ids);
             });
 
         $logger = $this->createMock(LoggerInterface::class);
@@ -108,6 +115,6 @@ final class PurgeExpiredAkickTaskTest extends TestCase
         $task = new PurgeExpiredAkickTask($akickRepo, $logger, 3600);
         $task->run();
 
-        self::assertCount(1, $removed);
+        self::assertSame([999], $deletedIds);
     }
 }

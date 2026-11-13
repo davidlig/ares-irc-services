@@ -2097,6 +2097,7 @@ services:
       $serverName: "%irc.server_name%"
       $logger: "@monolog.logger.maintenance"
       $intervalSeconds: "%maintenance.interval%"
+      $entityManager: "@doctrine.orm.entity_manager"
     tags: ["maintenance.task"]
 
   App\NickServ\Adapter\In\Maintenance\PurgeInactiveNicknamesTask:
@@ -2105,6 +2106,7 @@ services:
       $dropService: '@App\NickServ\Application\Service\NickDropService'
       $intervalSeconds: "%maintenance.interval%"
       $inactivityExpiryDays: "%nickserv.inactivity_expiry_days%"
+      $entityManager: "@doctrine.orm.entity_manager"
     tags: ["maintenance.task"]
 
   App\NickServ\Adapter\In\Maintenance\PurgePendingDeletionNicknamesTask:
@@ -2113,6 +2115,7 @@ services:
       $dropService: '@App\NickServ\Application\Service\NickDropService'
       $intervalSeconds: "%maintenance.interval%"
       $dropGraceDays: "%nickserv.drop_grace_days%"
+      $entityManager: "@doctrine.orm.entity_manager"
     tags: ["maintenance.task"]
 
   App\NickServ\Adapter\In\Maintenance\CleanupHistoryTask:

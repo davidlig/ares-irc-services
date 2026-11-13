@@ -9,7 +9,9 @@ use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\Service\NickDropService;
 use App\NickServ\Domain\Entity\RegisteredNick;
+use Doctrine\ORM\EntityManagerInterface;
 
+use function count;
 use function sprintf;
 
 /**
@@ -20,12 +22,19 @@ use function sprintf;
  */
 final readonly class PurgeInactiveNicknamesTask implements MaintenanceTaskInterface
 {
+    private const int DEFAULT_BATCH_SIZE = 100;
+
+    private const int DEFAULT_MAX_BATCHES = 1;
+
     public function __construct(
         private RegisteredNickRepositoryInterface $nickRepository,
         private NickDropService $dropService,
         private Clock $clock,
         private int $intervalSeconds,
         private int $inactivityExpiryDays,
+        private ?EntityManagerInterface $entityManager = null,
+        private int $batchSize = self::DEFAULT_BATCH_SIZE,
+        private int $maxBatchesPerCycle = self::DEFAULT_MAX_BATCHES,
     ) {}
 
     public function getName(): string
@@ -51,15 +60,25 @@ final readonly class PurgeInactiveNicknamesTask implements MaintenanceTaskInterf
 
         $now = $this->clock->now();
         $threshold = $now->modify(sprintf('-%d days', $this->inactivityExpiryDays));
-        $inactive = $this->nickRepository->findRegisteredInactiveSince($threshold);
+        $batches = 0;
 
-        foreach ($inactive as $nick) {
-            // @phpstan-ignore instanceof.alwaysTrue
-            if (!$nick instanceof RegisteredNick) {
-                continue;
+        do {
+            $inactive = $this->nickRepository->findRegisteredInactiveSince($threshold, $this->batchSize);
+            if ([] === $inactive) {
+                break;
             }
 
-            $this->dropService->dropNick($nick, $now, 'inactivity', null);
-        }
+            foreach ($inactive as $nick) {
+                // @phpstan-ignore instanceof.alwaysTrue
+                if (!$nick instanceof RegisteredNick) {
+                    continue;
+                }
+
+                $this->dropService->dropNick($nick, $now, 'inactivity', null);
+            }
+
+            $this->entityManager?->clear();
+            ++$batches;
+        } while (count($inactive) === $this->batchSize && $batches < $this->maxBatchesPerCycle);
     }
 }
