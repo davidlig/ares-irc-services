@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\Protocol\UnrealStandalone;
 
+use App\Irc\Adapter\Network\Event\CaseMappingChangedEvent;
 use App\Irc\Adapter\Protocol\ChannelBanMatcher;
 use App\Irc\Adapter\Protocol\ChannelBanMatcherProvider;
 use App\Irc\Adapter\Protocol\ProtocolHandlerInterface;
@@ -12,13 +13,17 @@ use App\Irc\Application\Port\In\ChannelModeSupportInterface;
 use App\Irc\Application\Port\In\ProtocolServiceActionsInterface;
 use App\Irc\Application\Port\In\ServiceNickReservationInterface;
 use App\Irc\Application\Port\In\UserModeSupportInterface;
+use App\Irc\Domain\ValueObject\CaseMapping;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * UnrealIRCd protocol module: handler, service actions, mode support, and nick reservation.
  */
-final readonly class UnrealStandaloneModule implements ProtocolRuntimeModuleInterface, ChannelBanMatcherProvider
+final class UnrealStandaloneModule implements ProtocolRuntimeModuleInterface, ChannelBanMatcherProvider, EventSubscriberInterface
 {
     public const string PROTOCOL_NAME = 'unreal';
+
+    private CaseMapping $caseMapping = CaseMapping::Ascii;
 
     public function __construct(
         private UnrealStandaloneProtocolHandler $handler,
@@ -27,6 +32,16 @@ final readonly class UnrealStandaloneModule implements ProtocolRuntimeModuleInte
         private UnrealStandaloneUserModeSupport $userModeSupport,
         private UnrealStandaloneNickReservation $nickReservation,
     ) {}
+
+    public static function getSubscribedEvents(): array
+    {
+        return [CaseMappingChangedEvent::class => 'onCaseMappingChanged'];
+    }
+
+    public function onCaseMappingChanged(CaseMappingChangedEvent $event): void
+    {
+        $this->caseMapping = $event->mapping;
+    }
 
     public function getProtocolName(): string
     {
@@ -65,6 +80,6 @@ final readonly class UnrealStandaloneModule implements ProtocolRuntimeModuleInte
 
     public function getChannelBanMatcher(): ChannelBanMatcher
     {
-        return new UnrealStandaloneChannelBanMatcher();
+        return new UnrealStandaloneChannelBanMatcher($this->caseMapping->value);
     }
 }

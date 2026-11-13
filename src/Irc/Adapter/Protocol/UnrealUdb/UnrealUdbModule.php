@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\Protocol\UnrealUdb;
 
+use App\Irc\Adapter\Network\Event\CaseMappingChangedEvent;
 use App\Irc\Adapter\Protocol\ChannelBanMatcher;
 use App\Irc\Adapter\Protocol\ChannelBanMatcherProvider;
 use App\Irc\Adapter\Protocol\ProtocolHandlerInterface;
@@ -17,13 +18,17 @@ use App\Irc\Application\Port\In\OperatorOnlyModeManagedByOptions;
 use App\Irc\Application\Port\In\ProtocolServiceActionsInterface;
 use App\Irc\Application\Port\In\ServiceNickReservationInterface;
 use App\Irc\Application\Port\In\UserModeSupportInterface;
+use App\Irc\Domain\ValueObject\CaseMapping;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * UnrealUdb protocol module: handler, service actions, mode support, nick reservation, and RAW interception.
  */
-final readonly class UnrealUdbModule implements ProtocolRuntimeModuleInterface, ChannelBanMatcherProvider, NativeNicknameAuthenticationInterface, NickChangePreservesIdentificationInterface, RawCommandInterceptorInterface, OperatorOnlyModeManagedByOptions
+final class UnrealUdbModule implements ProtocolRuntimeModuleInterface, ChannelBanMatcherProvider, EventSubscriberInterface, NativeNicknameAuthenticationInterface, NickChangePreservesIdentificationInterface, RawCommandInterceptorInterface, OperatorOnlyModeManagedByOptions
 {
     public const string PROTOCOL_NAME = 'unrealudb';
+
+    private CaseMapping $caseMapping = CaseMapping::Ascii;
 
     public function __construct(
         private UnrealUdbProtocolHandler $handler,
@@ -33,6 +38,16 @@ final readonly class UnrealUdbModule implements ProtocolRuntimeModuleInterface, 
         private UnrealUdbNickReservation $nickReservation,
         private UnrealUdbRawCommandInterceptor $rawCommandInterceptor,
     ) {}
+
+    public static function getSubscribedEvents(): array
+    {
+        return [CaseMappingChangedEvent::class => 'onCaseMappingChanged'];
+    }
+
+    public function onCaseMappingChanged(CaseMappingChangedEvent $event): void
+    {
+        $this->caseMapping = $event->mapping;
+    }
 
     public function getProtocolName(): string
     {
@@ -76,6 +91,6 @@ final readonly class UnrealUdbModule implements ProtocolRuntimeModuleInterface, 
 
     public function getChannelBanMatcher(): ChannelBanMatcher
     {
-        return new UnrealUdbChannelBanMatcher();
+        return new UnrealUdbChannelBanMatcher($this->caseMapping->value);
     }
 }

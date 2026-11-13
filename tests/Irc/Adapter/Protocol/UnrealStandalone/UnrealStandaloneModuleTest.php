@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Tests\Irc\Adapter\Protocol\UnrealStandalone;
 
+use App\Irc\Adapter\Network\Event\CaseMappingChangedEvent;
 use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
+use App\Irc\Adapter\Protocol\ChannelBanIdentity;
 use App\Irc\Adapter\Protocol\ChannelBanMatcherProvider;
 use App\Irc\Adapter\Protocol\UnrealStandalone\UnrealStandaloneChannelBanMatcher;
 use App\Irc\Adapter\Protocol\UnrealStandalone\UnrealStandaloneChannelModeSupport;
@@ -14,10 +16,12 @@ use App\Irc\Adapter\Protocol\UnrealStandalone\UnrealStandaloneProtocolHandler;
 use App\Irc\Adapter\Protocol\UnrealStandalone\UnrealStandaloneProtocolServiceActions;
 use App\Irc\Adapter\Protocol\UnrealStandalone\UnrealStandaloneServiceIntroductionFormatter;
 use App\Irc\Adapter\Protocol\UnrealStandalone\UnrealStandaloneUserModeSupport;
+use App\Irc\Domain\ValueObject\CaseMapping;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 use function class_implements;
 
@@ -94,6 +98,20 @@ final class UnrealStandaloneModuleTest extends TestCase
         $module = $this->createModule();
         self::assertContains(ChannelBanMatcherProvider::class, class_implements($module));
         self::assertInstanceOf(UnrealStandaloneChannelBanMatcher::class, $module->getChannelBanMatcher());
+    }
+
+    #[Test]
+    public function negotiatedCaseMappingAlsoAppliesToBanMatching(): void
+    {
+        $module = $this->createModule();
+        $dispatcher = new EventDispatcher();
+        $dispatcher->addSubscriber($module);
+        $identity = new ChannelBanIdentity('NICK{A}', 'ident', 'ident', 'host', 'host', 'host', null);
+        self::assertFalse($module->getChannelBanMatcher()->matches('nick[a]!*@*', $identity));
+        $dispatcher->dispatch(new CaseMappingChangedEvent(CaseMapping::Rfc1459));
+        self::assertTrue($module->getChannelBanMatcher()->matches('nick[a]!*@*', $identity));
+        $dispatcher->dispatch(new CaseMappingChangedEvent(CaseMapping::Ascii));
+        self::assertFalse($module->getChannelBanMatcher()->matches('nick[a]!*@*', $identity));
     }
 
     private function createModule(): UnrealStandaloneModule

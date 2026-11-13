@@ -19,6 +19,8 @@ use function strpbrk;
 /** Ordinary bans: UnrealIRCd 6.2.7 _match_user(MATCH_CHECK_ALL). Extbans excluded. */
 final readonly class UnrealUdbChannelBanMatcher implements ChannelBanMatcher
 {
+    public function __construct(private string $caseMapping = 'ascii') {}
+
     public function matches(string $mask, ChannelBanIdentity $identity): bool
     {
         if (str_starts_with($mask, '~') && str_contains($mask, ':')) {
@@ -27,17 +29,17 @@ final readonly class UnrealUdbChannelBanMatcher implements ChannelBanMatcher
         $host = $mask;
         if (str_contains($host, '!')) {
             [$nick, $host] = explode('!', $host, 2);
-            if (!IrcMaskPattern::matches($nick, $identity->nick)) {
+            if (!IrcMaskPattern::matches($nick, $identity->nick, $this->caseMapping)) {
                 return false;
             }
         }
         if (str_contains($host, '@')) {
             [$ident, $host] = explode('@', $host, 2);
-            if (!IrcMaskPattern::matches($ident, $identity->ident)) {
+            if (!IrcMaskPattern::matches($ident, $identity->ident, $this->caseMapping)) {
                 return false;
             }
         }
-        if (IrcMaskPattern::matches($host, $identity->displayHost) || IrcMaskPattern::matches($host, $identity->cloakedHost)) {
+        if (IrcMaskPattern::matches($host, $identity->displayHost, $this->caseMapping) || IrcMaskPattern::matches($host, $identity->cloakedHost, $this->caseMapping)) {
             return true;
         }
         // Unreal checks displayed/cloaked hosts before stripping a CIDR suffix.
@@ -50,7 +52,7 @@ final readonly class UnrealUdbChannelBanMatcher implements ChannelBanMatcher
         }
         if (null !== $identity->ip) {
             if (false !== strpbrk($host, '*?')) {
-                if (IrcMaskPattern::matches($host, $identity->ip)) {
+                if (IrcMaskPattern::matches($host, $identity->ip, $this->caseMapping)) {
                     return true;
                 }
             } else {
@@ -65,6 +67,6 @@ final readonly class UnrealUdbChannelBanMatcher implements ChannelBanMatcher
             }
         }
 
-        return IrcMaskPattern::matches($host, $identity->realHost);
+        return IrcMaskPattern::matches($host, $identity->realHost, $this->caseMapping);
     }
 }
