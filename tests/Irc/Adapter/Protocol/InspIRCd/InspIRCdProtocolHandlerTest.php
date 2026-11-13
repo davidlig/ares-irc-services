@@ -7,6 +7,7 @@ namespace App\Tests\Irc\Adapter\Protocol\InspIRCd;
 use App\Irc\Adapter\Event\ConnectionLostEvent;
 use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
 use App\Irc\Adapter\Event\NetworkSyncCompleteEvent;
+use App\Irc\Adapter\Network\Event\CaseMappingChangedEvent;
 use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 use App\Irc\Adapter\Protocol\InspIRCd\InspIRCdChannelModeSupport;
@@ -294,7 +295,10 @@ final class InspIRCdProtocolHandlerTest extends TestCase
 
         $eventDispatcher = $this->createStub(EventDispatcherInterface::class);
         $eventDispatcher->method('dispatch')
-            ->willReturnCallback(function (NetworkBurstCompleteEvent|NetworkSyncCompleteEvent $event) use ($connection): object {
+            ->willReturnCallback(function (CaseMappingChangedEvent|NetworkBurstCompleteEvent|NetworkSyncCompleteEvent $event) use ($connection): object {
+                if ($event instanceof CaseMappingChangedEvent) {
+                    return $event;
+                }
                 self::assertSame($connection, $event->connection);
                 self::assertSame('C2C', $event->serverSid);
                 $this->effects[] = 'event:' . $event::class;
