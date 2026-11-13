@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\Protocol;
 
+use App\Irc\Domain\ValueObject\CaseMapping;
+
 use function inet_pton;
 use function intdiv;
 use function ord;
@@ -11,8 +13,6 @@ use function preg_match;
 use function preg_quote;
 use function str_replace;
 use function strlen;
-use function strtolower;
-use function strtr;
 use function substr;
 
 /** Stateless primitives only: callers own protocol-specific mask and CIDR rules. */
@@ -20,18 +20,10 @@ final class IrcMaskPattern
 {
     public static function matches(string $pattern, string $subject, string $caseMapping = 'ascii'): bool
     {
-        $fold = static function (string $value) use ($caseMapping): string {
-            $value = strtolower($value);
+        $mapping = CaseMapping::tryFrom($caseMapping) ?? CaseMapping::Ascii;
+        $expression = str_replace(['\\*', '\\?'], ['.*', '.'], preg_quote($mapping->fold($pattern), '~'));
 
-            return match ($caseMapping) {
-                'rfc1459' => strtr($value, '[]\\^', '{}|~'),
-                'strict-rfc1459' => strtr($value, '[]\\', '{}|'),
-                default => $value,
-            };
-        };
-        $expression = str_replace(['\\*', '\\?'], ['.*', '.'], preg_quote($fold($pattern), '~'));
-
-        return 1 === preg_match('~\\A' . $expression . '\\z~sD', $fold($subject));
+        return 1 === preg_match('~\\A' . $expression . '\\z~sD', $mapping->fold($subject));
     }
 
     /** Compare a validated prefix, without selecting a protocol's allowed range. */

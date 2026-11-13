@@ -7,6 +7,7 @@ namespace App\Irc\Adapter\Protocol\InspIRCd;
 use App\Irc\Adapter\Event\ConnectionLostEvent;
 use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
 use App\Irc\Adapter\Event\NetworkSyncCompleteEvent;
+use App\Irc\Adapter\Network\Event\CaseMappingChangedEvent;
 use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 use App\Irc\Adapter\Protocol\IRCMessage;
@@ -14,6 +15,7 @@ use App\Irc\Adapter\Protocol\ProtocolHandlerInterface;
 use App\Irc\Adapter\Security\SensitiveDataRedactor;
 use App\Irc\Application\Port\In\AutomaticModeSupport;
 use App\Irc\Domain\Server\ServerLink;
+use App\Irc\Domain\ValueObject\CaseMapping;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -251,6 +253,8 @@ final class InspIRCdProtocolHandler implements ProtocolHandlerInterface, Automat
     private function applyRemoteCapab(): void
     {
         $capab = InspIRCdCapab::fromCapabLines($this->remoteCapabLines);
+        $mapping = CaseMapping::tryFrom($capab->getCapability('CASEMAPPING') ?? 'ascii') ?? CaseMapping::Ascii;
+        $this->eventDispatcher?->dispatch(new CaseMappingChangedEvent($mapping));
         $descriptors = $capab->getUserModeDescriptors();
         $this->automaticModes = null;
         if (null !== $descriptors) {

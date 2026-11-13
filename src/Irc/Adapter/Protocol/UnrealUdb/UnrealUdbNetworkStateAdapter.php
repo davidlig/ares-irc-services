@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\Protocol\UnrealUdb;
 
+use App\Irc\Adapter\Network\Event\CaseMappingChangedEvent;
 use App\Irc\Adapter\Network\Event\ChannelJoinReceivedEvent;
 use App\Irc\Adapter\Network\Event\ChannelKickReceivedEvent;
 use App\Irc\Adapter\Network\Event\ChannelModeReceivedEvent;
@@ -20,6 +21,7 @@ use App\Irc\Domain\Event\ServerDelinkedEvent;
 use App\Irc\Domain\Event\UserJoinedNetworkEvent;
 use App\Irc\Domain\Network\ChannelMemberRole;
 use App\Irc\Domain\Network\NetworkUser;
+use App\Irc\Domain\ValueObject\CaseMapping;
 use App\Irc\Domain\ValueObject\ChannelName;
 use App\Irc\Domain\ValueObject\Ident;
 use App\Irc\Domain\ValueObject\Nick;
@@ -82,7 +84,7 @@ final class UnrealUdbNetworkStateAdapter implements NetworkStateAdapterInterface
         match ($message->command) {
             'PROTOCTL' => $this->handleProtoctl($message),
             'SERVER', 'SID' => $this->handleServer($message),
-            'ERROR' => $this->resetServerTree(),
+            'ERROR' => $this->resetServerTree(true),
             'UID' => $this->handleUid($message),
             'NICK' => $this->handleNick($message),
             'QUIT' => $this->handleQuit($message),
@@ -251,6 +253,12 @@ final class UnrealUdbNetworkStateAdapter implements NetworkStateAdapterInterface
         }
 
         foreach ($message->params as $parameter) {
+            if (str_starts_with($parameter, 'CASEMAPPING=')) {
+                $mapping = CaseMapping::tryFrom(substr($parameter, 12));
+                if (null !== $mapping) {
+                    $this->eventDispatcher->dispatch(new CaseMappingChangedEvent($mapping));
+                }
+            }
             if (str_starts_with($parameter, 'SID=')) {
                 $sid = substr($parameter, 4);
                 if (1 === preg_match('/^[0-9][A-Z0-9]{2}$/D', $sid)) {
@@ -286,8 +294,11 @@ final class UnrealUdbNetworkStateAdapter implements NetworkStateAdapterInterface
         }
     }
 
-    private function resetServerTree(): void
+    private function resetServerTree(bool $resetCaseMapping = false): void
     {
+        if ($resetCaseMapping) {
+            $this->eventDispatcher->dispatch(new CaseMappingChangedEvent(CaseMapping::Ascii));
+        }
         $this->directSid = null;
         $this->directName = null;
         $this->servers = [];

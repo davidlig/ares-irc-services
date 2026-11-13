@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Irc\Domain\Network;
 
+use App\Irc\Domain\ValueObject\CaseMapping;
 use App\Irc\Domain\ValueObject\ChannelName;
 use App\Irc\Domain\ValueObject\Ident;
 use App\Irc\Domain\ValueObject\Nick;
@@ -21,7 +22,6 @@ use function inet_ntop;
 use function ltrim;
 use function str_contains;
 use function str_split;
-use function strtolower;
 
 /**
  * Represents a user currently connected to the IRC network.
@@ -59,6 +59,7 @@ class NetworkUser
         public readonly string $ipBase64,
         public readonly int $serviceStamp = 0,
         ?Ident $realIdent = null,
+        private CaseMapping $caseMapping = CaseMapping::Ascii,
     ) {
         $this->realIdent = $realIdent ?? $ident;
         $this->nick = $nick;
@@ -87,12 +88,12 @@ class NetworkUser
 
     public function addChannel(ChannelName $name): void
     {
-        $this->channelNames[strtolower($name->value)] = $name->value;
+        $this->channelNames[$this->caseMapping->fold($name->value)] = $name->value;
     }
 
     public function removeChannel(ChannelName $name): void
     {
-        unset($this->channelNames[strtolower($name->value)]);
+        unset($this->channelNames[$this->caseMapping->fold($name->value)]);
     }
 
     /**
@@ -208,6 +209,19 @@ class NetworkUser
     public function getDisplayHost(): string
     {
         return '*' !== $this->virtualHost ? $this->virtualHost : $this->cloakedHost;
+    }
+
+    public function useCaseMapping(CaseMapping $mapping): void
+    {
+        if ($mapping === $this->caseMapping) {
+            return;
+        }
+        $this->caseMapping = $mapping;
+        $names = $this->channelNames;
+        $this->channelNames = [];
+        foreach ($names as $name) {
+            $this->channelNames[$mapping->fold($name)] = $name;
+        }
     }
 
     /**
