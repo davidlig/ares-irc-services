@@ -1,5 +1,27 @@
 ## [Unreleased]
 
+### Bug Fixes
+
+- InspIRCd: SQUIT by SID or by name removes users on the split server and on every downstream server. Burst `SERVER` introductions are read with the 1206 grammar (`:<parent> SERVER <name> <sid> [burst=…] hidden=… :<desc>`).
+- InspIRCd: Ares no longer advertises `CASEMAPPING=ascii` in its CAPAB; it links to networks with any casemapping and follows the one the remote announces.
+- Netsplit users leave every channel through the same path as QUIT and KILL, so per-channel departure events are produced.
+- The 2-second topic grace window is re-armed when a channel is rejoined with the same timestamp, so the split side's TOPIC cannot overwrite the stored topic after a netsplit heals.
+- Service-issued KILL removes the user from local state inside the protocol `killUser()`, so no caller can leave a ghost user.
+- UnrealUdb: end-of-burst nick protection no longer aborts when an identified IRCop receives an operclass; UDB record writes no longer detach NickServ's preloaded accounts. A failing protection chunk is logged and later chunks still run.
+- End-of-burst and channel account lookups, the netsplit last-seen update and the deferred channel-activity flush are split into bounded statements; a failing activity chunk is logged and retried on the next flush.
+- MEMO READ/DEL and GLINE DEL by index always act on the entry LIST showed, including entries created in the same second (id tiebreaker).
+- Expired GLINE, MOTD and AKICK purges load batches of 100. A maintenance row that keeps failing (expired GLINE/MOTD, inactive or pending-deletion nickname, expired suspension) is logged and skipped, and a failing maintenance task no longer stops the remaining tasks of the cycle.
+- Rank enforcement no longer runs for continuation SJOIN/FJOIN lines during the burst on any protocol; the end-of-burst pass applies ranks after AKICK and NOJOIN.
+- `AKICK #channel CHECK nick` skips and logs corrupt stored masks instead of failing.
+- `VHOST UNFORBID` with different letter casing also removes the cached forbidden pattern on case-insensitive database collations.
+
+### Behaviour Changes
+
+- Since #164, a plain JOIN evaluates only the joining member's rank; other members' excess ranks are reconciled at the next full synchronization.
+- Since #166, `+r`/`+P` registration modes are reconciled once after all burst pages, and the ChanServ end-of-burst pass runs before OperServ G-line enforcement.
+- Since #172, NickServ `INFO` and `LIST` show the registration date as "last seen" for nicknames that have never been online, instead of "never seen".
+- Expired GLINE, MOTD and AKICK purges process rows in expiry order.
+
 ### Upgrade
 
 - Production IRC logs now default to `info` and no longer include per-line debug traffic. Set `IRC_LOG_LEVEL=debug` to restore redacted incoming line logs.
