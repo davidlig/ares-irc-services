@@ -51,6 +51,7 @@ use RuntimeException;
 use Stringable;
 use Symfony\Component\Clock\MockClock;
 
+use function array_keys;
 use function in_array;
 use function sprintf;
 
@@ -162,7 +163,11 @@ final class UdbOperclassBurstProtectionTest extends DoctrineIntegrationTestCase
         self::assertCount(1, $logger->records);
         self::assertSame(LogLevel::ERROR, $logger->records[0]['level']);
         self::assertSame('NickServ burst protection chunk failed; continuing with the next chunk.', $logger->records[0]['message']);
-        self::assertSame(['chunk' => 1, 'users' => 200, 'exception' => 'first chunk storage failure'], $logger->records[0]['context']);
+        $context = $logger->records[0]['context'];
+        self::assertSame(['chunk', 'users', 'exception'], array_keys($context));
+        self::assertSame([1, 200], [$context['chunk'], $context['users']]);
+        self::assertInstanceOf(RuntimeException::class, $context['exception']);
+        self::assertSame('first chunk storage failure', $context['exception']->getMessage());
     }
 
     private function nick(int $number): string

@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace App\Tests\Bootstrap\Adapter\Out\Persistence\Migration;
 
 use App\Migrations\Version20261114000001;
+use App\Tests\Bootstrap\Persistence\QueryCaptureLogger;
+use Doctrine\DBAL\Configuration;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DriverManager;
+use Doctrine\DBAL\Logging\Middleware;
 use Doctrine\DBAL\ParameterType;
 use Doctrine\Migrations\Exception\AbortMigration;
 use PHPUnit\Framework\Attributes\CoversNothing;
@@ -14,13 +17,18 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 
+use function array_filter;
 use function count;
+use function str_contains;
+use function str_starts_with;
 
 /** Migrations are outside the production coverage filter; exercise them on a physical schema. */
 #[CoversNothing]
 final class IdentityFoldMigrationTest extends TestCase
 {
     private Connection $connection;
+
+    private QueryCaptureLogger $queries;
 
     #[Test]
     public function upRewritesOnlyKeysThatChangeUnderTheRfc1459Fold(): void
@@ -140,6 +148,26 @@ final class IdentityFoldMigrationTest extends TestCase
         self::assertSame([['[bot]', '[Bot]']], $this->keys('SELECT nickname_lower, nickname FROM service_nick_reservations'));
     }
 
+    /** The preflight plan is reused by the migration body instead of scanning every table again. */
+    #[Test]
+    public function eachIdentityTableIsScannedOncePerDirection(): void
+    {
+        $this->insertNick(1, '[Foo]', '[foo]');
+        $this->insertChannel(10, '#[Ares]', '#[ares]');
+
+        foreach (['up', 'down'] as $direction) {
+            $this->queries->clear();
+            $this->queries->enabled = true;
+            $this->migrate($direction);
+            $this->queries->enabled = false;
+
+            self::assertSame(1, $this->tableScans('registered_nicks'), $direction);
+            self::assertSame(1, $this->tableScans('registered_channels'), $direction);
+        }
+        self::assertSame([[1, '[foo]']], $this->keys('SELECT id, nickname_lower FROM registered_nicks'));
+        self::assertSame([[10, '#[ares]']], $this->keys('SELECT id, name_lower FROM registered_channels'));
+    }
+
     #[Test]
     public function freshDatabasesWithoutTablesPlanNothing(): void
     {
@@ -157,7 +185,11 @@ final class IdentityFoldMigrationTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
+        $this->queries = new QueryCaptureLogger();
+        $this->connection = DriverManager::getConnection(
+            ['driver' => 'pdo_sqlite', 'memory' => true],
+            new Configuration()->setMiddlewares([new Middleware($this->queries)]),
+        );
         $this->connection->executeStatement('CREATE TABLE registered_nicks (id INTEGER PRIMARY KEY, nickname VARCHAR(32) NOT NULL, nickname_lower VARCHAR(32) NOT NULL)');
         $this->connection->executeStatement('CREATE UNIQUE INDEX uniq_nickname_lower ON registered_nicks (nickname_lower)');
         $this->connection->executeStatement('CREATE TABLE registered_channels (id INTEGER PRIMARY KEY, name VARCHAR(64) NOT NULL, name_lower VARCHAR(64) NOT NULL)');
@@ -212,6 +244,14 @@ final class IdentityFoldMigrationTest extends TestCase
     private function insertReservation(string $protocol, string $key, string $nickname): void
     {
         $this->connection->insert('service_nick_reservations', ['protocol' => $protocol, 'nickname_lower' => $key, 'nickname' => $nickname]);
+    }
+
+    private function tableScans(string $table): int
+    {
+        return count(array_filter(
+            $this->queries->queries,
+            static fn (array $query): bool => str_starts_with($query['sql'], 'SELECT id, ') && str_contains($query['sql'], ' FROM ' . $table . ' '),
+        ));
     }
 
     /** @return list<list<mixed>> */

@@ -52,10 +52,16 @@ final class UdbRecordMutationIdentityMapTest extends DoctrineIntegrationTestCase
         $this->assertOnlyUnrelatedEntitiesRemainManaged();
     }
 
+    /**
+     * The rejected mutation flushed the unrelated pending change inside the rolled-back
+     * transaction; keeping that entity managed would leave it clean with a value the database
+     * no longer holds, so the failure path discards the shared unit of work.
+     */
     #[Test]
-    public function aRejectedMutationRollsBackAndStillKeepsUnrelatedManagedEntities(): void
+    public function aRejectedMutationRollsBackAndDiscardsEntitiesFlushedInsideTheRolledBackTransaction(): void
     {
         $this->mutations->beginLocalStream($this->origin);
+        $this->unrelated->changeLanguage('es');
 
         try {
             $this->mutations->upsertWithManifest('Z', 'alice::vhost', UdbValue::string('vhost.example'), $this->origin);
@@ -64,8 +70,13 @@ final class UdbRecordMutationIdentityMapTest extends DoctrineIntegrationTestCase
             self::assertSame('The UDB mutation would create an invalid block aggregate.', $exception->getMessage());
         }
 
-        $this->assertOnlyUnrelatedEntitiesRemainManaged();
+        self::assertFalse($this->entityManager->contains($this->unrelated));
+        self::assertSame([], $this->entityManager->getUnitOfWork()->getIdentityMap());
         self::assertCount(0, $this->entityManager->getConnection()->fetchFirstColumn('SELECT 1 FROM udb_records'));
+        self::assertSame(['en'], $this->entityManager->getConnection()->fetchFirstColumn('SELECT language FROM registered_nicks'));
+        $reloaded = $this->entityManager->find(RegisteredNick::class, $this->unrelated->getId());
+        self::assertInstanceOf(RegisteredNick::class, $reloaded);
+        self::assertSame('en', $reloaded->getLanguage());
     }
 
     #[Test]

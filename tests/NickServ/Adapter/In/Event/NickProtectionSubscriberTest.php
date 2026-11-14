@@ -63,8 +63,11 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\AbstractLogger;
+use Psr\Log\NullLogger;
 use ReflectionProperty;
 use RuntimeException;
+use Stringable;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
 use function count;
@@ -333,6 +336,77 @@ final class NickProtectionSubscriberTest extends TestCase
         // The failing chunk is logged instead of propagating; its activity is still saved.
         $this->subscriber->onBurstComplete(new NetworkSynchronizationCompletedEvent('001'));
         self::assertTrue($this->burstState->isComplete());
+    }
+
+    #[Test]
+    public function aFailingBurstChunkIsLoggedWithItsThrowable(): void
+    {
+        $this->networkUserLookup->expects(self::never())->method('findByUid');
+        $this->notifier->expects(self::never())->method('setUserVhost');
+        $failure = new RuntimeException('preload failed');
+        $publisher = $this->createStub(NickServEventPublisher::class);
+        $publisher->method('publish')->willReturnCallback(static function ($event) use ($failure): void {
+            if ($event instanceof NickBurstBatchStartedEvent) {
+                throw $failure;
+            }
+        });
+        $logger = $this->recordingLogger();
+        $this->initializeSubscriber($this->createStub(RegisteredNickRepositoryInterface::class), null, $publisher, $logger);
+        $this->networkUserLookup->expects(self::never())->method('findByUid');
+        $this->notifier->expects(self::never())->method('setUserVhost');
+        $this->burstState->addPending(new NetworkUser('001AAA', 'Alice', 'i', 'h', 'c', 'ip'));
+
+        $this->subscriber->onBurstComplete(new NetworkSynchronizationCompletedEvent('001'));
+
+        self::assertSame([[
+            'level' => 'error',
+            'message' => 'NickServ burst protection chunk failed; continuing with the next chunk.',
+            'context' => ['chunk' => 1, 'users' => 1, 'exception' => $failure],
+        ]], $logger->records);
+    }
+
+    #[Test]
+    public function aBurstChunkWhoseActivitySaveAlsoFailsLogsBothFailuresAndKeepsTheOriginal(): void
+    {
+        $this->networkUserLookup->expects(self::never())->method('findByUid');
+        $this->notifier->expects(self::never())->method('setUserVhost');
+        $alice = RegisteredNick::createPending('Alice', 'hash', 'a@example.com', 'en', $this->now, $this->now);
+        $alice->activate();
+        new ReflectionProperty(RegisteredNick::class, 'id')->setValue($alice, 1);
+        $saveFailure = new RuntimeException('save failed');
+        $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $repo->method('findByNicknamesLower')->willReturn([$alice]);
+        $repo->expects(self::once())->method('saveActivityBatch')->with([$alice])->willThrowException($saveFailure);
+        $chunkFailure = new RuntimeException('listener failed');
+        $publisher = $this->createStub(NickServEventPublisher::class);
+        $publisher->method('publish')->willThrowException($chunkFailure);
+        $batchEvents = [];
+        $batchPublisher = $this->createStub(NickServEventPublisher::class);
+        $batchPublisher->method('publish')->willReturnCallback(static function ($event) use (&$batchEvents): void {
+            $batchEvents[] = $event;
+        });
+        $logger = $this->recordingLogger();
+        $this->initializeSubscriber($repo, $publisher, $batchPublisher, $logger);
+        $this->networkUserLookup->expects(self::never())->method('findByUid');
+        $this->notifier->expects(self::never())->method('setUserVhost');
+        $this->burstState->addPending(new NetworkUser('001AAA', 'Alice', 'i', 'h', 'c', 'ip', true));
+
+        $this->subscriber->onBurstComplete(new NetworkSynchronizationCompletedEvent('001'));
+
+        self::assertSame([
+            [
+                'level' => 'error',
+                'message' => 'NickServ burst protection chunk could not save its activity after the chunk failed.',
+                'context' => ['chunk' => 1, 'exception' => $saveFailure],
+            ],
+            [
+                'level' => 'error',
+                'message' => 'NickServ burst protection chunk failed; continuing with the next chunk.',
+                'context' => ['chunk' => 1, 'users' => 1, 'exception' => $chunkFailure],
+            ],
+        ], $logger->records);
+        self::assertCount(2, $batchEvents);
+        self::assertInstanceOf(NickBurstBatchFinishedEvent::class, $batchEvents[1]);
     }
 
     #[Test]
@@ -1218,8 +1292,12 @@ final class NickProtectionSubscriberTest extends TestCase
         $this->initializeSubscriber($this->createStub(RegisteredNickRepositoryInterface::class));
     }
 
-    private function initializeSubscriber(RegisteredNickRepositoryInterface $nickRepository, ?NickServEventPublisher $publisher = null, ?NickServEventPublisher $batchPublisher = null): void
-    {
+    private function initializeSubscriber(
+        RegisteredNickRepositoryInterface $nickRepository,
+        ?NickServEventPublisher $publisher = null,
+        ?NickServEventPublisher $batchPublisher = null,
+        ?AbstractLogger $logger = null,
+    ): void {
         $this->burstState = new BurstState();
         $this->networkUserLookup = $this->createMock(NetworkUserLookupPort::class);
         $this->notifier = $this->createMock(NickNetworkActions::class);
@@ -1273,7 +1351,25 @@ final class NickProtectionSubscriberTest extends TestCase
             $this->clock,
             $this->syncNetworkIdentification,
             batchEventPublisher: $batchPublisher,
+            logger: $logger ?? new NullLogger(),
         );
+    }
+
+    /**
+     * @return AbstractLogger&object{records: list<array{level: mixed, message: string, context: array<mixed>}>}
+     */
+    private function recordingLogger(): AbstractLogger
+    {
+        return new class extends AbstractLogger {
+            /** @var list<array{level: mixed, message: string, context: array<mixed>}> */
+            public array $records = [];
+
+            /** @param array<mixed> $context */
+            public function log($level, string|Stringable $message, array $context = []): void
+            {
+                $this->records[] = ['level' => $level, 'message' => (string) $message, 'context' => $context];
+            }
+        };
     }
 
     private function createVhostSyncService(): IdentifiedUserVhostSyncService

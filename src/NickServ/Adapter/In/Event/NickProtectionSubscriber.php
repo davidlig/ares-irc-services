@@ -29,6 +29,7 @@ use App\NickServ\Application\Service\PendingNickActivities;
 use App\NickServ\Application\UseCase\SyncNetworkIdentification\SyncNetworkIdentification;
 use App\NickServ\Application\UseCase\SyncNetworkIdentification\SyncNetworkIdentificationHandlerInterface;
 use App\Shared\Domain\IrcIdentityFold;
+use Closure;
 use DateTimeImmutable;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -39,6 +40,7 @@ use function array_chunk;
 use function array_map;
 use function array_values;
 use function count;
+use function sprintf;
 use function str_contains;
 
 /**
@@ -124,13 +126,13 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
 
         foreach (array_chunk($pending, self::BURST_CHUNK_SIZE) as $index => $batch) {
             try {
-                $this->protectBurstChunk($batch, $occurredAt);
+                $this->protectBurstChunk($batch, $occurredAt, $index + 1);
             } catch (Throwable $exception) {
                 // One failing chunk must not leave every later chunk unprotected.
                 $this->logger->error('NickServ burst protection chunk failed; continuing with the next chunk.', [
                     'chunk' => $index + 1,
                     'users' => count($batch),
-                    'exception' => $exception->getMessage(),
+                    'exception' => $exception,
                 ]);
             }
         }
@@ -249,9 +251,12 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
     }
 
     /**
+     * Saves the chunk's activity and ends its batch even when protection fails. The first failure
+     * is rethrown; a later cleanup failure is logged so it neither hides nor replaces it.
+     *
      * @param list<NetworkUser> $batch
      */
-    private function protectBurstChunk(array $batch, DateTimeImmutable $occurredAt): void
+    private function protectBurstChunk(array $batch, DateTimeImmutable $occurredAt, int $chunk): void
     {
         $accounts = [];
         foreach ($this->identifiedUserVhostSync->findAccountsForBurst(array_map(static fn (NetworkUser $user): string => $user->nick, $batch)) as $account) {
@@ -260,6 +265,7 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
         $activityBatch = new PendingNickActivities();
         $ids = array_map(static fn ($account): int => $account->getId(), array_values($accounts));
         $batchStarted = new NickBurstBatchStartedEvent($ids);
+        $failure = null;
         try {
             $this->batchEventPublisher?->publish($batchStarted);
             foreach ($batch as $user) {
@@ -267,16 +273,41 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
                 $this->identifiedUserVhostSync->syncVhostForLoadedUser($user, $account);
                 $this->nickProtectionService->enforceProtectionWithAccount($user, $occurredAt, $account, $activityBatch);
             }
-        } finally {
-            try {
-                $activities = $activityBatch->all();
-                if ([] !== $activities) {
-                    $this->nickProtectionService->saveActivities($activities);
-                }
-            } finally {
-                $this->batchEventPublisher?->publish(new NickBurstBatchFinishedEvent($batchStarted->token));
-            }
+        } catch (Throwable $exception) {
+            $failure = $exception;
         }
+        $failure = $this->finishBurstChunkStep($failure, $chunk, 'save its activity', function () use ($activityBatch): void {
+            $activities = $activityBatch->all();
+            if ([] !== $activities) {
+                $this->nickProtectionService->saveActivities($activities);
+            }
+        });
+        $failure = $this->finishBurstChunkStep($failure, $chunk, 'end its batch', function () use ($batchStarted): void {
+            $this->batchEventPublisher?->publish(new NickBurstBatchFinishedEvent($batchStarted->token));
+        });
+        if (null !== $failure) {
+            throw $failure;
+        }
+    }
+
+    /**
+     * @param Closure(): void $run
+     */
+    private function finishBurstChunkStep(?Throwable $failure, int $chunk, string $step, Closure $run): ?Throwable
+    {
+        try {
+            $run();
+        } catch (Throwable $exception) {
+            if (null === $failure) {
+                return $exception;
+            }
+            $this->logger->error(sprintf('NickServ burst protection chunk could not %s after the chunk failed.', $step), [
+                'chunk' => $chunk,
+                'exception' => $exception,
+            ]);
+        }
+
+        return $failure;
     }
 
     private function flushQuitActivities(): void

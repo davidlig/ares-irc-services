@@ -17,6 +17,9 @@ use App\Irc\Application\PublishedEvent\ChannelMemberRankGrantedEvent;
 use App\Irc\Application\PublishedEvent\ChannelSynchronizedEvent;
 use App\Irc\Application\PublishedEvent\IrcMessageHandledEvent;
 use App\Irc\Application\PublishedEvent\IrcMessageHandlingStartedEvent;
+use App\Irc\Application\PublishedEvent\NetworkConnectionEstablishedEvent;
+use App\Irc\Application\PublishedEvent\NetworkConnectionLostEvent;
+use App\Irc\Application\PublishedEvent\NetworkSynchronizationCompletedEvent;
 use App\Irc\Application\PublishedEvent\UserDepartedChannelEvent;
 use App\Irc\Application\PublishedEvent\UserJoinedChannelEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -24,19 +27,32 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 /** Translates framework/IRC events to the ChanServ rank-enforcement use cases. */
 final readonly class ChanServChannelRankSubscriber implements EventSubscriberInterface
 {
+    /**
+     * Runs before every other end-of-sync listener (the highest is the ChanServ end-of-burst pass at
+     * 10), so the window closes even when a later listener throws and stops propagation.
+     */
+    private const int REMOTE_BURST_END_PRIORITY = 2048;
+
+    private RemoteBurstWindow $remoteBurst;
+
     public function __construct(
         private EnforceChannelRanksHandlerInterface $enforceChannelRanks,
         private PendingChannelRankSynchronizations $pending,
         private BurstCompletePort $burstComplete,
         private BurstRankEventScope $burstRanks,
         private RegisteredChannelBurstSnapshot $burstChannels,
-    ) {}
+    ) {
+        $this->remoteBurst = new RemoteBurstWindow();
+    }
 
     public static function getSubscribedEvents(): array
     {
         return [
             IrcMessageHandlingStartedEvent::class => ['onMessageReceived', 256],
             IrcMessageHandledEvent::class => ['onIrcMessageHandled', -255],
+            NetworkConnectionEstablishedEvent::class => ['onNetworkConnectionEstablished', 0],
+            NetworkConnectionLostEvent::class => ['onRemoteBurstEnded', 0],
+            NetworkSynchronizationCompletedEvent::class => ['onRemoteBurstEnded', self::REMOTE_BURST_END_PRIORITY],
             UserJoinedChannelEvent::class => ['onUserJoinedChannel', 0],
             UserDepartedChannelEvent::class => ['onUserLeftChannel', 0],
             ChannelSynchronizedEvent::class => ['onChannelSynced', 0],
@@ -44,6 +60,16 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
             ChannelFounderChangedEvent::class => ['onChannelFounderChanged', 0],
             ChannelMemberRankGrantedEvent::class => ['onChannelMemberRankGranted', 0],
         ];
+    }
+
+    public function onNetworkConnectionEstablished(): void
+    {
+        $this->remoteBurst->open();
+    }
+
+    public function onRemoteBurstEnded(): void
+    {
+        $this->remoteBurst->close();
     }
 
     public function onMessageReceived(): void
@@ -67,7 +93,7 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
      */
     public function onUserJoinedChannel(UserJoinedChannelEvent $event): void
     {
-        if ($this->duringBurst($event->channelName)) {
+        if ($this->duringBurst()) {
             $this->markBurstActivity($event->channelName);
 
             return;
@@ -111,7 +137,7 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
 
     public function onChannelSynced(ChannelSynchronizedEvent $event): void
     {
-        if ($this->duringBurst($event->channelName)) {
+        if ($this->duringBurst()) {
             $this->markBurstActivity($event->channelName);
 
             return;
@@ -149,13 +175,13 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
     }
 
     /**
-     * The remote burst is open until the end-of-burst pass closes the snapshot. InspIRCd reports
-     * the local burst complete before the remote burst arrives, so both signals are checked to
-     * keep the three protocols aligned.
+     * The remote burst is open from link establishment until network synchronization starts to
+     * complete. InspIRCd reports the local burst complete before the remote burst arrives, so both
+     * signals are checked to keep the three protocols aligned.
      */
-    private function duringBurst(string $channelName): bool
+    private function duringBurst(): bool
     {
-        return !$this->burstComplete->isComplete() || null !== $this->burstChannels->contains($channelName);
+        return !$this->burstComplete->isComplete() || $this->remoteBurst->isOpen();
     }
 
     private function markBurstActivity(string $channelName): void

@@ -17,6 +17,7 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbRecordMutationStoreInterfa
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbChecksum;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbUnsignedDecimal;
 use Closure;
+use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Clock\ClockInterface;
@@ -38,8 +39,9 @@ use function substr;
  *
  * Live mutations run inside other contexts' processing (for example an
  * operclass written while NickServ still holds a burst chunk's accounts), so
- * the store only detaches the UDB entities it owns and never clears the
- * shared identity map.
+ * a successful mutation only detaches the UDB entities it owns and never
+ * clears the shared identity map. A failed mutation clears it, because the
+ * rollback invalidates every change its flush wrote.
  */
 final class UdbRecordMutationDoctrineStore implements UdbRecordMutationStoreInterface
 {
@@ -60,9 +62,8 @@ final class UdbRecordMutationDoctrineStore implements UdbRecordMutationStoreInte
 
             return $checkpoint;
         } catch (Throwable $exception) {
-            if ($connection->isTransactionActive()) {
-                $connection->rollBack();
-            }
+            $this->rollBackAndDiscardUnitOfWork($connection);
+
             throw $exception;
         } finally {
             $this->releaseOwnedEntities();
@@ -151,9 +152,8 @@ final class UdbRecordMutationDoctrineStore implements UdbRecordMutationStoreInte
 
             return $checkpoint->watermark;
         } catch (Throwable $exception) {
-            if ($connection->isTransactionActive()) {
-                $connection->rollBack();
-            }
+            $this->rollBackAndDiscardUnitOfWork($connection);
+
             throw $exception;
         } finally {
             $this->releaseOwnedEntities();
@@ -190,9 +190,7 @@ final class UdbRecordMutationDoctrineStore implements UdbRecordMutationStoreInte
 
             return $checkpoint->watermark;
         } catch (Throwable $exception) {
-            if ($connection->isTransactionActive()) {
-                $connection->rollBack();
-            }
+            $this->rollBackAndDiscardUnitOfWork($connection);
 
             throw $exception;
         } finally {
@@ -200,6 +198,25 @@ final class UdbRecordMutationDoctrineStore implements UdbRecordMutationStoreInte
         }
     }
 
+    /**
+     * A failed mutation may already have flushed other contexts' pending changes inside the
+     * rolled-back transaction; those entities would stay managed and clean with values the
+     * database no longer holds, so the whole unit of work is discarded on this path.
+     */
+    private function rollBackAndDiscardUnitOfWork(Connection $connection): void
+    {
+        try {
+            if ($connection->isTransactionActive()) {
+                $connection->rollBack();
+            }
+        } finally {
+            if ($this->em->isOpen()) {
+                $this->em->clear();
+            }
+        }
+    }
+
+    /** Successful mutations release only the UDB entities they own; see the class description. */
     private function releaseOwnedEntities(): void
     {
         if (!$this->em->isOpen()) {

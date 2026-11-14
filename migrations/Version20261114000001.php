@@ -9,6 +9,7 @@ use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
 use Doctrine\Migrations\Exception\AbortMigration;
 
+use function array_key_exists;
 use function array_keys;
 use function count;
 use function implode;
@@ -35,6 +36,14 @@ final class Version20261114000001 extends AbstractMigration
         'registered_channels' => ['name', 'name_lower'],
     ];
 
+    /**
+     * Updates planned by the preflight, consumed by the matching migration body so each table is
+     * scanned once per direction.
+     *
+     * @var array<string, array<int, string>> "up|down:table" => new key by row id
+     */
+    private array $plannedIdentityUpdates = [];
+
     public function getDescription(): string
     {
         return 'Fold nickname and channel lookup keys with the fixed RFC 1459 mapping';
@@ -42,22 +51,18 @@ final class Version20261114000001 extends AbstractMigration
 
     public function preUp(Schema $schema): void
     {
-        foreach (self::IDENTITY_TABLES as $table => [$display, $key]) {
-            $this->identityUpdates($table, $display, $key, true);
-        }
+        $this->planIdentityUpdates(true);
     }
 
     public function preDown(Schema $schema): void
     {
-        foreach (self::IDENTITY_TABLES as $table => [$display, $key]) {
-            $this->identityUpdates($table, $display, $key, false);
-        }
+        $this->planIdentityUpdates(false);
     }
 
     public function up(Schema $schema): void
     {
         foreach (self::IDENTITY_TABLES as $table => [$display, $key]) {
-            foreach ($this->identityUpdates($table, $display, $key, true) as $id => $value) {
+            foreach ($this->takeIdentityUpdates($table, $display, $key, true) as $id => $value) {
                 $this->addSql(
                     sprintf('UPDATE %s SET %s = ? WHERE id = ?', $table, $key),
                     [$value, $id],
@@ -72,7 +77,7 @@ final class Version20261114000001 extends AbstractMigration
     {
         // Rollback statements stay parameter-free so installed rollback simulations replay them verbatim.
         foreach (self::IDENTITY_TABLES as $table => [$display, $key]) {
-            foreach ($this->identityUpdates($table, $display, $key, false) as $id => $value) {
+            foreach ($this->takeIdentityUpdates($table, $display, $key, false) as $id => $value) {
                 $this->addSql(sprintf('UPDATE %s SET %s = %s WHERE id = %d', $table, $key, $this->connection->quote($value), $id));
             }
         }
@@ -92,6 +97,37 @@ final class Version20261114000001 extends AbstractMigration
     private static function fold(string $value): string
     {
         return strtr(strtolower($value), '[]\\^', '{}|~');
+    }
+
+    /** Validates every table before any statement is queued, so a collision aborts before mutation. */
+    private function planIdentityUpdates(bool $fold): void
+    {
+        $this->plannedIdentityUpdates = [];
+        foreach (self::IDENTITY_TABLES as $table => [$display, $key]) {
+            $this->plannedIdentityUpdates[self::planKey($table, $fold)] = $this->identityUpdates($table, $display, $key, $fold);
+        }
+    }
+
+    /**
+     * Returns the preflight plan for this direction, or computes it when the body runs without one.
+     *
+     * @return array<int, string> new key by row id
+     */
+    private function takeIdentityUpdates(string $table, string $display, string $key, bool $fold): array
+    {
+        $planKey = self::planKey($table, $fold);
+        if (!array_key_exists($planKey, $this->plannedIdentityUpdates)) {
+            return $this->identityUpdates($table, $display, $key, $fold);
+        }
+        $updates = $this->plannedIdentityUpdates[$planKey];
+        unset($this->plannedIdentityUpdates[$planKey]);
+
+        return $updates;
+    }
+
+    private static function planKey(string $table, bool $fold): string
+    {
+        return ($fold ? 'up:' : 'down:') . $table;
     }
 
     /**
