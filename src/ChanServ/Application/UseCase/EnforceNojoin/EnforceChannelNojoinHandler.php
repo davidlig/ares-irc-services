@@ -32,7 +32,7 @@ final readonly class EnforceChannelNojoinHandler implements EnforceChannelNojoin
 
     public function handle(EnforceChannelNojoin $command): int
     {
-        $channel = $this->channels->findByChannelName(IrcIdentityFold::fold($command->channelName));
+        $channel = $this->channels->findByChannelName($command->channelName);
         if (null === $channel || $channel->isBlocked()) {
             return 0;
         }

@@ -27,7 +27,7 @@ final class GetPendingChannelNoticeHandlerTest extends TestCase
     public function returnsNoNoticeWhenChannelDoesNotExist(): void
     {
         $channelPort = $this->createMock(MemoChannelPort::class);
-        $channelPort->expects(self::once())->method('findChannelByName')->with('#mixed')->willReturn(null);
+        $channelPort->expects(self::once())->method('findChannelByName')->with('#MiXeD')->willReturn(null);
         $settingsRepository = $this->createMock(MemoSettingsRepositoryInterface::class);
         $settingsRepository->expects(self::never())->method('isEnabledForChannel');
 
@@ -128,7 +128,7 @@ final class GetPendingChannelNoticeHandlerTest extends TestCase
     public function returnsSemanticNoticeDataWhenUserCanReadUnreadChannelMemos(): void
     {
         $channelPort = $this->createMock(MemoChannelPort::class);
-        $channelPort->expects(self::once())->method('findChannelByName')->with('#mixed')->willReturn(new MemoChannelView(5, '#Mixed'));
+        $channelPort->expects(self::once())->method('findChannelByName')->with('#MiXeD')->willReturn(new MemoChannelView(5, '#Mixed'));
         $channelPort->expects(self::once())->method('canReadChannelMemos')->with(5, 10)->willReturn(true);
         $userAccountPort = $this->createMock(MemoUserAccountPort::class);
         $userAccountPort->expects(self::once())->method('findAccountByNick')->with('User')->willReturn(new MemoAccountView(10, 'User', 'es'));

@@ -13,7 +13,6 @@ use App\ChanServ\Domain\Entity\ChannelAccess;
 use App\ChanServ\Domain\Exception\ChannelNotRegisteredException;
 use App\ChanServ\Domain\ValueObject\RankChange;
 use App\ChanServ\Domain\ValueObject\RankChangeAction;
-use App\Shared\Domain\IrcIdentityFold;
 
 use function in_array;
 
@@ -28,7 +27,7 @@ final readonly class ManageManualRankHandler implements ManageManualRankHandlerI
 
     public function handle(ManageManualRank $command): ManageManualRankResult
     {
-        $channel = $this->channels->findByChannelName(IrcIdentityFold::fold($command->channelName));
+        $channel = $this->channels->findByChannelName($command->channelName);
         if (null === $channel) {
             throw ChannelNotRegisteredException::forChannel($command->channelName);
         }
@@ -52,9 +51,11 @@ final readonly class ManageManualRankHandler implements ManageManualRankHandlerI
             );
         }
 
+        // Network semantics: the target is the member the network resolves for the nickname.
+        $targetUid = $this->network->findUidByNick($command->targetNickname);
         $target = null;
         foreach ($state->members as $member) {
-            if (IrcIdentityFold::equals($member->nickname, $command->targetNickname)) {
+            if (null !== $targetUid && $member->uid === $targetUid) {
                 $target = $member;
                 break;
             }

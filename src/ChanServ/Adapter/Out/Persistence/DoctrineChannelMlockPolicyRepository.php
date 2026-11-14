@@ -11,7 +11,6 @@ use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\ValueObject\ChannelModeLock;
 use App\ChanServ\Domain\ValueObject\ChannelSetting;
 use App\ChanServ\Domain\ValueObject\ModeName;
-use App\Shared\Domain\IrcIdentityFold;
 
 use function str_split;
 
@@ -21,7 +20,7 @@ final readonly class DoctrineChannelMlockPolicyRepository implements ChannelMloc
 
     public function findByName(string $channelName): ?ChannelMlockPolicy
     {
-        $channel = $this->channels->findByChannelName(IrcIdentityFold::fold($channelName));
+        $channel = $this->channels->findByChannelName($channelName);
 
         return null === $channel ? null : $this->forChannel($channel);
     }

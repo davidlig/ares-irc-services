@@ -30,14 +30,14 @@ final class PendingChannelRankSynchronizationsTest extends TestCase
     }
 
     #[Test]
-    public function itCoalescesRfc1459EquivalentNamesAndReleasesAnAsciiLoweredName(): void
+    public function itKeepsChannelsThatAreDistinctUnderAsciiCasemappingApart(): void
     {
         $pending = new PendingChannelRankSynchronizations();
-        $pending->schedule('#[Ares]');
-        $pending->schedule('#{ARES}');
+        $pending->schedule('#a[');
+        $pending->schedule('#A{');
         $pending->beginMessage();
 
-        self::assertSame(['#[ares]'], $pending->releaseMessageStartSnapshot());
+        self::assertSame(['#a[', '#a{'], $pending->releaseMessageStartSnapshot());
         self::assertSame([], $pending->releaseMessageStartSnapshot());
     }
 }

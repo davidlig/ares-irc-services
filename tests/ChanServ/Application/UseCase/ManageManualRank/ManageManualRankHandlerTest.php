@@ -91,6 +91,7 @@ final class ManageManualRankHandlerTest extends TestCase
             $this->state(members: []),
             $this->state(members: [$this->member(registeredNickId: null)]),
         );
+        $network->method('findUidByNick')->willReturn('UID2');
         $handler = $this->handler($this->channels(), $network);
 
         self::assertSame(ManageManualRankOutcome::TargetNotOnChannel, $handler->handle($this->command())->outcome);
@@ -189,6 +190,43 @@ final class ManageManualRankHandlerTest extends TestCase
         self::assertSame(ManageManualRankOutcome::Applied, $result->outcome);
     }
 
+    #[Test]
+    public function targetsTheMemberTheNetworkResolvesForTheNicknameAmongFoldEquivalentMembers(): void
+    {
+        // On an ascii-casemapping network bob[ and bob{ are different members.
+        $network = $this->createStub(ChannelRankNetworkQuery::class);
+        $network->method('findChannel')->willReturn($this->state([
+            new ChannelMember('UID3', 'bob[', true, false, false, 8, []),
+            new ChannelMember('UID4', 'bob{', true, false, false, 9, []),
+        ]));
+        $network->method('findUidByNick')->willReturnMap([['bob{', 'UID4']]);
+
+        $actions = $this->createMock(ChannelRankActions::class);
+        $actions->expects(self::once())->method('apply')->with(
+            '#Channel',
+            self::callback(static fn (array $changes): bool => 1 === count($changes)
+                && $changes[0] instanceof MemberRankChange
+                && 'UID4' === $changes[0]->uid),
+        );
+
+        $result = $this->handler($this->channels(), $network, $actions)
+            ->handle(new ManageManualRank('#Channel', 'bob{', 7, true, ManualRankOperation::Op));
+
+        self::assertSame(ManageManualRankOutcome::Applied, $result->outcome);
+    }
+
+    #[Test]
+    public function reportsTargetNotOnChannelWhenTheNetworkUserIsNotAMember(): void
+    {
+        $network = $this->createStub(ChannelRankNetworkQuery::class);
+        $network->method('findChannel')->willReturn($this->state());
+        $network->method('findUidByNick')->willReturn('UID9');
+
+        $result = $this->handler($this->channels(), $network)->handle($this->command());
+
+        self::assertSame(ManageManualRankOutcome::TargetNotOnChannel, $result->outcome);
+    }
+
     private function command(
         ?int $actorId = 7,
         bool $founderOverride = true,
@@ -228,6 +266,7 @@ final class ManageManualRankHandlerTest extends TestCase
     {
         $network = $this->createStub(ChannelRankNetworkQuery::class);
         $network->method('findChannel')->willReturn($this->state($members));
+        $network->method('findUidByNick')->willReturn('UID2');
 
         return $network;
     }

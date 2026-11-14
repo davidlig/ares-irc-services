@@ -162,6 +162,60 @@ final class IrcChannelRankNetworkQueryTest extends TestCase
         self::assertSame([ChannelRank::Owner], $result->members[2]->currentRanks);
     }
 
+    #[Test]
+    public function itDoesNotTreatAMemberWhoseNickOnlyFoldsToTheChanservNickAsTheService(): void
+    {
+        // On an ascii-casemapping network chan{serv} is a different user from the Chan[Serv] service.
+        $channels = $this->createStub(ChannelLookupPort::class);
+        $channels->method('findByChannelName')->willReturn(new ChannelView('#c', '', null, 0, [
+            ['uid' => 'U1', 'roleLetter' => ''],
+            ['uid' => 'U2', 'roleLetter' => ''],
+        ]));
+        $channels->method('findMember')->willReturn(new ChannelView('#c', '', null, 1, [['uid' => 'U1', 'roleLetter' => '']]));
+        $users = $this->createStub(NetworkUserLookupPort::class);
+        $users->method('findByUid')->willReturnMap([
+            ['U1', new SenderView('U1', 'chan{serv}', 'i', 'h', 'c', 'ip')],
+            ['U2', new SenderView('U2', 'CHAN[SERV]', 'i', 'h', 'c', 'ip')],
+        ]);
+        $query = new IrcChannelRankNetworkQuery(
+            $channels,
+            $users,
+            $this->createStub(NickAccountQuery::class),
+            $this->createStub(ActiveChannelModeSupportProviderInterface::class),
+            new ChannelRankModeMapper(),
+            'Chan[Serv]',
+        );
+
+        $state = $query->findChannel('#c');
+        self::assertNotNull($state);
+        $members = $state->members;
+        self::assertCount(2, $members);
+        self::assertFalse($members[0]->service);
+        self::assertTrue($members[1]->service);
+        self::assertFalse($query->findMember('#c', 'U1')?->members[0]->service);
+    }
+
+    #[Test]
+    public function itResolvesTheUidOfTheNetworkUserOnANickname(): void
+    {
+        $users = $this->createStub(NetworkUserLookupPort::class);
+        $users->method('findByNick')->willReturnMap([
+            ['bob{', new SenderView('UID4', 'bob{', 'i', 'h', 'c', 'ip')],
+            ['missing', null],
+        ]);
+        $query = new IrcChannelRankNetworkQuery(
+            $this->createStub(ChannelLookupPort::class),
+            $users,
+            $this->createStub(NickAccountQuery::class),
+            $this->createStub(ActiveChannelModeSupportProviderInterface::class),
+            new ChannelRankModeMapper(),
+            'ChanServ',
+        );
+
+        self::assertSame('UID4', $query->findUidByNick('bob{'));
+        self::assertNull($query->findUidByNick('missing'));
+    }
+
     private function query(ChannelLookupPort $channels): IrcChannelRankNetworkQuery
     {
         return new IrcChannelRankNetworkQuery(

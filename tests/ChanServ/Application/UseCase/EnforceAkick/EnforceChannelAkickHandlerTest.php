@@ -242,7 +242,7 @@ final class EnforceChannelAkickHandlerTest extends TestCase
     public function joinLoadsMemberAndUsesCanonicalRegisteredChannelName(): void
     {
         $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
-        $channels->expects(self::once())->method('findByChannelName')->with('#mixed')->willReturn($this->channel());
+        $channels->expects(self::once())->method('findByChannelName')->with('#MiXeD')->willReturn($this->channel());
         $network = $this->createStub(ChannelEntryNetworkQuery::class);
         $network->method('findMember')->willReturn($this->member('001A', 'nick!ident@example.test'));
         $akicks = $this->createStub(ChannelAkickRepositoryInterface::class);

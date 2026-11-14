@@ -9,7 +9,6 @@ use App\ChanServ\Application\Port\In\MemoChannelQuery;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Domain\Entity\ChannelLevel;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
-use App\Shared\Domain\IrcIdentityFold;
 
 use function array_find;
 
@@ -23,7 +22,7 @@ final readonly class MemoChannelQueryService implements MemoChannelQuery
     public function findByName(string $channelName): ?MemoChannel
     {
         return $this->toMemoChannel(
-            $this->available($this->channelRepository->findByChannelName(IrcIdentityFold::fold($channelName))),
+            $this->available($this->channelRepository->findByChannelName($channelName)),
         );
     }
 

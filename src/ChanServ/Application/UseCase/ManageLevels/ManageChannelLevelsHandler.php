@@ -8,7 +8,6 @@ use App\ChanServ\Application\Port\Out\ChannelLevelRepositoryInterface;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\Service\ChannelHistoryService;
 use App\ChanServ\Domain\Entity\ChannelLevel;
-use App\Shared\Domain\IrcIdentityFold;
 
 use function in_array;
 
@@ -22,7 +21,7 @@ final readonly class ManageChannelLevelsHandler implements ManageChannelLevelsHa
 
     public function handle(ManageChannelLevels $command): ManageChannelLevelsResult
     {
-        $channel = $this->channels->findByChannelName(IrcIdentityFold::fold($command->channelName));
+        $channel = $this->channels->findByChannelName($command->channelName);
         if (null === $channel) {
             return new ManageChannelLevelsResult(ManageChannelLevelsOutcome::ChannelNotRegistered);
         }

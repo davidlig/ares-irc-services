@@ -9,7 +9,6 @@ use App\MemoServ\Application\Port\Out\MemoChannelPort;
 use App\MemoServ\Application\Port\Out\MemoIgnoreRepositoryInterface;
 use App\MemoServ\Application\Port\Out\MemoUserAccountPort;
 use App\MemoServ\Domain\Entity\MemoIgnore;
-use App\Shared\Domain\IrcIdentityFold;
 
 use function array_unique;
 use function array_values;
@@ -28,7 +27,7 @@ final readonly class IgnoreMemoHandler implements IgnoreMemoHandlerInterface
     {
         $channel = null;
         if (null !== $command->channelName) {
-            $channel = $this->channelPort->findChannelByName(IrcIdentityFold::fold($command->channelName));
+            $channel = $this->channelPort->findChannelByName($command->channelName);
             if (null === $channel) {
                 return IgnoreMemoResult::channelNotRegistered($command->channelName);
             }

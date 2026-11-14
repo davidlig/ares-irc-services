@@ -17,6 +17,7 @@ use App\OperServ\Application\UseCase\Global\SendGlobalMessageHandler;
 use App\OperServ\Application\UseCase\Global\SendGlobalMessageOutcome;
 use App\OperServ\Application\UseCase\Global\SendGlobalMessageResult;
 use App\OperServ\Domain\ValueObject\GlobalMessageMask;
+use App\Shared\Domain\IrcIdentityFold;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -150,7 +151,7 @@ final readonly class GlobalTestAccounts implements OperatorAccountLookup
 
     public function findIdByNickname(string $nickname): ?int
     {
-        return $this->ids[$nickname] ?? null;
+        return $this->ids[IrcIdentityFold::fold($nickname)] ?? null;
     }
 
     public function findNicknameById(int $id): ?string

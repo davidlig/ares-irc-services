@@ -5,12 +5,16 @@
 - InspIRCd: SQUIT by SID or by name removes users on the split server and on every downstream server. Burst `SERVER` introductions are read with the 1206 grammar (`:<parent> SERVER <name> <sid> [burst=…] hidden=… :<desc>`).
 - InspIRCd: Ares no longer advertises `CASEMAPPING=ascii` in its CAPAB; it links to networks with any casemapping and follows the one the remote announces.
 - Netsplit users leave every channel through the same path as QUIT and KILL, so per-channel departure events are produced.
-- The 2-second topic grace window is re-armed when a channel is rejoined with the same timestamp, so the split side's TOPIC cannot overwrite the stored topic after a netsplit heals.
+- The 2-second topic grace window is re-armed when a channel is rejoined with the same timestamp by a server that is still bursting (UnrealIRCd `EOS`, InspIRCd `ENDBURST` not yet received), so the split side's TOPIC cannot overwrite the stored topic after a netsplit heals, while a topic set right after an ordinary remote join is still saved.
 - Service-issued KILL removes the user from local state inside the protocol `killUser()`, so no caller can leave a ghost user.
 - UnrealUdb: end-of-burst nick protection no longer aborts when an identified IRCop receives an operclass; UDB record writes no longer detach NickServ's preloaded accounts. A failing protection chunk is logged and later chunks still run.
 - End-of-burst and channel account lookups, the netsplit last-seen update and the deferred channel-activity flush are split into bounded statements; a failing activity chunk is logged and retried on the next flush.
 - MEMO READ/DEL and GLINE DEL by index always act on the entry LIST showed, including entries created in the same second (id tiebreaker).
-- Expired GLINE, MOTD and AKICK purges load batches of 100. A maintenance row that keeps failing (expired GLINE/MOTD, inactive or pending-deletion nickname, expired suspension) is logged and skipped, and a failing maintenance task no longer stops the remaining tasks of the cycle.
+- Expired GLINE, MOTD and AKICK purges load batches of 100. A maintenance row that keeps failing (expired GLINE/MOTD, inactive or pending-deletion nickname, expired suspension) is logged and skipped, and a failing maintenance task no longer stops the remaining tasks of the cycle. Tasks can declare prerequisites: a task whose prerequisite failed is skipped for that cycle with a warning and retried on the next tick (inactive-channel expiry requires the channel-activity flush; expired-MOTD purge requires the MOTD counter flush).
+- Inactive-channel expiry never drops a channel whose recorded activity has not been written to the database yet.
+- ChanServ rank enforcement on join no longer stays disabled until reconnect when an end-of-sync listener fails.
+- UnrealUdb: a failed live record mutation clears the shared unit of work after rollback, so no entity is left with values the database no longer holds.
+- IDENTIFY, OP/VOICE and the other manual rank commands, pending rank synchronizations and the ChanServ service-nick checks use the network's own casemapping (or UID) to pick network users and channels; the RFC 1459 fold applies only to registered identities.
 - Rank enforcement no longer runs for continuation SJOIN/FJOIN lines during the burst on any protocol; the end-of-burst pass applies ranks after AKICK and NOJOIN.
 - `AKICK #channel CHECK nick` skips and logs corrupt stored masks instead of failing.
 - `VHOST UNFORBID` with different letter casing also removes the cached forbidden pattern on case-insensitive database collations.

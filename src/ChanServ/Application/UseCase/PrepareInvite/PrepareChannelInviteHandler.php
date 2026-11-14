@@ -8,7 +8,6 @@ use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\Service\ChanServAccessHelper;
 use App\ChanServ\Domain\Entity\ChannelLevel;
 use App\ChanServ\Domain\Exception\ChannelNotRegisteredException;
-use App\Shared\Domain\IrcIdentityFold;
 
 final readonly class PrepareChannelInviteHandler implements PrepareChannelInviteHandlerInterface
 {
@@ -19,7 +18,7 @@ final readonly class PrepareChannelInviteHandler implements PrepareChannelInvite
 
     public function handle(PrepareChannelInvite $query): PrepareChannelInviteResult
     {
-        $channel = $this->channels->findByChannelName(IrcIdentityFold::fold($query->channelName));
+        $channel = $this->channels->findByChannelName($query->channelName);
         if (null === $channel) {
             throw ChannelNotRegisteredException::forChannel($query->channelName);
         }

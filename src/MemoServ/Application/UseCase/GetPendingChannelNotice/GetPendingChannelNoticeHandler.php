@@ -8,7 +8,6 @@ use App\MemoServ\Application\Port\Out\MemoChannelPort;
 use App\MemoServ\Application\Port\Out\MemoRepositoryInterface;
 use App\MemoServ\Application\Port\Out\MemoSettingsRepositoryInterface;
 use App\MemoServ\Application\Port\Out\MemoUserAccountPort;
-use App\Shared\Domain\IrcIdentityFold;
 
 final readonly class GetPendingChannelNoticeHandler
 {
@@ -21,7 +20,7 @@ final readonly class GetPendingChannelNoticeHandler
 
     public function handle(GetPendingChannelNotice $query): GetPendingChannelNoticeResult
     {
-        $channel = $this->channelPort->findChannelByName(IrcIdentityFold::fold($query->channelName));
+        $channel = $this->channelPort->findChannelByName($query->channelName);
         if (null === $channel || !$this->memoSettingsRepository->isEnabledForChannel($channel->id)) {
             return GetPendingChannelNoticeResult::noNotice();
         }

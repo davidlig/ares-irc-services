@@ -28,7 +28,7 @@ final readonly class ChannelRegistrationService implements ChannelRegistrationLi
 
     public function channelSynchronized(string $channelName): void
     {
-        $registered = $this->channelRepository->findByChannelName(IrcIdentityFold::fold($channelName));
+        $registered = $this->channelRepository->findByChannelName($channelName);
         if (null === $registered || $registered->isBlocked()) {
             return;
         }

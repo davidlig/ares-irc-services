@@ -12,7 +12,6 @@ use App\OperServ\Application\Port\Out\GlobalMessageTransport;
 use App\OperServ\Application\Port\Out\NetworkUserLookup;
 use App\OperServ\Application\Port\Out\OperatorAccountLookup;
 use App\OperServ\Domain\ValueObject\GlobalMessageMask;
-use App\Shared\Domain\IrcIdentityFold;
 use ValueError;
 
 /** Orchestrates GLOBAL delivery while keeping IRCd lifecycle operations behind one output port. */
@@ -59,7 +58,7 @@ final readonly class SendGlobalMessageHandler
             return SendGlobalMessageResult::nicknameConnected($sender->nickname);
         }
 
-        if (null !== $this->nickAccounts->findIdByNickname(IrcIdentityFold::fold($sender->nickname))) {
+        if (null !== $this->nickAccounts->findIdByNickname($sender->nickname)) {
             return SendGlobalMessageResult::nicknameRegistered($sender->nickname);
         }
 

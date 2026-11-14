@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Adapter\In\Event;
 
-use App\Shared\Domain\IrcIdentityFold;
-
 use function array_keys;
 use function array_values;
 use function strtolower;
@@ -13,7 +11,10 @@ use function strtolower;
 final class PendingChannelRankSynchronizations
 {
     /**
-     * Keyed by the service identity fold; the value keeps an ASCII-lowered network name.
+     * Keyed by the ASCII-lowered network channel name, which is handed back to the network.
+     *
+     * ASCII lowering never merges two channels the network treats as distinct; on an rfc1459
+     * network two equivalent spellings only cost a harmless second synchronization pass.
      *
      * @var array<string, string>
      */
@@ -24,7 +25,8 @@ final class PendingChannelRankSynchronizations
 
     public function schedule(string $channelName): void
     {
-        $this->pending[IrcIdentityFold::fold($channelName)] ??= strtolower($channelName);
+        $key = strtolower($channelName);
+        $this->pending[$key] = $key;
     }
 
     public function beginMessage(): void

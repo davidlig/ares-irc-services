@@ -6,7 +6,6 @@ namespace App\MemoServ\Application\UseCase\Del;
 
 use App\MemoServ\Application\Port\Out\MemoChannelPort;
 use App\MemoServ\Application\Port\Out\MemoRepositoryInterface;
-use App\Shared\Domain\IrcIdentityFold;
 
 final readonly class DelMemoHandler implements DelMemoHandlerInterface
 {
@@ -18,7 +17,7 @@ final readonly class DelMemoHandler implements DelMemoHandlerInterface
     public function handle(DelMemo $command): DelMemoResult
     {
         if (null !== $command->channelName) {
-            $channel = $this->channelPort->findChannelByName(IrcIdentityFold::fold($command->channelName));
+            $channel = $this->channelPort->findChannelByName($command->channelName);
             if (null === $channel) {
                 return DelMemoResult::channelNotRegistered($command->channelName);
             }

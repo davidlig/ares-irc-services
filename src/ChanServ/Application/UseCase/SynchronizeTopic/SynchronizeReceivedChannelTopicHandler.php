@@ -8,9 +8,9 @@ use App\ChanServ\Application\Port\Out\ChannelTopicActions;
 use App\ChanServ\Application\Port\Out\ChannelTopicClock;
 use App\ChanServ\Application\Port\Out\ChannelTopicNetworkQuery;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
-use App\Shared\Domain\IrcIdentityFold;
 
 use function str_contains;
+use function strcasecmp;
 
 final readonly class SynchronizeReceivedChannelTopicHandler implements SynchronizeReceivedChannelTopicHandlerInterface
 {
@@ -27,7 +27,7 @@ final readonly class SynchronizeReceivedChannelTopicHandler implements Synchroni
 
     public function handle(SynchronizeReceivedChannelTopic $command): void
     {
-        $registered = $this->channels->findByChannelName(IrcIdentityFold::fold($command->channelName));
+        $registered = $this->channels->findByChannelName($command->channelName);
         if (null === $registered || $registered->isBlocked()) {
             return;
         }
@@ -66,7 +66,9 @@ final readonly class SynchronizeReceivedChannelTopicHandler implements Synchroni
             return true;
         }
 
-        return IrcIdentityFold::equals($nickname, $this->chanservNick)
-            || IrcIdentityFold::equals($nickname, $this->nickservNick);
+        // Network semantics: ASCII case-insensitivity holds under every IRC casemapping and each service
+        // holds its configured spelling, so a distinct network user is never mistaken for a service.
+        return 0 === strcasecmp($nickname, $this->chanservNick)
+            || 0 === strcasecmp($nickname, $this->nickservNick);
     }
 }

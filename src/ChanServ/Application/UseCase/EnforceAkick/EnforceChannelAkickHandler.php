@@ -13,7 +13,6 @@ use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\Policy\AkickMatchPolicy;
 use App\ChanServ\Domain\ValueObject\AkickMask;
 use App\ChanServ\Domain\ValueObject\AkickRule;
-use App\Shared\Domain\IrcIdentityFold;
 use DateTimeImmutable;
 use InvalidArgumentException;
 
@@ -34,7 +33,7 @@ final readonly class EnforceChannelAkickHandler implements EnforceChannelAkickHa
 
     public function handle(EnforceChannelAkick $command): int
     {
-        $channel = $this->channels->findByChannelName(IrcIdentityFold::fold($command->channelName));
+        $channel = $this->channels->findByChannelName($command->channelName);
         if (null === $channel || $channel->isBlocked()) {
             return 0;
         }

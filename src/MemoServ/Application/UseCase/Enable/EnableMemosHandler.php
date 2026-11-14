@@ -7,7 +7,6 @@ namespace App\MemoServ\Application\UseCase\Enable;
 use App\MemoServ\Application\Port\Out\MemoChannelPort;
 use App\MemoServ\Application\Port\Out\MemoSettingsRepositoryInterface;
 use App\MemoServ\Domain\Entity\MemoSettings;
-use App\Shared\Domain\IrcIdentityFold;
 
 final readonly class EnableMemosHandler implements EnableMemosHandlerInterface
 {
@@ -29,7 +28,7 @@ final readonly class EnableMemosHandler implements EnableMemosHandlerInterface
     {
         /** @var string $channelName */
         $channelName = $command->channelName;
-        $channel = $this->channelPort->findChannelByName(IrcIdentityFold::fold($channelName));
+        $channel = $this->channelPort->findChannelByName($channelName);
         if (null === $channel) {
             return EnableMemosResult::channelNotRegistered($channelName);
         }

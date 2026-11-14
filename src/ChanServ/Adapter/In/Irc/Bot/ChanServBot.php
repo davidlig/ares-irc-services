@@ -17,7 +17,6 @@ use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
 use App\Irc\Application\Port\In\ServiceUidGeneratorInterface;
 use App\Irc\Application\Port\In\ServiceUidProviderInterface;
 use App\Irc\Application\PublishedEvent\ServiceIntroductionRequestedEvent;
-use App\Shared\Domain\IrcIdentityFold;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -78,7 +77,7 @@ final class ChanServBot implements ChanServNotifierInterface, ChannelServiceActi
 
     public function sendNoticeToChannel(string $channelName, string $message): void
     {
-        $channel = $this->channels->findByChannelName(IrcIdentityFold::fold($channelName));
+        $channel = $this->channels->findByChannelName($channelName);
         if (null !== $channel && !$channel->isVerbose()) {
             return;
         }

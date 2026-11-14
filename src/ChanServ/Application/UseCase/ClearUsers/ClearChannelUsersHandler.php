@@ -7,7 +7,6 @@ namespace App\ChanServ\Application\UseCase\ClearUsers;
 use App\ChanServ\Application\Port\Out\ChanNetworkActions;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\Service\ChannelHistoryService;
-use App\Shared\Domain\IrcIdentityFold;
 
 use function count;
 
@@ -21,7 +20,7 @@ final readonly class ClearChannelUsersHandler implements ClearChannelUsersHandle
 
     public function handle(ClearChannelUsers $command): ClearChannelUsersResult
     {
-        $channel = $this->channels->findByChannelName(IrcIdentityFold::fold($command->channelName));
+        $channel = $this->channels->findByChannelName($command->channelName);
         if (null === $channel) {
             return new ClearChannelUsersResult(ClearChannelUsersOutcome::ChannelNotRegistered);
         }

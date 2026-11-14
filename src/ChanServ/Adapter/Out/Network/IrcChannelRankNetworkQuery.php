@@ -19,6 +19,7 @@ use App\NickServ\Application\Port\In\NickAccountQuery;
 use App\Shared\Domain\IrcIdentityFold;
 
 use function in_array;
+use function strcasecmp;
 
 final readonly class IrcChannelRankNetworkQuery implements ChannelRankNetworkQuery
 {
@@ -85,13 +86,27 @@ final readonly class IrcChannelRankNetworkQuery implements ChannelRankNetworkQue
                 $user->nick,
                 $user->isIdentified,
                 $user->isOper,
-                IrcIdentityFold::equals($user->nick, $this->chanservNick),
+                $this->isChanServ($user->nick),
                 null !== $account && $account->registered ? $account->id : null,
                 $ranks
             );
         }
 
         return new ChannelRankNetworkState($view->name, null === $member ? [] : [$member], $this->supportedRanks($this->modeSupportProvider->getSupport()));
+    }
+
+    public function findUidByNick(string $nickname): ?string
+    {
+        return $this->users->findByNick($nickname)?->uid;
+    }
+
+    /**
+     * Network semantics: ASCII case-insensitivity holds under every IRC casemapping and ChanServ holds
+     * its configured spelling, so this matches the service user and never a distinct network user.
+     */
+    private function isChanServ(string $nickname): bool
+    {
+        return 0 === strcasecmp($nickname, $this->chanservNick);
     }
 
     /**
@@ -135,7 +150,7 @@ final readonly class IrcChannelRankNetworkQuery implements ChannelRankNetworkQue
                 nickname: $user->nick,
                 identified: $user->isIdentified,
                 operator: $user->isOper,
-                service: IrcIdentityFold::equals($user->nick, $this->chanservNick),
+                service: $this->isChanServ($user->nick),
                 registeredNickId: $accountId,
                 currentRanks: $ranks,
             );

@@ -12,7 +12,6 @@ use App\MemoServ\Application\Port\Out\MemoThrottlePort;
 use App\MemoServ\Application\Port\Out\MemoUserAccountPort;
 use App\MemoServ\Domain\Entity\Memo;
 use App\MemoServ\Domain\Exception\MemoDisabledException;
-use App\Shared\Domain\IrcIdentityFold;
 
 use function str_starts_with;
 
@@ -46,7 +45,7 @@ final readonly class SendMemoHandler implements SendMemoHandlerInterface
 
     private function sendToChannel(SendMemo $command): SendMemoResult
     {
-        $channel = $this->channelPort->findChannelByName(IrcIdentityFold::fold($command->target));
+        $channel = $this->channelPort->findChannelByName($command->target);
         if (null === $channel) {
             return SendMemoResult::channelNotRegistered($command->target);
         }

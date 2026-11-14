@@ -12,7 +12,6 @@ use App\OperServ\Application\Port\Out\NetworkUserLookup;
 use App\OperServ\Application\Port\Out\OperatorAccountLookup;
 use App\OperServ\Application\Port\Out\OperatorRoleAccess;
 use App\OperServ\Application\Port\Out\RootIdentityRegistry;
-use App\Shared\Domain\IrcIdentityFold;
 
 use function sprintf;
 
@@ -70,7 +69,7 @@ final readonly class KillNetworkUserHandler
             return false;
         }
 
-        $accountId = $this->nickAccounts->findIdByNickname(IrcIdentityFold::fold($nickname));
+        $accountId = $this->nickAccounts->findIdByNickname($nickname);
 
         return null !== $accountId && $this->operatorRoles->hasAssignedRole($accountId);
     }

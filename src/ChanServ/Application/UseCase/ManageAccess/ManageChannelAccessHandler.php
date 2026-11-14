@@ -14,7 +14,6 @@ use App\ChanServ\Domain\Entity\ChannelAccess;
 use App\ChanServ\Domain\Entity\ChannelLevel;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\Exception\ChannelNotRegisteredException;
-use App\Shared\Domain\IrcIdentityFold;
 
 use function array_values;
 
@@ -30,7 +29,7 @@ final readonly class ManageChannelAccessHandler implements ManageChannelAccessHa
 
     public function handle(ManageChannelAccess $command): ManageChannelAccessResult
     {
-        $channel = $this->channels->findByChannelName(IrcIdentityFold::fold($command->channelName));
+        $channel = $this->channels->findByChannelName($command->channelName);
         if (null === $channel) {
             throw ChannelNotRegisteredException::forChannel($command->channelName);
         }

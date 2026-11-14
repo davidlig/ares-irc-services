@@ -15,4 +15,7 @@ interface ChannelRankNetworkQuery
     public function findChannelWithAccounts(string $channelName, array $accounts): ?ChannelRankNetworkState;
 
     public function findMember(string $channelName, string $uid): ?ChannelRankNetworkState;
+
+    /** Resolve the UID of the network user on a nickname, using the network's own casemapping. */
+    public function findUidByNick(string $nickname): ?string;
 }

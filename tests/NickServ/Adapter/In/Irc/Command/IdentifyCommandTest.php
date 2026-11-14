@@ -306,6 +306,35 @@ final class IdentifyCommandTest extends TestCase
         self::assertSame(['identify.success'], $messages);
     }
 
+    #[Test]
+    public function releasesTheNetworkHolderAndForcesTheNickWhenOnlyTheServiceFoldMatchesTheSenderNick(): void
+    {
+        // On an ascii-casemapping network Foo{ and Foo[ are different users.
+        $sender = new SenderView('UID1', 'Foo{', 'ident', 'host', 'cloak', 'ip', serverSid: '001');
+        $holder = new SenderView('UID2', 'Foo[', 'ident2', 'host2', 'cloak2', 'ip2');
+
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $userLookup->method('findByNick')->willReturn($holder);
+
+        $pendingRegistry = $this->createStub(PendingNickRestoreRegistryInterface::class);
+        $pendingRegistry->method('peek')->willReturn(false);
+
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::once())->method('killUser')->with('UID2', 'identify.kill_reason');
+        $notifier->expects(self::once())->method('forceNick')->with('UID1', 'Foo[');
+        $notifier->expects(self::once())->method('setUserAccount')->with('UID1', 'Foo[');
+
+        $handler = $this->createStub(IdentifyNickHandlerInterface::class);
+        $handler->method('handle')->willReturn(IdentifyNickResult::success('Foo[', null, 'en'));
+
+        $command = new IdentifyCommand($handler, $userLookup, $pendingRegistry, new NickServClientKeyResolver(), $this->authenticationMode(), $this->automaticModeSessions());
+
+        $messages = [];
+        $command->execute($this->createContext($sender, $messages, ['Foo[', 'pass'], notifier: $notifier));
+
+        self::assertSame(['identify.kill_reason', 'identify.ghost_released', 'identify.success'], $messages);
+    }
+
     /**
      * @param list<mixed>  $messages
      * @param list<string> $args

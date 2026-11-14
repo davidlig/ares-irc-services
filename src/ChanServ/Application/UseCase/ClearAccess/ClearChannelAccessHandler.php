@@ -7,7 +7,6 @@ namespace App\ChanServ\Application\UseCase\ClearAccess;
 use App\ChanServ\Application\Port\Out\ChannelAccessRepositoryInterface;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\Service\ChannelHistoryService;
-use App\Shared\Domain\IrcIdentityFold;
 
 final readonly class ClearChannelAccessHandler implements ClearChannelAccessHandlerInterface
 {
@@ -19,7 +18,7 @@ final readonly class ClearChannelAccessHandler implements ClearChannelAccessHand
 
     public function handle(ClearChannelAccess $command): ClearChannelAccessResult
     {
-        $channel = $this->channels->findByChannelName(IrcIdentityFold::fold($command->channelName));
+        $channel = $this->channels->findByChannelName($command->channelName);
         if (null === $channel) {
             return new ClearChannelAccessResult(ClearChannelAccessOutcome::ChannelNotRegistered);
         }

@@ -17,6 +17,7 @@ use App\OperServ\Application\UseCase\Kill\KillNetworkUser;
 use App\OperServ\Application\UseCase\Kill\KillNetworkUserHandler;
 use App\OperServ\Application\UseCase\Kill\KillNetworkUserOutcome;
 use App\OperServ\Application\UseCase\Kill\KillNetworkUserResult;
+use App\Shared\Domain\IrcIdentityFold;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -131,7 +132,7 @@ final readonly class KillTestAccounts implements OperatorAccountLookup
 
     public function findIdByNickname(string $nickname): ?int
     {
-        return $this->ids[$nickname] ?? null;
+        return $this->ids[IrcIdentityFold::fold($nickname)] ?? null;
     }
 
     public function findNicknameById(int $id): ?string
