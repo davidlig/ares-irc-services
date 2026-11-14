@@ -67,7 +67,7 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
      */
     public function onUserJoinedChannel(UserJoinedChannelEvent $event): void
     {
-        if (!$this->burstComplete->isComplete()) {
+        if ($this->duringBurst($event->channelName)) {
             $this->markBurstActivity($event->channelName);
 
             return;
@@ -111,7 +111,7 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
 
     public function onChannelSynced(ChannelSynchronizedEvent $event): void
     {
-        if (!$this->burstComplete->isComplete()) {
+        if ($this->duringBurst($event->channelName)) {
             $this->markBurstActivity($event->channelName);
 
             return;
@@ -146,6 +146,16 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
             $event->uid,
             $rank,
         ));
+    }
+
+    /**
+     * The remote burst is open until the end-of-burst pass closes the snapshot. InspIRCd reports
+     * the local burst complete before the remote burst arrives, so both signals are checked to
+     * keep the three protocols aligned.
+     */
+    private function duringBurst(string $channelName): bool
+    {
+        return !$this->burstComplete->isComplete() || null !== $this->burstChannels->contains($channelName);
     }
 
     private function markBurstActivity(string $channelName): void

@@ -181,6 +181,65 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         self::assertFalse($scope->needsActivity('#unknown'));
     }
 
+    /**
+     * InspIRCd marks the local burst complete once Ares sends its own burst, before the remote
+     * burst arrives; the open remote-burst snapshot still defers ranks to the end-of-burst pass.
+     */
+    #[Test]
+    public function itDefersRankEnforcementWhileTheRemoteBurstSnapshotIsOpenEvenAfterTheLocalBurst(): void
+    {
+        $handler = $this->createMock(EnforceChannelRanksHandlerInterface::class);
+        $handler->expects(self::never())->method('handle');
+        $burst = $this->createStub(BurstCompletePort::class);
+        $burst->method('isComplete')->willReturn(true);
+        $snapshot = $this->createStub(RegisteredChannelBurstSnapshot::class);
+        $snapshot->method('contains')->willReturnMap([['#registered', true], ['#unknown', false]]);
+        $scope = new BurstRankEventScope();
+        $subscriber = new ChanServChannelRankSubscriber(
+            $handler,
+            new PendingChannelRankSynchronizations(),
+            $burst,
+            $scope,
+            $snapshot,
+        );
+
+        $subscriber->onUserJoinedChannel(new UserJoinedChannelEvent('0A1AAAAAA', '#registered', 'op', true));
+        $subscriber->onUserJoinedChannel(new UserJoinedChannelEvent('0A1BBBBBB', '#unknown', null, true));
+        $subscriber->onChannelSynced(new ChannelSynchronizedEvent('#registered'));
+
+        self::assertTrue($scope->needsActivity('#registered'));
+        self::assertFalse($scope->needsActivity('#unknown'));
+    }
+
+    #[Test]
+    public function itEnforcesRanksOnJoinOnceTheLocalBurstIsCompleteAndNoRemoteBurstIsOpen(): void
+    {
+        $commands = [];
+        $handler = $this->createStub(EnforceChannelRanksHandlerInterface::class);
+        $handler->method('handle')->willReturnCallback(static function (EnforceChannelRanks $command) use (&$commands): RankEnforcementResult {
+            $commands[] = $command;
+
+            return new RankEnforcementResult(RankEnforcementOutcome::NoChanges);
+        });
+        $burst = $this->createStub(BurstCompletePort::class);
+        $burst->method('isComplete')->willReturn(true);
+        $snapshot = $this->createStub(RegisteredChannelBurstSnapshot::class);
+        $snapshot->method('contains')->willReturn(null);
+        $subscriber = new ChanServChannelRankSubscriber(
+            $handler,
+            new PendingChannelRankSynchronizations(),
+            $burst,
+            new BurstRankEventScope(),
+            $snapshot,
+        );
+
+        $subscriber->onUserJoinedChannel(new UserJoinedChannelEvent('0A1AAAAAA', '#live', 'op', true));
+
+        self::assertCount(1, $commands);
+        self::assertSame('#live', $commands[0]->channelName);
+        self::assertSame(RankEnforcementTrigger::MemberJoined, $commands[0]->trigger);
+    }
+
     #[Test]
     #[DataProvider('initialRoles')]
     public function itMapsEverySemanticInitialRole(?string $role, ?ChannelRank $expected): void
