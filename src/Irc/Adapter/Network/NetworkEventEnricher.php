@@ -202,7 +202,7 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
                     }
                 }
                 $this->channelRepository->save($channel);
-                $this->eventDispatcher->dispatch(new ExistingChannelJoinObservedEvent($channel, $channelSetupApplicable));
+                $this->eventDispatcher->dispatch(new ExistingChannelJoinObservedEvent($channel, $channelSetupApplicable, $event->fromBurstingServer));
                 foreach ($event->members as $member) {
                     $joinedMember = $channel->getMember($member['uid']);
                     $role = null !== $joinedMember ? $joinedMember->role : ChannelMemberRole::None;
@@ -291,7 +291,7 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
             if ($channel->getCreatedAt()->getTimestamp() !== $existingTimestamp) {
                 $this->eventDispatcher->dispatch(new ChannelSyncedEvent($channel, $channelSetupApplicable));
             } else {
-                $this->eventDispatcher->dispatch(new ExistingChannelJoinObservedEvent($channel, $channelSetupApplicable));
+                $this->eventDispatcher->dispatch(new ExistingChannelJoinObservedEvent($channel, $channelSetupApplicable, $event->fromBurstingServer));
             }
             foreach ($joinedUids as $uid) {
                 $member = $channel->getMember($uid);
