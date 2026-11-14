@@ -9,6 +9,7 @@ use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionStateInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbRecordWriterInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbProtocolServiceActions;
+use App\Irc\Application\Port\In\LocalUserQuitSyncPort;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -50,7 +51,7 @@ final class UnrealUdbProtocolServiceActionsTest extends TestCase
         $state->method('isOperclassGloballyAvailable')->willReturn(false);
         $writer->expects(self::once())->method('delete')->with('N', 'TestNick::oper');
         $writer->expects(self::never())->method('insert');
-        $actions = new UnrealUdbProtocolServiceActions($this->connectionHolder, $writer, $state);
+        $actions = new UnrealUdbProtocolServiceActions($this->connectionHolder, $writer, $state, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->setUserOperclass('001', '001ABCD', 'TestNick', 'services:netadmin');
         $actions->setUserOperclass('001', '001ABCD', 'TestNick', null);
@@ -64,7 +65,7 @@ final class UnrealUdbProtocolServiceActionsTest extends TestCase
         $state->method('isOperclassGloballyAvailable')->willReturn(true);
         $writer->expects(self::once())->method('insert')->with('N', 'TestNick::oper', 'services:netadmin');
         $writer->expects(self::never())->method('delete');
-        $actions = new UnrealUdbProtocolServiceActions($this->connectionHolder, $writer, $state);
+        $actions = new UnrealUdbProtocolServiceActions($this->connectionHolder, $writer, $state, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->setUserOperclass('001', '001ABCD', 'TestNick', 'services:netadmin');
     }
@@ -75,7 +76,7 @@ final class UnrealUdbProtocolServiceActionsTest extends TestCase
         $writer = $this->createStub(UdbRecordWriterInterface::class);
         $state = $this->createStub(UdbSessionStateInterface::class);
         $state->method('getAvailableOperclasses')->willReturn(['locop', 'netadmin']);
-        $actionsWithState = new UnrealUdbProtocolServiceActions($this->connectionHolder, $writer, $state);
+        $actionsWithState = new UnrealUdbProtocolServiceActions($this->connectionHolder, $writer, $state, $this->createStub(LocalUserQuitSyncPort::class));
         self::assertSame(['locop', 'netadmin'], $actionsWithState->getAvailableOperclasses());
     }
 
@@ -89,9 +90,11 @@ final class UnrealUdbProtocolServiceActionsTest extends TestCase
     }
 
     #[Test]
-    public function killUserSendsKillCommand(): void
+    public function killUserSendsKillCommandAndRemovesTheUserLocally(): void
     {
-        $actions = $this->createActions();
+        $localUserQuitSync = $this->createMock(LocalUserQuitSyncPort::class);
+        $localUserQuitSync->expects(self::once())->method('apply')->with('001ABCD', 'Killed for abuse');
+        $actions = $this->createActions(localUserQuitSync: $localUserQuitSync);
 
         $actions->killUser('001', '001ABCD', 'Killed for abuse');
 
@@ -408,6 +411,7 @@ final class UnrealUdbProtocolServiceActionsTest extends TestCase
             $connectionHolder,
             $this->createUdbRecordWriter($connectionHolder),
             $this->createReadySessionState(),
+            $this->createStub(LocalUserQuitSyncPort::class),
         );
 
         $actions->setUserAccount('001', '001ABCD', 'TestAccount');
@@ -435,6 +439,7 @@ final class UnrealUdbProtocolServiceActionsTest extends TestCase
             $this->connectionHolder,
             $writer,
             $this->createReadySessionState(),
+            $this->createStub(LocalUserQuitSyncPort::class),
             clock: new MutableUdbClock(1_800_000_000),
         );
 
@@ -451,7 +456,7 @@ final class UnrealUdbProtocolServiceActionsTest extends TestCase
     {
         $writer = $this->createMock(UdbRecordWriterInterface::class);
         $writer->expects(self::once())->method('insert')->with('K', 'G::*@192.168.*::reason', 'Permanent ban');
-        $actions = new UnrealUdbProtocolServiceActions($this->connectionHolder, $writer, $this->createReadySessionState());
+        $actions = new UnrealUdbProtocolServiceActions($this->connectionHolder, $writer, $this->createReadySessionState(), $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->addGline('001', '*', '192.168.*', 0, 'Permanent ban');
     }
@@ -580,12 +585,13 @@ final class UnrealUdbProtocolServiceActionsTest extends TestCase
         $sidProperty->setValue($this->connectionHolder, '001');
     }
 
-    private function createActions(?UdbSessionStateInterface $sessionState = null): UnrealUdbProtocolServiceActions
+    private function createActions(?UdbSessionStateInterface $sessionState = null, ?LocalUserQuitSyncPort $localUserQuitSync = null): UnrealUdbProtocolServiceActions
     {
         return new UnrealUdbProtocolServiceActions(
             $this->connectionHolder,
             $this->createUdbRecordWriter($this->connectionHolder),
             $sessionState ?? $this->createReadySessionState(),
+            $localUserQuitSync ?? $this->createStub(LocalUserQuitSyncPort::class),
             clock: new MutableUdbClock(1_800_000_000),
         );
     }

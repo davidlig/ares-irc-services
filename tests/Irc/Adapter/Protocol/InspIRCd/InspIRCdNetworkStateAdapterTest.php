@@ -145,10 +145,10 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
         $adapter = new InspIRCdNetworkStateAdapter($eventDispatcher);
 
-        $adapter->handleMessage(new IRCMessage('SERVER', null, ['hub.example.net', 'password', '0A1'], 'Hub'));
-        $adapter->handleMessage(new IRCMessage('SERVER', '0A1', ['leaf1.example.net', 'password', '0A2'], 'Leaf 1'));
-        $adapter->handleMessage(new IRCMessage('SERVER', '0A2', ['leaf2.example.net', 'password', '0A3'], 'Leaf 2'));
-        $adapter->handleMessage(new IRCMessage('SERVER', '0A1', ['leaf3.example.net', 'password', '0A4'], 'Leaf 3'));
+        $adapter->handleMessage(IRCMessage::fromRawLine('SERVER hub.example.net password 0A1 :Hub'));
+        $adapter->handleMessage(IRCMessage::fromRawLine(':0A1 SERVER leaf1.example.net 0A2 burst=1700000000000 hidden=0 :Leaf 1'));
+        $adapter->handleMessage(IRCMessage::fromRawLine(':0A2 SERVER leaf2.example.net 0A3 burst=1700000000000 hidden=0 :Leaf 2'));
+        $adapter->handleMessage(IRCMessage::fromRawLine(':0A1 SERVER leaf3.example.net 0A4 burst=1700000000000 hidden=0 :Leaf 3'));
 
         $capturedEvent = null;
         $eventDispatcher->expects(self::once())->method('dispatch')
@@ -176,10 +176,10 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
         $adapter = new InspIRCdNetworkStateAdapter($eventDispatcher);
 
-        $adapter->handleMessage(new IRCMessage('SERVER', null, ['hub.example.net', 'password', '0A1'], 'Hub'));
-        $adapter->handleMessage(new IRCMessage('SERVER', '0A1', ['leaf1.example.net', 'password', '0A2'], 'Leaf 1'));
-        $adapter->handleMessage(new IRCMessage('SERVER', '0A2', ['leaf2.example.net', 'password', '0A3'], 'Leaf 2'));
-        $adapter->handleMessage(new IRCMessage('SERVER', '0A1', ['leaf3.example.net', 'password', '0A4'], 'Leaf 3'));
+        $adapter->handleMessage(IRCMessage::fromRawLine('SERVER hub.example.net password 0A1 :Hub'));
+        $adapter->handleMessage(IRCMessage::fromRawLine(':0A1 SERVER leaf1.example.net 0A2 burst=1700000000000 hidden=0 :Leaf 1'));
+        $adapter->handleMessage(IRCMessage::fromRawLine(':0A2 SERVER leaf2.example.net 0A3 burst=1700000000000 hidden=0 :Leaf 2'));
+        $adapter->handleMessage(IRCMessage::fromRawLine(':0A1 SERVER leaf3.example.net 0A4 burst=1700000000000 hidden=0 :Leaf 3'));
 
         $capturedEvent = null;
         $eventDispatcher->expects(self::once())->method('dispatch')
@@ -207,9 +207,9 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
         $adapter = new InspIRCdNetworkStateAdapter($eventDispatcher);
 
-        $adapter->handleMessage(new IRCMessage('SERVER', null, ['hub.example.net', 'password', '0A1'], 'Hub'));
-        $adapter->handleMessage(new IRCMessage('SERVER', '0A1', ['leaf1.example.net', 'password', '0A2'], 'Leaf 1'));
-        $adapter->handleMessage(new IRCMessage('SERVER', '0A2', ['leaf2.example.net', 'password', '0A3'], 'Leaf 2'));
+        $adapter->handleMessage(IRCMessage::fromRawLine('SERVER hub.example.net password 0A1 :Hub'));
+        $adapter->handleMessage(IRCMessage::fromRawLine(':0A1 SERVER leaf1.example.net 0A2 burst=1700000000000 hidden=0 :Leaf 1'));
+        $adapter->handleMessage(IRCMessage::fromRawLine(':0A2 SERVER leaf2.example.net 0A3 burst=1700000000000 hidden=0 :Leaf 2'));
 
         $capturedEvent = null;
         $eventDispatcher->expects(self::once())->method('dispatch')
@@ -236,8 +236,8 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
         $adapter = new InspIRCdNetworkStateAdapter($eventDispatcher);
 
-        $adapter->handleMessage(new IRCMessage('SERVER', null, ['hub.example.net', 'password', '0A1'], 'Hub'));
-        $adapter->handleMessage(new IRCMessage('SERVER', '0A1', ['leaf1.example.net', 'password', '0A2'], 'Leaf 1'));
+        $adapter->handleMessage(IRCMessage::fromRawLine('SERVER hub.example.net password 0A1 :Hub'));
+        $adapter->handleMessage(IRCMessage::fromRawLine(':0A1 SERVER leaf1.example.net 0A2 burst=1700000000000 hidden=0 :Leaf 1'));
         $adapter->handleMessage(new IRCMessage('ERROR', null, [], 'Closing Link'));
 
         $capturedEvent = null;
@@ -1651,10 +1651,10 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
         $adapter = new InspIRCdNetworkStateAdapter($eventDispatcher);
 
-        $adapter->handleMessage(new IRCMessage('SERVER', 'UNKNOWN', ['leaf.example.net', 'pass', '0A2'], 'Leaf'));
-        $adapter->handleMessage(new IRCMessage('SERVER', '', ['leaf.example.net', 'pass', '0A2'], 'Leaf'));
-        $adapter->handleMessage(new IRCMessage('SERVER', '0A1', ['', 'pass', '0A2'], 'Leaf'));
-        $adapter->handleMessage(new IRCMessage('SERVER', '0A1', ['leaf.example.net', 'pass', ''], 'Leaf'));
+        $adapter->handleMessage(IRCMessage::fromRawLine(':UNKNOWN SERVER leaf.example.net 0A2 burst=1700000000000 hidden=0 :Leaf'));
+        $adapter->handleMessage(new IRCMessage('SERVER', '', ['leaf.example.net', '0A2', 'hidden=0'], 'Leaf'));
+        $adapter->handleMessage(new IRCMessage('SERVER', '0A1', ['', '0A2', 'hidden=0'], 'Leaf'));
+        $adapter->handleMessage(new IRCMessage('SERVER', '0A1', ['leaf.example.net', '', 'hidden=0'], 'Leaf'));
         $adapter->handleMessage(new IRCMessage('SERVER', null, ['', 'pass', ''], 'Direct Empty'));
 
         $eventDispatcher->expects(self::once())->method('dispatch')

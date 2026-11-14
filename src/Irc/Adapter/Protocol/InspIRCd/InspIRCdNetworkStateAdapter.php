@@ -291,12 +291,18 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
         $this->eventDispatcher->dispatch(new ServerDelinkedEvent($target, $reason, [$target]));
     }
 
+    /**
+     * Protocol 1206 SERVER grammar (https://docs.inspircd.org/server/messages/server/):
+     * - handshake (unprefixed): SERVER <name> <password> <sid> :<desc>
+     * - introduction (prefixed with the parent SID): :<parent> SERVER <name> <sid> [<key>=<value>]+ :<desc>
+     *   e.g. :36D SERVER irc.us.example.com 36E burst=1700000000000 hidden=0 :American IRC server.
+     */
     private function handleServer(IRCMessage $message): void
     {
         $name = $message->params[0] ?? '';
-        $sid = $message->params[2] ?? '';
 
         if (null === $message->prefix) {
+            $sid = $message->params[2] ?? '';
             if ('' !== $name) {
                 $this->directName = strtolower($name);
             }
@@ -307,6 +313,7 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
             return;
         }
 
+        $sid = $message->params[1] ?? '';
         $parent = $this->resolve($message->prefix);
         if (null === $parent || '' === $name || '' === $sid) {
             return;

@@ -19,7 +19,9 @@ use App\Irc\Adapter\Protocol\InspIRCd\InspIRCdProtocolServiceActions;
 use App\Irc\Adapter\Protocol\InspIRCd\InspIRCdServiceIntroductionFormatter;
 use App\Irc\Adapter\Protocol\InspIRCd\InspIRCdUserModeSupport;
 use App\Irc\Adapter\Protocol\IRCMessage;
+use App\Irc\Application\Port\In\LocalUserQuitSyncPort;
 use App\Irc\Domain\Server\ServerLink;
+use App\Irc\Domain\ValueObject\CaseMapping;
 use App\Irc\Domain\ValueObject\Hostname;
 use App\Irc\Domain\ValueObject\LinkPassword;
 use App\Irc\Domain\ValueObject\Port;
@@ -33,6 +35,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 use function array_filter;
@@ -179,11 +182,11 @@ final class InspIRCdProtocolHandlerTest extends TestCase
 
         $handler->performHandshake($connection, $link);
 
-        self::assertSame('CAPAB START 1206', $written[0]);
-        self::assertSame('CAPAB CAPABILITIES :CASEMAPPING=ascii', $written[1]);
-        self::assertSame('CAPAB END', $written[2]);
-        self::assertSame('SERVER services.test.local link-secret B1B :Ares IRC Services', $written[3]);
-        self::assertCount(4, $written);
+        self::assertSame([
+            'CAPAB START 1206',
+            'CAPAB END',
+            'SERVER services.test.local link-secret B1B :Ares IRC Services',
+        ], $written);
     }
 
     #[Test]
@@ -217,13 +220,13 @@ final class InspIRCdProtocolHandlerTest extends TestCase
 
         $handler->performHandshake($connection, $link);
 
-        $serverLine = $written[3];
+        $serverLine = $written[2];
         self::assertSame('SERVER services.test.local link-secret 0A0 :Ares IRC Services', $serverLine);
         self::assertStringNotContainsString(' 0 0A0 ', $serverLine);
     }
 
     #[Test]
-    public function capabCapabilitiesContainsCaseMappingWithoutChallenge(): void
+    public function handshakeAdvertisesNeitherCaseMappingNorChallenge(): void
     {
         $written = [];
         $connection = $this->createRecordingConnection($written);
@@ -233,9 +236,34 @@ final class InspIRCdProtocolHandlerTest extends TestCase
 
         $handler->performHandshake($connection, $link);
 
-        $capsLine = $written[1];
-        self::assertStringContainsString('CASEMAPPING=ascii', $capsLine);
-        self::assertStringNotContainsString('CHALLENGE', $capsLine);
+        // InspIRCd refuses the link when an advertised CASEMAPPING differs from its own and skips
+        // the check when the key is absent, so Ares follows the casemapping the remote announces.
+        foreach ($written as $line) {
+            self::assertStringNotContainsString('CASEMAPPING', $line);
+            self::assertStringNotContainsString('CHALLENGE', $line);
+            self::assertStringNotContainsString('CAPAB CAPABILITIES', $line);
+        }
+    }
+
+    #[Test]
+    public function remoteCaseMappingIsAdoptedAfterHandshakeWithoutLocalAdvertisement(): void
+    {
+        $written = [];
+        $connection = $this->createRecordingConnection($written);
+        $mappings = [];
+        $dispatcher = new EventDispatcher();
+        $dispatcher->addListener(CaseMappingChangedEvent::class, static function (CaseMappingChangedEvent $event) use (&$mappings): void {
+            $mappings[] = $event->mapping;
+        });
+        $handler = $this->createHandler(eventDispatcher: $dispatcher);
+
+        $handler->performHandshake($connection, $this->createServerLink());
+        foreach (['CAPAB START 1206', 'CAPAB MODULES :services account chghost cloak', 'CAPAB CAPABILITIES :CASEMAPPING=rfc1459 MAXNICK=32', 'CAPAB END'] as $line) {
+            $handler->handleIncoming(IRCMessage::fromRawLine($line), $connection);
+        }
+
+        self::assertSame([CaseMapping::Rfc1459], $mappings);
+        self::assertSame(['CAPAB START 1206', 'CAPAB END', 'SERVER services.test.local link-secret A0A :Ares IRC Services'], $written);
     }
 
     #[Test]
@@ -318,7 +346,7 @@ final class InspIRCdProtocolHandlerTest extends TestCase
         $handler->handleIncoming(new IRCMessage(command: 'SERVER', params: ['hub.example.net', 'pass', '0A1']), $connection);
         $this->assertOutgoingBurstEffects();
 
-        $handler->handleIncoming(new IRCMessage(command: 'SERVER', prefix: '0A1', params: ['leaf.example.net', 'pass', '0A4']), $connection);
+        $handler->handleIncoming(IRCMessage::fromRawLine(':0A1 SERVER leaf.example.net 0A4 burst=1700000000000 hidden=0 :Leaf'), $connection);
 
         foreach (['0A4', '0A5', '0A2', '0A3'] as $downstreamSid) {
             $handler->handleIncoming(new IRCMessage(command: 'ENDBURST', prefix: $downstreamSid), $connection);
@@ -335,7 +363,7 @@ final class InspIRCdProtocolHandlerTest extends TestCase
         $this->effects = [];
 
         $handler->handleIncoming(new IRCMessage(command: 'ENDBURST', prefix: '0A1'), $connection);
-        $handler->handleIncoming(new IRCMessage(command: 'SERVER', prefix: '0A1', params: ['leaf.example.net', 'pass', '0B4']), $connection);
+        $handler->handleIncoming(IRCMessage::fromRawLine(':0A1 SERVER leaf.example.net 0B4 burst=1700000000000 hidden=0 :Leaf'), $connection);
         self::assertSame([], $this->effects);
 
         $handler->handleIncoming(new IRCMessage(command: 'SERVER', params: ['new-hub.example.net', 'pass', '0B1']), $connection);
@@ -733,7 +761,7 @@ final class InspIRCdProtocolHandlerTest extends TestCase
     {
         return new InspIRCdModule(
             handler: $handler,
-            serviceActions: new InspIRCdProtocolServiceActions($connectionHolder, new InspIRCdServiceIntroductionFormatter(), new NullLogger()),
+            serviceActions: new InspIRCdProtocolServiceActions($connectionHolder, $this->createStub(LocalUserQuitSyncPort::class), new InspIRCdServiceIntroductionFormatter(), new NullLogger()),
             channelModeSupport: $modeSupport,
             userModeSupport: new InspIRCdUserModeSupport(),
             nickReservation: new InspIRCdNickReservation($connectionHolder, new NullLogger()),

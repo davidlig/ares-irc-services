@@ -7,6 +7,7 @@ namespace App\Tests\Irc\Adapter\Protocol\InspIRCd;
 use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 use App\Irc\Adapter\Protocol\InspIRCd\InspIRCdProtocolServiceActions;
+use App\Irc\Application\Port\In\LocalUserQuitSyncPort;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -23,7 +24,7 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
     #[Test]
     public function setUserAccountSendsAccountMetadataAndSetsMode(): void
     {
-        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->setUserAccount('001', '001ABCD', 'TestAccount');
 
@@ -37,7 +38,7 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
     #[Test]
     public function setUserAccountClearsAccountWhenZero(): void
     {
-        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->setUserAccount('001', '001ABCD', '0');
 
@@ -51,7 +52,7 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
     #[Test]
     public function setUserModeSendsMode(): void
     {
-        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->setUserMode('001', '001ABCD', '+i');
 
@@ -62,7 +63,7 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
     #[Test]
     public function forceNickSendsSvsnickWithTimestamp(): void
     {
-        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->forceNick('001', '001ABCD', 'NewNick');
 
@@ -71,9 +72,11 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
     }
 
     #[Test]
-    public function killUserSendsKillCommand(): void
+    public function killUserSendsKillCommandAndRemovesTheUserLocally(): void
     {
-        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+        $localUserQuitSync = $this->createMock(LocalUserQuitSyncPort::class);
+        $localUserQuitSync->expects(self::once())->method('apply')->with('001ABCD', 'Killed for abuse');
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder, $localUserQuitSync);
 
         $actions->killUser('001', '001ABCD', 'Killed for abuse');
 
@@ -84,7 +87,7 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
     #[Test]
     public function setChannelModesSendsFmodeFromServerWhenTimestampProvided(): void
     {
-        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->setChannelModes('001', '#test', '+nt', [], '', 12345);
 
@@ -95,7 +98,7 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
     #[Test]
     public function setChannelModesSendsFmodeWithParamsWhenTimestampProvided(): void
     {
-        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->setChannelModes('001', '#test', '+k', ['secretkey'], '', 12345);
 
@@ -106,7 +109,7 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
     #[Test]
     public function setChannelModesSendsFmodeFromServiceWhenTimestampProvided(): void
     {
-        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->setChannelModes('001', '#test', '+k', ['secretkey'], '001CSRV', 12345);
 
@@ -117,7 +120,7 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
     #[Test]
     public function setChannelMemberModeSendsFmodeFromServerWhenTimestampProvided(): void
     {
-        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->setChannelMemberMode('001', '#test', '001ABCD', 'o', true, '', 12345);
 
@@ -128,7 +131,7 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
     #[Test]
     public function setChannelMemberModeSendsFmodeWhenRemovingAndTimestampProvided(): void
     {
-        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->setChannelMemberMode('001', '#test', '001ABCD', 'o', false, '', 12345);
 
@@ -139,7 +142,7 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
     #[Test]
     public function setChannelMemberModeSendsFmodeFromServiceWhenTimestampProvided(): void
     {
-        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->setChannelMemberMode('001', '#test', '001ABCD', 'o', true, '001CSRV', 12345);
 
@@ -150,7 +153,7 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
     #[Test]
     public function setChannelModesSendsModeFromServer(): void
     {
-        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->setChannelModes('001', '#test', '+nt');
 
@@ -161,7 +164,7 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
     #[Test]
     public function setChannelModesSendsModeFromService(): void
     {
-        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->setChannelModes('001', '#test', '+o', ['001ABCD'], '001CSRV');
 
@@ -172,7 +175,7 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
     #[Test]
     public function setChannelMemberModeSendsModeFromServer(): void
     {
-        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->setChannelMemberMode('001', '#test', '001ABCD', 'o', true);
 
@@ -183,7 +186,7 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
     #[Test]
     public function setChannelMemberModeRemovesMode(): void
     {
-        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->setChannelMemberMode('001', '#test', '001ABCD', 'o', false);
 
@@ -194,7 +197,7 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
     #[Test]
     public function inviteUserToChannelOmitsTimestampWhenNull(): void
     {
-        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->inviteUserToChannel('001', '#test', '001ABCD');
 
@@ -205,7 +208,7 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
     #[Test]
     public function inviteUserToChannelOmitsTimestampWhenNullWithServiceUid(): void
     {
-        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->inviteUserToChannel('001', '#test', '001ABCD', '001CSRV');
 
@@ -216,7 +219,7 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
     #[Test]
     public function inviteUserToChannelSendsInviteWithChannelTimestamp(): void
     {
-        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->inviteUserToChannel('001', '#test', '001ABCD', '', 1777168016);
 
@@ -227,7 +230,7 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
     #[Test]
     public function inviteUserToChannelSendsInviteWithServiceUidAndTimestamp(): void
     {
-        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->inviteUserToChannel('001', '#test', '001ABCD', '001CSRV', 1777168016);
 
@@ -238,7 +241,7 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
     #[Test]
     public function joinChannelAsServiceSendsFjoinWithOwnerPrefix(): void
     {
-        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->joinChannelAsService('001', '#test', '001CSRV', 'q');
 
@@ -249,7 +252,7 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
     #[Test]
     public function joinChannelAsServiceSkipsPrefixWhenEmpty(): void
     {
-        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->joinChannelAsService('001', '#test', '001CSRV', '');
 
@@ -260,7 +263,7 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
     #[Test]
     public function joinChannelAsServiceUsesOperatorWhenInvalidPrefix(): void
     {
-        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->joinChannelAsService('001', '#test', '001CSRV', 'x');
 
@@ -271,7 +274,7 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
     #[Test]
     public function joinChannelAsServiceUsesChannelTimestamp(): void
     {
-        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->joinChannelAsService('001', '#test', '001CSRV', 'o', 12345);
 
@@ -282,7 +285,7 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
     #[Test]
     public function setChannelTopicSetsFtopicWithTimestampsFromService(): void
     {
-        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->setChannelTopic('001', '#test', 'New topic', '001CSRV', 12345);
 
@@ -293,7 +296,7 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
     #[Test]
     public function setChannelTopicSetsFtopicFromServerWhenNoServiceUid(): void
     {
-        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->setChannelTopic('001', '#test', 'New topic', '', 12345);
 
@@ -304,7 +307,7 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
     #[Test]
     public function setChannelTopicUsesCurrentTimeWhenNoCreationTs(): void
     {
-        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->setChannelTopic('001', '#test', 'New topic');
 
@@ -315,7 +318,7 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
     #[Test]
     public function setChannelTopicClearsTopicWhenNull(): void
     {
-        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->setChannelTopic('001', '#test', null, '001CSRV', 12345);
 
@@ -326,7 +329,7 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
     #[Test]
     public function kickFromChannelSendsKickWithoutMembershipId(): void
     {
-        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->kickFromChannel('001', '#test', '001ABCD', 'Kicked for abuse', '001CSRV');
 
@@ -337,7 +340,7 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
     #[Test]
     public function kickFromChannelUsesServerSidWhenServiceUidEmpty(): void
     {
-        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->kickFromChannel('001', '#test', '001ABCD', 'reason');
 
@@ -350,7 +353,7 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
     {
         $connectionHolder = new ActiveConnectionHolder();
 
-        $actions = new InspIRCdProtocolServiceActions($connectionHolder);
+        $actions = new InspIRCdProtocolServiceActions($connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->setUserAccount('001', '001ABCD', 'TestAccount');
         $actions->setUserMode('001', '001ABCD', '+i');
@@ -364,7 +367,7 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
     #[Test]
     public function addGlineSendsAddlineGCommand(): void
     {
-        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->addGline('001', 'testuser', 'test.host', 3600, 'Test ban');
 
@@ -375,7 +378,7 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
     #[Test]
     public function addGlinePermanentBan(): void
     {
-        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->addGline('001', '*', '192.168.*', 0, 'Permanent ban');
 
@@ -386,7 +389,7 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
     #[Test]
     public function removeGlineSendsDellineGCommand(): void
     {
-        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->removeGline('001', 'testuser', 'test.host');
 
@@ -397,7 +400,7 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
     #[Test]
     public function removeGlineWithWildcards(): void
     {
-        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->removeGline('001', '*', '192.168.*');
 
@@ -408,7 +411,7 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
     #[Test]
     public function introducePseudoClientSendsUidCommand(): void
     {
-        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->introducePseudoClient('001', 'GlobalBot', 'global', 'services.red', '001Z00001', 'Global Message Bot');
 
@@ -419,7 +422,7 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
     #[Test]
     public function introducePseudoClientWithDifferentParams(): void
     {
-        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->introducePseudoClient('002', 'Announce', 'announce', 'irc.example.net', '002Z00005', 'Network Announcements');
 
@@ -430,7 +433,7 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
     #[Test]
     public function quitPseudoClientSendsQuitCommand(): void
     {
-        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->quitPseudoClient('001', '001Z00001', 'Global message completed');
 
@@ -441,7 +444,7 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
     #[Test]
     public function partChannelAsServiceSendsPartCommand(): void
     {
-        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->partChannelAsService('001', '#test', '001CSRV');
 
@@ -452,7 +455,7 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
     #[Test]
     public function setUserVhostSetsVhostUsingEncapChghost(): void
     {
-        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->setUserVhost('001', '001ABCD', 'custom.vhost.net');
 
@@ -463,7 +466,7 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
     #[Test]
     public function setUserVhostClearsVhostWithCloakedHost(): void
     {
-        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->setUserVhost('001', '001ABCD', '', 'cloaked.host.net');
 
@@ -475,7 +478,7 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
     #[Test]
     public function setUserVhostClearsVhostWithoutCloakedHostFallbackToTargetUid(): void
     {
-        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->setUserVhost('001', '001ABCD', '', '');
 
@@ -487,7 +490,7 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
     #[Test]
     public function introduceServiceSendsFormattedServiceIntroduction(): void
     {
-        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->introduceService('001', 'NickServ', 'NickServ', 'services.host', '001AAAAAA', 'Nickname Services', 'nickserv');
 

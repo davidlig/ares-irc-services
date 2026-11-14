@@ -12,7 +12,6 @@ use App\Irc\Adapter\Network\LocalUserModeSync;
 use App\Irc\Adapter\Network\NetworkStateSubscriber;
 use App\Irc\Adapter\ServiceBridge\CoreNetworkUserLookupAdapter;
 use App\Irc\Application\Port\In\ActiveProtocolModuleHolderInterface;
-use App\Irc\Application\Port\In\LocalUserQuitSyncPort;
 use App\Irc\Application\Port\In\ProtocolModuleInterface;
 use App\Irc\Application\Port\In\ProtocolServiceActionsInterface;
 use App\Irc\Application\Port\In\SenderView;
@@ -180,7 +179,6 @@ final class AutomaticModeIdentifyLifecycleTest extends DoctrineIntegrationTestCa
             new LocalUserModeSync($dispatcher),
             $serviceUidGenerator,
             'services.example.test',
-            $this->createStub(LocalUserQuitSyncPort::class),
         );
 
         $authenticationMode = $this->createStub(NicknameAuthenticationModeQuery::class);

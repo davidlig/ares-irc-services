@@ -6,6 +6,7 @@ namespace App\Irc\Adapter\Network;
 
 use App\Irc\Application\Port\In\ChannelSyncCompletedRegistryInterface;
 use App\Irc\Domain\Event\ChannelSyncedEvent;
+use App\Irc\Domain\Event\ExistingChannelJoinObservedEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -14,6 +15,9 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  * is only allowed after our sync has run (avoids race where user with temporary op changes topic).
  * Always marks on every ChannelSyncedEvent (not just initial setup) to ensure
  * sync completion is tracked for all channel sync events.
+ * Also re-arms on ExistingChannelJoinObservedEvent (an SJOIN/FJOIN/IJOIN for an existing
+ * channel that keeps its timestamp, e.g. a healed netsplit) so the topic persistence grace
+ * window starts again and the rejoining side's TOPIC cannot overwrite the stored topic.
  */
 final readonly class ChannelSyncCompletedMarkerSubscriber implements EventSubscriberInterface
 {
@@ -25,10 +29,16 @@ final readonly class ChannelSyncCompletedMarkerSubscriber implements EventSubscr
     {
         return [
             ChannelSyncedEvent::class => ['onChannelSynced', -100],
+            ExistingChannelJoinObservedEvent::class => ['onExistingChannelJoinObserved', -100],
         ];
     }
 
     public function onChannelSynced(ChannelSyncedEvent $event): void
+    {
+        $this->registry->markSyncCompleted($event->channel->name->value);
+    }
+
+    public function onExistingChannelJoinObserved(ExistingChannelJoinObservedEvent $event): void
     {
         $this->registry->markSyncCompleted($event->channel->name->value);
     }

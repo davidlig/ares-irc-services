@@ -8,7 +8,6 @@ use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
 use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 use App\Irc\Application\Port\In\LocalUserModeSyncPort;
-use App\Irc\Application\Port\In\LocalUserQuitSyncPort;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\ProtocolModuleInterface;
 use App\Irc\Application\Port\In\ProtocolServiceActionsInterface;
@@ -75,7 +74,6 @@ final class NickServBotTest extends TestCase
             $this->createStub(LocalUserModeSyncPort::class),
             $uidGenerator,
             self::HOSTNAME,
-            $this->createStub(LocalUserQuitSyncPort::class),
         );
         $event = new ServiceIntroductionRequestedEvent('001');
         $bot->onBurstComplete($event);
@@ -97,7 +95,6 @@ final class NickServBotTest extends TestCase
             $this->createStub(LocalUserModeSyncPort::class),
             $uidGenerator,
             self::HOSTNAME,
-            $this->createStub(LocalUserQuitSyncPort::class),
         );
         $event = new ServiceIntroductionRequestedEvent('001');
         $bot->onBurstComplete($event);
@@ -120,7 +117,6 @@ final class NickServBotTest extends TestCase
             $this->createStub(LocalUserModeSyncPort::class),
             $uidGenerator,
             self::HOSTNAME,
-            $this->createStub(LocalUserQuitSyncPort::class),
         );
         $bot->onBurstComplete(new ServiceIntroductionRequestedEvent('001'));
         $bot->sendNotice('001USER', 'Hello');
@@ -144,7 +140,6 @@ final class NickServBotTest extends TestCase
             $this->createStub(LocalUserModeSyncPort::class),
             $uidGenerator,
             self::HOSTNAME,
-            $this->createStub(LocalUserQuitSyncPort::class),
         );
         $bot->onBurstComplete(new ServiceIntroductionRequestedEvent('001'));
         $bot->sendMessage('001USER', 'Message', 'NOTICE');
@@ -177,7 +172,6 @@ final class NickServBotTest extends TestCase
             $localUserModeSync,
             $uidGenerator,
             self::HOSTNAME,
-            $this->createStub(LocalUserQuitSyncPort::class),
         );
 
         $bot->setUserAccount('001USER', 'AccountName');
@@ -210,7 +204,6 @@ final class NickServBotTest extends TestCase
             $localUserModeSync,
             $uidGenerator,
             self::HOSTNAME,
-            $this->createStub(LocalUserQuitSyncPort::class),
         );
 
         $bot->setUserAccount('001USER', '0');
@@ -247,7 +240,6 @@ final class NickServBotTest extends TestCase
             $this->createStub(LocalUserModeSyncPort::class),
             $uidGenerator,
             self::HOSTNAME,
-            $this->createStub(LocalUserQuitSyncPort::class),
         );
 
         $bot->setUserMode('001USER', '+i');
@@ -287,7 +279,6 @@ final class NickServBotTest extends TestCase
             $this->createStub(LocalUserModeSyncPort::class),
             $uidGenerator,
             self::HOSTNAME,
-            $this->createStub(LocalUserQuitSyncPort::class),
         );
 
         $bot->forceNick('001USER', 'NewNick');
@@ -310,7 +301,6 @@ final class NickServBotTest extends TestCase
             $this->createStub(LocalUserModeSyncPort::class),
             $uidGenerator,
             self::HOSTNAME,
-            $this->createStub(LocalUserQuitSyncPort::class),
         );
 
         $bot->forceNick('001USER', 'NewNick');
@@ -319,9 +309,6 @@ final class NickServBotTest extends TestCase
     #[Test]
     public function killUserDelegatesToModuleWhenPresent(): void
     {
-        $sync = $this->createMock(LocalUserQuitSyncPort::class);
-        $sync->expects(self::once())->method('apply')->with('001USER', 'Killed');
-
         $serviceActions = $this->createMock(ProtocolServiceActionsInterface::class);
         $serviceActions->expects(self::once())->method('killUser')
             ->with(self::anything(), '001USER', 'Killed');
@@ -342,7 +329,6 @@ final class NickServBotTest extends TestCase
             $this->createStub(LocalUserModeSyncPort::class),
             $uidGenerator,
             self::HOSTNAME,
-            $sync,
         );
 
         $bot->killUser('001USER', 'Killed');
@@ -387,7 +373,6 @@ final class NickServBotTest extends TestCase
             $this->createStub(LocalUserModeSyncPort::class),
             $uidGenerator,
             self::HOSTNAME,
-            $this->createStub(LocalUserQuitSyncPort::class),
         );
 
         $bot->setUserVhost('001USER', 'new.vhost', '001');
@@ -437,7 +422,6 @@ final class NickServBotTest extends TestCase
             $this->createStub(LocalUserModeSyncPort::class),
             $uidGenerator,
             self::HOSTNAME,
-            $this->createStub(LocalUserQuitSyncPort::class),
         );
 
         $bot->setUserVhost('001USER', '', '001');
@@ -485,7 +469,6 @@ final class NickServBotTest extends TestCase
             $this->createStub(LocalUserModeSyncPort::class),
             $uidGenerator,
             self::HOSTNAME,
-            $this->createStub(LocalUserQuitSyncPort::class),
         );
 
         $bot->setUserVhost('001USER', 'same.vhost', '001');
@@ -535,7 +518,6 @@ final class NickServBotTest extends TestCase
             $this->createStub(LocalUserModeSyncPort::class),
             $uidGenerator,
             self::HOSTNAME,
-            $this->createStub(LocalUserQuitSyncPort::class),
         );
 
         $bot->setUserVhost('001USER', '', '001');
@@ -580,7 +562,6 @@ final class NickServBotTest extends TestCase
             $this->createStub(LocalUserModeSyncPort::class),
             $uidGenerator,
             self::HOSTNAME,
-            $this->createStub(LocalUserQuitSyncPort::class),
             'CustomNS',
         );
 
@@ -606,7 +587,6 @@ final class NickServBotTest extends TestCase
             $localUserModeSync,
             $this->uidGenerator,
             self::HOSTNAME,
-            $this->createStub(LocalUserQuitSyncPort::class),
         );
     }
 }

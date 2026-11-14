@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\Network;
 
+use App\Irc\Adapter\Network\Event\UserQuitReceivedEvent;
 use App\Irc\Domain\Event\ServerDelinkedEvent;
-use App\Irc\Domain\Event\UserQuitNetworkEvent;
 use App\Irc\Domain\Repository\NetworkUserRepositoryInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -17,8 +17,9 @@ use function sprintf;
 
 /**
  * When a server is delinked (SQUIT), treats all users on that server as quit:
- * dispatches UserQuitNetworkEvent for each so NetworkStateSubscriber and
- * NickProtectionService clean repos and IdentifiedSessionRegistry.
+ * dispatches UserQuitReceivedEvent for each so they follow the same enrichment
+ * path as QUIT and KILL (per-channel UserLeftChannelEvent, repository removal and
+ * UserQuitNetworkEvent for NickServ session cleanup).
  */
 final readonly class ServerDelinkedSubscriber implements EventSubscriberInterface
 {
@@ -53,13 +54,7 @@ final readonly class ServerDelinkedSubscriber implements EventSubscriberInterfac
         ));
 
         foreach ($affected as $user) {
-            $this->eventDispatcher->dispatch(new UserQuitNetworkEvent(
-                uid: $user->uid,
-                nick: $user->getNick(),
-                reason: $reason,
-                ident: $user->ident->value,
-                displayHost: $user->getDisplayHost(),
-            ));
+            $this->eventDispatcher->dispatch(new UserQuitReceivedEvent($user->uid->value, $reason));
         }
     }
 }

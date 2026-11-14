@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Tests\Irc\Adapter\Network;
 
+use App\Irc\Adapter\Network\Event\UserQuitReceivedEvent;
 use App\Irc\Adapter\Network\ServerDelinkedSubscriber;
 use App\Irc\Domain\Event\ServerDelinkedEvent;
-use App\Irc\Domain\Event\UserQuitNetworkEvent;
 use App\Irc\Domain\Network\NetworkUser;
 use App\Irc\Domain\Repository\NetworkUserRepositoryInterface;
 use App\Irc\Domain\ValueObject\Ident;
@@ -59,9 +59,9 @@ final class ServerDelinkedSubscriberTest extends TestCase
         $index = 0;
         $this->eventDispatcher->expects(self::exactly(2))
             ->method('dispatch')
-            ->with(self::callback(static function (UserQuitNetworkEvent $quitEvent) use ($user1, $user2, &$index): bool {
+            ->with(self::callback(static function (UserQuitReceivedEvent $quitEvent) use ($user1, $user2, &$index): bool {
                 $expectedUids = [$user1->uid->value, $user2->uid->value];
-                $result = $quitEvent->uid->value === $expectedUids[$index];
+                $result = $quitEvent->sourceId === $expectedUids[$index] && 'Server split' === $quitEvent->reason;
                 ++$index;
 
                 return $result;
@@ -89,9 +89,9 @@ final class ServerDelinkedSubscriberTest extends TestCase
         $index = 0;
         $this->eventDispatcher->expects(self::exactly(2))
             ->method('dispatch')
-            ->with(self::callback(static function (UserQuitNetworkEvent $quitEvent) use ($user1, $user2, &$index): bool {
+            ->with(self::callback(static function (UserQuitReceivedEvent $quitEvent) use ($user1, $user2, &$index): bool {
                 $expectedUids = [$user1->uid->value, $user2->uid->value];
-                $result = $quitEvent->uid->value === $expectedUids[$index];
+                $result = $quitEvent->sourceId === $expectedUids[$index] && 'Server split' === $quitEvent->reason;
                 ++$index;
 
                 return $result;
@@ -136,7 +136,7 @@ final class ServerDelinkedSubscriberTest extends TestCase
 
         $this->eventDispatcher->expects(self::once())
             ->method('dispatch')
-            ->with(self::callback(static fn (UserQuitNetworkEvent $quitEvent): bool => '*.net *.split' === $quitEvent->reason));
+            ->with(self::callback(static fn (UserQuitReceivedEvent $quitEvent): bool => '001ABC123' === $quitEvent->sourceId && '*.net *.split' === $quitEvent->reason));
         $this->logger->expects(self::once())->method('info');
 
         $this->subscriber->onServerDelinked($event);

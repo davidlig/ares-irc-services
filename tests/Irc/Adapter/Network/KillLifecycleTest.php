@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Irc\Adapter\Network;
 
+use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
 use App\Irc\Adapter\In\Event\PublishedIrcEventBridge;
 use App\Irc\Adapter\Network\ChannelSyncCompletedRegistry;
 use App\Irc\Adapter\Network\InMemoryChannelRepository;
@@ -11,10 +12,17 @@ use App\Irc\Adapter\Network\InMemoryNetworkUserRepository;
 use App\Irc\Adapter\Network\LocalUserQuitSync;
 use App\Irc\Adapter\Network\NetworkEventEnricher;
 use App\Irc\Adapter\Network\NetworkStateSubscriber;
+use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
+use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 use App\Irc\Adapter\Protocol\InspIRCd\InspIRCdNetworkStateAdapter;
+use App\Irc\Adapter\Protocol\InspIRCd\InspIRCdProtocolServiceActions;
 use App\Irc\Adapter\Protocol\IRCMessage;
 use App\Irc\Adapter\Protocol\UnrealStandalone\UnrealStandaloneNetworkStateAdapter;
+use App\Irc\Adapter\Protocol\UnrealStandalone\UnrealStandaloneProtocolServiceActions;
+use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionStateInterface;
+use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbRecordWriterInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbNetworkStateAdapter;
+use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbProtocolServiceActions;
 use App\Irc\Application\Port\In as IrcPort;
 use App\Irc\Application\PublishedEvent\UserLeftNetworkEvent;
 use App\Irc\Domain\Network\Channel;
@@ -47,7 +55,15 @@ final class KillLifecycleTest extends TestCase
     #[Test]
     public function inboundAndServiceKillCleanTheWholeLifecycleOnce(): void
     {
-        foreach (['inspircd', 'standalone', 'udb', 'service', 'quit'] as $source) {
+        $cases = [['inspircd', 'quit']];
+        foreach (['inspircd', 'standalone', 'udb'] as $protocol) {
+            foreach (['inbound-uid', 'inbound-nick', 'service-direct', 'service-operserv'] as $mode) {
+                $cases[] = [$protocol, $mode];
+            }
+        }
+
+        foreach ($cases as [$protocol, $mode]) {
+            $label = $protocol . '/' . $mode;
             $users = new InMemoryNetworkUserRepository();
             $channels = new InMemoryChannelRepository();
             $events = new EventDispatcher();
@@ -95,40 +111,77 @@ final class KillLifecycleTest extends TestCase
             $languages->register($uid->value, 'es');
             $quitCount = 0;
             $events->addListener(UserLeftNetworkEvent::class, static function () use (&$quitCount): void { ++$quitCount; });
-            $adapter = match ($source) {
+            $adapter = match ($protocol) {
                 'standalone' => new UnrealStandaloneNetworkStateAdapter($events),
                 'udb' => new UnrealUdbNetworkStateAdapter($events),
                 default => new InspIRCdNetworkStateAdapter($events),
             };
             $before = hash('sha256', serialize([$users, $channels, $identified, $languages]));
-            $adapter->handleMessage(new IRCMessage('KILL', '001', ['001UNKNOWN'], 'reason'));
-            self::assertSame($before, hash('sha256', serialize([$users, $channels, $identified, $languages])), $source);
-            $adapter->handleMessage(new IRCMessage('KILL', '001', [], 'reason'));
-            self::assertSame($before, hash('sha256', serialize([$users, $channels, $identified, $languages])), $source);
-            if ('service' === $source) {
-                $wire = $this->createMock(IrcPort\ProtocolServiceActionsInterface::class);
-                $wire->expects(self::once())->method('killUser')->with('001', $uid->value, 'reason');
-                $module = $this->createStub(IrcPort\ProtocolModuleInterface::class);
-                $module->method('getServiceActions')->willReturn($wire);
-                $connection = $this->createStub(IrcPort\ActiveProtocolModuleHolderInterface::class);
-                $connection->method('getProtocolModule')->willReturn($module);
-                $connection->method('getServerSid')->willReturn('001');
-                self::assertTrue(new ActiveConnectionKillNetworkUser($connection, new LocalUserQuitSync($events))->kill($uid->value, 'reason'));
-            } elseif ('quit' === $source) {
+            // Unknown targets exercise both resolver branches: a 9-character UID and a nickname.
+            foreach ([['001ZZZZZZ'], ['Nobody'], []] as $params) {
+                $adapter->handleMessage(new IRCMessage('KILL', '001', $params, 'reason'));
+                self::assertSame($before, hash('sha256', serialize([$users, $channels, $identified, $languages])), $label);
+            }
+            $written = [];
+            if ('service-direct' === $mode || 'service-operserv' === $mode) {
+                $holder = $this->connectedHolder($written);
+                $serviceActions = $this->serviceActions($protocol, $holder, new LocalUserQuitSync($events));
+                if ('service-direct' === $mode) {
+                    // A new killUser() caller gets the local cleanup without repeating it.
+                    $serviceActions->killUser('001', $uid->value, 'reason');
+                } else {
+                    $module = $this->createStub(IrcPort\ProtocolModuleInterface::class);
+                    $module->method('getServiceActions')->willReturn($serviceActions);
+                    $connection = $this->createStub(IrcPort\ActiveProtocolModuleHolderInterface::class);
+                    $connection->method('getProtocolModule')->willReturn($module);
+                    $connection->method('getServerSid')->willReturn('001');
+                    self::assertTrue(new ActiveConnectionKillNetworkUser($connection)->kill($uid->value, 'reason'), $label);
+                }
+                self::assertSame([':001 KILL 001ABC123 :reason'], $written, $label);
+            } elseif ('quit' === $mode) {
                 $adapter->handleMessage(new IRCMessage('QUIT', $uid->value, [], 'reason'));
             } else {
-                $adapter->handleMessage(new IRCMessage('KILL', '001', [$uid->value], 'reason'));
+                $target = 'inbound-uid' === $mode ? $uid->value : $nick->value;
+                $adapter->handleMessage(new IRCMessage('KILL', '001', [$target], 'reason'));
             }
+            // No ghost user may remain before any later QUIT/KILL from the network.
+            self::assertNull($users->findByUid($uid), $label);
+            self::assertNull($channels->findByName($name), $label);
+            self::assertNull($identified->findNick($uid->value), $label);
             $adapter->handleMessage(new IRCMessage('QUIT', $uid->value, [], 'reason'));
-            $adapter->handleMessage(new IRCMessage('KILL', '001', ['001UNKNOWN'], 'reason'));
-            self::assertNull($users->findByUid($uid), $source);
-            self::assertNull($users->findByNick($nick), $source);
-            self::assertNull($channel->getMember($uid), $source);
-            self::assertNull($channels->findByName($name), $source);
-            self::assertFalse($registry->isSyncCompleted($name->value), $source);
-            self::assertNull($identified->findNick($uid->value), $source);
-            self::assertNull($languages->find($uid->value), $source);
-            self::assertSame(1, $quitCount, $source);
+            $adapter->handleMessage(new IRCMessage('KILL', '001', ['001ZZZZZZ'], 'reason'));
+            $adapter->handleMessage(new IRCMessage('KILL', '001', [$nick->value], 'reason'));
+            self::assertNull($users->findByUid($uid), $label);
+            self::assertNull($users->findByNick($nick), $label);
+            self::assertNull($channel->getMember($uid), $label);
+            self::assertNull($channels->findByName($name), $label);
+            self::assertFalse($registry->isSyncCompleted($name->value), $label);
+            self::assertNull($identified->findNick($uid->value), $label);
+            self::assertNull($languages->find($uid->value), $label);
+            self::assertSame(1, $quitCount, $label);
         }
+    }
+
+    /** @param list<string> $written */
+    private function connectedHolder(array &$written): ActiveConnectionHolder
+    {
+        $connection = $this->createStub(ConnectionInterface::class);
+        $connection->method('isConnected')->willReturn(true);
+        $connection->method('writeLine')->willReturnCallback(static function (string $line) use (&$written): void {
+            $written[] = $line;
+        });
+        $holder = new ActiveConnectionHolder();
+        $holder->onBurstComplete(new NetworkBurstCompleteEvent($connection, '001'));
+
+        return $holder;
+    }
+
+    private function serviceActions(string $protocol, ActiveConnectionHolder $holder, LocalUserQuitSync $localUserQuitSync): IrcPort\ProtocolServiceActionsInterface
+    {
+        return match ($protocol) {
+            'standalone' => new UnrealStandaloneProtocolServiceActions($holder, $localUserQuitSync),
+            'udb' => new UnrealUdbProtocolServiceActions($holder, $this->createStub(UdbRecordWriterInterface::class), $this->createStub(UdbSessionStateInterface::class), $localUserQuitSync),
+            default => new InspIRCdProtocolServiceActions($holder, $localUserQuitSync),
+        };
     }
 }

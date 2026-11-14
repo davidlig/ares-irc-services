@@ -36,9 +36,14 @@ use function time;
  *
  * Handshake sequence (outbound, protocol 1206):
  *   1. CAPAB START 1206
- *   2. CAPAB CAPABILITIES :CASEMAPPING=ascii
- *   3. CAPAB END
- *   4. SERVER <name> <password> <SID> :<description>
+ *   2. CAPAB END
+ *   3. SERVER <name> <password> <SID> :<description>
+ *
+ * Ares does not advertise CAPAB CAPABILITIES. InspIRCd refuses a link whose
+ * advertised CASEMAPPING differs from its own and skips that check when the key
+ * is absent, so Ares adopts the CASEMAPPING announced by the remote CAPAB instead
+ * of imposing one (see applyRemoteCapab()). Omitting CHALLENGE also keeps
+ * plaintext password authentication.
  *
  * When the remote IRCD accepts our credentials it sends its own SERVER line
  * back and enters WAIT_AUTH_2. We MUST send BURST + introductions + ENDBURST
@@ -57,9 +62,9 @@ use function time;
  * This lets the rest of Ares know which modes the remote IRCd actually
  * supports (e.g. +P permanent, +q/+a/+h prefix ranks).
  *
- * We do NOT send CHALLENGE in CAPAB CAPABILITIES, which tells InspIRCd
- * to use plaintext password authentication (no HMAC-SHA256). If both
- * sides send a CHALLENGE, InspIRCd switches to HMAC-SHA256 auth.
+ * We do NOT send CHALLENGE, which tells InspIRCd to use plaintext password
+ * authentication (no HMAC-SHA256). If both sides send a CHALLENGE, InspIRCd
+ * switches to HMAC-SHA256 auth.
  *
  * The SID is a 3-character alphanumeric server identifier unique on the network.
  * Protocol 1206 (v4) does NOT include a hop-count before the SID (unlike 1205/v3).
@@ -347,9 +352,6 @@ final class InspIRCdProtocolHandler implements ProtocolHandlerInterface, Automat
     private function sendCapabilities(ConnectionInterface $connection): void
     {
         $this->writeLine($connection, sprintf('CAPAB START %d', self::PROTOCOL_VERSION));
-
-        $this->writeLine($connection, 'CAPAB CAPABILITIES :CASEMAPPING=ascii');
-
         $this->writeLine($connection, 'CAPAB END');
     }
 

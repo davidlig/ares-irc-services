@@ -6,7 +6,6 @@ namespace App\NickServ\Adapter\In\Irc\Bot;
 
 use App\Irc\Application\Port\In\ActiveProtocolModuleHolderInterface;
 use App\Irc\Application\Port\In\LocalUserModeSyncPort;
-use App\Irc\Application\Port\In\LocalUserQuitSyncPort;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SendNoticePort;
 use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
@@ -36,7 +35,6 @@ final class NickServBot implements NickServNotifierInterface, NickNetworkActions
         private readonly LocalUserModeSyncPort $localUserModeSync,
         private readonly ServiceUidGeneratorInterface $uidGenerator,
         private readonly string $servicesVhost,
-        private readonly LocalUserQuitSyncPort $localUserQuitSync,
         private readonly string $nickservNick = 'NickServ',
         private readonly string $nickservIdent = 'NickServ',
         private readonly string $nickservRealname = 'Nickname Registration Services',
@@ -104,7 +102,6 @@ final class NickServBot implements NickServNotifierInterface, NickNetworkActions
             return;
         }
         $module->getServiceActions()->killUser($this->getServerSid(), $targetUid, $reason);
-        $this->localUserQuitSync->apply($targetUid, $reason);
     }
 
     public function setUserVhost(string $targetUid, string $vhost, string $sourceServerSid): void

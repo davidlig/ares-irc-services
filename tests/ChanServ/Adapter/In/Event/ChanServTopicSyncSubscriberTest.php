@@ -18,6 +18,7 @@ use App\Irc\Adapter\Protocol\UnrealStandalone\UnrealStandaloneProtocolServiceAct
 use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\Irc\Application\Port\In\ChannelServiceActionsPort;
 use App\Irc\Application\Port\In\ChannelSyncCompletedRegistryInterface;
+use App\Irc\Application\Port\In\LocalUserQuitSyncPort;
 use App\Irc\Application\Port\In\UidResolverInterface;
 use App\Irc\Application\PublishedEvent\ChannelTopicReceivedEvent;
 use DateTimeImmutable;
@@ -123,7 +124,7 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
         $connection->method('writeLine')->willReturnCallback(static function (string $line) use (&$written): void { $written[] = $line; });
         $holder = new ActiveConnectionHolder();
         new ReflectionClass($holder)->getProperty('connection')->setValue($holder, $connection);
-        $actions = new UnrealStandaloneProtocolServiceActions($holder);
+        $actions = new UnrealStandaloneProtocolServiceActions($holder, $this->createStub(LocalUserQuitSyncPort::class));
         $registered = $this->createMock(RegisteredChannel::class);
         $registered->expects(self::atLeastOnce())->method('isTopicLock')->willReturn(true);
         $registered->expects(self::atLeastOnce())->method('getTopic')->willReturn(null);
