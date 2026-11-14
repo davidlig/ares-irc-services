@@ -14,6 +14,7 @@ use App\Irc\Adapter\Network\Event\UserMetadataReceivedEvent;
 use App\Irc\Adapter\Network\Event\UserModeReceivedEvent;
 use App\Irc\Adapter\Network\Event\UserNickChangeReceivedEvent;
 use App\Irc\Adapter\Network\Event\UserQuitReceivedEvent;
+use App\Irc\Adapter\Network\ServerBurstRegistry;
 use App\Irc\Adapter\Protocol\InspIRCd\InspIRCdNetworkStateAdapter;
 use App\Irc\Adapter\Protocol\IRCMessage;
 use App\Irc\Domain\Event\ServerDelinkedEvent;
@@ -38,6 +39,25 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
         );
 
         self::assertSame('inspircd', $adapter->getSupportedProtocol());
+    }
+
+    #[Test]
+    public function endburstFromAnUnknownServerLeavesKnownBurstsOpen(): void
+    {
+        $registry = new ServerBurstRegistry();
+        $adapter = new InspIRCdNetworkStateAdapter(
+            $this->createStub(EventDispatcherInterface::class),
+            burstRegistry: $registry,
+        );
+        $adapter->handleMessage(new IRCMessage('SERVER', null, ['hub.test', 'secret', '0A1'], 'Hub'));
+
+        $adapter->handleMessage(new IRCMessage('ENDBURST', '9ZZ', []));
+
+        self::assertTrue($registry->isBursting('0A1'));
+
+        $adapter->handleMessage(new IRCMessage('ENDBURST', '0A1', []));
+
+        self::assertFalse($registry->isBursting('0A1'));
     }
 
     #[Test]
