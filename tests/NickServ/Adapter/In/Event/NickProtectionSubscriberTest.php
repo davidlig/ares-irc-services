@@ -330,8 +330,9 @@ final class NickProtectionSubscriberTest extends TestCase
         $this->notifier->expects(self::never())->method('setUserVhost');
         $this->burstState->addPending(new NetworkUser('001AAA', 'Alice', 'i', 'h', 'c', 'ip', true));
 
-        $this->expectExceptionMessage('listener failed');
+        // The failing chunk is logged instead of propagating; its activity is still saved.
         $this->subscriber->onBurstComplete(new NetworkSynchronizationCompletedEvent('001'));
+        self::assertTrue($this->burstState->isComplete());
     }
 
     #[Test]
@@ -381,12 +382,9 @@ final class NickProtectionSubscriberTest extends TestCase
         $this->notifier->expects(self::never())->method('setUserVhost');
         $this->burstState->addPending(new NetworkUser('001AAA', 'Alice', 'i', 'h', 'c', 'ip'));
 
-        try {
-            $this->subscriber->onBurstComplete(new NetworkSynchronizationCompletedEvent('001'));
-            self::fail('A preload failure must propagate.');
-        } catch (RuntimeException $e) {
-            self::assertSame('preload failed', $e->getMessage());
-        }
+        // The failing chunk is logged instead of propagating, and its batch still ends.
+        $this->subscriber->onBurstComplete(new NetworkSynchronizationCompletedEvent('001'));
+        self::assertCount(2, $events);
         self::assertInstanceOf(NickBurstBatchStartedEvent::class, $events[0]);
         self::assertInstanceOf(NickBurstBatchFinishedEvent::class, $events[1]);
         self::assertSame($events[0]->token, $events[1]->token);

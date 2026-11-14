@@ -16,6 +16,7 @@ use App\Irc\Application\PublishedEvent\UserLeftNetworkEvent;
 use App\Irc\Application\PublishedEvent\UserModesChangedEvent;
 use App\Irc\Application\PublishedEvent\UserNicknameChangedEvent;
 use App\NickServ\Adapter\Out\User\IrcNetworkUserMapper;
+use App\NickServ\Application\Model\NetworkUser;
 use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\NickServEventPublisher;
 use App\NickServ\Application\Port\Out\PendingNickProtectionRegistryInterface;
@@ -27,11 +28,16 @@ use App\NickServ\Application\Service\NickProtectionService;
 use App\NickServ\Application\Service\PendingNickActivities;
 use App\NickServ\Application\UseCase\SyncNetworkIdentification\SyncNetworkIdentification;
 use App\NickServ\Application\UseCase\SyncNetworkIdentification\SyncNetworkIdentificationHandlerInterface;
+use DateTimeImmutable;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Throwable;
 
 use function array_chunk;
 use function array_map;
 use function array_values;
+use function count;
 use function str_contains;
 use function strtolower;
 
@@ -43,6 +49,8 @@ use function strtolower;
  */
 final readonly class NickProtectionSubscriber implements EventSubscriberInterface
 {
+    private const int BURST_CHUNK_SIZE = 200;
+
     public function __construct(
         private NickProtectionService $nickProtectionService,
         private IdentifiedUserVhostSyncService $identifiedUserVhostSync,
@@ -54,6 +62,7 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
         private ?PendingNickProtectionRegistryInterface $pendingProtectionRegistry = null,
         private PendingNickActivities $pendingQuitActivities = new PendingNickActivities(),
         private ?NickServEventPublisher $batchEventPublisher = null,
+        private LoggerInterface $logger = new NullLogger(),
     ) {}
 
     /**
@@ -113,30 +122,16 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
         $this->burstState->markComplete();
         $pending = $this->burstState->takePending();
 
-        foreach (array_chunk($pending, 200) as $batch) {
-            $accounts = [];
-            foreach ($this->identifiedUserVhostSync->findAccountsForBurst(array_map(static fn ($user): string => $user->nick, $batch)) as $account) {
-                $accounts[strtolower($account->getNickname())] = $account;
-            }
-            $activityBatch = new PendingNickActivities();
-            $ids = array_map(static fn ($account): int => $account->getId(), array_values($accounts));
-            $batchStarted = new NickBurstBatchStartedEvent($ids);
+        foreach (array_chunk($pending, self::BURST_CHUNK_SIZE) as $index => $batch) {
             try {
-                $this->batchEventPublisher?->publish($batchStarted);
-                foreach ($batch as $user) {
-                    $account = $accounts[strtolower($user->nick)] ?? null;
-                    $this->identifiedUserVhostSync->syncVhostForLoadedUser($user, $account);
-                    $this->nickProtectionService->enforceProtectionWithAccount($user, $occurredAt, $account, $activityBatch);
-                }
-            } finally {
-                try {
-                    $activities = $activityBatch->all();
-                    if ([] !== $activities) {
-                        $this->nickProtectionService->saveActivities($activities);
-                    }
-                } finally {
-                    $this->batchEventPublisher?->publish(new NickBurstBatchFinishedEvent($batchStarted->token));
-                }
+                $this->protectBurstChunk($batch, $occurredAt);
+            } catch (Throwable $exception) {
+                // One failing chunk must not leave every later chunk unprotected.
+                $this->logger->error('NickServ burst protection chunk failed; continuing with the next chunk.', [
+                    'chunk' => $index + 1,
+                    'users' => count($batch),
+                    'exception' => $exception->getMessage(),
+                ]);
             }
         }
     }
@@ -251,6 +246,37 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
     public function onConnectionLost(NetworkConnectionLostEvent $event): void
     {
         $this->flushQuitActivities();
+    }
+
+    /**
+     * @param list<NetworkUser> $batch
+     */
+    private function protectBurstChunk(array $batch, DateTimeImmutable $occurredAt): void
+    {
+        $accounts = [];
+        foreach ($this->identifiedUserVhostSync->findAccountsForBurst(array_map(static fn (NetworkUser $user): string => $user->nick, $batch)) as $account) {
+            $accounts[strtolower($account->getNickname())] = $account;
+        }
+        $activityBatch = new PendingNickActivities();
+        $ids = array_map(static fn ($account): int => $account->getId(), array_values($accounts));
+        $batchStarted = new NickBurstBatchStartedEvent($ids);
+        try {
+            $this->batchEventPublisher?->publish($batchStarted);
+            foreach ($batch as $user) {
+                $account = $accounts[strtolower($user->nick)] ?? null;
+                $this->identifiedUserVhostSync->syncVhostForLoadedUser($user, $account);
+                $this->nickProtectionService->enforceProtectionWithAccount($user, $occurredAt, $account, $activityBatch);
+            }
+        } finally {
+            try {
+                $activities = $activityBatch->all();
+                if ([] !== $activities) {
+                    $this->nickProtectionService->saveActivities($activities);
+                }
+            } finally {
+                $this->batchEventPublisher?->publish(new NickBurstBatchFinishedEvent($batchStarted->token));
+            }
+        }
     }
 
     private function flushQuitActivities(): void

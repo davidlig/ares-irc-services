@@ -11,6 +11,7 @@ use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\ORM\EntityManagerInterface;
 use UnexpectedValueException;
 
+use function array_chunk;
 use function array_map;
 use function array_unique;
 use function array_values;
@@ -21,6 +22,9 @@ use function strtolower;
 
 final readonly class NickAccountBatchDoctrineQuery implements NickAccountBatchQuery
 {
+    /** Nicknames bound by one lookup statement; large pages and channels are split. */
+    private const int LOOKUP_CHUNK_SIZE = 1000;
+
     public function __construct(private EntityManagerInterface $em) {}
 
     public function findAccountsByNicks(array $nicknames): array
@@ -29,6 +33,23 @@ final readonly class NickAccountBatchDoctrineQuery implements NickAccountBatchQu
         if ([] === $names) {
             return [];
         }
+        $accounts = [];
+        foreach (array_chunk($names, self::LOOKUP_CHUNK_SIZE) as $chunk) {
+            foreach ($this->fetchChunk($chunk) as $lower => $account) {
+                $accounts[$lower] = $account;
+            }
+        }
+
+        return $accounts;
+    }
+
+    /**
+     * @param list<string> $names
+     *
+     * @return array<string, NickAccountData>
+     */
+    private function fetchChunk(array $names): array
+    {
         $rows = $this->em->getConnection()->executeQuery(
             'SELECT id, nickname, nickname_lower, status, language, timezone, email FROM registered_nicks WHERE nickname_lower IN (?)',
             [$names],

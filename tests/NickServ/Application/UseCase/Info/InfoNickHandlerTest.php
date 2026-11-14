@@ -256,6 +256,24 @@ final class InfoNickHandlerTest extends TestCase
         self::assertFalse($result->isOwnerIdentified);
     }
 
+    #[Test]
+    public function neverOnlineNickReportsItsRegistrationDateAsLastSeen(): void
+    {
+        // Intended since #172: INFO shows the registration date instead of "never seen".
+        $registeredAt = new DateTimeImmutable('2026-01-01 12:00:00 UTC');
+        $nick = RegisteredNick::createActive('NeverOnline', 'hash', null, 'en', $registeredAt);
+        $repository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repository->method('findByNick')->willReturn($nick);
+
+        $result = $this->createHandler($repository)->handle(new InfoNick('NeverOnline', null, false, false, false));
+
+        self::assertSame(InfoNickOutcome::Visible, $result->outcome);
+        self::assertFalse($result->lastSeenOnline);
+        self::assertSame($registeredAt, $result->registeredAt);
+        self::assertSame($registeredAt, $result->lastSeenAt);
+        self::assertNull($result->lastQuitMessage);
+    }
+
     protected function setUp(): void
     {
         $this->now = new DateTimeImmutable('2026-09-06 16:00:00 UTC');

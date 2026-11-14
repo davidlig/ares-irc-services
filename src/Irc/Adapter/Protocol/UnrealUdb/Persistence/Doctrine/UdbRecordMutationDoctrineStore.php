@@ -35,6 +35,11 @@ use function substr;
  * This deliberately owns the complete Doctrine unit of work instead of composing
  * the independent record/state repositories, whose flush/clear boundaries are
  * intended for standalone bootstrap and takeover operations.
+ *
+ * Live mutations run inside other contexts' processing (for example an
+ * operclass written while NickServ still holds a burst chunk's accounts), so
+ * the store only detaches the UDB entities it owns and never clears the
+ * shared identity map.
  */
 final class UdbRecordMutationDoctrineStore implements UdbRecordMutationStoreInterface
 {
@@ -60,9 +65,7 @@ final class UdbRecordMutationDoctrineStore implements UdbRecordMutationStoreInte
             }
             throw $exception;
         } finally {
-            if ($this->em->isOpen()) {
-                $this->em->clear();
-            }
+            $this->releaseOwnedEntities();
         }
     }
 
@@ -153,9 +156,7 @@ final class UdbRecordMutationDoctrineStore implements UdbRecordMutationStoreInte
             }
             throw $exception;
         } finally {
-            if ($this->em->isOpen()) {
-                $this->em->clear();
-            }
+            $this->releaseOwnedEntities();
         }
     }
 
@@ -195,9 +196,30 @@ final class UdbRecordMutationDoctrineStore implements UdbRecordMutationStoreInte
 
             throw $exception;
         } finally {
-            if ($this->em->isOpen()) {
-                $this->em->clear();
+            $this->releaseOwnedEntities();
+        }
+    }
+
+    private function releaseOwnedEntities(): void
+    {
+        if (!$this->em->isOpen()) {
+            return;
+        }
+
+        $unitOfWork = $this->em->getUnitOfWork();
+        $owned = [];
+        foreach ([UdbRecord::class, UdbBlockState::class, UdbAuthorityState::class] as $class) {
+            foreach ($unitOfWork->getIdentityMap()[$class] ?? [] as $entity) {
+                $owned[] = $entity;
             }
+        }
+        foreach ($unitOfWork->getScheduledEntityInsertions() as $entity) {
+            if ($entity instanceof UdbRecord || $entity instanceof UdbBlockState || $entity instanceof UdbAuthorityState) {
+                $owned[] = $entity;
+            }
+        }
+        foreach ($owned as $entity) {
+            $this->em->detach($entity);
         }
     }
 

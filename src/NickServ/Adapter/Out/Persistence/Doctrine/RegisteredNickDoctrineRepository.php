@@ -16,6 +16,7 @@ use Doctrine\ORM\Query\ResultSetMappingBuilder;
 use LogicException;
 use WeakMap;
 
+use function array_chunk;
 use function array_filter;
 use function array_key_exists;
 use function array_map;
@@ -34,6 +35,12 @@ use function strtr;
 
 class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterface
 {
+    /** Nicknames bound by one bulk lookup statement. */
+    private const int LOOKUP_CHUNK_SIZE = 1000;
+
+    /** Accounts per last-seen UPDATE; each binds three parameters. */
+    private const int ACTIVITY_CHUNK_SIZE = 500;
+
     /** @var WeakMap<EntityManagerInterface, array<string, RegisteredNick|null>>|null */
     private static ?WeakMap $lookupCache = null;
 
@@ -54,27 +61,17 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
             return;
         }
 
+        foreach ($nicks as $nick) {
+            if (!$this->em->contains($nick) || null === $nick->getLastSeenAt()) {
+                throw new LogicException('Activity batching requires managed accounts with a last-seen timestamp.');
+            }
+        }
+
         $this->em->wrapInTransaction(function () use ($nicks): void {
-            $cases = [];
-            $ids = [];
-            foreach ($nicks as $index => $nick) {
-                if (!$this->em->contains($nick) || null === $nick->getLastSeenAt()) {
-                    throw new LogicException('Activity batching requires managed accounts with a last-seen timestamp.');
-                }
-                $ids[] = $nick->getId();
-                $cases[] = sprintf('WHEN n.id = :id%d THEN :seen%d', $index, $index);
+            // Three bound parameters per account: keep every statement bounded.
+            foreach (array_chunk($nicks, self::ACTIVITY_CHUNK_SIZE) as $chunk) {
+                $this->updateLastSeenChunk($chunk);
             }
-            $query = $this->em->createQuery(sprintf(
-                'UPDATE %s n SET n.lastSeenAt = CASE %s ELSE n.lastSeenAt END WHERE n.id IN (:ids)',
-                RegisteredNick::class,
-                implode(' ', $cases),
-            ));
-            $query->setParameter('ids', $ids);
-            foreach ($nicks as $index => $nick) {
-                $query->setParameter('id' . $index, $nick->getId());
-                $query->setParameter('seen' . $index, $nick->getLastSeenAt(), Types::DATETIME_IMMUTABLE);
-            }
-            $query->execute();
             foreach ($nicks as $nick) {
                 // The bulk update bypasses change tracking. Keep the snapshot synchronized
                 // so the following transaction flush writes any other changed fields only.
@@ -142,13 +139,19 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
             return [];
         }
 
-        /** @var list<RegisteredNick> $accounts */
-        $accounts = $this->em->createQueryBuilder()
-            ->select('n')
-            ->from(RegisteredNick::class, 'n')
-            ->where('n.nicknameLower IN (:nicknames)')
-            ->setParameter('nicknames', $nicknames)
-            ->getQuery()->getResult();
+        $accounts = [];
+        foreach (array_chunk($nicknames, self::LOOKUP_CHUNK_SIZE) as $chunk) {
+            /** @var list<RegisteredNick> $found */
+            $found = $this->em->createQueryBuilder()
+                ->select('n')
+                ->from(RegisteredNick::class, 'n')
+                ->where('n.nicknameLower IN (:nicknames)')
+                ->setParameter('nicknames', $chunk)
+                ->getQuery()->getResult();
+            foreach ($found as $account) {
+                $accounts[] = $account;
+            }
+        }
 
         return $accounts;
     }
@@ -398,5 +401,29 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
     private static function toLikePattern(string $pattern): string
     {
         return strtr(strtolower($pattern), ['!' => '!!', '%' => '!%', '_' => '!_', '*' => '%']);
+    }
+
+    /**
+     * @param list<RegisteredNick> $nicks
+     */
+    private function updateLastSeenChunk(array $nicks): void
+    {
+        $cases = [];
+        $ids = [];
+        foreach ($nicks as $index => $nick) {
+            $ids[] = $nick->getId();
+            $cases[] = sprintf('WHEN n.id = :id%d THEN :seen%d', $index, $index);
+        }
+        $query = $this->em->createQuery(sprintf(
+            'UPDATE %s n SET n.lastSeenAt = CASE %s ELSE n.lastSeenAt END WHERE n.id IN (:ids)',
+            RegisteredNick::class,
+            implode(' ', $cases),
+        ));
+        $query->setParameter('ids', $ids);
+        foreach ($nicks as $index => $nick) {
+            $query->setParameter('id' . $index, $nick->getId());
+            $query->setParameter('seen' . $index, $nick->getLastSeenAt(), Types::DATETIME_IMMUTABLE);
+        }
+        $query->execute();
     }
 }

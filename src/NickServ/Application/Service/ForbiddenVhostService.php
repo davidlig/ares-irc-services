@@ -41,12 +41,14 @@ final class ForbiddenVhostService
             return false;
         }
 
+        // Evict by the stored pattern: the store may match $pattern case-insensitively.
+        $storedPattern = $forbidden->getPattern();
         $this->repository->remove($forbidden);
 
         if (null !== $this->forbiddenVhosts) {
             $this->forbiddenVhosts = array_values(array_filter(
                 $this->forbiddenVhosts,
-                static fn (ForbiddenVhost $cached): bool => $cached->getPattern() !== $pattern,
+                static fn (ForbiddenVhost $cached): bool => $cached !== $forbidden && $cached->getPattern() !== $storedPattern,
             ));
         }
 
