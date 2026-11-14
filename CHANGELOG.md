@@ -21,7 +21,7 @@
 - Since #166, `+r`/`+P` registration modes are reconciled once after all burst pages, and the ChanServ end-of-burst pass runs before OperServ G-line enforcement.
 - Since #172, NickServ `INFO` and `LIST` show the registration date as "last seen" for nicknames that have never been online, instead of "never seen".
 - Expired GLINE, MOTD and AKICK purges process rows in expiry order.
-- NickServ, ChanServ, MemoServ and OperServ fold nickname and channel identities with a fixed RFC 1459 mapping (case-insensitive, with `[]\^` equal to `{}|~`) for lookups, IDENTIFY, nick protection, AKICK, LIST and stored lookup keys, whatever CASEMAPPING the IRCd negotiates. AKICK masks and protected-nick checks treat `[`/`{`, `]`/`}`, `\`/`|` and `^`/`~` as the same character.
+- NickServ, ChanServ, MemoServ and OperServ fold nickname and channel identities with a fixed RFC 1459 mapping (case-insensitive, with `[]\^` equal to `{}|~`) for lookups, IDENTIFY, nick protection, AKICK, LIST and stored lookup keys, whatever CASEMAPPING the IRCd negotiates. AKICK masks and protected-nick checks treat `[`/`{`, `]`/`}`, `\`/`|` and `^`/`~` as the same character. NickServ and ChanServ `LIST` sort by the folded key, so names with `[]\^` now sort with `{}|~`, after plain letters, and a `{` pattern also finds `[`.
 
 ### Upgrade
 

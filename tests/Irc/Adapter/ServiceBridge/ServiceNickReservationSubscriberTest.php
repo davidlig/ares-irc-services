@@ -226,6 +226,33 @@ final class ServiceNickReservationSubscriberTest extends TestCase
         self::assertSame([['OldOper', 'newoper']], $snapshots);
     }
 
+    /**
+     * The inventory stores RFC 1459 folded keys, so `[Bot]` and `{Bot}` are one reservation.
+     */
+    #[Test]
+    public function onBurstCompleteTreatsRfc1459EquivalentWireNamesAsTheSameReservation(): void
+    {
+        $reservation = $this->createMock(ServiceNickReservationInterface::class);
+        $reservation->expects(self::never())->method('releaseNick');
+        $reservation->expects(self::once())->method('reserveNick')->with('{Bot}', 'Reserved for network services');
+
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::never())->method('warning');
+
+        $snapshots = [];
+        $inventory = $this->createMock(ServiceNickReservationInventory::class);
+        $inventory->expects(self::once())->method('namesForProtocol')->with('unreal')->willReturn(['[Bot]']);
+        $inventory->expects(self::once())->method('replaceForProtocol')
+            ->willReturnCallback(static function (string $protocol, array $names) use (&$snapshots): void {
+                $snapshots[] = $names;
+            });
+
+        $this->subscriberFor($reservation, $inventory, ['{Bot}'], 'unreal', $logger)
+            ->onBurstComplete($this->burstEvent());
+
+        self::assertSame([['[Bot]']], $snapshots);
+    }
+
     #[Test]
     public function onBurstCompleteDiscoversLegacyManagedReservationsWhenProtocolSupportsIt(): void
     {
