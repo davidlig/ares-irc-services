@@ -395,8 +395,9 @@ Add to `inspircd.conf`:
 Ensure the `spanningtree` module is loaded.
 
 > **Handshake:** Ares uses SpanTree v4 (1206). It sends `CAPAB START 1206` then
-> `CAPAB CAPABILITIES :CASEMAPPING=ascii` (deliberately omitting module/mode CAPAB fields to
-> skip comparison). At `CAPAB END`, the link requires protocol 1206 and the `services`,
+> `CAPAB END` (no `CAPAB CAPABILITIES`, so InspIRCd skips its CASEMAPPING comparison and Ares
+> adopts the casemapping the remote announces; module/mode CAPAB fields are deliberately
+> omitted to skip comparison). At `CAPAB END`, the link requires protocol 1206 and the `services`,
 > `account`, `chghost`, and `cloak` capabilities used by current operations; optional
 > decoration modes are not required. No `CHALLENGE` is sent — authentication uses the
 > plaintext link password. Set `IRC_SERVER_SID` to a 3-character alphanumeric value (for

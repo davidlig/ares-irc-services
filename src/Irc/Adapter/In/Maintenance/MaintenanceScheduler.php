@@ -23,7 +23,8 @@ use function usort;
  *
  * Tasks execute sequentially in ascending getOrder() to respect cross-service
  * dependencies (e.g. orphan channels must be handled before nicks are deleted).
- * If any task throws, the cycle stops immediately to avoid inconsistent state.
+ * A task that throws is logged and retried on the next tick; the remaining tasks
+ * of the cycle still run, so one persistent failure cannot starve the others.
  */
 final class MaintenanceScheduler
 {
@@ -50,6 +51,7 @@ final class MaintenanceScheduler
         $now = hrtime(true) / 1_000_000_000.0;
         $cycleStart = hrtime(true);
         $tasksRun = [];
+        $tasksFailed = [];
 
         $this->logger->info('Maintenance cycle started');
 
@@ -72,14 +74,12 @@ final class MaintenanceScheduler
                     'duration_ms' => round($durationMs, 2),
                 ]);
             } catch (Throwable $e) {
-                $this->logger->error('Maintenance cycle aborted', [
+                $tasksFailed[] = $task->getName();
+                $this->logger->error('Maintenance task failed', [
                     'task' => $task->getName(),
                     'error' => $e->getMessage(),
-                    'tasks_completed' => $tasksRun,
                     'exception' => $e,
                 ]);
-
-                return;
             }
         }
 
@@ -87,6 +87,7 @@ final class MaintenanceScheduler
         $this->logger->info('Maintenance cycle completed', [
             'tasks_run' => $tasksRun,
             'tasks_count' => count($tasksRun),
+            'tasks_failed' => $tasksFailed,
             'cycle_duration_ms' => round($cycleDurationMs, 2),
         ]);
     }

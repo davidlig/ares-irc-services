@@ -12,6 +12,8 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
+use function end;
+
 #[CoversClass(MaintenanceScheduler::class)]
 final class MaintenanceSchedulerTest extends TestCase
 {
@@ -75,7 +77,7 @@ final class MaintenanceSchedulerTest extends TestCase
     }
 
     #[Test]
-    public function tickStopsCycleWhenTaskThrows(): void
+    public function tickLogsAFailingTaskAndStillRunsLaterTasks(): void
     {
         $holder = new MaintenanceSchedulerTestState();
         $taskOk = new class($holder) implements MaintenanceTaskInterface {
@@ -154,7 +156,11 @@ final class MaintenanceSchedulerTest extends TestCase
 
         $scheduler->tick();
 
-        self::assertSame(['ok', 'fail'], $holder->runOrder);
+        self::assertSame(['ok', 'fail', 'never'], $holder->runOrder);
+
+        $scheduler->tick();
+
+        self::assertSame(['ok', 'fail', 'never', 'ok', 'fail', 'never'], $holder->runOrder);
     }
 
     #[Test]
@@ -268,7 +274,7 @@ final class MaintenanceSchedulerTest extends TestCase
     }
 
     #[Test]
-    public function tickLogsCycleAbortedWhenTaskThrows(): void
+    public function tickLogsTheFailedTaskAndReportsItInTheCompletedCycle(): void
     {
         $task = new class implements MaintenanceTaskInterface {
             public function getName(): string
@@ -293,16 +299,28 @@ final class MaintenanceSchedulerTest extends TestCase
         };
 
         $logErrors = [];
+        $logInfos = [];
         $logger = $this->createStub(LoggerInterface::class);
-        $logger->method('info')->willReturnCallback(static function (): void {});
-        $logger->method('error')->willReturnCallback(static function (string $message) use (&$logErrors): void {
-            $logErrors[] = $message;
+        $logger->method('info')->willReturnCallback(static function (string $message, array $context = []) use (&$logInfos): void {
+            $logInfos[] = [$message, $context];
+        });
+        $logger->method('error')->willReturnCallback(static function (string $message, array $context = []) use (&$logErrors): void {
+            $logErrors[] = [$message, $context];
         });
 
         $scheduler = new MaintenanceScheduler([$task], $logger);
         $scheduler->tick();
 
-        self::assertSame('Maintenance cycle aborted', $logErrors[0]);
+        self::assertCount(1, $logErrors);
+        self::assertSame('Maintenance task failed', $logErrors[0][0]);
+        self::assertSame('task.throws', $logErrors[0][1]['task']);
+        self::assertSame('Task error', $logErrors[0][1]['error']);
+        self::assertInstanceOf(RuntimeException::class, $logErrors[0][1]['exception']);
+        $completed = end($logInfos);
+        self::assertIsArray($completed);
+        self::assertSame('Maintenance cycle completed', $completed[0]);
+        self::assertSame([], $completed[1]['tasks_run']);
+        self::assertSame(['task.throws'], $completed[1]['tasks_failed']);
     }
 }
 
