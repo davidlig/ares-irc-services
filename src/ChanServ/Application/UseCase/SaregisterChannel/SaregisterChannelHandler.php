@@ -12,9 +12,9 @@ use App\ChanServ\Application\Service\ChannelHistoryService;
 use App\ChanServ\Application\Service\ChannelRegistrationActivator;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\Shared\Application\Port\EventBusInterface;
+use App\Shared\Domain\IrcIdentityFold;
 
 use function preg_match;
-use function strtolower;
 use function trim;
 
 final readonly class SaregisterChannelHandler implements SaregisterChannelHandlerInterface
@@ -34,7 +34,7 @@ final readonly class SaregisterChannelHandler implements SaregisterChannelHandle
             return SaregisterChannelResult::invalidChannelName($command->channelName);
         }
 
-        $channelNameLower = strtolower($command->channelName);
+        $channelNameLower = IrcIdentityFold::fold($command->channelName);
         $expiredRejectedChannel = null;
         if ($this->channelRepository->existsByChannelName($channelNameLower)) {
             $existing = $this->channelRepository->findByChannelName($channelNameLower);

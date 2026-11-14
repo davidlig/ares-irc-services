@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Domain\ValueObject;
 
+use App\Shared\Domain\IrcIdentityFold;
 use InvalidArgumentException;
 
 use function ctype_alnum;
@@ -12,7 +13,6 @@ use function str_replace;
 use function str_split;
 use function strlen;
 use function strpos;
-use function strtolower;
 use function substr;
 
 final readonly class AkickMask
@@ -29,12 +29,12 @@ final readonly class AkickMask
             throw new InvalidArgumentException('AKICK mask must be a non-empty nick!ident@host pattern of at most 255 characters.');
         }
 
-        $this->pattern = strtolower($value);
+        $this->pattern = IrcIdentityFold::fold($value);
     }
 
     public function matches(string $userMask): bool
     {
-        $subject = strtolower($userMask);
+        $subject = IrcIdentityFold::fold($userMask);
         $patternLength = strlen($this->pattern);
         $subjectLength = strlen($subject);
         $patternIndex = 0;

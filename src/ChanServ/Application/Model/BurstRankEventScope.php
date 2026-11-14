@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Application\Model;
 
-use function strtolower;
+use App\Shared\Domain\IrcIdentityFold;
 
 /** In-memory state for synchronous events emitted during one EOS reconciliation. */
 final class BurstRankEventScope
@@ -45,7 +45,7 @@ final class BurstRankEventScope
     /** @return array{ChannelRankPolicy, ?ChannelRankNetworkState}|null */
     public function channel(string $name): ?array
     {
-        if (null === $this->policy || strtolower($this->policy->name) !== strtolower($name)) {
+        if (null === $this->policy || !IrcIdentityFold::equals($this->policy->name, $name)) {
             return null;
         }
 
@@ -54,11 +54,11 @@ final class BurstRankEventScope
 
     public function markActivity(string $name): void
     {
-        $this->activity[strtolower($name)] = true;
+        $this->activity[IrcIdentityFold::fold($name)] = true;
     }
 
     public function needsActivity(string $name): bool
     {
-        return isset($this->activity[strtolower($name)]);
+        return isset($this->activity[IrcIdentityFold::fold($name)]);
     }
 }

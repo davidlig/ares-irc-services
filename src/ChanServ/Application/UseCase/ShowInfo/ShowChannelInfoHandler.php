@@ -8,8 +8,7 @@ use App\ChanServ\Application\Port\Out\ChannelAccessRepositoryInterface;
 use App\ChanServ\Application\Port\Out\ChanUserAccountPort;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
-
-use function strtolower;
+use App\Shared\Domain\IrcIdentityFold;
 
 final readonly class ShowChannelInfoHandler implements ShowChannelInfoHandlerInterface
 {
@@ -22,7 +21,7 @@ final readonly class ShowChannelInfoHandler implements ShowChannelInfoHandlerInt
 
     public function handle(ShowChannelInfo $query): ?ChannelInfoView
     {
-        $channel = $this->channels->findByChannelName(strtolower($query->channelName));
+        $channel = $this->channels->findByChannelName(IrcIdentityFold::fold($query->channelName));
         if (null === $channel) {
             return null;
         }

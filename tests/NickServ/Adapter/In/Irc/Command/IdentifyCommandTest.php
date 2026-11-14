@@ -271,6 +271,41 @@ final class IdentifyCommandTest extends TestCase
         self::assertSame(['identify.success'], $messages);
     }
 
+    /** @return iterable<string, array{string, string}> */
+    public static function equivalentSenderNicknames(): iterable
+    {
+        yield 'ascii case' => ['alice', 'Alice'];
+        yield 'rfc1459 fold' => ['{alice}|', '[Alice]\\'];
+    }
+
+    #[Test]
+    #[DataProvider('equivalentSenderNicknames')]
+    public function doesNotForceTheNicknameWhenTheSenderAlreadyHoldsAnEquivalentNick(string $senderNick, string $accountNick): void
+    {
+        $sender = new SenderView('UID1', $senderNick, 'ident', 'host', 'cloak', 'ip', serverSid: '001');
+
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $userLookup->method('findByNick')->willReturn($sender);
+
+        $pendingRegistry = $this->createStub(PendingNickRestoreRegistryInterface::class);
+        $pendingRegistry->method('peek')->willReturn(false);
+
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::never())->method('killUser');
+        $notifier->expects(self::never())->method('forceNick');
+        $notifier->expects(self::once())->method('setUserAccount')->with('UID1', $accountNick);
+
+        $handler = $this->createStub(IdentifyNickHandlerInterface::class);
+        $handler->method('handle')->willReturn(IdentifyNickResult::success($accountNick, null, 'en'));
+
+        $command = new IdentifyCommand($handler, $userLookup, $pendingRegistry, new NickServClientKeyResolver(), $this->authenticationMode(), $this->automaticModeSessions());
+
+        $messages = [];
+        $command->execute($this->createContext($sender, $messages, [$accountNick, 'pass'], notifier: $notifier));
+
+        self::assertSame(['identify.success'], $messages);
+    }
+
     /**
      * @param list<mixed>  $messages
      * @param list<string> $args

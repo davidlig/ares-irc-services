@@ -12,8 +12,7 @@ use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\Irc\Application\Port\In\ChannelView;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
-
-use function strcasecmp;
+use App\Shared\Domain\IrcIdentityFold;
 
 final readonly class IrcChannelEntryNetworkQuery implements ChannelEntryNetworkQuery
 {
@@ -80,7 +79,7 @@ final readonly class IrcChannelEntryNetworkQuery implements ChannelEntryNetworkQ
             userMask: $user->toUserMask(),
             identified: $user->isIdentified,
             operator: $user->isOper,
-            service: 0 === strcasecmp($user->nick, $this->chanservNick),
+            service: IrcIdentityFold::equals($user->nick, $this->chanservNick),
             displayMask: $user->toDisplayMask(),
         );
     }

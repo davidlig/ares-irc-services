@@ -257,6 +257,7 @@ final class LayerDependencyTest extends TestCase
             'src/Shared/Application/Port/EventBusInterface.php',
             'src/Shared/Application/Port/TransactionManagerInterface.php',
             'src/Shared/Application/Time/RelativeExpiryParser.php',
+            'src/Shared/Domain/IrcIdentityFold.php',
         ];
         $actual = self::phpFiles('src/Shared');
 

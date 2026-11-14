@@ -15,9 +15,9 @@ use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\Exception\ChannelAlreadyRegisteredException;
 use App\ChanServ\Domain\ValueObject\RegistrationMode;
 use App\Shared\Application\Port\EventBusInterface;
+use App\Shared\Domain\IrcIdentityFold;
 
 use function ceil;
-use function strtolower;
 
 final readonly class RegisterChannelHandler implements RegisterChannelHandlerInterface
 {
@@ -35,7 +35,7 @@ final readonly class RegisterChannelHandler implements RegisterChannelHandlerInt
 
     public function handle(RegisterChannel $command): RegisterChannelResult
     {
-        $channelNameLower = strtolower($command->channelName);
+        $channelNameLower = IrcIdentityFold::fold($command->channelName);
         $expiredRejectedChannel = null;
         if ($this->channelRepository->existsByChannelName($channelNameLower)) {
             $existing = $this->channelRepository->findByChannelName($channelNameLower);

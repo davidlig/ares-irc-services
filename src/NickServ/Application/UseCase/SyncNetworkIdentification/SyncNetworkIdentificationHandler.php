@@ -10,8 +10,7 @@ use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\Port\Out\SessionLanguageTracker;
 use App\NickServ\Application\PublishedEvent\UserDeidentifiedEvent;
 use App\NickServ\Application\Service\NickProtectionService;
-
-use function strcasecmp;
+use App\Shared\Domain\IrcIdentityFold;
 
 final readonly class SyncNetworkIdentificationHandler implements SyncNetworkIdentificationHandlerInterface
 {
@@ -29,7 +28,7 @@ final readonly class SyncNetworkIdentificationHandler implements SyncNetworkIden
         $identifiedNick = $this->identifiedSessions->findNick($user->uid);
 
         if ($user->isIdentified) {
-            if (null !== $identifiedNick && 0 === strcasecmp($identifiedNick, $user->nick)) {
+            if (null !== $identifiedNick && IrcIdentityFold::equals($identifiedNick, $user->nick)) {
                 return;
             }
 

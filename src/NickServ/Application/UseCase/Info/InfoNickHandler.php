@@ -7,8 +7,7 @@ namespace App\NickServ\Application\UseCase\Info;
 use App\NickServ\Application\Port\Out\NickAssociatedChannelsPort;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\Service\VhostDisplayResolver;
-
-use function strcasecmp;
+use App\Shared\Domain\IrcIdentityFold;
 
 final readonly class InfoNickHandler implements InfoNickHandlerInterface
 {
@@ -39,7 +38,7 @@ final readonly class InfoNickHandler implements InfoNickHandlerInterface
             );
         }
 
-        $isOwner = null !== $command->senderNick && 0 === strcasecmp($command->senderNick, $account->getNickname());
+        $isOwner = null !== $command->senderNick && IrcIdentityFold::equals($command->senderNick, $account->getNickname());
         if ($account->isPrivate() && !$isOwner) {
             return InfoNickResult::private($account->getNickname());
         }

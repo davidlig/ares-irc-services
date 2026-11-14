@@ -871,4 +871,15 @@ final class RegisteredNickTest extends TestCase
         $nick->changeAutomaticModes(new AutomaticModeProfile());
         self::assertSame([], $nick->getAutomaticModes()->intentions);
     }
+
+    #[Test]
+    public function lookupKeyUsesTheRfc1459Fold(): void
+    {
+        $at = new DateTimeImmutable('2026-01-01');
+
+        self::assertSame('{foo}|~', RegisteredNick::createPending('[Foo]\\^', 'h', 'a@example.com', 'en', $at, $at)->getNicknameLower());
+        self::assertSame('{foo}', RegisteredNick::createActive('[Foo]', 'h', null, 'en', $at)->getNicknameLower());
+        self::assertSame('{foo}', RegisteredNick::createForbidden('[FOO]', 'r')->getNicknameLower());
+        self::assertSame('plain', RegisteredNick::createActive('Plain', 'h', null, 'en', $at)->getNicknameLower());
+    }
 }

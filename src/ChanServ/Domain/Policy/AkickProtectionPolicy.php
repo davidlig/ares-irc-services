@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\ChanServ\Domain\Policy;
 
 use App\ChanServ\Domain\ValueObject\AkickMask;
+use App\Shared\Domain\IrcIdentityFold;
 
 use function fnmatch;
-use function strtolower;
 
 final readonly class AkickProtectionPolicy
 {
@@ -18,9 +18,9 @@ final readonly class AkickProtectionPolicy
             return null;
         }
 
-        $pattern = strtolower($mask->nicknamePattern());
+        $pattern = IrcIdentityFold::fold($mask->nicknamePattern());
         foreach ($protectedNicknames as $nickname) {
-            if (fnmatch($pattern, strtolower($nickname))) {
+            if (fnmatch($pattern, IrcIdentityFold::fold($nickname))) {
                 return $nickname;
             }
         }

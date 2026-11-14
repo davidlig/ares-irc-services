@@ -11,7 +11,7 @@ interface ChannelRankNetworkQuery
 {
     public function findChannel(string $channelName): ?ChannelRankNetworkState;
 
-    /** @param array<string, ChanAccountView> $accounts keyed by lowercase nickname */
+    /** @param array<string, ChanAccountView> $accounts keyed by the IrcIdentityFold of the nickname */
     public function findChannelWithAccounts(string $channelName, array $accounts): ?ChannelRankNetworkState;
 
     public function findMember(string $channelName, string $uid): ?ChannelRankNetworkState;

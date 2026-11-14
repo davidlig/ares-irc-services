@@ -5,9 +5,8 @@ declare(strict_types=1);
 namespace App\Irc\Adapter\Out\Persistence;
 
 use App\Irc\Adapter\ServiceBridge\ServiceNickReservationInventory;
+use App\Shared\Domain\IrcIdentityFold;
 use Doctrine\DBAL\Connection;
-
-use function strtolower;
 
 final readonly class DbalServiceNickReservationInventory implements ServiceNickReservationInventory
 {
@@ -32,7 +31,7 @@ final readonly class DbalServiceNickReservationInventory implements ServiceNickR
             foreach ($nicknames as $nickname) {
                 $connection->insert('service_nick_reservations', [
                     'protocol' => $protocol,
-                    'nickname_lower' => strtolower($nickname),
+                    'nickname_lower' => IrcIdentityFold::fold($nickname),
                     'nickname' => $nickname,
                 ]);
             }

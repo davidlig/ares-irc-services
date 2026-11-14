@@ -17,9 +17,8 @@ use App\NickServ\Application\Port\Out\TemporaryRescueTokenStore;
 use App\NickServ\Application\PublishedEvent\NickPasswordHashAvailable;
 use App\NickServ\Application\Service\NickHistoryService;
 use App\NickServ\Domain\ValueObject\NickStatus;
+use App\Shared\Domain\IrcIdentityFold;
 use DateTimeImmutable;
-
-use function strcasecmp;
 
 final readonly class VerifyNickHandler implements VerifyNickHandlerInterface
 {
@@ -54,7 +53,7 @@ final readonly class VerifyNickHandler implements VerifyNickHandlerInterface
         $migration = $account->isRegistered();
         $authenticatedNick = $this->identifiedRegistry->findNick($command->senderUid);
         $authenticated = $command->authenticatedAccountId === $account->getId()
-            || (null !== $authenticatedNick && 0 === strcasecmp($authenticatedNick, $account->getNickname()));
+            || (null !== $authenticatedNick && IrcIdentityFold::equals($authenticatedNick, $account->getNickname()));
         $expired = $account->isPending() && (null === $account->getExpiresAt() || $account->getExpiresAt() <= $now);
         $matches = null !== $hash && !$expired && (!$migration || $authenticated)
             && $this->temporaryTokens->matches($account->getId(), $hash, $now);

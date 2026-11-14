@@ -9,8 +9,7 @@ use App\ChanServ\Application\Port\Out\ChannelMlockPolicyRepository;
 use App\ChanServ\Application\Port\Out\ChanNetworkActions;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\Port\Out\RegisteredChannelSetupActions;
-
-use function strtolower;
+use App\Shared\Domain\IrcIdentityFold;
 
 final readonly class RegisteredChannelSetupService implements RegisteredChannelSetup
 {
@@ -23,7 +22,7 @@ final readonly class RegisteredChannelSetupService implements RegisteredChannelS
 
     public function restore(string $channelName): void
     {
-        $registered = $this->channels->findByChannelName(strtolower($channelName));
+        $registered = $this->channels->findByChannelName(IrcIdentityFold::fold($channelName));
         if (null === $registered || $registered->isBlocked()) {
             return;
         }

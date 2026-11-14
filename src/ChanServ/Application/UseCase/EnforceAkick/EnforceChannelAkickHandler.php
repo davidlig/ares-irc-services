@@ -13,13 +13,13 @@ use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\Policy\AkickMatchPolicy;
 use App\ChanServ\Domain\ValueObject\AkickMask;
 use App\ChanServ\Domain\ValueObject\AkickRule;
+use App\Shared\Domain\IrcIdentityFold;
 use DateTimeImmutable;
 use InvalidArgumentException;
 
 use function array_values;
 use function spl_object_id;
 use function sprintf;
-use function strtolower;
 
 final readonly class EnforceChannelAkickHandler implements EnforceChannelAkickHandlerInterface
 {
@@ -34,7 +34,7 @@ final readonly class EnforceChannelAkickHandler implements EnforceChannelAkickHa
 
     public function handle(EnforceChannelAkick $command): int
     {
-        $channel = $this->channels->findByChannelName(strtolower($command->channelName));
+        $channel = $this->channels->findByChannelName(IrcIdentityFold::fold($command->channelName));
         if (null === $channel || $channel->isBlocked()) {
             return 0;
         }

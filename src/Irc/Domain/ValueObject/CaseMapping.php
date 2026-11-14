@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Irc\Domain\ValueObject;
 
+use App\Shared\Domain\IrcIdentityFold;
+
 use function strtolower;
 use function strtr;
 
@@ -16,12 +18,10 @@ enum CaseMapping: string
 
     public function fold(string $value): string
     {
-        $value = strtolower($value);
-
         return match ($this) {
-            self::Ascii => $value,
-            self::Rfc1459 => strtr($value, '[]\\^', '{}|~'),
-            self::StrictRfc1459 => strtr($value, '[]\\', '{}|'),
+            self::Ascii => strtolower($value),
+            self::Rfc1459 => IrcIdentityFold::fold($value),
+            self::StrictRfc1459 => strtr(strtolower($value), '[]\\', '{}|'),
         };
     }
 }

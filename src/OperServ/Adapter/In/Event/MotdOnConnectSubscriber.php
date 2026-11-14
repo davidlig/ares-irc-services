@@ -19,6 +19,7 @@ use App\OperServ\Application\Model\MessageDelivery;
 use App\OperServ\Application\Port\Out\MotdEntry;
 use App\OperServ\Application\Port\Out\MotdRepository;
 use App\OperServ\Domain\ValueObject\GlobalMessageMask;
+use App\Shared\Domain\IrcIdentityFold;
 use DateTimeImmutable;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -30,7 +31,6 @@ use function array_values;
 use function in_array;
 use function max;
 use function sprintf;
-use function strtolower;
 use function time;
 
 /**
@@ -120,7 +120,7 @@ final class MotdOnConnectSubscriber implements EventSubscriberInterface
                 continue;
             }
 
-            $nickLower = strtolower($mask->nickname);
+            $nickLower = IrcIdentityFold::fold($mask->nickname);
 
             if (isset($this->pseudoClients[$nickLower])) {
                 $pc = &$this->pseudoClients[$nickLower];
@@ -251,7 +251,7 @@ final class MotdOnConnectSubscriber implements EventSubscriberInterface
                 continue;
             }
 
-            $nickLower = strtolower($mask->nickname);
+            $nickLower = IrcIdentityFold::fold($mask->nickname);
             $pc = $this->pseudoClients[$nickLower] ?? null;
 
             if (null !== $pc) {

@@ -5,32 +5,35 @@ declare(strict_types=1);
 namespace App\OperServ\Adapter\Out\Security;
 
 use App\OperServ\Application\Port\Out\RootIdentityRegistry;
+use App\Shared\Domain\IrcIdentityFold;
 
-use function array_fill_keys;
 use function array_filter;
-use function array_keys;
 use function array_map;
+use function array_values;
 use function explode;
 use function strtolower;
 
 final readonly class ConfiguredRootIdentityRegistry implements RootIdentityRegistry
 {
-    /** @var array<string, true> */
+    /** @var array<string, string> ASCII-lowered network nicknames keyed by the service identity fold */
     private array $nicknames;
 
     public function __construct(string $rootUsers)
     {
-        $values = array_filter(array_map('trim', explode(',', $rootUsers)));
-        $this->nicknames = array_fill_keys(array_map('strtolower', $values), true);
+        $nicknames = [];
+        foreach (array_filter(array_map('trim', explode(',', $rootUsers))) as $nickname) {
+            $nicknames[IrcIdentityFold::fold($nickname)] ??= strtolower($nickname);
+        }
+        $this->nicknames = $nicknames;
     }
 
     public function contains(string $nickname): bool
     {
-        return isset($this->nicknames[strtolower($nickname)]);
+        return isset($this->nicknames[IrcIdentityFold::fold($nickname)]);
     }
 
     public function allNicknames(): array
     {
-        return array_keys($this->nicknames);
+        return array_values($this->nicknames);
     }
 }

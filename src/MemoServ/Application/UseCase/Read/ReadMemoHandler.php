@@ -7,9 +7,8 @@ namespace App\MemoServ\Application\UseCase\Read;
 use App\MemoServ\Application\Port\Out\MemoChannelPort;
 use App\MemoServ\Application\Port\Out\MemoRepositoryInterface;
 use App\MemoServ\Application\Port\Out\MemoUserAccountPort;
+use App\Shared\Domain\IrcIdentityFold;
 use LogicException;
-
-use function strtolower;
 
 final readonly class ReadMemoHandler implements ReadMemoHandlerInterface
 {
@@ -22,7 +21,7 @@ final readonly class ReadMemoHandler implements ReadMemoHandlerInterface
     public function handle(ReadMemo $command): ReadMemoResult
     {
         if (null !== $command->channelName) {
-            $channel = $this->channelPort->findChannelByName(strtolower($command->channelName));
+            $channel = $this->channelPort->findChannelByName(IrcIdentityFold::fold($command->channelName));
             if (null === $channel) {
                 return ReadMemoResult::channelNotRegistered($command->channelName);
             }

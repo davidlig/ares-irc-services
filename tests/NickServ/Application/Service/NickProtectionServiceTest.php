@@ -29,6 +29,7 @@ use App\NickServ\Application\UseCase\IssueMigrationRescueToken\IssueMigrationRes
 use App\NickServ\Domain\Entity\RegisteredNick;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
@@ -591,6 +592,56 @@ final class NickProtectionServiceTest extends TestCase
         );
 
         $service->onNickChanged('UID1', 'OldNick', 'RegNick', new DateTimeImmutable());
+    }
+
+    /** @return iterable<string, array{string, string}> */
+    public static function equivalentIdentifiedNicknames(): iterable
+    {
+        yield 'ascii case' => ['RegNick', 'REGNICK'];
+        yield 'rfc1459 fold' => ['[Reg]\\^', '{REG}|~'];
+    }
+
+    #[Test]
+    #[DataProvider('equivalentIdentifiedNicknames')]
+    public function onNickChangedSkipsProtectionForAnEquivalentIdentifiedNickname(string $registered, string $newNick): void
+    {
+        $burstState = new BurstState();
+        $burstState->markComplete();
+        $identifiedRegistry = new IdentifiedSessionRegistry();
+        $identifiedRegistry->register('UID1', $registered);
+
+        $account = RegisteredNick::createActive($registered, 'hash', 'u@e.com', 'en', new DateTimeImmutable());
+        $user = new NetworkUser('UID1', $newNick, 'i', 'h', 'c', 'ip', false);
+
+        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repo->method('findByNick')->willReturn($account);
+        $userLookup = $this->createStub(NickNetworkUserLookup::class);
+        $userLookup->method('findByUid')->willReturn($user);
+
+        $notifier = $this->createMock(NickNetworkActions::class);
+        $notifier->expects(self::never())->method('forceNick');
+        $notifier->expects(self::never())->method('setUserAccount');
+
+        $service = new NickProtectionService(
+            $repo,
+            $userLookup,
+            $notifier,
+            $burstState,
+            $identifiedRegistry,
+            new SessionLanguageRegistry(),
+            $this->createStub(PendingNickRestoreRegistryInterface::class),
+            $this->createStub(NickProtectionNotifier::class),
+            $this->createStub(NickServEventPublisher::class),
+            $this->createStub(ForbiddenNickService::class),
+            $this->createStub(NickChangeIdentificationPolicy::class),
+            $this->guestNicknameGenerator(),
+            $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
+            $this->authenticationModeQuery(),
+        );
+
+        $service->onNickChanged('UID1', 'OldNick', $newNick, new DateTimeImmutable());
+
+        self::assertSame($registered, $identifiedRegistry->findNick('UID1'));
     }
 
     #[Test]

@@ -22,9 +22,9 @@ use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use App\Shared\Adapter\In\Irc\Presentation\Component;
 use App\Shared\Adapter\In\Irc\Presentation\Role;
+use App\Shared\Domain\IrcIdentityFold;
 
 use function ceil;
-use function strcasecmp;
 
 final readonly class IdentifyCommand implements NickServCommandInterface
 {
@@ -205,7 +205,7 @@ final readonly class IdentifyCommand implements NickServCommandInterface
             $context->replyEmphasized('identify.ghost_released', ['nickname' => $nickname], Role::Information, ['nickname']);
         }
 
-        if (0 !== strcasecmp($sender->nick, $nickname) || $this->pendingRegistry->peek($sender->uid)) {
+        if (!IrcIdentityFold::equals($sender->nick, $nickname) || $this->pendingRegistry->peek($sender->uid)) {
             $context->getNotifier()->forceNick($sender->uid, $nickname);
         }
 

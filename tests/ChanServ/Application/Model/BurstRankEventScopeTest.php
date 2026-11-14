@@ -34,4 +34,19 @@ final class BurstRankEventScopeTest extends TestCase
         self::assertNull($scope->channel('#test'));
         self::assertFalse($scope->needsActivity('#test'));
     }
+
+    #[Test]
+    public function scopeFoldsChannelNamesWithTheRfc1459Mapping(): void
+    {
+        $scope = new BurstRankEventScope();
+        $scope->begin();
+        $policy = new ChannelRankPolicy(1, '#[Ares]', 10, false, false, ChannelLevelSet::defaults(), []);
+        $scope->setChannel($policy, null);
+
+        self::assertSame([$policy, null], $scope->channel('#{ARES}'));
+        self::assertNull($scope->channel('#(ares)'));
+        $scope->markActivity('#[Ares]');
+        self::assertTrue($scope->needsActivity('#{ares}'));
+        self::assertFalse($scope->needsActivity('#(ares)'));
+    }
 }

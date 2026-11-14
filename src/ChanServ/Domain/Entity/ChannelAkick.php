@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Domain\Entity;
 
+use App\Shared\Domain\IrcIdentityFold;
 use DateTimeImmutable;
 use InvalidArgumentException;
 use Stringable;
@@ -14,7 +15,6 @@ use function sprintf;
 use function str_split;
 use function strlen;
 use function strpos;
-use function strtolower;
 use function substr;
 use function substr_count;
 
@@ -145,8 +145,8 @@ class ChannelAkick
      */
     public function matches(string|Stringable $userMask): bool
     {
-        $pattern = strtolower($this->mask);
-        $subject = strtolower((string) $userMask);
+        $pattern = IrcIdentityFold::fold($this->mask);
+        $subject = IrcIdentityFold::fold((string) $userMask);
 
         return fnmatch($pattern, $subject);
     }

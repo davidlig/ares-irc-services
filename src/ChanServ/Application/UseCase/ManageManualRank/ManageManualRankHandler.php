@@ -13,10 +13,9 @@ use App\ChanServ\Domain\Entity\ChannelAccess;
 use App\ChanServ\Domain\Exception\ChannelNotRegisteredException;
 use App\ChanServ\Domain\ValueObject\RankChange;
 use App\ChanServ\Domain\ValueObject\RankChangeAction;
+use App\Shared\Domain\IrcIdentityFold;
 
 use function in_array;
-use function strcasecmp;
-use function strtolower;
 
 final readonly class ManageManualRankHandler implements ManageManualRankHandlerInterface
 {
@@ -29,7 +28,7 @@ final readonly class ManageManualRankHandler implements ManageManualRankHandlerI
 
     public function handle(ManageManualRank $command): ManageManualRankResult
     {
-        $channel = $this->channels->findByChannelName(strtolower($command->channelName));
+        $channel = $this->channels->findByChannelName(IrcIdentityFold::fold($command->channelName));
         if (null === $channel) {
             throw ChannelNotRegisteredException::forChannel($command->channelName);
         }
@@ -55,7 +54,7 @@ final readonly class ManageManualRankHandler implements ManageManualRankHandlerI
 
         $target = null;
         foreach ($state->members as $member) {
-            if (0 === strcasecmp($member->nickname, $command->targetNickname)) {
+            if (IrcIdentityFold::equals($member->nickname, $command->targetNickname)) {
                 $target = $member;
                 break;
             }

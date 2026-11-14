@@ -11,10 +11,9 @@ use App\ChanServ\Application\Port\Out\ChannelRankPolicyRepository;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\ValueObject\ChannelLevelSet;
+use App\Shared\Domain\IrcIdentityFold;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
-
-use function strtolower;
 
 final readonly class DoctrineChannelRankPolicyRepository implements ChannelRankPolicyRepository
 {
@@ -32,7 +31,7 @@ final readonly class DoctrineChannelRankPolicyRepository implements ChannelRankP
 
     public function findByName(string $channelName): ?ChannelRankPolicy
     {
-        $channel = $this->channels->findByChannelName(strtolower($channelName));
+        $channel = $this->channels->findByChannelName(IrcIdentityFold::fold($channelName));
 
         return null === $channel ? null : $this->snapshot($channel, false);
     }
@@ -46,7 +45,7 @@ final readonly class DoctrineChannelRankPolicyRepository implements ChannelRankP
 
     public function findByNameForNick(string $channelName, ?int $nickId): ?ChannelRankPolicy
     {
-        $channel = $this->channels->findByChannelName(strtolower($channelName));
+        $channel = $this->channels->findByChannelName(IrcIdentityFold::fold($channelName));
 
         return null === $channel ? null : $this->snapshot($channel, false, true, $nickId);
     }

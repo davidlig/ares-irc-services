@@ -24,13 +24,13 @@ use App\NickServ\Application\PublishedEvent\UserDeidentifiedEvent;
 use App\NickServ\Application\UseCase\IssueMigrationRescueToken\IssueMigrationRescueToken;
 use App\NickServ\Application\UseCase\IssueMigrationRescueToken\IssueMigrationRescueTokenHandlerInterface;
 use App\NickServ\Domain\Entity\RegisteredNick;
+use App\Shared\Domain\IrcIdentityFold;
 use DateTimeImmutable;
 
 use function base64_decode;
 use function inet_ntop;
 use function sprintf;
 use function str_starts_with;
-use function strcasecmp;
 
 /**
  * Application service: enforces nick protection rules.
@@ -297,7 +297,7 @@ final readonly class NickProtectionService
     {
         $registeredNick = $this->identifiedRegistry->findNick($uid);
 
-        if (null !== $registeredNick && 0 === strcasecmp($registeredNick, $oldNick)) {
+        if (null !== $registeredNick && IrcIdentityFold::equals($registeredNick, $oldNick)) {
             // Get account info before removing from registry
             $account = $this->nickRepository->findByNick($registeredNick);
 
@@ -335,7 +335,7 @@ final readonly class NickProtectionService
 
         $registeredNick = $this->identifiedRegistry->findNick($uid);
 
-        if (null !== $registeredNick && 0 === strcasecmp($registeredNick, $newNick)) {
+        if (null !== $registeredNick && IrcIdentityFold::equals($registeredNick, $newNick)) {
             $this->logger?->info(sprintf(
                 'Nick change: %s [%s] → %s — identified in registry, skipping protection',
                 $oldNick,
@@ -356,7 +356,7 @@ final readonly class NickProtectionService
         // Reconstruct registry state after service restart or when authenticated via IRCd:
         // if the user has +r on IRCd but the in-memory registry is empty,
         // trust the IRCd state when the nick matches the registered account.
-        if (null === $identifiedNick && 0 === strcasecmp($user->nick, $account->getNickname())) {
+        if (null === $identifiedNick && IrcIdentityFold::equals($user->nick, $account->getNickname())) {
             $this->identifiedRegistry->register($user->uid, $account->getNickname());
             $identifiedNick = $account->getNickname();
             if (NicknameAuthenticationMode::NativeNick === $this->authenticationMode->current()) {
@@ -364,7 +364,7 @@ final readonly class NickProtectionService
             }
         }
 
-        if (null !== $identifiedNick && 0 === strcasecmp($identifiedNick, $account->getNickname())) {
+        if (null !== $identifiedNick && IrcIdentityFold::equals($identifiedNick, $account->getNickname())) {
             $this->markIdentifiedAndDispatch($account, $user, $occurredAt, $activityBatch);
 
             return;

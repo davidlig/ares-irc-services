@@ -112,6 +112,22 @@ final class NickAccountResolverTest extends TestCase
     }
 
     #[Test]
+    public function findAccountsByNicksKeysAccountsByTheRfc1459Fold(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(10);
+        $account->method('getNickname')->willReturn('[Alice]');
+        $account->method('getLanguage')->willReturn('en');
+        $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $repo->expects(self::once())->method('findByNicks')->with(['{alice}'])->willReturn([$account]);
+
+        $result = new NickAccountResolver($repo)->findAccountsByNicks(['{ALICE}', '[alice]']);
+
+        self::assertSame(['{alice}'], array_keys($result));
+        self::assertSame('[Alice]', $result['{alice}']->nickname);
+    }
+
+    #[Test]
     public function findAccountByIdReturnsDataWhenFound(): void
     {
         $repo = $this->createStub(RegisteredNickRepositoryInterface::class);

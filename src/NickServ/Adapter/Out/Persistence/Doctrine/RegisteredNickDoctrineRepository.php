@@ -7,6 +7,7 @@ namespace App\NickServ\Adapter\Out\Persistence\Doctrine;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\NickServ\Domain\ValueObject\NickStatus;
+use App\Shared\Domain\IrcIdentityFold;
 use DateTimeImmutable;
 use Doctrine\DBAL\Platforms\AbstractMySQLPlatform;
 use Doctrine\DBAL\Platforms\SQLitePlatform;
@@ -30,7 +31,6 @@ use function max;
 use function spl_object_id;
 use function sprintf;
 use function str_contains;
-use function strtolower;
 use function strtr;
 
 class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterface
@@ -93,7 +93,7 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
 
     public function findByNick(string $nickname): ?RegisteredNick
     {
-        $nicknameLower = strtolower($nickname);
+        $nicknameLower = IrcIdentityFold::fold($nickname);
         if (!self::$lookupCacheActive) {
             return $this->em
                 ->getRepository(RegisteredNick::class)
@@ -134,7 +134,7 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
 
     public function findByNicks(array $nicknames): array
     {
-        $nicknames = array_values(array_unique(array_map(strtolower(...), $nicknames)));
+        $nicknames = array_values(array_unique(array_map(IrcIdentityFold::fold(...), $nicknames)));
         if ([] === $nicknames) {
             return [];
         }
@@ -392,7 +392,7 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
             $equality = $platform instanceof SQLitePlatform ? $expression . ' COLLATE NOCASE' : $expression;
             // Keep LIKE: equality can ignore trailing spaces or broaden linguistic matches.
             $predicate = $equality . ' = :exact AND ' . $predicate;
-            $parameters['exact'] = strtolower($pattern);
+            $parameters['exact'] = IrcIdentityFold::fold($pattern);
         }
 
         return [$predicate, $parameters];
@@ -400,7 +400,7 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
 
     private static function toLikePattern(string $pattern): string
     {
-        return strtr(strtolower($pattern), ['!' => '!!', '%' => '!%', '_' => '!_', '*' => '%']);
+        return strtr(IrcIdentityFold::fold($pattern), ['!' => '!!', '%' => '!%', '_' => '!_', '*' => '%']);
     }
 
     /**

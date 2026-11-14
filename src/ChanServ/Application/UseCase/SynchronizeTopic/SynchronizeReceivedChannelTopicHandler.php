@@ -8,10 +8,9 @@ use App\ChanServ\Application\Port\Out\ChannelTopicActions;
 use App\ChanServ\Application\Port\Out\ChannelTopicClock;
 use App\ChanServ\Application\Port\Out\ChannelTopicNetworkQuery;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
+use App\Shared\Domain\IrcIdentityFold;
 
 use function str_contains;
-use function strcasecmp;
-use function strtolower;
 
 final readonly class SynchronizeReceivedChannelTopicHandler implements SynchronizeReceivedChannelTopicHandlerInterface
 {
@@ -28,7 +27,7 @@ final readonly class SynchronizeReceivedChannelTopicHandler implements Synchroni
 
     public function handle(SynchronizeReceivedChannelTopic $command): void
     {
-        $registered = $this->channels->findByChannelName(strtolower($command->channelName));
+        $registered = $this->channels->findByChannelName(IrcIdentityFold::fold($command->channelName));
         if (null === $registered || $registered->isBlocked()) {
             return;
         }
@@ -67,7 +66,7 @@ final readonly class SynchronizeReceivedChannelTopicHandler implements Synchroni
             return true;
         }
 
-        return 0 === strcasecmp($nickname, $this->chanservNick)
-            || 0 === strcasecmp($nickname, $this->nickservNick);
+        return IrcIdentityFold::equals($nickname, $this->chanservNick)
+            || IrcIdentityFold::equals($nickname, $this->nickservNick);
     }
 }

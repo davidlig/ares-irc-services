@@ -8,6 +8,7 @@ use App\ChanServ\Adapter\Out\Persistence\Doctrine\RegisteredChannelDoctrineRepos
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\ValueObject\ChannelStatus;
+use App\Shared\Domain\IrcIdentityFold;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
 use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
@@ -32,7 +33,6 @@ use function max;
 use function sprintf;
 use function str_contains;
 use function str_ends_with;
-use function strtolower;
 use function strtr;
 
 #[CoversClass(RegisteredChannelDoctrineRepository::class)]
@@ -207,7 +207,7 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
         $connection->update('registered_channels', ['name_lower' => '#ÉcOlE'], ['name' => '#École']);
 
         foreach (['*', '#ALPHA', '#Al*', '*a*', '**a**', '#Literal!%_?[]\\\\Name', '#É*', '#é*', '#İ*', '#space ', '#space'] as $pattern) {
-            $like = strtr(strtolower($pattern), ['!' => '!!', '%' => '!%', '_' => '!_', '*' => '%']);
+            $like = strtr(IrcIdentityFold::fold($pattern), ['!' => '!!', '%' => '!%', '_' => '!_', '*' => '%']);
             $legacy = $connection->fetchFirstColumn(
                 "SELECT name FROM registered_channels WHERE LOWER(name_lower) LIKE ? ESCAPE '!' ORDER BY name_lower ASC, id ASC",
                 [$like],
@@ -282,6 +282,28 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
         self::assertNotNull($this->repository->findByChannelName('#TestChannel'));
         self::assertNotNull($this->repository->findByChannelName('#testchannel'));
         self::assertNotNull($this->repository->findByChannelName('#TESTCHANNEL'));
+    }
+
+    #[Test]
+    public function lookupsFoldChannelNamesWithTheRfc1459Mapping(): void
+    {
+        $this->repository->save(RegisteredChannel::register(new DateTimeImmutable(), '#[Ares]', 1, 'Ares'));
+        $this->repository->save(RegisteredChannel::register(new DateTimeImmutable(), '#{Ares}|Dev', 1, 'Dev'));
+        $this->flushAndClear();
+
+        self::assertSame('#{ares}', $this->entityManager->getConnection()->fetchOne("SELECT name_lower FROM registered_channels WHERE name = '#[Ares]'"));
+        self::assertSame('#[Ares]', $this->repository->findByChannelName('#{ARES}')?->getName());
+        self::assertTrue($this->repository->existsByChannelName('#{ares}'));
+        self::assertFalse($this->repository->existsByChannelName('#(ares)'));
+        self::assertSame(1, $this->repository->countByPattern('#{ares}'));
+        self::assertSame(2, $this->repository->countByPattern('#[ares]*'));
+        self::assertSame(['#[Ares]', '#{Ares}|Dev'], array_map(static fn (RegisteredChannel $channel): string => $channel->getName(), $this->repository->searchByPattern('#{ARES}*', 0, 10)));
+
+        $repository = new RegisteredChannelDoctrineRepository($this->entityManager);
+        $repository->beginBurst();
+        self::assertTrue($repository->contains('#{ARES}'));
+        self::assertNotNull($repository->findByChannelName('#[ares]\\dev'));
+        $repository->endBurst();
     }
 
     #[Test]

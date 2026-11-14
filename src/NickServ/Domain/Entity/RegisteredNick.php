@@ -6,6 +6,7 @@ namespace App\NickServ\Domain\Entity;
 
 use App\NickServ\Domain\ValueObject\AutomaticModeProfile;
 use App\NickServ\Domain\ValueObject\NickStatus;
+use App\Shared\Domain\IrcIdentityFold;
 use DateTimeImmutable;
 use DateTimeZone;
 use Exception;
@@ -25,7 +26,7 @@ use const FILTER_VALIDATE_EMAIL;
 /**
  * A registered (or pending/suspended/forbidden) IRC nickname.
  *
- * The canonical lookup key is nicknameLower (case-insensitive). The nickname
+ * The canonical lookup key is nicknameLower (fixed RFC 1459 IrcIdentityFold). The nickname
  * field preserves the original casing supplied at registration time.
  *
  * passwordHash, email and registeredAt are nullable because FORBIDDEN entries
@@ -115,7 +116,7 @@ class RegisteredNick
     ): self {
         $nick = new self();
         $nick->nickname = $nickname;
-        $nick->nicknameLower = strtolower($nickname);
+        $nick->nicknameLower = IrcIdentityFold::fold($nickname);
         $nick->status = NickStatus::Pending;
         $nick->passwordHash = $passwordHash;
         self::assertValidEmail($email);
@@ -141,7 +142,7 @@ class RegisteredNick
     ): self {
         $nick = new self();
         $nick->nickname = $nickname;
-        $nick->nicknameLower = strtolower($nickname);
+        $nick->nicknameLower = IrcIdentityFold::fold($nickname);
         $nick->status = NickStatus::Registered;
         $nick->passwordHash = $passwordHash;
         self::assertValidEmail($email);
@@ -166,7 +167,7 @@ class RegisteredNick
     ): self {
         $nick = new self();
         $nick->nickname = $nickname;
-        $nick->nicknameLower = strtolower($nickname);
+        $nick->nicknameLower = IrcIdentityFold::fold($nickname);
         $nick->status = NickStatus::Forbidden;
         $nick->passwordHash = null;
         $nick->email = null;

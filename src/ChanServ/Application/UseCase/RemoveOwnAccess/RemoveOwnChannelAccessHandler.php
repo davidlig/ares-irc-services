@@ -8,8 +8,7 @@ use App\ChanServ\Application\Port\Out\ChannelAccessRepositoryInterface;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\PublishedEvent\ChannelAccessChangedEvent;
 use App\Shared\Application\Port\EventBusInterface;
-
-use function strtolower;
+use App\Shared\Domain\IrcIdentityFold;
 
 final readonly class RemoveOwnChannelAccessHandler implements RemoveOwnChannelAccessHandlerInterface
 {
@@ -21,7 +20,7 @@ final readonly class RemoveOwnChannelAccessHandler implements RemoveOwnChannelAc
 
     public function handle(RemoveOwnChannelAccess $command): RemoveOwnChannelAccessOutcome
     {
-        $channel = $this->channels->findByChannelName(strtolower($command->channelName));
+        $channel = $this->channels->findByChannelName(IrcIdentityFold::fold($command->channelName));
         if (null === $channel) {
             return RemoveOwnChannelAccessOutcome::NotRegistered;
         }

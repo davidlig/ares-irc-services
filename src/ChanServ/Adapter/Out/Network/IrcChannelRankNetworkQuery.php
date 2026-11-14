@@ -16,10 +16,9 @@ use App\Irc\Application\Port\In\ChannelView;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\NickServ\Application\Port\In\NickAccountData;
 use App\NickServ\Application\Port\In\NickAccountQuery;
+use App\Shared\Domain\IrcIdentityFold;
 
 use function in_array;
-use function strcasecmp;
-use function strtolower;
 
 final readonly class IrcChannelRankNetworkQuery implements ChannelRankNetworkQuery
 {
@@ -86,7 +85,7 @@ final readonly class IrcChannelRankNetworkQuery implements ChannelRankNetworkQue
                 $user->nick,
                 $user->isIdentified,
                 $user->isOper,
-                0 === strcasecmp($user->nick, $this->chanservNick),
+                IrcIdentityFold::equals($user->nick, $this->chanservNick),
                 null !== $account && $account->registered ? $account->id : null,
                 $ranks
             );
@@ -120,7 +119,7 @@ final readonly class IrcChannelRankNetworkQuery implements ChannelRankNetworkQue
         $accounts ??= $this->registeredNicks->findAccountsByNicks($nicknames);
         $members = [];
         foreach ($resolved as [$entry, $user]) {
-            $account = $accounts[strtolower($user->nick)] ?? null;
+            $account = $accounts[IrcIdentityFold::fold($user->nick)] ?? null;
             $accountId = null !== $account && $account->registered ? $account->id : null;
             $letters = $entry['prefixLetters'] ?? [$entry['roleLetter']];
             $ranks = [];
@@ -136,7 +135,7 @@ final readonly class IrcChannelRankNetworkQuery implements ChannelRankNetworkQue
                 nickname: $user->nick,
                 identified: $user->isIdentified,
                 operator: $user->isOper,
-                service: 0 === strcasecmp($user->nick, $this->chanservNick),
+                service: IrcIdentityFold::equals($user->nick, $this->chanservNick),
                 registeredNickId: $accountId,
                 currentRanks: $ranks,
             );

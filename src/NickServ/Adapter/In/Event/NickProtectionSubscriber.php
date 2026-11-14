@@ -28,6 +28,7 @@ use App\NickServ\Application\Service\NickProtectionService;
 use App\NickServ\Application\Service\PendingNickActivities;
 use App\NickServ\Application\UseCase\SyncNetworkIdentification\SyncNetworkIdentification;
 use App\NickServ\Application\UseCase\SyncNetworkIdentification\SyncNetworkIdentificationHandlerInterface;
+use App\Shared\Domain\IrcIdentityFold;
 use DateTimeImmutable;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -39,7 +40,6 @@ use function array_map;
 use function array_values;
 use function count;
 use function str_contains;
-use function strtolower;
 
 /**
  * Subscriber: forwards Application-layer events to NickServ services.
@@ -255,7 +255,7 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
     {
         $accounts = [];
         foreach ($this->identifiedUserVhostSync->findAccountsForBurst(array_map(static fn (NetworkUser $user): string => $user->nick, $batch)) as $account) {
-            $accounts[strtolower($account->getNickname())] = $account;
+            $accounts[IrcIdentityFold::fold($account->getNickname())] = $account;
         }
         $activityBatch = new PendingNickActivities();
         $ids = array_map(static fn ($account): int => $account->getId(), array_values($accounts));
@@ -263,7 +263,7 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
         try {
             $this->batchEventPublisher?->publish($batchStarted);
             foreach ($batch as $user) {
-                $account = $accounts[strtolower($user->nick)] ?? null;
+                $account = $accounts[IrcIdentityFold::fold($user->nick)] ?? null;
                 $this->identifiedUserVhostSync->syncVhostForLoadedUser($user, $account);
                 $this->nickProtectionService->enforceProtectionWithAccount($user, $occurredAt, $account, $activityBatch);
             }

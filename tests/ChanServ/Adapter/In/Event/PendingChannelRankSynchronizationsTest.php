@@ -28,4 +28,16 @@ final class PendingChannelRankSynchronizationsTest extends TestCase
         self::assertSame(['#second'], $pending->releaseMessageStartSnapshot());
         self::assertSame([], $pending->releaseMessageStartSnapshot());
     }
+
+    #[Test]
+    public function itCoalescesRfc1459EquivalentNamesAndReleasesAnAsciiLoweredName(): void
+    {
+        $pending = new PendingChannelRankSynchronizations();
+        $pending->schedule('#[Ares]');
+        $pending->schedule('#{ARES}');
+        $pending->beginMessage();
+
+        self::assertSame(['#[ares]'], $pending->releaseMessageStartSnapshot());
+        self::assertSame([], $pending->releaseMessageStartSnapshot());
+    }
 }

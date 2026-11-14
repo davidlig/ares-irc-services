@@ -24,6 +24,7 @@ use App\ChanServ\Domain\Policy\AkickProtectionPolicy;
 use App\ChanServ\Domain\ValueObject\AkickAdditionDecision;
 use App\ChanServ\Domain\ValueObject\AkickMask;
 use App\ChanServ\Domain\ValueObject\AkickRule;
+use App\Shared\Domain\IrcIdentityFold;
 use DateTimeImmutable;
 use InvalidArgumentException;
 
@@ -35,7 +36,6 @@ use function count;
 use function ctype_digit;
 use function spl_object_id;
 use function sprintf;
-use function strtolower;
 
 final readonly class ManageChannelAkickHandler implements ManageChannelAkickHandlerInterface
 {
@@ -56,7 +56,7 @@ final readonly class ManageChannelAkickHandler implements ManageChannelAkickHand
 
     public function handle(ManageChannelAkick $command): ManageChannelAkickResult
     {
-        $channel = $this->channels->findByChannelName(strtolower($command->channelName));
+        $channel = $this->channels->findByChannelName(IrcIdentityFold::fold($command->channelName));
         if (null === $channel) {
             throw ChannelNotRegisteredException::forChannel($command->channelName);
         }

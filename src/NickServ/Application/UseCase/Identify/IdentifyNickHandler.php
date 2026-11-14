@@ -16,8 +16,7 @@ use App\NickServ\Application\PublishedEvent\NickPasswordHashAvailable;
 use App\NickServ\Application\Service\VhostDisplayResolver;
 use App\NickServ\Application\UseCase\IssueMigrationRescueToken\IssueMigrationRescueToken;
 use App\NickServ\Application\UseCase\IssueMigrationRescueToken\IssueMigrationRescueTokenHandlerInterface;
-
-use function strcasecmp;
+use App\Shared\Domain\IrcIdentityFold;
 
 final readonly class IdentifyNickHandler implements IdentifyNickHandlerInterface
 {
@@ -39,8 +38,8 @@ final readonly class IdentifyNickHandler implements IdentifyNickHandlerInterface
     public function handle(IdentifyNick $command): IdentifyNickResult
     {
         $alreadyTrackedNick = $this->identifiedRegistry->findNick($command->senderUid);
-        $alreadyIdentified = (null !== $alreadyTrackedNick && 0 === strcasecmp($alreadyTrackedNick, $command->nickname))
-            || ($command->senderIsIdentified && 0 === strcasecmp($command->senderNick, $command->nickname));
+        $alreadyIdentified = (null !== $alreadyTrackedNick && IrcIdentityFold::equals($alreadyTrackedNick, $command->nickname))
+            || ($command->senderIsIdentified && IrcIdentityFold::equals($command->senderNick, $command->nickname));
         $account = $alreadyIdentified ? $this->nickRepository->findByNick($command->nickname) : null;
         if ($alreadyIdentified && null !== $account && $account->isRegistered() && null !== $account->getRescueTokenHash()) {
             if (null === $alreadyTrackedNick) {

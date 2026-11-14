@@ -12,11 +12,11 @@ use App\NickServ\Application\Security\NickServPermission;
 use App\Shared\Adapter\In\Irc\Presentation\Component;
 use App\Shared\Adapter\In\Irc\Presentation\Fragment;
 use App\Shared\Adapter\In\Irc\Presentation\Role;
+use App\Shared\Domain\IrcIdentityFold;
 
 use function is_string;
 use function str_starts_with;
 use function strlen;
-use function strtolower;
 use function substr;
 
 /**
@@ -200,7 +200,7 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
 
         return $this->filterByPermission(
             $this->context->getRegistry()->all(),
-            strtolower($sender->nick),
+            IrcIdentityFold::fold($sender->nick),
             (int) $account->getId(),
             $sender->isIdentified,
             $sender->isOper,
@@ -217,7 +217,7 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
         }
 
         return $this->operatorAccess->hasAnyPermission(
-            strtolower($sender->nick),
+            IrcIdentityFold::fold($sender->nick),
             (int) $account->getId(),
             $sender->isIdentified,
             $sender->isOper,

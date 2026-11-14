@@ -7,6 +7,7 @@ namespace App\NickServ\Adapter\Out\Persistence\Doctrine;
 use App\NickServ\Application\Port\In\NickAccountBatchQuery;
 use App\NickServ\Application\Port\In\NickAccountData;
 use App\NickServ\Domain\ValueObject\NickStatus;
+use App\Shared\Domain\IrcIdentityFold;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\ORM\EntityManagerInterface;
 use UnexpectedValueException;
@@ -18,7 +19,6 @@ use function array_values;
 use function is_int;
 use function is_numeric;
 use function is_string;
-use function strtolower;
 
 final readonly class NickAccountBatchDoctrineQuery implements NickAccountBatchQuery
 {
@@ -29,7 +29,7 @@ final readonly class NickAccountBatchDoctrineQuery implements NickAccountBatchQu
 
     public function findAccountsByNicks(array $nicknames): array
     {
-        $names = array_values(array_unique(array_map(strtolower(...), $nicknames)));
+        $names = array_values(array_unique(array_map(IrcIdentityFold::fold(...), $nicknames)));
         if ([] === $names) {
             return [];
         }

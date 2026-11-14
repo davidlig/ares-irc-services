@@ -20,7 +20,7 @@ interface NickAccountQuery
     /**
      * @param list<string> $nicknames
      *
-     * @return array<string, NickAccountData> accounts keyed by lowercase nickname
+     * @return array<string, NickAccountData> accounts keyed by the IrcIdentityFold of the nickname
      */
     public function findAccountsByNicks(array $nicknames): array;
 

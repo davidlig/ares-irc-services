@@ -15,8 +15,7 @@ use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Domain\Entity\ChannelLevel;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\Policy\ChannelAccessPolicy;
-
-use function strtolower;
+use App\Shared\Domain\IrcIdentityFold;
 
 final readonly class EnforceChannelNojoinHandler implements EnforceChannelNojoinHandlerInterface
 {
@@ -33,7 +32,7 @@ final readonly class EnforceChannelNojoinHandler implements EnforceChannelNojoin
 
     public function handle(EnforceChannelNojoin $command): int
     {
-        $channel = $this->channels->findByChannelName(strtolower($command->channelName));
+        $channel = $this->channels->findByChannelName(IrcIdentityFold::fold($command->channelName));
         if (null === $channel || $channel->isBlocked()) {
             return 0;
         }
@@ -74,7 +73,7 @@ final readonly class EnforceChannelNojoinHandler implements EnforceChannelNojoin
             $channel,
             $members,
             $requiredAccess,
-            static fn (string $nickname): ?ChanAccountView => $accounts[strtolower($nickname)] ?? null,
+            static fn (string $nickname): ?ChanAccountView => $accounts[IrcIdentityFold::fold($nickname)] ?? null,
             static fn (int $nickId): ?int => $access[$nickId] ?? null,
         );
     }

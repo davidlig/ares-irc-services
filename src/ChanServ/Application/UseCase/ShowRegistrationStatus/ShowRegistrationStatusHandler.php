@@ -5,8 +5,7 @@ declare(strict_types=1);
 namespace App\ChanServ\Application\UseCase\ShowRegistrationStatus;
 
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
-
-use function strtolower;
+use App\Shared\Domain\IrcIdentityFold;
 
 final readonly class ShowRegistrationStatusHandler
 {
@@ -14,7 +13,7 @@ final readonly class ShowRegistrationStatusHandler
 
     public function handle(string $channelName): ?RegistrationStatusView
     {
-        $channel = $this->channels->findByChannelName(strtolower($channelName));
+        $channel = $this->channels->findByChannelName(IrcIdentityFold::fold($channelName));
         if (null === $channel) {
             return null;
         }

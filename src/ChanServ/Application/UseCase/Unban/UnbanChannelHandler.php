@@ -10,9 +10,9 @@ use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\Service\ChanServAccessHelper;
 use App\ChanServ\Domain\Entity\ChannelLevel;
 use App\ChanServ\Domain\Exception\ChannelNotRegisteredException;
+use App\Shared\Domain\IrcIdentityFold;
 
 use function count;
-use function strtolower;
 
 final readonly class UnbanChannelHandler implements UnbanChannelHandlerInterface
 {
@@ -25,7 +25,7 @@ final readonly class UnbanChannelHandler implements UnbanChannelHandlerInterface
 
     public function handle(UnbanChannel $command): UnbanChannelResult
     {
-        $channel = $this->channels->findByChannelName(strtolower($command->channelName));
+        $channel = $this->channels->findByChannelName(IrcIdentityFold::fold($command->channelName));
         if (null === $channel) {
             throw ChannelNotRegisteredException::forChannel($command->channelName);
         }

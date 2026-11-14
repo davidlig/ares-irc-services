@@ -8,8 +8,7 @@ use App\ChanServ\Application\Port\Out\ChannelTopicActions;
 use App\ChanServ\Application\Port\Out\ChannelTopicNetworkQuery;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
-
-use function strtolower;
+use App\Shared\Domain\IrcIdentityFold;
 
 final readonly class ApplyStoredChannelTopicHandler implements ApplyStoredChannelTopicHandlerInterface
 {
@@ -27,7 +26,7 @@ final readonly class ApplyStoredChannelTopicHandler implements ApplyStoredChanne
             return;
         }
 
-        $registered = $this->channels->findByChannelName(strtolower($command->channelName));
+        $registered = $this->channels->findByChannelName(IrcIdentityFold::fold($command->channelName));
         if (null === $registered || $registered->isBlocked()) {
             return;
         }

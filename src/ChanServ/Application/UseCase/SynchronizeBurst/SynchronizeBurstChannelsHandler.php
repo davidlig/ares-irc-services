@@ -26,11 +26,11 @@ use App\ChanServ\Application\UseCase\EnforceRanks\EnforceChannelRanksHandlerInte
 use App\ChanServ\Application\UseCase\EnforceRanks\RankEnforcementTrigger;
 use App\ChanServ\Domain\Entity\ChannelLevel;
 use App\ChanServ\Domain\ValueObject\ChannelLevelSet;
+use App\Shared\Domain\IrcIdentityFold;
 use DateTimeImmutable;
 
 use function array_unique;
 use function array_values;
-use function strtolower;
 use function usort;
 
 final readonly class SynchronizeBurstChannelsHandler implements SynchronizeBurstChannels
@@ -87,7 +87,7 @@ final readonly class SynchronizeBurstChannelsHandler implements SynchronizeBurst
         $nicknames = [];
         $this->rankScope->setChannel(null, null);
         foreach ($page->channels as $channel) {
-            $registered[strtolower($channel->getName())] = true;
+            $registered[IrcIdentityFold::fold($channel->getName())] = true;
             if ($channel->isForbidden()) {
                 $this->forbidden->enforceKnownForbiddenChannel($channel->getName());
             }

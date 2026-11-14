@@ -151,6 +151,23 @@ final class PendingEmailChangeRegistryTest extends TestCase
         self::assertTrue($registry->has('nick2'));
     }
 
+    #[Test]
+    public function nicknameKeysUseTheRfc1459Fold(): void
+    {
+        $registry = new PendingEmailChangeRegistry();
+        $now = new DateTimeImmutable('2026-01-01 00:00:00');
+        $registry->store('[Foo]\\', 'new@example.com', 'token', $now);
+
+        self::assertTrue($registry->has('{FOO}|'));
+        self::assertFalse($registry->has('(foo)|'));
+        self::assertTrue($registry->consume('{foo}|', 'NEW@example.com', 'token', $now));
+        self::assertFalse($registry->has('[foo]\\'));
+
+        $registry->store('Plain', 'new@example.com', 'token', $now);
+        $registry->remove('PLAIN');
+        self::assertFalse($registry->has('plain'));
+    }
+
     private function now(): DateTimeImmutable
     {
         return new DateTimeImmutable('2026-09-06 12:00:00 UTC');

@@ -8,6 +8,7 @@ use App\ChanServ\Application\Port\Out\RegisteredChannelBurstSnapshot;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\ValueObject\ChannelStatus;
+use App\Shared\Domain\IrcIdentityFold;
 use DateTimeImmutable;
 use Doctrine\DBAL\Platforms\AbstractMySQLPlatform;
 use Doctrine\DBAL\Platforms\SQLitePlatform;
@@ -24,7 +25,6 @@ use function is_numeric;
 use function is_string;
 use function max;
 use function str_contains;
-use function strtolower;
 use function strtr;
 
 final class RegisteredChannelDoctrineRepository implements RegisteredChannelRepositoryInterface, RegisteredChannelBurstSnapshot
@@ -61,7 +61,7 @@ final class RegisteredChannelDoctrineRepository implements RegisteredChannelRepo
 
     public function contains(string $channelName): ?bool
     {
-        return null === $this->burstNames ? null : isset($this->burstNames[strtolower($channelName)]);
+        return null === $this->burstNames ? null : isset($this->burstNames[IrcIdentityFold::fold($channelName)]);
     }
 
     public function save(RegisteredChannel $channel): void
@@ -70,7 +70,7 @@ final class RegisteredChannelDoctrineRepository implements RegisteredChannelRepo
         $this->em->persist($channel);
         $this->em->flush();
         if (null !== $this->burstNames) {
-            $this->burstNames[strtolower($channel->getName())] = true;
+            $this->burstNames[IrcIdentityFold::fold($channel->getName())] = true;
         }
     }
 
@@ -80,13 +80,13 @@ final class RegisteredChannelDoctrineRepository implements RegisteredChannelRepo
         $this->em->remove($channel);
         $this->em->flush();
         if (null !== $this->burstNames) {
-            unset($this->burstNames[strtolower($channel->getName())]);
+            unset($this->burstNames[IrcIdentityFold::fold($channel->getName())]);
         }
     }
 
     public function findByChannelName(string $channelName): ?RegisteredChannel
     {
-        $nameLower = strtolower($channelName);
+        $nameLower = IrcIdentityFold::fold($channelName);
         if (null !== $this->burstNames && !isset($this->burstNames[$nameLower])) {
             return null;
         }
@@ -317,7 +317,7 @@ final class RegisteredChannelDoctrineRepository implements RegisteredChannelRepo
             $equality = $platform instanceof SQLitePlatform ? $expression . ' COLLATE NOCASE' : $expression;
             // Keep LIKE: equality can ignore trailing spaces or broaden linguistic matches.
             $predicate = $equality . ' = :exact AND ' . $predicate;
-            $parameters['exact'] = strtolower($pattern);
+            $parameters['exact'] = IrcIdentityFold::fold($pattern);
         }
 
         $predicate .= ' AND c.status NOT IN (:registrationPending, :registrationRejected)';
@@ -372,6 +372,6 @@ final class RegisteredChannelDoctrineRepository implements RegisteredChannelRepo
 
     private static function toLikePattern(string $pattern): string
     {
-        return strtr(strtolower($pattern), ['!' => '!!', '%' => '!%', '_' => '!_', '*' => '%']);
+        return strtr(IrcIdentityFold::fold($pattern), ['!' => '!!', '%' => '!%', '_' => '!_', '*' => '%']);
     }
 }

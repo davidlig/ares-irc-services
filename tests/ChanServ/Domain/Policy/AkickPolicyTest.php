@@ -177,4 +177,29 @@ final class AkickPolicyTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         new AkickAdditionPolicy()->decide(-1, null, new DateTimeImmutable());
     }
+
+    #[Test]
+    public function matchingFoldsNicknamesWithTheRfc1459Mapping(): void
+    {
+        $now = new DateTimeImmutable('2026-09-07 12:00:00');
+        $policy = new AkickMatchPolicy();
+        $rule = new AkickRule(new AkickMask('[bad]*!*@*'));
+        $braces = new AkickRule(new AkickMask('{bad}\\^!*@*'));
+        $ascii = new AkickRule(new AkickMask('Bad*!*@*'));
+
+        self::assertSame($rule, $policy->firstMatch([$rule], '{BAD}x!u@h', $now, false));
+        self::assertSame($braces, $policy->firstMatch([$braces], '[BAD]|~!u@h', $now, false));
+        self::assertSame($ascii, $policy->firstMatch([$ascii], 'bAdNick!u@h', $now, false));
+        self::assertNull($policy->firstMatch([$ascii], 'Good!u@h', $now, false));
+    }
+
+    #[Test]
+    public function protectionFoldsNicknamesWithTheRfc1459Mapping(): void
+    {
+        $policy = new AkickProtectionPolicy();
+
+        self::assertSame('{Founder}', $policy->firstProtectedNickname(new AkickMask('[founder]*!*@*'), ['{Founder}']));
+        self::assertSame('Founder', $policy->firstProtectedNickname(new AkickMask('FOUNDER!*@*'), ['Founder']));
+        self::assertNull($policy->firstProtectedNickname(new AkickMask('(founder)!*@*'), ['{Founder}']));
+    }
 }

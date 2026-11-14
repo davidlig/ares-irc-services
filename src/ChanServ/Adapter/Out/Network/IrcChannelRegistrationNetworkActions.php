@@ -8,12 +8,12 @@ use App\ChanServ\Application\Port\Out\ChannelRegistrationNetworkActions;
 use App\Irc\Application\Port\In\ActiveChannelModeSupportProviderInterface;
 use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\Irc\Application\Port\In\ChannelServiceActionsPort;
+use App\Shared\Domain\IrcIdentityFold;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
 use function implode;
 use function str_contains;
-use function strtolower;
 
 final readonly class IrcChannelRegistrationNetworkActions implements ChannelRegistrationNetworkActions
 {
@@ -156,7 +156,7 @@ final readonly class IrcChannelRegistrationNetworkActions implements ChannelRegi
     private function removeModeFromUnregisteredChannels(array $registeredNames, string $modeLetter, string $description): void
     {
         foreach ($this->channelLookup->iterateModeSnapshots() as $view) {
-            if (isset($registeredNames[strtolower($view->name)]) || !str_contains($view->modes, $modeLetter)) {
+            if (isset($registeredNames[IrcIdentityFold::fold($view->name)]) || !str_contains($view->modes, $modeLetter)) {
                 continue;
             }
 

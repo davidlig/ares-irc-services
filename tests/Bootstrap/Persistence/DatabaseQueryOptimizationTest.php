@@ -16,6 +16,7 @@ use App\NickServ\Adapter\In\Maintenance\UnsuspendExpiredSuspensionsTask;
 use App\NickServ\Adapter\Out\Persistence\Doctrine\RegisteredNickDoctrineRepository;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\NickServ\Domain\ValueObject\NickStatus;
+use App\Shared\Domain\IrcIdentityFold;
 use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DriverManager;
@@ -119,6 +120,7 @@ final class DatabaseQueryOptimizationTest extends TestCase
         $before = $this->snapshot();
         $this->migrate('latest');
         self::assertSame($before, $this->snapshot());
+        $this->assertLookupKeys(true);
         $this->assertIndexesPresent();
         $this->assertIssue172IndexesPresent();
         $this->assertListMatchingAndLifecycleVisibility();
@@ -138,8 +140,10 @@ final class DatabaseQueryOptimizationTest extends TestCase
         $this->migrate('App\\Migrations\\Version20260926000002');
         $this->assertIndexesPresent(false);
         self::assertSame($before, $this->snapshot(), 'Rollback must preserve all original account/channel data.');
+        $this->assertLookupKeys(false);
         $this->migrate('latest');
         self::assertSame($before, $this->snapshot(), 'Reapplying must preserve all original account/channel data.');
+        $this->assertLookupKeys(true);
         $this->assertIndexesPresent();
         $this->assertListMatchingAndLifecycleVisibility();
     }
@@ -252,7 +256,8 @@ final class DatabaseQueryOptimizationTest extends TestCase
         foreach (['registered_nicks', 'registered_channels', 'channel_akick', 'channel_history', 'memo_ignores'] as $table) {
             if (!isset($this->snapshotColumns[$table])) {
                 $columns = array_keys($this->connection->createSchemaManager()->listTableColumns($table));
-                $columns = array_values(array_diff($columns, ['list_search_key']));
+                // Lookup keys are derived from the display names; assertLookupKeys() checks them.
+                $columns = array_values(array_diff($columns, ['list_search_key', 'nickname_lower', 'name_lower']));
                 sort($columns);
                 $this->snapshotColumns[$table] = $columns;
             }
@@ -266,6 +271,17 @@ final class DatabaseQueryOptimizationTest extends TestCase
         }
 
         return $result;
+    }
+
+    /** Keys are the fixed RFC 1459 fold after the latest migration and ASCII-lowered before it. */
+    private function assertLookupKeys(bool $folded): void
+    {
+        foreach (['registered_nicks' => ['nickname', 'nickname_lower'], 'registered_channels' => ['name', 'name_lower']] as $table => [$display, $key]) {
+            foreach ($this->connection->iterateNumeric('SELECT ' . $display . ', ' . $key . ' FROM ' . $table . ' ORDER BY id') as [$name, $lookup]) {
+                self::assertIsString($name);
+                self::assertSame($folded ? IrcIdentityFold::fold($name) : strtolower($name), $lookup, $table . ': ' . $name);
+            }
+        }
     }
 
     private function assertIndexesPresent(bool $present = true): void
@@ -311,7 +327,7 @@ final class DatabaseQueryOptimizationTest extends TestCase
         foreach ([['registered_nicks', 'nickname_lower', new RegisteredNickDoctrineRepository($this->entityManager), ''], ['registered_channels', 'name_lower', new RegisteredChannelDoctrineRepository($this->entityManager), '#']] as [$table, $key, $repository, $prefix]) {
             foreach ($patterns as $pattern) {
                 $pattern = $prefix . $pattern;
-                $like = strtr(strtolower($pattern), ['!' => '!!', '%' => '!%', '_' => '!_', '*' => '%']);
+                $like = strtr(IrcIdentityFold::fold($pattern), ['!' => '!!', '%' => '!%', '_' => '!_', '*' => '%']);
                 $legacy = ' FROM ' . $table . " WHERE LOWER($key) LIKE ? ESCAPE '!'";
                 $parameters = [$like];
                 if ('registered_channels' === $table) {

@@ -9,13 +9,13 @@ use App\ChanServ\Application\Port\Out\ChanTransactionBoundary;
 use App\ChanServ\Application\Port\Out\ChanUserAccountPort;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\Service\ChannelHistoryService;
+use App\Shared\Domain\IrcIdentityFold;
 use UnexpectedValueException;
 
 use function array_values;
 use function ceil;
 use function is_int;
 use function min;
-use function strtolower;
 
 final readonly class ManageChannelHistoryHandler implements ManageChannelHistoryHandlerInterface
 {
@@ -30,7 +30,7 @@ final readonly class ManageChannelHistoryHandler implements ManageChannelHistory
 
     public function handle(ManageChannelHistory $command): ManageChannelHistoryResult
     {
-        $channel = $this->channelRepository->findByChannelName(strtolower($command->channelName));
+        $channel = $this->channelRepository->findByChannelName(IrcIdentityFold::fold($command->channelName));
         if (null === $channel) {
             return new ManageChannelHistoryResult(ManageChannelHistoryOutcome::ChannelNotRegistered);
         }

@@ -4,35 +4,36 @@ declare(strict_types=1);
 
 namespace App\OperServ\Application;
 
-use function array_fill_keys;
+use App\Shared\Domain\IrcIdentityFold;
+
 use function array_filter;
-use function array_keys;
 use function array_map;
+use function array_values;
 use function explode;
 use function strtolower;
 
 final readonly class RootUserRegistry
 {
-    /** @var array<string, true> */
+    /** @var array<string, string> ASCII-lowered network nicknames keyed by the service identity fold */
     private array $rootNicksLower;
 
     public function __construct(string $rootUsers)
     {
-        $nicks = array_filter(array_map('trim', explode(',', $rootUsers)));
-        $this->rootNicksLower = array_fill_keys(
-            array_map('strtolower', $nicks),
-            true
-        );
+        $rootNicks = [];
+        foreach (array_filter(array_map('trim', explode(',', $rootUsers))) as $nick) {
+            $rootNicks[IrcIdentityFold::fold($nick)] ??= strtolower($nick);
+        }
+        $this->rootNicksLower = $rootNicks;
     }
 
     public function isRoot(string $nick): bool
     {
-        return isset($this->rootNicksLower[strtolower($nick)]);
+        return isset($this->rootNicksLower[IrcIdentityFold::fold($nick)]);
     }
 
     /** @return list<string> */
     public function getRootNicks(): array
     {
-        return array_keys($this->rootNicksLower);
+        return array_values($this->rootNicksLower);
     }
 }

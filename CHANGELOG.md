@@ -21,9 +21,11 @@
 - Since #166, `+r`/`+P` registration modes are reconciled once after all burst pages, and the ChanServ end-of-burst pass runs before OperServ G-line enforcement.
 - Since #172, NickServ `INFO` and `LIST` show the registration date as "last seen" for nicknames that have never been online, instead of "never seen".
 - Expired GLINE, MOTD and AKICK purges process rows in expiry order.
+- NickServ, ChanServ, MemoServ and OperServ fold nickname and channel identities with a fixed RFC 1459 mapping (case-insensitive, with `[]\^` equal to `{}|~`) for lookups, IDENTIFY, nick protection, AKICK, LIST and stored lookup keys, whatever CASEMAPPING the IRCd negotiates. AKICK masks and protected-nick checks treat `[`/`{`, `]`/`}`, `\`/`|` and `^`/`~` as the same character.
 
 ### Upgrade
 
+- Back up the database and run the migrations (`doctrine:migrations:migrate`). `Version20261114000001` rewrites `registered_nicks.nickname_lower`, `registered_channels.name_lower` and `service_nick_reservations.nickname_lower` with the RFC 1459 fold. It aborts without changing anything when two registered nicknames or two channels differ only by `[]\^` versus `{}|~`, and lists the conflicting names; drop or rename one of each listed pair before upgrading.
 - Production IRC logs now default to `info` and no longer include per-line debug traffic. Set `IRC_LOG_LEVEL=debug` to restore redacted incoming line logs.
 
 ## [2.5.0] - 2026-11-06

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\NickServ\Adapter\Out\InMemory;
 
 use App\NickServ\Application\Port\Out\RecoveryTokenStore;
+use App\Shared\Domain\IrcIdentityFold;
 use DateTimeImmutable;
 use OverflowException;
 
@@ -40,10 +41,10 @@ final class RecoveryTokenRegistry implements RecoveryTokenStore
 
     public function store(string $nickname, string $token, DateTimeImmutable $expiresAt): void
     {
-        if (!isset($this->entries[strtolower($nickname)]) && count($this->entries) >= $this->maxEntries) {
+        if (!isset($this->entries[IrcIdentityFold::fold($nickname)]) && count($this->entries) >= $this->maxEntries) {
             throw new OverflowException('Recovery token capacity exhausted.');
         }
-        $this->entries[strtolower($nickname)] = [
+        $this->entries[IrcIdentityFold::fold($nickname)] = [
             'token' => hash('sha256', strtolower(trim($token))),
             'expiresAt' => $expiresAt,
         ];
@@ -66,7 +67,7 @@ final class RecoveryTokenRegistry implements RecoveryTokenStore
 
     public function matches(string $nickname, string $token, DateTimeImmutable $now): bool
     {
-        $key = strtolower($nickname);
+        $key = IrcIdentityFold::fold($nickname);
         $entry = $this->entries[$key] ?? null;
         if (null === $entry) {
             return false;
@@ -82,7 +83,7 @@ final class RecoveryTokenRegistry implements RecoveryTokenStore
 
     public function removeIfMatches(string $nickname, string $token): void
     {
-        $key = strtolower($nickname);
+        $key = IrcIdentityFold::fold($nickname);
         if (isset($this->entries[$key]) && hash_equals($this->entries[$key]['token'], hash('sha256', strtolower(trim($token))))) {
             unset($this->entries[$key]);
         }
@@ -93,7 +94,7 @@ final class RecoveryTokenRegistry implements RecoveryTokenStore
      */
     public function getLastRecoverAt(string $nickname): ?DateTimeImmutable
     {
-        return $this->lastRecoverAt[strtolower($nickname)] ?? null;
+        return $this->lastRecoverAt[IrcIdentityFold::fold($nickname)] ?? null;
     }
 
     /**
@@ -101,10 +102,10 @@ final class RecoveryTokenRegistry implements RecoveryTokenStore
      */
     public function recordRecover(string $nickname, DateTimeImmutable $now): void
     {
-        if (!isset($this->lastRecoverAt[strtolower($nickname)]) && count($this->lastRecoverAt) >= $this->maxEntries) {
+        if (!isset($this->lastRecoverAt[IrcIdentityFold::fold($nickname)]) && count($this->lastRecoverAt) >= $this->maxEntries) {
             throw new OverflowException('Recovery timestamp capacity exhausted.');
         }
-        $this->lastRecoverAt[strtolower($nickname)] = $now;
+        $this->lastRecoverAt[IrcIdentityFold::fold($nickname)] = $now;
     }
 
     /**

@@ -8,8 +8,7 @@ use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\Service\NickDropService;
 use App\NickServ\Application\Service\NickProtectabilityStatus;
 use App\NickServ\Application\Service\NickTargetValidator;
-
-use function strtolower;
+use App\Shared\Domain\IrcIdentityFold;
 
 final readonly class DropNickHandler implements DropNickHandlerInterface
 {
@@ -21,7 +20,7 @@ final readonly class DropNickHandler implements DropNickHandlerInterface
 
     public function handle(DropNick $command): DropNickResult
     {
-        if (strtolower($command->targetNick) === strtolower($command->operatorNick)) {
+        if (IrcIdentityFold::equals($command->targetNick, $command->operatorNick)) {
             return DropNickResult::cannotDropSelf();
         }
 

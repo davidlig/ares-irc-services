@@ -9,12 +9,12 @@ use App\OperServ\Application\Port\Out\ProtectedGlineSubjects;
 use App\OperServ\Application\Port\Out\RootIdentityRegistry;
 use App\OperServ\Domain\Entity\OperIrcop;
 use App\OperServ\Domain\Repository\OperIrcopRepositoryInterface;
+use App\Shared\Domain\IrcIdentityFold;
 
 use function array_key_exists;
 use function array_map;
 use function array_unique;
 use function array_values;
-use function strtolower;
 
 final readonly class DoctrineProtectedGlineSubjects implements ProtectedGlineSubjects
 {
@@ -28,7 +28,7 @@ final readonly class DoctrineProtectedGlineSubjects implements ProtectedGlineSub
     {
         $nicknames = [];
         foreach ($this->roots->allNicknames() as $nickname) {
-            $nicknames[strtolower($nickname)] = $nickname;
+            $nicknames[IrcIdentityFold::fold($nickname)] = $nickname;
         }
         $operators = $this->operators->findAll();
         $nickIds = array_values(array_unique(array_map(
@@ -38,8 +38,8 @@ final readonly class DoctrineProtectedGlineSubjects implements ProtectedGlineSub
         $nicknamesById = [] === $nickIds ? [] : $this->accounts->findNicknamesByIds($nickIds);
         foreach ($operators as $operator) {
             $nickname = $nicknamesById[$operator->getNickId()] ?? null;
-            if (null !== $nickname && !array_key_exists(strtolower($nickname), $nicknames)) {
-                $nicknames[strtolower($nickname)] = $nickname;
+            if (null !== $nickname && !array_key_exists(IrcIdentityFold::fold($nickname), $nicknames)) {
+                $nicknames[IrcIdentityFold::fold($nickname)] = $nickname;
             }
         }
 

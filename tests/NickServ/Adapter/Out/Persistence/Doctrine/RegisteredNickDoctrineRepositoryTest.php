@@ -9,6 +9,7 @@ use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\NickServ\Domain\ValueObject\AutomaticModeProfile;
 use App\NickServ\Domain\ValueObject\NickStatus;
+use App\Shared\Domain\IrcIdentityFold;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
 use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
@@ -34,7 +35,6 @@ use function max;
 use function sprintf;
 use function str_contains;
 use function str_ends_with;
-use function strtolower;
 use function strtr;
 
 #[CoversClass(RegisteredNickDoctrineRepository::class)]
@@ -129,7 +129,7 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
         $connection->update('registered_nicks', ['nickname_lower' => 'ÉcOlE'], ['nickname' => 'École']);
 
         foreach (['*', 'ALPHA', 'Al*', '*a*', '**a**', 'Literal!%_?[]\\\\Name', 'É*', 'é*', 'İ*', 'space ', 'space'] as $pattern) {
-            $like = strtr(strtolower($pattern), ['!' => '!!', '%' => '!%', '_' => '!_', '*' => '%']);
+            $like = strtr(IrcIdentityFold::fold($pattern), ['!' => '!!', '%' => '!%', '_' => '!_', '*' => '%']);
             $legacy = $connection->fetchFirstColumn(
                 "SELECT nickname FROM registered_nicks WHERE LOWER(nickname_lower) LIKE ? ESCAPE '!' ORDER BY nickname_lower ASC, id ASC",
                 [$like],
@@ -216,6 +216,23 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
         self::assertNotNull($this->repository->findByNick('TestUser'));
         self::assertNotNull($this->repository->findByNick('testuser'));
         self::assertNotNull($this->repository->findByNick('TESTUSER'));
+    }
+
+    #[Test]
+    public function lookupsFoldNicknamesWithTheRfc1459Mapping(): void
+    {
+        $this->repository->save($this->createRegisteredNick('[Foo]\\^', 'foo@example.com'));
+        $this->repository->save($this->createRegisteredNick('{Foo}Bar', 'foobar@example.com'));
+        $this->flushAndClear();
+
+        self::assertSame('{foo}|~', $this->entityManager->getConnection()->fetchOne('SELECT nickname_lower FROM registered_nicks WHERE nickname = ?', ['[Foo]\\^']));
+        self::assertSame('[Foo]\\^', $this->repository->findByNick('{FOO}|~')?->getNickname());
+        self::assertSame('[Foo]\\^', $this->repository->findByNick('[foo]\\^')?->getNickname());
+        self::assertSame(['[Foo]\\^'], array_map(static fn (RegisteredNick $nick): string => $nick->getNickname(), $this->repository->findByNicks(['{foo}|~', '[FOO]\\^'])));
+        self::assertSame(1, $this->repository->countByPattern('{foo}|~'));
+        self::assertSame(2, $this->repository->countByPattern('[foo]*'));
+        self::assertSame(['{Foo}Bar', '[Foo]\\^'], array_map(static fn (RegisteredNick $nick): string => $nick->getNickname(), $this->repository->searchByPattern('{FOO}*', 0, 10)));
+        self::assertNull($this->repository->findByNick('(foo)|~'));
     }
 
     #[Test]

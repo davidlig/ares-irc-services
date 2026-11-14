@@ -13,7 +13,7 @@ interface ChanUserAccountPort
     /**
      * @param list<string> $nicknames
      *
-     * @return array<string, ChanAccountView> keyed by lowercase nickname
+     * @return array<string, ChanAccountView> keyed by the IrcIdentityFold of the nickname
      */
     public function findAccountsByNicks(array $nicknames): array;
 

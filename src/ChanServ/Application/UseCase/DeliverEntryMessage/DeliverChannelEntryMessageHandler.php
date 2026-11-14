@@ -7,8 +7,7 @@ namespace App\ChanServ\Application\UseCase\DeliverEntryMessage;
 use App\ChanServ\Application\Port\Out\ChannelEntryMessageDelivery;
 use App\ChanServ\Application\Port\Out\ChanServNetworkIdentity;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
-
-use function strtolower;
+use App\Shared\Domain\IrcIdentityFold;
 
 final readonly class DeliverChannelEntryMessageHandler implements DeliverChannelEntryMessageHandlerInterface
 {
@@ -24,7 +23,7 @@ final readonly class DeliverChannelEntryMessageHandler implements DeliverChannel
             return;
         }
 
-        $channel = $this->channels->findByChannelName(strtolower($command->channelName));
+        $channel = $this->channels->findByChannelName(IrcIdentityFold::fold($command->channelName));
         if (null === $channel || $channel->isBlocked()) {
             return;
         }

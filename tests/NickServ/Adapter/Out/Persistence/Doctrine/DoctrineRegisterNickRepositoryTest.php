@@ -39,6 +39,16 @@ final class DoctrineRegisterNickRepositoryTest extends DoctrineIntegrationTestCa
     }
 
     #[Test]
+    public function findsRegistrationByAnRfc1459EquivalentNickname(): void
+    {
+        $this->repository->save(RegisteredNick::createPending('[Mixed]', 'hash', 'm@example.com', 'en', new DateTimeImmutable('+1 hour'), new DateTimeImmutable()));
+        $this->flushAndClear();
+
+        self::assertSame('[Mixed]', $this->repository->findByNick('{MIXED}')?->getNickname());
+        self::assertNull($this->repository->findByNick('(mixed)'));
+    }
+
+    #[Test]
     public function returnsNullWhenRegistrationDoesNotExist(): void
     {
         self::assertNull($this->repository->findByNick('missing'));

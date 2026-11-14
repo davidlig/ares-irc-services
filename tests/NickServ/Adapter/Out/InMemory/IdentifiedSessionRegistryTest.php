@@ -151,4 +151,19 @@ final class IdentifiedSessionRegistryTest extends TestCase
 
         self::assertNull($registry->findUidByNick('TestNick'));
     }
+
+    #[Test]
+    public function rfc1459EquivalentNicknamesShareOneSessionKey(): void
+    {
+        $registry = new IdentifiedSessionRegistry();
+        $registry->register('UID123', '[Foo]\\^');
+
+        self::assertSame('UID123', $registry->findUidByNick('{foo}|~'));
+        self::assertTrue($registry->isIdentifiedAs('UID123', '{FOO}|~'));
+        self::assertFalse($registry->isIdentifiedAs('UID123', '(Foo)'));
+
+        $registry->register('UID123', 'Other');
+
+        self::assertNull($registry->findUidByNick('{foo}|~'));
+    }
 }

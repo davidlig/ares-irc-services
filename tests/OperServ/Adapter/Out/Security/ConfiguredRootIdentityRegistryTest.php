@@ -22,4 +22,15 @@ final class ConfiguredRootIdentityRegistryTest extends TestCase
         self::assertFalse($registry->contains('other'));
         self::assertSame(['root', 'second'], $registry->allNicknames());
     }
+
+    #[Test]
+    public function rootNicknamesUseTheRfc1459FoldAndListAsciiLoweredNames(): void
+    {
+        $registry = new ConfiguredRootIdentityRegistry('[Root]\\, {ROOT}|, Admin');
+
+        self::assertTrue($registry->contains('{root}|'));
+        self::assertTrue($registry->contains('ADMIN'));
+        self::assertFalse($registry->contains('(root)|'));
+        self::assertSame(['[root]\\', 'admin'], $registry->allNicknames());
+    }
 }

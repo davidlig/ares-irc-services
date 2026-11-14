@@ -8,12 +8,12 @@ use App\MemoServ\Application\Model\MemoListItem;
 use App\MemoServ\Application\Port\Out\MemoChannelPort;
 use App\MemoServ\Application\Port\Out\MemoRepositoryInterface;
 use App\MemoServ\Application\Port\Out\MemoUserAccountPort;
+use App\Shared\Domain\IrcIdentityFold;
 use LogicException;
 
 use function array_unique;
 use function array_values;
 use function count;
-use function strtolower;
 
 final readonly class ListMemosHandler implements ListMemosHandlerInterface
 {
@@ -26,7 +26,7 @@ final readonly class ListMemosHandler implements ListMemosHandlerInterface
     public function handle(ListMemos $command): ListMemosResult
     {
         if (null !== $command->channelName) {
-            $channel = $this->channelPort->findChannelByName(strtolower($command->channelName));
+            $channel = $this->channelPort->findChannelByName(IrcIdentityFold::fold($command->channelName));
             if (null === $channel) {
                 return ListMemosResult::channelNotRegistered($command->channelName);
             }

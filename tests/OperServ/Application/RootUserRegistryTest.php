@@ -115,4 +115,15 @@ final class RootUserRegistryTest extends TestCase
         self::assertTrue($registry->isRoot('ROOTUSER'));
         self::assertTrue($registry->isRoot('RootUser'));
     }
+
+    #[Test]
+    public function rootNicknamesUseTheRfc1459FoldAndListAsciiLoweredNames(): void
+    {
+        $registry = new RootUserRegistry('[Root]\\, {ROOT}|, Admin');
+
+        self::assertTrue($registry->isRoot('{root}|'));
+        self::assertTrue($registry->isRoot('ADMIN'));
+        self::assertFalse($registry->isRoot('(root)|'));
+        self::assertSame(['[root]\\', 'admin'], $registry->getRootNicks());
+    }
 }

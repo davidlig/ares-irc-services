@@ -47,4 +47,19 @@ final class DbalServiceNickReservationInventoryTest extends TestCase
             self::assertSame(['OldNick'], $inventory->namesForProtocol('unreal'));
         }
     }
+
+    #[Test]
+    public function reservationKeysUseTheRfc1459Fold(): void
+    {
+        $connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
+        $connection->executeStatement('CREATE TABLE service_nick_reservations (protocol VARCHAR(32) NOT NULL, nickname_lower VARCHAR(64) NOT NULL, nickname VARCHAR(64) NOT NULL, PRIMARY KEY(protocol, nickname_lower))');
+        $inventory = new DbalServiceNickReservationInventory($connection);
+        $inventory->replaceForProtocol('unreal', ['[Bot]\\', 'Plain']);
+
+        self::assertSame(['plain', '{bot}|'], $connection->fetchFirstColumn('SELECT nickname_lower FROM service_nick_reservations ORDER BY nickname_lower'));
+        self::assertSame(['Plain', '[Bot]\\'], $inventory->namesForProtocol('unreal'));
+
+        $this->expectException(UniqueConstraintViolationException::class);
+        $inventory->replaceForProtocol('unreal', ['[Bot]', '{BOT}']);
+    }
 }

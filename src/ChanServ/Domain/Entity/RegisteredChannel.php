@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace App\ChanServ\Domain\Entity;
 
 use App\ChanServ\Domain\ValueObject\ChannelStatus;
+use App\Shared\Domain\IrcIdentityFold;
 use DateTimeImmutable;
 use InvalidArgumentException;
 use LogicException;
 
 use function sprintf;
 use function strlen;
-use function strtolower;
 use function trim;
 
 /**
@@ -108,7 +108,7 @@ class RegisteredChannel
     ): self {
         $channel = new self($registeredAt);
         $channel->name = $channelName;
-        $channel->nameLower = strtolower($channelName);
+        $channel->nameLower = IrcIdentityFold::fold($channelName);
         $channel->founderNickId = $founderNickId;
         $channel->description = $description;
         $channel->lastUsedAt = $registeredAt;
@@ -135,7 +135,7 @@ class RegisteredChannel
     ): self {
         $channel = new self($createdAt);
         $channel->name = $channelName;
-        $channel->nameLower = strtolower($channelName);
+        $channel->nameLower = IrcIdentityFold::fold($channelName);
         $channel->founderNickId = 0;
         $channel->description = '';
         $channel->status = ChannelStatus::Forbidden;
