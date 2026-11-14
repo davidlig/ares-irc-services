@@ -53,7 +53,7 @@ final class DoctrineGlineRepositoryTest extends TestCase
         $gline = $this->gline(7);
         $objectRepository = $this->createMock(EntityRepository::class);
         $objectRepository->expects(self::once())->method('findBy')
-            ->with([], ['createdAt' => 'DESC'])
+            ->with([], ['createdAt' => 'DESC', 'id' => 'DESC'])
             ->willReturn([$gline, new stdClass()]);
         $entityManager = $this->createStub(EntityManagerInterface::class);
         $entityManager->method('getRepository')->willReturn($objectRepository);
@@ -74,7 +74,7 @@ final class DoctrineGlineRepositoryTest extends TestCase
         $query->expects(self::once())->method('getResult')->willReturn([$gline]);
         $entityManager = $this->createMock(EntityManagerInterface::class);
         $entityManager->expects(self::once())->method('createQuery')
-            ->with(sprintf('SELECT g FROM %s g ORDER BY g.createdAt DESC', Gline::class))
+            ->with(sprintf('SELECT g FROM %s g ORDER BY g.createdAt DESC, g.id DESC', Gline::class))
             ->willReturn($query);
 
         $entry = new DoctrineGlineRepository($entityManager)->findByIndex(3);
@@ -88,17 +88,12 @@ final class DoctrineGlineRepositoryTest extends TestCase
     {
         yield 'pattern' => [
             'findByMaskPattern',
-            'SELECT g FROM %s g WHERE LOWER(g.mask) LIKE :pattern ORDER BY g.createdAt DESC',
+            'SELECT g FROM %s g WHERE LOWER(g.mask) LIKE :pattern ORDER BY g.createdAt DESC, g.id DESC',
             '%host%',
         ];
         yield 'active' => [
             'findActiveAt',
-            'SELECT g FROM %s g WHERE g.expiresAt IS NULL OR g.expiresAt > :at ORDER BY g.createdAt DESC',
-            'at',
-        ];
-        yield 'expired' => [
-            'findExpiredAt',
-            'SELECT g FROM %s g WHERE g.expiresAt IS NOT NULL AND g.expiresAt <= :at ORDER BY g.createdAt DESC',
+            'SELECT g FROM %s g WHERE g.expiresAt IS NULL OR g.expiresAt > :at ORDER BY g.createdAt DESC, g.id DESC',
             'at',
         ];
     }
@@ -121,11 +116,7 @@ final class DoctrineGlineRepositoryTest extends TestCase
             ->willReturn($query);
         $adapter = new DoctrineGlineRepository($entityManager);
 
-        $entries = match ($method) {
-            'findByMaskPattern' => $adapter->findByMaskPattern('HOST'),
-            'findActiveAt' => $adapter->findActiveAt($at),
-            default => $adapter->findExpiredAt($at),
-        };
+        $entries = 'findByMaskPattern' === $method ? $adapter->findByMaskPattern('HOST') : $adapter->findActiveAt($at);
 
         self::assertCount(1, $entries);
         self::assertSame('*@host.test', $entries[0]->mask);

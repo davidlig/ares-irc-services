@@ -10,6 +10,8 @@ use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\Service\NickDropService;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
+use Throwable;
 
 use function count;
 use function sprintf;
@@ -22,13 +24,14 @@ use function sprintf;
  */
 final readonly class PurgeInactiveNicknamesTask implements MaintenanceTaskInterface
 {
-    private const int DEFAULT_BATCH_SIZE = 100;
+    public const int DEFAULT_BATCH_SIZE = 100;
 
     private const int DEFAULT_MAX_BATCHES = 1;
 
     public function __construct(
         private RegisteredNickRepositoryInterface $nickRepository,
         private NickDropService $dropService,
+        private LoggerInterface $logger,
         private Clock $clock,
         private int $intervalSeconds,
         private int $inactivityExpiryDays,
@@ -61,24 +64,38 @@ final readonly class PurgeInactiveNicknamesTask implements MaintenanceTaskInterf
         $now = $this->clock->now();
         $threshold = $now->modify(sprintf('-%d days', $this->inactivityExpiryDays));
         $batches = 0;
+        /** @var array<int, true> $failed nick ids that failed earlier in this cycle */
+        $failed = [];
 
         do {
-            $inactive = $this->nickRepository->findRegisteredInactiveSince($threshold, $this->batchSize);
-            if ([] === $inactive) {
+            // Failed rows stay in the result set; widen the page so they never take a slot.
+            $limit = $this->batchSize + count($failed);
+            $batch = $this->nickRepository->findRegisteredInactiveSince($threshold, $limit);
+            if ([] === $batch) {
                 break;
             }
 
-            foreach ($inactive as $nick) {
+            foreach ($batch as $nick) {
                 // @phpstan-ignore instanceof.alwaysTrue
-                if (!$nick instanceof RegisteredNick) {
+                if (!$nick instanceof RegisteredNick || isset($failed[$nick->getId()])) {
                     continue;
                 }
 
-                $this->dropService->dropNick($nick, $now, 'inactivity', null);
+                try {
+                    $this->dropService->dropNick($nick, $now, 'inactivity', null);
+                } catch (Throwable $e) {
+                    $failed[$nick->getId()] = true;
+                    $this->logger->error(sprintf(
+                        'Maintenance [%s]: failed to drop inactive nick %s (id %d); skipping it until the next cycle.',
+                        $this->getName(),
+                        $nick->getNickname(),
+                        $nick->getId(),
+                    ), ['exception' => $e]);
+                }
             }
 
             $this->entityManager?->clear();
             ++$batches;
-        } while (count($inactive) === $this->batchSize && $batches < $this->maxBatchesPerCycle);
+        } while (count($batch) === $limit && $batches < $this->maxBatchesPerCycle);
     }
 }

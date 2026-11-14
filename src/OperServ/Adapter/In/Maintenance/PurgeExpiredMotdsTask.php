@@ -13,11 +13,20 @@ use DateTimeImmutable;
 use DateTimeZone;
 use Psr\Log\LoggerInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
+use Throwable;
 
+use function count;
 use function sprintf;
 
+/**
+ * Removes expired MOTDs in id-ordered batches. A MOTD whose removal keeps
+ * failing is logged and left for the next cycle; the keyset cursor moves past it
+ * so it never blocks the remaining rows or the later maintenance tasks.
+ */
 final readonly class PurgeExpiredMotdsTask implements MaintenanceTaskInterface
 {
+    public const int DEFAULT_BATCH_SIZE = 100;
+
     public function __construct(
         private MotdRepository $motdRepository,
         private ServiceDebugNotifierInterface $debugNotifier,
@@ -26,6 +35,7 @@ final readonly class PurgeExpiredMotdsTask implements MaintenanceTaskInterface
         private string $defaultLanguage,
         private string $defaultTimezone,
         private int $intervalSeconds,
+        private int $batchSize = self::DEFAULT_BATCH_SIZE,
     ) {}
 
     public function getName(): string
@@ -45,25 +55,46 @@ final readonly class PurgeExpiredMotdsTask implements MaintenanceTaskInterface
 
     public function run(): void
     {
-        $expired = $this->motdRepository->findExpiredAt(new DateTimeImmutable());
-        if ([] === $expired) {
-            return;
-        }
+        $occurredAt = new DateTimeImmutable();
+        $after = null;
 
-        $ids = [];
-        foreach ($expired as $motd) {
-            $ids[] = $motd->id;
+        do {
+            $expired = $this->motdRepository->findExpiredAt($occurredAt, $after, $this->batchSize);
+            $ids = [];
+            foreach ($expired as $motd) {
+                $after = $motd;
+                if ($this->finalize($motd)) {
+                    $ids[] = $motd->id;
+                }
+            }
 
+            if ([] !== $ids) {
+                $this->motdRepository->deleteByIds($ids);
+            }
+        } while (count($expired) === $this->batchSize);
+    }
+
+    private function finalize(MotdEntry $motd): bool
+    {
+        try {
             $this->debugNotifier->notify($this->formatFinalizedMessage($motd));
-
-            $this->logger->info(sprintf(
-                'Maintenance [%s]: removed expired MOTD id %d.',
+        } catch (Throwable $e) {
+            $this->logger->error(sprintf(
+                'Maintenance [%s]: failed to remove expired MOTD id %d; skipping it until the next cycle.',
                 $this->getName(),
                 $motd->id,
-            ));
+            ), ['exception' => $e]);
+
+            return false;
         }
 
-        $this->motdRepository->deleteByIds($ids);
+        $this->logger->info(sprintf(
+            'Maintenance [%s]: removed expired MOTD id %d.',
+            $this->getName(),
+            $motd->id,
+        ));
+
+        return true;
     }
 
     private function formatFinalizedMessage(MotdEntry $motd): string

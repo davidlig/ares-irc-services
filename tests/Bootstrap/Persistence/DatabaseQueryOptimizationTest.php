@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace App\Tests\Bootstrap\Persistence;
 
+use App\ChanServ\Adapter\In\Maintenance\PurgeExpiredAkickTask;
 use App\ChanServ\Adapter\Out\Persistence\Doctrine\ChannelAkickDoctrineRepository;
 use App\ChanServ\Adapter\Out\Persistence\Doctrine\ChannelHistoryDoctrineRepository;
 use App\ChanServ\Adapter\Out\Persistence\Doctrine\RegisteredChannelDoctrineRepository;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\ValueObject\ChannelStatus;
 use App\MemoServ\Adapter\Out\Persistence\Doctrine\MemoIgnoreDoctrineRepository;
+use App\NickServ\Adapter\In\Maintenance\PurgeInactiveNicknamesTask;
+use App\NickServ\Adapter\In\Maintenance\UnsuspendExpiredSuspensionsTask;
 use App\NickServ\Adapter\Out\Persistence\Doctrine\RegisteredNickDoctrineRepository;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\NickServ\Domain\ValueObject\NickStatus;
@@ -390,8 +393,9 @@ final class DatabaseQueryOptimizationTest extends TestCase
         $nickRepository = new RegisteredNickDoctrineRepository($this->entityManager);
         $nickRepository->findNicknamesByLastConnectIp('203.0.113.9');
         $nickRepository->findByEmail('FINDME@example.com');
-        $nickRepository->findExpiredSuspensions(new DateTimeImmutable('2026-01-01'));
-        $nickRepository->findRegisteredInactiveSince(new DateTimeImmutable('2026-01-01'));
+        // Same arguments as the maintenance tasks: production adds ORDER BY id LIMIT <batch size>.
+        $nickRepository->findExpiredSuspensions(new DateTimeImmutable('2026-01-01'), UnsuspendExpiredSuspensionsTask::DEFAULT_BATCH_SIZE);
+        $nickRepository->findRegisteredInactiveSince(new DateTimeImmutable('2026-01-01'), PurgeInactiveNicknamesTask::DEFAULT_BATCH_SIZE);
         $channelRepository = new RegisteredChannelDoctrineRepository($this->entityManager);
         $channelRepository->findByFounderNickId(999999);
         $channelRepository->findEstablishedByFounderNickId(999999);
@@ -458,13 +462,17 @@ final class DatabaseQueryOptimizationTest extends TestCase
     {
         $this->logger->clear();
         $this->logger->enabled = true;
-        self::assertCount(1, new ChannelAkickDoctrineRepository($this->entityManager)->findExpired());
+        // Same calls as PurgeExpiredAkickTask: the first page, then the page after its keyset cursor.
+        $akickRepository = new ChannelAkickDoctrineRepository($this->entityManager);
+        $expiredAkicks = $akickRepository->findExpired(null, PurgeExpiredAkickTask::DEFAULT_BATCH_SIZE);
+        self::assertCount(1, $expiredAkicks);
+        self::assertSame([], $akickRepository->findExpired($expiredAkicks[0], PurgeExpiredAkickTask::DEFAULT_BATCH_SIZE));
         self::assertCount(1, new ChannelHistoryDoctrineRepository($this->entityManager)->findByChannelId(1, 10));
         new MemoIgnoreDoctrineRepository($this->entityManager)->deleteAllForNick(999999);
         $this->logger->enabled = false;
-        self::assertCount(3, $this->logger->queries);
+        self::assertCount(4, $this->logger->queries);
         $platform = $this->connection->getDatabasePlatform();
-        foreach (['idx_channel_akicks_expires', 'idx_channel_history_channel_performed', 'idx_memo_ignores_ignored_nick'] as $i => $index) {
+        foreach (['idx_channel_akicks_expires', 'idx_channel_akicks_expires', 'idx_channel_history_channel_performed', 'idx_memo_ignores_ignored_nick'] as $i => $index) {
             $query = $this->logger->queries[$i];
             $rows = $this->connection->fetchAllAssociative(($platform instanceof SQLitePlatform ? 'EXPLAIN QUERY PLAN ' : 'EXPLAIN ') . $query['sql'], $query['params'], $query['types']);
             self::assertStringContainsString($index, json_encode($rows, JSON_THROW_ON_ERROR));

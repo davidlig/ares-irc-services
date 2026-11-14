@@ -2101,6 +2101,7 @@ services:
     arguments:
       $nickRepository: '@App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface'
       $dropService: '@App\NickServ\Application\Service\NickDropService'
+      $logger: "@monolog.logger.maintenance"
       $intervalSeconds: "%maintenance.interval%"
       $inactivityExpiryDays: "%nickserv.inactivity_expiry_days%"
       $entityManager: "@doctrine.orm.entity_manager"
@@ -2110,6 +2111,7 @@ services:
     arguments:
       $nickRepository: '@App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface'
       $dropService: '@App\NickServ\Application\Service\NickDropService'
+      $logger: "@monolog.logger.maintenance"
       $intervalSeconds: "%maintenance.interval%"
       $dropGraceDays: "%nickserv.drop_grace_days%"
       $entityManager: "@doctrine.orm.entity_manager"

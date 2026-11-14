@@ -117,4 +117,41 @@ final class PurgeExpiredAkickTaskTest extends TestCase
 
         self::assertSame([999], $deletedIds);
     }
+
+    #[Test]
+    public function loadsExpiredAkicksInBoundedBatchesAfterTheLastSeenId(): void
+    {
+        $loads = [];
+        $deleted = [];
+        $akickRepo = $this->createMock(ChannelAkickRepositoryInterface::class);
+        $akickRepo->expects(self::exactly(2))->method('findExpired')
+            ->willReturnCallback(function (?ChannelAkick $after, ?int $limit) use (&$loads): array {
+                $loads[] = [$after?->getId(), $limit];
+
+                return null === $after ? [$this->expired(1), $this->expired(2)] : [$this->expired(3)];
+            });
+        $akickRepo->expects(self::exactly(2))->method('deleteByIds')
+            ->willReturnCallback(static function (array $ids) use (&$deleted): int {
+                $deleted[] = $ids;
+
+                return count($ids);
+            });
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::exactly(3))->method('info');
+
+        new PurgeExpiredAkickTask($akickRepo, $logger, 3600, 2)->run();
+
+        self::assertSame([[null, 2], [2, 2]], $loads);
+        self::assertSame([[1, 2], [3]], $deleted);
+    }
+
+    private function expired(int $id): ChannelAkick
+    {
+        $akick = $this->createStub(ChannelAkick::class);
+        $akick->method('getChannelId')->willReturn(1);
+        $akick->method('getMask')->willReturn('*!*@host' . $id . '.test');
+        $akick->method('getId')->willReturn($id);
+
+        return $akick;
+    }
 }

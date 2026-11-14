@@ -12,11 +12,20 @@ use App\Shared\Application\Port\EventBusInterface;
 use DateTimeImmutable;
 use LogicException;
 use Psr\Log\LoggerInterface;
+use Throwable;
 
+use function count;
 use function sprintf;
 
+/**
+ * Removes expired G-lines in id-ordered batches. A G-line whose removal keeps
+ * failing is logged and left for the next cycle; the keyset cursor moves past it
+ * so it never blocks the remaining rows or the later maintenance tasks.
+ */
 final readonly class PurgeExpiredGlinesTask implements MaintenanceTaskInterface
 {
+    public const int DEFAULT_BATCH_SIZE = 100;
+
     public function __construct(
         private GlineRepository $glineRepository,
         private ServiceDebugNotifierInterface $debugNotifier,
@@ -24,6 +33,7 @@ final readonly class PurgeExpiredGlinesTask implements MaintenanceTaskInterface
         private LoggerInterface $logger,
         private string $serverName,
         private int $intervalSeconds,
+        private int $batchSize = self::DEFAULT_BATCH_SIZE,
     ) {}
 
     public function getName(): string
@@ -44,21 +54,32 @@ final readonly class PurgeExpiredGlinesTask implements MaintenanceTaskInterface
     public function run(): void
     {
         $occurredAt = new DateTimeImmutable();
-        $expired = $this->glineRepository->findExpiredAt($occurredAt);
-        if ([] === $expired) {
-            return;
-        }
+        $after = null;
 
-        $ids = [];
-        foreach ($expired as $gline) {
-            $mask = $gline->mask;
-            $glineId = $gline->id;
-            if (null === $glineId) {
-                throw new LogicException('Persisted GLINE entry must have an identifier.');
+        do {
+            $expired = $this->glineRepository->findExpiredAt($occurredAt, $after, $this->batchSize);
+            $ids = [];
+            foreach ($expired as $gline) {
+                $glineId = $gline->id;
+                if (null === $glineId) {
+                    throw new LogicException('Persisted GLINE entry must have an identifier.');
+                }
+
+                $after = $gline;
+                if ($this->remove($gline->mask, $glineId, $occurredAt)) {
+                    $ids[] = $glineId;
+                }
             }
 
-            $ids[] = $glineId;
+            if ([] !== $ids) {
+                $this->glineRepository->deleteByIds($ids);
+            }
+        } while (count($expired) === $this->batchSize);
+    }
 
+    private function remove(string $mask, int $glineId, DateTimeImmutable $occurredAt): bool
+    {
+        try {
             $this->eventDispatcher->dispatch(new GlineRemovedEvent(
                 glineId: $glineId,
                 mask: $mask,
@@ -73,15 +94,24 @@ final readonly class PurgeExpiredGlinesTask implements MaintenanceTaskInterface
                 target: $mask,
                 reason: 'expired',
             );
-
-            $this->logger->info(sprintf(
-                'Maintenance [%s]: removed expired GLINE %s (id %d).',
+        } catch (Throwable $e) {
+            $this->logger->error(sprintf(
+                'Maintenance [%s]: failed to remove expired GLINE %s (id %d); skipping it until the next cycle.',
                 $this->getName(),
                 $mask,
                 $glineId,
-            ));
+            ), ['exception' => $e]);
+
+            return false;
         }
 
-        $this->glineRepository->deleteByIds($ids);
+        $this->logger->info(sprintf(
+            'Maintenance [%s]: removed expired GLINE %s (id %d).',
+            $this->getName(),
+            $mask,
+            $glineId,
+        ));
+
+        return true;
     }
 }

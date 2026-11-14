@@ -15,7 +15,9 @@ use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use RuntimeException;
 
 use function count;
 
@@ -164,5 +166,82 @@ final class PurgeExpiredGlinesTaskTest extends TestCase
         self::assertSame(999, $events[0]->glineId);
         self::assertSame('*@isp.com', $events[0]->mask);
         self::assertSame('expired', $events[0]->cause);
+    }
+
+    #[Test]
+    public function loadsExpiredGlinesInBoundedBatchesAfterTheLastSeenId(): void
+    {
+        $loads = [];
+        $deleted = [];
+        $glineRepo = $this->createMock(GlineRepository::class);
+        $glineRepo->expects(self::exactly(2))->method('findExpiredAt')
+            ->willReturnCallback(function (DateTimeImmutable $at, ?GlineEntry $after, ?int $limit) use (&$loads): array {
+                $loads[] = [$after?->id, $limit];
+
+                return null === $after ? [$this->expired(1), $this->expired(2)] : [$this->expired(3)];
+            });
+        $glineRepo->expects(self::exactly(2))->method('deleteByIds')
+            ->willReturnCallback(static function (array $ids) use (&$deleted): int {
+                $deleted[] = $ids;
+
+                return count($ids);
+            });
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
+        $eventDispatcher->expects(self::exactly(3))->method('dispatch');
+
+        $task = new PurgeExpiredGlinesTask($glineRepo, $this->createStub(ServiceDebugNotifierInterface::class), $eventDispatcher, new NullLogger(), self::SERVER_NAME, 3600, 2);
+        $task->run();
+
+        self::assertSame([[null, 2], [2, 2]], $loads);
+        self::assertSame([[1, 2], [3]], $deleted);
+    }
+
+    #[Test]
+    public function aGlineThatKeepsFailingIsLoggedAndSkippedWithoutBlockingLaterRows(): void
+    {
+        $failure = new RuntimeException('network sink rejected the removal');
+        $loads = [];
+        $deleted = [];
+        $glineRepo = $this->createMock(GlineRepository::class);
+        $glineRepo->expects(self::exactly(2))->method('findExpiredAt')
+            ->willReturnCallback(function (DateTimeImmutable $at, ?GlineEntry $after, ?int $limit) use (&$loads): array {
+                $loads[] = [$after?->id, $limit];
+
+                return null === $after ? [$this->expired(1), $this->expired(2)] : [$this->expired(3)];
+            });
+        $glineRepo->expects(self::exactly(2))->method('deleteByIds')
+            ->willReturnCallback(static function (array $ids) use (&$deleted): int {
+                $deleted[] = $ids;
+
+                return count($ids);
+            });
+        $removed = [];
+        $eventDispatcher = $this->createStub(EventBusInterface::class);
+        $eventDispatcher->method('dispatch')
+            ->willReturnCallback(static function (object $event) use ($failure, &$removed): void {
+                self::assertInstanceOf(GlineRemovedEvent::class, $event);
+                if (1 === $event->glineId) {
+                    throw $failure;
+                }
+                $removed[] = $event->glineId;
+            });
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::once())->method('error')->with(
+            'Maintenance [operserv.purge_expired_glines]: failed to remove expired GLINE *@host1.test (id 1); skipping it until the next cycle.',
+            ['exception' => $failure],
+        );
+        $logger->expects(self::exactly(2))->method('info');
+
+        $task = new PurgeExpiredGlinesTask($glineRepo, $this->createStub(ServiceDebugNotifierInterface::class), $eventDispatcher, $logger, self::SERVER_NAME, 3600, 2);
+        $task->run();
+
+        self::assertSame([[null, 2], [2, 2]], $loads);
+        self::assertSame([2, 3], $removed);
+        self::assertSame([[2], [3]], $deleted);
+    }
+
+    private function expired(int $id): GlineEntry
+    {
+        return new GlineEntry('*@host' . $id . '.test', null, null, new DateTimeImmutable('-2 hours'), new DateTimeImmutable('-1 hour'), $id);
     }
 }

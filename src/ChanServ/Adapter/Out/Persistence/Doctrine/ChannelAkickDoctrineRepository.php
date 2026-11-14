@@ -8,6 +8,7 @@ use App\ChanServ\Application\Port\Out\ChannelAkickRepositoryInterface;
 use App\ChanServ\Domain\Entity\ChannelAkick;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
+use LogicException;
 
 use function array_filter;
 use function array_values;
@@ -102,17 +103,34 @@ final readonly class ChannelAkickDoctrineRepository implements ChannelAkickRepos
     }
 
     /**
+     * Expired entries ordered by expiry then id, strictly after the $after keyset cursor.
+     *
      * @return ChannelAkick[]
      */
-    public function findExpired(): array
+    public function findExpired(?ChannelAkick $after = null, ?int $limit = null): array
     {
+        $dql = 'SELECT a FROM ' . ChannelAkick::class . ' a WHERE a.expiresAt IS NOT NULL AND a.expiresAt < :now';
+        $parameters = ['now' => new DateTimeImmutable()->format('Y-m-d H:i:s')];
+        $afterExpiresAt = $after?->getExpiresAt();
+        if (null !== $after) {
+            if (null === $afterExpiresAt) {
+                throw new LogicException('AKICK expiry cursor must be an expired entry.');
+            }
+            $dql .= ' AND a.expiresAt >= :afterExpiresAt AND (a.expiresAt > :afterExpiresAt OR a.id > :afterId)';
+            $parameters['afterExpiresAt'] = $afterExpiresAt->format('Y-m-d H:i:s');
+            $parameters['afterId'] = $after->getId();
+        }
+
+        $query = $this->em->createQuery($dql . ' ORDER BY a.expiresAt ASC, a.id ASC');
+        foreach ($parameters as $name => $value) {
+            $query->setParameter($name, $value);
+        }
+        if (null !== $limit) {
+            $query->setMaxResults($limit);
+        }
+
         /** @var ChannelAkick[] $result */
-        $result = $this->em
-            ->createQuery(
-                'SELECT a FROM ' . ChannelAkick::class . ' a WHERE a.expiresAt IS NOT NULL AND a.expiresAt < :now'
-            )
-            ->setParameter('now', new DateTimeImmutable()->format('Y-m-d H:i:s'))
-            ->getResult();
+        $result = $query->getResult();
 
         return $result;
     }

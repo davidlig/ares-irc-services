@@ -8,17 +8,27 @@ use App\MemoServ\Adapter\Out\Persistence\Doctrine\MemoDoctrineRepository;
 use App\MemoServ\Application\Port\Out\MemoRepositoryInterface;
 use App\MemoServ\Application\UseCase\GetPendingNickNotice\BurstMemoNoticeCache;
 use App\MemoServ\Domain\Entity\Memo;
+use App\Tests\Bootstrap\Persistence\QueryCaptureLogger;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
 use DateTimeImmutable;
+use Doctrine\DBAL\DriverManager;
+use Doctrine\DBAL\Logging\Middleware;
+use Doctrine\ORM\Configuration;
+use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\Mapping\Driver\SimplifiedXmlDriver;
 use Doctrine\ORM\Query;
 use Doctrine\ORM\QueryBuilder;
+use Doctrine\ORM\Tools\SchemaTool;
 use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use stdClass;
+
+use function array_map;
+use function sys_get_temp_dir;
 
 #[CoversClass(MemoDoctrineRepository::class)]
 #[CoversClass(BurstMemoNoticeCache::class)]
@@ -86,6 +96,79 @@ final class MemoDoctrineRepositoryTest extends DoctrineIntegrationTestCase
         self::assertCount(2, $list);
         self::assertSame('First', $list[0]->getMessage());
         self::assertSame('Second', $list[1]->getMessage());
+    }
+
+    #[Test]
+    public function nickInboxListAndIndexShareOneTotalOrderForMemosCreatedInTheSameSecond(): void
+    {
+        $sameSecond = new DateTimeImmutable('2026-05-01 10:00:00');
+        foreach (['First', 'Second', 'Third', 'Fourth'] as $message) {
+            $this->repository->save(new Memo(targetNickId: 1, targetChannelId: null, senderNickId: 2, message: $message, createdAt: $sameSecond));
+        }
+        $this->flushAndClear();
+
+        $listed = array_map(static fn (Memo $memo): string => $memo->getMessage(), $this->repository->findByTargetNick(1));
+
+        self::assertSame(['First', 'Second', 'Third', 'Fourth'], $listed);
+        foreach ($listed as $position => $message) {
+            self::assertSame($message, $this->repository->findByTargetNickAndIndex(1, $position + 1)?->getMessage());
+        }
+        self::assertNull($this->repository->findByTargetNickAndIndex(1, 5));
+    }
+
+    #[Test]
+    public function channelInboxListAndIndexShareOneTotalOrderForMemosCreatedInTheSameSecond(): void
+    {
+        $sameSecond = new DateTimeImmutable('2026-05-01 10:00:00');
+        foreach (['First', 'Second', 'Third', 'Fourth'] as $message) {
+            $this->repository->save(new Memo(targetNickId: null, targetChannelId: 10, senderNickId: 1, message: $message, createdAt: $sameSecond));
+        }
+        $this->flushAndClear();
+
+        $listed = array_map(static fn (Memo $memo): string => $memo->getMessage(), $this->repository->findByTargetChannel(10));
+
+        self::assertSame(['First', 'Second', 'Third', 'Fourth'], $listed);
+        foreach ($listed as $position => $message) {
+            self::assertSame($message, $this->repository->findByTargetChannelAndIndex(10, $position + 1)?->getMessage());
+        }
+        self::assertNull($this->repository->findByTargetChannelAndIndex(10, 5));
+    }
+
+    #[Test]
+    public function everyListAndIndexQueryBreaksCreatedAtTiesById(): void
+    {
+        $logger = new QueryCaptureLogger();
+        $repository = new MemoDoctrineRepository($this->capturingEntityManager($logger));
+        $logger->enabled = true;
+
+        $repository->findByTargetNick(1);
+        $repository->findByTargetChannel(10);
+        $repository->findByTargetNickAndIndex(1, 2);
+        $repository->findByTargetChannelAndIndex(10, 2);
+
+        self::assertCount(4, $logger->queries);
+        foreach ($logger->queries as $query) {
+            self::assertMatchesRegularExpression('/ORDER BY \\w+\\.created_at ASC, \\w+\\.id ASC(?: |$)/', $query['sql']);
+        }
+    }
+
+    #[Test]
+    public function distinctTimestampsStillOrderListAndIndexByCreatedAtBeforeInsertionOrder(): void
+    {
+        $this->repository->save(new Memo(targetNickId: 1, targetChannelId: null, senderNickId: 2, message: 'Newest', createdAt: new DateTimeImmutable('2026-05-01 10:00:03')));
+        $this->repository->save(new Memo(targetNickId: 1, targetChannelId: null, senderNickId: 2, message: 'Oldest', createdAt: new DateTimeImmutable('2026-05-01 10:00:01')));
+        $this->repository->save(new Memo(targetNickId: 1, targetChannelId: null, senderNickId: 2, message: 'Middle', createdAt: new DateTimeImmutable('2026-05-01 10:00:02')));
+        $this->repository->save(new Memo(targetNickId: null, targetChannelId: 10, senderNickId: 1, message: 'Newest', createdAt: new DateTimeImmutable('2026-05-01 10:00:03')));
+        $this->repository->save(new Memo(targetNickId: null, targetChannelId: 10, senderNickId: 1, message: 'Oldest', createdAt: new DateTimeImmutable('2026-05-01 10:00:01')));
+        $this->flushAndClear();
+
+        self::assertSame(['Oldest', 'Middle', 'Newest'], array_map(static fn (Memo $memo): string => $memo->getMessage(), $this->repository->findByTargetNick(1)));
+        self::assertSame('Oldest', $this->repository->findByTargetNickAndIndex(1, 1)?->getMessage());
+        self::assertSame('Middle', $this->repository->findByTargetNickAndIndex(1, 2)?->getMessage());
+        self::assertSame('Newest', $this->repository->findByTargetNickAndIndex(1, 3)?->getMessage());
+        self::assertSame(['Oldest', 'Newest'], array_map(static fn (Memo $memo): string => $memo->getMessage(), $this->repository->findByTargetChannel(10)));
+        self::assertSame('Oldest', $this->repository->findByTargetChannelAndIndex(10, 1)?->getMessage());
+        self::assertSame('Newest', $this->repository->findByTargetChannelAndIndex(10, 2)?->getMessage());
     }
 
     #[Test]
@@ -453,6 +536,21 @@ final class MemoDoctrineRepositoryTest extends DoctrineIntegrationTestCase
         $this->repository = new MemoDoctrineRepository($this->entityManager, new BurstMemoNoticeCache());
     }
 
+    private function capturingEntityManager(QueryCaptureLogger $logger): EntityManager
+    {
+        $config = new Configuration();
+        $config->setProxyDir(sys_get_temp_dir());
+        $config->setProxyNamespace('MemoOrderProxies');
+        $config->setMetadataDriverImpl(new SimplifiedXmlDriver([
+            __DIR__ . '/../../../../../../config/doctrine/memoserv' => 'App\\MemoServ\\Domain\\Entity',
+        ]));
+        $config->setMiddlewares([new Middleware($logger)]);
+        $entityManager = new EntityManager(DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true], $config), $config);
+        new SchemaTool($entityManager)->createSchema($entityManager->getMetadataFactory()->getAllMetadata());
+
+        return $entityManager;
+    }
+
     private function repositoryWithUnexpectedIndexResult(): MemoDoctrineRepository
     {
         $query = $this->createStub(Query::class);
@@ -464,6 +562,7 @@ final class MemoDoctrineRepositoryTest extends DoctrineIntegrationTestCase
         $queryBuilder->method('where')->willReturnSelf();
         $queryBuilder->method('setParameter')->willReturnSelf();
         $queryBuilder->method('orderBy')->willReturnSelf();
+        $queryBuilder->method('addOrderBy')->willReturnSelf();
         $queryBuilder->method('setFirstResult')->willReturnSelf();
         $queryBuilder->method('setMaxResults')->willReturnSelf();
         $queryBuilder->method('getQuery')->willReturn($query);

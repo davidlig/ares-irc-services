@@ -13,7 +13,7 @@ interface GlineRepository
     /** @return list<GlineEntry> */
     public function findAll(): array;
 
-    /** Find a zero-based entry from the createdAt DESC result set. */
+    /** Find a zero-based entry from the createdAt DESC, id DESC result set that findAll() lists. */
     public function findByIndex(int $index): ?GlineEntry;
 
     /** @return list<GlineEntry> */
@@ -22,8 +22,12 @@ interface GlineRepository
     /** @return list<GlineEntry> */
     public function findActiveAt(DateTimeImmutable $at): array;
 
-    /** @return list<GlineEntry> */
-    public function findExpiredAt(DateTimeImmutable $at): array;
+    /**
+     * Expired entries ordered by expiry then id, strictly after the $after keyset cursor.
+     *
+     * @return list<GlineEntry>
+     */
+    public function findExpiredAt(DateTimeImmutable $at, ?GlineEntry $after = null, ?int $limit = null): array;
 
     public function countAll(): int;
 

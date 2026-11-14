@@ -24,7 +24,7 @@ final readonly class OperServNickDropCleanupSubscriber implements EventSubscribe
         private OperIrcopRepositoryInterface $operIrcopRepository,
         private GlineRepository $glineRepository,
         private MotdRepository $motdRepository,
-        private ?OperatorPermissionCache $operatorPermissionCache = null,
+        private OperatorPermissionCache $operatorPermissionCache,
     ) {}
 
     public static function getSubscribedEvents(): array
@@ -37,7 +37,7 @@ final readonly class OperServNickDropCleanupSubscriber implements EventSubscribe
     public function onNickDrop(NickDropCleanupEvent $event): void
     {
         $this->operIrcopRepository->deleteByNickId($event->nickId);
-        $this->operatorPermissionCache?->invalidate($event->nickId);
+        $this->operatorPermissionCache->invalidate($event->nickId);
         $this->operIrcopRepository->clearAddedById($event->nickId);
 
         $this->glineRepository->clearCreatorAccountId($event->nickId);

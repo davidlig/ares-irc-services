@@ -16,8 +16,12 @@ use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use ReflectionClass;
+use RuntimeException;
+
+use function count;
 
 #[CoversClass(UnsuspendExpiredSuspensionsTask::class)]
 final class UnsuspendExpiredSuspensionsTaskTest extends TestCase
@@ -210,6 +214,88 @@ final class UnsuspendExpiredSuspensionsTaskTest extends TestCase
         self::assertFalse($nick->isSuspended());
         self::assertNull($nick->getReason());
         self::assertNull($nick->getSuspendedUntil());
+    }
+
+    #[Test]
+    public function aSuspensionThatKeepsFailingIsLoggedAndSkippedWhileTheRestOfTheBatchIsLifted(): void
+    {
+        $failing = $this->createNickWithId('Broken', 1);
+        $failing->suspend('Ban', new DateTimeImmutable('-1 hour'));
+        $healthy = $this->createNickWithId('Healthy', 2);
+        $healthy->suspend('Ban', new DateTimeImmutable('-1 hour'));
+        $failure = new RuntimeException('database rejected the update');
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findExpiredSuspensions')->willReturn([$failing, $healthy]);
+        $nickRepo->method('save')->willReturnCallback(static function (RegisteredNick $nick) use ($failing, $failure): void {
+            if ($nick === $failing) {
+                throw $failure;
+            }
+        });
+        $published = [];
+        $eventPublisher = $this->createStub(NickServEventPublisher::class);
+        $eventPublisher->method('publish')->willReturnCallback(static function (NickUnsuspendedEvent $event) use (&$published): void {
+            $published[] = $event->nickname;
+        });
+        $debugNotifier = $this->createMock(ServiceDebugNotifierInterface::class);
+        $debugNotifier->expects(self::once())->method('log')->with(self::SERVER_NAME, 'UNSUSPEND', 'Healthy');
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::once())->method('error')->with(
+            'Maintenance [nickserv.unsuspend_expired_suspensions]: failed to auto-unsuspend nick Broken (id 1); skipping it until the next cycle.',
+            ['exception' => $failure],
+        );
+        $logger->expects(self::once())->method('info')->with('Maintenance [nickserv.unsuspend_expired_suspensions]: auto-unsuspended nick Healthy (id 2).');
+        $em = $this->createMock(EntityManagerInterface::class);
+        $em->expects(self::once())->method('detach')->with($failing);
+        $em->expects(self::once())->method('clear');
+
+        new UnsuspendExpiredSuspensionsTask($nickRepo, $debugNotifier, $logger, $this->clock(), $eventPublisher, self::SERVER_NAME, 3600, $em)->run();
+
+        self::assertSame(['Healthy'], $published);
+        self::assertFalse($healthy->isSuspended());
+    }
+
+    #[Test]
+    public function laterBatchesOfTheSameCycleSkipSuspensionsThatAlreadyFailedWithoutShrinkingTheBatch(): void
+    {
+        $failing = $this->createNickWithId('Broken', 1);
+        $second = $this->createNickWithId('Second', 2);
+        $third = $this->createNickWithId('Third', 3);
+        $fourth = $this->createNickWithId('Fourth', 4);
+        foreach ([$failing, $second, $third, $fourth] as $nick) {
+            $nick->suspend('Ban', new DateTimeImmutable('-1 hour'));
+        }
+        $loads = [];
+        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepo->expects(self::exactly(2))->method('findExpiredSuspensions')
+            ->willReturnCallback(static function (DateTimeImmutable $now, int $limit) use ($failing, $second, $third, $fourth, &$loads): array {
+                $loads[] = $limit;
+
+                return 1 === count($loads) ? [$failing, $second] : [$failing, $third, $fourth];
+            });
+        $attempts = [];
+        $nickRepo->method('save')->willReturnCallback(static function (RegisteredNick $nick) use ($failing, &$attempts): void {
+            $attempts[] = $nick->getNickname();
+            if ($nick === $failing) {
+                throw new RuntimeException('database rejected the update');
+            }
+        });
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::once())->method('error');
+
+        new UnsuspendExpiredSuspensionsTask(
+            $nickRepo,
+            $this->createStub(ServiceDebugNotifierInterface::class),
+            $logger,
+            $this->clock(),
+            $this->createStub(NickServEventPublisher::class),
+            self::SERVER_NAME,
+            3600,
+            batchSize: 2,
+            maxBatchesPerCycle: 2,
+        )->run();
+
+        self::assertSame([2, 3], $loads);
+        self::assertSame(['Broken', 'Second', 'Third', 'Fourth'], $attempts);
     }
 
     private function createNickWithId(string $nickname, int $id): RegisteredNick

@@ -8,20 +8,24 @@ use App\ChanServ\Application\Port\Out\ChannelAkickRepositoryInterface;
 use App\Irc\Application\Port\In\Maintenance\MaintenanceTaskInterface;
 use Psr\Log\LoggerInterface;
 
+use function count;
 use function sprintf;
 
 /**
- * Removes expired AKICK entries from channels.
+ * Removes expired AKICK entries from channels in id-ordered batches.
  * Dispatched periodically by the maintenance scheduler.
  *
  * Order 350: ChanServ AKICK cleanup (after channel purge).
  */
 final readonly class PurgeExpiredAkickTask implements MaintenanceTaskInterface
 {
+    public const int DEFAULT_BATCH_SIZE = 100;
+
     public function __construct(
         private ChannelAkickRepositoryInterface $akickRepository,
         private LoggerInterface $logger,
         private int $intervalSeconds,
+        private int $batchSize = self::DEFAULT_BATCH_SIZE,
     ) {}
 
     public function getName(): string
@@ -41,27 +45,28 @@ final readonly class PurgeExpiredAkickTask implements MaintenanceTaskInterface
 
     public function run(): void
     {
-        $expired = $this->akickRepository->findExpired();
-        if ([] === $expired) {
-            return;
-        }
+        $after = null;
 
-        $ids = [];
-        foreach ($expired as $akick) {
-            $channelId = $akick->getChannelId();
-            $mask = $akick->getMask();
-            $akickId = $akick->getId();
-            $ids[] = $akickId;
+        do {
+            $expired = $this->akickRepository->findExpired($after, $this->batchSize);
+            $ids = [];
+            foreach ($expired as $akick) {
+                $akickId = $akick->getId();
+                $after = $akick;
+                $ids[] = $akickId;
 
-            $this->logger->info(sprintf(
-                'Maintenance [%s]: removed expired AKICK %s (id %d) from channel %d.',
-                $this->getName(),
-                $mask,
-                $akickId,
-                $channelId,
-            ));
-        }
+                $this->logger->info(sprintf(
+                    'Maintenance [%s]: removed expired AKICK %s (id %d) from channel %d.',
+                    $this->getName(),
+                    $akick->getMask(),
+                    $akickId,
+                    $akick->getChannelId(),
+                ));
+            }
 
-        $this->akickRepository->deleteByIds($ids);
+            if ([] !== $ids) {
+                $this->akickRepository->deleteByIds($ids);
+            }
+        } while (count($expired) === $this->batchSize);
     }
 }

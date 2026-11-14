@@ -14,9 +14,13 @@ use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
+use RuntimeException;
 use stdClass;
 
 use function array_fill;
+use function count;
 
 #[CoversClass(PurgePendingDeletionNicknamesTask::class)]
 final class PurgePendingDeletionNicknamesTaskTest extends TestCase
@@ -27,6 +31,7 @@ final class PurgePendingDeletionNicknamesTaskTest extends TestCase
         $task = new PurgePendingDeletionNicknamesTask(
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NickDropService::class),
+            new NullLogger(),
             $this->clock(),
             3600,
             7,
@@ -49,7 +54,7 @@ final class PurgePendingDeletionNicknamesTaskTest extends TestCase
         $dropService = $this->createMock(NickDropService::class);
         $dropService->expects(self::never())->method('hardDropNick');
 
-        $task = new PurgePendingDeletionNicknamesTask($repo, $dropService, $this->clock(), 3600, 7);
+        $task = new PurgePendingDeletionNicknamesTask($repo, $dropService, new NullLogger(), $this->clock(), 3600, 7);
         $task->run();
     }
 
@@ -72,7 +77,7 @@ final class PurgePendingDeletionNicknamesTaskTest extends TestCase
             null,
         );
 
-        $task = new PurgePendingDeletionNicknamesTask($repo, $dropService, $this->clock(), 3600, 7);
+        $task = new PurgePendingDeletionNicknamesTask($repo, $dropService, new NullLogger(), $this->clock(), 3600, 7);
 
         $task->run();
     }
@@ -97,6 +102,7 @@ final class PurgePendingDeletionNicknamesTaskTest extends TestCase
         $task = new PurgePendingDeletionNicknamesTask(
             $repo,
             $dropService,
+            new NullLogger(),
             $this->clock(),
             3600,
             7,
@@ -128,6 +134,7 @@ final class PurgePendingDeletionNicknamesTaskTest extends TestCase
         $task = new PurgePendingDeletionNicknamesTask(
             $repo,
             $dropService,
+            new NullLogger(),
             $this->clock(),
             3600,
             7,
@@ -136,6 +143,77 @@ final class PurgePendingDeletionNicknamesTaskTest extends TestCase
             maxBatchesPerCycle: 2,
         );
         $task->run();
+    }
+
+    #[Test]
+    public function aNickThatKeepsFailingIsLoggedAndSkippedWhileTheRestOfTheBatchIsDropped(): void
+    {
+        $failing = $this->nick(1, 'Broken');
+        $healthy = $this->nick(2, 'Healthy');
+        $failure = new RuntimeException('drop subscriber failed');
+        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repo->method('findPendingDeletionBefore')->willReturn([$failing, $healthy]);
+        $dropped = [];
+        $dropService = $this->createMock(NickDropService::class);
+        $dropService->expects(self::exactly(2))->method('hardDropNick')
+            ->willReturnCallback(static function (RegisteredNick $nick) use ($failing, $failure, &$dropped): void {
+                if ($nick === $failing) {
+                    throw $failure;
+                }
+                $dropped[] = $nick->getNickname();
+            });
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::once())->method('error')->with(
+            'Maintenance [nickserv.purge_pending_deletion_nicknames]: failed to drop pending-deletion nick Broken (id 1); skipping it until the next cycle.',
+            ['exception' => $failure],
+        );
+        $em = $this->createMock(EntityManagerInterface::class);
+        $em->expects(self::once())->method('clear');
+
+        new PurgePendingDeletionNicknamesTask($repo, $dropService, $logger, $this->clock(), 3600, 7, $em)->run();
+
+        self::assertSame(['Healthy'], $dropped);
+    }
+
+    #[Test]
+    public function laterBatchesOfTheSameCycleSkipNicksThatAlreadyFailedWithoutShrinkingTheBatch(): void
+    {
+        $failing = $this->nick(1, 'Broken');
+        $loads = [];
+        $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $repo->expects(self::exactly(2))->method('findPendingDeletionBefore')
+            ->willReturnCallback(function (DateTimeImmutable $threshold, int $limit) use ($failing, &$loads): array {
+                $loads[] = $limit;
+
+                return 1 === count($loads)
+                    ? [$failing, $this->nick(2, 'Second')]
+                    : [$failing, $this->nick(3, 'Third'), $this->nick(4, 'Fourth')];
+            });
+        $attempts = [];
+        $dropService = $this->createStub(NickDropService::class);
+        $dropService->method('hardDropNick')
+            ->willReturnCallback(static function (RegisteredNick $nick) use ($failing, &$attempts): void {
+                $attempts[] = $nick->getNickname();
+                if ($nick === $failing) {
+                    throw new RuntimeException('drop subscriber failed');
+                }
+            });
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::once())->method('error');
+
+        new PurgePendingDeletionNicknamesTask($repo, $dropService, $logger, $this->clock(), 3600, 7, batchSize: 2, maxBatchesPerCycle: 2)->run();
+
+        self::assertSame([2, 3], $loads);
+        self::assertSame(['Broken', 'Second', 'Third', 'Fourth'], $attempts);
+    }
+
+    private function nick(int $id, string $nickname): RegisteredNick
+    {
+        $nick = $this->createStub(RegisteredNick::class);
+        $nick->method('getId')->willReturn($id);
+        $nick->method('getNickname')->willReturn($nickname);
+
+        return $nick;
     }
 
     private function clock(): Clock

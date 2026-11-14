@@ -10,6 +10,8 @@ use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\Service\NickDropService;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
+use Throwable;
 
 use function count;
 use function max;
@@ -17,13 +19,14 @@ use function sprintf;
 
 final readonly class PurgePendingDeletionNicknamesTask implements MaintenanceTaskInterface
 {
-    private const int DEFAULT_BATCH_SIZE = 100;
+    public const int DEFAULT_BATCH_SIZE = 100;
 
     private const int DEFAULT_MAX_BATCHES = 1;
 
     public function __construct(
         private RegisteredNickRepositoryInterface $nickRepository,
         private NickDropService $dropService,
+        private LoggerInterface $logger,
         private Clock $clock,
         private int $intervalSeconds,
         private int $dropGraceDays,
@@ -52,24 +55,38 @@ final readonly class PurgePendingDeletionNicknamesTask implements MaintenanceTas
         $now = $this->clock->now();
         $threshold = $now->modify(sprintf('-%d days', max(0, $this->dropGraceDays)));
         $batches = 0;
+        /** @var array<int, true> $failed nick ids that failed earlier in this cycle */
+        $failed = [];
 
         do {
-            $expired = $this->nickRepository->findPendingDeletionBefore($threshold, $this->batchSize);
-            if ([] === $expired) {
+            // Failed rows stay in the result set; widen the page so they never take a slot.
+            $limit = $this->batchSize + count($failed);
+            $batch = $this->nickRepository->findPendingDeletionBefore($threshold, $limit);
+            if ([] === $batch) {
                 break;
             }
 
-            foreach ($expired as $nick) {
+            foreach ($batch as $nick) {
                 // @phpstan-ignore instanceof.alwaysTrue
-                if (!$nick instanceof RegisteredNick) {
+                if (!$nick instanceof RegisteredNick || isset($failed[$nick->getId()])) {
                     continue;
                 }
 
-                $this->dropService->hardDropNick($nick, $now, 'manual-grace-expired', null);
+                try {
+                    $this->dropService->hardDropNick($nick, $now, 'manual-grace-expired', null);
+                } catch (Throwable $e) {
+                    $failed[$nick->getId()] = true;
+                    $this->logger->error(sprintf(
+                        'Maintenance [%s]: failed to drop pending-deletion nick %s (id %d); skipping it until the next cycle.',
+                        $this->getName(),
+                        $nick->getNickname(),
+                        $nick->getId(),
+                    ), ['exception' => $e]);
+                }
             }
 
             $this->entityManager?->clear();
             ++$batches;
-        } while (count($expired) === $this->batchSize && $batches < $this->maxBatchesPerCycle);
+        } while (count($batch) === $limit && $batches < $this->maxBatchesPerCycle);
     }
 }

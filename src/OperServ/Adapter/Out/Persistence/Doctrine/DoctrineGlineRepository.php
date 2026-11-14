@@ -33,7 +33,7 @@ final readonly class DoctrineGlineRepository implements GlineRepository
     public function findAll(): array
     {
         /** @var list<mixed> $glines */
-        $glines = $this->entityManager->getRepository(Gline::class)->findBy([], ['createdAt' => 'DESC']);
+        $glines = $this->entityManager->getRepository(Gline::class)->findBy([], ['createdAt' => 'DESC', 'id' => 'DESC']);
 
         return $this->entries($glines);
     }
@@ -42,7 +42,7 @@ final readonly class DoctrineGlineRepository implements GlineRepository
     {
         /** @var list<mixed> $glines */
         $glines = $this->entityManager
-            ->createQuery(sprintf('SELECT g FROM %s g ORDER BY g.createdAt DESC', Gline::class))
+            ->createQuery(sprintf('SELECT g FROM %s g ORDER BY g.createdAt DESC, g.id DESC', Gline::class))
             ->setFirstResult($index)
             ->setMaxResults(1)
             ->getResult();
@@ -54,7 +54,7 @@ final readonly class DoctrineGlineRepository implements GlineRepository
     {
         /** @var list<mixed> $glines */
         $glines = $this->entityManager
-            ->createQuery(sprintf('SELECT g FROM %s g WHERE LOWER(g.mask) LIKE :pattern ORDER BY g.createdAt DESC', Gline::class))
+            ->createQuery(sprintf('SELECT g FROM %s g WHERE LOWER(g.mask) LIKE :pattern ORDER BY g.createdAt DESC, g.id DESC', Gline::class))
             ->setParameter('pattern', '%' . strtolower($pattern) . '%')
             ->getResult();
 
@@ -65,20 +65,36 @@ final readonly class DoctrineGlineRepository implements GlineRepository
     {
         /** @var list<mixed> $glines */
         $glines = $this->entityManager
-            ->createQuery(sprintf('SELECT g FROM %s g WHERE g.expiresAt IS NULL OR g.expiresAt > :at ORDER BY g.createdAt DESC', Gline::class))
+            ->createQuery(sprintf('SELECT g FROM %s g WHERE g.expiresAt IS NULL OR g.expiresAt > :at ORDER BY g.createdAt DESC, g.id DESC', Gline::class))
             ->setParameter('at', $at)
             ->getResult();
 
         return $this->entries($glines);
     }
 
-    public function findExpiredAt(DateTimeImmutable $at): array
+    public function findExpiredAt(DateTimeImmutable $at, ?GlineEntry $after = null, ?int $limit = null): array
     {
+        $dql = 'SELECT g FROM %s g WHERE g.expiresAt IS NOT NULL AND g.expiresAt <= :at';
+        $parameters = ['at' => $at];
+        if (null !== $after) {
+            if (null === $after->expiresAt || null === $after->id) {
+                throw new LogicException('GLINE expiry cursor must be a persisted expired entry.');
+            }
+            $dql .= ' AND g.expiresAt >= :afterExpiresAt AND (g.expiresAt > :afterExpiresAt OR g.id > :afterId)';
+            $parameters['afterExpiresAt'] = $after->expiresAt;
+            $parameters['afterId'] = $after->id;
+        }
+
+        $query = $this->entityManager->createQuery(sprintf($dql . ' ORDER BY g.expiresAt ASC, g.id ASC', Gline::class));
+        foreach ($parameters as $name => $value) {
+            $query->setParameter($name, $value);
+        }
+        if (null !== $limit) {
+            $query->setMaxResults($limit);
+        }
+
         /** @var list<mixed> $glines */
-        $glines = $this->entityManager
-            ->createQuery(sprintf('SELECT g FROM %s g WHERE g.expiresAt IS NOT NULL AND g.expiresAt <= :at ORDER BY g.createdAt DESC', Gline::class))
-            ->setParameter('at', $at)
-            ->getResult();
+        $glines = $query->getResult();
 
         return $this->entries($glines);
     }

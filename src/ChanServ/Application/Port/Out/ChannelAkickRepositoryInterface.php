@@ -32,9 +32,11 @@ interface ChannelAkickRepositoryInterface
     public function deleteByIds(array $ids): int;
 
     /**
-     * @return ChannelAkick[] All AKICK entries that have expired
+     * Expired entries ordered by expiry then id, strictly after the $after keyset cursor.
+     *
+     * @return ChannelAkick[]
      */
-    public function findExpired(): array;
+    public function findExpired(?ChannelAkick $after = null, ?int $limit = null): array;
 
     /**
      * @param list<int> $channelIds

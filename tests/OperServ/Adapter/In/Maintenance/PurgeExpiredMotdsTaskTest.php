@@ -14,10 +14,14 @@ use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use RuntimeException;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function count;
 use function is_string;
+use function str_contains;
 
 #[CoversClass(PurgeExpiredMotdsTask::class)]
 final class PurgeExpiredMotdsTaskTest extends TestCase
@@ -79,10 +83,87 @@ final class PurgeExpiredMotdsTaskTest extends TestCase
         $task->run();
     }
 
+    #[Test]
+    public function loadsExpiredMotdsInBoundedBatchesAfterTheLastSeenId(): void
+    {
+        $loads = [];
+        $deleted = [];
+        $motdRepository = $this->createMock(MotdRepository::class);
+        $motdRepository->expects(self::exactly(2))->method('findExpiredAt')
+            ->willReturnCallback(function (DateTimeImmutable $at, ?MotdEntry $after, ?int $limit) use (&$loads): array {
+                $loads[] = [$after?->id, $limit];
+
+                return null === $after ? [$this->expired(1), $this->expired(2)] : [$this->expired(3)];
+            });
+        $motdRepository->expects(self::exactly(2))->method('deleteByIds')
+            ->willReturnCallback(static function (array $ids) use (&$deleted): int {
+                $deleted[] = $ids;
+
+                return count($ids);
+            });
+        $debugNotifier = $this->createMock(ServiceDebugNotifierInterface::class);
+        $debugNotifier->expects(self::exactly(3))->method('notify');
+
+        $this->createTask(motdRepository: $motdRepository, debugNotifier: $debugNotifier, batchSize: 2)->run();
+
+        self::assertSame([[null, 2], [2, 2]], $loads);
+        self::assertSame([[1, 2], [3]], $deleted);
+    }
+
+    #[Test]
+    public function aMotdThatKeepsFailingIsLoggedAndSkippedWithoutBlockingLaterRows(): void
+    {
+        $failure = new RuntimeException('debug channel unavailable');
+        $loads = [];
+        $deleted = [];
+        $motdRepository = $this->createMock(MotdRepository::class);
+        $motdRepository->expects(self::exactly(2))->method('findExpiredAt')
+            ->willReturnCallback(function (DateTimeImmutable $at, ?MotdEntry $after, ?int $limit) use (&$loads): array {
+                $loads[] = [$after?->id, $limit];
+
+                return null === $after ? [$this->expired(1), $this->expired(2)] : [$this->expired(3)];
+            });
+        $motdRepository->expects(self::exactly(2))->method('deleteByIds')
+            ->willReturnCallback(static function (array $ids) use (&$deleted): int {
+                $deleted[] = $ids;
+
+                return count($ids);
+            });
+        $notified = [];
+        $debugNotifier = $this->createStub(ServiceDebugNotifierInterface::class);
+        $debugNotifier->method('notify')->willReturnCallback(static function (string $message) use ($failure, &$notified): void {
+            if (str_contains($message, '#1 ')) {
+                throw $failure;
+            }
+            $notified[] = $message;
+        });
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::once())->method('error')->with(
+            'Maintenance [operserv.purge_expired_motds]: failed to remove expired MOTD id 1; skipping it until the next cycle.',
+            ['exception' => $failure],
+        );
+        $logger->expects(self::exactly(2))->method('info');
+
+        $this->createTask(motdRepository: $motdRepository, debugNotifier: $debugNotifier, batchSize: 2, logger: $logger)->run();
+
+        self::assertSame([[null, 2], [2, 2]], $loads);
+        self::assertCount(2, $notified);
+        self::assertStringContainsString('#2 ', $notified[0]);
+        self::assertStringContainsString('#3 ', $notified[1]);
+        self::assertSame([[2], [3]], $deleted);
+    }
+
+    private function expired(int $id): MotdEntry
+    {
+        return new MotdEntry($id, 'Expired ' . $id, 'Bot1', MessageDelivery::Interactive, true, new DateTimeImmutable('-2 hours'), new DateTimeImmutable('-1 hour'), 0);
+    }
+
     private function createTask(
         ?MotdRepository $motdRepository = null,
         ?ServiceDebugNotifierInterface $debugNotifier = null,
         int $intervalSeconds = 3600,
+        int $batchSize = 100,
+        ?LoggerInterface $logger = null,
     ): PurgeExpiredMotdsTask {
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static function (string $id, array $params = []): string {
@@ -115,10 +196,11 @@ final class PurgeExpiredMotdsTaskTest extends TestCase
             $motdRepository ?? $this->createStub(MotdRepository::class),
             $debugNotifier ?? $this->createStub(ServiceDebugNotifierInterface::class),
             $translator,
-            new NullLogger(),
+            $logger ?? new NullLogger(),
             'en',
             'UTC',
             $intervalSeconds,
+            $batchSize,
         );
     }
 }
