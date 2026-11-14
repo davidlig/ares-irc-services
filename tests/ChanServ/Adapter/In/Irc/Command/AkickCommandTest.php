@@ -18,6 +18,7 @@ use App\ChanServ\Application\Port\Out\ChannelAccessRepositoryInterface;
 use App\ChanServ\Application\Port\Out\ChannelAkickRepositoryInterface;
 use App\ChanServ\Application\Port\Out\ChannelEntryNetworkQuery;
 use App\ChanServ\Application\Port\Out\ChannelLevelRepositoryInterface;
+use App\ChanServ\Application\Port\Out\ChanServActivitySink;
 use App\ChanServ\Application\Port\Out\ChanUserAccountPort;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\PublishedEvent\ChannelAkickChangedEvent;
@@ -3233,6 +3234,7 @@ final class AkickCommandTest extends TestCase
             $network,
             $actions,
             new SymfonyChanServEventPublisher($eventDispatcher),
+            $this->createStub(ChanServActivitySink::class),
         ));
     }
 

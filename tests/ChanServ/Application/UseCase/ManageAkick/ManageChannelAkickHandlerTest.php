@@ -11,6 +11,7 @@ use App\ChanServ\Application\Port\Out\ChannelAccessRepositoryInterface;
 use App\ChanServ\Application\Port\Out\ChannelAkickRepositoryInterface;
 use App\ChanServ\Application\Port\Out\ChannelEntryNetworkQuery;
 use App\ChanServ\Application\Port\Out\ChannelLevelRepositoryInterface;
+use App\ChanServ\Application\Port\Out\ChanServActivitySink;
 use App\ChanServ\Application\Port\Out\ChanServEventPublisher;
 use App\ChanServ\Application\Port\Out\ChanUserAccountPort;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
@@ -75,6 +76,7 @@ final class ManageChannelAkickHandlerTest extends TestCase
             $network,
             $actions,
             $events,
+            $this->createStub(ChanServActivitySink::class),
         );
 
         foreach ([[null, true], ['', true], ['*!*@example.test', false]] as [$item, $valid]) {
@@ -641,6 +643,56 @@ final class ManageChannelAkickHandlerTest extends TestCase
     }
 
     #[Test]
+    public function checkSkipsAndLogsACorruptStoredMaskAndKeepsListNumbering(): void
+    {
+        $channel = $this->createStub(RegisteredChannel::class);
+        $channel->method('getId')->willReturn(1);
+        $channel->method('isFounder')->willReturn(true);
+        $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channels->method('findByChannelName')->willReturn($channel);
+
+        $member = new ChannelEntryMember('UID1', 'TargetNick', 'TargetNick!ident@special.host', true, false, false);
+        $network = $this->createStub(ChannelEntryNetworkQuery::class);
+        $network->method('findMemberByNick')->willReturn($member);
+
+        $corrupt = $this->createStub(ChannelAkick::class);
+        $corrupt->method('getMask')->willReturn('corrupt-mask-without-bang-and-at');
+        $valid = ChannelAkick::create($this->now, 1, 2, '*!*@special.host', 'Matched');
+        $akicks = $this->createMock(ChannelAkickRepositoryInterface::class);
+        $akicks->method('listByChannel')->willReturn([$corrupt, $valid]);
+        $akicks->expects(self::never())->method('save');
+        $akicks->expects(self::never())->method('remove');
+
+        $accounts = $this->createStub(ChanUserAccountPort::class);
+        $accounts->method('findNicknamesByIds')->willReturn([2 => 'Founder']);
+        $activity = $this->createMock(ChanServActivitySink::class);
+        $activity->expects(self::once())->method('warning')->with('Skipping invalid AKICK rule for channel ID 1.');
+        $actions = $this->createMock(AkickActions::class);
+        $actions->expects(self::never())->method('banAndKick');
+
+        $handler = $this->createHandler(channels: $channels, akicks: $akicks, accounts: $accounts, network: $network, actions: $actions, activity: $activity);
+
+        $result = $handler->handle(new ManageChannelAkick(
+            '#test',
+            ManageChannelAkickAction::Check,
+            1,
+            true,
+            'Founder',
+            'ip',
+            'host',
+            $this->now,
+            item: 'TargetNick',
+            validRequest: true,
+        ));
+
+        self::assertSame(ManageChannelAkickOutcome::Checked, $result->outcome);
+        self::assertCount(1, $result->entries);
+        self::assertSame('*!*@special.host', $result->entries[0]->mask);
+        self::assertSame(2, $result->entries[0]->entryNumber);
+        self::assertSame(0, $valid->getUses());
+    }
+
+    #[Test]
     public function checkWithoutPrivilegesMatchesOnlyVisibleMaskAndPreventsRealHostInference(): void
     {
         $channel = $this->createStub(RegisteredChannel::class);
@@ -1005,6 +1057,7 @@ final class ManageChannelAkickHandlerTest extends TestCase
         ?ChannelEntryNetworkQuery $network = null,
         ?AkickActions $actions = null,
         ?ChanServEventPublisher $events = null,
+        ?ChanServActivitySink $activity = null,
     ): ManageChannelAkickHandler {
         $accessRepo = $access ?? $this->createStub(ChannelAccessRepositoryInterface::class);
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
@@ -1022,6 +1075,7 @@ final class ManageChannelAkickHandlerTest extends TestCase
             $network ?? $this->createStub(ChannelEntryNetworkQuery::class),
             $actions ?? $this->createStub(AkickActions::class),
             $events ?? $this->createStub(ChanServEventPublisher::class),
+            $activity ?? $this->createStub(ChanServActivitySink::class),
         );
     }
 }

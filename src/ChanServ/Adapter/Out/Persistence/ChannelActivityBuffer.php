@@ -7,7 +7,11 @@ namespace App\ChanServ\Adapter\Out\Persistence;
 use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\ParameterType;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
+use Throwable;
 
+use function array_chunk;
 use function count;
 use function implode;
 use function sprintf;
@@ -21,13 +25,19 @@ final class ChannelActivityBuffer
 {
     private const int THROTTLE_WINDOW_SECONDS = 60;
 
+    /** Three bound parameters per channel keeps each statement at 600 parameters. */
+    private const int CHANNELS_PER_STATEMENT = 200;
+
     /** @var array<int, DateTimeImmutable> */
     private array $pending = [];
 
     /** @var array<int, DateTimeImmutable> */
     private array $lastRecordedAt = [];
 
-    public function __construct(private readonly Connection $connection) {}
+    public function __construct(
+        private readonly Connection $connection,
+        private readonly LoggerInterface $logger = new NullLogger(),
+    ) {}
 
     public function record(int $channelId, DateTimeImmutable $usedAt): void
     {
@@ -42,14 +52,42 @@ final class ChannelActivityBuffer
         $this->pending[$channelId] = $usedAt;
     }
 
+    /**
+     * Writes pending activity in chunks so no statement binds an unbounded number of parameters.
+     *
+     * A failing chunk is logged and kept pending for the next flush; later chunks are still written
+     * and already-written chunks are cleared, so one failure never blocks the remaining channels nor
+     * the maintenance cycle that runs this flush.
+     */
     public function flush(?DateTimeImmutable $now = null): void
     {
         $this->pruneThrottleHistory($now ?? new DateTimeImmutable());
-        if ([] === $this->pending) {
-            return;
-        }
 
-        $batch = $this->pending;
+        foreach (array_chunk($this->pending, self::CHANNELS_PER_STATEMENT, true) as $batch) {
+            try {
+                $this->writeBatch($batch);
+            } catch (Throwable $exception) {
+                $this->logger->error('Could not flush a chunk of deferred ChanServ channel activity; it will be retried.', [
+                    'channels' => count($batch),
+                    'exception' => $exception,
+                ]);
+
+                continue;
+            }
+
+            foreach ($batch as $channelId => $usedAt) {
+                if (($this->pending[$channelId] ?? null) === $usedAt) {
+                    unset($this->pending[$channelId]);
+                }
+            }
+        }
+    }
+
+    /**
+     * @param array<int, DateTimeImmutable> $batch
+     */
+    private function writeBatch(array $batch): void
+    {
         $cases = [];
         $ids = [];
         $params = [];
@@ -78,12 +116,6 @@ final class ChannelActivityBuffer
         );
 
         $this->connection->executeStatement($sql, $params, $types);
-
-        foreach ($batch as $channelId => $usedAt) {
-            if (($this->pending[$channelId] ?? null) === $usedAt) {
-                unset($this->pending[$channelId]);
-            }
-        }
     }
 
     private function pruneThrottleHistory(DateTimeImmutable $now): void

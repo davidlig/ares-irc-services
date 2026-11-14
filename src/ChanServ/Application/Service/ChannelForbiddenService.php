@@ -14,7 +14,6 @@ use App\ChanServ\Application\PublishedEvent\ChannelUnforbiddenEvent;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use DateTimeImmutable;
 
-use function count;
 use function sprintf;
 
 readonly class ChannelForbiddenService implements ForbiddenChannelEnforcement
@@ -178,32 +177,6 @@ readonly class ChannelForbiddenService implements ForbiddenChannelEnforcement
             'ChannelUnforbidden: bot left forbidden channel %s',
             $channelName,
         ));
-    }
-
-    public function enforceAllForbiddenChannels(): void
-    {
-        $forbiddenChannels = $this->channelRepository->findForbiddenChannels();
-        if ([] === $forbiddenChannels) {
-            return;
-        }
-
-        $this->logger->info(sprintf(
-            'ChanServForbiddenChannelBurst: enforcing %d forbidden channel(s)',
-            count($forbiddenChannels),
-        ));
-
-        foreach ($forbiddenChannels as $channel) {
-            if (!$this->channelActions->isChannelOnNetwork($channel->getName())) {
-                $this->logger->debug(sprintf(
-                    'ChanServForbiddenChannelBurst: channel %s not on network, skipping',
-                    $channel->getName(),
-                ));
-
-                continue;
-            }
-
-            $this->enforceForbiddenChannel($channel->getName());
-        }
     }
 
     public function enforceKnownForbiddenChannel(string $channelName): void

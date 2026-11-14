@@ -28,8 +28,6 @@ interface RegisteredChannelRepositoryInterface
 
     public function countByFounderNickId(int $founderNickId, bool $excludeRejected = false): int;
 
-    public function countPendingRegistrations(): int;
-
     /** @return list<RegisteredChannel> Pending registrations ordered by name and ID. */
     public function findPendingPage(int $offset, int $limit): array;
 
@@ -84,9 +82,4 @@ interface RegisteredChannelRepositoryInterface
      * @return RegisteredChannel[]
      */
     public function findByIds(array $ids): array;
-
-    /**
-     * @return RegisteredChannel[] Channels that are currently forbidden
-     */
-    public function findForbiddenChannels(): array;
 }

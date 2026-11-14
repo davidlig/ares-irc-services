@@ -11,7 +11,6 @@ use App\ChanServ\Application\PublishedEvent\ChannelSecureEnabledEvent;
 use App\ChanServ\Application\UseCase\EnforceRanks\EnforceChannelRanks;
 use App\ChanServ\Application\UseCase\EnforceRanks\EnforceChannelRanksHandlerInterface;
 use App\ChanServ\Application\UseCase\EnforceRanks\RankEnforcementTrigger;
-use App\ChanServ\Application\UseCase\EnforceRanks\SynchronizeAllChannelRanksHandler;
 use App\ChanServ\Domain\ValueObject\ChannelRank;
 use App\Irc\Application\Port\In\BurstCompletePort;
 use App\Irc\Application\PublishedEvent\ChannelMemberRankGrantedEvent;
@@ -27,7 +26,6 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
 {
     public function __construct(
         private EnforceChannelRanksHandlerInterface $enforceChannelRanks,
-        private SynchronizeAllChannelRanksHandler $synchronizeAllChannelRanks,
         private PendingChannelRankSynchronizations $pending,
         private BurstCompletePort $burstComplete,
         private BurstRankEventScope $burstRanks,
@@ -63,8 +61,18 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
         }
     }
 
+    /**
+     * Joins received before network synchronization completes (continuation SJOIN/FJOIN lines of
+     * the burst) are reconciled by the end-of-burst pass, after AKICK and NOJOIN.
+     */
     public function onUserJoinedChannel(UserJoinedChannelEvent $event): void
     {
+        if (!$this->burstComplete->isComplete()) {
+            $this->markBurstActivity($event->channelName);
+
+            return;
+        }
+
         $this->enforceChannelRanks->handle(new EnforceChannelRanks(
             $event->channelName,
             RankEnforcementTrigger::MemberJoined,
@@ -101,17 +109,10 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
         ));
     }
 
-    public function onNetworkSynchronizationCompleted(): void
-    {
-        $this->synchronizeAllChannelRanks->handle();
-    }
-
     public function onChannelSynced(ChannelSynchronizedEvent $event): void
     {
         if (!$this->burstComplete->isComplete()) {
-            if (false !== $this->burstChannels->contains($event->channelName)) {
-                $this->burstRanks->markActivity($event->channelName);
-            }
+            $this->markBurstActivity($event->channelName);
 
             return;
         }
@@ -145,6 +146,13 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
             $event->uid,
             $rank,
         ));
+    }
+
+    private function markBurstActivity(string $channelName): void
+    {
+        if (false !== $this->burstChannels->contains($channelName)) {
+            $this->burstRanks->markActivity($channelName);
+        }
     }
 
     private function initialRank(?string $role): ?ChannelRank

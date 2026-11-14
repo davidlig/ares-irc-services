@@ -187,13 +187,6 @@ final class RegisteredChannelDoctrineRepository implements RegisteredChannelRepo
         return (int) $query->getQuery()->getSingleScalarResult();
     }
 
-    public function countPendingRegistrations(): int
-    {
-        return (int) $this->em->createQueryBuilder()->select('COUNT(c.id)')
-            ->from(RegisteredChannel::class, 'c')->where('c.status = :status')
-            ->setParameter('status', ChannelStatus::Pending)->getQuery()->getSingleScalarResult();
-    }
-
     public function findPendingPage(int $offset, int $limit): array
     {
         /** @var list<RegisteredChannel> $result */
@@ -276,21 +269,6 @@ final class RegisteredChannelDoctrineRepository implements RegisteredChannelRepo
             )
             ->setParameter('successorNickId', $successorNickId)
             ->execute();
-    }
-
-    public function findForbiddenChannels(): array
-    {
-        $qb = $this->em->createQueryBuilder();
-        $qb->select('c')
-            ->from(RegisteredChannel::class, 'c')
-            ->where('c.status = :status')
-            ->setParameter('status', ChannelStatus::Forbidden);
-
-        /** @var array<mixed> $result */
-        $result = $qb->getQuery()->getResult();
-
-        /* @var array<RegisteredChannel> */
-        return array_values(array_filter($result, static fn ($row): bool => $row instanceof RegisteredChannel));
     }
 
     private function invalidateLookup(string $nameLower): void

@@ -658,45 +658,6 @@ final class ChannelForbiddenServiceTest extends TestCase
     }
 
     #[Test]
-    public function enforceAllForbiddenChannelsSkipsEmptyRepository(): void
-    {
-        $repository = $this->createMock(RegisteredChannelRepositoryInterface::class);
-        $repository->expects(self::once())->method('findForbiddenChannels')->willReturn([]);
-        $actions = $this->createMock(ChanNetworkActions::class);
-        $actions->expects(self::never())->method('isChannelOnNetwork');
-
-        $this->createService(channelRepository: $repository, channelActions: $actions)
-            ->enforceAllForbiddenChannels();
-    }
-
-    #[Test]
-    public function enforceAllForbiddenChannelsOnlyEnforcesOnlineEntries(): void
-    {
-        $online = RegisteredChannel::createForbidden(new DateTimeImmutable(), '#online', 'bad');
-        $offline = RegisteredChannel::createForbidden(new DateTimeImmutable(), '#offline', 'bad');
-        $repository = $this->createStub(RegisteredChannelRepositoryInterface::class);
-        $repository->method('findForbiddenChannels')->willReturn([$online, $offline]);
-        $actions = $this->createMock(ChanNetworkActions::class);
-        $checks = 0;
-        $actions->expects(self::exactly(3))->method('isChannelOnNetwork')
-            ->willReturnCallback(static function (string $channel) use (&$checks): bool {
-                ++$checks;
-
-                return '#online' === $channel;
-            });
-        $actions->expects(self::once())->method('getChannelTimestamp')->with('#online')->willReturn(42);
-        $actions->expects(self::once())->method('joinChannelAsService')->with('#online', 42);
-        $actions->expects(self::once())->method('getChannelMemberUids')->with('#online')->willReturn([]);
-        $actions->expects(self::once())->method('enforceForbiddenModes')->with('#online', 42);
-        $logger = $this->createMock(ChanServActivitySink::class);
-        $logger->expects(self::exactly(2))->method('info');
-        $logger->expects(self::once())->method('debug')->with(self::stringContains('#offline'));
-
-        $this->createService($repository, channelActions: $actions, logger: $logger)
-            ->enforceAllForbiddenChannels();
-    }
-
-    #[Test]
     public function forbiddenUserJoinIsIgnoredForUnknownChannel(): void
     {
         $repository = $this->createStub(RegisteredChannelRepositoryInterface::class);

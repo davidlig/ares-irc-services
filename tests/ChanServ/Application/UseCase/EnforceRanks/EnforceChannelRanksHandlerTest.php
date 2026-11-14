@@ -122,6 +122,34 @@ final class EnforceChannelRanksHandlerTest extends TestCase
     }
 
     #[Test]
+    public function plainJoinOnSecureChannelEvaluatesOnlyTheJoiningMember(): void
+    {
+        // Intended since #164: a plain JOIN no longer runs a full-channel reconciliation, so excess
+        // ranks held by other members stay until the next full synchronization.
+        $joiner = new ChannelMember('001B', 'Bob', true, false, false, 20, []);
+        $network = $this->createMock(ChannelRankNetworkQuery::class);
+        $network->expects(self::once())->method('findMember')->with('#test', '001B')
+            ->willReturn(new ChannelRankNetworkState('#test', [$joiner], [ChannelRank::Operator, ChannelRank::Voice]));
+        $network->expects(self::never())->method('findChannel');
+        $network->expects(self::never())->method('findChannelWithAccounts');
+        $actions = $this->createMock(ChannelRankActions::class);
+        $actions->expects(self::once())->method('apply')->with('#test', self::callback(static function (array $changes): bool {
+            self::assertCount(1, $changes);
+            self::assertInstanceOf(MemberRankChange::class, $changes[0]);
+            self::assertSame('001B', $changes[0]->uid);
+            self::assertSame(ChannelRank::Operator, $changes[0]->change->rank);
+            self::assertSame(RankChangeAction::Grant, $changes[0]->change->action);
+
+            return true;
+        }));
+
+        $result = $this->handler($this->policyRepository($this->policy(secure: true, access: [20 => 300])), $network, $actions)
+            ->handle(new EnforceChannelRanks('#test', RankEnforcementTrigger::MemberJoined, '001B'));
+
+        self::assertSame(RankEnforcementOutcome::Applied, $result->outcome);
+    }
+
+    #[Test]
     public function reportsUnavailableAndBlockedChannelsBeforeNetworkLookup(): void
     {
         $policies = $this->createStub(ChannelRankPolicyRepository::class);

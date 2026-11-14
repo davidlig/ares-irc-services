@@ -92,7 +92,7 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
     }
 
     #[Test]
-    public function pendingPagesAndCountsPreserveIterationOrder(): void
+    public function pendingPagesPreserveIterationOrder(): void
     {
         $at = new DateTimeImmutable();
         $this->entityManager->persist(RegisteredChannel::createPendingRegistration($at, '#z', 1, 'z'));
@@ -100,7 +100,6 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
         $this->entityManager->persist(RegisteredChannel::createPendingRegistration($at, '#A', 3, 'a'));
         $this->flushAndClear();
 
-        self::assertSame(2, $this->repository->countPendingRegistrations());
         self::assertSame(['#A'], array_map(static fn (RegisteredChannel $c): string => $c->getName(), $this->repository->findPendingPage(0, 1)));
         self::assertSame(['#z'], array_map(static fn (RegisteredChannel $c): string => $c->getName(), $this->repository->findPendingPage(1, 1)));
     }
@@ -535,41 +534,6 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
         $found = $this->repository->findByChannelName('#test');
         self::assertNotNull($found);
         self::assertSame(100, $found->getSuccessorNickId());
-    }
-
-    #[Test]
-    public function findForbiddenChannelsReturnsOnlyForbiddenChannels(): void
-    {
-        $forbidden = RegisteredChannel::createForbidden(new DateTimeImmutable(), '#forbidden1', 'Spam channel');
-        $forbidden2 = RegisteredChannel::createForbidden(new DateTimeImmutable(), '#forbidden2', 'Illegal content');
-        $active = RegisteredChannel::register(new DateTimeImmutable(), '#active', 1, 'Active channel');
-        $suspended = RegisteredChannel::register(new DateTimeImmutable(), '#suspended', 2, 'Suspended channel');
-        $suspended->suspend('Abuse');
-
-        $this->repository->save($forbidden);
-        $this->repository->save($forbidden2);
-        $this->repository->save($active);
-        $this->repository->save($suspended);
-        $this->flushAndClear();
-
-        $result = $this->repository->findForbiddenChannels();
-
-        self::assertCount(2, $result);
-        $names = array_map(static fn (RegisteredChannel $c): string => $c->getName(), $result);
-        self::assertContains('#forbidden1', $names);
-        self::assertContains('#forbidden2', $names);
-    }
-
-    #[Test]
-    public function findForbiddenChannelsReturnsEmptyArrayWhenNoneForbidden(): void
-    {
-        $active = RegisteredChannel::register(new DateTimeImmutable(), '#active', 1, 'Active channel');
-        $this->repository->save($active);
-        $this->flushAndClear();
-
-        $result = $this->repository->findForbiddenChannels();
-
-        self::assertSame([], $result);
     }
 
     protected function setUp(): void

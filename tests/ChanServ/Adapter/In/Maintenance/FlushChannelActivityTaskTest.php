@@ -51,12 +51,7 @@ final class FlushChannelActivityTaskTest extends TestCase
         $buffer->record(7, new DateTimeImmutable('2026-01-01 00:00:00 UTC'));
         $task = new FlushChannelActivityTask($buffer);
 
-        try {
-            $task->run();
-            self::fail('The first maintenance flush should fail.');
-        } catch (RuntimeException $exception) {
-            self::assertSame('database unavailable', $exception->getMessage());
-        }
+        $task->run();
 
         self::assertSame(0, $task->getIntervalSeconds());
         $task->run();

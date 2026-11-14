@@ -44,7 +44,6 @@ use App\ChanServ\Application\UseCase\EnforceRanks\EnforceChannelRanksHandler;
 use App\ChanServ\Application\UseCase\EnforceRanks\EnforceChannelRanksHandlerInterface;
 use App\ChanServ\Application\UseCase\EnforceRanks\RankEnforcementOutcome;
 use App\ChanServ\Application\UseCase\EnforceRanks\RankEnforcementResult;
-use App\ChanServ\Application\UseCase\EnforceRanks\SynchronizeAllChannelRanksHandler;
 use App\ChanServ\Application\UseCase\SynchronizeBurst\SynchronizeBurstChannelsHandler;
 use App\ChanServ\Domain\Entity\ChannelAccess;
 use App\ChanServ\Domain\Entity\ChannelAkick;
@@ -140,6 +139,43 @@ final class SynchronizeBurstChannelsHandlerTest extends TestCase
     }
 
     #[Test]
+    public function registrationModesAreReconciledOnceAfterEveryPage(): void
+    {
+        // Intended since #166: +r/+P reconciliation runs after all pages, not once per page.
+        $now = new DateTimeImmutable('2026-01-01 UTC');
+        $first = $this->createStub(RegisteredChannel::class);
+        $first->method('getName')->willReturn('#first');
+        $first->method('getId')->willReturn(1);
+        $second = $this->createStub(RegisteredChannel::class);
+        $second->method('getName')->willReturn('#Second');
+        $second->method('getId')->willReturn(2);
+        $pages = $this->createStub(BurstChannelPages::class);
+        $pages->method('pages')->willReturn([new BurstChannelPage([$first], [], [], []), new BurstChannelPage([$second], [], [], [])]);
+        $rankNetwork = $this->createStub(ChannelRankNetworkQuery::class);
+        $ranks = $this->createStub(EnforceChannelRanksHandlerInterface::class);
+        $ranks->method('handleKnownPolicyAndNetwork')->willReturn(new RankEnforcementResult(RankEnforcementOutcome::NoChanges));
+        $mlockPolicies = $this->createStub(ChannelMlockPolicyRepository::class);
+        $mlockPolicies->method('forChannel')->willReturnCallback(static fn (RegisteredChannel $channel): ChannelMlockPolicy => new ChannelMlockPolicy($channel->getName(), false, ChannelModeLock::inactive()));
+        $order = [];
+        $topic = $this->createMock(ApplyStoredChannelTopicHandlerInterface::class);
+        $topic->expects(self::exactly(2))->method('synchronizeKnownChannel')->willReturnCallback(static function (RegisteredChannel $channel) use (&$order): void {
+            $order[] = 'topic ' . $channel->getName();
+        });
+        $registration = $this->createMock(ChannelRegistrationLifecycle::class);
+        $registration->expects(self::once())->method('reconcileKnownChannels')
+            ->with(['#first' => true, '#second' => true], ['#first', '#Second'])
+            ->willReturnCallback(static function () use (&$order): void {
+                $order[] = 'registration';
+            });
+        $scope = new BurstRankEventScope();
+        $scope->begin();
+
+        new SynchronizeBurstChannelsHandler($pages, $this->createStub(ChannelEntryNetworkQuery::class), $this->createStub(ChanUserAccountPort::class), $this->createStub(ForbiddenChannelEnforcement::class), $this->createStub(EnforceChannelAkickHandlerInterface::class), $this->createStub(EnforceChannelNojoinHandlerInterface::class), $rankNetwork, $ranks, $mlockPolicies, $this->createStub(EnforceChannelMlockHandlerInterface::class), $topic, $registration, $scope, $this->createStub(BurstChannelActivity::class))->handle($now);
+
+        self::assertSame(['topic #first', 'topic #Second', 'registration'], $order);
+    }
+
+    #[Test]
     public function akickRemovesOverlappingMemberBeforeNojoin(): void
     {
         $now = new DateTimeImmutable('2026-01-01 UTC');
@@ -178,7 +214,7 @@ final class SynchronizeBurstChannelsHandlerTest extends TestCase
         $mlockPolicies->method('forChannel')->willReturn(new ChannelMlockPolicy('#active', false, ChannelModeLock::inactive()));
         $scope = new BurstRankEventScope();
         $scope->begin();
-        $subscriber = new ChanServChannelRankSubscriber($ranks, new SynchronizeAllChannelRanksHandler($policyRepo, $ranks), new PendingChannelRankSynchronizations(), $this->createStub(BurstCompletePort::class), $scope, $this->createStub(RegisteredChannelBurstSnapshot::class));
+        $subscriber = new ChanServChannelRankSubscriber($ranks, new PendingChannelRankSynchronizations(), $this->createStub(BurstCompletePort::class), $scope, $this->createStub(RegisteredChannelBurstSnapshot::class));
         $trace = [];
         $akickActions = $this->createMock(AkickActions::class);
         $akickActions->expects(self::once())->method('banAndKick')->with('#active', 'U1', '*!*@bad.test', 'AKICK: *!*@bad.test')->willReturnCallback(static function () use (&$trace, &$members, $subscriber): void {

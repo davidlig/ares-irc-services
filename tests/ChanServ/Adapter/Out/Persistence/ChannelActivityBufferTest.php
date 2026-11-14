@@ -11,12 +11,15 @@ use Doctrine\DBAL\DriverManager;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 use ReflectionProperty;
 use RuntimeException;
 
 use function array_filter;
+use function array_map;
 use function array_unique;
 use function array_values;
+use function count;
 use function str_contains;
 use function str_starts_with;
 
@@ -54,7 +57,7 @@ final class ChannelActivityBufferTest extends TestCase
     }
 
     #[Test]
-    public function itRetainsPendingUpdatesWhenTheDatabaseWriteFails(): void
+    public function itRetainsPendingUpdatesWhenTheDatabaseWriteFailsAndLogsInsteadOfThrowing(): void
     {
         $connection = $this->createMock(Connection::class);
         $attempts = 0;
@@ -67,18 +70,76 @@ final class ChannelActivityBufferTest extends TestCase
                 return 1;
             },
         );
-        $buffer = new ChannelActivityBuffer($connection);
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::once())->method('error')->with(
+            'Could not flush a chunk of deferred ChanServ channel activity; it will be retried.',
+            self::callback(static function (array $context): bool {
+                self::assertSame(1, $context['channels']);
+                self::assertInstanceOf(RuntimeException::class, $context['exception']);
+
+                return true;
+            }),
+        );
+        $buffer = new ChannelActivityBuffer($connection, $logger);
         $buffer->record(7, new DateTimeImmutable('2026-01-01 00:00:00 UTC'));
 
-        try {
-            $buffer->flush();
-            self::fail('The first write should have failed.');
-        } catch (RuntimeException $exception) {
-            self::assertSame('database unavailable', $exception->getMessage());
+        $buffer->flush();
+        $buffer->flush();
+        $buffer->flush();
+    }
+
+    #[Test]
+    public function itWritesEveryPendingChannelAcrossSeveralChunksOnARealConnection(): void
+    {
+        $connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
+        $connection->executeStatement('CREATE TABLE registered_channels (id INTEGER PRIMARY KEY, last_used_at DATETIME NULL)');
+        $channelCount = 450;
+        $connection->executeStatement('WITH RECURSIVE seq(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM seq WHERE n < ' . $channelCount . ') INSERT INTO registered_channels (id, last_used_at) SELECT n, NULL FROM seq');
+        $buffer = new ChannelActivityBuffer($connection);
+        $usedAt = new DateTimeImmutable('2026-01-01 00:00:00 UTC');
+        for ($id = 1; $id <= $channelCount; ++$id) {
+            $buffer->record($id, $usedAt);
         }
 
-        $buffer->flush();
-        $buffer->flush();
+        $buffer->flush($usedAt);
+
+        self::assertSame($channelCount, $connection->fetchOne("SELECT COUNT(*) FROM registered_channels WHERE last_used_at = '2026-01-01 00:00:00'"));
+        $pending = new ReflectionProperty($buffer, 'pending');
+        self::assertSame([], $pending->getValue($buffer));
+    }
+
+    #[Test]
+    public function itBindsABoundedNumberOfParametersPerStatementAndContinuesAfterAFailedChunk(): void
+    {
+        $connection = $this->createMock(Connection::class);
+        $statements = [];
+        $connection->expects(self::exactly(4))->method('executeStatement')->willReturnCallback(
+            static function (string $sql, array $params) use (&$statements): int {
+                $statements[] = $params;
+                if (1 === count($statements)) {
+                    throw new RuntimeException('lock timeout');
+                }
+
+                return 1;
+            },
+        );
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::once())->method('error');
+        $buffer = new ChannelActivityBuffer($connection, $logger);
+        $usedAt = new DateTimeImmutable('2026-01-01 00:00:00 UTC');
+        for ($id = 1; $id <= 450; ++$id) {
+            $buffer->record($id, $usedAt);
+        }
+
+        $buffer->flush($usedAt);
+        $buffer->flush($usedAt);
+
+        self::assertCount(4, $statements);
+        foreach ($statements as $params) {
+            self::assertLessThanOrEqual(600, count($params));
+        }
+        self::assertSame([600, 600, 150, 600], array_map('count', $statements));
+        self::assertSame($statements[0], $statements[3], 'Only the failed chunk is retried on the next flush.');
     }
 
     #[Test]

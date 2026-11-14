@@ -4,19 +4,32 @@ declare(strict_types=1);
 
 namespace App\Tests\Bootstrap\Persistence;
 
+use App\ChanServ\Adapter\In\Event\ChanServAkickEnforceSubscriber;
 use App\ChanServ\Adapter\In\Event\ChanServChannelRankSubscriber;
+use App\ChanServ\Adapter\In\Event\ChanServNojoinEnforceSubscriber;
 use App\ChanServ\Adapter\In\Event\PendingChannelRankSynchronizations;
 use App\ChanServ\Adapter\Out\Network\ChannelRankModeMapper;
+use App\ChanServ\Adapter\Out\Network\IrcChannelEntryNetworkQuery;
 use App\ChanServ\Adapter\Out\Network\IrcChannelRankNetworkQuery;
+use App\ChanServ\Adapter\Out\NickServ\NickServChanUserAccountAdapter;
 use App\ChanServ\Adapter\Out\Persistence\Doctrine\ChannelAccessDoctrineRepository;
+use App\ChanServ\Adapter\Out\Persistence\Doctrine\ChannelAkickDoctrineRepository;
 use App\ChanServ\Adapter\Out\Persistence\Doctrine\ChannelLevelDoctrineRepository;
 use App\ChanServ\Adapter\Out\Persistence\Doctrine\RegisteredChannelDoctrineRepository;
 use App\ChanServ\Adapter\Out\Persistence\DoctrineChannelRankPolicyRepository;
 use App\ChanServ\Application\Model\BurstRankEventScope;
+use App\ChanServ\Application\Port\Out\AkickActions;
 use App\ChanServ\Application\Port\Out\ChannelRankActions;
+use App\ChanServ\Application\Port\Out\ChanServActivitySink;
+use App\ChanServ\Application\Port\Out\NojoinActions;
 use App\ChanServ\Application\Port\Out\RegisteredChannelBurstSnapshot;
+use App\ChanServ\Application\UseCase\EnforceAkick\EnforceChannelAkickHandler;
+use App\ChanServ\Application\UseCase\EnforceAkick\SynchronizeAllChannelAkicksHandlerInterface;
+use App\ChanServ\Application\UseCase\EnforceNojoin\EnforceChannelNojoinHandler;
+use App\ChanServ\Application\UseCase\EnforceNojoin\SynchronizeAllChannelNojoinHandlerInterface;
 use App\ChanServ\Application\UseCase\EnforceRanks\EnforceChannelRanksHandler;
-use App\ChanServ\Application\UseCase\EnforceRanks\SynchronizeAllChannelRanksHandler;
+use App\ChanServ\Domain\Entity\ChannelAkick;
+use App\ChanServ\Domain\Policy\AkickMatchPolicy;
 use App\ChanServ\Domain\Policy\AutomaticRankPolicy;
 use App\ChanServ\Domain\Policy\ChannelAccessPolicy;
 use App\ChanServ\Domain\Policy\RankReconciliationPolicy;
@@ -45,6 +58,7 @@ use App\Irc\Domain\ValueObject\ChannelName;
 use App\Irc\Domain\ValueObject\Ident;
 use App\Irc\Domain\ValueObject\Nick;
 use App\Irc\Domain\ValueObject\Uid;
+use App\NickServ\Adapter\Out\Persistence\Doctrine\NickAccountBatchDoctrineQuery;
 use App\NickServ\Adapter\Out\Persistence\Doctrine\RegisteredNickDoctrineRepository;
 use App\NickServ\Adapter\Out\User\NickAccountResolver;
 use DateTimeImmutable;
@@ -59,7 +73,10 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
+use function array_filter;
 use function count;
+use function str_contains;
+use function str_starts_with;
 use function substr;
 use function sys_get_temp_dir;
 
@@ -86,6 +103,17 @@ final class RankQueryCountTest extends TestCase
             $connection->insert('registered_nicks', ['id' => $i, 'nickname' => 'N' . $i, 'nickname_lower' => 'n' . $i, 'status' => 'registered', 'language' => 'en', 'private' => 0, 'msg_privmsg' => 0]);
             $connection->insert('channel_access', ['channel_id' => 1, 'nick_id' => $i, 'level' => 300]);
         }
+        $connection->insert('channel_levels', ['channel_id' => 1, 'level_key' => 'NOJOIN', 'value' => 1]);
+        $akick = ChannelAkick::create(new DateTimeImmutable('2026-09-27 00:00:00'), 1, 1, 'N2!*@*', 'Join fixture');
+        $em->persist($akick);
+        $em->flush();
+        $akickId = $akick->getId();
+        $em->clear();
+        $accounts = new NickServChanUserAccountAdapter(new NickAccountResolver(new RegisteredNickDoctrineRepository($em), 'en'), new NickAccountBatchDoctrineQuery($em));
+        $akickActions = $this->createMock(AkickActions::class);
+        $akickActions->expects(self::exactly(2))->method('banAndKick')->with('#test', 'U2', 'N2!*@*', 'Join fixture');
+        $nojoinActions = $this->createMock(NojoinActions::class);
+        $nojoinActions->expects(self::never())->method('kick');
         $policy = new DoctrineChannelRankPolicyRepository(new RegisteredChannelDoctrineRepository($em), new ChannelAccessDoctrineRepository($em), new ChannelLevelDoctrineRepository($em), $em);
         $users = $this->createStub(NetworkUserLookupPort::class);
         $users->method('findByUid')->willReturnCallback(static fn (string $uid): SenderView => new SenderView($uid, 'N' . substr($uid, 1), 'a', 'host', 'cloak', '', true));
@@ -94,6 +122,7 @@ final class RankQueryCountTest extends TestCase
         $provider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
         $provider->method('getSupport')->willReturn($support);
         $counts = [];
+        $joinQueries = [];
         foreach ([2, 80] as $size) {
             $members = [];
             for ($i = 1; $i <= $size; ++$i) {
@@ -108,7 +137,17 @@ final class RankQueryCountTest extends TestCase
             $dispatcher->addSubscriber(new PublishedIrcEventBridge($dispatcher));
             $burst = $this->createStub(BurstCompletePort::class);
             $burst->method('isComplete')->willReturn(true);
-            $dispatcher->addSubscriber(new ChanServChannelRankSubscriber($handler, new SynchronizeAllChannelRanksHandler($policy, $handler), new PendingChannelRankSynchronizations(), $burst, new BurstRankEventScope(), $this->createStub(RegisteredChannelBurstSnapshot::class)));
+            $entryNetwork = new IrcChannelEntryNetworkQuery($channels, $users, 'ChanServ', $burst);
+            $registeredChannels = new RegisteredChannelDoctrineRepository($em);
+            $dispatcher->addSubscriber(new ChanServNojoinEnforceSubscriber(
+                new EnforceChannelNojoinHandler($registeredChannels, new ChannelLevelDoctrineRepository($em), new ChannelAccessDoctrineRepository($em), $accounts, $entryNetwork, $nojoinActions, new ChannelAccessPolicy()),
+                $this->createStub(SynchronizeAllChannelNojoinHandlerInterface::class),
+            ));
+            $dispatcher->addSubscriber(new ChanServAkickEnforceSubscriber(
+                new EnforceChannelAkickHandler($registeredChannels, new ChannelAkickDoctrineRepository($em), $entryNetwork, $akickActions, new AkickMatchPolicy(), $this->createStub(ChanServActivitySink::class)),
+                $this->createStub(SynchronizeAllChannelAkicksHandlerInterface::class),
+            ));
+            $dispatcher->addSubscriber(new ChanServChannelRankSubscriber($handler, new PendingChannelRankSynchronizations(), $burst, new BurstRankEventScope(), $this->createStub(RegisteredChannelBurstSnapshot::class)));
             $channelName = new ChannelName('#test');
             $channel = new Channel($channelName, '', new DateTimeImmutable('@100'));
             $channel->syncMember(new Uid('U1'), ChannelMemberRole::None);
@@ -133,14 +172,33 @@ final class RankQueryCountTest extends TestCase
                 $dispatch();
                 $logger->enabled = false;
                 $counts[$name][] = $this->queryCount($logger);
+                if ('join' === $name) {
+                    $joinQueries[] = $logger->queries;
+                }
             }
         }
         foreach ($counts as $queries) {
             self::assertSame($queries[0], $queries[1]);
             self::assertGreaterThan(0, $queries[0]);
         }
+        foreach ($joinQueries as $queries) {
+            self::assertSame(1, $this->countMatching($queries, static fn (string $sql): bool => str_contains($sql, 'FROM channel_akick ')), 'AKICK rules are read once per JOIN.');
+            self::assertSame(1, $this->countMatching($queries, static fn (string $sql): bool => str_starts_with($sql, 'UPDATE channel_akick ')), 'AKICK usage is flushed once per JOIN.');
+            self::assertSame(1, $this->countMatching($queries, static fn (string $sql): bool => str_contains($sql, 'FROM channel_levels') && str_contains($sql, 'level_key = ?')), 'NOJOIN reads its level once per JOIN.');
+            self::assertGreaterThan(0, $this->countMatching($queries, static fn (string $sql): bool => str_contains($sql, 'FROM channel_access')), 'NOJOIN and rank access lookups run on JOIN.');
+        }
+        self::assertSame(2, $connection->fetchOne('SELECT uses FROM channel_akick WHERE id = ?', [$akickId]));
         $em->close();
         $connection->close();
+    }
+
+    /**
+     * @param list<array{sql: string, params: list<mixed>, types: list<mixed>}> $queries
+     * @param callable(string): bool                                            $predicate
+     */
+    private function countMatching(array $queries, callable $predicate): int
+    {
+        return count(array_filter($queries, static fn (array $query): bool => $predicate($query['sql'])));
     }
 
     private function queryCount(QueryCaptureLogger $logger): int

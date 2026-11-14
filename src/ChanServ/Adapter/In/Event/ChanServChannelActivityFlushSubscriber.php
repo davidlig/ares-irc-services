@@ -6,15 +6,16 @@ namespace App\ChanServ\Adapter\In\Event;
 
 use App\ChanServ\Adapter\Out\Persistence\ChannelActivityBuffer;
 use App\Irc\Application\PublishedEvent\NetworkConnectionLostEvent;
-use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Throwable;
 
+/**
+ * Flushes deferred channel activity on disconnection. The buffer logs and retains failed chunks
+ * itself, so a database failure never breaks shutdown.
+ */
 final readonly class ChanServChannelActivityFlushSubscriber implements EventSubscriberInterface
 {
     public function __construct(
         private ChannelActivityBuffer $activityBuffer,
-        private LoggerInterface $logger,
     ) {}
 
     public static function getSubscribedEvents(): array
@@ -24,12 +25,6 @@ final readonly class ChanServChannelActivityFlushSubscriber implements EventSubs
 
     public function onConnectionLost(NetworkConnectionLostEvent $event): void
     {
-        try {
-            $this->activityBuffer->flush();
-        } catch (Throwable $exception) {
-            $this->logger->error('Could not flush deferred ChanServ channel activity during shutdown.', [
-                'exception' => $exception,
-            ]);
-        }
+        $this->activityBuffer->flush();
     }
 }

@@ -1587,9 +1587,6 @@ services:
   App\ChanServ\Adapter\In\Event\ChanServChannelUnforbiddenSubscriber:
     tags: ["kernel.event_subscriber"]
 
-  App\ChanServ\Adapter\In\Event\ChanServForbiddenChannelBurstSubscriber:
-    tags: ["kernel.event_subscriber"]
-
   App\ChanServ\Adapter\In\Event\ChanServForbiddenChannelJoinSubscriber:
     tags: ["kernel.event_subscriber"]
 

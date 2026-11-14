@@ -8,6 +8,7 @@ use App\ChanServ\Application\Port\Out\AkickActions;
 use App\ChanServ\Application\Port\Out\ChannelAccessRepositoryInterface;
 use App\ChanServ\Application\Port\Out\ChannelAkickRepositoryInterface;
 use App\ChanServ\Application\Port\Out\ChannelEntryNetworkQuery;
+use App\ChanServ\Application\Port\Out\ChanServActivitySink;
 use App\ChanServ\Application\Port\Out\ChanServEventPublisher;
 use App\ChanServ\Application\Port\Out\ChanUserAccountPort;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
@@ -33,6 +34,7 @@ use function array_values;
 use function count;
 use function ctype_digit;
 use function spl_object_id;
+use function sprintf;
 use function strtolower;
 
 final readonly class ManageChannelAkickHandler implements ManageChannelAkickHandlerInterface
@@ -49,6 +51,7 @@ final readonly class ManageChannelAkickHandler implements ManageChannelAkickHand
         private ChannelEntryNetworkQuery $network,
         private AkickActions $actions,
         private ChanServEventPublisher $events,
+        private ChanServActivitySink $activity,
     ) {}
 
     public function handle(ManageChannelAkick $command): ManageChannelAkickResult
@@ -282,11 +285,16 @@ final readonly class ManageChannelAkickHandler implements ManageChannelAkickHand
         $ruleMap = [];
         $indexMap = [];
         foreach ($stored as $index => $akick) {
-            $rule = new AkickRule(
-                new AkickMask($akick->getMask()),
-                $akick->getReason(),
-                $akick->getExpiresAt(),
-            );
+            try {
+                $rule = new AkickRule(
+                    new AkickMask($akick->getMask()),
+                    $akick->getReason(),
+                    $akick->getExpiresAt(),
+                );
+            } catch (InvalidArgumentException) {
+                $this->activity->warning(sprintf('Skipping invalid AKICK rule for channel ID %d.', $channel->getId()));
+                continue;
+            }
             $rules[] = $rule;
             $ruleMap[spl_object_id($rule)] = $akick;
             $indexMap[spl_object_id($rule)] = $index + 1;

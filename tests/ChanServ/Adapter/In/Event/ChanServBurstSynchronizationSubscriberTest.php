@@ -8,6 +8,7 @@ use App\ChanServ\Adapter\In\Event\ChanServBurstSynchronizationSubscriber;
 use App\ChanServ\Application\Model\BurstRankEventScope;
 use App\ChanServ\Application\UseCase\SynchronizeBurst\SynchronizeBurstChannels;
 use App\Irc\Application\PublishedEvent\NetworkSynchronizationCompletedEvent;
+use App\OperServ\Adapter\In\Event\OperServGlineEnforceSubscriber;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -28,6 +29,17 @@ final class ChanServBurstSynchronizationSubscriberTest extends TestCase
         });
         new ChanServBurstSynchronizationSubscriber($handler, $scope)->onSyncComplete();
         self::assertFalse($scope->active());
+    }
+
+    #[Test]
+    public function runsTheChanServPassBeforeOperServGlineEnforcement(): void
+    {
+        // Intended since #166: the single ChanServ end-of-burst pass runs before G-line enforcement.
+        $chanServ = ChanServBurstSynchronizationSubscriber::getSubscribedEvents()[NetworkSynchronizationCompletedEvent::class];
+        $gline = OperServGlineEnforceSubscriber::getSubscribedEvents()[NetworkSynchronizationCompletedEvent::class];
+        self::assertIsArray($chanServ);
+        self::assertIsArray($gline);
+        self::assertGreaterThan($gline[1], $chanServ[1]);
     }
 
     #[Test]
