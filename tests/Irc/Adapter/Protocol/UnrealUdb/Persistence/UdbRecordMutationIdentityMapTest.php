@@ -68,6 +68,23 @@ final class UdbRecordMutationIdentityMapTest extends DoctrineIntegrationTestCase
         self::assertCount(0, $this->entityManager->getConnection()->fetchFirstColumn('SELECT 1 FROM udb_records'));
     }
 
+    #[Test]
+    public function aNoOpMutationReleasesOwnedPendingInsertsButKeepsUnrelatedOnes(): void
+    {
+        $this->mutations->beginLocalStream($this->origin);
+        self::assertSame('1', (string) $this->mutations->upsertWithManifest('N', 'alice::vhost', UdbValue::string('vhost.example'), $this->origin));
+        $pendingOwned = new UdbBlockState('C');
+        $pendingUnrelated = RegisteredNick::createActive('Bob', 'hash', null, 'en', new DateTimeImmutable('2026-01-01 00:00:00'));
+        $this->entityManager->persist($pendingOwned);
+        $this->entityManager->persist($pendingUnrelated);
+
+        self::assertNull($this->mutations->upsertWithManifest('N', 'alice::vhost', UdbValue::string('vhost.example'), $this->origin));
+
+        self::assertFalse($this->entityManager->contains($pendingOwned));
+        self::assertTrue($this->entityManager->contains($pendingUnrelated));
+        $this->assertOnlyUnrelatedEntitiesRemainManaged();
+    }
+
     protected function setUp(): void
     {
         parent::setUp();

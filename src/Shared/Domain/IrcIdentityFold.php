@@ -15,8 +15,6 @@ use function strtr;
  */
 final class IrcIdentityFold
 {
-    private function __construct() {}
-
     public static function fold(string $value): string
     {
         return strtr(strtolower($value), '[]\\^', '{}|~');
