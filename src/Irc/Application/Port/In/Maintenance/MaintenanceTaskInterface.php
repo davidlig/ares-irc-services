@@ -11,8 +11,10 @@ namespace App\Irc\Application\Port\In\Maintenance;
  * in ascending order (getOrder()). Gaps of 100 between values leave room
  * for future tasks to be inserted without renumbering.
  *
- * If a task throws, the scheduler stops the current cycle to avoid leaving
- * data in an inconsistent state.
+ * If a task throws, the scheduler logs it, retries it on the next tick and still
+ * runs the remaining tasks of the cycle. A task that needs another task to have
+ * succeeded first implements PrerequisiteAwareMaintenanceTaskInterface, so it is
+ * skipped for the cycle when that prerequisite fails.
  */
 interface MaintenanceTaskInterface
 {

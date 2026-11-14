@@ -18,9 +18,9 @@ use function count;
 use function sprintf;
 
 /**
- * Removes expired G-lines in id-ordered batches. A G-line whose removal keeps
- * failing is logged and left for the next cycle; the keyset cursor moves past it
- * so it never blocks the remaining rows or the later maintenance tasks.
+ * Removes expired G-lines in batches ordered by expiry, then id. A G-line whose
+ * removal keeps failing is logged and left for the next cycle; the keyset cursor
+ * moves past it so it never blocks the remaining rows or the later maintenance tasks.
  */
 final readonly class PurgeExpiredGlinesTask implements MaintenanceTaskInterface
 {

@@ -12,7 +12,7 @@ use function count;
 use function sprintf;
 
 /**
- * Removes expired AKICK entries from channels in id-ordered batches.
+ * Removes expired AKICK entries from channels in batches ordered by expiry, then id.
  * Dispatched periodically by the maintenance scheduler.
  *
  * Order 350: ChanServ AKICK cleanup (after channel purge).

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Irc\Adapter\In\Maintenance;
 
 use App\Irc\Application\Port\In\Maintenance\MaintenanceTaskInterface;
+use App\Irc\Application\Port\In\Maintenance\PrerequisiteAwareMaintenanceTaskInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -25,6 +26,11 @@ use function usort;
  * dependencies (e.g. orphan channels must be handled before nicks are deleted).
  * A task that throws is logged and retried on the next tick; the remaining tasks
  * of the cycle still run, so one persistent failure cannot starve the others.
+ *
+ * A task implementing PrerequisiteAwareMaintenanceTaskInterface is skipped for the
+ * cycle (logged as a warning, not marked as run, so it is retried on the next tick)
+ * when one of its declared prerequisites failed earlier in the cycle or was itself
+ * skipped for that reason. A prerequisite that was not due this cycle does not block.
  */
 final class MaintenanceScheduler
 {
@@ -52,6 +58,9 @@ final class MaintenanceScheduler
         $cycleStart = hrtime(true);
         $tasksRun = [];
         $tasksFailed = [];
+        $tasksSkipped = [];
+        /** @var array<string, true> $blocked tasks that failed or were skipped in this cycle */
+        $blocked = [];
 
         $this->logger->info('Maintenance cycle started');
 
@@ -59,6 +68,18 @@ final class MaintenanceScheduler
             $last = $this->lastRun[$task->getName()] ?? 0.0;
 
             if (0.0 !== $last && ($now - $last) < $task->getIntervalSeconds()) {
+                continue;
+            }
+
+            $failedPrerequisite = $this->failedPrerequisite($task, $blocked);
+            if (null !== $failedPrerequisite) {
+                $blocked[$task->getName()] = true;
+                $tasksSkipped[] = $task->getName();
+                $this->logger->warning('Maintenance task skipped: a prerequisite failed in this cycle', [
+                    'task' => $task->getName(),
+                    'prerequisite' => $failedPrerequisite,
+                ]);
+
                 continue;
             }
 
@@ -74,6 +95,7 @@ final class MaintenanceScheduler
                     'duration_ms' => round($durationMs, 2),
                 ]);
             } catch (Throwable $e) {
+                $blocked[$task->getName()] = true;
                 $tasksFailed[] = $task->getName();
                 $this->logger->error('Maintenance task failed', [
                     'task' => $task->getName(),
@@ -88,7 +110,26 @@ final class MaintenanceScheduler
             'tasks_run' => $tasksRun,
             'tasks_count' => count($tasksRun),
             'tasks_failed' => $tasksFailed,
+            'tasks_skipped' => $tasksSkipped,
             'cycle_duration_ms' => round($cycleDurationMs, 2),
         ]);
+    }
+
+    /**
+     * @param array<string, true> $blocked
+     */
+    private function failedPrerequisite(MaintenanceTaskInterface $task, array $blocked): ?string
+    {
+        if (!$task instanceof PrerequisiteAwareMaintenanceTaskInterface) {
+            return null;
+        }
+
+        foreach ($task->getPrerequisiteTaskNames() as $prerequisite) {
+            if (isset($blocked[$prerequisite])) {
+                return $prerequisite;
+            }
+        }
+
+        return null;
     }
 }

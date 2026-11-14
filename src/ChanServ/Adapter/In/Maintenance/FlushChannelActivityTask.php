@@ -10,13 +10,15 @@ use App\Irc\Application\Port\In\Maintenance\MaintenanceTaskInterface;
 /** Flushes deferred channel activity before inactive-channel expiry runs. */
 final readonly class FlushChannelActivityTask implements MaintenanceTaskInterface
 {
+    public const string NAME = 'chanserv.flush_channel_activity';
+
     public function __construct(
         private ChannelActivityBuffer $activityBuffer,
     ) {}
 
     public function getName(): string
     {
-        return 'chanserv.flush_channel_activity';
+        return self::NAME;
     }
 
     public function getIntervalSeconds(): int

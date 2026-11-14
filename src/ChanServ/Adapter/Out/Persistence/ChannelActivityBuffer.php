@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Adapter\Out\Persistence;
 
+use App\ChanServ\Application\Port\Out\ChannelActivityPendingQuery;
 use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\ParameterType;
@@ -21,7 +22,7 @@ use function sprintf;
  *
  * @internal
  */
-final class ChannelActivityBuffer
+final class ChannelActivityBuffer implements ChannelActivityPendingQuery
 {
     private const int THROTTLE_WINDOW_SECONDS = 60;
 
@@ -50,6 +51,11 @@ final class ChannelActivityBuffer
 
         $this->lastRecordedAt[$channelId] = $usedAt;
         $this->pending[$channelId] = $usedAt;
+    }
+
+    public function hasPendingActivity(int $channelId): bool
+    {
+        return isset($this->pending[$channelId]);
     }
 
     /**

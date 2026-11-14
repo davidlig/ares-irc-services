@@ -6,6 +6,7 @@ namespace App\Tests\Irc\Adapter\In\Maintenance;
 
 use App\Irc\Adapter\In\Maintenance\MaintenanceScheduler;
 use App\Irc\Application\Port\In\Maintenance\MaintenanceTaskInterface;
+use App\Irc\Application\Port\In\Maintenance\PrerequisiteAwareMaintenanceTaskInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -322,6 +323,98 @@ final class MaintenanceSchedulerTest extends TestCase
         self::assertSame([], $completed[1]['tasks_run']);
         self::assertSame(['task.throws'], $completed[1]['tasks_failed']);
     }
+
+    #[Test]
+    public function tickSkipsATaskWhosePrerequisiteFailedAndStillRunsUnrelatedTasks(): void
+    {
+        $holder = new MaintenanceSchedulerTestState();
+        $warnings = [];
+        $logger = $this->createStub(LoggerInterface::class);
+        $logger->method('warning')->willReturnCallback(static function (string $message, array $context = []) use (&$warnings): void {
+            $warnings[] = [$message, $context];
+        });
+        $infos = [];
+        $logger->method('info')->willReturnCallback(static function (string $message, array $context = []) use (&$infos): void {
+            $infos[] = [$message, $context];
+        });
+
+        $scheduler = new MaintenanceScheduler([
+            new MaintenanceSchedulerTestTask($holder, 'task.flush', 100, fails: true),
+            new MaintenanceSchedulerTestDependentTask($holder, 'task.purge', 200, ['task.flush']),
+            new MaintenanceSchedulerTestTask($holder, 'task.unrelated', 300),
+        ], $logger);
+
+        $scheduler->tick();
+
+        self::assertSame(['task.flush', 'task.unrelated'], $holder->runOrder);
+        self::assertSame([[
+            'Maintenance task skipped: a prerequisite failed in this cycle',
+            ['task' => 'task.purge', 'prerequisite' => 'task.flush'],
+        ]], $warnings);
+        $completed = end($infos);
+        self::assertIsArray($completed);
+        self::assertSame(['task.unrelated'], $completed[1]['tasks_run']);
+        self::assertSame(['task.flush'], $completed[1]['tasks_failed']);
+        self::assertSame(['task.purge'], $completed[1]['tasks_skipped']);
+    }
+
+    #[Test]
+    public function tickSkipsATaskWhosePrerequisiteWasSkippedForAFailedPrerequisite(): void
+    {
+        $holder = new MaintenanceSchedulerTestState();
+        $warnings = [];
+        $logger = $this->createStub(LoggerInterface::class);
+        $logger->method('warning')->willReturnCallback(static function (string $message, array $context = []) use (&$warnings): void {
+            $warnings[] = $context;
+        });
+
+        $scheduler = new MaintenanceScheduler([
+            new MaintenanceSchedulerTestTask($holder, 'task.a', 100, fails: true),
+            new MaintenanceSchedulerTestDependentTask($holder, 'task.b', 200, ['task.a']),
+            new MaintenanceSchedulerTestDependentTask($holder, 'task.c', 300, ['task.b']),
+        ], $logger);
+
+        $scheduler->tick();
+
+        self::assertSame(['task.a'], $holder->runOrder);
+        self::assertSame([
+            ['task' => 'task.b', 'prerequisite' => 'task.a'],
+            ['task' => 'task.c', 'prerequisite' => 'task.b'],
+        ], $warnings);
+    }
+
+    #[Test]
+    public function tickRunsATaskWhosePrerequisiteWasNotDueThisCycle(): void
+    {
+        $holder = new MaintenanceSchedulerTestState();
+        $scheduler = new MaintenanceScheduler([
+            new MaintenanceSchedulerTestTask($holder, 'task.hourly', 100, intervalSeconds: 3600),
+            new MaintenanceSchedulerTestDependentTask($holder, 'task.dependent', 200, ['task.hourly']),
+        ], $this->createStub(LoggerInterface::class));
+
+        $scheduler->tick();
+        $scheduler->tick();
+
+        self::assertSame(['task.hourly', 'task.dependent', 'task.dependent'], $holder->runOrder);
+    }
+
+    #[Test]
+    public function tickRunsASkippedTaskOnTheNextTickOnceItsPrerequisiteSucceeds(): void
+    {
+        $holder = new MaintenanceSchedulerTestState();
+        $flush = new MaintenanceSchedulerTestTask($holder, 'task.flush', 100, fails: true);
+        $scheduler = new MaintenanceScheduler([
+            $flush,
+            new MaintenanceSchedulerTestDependentTask($holder, 'task.purge', 200, ['task.flush'], intervalSeconds: 3600),
+        ], $this->createStub(LoggerInterface::class));
+
+        $scheduler->tick();
+        $flush->fails = false;
+        $scheduler->tick();
+        $scheduler->tick();
+
+        self::assertSame(['task.flush', 'task.flush', 'task.purge', 'task.flush'], $holder->runOrder);
+    }
 }
 
 final class MaintenanceSchedulerTestState
@@ -330,4 +423,59 @@ final class MaintenanceSchedulerTestState
     public array $runOrder = [];
 
     public int $runCount = 0;
+}
+
+class MaintenanceSchedulerTestTask implements MaintenanceTaskInterface
+{
+    public function __construct(
+        private readonly MaintenanceSchedulerTestState $holder,
+        private readonly string $name,
+        private readonly int $order,
+        public bool $fails = false,
+        private readonly int $intervalSeconds = 0,
+    ) {}
+
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
+    public function getIntervalSeconds(): int
+    {
+        return $this->intervalSeconds;
+    }
+
+    public function getOrder(): int
+    {
+        return $this->order;
+    }
+
+    public function run(): void
+    {
+        $this->holder->runOrder[] = $this->name;
+        if ($this->fails) {
+            throw new RuntimeException($this->name . ' failed');
+        }
+    }
+}
+
+final class MaintenanceSchedulerTestDependentTask extends MaintenanceSchedulerTestTask implements PrerequisiteAwareMaintenanceTaskInterface
+{
+    /**
+     * @param list<string> $prerequisites
+     */
+    public function __construct(
+        MaintenanceSchedulerTestState $holder,
+        string $name,
+        int $order,
+        private readonly array $prerequisites,
+        int $intervalSeconds = 0,
+    ) {
+        parent::__construct($holder, $name, $order, false, $intervalSeconds);
+    }
+
+    public function getPrerequisiteTaskNames(): array
+    {
+        return $this->prerequisites;
+    }
 }

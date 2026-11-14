@@ -176,4 +176,31 @@ final class ChannelActivityBufferTest extends TestCase
         $history = new ReflectionProperty($buffer, 'lastRecordedAt');
         self::assertSame([], $history->getValue($buffer));
     }
+
+    #[Test]
+    public function itReportsActivityAsPendingUntilAFlushPersistsIt(): void
+    {
+        $writes = 0;
+        $connection = $this->createStub(Connection::class);
+        $connection->method('executeStatement')->willReturnCallback(static function () use (&$writes): int {
+            if (0 === $writes++) {
+                throw new RuntimeException('database unavailable');
+            }
+
+            return 1;
+        });
+        $buffer = new ChannelActivityBuffer($connection);
+
+        self::assertFalse($buffer->hasPendingActivity(5));
+
+        $buffer->record(5, new DateTimeImmutable('2026-01-01 00:00:00 UTC'));
+        self::assertTrue($buffer->hasPendingActivity(5));
+        self::assertFalse($buffer->hasPendingActivity(6));
+
+        $buffer->flush(new DateTimeImmutable('2026-01-01 00:00:10 UTC'));
+        self::assertTrue($buffer->hasPendingActivity(5));
+
+        $buffer->flush(new DateTimeImmutable('2026-01-01 00:00:20 UTC'));
+        self::assertFalse($buffer->hasPendingActivity(5));
+    }
 }

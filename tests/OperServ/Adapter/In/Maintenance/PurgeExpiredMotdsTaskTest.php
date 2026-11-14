@@ -51,6 +51,14 @@ final class PurgeExpiredMotdsTaskTest extends TestCase
     }
 
     #[Test]
+    public function itRequiresTheMotdCounterFlushSoFinalizedShownCountsAreCurrent(): void
+    {
+        $task = $this->createTask();
+
+        self::assertSame(['operserv.flush_motd_counters'], $task->getPrerequisiteTaskNames());
+    }
+
+    #[Test]
     public function runRemovesExpiredMotdsAndNotifiesDebug(): void
     {
         $expired = new MotdEntry(1, 'Expired', 'Bot1', MessageDelivery::Interactive, true, new DateTimeImmutable('-2 hours'), new DateTimeImmutable('-1 hour'), 1);

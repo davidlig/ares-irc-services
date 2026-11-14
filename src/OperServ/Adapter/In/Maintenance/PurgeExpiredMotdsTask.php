@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\OperServ\Adapter\In\Maintenance;
 
-use App\Irc\Application\Port\In\Maintenance\MaintenanceTaskInterface;
+use App\Irc\Application\Port\In\Maintenance\PrerequisiteAwareMaintenanceTaskInterface;
 use App\Irc\Application\Port\In\ServiceDebugNotifierInterface;
 use App\OperServ\Application\Model\MessageDelivery;
 use App\OperServ\Application\Port\Out\MotdEntry;
@@ -19,11 +19,14 @@ use function count;
 use function sprintf;
 
 /**
- * Removes expired MOTDs in id-ordered batches. A MOTD whose removal keeps
- * failing is logged and left for the next cycle; the keyset cursor moves past it
- * so it never blocks the remaining rows or the later maintenance tasks.
+ * Removes expired MOTDs in batches ordered by expiry, then id. A MOTD whose removal
+ * keeps failing is logged and left for the next cycle; the keyset cursor moves past
+ * it so it never blocks the remaining rows or the later maintenance tasks.
+ *
+ * Requires the MOTD shown-counter flush (order 364) to have succeeded in the same
+ * cycle, so the finalized notice reports a current shown count.
  */
-final readonly class PurgeExpiredMotdsTask implements MaintenanceTaskInterface
+final readonly class PurgeExpiredMotdsTask implements PrerequisiteAwareMaintenanceTaskInterface
 {
     public const int DEFAULT_BATCH_SIZE = 100;
 
@@ -51,6 +54,11 @@ final readonly class PurgeExpiredMotdsTask implements MaintenanceTaskInterface
     public function getOrder(): int
     {
         return 365;
+    }
+
+    public function getPrerequisiteTaskNames(): array
+    {
+        return [FlushMotdCountersTask::NAME];
     }
 
     public function run(): void
