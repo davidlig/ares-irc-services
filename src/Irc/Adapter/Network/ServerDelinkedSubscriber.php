@@ -27,8 +27,10 @@ use function sprintf;
  * The quits are bracketed by ServerDelinkStartedEvent and ServerDelinkFinishedEvent, so services can
  * batch per-channel work across the whole split. Each quit is isolated: a failing quit listener is
  * logged and the remaining split users still quit, and the failing user itself is still removed from
- * the network state by the enricher, so no ghost users stay. The finished event is published once at
- * the end, even when a started listener fails after it already began its batch.
+ * the network state by the enricher, so no ghost users stay. A failing started listener is logged
+ * the same way and does not stop the quits. The finished event is published once at the end, even
+ * when a started listener failed after it already began its batch; a started failure is logged before
+ * the quits run, so a later finished failure cannot hide it.
  */
 final readonly class ServerDelinkedSubscriber implements EventSubscriberInterface
 {
@@ -63,7 +65,15 @@ final readonly class ServerDelinkedSubscriber implements EventSubscriberInterfac
         ));
 
         try {
-            $this->eventDispatcher->dispatch(new ServerDelinkStartedEvent($event->serverSid));
+            try {
+                $this->eventDispatcher->dispatch(new ServerDelinkStartedEvent($event->serverSid));
+            } catch (Throwable $exception) {
+                $this->logger->error(sprintf(
+                    'Delink start listener for server %s failed; quitting its users anyway.',
+                    $event->serverSid,
+                ), ['exception' => $exception]);
+            }
+
             foreach ($affected as $user) {
                 try {
                     $this->eventDispatcher->dispatch(new UserQuitReceivedEvent($user->uid->value, $reason));

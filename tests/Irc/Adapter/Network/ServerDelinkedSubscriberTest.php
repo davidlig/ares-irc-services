@@ -147,13 +147,15 @@ final class ServerDelinkedSubscriberTest extends TestCase
 
     /**
      * A started listener (ChanServ opens its departure batch there) can fail after it already began
-     * its work; the finished event must still close it.
+     * its work; the failure is logged, every split user still quits (no ghosts) and the finished
+     * event still closes the batch.
      */
     #[Test]
-    public function onServerDelinkedPublishesFinishedWhenAStartedListenerFails(): void
+    public function onServerDelinkedStillQuitsEverySplitUserWhenAStartedListenerFails(): void
     {
         $users = new InMemoryNetworkUserRepository();
         $users->add($this->createUser('001AAAAAA', 'Alice', '002'));
+        $users->add($this->createUser('001BBBBBB', 'Bob', '002'));
         $failure = new RuntimeException('started listener failed');
         $finished = new class {
             /** @var list<string> */
@@ -163,22 +165,66 @@ final class ServerDelinkedSubscriberTest extends TestCase
         $dispatcher->addListener(ServerDelinkStartedEvent::class, static function () use ($failure): void {
             throw $failure;
         });
+        $dispatcher->addListener(UserQuitReceivedEvent::class, static function (UserQuitReceivedEvent $event) use ($users): void {
+            $users->removeByUid(new Uid($event->sourceId));
+        });
         $dispatcher->addListener(ServerDelinkFinishedEvent::class, static function (ServerDelinkFinishedEvent $event) use ($finished): void {
             $finished->serverSids[] = $event->serverSid;
         });
         $this->userRepository->expects(self::never())->method('findByServerSids');
         $this->eventDispatcher->expects(self::never())->method('dispatch');
         $this->logger->expects(self::once())->method('info');
+        $this->logger->expects(self::once())->method('error')->with(
+            'Delink start listener for server 002 failed; quitting its users anyway.',
+            ['exception' => $failure],
+        );
+
+        new ServerDelinkedSubscriber($users, $dispatcher, $this->logger)
+            ->onServerDelinked(new ServerDelinkedEvent('002', 'Server split'));
+
+        self::assertNull($users->findByUid(new Uid('001AAAAAA')));
+        self::assertNull($users->findByUid(new Uid('001BBBBBB')));
+        self::assertSame(['002'], $finished->serverSids);
+    }
+
+    /**
+     * When both the started and the finished listener fail, the finished failure propagates and the
+     * started failure is not lost: it was already logged before the quits ran.
+     */
+    #[Test]
+    public function onServerDelinkedLogsTheStartedFailureWhenTheFinishedListenerAlsoFails(): void
+    {
+        $users = new InMemoryNetworkUserRepository();
+        $users->add($this->createUser('001AAAAAA', 'Alice', '002'));
+        $startedFailure = new RuntimeException('started listener failed');
+        $finishedFailure = new RuntimeException('finished listener failed');
+        $dispatcher = new EventDispatcher();
+        $dispatcher->addListener(ServerDelinkStartedEvent::class, static function () use ($startedFailure): void {
+            throw $startedFailure;
+        });
+        $dispatcher->addListener(UserQuitReceivedEvent::class, static function (UserQuitReceivedEvent $event) use ($users): void {
+            $users->removeByUid(new Uid($event->sourceId));
+        });
+        $dispatcher->addListener(ServerDelinkFinishedEvent::class, static function () use ($finishedFailure): void {
+            throw $finishedFailure;
+        });
+        $this->userRepository->expects(self::never())->method('findByServerSids');
+        $this->eventDispatcher->expects(self::never())->method('dispatch');
+        $this->logger->expects(self::once())->method('info');
+        $this->logger->expects(self::once())->method('error')->with(
+            'Delink start listener for server 002 failed; quitting its users anyway.',
+            ['exception' => $startedFailure],
+        );
 
         try {
             new ServerDelinkedSubscriber($users, $dispatcher, $this->logger)
                 ->onServerDelinked(new ServerDelinkedEvent('002', 'Server split'));
-            self::fail('The started listener failure must propagate.');
+            self::fail('The finished listener failure must propagate.');
         } catch (RuntimeException $exception) {
-            self::assertSame($failure, $exception);
+            self::assertSame($finishedFailure, $exception);
         }
 
-        self::assertSame(['002'], $finished->serverSids);
+        self::assertNull($users->findByUid(new Uid('001AAAAAA')));
     }
 
     #[Test]

@@ -11,6 +11,7 @@ use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SendNoticePort;
 use App\Irc\Application\Port\In\ServiceChannelRegistrationPort;
 use App\Irc\Application\Port\In\ServiceUidRegistry;
+use App\Irc\Application\PublishedEvent\NetworkConnectionLostEvent;
 use App\Irc\Application\PublishedEvent\NetworkSynchronizationCompletedEvent;
 use App\Irc\Application\PublishedEvent\UserJoinedNetworkAppEvent;
 use App\NickServ\Application\Port\In\NickAccountQuery;
@@ -43,7 +44,9 @@ use function time;
  * pseudo-client under RFC 1459 but not under ASCII.
  *
  * Late MOTD additions (after sync) are reconciled on every user join.
- * On services restart, active pseudo-clients are re-introduced.
+ * On services restart, active pseudo-clients are re-introduced. The pseudo-clients live on the
+ * link, so their state is discarded when the link is lost and they are introduced again when the
+ * new link finishes its sync.
  */
 final class MotdOnConnectSubscriber implements EventSubscriberInterface
 {
@@ -79,7 +82,14 @@ final class MotdOnConnectSubscriber implements EventSubscriberInterface
         return [
             NetworkSynchronizationCompletedEvent::class => ['onSyncComplete', -50],
             UserJoinedNetworkAppEvent::class => ['onUserJoined', -60],
+            NetworkConnectionLostEvent::class => ['onConnectionLost', 0],
         ];
+    }
+
+    public function onConnectionLost(NetworkConnectionLostEvent $event): void
+    {
+        $this->isSynced = false;
+        $this->pseudoClients = [];
     }
 
     public function onSyncComplete(): void

@@ -16,6 +16,7 @@ use App\Irc\Application\Port\In\SendNoticePort;
 use App\Irc\Application\Port\In\ServiceChannelRegistrationPort;
 use App\Irc\Application\Port\In\ServiceNickReservationInterface;
 use App\Irc\Application\Port\In\ServiceUidRegistry;
+use App\Irc\Application\PublishedEvent\NetworkConnectionLostEvent;
 use App\Irc\Application\PublishedEvent\NetworkSynchronizationCompletedEvent;
 use App\Irc\Application\PublishedEvent\UserJoinedNetworkAppEvent;
 use App\Irc\Application\PublishedEvent\UserJoinedNetworkDTO;
@@ -47,6 +48,7 @@ final class MotdOnConnectSubscriberTest extends TestCase
         $ev = MotdOnConnectSubscriber::getSubscribedEvents();
         self::assertArrayHasKey(NetworkSynchronizationCompletedEvent::class, $ev);
         self::assertArrayHasKey(UserJoinedNetworkAppEvent::class, $ev);
+        self::assertArrayHasKey(NetworkConnectionLostEvent::class, $ev);
     }
 
     #[Test]
@@ -163,6 +165,57 @@ final class MotdOnConnectSubscriberTest extends TestCase
         $x = $this->sub(r: $r, u: $u, c: $c, p: $p, l: $l, n: $n, s: $s);
         $x->onSyncComplete();
         $x->onUserJoined(new UserJoinedNetworkAppEvent($this->dto()));
+    }
+
+    /**
+     * The pseudo-client lived on the link that dropped; after a reconnect without a process restart it
+     * is introduced again on the new link, and MOTDs are sent from the new uid. Between the loss and
+     * the new sync no MOTD is delivered.
+     */
+    #[Test]
+    public function pseudoClientIsIntroducedAgainAfterTheLinkIsLost(): void
+    {
+        $m = $this->motd('Hi', 'test!bot@h.com', 'PRIVMSG');
+        $r = $this->createStub(MotdRepository::class);
+        $r->method('findActiveAt')->willReturn([$m]);
+        $u = $this->createStub(ServiceUidRegistry::class);
+        $u->method('getUidByNickname')->willReturn(null);
+        $l = $this->createStub(NetworkUserLookupPort::class);
+        $l->method('findByNick')->willReturn(null);
+        $n = $this->createStub(NickAccountQuery::class);
+        $n->method('findIdByNick')->willReturn(null);
+
+        $introduced = [];
+        $sa = $this->createMock(ProtocolServiceActionsInterface::class);
+        $sa->expects(self::exactly(2))->method('introducePseudoClient')->willReturnCallback(
+            static function (string $sid, string $nick, string $ident, string $vhost, string $uid) use (&$introduced): void {
+                $introduced[] = [$nick, $uid];
+            },
+        );
+        $sa->expects(self::never())->method('quitPseudoClient');
+        $c = $this->createStub(ActiveProtocolModuleHolderInterface::class);
+        $c->method('getProtocolModule')->willReturn($this->mod($sa));
+        $c->method('getServerSid')->willReturn('0A0');
+        $p = $this->createStub(PseudoClientUidGenerator::class);
+        $p->method('generate')->willReturnOnConsecutiveCalls('0A0Z00001', '0A0Z00002');
+
+        $sent = [];
+        $s = $this->createStub(SendNoticePort::class);
+        $s->method('sendMessage')->willReturnCallback(
+            static function (string $from, string $to, string $message) use (&$sent): void {
+                $sent[] = [$from, $message];
+            },
+        );
+
+        $x = $this->sub(r: $r, u: $u, c: $c, p: $p, l: $l, n: $n, s: $s);
+        $x->onSyncComplete();
+        $x->onConnectionLost(new NetworkConnectionLostEvent());
+        $x->onUserJoined(new UserJoinedNetworkAppEvent($this->dto()));
+        $x->onSyncComplete();
+        $x->onUserJoined(new UserJoinedNetworkAppEvent($this->dto()));
+
+        self::assertSame([['test', '0A0Z00001'], ['test', '0A0Z00002']], $introduced);
+        self::assertSame([['0A0Z00002', 'Hi']], $sent);
     }
 
     #[Test]
