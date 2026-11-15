@@ -7,9 +7,9 @@ namespace App\ChanServ\Adapter\In\Event;
 /**
  * Whether the remote server's burst is still arriving on the current link.
  *
- * Opened when the link is established and closed when it is lost or as soon as network
- * synchronization completes, before any other end-of-sync listener runs, so a failing
- * end-of-burst listener cannot keep it open.
+ * Opened when the link is established and closed when it is lost or when the remote burst ends,
+ * which is published before any other end-of-sync listener runs, so a failing end-of-sync
+ * listener cannot keep it open.
  */
 final class RemoteBurstWindow
 {

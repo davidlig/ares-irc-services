@@ -301,13 +301,14 @@ final readonly class ManageChannelAkickHandler implements ManageChannelAkickHand
             $indexMap[spl_object_id($rule)] = $index + 1;
         }
 
+        $prepared = $this->matchPolicy->prepare($rules, $this->identityFold->fold(...));
         if ($command->founderEquivalent && null !== $member->displayMask && $member->displayMask !== $member->userMask) {
-            $realMatches = $this->matchPolicy->allMatches($rules, $member->userMask, $command->now, $member->operator, $this->identityFold->fold(...));
-            $displayMatches = $this->matchPolicy->allMatches($rules, $member->displayMask, $command->now, $member->operator, $this->identityFold->fold(...));
+            $realMatches = $prepared->allMatches($member->userMask, $command->now, $member->operator);
+            $displayMatches = $prepared->allMatches($member->displayMask, $command->now, $member->operator);
             $matches = $this->mergeMatches($realMatches, $displayMatches);
         } else {
             $mask = $command->founderEquivalent ? $member->userMask : $member->getVisibleMask();
-            $matches = $this->matchPolicy->allMatches($rules, $mask, $command->now, $member->operator, $this->identityFold->fold(...));
+            $matches = $prepared->allMatches($mask, $command->now, $member->operator);
         }
 
         if ([] === $matches) {
@@ -447,9 +448,10 @@ final readonly class ManageChannelAkickHandler implements ManageChannelAkickHand
             }
         }
 
+        $prepared = $this->matchPolicy->prepare($rules, $this->identityFold->fold(...));
         $enforcedCount = 0;
         foreach ($channel->members as $member) {
-            $matching = $this->matchPolicy->firstMatch($rules, $member->userMask, $now, $member->operator, $this->identityFold->fold(...));
+            $matching = $prepared->firstMatch($member->userMask, $now, $member->operator);
             if (null === $matching) {
                 continue;
             }

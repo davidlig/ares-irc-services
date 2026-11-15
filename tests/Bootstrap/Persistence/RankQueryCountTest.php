@@ -161,7 +161,7 @@ final class RankQueryCountTest extends TestCase
                 new EnforceChannelAkickHandler($registeredChannels, new ChannelAkickDoctrineRepository($em), $entryNetwork, $akickActions, new AkickMatchPolicy(), $this->createStub(ChanServActivitySink::class), NegotiatedCaseMapping::chanServ()),
                 $this->createStub(SynchronizeAllChannelAkicksHandlerInterface::class),
             ));
-            $dispatcher->addSubscriber(new ChanServChannelRankSubscriber($handler, new PendingChannelRankSynchronizations(), $burst, new BurstRankEventScope(), $this->createStub(RegisteredChannelBurstSnapshot::class), new DelinkDepartureRankScope($policy, $network)));
+            $dispatcher->addSubscriber(new ChanServChannelRankSubscriber($handler, new PendingChannelRankSynchronizations(), $burst, new BurstRankEventScope(NegotiatedCaseMapping::chanServ()), $this->createStub(RegisteredChannelBurstSnapshot::class), new DelinkDepartureRankScope($policy, $network)));
             $channelName = new ChannelName('#test');
             $channel = new Channel($channelName, '', new DateTimeImmutable('@100'));
             $channel->syncMember(new Uid('U1'), ChannelMemberRole::None);
@@ -207,7 +207,7 @@ final class RankQueryCountTest extends TestCase
     }
 
     #[Test]
-    public function serverDelinkDepartureRankWorkStaysConstantAsTheSplitGrows(): void
+    public function serverDelinkDepartureRankWorkFollowsTheDeparturesNotTheChannelSize(): void
     {
         $config = new Configuration();
         $config->setProxyDir(sys_get_temp_dir());
@@ -250,7 +250,7 @@ final class RankQueryCountTest extends TestCase
                 $dispatcher->addSubscriber(new ServerDelinkedSubscriber($users, $dispatcher));
                 $dispatcher->addSubscriber(new NetworkStateSubscriber($users, $channels, new ChannelSyncCompletedRegistry()));
                 $dispatcher->addSubscriber(new NetworkEventEnricher($channels, $users, $dispatcher, $this->createStub(SkipIdentifiedModeStripRegistry::class), $provider, $this->createStub(ActiveProtocolModuleHolderInterface::class)));
-                $dispatcher->addSubscriber(new ChanServChannelRankSubscriber($handler, new PendingChannelRankSynchronizations(), $burst, new BurstRankEventScope(), $this->createStub(RegisteredChannelBurstSnapshot::class), new DelinkDepartureRankScope($policy, $network)));
+                $dispatcher->addSubscriber(new ChanServChannelRankSubscriber($handler, new PendingChannelRankSynchronizations(), $burst, new BurstRankEventScope(NegotiatedCaseMapping::chanServ()), $this->createStub(RegisteredChannelBurstSnapshot::class), new DelinkDepartureRankScope($policy, $network)));
 
                 $channelName = new ChannelName('#test');
                 $channel = new Channel($channelName, '+nt', new DateTimeImmutable('@100'));
@@ -264,6 +264,12 @@ final class RankQueryCountTest extends TestCase
                     if (0 !== $i) {
                         $splitUids[] = $uid;
                     }
+                }
+                for ($i = 1; $i <= 200; ++$i) {
+                    $local = new NetworkUser(new Uid(sprintf('001AAB%03d', $i)), new Nick('L' . $i), new Ident('ident'), 'host', 'cloak', 'host', '+r', new DateTimeImmutable('@100'), 'user', '001', '');
+                    $local->addChannel($channelName);
+                    $users->add($local);
+                    $channel->syncMember($local->uid, ChannelMemberRole::None);
                 }
                 $channels->save($channel);
 
@@ -281,24 +287,44 @@ final class RankQueryCountTest extends TestCase
                 $results[$mode][$size] = [
                     'queries' => $this->queryCount($logger),
                     'policyLoads' => $this->countMatching($logger->queries, static fn (string $sql): bool => str_contains($sql, 'FROM registered_channels')),
+                    'nickLookups' => $this->boundParameters($logger->queries, static fn (string $sql): bool => str_contains($sql, 'FROM registered_nicks')),
                     'activity' => $activity->hasPendingActivity(1),
                     'members' => array_map(static fn ($member): string => $member->uid->value, $channels->findByName($channelName)?->getMembers() ?? []),
                 ];
             }
         }
 
-        self::assertSame($results['batched'][2]['queries'], $results['batched'][40]['queries'], 'A split costs the same queries whatever its size.');
+        self::assertSame(2, $results['batched'][2]['nickLookups'], 'Only departing members are resolved, not the 200 members that stay.');
+        self::assertSame(40, $results['batched'][40]['nickLookups'], 'Only departing members are resolved, not the 200 members that stay.');
+        self::assertSame(38, $results['batched'][40]['queries'] - $results['batched'][2]['queries'], 'One account lookup per departure and nothing per remaining member.');
         self::assertSame(1, $results['batched'][2]['policyLoads'], 'One rank pass per affected channel.');
         self::assertSame(1, $results['batched'][40]['policyLoads'], 'One rank pass per affected channel.');
         self::assertSame(40, $results['unbatched'][40]['policyLoads'], 'Without the delink scope every departure loads the channel.');
         foreach ([2, 40] as $size) {
             self::assertTrue($results['batched'][$size]['activity']);
             self::assertSame($results['unbatched'][$size]['activity'], $results['batched'][$size]['activity']);
-            self::assertSame(['001AAA000'], $results['batched'][$size]['members']);
+            self::assertCount(201, $results['batched'][$size]['members']);
+            self::assertNotContains('002AAA001', $results['batched'][$size]['members']);
             self::assertSame($results['unbatched'][$size]['members'], $results['batched'][$size]['members']);
         }
         $em->close();
         $connection->close();
+    }
+
+    /**
+     * @param list<array{sql: string, params: list<mixed>, types: list<mixed>}> $queries
+     * @param callable(string): bool                                            $predicate
+     */
+    private function boundParameters(array $queries, callable $predicate): int
+    {
+        $bound = 0;
+        foreach ($queries as $query) {
+            if ($predicate($query['sql'])) {
+                $bound += count($query['params']);
+            }
+        }
+
+        return $bound;
     }
 
     /**

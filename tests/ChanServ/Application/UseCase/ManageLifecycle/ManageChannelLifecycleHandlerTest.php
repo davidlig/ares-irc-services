@@ -20,6 +20,7 @@ use App\ChanServ\Application\UseCase\ManageLifecycle\ManageChannelLifecycle;
 use App\ChanServ\Application\UseCase\ManageLifecycle\ManageChannelLifecycleHandler;
 use App\ChanServ\Domain\Entity\ChannelHistory;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
+use App\ChanServ\Domain\Exception\ChannelNameConflictException;
 use App\Shared\Application\Port\EventBusInterface;
 use DateTimeImmutable;
 use LogicException;
@@ -71,6 +72,22 @@ final class ManageChannelLifecycleHandlerTest extends TestCase
         self::assertSame(ChannelLifecycleOutcome::NotRegistered, $this->handler($this->channelsReturning(null))->handle($this->command(ChannelLifecycleAction::EnableIrcopOnly))->outcome);
         $forbidden = RegisteredChannel::createForbidden($this->now, '#test', 'reason');
         self::assertSame(ChannelLifecycleOutcome::ChannelForbidden, $this->handler($this->channelsReturning($forbidden))->handle($this->command(ChannelLifecycleAction::DisableIrcopOnly))->outcome);
+    }
+
+    #[Test]
+    public function forbidOfAnotherChannelSharingTheRegistrationKeyReportsANameConflict(): void
+    {
+        $otherChannelRequest = RegisteredChannel::createPendingRegistration($this->now, '#test[', 7, 'description');
+        $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channels->method('findByChannelName')->willReturn(null);
+        $channels->method('findByChannelNameKey')->willReturn($otherChannelRequest);
+        $forbidden = $this->createMock(ChannelForbiddenService::class);
+        $forbidden->expects(self::once())->method('forbid')->willThrowException(ChannelNameConflictException::forChannel('#test', '#test['));
+
+        $result = $this->handler($channels, forbidden: $forbidden)->handle($this->command(ChannelLifecycleAction::Forbid, reason: 'policy'));
+
+        self::assertSame(ChannelLifecycleOutcome::NameConflict, $result->outcome);
+        self::assertTrue($otherChannelRequest->isPendingRegistration());
     }
 
     #[Test]

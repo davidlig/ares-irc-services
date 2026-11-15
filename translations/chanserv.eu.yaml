@@ -802,6 +802,7 @@ forbid:
   success: "%channel% kanala debekatu da."
   updated: "%channel% kanalaren debeku arrazoia eguneratu da."
   channel_forbidden: "%channel% kanala debekatua dago eta ezin da erabili."
+  name_conflict: "%channel% kanala ezin da debekatu: bere erregistroa beste kanal batena da."
 
 # --- UNFORBID (IRCop) ---------------------------------------------------------
 unforbid:

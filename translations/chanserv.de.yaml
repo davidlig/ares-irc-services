@@ -802,6 +802,7 @@ forbid:
   success: "Channel %channel% wurde gesperrt."
   updated: "Begründung für die Sperre von Channel %channel% wurde aktualisiert."
   channel_forbidden: "Channel %channel% ist gesperrt und kann nicht verwendet werden."
+  name_conflict: "Channel %channel% kann nicht gesperrt werden: Seine Registrierung gehört zu einem anderen Channel."
 
 # --- UNFORBID (IRCop) ---------------------------------------------------------
 unforbid:

@@ -36,7 +36,22 @@ final readonly class AkickMask
      */
     public function matches(string $userMask, Closure $fold): bool
     {
-        return self::glob($fold($this->value), $fold($userMask));
+        return ($this->matcher($fold))($fold($userMask));
+    }
+
+    /**
+     * Folds the pattern once and returns a matcher for user masks already folded with the same
+     * fold, so an enforcement pass folds each rule once instead of once per member.
+     *
+     * @param Closure(string): string $fold negotiated identity fold
+     *
+     * @return Closure(string): bool receives a nick!ident@host folded with $fold
+     */
+    public function matcher(Closure $fold): Closure
+    {
+        $pattern = $fold($this->value);
+
+        return static fn (string $foldedUserMask): bool => self::glob($pattern, $foldedUserMask);
     }
 
     /** @param Closure(string): string $fold negotiated identity fold */

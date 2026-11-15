@@ -802,6 +802,7 @@ forbid:
   success: "%channel% kanalı yasaklandı."
   updated: "%channel% kanalı için yasaklama gerekçesi güncellendi."
   channel_forbidden: "%channel% kanalı yasaklanmış ve kullanılamaz."
+  name_conflict: "%channel% kanalı yasaklanamaz: kaydı farklı bir kanala ait."
 
 # --- UNFORBID (IRCop) ---------------------------------------------------------
 unforbid:

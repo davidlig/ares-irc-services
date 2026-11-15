@@ -12,12 +12,12 @@ use App\ChanServ\Application\Port\Out\ChannelRankPolicyRepository;
 use function array_key_exists;
 
 /**
- * Channel rank snapshots shared by every departure of one server delink (SQUIT).
+ * Channel rank policies shared by every departure of one server delink (SQUIT).
  *
- * The first departure from a channel loads its policy and network state once, while every split
- * member is still on the channel (a departure is published before the member is removed); later
- * departures from that channel reuse the snapshot, so a split costs one rank pass per affected
- * channel instead of one per departing member.
+ * The first departure from a channel loads its policy once and later departures from that channel
+ * reuse it, so a split costs one policy load per affected channel instead of one per departing
+ * member. Network state is resolved for the departing member only (a departure is published before
+ * the member is removed), so the cost follows the departures, not the size of the channel.
  */
 final class DelinkDepartureRankScope
 {
@@ -26,7 +26,7 @@ final class DelinkDepartureRankScope
     /**
      * Keyed by the channel name exactly as the network publishes it; null marks an unregistered channel.
      *
-     * @var array<string, array{ChannelRankPolicy, ?ChannelRankNetworkState}|null>
+     * @var array<string, ChannelRankPolicy|null>
      */
     private array $channels = [];
 
@@ -52,16 +52,20 @@ final class DelinkDepartureRankScope
         return $this->active;
     }
 
-    /** @return array{ChannelRankPolicy, ?ChannelRankNetworkState}|null null when the channel is not registered */
-    public function channel(string $channelName): ?array
+    /**
+     * @return array{ChannelRankPolicy, ?ChannelRankNetworkState}|null null when the channel is not registered;
+     *                                                                 the state holds only the departing member
+     */
+    public function departure(string $channelName, string $uid): ?array
     {
         if (!array_key_exists($channelName, $this->channels)) {
-            $policy = $this->policies->findByName($channelName);
-            $this->channels[$channelName] = null === $policy
-                ? null
-                : [$policy, $policy->blocked ? null : $this->network->findChannel($channelName)];
+            $this->channels[$channelName] = $this->policies->findByName($channelName);
+        }
+        $policy = $this->channels[$channelName];
+        if (null === $policy) {
+            return null;
         }
 
-        return $this->channels[$channelName];
+        return [$policy, $policy->blocked ? null : $this->network->findMember($channelName, $uid)];
     }
 }

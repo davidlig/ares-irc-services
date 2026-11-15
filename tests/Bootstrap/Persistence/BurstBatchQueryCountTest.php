@@ -192,7 +192,7 @@ final class BurstBatchQueryCountTest extends TestCase
         $ranks = new EnforceChannelRanksHandler($rankPolicies, $rankNetwork, $rankActions, new ChannelAccessPolicy(), new AutomaticRankPolicy(), new RankReconciliationPolicy());
         $mlockPolicies = $this->createStub(ChannelMlockPolicyRepository::class);
         $mlockPolicies->method('forChannel')->willReturnCallback(static fn (RegisteredChannel $channel): ChannelMlockPolicy => new ChannelMlockPolicy($channel->getName(), false, ChannelModeLock::inactive()));
-        $scope = new BurstRankEventScope();
+        $scope = new BurstRankEventScope(NegotiatedCaseMapping::chanServ());
         $scope->begin();
         $handler = new SynchronizeBurstChannelsHandler($source, $network, $accounts, $this->createStub(ForbiddenChannelEnforcement::class), $akicks, $nojoin, $rankNetwork, $ranks, $mlockPolicies, $this->createStub(EnforceChannelMlockHandlerInterface::class), $this->createStub(ApplyStoredChannelTopicHandlerInterface::class), $this->createStub(ChannelRegistrationLifecycle::class), $scope, new BurstChannelActivityWriter($em));
         $logger->enabled = true;

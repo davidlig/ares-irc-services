@@ -19,6 +19,7 @@ use App\ChanServ\Application\UseCase\ManageLifecycle\ChannelLifecycleResult;
 use App\ChanServ\Application\UseCase\ManageLifecycle\ManageChannelLifecycle;
 use App\ChanServ\Application\UseCase\ManageLifecycle\ManageChannelLifecycleHandler;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
+use App\ChanServ\Domain\Exception\ChannelNameConflictException;
 use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\Irc\Application\Port\In\ChannelModeSupportInterface;
 use App\Irc\Application\Port\In\Command\IrcopAuditData;
@@ -240,6 +241,29 @@ final class ForbidCommandTest extends TestCase
         $cmd->execute($context);
 
         self::assertContains("\x0303✔\x03\x0F forbid.success", $messages);
+    }
+
+    #[Test]
+    public function executeRejectsAForbidOfAnotherChannelThatSharesTheRegistrationKey(): void
+    {
+        $sender = $this->createSender();
+        $otherChannelRequest = RegisteredChannel::createPendingRegistration(new DateTimeImmutable(), '#chan[', 7, 'description');
+
+        $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepository->method('findByChannelName')->willReturn(null);
+        $channelRepository->method('findByChannelNameKey')->willReturn($otherChannelRequest);
+
+        $forbiddenService = $this->createMock(ChannelForbiddenService::class);
+        $forbiddenService->expects(self::once())->method('forbid')
+            ->with('#chan{', 'abuse', 'OperUser', self::isInstanceOf(DateTimeImmutable::class))
+            ->willThrowException(ChannelNameConflictException::forChannel('#chan{', '#chan['));
+
+        $messages = [];
+        $outcome = $this->createCommandWith($channelRepository, $forbiddenService)
+            ->execute($this->createContext($sender, ['#chan{', 'abuse'], $messages));
+
+        self::assertFalse($outcome->success);
+        self::assertSame(["\x0304✗\x03\x0F forbid.name_conflict"], $messages);
     }
 
     #[Test]

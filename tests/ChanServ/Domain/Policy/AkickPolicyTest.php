@@ -7,6 +7,7 @@ namespace App\Tests\ChanServ\Domain\Policy;
 use App\ChanServ\Domain\Policy\AkickAdditionPolicy;
 use App\ChanServ\Domain\Policy\AkickMatchPolicy;
 use App\ChanServ\Domain\Policy\AkickProtectionPolicy;
+use App\ChanServ\Domain\Policy\PreparedAkickRules;
 use App\ChanServ\Domain\ValueObject\AkickAdditionDecision;
 use App\ChanServ\Domain\ValueObject\AkickMask;
 use App\ChanServ\Domain\ValueObject\AkickRule;
@@ -22,6 +23,7 @@ use function str_repeat;
 
 #[CoversClass(AkickMatchPolicy::class)]
 #[CoversClass(AkickProtectionPolicy::class)]
+#[CoversClass(PreparedAkickRules::class)]
 #[CoversClass(AkickAdditionPolicy::class)]
 #[CoversClass(AkickAdditionDecision::class)]
 #[CoversClass(AkickMask::class)]
@@ -36,7 +38,7 @@ final class AkickPolicyTest extends TestCase
         $first = new AkickRule(new AkickMask('bad*!*@*'), 'first');
         $later = new AkickRule(new AkickMask('*!*@*'), 'later');
 
-        self::assertSame($first, new AkickMatchPolicy()->firstMatch([$expired, $first, $later], 'BADNick!ident@host', $now, false, NegotiatedCaseMapping::fold()));
+        self::assertSame($first, new AkickMatchPolicy()->prepare([$expired, $first, $later], NegotiatedCaseMapping::fold())->firstMatch('BADNick!ident@host', $now, false));
     }
 
     #[Test]
@@ -48,11 +50,11 @@ final class AkickPolicyTest extends TestCase
         $backslash = new AkickRule(new AkickMask('a\\b!*@*'));
         $wildcard = new AkickRule(new AkickMask('Bad?!*@*.example'));
 
-        self::assertSame($brackets, $policy->firstMatch([$brackets], '[foo]!u@h', $now, false, NegotiatedCaseMapping::fold()));
-        self::assertNull($policy->firstMatch([$brackets], 'f!u@h', $now, false, NegotiatedCaseMapping::fold()));
-        self::assertSame($backslash, $policy->firstMatch([$backslash], 'A\\B!u@h', $now, false, NegotiatedCaseMapping::fold()));
-        self::assertSame([$brackets], $policy->allMatches([$brackets], '[Foo]!u@h', $now, false, NegotiatedCaseMapping::fold()));
-        self::assertSame($wildcard, $policy->firstMatch([$wildcard], 'bad1!u@host.example', $now, false, NegotiatedCaseMapping::fold()));
+        self::assertSame($brackets, $policy->prepare([$brackets], NegotiatedCaseMapping::fold())->firstMatch('[foo]!u@h', $now, false));
+        self::assertNull($policy->prepare([$brackets], NegotiatedCaseMapping::fold())->firstMatch('f!u@h', $now, false));
+        self::assertSame($backslash, $policy->prepare([$backslash], NegotiatedCaseMapping::fold())->firstMatch('A\\B!u@h', $now, false));
+        self::assertSame([$brackets], $policy->prepare([$brackets], NegotiatedCaseMapping::fold())->allMatches('[Foo]!u@h', $now, false));
+        self::assertSame($wildcard, $policy->prepare([$wildcard], NegotiatedCaseMapping::fold())->firstMatch('bad1!u@host.example', $now, false));
     }
 
     #[Test]
@@ -73,9 +75,9 @@ final class AkickPolicyTest extends TestCase
         $rule = new AkickRule(new AkickMask('*!*@host'), expiresAt: $now);
         $policy = new AkickMatchPolicy();
 
-        self::assertSame($rule, $policy->firstMatch([$rule], 'nick!ident@host', $now, false, NegotiatedCaseMapping::fold()));
-        self::assertNull($policy->firstMatch([$rule], 'nick!ident@host', $now, true, NegotiatedCaseMapping::fold()));
-        self::assertNull($policy->firstMatch([$rule], 'nick!ident@elsewhere', $now, false, NegotiatedCaseMapping::fold()));
+        self::assertSame($rule, $policy->prepare([$rule], NegotiatedCaseMapping::fold())->firstMatch('nick!ident@host', $now, false));
+        self::assertNull($policy->prepare([$rule], NegotiatedCaseMapping::fold())->firstMatch('nick!ident@host', $now, true));
+        self::assertNull($policy->prepare([$rule], NegotiatedCaseMapping::fold())->firstMatch('nick!ident@elsewhere', $now, false));
     }
 
     #[Test]
@@ -88,11 +90,39 @@ final class AkickPolicyTest extends TestCase
         $unrelated = new AkickRule(new AkickMask('other!*@*'), 'unrelated');
         $policy = new AkickMatchPolicy();
 
-        $matches = $policy->allMatches([$rule1, $expired, $rule2, $unrelated], 'badnick!ident@host', $now, false, NegotiatedCaseMapping::fold());
+        $matches = $policy->prepare([$rule1, $expired, $rule2, $unrelated], NegotiatedCaseMapping::fold())->allMatches('badnick!ident@host', $now, false);
         self::assertSame([$rule1, $rule2], $matches);
 
         // Operator is exempt
-        self::assertSame([], $policy->allMatches([$rule1, $rule2], 'badnick!ident@host', $now, true, NegotiatedCaseMapping::fold()));
+        self::assertSame([], $policy->prepare([$rule1, $rule2], NegotiatedCaseMapping::fold())->allMatches('badnick!ident@host', $now, true));
+    }
+
+    #[Test]
+    public function preparedRulesFoldEachPatternOnceAndMatchLikeTheMaskItself(): void
+    {
+        $now = new DateTimeImmutable('2026-09-07 12:00:00');
+        $calls = [];
+        $fold = static function (string $value) use (&$calls): string {
+            $calls[] = $value;
+
+            return NegotiatedCaseMapping::fold()($value);
+        };
+        $rules = [new AkickRule(new AkickMask('[Bad]*!*@*')), new AkickRule(new AkickMask('*!*@Host.Example'))];
+        $prepared = new AkickMatchPolicy()->prepare($rules, $fold);
+        $masks = ['{bad}x!u@h', 'Good!u@HOST.example', 'good!u@elsewhere'];
+        $expected = [];
+        foreach ($masks as $mask) {
+            $expected[] = $rules[0]->mask->matches($mask, NegotiatedCaseMapping::fold()) || $rules[1]->mask->matches($mask, NegotiatedCaseMapping::fold());
+        }
+
+        $actual = [];
+        foreach ($masks as $mask) {
+            $actual[] = null !== $prepared->firstMatch($mask, $now, false);
+        }
+
+        self::assertSame([true, true, false], $expected);
+        self::assertSame($expected, $actual);
+        self::assertSame(['[Bad]*!*@*', '*!*@Host.Example', ...$masks], $calls);
     }
 
     #[Test]
@@ -190,10 +220,10 @@ final class AkickPolicyTest extends TestCase
         $braces = new AkickRule(new AkickMask('{bad}\\^!*@*'));
         $ascii = new AkickRule(new AkickMask('Bad*!*@*'));
 
-        self::assertSame($rule, $policy->firstMatch([$rule], '{BAD}x!u@h', $now, false, NegotiatedCaseMapping::fold()));
-        self::assertSame($braces, $policy->firstMatch([$braces], '[BAD]|~!u@h', $now, false, NegotiatedCaseMapping::fold()));
-        self::assertSame($ascii, $policy->firstMatch([$ascii], 'bAdNick!u@h', $now, false, NegotiatedCaseMapping::fold()));
-        self::assertNull($policy->firstMatch([$ascii], 'Good!u@h', $now, false, NegotiatedCaseMapping::fold()));
+        self::assertSame($rule, $policy->prepare([$rule], NegotiatedCaseMapping::fold())->firstMatch('{BAD}x!u@h', $now, false));
+        self::assertSame($braces, $policy->prepare([$braces], NegotiatedCaseMapping::fold())->firstMatch('[BAD]|~!u@h', $now, false));
+        self::assertSame($ascii, $policy->prepare([$ascii], NegotiatedCaseMapping::fold())->firstMatch('bAdNick!u@h', $now, false));
+        self::assertNull($policy->prepare([$ascii], NegotiatedCaseMapping::fold())->firstMatch('Good!u@h', $now, false));
     }
 
     #[Test]
@@ -214,10 +244,10 @@ final class AkickPolicyTest extends TestCase
         $rule = new AkickRule(new AkickMask('[bot]*!*@*'));
         $ascii = NegotiatedCaseMapping::fold(CaseMapping::Ascii);
 
-        self::assertNull($policy->firstMatch([$rule], '{bot}x!u@h', $now, false, $ascii));
-        self::assertSame($rule, $policy->firstMatch([$rule], '[BOT]x!u@h', $now, false, $ascii));
-        self::assertNull($policy->firstMatch([$rule], 'bx!u@h', $now, false, $ascii));
-        self::assertSame([], $policy->allMatches([$rule], '{bot}x!u@h', $now, false, $ascii));
+        self::assertNull($policy->prepare([$rule], $ascii)->firstMatch('{bot}x!u@h', $now, false));
+        self::assertSame($rule, $policy->prepare([$rule], $ascii)->firstMatch('[BOT]x!u@h', $now, false));
+        self::assertNull($policy->prepare([$rule], $ascii)->firstMatch('bx!u@h', $now, false));
+        self::assertSame([], $policy->prepare([$rule], $ascii)->allMatches('{bot}x!u@h', $now, false));
         self::assertNull(new AkickProtectionPolicy()->firstProtectedNickname(new AkickMask('[founder]*!*@*'), ['{Founder}'], $ascii));
         self::assertSame('[Founder]', new AkickProtectionPolicy()->firstProtectedNickname(new AkickMask('[founder]*!*@*'), ['[Founder]'], $ascii));
     }

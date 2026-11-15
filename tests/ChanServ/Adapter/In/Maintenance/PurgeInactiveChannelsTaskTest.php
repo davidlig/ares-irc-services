@@ -171,6 +171,7 @@ final class PurgeInactiveChannelsTaskTest extends TestCase
 
             return 1;
         });
+        $connection->method('fetchOne')->willThrowException(new RuntimeException('database unavailable'));
         $buffer = new ChannelActivityBuffer($connection);
         $buffer->record(7, new DateTimeImmutable('-1 minute'));
         $failure = null;

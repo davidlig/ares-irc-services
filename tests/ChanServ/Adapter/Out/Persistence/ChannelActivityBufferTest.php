@@ -16,6 +16,7 @@ use ReflectionProperty;
 use RuntimeException;
 
 use function array_filter;
+use function array_keys;
 use function array_map;
 use function array_unique;
 use function array_values;
@@ -70,6 +71,7 @@ final class ChannelActivityBufferTest extends TestCase
                 return 1;
             },
         );
+        $connection->method('fetchOne')->willThrowException(new RuntimeException('database unavailable'));
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects(self::once())->method('error')->with(
             'Could not flush a chunk of deferred ChanServ channel activity; it will be retried.',
@@ -120,6 +122,53 @@ final class ChannelActivityBufferTest extends TestCase
     }
 
     #[Test]
+    public function aRowThatAlwaysFailsIsIsolatedAndKeptPendingWithoutFailingTheFlushOnARealConnection(): void
+    {
+        $connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
+        $connection->executeStatement('CREATE TABLE registered_channels (id INTEGER PRIMARY KEY, last_used_at DATETIME NULL)');
+        $connection->executeStatement('WITH RECURSIVE seq(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM seq WHERE n < 250) INSERT INTO registered_channels (id, last_used_at) SELECT n, NULL FROM seq');
+        $connection->executeStatement("CREATE TRIGGER poison_row BEFORE UPDATE ON registered_channels WHEN NEW.id = 13 BEGIN SELECT RAISE(ABORT, 'poison row'); END");
+        $errors = [];
+        $logger = $this->createStub(LoggerInterface::class);
+        $logger->method('error')->willReturnCallback(static function (string $message, array $context) use (&$errors): void {
+            $errors[] = [$message, $context['channel_id'] ?? null];
+        });
+        $buffer = new ChannelActivityBuffer($connection, $logger);
+        $usedAt = new DateTimeImmutable('2026-01-01 00:00:00 UTC');
+        for ($id = 1; $id <= 250; ++$id) {
+            $buffer->record($id, $usedAt);
+        }
+
+        $buffer->flush($usedAt);
+        $buffer->flush($usedAt->modify('+1 minute'));
+
+        self::assertSame(249, $connection->fetchOne("SELECT COUNT(*) FROM registered_channels WHERE last_used_at = '2026-01-01 00:00:00'"));
+        self::assertNull($connection->fetchOne('SELECT last_used_at FROM registered_channels WHERE id = 13'));
+        self::assertTrue($buffer->hasPendingActivity(13));
+        self::assertFalse($buffer->hasPendingActivity(12));
+        self::assertFalse($buffer->hasPendingActivity(201));
+        $pending = new ReflectionProperty($buffer, 'pending');
+        self::assertSame([13], array_keys((array) $pending->getValue($buffer)));
+        $isolated = 'Could not flush deferred ChanServ channel activity for one channel; it stays pending and the channel is kept from inactivity expiry.';
+        $chunk = 'Could not flush a chunk of deferred ChanServ channel activity; it will be retried.';
+        self::assertSame([[$chunk, null], [$isolated, 13], [$chunk, null], [$isolated, 13]], $errors);
+    }
+
+    #[Test]
+    public function aLonePendingRowThatFailsWhileTheDatabaseAnswersStaysPendingWithoutFailingTheFlushOrBeingWrittenTwice(): void
+    {
+        $connection = $this->createMock(Connection::class);
+        $connection->expects(self::once())->method('executeStatement')->willThrowException(new RuntimeException('poison row'));
+        $connection->expects(self::once())->method('fetchOne')->willReturn(1);
+        $buffer = new ChannelActivityBuffer($connection);
+        $buffer->record(7, new DateTimeImmutable('2026-01-01 00:00:00 UTC'));
+
+        $buffer->flush(new DateTimeImmutable('2026-01-01 00:00:00 UTC'));
+
+        self::assertTrue($buffer->hasPendingActivity(7));
+    }
+
+    #[Test]
     public function itBindsABoundedNumberOfParametersPerStatementAndContinuesAfterAFailedChunk(): void
     {
         $connection = $this->createMock(Connection::class);
@@ -134,6 +183,7 @@ final class ChannelActivityBufferTest extends TestCase
                 return 1;
             },
         );
+        $connection->method('fetchOne')->willThrowException(new RuntimeException('lock timeout'));
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects(self::once())->method('error');
         $buffer = new ChannelActivityBuffer($connection, $logger);
@@ -209,6 +259,7 @@ final class ChannelActivityBufferTest extends TestCase
 
             return 1;
         });
+        $connection->method('fetchOne')->willThrowException(new RuntimeException('database unavailable'));
         $buffer = new ChannelActivityBuffer($connection);
 
         self::assertFalse($buffer->hasPendingActivity(5));

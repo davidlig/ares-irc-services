@@ -19,7 +19,7 @@ use App\Irc\Application\PublishedEvent\IrcMessageHandledEvent;
 use App\Irc\Application\PublishedEvent\IrcMessageHandlingStartedEvent;
 use App\Irc\Application\PublishedEvent\NetworkConnectionEstablishedEvent;
 use App\Irc\Application\PublishedEvent\NetworkConnectionLostEvent;
-use App\Irc\Application\PublishedEvent\NetworkSynchronizationCompletedEvent;
+use App\Irc\Application\PublishedEvent\RemoteBurstEndedEvent;
 use App\Irc\Application\PublishedEvent\ServerDelinkFinishedEvent;
 use App\Irc\Application\PublishedEvent\ServerDelinkStartedEvent;
 use App\Irc\Application\PublishedEvent\UserDepartedChannelEvent;
@@ -29,12 +29,6 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 /** Translates framework/IRC events to the ChanServ rank-enforcement use cases. */
 final readonly class ChanServChannelRankSubscriber implements EventSubscriberInterface
 {
-    /**
-     * Runs before every other end-of-sync listener (the highest is the ChanServ end-of-burst pass at
-     * 10), so the window closes even when a later listener throws and stops propagation.
-     */
-    private const int REMOTE_BURST_END_PRIORITY = 2048;
-
     private RemoteBurstWindow $remoteBurst;
 
     public function __construct(
@@ -55,7 +49,7 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
             IrcMessageHandledEvent::class => ['onIrcMessageHandled', -255],
             NetworkConnectionEstablishedEvent::class => ['onNetworkConnectionEstablished', 0],
             NetworkConnectionLostEvent::class => ['onRemoteBurstEnded', 0],
-            NetworkSynchronizationCompletedEvent::class => ['onRemoteBurstEnded', self::REMOTE_BURST_END_PRIORITY],
+            RemoteBurstEndedEvent::class => ['onRemoteBurstEnded', 0],
             UserJoinedChannelEvent::class => ['onUserJoinedChannel', 0],
             UserDepartedChannelEvent::class => ['onUserLeftChannel', 0],
             ChannelSynchronizedEvent::class => ['onChannelSynced', 0],
@@ -193,13 +187,13 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
     }
 
     /**
-     * A server delink departs every split member from each of its channels; the channel is loaded
-     * once for the whole split and each departure is evaluated against that snapshot, recording the
-     * same activity a single departure would.
+     * A server delink departs every split member from each of its channels; the channel policy is
+     * loaded once for the whole split and each departure is evaluated against it with only the
+     * departing member resolved, recording the same activity a single departure would.
      */
     private function onDelinkDeparture(EnforceChannelRanks $command): void
     {
-        $snapshot = $this->delinkDepartures->channel($command->channelName);
+        $snapshot = $this->delinkDepartures->departure($command->channelName, (string) $command->uid);
         if (null === $snapshot) {
             return;
         }
@@ -209,8 +203,8 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
     }
 
     /**
-     * The remote burst is open from link establishment until network synchronization starts to
-     * complete. InspIRCd reports the local burst complete before the remote burst arrives, so both
+     * The remote burst is open from link establishment until the remote burst ends, which is
+     * published before any end-of-sync listener runs. InspIRCd reports the local burst complete before the remote burst arrives, so both
      * signals are checked to keep the three protocols aligned.
      */
     private function duringBurst(): bool

@@ -794,6 +794,7 @@ forbid:
   success: "Kanał %channel% został zabroniony."
   updated: "Powód zabronienia kanału %channel% został zaktualizowany."
   channel_forbidden: "Kanał %channel% jest zabroniony i nie może być używany."
+  name_conflict: "Kanału %channel% nie można zabronić: jego rejestracja należy do innego kanału."
 
 # --- UNFORBID (IRCop) ---------------------------------------------------------
 unforbid:

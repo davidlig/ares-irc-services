@@ -46,6 +46,7 @@ final class ChanServChannelActivityFlushSubscriberTest extends TestCase
     {
         $connection = $this->createMock(Connection::class);
         $connection->expects(self::once())->method('executeStatement')->willThrowException(new RuntimeException('db unavailable'));
+        $connection->method('fetchOne')->willThrowException(new RuntimeException('db unavailable'));
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects(self::once())->method('error')->with(
             'Could not flush a chunk of deferred ChanServ channel activity; it will be retried.',

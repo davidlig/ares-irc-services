@@ -7,12 +7,14 @@ namespace App\Tests\ChanServ\Application\Service;
 use App\ChanServ\Application\Port\Out\ChanNetworkActions;
 use App\ChanServ\Application\Port\Out\ChanServActivitySink;
 use App\ChanServ\Application\Port\Out\ChanServEventPublisher;
+use App\ChanServ\Application\Port\Out\NetworkIdentityFold;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\PublishedEvent\ChannelForbiddenEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelUnforbiddenEvent;
 use App\ChanServ\Application\Service\ChanDropService;
 use App\ChanServ\Application\Service\ChannelForbiddenService;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
+use App\ChanServ\Domain\Exception\ChannelNameConflictException;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -20,7 +22,10 @@ use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 
+use function strtolower;
+
 #[CoversClass(ChannelForbiddenService::class)]
+#[CoversClass(ChannelNameConflictException::class)]
 final class ChannelForbiddenServiceTest extends TestCase
 {
     /** @var RegisteredChannelRepositoryInterface&Stub */
@@ -147,6 +152,55 @@ final class ChannelForbiddenServiceTest extends TestCase
             channelActions: $channelActions,
             eventPublisher: $eventPublisher,
         )->forbid('#taken', 'Forbidden', 'OperNick', new DateTimeImmutable());
+    }
+
+    #[Test]
+    public function forbidNeverDropsARegistrationThatOnlySharesTheKeyUnderTheNegotiatedCasemapping(): void
+    {
+        foreach ([
+            $this->createRegisteredChannelWithId('#chan[', 42, 'A channel', 5),
+            $this->createForbiddenChannelWithId('#chan[', 'Old reason', 6),
+        ] as $existing) {
+            $channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
+            $channelRepository->method('findByChannelNameKey')->willReturn($existing);
+            $channelRepository->expects(self::never())->method('save');
+            $dropService = $this->createMock(ChanDropService::class);
+            $dropService->expects(self::never())->method('dropChannel');
+            $eventPublisher = $this->createMock(ChanServEventPublisher::class);
+            $eventPublisher->expects(self::never())->method('publish');
+
+            try {
+                $this->createService(
+                    channelRepository: $channelRepository,
+                    dropService: $dropService,
+                    eventPublisher: $eventPublisher,
+                    identityFold: $this->asciiFold(),
+                )->forbid('#chan{', 'Forbidden', 'OperNick', new DateTimeImmutable());
+                self::fail('A FORBID of another channel sharing the key must be rejected.');
+            } catch (ChannelNameConflictException $conflict) {
+                self::assertSame('#chan{', $conflict->getChannelName());
+                self::assertSame('#chan[', $conflict->getRegisteredName());
+            }
+            self::assertSame('#chan[', $existing->getName());
+        }
+    }
+
+    #[Test]
+    public function forbidStillDropsTheSameChannelSpelledWithAnotherCaseUnderTheNegotiatedCasemapping(): void
+    {
+        $existing = $this->createRegisteredChannelWithId('#Taken', 42, 'A channel', 5);
+        $channelRepository = $this->repositoryThatSavesAndSetsId();
+        $channelRepository->method('findByChannelNameKey')->willReturn($existing);
+        $dropService = $this->createMock(ChanDropService::class);
+        $dropService->expects(self::once())->method('dropChannel')->with($existing);
+
+        $result = $this->createService(
+            channelRepository: $channelRepository,
+            dropService: $dropService,
+            identityFold: $this->asciiFold(),
+        )->forbid('#taken', 'Forbidden', 'OperNick', new DateTimeImmutable());
+
+        self::assertTrue($result->isForbidden());
     }
 
     #[Test]
@@ -789,6 +843,7 @@ final class ChannelForbiddenServiceTest extends TestCase
         ?ChanNetworkActions $channelActions = null,
         ?ChanServEventPublisher $eventPublisher = null,
         ?ChanServActivitySink $logger = null,
+        ?NetworkIdentityFold $identityFold = null,
     ): ChannelForbiddenService {
         return new ChannelForbiddenService(
             $channelRepository ?? $this->channelRepository,
@@ -796,7 +851,18 @@ final class ChannelForbiddenServiceTest extends TestCase
             $channelActions ?? $this->channelActions,
             $eventPublisher ?? $this->eventPublisher,
             $logger ?? $this->logger,
+            $identityFold ?? $this->asciiFold(),
         );
+    }
+
+    private function asciiFold(): NetworkIdentityFold
+    {
+        return new class implements NetworkIdentityFold {
+            public function fold(string $value): string
+            {
+                return strtolower($value);
+            }
+        };
     }
 
     private function createForbiddenChannelWithId(string $channelName, string $reason, int $id): RegisteredChannel

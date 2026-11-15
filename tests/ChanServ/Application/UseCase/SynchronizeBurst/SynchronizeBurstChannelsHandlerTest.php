@@ -128,7 +128,7 @@ final class SynchronizeBurstChannelsHandlerTest extends TestCase
         });
         $topic = $this->createMock(ApplyStoredChannelTopicHandlerInterface::class);
         $topic->expects(self::once())->method('synchronizeKnownChannel')->with($channel)->willReturnCallback(static function () use (&$order): void { $order[] = 'topic'; });
-        $scope = new BurstRankEventScope();
+        $scope = new BurstRankEventScope(NegotiatedCaseMapping::chanServ());
         $scope->begin();
         $scope->markActivity('#active');
         $activity = $this->createMock(BurstChannelActivity::class);
@@ -169,7 +169,7 @@ final class SynchronizeBurstChannelsHandlerTest extends TestCase
             ->willReturnCallback(static function () use (&$order): void {
                 $order[] = 'registration';
             });
-        $scope = new BurstRankEventScope();
+        $scope = new BurstRankEventScope(NegotiatedCaseMapping::chanServ());
         $scope->begin();
 
         new SynchronizeBurstChannelsHandler($pages, $this->createStub(ChannelEntryNetworkQuery::class), $this->createStub(ChanUserAccountPort::class), $this->createStub(ForbiddenChannelEnforcement::class), $this->createStub(EnforceChannelAkickHandlerInterface::class), $this->createStub(EnforceChannelNojoinHandlerInterface::class), $rankNetwork, $ranks, $mlockPolicies, $this->createStub(EnforceChannelMlockHandlerInterface::class), $topic, $registration, $scope, $this->createStub(BurstChannelActivity::class))->handle($now);
@@ -214,7 +214,7 @@ final class SynchronizeBurstChannelsHandlerTest extends TestCase
         $ranks = new EnforceChannelRanksHandler($policyRepo, $rankNetwork, $rankActions, new ChannelAccessPolicy(), new AutomaticRankPolicy(), new RankReconciliationPolicy());
         $mlockPolicies = $this->createStub(ChannelMlockPolicyRepository::class);
         $mlockPolicies->method('forChannel')->willReturn(new ChannelMlockPolicy('#active', false, ChannelModeLock::inactive()));
-        $scope = new BurstRankEventScope();
+        $scope = new BurstRankEventScope(NegotiatedCaseMapping::chanServ());
         $scope->begin();
         $subscriber = new ChanServChannelRankSubscriber($ranks, new PendingChannelRankSynchronizations(), $this->createStub(BurstCompletePort::class), $scope, $this->createStub(RegisteredChannelBurstSnapshot::class), new DelinkDepartureRankScope($policyRepo, $rankNetwork));
         $trace = [];
@@ -274,6 +274,6 @@ final class SynchronizeBurstChannelsHandlerTest extends TestCase
         $topic->expects(self::once())->method('synchronizeKnownChannel')->with($channel);
         $activity = $this->createMock(BurstChannelActivity::class);
         $activity->expects(self::once())->method('touchByIds')->with([], self::isInstanceOf(DateTimeImmutable::class));
-        new SynchronizeBurstChannelsHandler($pages, $network, $accounts, $this->createStub(ForbiddenChannelEnforcement::class), $akicks, $nojoin, $rankNetwork, $ranks, $mlockPolicies, $mlock, $topic, $this->createStub(ChannelRegistrationLifecycle::class), new BurstRankEventScope(), $activity)->handle(new DateTimeImmutable());
+        new SynchronizeBurstChannelsHandler($pages, $network, $accounts, $this->createStub(ForbiddenChannelEnforcement::class), $akicks, $nojoin, $rankNetwork, $ranks, $mlockPolicies, $mlock, $topic, $this->createStub(ChannelRegistrationLifecycle::class), new BurstRankEventScope(NegotiatedCaseMapping::chanServ()), $activity)->handle(new DateTimeImmutable());
     }
 }

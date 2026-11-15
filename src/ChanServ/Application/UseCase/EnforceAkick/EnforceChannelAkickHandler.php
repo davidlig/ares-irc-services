@@ -80,12 +80,12 @@ final readonly class EnforceChannelAkickHandler implements EnforceChannelAkickHa
             $ruleMap[spl_object_id($rule)] = $akick;
         }
 
-        $fold = $this->identityFold->fold(...);
+        $prepared = $this->matchPolicy->prepare($rules, $this->identityFold->fold(...));
         $enforced = 0;
         $used = [];
         try {
             foreach ($members as $member) {
-                $matching = $this->matchPolicy->firstMatch($rules, $member->userMask, $now, $member->operator, $fold);
+                $matching = $prepared->firstMatch($member->userMask, $now, $member->operator);
                 if (null === $matching) {
                     continue;
                 }

@@ -62,12 +62,15 @@ final class ChannelActivityBuffer implements ChannelActivityPendingQuery
     /**
      * Writes pending activity in chunks so no statement binds an unbounded number of parameters.
      *
-     * Every chunk is attempted: a failing chunk is logged and kept pending for the next flush,
-     * already-written chunks are cleared. Once all chunks were tried, any failure is reported
-     * with one exception, so the maintenance task running this flush fails and the tasks that
-     * require it are skipped for the cycle.
+     * Every chunk is attempted and written chunks are cleared. When a chunk fails while the
+     * database still answers, its rows are retried one by one: a row that also fails on its own
+     * is logged and stays pending (so the inactive-channel purge keeps that channel), without
+     * failing the flush, so expiry still runs for every other channel. A failure that is not
+     * row-specific (the database does not answer) keeps the chunk pending and is reported with
+     * one exception once all chunks were tried, so the maintenance task running this flush fails
+     * and the tasks that require it are skipped for the cycle.
      *
-     * @throws RuntimeException when at least one chunk could not be written
+     * @throws RuntimeException when at least one chunk could not be written for a reason that is not row-specific
      */
     public function flush(?DateTimeImmutable $now = null): void
     {
@@ -82,27 +85,79 @@ final class ChannelActivityBuffer implements ChannelActivityPendingQuery
             try {
                 $this->writeBatch($batch);
             } catch (Throwable $exception) {
-                ++$failedChunks;
-                $failedChannels += count($batch);
-                $firstFailure ??= $exception;
                 $this->logger->error('Could not flush a chunk of deferred ChanServ channel activity; it will be retried.', [
                     'channels' => count($batch),
                     'exception' => $exception,
                 ]);
+                if (!$this->databaseAnswers()) {
+                    ++$failedChunks;
+                    $failedChannels += count($batch);
+                    $firstFailure ??= $exception;
+
+                    continue;
+                }
+                $this->writeRowsOneByOne($batch, $exception);
 
                 continue;
             }
 
-            foreach ($batch as $channelId => $usedAt) {
-                if (($this->pending[$channelId] ?? null) === $usedAt) {
-                    unset($this->pending[$channelId]);
-                }
-            }
+            $this->clearWritten($batch);
         }
 
         if (null !== $firstFailure) {
             throw new RuntimeException(sprintf('Could not flush %d of %d chunks of deferred ChanServ channel activity (%d channels kept pending).', $failedChunks, count($chunks), $failedChannels), 0, $firstFailure);
         }
+    }
+
+    /**
+     * Isolates the rows of a chunk that failed while the database still answers.
+     *
+     * A one-row chunk already failed on its own, so it is not written again.
+     *
+     * @param array<int, DateTimeImmutable> $batch
+     */
+    private function writeRowsOneByOne(array $batch, Throwable $chunkFailure): void
+    {
+        foreach ($batch as $channelId => $usedAt) {
+            $row = [$channelId => $usedAt];
+            try {
+                if (1 === count($batch)) {
+                    throw $chunkFailure;
+                }
+                $this->writeBatch($row);
+            } catch (Throwable $exception) {
+                $this->logger->error('Could not flush deferred ChanServ channel activity for one channel; it stays pending and the channel is kept from inactivity expiry.', [
+                    'channel_id' => $channelId,
+                    'exception' => $exception,
+                ]);
+
+                continue;
+            }
+            $this->clearWritten($row);
+        }
+    }
+
+    /**
+     * @param array<int, DateTimeImmutable> $batch
+     */
+    private function clearWritten(array $batch): void
+    {
+        foreach ($batch as $channelId => $usedAt) {
+            if (($this->pending[$channelId] ?? null) === $usedAt) {
+                unset($this->pending[$channelId]);
+            }
+        }
+    }
+
+    private function databaseAnswers(): bool
+    {
+        try {
+            $this->connection->fetchOne($this->connection->getDatabasePlatform()->getDummySelectSQL());
+        } catch (Throwable) {
+            return false;
+        }
+
+        return true;
     }
 
     /**

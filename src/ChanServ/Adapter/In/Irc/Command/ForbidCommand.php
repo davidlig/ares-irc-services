@@ -123,6 +123,12 @@ final class ForbidCommand implements ChanServCommandInterface, IrcopAuditableCom
             reason: $reason,
         ));
 
+        if (ChannelLifecycleOutcome::NameConflict === $result->outcome) {
+            $context->reply('forbid.name_conflict', ['%channel%' => new Fragment($channelName, Component::Emphasis)], Role::Error);
+
+            return CommandOutcome::rejected();
+        }
+
         $context->reply(
             ChannelLifecycleOutcome::ForbiddenUpdated === $result->outcome ? 'forbid.updated' : 'forbid.success',
             ['%channel%' => new Fragment($channelName, Component::Emphasis)],

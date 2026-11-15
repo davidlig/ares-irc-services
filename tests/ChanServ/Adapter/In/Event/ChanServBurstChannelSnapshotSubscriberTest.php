@@ -10,6 +10,7 @@ use App\ChanServ\Application\Port\Out\RegisteredChannelBurstSnapshot;
 use App\Irc\Application\PublishedEvent\NetworkConnectionEstablishedEvent;
 use App\Irc\Application\PublishedEvent\NetworkConnectionLostEvent;
 use App\Irc\Application\PublishedEvent\NetworkSynchronizationCompletedEvent;
+use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -28,7 +29,7 @@ final class ChanServBurstChannelSnapshotSubscriberTest extends TestCase
         $snapshot = $this->createMock(RegisteredChannelBurstSnapshot::class);
         $snapshot->expects(self::once())->method('beginBurst');
         $snapshot->expects(self::exactly(2))->method('endBurst');
-        $subscriber = new ChanServBurstChannelSnapshotSubscriber($snapshot, new BurstRankEventScope());
+        $subscriber = new ChanServBurstChannelSnapshotSubscriber($snapshot, new BurstRankEventScope(NegotiatedCaseMapping::chanServ()));
         $subscriber->onConnect();
         $subscriber->onEnd();
         $subscriber->onEnd();

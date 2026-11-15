@@ -8,6 +8,7 @@ use App\ChanServ\Application\Port\Out\ChannelRegistrationNetworkActions;
 use App\ChanServ\Application\Port\Out\ChanNetworkActions;
 use App\ChanServ\Application\Port\Out\ChanServActivitySink;
 use App\ChanServ\Application\Port\Out\ChanServEventPublisher;
+use App\ChanServ\Application\Port\Out\NetworkIdentityFold;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\Service\ChanDropService;
 use App\ChanServ\Application\Service\ChannelForbiddenService;
@@ -56,7 +57,7 @@ final class BurstChannelPolicyIntegrationTest extends TestCase
         $network->expects(self::once())->method('joinChannelAsService')->with('#bad', 100);
         $network->expects(self::once())->method('kickFromChannel')->with('#bad', 'U1', 'Forbidden channel');
         $network->expects(self::once())->method('enforceForbiddenModes')->with('#bad', 100);
-        new ChannelForbiddenService($repo, $this->createStub(ChanDropService::class), $network, $this->createStub(ChanServEventPublisher::class), $this->createStub(ChanServActivitySink::class))
+        new ChannelForbiddenService($repo, $this->createStub(ChanDropService::class), $network, $this->createStub(ChanServEventPublisher::class), $this->createStub(ChanServActivitySink::class), $this->createStub(NetworkIdentityFold::class))
             ->enforceKnownForbiddenChannel('#bad');
     }
 }

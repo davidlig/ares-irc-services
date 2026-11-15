@@ -10,8 +10,9 @@ use App\Irc\Application\Port\In\Maintenance\MaintenanceTaskInterface;
 /**
  * Flushes deferred channel activity before inactive-channel expiry runs.
  *
- * A chunk the buffer could not write makes this task fail, so the inactive-channel purge that
- * declares it as a prerequisite is skipped for the cycle.
+ * A chunk the buffer could not write while the database does not answer makes this task fail, so
+ * the inactive-channel purge that declares it as a prerequisite is skipped for the cycle. A single
+ * row that keeps failing stays pending (its channel is kept from expiry) without failing the task.
  */
 final readonly class FlushChannelActivityTask implements MaintenanceTaskInterface
 {
