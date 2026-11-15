@@ -4,11 +4,8 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Domain\Entity;
 
-use App\ChanServ\Domain\ValueObject\AkickMask;
-use Closure;
 use DateTimeImmutable;
 use InvalidArgumentException;
-use Stringable;
 
 use function ctype_alnum;
 use function sprintf;
@@ -133,21 +130,6 @@ class ChannelAkick
     public function isExpired(DateTimeImmutable $now): bool
     {
         return null !== $this->expiresAt && $this->expiresAt < $now;
-    }
-
-    /**
-     * Checks if a user mask (nick!user@host) matches this AKICK mask with the negotiated
-     * casemapping; a stored mask that is not a valid AKICK mask never matches.
-     *
-     * @param Closure(string): string $fold negotiated identity fold
-     */
-    public function matches(string|Stringable $userMask, Closure $fold): bool
-    {
-        try {
-            return new AkickMask($this->mask)->matches((string) $userMask, $fold);
-        } catch (InvalidArgumentException) {
-            return false;
-        }
     }
 
     public function updateReason(?string $reason): void

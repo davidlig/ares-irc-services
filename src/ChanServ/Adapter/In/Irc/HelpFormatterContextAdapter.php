@@ -10,7 +10,6 @@ use App\ChanServ\Application\Port\Out\ChanServOperatorAccess;
 use App\ChanServ\Application\Security\ChanServPermission;
 use App\Shared\Adapter\In\Irc\Presentation\Component;
 use App\Shared\Adapter\In\Irc\Presentation\Fragment;
-use App\Shared\Domain\IrcIdentityFold;
 use InvalidArgumentException;
 
 use function is_string;
@@ -176,7 +175,7 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
 
         return $this->filterByPermission(
             $this->context->getRegistry()->all(),
-            IrcIdentityFold::fold($sender->nick),
+            $sender->nick,
             $account->id,
             $sender->isIdentified,
             $sender->isOper,
@@ -193,7 +192,7 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
         }
 
         return $this->operatorAccess->hasAnyPermission(
-            IrcIdentityFold::fold($sender->nick),
+            $sender->nick,
             $account->id,
             $sender->isIdentified,
             $sender->isOper,

@@ -20,7 +20,6 @@ use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentValidator;
 use App\Shared\Adapter\In\Irc\Presentation\Component;
 use App\Shared\Adapter\In\Irc\Presentation\Fragment;
 use App\Shared\Adapter\In\Irc\Presentation\Role;
-use App\Shared\Domain\IrcIdentityFold;
 
 use function strtoupper;
 
@@ -118,7 +117,7 @@ final readonly class RegmodeCommand implements NickServCommandInterface, IrcopAu
         $action = strtoupper($context->args[0] ?? '');
         $mode = RegistrationMode::tryFrom($action);
         $authorized = $this->operatorAccess->hasPermission(
-            IrcIdentityFold::fold($sender->nick),
+            $sender->nick,
             $context->getSenderAccountId(),
             $sender->isIdentified,
             $sender->isOper,

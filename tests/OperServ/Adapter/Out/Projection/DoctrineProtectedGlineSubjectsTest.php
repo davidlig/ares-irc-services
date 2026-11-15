@@ -41,4 +41,23 @@ final class DoctrineProtectedGlineSubjectsTest extends TestCase
             new DoctrineProtectedGlineSubjects($roots, $operators, $accounts)->nicknames(),
         );
     }
+
+    #[Test]
+    public function keepsEveryConfiguredRootSpellingAndOperatorsNotAlreadyListed(): void
+    {
+        $roots = $this->createStub(RootIdentityRegistry::class);
+        $roots->method('allNicknames')->willReturn(['admin[', 'admin{']);
+        $operators = $this->createStub(OperIrcopRepositoryInterface::class);
+        $operators->method('findAll')->willReturn([
+            OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 1, OperRole::create('OPER')),
+            OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 2, OperRole::create('OPER')),
+        ]);
+        $accounts = $this->createStub(NickAccountQuery::class);
+        $accounts->method('findNicknamesByIds')->willReturn([1 => 'Admin[', 2 => 'Oper^']);
+
+        self::assertSame(
+            ['admin[', 'admin{', 'Oper^'],
+            new DoctrineProtectedGlineSubjects($roots, $operators, $accounts)->nicknames(),
+        );
+    }
 }

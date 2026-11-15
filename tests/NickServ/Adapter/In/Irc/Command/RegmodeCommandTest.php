@@ -76,7 +76,7 @@ final class RegmodeCommandTest extends TestCase
     public function authorizationDenialIsPresented(): void
     {
         $access = $this->createMock(NickServOperatorAccess::class);
-        $access->expects(self::once())->method('hasPermission')->with('oper', null, false, false, NickServPermission::REGMODE)->willReturn(false);
+        $access->expects(self::once())->method('hasPermission')->with('Oper', null, false, false, NickServPermission::REGMODE)->willReturn(false);
         $handler = $this->createMock(RegistrationModeHandlerInterface::class);
         $handler->expects(self::once())->method('handle')->with(self::callback(static fn (RegistrationModeInput $input): bool => !$input->authorized && RegistrationMode::Email === $input->mode))->willReturn(new RegistrationModeResult(false));
         $messages = [];

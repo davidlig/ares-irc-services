@@ -7,6 +7,7 @@ namespace App\Tests\NickServ\Adapter\In\Irc;
 use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
 use App\Irc\Application\Port\In\ServiceNicknameRegistry;
+use App\Irc\Domain\ValueObject\CaseMapping;
 use App\NickServ\Adapter\In\Irc\HelpFormatterContextAdapter;
 use App\NickServ\Adapter\In\Irc\NickServCommandInterface;
 use App\NickServ\Adapter\In\Irc\NickServCommandRegistry;
@@ -14,10 +15,18 @@ use App\NickServ\Adapter\In\Irc\NickServContext;
 use App\NickServ\Adapter\In\Irc\NickServNotifierInterface;
 use App\NickServ\Adapter\Out\InMemory\PendingVerificationRegistry;
 use App\NickServ\Adapter\Out\InMemory\RecoveryTokenRegistry;
+use App\NickServ\Adapter\Out\Security\OperNickServOperatorAccess;
 use App\NickServ\Application\Port\Out\NickServOperatorAccess;
 use App\NickServ\Application\Security\NickServPermission;
 use App\NickServ\Domain\Entity\RegisteredNick;
+use App\OperServ\Adapter\Out\Security\ConfiguredRootIdentityRegistry;
+use App\OperServ\Application\IrcopAccessQueryService;
+use App\OperServ\Application\Port\Out\OperatorRoleAccess;
+use App\OperServ\Application\Security\OperatorAuthorizationService;
+use App\OperServ\Application\Security\OperatorPermissionPolicy;
+use App\OperServ\Application\Security\RootAuthorizationPolicy;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -69,7 +78,7 @@ final class HelpFormatterContextAdapterIrcopTest extends TestCase
         $denied = $this->createIrcopCommandStub('OTHER', 'nickserv.other');
         $access = $this->createStub(NickServOperatorAccess::class);
         $access->method('hasPermission')->willReturnCallback(
-            static fn (string $nick, ?int $id, bool $identified, bool $oper, string $permission): bool => 'operuser' === $nick && 1 === $id && $identified && $oper && 'nickserv.userip' === $permission,
+            static fn (string $nick, ?int $id, bool $identified, bool $oper, string $permission): bool => 'OperUser' === $nick && 1 === $id && $identified && $oper && 'nickserv.userip' === $permission,
         );
         $adapter = new HelpFormatterContextAdapter(
             $this->context(new NickServCommandRegistry([$allowed, $denied]), identified: true, oper: true, account: true),
@@ -105,6 +114,40 @@ final class HelpFormatterContextAdapterIrcopTest extends TestCase
     }
 
     #[Test]
+    public function rootAccessComparesTheRawSenderNickUnderTheNegotiatedCasemapping(): void
+    {
+        $registry = new NickServCommandRegistry([$this->createIrcopCommandStub('WHOIP', NickServPermission::WHOIP)]);
+        $base = $this->context($registry, identified: true, oper: false, account: true);
+        $context = new NickServContext(
+            new SenderView('UID1', 'foo[', 'i', 'h', 'c', 'ip', true, false),
+            $base->senderAccount,
+            'HELP',
+            [],
+            $base->getNotifier(),
+            $this->createStub(TranslatorInterface::class),
+            'en',
+            'UTC',
+            'NOTICE',
+            $registry,
+            $base->getPendingVerificationRegistry(),
+            $base->getRecoveryTokenRegistry(),
+            $this->createServiceNicks(),
+        );
+
+        foreach ([[CaseMapping::Ascii, false], [CaseMapping::Rfc1459, true]] as [$mapping, $root]) {
+            $roles = $this->createStub(OperatorRoleAccess::class);
+            $rootPolicy = new RootAuthorizationPolicy(new ConfiguredRootIdentityRegistry('foo{', NegotiatedCaseMapping::network($mapping)));
+            $access = new OperNickServOperatorAccess(new IrcopAccessQueryService(new OperatorAuthorizationService(
+                $rootPolicy,
+                new OperatorPermissionPolicy($rootPolicy, $roles),
+                $roles,
+            )));
+
+            self::assertSame($root, new HelpFormatterContextAdapter($context, $access)->hasIrcopAccess(), $mapping->value);
+        }
+    }
+
+    #[Test]
     public function whoipAppearsInIrcopHelpOnlyWhenCentralPermissionBoundaryGrantsIt(): void
     {
         $command = $this->createIrcopCommandStub('WHOIP', NickServPermission::WHOIP);
@@ -113,7 +156,7 @@ final class HelpFormatterContextAdapterIrcopTest extends TestCase
         $rootAccess = $this->createMock(NickServOperatorAccess::class);
         $rootAccess->expects(self::once())
             ->method('hasPermission')
-            ->with('rootadmin', 1, true, false, NickServPermission::WHOIP)
+            ->with('RootAdmin', 1, true, false, NickServPermission::WHOIP)
             ->willReturn(true);
         $rootContext = $this->context($registry, identified: true, oper: false, account: true);
         $rootContext = new NickServContext(
@@ -137,7 +180,7 @@ final class HelpFormatterContextAdapterIrcopTest extends TestCase
         $roleAccess = $this->createMock(NickServOperatorAccess::class);
         $roleAccess->expects(self::once())
             ->method('hasPermission')
-            ->with('operuser', 1, true, true, NickServPermission::WHOIP)
+            ->with('OperUser', 1, true, true, NickServPermission::WHOIP)
             ->willReturn(true);
         self::assertSame([$command], iterator_to_array(new HelpFormatterContextAdapter(
             $this->context($registry, identified: true, oper: true, account: true),

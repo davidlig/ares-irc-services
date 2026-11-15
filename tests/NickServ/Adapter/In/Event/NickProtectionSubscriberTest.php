@@ -428,6 +428,39 @@ final class NickProtectionSubscriberTest extends TestCase
     }
 
     #[Test]
+    public function aBurstChunkWhoseBatchCannotEndAfterItFailedLogsTheCleanupAndKeepsTheOriginal(): void
+    {
+        $this->networkUserLookup->expects(self::never())->method('findByUid');
+        $this->notifier->expects(self::never())->method('setUserVhost');
+        $startFailure = new RuntimeException('preload failed');
+        $finishFailure = new RuntimeException('finish failed');
+        $batchPublisher = $this->createStub(NickServEventPublisher::class);
+        $batchPublisher->method('publish')->willReturnCallback(static function ($event) use ($startFailure, $finishFailure): void {
+            throw $event instanceof NickBurstBatchStartedEvent ? $startFailure : $finishFailure;
+        });
+        $logger = $this->recordingLogger();
+        $this->initializeSubscriber($this->createStub(RegisteredNickRepositoryInterface::class), null, $batchPublisher, $logger);
+        $this->networkUserLookup->expects(self::never())->method('findByUid');
+        $this->notifier->expects(self::never())->method('setUserVhost');
+        $this->burstState->addPending(new NetworkUser('001AAA', 'Alice', 'i', 'h', 'c', 'ip'));
+
+        $this->subscriber->onBurstComplete(new NetworkSynchronizationCompletedEvent('001'));
+
+        self::assertSame([
+            [
+                'level' => 'error',
+                'message' => 'NickServ burst protection chunk could not end its batch after the chunk failed.',
+                'context' => ['chunk' => 1, 'exception' => $finishFailure],
+            ],
+            [
+                'level' => 'error',
+                'message' => 'NickServ burst protection chunk failed; continuing with the next chunk.',
+                'context' => ['chunk' => 1, 'users' => 1, 'exception' => $startFailure],
+            ],
+        ], $logger->records);
+    }
+
+    #[Test]
     public function aBurstChunkWhoseActivitySaveAlsoFailsLogsBothFailuresAndKeepsTheOriginal(): void
     {
         $this->networkUserLookup->expects(self::never())->method('findByUid');

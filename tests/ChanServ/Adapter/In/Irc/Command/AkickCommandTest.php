@@ -59,7 +59,6 @@ use function assert;
 use function count;
 use function is_string;
 use function json_encode;
-use function str_contains;
 
 #[CoversTrait(ChanServArgumentDefinitionSupport::class)]
 #[CoversClass(AkickCommand::class)]
@@ -2279,7 +2278,6 @@ final class AkickCommandTest extends TestCase
         $akick->method('getReason')->willReturn('Spam');
         $akick->method('getCreatorNickId')->willReturn(1);
         $akick->method('getExpiresAt')->willReturn(null);
-        $akick->method('matches')->willReturnCallback(static fn (string $mask): bool => str_contains($mask, '.isp.com'));
 
         $nickRepo = $this->createStub(ChanUserAccountPort::class);
         $nickRepo->method('findNicknameById')->willReturn('TestNick');
@@ -2378,7 +2376,6 @@ final class AkickCommandTest extends TestCase
         $akick->method('getReason')->willReturn('Test');
         $akick->method('getCreatorNickId')->willReturn(1);
         $akick->method('getExpiresAt')->willReturn(null);
-        $akick->method('matches')->willReturn(true);
 
         $nickRepo = $this->createStub(ChanUserAccountPort::class);
         $nickRepo->method('findNicknameById')->willReturn('TestNick');
