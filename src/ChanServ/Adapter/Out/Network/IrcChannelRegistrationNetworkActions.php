@@ -8,6 +8,7 @@ use App\ChanServ\Application\Port\Out\ChannelRegistrationNetworkActions;
 use App\Irc\Application\Port\In\ActiveChannelModeSupportProviderInterface;
 use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\Irc\Application\Port\In\ChannelServiceActionsPort;
+use App\Irc\Application\Port\In\NetworkIdentityEquivalence;
 use App\Shared\Domain\IrcIdentityFold;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -21,6 +22,7 @@ final readonly class IrcChannelRegistrationNetworkActions implements ChannelRegi
         private ActiveChannelModeSupportProviderInterface $modeSupportProvider,
         private ChannelLookupPort $channelLookup,
         private ChannelServiceActionsPort $channelServiceActions,
+        private NetworkIdentityEquivalence $equivalence,
         private LoggerInterface $logger = new NullLogger(),
     ) {}
 
@@ -152,11 +154,12 @@ final readonly class IrcChannelRegistrationNetworkActions implements ChannelRegi
         }
     }
 
-    /** @param array<string, true> $registeredNames */
+    /** @param array<string, string> $registeredNames stored channel names keyed by their RFC 1459 key */
     private function removeModeFromUnregisteredChannels(array $registeredNames, string $modeLetter, string $description): void
     {
         foreach ($this->channelLookup->iterateModeSnapshots() as $view) {
-            if (isset($registeredNames[IrcIdentityFold::fold($view->name)]) || !str_contains($view->modes, $modeLetter)) {
+            $registered = $registeredNames[IrcIdentityFold::fold($view->name)] ?? null;
+            if ((null !== $registered && $this->equivalence->equivalent($registered, $view->name)) || !str_contains($view->modes, $modeLetter)) {
                 continue;
             }
 

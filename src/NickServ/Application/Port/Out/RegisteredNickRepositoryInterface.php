@@ -17,17 +17,27 @@ interface RegisteredNickRepositoryInterface
 
     public function delete(RegisteredNick $nick): void;
 
+    /**
+     * Resolves a nickname to its registration: the stored RFC 1459 key must match and the stored
+     * nickname must be equivalent under the casemapping the IRCd negotiated.
+     */
     public function findByNick(string $nickname): ?RegisteredNick;
+
+    /**
+     * Returns the registration that owns the nickname's RFC 1459 key, whatever the negotiated
+     * casemapping. Only for uniqueness checks and writes that must not collide with the key.
+     */
+    public function findByNicknameKey(string $nickname): ?RegisteredNick;
 
     /**
      * @param list<string> $nicknames
      *
-     * @return list<RegisteredNick>
+     * @return array<string, RegisteredNick> keyed by each queried nickname that resolves as findByNick() does
      */
     public function findByNicks(array $nicknames): array;
 
     /** @param list<string> $nicknames
-     * @return list<RegisteredNick>
+     * @return array<string, RegisteredNick> keyed by each queried nickname that resolves as findByNick() does
      */
     public function findByNicknamesLower(array $nicknames): array;
 
@@ -44,6 +54,7 @@ interface RegisteredNickRepositoryInterface
     /** Returns the account that has this email (case-insensitive). Null if not used or only FORBIDDEN. */
     public function findByEmail(string $email): ?RegisteredNick;
 
+    /** True when the nickname's RFC 1459 key is taken (uniqueness), whatever the negotiated casemapping. */
     public function existsByNick(string $nickname): bool;
 
     /**

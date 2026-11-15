@@ -8,6 +8,7 @@ use App\ChanServ\Application\Port\Out\AkickActions;
 use App\ChanServ\Application\Port\Out\ChannelAkickRepositoryInterface;
 use App\ChanServ\Application\Port\Out\ChannelEntryNetworkQuery;
 use App\ChanServ\Application\Port\Out\ChanServActivitySink;
+use App\ChanServ\Application\Port\Out\NetworkIdentityFold;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\Policy\AkickMatchPolicy;
@@ -29,6 +30,7 @@ final readonly class EnforceChannelAkickHandler implements EnforceChannelAkickHa
         private AkickActions $actions,
         private AkickMatchPolicy $matchPolicy,
         private ChanServActivitySink $activity,
+        private NetworkIdentityFold $identityFold,
     ) {}
 
     public function handle(EnforceChannelAkick $command): int
@@ -78,11 +80,12 @@ final readonly class EnforceChannelAkickHandler implements EnforceChannelAkickHa
             $ruleMap[spl_object_id($rule)] = $akick;
         }
 
+        $fold = $this->identityFold->fold(...);
         $enforced = 0;
         $used = [];
         try {
             foreach ($members as $member) {
-                $matching = $this->matchPolicy->firstMatch($rules, $member->userMask, $now, $member->operator);
+                $matching = $this->matchPolicy->firstMatch($rules, $member->userMask, $now, $member->operator, $fold);
                 if (null === $matching) {
                     continue;
                 }

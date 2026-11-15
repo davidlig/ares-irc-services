@@ -9,6 +9,7 @@ use App\NickServ\Application\Model\NicknameAuthenticationMode;
 use App\NickServ\Application\Model\UserMessagePreference;
 use App\NickServ\Application\Port\Out\GuestNicknameGenerator;
 use App\NickServ\Application\Port\Out\IdentifiedSessionTracker;
+use App\NickServ\Application\Port\Out\NetworkNickEquivalence;
 use App\NickServ\Application\Port\Out\NickChangeIdentificationPolicy;
 use App\NickServ\Application\Port\Out\NicknameAuthenticationModeQuery;
 use App\NickServ\Application\Port\Out\NickNetworkActions;
@@ -54,6 +55,7 @@ final readonly class NickProtectionService
         private GuestNicknameGenerator $guestNicknameGenerator,
         private IssueMigrationRescueTokenHandlerInterface $migrationTokens,
         private NicknameAuthenticationModeQuery $authenticationMode,
+        private NetworkNickEquivalence $nickEquivalence,
         private string $guestPrefix = 'Guest-',
         private string $defaultLanguage = 'en',
         private ?NickServActivitySink $logger = null,
@@ -297,7 +299,7 @@ final readonly class NickProtectionService
     {
         $registeredNick = $this->identifiedRegistry->findNick($uid);
 
-        if (null !== $registeredNick && IrcIdentityFold::equals($registeredNick, $oldNick)) {
+        if (null !== $registeredNick && $this->nickEquivalence->equivalent($registeredNick, $oldNick)) {
             // Get account info before removing from registry
             $account = $this->nickRepository->findByNick($registeredNick);
 
@@ -335,7 +337,7 @@ final readonly class NickProtectionService
 
         $registeredNick = $this->identifiedRegistry->findNick($uid);
 
-        if (null !== $registeredNick && IrcIdentityFold::equals($registeredNick, $newNick)) {
+        if (null !== $registeredNick && $this->nickEquivalence->equivalent($registeredNick, $newNick)) {
             $this->logger?->info(sprintf(
                 'Nick change: %s [%s] → %s — identified in registry, skipping protection',
                 $oldNick,
@@ -356,7 +358,7 @@ final readonly class NickProtectionService
         // Reconstruct registry state after service restart or when authenticated via IRCd:
         // if the user has +r on IRCd but the in-memory registry is empty,
         // trust the IRCd state when the nick matches the registered account.
-        if (null === $identifiedNick && IrcIdentityFold::equals($user->nick, $account->getNickname())) {
+        if (null === $identifiedNick && $this->nickEquivalence->equivalent($user->nick, $account->getNickname())) {
             $this->identifiedRegistry->register($user->uid, $account->getNickname());
             $identifiedNick = $account->getNickname();
             if (NicknameAuthenticationMode::NativeNick === $this->authenticationMode->current()) {

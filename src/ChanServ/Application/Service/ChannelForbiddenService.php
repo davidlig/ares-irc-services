@@ -33,7 +33,7 @@ readonly class ChannelForbiddenService implements ForbiddenChannelEnforcement
         DateTimeImmutable $occurredAt,
         string $defaultLanguage = 'en',
     ): RegisteredChannel {
-        $existing = $this->channelRepository->findByChannelName($channelName);
+        $existing = $this->channelRepository->findByChannelNameKey($channelName);
 
         if (null !== $existing && $existing->isForbidden()) {
             $existing->updateForbiddenReason($reason);

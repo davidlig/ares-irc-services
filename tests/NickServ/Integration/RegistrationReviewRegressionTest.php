@@ -37,6 +37,7 @@ use App\NickServ\Application\UseCase\Verify\VerifyNickHandler;
 use App\NickServ\Application\UseCase\Verify\VerifyNickOutcome;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\NickServ\Domain\ValueObject\RegistrationMode;
+use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversNothing;
@@ -157,7 +158,7 @@ final class RegistrationReviewRegressionTest extends DoctrineIntegrationTestCase
         $now = new DateTimeImmutable('2026-10-22T12:00:00Z');
         $originalDeadline = $now->modify('+1 second');
         $db = $this->entityManager->getConnection();
-        $repo = new RegisteredNickDoctrineRepository($this->entityManager);
+        $repo = new RegisteredNickDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network());
         $policy = new DoctrineRegistrationPolicyRepository($db);
         $policy->change(RegistrationMode::Email);
         $codec = new UuidRescueTokenCodec();

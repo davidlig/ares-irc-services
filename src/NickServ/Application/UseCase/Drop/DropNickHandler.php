@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\NickServ\Application\UseCase\Drop;
 
+use App\NickServ\Application\Port\Out\NetworkNickEquivalence;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\Service\NickDropService;
 use App\NickServ\Application\Service\NickProtectabilityStatus;
 use App\NickServ\Application\Service\NickTargetValidator;
-use App\Shared\Domain\IrcIdentityFold;
 
 final readonly class DropNickHandler implements DropNickHandlerInterface
 {
@@ -16,11 +16,12 @@ final readonly class DropNickHandler implements DropNickHandlerInterface
         private RegisteredNickRepositoryInterface $nickRepository,
         private NickTargetValidator $targetValidator,
         private NickDropService $dropService,
+        private NetworkNickEquivalence $nickEquivalence,
     ) {}
 
     public function handle(DropNick $command): DropNickResult
     {
-        if (IrcIdentityFold::equals($command->targetNick, $command->operatorNick)) {
+        if ($this->nickEquivalence->equivalent($command->targetNick, $command->operatorNick)) {
             return DropNickResult::cannotDropSelf();
         }
 

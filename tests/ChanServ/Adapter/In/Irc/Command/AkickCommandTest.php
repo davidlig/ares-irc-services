@@ -45,6 +45,7 @@ use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
 use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\Shared\Application\Port\EventBusInterface;
+use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversTrait;
@@ -3235,6 +3236,7 @@ final class AkickCommandTest extends TestCase
             $actions,
             new SymfonyChanServEventPublisher($eventDispatcher),
             $this->createStub(ChanServActivitySink::class),
+            NegotiatedCaseMapping::chanServ(),
         ));
     }
 

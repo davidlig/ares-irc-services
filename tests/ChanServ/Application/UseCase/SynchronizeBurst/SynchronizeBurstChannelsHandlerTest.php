@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\ChanServ\Application\UseCase\SynchronizeBurst;
 
 use App\ChanServ\Adapter\In\Event\ChanServChannelRankSubscriber;
+use App\ChanServ\Adapter\In\Event\DelinkDepartureRankScope;
 use App\ChanServ\Adapter\In\Event\PendingChannelRankSynchronizations;
 use App\ChanServ\Application\Model\BurstChannelPage;
 use App\ChanServ\Application\Model\BurstRankEventScope;
@@ -57,6 +58,7 @@ use App\ChanServ\Domain\ValueObject\ChannelModeLock;
 use App\ChanServ\Domain\ValueObject\ChannelRank;
 use App\Irc\Application\Port\In\BurstCompletePort;
 use App\Irc\Application\PublishedEvent\UserDepartedChannelEvent;
+use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -194,7 +196,7 @@ final class SynchronizeBurstChannelsHandlerTest extends TestCase
             return new ChannelEntryNetworkState('#active', array_values($members));
         });
         $accounts = $this->createStub(ChanUserAccountPort::class);
-        $accounts->method('findAccountsByNicks')->willReturn(['alice' => new ChanAccountView(10, 'Alice', 'en'), 'bob' => new ChanAccountView(2, 'Bob', 'es')]);
+        $accounts->method('findAccountsByNicks')->willReturn(['Alice' => new ChanAccountView(10, 'Alice', 'en'), 'Bob' => new ChanAccountView(2, 'Bob', 'es')]);
         $rankNetwork = $this->createStub(ChannelRankNetworkQuery::class);
         $rankNetwork->method('findChannelWithAccounts')->willReturnCallback(static function () use (&$members): ChannelRankNetworkState {
             $rankMembers = [];
@@ -214,7 +216,7 @@ final class SynchronizeBurstChannelsHandlerTest extends TestCase
         $mlockPolicies->method('forChannel')->willReturn(new ChannelMlockPolicy('#active', false, ChannelModeLock::inactive()));
         $scope = new BurstRankEventScope();
         $scope->begin();
-        $subscriber = new ChanServChannelRankSubscriber($ranks, new PendingChannelRankSynchronizations(), $this->createStub(BurstCompletePort::class), $scope, $this->createStub(RegisteredChannelBurstSnapshot::class));
+        $subscriber = new ChanServChannelRankSubscriber($ranks, new PendingChannelRankSynchronizations(), $this->createStub(BurstCompletePort::class), $scope, $this->createStub(RegisteredChannelBurstSnapshot::class), new DelinkDepartureRankScope($policyRepo, $rankNetwork));
         $trace = [];
         $akickActions = $this->createMock(AkickActions::class);
         $akickActions->expects(self::once())->method('banAndKick')->with('#active', 'U1', '*!*@bad.test', 'AKICK: *!*@bad.test')->willReturnCallback(static function () use (&$trace, &$members, $subscriber): void {
@@ -225,7 +227,7 @@ final class SynchronizeBurstChannelsHandlerTest extends TestCase
         $akickRepository = $this->createMock(ChannelAkickRepositoryInterface::class);
         $akickRepository->expects(self::once())->method('saveAll')->with([$akick]);
         $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
-        $akicks = new EnforceChannelAkickHandler($channels, $akickRepository, $network, $akickActions, new AkickMatchPolicy(), $this->createStub(ChanServActivitySink::class));
+        $akicks = new EnforceChannelAkickHandler($channels, $akickRepository, $network, $akickActions, new AkickMatchPolicy(), $this->createStub(ChanServActivitySink::class), NegotiatedCaseMapping::chanServ());
         $nojoinActions = $this->createMock(NojoinActions::class);
         $nojoinActions->expects(self::once())->method('kick')->with('#active', 'U2', 'Bob', 0, 100, 'es')->willReturnCallback(static function () use (&$trace, &$members, $subscriber): void {
             $trace[] = 'nojoin:U2';

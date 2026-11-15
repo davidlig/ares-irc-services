@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Domain\ValueObject;
 
-use App\Shared\Domain\IrcIdentityFold;
+use Closure;
 use InvalidArgumentException;
 
 use function ctype_alnum;
@@ -21,47 +21,28 @@ final readonly class AkickMask
 
     public const int MIN_ALPHANUMERIC_CHARACTERS = 4;
 
-    private string $pattern;
-
     public function __construct(public string $value)
     {
         if ('' === $value || self::MAX_LENGTH < strlen($value) || !str_contains($value, '!') || !str_contains($value, '@')) {
             throw new InvalidArgumentException('AKICK mask must be a non-empty nick!ident@host pattern of at most 255 characters.');
         }
-
-        $this->pattern = IrcIdentityFold::fold($value);
     }
 
-    public function matches(string $userMask): bool
+    /**
+     * Matches nick!ident@host with the casemapping the IRCd negotiated, so the decision agrees with
+     * the ban the IRCd applies. Only `*` and `?` are wildcards; every other byte is literal.
+     *
+     * @param Closure(string): string $fold negotiated identity fold
+     */
+    public function matches(string $userMask, Closure $fold): bool
     {
-        $subject = IrcIdentityFold::fold($userMask);
-        $patternLength = strlen($this->pattern);
-        $subjectLength = strlen($subject);
-        $patternIndex = 0;
-        $subjectIndex = 0;
-        $lastStar = -1;
-        $starMatchEnd = 0;
+        return self::glob($fold($this->value), $fold($userMask));
+    }
 
-        while ($subjectIndex < $subjectLength) {
-            if ($patternIndex < $patternLength && ('?' === $this->pattern[$patternIndex] || ('*' !== $this->pattern[$patternIndex] && $this->pattern[$patternIndex] === $subject[$subjectIndex]))) {
-                ++$patternIndex;
-                ++$subjectIndex;
-            } elseif ($patternIndex < $patternLength && '*' === $this->pattern[$patternIndex]) {
-                $lastStar = $patternIndex++;
-                $starMatchEnd = $subjectIndex;
-            } elseif (-1 !== $lastStar) {
-                $patternIndex = $lastStar + 1;
-                $subjectIndex = ++$starMatchEnd;
-            } else {
-                return false;
-            }
-        }
-
-        while ($patternIndex < $patternLength && '*' === $this->pattern[$patternIndex]) {
-            ++$patternIndex;
-        }
-
-        return $patternIndex === $patternLength;
+    /** @param Closure(string): string $fold negotiated identity fold */
+    public function nicknameMatches(string $nickname, Closure $fold): bool
+    {
+        return self::glob($fold($this->nicknamePattern()), $fold($nickname));
     }
 
     public function nicknamePattern(): string
@@ -94,5 +75,36 @@ final readonly class AkickMask
         }
 
         return self::MIN_ALPHANUMERIC_CHARACTERS <= $alphanumericCharacters;
+    }
+
+    private static function glob(string $pattern, string $subject): bool
+    {
+        $patternLength = strlen($pattern);
+        $subjectLength = strlen($subject);
+        $patternIndex = 0;
+        $subjectIndex = 0;
+        $lastStar = -1;
+        $starMatchEnd = 0;
+
+        while ($subjectIndex < $subjectLength) {
+            if ($patternIndex < $patternLength && ('?' === $pattern[$patternIndex] || ('*' !== $pattern[$patternIndex] && $pattern[$patternIndex] === $subject[$subjectIndex]))) {
+                ++$patternIndex;
+                ++$subjectIndex;
+            } elseif ($patternIndex < $patternLength && '*' === $pattern[$patternIndex]) {
+                $lastStar = $patternIndex++;
+                $starMatchEnd = $subjectIndex;
+            } elseif (-1 !== $lastStar) {
+                $patternIndex = $lastStar + 1;
+                $subjectIndex = ++$starMatchEnd;
+            } else {
+                return false;
+            }
+        }
+
+        while ($patternIndex < $patternLength && '*' === $pattern[$patternIndex]) {
+            ++$patternIndex;
+        }
+
+        return $patternIndex === $patternLength;
     }
 }

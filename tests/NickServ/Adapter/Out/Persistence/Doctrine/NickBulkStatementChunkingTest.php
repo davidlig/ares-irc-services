@@ -9,6 +9,7 @@ use App\NickServ\Adapter\Out\Persistence\Doctrine\RegisteredNickDoctrineReposito
 use App\NickServ\Adapter\Out\User\NickAccountResolver;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\Tests\Bootstrap\Persistence\QueryCaptureLogger;
+use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DriverManager;
@@ -25,6 +26,7 @@ use PHPUnit\Framework\TestCase;
 use function array_filter;
 use function array_keys;
 use function array_map;
+use function array_unique;
 use function array_values;
 use function count;
 use function range;
@@ -61,50 +63,51 @@ final class NickBulkStatementChunkingTest extends TestCase
     #[Test]
     public function repositoryLookupIsChunkedAndReturnsEveryMatch(): void
     {
-        $repository = new RegisteredNickDoctrineRepository($this->em);
+        $repository = new RegisteredNickDoctrineRepository($this->em, NegotiatedCaseMapping::network());
 
         $this->logger->enabled = true;
         $accounts = $repository->findByNicks($this->requestedNames());
         $this->logger->enabled = false;
 
-        self::assertSame($this->expectedNames(), $this->sorted(array_map(static fn (RegisteredNick $nick): string => $nick->getNickname(), $accounts)));
+        self::assertSame($this->resolvedNames(), $this->sorted(array_keys($accounts)));
+        self::assertSame($this->expectedNames(), $this->sorted(array_values(array_unique(array_map(static fn (RegisteredNick $nick): string => $nick->getNickname(), $accounts)))));
         $this->assertBoundedStatements('SELECT', 3, self::MAX_LOOKUP_PARAMETERS);
     }
 
     #[Test]
     public function batchAccountQueryIsChunkedAndKeepsLowercaseKeys(): void
     {
-        $query = new NickAccountBatchDoctrineQuery($this->em);
+        $query = new NickAccountBatchDoctrineQuery($this->em, NegotiatedCaseMapping::network());
 
         $this->logger->enabled = true;
         $accounts = $query->findAccountsByNicks($this->requestedNames());
         $this->logger->enabled = false;
 
-        self::assertSame(array_map(strtolower(...), $this->expectedNames()), $this->sorted(array_keys($accounts)));
-        self::assertSame('Nick0001', $accounts['nick0001']->nickname);
-        self::assertSame(1, $accounts['nick0001']->id);
+        self::assertSame($this->resolvedNames(), $this->sorted(array_keys($accounts)));
+        self::assertSame('Nick0001', $accounts['NICK0001']->nickname);
+        self::assertSame(1, $accounts['Nick0001']->id);
         $this->assertBoundedStatements('SELECT', 3, self::MAX_LOOKUP_PARAMETERS);
     }
 
     #[Test]
     public function accountResolverUsesTheChunkedLookupAndKeepsLowercaseKeys(): void
     {
-        $resolver = new NickAccountResolver(new RegisteredNickDoctrineRepository($this->em));
+        $resolver = new NickAccountResolver(new RegisteredNickDoctrineRepository($this->em, NegotiatedCaseMapping::network()));
 
         $this->logger->enabled = true;
         $accounts = $resolver->findAccountsByNicks($this->requestedNames());
         $this->logger->enabled = false;
 
-        self::assertSame(array_map(strtolower(...), $this->expectedNames()), $this->sorted(array_keys($accounts)));
-        self::assertSame('Nick2500', $accounts['nick2500']->nickname);
+        self::assertSame($this->resolvedNames(), $this->sorted(array_keys($accounts)));
+        self::assertSame('Nick2500', $accounts['NICK2500']->nickname);
         $this->assertBoundedStatements('SELECT', 3, self::MAX_LOOKUP_PARAMETERS);
     }
 
     #[Test]
     public function activityBatchUpdateIsChunkedAndPersistsEveryTimestamp(): void
     {
-        $repository = new RegisteredNickDoctrineRepository($this->em);
-        $accounts = $repository->findByNicks($this->expectedNames());
+        $repository = new RegisteredNickDoctrineRepository($this->em, NegotiatedCaseMapping::network());
+        $accounts = array_values($repository->findByNicks($this->expectedNames()));
         $seenAt = new DateTimeImmutable('2026-05-06 07:08:09');
         foreach ($accounts as $account) {
             $account->markSeen($seenAt);
@@ -155,6 +158,12 @@ final class NickBulkStatementChunkingTest extends TestCase
         $names[] = 'MissingNick';
 
         return $names;
+    }
+
+    /** @return list<string> every requested spelling that resolves to a registration, sorted */
+    private function resolvedNames(): array
+    {
+        return $this->sorted(array_values(array_filter($this->requestedNames(), static fn (string $name): bool => 'MissingNick' !== $name)));
     }
 
     /** @return list<string> */

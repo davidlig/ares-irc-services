@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\NickServ\Adapter\Out\Persistence\Doctrine;
 
+use App\Irc\Application\Port\In\NetworkIdentityEquivalence;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\NickServ\Domain\ValueObject\NickStatus;
@@ -46,7 +47,10 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
 
     private static bool $lookupCacheActive = false;
 
-    public function __construct(private readonly EntityManagerInterface $em) {}
+    public function __construct(
+        private readonly EntityManagerInterface $em,
+        private readonly NetworkIdentityEquivalence $equivalence,
+    ) {}
 
     public function save(RegisteredNick $nick): void
     {
@@ -93,6 +97,13 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
 
     public function findByNick(string $nickname): ?RegisteredNick
     {
+        $nick = $this->findByNicknameKey($nickname);
+
+        return null !== $nick && $this->equivalence->equivalent($nick->getNickname(), $nickname) ? $nick : null;
+    }
+
+    public function findByNicknameKey(string $nickname): ?RegisteredNick
+    {
         $nicknameLower = IrcIdentityFold::fold($nickname);
         if (!self::$lookupCacheActive) {
             return $this->em
@@ -134,13 +145,13 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
 
     public function findByNicks(array $nicknames): array
     {
-        $nicknames = array_values(array_unique(array_map(IrcIdentityFold::fold(...), $nicknames)));
-        if ([] === $nicknames) {
+        $keys = array_values(array_unique(array_map(IrcIdentityFold::fold(...), $nicknames)));
+        if ([] === $keys) {
             return [];
         }
 
-        $accounts = [];
-        foreach (array_chunk($nicknames, self::LOOKUP_CHUNK_SIZE) as $chunk) {
+        $byKey = [];
+        foreach (array_chunk($keys, self::LOOKUP_CHUNK_SIZE) as $chunk) {
             /** @var list<RegisteredNick> $found */
             $found = $this->em->createQueryBuilder()
                 ->select('n')
@@ -149,7 +160,15 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
                 ->setParameter('nicknames', $chunk)
                 ->getQuery()->getResult();
             foreach ($found as $account) {
-                $accounts[] = $account;
+                $byKey[$account->getNicknameLower()] = $account;
+            }
+        }
+
+        $accounts = [];
+        foreach ($nicknames as $nickname) {
+            $account = $byKey[IrcIdentityFold::fold($nickname)] ?? null;
+            if (null !== $account && $this->equivalence->equivalent($account->getNickname(), $nickname)) {
+                $accounts[$nickname] = $account;
             }
         }
 
@@ -218,7 +237,7 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
 
     public function existsByNick(string $nickname): bool
     {
-        return null !== $this->findByNick($nickname);
+        return null !== $this->findByNicknameKey($nickname);
     }
 
     public function findRegisteredInactiveSince(DateTimeImmutable $threshold, ?int $limit = null): array

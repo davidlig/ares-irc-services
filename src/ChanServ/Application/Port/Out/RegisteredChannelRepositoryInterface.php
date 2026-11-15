@@ -13,7 +13,17 @@ interface RegisteredChannelRepositoryInterface
 
     public function delete(RegisteredChannel $channel): void;
 
+    /**
+     * Resolves a channel name to its registration: the stored RFC 1459 key must match and the
+     * stored name must be equivalent under the casemapping the IRCd negotiated.
+     */
     public function findByChannelName(string $channelName): ?RegisteredChannel;
+
+    /**
+     * Returns the registration that owns the name's RFC 1459 key, whatever the negotiated
+     * casemapping. Only for uniqueness checks and writes that must not collide with the key.
+     */
+    public function findByChannelNameKey(string $channelName): ?RegisteredChannel;
 
     /** Counts listed channels matching a strict star glob, excluding pending/rejected registrations. */
     public function countByPattern(string $pattern): int;
@@ -21,6 +31,7 @@ interface RegisteredChannelRepositoryInterface
     /** @return list<RegisteredChannel> bounded, stable ascending page matching the strict star glob, excluding pending/rejected registrations */
     public function searchByPattern(string $pattern, int $offset, int $limit): array;
 
+    /** True when the name's RFC 1459 key is taken (uniqueness), whatever the negotiated casemapping. */
     public function existsByChannelName(string $channelName): bool;
 
     /** @return RegisteredChannel[] */

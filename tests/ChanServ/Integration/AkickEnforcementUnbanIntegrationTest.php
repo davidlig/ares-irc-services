@@ -72,6 +72,7 @@ use App\Irc\Domain\ValueObject\Nick;
 use App\Irc\Domain\ValueObject\Uid;
 use App\OperServ\Application\Port\In\CommandAuditRecorder;
 use App\Shared\Application\Port\EventBusInterface;
+use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -166,6 +167,7 @@ final class AkickEnforcementUnbanIntegrationTest extends TestCase
             $this->akickActions,
             new AkickMatchPolicy(),
             $this->createStub(ChanServActivitySink::class),
+            NegotiatedCaseMapping::chanServ(),
         );
 
         $subscriber = new ChanServAkickEnforceSubscriber(
@@ -278,6 +280,7 @@ final class AkickEnforcementUnbanIntegrationTest extends TestCase
             $this->akickActions,
             new AkickMatchPolicy(),
             $this->createStub(ChanServActivitySink::class),
+            NegotiatedCaseMapping::chanServ(),
         );
 
         $syncHandler = new SynchronizeAllChannelAkicksHandler(
@@ -390,6 +393,7 @@ final class AkickEnforcementUnbanIntegrationTest extends TestCase
             $this->akickActions,
             new AkickMatchPolicy(),
             $this->createStub(ChanServActivitySink::class),
+            NegotiatedCaseMapping::chanServ(),
         );
 
         $subscriber = new ChanServAkickEnforceSubscriber(

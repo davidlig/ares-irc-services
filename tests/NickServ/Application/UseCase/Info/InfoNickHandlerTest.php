@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Application\UseCase\Info;
 
+use App\Irc\Domain\ValueObject\CaseMapping;
 use App\NickServ\Application\Port\Out\AssociatedChannel;
 use App\NickServ\Application\Port\Out\NickAssociatedChannelsPort;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
@@ -14,6 +15,7 @@ use App\NickServ\Application\UseCase\Info\InfoNickOutcome;
 use App\NickServ\Application\UseCase\Info\InfoNickResult;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\NickServ\Domain\ValueObject\NickStatus;
+use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -274,6 +276,28 @@ final class InfoNickHandlerTest extends TestCase
         self::assertNull($result->lastQuitMessage);
     }
 
+    #[Test]
+    public function ownerViewFollowsTheNegotiatedCasemapping(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('isPrivate')->willReturn(true);
+        $account->method('getNickname')->willReturn('Foo[');
+        $account->method('getStatus')->willReturn(NickStatus::Registered);
+        $account->method('getRegisteredAt')->willReturn($this->now);
+        $account->method('getLanguage')->willReturn('en');
+        $account->method('getVhost')->willReturn('');
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn($account);
+
+        foreach ([CaseMapping::Ascii->value => InfoNickOutcome::Private, CaseMapping::Rfc1459->value => InfoNickOutcome::Visible] as $mapping => $outcome) {
+            $handler = new InfoNickHandler($nickRepo, $this->createStub(NickAssociatedChannelsPort::class), new VhostDisplayResolver(), NegotiatedCaseMapping::nickServ(CaseMapping::from($mapping)));
+            $result = $handler->handle(new InfoNick('Foo[', 'foo{', true, false, true));
+
+            self::assertSame($outcome, $result->outcome, $mapping);
+            self::assertSame(InfoNickOutcome::Visible === $outcome, $result->isOwnerIdentified, $mapping);
+        }
+    }
+
     protected function setUp(): void
     {
         $this->now = new DateTimeImmutable('2026-09-06 16:00:00 UTC');
@@ -288,6 +312,7 @@ final class InfoNickHandlerTest extends TestCase
             $nickRepo ?? $this->createStub(RegisteredNickRepositoryInterface::class),
             $channelsPort ?? $this->createStub(NickAssociatedChannelsPort::class),
             new VhostDisplayResolver(),
+            NegotiatedCaseMapping::nickServ(),
             $dropGraceDays,
         );
     }

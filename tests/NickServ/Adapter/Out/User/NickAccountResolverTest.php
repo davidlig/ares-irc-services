@@ -96,35 +96,36 @@ final class NickAccountResolverTest extends TestCase
         $account->method('isSuspended')->willReturn(true);
         $account->method('getEmail')->willReturn('alice@example.com');
         $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
-        $repo->expects(self::once())->method('findByNicks')->with(['alice', 'missing'])->willReturn([$account]);
+        $repo->expects(self::once())->method('findByNicks')->with(['ALICE', 'Alice', 'Missing'])->willReturn(['ALICE' => $account, 'Alice' => $account]);
         $resolver = new NickAccountResolver($repo);
 
         self::assertSame([], $resolver->findAccountsByNicks([]));
         $result = $resolver->findAccountsByNicks(['ALICE', 'Alice', 'Missing']);
-        self::assertSame(['alice'], array_keys($result));
-        self::assertSame(10, $result['alice']->id);
-        self::assertSame('Alice', $result['alice']->nickname);
-        self::assertSame('fr', $result['alice']->language);
-        self::assertSame('UTC', $result['alice']->timezone);
-        self::assertFalse($result['alice']->registered);
-        self::assertTrue($result['alice']->suspended);
-        self::assertSame('alice@example.com', $result['alice']->email);
+        self::assertSame(['ALICE', 'Alice'], array_keys($result));
+        self::assertSame($result['ALICE']->id, $result['Alice']->id);
+        self::assertSame(10, $result['Alice']->id);
+        self::assertSame('Alice', $result['Alice']->nickname);
+        self::assertSame('fr', $result['Alice']->language);
+        self::assertSame('UTC', $result['Alice']->timezone);
+        self::assertFalse($result['Alice']->registered);
+        self::assertTrue($result['Alice']->suspended);
+        self::assertSame('alice@example.com', $result['Alice']->email);
     }
 
     #[Test]
-    public function findAccountsByNicksKeysAccountsByTheRfc1459Fold(): void
+    public function findAccountsByNicksKeysAccountsByTheQueriedNickname(): void
     {
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(10);
         $account->method('getNickname')->willReturn('[Alice]');
         $account->method('getLanguage')->willReturn('en');
         $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
-        $repo->expects(self::once())->method('findByNicks')->with(['{alice}'])->willReturn([$account]);
+        $repo->expects(self::once())->method('findByNicks')->with(['{ALICE}', '[alice]'])->willReturn(['[alice]' => $account]);
 
-        $result = new NickAccountResolver($repo)->findAccountsByNicks(['{ALICE}', '[alice]']);
+        $result = new NickAccountResolver($repo)->findAccountsByNicks(['{ALICE}', '[alice]', '[alice]']);
 
-        self::assertSame(['{alice}'], array_keys($result));
-        self::assertSame('[Alice]', $result['{alice}']->nickname);
+        self::assertSame(['[alice]'], array_keys($result));
+        self::assertSame('[Alice]', $result['[alice]']->nickname);
     }
 
     #[Test]

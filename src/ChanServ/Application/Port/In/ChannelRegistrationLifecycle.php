@@ -17,8 +17,8 @@ interface ChannelRegistrationLifecycle
     public function reconcilePermanentMode(): void;
 
     /**
-     * @param array<string, true> $registeredNames
-     * @param list<string>        $eligibleChannelNames
+     * @param array<string, string> $registeredNames      stored channel names keyed by their RFC 1459 key
+     * @param list<string>          $eligibleChannelNames
      */
     public function reconcileKnownChannels(array $registeredNames, array $eligibleChannelNames): void;
 }

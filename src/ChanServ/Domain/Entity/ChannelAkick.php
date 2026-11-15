@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Domain\Entity;
 
-use App\Shared\Domain\IrcIdentityFold;
+use App\ChanServ\Domain\ValueObject\AkickMask;
+use Closure;
 use DateTimeImmutable;
 use InvalidArgumentException;
 use Stringable;
 
 use function ctype_alnum;
-use function fnmatch;
 use function sprintf;
 use function str_split;
 use function strlen;
@@ -136,19 +136,18 @@ class ChannelAkick
     }
 
     /**
-     * Checks if a user mask matches this AKICK mask.
+     * Checks if a user mask (nick!user@host) matches this AKICK mask with the negotiated
+     * casemapping; a stored mask that is not a valid AKICK mask never matches.
      *
-     * Uses fnmatch for wildcard matching (* and ?).
-     * Converts both masks to lowercase for case-insensitive comparison.
-     *
-     * @param string|Stringable $userMask Full mask (nick!user@host) to check against
+     * @param Closure(string): string $fold negotiated identity fold
      */
-    public function matches(string|Stringable $userMask): bool
+    public function matches(string|Stringable $userMask, Closure $fold): bool
     {
-        $pattern = IrcIdentityFold::fold($this->mask);
-        $subject = IrcIdentityFold::fold((string) $userMask);
-
-        return fnmatch($pattern, $subject);
+        try {
+            return new AkickMask($this->mask)->matches((string) $userMask, $fold);
+        } catch (InvalidArgumentException) {
+            return false;
+        }
     }
 
     public function updateReason(?string $reason): void

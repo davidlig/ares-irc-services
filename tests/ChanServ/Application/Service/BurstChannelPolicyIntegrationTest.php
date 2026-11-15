@@ -28,9 +28,9 @@ final class BurstChannelPolicyIntegrationTest extends TestCase
         $network = $this->createMock(ChannelRegistrationNetworkActions::class);
         $network->method('supportsRegisteredMode')->willReturn(true);
         $network->method('supportsPermanentMode')->willReturn(true);
-        $network->expects(self::once())->method('reconcileRegisteredMode')->with(['#a' => true], ['#A']);
-        $network->expects(self::once())->method('reconcilePermanentMode')->with(['#a' => true], ['#A']);
-        new ChannelRegistrationService($repo, $network)->reconcileKnownChannels(['#a' => true], ['#A']);
+        $network->expects(self::once())->method('reconcileRegisteredMode')->with(['#a' => '#a'], ['#A']);
+        $network->expects(self::once())->method('reconcilePermanentMode')->with(['#a' => '#a'], ['#A']);
+        new ChannelRegistrationService($repo, $network)->reconcileKnownChannels(['#a' => '#a'], ['#A']);
     }
 
     #[Test]

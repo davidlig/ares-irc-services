@@ -28,7 +28,7 @@ use App\NickServ\Application\Service\NickProtectionService;
 use App\NickServ\Application\Service\PendingNickActivities;
 use App\NickServ\Application\UseCase\SyncNetworkIdentification\SyncNetworkIdentification;
 use App\NickServ\Application\UseCase\SyncNetworkIdentification\SyncNetworkIdentificationHandlerInterface;
-use App\Shared\Domain\IrcIdentityFold;
+use App\NickServ\Domain\Entity\RegisteredNick;
 use Closure;
 use DateTimeImmutable;
 use Psr\Log\LoggerInterface;
@@ -258,20 +258,19 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
      */
     private function protectBurstChunk(array $batch, DateTimeImmutable $occurredAt, int $chunk): void
     {
-        $accounts = [];
-        foreach ($this->identifiedUserVhostSync->findAccountsForBurst(array_map(static fn (NetworkUser $user): string => $user->nick, $batch)) as $account) {
-            $accounts[IrcIdentityFold::fold($account->getNickname())] = $account;
-        }
+        $accounts = $this->identifiedUserVhostSync->findAccountsForBurst(array_map(static fn (NetworkUser $user): string => $user->nick, $batch));
         $activityBatch = new PendingNickActivities();
-        $ids = array_map(static fn ($account): int => $account->getId(), array_values($accounts));
+        $ids = [];
+        foreach ($accounts as $account) {
+            $ids[$account->getId()] = $account->getId();
+        }
+        $ids = array_values($ids);
         $batchStarted = new NickBurstBatchStartedEvent($ids);
         $failure = null;
         try {
             $this->batchEventPublisher?->publish($batchStarted);
             foreach ($batch as $user) {
-                $account = $accounts[IrcIdentityFold::fold($user->nick)] ?? null;
-                $this->identifiedUserVhostSync->syncVhostForLoadedUser($user, $account);
-                $this->nickProtectionService->enforceProtectionWithAccount($user, $occurredAt, $account, $activityBatch);
+                $this->protectBurstUser($user, $accounts[$user->nick] ?? null, $occurredAt, $activityBatch, $chunk);
             }
         } catch (Throwable $exception) {
             $failure = $exception;
@@ -287,6 +286,21 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
         });
         if (null !== $failure) {
             throw $failure;
+        }
+    }
+
+    /** One failing user is logged and skipped so the rest of its chunk is still protected. */
+    private function protectBurstUser(NetworkUser $user, ?RegisteredNick $account, DateTimeImmutable $occurredAt, PendingNickActivities $activityBatch, int $chunk): void
+    {
+        try {
+            $this->identifiedUserVhostSync->syncVhostForLoadedUser($user, $account);
+            $this->nickProtectionService->enforceProtectionWithAccount($user, $occurredAt, $account, $activityBatch);
+        } catch (Throwable $exception) {
+            $this->logger->error('NickServ burst protection failed for one user; continuing with the rest of the chunk.', [
+                'chunk' => $chunk,
+                'uid' => $user->uid,
+                'exception' => $exception,
+            ]);
         }
     }
 

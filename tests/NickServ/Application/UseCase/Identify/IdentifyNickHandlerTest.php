@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Application\UseCase\Identify;
 
+use App\Irc\Domain\ValueObject\CaseMapping;
 use App\NickServ\Adapter\Out\Security\PhpPasswordHasher;
 use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\ForcedVhostCheckerInterface;
@@ -20,6 +21,7 @@ use App\NickServ\Application\UseCase\Identify\IdentifyNickResult;
 use App\NickServ\Application\UseCase\IssueMigrationRescueToken\IssueMigrationRescueToken;
 use App\NickServ\Application\UseCase\IssueMigrationRescueToken\IssueMigrationRescueTokenHandlerInterface;
 use App\NickServ\Domain\Entity\RegisteredNick;
+use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -90,6 +92,27 @@ final class IdentifyNickHandlerTest extends TestCase
 
         self::assertSame(IdentifyNickOutcome::AlreadyIdentified, $result->outcome);
         self::assertSame('alice', $result->nickname);
+    }
+
+    #[Test]
+    public function anIdentifiedSenderOnlyCountsAsAlreadyIdentifiedUnderTheNegotiatedCasemapping(): void
+    {
+        $account = RegisteredNick::createPending('Foo[', 'hash', 'foo@example.com', 'en', $this->now()->modify('+1 hour'), $this->now());
+        $account->activate();
+        $account->replaceRescueTokenHash(str_repeat('a', 64));
+        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repo->method('findByNick')->willReturn($account);
+        $command = new IdentifyNick(
+            senderUid: 'UID1',
+            senderNick: 'foo{',
+            senderIsIdentified: true,
+            nickname: 'Foo[',
+            password: 'wrong',
+            clientKey: 'ip:127.0.0.1',
+        );
+
+        self::assertSame(IdentifyNickOutcome::AlreadyIdentified, $this->createHandler(nickRepo: $repo)->handle($command)->outcome);
+        self::assertNotSame(IdentifyNickOutcome::AlreadyIdentified, $this->createHandler(nickRepo: $repo, mapping: CaseMapping::Ascii)->handle($command)->outcome);
     }
 
     #[Test]
@@ -274,6 +297,7 @@ final class IdentifyNickHandlerTest extends TestCase
             $this->passwordHasherThatVerifies('$2y$hash'),
             $this->fixedClock(),
             $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
+            NegotiatedCaseMapping::nickServ(),
             5,
             900,
             1800,
@@ -324,6 +348,7 @@ final class IdentifyNickHandlerTest extends TestCase
             $this->passwordHasherThatVerifies('$2y$hash'),
             $this->fixedClock(),
             $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
+            NegotiatedCaseMapping::nickServ(),
             5,
             900,
             1800,
@@ -386,6 +411,7 @@ final class IdentifyNickHandlerTest extends TestCase
         ?IdentifyLockoutTracker $lockoutTracker = null,
         ?PasswordHasher $passwordHasher = null,
         ?IssueMigrationRescueTokenHandlerInterface $migrationTokens = null,
+        CaseMapping $mapping = CaseMapping::Rfc1459,
     ): IdentifyNickHandler {
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepo->method('findByNick')->willReturn($account);
@@ -412,6 +438,7 @@ final class IdentifyNickHandlerTest extends TestCase
         ?ForcedVhostCheckerInterface $forcedVhostChecker = null,
         ?PasswordHasher $passwordHasher = null,
         ?IssueMigrationRescueTokenHandlerInterface $migrationTokens = null,
+        CaseMapping $mapping = CaseMapping::Rfc1459,
     ): IdentifyNickHandler {
         return new IdentifyNickHandler(
             $nickRepo ?? $this->createStub(RegisteredNickRepositoryInterface::class),
@@ -423,6 +450,7 @@ final class IdentifyNickHandlerTest extends TestCase
             $passwordHasher ?? $this->createStub(PasswordHasher::class),
             $this->fixedClock(),
             $migrationTokens ?? $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
+            NegotiatedCaseMapping::nickServ($mapping),
             5,
             900,
             1800,

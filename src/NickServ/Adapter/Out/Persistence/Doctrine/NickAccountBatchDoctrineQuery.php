@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\NickServ\Adapter\Out\Persistence\Doctrine;
 
+use App\Irc\Application\Port\In\NetworkIdentityEquivalence;
 use App\NickServ\Application\Port\In\NickAccountBatchQuery;
 use App\NickServ\Application\Port\In\NickAccountData;
 use App\NickServ\Domain\ValueObject\NickStatus;
@@ -25,7 +26,10 @@ final readonly class NickAccountBatchDoctrineQuery implements NickAccountBatchQu
     /** Nicknames bound by one lookup statement; large pages and channels are split. */
     private const int LOOKUP_CHUNK_SIZE = 1000;
 
-    public function __construct(private EntityManagerInterface $em) {}
+    public function __construct(
+        private EntityManagerInterface $em,
+        private NetworkIdentityEquivalence $equivalence,
+    ) {}
 
     public function findAccountsByNicks(array $nicknames): array
     {
@@ -33,10 +37,18 @@ final readonly class NickAccountBatchDoctrineQuery implements NickAccountBatchQu
         if ([] === $names) {
             return [];
         }
-        $accounts = [];
+        $byKey = [];
         foreach (array_chunk($names, self::LOOKUP_CHUNK_SIZE) as $chunk) {
             foreach ($this->fetchChunk($chunk) as $lower => $account) {
-                $accounts[$lower] = $account;
+                $byKey[$lower] = $account;
+            }
+        }
+
+        $accounts = [];
+        foreach ($nicknames as $nickname) {
+            $account = $byKey[IrcIdentityFold::fold($nickname)] ?? null;
+            if (null !== $account && $this->equivalence->equivalent($account->nickname, $nickname)) {
+                $accounts[$nickname] = $account;
             }
         }
 

@@ -56,6 +56,7 @@ use App\OperServ\Adapter\Out\Projection\OperatorPermissionCache;
 use App\OperServ\Application\Model\MessageDelivery;
 use App\OperServ\Domain\Entity\OperIrcop;
 use App\OperServ\Domain\Entity\OperRole;
+use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Group;
@@ -128,7 +129,7 @@ final class DropDependencyCleanupTest extends DoctrineIntegrationTestCase
         $motdRepository->add('MOTD', 'OperServ', MessageDelivery::NonInteractive, $founderId, $at, null);
 
         $dispatcher = $this->cleanupDispatcher();
-        $nickRepository = new RegisteredNickDoctrineRepository($this->entityManager);
+        $nickRepository = new RegisteredNickDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network());
         $transactionManager = new DoctrineTransactionManager($this->entityManager);
 
         $transactionManager->transactional(static function () use ($dispatcher, $nickRepository, $founderId, $at): void {
@@ -188,7 +189,7 @@ final class DropDependencyCleanupTest extends DoctrineIntegrationTestCase
         $this->entityManager->flush();
 
         $dispatcher = $this->cleanupDispatcher();
-        $channelRepository = new RegisteredChannelDoctrineRepository($this->entityManager);
+        $channelRepository = new RegisteredChannelDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network());
         $transactionManager = new DoctrineTransactionManager($this->entityManager);
 
         $transactionManager->transactional(static function () use ($dispatcher, $channelRepository, $channelId, $at): void {
@@ -219,7 +220,7 @@ final class DropDependencyCleanupTest extends DoctrineIntegrationTestCase
         $akickRepository = new ChannelAkickDoctrineRepository($this->entityManager);
         $historyRepository = new ChannelHistoryDoctrineRepository($this->entityManager);
         $levelRepository = new ChannelLevelDoctrineRepository($this->entityManager);
-        $channelRepository = new RegisteredChannelDoctrineRepository($this->entityManager);
+        $channelRepository = new RegisteredChannelDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network());
         $memoRepository = new MemoDoctrineRepository($this->entityManager);
         $memoIgnoreRepository = new MemoIgnoreDoctrineRepository($this->entityManager);
         $memoSettingsRepository = new MemoSettingsDoctrineRepository($this->entityManager);

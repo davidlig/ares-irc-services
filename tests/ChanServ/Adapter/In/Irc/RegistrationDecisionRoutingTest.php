@@ -124,6 +124,7 @@ use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
 use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
 use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
 use App\Shared\Application\Port\EventBusInterface;
+use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
 use ArrayObject;
 use DateTimeImmutable;
@@ -273,7 +274,7 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
     #[DataProvider('pendingCancellationCases')]
     public function pendingCancellationPreservesPermissionsAndOnlyDeletesItsTarget(bool $force, array $permissions, string $expected, bool $deleted): void
     {
-        $repository = new RegisteredChannelDoctrineRepository($this->entityManager);
+        $repository = new RegisteredChannelDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network());
         $other = RegisteredChannel::register(new DateTimeImmutable('-1 day'), '#untouched', 10, 'approved');
         $repository->save($other);
         $pending = RegisteredChannel::createPendingRegistration(new DateTimeImmutable('-1 day'), '#private', 10, 'request');
@@ -353,7 +354,7 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
                 $register,
             )->dispatch('REGISTER #private new-request', $this->sender('Other', true, false));
             self::assertSame(["\x0303✔\x03\x0F register.awaiting_approval"], iterator_to_array($messages));
-            $fresh = new RegisteredChannelDoctrineRepository($this->entityManager)->findByChannelName('#private');
+            $fresh = new RegisteredChannelDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network())->findByChannelName('#private');
             self::assertNotNull($fresh);
             self::assertTrue($fresh->isPendingRegistration());
             self::assertSame(12, $fresh->getFounderNickId());
@@ -368,7 +369,7 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
     #[Test]
     public function databaseReleaseAndRejectionAuthorizationMatrix(): void
     {
-        $repository = new RegisteredChannelDoctrineRepository($this->entityManager);
+        $repository = new RegisteredChannelDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network());
         $boundary = $this->createStub(ChanTransactionBoundary::class);
         $boundary->method('transactional')->willReturnCallback(static fn (callable $operation): mixed => $operation());
         $dropService = new ChanDropService(
@@ -583,7 +584,7 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
     #[DataProvider('registrationAudits')]
     public function registerUsesCentralAuditByActualOutcome(RegistrationMode $mode, string $nick, bool $oper, bool $role, ?string $debugChannel, string $case): void
     {
-        $repository = new RegisteredChannelDoctrineRepository($this->entityManager);
+        $repository = new RegisteredChannelDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network());
         if (in_array($case, ['restricted', 'pending-deletion', 'already-registered'], true)) {
             $existing = RegisteredChannel::createPendingRegistration(new DateTimeImmutable('-1 day'), '#private', 10, 'previous');
             if ('restricted' === $case) {
@@ -638,7 +639,7 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
         $query->method('current')->willReturn($mode);
         $roles = $this->createStub(OperatorRoleAccess::class);
         $roles->method('hasAssignedRole')->willReturn($role);
-        $root = new RootAuthorizationPolicy(new ConfiguredRootIdentityRegistry('Root'));
+        $root = new RootAuthorizationPolicy(new ConfiguredRootIdentityRegistry('Root', NegotiatedCaseMapping::network()));
         $operators = new OperChanServOperatorAccess(new IrcopAccessQueryService(new OperatorAuthorizationService(
             $root,
             new OperatorPermissionPolicy($root, $roles),
@@ -764,7 +765,7 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
     #[DataProvider('requesterQuotas')]
     public function requesterQuotaPolicyThroughPublicRouting(string $nickname, bool $ircop, bool $assignedRole, int $maximum, int $approved, int $rejected, string $extraState, string $registerReply, string $acceptReply, string $sessionUid, bool $online): void
     {
-        $repository = new RegisteredChannelDoctrineRepository($this->entityManager);
+        $repository = new RegisteredChannelDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network());
         $at = new DateTimeImmutable('-1 day');
         for ($i = 0; $i < $approved; ++$i) {
             $repository->save(RegisteredChannel::register($at, '#approved' . $i, 10, 'approved'));
@@ -791,7 +792,7 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
         $accounts->method('findNicknameById')->willReturn($nickname);
         $roles = $this->createStub(OperatorRoleAccess::class);
         $roles->method('hasAssignedRole')->willReturn($assignedRole);
-        $root = new RootAuthorizationPolicy(new ConfiguredRootIdentityRegistry('Root'));
+        $root = new RootAuthorizationPolicy(new ConfiguredRootIdentityRegistry('Root', NegotiatedCaseMapping::network()));
         $authorization = new OperatorAuthorizationService($root, new OperatorPermissionPolicy($root, $roles), $roles);
         $operators = new OperChanServOperatorAccess(new IrcopAccessQueryService($authorization));
         $boundary = $this->createStub(ChanTransactionBoundary::class);
@@ -859,7 +860,7 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
         $nick->activate();
         $this->entityManager->persist($nick);
         $this->entityManager->flush();
-        $repository = new RegisteredChannelDoctrineRepository($this->entityManager);
+        $repository = new RegisteredChannelDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network());
         $access = new ChannelAccessDoctrineRepository($this->entityManager);
         $approved = RegisteredChannel::register(new DateTimeImmutable('-1 day'), '#approved', $nick->getId(), 'approved');
         $pending = RegisteredChannel::createPendingRegistration(new DateTimeImmutable('-1 day'), '#private', $nick->getId(), 'pending');
@@ -912,7 +913,7 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
         $this->entityManager->persist($nick);
         $this->entityManager->flush();
         $requesterId = $nick->getId();
-        $repository = new RegisteredChannelDoctrineRepository($this->entityManager);
+        $repository = new RegisteredChannelDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network());
         foreach (['#one', '#two', '#three'] as $name) {
             $repository->save(RegisteredChannel::register($at, $name, $requesterId, 'approved'));
         }
@@ -925,7 +926,7 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
         $accounts->method('findAccountByNick')->willReturnCallback(static fn (string $name): ChanAccountView => new ChanAccountView('Reviewer' === $name ? 99 : $requesterId, $name, 'en'));
         $roles = $this->createStub(OperatorRoleAccess::class);
         $roles->method('hasAssignedRole')->willReturn(true);
-        $root = new RootAuthorizationPolicy(new ConfiguredRootIdentityRegistry('Root'));
+        $root = new RootAuthorizationPolicy(new ConfiguredRootIdentityRegistry('Root', NegotiatedCaseMapping::network()));
         $operators = new OperChanServOperatorAccess(new IrcopAccessQueryService(new OperatorAuthorizationService($root, new OperatorPermissionPolicy($root, $roles), $roles)));
         $sessions = new IdentifiedSessionRegistry();
         $sessions->register('UID-RequesterOper', 'RequesterOper');
@@ -1009,7 +1010,7 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
         self::assertSame($before, $this->entityManager->getConnection()->fetchAllAssociative('SELECT * FROM registered_channels'));
         self::assertSame(["\x0303✔\x03\x0F creg.rejected"], $run('CREG REJECT #private duplicate'));
         self::assertCount(1, $memos->findByTargetNick($requesterId));
-        $rejectedRequest = new RegisteredChannelDoctrineRepository($this->entityManager)->findByChannelName('#private');
+        $rejectedRequest = new RegisteredChannelDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network())->findByChannelName('#private');
         self::assertNotNull($rejectedRequest);
         self::assertCount(0, $history->findByChannelId($rejectedRequest->getId()));
         self::assertStringNotContainsString('#private', $this->nickInfo($repository, 'RequesterOper'));
@@ -1017,7 +1018,7 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
         self::assertSame(["\x0303✔\x03\x0F drop.force_success"], $run('DROP #private FORCE'));
         self::assertSame(["\x0303✔\x03\x0F register.awaiting_approval"], $run('REGISTER #private description', true));
         self::assertSame(["\x0303✔\x03\x0F creg.accepted"], $run('CREG ACCEPT #private'));
-        $accepted = new RegisteredChannelDoctrineRepository($this->entityManager)->findByChannelName('#private');
+        $accepted = new RegisteredChannelDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network())->findByChannelName('#private');
         self::assertNotNull($accepted);
         self::assertFalse($accepted->isPendingRegistration());
         $acceptedId = $accepted->getId();
@@ -1061,7 +1062,7 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
     #[DataProvider('listVisibilityCases')]
     public function listExcludesUnacceptedRequestsBeforeCountingAndPagination(string $pattern, int $page, array $expectedNames, int $total, bool $granted): void
     {
-        $repository = new RegisteredChannelDoctrineRepository($this->entityManager);
+        $repository = new RegisteredChannelDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network());
         $at = new DateTimeImmutable('-1 day');
         $active = RegisteredChannel::register($at, '#visible-a', 1, 'active');
         $suspended = RegisteredChannel::register($at, '#visible-b', 1, 'suspended');
@@ -1139,7 +1140,7 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
 
     private function nickInfo(RegisteredChannelDoctrineRepository $channels, string $nickname, ?string $viewer = null): string
     {
-        $nicks = new RegisteredNickDoctrineRepository($this->entityManager);
+        $nicks = new RegisteredNickDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network());
         $associations = new NickChannelAssociationQueryService(
             new ChannelAccessDoctrineRepository($this->entityManager),
             $channels,
@@ -1148,6 +1149,7 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
             $nicks,
             new ChanServNickAssociatedChannelsAdapter($associations),
             new VhostDisplayResolver(),
+            NegotiatedCaseMapping::nickServ(),
         );
         $lookup = $this->createStub(NetworkUserLookupPort::class);
         $messages = new ArrayObject();
@@ -1218,8 +1220,8 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
         $roleAccess->method('hasAssignedRole')->willReturn($hasRole);
         $roleAccess->method('hasPermission')->willReturnCallback(static fn (int $id, string $permission): bool => in_array($permission, $allowedPermissions, true));
         $authorization = new OperatorAuthorizationService(
-            new RootAuthorizationPolicy(new ConfiguredRootIdentityRegistry('Root')),
-            new OperatorPermissionPolicy(new RootAuthorizationPolicy(new ConfiguredRootIdentityRegistry('Root')), $roleAccess),
+            new RootAuthorizationPolicy(new ConfiguredRootIdentityRegistry('Root', NegotiatedCaseMapping::network())),
+            new OperatorPermissionPolicy(new RootAuthorizationPolicy(new ConfiguredRootIdentityRegistry('Root', NegotiatedCaseMapping::network())), $roleAccess),
             $roleAccess,
         );
         $checker = $this->createStub(ChanAuthorizationCheckerInterface::class);

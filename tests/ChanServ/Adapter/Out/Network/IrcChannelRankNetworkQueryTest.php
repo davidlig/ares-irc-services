@@ -38,7 +38,7 @@ final class IrcChannelRankNetworkQueryTest extends TestCase
         $provider->method('getSupport')->willReturn($support);
         $network = new IrcChannelRankNetworkQuery($channels, $users, $accounts, $provider, new ChannelRankModeMapper(), 'ChanServ');
 
-        $state = $network->findChannelWithAccounts('#test', ['alice' => new ChanAccountView(42, 'Alice', 'es')]);
+        $state = $network->findChannelWithAccounts('#test', ['Alice' => new ChanAccountView(42, 'Alice', 'es')]);
         self::assertNotNull($state);
         self::assertSame(42, $state->members[0]->registeredNickId);
         self::assertSame([ChannelRank::Operator], $state->members[0]->currentRanks);
@@ -122,9 +122,9 @@ final class IrcChannelRankNetworkQueryTest extends TestCase
         $registeredNicks = $this->createMock(NickAccountQuery::class);
         $registeredNicks->expects(self::once())->method('findAccountsByNicks')
             ->with(['Alice', 'cHaNsErV', 'PendingNick'])->willReturn([
-                'alice' => new NickAccountData(42, 'Alice', 'en'),
-                'chanserv' => new NickAccountData(99, 'ChanServ', 'en'),
-                'pendingnick' => new NickAccountData(100, 'PendingNick', 'en', registered: false),
+                'Alice' => new NickAccountData(42, 'Alice', 'en'),
+                'cHaNsErV' => new NickAccountData(99, 'ChanServ', 'en'),
+                'PendingNick' => new NickAccountData(100, 'PendingNick', 'en', registered: false),
             ]);
 
         $support = $this->createMock(ChannelModeSupportInterface::class);

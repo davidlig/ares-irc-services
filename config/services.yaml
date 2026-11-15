@@ -265,6 +265,9 @@ services:
   App\NickServ\Application\Port\Out\NickNetworkUserLookup:
     alias: App\NickServ\Adapter\Out\User\IrcNickNetworkUserLookup
 
+  App\NickServ\Application\Port\Out\NetworkNickEquivalence:
+    alias: App\NickServ\Adapter\Out\User\IrcNetworkNickEquivalence
+
   App\NickServ\Application\Port\Out\NickChangeIdentificationPolicy:
     alias: App\NickServ\Adapter\Out\Protocol\ProtocolNickChangeIdentificationPolicy
 
@@ -388,6 +391,9 @@ services:
 
   App\ChanServ\Application\Port\Out\ChanServNetworkIdentity:
     alias: App\ChanServ\Adapter\Out\Network\ServiceRegistryChanServNetworkIdentity
+
+  App\ChanServ\Application\Port\Out\NetworkIdentityFold:
+    alias: App\ChanServ\Adapter\Out\Network\IrcNetworkIdentityFold
 
   App\ChanServ\Application\Port\Out\ChannelTopicClock:
     alias: App\ChanServ\Adapter\Out\Time\SystemChannelTopicClock
@@ -892,6 +898,10 @@ services:
 
   App\Irc\Domain\Repository\ChannelRepositoryInterface:
     class: App\Irc\Adapter\Network\InMemoryChannelRepository
+
+  # Negotiated casemapping for services' name equivalence (ASCII until negotiated, reset per link).
+  App\Irc\Application\Port\In\NetworkIdentityEquivalence:
+    alias: App\Irc\Adapter\Network\NetworkIdentityEquivalenceTracker
 
   # --- Network state: protocol router (wire → domain events) + subscriber (domain events → repos) ---
 
@@ -2242,6 +2252,9 @@ services:
 
   App\OperServ\Application\Port\Out\RootIdentityRegistry:
     alias: App\OperServ\Adapter\Out\Security\ConfiguredRootIdentityRegistry
+
+  App\OperServ\Application\Port\Out\NetworkNickEquivalence:
+    alias: App\OperServ\Adapter\Out\Security\IrcNetworkNickEquivalence
 
   App\OperServ\Adapter\Out\Projection\DoctrineOperatorRoleAccess:
     arguments:

@@ -57,8 +57,8 @@ change is deliberately specified and tested.
 
 ## 4. AKICK and NOJOIN
 
-- AKICK entries use wildcard matching against `nick!ident@host`, folded with the shared RFC 1459
-  identity fold (`App\Shared\Domain\IrcIdentityFold`). Expired entries do
+- AKICK entries use wildcard matching against `nick!ident@host`, folded with the casemapping the
+  IRCd negotiated (Irc `NetworkIdentityEquivalence` port). Expired entries do
   not match; the first non-expired match is enforced with a ban followed by a kick. IRC operators
   are exempt.
 - A missing AKICK reason becomes `AKICK: <mask>`. Adding an AKICK protects founder, successor, and

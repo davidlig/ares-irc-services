@@ -227,6 +227,7 @@ final class ForbidCommandTest extends TestCase
 
         $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepository->method('findByChannelName')->willReturn(null);
+        $channelRepository->method('findByChannelNameKey')->willReturn(null);
 
         $forbiddenService = $this->createMock(ChannelForbiddenService::class);
         $forbiddenService->expects(self::once())->method('forbid')->with('#test', 'abuse', 'OperUser', self::isInstanceOf(DateTimeImmutable::class))->willReturn($forbiddenChannel);
@@ -251,6 +252,7 @@ final class ForbidCommandTest extends TestCase
 
         $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepository->method('findByChannelName')->willReturn($channel);
+        $channelRepository->method('findByChannelNameKey')->willReturn($channel);
 
         $forbiddenService = $this->createMock(ChannelForbiddenService::class);
         $forbiddenService->expects(self::once())->method('forbid')->with('#test', 'new reason', 'OperUser', self::isInstanceOf(DateTimeImmutable::class))->willReturn($channel);
@@ -279,6 +281,7 @@ final class ForbidCommandTest extends TestCase
 
         $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepository->method('findByChannelName')->willReturn($channel);
+        $channelRepository->method('findByChannelNameKey')->willReturn($channel);
 
         $forbiddenService = $this->createMock(ChannelForbiddenService::class);
         $forbiddenService->expects(self::once())->method('forbid')->with('#test', 'abuse', 'OperUser', self::isInstanceOf(DateTimeImmutable::class))->willReturn($forbiddenChannel);
@@ -303,6 +306,7 @@ final class ForbidCommandTest extends TestCase
 
         $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepository->method('findByChannelName')->willReturn(null);
+        $channelRepository->method('findByChannelNameKey')->willReturn(null);
 
         $forbiddenService = $this->createStub(ChannelForbiddenService::class);
         $forbiddenService->method('forbid')->willReturn($forbiddenChannel);
@@ -330,6 +334,7 @@ final class ForbidCommandTest extends TestCase
 
         $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepository->method('findByChannelName')->willReturn($channel);
+        $channelRepository->method('findByChannelNameKey')->willReturn($channel);
 
         $forbiddenService = $this->createStub(ChannelForbiddenService::class);
         $forbiddenService->method('forbid')->willReturn($channel);

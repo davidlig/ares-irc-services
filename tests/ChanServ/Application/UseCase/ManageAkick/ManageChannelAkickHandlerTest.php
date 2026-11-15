@@ -28,6 +28,7 @@ use App\ChanServ\Domain\Exception\ChannelNotRegisteredException;
 use App\ChanServ\Domain\Policy\AkickAdditionPolicy;
 use App\ChanServ\Domain\Policy\AkickMatchPolicy;
 use App\ChanServ\Domain\Policy\AkickProtectionPolicy;
+use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -77,6 +78,7 @@ final class ManageChannelAkickHandlerTest extends TestCase
             $actions,
             $events,
             $this->createStub(ChanServActivitySink::class),
+            NegotiatedCaseMapping::chanServ(),
         );
 
         foreach ([[null, true], ['', true], ['*!*@example.test', false]] as [$item, $valid]) {
@@ -1076,6 +1078,7 @@ final class ManageChannelAkickHandlerTest extends TestCase
             $actions ?? $this->createStub(AkickActions::class),
             $events ?? $this->createStub(ChanServEventPublisher::class),
             $activity ?? $this->createStub(ChanServActivitySink::class),
+            NegotiatedCaseMapping::chanServ(),
         );
     }
 }

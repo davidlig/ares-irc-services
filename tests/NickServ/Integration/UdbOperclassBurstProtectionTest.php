@@ -38,6 +38,7 @@ use App\NickServ\Application\Service\VhostDisplayResolver;
 use App\NickServ\Application\UseCase\IssueMigrationRescueToken\IssueMigrationRescueTokenHandlerInterface;
 use App\NickServ\Application\UseCase\SyncNetworkIdentification\SyncNetworkIdentificationHandlerInterface;
 use App\NickServ\Domain\Entity\RegisteredNick;
+use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -72,7 +73,7 @@ final class UdbOperclassBurstProtectionTest extends DoctrineIntegrationTestCase
     {
         $registeredAt = new DateTimeImmutable('2026-01-01 00:00:00');
         $seenAt = new DateTimeImmutable('2026-03-04 05:06:07');
-        $repository = new RegisteredNickDoctrineRepository($this->entityManager);
+        $repository = new RegisteredNickDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network());
         for ($i = 1; $i <= self::USERS; ++$i) {
             $repository->save(RegisteredNick::createActive($this->nick($i), 'hash', null, 'en', $registeredAt));
         }
@@ -122,7 +123,7 @@ final class UdbOperclassBurstProtectionTest extends DoctrineIntegrationTestCase
     {
         $registeredAt = new DateTimeImmutable('2026-01-01 00:00:00');
         $seenAt = new DateTimeImmutable('2026-03-04 05:06:07');
-        $repository = new class($this->entityManager) extends RegisteredNickDoctrineRepository {
+        $repository = new class($this->entityManager, NegotiatedCaseMapping::network()) extends RegisteredNickDoctrineRepository {
             public int $calls = 0;
 
             public function saveActivityBatch(array $nicks): void
@@ -198,6 +199,7 @@ final class UdbOperclassBurstProtectionTest extends DoctrineIntegrationTestCase
             $this->createStub(GuestNicknameGenerator::class),
             $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
             $mode,
+            NegotiatedCaseMapping::nickServ(),
         );
         $vhostSync = new IdentifiedUserVhostSyncService(
             $repository,

@@ -253,6 +253,7 @@ final class ForbidCommandTest extends TestCase
 
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepository->method('findByNick')->willReturn($nick);
+        $nickRepository->method('findByNicknameKey')->willReturn($nick);
 
         $validator = $this->createStub(NickTargetValidator::class);
         $validator->method('validate')->willReturn(NickProtectabilityResult::allowed('BadNick', $nick));
@@ -283,6 +284,7 @@ final class ForbidCommandTest extends TestCase
 
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepository->method('findByNick')->willReturn(null);
+        $nickRepository->method('findByNicknameKey')->willReturn(null);
 
         $validator = $this->createStub(NickTargetValidator::class);
         $validator->method('validate')->willReturn(NickProtectabilityResult::allowed('BadNick', null));
@@ -319,6 +321,7 @@ final class ForbidCommandTest extends TestCase
 
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepository->method('findByNick')->willReturn($nick);
+        $nickRepository->method('findByNicknameKey')->willReturn($nick);
 
         $validator = $this->createStub(NickTargetValidator::class);
         $validator->method('validate')->willReturn(NickProtectabilityResult::allowed('BadUser', $nick));

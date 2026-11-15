@@ -6,6 +6,7 @@ namespace App\Tests\ChanServ\Domain\Entity;
 
 use App\ChanServ\Domain\Entity\ChannelAkick;
 use App\Irc\Domain\ValueObject\UserMask;
+use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use DateTimeImmutable;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -81,9 +82,9 @@ final class ChannelAkickTest extends TestCase
     {
         $akick = ChannelAkick::create(new DateTimeImmutable(), 1, 2, '*!*@*.isp.com');
 
-        self::assertTrue($akick->matches('Nick!user@host.isp.com'));
-        self::assertTrue($akick->matches('NICK!user@HOST.ISP.COM'));
-        self::assertFalse($akick->matches('Nick!user@other.com'));
+        self::assertTrue($akick->matches('Nick!user@host.isp.com', NegotiatedCaseMapping::fold()));
+        self::assertTrue($akick->matches('NICK!user@HOST.ISP.COM', NegotiatedCaseMapping::fold()));
+        self::assertFalse($akick->matches('Nick!user@other.com', NegotiatedCaseMapping::fold()));
     }
 
     #[Test]
@@ -91,9 +92,9 @@ final class ChannelAkickTest extends TestCase
     {
         $akick = ChannelAkick::create(new DateTimeImmutable(), 1, 2, 'Nick!*@*');
 
-        self::assertTrue($akick->matches('Nick!user@host'));
-        self::assertTrue($akick->matches('Nick!any@any'));
-        self::assertFalse($akick->matches('Other!user@host'));
+        self::assertTrue($akick->matches('Nick!user@host', NegotiatedCaseMapping::fold()));
+        self::assertTrue($akick->matches('Nick!any@any', NegotiatedCaseMapping::fold()));
+        self::assertFalse($akick->matches('Other!user@host', NegotiatedCaseMapping::fold()));
     }
 
     #[Test]
@@ -101,9 +102,9 @@ final class ChannelAkickTest extends TestCase
     {
         $akick = ChannelAkick::create(new DateTimeImmutable(), 1, 2, '*!*@*.isp.com');
 
-        self::assertTrue($akick->matches(UserMask::fromString('Nick!user@host.isp.com')));
-        self::assertTrue($akick->matches(UserMask::fromString('NICK!user@HOST.ISP.COM')));
-        self::assertFalse($akick->matches(UserMask::fromString('Nick!user@other.com')));
+        self::assertTrue($akick->matches(UserMask::fromString('Nick!user@host.isp.com'), NegotiatedCaseMapping::fold()));
+        self::assertTrue($akick->matches(UserMask::fromString('NICK!user@HOST.ISP.COM'), NegotiatedCaseMapping::fold()));
+        self::assertFalse($akick->matches(UserMask::fromString('Nick!user@other.com'), NegotiatedCaseMapping::fold()));
     }
 
     #[Test]

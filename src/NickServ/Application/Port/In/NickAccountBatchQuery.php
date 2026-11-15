@@ -9,7 +9,7 @@ interface NickAccountBatchQuery
     /**
      * @param list<string> $nicknames
      *
-     * @return array<string, NickAccountData> keyed by the IrcIdentityFold of the nickname
+     * @return array<string, NickAccountData> keyed by each queried nickname whose registration is equivalent under the negotiated casemapping
      */
     public function findAccountsByNicks(array $nicknames): array;
 }

@@ -18,6 +18,7 @@ use App\Irc\Application\Port\In\ChannelView;
 use App\Irc\Application\PublishedEvent\ChannelSynchronizedEvent;
 use App\Irc\Application\PublishedEvent\ExistingChannelJoinObservedEvent;
 use App\Irc\Application\PublishedEvent\NetworkSynchronizationCompletedEvent;
+use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -440,6 +441,7 @@ final class ChanServRejoinSubscriberTest extends TestCase
             $this->modeSupportProvider,
             $this->channelLookup,
             $this->channelServiceActions,
+            NegotiatedCaseMapping::network(),
             $this->logger,
         );
 
@@ -573,6 +575,7 @@ final class ChanServRejoinSubscriberTest extends TestCase
             $this->modeSupportProvider,
             $this->channelLookup,
             $this->channelServiceActions,
+            NegotiatedCaseMapping::network(),
             $this->logger,
         );
 
@@ -910,6 +913,7 @@ final class ChanServRejoinSubscriberTest extends TestCase
             $modeSupportProvider,
             $channelLookup,
             $channelServiceActions,
+            NegotiatedCaseMapping::network(),
             $logger,
         );
         $registrationLifecycle = new ChannelRegistrationService($channelRepository, $networkActions);

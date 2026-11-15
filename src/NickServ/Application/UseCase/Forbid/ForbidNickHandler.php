@@ -34,7 +34,7 @@ final readonly class ForbidNickHandler
             return new ForbidNickResult($outcome, $protectability->nickname, $input->reason);
         }
 
-        $account = $this->nickRepository->findByNick($input->targetNickname);
+        $account = $this->nickRepository->findByNicknameKey($input->targetNickname);
         if (null !== $account && $account->isForbidden()) {
             $this->forbiddenService->updateReason($account, $input->reason);
 

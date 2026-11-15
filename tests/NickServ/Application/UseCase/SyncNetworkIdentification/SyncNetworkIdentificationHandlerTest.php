@@ -26,6 +26,7 @@ use App\NickServ\Application\UseCase\IssueMigrationRescueToken\IssueMigrationRes
 use App\NickServ\Application\UseCase\SyncNetworkIdentification\SyncNetworkIdentification;
 use App\NickServ\Application\UseCase\SyncNetworkIdentification\SyncNetworkIdentificationHandler;
 use App\NickServ\Domain\Entity\RegisteredNick;
+use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -181,6 +182,7 @@ final class SyncNetworkIdentificationHandlerTest extends TestCase
             $this->guestNicknameGenerator(),
             $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
             $this->authenticationModeQuery(),
+            NegotiatedCaseMapping::nickServ(),
         );
 
         return new SyncNetworkIdentificationHandler(
@@ -189,6 +191,7 @@ final class SyncNetworkIdentificationHandlerTest extends TestCase
             $sessionLanguages,
             $repository,
             $events,
+            NegotiatedCaseMapping::nickServ(),
         );
     }
 

@@ -9,6 +9,7 @@ use App\NickServ\Application\Port\Out\ForcedVhostCheckerInterface;
 use App\NickServ\Application\Port\Out\IdentifiedSessionTracker;
 use App\NickServ\Application\Port\Out\IdentifyEventPublisher;
 use App\NickServ\Application\Port\Out\IdentifyLockoutTracker;
+use App\NickServ\Application\Port\Out\NetworkNickEquivalence;
 use App\NickServ\Application\Port\Out\PasswordHasher;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\PublishedEvent\NickIdentifiedEvent;
@@ -16,7 +17,6 @@ use App\NickServ\Application\PublishedEvent\NickPasswordHashAvailable;
 use App\NickServ\Application\Service\VhostDisplayResolver;
 use App\NickServ\Application\UseCase\IssueMigrationRescueToken\IssueMigrationRescueToken;
 use App\NickServ\Application\UseCase\IssueMigrationRescueToken\IssueMigrationRescueTokenHandlerInterface;
-use App\Shared\Domain\IrcIdentityFold;
 
 final readonly class IdentifyNickHandler implements IdentifyNickHandlerInterface
 {
@@ -30,6 +30,7 @@ final readonly class IdentifyNickHandler implements IdentifyNickHandlerInterface
         private PasswordHasher $passwordHasher,
         private Clock $clock,
         private IssueMigrationRescueTokenHandlerInterface $migrationTokens,
+        private NetworkNickEquivalence $nickEquivalence,
         private int $identifyMaxFailedAttempts,
         private int $identifyFailedWindowSeconds,
         private int $identifyLockoutSeconds,
@@ -38,8 +39,8 @@ final readonly class IdentifyNickHandler implements IdentifyNickHandlerInterface
     public function handle(IdentifyNick $command): IdentifyNickResult
     {
         $alreadyTrackedNick = $this->identifiedRegistry->findNick($command->senderUid);
-        $alreadyIdentified = (null !== $alreadyTrackedNick && IrcIdentityFold::equals($alreadyTrackedNick, $command->nickname))
-            || ($command->senderIsIdentified && IrcIdentityFold::equals($command->senderNick, $command->nickname));
+        $alreadyIdentified = (null !== $alreadyTrackedNick && $this->nickEquivalence->equivalent($alreadyTrackedNick, $command->nickname))
+            || ($command->senderIsIdentified && $this->nickEquivalence->equivalent($command->senderNick, $command->nickname));
         $account = $alreadyIdentified ? $this->nickRepository->findByNick($command->nickname) : null;
         if ($alreadyIdentified && null !== $account && $account->isRegistered() && null !== $account->getRescueTokenHash()) {
             if (null === $alreadyTrackedNick) {

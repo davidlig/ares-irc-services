@@ -11,6 +11,7 @@ use App\ChanServ\Application\Port\Out\ChannelEntryNetworkQuery;
 use App\ChanServ\Application\Port\Out\ChanServActivitySink;
 use App\ChanServ\Application\Port\Out\ChanServEventPublisher;
 use App\ChanServ\Application\Port\Out\ChanUserAccountPort;
+use App\ChanServ\Application\Port\Out\NetworkIdentityFold;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\PublishedEvent\ChannelAkickChangedEvent;
 use App\ChanServ\Application\Service\ChanServAccessHelper;
@@ -51,6 +52,7 @@ final readonly class ManageChannelAkickHandler implements ManageChannelAkickHand
         private AkickActions $actions,
         private ChanServEventPublisher $events,
         private ChanServActivitySink $activity,
+        private NetworkIdentityFold $identityFold,
     ) {}
 
     public function handle(ManageChannelAkick $command): ManageChannelAkickResult
@@ -128,7 +130,7 @@ final readonly class ManageChannelAkickHandler implements ManageChannelAkickHand
             return new ManageChannelAkickResult(ManageChannelAkickOutcome::DangerousMask, mask: $mask->value);
         }
 
-        $protected = $this->protectionPolicy->firstProtectedNickname($mask, $this->protectedNicknames($channel));
+        $protected = $this->protectionPolicy->firstProtectedNickname($mask, $this->protectedNicknames($channel), $this->identityFold->fold(...));
         if (null !== $protected) {
             return new ManageChannelAkickResult(ManageChannelAkickOutcome::ProtectedUser, protectedNickname: $protected);
         }
@@ -300,12 +302,12 @@ final readonly class ManageChannelAkickHandler implements ManageChannelAkickHand
         }
 
         if ($command->founderEquivalent && null !== $member->displayMask && $member->displayMask !== $member->userMask) {
-            $realMatches = $this->matchPolicy->allMatches($rules, $member->userMask, $command->now, $member->operator);
-            $displayMatches = $this->matchPolicy->allMatches($rules, $member->displayMask, $command->now, $member->operator);
+            $realMatches = $this->matchPolicy->allMatches($rules, $member->userMask, $command->now, $member->operator, $this->identityFold->fold(...));
+            $displayMatches = $this->matchPolicy->allMatches($rules, $member->displayMask, $command->now, $member->operator, $this->identityFold->fold(...));
             $matches = $this->mergeMatches($realMatches, $displayMatches);
         } else {
             $mask = $command->founderEquivalent ? $member->userMask : $member->getVisibleMask();
-            $matches = $this->matchPolicy->allMatches($rules, $mask, $command->now, $member->operator);
+            $matches = $this->matchPolicy->allMatches($rules, $mask, $command->now, $member->operator, $this->identityFold->fold(...));
         }
 
         if ([] === $matches) {
@@ -447,7 +449,7 @@ final readonly class ManageChannelAkickHandler implements ManageChannelAkickHand
 
         $enforcedCount = 0;
         foreach ($channel->members as $member) {
-            $matching = $this->matchPolicy->firstMatch($rules, $member->userMask, $now, $member->operator);
+            $matching = $this->matchPolicy->firstMatch($rules, $member->userMask, $now, $member->operator, $this->identityFold->fold(...));
             if (null === $matching) {
                 continue;
             }

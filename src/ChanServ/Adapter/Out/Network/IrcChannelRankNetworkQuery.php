@@ -16,7 +16,6 @@ use App\Irc\Application\Port\In\ChannelView;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\NickServ\Application\Port\In\NickAccountData;
 use App\NickServ\Application\Port\In\NickAccountQuery;
-use App\Shared\Domain\IrcIdentityFold;
 
 use function in_array;
 use function strcasecmp;
@@ -134,7 +133,7 @@ final readonly class IrcChannelRankNetworkQuery implements ChannelRankNetworkQue
         $accounts ??= $this->registeredNicks->findAccountsByNicks($nicknames);
         $members = [];
         foreach ($resolved as [$entry, $user]) {
-            $account = $accounts[IrcIdentityFold::fold($user->nick)] ?? null;
+            $account = $accounts[$user->nick] ?? null;
             $accountId = null !== $account && $account->registered ? $account->id : null;
             $letters = $entry['prefixLetters'] ?? [$entry['roleLetter']];
             $ranks = [];

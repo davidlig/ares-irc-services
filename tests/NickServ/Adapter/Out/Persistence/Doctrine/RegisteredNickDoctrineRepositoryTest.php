@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Adapter\Out\Persistence\Doctrine;
 
+use App\Irc\Domain\ValueObject\CaseMapping;
 use App\NickServ\Adapter\Out\Persistence\Doctrine\RegisteredNickDoctrineRepository;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\NickServ\Domain\ValueObject\AutomaticModeProfile;
 use App\NickServ\Domain\ValueObject\NickStatus;
 use App\Shared\Domain\IrcIdentityFold;
+use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
 use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
@@ -28,6 +30,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 
+use function array_keys;
 use function array_map;
 use function array_slice;
 use function count;
@@ -70,7 +73,7 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
         $em = $this->createStub(EntityManagerInterface::class);
         $em->method('getConnection')->willReturn($connection);
 
-        self::assertSame(2, new RegisteredNickDoctrineRepository($em)->countByPattern('NAME!%_'));
+        self::assertSame(2, new RegisteredNickDoctrineRepository($em, NegotiatedCaseMapping::network())->countByPattern('NAME!%_'));
     }
 
     #[Test]
@@ -82,7 +85,7 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
         $em = $this->createStub(EntityManagerInterface::class);
         $em->method('getConnection')->willReturn($connection);
 
-        self::assertSame(0, new RegisteredNickDoctrineRepository($em)->countByPattern('*'));
+        self::assertSame(0, new RegisteredNickDoctrineRepository($em, NegotiatedCaseMapping::network())->countByPattern('*'));
     }
 
     /** @return iterable<string, array{string}> */
@@ -113,7 +116,7 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
                 self::callback(static fn (ResultSetMapping $mapping): bool => NickStatus::class === ($mapping->enumMappings['status'] ?? null)),
             )->willReturn($query);
 
-        self::assertSame([$entity], new RegisteredNickDoctrineRepository($em)->searchByPattern('Na*', 3, 2));
+        self::assertSame([$entity], new RegisteredNickDoctrineRepository($em, NegotiatedCaseMapping::network())->searchByPattern('Na*', 3, 2));
     }
 
     #[Test]
@@ -228,11 +231,26 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
         self::assertSame('{foo}|~', $this->entityManager->getConnection()->fetchOne('SELECT nickname_lower FROM registered_nicks WHERE nickname = ?', ['[Foo]\\^']));
         self::assertSame('[Foo]\\^', $this->repository->findByNick('{FOO}|~')?->getNickname());
         self::assertSame('[Foo]\\^', $this->repository->findByNick('[foo]\\^')?->getNickname());
-        self::assertSame(['[Foo]\\^'], array_map(static fn (RegisteredNick $nick): string => $nick->getNickname(), $this->repository->findByNicks(['{foo}|~', '[FOO]\\^'])));
+        self::assertSame(['{foo}|~' => '[Foo]\\^', '[FOO]\\^' => '[Foo]\\^'], array_map(static fn (RegisteredNick $nick): string => $nick->getNickname(), $this->repository->findByNicks(['{foo}|~', '[FOO]\\^'])));
         self::assertSame(1, $this->repository->countByPattern('{foo}|~'));
         self::assertSame(2, $this->repository->countByPattern('[foo]*'));
         self::assertSame(['{Foo}Bar', '[Foo]\\^'], array_map(static fn (RegisteredNick $nick): string => $nick->getNickname(), $this->repository->searchByPattern('{FOO}*', 0, 10)));
         self::assertNull($this->repository->findByNick('(foo)|~'));
+    }
+
+    #[Test]
+    public function lookupsConfirmTheStoredNicknameWithTheNegotiatedCasemapping(): void
+    {
+        $this->repository->save($this->createRegisteredNick('Foo[', 'foo@example.com'));
+        $this->flushAndClear();
+        $ascii = new RegisteredNickDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network(CaseMapping::Ascii));
+
+        self::assertSame('Foo[', $ascii->findByNick('FOO[')?->getNickname());
+        self::assertNull($ascii->findByNick('foo{'));
+        self::assertSame(['FOO['], array_keys($ascii->findByNicks(['FOO[', 'foo{'])));
+        self::assertSame('Foo[', $ascii->findByNicknameKey('foo{')?->getNickname());
+        self::assertTrue($ascii->existsByNick('foo{'));
+        self::assertSame('Foo[', $this->repository->findByNick('foo{')?->getNickname());
     }
 
     #[Test]
@@ -244,8 +262,9 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
 
         self::assertSame([], $this->repository->findByNicks([]));
         $accounts = $this->repository->findByNicks(['ALICE', 'alice', 'Missing']);
-        self::assertCount(1, $accounts);
-        self::assertSame('Alice', $accounts[0]->getNickname());
+        self::assertSame(['ALICE', 'alice'], array_keys($accounts));
+        self::assertSame('Alice', $accounts['ALICE']->getNickname());
+        self::assertSame($accounts['ALICE'], $accounts['alice']);
     }
 
     #[Test]
@@ -256,8 +275,8 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
 
         self::assertSame([], $this->repository->findByNicknamesLower([]));
         $accounts = $this->repository->findByNicknamesLower(['ALICE', 'alice', 'missing']);
-        self::assertCount(1, $accounts);
-        self::assertSame('Alice', $accounts[0]->getNickname());
+        self::assertSame(['ALICE', 'alice'], array_keys($accounts));
+        self::assertSame('Alice', $accounts['alice']->getNickname());
     }
 
     #[Test]
@@ -351,7 +370,7 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
         $queryBuilder->expects(self::once())->method('getQuery')->willReturn($query);
         $entityManager = $this->createMock(EntityManagerInterface::class);
         $entityManager->expects(self::once())->method('createQueryBuilder')->willReturn($queryBuilder);
-        $repository = new RegisteredNickDoctrineRepository($entityManager);
+        $repository = new RegisteredNickDoctrineRepository($entityManager, NegotiatedCaseMapping::network());
 
         self::assertSame([3 => 'Alice'], $repository->findNicknamesByIds([1, 2, 3]));
     }
@@ -860,7 +879,7 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
     protected function setUp(): void
     {
         parent::setUp();
-        $this->repository = new RegisteredNickDoctrineRepository($this->entityManager);
+        $this->repository = new RegisteredNickDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network());
     }
 
     /**

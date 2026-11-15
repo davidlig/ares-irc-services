@@ -43,6 +43,7 @@ final class ManageChannelLifecycleHandlerTest extends TestCase
         $channel = $this->channel();
         $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channels->method('findByChannelName')->willReturn($channel);
+        $channels->method('findByChannelNameKey')->willReturn($channel);
         $channels->expects(self::exactly(2))->method('save')->with($channel);
         $events = $this->createMock(EventBusInterface::class);
         $events->expects(self::exactly(2))->method('dispatch')->with(self::isInstanceOf(ChannelIrcopOnlyUpdatedEvent::class));
@@ -110,6 +111,7 @@ final class ManageChannelLifecycleHandlerTest extends TestCase
             foreach ($commands as [$command, $expected]) {
                 $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
                 $channels->method('findByChannelName')->willReturn($request);
+                $channels->method('findByChannelNameKey')->willReturn($request);
                 $channels->expects(self::never())->method('save');
                 self::assertSame($expected, $this->handler(
                     $channels,
@@ -338,6 +340,7 @@ final class ManageChannelLifecycleHandlerTest extends TestCase
         $channel = $this->channel();
         $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channels->method('findByChannelName')->willReturn($channel);
+        $channels->method('findByChannelNameKey')->willReturn($channel);
         $channels->expects(self::once())->method('save')->with($channel);
         $history = $this->createMock(ChannelHistoryRepositoryInterface::class);
         $history->expects(self::once())->method('save')->willReturnCallback(static function (ChannelHistory $entry) use ($enabled): void {
@@ -399,6 +402,7 @@ final class ManageChannelLifecycleHandlerTest extends TestCase
         $channel = $this->channel();
         $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channels->method('findByChannelName')->willReturn($channel);
+        $channels->method('findByChannelNameKey')->willReturn($channel);
         $channels->expects(self::once())->method('save')->with($channel);
         $suspensions = $this->createMock(ChannelSuspensionService::class);
         $suspensions->expects(self::once())->method('enforceSuspension')->with($channel);
@@ -434,6 +438,7 @@ final class ManageChannelLifecycleHandlerTest extends TestCase
         $channel = $this->channel();
         $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channels->method('findByChannelName')->willReturn($channel);
+        $channels->method('findByChannelNameKey')->willReturn($channel);
         $channels->expects(self::once())->method('save')->with($channel);
         $suspensions = $this->createMock(ChannelSuspensionService::class);
         $suspensions->expects(self::once())->method('enforceSuspension')->with($channel);
@@ -480,6 +485,7 @@ final class ManageChannelLifecycleHandlerTest extends TestCase
         $channel->suspend('abuse');
         $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channels->method('findByChannelName')->willReturn($channel);
+        $channels->method('findByChannelNameKey')->willReturn($channel);
         $channels->expects(self::once())->method('save')->with($channel);
         $events = $this->createMock(EventBusInterface::class);
         $events->expects(self::once())->method('dispatch')->with(self::callback(
@@ -541,6 +547,7 @@ final class ManageChannelLifecycleHandlerTest extends TestCase
     {
         $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channels->method('findByChannelName')->willReturn($channel);
+        $channels->method('findByChannelNameKey')->willReturn($channel);
 
         return $channels;
     }

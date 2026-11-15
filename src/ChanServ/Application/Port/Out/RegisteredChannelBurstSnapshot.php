@@ -10,6 +10,6 @@ interface RegisteredChannelBurstSnapshot
 
     public function endBurst(): void;
 
-    /** Returns null when no burst snapshot is active. */
+    /** Whether the name resolves to a registration as findByChannelName() does; null when no burst snapshot is active. */
     public function contains(string $channelName): ?bool;
 }

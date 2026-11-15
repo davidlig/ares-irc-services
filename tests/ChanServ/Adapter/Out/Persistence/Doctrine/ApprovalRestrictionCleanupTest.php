@@ -15,6 +15,7 @@ use App\ChanServ\Application\UseCase\RegisterChannel\RegisterChannel;
 use App\ChanServ\Application\UseCase\RegisterChannel\RegisterChannelHandler;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\ValueObject\RegistrationMode;
+use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
 use DateTimeImmutable;
 use Doctrine\DBAL\Exception\DriverException;
@@ -50,7 +51,7 @@ final class ApprovalRestrictionCleanupTest extends DoctrineIntegrationTestCase
     public function recoverableDropAndRestorePreserveRegistrationUntilDefinitiveDrop(): void
     {
         $at = new DateTimeImmutable('2026-10-27T12:00:00+00:00');
-        $channels = new RegisteredChannelDoctrineRepository($this->entityManager);
+        $channels = new RegisteredChannelDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network());
         $channel = RegisteredChannel::register($at, '#test', 7, 'description');
         $channels->save($channel);
         $drop = $this->construct(ChanDropService::class, [
@@ -72,7 +73,7 @@ final class ApprovalRestrictionCleanupTest extends DoctrineIntegrationTestCase
     public function expiredRejectionReplacementStartsFreshAndFailurePreservesRejection(bool $fail): void
     {
         $at = new DateTimeImmutable('2026-10-27T12:00:00+00:00');
-        $channels = new RegisteredChannelDoctrineRepository($this->entityManager);
+        $channels = new RegisteredChannelDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network());
         $channel = RegisteredChannel::createPendingRegistration($at->modify('-2 days'), '#test', 7, 'description');
         $channel->rejectRegistration('Reason', 9, 'Root', $at->modify('-2 days'), $at->modify('-1 day'));
         $channels->save($channel);
@@ -111,7 +112,7 @@ final class ApprovalRestrictionCleanupTest extends DoctrineIntegrationTestCase
     public function requesterCleanupOrphansRejectionsButPreservesRestrictions(): void
     {
         $at = new DateTimeImmutable('2026-10-26T12:00:00+00:00');
-        $channels = new RegisteredChannelDoctrineRepository($this->entityManager);
+        $channels = new RegisteredChannelDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network());
         foreach ([['#finite', $at->modify('+24 hours')], ['#indefinite', null]] as [$name, $until]) {
             $request = RegisteredChannel::createPendingRegistration($at, $name, 7, 'description');
             $request->rejectRegistration('Reason', 9, 'Root', $at, $until);

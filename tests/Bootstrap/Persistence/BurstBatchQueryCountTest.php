@@ -53,6 +53,7 @@ use App\Irc\Application\Port\In\SenderView;
 use App\NickServ\Adapter\Out\Persistence\Doctrine\NickAccountBatchDoctrineQuery;
 use App\NickServ\Application\Port\In\NickAccountQuery;
 use App\NickServ\Domain\Entity\RegisteredNick;
+use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use ArrayObject;
 use DateTimeImmutable;
 use Doctrine\DBAL\DriverManager;
@@ -141,10 +142,10 @@ final class BurstBatchQueryCountTest extends TestCase
             return $members;
         };
         $host = static fn (string $nick): string => '_1' === substr($nick, -2) || '_2' === substr($nick, -2) ? 'bad.host' : 'host';
-        $channels = new RegisteredChannelDoctrineRepository($em);
+        $channels = new RegisteredChannelDoctrineRepository($em, NegotiatedCaseMapping::network());
         $akickRepo = new ChannelAkickDoctrineRepository($em);
         $source = new BurstChannelPageSource($channels, $akickRepo, $em);
-        $accounts = new NickServChanUserAccountAdapter($this->createStub(NickAccountQuery::class), new NickAccountBatchDoctrineQuery($em));
+        $accounts = new NickServChanUserAccountAdapter($this->createStub(NickAccountQuery::class), new NickAccountBatchDoctrineQuery($em, NegotiatedCaseMapping::network()));
         $network = $this->createStub(ChannelEntryNetworkQuery::class);
         $network->method('findChannel')->willReturnCallback(static fn (string $channelName): ChannelEntryNetworkState => new ChannelEntryNetworkState(
             $channelName,
@@ -156,7 +157,7 @@ final class BurstBatchQueryCountTest extends TestCase
                 self::assertSame('*!*@bad.host', $mask);
                 $removed[$channelName . ' ' . $uid] = true;
             });
-        $akicks = new EnforceChannelAkickHandler($channels, $akickRepo, $network, $akickActions, new AkickMatchPolicy(), $this->createStub(ChanServActivitySink::class));
+        $akicks = new EnforceChannelAkickHandler($channels, $akickRepo, $network, $akickActions, new AkickMatchPolicy(), $this->createStub(ChanServActivitySink::class), NegotiatedCaseMapping::chanServ());
         $nojoinActions = $this->createMock(NojoinActions::class);
         $nojoinActions->expects(self::exactly($channelCount * ($membersPerChannel - 3)))->method('kick')
             ->willReturnCallback(static function (string $channelName, string $uid) use ($removed): void {

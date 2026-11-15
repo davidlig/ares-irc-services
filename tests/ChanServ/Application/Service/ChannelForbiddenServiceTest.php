@@ -45,6 +45,7 @@ final class ChannelForbiddenServiceTest extends TestCase
     {
         $channelRepository = $this->repositoryThatSavesAndSetsId();
         $channelRepository->method('findByChannelName')->willReturn(null);
+        $channelRepository->method('findByChannelNameKey')->willReturn(null);
 
         $dispatchedEvent = null;
         $eventPublisher = $this->createMock(ChanServEventPublisher::class);
@@ -74,6 +75,7 @@ final class ChannelForbiddenServiceTest extends TestCase
 
         $channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepository->method('findByChannelName')->willReturn($existing);
+        $channelRepository->method('findByChannelNameKey')->willReturn($existing);
         $channelRepository->expects(self::once())
             ->method('save')
             ->with($existing);
@@ -109,6 +111,7 @@ final class ChannelForbiddenServiceTest extends TestCase
 
         $channelRepository = $this->repositoryThatSavesAndSetsId();
         $channelRepository->method('findByChannelName')->willReturn($existing);
+        $channelRepository->method('findByChannelNameKey')->willReturn($existing);
 
         $dropService = $this->createMock(ChanDropService::class);
         $dropService->expects(self::once())
@@ -151,6 +154,7 @@ final class ChannelForbiddenServiceTest extends TestCase
     {
         $channelRepository = $this->repositoryThatSavesAndSetsId();
         $channelRepository->method('findByChannelName')->willReturn(null);
+        $channelRepository->method('findByChannelNameKey')->willReturn(null);
 
         $dispatchedEvent = null;
         $eventPublisher = $this->createMock(ChanServEventPublisher::class);
@@ -178,6 +182,7 @@ final class ChannelForbiddenServiceTest extends TestCase
     {
         $channelRepository = $this->repositoryThatSavesAndSetsId();
         $channelRepository->method('findByChannelName')->willReturn(null);
+        $channelRepository->method('findByChannelNameKey')->willReturn(null);
 
         $result = $this->createService(channelRepository: $channelRepository)->forbid(
             '#forbidme',
@@ -198,6 +203,7 @@ final class ChannelForbiddenServiceTest extends TestCase
 
         $channelRepository = $this->repositoryThatSavesAndSetsId();
         $channelRepository->method('findByChannelName')->willReturn($existing);
+        $channelRepository->method('findByChannelNameKey')->willReturn($existing);
 
         $dropService = $this->createMock(ChanDropService::class);
         $dropService->expects(self::once())
@@ -215,6 +221,7 @@ final class ChannelForbiddenServiceTest extends TestCase
     {
         $channelRepository = $this->repositoryThatSavesAndSetsId();
         $channelRepository->method('findByChannelName')->willReturn(null);
+        $channelRepository->method('findByChannelNameKey')->willReturn(null);
 
         $channelActions = $this->createMock(ChanNetworkActions::class);
         $channelActions->expects(self::once())
@@ -249,6 +256,7 @@ final class ChannelForbiddenServiceTest extends TestCase
 
         $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepository->method('findByChannelName')->willReturn($existing);
+        $channelRepository->method('findByChannelNameKey')->willReturn($existing);
 
         $dropService = $this->createMock(ChanDropService::class);
         $dropService->expects(self::never())->method('dropChannel');
@@ -266,6 +274,7 @@ final class ChannelForbiddenServiceTest extends TestCase
 
         $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepository->method('findByChannelName')->willReturn($existing);
+        $channelRepository->method('findByChannelNameKey')->willReturn($existing);
 
         $channelActions = $this->createMock(ChanNetworkActions::class);
         $channelActions->expects(self::never())->method('joinChannelAsService');
@@ -283,6 +292,7 @@ final class ChannelForbiddenServiceTest extends TestCase
     {
         $channelRepository = $this->repositoryThatSavesAndSetsId();
         $channelRepository->method('findByChannelName')->willReturn(null);
+        $channelRepository->method('findByChannelNameKey')->willReturn(null);
 
         $logger = $this->createMock(ChanServActivitySink::class);
         $logger->expects(self::once())
@@ -302,6 +312,7 @@ final class ChannelForbiddenServiceTest extends TestCase
 
         $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepository->method('findByChannelName')->willReturn($existing);
+        $channelRepository->method('findByChannelNameKey')->willReturn($existing);
 
         $logger = $this->createMock(ChanServActivitySink::class);
         $logger->expects(self::once())
@@ -321,6 +332,7 @@ final class ChannelForbiddenServiceTest extends TestCase
 
         $channelRepository = $this->repositoryThatSavesAndSetsId();
         $channelRepository->method('findByChannelName')->willReturn($existing);
+        $channelRepository->method('findByChannelNameKey')->willReturn($existing);
 
         $logMessages = [];
         $logger = $this->createMock(ChanServActivitySink::class);
@@ -348,6 +360,7 @@ final class ChannelForbiddenServiceTest extends TestCase
 
         $channelRepository = $this->repositoryThatSavesAndSetsId();
         $channelRepository->method('findByChannelName')->willReturn($existing);
+        $channelRepository->method('findByChannelNameKey')->willReturn($existing);
 
         $dropService = $this->createMock(ChanDropService::class);
         $dropService->expects(self::once())
@@ -371,6 +384,7 @@ final class ChannelForbiddenServiceTest extends TestCase
 
         $channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepository->method('findByChannelName')->willReturn($channel);
+        $channelRepository->method('findByChannelNameKey')->willReturn($channel);
         $channelRepository->expects(self::once())
             ->method('delete')
             ->with($channel);
@@ -398,6 +412,7 @@ final class ChannelForbiddenServiceTest extends TestCase
     {
         $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepository->method('findByChannelName')->willReturn(null);
+        $channelRepository->method('findByChannelNameKey')->willReturn(null);
 
         $result = $this->createService(channelRepository: $channelRepository)->unforbid('#ghost', 'OperNick', new DateTimeImmutable());
 
@@ -411,6 +426,7 @@ final class ChannelForbiddenServiceTest extends TestCase
 
         $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepository->method('findByChannelName')->willReturn($channel);
+        $channelRepository->method('findByChannelNameKey')->willReturn($channel);
 
         $result = $this->createService(channelRepository: $channelRepository)->unforbid('#active', 'OperNick', new DateTimeImmutable());
 
@@ -424,6 +440,7 @@ final class ChannelForbiddenServiceTest extends TestCase
 
         $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepository->method('findByChannelName')->willReturn($channel);
+        $channelRepository->method('findByChannelNameKey')->willReturn($channel);
 
         $dispatchedEvent = null;
         $eventPublisher = $this->createMock(ChanServEventPublisher::class);
@@ -449,6 +466,7 @@ final class ChannelForbiddenServiceTest extends TestCase
     {
         $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepository->method('findByChannelName')->willReturn(null);
+        $channelRepository->method('findByChannelNameKey')->willReturn(null);
 
         $eventPublisher = $this->createMock(ChanServEventPublisher::class);
         $eventPublisher->expects(self::never())->method('publish');
@@ -463,6 +481,7 @@ final class ChannelForbiddenServiceTest extends TestCase
 
         $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepository->method('findByChannelName')->willReturn($channel);
+        $channelRepository->method('findByChannelNameKey')->willReturn($channel);
 
         $eventPublisher = $this->createMock(ChanServEventPublisher::class);
         $eventPublisher->expects(self::never())->method('publish');
@@ -662,6 +681,7 @@ final class ChannelForbiddenServiceTest extends TestCase
     {
         $repository = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $repository->method('findByChannelName')->willReturn(null);
+        $repository->method('findByChannelNameKey')->willReturn(null);
         $actions = $this->createMock(ChanNetworkActions::class);
         $actions->expects(self::never())->method('kickFromChannel');
 
@@ -675,6 +695,7 @@ final class ChannelForbiddenServiceTest extends TestCase
         $regular = RegisteredChannel::register(new DateTimeImmutable(), '#regular', 1, 'regular');
         $repository = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $repository->method('findByChannelName')->willReturn($regular);
+        $repository->method('findByChannelNameKey')->willReturn($regular);
         $actions = $this->createMock(ChanNetworkActions::class);
         $actions->expects(self::never())->method('kickFromChannel');
 
@@ -688,6 +709,7 @@ final class ChannelForbiddenServiceTest extends TestCase
         $forbidden = RegisteredChannel::createForbidden(new DateTimeImmutable(), '#bad', 'bad');
         $repository = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $repository->method('findByChannelName')->willReturn($forbidden);
+        $repository->method('findByChannelNameKey')->willReturn($forbidden);
         $actions = $this->createMock(ChanNetworkActions::class);
         $actions->expects(self::exactly(2))->method('isChannelOnNetwork')->with('#bad')->willReturn(true);
         $actions->expects(self::exactly(2))->method('kickFromChannel')
@@ -711,6 +733,7 @@ final class ChannelForbiddenServiceTest extends TestCase
         $forbidden = RegisteredChannel::createForbidden(new DateTimeImmutable(), '#bad', 'bad');
         $repository = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $repository->method('findByChannelName')->willReturn($forbidden);
+        $repository->method('findByChannelNameKey')->willReturn($forbidden);
         $actions = $this->createMock(ChanNetworkActions::class);
         $actions->expects(self::once())->method('kickFromChannel')->with('#bad', 'AAA', 'Forbidden channel');
         $actions->expects(self::once())->method('isChannelOnNetwork')->with('#bad')->willReturn(false);
@@ -726,6 +749,7 @@ final class ChannelForbiddenServiceTest extends TestCase
         $regular = RegisteredChannel::register(new DateTimeImmutable(), '#regular', 1, 'regular');
         $repository = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $repository->method('findByChannelName')->willReturn($regular);
+        $repository->method('findByChannelNameKey')->willReturn($regular);
         $actions = $this->createMock(ChanNetworkActions::class);
         $actions->expects(self::never())->method('isChannelOnNetwork');
 
@@ -739,6 +763,7 @@ final class ChannelForbiddenServiceTest extends TestCase
         $forbidden = RegisteredChannel::createForbidden(new DateTimeImmutable(), '#bad', 'bad');
         $repository = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $repository->method('findByChannelName')->willReturn($forbidden);
+        $repository->method('findByChannelNameKey')->willReturn($forbidden);
         $actions = $this->createMock(ChanNetworkActions::class);
         $actions->expects(self::once())->method('isChannelOnNetwork')->with('#bad')->willReturn(false);
         $logger = $this->createMock(ChanServActivitySink::class);

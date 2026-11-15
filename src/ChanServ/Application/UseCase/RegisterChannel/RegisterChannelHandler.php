@@ -38,7 +38,7 @@ final readonly class RegisterChannelHandler implements RegisterChannelHandlerInt
         $channelNameLower = IrcIdentityFold::fold($command->channelName);
         $expiredRejectedChannel = null;
         if ($this->channelRepository->existsByChannelName($channelNameLower)) {
-            $existing = $this->channelRepository->findByChannelName($channelNameLower);
+            $existing = $this->channelRepository->findByChannelNameKey($channelNameLower);
             if (null !== $existing && $existing->isPendingDeletion()) {
                 return RegisterChannelResult::pendingDeletion();
             }

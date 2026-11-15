@@ -46,7 +46,7 @@ final readonly class IdentifiedUserVhostSyncService
     }
 
     /** @param list<string> $nicknames
-     * @return list<RegisteredNick>
+     * @return array<string, RegisteredNick> keyed by each queried nickname that resolves to a registration
      */
     public function findAccountsForBurst(array $nicknames): array
     {

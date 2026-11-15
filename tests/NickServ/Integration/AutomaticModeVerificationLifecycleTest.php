@@ -51,6 +51,7 @@ use App\NickServ\Domain\Entity\RegisteredNick;
 use App\OperServ\Application\Port\In\GlineProjectionQuery;
 use App\OperServ\Application\Port\In\OperatorNetworkProjectionQuery;
 use App\Shared\Application\Port\EventBusInterface;
+use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversNothing;
@@ -124,7 +125,7 @@ final class AutomaticModeVerificationLifecycleTest extends DoctrineIntegrationTe
         bool $throwModes,
     ): void {
         $now = new DateTimeImmutable('2026-11-01T18:00:00Z');
-        $repository = new RegisteredNickDoctrineRepository($this->entityManager);
+        $repository = new RegisteredNickDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network());
         $account = RegisteredNick::createPending('Ares', self::PASSWORD_HASH, null, 'en', $now->modify('+1 hour'), $now);
         $account->changeVhost('ares.example.test');
         $repository->save($account);

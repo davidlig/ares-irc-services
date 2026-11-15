@@ -54,7 +54,7 @@ final class SaregisterChannelHandlerTest extends TestCase
 
         $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepo->expects(self::once())->method('existsByChannelName')->with('#channel')->willReturn(true);
-        $channelRepo->expects(self::once())->method('findByChannelName')->with('#channel')->willReturn($existing);
+        $channelRepo->expects(self::once())->method('findByChannelNameKey')->with('#channel')->willReturn($existing);
 
         $handler = $this->handler(channelRepository: $channelRepo);
         $result = $handler->handle($this->command(channelName: '#Channel'));
@@ -72,7 +72,7 @@ final class SaregisterChannelHandlerTest extends TestCase
 
         $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepo->expects(self::once())->method('existsByChannelName')->with('#restricted')->willReturn(true);
-        $channelRepo->expects(self::once())->method('findByChannelName')->with('#restricted')->willReturn($existing);
+        $channelRepo->expects(self::once())->method('findByChannelNameKey')->with('#restricted')->willReturn($existing);
 
         $handler = $this->handler(channelRepository: $channelRepo);
         $result = $handler->handle($this->command(channelName: '#restricted'));
@@ -88,7 +88,7 @@ final class SaregisterChannelHandlerTest extends TestCase
 
         $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepo->expects(self::once())->method('existsByChannelName')->with('#channel')->willReturn(true);
-        $channelRepo->expects(self::once())->method('findByChannelName')->with('#channel')->willReturn($existing);
+        $channelRepo->expects(self::once())->method('findByChannelNameKey')->with('#channel')->willReturn($existing);
 
         $handler = $this->handler(channelRepository: $channelRepo);
         $result = $handler->handle($this->command(channelName: '#Channel'));
@@ -232,7 +232,7 @@ final class SaregisterChannelHandlerTest extends TestCase
 
         $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('existsByChannelName')->willReturn(true);
-        $channelRepo->method('findByChannelName')->willReturn($expiredRejected);
+        $channelRepo->method('findByChannelNameKey')->willReturn($expiredRejected);
         $channelRepo->method('findByFounderNickId')->willReturn([]);
         $channelRepo->expects(self::once())->method('delete')->with($expiredRejected);
         $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function (RegisteredChannel $chan): void {

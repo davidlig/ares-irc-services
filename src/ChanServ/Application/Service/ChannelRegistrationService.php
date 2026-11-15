@@ -67,7 +67,7 @@ final readonly class ChannelRegistrationService implements ChannelRegistrationLi
     }
 
     /**
-     * @return array{array<string, true>, list<string>}
+     * @return array{array<string, string>, list<string>}
      */
     private function registrationSets(): array
     {
@@ -75,7 +75,7 @@ final readonly class ChannelRegistrationService implements ChannelRegistrationLi
         $eligibleChannelNames = [];
 
         foreach ($this->channelRepository->iterateAll() as $channel) {
-            $registeredNames[IrcIdentityFold::fold($channel->getName())] = true;
+            $registeredNames[IrcIdentityFold::fold($channel->getName())] = $channel->getName();
             if (!$channel->isBlocked()) {
                 $eligibleChannelNames[] = $channel->getName();
             }

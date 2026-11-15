@@ -19,6 +19,7 @@ use App\ChanServ\Application\UseCase\EnforceAkick\SynchronizeAllChannelAkicksHan
 use App\ChanServ\Domain\Entity\ChannelAkick;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\Policy\AkickMatchPolicy;
+use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -135,6 +136,7 @@ final class EnforceChannelAkickHandlerTest extends TestCase
             $actions,
             new AkickMatchPolicy(),
             $activity,
+            NegotiatedCaseMapping::chanServ(),
         );
 
         self::assertSame(1, $handler->handleKnownChannel($this->channel(), [$this->member('001A', '[Foo]!u@h')], $this->now));
@@ -302,7 +304,7 @@ final class EnforceChannelAkickHandlerTest extends TestCase
         ChannelEntryNetworkQuery $network,
         AkickActions $actions,
     ): EnforceChannelAkickHandler {
-        return new EnforceChannelAkickHandler($channels, $akicks, $network, $actions, new AkickMatchPolicy(), $this->createStub(ChanServActivitySink::class));
+        return new EnforceChannelAkickHandler($channels, $akicks, $network, $actions, new AkickMatchPolicy(), $this->createStub(ChanServActivitySink::class), NegotiatedCaseMapping::chanServ());
     }
 
     private function channel(string $name = '#Test', bool $blocked = false): RegisteredChannel

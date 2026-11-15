@@ -12,6 +12,12 @@
 - MEMO READ/DEL and GLINE DEL by index always act on the entry LIST showed, including entries created in the same second (id tiebreaker).
 - Expired GLINE, MOTD and AKICK purges load batches of 100. A maintenance row that keeps failing (expired GLINE/MOTD, inactive or pending-deletion nickname, expired suspension) is logged and skipped, and a failing maintenance task no longer stops the remaining tasks of the cycle. Tasks can declare prerequisites: a task whose prerequisite failed is skipped for that cycle with a warning and retried on the next tick (inactive-channel expiry requires the channel-activity flush; expired-MOTD purge requires the MOTD counter flush).
 - Inactive-channel expiry never drops a channel whose recorded activity has not been written to the database yet.
+- The channel-activity flush tries every chunk, keeps failed ones pending and then reports the failure, so the inactive-channel purge is skipped for that cycle.
+- NickServ maintenance stops a batch and fails the task when a drop or unsuspend closes the EntityManager, and reports failures after a committed change accurately.
+- A failing debug-channel notice no longer keeps expired MOTDs or G-lines forever; a G-line row is kept only when its network removal fails.
+- A server split runs ChanServ rank bookkeeping once per affected channel instead of once per departing user, so large netsplits do not stall the event loop.
+- End-of-burst nick protection logs a failing user and keeps protecting the rest of its chunk.
+- Every configured root spelling (for example `Admin[,Admin{`) is kept and recognised.
 - ChanServ rank enforcement on join no longer stays disabled until reconnect when an end-of-sync listener fails.
 - UnrealUdb: a failed live record mutation clears the shared unit of work after rollback, so no entity is left with values the database no longer holds.
 - IDENTIFY, OP/VOICE and the other manual rank commands, pending rank synchronizations and the ChanServ service-nick checks use the network's own casemapping (or UID) to pick network users and channels; the RFC 1459 fold applies only to registered identities.
@@ -25,7 +31,7 @@
 - Since #166, `+r`/`+P` registration modes are reconciled once after all burst pages, and the ChanServ end-of-burst pass runs before OperServ G-line enforcement.
 - Since #172, NickServ `INFO` and `LIST` show the registration date as "last seen" for nicknames that have never been online, instead of "never seen".
 - Expired GLINE, MOTD and AKICK purges process rows in expiry order.
-- NickServ, ChanServ, MemoServ and OperServ fold nickname and channel identities with a fixed RFC 1459 mapping (case-insensitive, with `[]\^` equal to `{}|~`) for lookups, IDENTIFY, nick protection, AKICK, LIST and stored lookup keys, whatever CASEMAPPING the IRCd negotiates. AKICK masks and protected-nick checks treat `[`/`{`, `]`/`}`, `\`/`|` and `^`/`~` as the same character. NickServ and ChanServ `LIST` sort by the folded key, so names with `[]\^` now sort with `{}|~`, after plain letters, and a `{` pattern also finds `[`.
+- NickServ, ChanServ, MemoServ and OperServ compare nicknames and channel names with the casemapping the IRCd negotiates: on `ascii` networks `Foo[` and `Foo{` are different users and channels, on `rfc1459` networks they are the same. Stored lookup keys use the RFC 1459 fold, so a name whose RFC 1459 form is already registered cannot be registered again. AKICK matching follows the negotiated casemapping, so ChanServ agrees with the IRCd ban (no kick loop on `ascii` networks), and NickServ `INFO` shows the owner view only to the holder of an equivalent nickname. NickServ and ChanServ `LIST` sort by the folded key.
 
 ### Upgrade
 

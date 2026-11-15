@@ -82,7 +82,7 @@ final readonly class ManageChannelLifecycleHandler implements ManageChannelLifec
 
     private function forbid(ManageChannelLifecycle $command): ChannelLifecycleResult
     {
-        $existing = $this->channels->findByChannelName($command->channelName);
+        $existing = $this->channels->findByChannelNameKey($command->channelName);
         if ($this->isRegistrationRequest($existing)) {
             return new ChannelLifecycleResult(ChannelLifecycleOutcome::NotRegistered);
         }

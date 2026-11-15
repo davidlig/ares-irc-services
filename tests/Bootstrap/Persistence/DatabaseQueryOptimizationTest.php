@@ -17,6 +17,7 @@ use App\NickServ\Adapter\Out\Persistence\Doctrine\RegisteredNickDoctrineReposito
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\NickServ\Domain\ValueObject\NickStatus;
 use App\Shared\Domain\IrcIdentityFold;
+use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DriverManager;
@@ -86,7 +87,7 @@ final class DatabaseQueryOptimizationTest extends TestCase
         $this->insertPair(1, 'Mixed', null, 1);
         $this->connection->executeStatement("UPDATE registered_nicks SET email = 'Mixed@Example.com' WHERE id = 1");
         $this->logger->enabled = true;
-        $found = new RegisteredNickDoctrineRepository($this->entityManager)->findByEmail('MIXED@EXAMPLE.COM');
+        $found = new RegisteredNickDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network())->findByEmail('MIXED@EXAMPLE.COM');
         $this->logger->enabled = false;
         self::assertSame('Mixed@Example.com', $found?->getEmail());
         self::assertStringContainsString('email_search_key', $this->logger->queries[0]['sql']);
@@ -100,7 +101,7 @@ final class DatabaseQueryOptimizationTest extends TestCase
         $this->insertPair(2, 'SeenLater', null, 1);
         $this->connection->executeStatement("UPDATE registered_nicks SET registered_at = '2020-01-01 00:00:00', last_seen_at = NULL WHERE id = 1");
         $this->connection->executeStatement("UPDATE registered_nicks SET registered_at = '1901-01-01 00:00:00', last_seen_at = NULL WHERE id = 2");
-        $repository = new RegisteredNickDoctrineRepository($this->entityManager);
+        $repository = new RegisteredNickDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network());
         $threshold = new DateTimeImmutable('2021-01-01 00:00:00');
         self::assertSame(2, self::databaseInteger($this->connection->fetchOne("SELECT COUNT(*) FROM registered_nicks WHERE status = 'registered' AND no_expire = FALSE AND COALESCE(last_seen_at, registered_at) < '2021-01-01 00:00:00'")));
         $this->migrate('latest');
@@ -324,7 +325,7 @@ final class DatabaseQueryOptimizationTest extends TestCase
     private function assertListMatchingAndLifecycleVisibility(): void
     {
         $patterns = ['Alpha', 'ALPHA', 'al*', '*a*', 'missing', 'Éclair', 'écl*', '*mega', 'Σ*', 'İ*', 'percent%name', 'under_score', 'bang!name', 'query?name', 'back\\slash', 'trail ', 'trail', 'many**end', 'mixedstored', 'MIXED*', 'Ämixed', 'ämixed', '*MiXeD*', '*', ''];
-        foreach ([['registered_nicks', 'nickname_lower', new RegisteredNickDoctrineRepository($this->entityManager), ''], ['registered_channels', 'name_lower', new RegisteredChannelDoctrineRepository($this->entityManager), '#']] as [$table, $key, $repository, $prefix]) {
+        foreach ([['registered_nicks', 'nickname_lower', new RegisteredNickDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network()), ''], ['registered_channels', 'name_lower', new RegisteredChannelDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network()), '#']] as [$table, $key, $repository, $prefix]) {
             foreach ($patterns as $pattern) {
                 $pattern = $prefix . $pattern;
                 $like = strtr(IrcIdentityFold::fold($pattern), ['!' => '!!', '%' => '!%', '_' => '!_', '*' => '%']);
@@ -361,7 +362,7 @@ final class DatabaseQueryOptimizationTest extends TestCase
 
     private function assertWhoipEquivalence(): void
     {
-        $repository = new RegisteredNickDoctrineRepository($this->entityManager);
+        $repository = new RegisteredNickDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network());
         foreach (['192.0.2.7', '2001:db8::7', '192.0.2.254'] as $ip) {
             $expected = $this->connection->fetchFirstColumn('SELECT nickname FROM registered_nicks WHERE last_connect_ip = ? ORDER BY nickname_lower ASC, id ASC', [$ip]);
             self::assertSame($expected, $repository->findNicknamesByLastConnectIp($ip));
@@ -406,16 +407,16 @@ final class DatabaseQueryOptimizationTest extends TestCase
     private function assertSelectivePlans(): void
     {
         $this->logger->enabled = true;
-        $nickRepository = new RegisteredNickDoctrineRepository($this->entityManager);
+        $nickRepository = new RegisteredNickDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network());
         $nickRepository->findNicknamesByLastConnectIp('203.0.113.9');
         $nickRepository->findByEmail('FINDME@example.com');
         // Same arguments as the maintenance tasks: production adds ORDER BY id LIMIT <batch size>.
         $nickRepository->findExpiredSuspensions(new DateTimeImmutable('2026-01-01'), UnsuspendExpiredSuspensionsTask::DEFAULT_BATCH_SIZE);
         $nickRepository->findRegisteredInactiveSince(new DateTimeImmutable('2026-01-01'), PurgeInactiveNicknamesTask::DEFAULT_BATCH_SIZE);
-        $channelRepository = new RegisteredChannelDoctrineRepository($this->entityManager);
+        $channelRepository = new RegisteredChannelDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network());
         $channelRepository->findByFounderNickId(999999);
         $channelRepository->findEstablishedByFounderNickId(999999);
-        foreach ([[$nickRepository, ''], [new RegisteredChannelDoctrineRepository($this->entityManager), '#']] as [$repository, $prefix]) {
+        foreach ([[$nickRepository, ''], [new RegisteredChannelDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network()), '#']] as [$repository, $prefix]) {
             foreach (['load12345', 'load1234*'] as $pattern) {
                 $repository->countByPattern($prefix . $pattern);
                 $repository->searchByPattern($prefix . $pattern, 0, 50);
@@ -453,7 +454,7 @@ final class DatabaseQueryOptimizationTest extends TestCase
         $this->logger->enabled = true;
         $count = 0;
         $ids = [];
-        foreach (new RegisteredChannelDoctrineRepository($this->entityManager)->iterateAll() as $channel) {
+        foreach (new RegisteredChannelDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network())->iterateAll() as $channel) {
             $ids[] = $channel->getId();
             if (++$count > 500) {
                 break;

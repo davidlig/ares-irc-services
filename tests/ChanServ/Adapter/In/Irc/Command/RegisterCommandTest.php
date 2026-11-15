@@ -540,6 +540,7 @@ final class RegisterCommandTest extends TestCase
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('existsByChannelName')->willReturn(true);
         $channelRepo->method('findByChannelName')->willReturn($channel);
+        $channelRepo->method('findByChannelNameKey')->willReturn($channel);
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $messages = [];
@@ -603,6 +604,7 @@ final class RegisterCommandTest extends TestCase
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('existsByChannelName')->willReturn(true);
         $channelRepo->method('findByChannelName')->willReturn(null);
+        $channelRepo->method('findByChannelNameKey')->willReturn(null);
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $throttle = new ChannelRegisterThrottleRegistry();
         $channelView = $this->channelViewWithSenderPrefix('#test');

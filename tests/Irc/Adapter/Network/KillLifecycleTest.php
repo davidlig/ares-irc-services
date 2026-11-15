@@ -88,6 +88,7 @@ final class KillLifecycleTest extends TestCase
                 $this->createStub(NickPort\GuestNicknameGenerator::class),
                 $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
                 $this->createStub(NickPort\NicknameAuthenticationModeQuery::class),
+                $this->createStub(NickPort\NetworkNickEquivalence::class),
             );
             $vhost = new NickService\IdentifiedUserVhostSyncService($repo, $actions, new NickService\VhostDisplayResolver(), $this->createStub(NickPort\ForcedVhostCheckerInterface::class), $policy);
             $clock = $this->createStub(NickPort\Clock::class);

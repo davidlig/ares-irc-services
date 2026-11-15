@@ -17,6 +17,7 @@ use App\ChanServ\Application\UseCase\ManageHistory\ManageChannelHistoryHandler;
 use App\ChanServ\Application\UseCase\ManageHistory\ManageChannelHistoryOutcome;
 use App\ChanServ\Domain\Entity\ChannelHistory;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
+use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -132,7 +133,7 @@ final class ChannelHistoryClearTransactionTest extends DoctrineIntegrationTestCa
     private function handler(ChannelHistoryRepositoryInterface $repository, ChannelHistoryRepositoryInterface $writeRepository): ManageChannelHistoryHandler
     {
         return new ManageChannelHistoryHandler(
-            new RegisteredChannelDoctrineRepository($this->entityManager),
+            new RegisteredChannelDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network()),
             $repository,
             new ChannelHistoryService($writeRepository),
             $this->createStub(ChanUserAccountPort::class),

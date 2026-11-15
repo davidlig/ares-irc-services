@@ -4,36 +4,37 @@ declare(strict_types=1);
 
 namespace App\OperServ\Application;
 
-use App\Shared\Domain\IrcIdentityFold;
+use App\OperServ\Application\Port\Out\NetworkNickEquivalence;
 
+use function array_any;
 use function array_filter;
 use function array_map;
+use function array_unique;
 use function array_values;
 use function explode;
 use function strtolower;
 
 final readonly class RootUserRegistry
 {
-    /** @var array<string, string> ASCII-lowered network nicknames keyed by the service identity fold */
+    /** @var list<string> every configured spelling, ASCII-lowered; one network may tell them apart */
     private array $rootNicksLower;
 
-    public function __construct(string $rootUsers)
+    public function __construct(string $rootUsers, private NetworkNickEquivalence $equivalence)
     {
-        $rootNicks = [];
-        foreach (array_filter(array_map('trim', explode(',', $rootUsers))) as $nick) {
-            $rootNicks[IrcIdentityFold::fold($nick)] ??= strtolower($nick);
-        }
-        $this->rootNicksLower = $rootNicks;
+        $this->rootNicksLower = array_values(array_unique(array_map(
+            strtolower(...),
+            array_filter(array_map('trim', explode(',', $rootUsers))),
+        )));
     }
 
     public function isRoot(string $nick): bool
     {
-        return isset($this->rootNicksLower[IrcIdentityFold::fold($nick)]);
+        return array_any($this->rootNicksLower, fn (string $root): bool => $this->equivalence->equivalent($root, $nick));
     }
 
     /** @return list<string> */
     public function getRootNicks(): array
     {
-        return array_values($this->rootNicksLower);
+        return $this->rootNicksLower;
     }
 }
