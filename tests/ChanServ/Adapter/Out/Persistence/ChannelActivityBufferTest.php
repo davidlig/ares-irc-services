@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\ChanServ\Adapter\Out\Persistence;
 
 use App\ChanServ\Adapter\Out\Persistence\ChannelActivityBuffer;
+use ArrayObject;
 use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DriverManager;
@@ -14,6 +15,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use ReflectionProperty;
 use RuntimeException;
+use Throwable;
 
 use function array_filter;
 use function array_keys;
@@ -21,6 +23,7 @@ use function array_map;
 use function array_unique;
 use function array_values;
 use function count;
+use function in_array;
 use function str_contains;
 use function str_starts_with;
 
@@ -151,7 +154,182 @@ final class ChannelActivityBufferTest extends TestCase
         self::assertSame([13], array_keys((array) $pending->getValue($buffer)));
         $isolated = 'Could not flush deferred ChanServ channel activity for one channel; it stays pending and the channel is kept from inactivity expiry.';
         $chunk = 'Could not flush a chunk of deferred ChanServ channel activity; it will be retried.';
-        self::assertSame([[$chunk, null], [$isolated, 13], [$chunk, null], [$isolated, 13]], $errors);
+        self::assertSame([[$chunk, null], [$isolated, 13], [$isolated, 13]], $errors, 'A known-bad row is written on its own, so its chunk is not split again.');
+    }
+
+    #[Test]
+    public function aRowThatFailsOnItsOwnThreeFlushesInARowIsDroppedWithAWarningOnARealConnection(): void
+    {
+        $connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
+        $connection->executeStatement('CREATE TABLE registered_channels (id INTEGER PRIMARY KEY, last_used_at DATETIME NULL)');
+        $connection->executeStatement('WITH RECURSIVE seq(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM seq WHERE n < 250) INSERT INTO registered_channels (id, last_used_at) SELECT n, NULL FROM seq');
+        $connection->executeStatement("CREATE TRIGGER poison_row BEFORE UPDATE ON registered_channels WHEN NEW.id = 13 BEGIN SELECT RAISE(ABORT, 'poison row'); END");
+        $errors = self::recorder();
+        $warnings = self::recorder();
+        $logger = $this->createStub(LoggerInterface::class);
+        $logger->method('error')->willReturnCallback(static function (string $message, array $context) use ($errors): void {
+            $errors[] = [$message, $context['channel_id'] ?? null, $context['attempts'] ?? null];
+        });
+        $logger->method('warning')->willReturnCallback(static function (string $message, array $context) use ($warnings): void {
+            $exception = $context['exception'] ?? null;
+            $warnings[] = [$message, $context['channel_id'] ?? null, $context['attempts'] ?? null, $exception instanceof Throwable && str_contains($exception->getMessage(), 'poison row')];
+        });
+        $buffer = new ChannelActivityBuffer($connection, $logger);
+        $usedAt = new DateTimeImmutable('2026-01-01 00:00:00 UTC');
+        for ($id = 1; $id <= 250; ++$id) {
+            $buffer->record($id, $usedAt);
+        }
+
+        $buffer->flush($usedAt);
+        $buffer->flush($usedAt->modify('+1 minute'));
+        self::assertTrue($buffer->hasPendingActivity(13), 'Two isolated failures keep the row pending.');
+        self::assertCount(0, $warnings);
+
+        $buffer->flush($usedAt->modify('+2 minutes'));
+
+        self::assertFalse($buffer->hasPendingActivity(13), 'The third isolated failure drops the row, so the channel can expire again.');
+        $pending = new ReflectionProperty($buffer, 'pending');
+        self::assertSame([], $pending->getValue($buffer));
+        self::assertNull($connection->fetchOne('SELECT last_used_at FROM registered_channels WHERE id = 13'));
+        $isolated = 'Could not flush deferred ChanServ channel activity for one channel; it stays pending and the channel is kept from inactivity expiry.';
+        $chunk = 'Could not flush a chunk of deferred ChanServ channel activity; it will be retried.';
+        self::assertSame([[$chunk, null, null], [$isolated, 13, 1], [$isolated, 13, 2]], $errors->getArrayCopy());
+        $dropped = 'Dropped deferred ChanServ channel activity for one channel after repeated failures; the channel can expire for inactivity again.';
+        self::assertSame([[$dropped, 13, 3, true]], $warnings->getArrayCopy());
+
+        $buffer->flush($usedAt->modify('+3 minutes'));
+        self::assertCount(1, $warnings, 'A dropped row is not written again.');
+    }
+
+    #[Test]
+    public function aKnownBadRowIsWrittenAloneWhileTheOtherRowsKeepTheirNormalChunks(): void
+    {
+        $statements = self::recorder();
+        $connection = $this->createStub(Connection::class);
+        $connection->method('executeStatement')->willReturnCallback(static function (string $sql, array $params) use ($statements): int {
+            $statements[] = array_values(array_unique(array_filter($params, 'is_int')));
+            if (in_array(7, $params, true)) {
+                throw new RuntimeException('poison row');
+            }
+
+            return 1;
+        });
+        $connection->method('fetchOne')->willReturn(1);
+        $buffer = new ChannelActivityBuffer($connection);
+        $usedAt = new DateTimeImmutable('2026-01-01 00:00:00 UTC');
+        $buffer->record(7, $usedAt);
+        $buffer->record(8, $usedAt);
+        $buffer->flush($usedAt);
+        self::assertSame([[7, 8], [7], [8]], $statements->getArrayCopy());
+
+        $statements->exchangeArray([]);
+        $buffer->record(9, $usedAt);
+        $buffer->record(10, $usedAt);
+        $buffer->flush($usedAt);
+
+        self::assertSame([[9, 10], [7]], $statements->getArrayCopy(), 'The known-bad row is written alone and does not split the chunk of the others.');
+        self::assertTrue($buffer->hasPendingActivity(7));
+        self::assertFalse($buffer->hasPendingActivity(9));
+    }
+
+    #[Test]
+    public function aSuccessfulWriteResetsTheConsecutiveFailureCount(): void
+    {
+        $failNext = new ArrayObject(['enabled' => true]);
+        $connection = $this->createStub(Connection::class);
+        $connection->method('executeStatement')->willReturnCallback(static function () use ($failNext): int {
+            if (true === $failNext['enabled']) {
+                throw new RuntimeException('poison row');
+            }
+
+            return 1;
+        });
+        $connection->method('fetchOne')->willReturn(1);
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::never())->method('warning');
+        $buffer = new ChannelActivityBuffer($connection, $logger);
+        $usedAt = new DateTimeImmutable('2026-01-01 00:00:00 UTC');
+
+        $buffer->record(7, $usedAt);
+        $buffer->flush($usedAt);
+        $buffer->flush($usedAt);
+        $failNext['enabled'] = false;
+        $buffer->flush($usedAt);
+        self::assertFalse($buffer->hasPendingActivity(7));
+
+        $failNext['enabled'] = true;
+        $later = $usedAt->modify('+5 minutes');
+        $buffer->record(7, $later);
+        $buffer->flush($later);
+        $buffer->flush($later);
+
+        self::assertTrue($buffer->hasPendingActivity(7), 'Two failures after a successful write do not reach the drop threshold.');
+    }
+
+    #[Test]
+    public function newActivityKeepsOnlyTheNewerTimestampButDoesNotResetTheFailureCount(): void
+    {
+        $connection = $this->createStub(Connection::class);
+        $connection->method('executeStatement')->willThrowException(new RuntimeException('poison row'));
+        $connection->method('fetchOne')->willReturn(1);
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::once())->method('warning');
+        $buffer = new ChannelActivityBuffer($connection, $logger);
+        $usedAt = new DateTimeImmutable('2026-01-01 00:00:00 UTC');
+
+        $buffer->record(7, $usedAt);
+        $buffer->flush($usedAt);
+        $buffer->record(7, $usedAt->modify('+2 minutes'));
+        $buffer->flush($usedAt->modify('+2 minutes'));
+        $buffer->record(7, $usedAt->modify('+4 minutes'));
+        $buffer->flush($usedAt->modify('+4 minutes'));
+
+        self::assertFalse($buffer->hasPendingActivity(7));
+    }
+
+    #[Test]
+    public function failuresWhileTheDatabaseDoesNotAnswerAreNotCountedAsRowFailures(): void
+    {
+        $database = new ArrayObject(['up' => true]);
+        $connection = $this->createStub(Connection::class);
+        $connection->method('executeStatement')->willThrowException(new RuntimeException('poison row'));
+        $connection->method('fetchOne')->willReturnCallback(static function () use ($database): int {
+            if (true !== $database['up']) {
+                throw new RuntimeException('database unavailable');
+            }
+
+            return 1;
+        });
+        $warnings = self::recorder();
+        $logger = $this->createStub(LoggerInterface::class);
+        $logger->method('warning')->willReturnCallback(static function (string $message) use ($warnings): void {
+            $warnings[] = $message;
+        });
+        $buffer = new ChannelActivityBuffer($connection, $logger);
+        $usedAt = new DateTimeImmutable('2026-01-01 00:00:00 UTC');
+        $buffer->record(7, $usedAt);
+
+        $buffer->flush($usedAt);
+        $database['up'] = false;
+        for ($outage = 0; $outage < 4; ++$outage) {
+            $failure = null;
+            try {
+                $buffer->flush($usedAt);
+            } catch (RuntimeException $e) {
+                $failure = $e;
+            }
+            self::assertInstanceOf(RuntimeException::class, $failure, 'A known-bad row that fails while the database does not answer still fails the flush.');
+            self::assertSame('Could not flush 1 of 1 chunks of deferred ChanServ channel activity (1 channels kept pending).', $failure->getMessage());
+        }
+        $database['up'] = true;
+        $buffer->flush($usedAt);
+        self::assertTrue($buffer->hasPendingActivity(7));
+        self::assertCount(0, $warnings);
+
+        $buffer->flush($usedAt);
+
+        self::assertFalse($buffer->hasPendingActivity(7));
+        self::assertCount(1, $warnings);
     }
 
     #[Test]
@@ -279,5 +457,11 @@ final class ChannelActivityBufferTest extends TestCase
 
         $buffer->flush(new DateTimeImmutable('2026-01-01 00:00:20 UTC'));
         self::assertFalse($buffer->hasPendingActivity(5));
+    }
+
+    /** @return ArrayObject<int, mixed> */
+    private static function recorder(): ArrayObject
+    {
+        return new ArrayObject();
     }
 }

@@ -34,7 +34,6 @@ use App\ChanServ\Domain\Entity\ChannelAkick;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\Exception\ChannelNotRegisteredException;
 use App\ChanServ\Domain\Policy\AkickAdditionPolicy;
-use App\ChanServ\Domain\Policy\AkickMatchPolicy;
 use App\ChanServ\Domain\Policy\AkickProtectionPolicy;
 use App\Irc\Adapter\Protocol\NullChannelModeSupport;
 use App\Irc\Application\Port\In\BurstCompletePort;
@@ -3227,7 +3226,6 @@ final class AkickCommandTest extends TestCase
             $accessRepository,
             $accessHelper,
             new AkickAdditionPolicy(),
-            new AkickMatchPolicy(),
             new AkickProtectionPolicy(),
             $network,
             $actions,

@@ -20,8 +20,8 @@ use App\ChanServ\Domain\Entity\ChannelLevel;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\Exception\ChannelNotRegisteredException;
 use App\ChanServ\Domain\Policy\AkickAdditionPolicy;
-use App\ChanServ\Domain\Policy\AkickMatchPolicy;
 use App\ChanServ\Domain\Policy\AkickProtectionPolicy;
+use App\ChanServ\Domain\Policy\PreparedAkickRules;
 use App\ChanServ\Domain\ValueObject\AkickAdditionDecision;
 use App\ChanServ\Domain\ValueObject\AkickMask;
 use App\ChanServ\Domain\ValueObject\AkickRule;
@@ -46,7 +46,6 @@ final readonly class ManageChannelAkickHandler implements ManageChannelAkickHand
         private ChannelAccessRepositoryInterface $access,
         private ChanServAccessHelper $accessPolicy,
         private AkickAdditionPolicy $additionPolicy,
-        private AkickMatchPolicy $matchPolicy,
         private AkickProtectionPolicy $protectionPolicy,
         private ChannelEntryNetworkQuery $network,
         private AkickActions $actions,
@@ -301,7 +300,7 @@ final readonly class ManageChannelAkickHandler implements ManageChannelAkickHand
             $indexMap[spl_object_id($rule)] = $index + 1;
         }
 
-        $prepared = $this->matchPolicy->prepare($rules, $this->identityFold->fold(...));
+        $prepared = PreparedAkickRules::prepare($rules, $this->identityFold->fold(...));
         if ($command->founderEquivalent && null !== $member->displayMask && $member->displayMask !== $member->userMask) {
             $realMatches = $prepared->allMatches($member->userMask, $command->now, $member->operator);
             $displayMatches = $prepared->allMatches($member->displayMask, $command->now, $member->operator);
@@ -448,7 +447,7 @@ final readonly class ManageChannelAkickHandler implements ManageChannelAkickHand
             }
         }
 
-        $prepared = $this->matchPolicy->prepare($rules, $this->identityFold->fold(...));
+        $prepared = PreparedAkickRules::prepare($rules, $this->identityFold->fold(...));
         $enforcedCount = 0;
         foreach ($channel->members as $member) {
             $matching = $prepared->firstMatch($member->userMask, $now, $member->operator);

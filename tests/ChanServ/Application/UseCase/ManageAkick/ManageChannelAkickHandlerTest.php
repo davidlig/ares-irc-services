@@ -26,7 +26,6 @@ use App\ChanServ\Domain\Entity\ChannelAkick;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\Exception\ChannelNotRegisteredException;
 use App\ChanServ\Domain\Policy\AkickAdditionPolicy;
-use App\ChanServ\Domain\Policy\AkickMatchPolicy;
 use App\ChanServ\Domain\Policy\AkickProtectionPolicy;
 use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use DateTimeImmutable;
@@ -72,7 +71,6 @@ final class ManageChannelAkickHandlerTest extends TestCase
             $access,
             $policy,
             new AkickAdditionPolicy(),
-            new AkickMatchPolicy(),
             new AkickProtectionPolicy(),
             $network,
             $actions,
@@ -1072,7 +1070,6 @@ final class ManageChannelAkickHandlerTest extends TestCase
             $accessRepo,
             $policy,
             new AkickAdditionPolicy(),
-            new AkickMatchPolicy(),
             new AkickProtectionPolicy(),
             $network ?? $this->createStub(ChannelEntryNetworkQuery::class),
             $actions ?? $this->createStub(AkickActions::class),

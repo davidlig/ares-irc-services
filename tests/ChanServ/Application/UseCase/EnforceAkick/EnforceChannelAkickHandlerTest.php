@@ -19,7 +19,6 @@ use App\ChanServ\Application\UseCase\EnforceAkick\SynchronizeAllChannelAkicks;
 use App\ChanServ\Application\UseCase\EnforceAkick\SynchronizeAllChannelAkicksHandler;
 use App\ChanServ\Domain\Entity\ChannelAkick;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
-use App\ChanServ\Domain\Policy\AkickMatchPolicy;
 use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use ArrayObject;
 use DateTimeImmutable;
@@ -138,7 +137,6 @@ final class EnforceChannelAkickHandlerTest extends TestCase
             $this->createStub(ChannelAkickRepositoryInterface::class),
             $this->createStub(ChannelEntryNetworkQuery::class),
             $actions,
-            new AkickMatchPolicy(),
             $this->createStub(ChanServActivitySink::class),
             $fold,
         );
@@ -185,7 +183,6 @@ final class EnforceChannelAkickHandlerTest extends TestCase
             $akicks,
             $this->createStub(ChannelEntryNetworkQuery::class),
             $actions,
-            new AkickMatchPolicy(),
             $activity,
             NegotiatedCaseMapping::chanServ(),
         );
@@ -355,7 +352,7 @@ final class EnforceChannelAkickHandlerTest extends TestCase
         ChannelEntryNetworkQuery $network,
         AkickActions $actions,
     ): EnforceChannelAkickHandler {
-        return new EnforceChannelAkickHandler($channels, $akicks, $network, $actions, new AkickMatchPolicy(), $this->createStub(ChanServActivitySink::class), NegotiatedCaseMapping::chanServ());
+        return new EnforceChannelAkickHandler($channels, $akicks, $network, $actions, $this->createStub(ChanServActivitySink::class), NegotiatedCaseMapping::chanServ());
     }
 
     private function channel(string $name = '#Test', bool $blocked = false): RegisteredChannel

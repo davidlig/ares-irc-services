@@ -59,7 +59,7 @@ change is deliberately specified and tested.
 
 - AKICK entries use wildcard matching against `nick!ident@host`, folded with the casemapping the
   IRCd negotiated (Irc `NetworkIdentityEquivalence` port). Rules are prepared once per
-  enforcement pass (`AkickMatchPolicy::prepare`), so each pattern is folded once. Expired entries do
+  enforcement pass (`PreparedAkickRules::prepare`), so each pattern is folded once. Expired entries do
   not match; the first non-expired match is enforced with a ban followed by a kick. IRC operators
   are exempt.
 - A missing AKICK reason becomes `AKICK: <mask>`. Adding an AKICK protects founder, successor, and

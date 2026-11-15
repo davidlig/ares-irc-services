@@ -11,7 +11,7 @@ use App\ChanServ\Application\Port\Out\ChanServActivitySink;
 use App\ChanServ\Application\Port\Out\NetworkIdentityFold;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
-use App\ChanServ\Domain\Policy\AkickMatchPolicy;
+use App\ChanServ\Domain\Policy\PreparedAkickRules;
 use App\ChanServ\Domain\ValueObject\AkickMask;
 use App\ChanServ\Domain\ValueObject\AkickRule;
 use DateTimeImmutable;
@@ -28,7 +28,6 @@ final readonly class EnforceChannelAkickHandler implements EnforceChannelAkickHa
         private ChannelAkickRepositoryInterface $akicks,
         private ChannelEntryNetworkQuery $network,
         private AkickActions $actions,
-        private AkickMatchPolicy $matchPolicy,
         private ChanServActivitySink $activity,
         private NetworkIdentityFold $identityFold,
     ) {}
@@ -80,7 +79,7 @@ final readonly class EnforceChannelAkickHandler implements EnforceChannelAkickHa
             $ruleMap[spl_object_id($rule)] = $akick;
         }
 
-        $prepared = $this->matchPolicy->prepare($rules, $this->identityFold->fold(...));
+        $prepared = PreparedAkickRules::prepare($rules, $this->identityFold->fold(...));
         $enforced = 0;
         $used = [];
         try {

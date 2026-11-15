@@ -34,7 +34,6 @@ use App\ChanServ\Application\UseCase\Unban\UnbanChannelHandler;
 use App\ChanServ\Application\UseCase\Unban\UnbanChannelOutcome;
 use App\ChanServ\Domain\Entity\ChannelAkick;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
-use App\ChanServ\Domain\Policy\AkickMatchPolicy;
 use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
 use App\Irc\Adapter\In\Event\CoreApplyOutgoingChannelKickAdapter;
 use App\Irc\Adapter\In\Event\CoreApplyOutgoingChannelModesAdapter;
@@ -165,7 +164,6 @@ final class AkickEnforcementUnbanIntegrationTest extends TestCase
             $akickRepo,
             $this->entryNetworkQuery,
             $this->akickActions,
-            new AkickMatchPolicy(),
             $this->createStub(ChanServActivitySink::class),
             NegotiatedCaseMapping::chanServ(),
         );
@@ -278,7 +276,6 @@ final class AkickEnforcementUnbanIntegrationTest extends TestCase
             $akickRepo,
             $this->entryNetworkQuery,
             $this->akickActions,
-            new AkickMatchPolicy(),
             $this->createStub(ChanServActivitySink::class),
             NegotiatedCaseMapping::chanServ(),
         );
@@ -391,7 +388,6 @@ final class AkickEnforcementUnbanIntegrationTest extends TestCase
             $akickRepo,
             $this->entryNetworkQuery,
             $this->akickActions,
-            new AkickMatchPolicy(),
             $this->createStub(ChanServActivitySink::class),
             NegotiatedCaseMapping::chanServ(),
         );

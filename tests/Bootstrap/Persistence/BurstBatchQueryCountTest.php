@@ -37,7 +37,6 @@ use App\ChanServ\Application\UseCase\EnforceRanks\EnforceChannelRanksHandler;
 use App\ChanServ\Application\UseCase\SynchronizeBurst\SynchronizeBurstChannelsHandler;
 use App\ChanServ\Domain\Entity\ChannelAkick;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
-use App\ChanServ\Domain\Policy\AkickMatchPolicy;
 use App\ChanServ\Domain\Policy\AutomaticRankPolicy;
 use App\ChanServ\Domain\Policy\ChannelAccessPolicy;
 use App\ChanServ\Domain\Policy\RankReconciliationPolicy;
@@ -157,7 +156,7 @@ final class BurstBatchQueryCountTest extends TestCase
                 self::assertSame('*!*@bad.host', $mask);
                 $removed[$channelName . ' ' . $uid] = true;
             });
-        $akicks = new EnforceChannelAkickHandler($channels, $akickRepo, $network, $akickActions, new AkickMatchPolicy(), $this->createStub(ChanServActivitySink::class), NegotiatedCaseMapping::chanServ());
+        $akicks = new EnforceChannelAkickHandler($channels, $akickRepo, $network, $akickActions, $this->createStub(ChanServActivitySink::class), NegotiatedCaseMapping::chanServ());
         $nojoinActions = $this->createMock(NojoinActions::class);
         $nojoinActions->expects(self::exactly($channelCount * ($membersPerChannel - 3)))->method('kick')
             ->willReturnCallback(static function (string $channelName, string $uid) use ($removed): void {

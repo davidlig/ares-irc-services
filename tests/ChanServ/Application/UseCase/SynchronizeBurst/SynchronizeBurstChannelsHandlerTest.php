@@ -50,7 +50,6 @@ use App\ChanServ\Domain\Entity\ChannelAccess;
 use App\ChanServ\Domain\Entity\ChannelAkick;
 use App\ChanServ\Domain\Entity\ChannelLevel;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
-use App\ChanServ\Domain\Policy\AkickMatchPolicy;
 use App\ChanServ\Domain\Policy\AutomaticRankPolicy;
 use App\ChanServ\Domain\Policy\ChannelAccessPolicy;
 use App\ChanServ\Domain\Policy\RankReconciliationPolicy;
@@ -227,7 +226,7 @@ final class SynchronizeBurstChannelsHandlerTest extends TestCase
         $akickRepository = $this->createMock(ChannelAkickRepositoryInterface::class);
         $akickRepository->expects(self::once())->method('saveAll')->with([$akick]);
         $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
-        $akicks = new EnforceChannelAkickHandler($channels, $akickRepository, $network, $akickActions, new AkickMatchPolicy(), $this->createStub(ChanServActivitySink::class), NegotiatedCaseMapping::chanServ());
+        $akicks = new EnforceChannelAkickHandler($channels, $akickRepository, $network, $akickActions, $this->createStub(ChanServActivitySink::class), NegotiatedCaseMapping::chanServ());
         $nojoinActions = $this->createMock(NojoinActions::class);
         $nojoinActions->expects(self::once())->method('kick')->with('#active', 'U2', 'Bob', 0, 100, 'es')->willReturnCallback(static function () use (&$trace, &$members, $subscriber): void {
             $trace[] = 'nojoin:U2';

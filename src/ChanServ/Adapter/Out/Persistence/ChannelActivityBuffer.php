@@ -14,6 +14,8 @@ use RuntimeException;
 use Throwable;
 
 use function array_chunk;
+use function array_diff_key;
+use function array_intersect_key;
 use function count;
 use function implode;
 use function sprintf;
@@ -30,11 +32,21 @@ final class ChannelActivityBuffer implements ChannelActivityPendingQuery
     /** Three bound parameters per channel keeps each statement at 600 parameters. */
     private const int CHANNELS_PER_STATEMENT = 200;
 
+    /** A row that fails on its own this many flushes in a row is dropped. */
+    private const int MAX_CONSECUTIVE_ROW_FAILURES = 3;
+
     /** @var array<int, DateTimeImmutable> */
     private array $pending = [];
 
     /** @var array<int, DateTimeImmutable> */
     private array $lastRecordedAt = [];
+
+    /**
+     * Consecutive isolated (row-specific) write failures per pending channel.
+     *
+     * @var array<int, int>
+     */
+    private array $rowFailures = [];
 
     public function __construct(
         private readonly Connection $connection,
@@ -63,12 +75,18 @@ final class ChannelActivityBuffer implements ChannelActivityPendingQuery
      * Writes pending activity in chunks so no statement binds an unbounded number of parameters.
      *
      * Every chunk is attempted and written chunks are cleared. When a chunk fails while the
-     * database still answers, its rows are retried one by one: a row that also fails on its own
+     * database still answers, its rows are retried one by one. A row that also fails on its own
      * is logged and stays pending (so the inactive-channel purge keeps that channel), without
-     * failing the flush, so expiry still runs for every other channel. A failure that is not
-     * row-specific (the database does not answer) keeps the chunk pending and is reported with
-     * one exception once all chunks were tried, so the maintenance task running this flush fails
-     * and the tasks that require it are skipped for the cycle.
+     * failing the flush, so expiry still runs for every other channel. Such a known-bad row is
+     * written on its own on later flushes, so it no longer splits the chunk of the other rows.
+     * After three consecutive isolated failures it is dropped with a warning: the channel loses
+     * that activity timestamp but can expire for inactivity again. A successful write resets the
+     * count; newer activity only replaces the pending timestamp and keeps counting.
+     *
+     * A failure that is not row-specific (the database does not answer) is never counted against
+     * a row: it keeps the rows pending and is reported with one exception once all chunks were
+     * tried, so the maintenance task running this flush fails and the tasks that require it are
+     * skipped for the cycle.
      *
      * @throws RuntimeException when at least one chunk could not be written for a reason that is not row-specific
      */
@@ -76,7 +94,11 @@ final class ChannelActivityBuffer implements ChannelActivityPendingQuery
     {
         $this->pruneThrottleHistory($now ?? new DateTimeImmutable());
 
-        $chunks = array_chunk($this->pending, self::CHANNELS_PER_STATEMENT, true);
+        $knownBad = array_intersect_key($this->pending, $this->rowFailures);
+        $chunks = [
+            ...array_chunk(array_diff_key($this->pending, $this->rowFailures), self::CHANNELS_PER_STATEMENT, true),
+            ...array_chunk($knownBad, 1, true),
+        ];
         $failedChunks = 0;
         $failedChannels = 0;
         $firstFailure = null;
@@ -85,16 +107,22 @@ final class ChannelActivityBuffer implements ChannelActivityPendingQuery
             try {
                 $this->writeBatch($batch);
             } catch (Throwable $exception) {
-                $this->logger->error('Could not flush a chunk of deferred ChanServ channel activity; it will be retried.', [
-                    'channels' => count($batch),
-                    'exception' => $exception,
-                ]);
                 if (!$this->databaseAnswers()) {
+                    $this->logger->error('Could not flush a chunk of deferred ChanServ channel activity; it will be retried.', [
+                        'channels' => count($batch),
+                        'exception' => $exception,
+                    ]);
                     ++$failedChunks;
                     $failedChannels += count($batch);
                     $firstFailure ??= $exception;
 
                     continue;
+                }
+                if (1 < count($batch)) {
+                    $this->logger->error('Could not flush a chunk of deferred ChanServ channel activity; it will be retried.', [
+                        'channels' => count($batch),
+                        'exception' => $exception,
+                    ]);
                 }
                 $this->writeRowsOneByOne($batch, $exception);
 
@@ -126,15 +154,34 @@ final class ChannelActivityBuffer implements ChannelActivityPendingQuery
                 }
                 $this->writeBatch($row);
             } catch (Throwable $exception) {
-                $this->logger->error('Could not flush deferred ChanServ channel activity for one channel; it stays pending and the channel is kept from inactivity expiry.', [
-                    'channel_id' => $channelId,
-                    'exception' => $exception,
-                ]);
+                $this->recordRowFailure($channelId, $exception);
 
                 continue;
             }
             $this->clearWritten($row);
         }
+    }
+
+    private function recordRowFailure(int $channelId, Throwable $exception): void
+    {
+        $attempts = ($this->rowFailures[$channelId] ?? 0) + 1;
+        if (self::MAX_CONSECUTIVE_ROW_FAILURES > $attempts) {
+            $this->rowFailures[$channelId] = $attempts;
+            $this->logger->error('Could not flush deferred ChanServ channel activity for one channel; it stays pending and the channel is kept from inactivity expiry.', [
+                'channel_id' => $channelId,
+                'attempts' => $attempts,
+                'exception' => $exception,
+            ]);
+
+            return;
+        }
+
+        unset($this->pending[$channelId], $this->rowFailures[$channelId]);
+        $this->logger->warning('Dropped deferred ChanServ channel activity for one channel after repeated failures; the channel can expire for inactivity again.', [
+            'channel_id' => $channelId,
+            'attempts' => $attempts,
+            'exception' => $exception,
+        ]);
     }
 
     /**
@@ -143,6 +190,7 @@ final class ChannelActivityBuffer implements ChannelActivityPendingQuery
     private function clearWritten(array $batch): void
     {
         foreach ($batch as $channelId => $usedAt) {
+            unset($this->rowFailures[$channelId]);
             if (($this->pending[$channelId] ?? null) === $usedAt) {
                 unset($this->pending[$channelId]);
             }

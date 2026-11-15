@@ -15,7 +15,6 @@ use App\ChanServ\Application\UseCase\EnforceAkick\EnforceChannelAkick;
 use App\ChanServ\Application\UseCase\EnforceAkick\EnforceChannelAkickHandler;
 use App\ChanServ\Domain\Entity\ChannelAkick;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
-use App\ChanServ\Domain\Policy\AkickMatchPolicy;
 use App\Irc\Adapter\Event\ConnectionLostEvent;
 use App\Irc\Adapter\Network\CaseMappingSessionSubscriber;
 use App\Irc\Adapter\Network\NetworkIdentityEquivalenceTracker;
@@ -108,7 +107,6 @@ final class NegotiatedCaseMappingEnforcementTest extends DoctrineIntegrationTest
             $akicks,
             $network,
             $this->createStub(AkickActions::class),
-            new AkickMatchPolicy(),
             $this->createStub(ChanServActivitySink::class),
             new IrcNetworkIdentityFold($tracker),
         );

@@ -31,7 +31,6 @@ use App\ChanServ\Application\UseCase\EnforceNojoin\EnforceChannelNojoinHandler;
 use App\ChanServ\Application\UseCase\EnforceNojoin\SynchronizeAllChannelNojoinHandlerInterface;
 use App\ChanServ\Application\UseCase\EnforceRanks\EnforceChannelRanksHandler;
 use App\ChanServ\Domain\Entity\ChannelAkick;
-use App\ChanServ\Domain\Policy\AkickMatchPolicy;
 use App\ChanServ\Domain\Policy\AutomaticRankPolicy;
 use App\ChanServ\Domain\Policy\ChannelAccessPolicy;
 use App\ChanServ\Domain\Policy\RankReconciliationPolicy;
@@ -158,7 +157,7 @@ final class RankQueryCountTest extends TestCase
                 $this->createStub(SynchronizeAllChannelNojoinHandlerInterface::class),
             ));
             $dispatcher->addSubscriber(new ChanServAkickEnforceSubscriber(
-                new EnforceChannelAkickHandler($registeredChannels, new ChannelAkickDoctrineRepository($em), $entryNetwork, $akickActions, new AkickMatchPolicy(), $this->createStub(ChanServActivitySink::class), NegotiatedCaseMapping::chanServ()),
+                new EnforceChannelAkickHandler($registeredChannels, new ChannelAkickDoctrineRepository($em), $entryNetwork, $akickActions, $this->createStub(ChanServActivitySink::class), NegotiatedCaseMapping::chanServ()),
                 $this->createStub(SynchronizeAllChannelAkicksHandlerInterface::class),
             ));
             $dispatcher->addSubscriber(new ChanServChannelRankSubscriber($handler, new PendingChannelRankSynchronizations(), $burst, new BurstRankEventScope(NegotiatedCaseMapping::chanServ()), $this->createStub(RegisteredChannelBurstSnapshot::class), new DelinkDepartureRankScope($policy, $network)));

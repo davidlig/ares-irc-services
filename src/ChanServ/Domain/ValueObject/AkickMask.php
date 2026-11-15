@@ -36,7 +36,7 @@ final readonly class AkickMask
      */
     public function matches(string $userMask, Closure $fold): bool
     {
-        return ($this->matcher($fold))($fold($userMask));
+        return self::glob($fold($this->value), $fold($userMask));
     }
 
     /**
