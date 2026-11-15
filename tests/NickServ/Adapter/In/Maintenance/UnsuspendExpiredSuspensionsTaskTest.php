@@ -373,6 +373,50 @@ final class UnsuspendExpiredSuspensionsTaskTest extends TestCase
     }
 
     #[Test]
+    public function aSuspensionWhoseSaveClosedTheEntityManagerIsRetriedFirstInTheNextCycle(): void
+    {
+        $nicks = [];
+        foreach (['First', 'Second', 'Third'] as $index => $nickname) {
+            $nicks[] = $this->createNickWithId($nickname, $index + 1);
+        }
+        $pages = [];
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findExpiredSuspensions')
+            ->willReturnCallback(static function (DateTimeImmutable $now, int $limit, int $afterId) use ($nicks, &$pages): array {
+                $pages[] = $afterId;
+
+                return array_values(array_filter($nicks, static fn (RegisteredNick $nick): bool => $nick->getId() > $afterId));
+            });
+        $open = true;
+        $attempts = [];
+        $nickRepo->method('save')->willReturnCallback(static function (RegisteredNick $nick) use (&$open, &$attempts): void {
+            $attempts[] = $nick->getNickname();
+            if ('Second' === $nick->getNickname() && 2 === count($attempts)) {
+                $open = false;
+
+                throw new RuntimeException('flush failed');
+            }
+        });
+        $em = $this->createStub(EntityManagerInterface::class);
+        $em->method('isOpen')->willReturnCallback(static function () use (&$open): bool {
+            return $open;
+        });
+        $task = new UnsuspendExpiredSuspensionsTask($nickRepo, $this->createStub(ServiceDebugNotifierInterface::class), new NullLogger(), $this->clock(), $this->createStub(NickServEventPublisher::class), self::SERVER_NAME, 3600, $em);
+
+        try {
+            $task->run();
+            self::fail('The closed EntityManager must fail the task.');
+        } catch (RuntimeException $e) {
+            self::assertSame('flush failed', $e->getMessage());
+        }
+        $open = true;
+        $task->run();
+
+        self::assertSame([0, 1], $pages);
+        self::assertSame(['First', 'Second', 'Second', 'Third'], $attempts);
+    }
+
+    #[Test]
     public function aFailureAfterTheUnsuspendWasSavedIsLoggedAsUnsuspendedAndTheBatchContinues(): void
     {
         $first = $this->createNickWithId('First', 1);

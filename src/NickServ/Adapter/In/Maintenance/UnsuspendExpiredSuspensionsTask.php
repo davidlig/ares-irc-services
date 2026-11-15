@@ -73,16 +73,21 @@ final class UnsuspendExpiredSuspensionsTask implements MaintenanceTaskInterface
             }
 
             foreach ($expired as $nick) {
-                $this->cursor = max($this->cursor, $nick->getId());
+                $id = $nick->getId();
 
                 try {
                     $nick->unsuspend();
                     $this->nickRepository->save($nick);
                 } catch (Throwable $e) {
                     $this->recordSaveFailure($nick, $e);
+                    $this->cursor = max($this->cursor, $id);
 
                     continue;
                 }
+
+                // Advanced only after a row-specific outcome: a closed EntityManager rethrows above,
+                // so the next cycle retries this suspension instead of skipping it.
+                $this->cursor = max($this->cursor, $id);
 
                 try {
                     $this->announce($nick);

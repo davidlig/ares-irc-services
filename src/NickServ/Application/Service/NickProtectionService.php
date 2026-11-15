@@ -25,7 +25,6 @@ use App\NickServ\Application\PublishedEvent\UserDeidentifiedEvent;
 use App\NickServ\Application\UseCase\IssueMigrationRescueToken\IssueMigrationRescueToken;
 use App\NickServ\Application\UseCase\IssueMigrationRescueToken\IssueMigrationRescueTokenHandlerInterface;
 use App\NickServ\Domain\Entity\RegisteredNick;
-use App\Shared\Domain\IrcIdentityFold;
 use DateTimeImmutable;
 
 use function base64_decode;
@@ -366,7 +365,7 @@ final readonly class NickProtectionService
             }
         }
 
-        if (null !== $identifiedNick && IrcIdentityFold::equals($identifiedNick, $account->getNickname())) {
+        if (null !== $identifiedNick && $this->nickEquivalence->equivalent($identifiedNick, $account->getNickname())) {
             $this->markIdentifiedAndDispatch($account, $user, $occurredAt, $activityBatch);
 
             return;

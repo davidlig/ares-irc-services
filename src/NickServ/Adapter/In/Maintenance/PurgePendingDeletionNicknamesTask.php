@@ -80,13 +80,16 @@ final class PurgePendingDeletionNicknamesTask implements MaintenanceTaskInterfac
                 // Doctrine unsets the id once the drop is flushed; keep what the failure log needs.
                 $id = $nick->getId();
                 $nickname = $nick->getNickname();
-                $this->cursor = max($this->cursor, $id);
 
                 try {
                     $this->dropService->hardDropNick($nick, $now, 'manual-grace-expired', null);
                 } catch (Throwable $e) {
                     $this->recordFailure($id, $nickname, $e);
                 }
+
+                // Advanced only after a row-specific outcome: a closed EntityManager rethrows above,
+                // so the next cycle retries this nick instead of skipping it.
+                $this->cursor = max($this->cursor, $id);
             }
 
             $this->entityManager?->clear();

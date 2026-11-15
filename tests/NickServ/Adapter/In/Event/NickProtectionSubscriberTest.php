@@ -455,12 +455,79 @@ final class NickProtectionSubscriberTest extends TestCase
         self::assertSame(2, $attempts);
         self::assertSame($this->now, $accounts['User1']->getLastSeenAt());
         self::assertSame([NickBurstBatchStartedEvent::class, NickBurstBatchFinishedEvent::class], $batchEvents);
-        self::assertSame([[
-            'level' => 'error',
-            'message' => 'NickServ burst protection stopped: the EntityManager is closed, so the remaining burst users are left unprotected.',
-            'context' => ['chunk' => 1, 'remaining_users' => 201, 'exception' => $failure],
-        ]], $logger->records);
+        self::assertSame([
+            [
+                'level' => 'warning',
+                'message' => 'NickServ burst protection did not save the last-seen activity of 2 users: the EntityManager is closed.',
+                'context' => ['chunk' => 1],
+            ],
+            [
+                'level' => 'error',
+                'message' => 'NickServ burst protection stopped: the EntityManager is closed, so the remaining burst users are left unprotected.',
+                'context' => ['chunk' => 1, 'remaining_users' => 200, 'exception' => $failure],
+            ],
+        ], $logger->records);
         self::assertTrue($this->burstState->isComplete());
+    }
+
+    #[Test]
+    public function aClosedEntityManagerMidwayThroughALaterChunkReportsOnlyTheUsersLeftUnprotected(): void
+    {
+        $this->networkUserLookup->expects(self::never())->method('findByUid');
+        $this->notifier->expects(self::never())->method('setUserVhost');
+        $accounts = [];
+        for ($number = 1; $number <= 400; ++$number) {
+            $account = RegisteredNick::createPending('User' . $number, 'hash', $number . '@example.com', 'en', $this->now, $this->now);
+            $account->activate();
+            new ReflectionProperty(RegisteredNick::class, 'id')->setValue($account, $number);
+            $accounts['User' . $number] = $account;
+        }
+        $saved = [];
+        $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $repo->expects(self::exactly(2))->method('findByNicknamesLower')->willReturn($accounts);
+        $repo->method('saveActivityBatch')->willReturnCallback(static function (array $batch) use (&$saved): void {
+            $saved[] = count($batch);
+        });
+        $failure = new RuntimeException('transaction rolled back');
+        $closed = false;
+        $attempts = 0;
+        $publisher = $this->createStub(NickServEventPublisher::class);
+        $publisher->method('publish')->willReturnCallback(static function () use ($failure, &$closed, &$attempts): void {
+            if (351 !== ++$attempts) {
+                return;
+            }
+            $closed = true;
+
+            throw $failure;
+        });
+        $entityManager = $this->createStub(EntityManagerInterface::class);
+        $entityManager->method('isOpen')->willReturnCallback(static function () use (&$closed): bool {
+            return !$closed;
+        });
+        $logger = $this->recordingLogger();
+        $this->initializeSubscriber($repo, $publisher, null, $logger, $entityManager);
+        $this->networkUserLookup->expects(self::never())->method('findByUid');
+        $this->notifier->expects(self::never())->method('setUserVhost');
+        foreach ($accounts as $nickname => $account) {
+            $this->burstState->addPending(new NetworkUser('UID' . $account->getId(), $nickname, 'i', 'h', 'c', 'ip', true));
+        }
+
+        $this->subscriber->onBurstComplete(new NetworkSynchronizationCompletedEvent('001'));
+
+        self::assertSame(351, $attempts);
+        self::assertSame([200], $saved);
+        self::assertSame([
+            [
+                'level' => 'warning',
+                'message' => 'NickServ burst protection did not save the last-seen activity of 151 users: the EntityManager is closed.',
+                'context' => ['chunk' => 2],
+            ],
+            [
+                'level' => 'error',
+                'message' => 'NickServ burst protection stopped: the EntityManager is closed, so the remaining burst users are left unprotected.',
+                'context' => ['chunk' => 2, 'remaining_users' => 50, 'exception' => $failure],
+            ],
+        ], $logger->records);
     }
 
     #[Test]

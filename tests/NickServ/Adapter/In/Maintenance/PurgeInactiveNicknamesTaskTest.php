@@ -346,6 +346,51 @@ final class PurgeInactiveNicknamesTaskTest extends TestCase
     }
 
     #[Test]
+    public function aNickWhoseDropClosedTheEntityManagerIsRetriedFirstInTheNextCycle(): void
+    {
+        $pages = [];
+        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repo->method('findRegisteredInactiveSince')
+            ->willReturnCallback(function (DateTimeImmutable $threshold, int $limit, int $afterId) use (&$pages): array {
+                $pages[] = $afterId;
+
+                return array_values(array_filter(
+                    [$this->nick(1, 'First'), $this->nick(2, 'Second'), $this->nick(3, 'Third')],
+                    static fn (RegisteredNick $nick): bool => $nick->getId() > $afterId,
+                ));
+            });
+        $open = true;
+        $attempts = [];
+        $dropService = $this->createStub(NickDropService::class);
+        $dropService->method('dropNick')
+            ->willReturnCallback(static function (RegisteredNick $nick) use (&$open, &$attempts): void {
+                $attempts[] = $nick->getNickname();
+                if ('Second' === $nick->getNickname() && 2 === count($attempts)) {
+                    $open = false;
+
+                    throw new RuntimeException('transaction rolled back');
+                }
+            });
+        $em = $this->createStub(EntityManagerInterface::class);
+        $em->method('isOpen')->willReturnCallback(static function () use (&$open): bool {
+            return $open;
+        });
+        $task = new PurgeInactiveNicknamesTask($repo, $dropService, new NullLogger(), $this->clock(), 3600, 90, $em);
+
+        try {
+            $task->run();
+            self::fail('The closed EntityManager must fail the task.');
+        } catch (RuntimeException $e) {
+            self::assertSame('transaction rolled back', $e->getMessage());
+        }
+        $open = true;
+        $task->run();
+
+        self::assertSame([0, 1], $pages);
+        self::assertSame(['First', 'Second', 'Second', 'Third'], $attempts);
+    }
+
+    #[Test]
     public function aFailureAfterTheDropCommittedIsLoggedAsDroppedAndTheBatchContinues(): void
     {
         $dropped = $this->nick(1, 'Gone');

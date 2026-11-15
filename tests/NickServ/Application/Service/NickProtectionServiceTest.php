@@ -697,6 +697,56 @@ final class NickProtectionServiceTest extends TestCase
         $service->onNickChanged('UID1', 'OldNick', '{REG}|~', new DateTimeImmutable());
     }
 
+    /** @return iterable<string, array{CaseMapping, bool}> */
+    public static function identifiedSpellingOfABraceAccount(): iterable
+    {
+        yield 'ascii keeps brackets and braces apart' => [CaseMapping::Ascii, true];
+        yield 'rfc1459 folds brackets onto braces' => [CaseMapping::Rfc1459, false];
+    }
+
+    #[Test]
+    #[DataProvider('identifiedSpellingOfABraceAccount')]
+    public function anIdentifiedUserMatchesTheAccountUnderTheNegotiatedCaseMapping(CaseMapping $mapping, bool $renamed): void
+    {
+        $burstState = new BurstState();
+        $burstState->markComplete();
+        $identifiedRegistry = new IdentifiedSessionRegistry();
+        $identifiedRegistry->register('UID1', 'nick[');
+        $account = RegisteredNick::createActive('nick{', 'hash', 'u@e.com', 'en', new DateTimeImmutable());
+        new ReflectionClass(RegisteredNick::class)->getProperty('id')->setValue($account, 1);
+        $user = new NetworkUser('UID1', 'nick{', 'i', 'h', 'c', 'ip', true);
+        $now = new DateTimeImmutable('2026-11-15 12:00:00');
+
+        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $notifier = $this->createMock(NickNetworkActions::class);
+        $notifier->expects($renamed ? self::once() : self::never())->method('forceNick');
+
+        $service = new NickProtectionService(
+            $repo,
+            $this->createStub(NickNetworkUserLookup::class),
+            $notifier,
+            $burstState,
+            $identifiedRegistry,
+            new SessionLanguageRegistry(),
+            $this->createStub(PendingNickRestoreRegistryInterface::class),
+            $this->createStub(NickProtectionNotifier::class),
+            $this->createStub(NickServEventPublisher::class),
+            $this->createStub(ForbiddenNickService::class),
+            $this->createStub(NickChangeIdentificationPolicy::class),
+            $this->guestNicknameGenerator(),
+            $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
+            $this->authenticationModeQuery(),
+            NegotiatedCaseMapping::nickServ($mapping),
+        );
+
+        $lastSeenBefore = $account->getLastSeenAt();
+
+        $service->enforceProtectionWithAccount($user, $now, $account);
+
+        self::assertSame($renamed ? $lastSeenBefore : $now, $account->getLastSeenAt());
+        self::assertSame($renamed ? 'nick[' : 'nick{', $identifiedRegistry->findNick('UID1'));
+    }
+
     #[Test]
     public function onNickChangedSkipsWhenUserIdentifiedFlagTrue(): void
     {
