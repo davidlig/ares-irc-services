@@ -28,7 +28,7 @@ use function sprintf;
  * batch per-channel work across the whole split. Each quit is isolated: a failing quit listener is
  * logged and the remaining split users still quit, and the failing user itself is still removed from
  * the network state by the enricher, so no ghost users stay. The finished event is published once at
- * the end.
+ * the end, even when a started listener fails after it already began its batch.
  */
 final readonly class ServerDelinkedSubscriber implements EventSubscriberInterface
 {
@@ -62,8 +62,8 @@ final readonly class ServerDelinkedSubscriber implements EventSubscriberInterfac
             count($affected),
         ));
 
-        $this->eventDispatcher->dispatch(new ServerDelinkStartedEvent($event->serverSid));
         try {
+            $this->eventDispatcher->dispatch(new ServerDelinkStartedEvent($event->serverSid));
             foreach ($affected as $user) {
                 try {
                     $this->eventDispatcher->dispatch(new UserQuitReceivedEvent($user->uid->value, $reason));

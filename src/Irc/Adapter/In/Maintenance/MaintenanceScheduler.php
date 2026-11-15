@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\In\Maintenance;
 
+use App\Irc\Adapter\Out\Persistence\ClosedEntityManagerReset;
 use App\Irc\Application\Port\In\Maintenance\MaintenanceTaskInterface;
 use App\Irc\Application\Port\In\Maintenance\PrerequisiteAwareMaintenanceTaskInterface;
-use Doctrine\ORM\EntityManagerInterface;
-use Doctrine\Persistence\ManagerRegistry;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -37,8 +36,7 @@ use function usort;
  * A database error can close the Doctrine EntityManager, which would make every later
  * Doctrine-backed task fail until restart. The scheduler therefore resets a closed
  * EntityManager (logged as a warning) at the start of each cycle and after each failed
- * task. The default EntityManager service is lazy, so the reset reopens it in place
- * for every service that already holds it.
+ * task (see ClosedEntityManagerReset, which IRCClient also runs before every incoming line).
  */
 final class MaintenanceScheduler
 {
@@ -54,7 +52,7 @@ final class MaintenanceScheduler
     public function __construct(
         iterable $tasks,
         private readonly LoggerInterface $logger,
-        private readonly ?ManagerRegistry $managerRegistry = null,
+        private readonly ClosedEntityManagerReset $entityManagerReset = new ClosedEntityManagerReset(),
     ) {
         $sorted = iterator_to_array($tasks, false);
         usort($sorted, static fn (MaintenanceTaskInterface $a, MaintenanceTaskInterface $b) => $a->getOrder() <=> $b->getOrder());
@@ -128,22 +126,7 @@ final class MaintenanceScheduler
 
     private function resetClosedEntityManager(?string $afterTask): void
     {
-        if (null === $this->managerRegistry) {
-            return;
-        }
-
-        $context = ['after_task' => $afterTask];
-        try {
-            $manager = $this->managerRegistry->getManager();
-            if (!$manager instanceof EntityManagerInterface || $manager->isOpen()) {
-                return;
-            }
-
-            $this->logger->warning('Maintenance: the EntityManager is closed, resetting it', $context);
-            $this->managerRegistry->resetManager();
-        } catch (Throwable $e) {
-            $this->logger->error('Maintenance: resetting the closed EntityManager failed', $context + ['exception' => $e]);
-        }
+        $this->entityManagerReset->resetIfClosed($this->logger, 'Maintenance', ['after_task' => $afterTask]);
     }
 
     /**

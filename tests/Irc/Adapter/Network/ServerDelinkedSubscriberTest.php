@@ -145,6 +145,42 @@ final class ServerDelinkedSubscriberTest extends TestCase
         self::assertSame(['002'], $finished->serverSids);
     }
 
+    /**
+     * A started listener (ChanServ opens its departure batch there) can fail after it already began
+     * its work; the finished event must still close it.
+     */
+    #[Test]
+    public function onServerDelinkedPublishesFinishedWhenAStartedListenerFails(): void
+    {
+        $users = new InMemoryNetworkUserRepository();
+        $users->add($this->createUser('001AAAAAA', 'Alice', '002'));
+        $failure = new RuntimeException('started listener failed');
+        $finished = new class {
+            /** @var list<string> */
+            public array $serverSids = [];
+        };
+        $dispatcher = new EventDispatcher();
+        $dispatcher->addListener(ServerDelinkStartedEvent::class, static function () use ($failure): void {
+            throw $failure;
+        });
+        $dispatcher->addListener(ServerDelinkFinishedEvent::class, static function (ServerDelinkFinishedEvent $event) use ($finished): void {
+            $finished->serverSids[] = $event->serverSid;
+        });
+        $this->userRepository->expects(self::never())->method('findByServerSids');
+        $this->eventDispatcher->expects(self::never())->method('dispatch');
+        $this->logger->expects(self::once())->method('info');
+
+        try {
+            new ServerDelinkedSubscriber($users, $dispatcher, $this->logger)
+                ->onServerDelinked(new ServerDelinkedEvent('002', 'Server split'));
+            self::fail('The started listener failure must propagate.');
+        } catch (RuntimeException $exception) {
+            self::assertSame($failure, $exception);
+        }
+
+        self::assertSame(['002'], $finished->serverSids);
+    }
+
     #[Test]
     public function onServerDelinkedDoesNothingWhenNoAffectedUsers(): void
     {

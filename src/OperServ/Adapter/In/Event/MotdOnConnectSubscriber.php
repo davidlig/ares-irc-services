@@ -6,6 +6,7 @@ namespace App\OperServ\Adapter\In\Event;
 
 use App\Irc\Application\Port\In\ActiveProtocolModuleHolderInterface;
 use App\Irc\Application\Port\In\ChannelLookupPort;
+use App\Irc\Application\Port\In\NetworkIdentityEquivalence;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SendNoticePort;
 use App\Irc\Application\Port\In\ServiceChannelRegistrationPort;
@@ -19,7 +20,6 @@ use App\OperServ\Application\Model\MessageDelivery;
 use App\OperServ\Application\Port\Out\MotdEntry;
 use App\OperServ\Application\Port\Out\MotdRepository;
 use App\OperServ\Domain\ValueObject\GlobalMessageMask;
-use App\Shared\Domain\IrcIdentityFold;
 use DateTimeImmutable;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -38,7 +38,9 @@ use function time;
  *
  * Pseudo-clients (nick!ident@vhost) stay connected as long as at least one
  * active MOTD references them. Multiple MOTDs sharing the same mask reuse
- * the same pseudo-client, which quits only when the last MOTD is removed.
+ * the same pseudo-client, which quits only when the last MOTD is removed. Nicknames
+ * are compared with the casemapping the link negotiated, so `Bot[` and `bot{` share a
+ * pseudo-client under RFC 1459 but not under ASCII.
  *
  * Late MOTD additions (after sync) are reconciled on every user join.
  * On services restart, active pseudo-clients are re-introduced.
@@ -50,7 +52,7 @@ final class MotdOnConnectSubscriber implements EventSubscriberInterface
     private bool $isSynced = false;
 
     /**
-     * Map of nickname_lower => pseudo-client aggregated info.
+     * Map of nickname folded with the negotiated casemapping => pseudo-client aggregated info.
      *
      * @var array<string, array{uid: string, mask: GlobalMessageMask, motdIds: int[]}>
      */
@@ -67,6 +69,7 @@ final class MotdOnConnectSubscriber implements EventSubscriberInterface
         private readonly NickAccountQuery $nickAccounts,
         private readonly SendNoticePort $sendNoticePort,
         private readonly NickCollisionResolver $nickCollisionResolver,
+        private readonly NetworkIdentityEquivalence $identityEquivalence,
         private readonly ?string $debugChannel,
         private readonly LoggerInterface $logger = new NullLogger(),
     ) {}
@@ -120,7 +123,7 @@ final class MotdOnConnectSubscriber implements EventSubscriberInterface
                 continue;
             }
 
-            $nickLower = IrcIdentityFold::fold($mask->nickname);
+            $nickLower = $this->identityEquivalence->fold($mask->nickname);
 
             if (isset($this->pseudoClients[$nickLower])) {
                 $pc = &$this->pseudoClients[$nickLower];
@@ -252,7 +255,7 @@ final class MotdOnConnectSubscriber implements EventSubscriberInterface
                 continue;
             }
 
-            $nickLower = IrcIdentityFold::fold($mask->nickname);
+            $nickLower = $this->identityEquivalence->fold($mask->nickname);
             $pc = $this->pseudoClients[$nickLower] ?? null;
 
             if (null !== $pc) {

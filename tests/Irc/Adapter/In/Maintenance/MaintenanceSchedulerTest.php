@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Irc\Adapter\In\Maintenance;
 
 use App\Irc\Adapter\In\Maintenance\MaintenanceScheduler;
+use App\Irc\Adapter\Out\Persistence\ClosedEntityManagerReset;
 use App\Irc\Application\Port\In\Maintenance\MaintenanceTaskInterface;
 use App\Irc\Application\Port\In\Maintenance\PrerequisiteAwareMaintenanceTaskInterface;
 use Doctrine\ORM\EntityManagerInterface;
@@ -432,7 +433,7 @@ final class MaintenanceSchedulerTest extends TestCase
             ['after_task' => 'task.closing'],
         );
 
-        $scheduler = new MaintenanceScheduler([$laterTask, $closingTask], $logger, $this->registryFor($persistence));
+        $scheduler = new MaintenanceScheduler([$laterTask, $closingTask], $logger, new ClosedEntityManagerReset($this->registryFor($persistence)));
         $scheduler->tick();
 
         self::assertSame(['task.closing', 'task.later:open'], $holder->runOrder);
@@ -450,7 +451,7 @@ final class MaintenanceSchedulerTest extends TestCase
         $logger->expects(self::never())->method('warning');
         $logger->expects(self::once())->method('error')->with('Maintenance task failed', self::anything());
 
-        $scheduler = new MaintenanceScheduler([$failingTask, $laterTask], $logger, $this->registryFor($persistence));
+        $scheduler = new MaintenanceScheduler([$failingTask, $laterTask], $logger, new ClosedEntityManagerReset($this->registryFor($persistence)));
         $scheduler->tick();
 
         self::assertSame(['task.failing', 'task.later:open'], $holder->runOrder);
@@ -470,7 +471,7 @@ final class MaintenanceSchedulerTest extends TestCase
             ['after_task' => null],
         );
 
-        $scheduler = new MaintenanceScheduler([$task], $logger, $this->registryFor($persistence));
+        $scheduler = new MaintenanceScheduler([$task], $logger, new ClosedEntityManagerReset($this->registryFor($persistence)));
         $scheduler->tick();
 
         self::assertSame(['task.only:open'], $holder->runOrder);
@@ -492,7 +493,7 @@ final class MaintenanceSchedulerTest extends TestCase
             ['after_task' => null, 'exception' => $persistence->resetFailure],
         );
 
-        $scheduler = new MaintenanceScheduler([$task], $logger, $this->registryFor($persistence));
+        $scheduler = new MaintenanceScheduler([$task], $logger, new ClosedEntityManagerReset($this->registryFor($persistence)));
         $scheduler->tick();
 
         self::assertSame(['task.only:closed'], $holder->runOrder);
@@ -509,7 +510,7 @@ final class MaintenanceSchedulerTest extends TestCase
         $scheduler = new MaintenanceScheduler(
             [new MaintenanceSchedulerTestTask($holder, 'task.failing', 100, true)],
             $this->createStub(LoggerInterface::class),
-            $registry,
+            new ClosedEntityManagerReset($registry),
         );
         $scheduler->tick();
 

@@ -7,6 +7,7 @@ namespace App\Tests\OperServ\Adapter\In\Event;
 use App\Irc\Application\Port\In\ActiveProtocolModuleHolderInterface;
 use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\Irc\Application\Port\In\ChannelView;
+use App\Irc\Application\Port\In\NetworkIdentityEquivalence;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\ProtocolModuleInterface;
 use App\Irc\Application\Port\In\ProtocolServiceActionsInterface;
@@ -32,6 +33,8 @@ use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+
+use function count;
 
 #[CoversClass(MotdOnConnectSubscriber::class)]
 final class MotdOnConnectSubscriberTest extends TestCase
@@ -438,6 +441,17 @@ final class MotdOnConnectSubscriberTest extends TestCase
         $x->onSyncComplete();
     }
 
+    /**
+     * `Bot[` and `bot{` are one nick under RFC 1459 but two under ASCII, so the pseudo-clients follow
+     * the casemapping the link negotiated.
+     */
+    #[Test]
+    public function pseudoClientsAreKeyedByTheNegotiatedCaseMapping(): void
+    {
+        self::assertSame(2, $this->introducedPseudoClients(CaseMapping::Ascii));
+        self::assertSame(1, $this->introducedPseudoClients(CaseMapping::Rfc1459));
+    }
+
     #[Test]
     public function skipWhenNickRegisteredOnAsciiNetworkWithBrackets(): void
     {
@@ -710,6 +724,50 @@ final class MotdOnConnectSubscriberTest extends TestCase
         );
     }
 
+    private function introducedPseudoClients(CaseMapping $mapping): int
+    {
+        $a = $this->motd('First', 'Bot[!bot@h.com', 'PRIVMSG');
+        $b = $this->motd('Second', 'bot{!bot@h.com', 'NOTICE');
+        $r = $this->createStub(MotdRepository::class);
+        $r->method('findActiveAt')->willReturn([$a, $b]);
+        $u = $this->createStub(ServiceUidRegistry::class);
+        $u->method('getUidByNickname')->willReturn(null);
+        $l = $this->createStub(NetworkUserLookupPort::class);
+        $l->method('findByNick')->willReturn(null);
+        $n = $this->createStub(NickAccountQuery::class);
+        $n->method('findIdByNick')->willReturn(null);
+
+        $introduced = [];
+        $sa = $this->createStub(ProtocolServiceActionsInterface::class);
+        $sa->method('introducePseudoClient')->willReturnCallback(
+            static function (string $sid, string $nick, string $ident, string $vhost, string $uid) use (&$introduced): void {
+                $introduced[] = $nick;
+            },
+        );
+        $c = $this->createStub(ActiveProtocolModuleHolderInterface::class);
+        $c->method('getProtocolModule')->willReturn($this->mod($sa));
+        $c->method('getServerSid')->willReturn('0A0');
+        $p = $this->createStub(PseudoClientUidGenerator::class);
+        $p->method('generate')->willReturnOnConsecutiveCalls('0A0Z00001', '0A0Z00002');
+
+        $sent = [];
+        $s = $this->createStub(SendNoticePort::class);
+        $s->method('sendMessage')->willReturnCallback(
+            static function (string $from, string $to, string $message) use (&$sent): void {
+                $sent[] = [$from, $message];
+            },
+        );
+
+        $x = $this->sub(r: $r, u: $u, c: $c, p: $p, l: $l, n: $n, s: $s, eq: NegotiatedCaseMapping::network($mapping));
+        $x->onSyncComplete();
+        $x->onUserJoined(new UserJoinedNetworkAppEvent($this->dto()));
+
+        $expectedSecondSender = 2 === count($introduced) ? '0A0Z00002' : '0A0Z00001';
+        self::assertSame([['0A0Z00001', 'First'], [$expectedSecondSender, 'Second']], $sent);
+
+        return count($introduced);
+    }
+
     private function sub(
         ?MotdRepository $r = null,
         ?ServiceUidRegistry $u = null,
@@ -722,6 +780,7 @@ final class MotdOnConnectSubscriberTest extends TestCase
         ?SendNoticePort $s = null,
         ?NickCollisionResolver $f = null,
         ?string $debugChannel = null,
+        ?NetworkIdentityEquivalence $eq = null,
     ): MotdOnConnectSubscriber {
         return new MotdOnConnectSubscriber(
             $r ?? $this->createStub(MotdRepository::class),
@@ -734,6 +793,7 @@ final class MotdOnConnectSubscriberTest extends TestCase
             $n ?? $this->createStub(NickAccountQuery::class),
             $s ?? $this->createStub(SendNoticePort::class),
             $f ?? $this->createStub(NickCollisionResolver::class),
+            $eq ?? NegotiatedCaseMapping::network(),
             $debugChannel,
         );
     }

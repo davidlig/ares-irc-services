@@ -10,6 +10,7 @@ use App\Irc\Adapter\Event\IncomingIrcMessageEvent;
 use App\Irc\Adapter\Event\IrcMessageProcessedEvent;
 use App\Irc\Adapter\Event\MessageReceivedEvent;
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
+use App\Irc\Adapter\Out\Persistence\ClosedEntityManagerReset;
 use App\Irc\Adapter\Protocol\IRCMessage;
 use App\Irc\Adapter\Protocol\ProtocolHandlerInterface;
 use App\Irc\Adapter\Runtime\IRCClient;
@@ -27,16 +28,21 @@ use App\Irc\Domain\ValueObject\ServerName;
 use App\Shared\Application\Port\AsyncMessageDispatcherInterface;
 use App\Shared\Application\Port\EventBusInterface;
 use Closure;
+use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\Persistence\ManagerRegistry;
 use Monolog\Handler\TestHandler;
 use Monolog\Logger;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 use RuntimeException;
 use stdClass;
 use Symfony\Component\Messenger\Envelope;
 
 use function array_filter;
+use function array_shift;
 use function array_values;
 use function range;
 use function serialize;
@@ -179,6 +185,48 @@ final class IRCClientTest extends TestCase
         self::assertSame(range(0, 2049), $handled);
         self::assertSame(SessionEventPump::READER_HIGH_WATER, $pump->getPeakQueueSize());
         self::assertSame(0, $pump->getQueueSize());
+    }
+
+    /**
+     * A command whose flush failed (REGISTER, IDENTIFY, ...) closes the EntityManager; the next line
+     * must not find it closed until the next maintenance tick.
+     */
+    #[Test]
+    public function aClosedEntityManagerIsReopenedBeforeTheNextLineIsProcessed(): void
+    {
+        $lines = ['PRIVMSG NickServ :REGISTER secret', 'PRIVMSG NickServ :IDENTIFY secret', null];
+        $this->connection = $this->createStub(ConnectionInterface::class);
+        $this->connection->method('isConnected')->willReturn(true);
+        $this->connection->method('readLine')->willReturnCallback(static function () use (&$lines): ?string {
+            return array_shift($lines);
+        });
+        $persistence = new IRCClientTestPersistence();
+        $entityManager = $this->createStub(EntityManagerInterface::class);
+        $entityManager->method('isOpen')->willReturnCallback(static fn (): bool => !$persistence->closed);
+        $registry = $this->createStub(ManagerRegistry::class);
+        $registry->method('getManager')->willReturn($entityManager);
+        $registry->method('resetManager')->willReturnCallback(static function () use ($persistence, $entityManager): EntityManagerInterface {
+            ++$persistence->resets;
+            $persistence->closed = false;
+
+            return $entityManager;
+        });
+        $openWhenHandled = [];
+        $this->protocol = $this->createStub(ProtocolHandlerInterface::class);
+        $this->protocol->method('parseRawLine')->willReturnCallback(IRCMessage::fromRawLine(...));
+        $this->protocol->method('handleIncoming')->willReturnCallback(
+            static function () use ($persistence, &$openWhenHandled): void {
+                $openWhenHandled[] = !$persistence->closed;
+                $persistence->closed = true;
+            },
+        );
+        $handler = new TestHandler();
+
+        $this->createClient(logger: new Logger('test', [$handler]), entityManagerReset: new ClosedEntityManagerReset($registry))->run();
+
+        self::assertSame([true, true], $openWhenHandled);
+        self::assertSame(1, $persistence->resets);
+        self::assertTrue($handler->hasWarningThatContains('IRC: the EntityManager is closed, resetting it'));
     }
 
     #[Test]
@@ -748,6 +796,8 @@ final class IRCClientTest extends TestCase
     private function createClient(
         ?LoopSchedulerInterface $loopScheduler = null,
         ?SessionEventPump $eventPump = null,
+        ?LoggerInterface $logger = null,
+        ?ClosedEntityManagerReset $entityManagerReset = null,
     ): IRCClient {
         return new IRCClient(
             $this->connection,
@@ -756,8 +806,17 @@ final class IRCClientTest extends TestCase
             $this->messageBus,
             $this->burstCompleteRegistry,
             60,
+            logger: $logger ?? new NullLogger(),
             loopScheduler: $loopScheduler ?? new RevoltLoopScheduler(),
             eventPump: $eventPump,
+            entityManagerReset: $entityManagerReset ?? new ClosedEntityManagerReset(),
         );
     }
+}
+
+final class IRCClientTestPersistence
+{
+    public bool $closed = false;
+
+    public int $resets = 0;
 }

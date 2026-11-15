@@ -19,7 +19,12 @@ use Psr\Log\NullLogger;
 use RuntimeException;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function array_filter;
+use function array_map;
+use function array_slice;
+use function array_values;
 use function count;
+use function in_array;
 use function is_string;
 use function str_contains;
 
@@ -154,6 +159,57 @@ final class PurgeExpiredMotdsTaskTest extends TestCase
         self::assertSame([[1, 2]], $deleted);
     }
 
+    /**
+     * A mass expiry must not block the event loop: one tick handles at most maxBatchesPerCycle
+     * batches and the next tick continues from the keyset cursor; a short page ends the sweep.
+     */
+    #[Test]
+    public function oneTickHandlesAtMostTheBatchCapAndTheNextTickContinues(): void
+    {
+        $state = new PurgeExpiredMotdsTestState([1, 2, 3, 4, 5, 6, 7]);
+        $motdRepository = $this->createStub(MotdRepository::class);
+        $motdRepository->method('findExpiredAt')->willReturnCallback(
+            function (DateTimeImmutable $at, ?MotdEntry $after, ?int $limit) use ($state): array {
+                $state->loads[] = [$after?->id, $limit];
+                $page = array_values(array_filter($state->ids, static fn (int $id): bool => $id > ($after->id ?? 0)));
+
+                return array_map($this->expired(...), array_slice($page, 0, $limit));
+            },
+        );
+        $motdRepository->method('deleteByIds')->willReturnCallback(static function (array $ids) use ($state): int {
+            $state->ids = array_values(array_filter($state->ids, static fn (int $id): bool => !in_array($id, $ids, true)));
+
+            return count($ids);
+        });
+        $debugNotifier = $this->createStub(ServiceDebugNotifierInterface::class);
+        $debugNotifier->method('notify')->willReturnCallback(static function () use ($state): void {
+            ++$state->handled;
+        });
+        $task = $this->createTask(motdRepository: $motdRepository, debugNotifier: $debugNotifier, batchSize: 2, maxBatchesPerCycle: 2);
+
+        $task->run();
+        self::assertSweep($state, [[null, 2], [2, 2]], [5, 6, 7], 4);
+
+        $task->run();
+        self::assertSweep($state, [[null, 2], [2, 2], [4, 2], [6, 2]], [], 7);
+
+        // The short page above ended the sweep, so the next one restarts from the beginning.
+        $state->ids = [8];
+        $task->run();
+        self::assertSweep($state, [[null, 2], [2, 2], [4, 2], [6, 2], [null, 2]], [], 8);
+    }
+
+    /**
+     * @param list<array{?int, ?int}> $loads
+     * @param list<int>               $ids
+     */
+    private static function assertSweep(PurgeExpiredMotdsTestState $state, array $loads, array $ids, int $handled): void
+    {
+        self::assertSame($loads, $state->loads);
+        self::assertSame($ids, $state->ids);
+        self::assertSame($handled, $state->handled);
+    }
+
     private function expired(int $id): MotdEntry
     {
         return new MotdEntry($id, 'Expired ' . $id, 'Bot1', MessageDelivery::Interactive, true, new DateTimeImmutable('-2 hours'), new DateTimeImmutable('-1 hour'), 0);
@@ -165,6 +221,7 @@ final class PurgeExpiredMotdsTaskTest extends TestCase
         int $intervalSeconds = 3600,
         int $batchSize = 100,
         ?LoggerInterface $logger = null,
+        int $maxBatchesPerCycle = PurgeExpiredMotdsTask::DEFAULT_MAX_BATCHES,
     ): PurgeExpiredMotdsTask {
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static function (string $id, array $params = []): string {
@@ -202,6 +259,19 @@ final class PurgeExpiredMotdsTaskTest extends TestCase
             'UTC',
             $intervalSeconds,
             $batchSize,
+            $maxBatchesPerCycle,
         );
     }
+}
+
+final class PurgeExpiredMotdsTestState
+{
+    /** @var list<array{?int, ?int}> */
+    public array $loads = [];
+
+    /** Expired rows whose removal was announced (event or debug notice). */
+    public int $handled = 0;
+
+    /** @param list<int> $ids expired MOTD ids still stored */
+    public function __construct(public array $ids) {}
 }

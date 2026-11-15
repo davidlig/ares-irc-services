@@ -24,22 +24,33 @@ use function sprintf;
  * is logged on its own and the expired MOTD is still removed, so an unavailable debug
  * channel never keeps expired rows forever.
  *
+ * A cycle handles at most maxBatchesPerCycle batches, so a mass expiry cannot block the
+ * event loop; the keyset cursor is kept between cycles, so the next cycle continues where
+ * this one stopped, and a short page ends the sweep. The cursor only advances once a batch
+ * was deleted.
+ *
  * Requires the MOTD shown-counter flush (order 364) to have succeeded in the same
  * cycle, so the finalized notice reports a current shown count.
  */
-final readonly class PurgeExpiredMotdsTask implements PrerequisiteAwareMaintenanceTaskInterface
+final class PurgeExpiredMotdsTask implements PrerequisiteAwareMaintenanceTaskInterface
 {
     public const int DEFAULT_BATCH_SIZE = 100;
 
+    public const int DEFAULT_MAX_BATCHES = 10;
+
+    /** Last MOTD visited by the current sweep; null starts a new sweep. */
+    private ?MotdEntry $cursor = null;
+
     public function __construct(
-        private MotdRepository $motdRepository,
-        private ServiceDebugNotifierInterface $debugNotifier,
-        private TranslatorInterface $translator,
-        private LoggerInterface $logger,
-        private string $defaultLanguage,
-        private string $defaultTimezone,
-        private int $intervalSeconds,
-        private int $batchSize = self::DEFAULT_BATCH_SIZE,
+        private readonly MotdRepository $motdRepository,
+        private readonly ServiceDebugNotifierInterface $debugNotifier,
+        private readonly TranslatorInterface $translator,
+        private readonly LoggerInterface $logger,
+        private readonly string $defaultLanguage,
+        private readonly string $defaultTimezone,
+        private readonly int $intervalSeconds,
+        private readonly int $batchSize = self::DEFAULT_BATCH_SIZE,
+        private readonly int $maxBatchesPerCycle = self::DEFAULT_MAX_BATCHES,
     ) {}
 
     public function getName(): string
@@ -65,9 +76,10 @@ final readonly class PurgeExpiredMotdsTask implements PrerequisiteAwareMaintenan
     public function run(): void
     {
         $occurredAt = new DateTimeImmutable();
-        $after = null;
+        $batches = 0;
 
         do {
+            $after = $this->cursor;
             $expired = $this->motdRepository->findExpiredAt($occurredAt, $after, $this->batchSize);
             $ids = [];
             foreach ($expired as $motd) {
@@ -79,7 +91,15 @@ final readonly class PurgeExpiredMotdsTask implements PrerequisiteAwareMaintenan
             if ([] !== $ids) {
                 $this->motdRepository->deleteByIds($ids);
             }
-        } while (count($expired) === $this->batchSize);
+
+            ++$batches;
+            if (count($expired) < $this->batchSize) {
+                $this->cursor = null;
+
+                return;
+            }
+            $this->cursor = $after;
+        } while ($batches < $this->maxBatchesPerCycle);
     }
 
     private function notifyFinalized(MotdEntry $motd): void

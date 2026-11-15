@@ -19,7 +19,12 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use RuntimeException;
 
+use function array_filter;
+use function array_map;
+use function array_slice;
+use function array_values;
 use function count;
+use function in_array;
 
 #[CoversClass(PurgeExpiredGlinesTask::class)]
 #[CoversClass(GlineRemovedEvent::class)]
@@ -262,8 +267,103 @@ final class PurgeExpiredGlinesTaskTest extends TestCase
         new PurgeExpiredGlinesTask($glineRepo, $debugNotifier, $eventDispatcher, $logger, self::SERVER_NAME, 3600)->run();
     }
 
+    /**
+     * A mass expiry must not block the event loop: one tick handles at most maxBatchesPerCycle
+     * batches and the next tick continues from the keyset cursor; a short page ends the sweep.
+     */
+    #[Test]
+    public function oneTickHandlesAtMostTheBatchCapAndTheNextTickContinues(): void
+    {
+        $state = new PurgeExpiredGlinesTestState([1, 2, 3, 4, 5, 6, 7]);
+        $eventDispatcher = $this->createStub(EventBusInterface::class);
+        $eventDispatcher->method('dispatch')->willReturnCallback(static function () use ($state): void {
+            ++$state->handled;
+        });
+        $task = new PurgeExpiredGlinesTask($this->repositoryFor($state), $this->createStub(ServiceDebugNotifierInterface::class), $eventDispatcher, new NullLogger(), self::SERVER_NAME, 3600, 2, 2);
+
+        $task->run();
+        self::assertSweep($state, [[null, 2], [2, 2]], [5, 6, 7], 4);
+
+        $task->run();
+        self::assertSweep($state, [[null, 2], [2, 2], [4, 2], [6, 2]], [], 7);
+
+        // The short page above ended the sweep, so the next one restarts from the beginning.
+        $state->ids = [8];
+        $task->run();
+        self::assertSweep($state, [[null, 2], [2, 2], [4, 2], [6, 2], [null, 2]], [], 8);
+    }
+
+    #[Test]
+    public function aBatchWhoseDeleteFailsIsRetriedFromTheSameCursorOnTheNextTick(): void
+    {
+        $state = new PurgeExpiredGlinesTestState([1, 2, 3, 4, 5]);
+        $task = new PurgeExpiredGlinesTask($this->repositoryFor($state), $this->createStub(ServiceDebugNotifierInterface::class), $this->createStub(EventBusInterface::class), new NullLogger(), self::SERVER_NAME, 3600, 2, 1);
+
+        $task->run();
+        $state->deleteFailures = 1;
+        try {
+            $task->run();
+            self::fail('The delete failure must propagate to the scheduler.');
+        } catch (RuntimeException) {
+        }
+        $task->run();
+
+        self::assertSame([[null, 2], [2, 2], [2, 2]], $state->loads);
+        self::assertSame([5], $state->ids);
+    }
+
+    private function repositoryFor(PurgeExpiredGlinesTestState $state): GlineRepository
+    {
+        $repository = $this->createStub(GlineRepository::class);
+        $repository->method('findExpiredAt')->willReturnCallback(
+            function (DateTimeImmutable $at, ?GlineEntry $after, ?int $limit) use ($state): array {
+                $state->loads[] = [$after?->id, $limit];
+                $page = array_values(array_filter($state->ids, static fn (int $id): bool => $id > ($after->id ?? 0)));
+
+                return array_map($this->expired(...), array_slice($page, 0, $limit));
+            },
+        );
+        $repository->method('deleteByIds')->willReturnCallback(static function (array $ids) use ($state): int {
+            if ($state->deleteFailures > 0) {
+                --$state->deleteFailures;
+
+                throw new RuntimeException('database error');
+            }
+            $state->ids = array_values(array_filter($state->ids, static fn (int $id): bool => !in_array($id, $ids, true)));
+
+            return count($ids);
+        });
+
+        return $repository;
+    }
+
+    /**
+     * @param list<array{?int, ?int}> $loads
+     * @param list<int>               $ids
+     */
+    private static function assertSweep(PurgeExpiredGlinesTestState $state, array $loads, array $ids, int $handled): void
+    {
+        self::assertSame($loads, $state->loads);
+        self::assertSame($ids, $state->ids);
+        self::assertSame($handled, $state->handled);
+    }
+
     private function expired(int $id): GlineEntry
     {
         return new GlineEntry('*@host' . $id . '.test', null, null, new DateTimeImmutable('-2 hours'), new DateTimeImmutable('-1 hour'), $id);
     }
+}
+
+final class PurgeExpiredGlinesTestState
+{
+    /** @var list<array{?int, ?int}> */
+    public array $loads = [];
+
+    /** Expired rows whose removal was announced (event or debug notice). */
+    public int $handled = 0;
+
+    public int $deleteFailures = 0;
+
+    /** @param list<int> $ids expired G-line ids still stored */
+    public function __construct(public array $ids) {}
 }

@@ -6,6 +6,7 @@ namespace App\OperServ\Adapter\In\Maintenance;
 
 use App\Irc\Application\Port\In\Maintenance\MaintenanceTaskInterface;
 use App\Irc\Application\Port\In\ServiceDebugNotifierInterface;
+use App\OperServ\Application\Port\Out\GlineEntry;
 use App\OperServ\Application\Port\Out\GlineRepository;
 use App\OperServ\Application\PublishedEvent\GlineRemovedEvent;
 use App\Shared\Application\Port\EventBusInterface;
@@ -23,19 +24,30 @@ use function sprintf;
  * for the next cycle; the keyset cursor moves past it so it never blocks the remaining
  * rows or the later maintenance tasks. The debug-channel log is best-effort: its failure
  * is logged on its own and never keeps a G-line that was removed from the network.
+ *
+ * A cycle handles at most maxBatchesPerCycle batches, so a mass expiry cannot block the event
+ * loop; the keyset cursor is kept between cycles, so the next cycle continues where this one
+ * stopped, and a short page ends the sweep (the next cycle starts again from the beginning,
+ * which also retries the skipped rows). The cursor only advances once a batch was deleted.
  */
-final readonly class PurgeExpiredGlinesTask implements MaintenanceTaskInterface
+final class PurgeExpiredGlinesTask implements MaintenanceTaskInterface
 {
     public const int DEFAULT_BATCH_SIZE = 100;
 
+    public const int DEFAULT_MAX_BATCHES = 10;
+
+    /** Last G-line visited by the current sweep; null starts a new sweep. */
+    private ?GlineEntry $cursor = null;
+
     public function __construct(
-        private GlineRepository $glineRepository,
-        private ServiceDebugNotifierInterface $debugNotifier,
-        private EventBusInterface $eventDispatcher,
-        private LoggerInterface $logger,
-        private string $serverName,
-        private int $intervalSeconds,
-        private int $batchSize = self::DEFAULT_BATCH_SIZE,
+        private readonly GlineRepository $glineRepository,
+        private readonly ServiceDebugNotifierInterface $debugNotifier,
+        private readonly EventBusInterface $eventDispatcher,
+        private readonly LoggerInterface $logger,
+        private readonly string $serverName,
+        private readonly int $intervalSeconds,
+        private readonly int $batchSize = self::DEFAULT_BATCH_SIZE,
+        private readonly int $maxBatchesPerCycle = self::DEFAULT_MAX_BATCHES,
     ) {}
 
     public function getName(): string
@@ -56,9 +68,10 @@ final readonly class PurgeExpiredGlinesTask implements MaintenanceTaskInterface
     public function run(): void
     {
         $occurredAt = new DateTimeImmutable();
-        $after = null;
+        $batches = 0;
 
         do {
+            $after = $this->cursor;
             $expired = $this->glineRepository->findExpiredAt($occurredAt, $after, $this->batchSize);
             $ids = [];
             foreach ($expired as $gline) {
@@ -76,7 +89,15 @@ final readonly class PurgeExpiredGlinesTask implements MaintenanceTaskInterface
             if ([] !== $ids) {
                 $this->glineRepository->deleteByIds($ids);
             }
-        } while (count($expired) === $this->batchSize);
+
+            ++$batches;
+            if (count($expired) < $this->batchSize) {
+                $this->cursor = null;
+
+                return;
+            }
+            $this->cursor = $after;
+        } while ($batches < $this->maxBatchesPerCycle);
     }
 
     private function remove(string $mask, int $glineId, DateTimeImmutable $occurredAt): bool
