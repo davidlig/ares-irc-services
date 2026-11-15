@@ -23,6 +23,7 @@ use App\Irc\Application\PublishedEvent\IrcMessageProcessingStartedEvent;
 use App\Irc\Application\PublishedEvent\NetworkConnectionEstablishedEvent;
 use App\Irc\Application\PublishedEvent\NetworkConnectionLostEvent;
 use App\Irc\Application\PublishedEvent\NetworkSynchronizationCompletedEvent;
+use App\Irc\Application\PublishedEvent\RemoteBurstEndedEvent;
 use App\Irc\Application\PublishedEvent\ServiceIntroductionRequestedEvent;
 use App\Irc\Application\PublishedEvent\UserDepartedChannelEvent;
 use App\Irc\Application\PublishedEvent\UserJoinedChannelEvent as PublishedUserJoinedChannelEvent;
@@ -43,6 +44,12 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 /** Publishes stable scalar events after IRC adapter state has been updated. */
 final readonly class PublishedIrcEventBridge implements EventSubscriberInterface
 {
+    /**
+     * Runs before every other end-of-sync listener (the highest is the IRCops debug channel
+     * protection at 15), so a failing end-of-sync listener cannot suppress the remote-burst end.
+     */
+    private const int REMOTE_BURST_ENDED_PRIORITY = 2048;
+
     public function __construct(private EventDispatcherInterface $eventDispatcher) {}
 
     public static function getSubscribedEvents(): array
@@ -64,7 +71,10 @@ final readonly class PublishedIrcEventBridge implements EventSubscriberInterface
             NetworkBurstCompleteEvent::class => [
                 ['publishServiceIntroductionRequested', 100],
             ],
-            NetworkSyncCompleteEvent::class => ['publishNetworkSynchronizationCompleted', -256],
+            NetworkSyncCompleteEvent::class => [
+                ['publishRemoteBurstEnded', self::REMOTE_BURST_ENDED_PRIORITY],
+                ['publishNetworkSynchronizationCompleted', -256],
+            ],
             IrcMessageProcessedEvent::class => [
                 ['publishMessageHandled', -200],
                 ['publishMessageProcessingFinished', -257],
@@ -171,6 +181,11 @@ final readonly class PublishedIrcEventBridge implements EventSubscriberInterface
     public function publishServiceIntroductionRequested(NetworkBurstCompleteEvent $event): void
     {
         $this->eventDispatcher->dispatch(new ServiceIntroductionRequestedEvent($event->serverSid));
+    }
+
+    public function publishRemoteBurstEnded(NetworkSyncCompleteEvent $event): void
+    {
+        $this->eventDispatcher->dispatch(new RemoteBurstEndedEvent($event->serverSid));
     }
 
     public function publishNetworkSynchronizationCompleted(NetworkSyncCompleteEvent $event): void

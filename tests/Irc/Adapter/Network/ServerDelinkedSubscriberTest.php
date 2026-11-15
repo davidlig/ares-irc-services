@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Irc\Adapter\Network;
 
 use App\Irc\Adapter\Network\Event\UserQuitReceivedEvent;
+use App\Irc\Adapter\Network\InMemoryNetworkUserRepository;
 use App\Irc\Adapter\Network\ServerDelinkedSubscriber;
 use App\Irc\Application\PublishedEvent\ServerDelinkFinishedEvent;
 use App\Irc\Application\PublishedEvent\ServerDelinkStartedEvent;
@@ -22,6 +23,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 #[CoversClass(ServerDelinkedSubscriber::class)]
@@ -97,36 +99,50 @@ final class ServerDelinkedSubscriberTest extends TestCase
         ], $this->describe($dispatched));
     }
 
+    /**
+     * One failing split quit (for example a database error in a departure listener) is logged and
+     * the remaining split users still quit, so no ghost users stay in the network state; the delink
+     * is closed once at the end.
+     */
     #[Test]
-    public function onServerDelinkedClosesTheDelinkWhenAQuitListenerFails(): void
+    public function onServerDelinkedKeepsQuittingTheRemainingUsersWhenOneQuitFails(): void
     {
-        $user = $this->createUser('001ABC123', 'Alice', '002');
-        $this->userRepository->expects(self::once())->method('findByServerSids')->willReturn([$user]);
+        $users = new InMemoryNetworkUserRepository();
+        $users->add($this->createUser('001AAAAAA', 'Alice', '002'));
+        $users->add($this->createUser('001BBBBBB', 'Bob', '002'));
+        $users->add($this->createUser('001CCCCCC', 'Carol', '002'));
+        $users->add($this->createUser('001DDDDDD', 'Dave', '003'));
+        $failure = new RuntimeException('departure listener failed');
+        $finished = new class {
+            /** @var list<string> */
+            public array $serverSids = [];
+        };
+        $dispatcher = new EventDispatcher();
+        $dispatcher->addListener(UserQuitReceivedEvent::class, static function (UserQuitReceivedEvent $event) use ($users, $failure): void {
+            if ('001BBBBBB' === $event->sourceId) {
+                throw $failure;
+            }
+            $users->removeByUid(new Uid($event->sourceId));
+        });
+        $dispatcher->addListener(ServerDelinkFinishedEvent::class, static function (ServerDelinkFinishedEvent $event) use ($finished): void {
+            $finished->serverSids[] = $event->serverSid;
+        });
+        $this->userRepository->expects(self::never())->method('findByServerSids');
+        $this->eventDispatcher->expects(self::never())->method('dispatch');
         $this->logger->expects(self::once())->method('info');
-        $dispatched = new ArrayObject();
-        $this->eventDispatcher->expects(self::exactly(3))
-            ->method('dispatch')
-            ->willReturnCallback(static function (object $event) use ($dispatched): object {
-                $dispatched->append($event);
-                if ($event instanceof UserQuitReceivedEvent) {
-                    throw new RuntimeException('quit listener failed');
-                }
+        $this->logger->expects(self::once())->method('error')->with(
+            'Split quit for 001BBBBBB (Bob) failed; continuing with the remaining users of server 002.',
+            ['exception' => $failure],
+        );
 
-                return $event;
-            });
+        new ServerDelinkedSubscriber($users, $dispatcher, $this->logger)
+            ->onServerDelinked(new ServerDelinkedEvent('002', 'Server split'));
 
-        try {
-            $this->subscriber->onServerDelinked(new ServerDelinkedEvent('002', 'Server split'));
-            self::fail('The quit listener failure must propagate.');
-        } catch (RuntimeException $exception) {
-            self::assertSame('quit listener failed', $exception->getMessage());
-        }
-
-        self::assertSame([
-            [ServerDelinkStartedEvent::class, '002'],
-            [UserQuitReceivedEvent::class, '001ABC123', 'Server split'],
-            [ServerDelinkFinishedEvent::class, '002'],
-        ], $this->describe($dispatched));
+        self::assertNull($users->findByUid(new Uid('001AAAAAA')));
+        self::assertNull($users->findByUid(new Uid('001CCCCCC')));
+        self::assertNotNull($users->findByUid(new Uid('001BBBBBB')));
+        self::assertNotNull($users->findByUid(new Uid('001DDDDDD')), 'Users on other servers stay.');
+        self::assertSame(['002'], $finished->serverSids);
     }
 
     #[Test]

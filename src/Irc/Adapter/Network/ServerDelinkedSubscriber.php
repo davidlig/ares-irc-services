@@ -13,6 +13,7 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
+use Throwable;
 
 use function count;
 use function sprintf;
@@ -24,8 +25,9 @@ use function sprintf;
  * UserQuitNetworkEvent for NickServ session cleanup).
  *
  * The quits are bracketed by ServerDelinkStartedEvent and ServerDelinkFinishedEvent, so services can
- * batch per-channel work across the whole split; the finished event is published even when a quit
- * listener fails.
+ * batch per-channel work across the whole split. Each quit is isolated: a failing quit listener is
+ * logged and the remaining split users still quit, so no ghost users stay in the network state, and
+ * the finished event is published once at the end.
  */
 final readonly class ServerDelinkedSubscriber implements EventSubscriberInterface
 {
@@ -62,7 +64,16 @@ final readonly class ServerDelinkedSubscriber implements EventSubscriberInterfac
         $this->eventDispatcher->dispatch(new ServerDelinkStartedEvent($event->serverSid));
         try {
             foreach ($affected as $user) {
-                $this->eventDispatcher->dispatch(new UserQuitReceivedEvent($user->uid->value, $reason));
+                try {
+                    $this->eventDispatcher->dispatch(new UserQuitReceivedEvent($user->uid->value, $reason));
+                } catch (Throwable $exception) {
+                    $this->logger->error(sprintf(
+                        'Split quit for %s (%s) failed; continuing with the remaining users of server %s.',
+                        $user->uid->value,
+                        $user->getNick()->value,
+                        $event->serverSid,
+                    ), ['exception' => $exception]);
+                }
             }
         } finally {
             $this->eventDispatcher->dispatch(new ServerDelinkFinishedEvent($event->serverSid));
