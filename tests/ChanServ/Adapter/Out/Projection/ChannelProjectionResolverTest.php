@@ -8,12 +8,16 @@ use App\ChanServ\Adapter\Out\Projection\ChannelProjectionResolver;
 use App\ChanServ\Application\Port\In\ChannelProjection;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
+use App\Irc\Domain\ValueObject\CaseMapping;
+use App\Shared\Domain\IrcIdentityFold;
+use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
 
+use function array_find;
 use function array_map;
 
 #[CoversClass(ChannelProjectionResolver::class)]
@@ -69,6 +73,22 @@ final class ChannelProjectionResolverTest extends TestCase
         $channels->method('findByChannelName')->willReturn(null);
 
         self::assertNull(new ChannelProjectionResolver($channels)->findByName('#missing'));
+    }
+
+    #[Test]
+    public function findsChannelsByTheirStoredKeyOnAsciiNetworks(): void
+    {
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Ops[1]', 7, 'description');
+        new ReflectionProperty(RegisteredChannel::class, 'id')->setValue($channel, 12);
+        $pending = RegisteredChannel::createPendingRegistration(new DateTimeImmutable(), '#Req[1]', 8, 'request');
+        $channels = $this->asciiNetworkChannels([$channel, $pending]);
+        $resolver = new ChannelProjectionResolver($channels);
+
+        self::assertNull($resolver->findByName('#ops{1}'));
+        self::assertSame('#Ops[1]', $resolver->findByNameKey($channel->getNameLower())?->name);
+        self::assertSame(12, $resolver->findByNameKey('#OPS{1}')?->id);
+        self::assertNull($resolver->findByNameKey($pending->getNameLower()));
+        self::assertNull($resolver->findByNameKey('#missing'));
     }
 
     #[Test]
@@ -132,6 +152,30 @@ final class ChannelProjectionResolverTest extends TestCase
         self::assertSame('#suspended', $resolver->findByName('#suspended')?->name);
         self::assertSame('#forbidden', $resolver->findByName('#forbidden')?->name);
         self::assertSame('#drop', $resolver->findByName('#drop')?->name);
+    }
+
+    /**
+     * The registered-channel store of an ascii network: name lookups also need the stored name to be
+     * ascii-equivalent, key lookups only compare the RFC 1459 key.
+     *
+     * @param list<RegisteredChannel> $stored
+     */
+    private function asciiNetworkChannels(array $stored): RegisteredChannelRepositoryInterface
+    {
+        $ascii = NegotiatedCaseMapping::network(CaseMapping::Ascii);
+        $byKey = static fn (string $name): ?RegisteredChannel => array_find(
+            $stored,
+            static fn (RegisteredChannel $channel): bool => IrcIdentityFold::fold($name) === $channel->getNameLower(),
+        );
+        $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channels->method('findByChannelNameKey')->willReturnCallback($byKey);
+        $channels->method('findByChannelName')->willReturnCallback(static function (string $name) use ($byKey, $ascii): ?RegisteredChannel {
+            $channel = $byKey($name);
+
+            return null !== $channel && $ascii->equivalent($channel->getName(), $name) ? $channel : null;
+        });
+
+        return $channels;
     }
 
     private static function assertProjection(ChannelProjection $expected, ChannelProjection $actual): void

@@ -18,6 +18,7 @@ use App\Irc\Application\Port\In\ServiceUidRegistry;
 use App\Irc\Application\PublishedEvent\NetworkSynchronizationCompletedEvent;
 use App\Irc\Application\PublishedEvent\UserJoinedNetworkAppEvent;
 use App\Irc\Application\PublishedEvent\UserJoinedNetworkDTO;
+use App\Irc\Domain\ValueObject\CaseMapping;
 use App\NickServ\Application\Port\In\NickAccountQuery;
 use App\NickServ\Application\Port\In\NickCollisionResolver;
 use App\OperServ\Adapter\In\Event\MotdOnConnectSubscriber;
@@ -25,6 +26,8 @@ use App\OperServ\Adapter\Out\Irc\PseudoClientUidGenerator;
 use App\OperServ\Application\Model\MessageDelivery;
 use App\OperServ\Application\Port\Out\MotdEntry;
 use App\OperServ\Application\Port\Out\MotdRepository;
+use App\Shared\Domain\IrcIdentityFold;
+use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -394,6 +397,37 @@ final class MotdOnConnectSubscriberTest extends TestCase
         $c->method('getServerSid')->willReturn('0A0');
 
         $x = $this->sub(r: $r, u: $u, c: $c, l: $l, n: $n);
+        $x->onSyncComplete();
+    }
+
+    #[Test]
+    public function skipWhenNickRegisteredOnAsciiNetworkWithBrackets(): void
+    {
+        $m = $this->motd('Hi', 'news[!bot@h.com', 'PRIVMSG');
+        $r = $this->createStub(MotdRepository::class);
+        $r->method('findActiveAt')->willReturn([$m]);
+
+        $u = $this->createStub(ServiceUidRegistry::class);
+        $u->method('getUidByNickname')->willReturn(null);
+        $l = $this->createStub(NetworkUserLookupPort::class);
+        $l->method('findByNick')->willReturn(null);
+        $ascii = NegotiatedCaseMapping::network(CaseMapping::Ascii);
+        $n = $this->createStub(NickAccountQuery::class);
+        $n->method('findIdByNick')->willReturnCallback(
+            static fn (string $nick): ?int => IrcIdentityFold::fold($nick) === IrcIdentityFold::fold('News[') && $ascii->equivalent('News[', $nick) ? 1 : null,
+        );
+
+        $sa = $this->createMock(ProtocolServiceActionsInterface::class);
+        $sa->expects(self::never())->method('introducePseudoClient');
+
+        $c = $this->createStub(ActiveProtocolModuleHolderInterface::class);
+        $c->method('getProtocolModule')->willReturn($this->mod($sa));
+        $c->method('getServerSid')->willReturn('0A0');
+
+        $p = $this->createStub(PseudoClientUidGenerator::class);
+        $p->method('generate')->willReturn('0A0Z00001');
+
+        $x = $this->sub(r: $r, u: $u, c: $c, p: $p, l: $l, n: $n);
         $x->onSyncComplete();
     }
 

@@ -26,7 +26,7 @@ final readonly class ChannelUnsuspensionService implements UnsuspendedChannelRes
 
     public function restore(string $channelNameLower): ?string
     {
-        $channel = $this->channelRepository->findByChannelName($channelNameLower);
+        $channel = $this->channelRepository->findByChannelNameKey($channelNameLower);
         if (null === $channel) {
             return null;
         }

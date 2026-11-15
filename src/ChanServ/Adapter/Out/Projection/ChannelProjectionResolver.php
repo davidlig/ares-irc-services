@@ -31,8 +31,16 @@ final readonly class ChannelProjectionResolver implements ChannelProjectionQuery
 
     public function findByName(string $channelName): ?ChannelProjection
     {
-        $channel = $this->channels->findByChannelName($channelName);
+        return $this->projectRegistered($this->channels->findByChannelName($channelName));
+    }
 
+    public function findByNameKey(string $channelNameKey): ?ChannelProjection
+    {
+        return $this->projectRegistered($this->channels->findByChannelNameKey($channelNameKey));
+    }
+
+    private function projectRegistered(?RegisteredChannel $channel): ?ChannelProjection
+    {
         return null !== $channel && !$this->isRegistrationRequest($channel) ? $this->project($channel) : null;
     }
 

@@ -141,7 +141,7 @@ final class MotdOnConnectSubscriber implements EventSubscriberInterface
                 ]);
             }
 
-            if (null !== $this->nickAccounts->findIdByNick($nickLower)) {
+            if (null !== $this->nickAccounts->findIdByNick($mask->nickname)) {
                 continue;
             }
 
