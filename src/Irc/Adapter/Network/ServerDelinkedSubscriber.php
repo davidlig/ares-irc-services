@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Irc\Adapter\Network;
 
 use App\Irc\Adapter\Network\Event\UserQuitReceivedEvent;
+use App\Irc\Application\PublishedEvent\ServerDelinkFinishedEvent;
+use App\Irc\Application\PublishedEvent\ServerDelinkStartedEvent;
 use App\Irc\Domain\Event\ServerDelinkedEvent;
 use App\Irc\Domain\Repository\NetworkUserRepositoryInterface;
 use Psr\Log\LoggerInterface;
@@ -20,6 +22,10 @@ use function sprintf;
  * dispatches UserQuitReceivedEvent for each so they follow the same enrichment
  * path as QUIT and KILL (per-channel UserLeftChannelEvent, repository removal and
  * UserQuitNetworkEvent for NickServ session cleanup).
+ *
+ * The quits are bracketed by ServerDelinkStartedEvent and ServerDelinkFinishedEvent, so services can
+ * batch per-channel work across the whole split; the finished event is published even when a quit
+ * listener fails.
  */
 final readonly class ServerDelinkedSubscriber implements EventSubscriberInterface
 {
@@ -53,8 +59,13 @@ final readonly class ServerDelinkedSubscriber implements EventSubscriberInterfac
             count($affected),
         ));
 
-        foreach ($affected as $user) {
-            $this->eventDispatcher->dispatch(new UserQuitReceivedEvent($user->uid->value, $reason));
+        $this->eventDispatcher->dispatch(new ServerDelinkStartedEvent($event->serverSid));
+        try {
+            foreach ($affected as $user) {
+                $this->eventDispatcher->dispatch(new UserQuitReceivedEvent($user->uid->value, $reason));
+            }
+        } finally {
+            $this->eventDispatcher->dispatch(new ServerDelinkFinishedEvent($event->serverSid));
         }
     }
 }

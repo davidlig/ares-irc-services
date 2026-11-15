@@ -20,6 +20,8 @@ use App\Irc\Application\PublishedEvent\IrcMessageHandlingStartedEvent;
 use App\Irc\Application\PublishedEvent\NetworkConnectionEstablishedEvent;
 use App\Irc\Application\PublishedEvent\NetworkConnectionLostEvent;
 use App\Irc\Application\PublishedEvent\NetworkSynchronizationCompletedEvent;
+use App\Irc\Application\PublishedEvent\ServerDelinkFinishedEvent;
+use App\Irc\Application\PublishedEvent\ServerDelinkStartedEvent;
 use App\Irc\Application\PublishedEvent\UserDepartedChannelEvent;
 use App\Irc\Application\PublishedEvent\UserJoinedChannelEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -41,6 +43,7 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
         private BurstCompletePort $burstComplete,
         private BurstRankEventScope $burstRanks,
         private RegisteredChannelBurstSnapshot $burstChannels,
+        private DelinkDepartureRankScope $delinkDepartures,
     ) {
         $this->remoteBurst = new RemoteBurstWindow();
     }
@@ -59,6 +62,8 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
             ChannelSecureEnabledEvent::class => ['onChannelSecureEnabled', 0],
             ChannelFounderChangedEvent::class => ['onChannelFounderChanged', 0],
             ChannelMemberRankGrantedEvent::class => ['onChannelMemberRankGranted', 0],
+            ServerDelinkStartedEvent::class => ['onServerDelinkStarted', 0],
+            ServerDelinkFinishedEvent::class => ['onServerDelinkFinished', 0],
         ];
     }
 
@@ -70,6 +75,16 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
     public function onRemoteBurstEnded(): void
     {
         $this->remoteBurst->close();
+    }
+
+    public function onServerDelinkStarted(): void
+    {
+        $this->delinkDepartures->begin();
+    }
+
+    public function onServerDelinkFinished(): void
+    {
+        $this->delinkDepartures->end();
     }
 
     public function onMessageReceived(): void
@@ -128,11 +143,14 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
             return;
         }
 
-        $this->enforceChannelRanks->handle(new EnforceChannelRanks(
-            $event->channelName,
-            RankEnforcementTrigger::MemberLeft,
-            $event->uid,
-        ));
+        $command = new EnforceChannelRanks($event->channelName, RankEnforcementTrigger::MemberLeft, $event->uid);
+        if ($this->delinkDepartures->active()) {
+            $this->onDelinkDeparture($command);
+
+            return;
+        }
+
+        $this->enforceChannelRanks->handle($command);
     }
 
     public function onChannelSynced(ChannelSynchronizedEvent $event): void
@@ -172,6 +190,22 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
             $event->uid,
             $rank,
         ));
+    }
+
+    /**
+     * A server delink departs every split member from each of its channels; the channel is loaded
+     * once for the whole split and each departure is evaluated against that snapshot, recording the
+     * same activity a single departure would.
+     */
+    private function onDelinkDeparture(EnforceChannelRanks $command): void
+    {
+        $snapshot = $this->delinkDepartures->channel($command->channelName);
+        if (null === $snapshot) {
+            return;
+        }
+
+        [$policy, $network] = $snapshot;
+        $this->enforceChannelRanks->handleKnownPolicyAndNetwork($command, $policy, $network);
     }
 
     /**

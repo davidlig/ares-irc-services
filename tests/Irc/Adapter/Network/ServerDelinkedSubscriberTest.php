@@ -6,18 +6,22 @@ namespace App\Tests\Irc\Adapter\Network;
 
 use App\Irc\Adapter\Network\Event\UserQuitReceivedEvent;
 use App\Irc\Adapter\Network\ServerDelinkedSubscriber;
+use App\Irc\Application\PublishedEvent\ServerDelinkFinishedEvent;
+use App\Irc\Application\PublishedEvent\ServerDelinkStartedEvent;
 use App\Irc\Domain\Event\ServerDelinkedEvent;
 use App\Irc\Domain\Network\NetworkUser;
 use App\Irc\Domain\Repository\NetworkUserRepositoryInterface;
 use App\Irc\Domain\ValueObject\Ident;
 use App\Irc\Domain\ValueObject\Nick;
 use App\Irc\Domain\ValueObject\Uid;
+use ArrayObject;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 #[CoversClass(ServerDelinkedSubscriber::class)]
@@ -54,23 +58,18 @@ final class ServerDelinkedSubscriberTest extends TestCase
             ->with(['002'])
             ->willReturn([$user1, $user2]);
 
-        $event = new ServerDelinkedEvent('002', 'Server split');
-
-        $index = 0;
-        $this->eventDispatcher->expects(self::exactly(2))
-            ->method('dispatch')
-            ->with(self::callback(static function (UserQuitReceivedEvent $quitEvent) use ($user1, $user2, &$index): bool {
-                $expectedUids = [$user1->uid->value, $user2->uid->value];
-                $result = $quitEvent->sourceId === $expectedUids[$index] && 'Server split' === $quitEvent->reason;
-                ++$index;
-
-                return $result;
-            }));
-
+        $dispatched = $this->recordDispatches(4);
         $this->logger->expects(self::once())
             ->method('info');
 
-        $this->subscriber->onServerDelinked($event);
+        $this->subscriber->onServerDelinked(new ServerDelinkedEvent('002', 'Server split'));
+
+        self::assertSame([
+            [ServerDelinkStartedEvent::class, '002'],
+            [UserQuitReceivedEvent::class, '001ABC123', 'Server split'],
+            [UserQuitReceivedEvent::class, '001DEF456', 'Server split'],
+            [ServerDelinkFinishedEvent::class, '002'],
+        ], $this->describe($dispatched));
     }
 
     #[Test]
@@ -84,23 +83,50 @@ final class ServerDelinkedSubscriberTest extends TestCase
             ->with(['002', '003'])
             ->willReturn([$user1, $user2]);
 
-        $event = new ServerDelinkedEvent('002', 'Server split', ['002', '003']);
-
-        $index = 0;
-        $this->eventDispatcher->expects(self::exactly(2))
-            ->method('dispatch')
-            ->with(self::callback(static function (UserQuitReceivedEvent $quitEvent) use ($user1, $user2, &$index): bool {
-                $expectedUids = [$user1->uid->value, $user2->uid->value];
-                $result = $quitEvent->sourceId === $expectedUids[$index] && 'Server split' === $quitEvent->reason;
-                ++$index;
-
-                return $result;
-            }));
-
+        $dispatched = $this->recordDispatches(4);
         $this->logger->expects(self::once())
             ->method('info');
 
-        $this->subscriber->onServerDelinked($event);
+        $this->subscriber->onServerDelinked(new ServerDelinkedEvent('002', 'Server split', ['002', '003']));
+
+        self::assertSame([
+            [ServerDelinkStartedEvent::class, '002'],
+            [UserQuitReceivedEvent::class, '001ABC123', 'Server split'],
+            [UserQuitReceivedEvent::class, '001DEF456', 'Server split'],
+            [ServerDelinkFinishedEvent::class, '002'],
+        ], $this->describe($dispatched));
+    }
+
+    #[Test]
+    public function onServerDelinkedClosesTheDelinkWhenAQuitListenerFails(): void
+    {
+        $user = $this->createUser('001ABC123', 'Alice', '002');
+        $this->userRepository->expects(self::once())->method('findByServerSids')->willReturn([$user]);
+        $this->logger->expects(self::once())->method('info');
+        $dispatched = new ArrayObject();
+        $this->eventDispatcher->expects(self::exactly(3))
+            ->method('dispatch')
+            ->willReturnCallback(static function (object $event) use ($dispatched): object {
+                $dispatched->append($event);
+                if ($event instanceof UserQuitReceivedEvent) {
+                    throw new RuntimeException('quit listener failed');
+                }
+
+                return $event;
+            });
+
+        try {
+            $this->subscriber->onServerDelinked(new ServerDelinkedEvent('002', 'Server split'));
+            self::fail('The quit listener failure must propagate.');
+        } catch (RuntimeException $exception) {
+            self::assertSame('quit listener failed', $exception->getMessage());
+        }
+
+        self::assertSame([
+            [ServerDelinkStartedEvent::class, '002'],
+            [UserQuitReceivedEvent::class, '001ABC123', 'Server split'],
+            [ServerDelinkFinishedEvent::class, '002'],
+        ], $this->describe($dispatched));
     }
 
     #[Test]
@@ -134,12 +160,16 @@ final class ServerDelinkedSubscriberTest extends TestCase
 
         $event = new ServerDelinkedEvent('002', '');
 
-        $this->eventDispatcher->expects(self::once())
-            ->method('dispatch')
-            ->with(self::callback(static fn (UserQuitReceivedEvent $quitEvent): bool => '001ABC123' === $quitEvent->sourceId && '*.net *.split' === $quitEvent->reason));
+        $dispatched = $this->recordDispatches(3);
         $this->logger->expects(self::once())->method('info');
 
         $this->subscriber->onServerDelinked($event);
+
+        self::assertSame([
+            [ServerDelinkStartedEvent::class, '002'],
+            [UserQuitReceivedEvent::class, '001ABC123', '*.net *.split'],
+            [ServerDelinkFinishedEvent::class, '002'],
+        ], $this->describe($dispatched));
     }
 
     #[Test]
@@ -171,6 +201,40 @@ final class ServerDelinkedSubscriberTest extends TestCase
             $this->eventDispatcher,
             $this->logger,
         );
+    }
+
+    /** @return ArrayObject<int, object> */
+    private function recordDispatches(int $count): ArrayObject
+    {
+        $dispatched = new ArrayObject();
+        $this->eventDispatcher->expects(self::exactly($count))
+            ->method('dispatch')
+            ->willReturnCallback(static function (object $event) use ($dispatched): object {
+                $dispatched->append($event);
+
+                return $event;
+            });
+
+        return $dispatched;
+    }
+
+    /**
+     * @param ArrayObject<int, object> $dispatched
+     *
+     * @return list<array<int, string>>
+     */
+    private function describe(ArrayObject $dispatched): array
+    {
+        $described = [];
+        foreach ($dispatched as $event) {
+            $described[] = match (true) {
+                $event instanceof UserQuitReceivedEvent => [$event::class, $event->sourceId, $event->reason],
+                $event instanceof ServerDelinkStartedEvent, $event instanceof ServerDelinkFinishedEvent => [$event::class, $event->serverSid],
+                default => [$event::class],
+            };
+        }
+
+        return $described;
     }
 
     private function createUser(string $uid, string $nick, string $serverSid): NetworkUser

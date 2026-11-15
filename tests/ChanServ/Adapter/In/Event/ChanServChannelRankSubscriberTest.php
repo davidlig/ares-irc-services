@@ -6,10 +6,13 @@ namespace App\Tests\ChanServ\Adapter\In\Event;
 
 use App\ChanServ\Adapter\In\Event\ChanServBurstChannelSnapshotSubscriber;
 use App\ChanServ\Adapter\In\Event\ChanServChannelRankSubscriber;
+use App\ChanServ\Adapter\In\Event\DelinkDepartureRankScope;
 use App\ChanServ\Adapter\In\Event\PendingChannelRankSynchronizations;
 use App\ChanServ\Application\Model\BurstRankEventScope;
 use App\ChanServ\Application\Model\ChannelRankNetworkState;
 use App\ChanServ\Application\Model\ChannelRankPolicy;
+use App\ChanServ\Application\Port\Out\ChannelRankNetworkQuery;
+use App\ChanServ\Application\Port\Out\ChannelRankPolicyRepository;
 use App\ChanServ\Application\Port\Out\RegisteredChannelBurstSnapshot;
 use App\ChanServ\Application\PublishedEvent\ChannelFounderChangedEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelSecureEnabledEvent;
@@ -28,6 +31,8 @@ use App\Irc\Application\PublishedEvent\IrcMessageHandlingStartedEvent;
 use App\Irc\Application\PublishedEvent\NetworkConnectionEstablishedEvent;
 use App\Irc\Application\PublishedEvent\NetworkConnectionLostEvent;
 use App\Irc\Application\PublishedEvent\NetworkSynchronizationCompletedEvent;
+use App\Irc\Application\PublishedEvent\ServerDelinkFinishedEvent;
+use App\Irc\Application\PublishedEvent\ServerDelinkStartedEvent;
 use App\Irc\Application\PublishedEvent\UserDepartedChannelEvent;
 use App\Irc\Application\PublishedEvent\UserJoinedChannelEvent;
 use DateTimeImmutable;
@@ -38,10 +43,12 @@ use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
+use function array_keys;
 use function array_map;
 use function count;
 
 #[CoversClass(ChanServChannelRankSubscriber::class)]
+#[CoversClass(DelinkDepartureRankScope::class)]
 final class ChanServChannelRankSubscriberTest extends TestCase
 {
     #[Test]
@@ -59,6 +66,8 @@ final class ChanServChannelRankSubscriberTest extends TestCase
             ChannelSecureEnabledEvent::class => ['onChannelSecureEnabled', 0],
             ChannelFounderChangedEvent::class => ['onChannelFounderChanged', 0],
             ChannelMemberRankGrantedEvent::class => ['onChannelMemberRankGranted', 0],
+            ServerDelinkStartedEvent::class => ['onServerDelinkStarted', 0],
+            ServerDelinkFinishedEvent::class => ['onServerDelinkFinished', 0],
         ], ChanServChannelRankSubscriber::getSubscribedEvents());
     }
 
@@ -106,7 +115,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         $scope->begin();
         $scope->setChannel(new ChannelRankPolicy(1, '#test', 10, false, false, ChannelLevelSet::defaults(), []), new ChannelRankNetworkState('#test', [], []));
         $burst = $this->createStub(BurstCompletePort::class);
-        $subscriber = new ChanServChannelRankSubscriber($handler, new PendingChannelRankSynchronizations(), $burst, $scope, $this->createStub(RegisteredChannelBurstSnapshot::class));
+        $subscriber = new ChanServChannelRankSubscriber($handler, new PendingChannelRankSynchronizations(), $burst, $scope, $this->createStub(RegisteredChannelBurstSnapshot::class), $this->idleDelinkScope());
         $subscriber->onUserLeftChannel(new UserDepartedChannelEvent('U1', '#test'));
         self::assertTrue($scope->needsActivity('#test'));
     }
@@ -125,9 +134,67 @@ final class ChanServChannelRankSubscriberTest extends TestCase
             $this->createStub(BurstCompletePort::class),
             $scope,
             $this->createStub(RegisteredChannelBurstSnapshot::class),
+            $this->idleDelinkScope(),
         );
         $subscriber->onUserLeftChannel(new UserDepartedChannelEvent('U1', '#forbidden'));
         self::assertFalse($scope->needsActivity('#forbidden'));
+    }
+
+    #[Test]
+    public function departuresDuringAServerDelinkLoadEachChannelOnce(): void
+    {
+        $test = new ChannelRankPolicy(1, '#test', 10, false, false, ChannelLevelSet::defaults(), []);
+        $other = new ChannelRankPolicy(2, '#other', 10, false, false, ChannelLevelSet::defaults(), []);
+        $policies = $this->createMock(ChannelRankPolicyRepository::class);
+        $policies->expects(self::exactly(3))->method('findByName')->willReturnCallback(static fn (string $name): ?ChannelRankPolicy => match ($name) {
+            '#test' => $test,
+            '#other' => $other,
+            default => null,
+        });
+        $networkStates = [];
+        $network = $this->createMock(ChannelRankNetworkQuery::class);
+        $network->expects(self::exactly(2))->method('findChannel')->willReturnCallback(static function (string $name) use (&$networkStates): ChannelRankNetworkState {
+            return $networkStates[$name] = new ChannelRankNetworkState($name, [], []);
+        });
+        $known = [];
+        $handler = $this->createMock(EnforceChannelRanksHandlerInterface::class);
+        $handler->expects(self::once())->method('handle')->with(self::callback(
+            static fn (EnforceChannelRanks $command): bool => '#test' === $command->channelName
+                && RankEnforcementTrigger::MemberLeft === $command->trigger
+                && 'U4' === $command->uid,
+        ))->willReturn(new RankEnforcementResult(RankEnforcementOutcome::NoChanges));
+        $handler->expects(self::exactly(3))->method('handleKnownPolicyAndNetwork')->willReturnCallback(
+            static function (EnforceChannelRanks $command, ChannelRankPolicy $policy, ?ChannelRankNetworkState $state, bool $deferActivity) use (&$known): RankEnforcementResult {
+                $known[] = [$command->channelName, $command->trigger, $command->uid, $policy->name, $state?->name, $deferActivity];
+
+                return new RankEnforcementResult(RankEnforcementOutcome::Applied, activityTouched: true);
+            },
+        );
+        $burst = $this->createStub(BurstCompletePort::class);
+        $burst->method('isComplete')->willReturn(true);
+        $subscriber = new ChanServChannelRankSubscriber(
+            $handler,
+            new PendingChannelRankSynchronizations(),
+            $burst,
+            new BurstRankEventScope(),
+            $this->createStub(RegisteredChannelBurstSnapshot::class),
+            new DelinkDepartureRankScope($policies, $network),
+        );
+
+        $subscriber->onServerDelinkStarted();
+        $subscriber->onUserLeftChannel(new UserDepartedChannelEvent('U1', '#test'));
+        $subscriber->onUserLeftChannel(new UserDepartedChannelEvent('U1', '#unregistered'));
+        $subscriber->onUserLeftChannel(new UserDepartedChannelEvent('U2', '#test'));
+        $subscriber->onUserLeftChannel(new UserDepartedChannelEvent('U3', '#other'));
+        $subscriber->onServerDelinkFinished();
+        $subscriber->onUserLeftChannel(new UserDepartedChannelEvent('U4', '#test'));
+
+        self::assertSame([
+            ['#test', RankEnforcementTrigger::MemberLeft, 'U1', '#test', '#test', false],
+            ['#test', RankEnforcementTrigger::MemberLeft, 'U2', '#test', '#test', false],
+            ['#other', RankEnforcementTrigger::MemberLeft, 'U3', '#other', '#other', false],
+        ], $known);
+        self::assertSame(['#test', '#other'], array_keys($networkStates));
     }
 
     #[Test]
@@ -140,7 +207,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         $snapshot = $this->createStub(RegisteredChannelBurstSnapshot::class);
         $snapshot->method('contains')->willReturnMap([['#registered', true], ['#unknown', false]]);
         $scope = new BurstRankEventScope();
-        $subscriber = new ChanServChannelRankSubscriber($handler, new PendingChannelRankSynchronizations(), $burst, $scope, $snapshot);
+        $subscriber = new ChanServChannelRankSubscriber($handler, new PendingChannelRankSynchronizations(), $burst, $scope, $snapshot, $this->idleDelinkScope());
         $subscriber->onChannelSynced(new ChannelSynchronizedEvent('#registered'));
         $subscriber->onChannelSynced(new ChannelSynchronizedEvent('#unknown'));
         self::assertTrue($scope->needsActivity('#registered'));
@@ -160,6 +227,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
             $burst,
             new BurstRankEventScope(),
             $this->createStub(RegisteredChannelBurstSnapshot::class),
+            $this->idleDelinkScope(),
         );
 
         $subscriber->onChannelSynced(new ChannelSynchronizedEvent('#burst'));
@@ -182,6 +250,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
             $burst,
             $scope,
             $snapshot,
+            $this->idleDelinkScope(),
         );
 
         $subscriber->onUserJoinedChannel(new UserJoinedChannelEvent('001AAAA', '#registered', 'op', true));
@@ -211,6 +280,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
             $burst,
             $scope,
             $snapshot,
+            $this->idleDelinkScope(),
         );
         $subscriber->onNetworkConnectionEstablished();
 
@@ -242,6 +312,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
             $burst,
             new BurstRankEventScope(),
             $snapshot,
+            $this->idleDelinkScope(),
         );
 
         $subscriber->onUserJoinedChannel(new UserJoinedChannelEvent('0A1AAAAAA', '#live', 'op', true));
@@ -365,7 +436,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         };
         $scope = new BurstRankEventScope();
         $dispatcher = new EventDispatcher();
-        $dispatcher->addSubscriber(new ChanServChannelRankSubscriber($handler, new PendingChannelRankSynchronizations(), $burst, $scope, $snapshot));
+        $dispatcher->addSubscriber(new ChanServChannelRankSubscriber($handler, new PendingChannelRankSynchronizations(), $burst, $scope, $snapshot, $this->idleDelinkScope()));
         $dispatcher->addSubscriber(new ChanServBurstChannelSnapshotSubscriber($snapshot, $scope));
         $dispatcher->addListener(NetworkSynchronizationCompletedEvent::class, static function (): never {
             throw new RuntimeException('end-of-burst pass failed');
@@ -420,6 +491,15 @@ final class ChanServChannelRankSubscriberTest extends TestCase
             $burst,
             new BurstRankEventScope(),
             $this->createStub(RegisteredChannelBurstSnapshot::class),
+            $this->idleDelinkScope(),
+        );
+    }
+
+    private function idleDelinkScope(): DelinkDepartureRankScope
+    {
+        return new DelinkDepartureRankScope(
+            $this->createStub(ChannelRankPolicyRepository::class),
+            $this->createStub(ChannelRankNetworkQuery::class),
         );
     }
 

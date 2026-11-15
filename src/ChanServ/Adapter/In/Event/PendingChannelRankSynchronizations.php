@@ -5,28 +5,26 @@ declare(strict_types=1);
 namespace App\ChanServ\Adapter\In\Event;
 
 use function array_keys;
-use function array_values;
 use function strtolower;
 
 final class PendingChannelRankSynchronizations
 {
     /**
-     * Keyed by the ASCII-lowered network channel name, which is handed back to the network.
+     * Set of ASCII-lowered network channel names; each name is handed back to the network as is.
      *
      * ASCII lowering never merges two channels the network treats as distinct; on an rfc1459
      * network two equivalent spellings only cost a harmless second synchronization pass.
      *
-     * @var array<string, string>
+     * @var array<string, true>
      */
     private array $pending = [];
 
-    /** @var array<string, string> */
+    /** @var array<string, true> */
     private array $pendingAtMessageStart = [];
 
     public function schedule(string $channelName): void
     {
-        $key = strtolower($channelName);
-        $this->pending[$key] = $key;
+        $this->pending[strtolower($channelName)] = true;
     }
 
     public function beginMessage(): void
@@ -37,9 +35,9 @@ final class PendingChannelRankSynchronizations
     /** @return list<string> */
     public function releaseMessageStartSnapshot(): array
     {
-        $channels = array_values($this->pendingAtMessageStart);
-        foreach (array_keys($this->pendingAtMessageStart) as $key) {
-            unset($this->pending[$key]);
+        $channels = array_keys($this->pendingAtMessageStart);
+        foreach ($channels as $channelName) {
+            unset($this->pending[$channelName]);
         }
         $this->pendingAtMessageStart = [];
 
