@@ -38,6 +38,11 @@
 - MOTD pseudo-clients follow the negotiated casemapping: on ascii networks `Bot[` and `bot{` are two pseudo-clients (one under rfc1459).
 - A closed EntityManager (for example after a failed REGISTER or IDENTIFY write) is reset before the next IRC line is processed, not only at the next maintenance tick.
 - Expired G-line, MOTD and AKICK purges handle at most 10 batches of 100 per maintenance cycle and continue on the next cycle, so a mass expiry no longer blocks the event loop.
+- After resetting a closed EntityManager during end-of-burst protection, the user whose protection closed it is skipped instead of retried, and the last-seen activity of the users already handled in that chunk is saved again on the fresh manager.
+- NickServ and ChanServ maintenance: a row skipped after exhausting its closed-EntityManager budget no longer gets a fresh 3-cycle budget every sweep; in later sweeps it gets one attempt and is skipped at once if it fails again. ChanServ counts these failures per channel, so another channel succeeding no longer resets the count. The skip handling lives in one budget class per service.
+- When an automatic channel unsuspension is saved but a follow-up step fails (UDB record removal, network restoration), it is reported as such and the unsuspension event is dispatched again in up to three later cycles.
+- A failing server-delink start listener is logged and every split user still quits; the delink finished event still always follows.
+- MOTD pseudo-client state is discarded when the network link is lost, so MOTD pseudo-clients are introduced again on the new link.
 - When a quitting user's channel departure and the quit itself both fail, the departure failure is logged instead of being lost.
 - A maintenance task whose database error closed the Doctrine EntityManager no longer makes every later database-backed task fail until restart: the scheduler resets a closed EntityManager, with a warning, at the start of each cycle and after each failed task.
 - When the MOTD bot nick is a registered nickname, the user holding it is no longer renamed to a Guest nick; the MOTD pseudo-client is skipped as before.
