@@ -45,7 +45,7 @@ final class PurgeInactiveNicknamesTask implements MaintenanceTaskInterface
         private readonly int $batchSize = self::DEFAULT_BATCH_SIZE,
         private readonly int $maxBatchesPerCycle = self::DEFAULT_MAX_BATCHES,
     ) {
-        $this->retryBudget = new ClosedEntityManagerRetryBudget();
+        $this->retryBudget = new ClosedEntityManagerRetryBudget($this->logger, $this->getName());
     }
 
     public function getName(): string
@@ -70,7 +70,8 @@ final class PurgeInactiveNicknamesTask implements MaintenanceTaskInterface
      * A failure that closes the EntityManager stops the batch with the cursor kept before the
      * nick, so the next cycle retries it; after {@see ClosedEntityManagerRetryBudget::MAX_ATTEMPTS} such
      * failures in a row while the database answers, the nick is skipped until the next sweep, so it
-     * cannot block later rows; a database outage never skips it.
+     * cannot block later rows; in later sweeps it gets one attempt before it is skipped again, and
+     * a database outage never skips it.
      */
     public function run(): void
     {
@@ -109,7 +110,7 @@ final class PurgeInactiveNicknamesTask implements MaintenanceTaskInterface
                 // Advanced only after a row-specific outcome: a closed EntityManager rethrows above,
                 // so the next cycle retries this nick instead of skipping it.
                 $this->cursor = max($this->cursor, $id);
-                $this->retryBudget->reset();
+                $this->retryBudget->rowSettled($id);
             }
 
             $this->entityManager?->clear();
@@ -133,28 +134,15 @@ final class PurgeInactiveNicknamesTask implements MaintenanceTaskInterface
      */
     private function recordFailure(int $id, string $nickname, Throwable $e): void
     {
-        if (null !== $this->entityManager && !$this->entityManager->isOpen()) {
-            if ($this->giveUpAfterClosedEntityManager($this->entityManager, $id)) {
-                $this->logger->error(sprintf(
-                    'Maintenance [%s]: failed to drop inactive nick %s (id %d) with the EntityManager closed %d times in a row; skipping it until the next sweep and stopping this batch.',
-                    $this->getName(),
-                    $nickname,
-                    $id,
-                    ClosedEntityManagerRetryBudget::MAX_ATTEMPTS,
-                ), ['exception' => $e]);
-
-                throw $e;
-            }
-
-            $this->logger->error(sprintf(
-                'Maintenance [%s]: failed to drop inactive nick %s (id %d); the EntityManager is closed, stopping this batch.',
-                $this->getName(),
-                $nickname,
-                $id,
-            ), ['exception' => $e]);
-
-            throw $e;
-        }
+        $this->retryBudget->rethrowWhenClosed(
+            $id,
+            $this->entityManager,
+            $e,
+            sprintf('failed to drop inactive nick %s (id %d)', $nickname, $id),
+            function () use ($id): void {
+                $this->cursor = max($this->cursor, $id);
+            },
+        );
 
         if (null === $this->nickRepository->findById($id)) {
             $this->logger->error(sprintf(
@@ -173,21 +161,5 @@ final class PurgeInactiveNicknamesTask implements MaintenanceTaskInterface
             $nickname,
             $id,
         ), ['exception' => $e]);
-    }
-
-    /**
-     * Counts a closed-EntityManager failure of the row and, once it reached the limit in a row,
-     * moves the cursor past it so the next cycle continues with the later rows. A failure while
-     * the database does not answer is an outage: it neither counts nor moves the cursor.
-     */
-    private function giveUpAfterClosedEntityManager(EntityManagerInterface $entityManager, int $id): bool
-    {
-        if (!$this->retryBudget->exhaustedBy($id, $entityManager)) {
-            return false;
-        }
-
-        $this->cursor = max($this->cursor, $id);
-
-        return true;
     }
 }

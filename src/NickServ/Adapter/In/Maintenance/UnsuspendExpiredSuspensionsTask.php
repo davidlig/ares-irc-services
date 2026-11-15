@@ -42,7 +42,7 @@ final class UnsuspendExpiredSuspensionsTask implements MaintenanceTaskInterface
         private readonly int $batchSize = self::DEFAULT_BATCH_SIZE,
         private readonly int $maxBatchesPerCycle = self::DEFAULT_MAX_BATCHES,
     ) {
-        $this->retryBudget = new ClosedEntityManagerRetryBudget();
+        $this->retryBudget = new ClosedEntityManagerRetryBudget($this->logger, $this->getName());
     }
 
     public function getName(): string
@@ -67,7 +67,8 @@ final class UnsuspendExpiredSuspensionsTask implements MaintenanceTaskInterface
      * A failure that closes the EntityManager stops the batch with the cursor kept before the
      * suspension, so the next cycle retries it; after {@see ClosedEntityManagerRetryBudget::MAX_ATTEMPTS} such
      * failures in a row while the database answers, the suspension is skipped until the next sweep, so
-     * it cannot block later rows; a database outage never skips it.
+     * it cannot block later rows; in later sweeps it gets one attempt before it is skipped again, and
+     * a database outage never skips it.
      */
     public function run(): void
     {
@@ -90,7 +91,7 @@ final class UnsuspendExpiredSuspensionsTask implements MaintenanceTaskInterface
                 } catch (Throwable $e) {
                     $this->recordSaveFailure($nick, $e);
                     $this->cursor = max($this->cursor, $id);
-                    $this->retryBudget->reset();
+                    $this->retryBudget->rowSettled($id);
 
                     continue;
                 }
@@ -98,7 +99,7 @@ final class UnsuspendExpiredSuspensionsTask implements MaintenanceTaskInterface
                 // Advanced only after a row-specific outcome: a closed EntityManager rethrows above,
                 // so the next cycle retries this suspension instead of skipping it.
                 $this->cursor = max($this->cursor, $id);
-                $this->retryBudget->reset();
+                $this->retryBudget->rowSettled($id);
 
                 try {
                     $this->announce($nick);
@@ -131,28 +132,16 @@ final class UnsuspendExpiredSuspensionsTask implements MaintenanceTaskInterface
      */
     private function recordSaveFailure(RegisteredNick $nick, Throwable $e): void
     {
-        if (null !== $this->entityManager && !$this->entityManager->isOpen()) {
-            if ($this->giveUpAfterClosedEntityManager($this->entityManager, $nick->getId())) {
-                $this->logger->error(sprintf(
-                    'Maintenance [%s]: failed to auto-unsuspend nick %s (id %d) with the EntityManager closed %d times in a row; skipping it until the next sweep and stopping this batch.',
-                    $this->getName(),
-                    $nick->getNickname(),
-                    $nick->getId(),
-                    ClosedEntityManagerRetryBudget::MAX_ATTEMPTS,
-                ), ['exception' => $e]);
-
-                throw $e;
-            }
-
-            $this->logger->error(sprintf(
-                'Maintenance [%s]: failed to auto-unsuspend nick %s (id %d); the EntityManager is closed, stopping this batch.',
-                $this->getName(),
-                $nick->getNickname(),
-                $nick->getId(),
-            ), ['exception' => $e]);
-
-            throw $e;
-        }
+        $id = $nick->getId();
+        $this->retryBudget->rethrowWhenClosed(
+            $id,
+            $this->entityManager,
+            $e,
+            sprintf('failed to auto-unsuspend nick %s (id %d)', $nick->getNickname(), $id),
+            function () use ($id): void {
+                $this->cursor = max($this->cursor, $id);
+            },
+        );
 
         // Keep the half-applied unsuspend out of later flushes in this batch.
         $this->entityManager?->detach($nick);
@@ -162,22 +151,6 @@ final class UnsuspendExpiredSuspensionsTask implements MaintenanceTaskInterface
             $nick->getNickname(),
             $nick->getId(),
         ), ['exception' => $e]);
-    }
-
-    /**
-     * Counts a closed-EntityManager failure of the row and, once it reached the limit in a row,
-     * moves the cursor past it so the next cycle continues with the later rows. A failure while
-     * the database does not answer is an outage: it neither counts nor moves the cursor.
-     */
-    private function giveUpAfterClosedEntityManager(EntityManagerInterface $entityManager, int $id): bool
-    {
-        if (!$this->retryBudget->exhaustedBy($id, $entityManager)) {
-            return false;
-        }
-
-        $this->cursor = max($this->cursor, $id);
-
-        return true;
     }
 
     private function announce(RegisteredNick $nick): void

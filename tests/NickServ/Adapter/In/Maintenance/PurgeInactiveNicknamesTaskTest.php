@@ -522,6 +522,63 @@ final class PurgeInactiveNicknamesTaskTest extends TestCase
     }
 
     #[Test]
+    public function aNickSkippedAfterItsAttemptsGetsOneAttemptPerLaterSweepInsteadOfAFreshBudget(): void
+    {
+        $pages = [];
+        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repo->method('findRegisteredInactiveSince')
+            ->willReturnCallback(function (DateTimeImmutable $threshold, int $limit, int $afterId) use (&$pages): array {
+                $pages[] = $afterId;
+
+                return array_values(array_filter(
+                    [$this->nick(1, 'Poison'), $this->nick(2, 'Healthy')],
+                    static fn (RegisteredNick $nick): bool => $nick->getId() > $afterId,
+                ));
+            });
+        $open = true;
+        $attempts = [];
+        $dropService = $this->createStub(NickDropService::class);
+        $dropService->method('dropNick')
+            ->willReturnCallback(static function (RegisteredNick $nick) use (&$open, &$attempts): void {
+                $attempts[] = $nick->getNickname();
+                if ('Poison' === $nick->getNickname()) {
+                    $open = false;
+
+                    throw new RuntimeException('foreign key violation');
+                }
+            });
+        $errors = [];
+        $logger = $this->createStub(LoggerInterface::class);
+        $logger->method('error')->willReturnCallback(static function (string $message) use (&$errors): void {
+            $errors[] = $message;
+        });
+        $em = $this->createStub(EntityManagerInterface::class);
+        $em->method('isOpen')->willReturnCallback(static function () use (&$open): bool {
+            return $open;
+        });
+        $task = new PurgeInactiveNicknamesTask($repo, $dropService, $logger, $this->clock(), 3600, 90, $em);
+
+        $failures = 0;
+        for ($cycle = 0; $cycle < 8; ++$cycle) {
+            try {
+                $task->run();
+            } catch (RuntimeException) {
+                ++$failures;
+            }
+            $open = true;
+        }
+
+        self::assertSame(5, $failures);
+        self::assertSame([0, 0, 0, 1, 0, 1, 0, 1], $pages);
+        self::assertSame(['Poison', 'Poison', 'Poison', 'Healthy', 'Poison', 'Healthy', 'Poison', 'Healthy'], $attempts);
+        self::assertSame(
+            'Maintenance [nickserv.purge_inactive_nicknames]: failed to drop inactive nick Poison (id 1) again after it was skipped in an earlier sweep; skipping it until the next sweep and stopping this batch.',
+            $errors[3],
+        );
+        self::assertSame($errors[3], $errors[4]);
+    }
+
+    #[Test]
     public function theClosedEntityManagerAttemptsRestartAfterTheNickIsProcessed(): void
     {
         $pages = [];
