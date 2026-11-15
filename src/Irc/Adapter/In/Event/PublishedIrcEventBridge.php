@@ -47,6 +47,8 @@ final readonly class PublishedIrcEventBridge implements EventSubscriberInterface
     /**
      * Runs before every other end-of-sync listener (the highest is the IRCops debug channel
      * protection at 15), so a failing end-of-sync listener cannot suppress the remote-burst end.
+     * None of those listeners produces a member join or channel synchronization (both come only
+     * from inbound JOIN/SJOIN/FJOIN lines), so no live rank enforcement runs before the burst pass.
      */
     private const int REMOTE_BURST_ENDED_PRIORITY = 2048;
 

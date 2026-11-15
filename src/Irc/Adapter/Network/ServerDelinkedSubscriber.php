@@ -26,8 +26,9 @@ use function sprintf;
  *
  * The quits are bracketed by ServerDelinkStartedEvent and ServerDelinkFinishedEvent, so services can
  * batch per-channel work across the whole split. Each quit is isolated: a failing quit listener is
- * logged and the remaining split users still quit, so no ghost users stay in the network state, and
- * the finished event is published once at the end.
+ * logged and the remaining split users still quit, and the failing user itself is still removed from
+ * the network state by the enricher, so no ghost users stay. The finished event is published once at
+ * the end.
  */
 final readonly class ServerDelinkedSubscriber implements EventSubscriberInterface
 {
