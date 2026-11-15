@@ -811,6 +811,7 @@ forbid:
   cannot_forbid_root: "Root-Benutzer %nickname% kann nicht gesperrt werden."
   cannot_forbid_oper: "IRC-Operator %nickname% kann nicht gesperrt werden."
   cannot_forbid_service: "Service-Nickname %nickname% kann nicht gesperrt werden."
+  key_conflict: "%nickname% kann nicht gesperrt werden: Er kollidiert mit dem registrierten Nickname %registered%, der in diesem Netzwerk ein anderer Nickname ist."
 
 # --- UNFORBID (IRCop) ---------------------------------------------------------
 unforbid:

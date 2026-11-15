@@ -35,6 +35,11 @@ final readonly class ForbidNickHandler
         }
 
         $account = $this->nickRepository->findByNicknameKey($input->targetNickname);
+        if (null !== $account && $account !== $protectability->account) {
+            // The RFC 1459 key matched a different nick of this network; never drop or rewrite it.
+            return new ForbidNickResult(ForbidNickOutcome::TargetSharesKeyWithOtherNick, $input->targetNickname, $input->reason, $account->getNickname());
+        }
+
         if (null !== $account && $account->isForbidden()) {
             $this->forbiddenService->updateReason($account, $input->reason);
 

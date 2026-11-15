@@ -810,6 +810,7 @@ forbid:
   cannot_forbid_root: "Impossible d'interdire l'utilisateur root %nickname%."
   cannot_forbid_oper: "Impossible d'interdire l'opérateur IRC %nickname%."
   cannot_forbid_service: "Impossible d'interdire le surnom de service %nickname%."
+  key_conflict: "Impossible d'interdire %nickname% : il entre en conflit avec le surnom enregistré %registered%, qui est un surnom différent sur ce réseau."
 
 # --- UNFORBID (IRCop) ---------------------------------------------------------
 unforbid:

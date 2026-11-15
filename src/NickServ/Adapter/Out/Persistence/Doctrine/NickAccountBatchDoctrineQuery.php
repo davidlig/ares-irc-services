@@ -23,8 +23,8 @@ use function is_string;
 
 final readonly class NickAccountBatchDoctrineQuery implements NickAccountBatchQuery
 {
-    /** Nicknames bound by one lookup statement; large pages and channels are split. */
-    private const int LOOKUP_CHUNK_SIZE = 1000;
+    /** Nicknames bound by one lookup statement; large pages and channels are split under SQLite's historic 999-parameter limit. */
+    private const int LOOKUP_CHUNK_SIZE = 900;
 
     public function __construct(
         private EntityManagerInterface $em,

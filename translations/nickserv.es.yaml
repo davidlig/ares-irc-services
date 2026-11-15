@@ -792,6 +792,7 @@ forbid:
   cannot_forbid_root: "No se puede prohibir al usuario root %nickname%."
   cannot_forbid_oper: "No se puede prohibir al IRC operator %nickname%."
   cannot_forbid_service: "No se puede prohibir el apodo de servicio %nickname%."
+  key_conflict: "No se puede prohibir %nickname%: entra en conflicto con el apodo registrado %registered%, que es un apodo distinto en esta red."
 
 # --- UNFORBID (IRCop) ---------------------------------------------------------
 unforbid:

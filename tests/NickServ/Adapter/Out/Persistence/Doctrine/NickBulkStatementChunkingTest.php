@@ -40,7 +40,8 @@ use function sys_get_temp_dir;
 
 /**
  * Bulk nickname statements must bind a bounded number of parameters however
- * many nicknames a burst, a large channel or a netsplit supplies.
+ * many nicknames a burst, a large channel or a netsplit supplies, and never
+ * more than SQLite's historic limit of 999.
  */
 #[CoversClass(RegisteredNickDoctrineRepository::class)]
 #[CoversClass(NickAccountBatchDoctrineQuery::class)]
@@ -50,9 +51,8 @@ final class NickBulkStatementChunkingTest extends TestCase
 {
     private const int NICKS = 2500;
 
-    private const int MAX_LOOKUP_PARAMETERS = 1000;
-
-    private const int MAX_ACTIVITY_PARAMETERS = 1500;
+    /** SQLite's historic bound-parameter limit (SQLITE_MAX_VARIABLE_NUMBER before 3.32). */
+    private const int MAX_PARAMETERS = 999;
 
     private EntityManager $em;
 
@@ -71,7 +71,7 @@ final class NickBulkStatementChunkingTest extends TestCase
 
         self::assertSame($this->resolvedNames(), $this->sorted(array_keys($accounts)));
         self::assertSame($this->expectedNames(), $this->sorted(array_values(array_unique(array_map(static fn (RegisteredNick $nick): string => $nick->getNickname(), $accounts)))));
-        $this->assertBoundedStatements('SELECT', 3, self::MAX_LOOKUP_PARAMETERS);
+        $this->assertBoundedStatements('SELECT', 3, self::MAX_PARAMETERS);
     }
 
     #[Test]
@@ -86,7 +86,7 @@ final class NickBulkStatementChunkingTest extends TestCase
         self::assertSame($this->resolvedNames(), $this->sorted(array_keys($accounts)));
         self::assertSame('Nick0001', $accounts['NICK0001']->nickname);
         self::assertSame(1, $accounts['Nick0001']->id);
-        $this->assertBoundedStatements('SELECT', 3, self::MAX_LOOKUP_PARAMETERS);
+        $this->assertBoundedStatements('SELECT', 3, self::MAX_PARAMETERS);
     }
 
     #[Test]
@@ -100,7 +100,22 @@ final class NickBulkStatementChunkingTest extends TestCase
 
         self::assertSame($this->resolvedNames(), $this->sorted(array_keys($accounts)));
         self::assertSame('Nick2500', $accounts['NICK2500']->nickname);
-        $this->assertBoundedStatements('SELECT', 3, self::MAX_LOOKUP_PARAMETERS);
+        $this->assertBoundedStatements('SELECT', 3, self::MAX_PARAMETERS);
+    }
+
+    #[Test]
+    public function nicknameByIdLookupIsChunkedAndReturnsEveryMatch(): void
+    {
+        $repository = new RegisteredNickDoctrineRepository($this->em, NegotiatedCaseMapping::network());
+
+        $this->logger->enabled = true;
+        $nicknames = $repository->findNicknamesByIds([...range(1, self::NICKS), self::NICKS + 1]);
+        $this->logger->enabled = false;
+
+        self::assertSame(range(1, self::NICKS), $this->sortedIds(array_keys($nicknames)));
+        self::assertSame('Nick0001', $nicknames[1]);
+        self::assertSame('Nick2500', $nicknames[self::NICKS]);
+        $this->assertBoundedStatements('SELECT', 3, self::MAX_PARAMETERS);
     }
 
     #[Test]
@@ -117,7 +132,7 @@ final class NickBulkStatementChunkingTest extends TestCase
         $repository->saveActivityBatch($accounts);
         $this->logger->enabled = false;
 
-        $this->assertBoundedStatements('UPDATE', 5, self::MAX_ACTIVITY_PARAMETERS);
+        $this->assertBoundedStatements('UPDATE', 9, self::MAX_PARAMETERS);
         self::assertCount(self::NICKS, $this->connection->fetchFirstColumn('SELECT 1 FROM registered_nicks WHERE last_seen_at = ?', [$seenAt->format('Y-m-d H:i:s')]));
         self::assertTrue($this->em->contains($accounts[0]));
     }
@@ -178,6 +193,18 @@ final class NickBulkStatementChunkingTest extends TestCase
      * @return list<string>
      */
     private function sorted(array $values): array
+    {
+        sort($values);
+
+        return $values;
+    }
+
+    /**
+     * @param list<int> $values
+     *
+     * @return list<int>
+     */
+    private function sortedIds(array $values): array
     {
         sort($values);
 

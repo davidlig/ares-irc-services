@@ -60,6 +60,7 @@ use App\OperServ\Domain\Repository\OperIrcopRepositoryInterface;
 use App\Shared\Application\Port\EventBusInterface;
 use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use DateTimeImmutable;
+use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -403,6 +404,63 @@ final class NickProtectionSubscriberTest extends TestCase
             'message' => 'NickServ burst protection failed for one user; continuing with the rest of the chunk.',
             'context' => ['chunk' => 1, 'uid' => '001AAA', 'exception' => $failure],
         ]], $logger->records);
+    }
+
+    #[Test]
+    public function aFailureThatClosesTheEntityManagerStopsBurstProtectionWithOneError(): void
+    {
+        $this->networkUserLookup->expects(self::never())->method('findByUid');
+        $this->notifier->expects(self::never())->method('setUserVhost');
+        $accounts = [];
+        for ($number = 1; $number <= 201; ++$number) {
+            $account = RegisteredNick::createPending('User' . $number, 'hash', $number . '@example.com', 'en', $this->now, $this->now);
+            $account->activate();
+            new ReflectionProperty(RegisteredNick::class, 'id')->setValue($account, $number);
+            $accounts['User' . $number] = $account;
+        }
+        $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $repo->expects(self::once())->method('findByNicknamesLower')->willReturn($accounts);
+        $repo->expects(self::never())->method('saveActivityBatch');
+        $failure = new RuntimeException('transaction rolled back');
+        $closed = false;
+        $attempts = 0;
+        $publisher = $this->createStub(NickServEventPublisher::class);
+        $publisher->method('publish')->willReturnCallback(static function () use ($failure, &$closed, &$attempts): void {
+            if (1 === ++$attempts) {
+                return;
+            }
+            $closed = true;
+
+            throw $failure;
+        });
+        $entityManager = $this->createStub(EntityManagerInterface::class);
+        $entityManager->method('isOpen')->willReturnCallback(static function () use (&$closed): bool {
+            return !$closed;
+        });
+        $batchEvents = [];
+        $batchPublisher = $this->createStub(NickServEventPublisher::class);
+        $batchPublisher->method('publish')->willReturnCallback(static function (object $event) use (&$batchEvents): void {
+            $batchEvents[] = $event::class;
+        });
+        $logger = $this->recordingLogger();
+        $this->initializeSubscriber($repo, $publisher, $batchPublisher, $logger, $entityManager);
+        $this->networkUserLookup->expects(self::never())->method('findByUid');
+        $this->notifier->expects(self::never())->method('setUserVhost');
+        foreach ($accounts as $nickname => $account) {
+            $this->burstState->addPending(new NetworkUser('UID' . $account->getId(), $nickname, 'i', 'h', 'c', 'ip', true));
+        }
+
+        $this->subscriber->onBurstComplete(new NetworkSynchronizationCompletedEvent('001'));
+
+        self::assertSame(2, $attempts);
+        self::assertSame($this->now, $accounts['User1']->getLastSeenAt());
+        self::assertSame([NickBurstBatchStartedEvent::class, NickBurstBatchFinishedEvent::class], $batchEvents);
+        self::assertSame([[
+            'level' => 'error',
+            'message' => 'NickServ burst protection stopped: the EntityManager is closed, so the remaining burst users are left unprotected.',
+            'context' => ['chunk' => 1, 'remaining_users' => 201, 'exception' => $failure],
+        ]], $logger->records);
+        self::assertTrue($this->burstState->isComplete());
     }
 
     #[Test]
@@ -1394,6 +1452,7 @@ final class NickProtectionSubscriberTest extends TestCase
         ?NickServEventPublisher $publisher = null,
         ?NickServEventPublisher $batchPublisher = null,
         ?AbstractLogger $logger = null,
+        ?EntityManagerInterface $entityManager = null,
     ): void {
         $this->burstState = new BurstState();
         $this->networkUserLookup = $this->createMock(NetworkUserLookupPort::class);
@@ -1450,6 +1509,7 @@ final class NickProtectionSubscriberTest extends TestCase
             $this->syncNetworkIdentification,
             batchEventPublisher: $batchPublisher,
             logger: $logger ?? new NullLogger(),
+            entityManager: $entityManager,
         );
     }
 

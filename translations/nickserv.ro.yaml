@@ -802,6 +802,7 @@ forbid:
   cannot_forbid_root: "Nu se poate interzice utilizatorul root %nickname%."
   cannot_forbid_oper: "Nu se poate interzice operatorul IRC %nickname%."
   cannot_forbid_service: "Nu se poate interzice porecla de serviciu %nickname%."
+  key_conflict: "Nu se poate interzice %nickname%: intră în conflict cu porecla înregistrată %registered%, care este o poreclă diferită în această rețea."
 
 # --- UNFORBID (IRCop) ---------------------------------------------------------
 unforbid:

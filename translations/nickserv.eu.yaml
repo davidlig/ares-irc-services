@@ -866,6 +866,7 @@ forbid:
   cannot_forbid_root: "Ezin da root erabiltzaile %nickname% debekatu."
   cannot_forbid_oper: "Ezin da IRC operadore %nickname% debekatu."
   cannot_forbid_service: "Ezin da zerbitzu ezizen %nickname% debekatu."
+  key_conflict: "Ezin da %nickname% debekatu: %registered% ezizen erregistratuarekin talka egiten du, eta sare honetan beste ezizen bat da."
 
 # --- UNFORBID (IRCop) ---------------------------------------------------------
 unforbid:

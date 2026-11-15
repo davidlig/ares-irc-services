@@ -33,6 +33,7 @@ use PHPUnit\Framework\Attributes\Test;
 use function array_keys;
 use function array_map;
 use function array_slice;
+use function array_values;
 use function count;
 use function max;
 use function sprintf;
@@ -820,6 +821,34 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
     }
 
     #[Test]
+    public function maintenanceSweepQueriesReturnOnlyIdsAfterTheCursor(): void
+    {
+        $inactive = [];
+        $suspended = [];
+        $pending = [];
+        foreach ([1, 2, 3] as $n) {
+            $inactive[$n] = $this->createRegisteredNick('Idle' . $n, 'idle' . $n . '@example.com');
+            $inactive[$n]->markSeen(new DateTimeImmutable('-60 days'));
+            $suspended[$n] = $this->createRegisteredNick('Held' . $n, 'held' . $n . '@example.com');
+            $suspended[$n]->suspend('Reason', new DateTimeImmutable('-1 hour'));
+            $pending[$n] = $this->createRegisteredNick('Gone' . $n, 'gone' . $n . '@example.com');
+            $pending[$n]->markPendingDeletion(new DateTimeImmutable('-10 days'));
+            $this->repository->save($inactive[$n]);
+            $this->repository->save($suspended[$n]);
+            $this->repository->save($pending[$n]);
+        }
+        $this->entityManager->flush();
+
+        $idle = $this->repository->findRegisteredInactiveSince(new DateTimeImmutable('-30 days'), 1, $inactive[1]->getId());
+        $held = $this->repository->findExpiredSuspensions(new DateTimeImmutable(), 5, $suspended[2]->getId());
+        $gone = $this->repository->findPendingDeletionBefore(new DateTimeImmutable('-7 days'), null, $pending[1]->getId());
+
+        self::assertSame(['Idle2'], $this->nicknamesOf($idle));
+        self::assertSame(['Held3'], $this->nicknamesOf($held));
+        self::assertSame(['Gone2', 'Gone3'], $this->nicknamesOf($gone));
+    }
+
+    #[Test]
     public function findExpiredSuspensionsHonorsLimitAndOrdersByIdAscending(): void
     {
         $nick1 = $this->createRegisteredNick('Sus1', 'sus1@example.com');
@@ -890,6 +919,16 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
     private function names(array $nicks): array
     {
         return array_map(static fn (RegisteredNick $nick): string => $nick->getNickname(), $nicks);
+    }
+
+    /**
+     * @param RegisteredNick[] $nicks
+     *
+     * @return list<string>
+     */
+    private function nicknamesOf(array $nicks): array
+    {
+        return array_values(array_map(static fn (RegisteredNick $nick): string => $nick->getNickname(), $nicks));
     }
 
     private function createRegisteredNick(string $nickname, string $email): RegisteredNick

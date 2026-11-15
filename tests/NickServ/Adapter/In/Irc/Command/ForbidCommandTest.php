@@ -15,6 +15,7 @@ use App\NickServ\Adapter\In\Irc\NickServNotifierInterface;
 use App\NickServ\Adapter\Out\InMemory\PendingVerificationRegistry;
 use App\NickServ\Adapter\Out\InMemory\RecoveryTokenRegistry;
 use App\NickServ\Application\Port\Out\Clock;
+use App\NickServ\Application\Port\Out\NickProtectionExemption;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\Security\NickServPermission;
 use App\NickServ\Application\Service\ForbiddenNickService;
@@ -26,12 +27,15 @@ use App\NickServ\Application\UseCase\Forbid\ForbidNickHandler;
 use App\NickServ\Application\UseCase\Forbid\ForbidNickOutcome;
 use App\NickServ\Application\UseCase\Forbid\ForbidNickResult;
 use App\NickServ\Domain\Entity\RegisteredNick;
+use App\Shared\Adapter\In\Irc\Presentation\Fragment;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use Symfony\Contracts\Translation\TranslatorInterface;
+
+use function is_scalar;
 
 #[CoversClass(ForbidCommand::class)]
 #[CoversClass(ForbidNickHandler::class)]
@@ -40,6 +44,9 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 #[CoversClass(ForbidNickOutcome::class)]
 final class ForbidCommandTest extends TestCase
 {
+    /** @var array<string, string> parameters of the last translated reply */
+    private array $lastParams = [];
+
     #[Test]
     public function getNameReturnsForbid(): void
     {
@@ -352,6 +359,61 @@ final class ForbidCommandTest extends TestCase
         self::assertContains('forbid.success', $messages);
     }
 
+    #[Test]
+    public function aTargetThatOnlySharesTheStoredKeyOfAnotherNetworkNickIsRejectedWithoutDroppingIt(): void
+    {
+        // Under the negotiated ascii casemapping Admin{ and the root Admin[ are different nicks,
+        // although both have the RFC 1459 key admin[.
+        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o');
+        $root = $this->createActivatedNick('Admin[');
+        $messages = [];
+        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepository->method('findByNick')->willReturn(null);
+        $nickRepository->method('findByNicknameKey')->willReturnMap([['Admin{', $root]]);
+        $exemption = $this->createStub(NickProtectionExemption::class);
+        $exemption->method('isRootNickname')->willReturnCallback(static fn (string $nickname): bool => 'Admin[' === $nickname);
+        $dropService = $this->createMock(NickDropService::class);
+        $dropService->expects(self::never())->method('dropNick');
+        $forbiddenService = $this->createMock(ForbiddenNickService::class);
+        $forbiddenService->expects(self::never())->method('forbid');
+        $forbiddenService->expects(self::never())->method('updateReason');
+        $context = $this->createContext($sender, ['Admin{', 'Test reason'], $messages, nickRepository: $nickRepository);
+        $cmd = $this->createCommand($nickRepository, new NickTargetValidator($exemption, $nickRepository), $forbiddenService, $dropService, $this->clock());
+
+        $outcome = $cmd->execute($context);
+
+        self::assertFalse($outcome->success);
+        self::assertNull($outcome->auditData);
+        self::assertSame(['forbid.key_conflict'], $messages);
+        self::assertSame('Admin{', $this->lastParams['%nickname%'] ?? null);
+        self::assertSame('Admin[', $this->lastParams['%registered%'] ?? null);
+    }
+
+    #[Test]
+    public function aTargetThatOnlySharesTheStoredKeyOfAnotherForbiddenNickDoesNotRewriteItsReason(): void
+    {
+        $sender = $this->createSender();
+        $forbidden = RegisteredNick::createForbidden('Bad[', 'Old reason');
+        $messages = [];
+        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepository->method('findByNicknameKey')->willReturn($forbidden);
+        $validator = $this->createStub(NickTargetValidator::class);
+        $validator->method('validate')->willReturn(NickProtectabilityResult::allowed('Bad{', null));
+        $forbiddenService = $this->createMock(ForbiddenNickService::class);
+        $forbiddenService->expects(self::never())->method('updateReason');
+        $forbiddenService->expects(self::never())->method('forbid');
+        $context = $this->createContext($sender, ['Bad{', 'New reason'], $messages, nickRepository: $nickRepository);
+        $cmd = $this->createCommand($nickRepository, $validator, $forbiddenService, $this->createStub(NickDropService::class), $this->clock());
+
+        $outcome = $cmd->execute($context);
+
+        self::assertFalse($outcome->success);
+        self::assertSame(['forbid.key_conflict'], $messages);
+        self::assertSame('Old reason', $forbidden->getReason());
+        self::assertSame('Bad{', $this->lastParams['%nickname%'] ?? null);
+        self::assertSame('Bad[', $this->lastParams['%registered%'] ?? null);
+    }
+
     private function createCommand(
         ?RegisteredNickRepositoryInterface $repository = null,
         ?NickTargetValidator $validator = null,
@@ -401,7 +463,14 @@ final class ForbidCommandTest extends TestCase
         });
 
         $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $translator->method('trans')->willReturnCallback(function (string $id, array $params = []): string {
+            $this->lastParams = [];
+            foreach ($params as $name => $value) {
+                $this->lastParams[(string) $name] = $value instanceof Fragment ? $value->text : (is_scalar($value) ? (string) $value : '');
+            }
+
+            return $id;
+        });
 
         return new NickServContext(
             $sender,

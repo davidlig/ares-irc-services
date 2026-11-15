@@ -20,7 +20,12 @@ use RuntimeException;
 use stdClass;
 
 use function array_fill;
+use function array_filter;
+use function array_keys;
+use function array_slice;
+use function array_values;
 use function count;
+use function range;
 
 #[CoversClass(PurgePendingDeletionNicknamesTask::class)]
 final class PurgePendingDeletionNicknamesTaskTest extends TestCase
@@ -165,7 +170,7 @@ final class PurgePendingDeletionNicknamesTaskTest extends TestCase
             });
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects(self::once())->method('error')->with(
-            'Maintenance [nickserv.purge_pending_deletion_nicknames]: failed to drop pending-deletion nick Broken (id 1); skipping it until the next cycle.',
+            'Maintenance [nickserv.purge_pending_deletion_nicknames]: failed to drop pending-deletion nick Broken (id 1); skipping it until the next sweep.',
             ['exception' => $failure],
         );
         $em = $this->createMock(EntityManagerInterface::class);
@@ -178,18 +183,18 @@ final class PurgePendingDeletionNicknamesTaskTest extends TestCase
     }
 
     #[Test]
-    public function laterBatchesOfTheSameCycleSkipNicksThatAlreadyFailedWithoutShrinkingTheBatch(): void
+    public function laterBatchesOfTheSameCycleContinueAfterTheLastVisitedNickWithoutShrinkingTheBatch(): void
     {
         $failing = $this->nick(1, 'Broken');
         $loads = [];
         $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $repo->expects(self::exactly(2))->method('findPendingDeletionBefore')
-            ->willReturnCallback(function (DateTimeImmutable $threshold, int $limit) use ($failing, &$loads): array {
-                $loads[] = $limit;
+            ->willReturnCallback(function (DateTimeImmutable $threshold, int $limit, int $afterId) use ($failing, &$loads): array {
+                $loads[] = [$limit, $afterId];
 
                 return 1 === count($loads)
                     ? [$failing, $this->nick(2, 'Second')]
-                    : [$failing, $this->nick(3, 'Third'), $this->nick(4, 'Fourth')];
+                    : [$this->nick(3, 'Third'), $this->nick(4, 'Fourth')];
             });
         $repo->method('findById')->willReturn($failing);
         $attempts = [];
@@ -206,8 +211,52 @@ final class PurgePendingDeletionNicknamesTaskTest extends TestCase
 
         new PurgePendingDeletionNicknamesTask($repo, $dropService, $logger, $this->clock(), 3600, 7, batchSize: 2, maxBatchesPerCycle: 2)->run();
 
-        self::assertSame([2, 3], $loads);
+        self::assertSame([[2, 0], [2, 2]], $loads);
         self::assertSame(['Broken', 'Second', 'Third', 'Fourth'], $attempts);
+    }
+
+    #[Test]
+    public function aFullPageOfNicksThatKeepFailingDoesNotBlockLaterNicksInTheNextCycle(): void
+    {
+        $rows = [];
+        for ($id = 1; $id <= 101; ++$id) {
+            $rows[$id] = $this->nick($id, 'Nick' . $id);
+        }
+        $pages = [];
+        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repo->method('findPendingDeletionBefore')
+            ->willReturnCallback(static function (DateTimeImmutable $threshold, int $limit, int $afterId = 0) use (&$rows, &$pages): array {
+                $pages[] = [$limit, $afterId];
+
+                return array_slice(array_values(array_filter($rows, static fn (RegisteredNick $nick): bool => $nick->getId() > $afterId)), 0, $limit);
+            });
+        $repo->method('findById')->willReturnCallback(static fn (int $id): ?RegisteredNick => $rows[$id] ?? null);
+        $attempts = [];
+        $dropService = $this->createStub(NickDropService::class);
+        $dropService->method('hardDropNick')
+            ->willReturnCallback(static function (RegisteredNick $nick) use (&$rows, &$attempts): void {
+                $attempts[] = $nick->getId();
+                if ($nick->getId() <= 100) {
+                    throw new RuntimeException('drop subscriber failed');
+                }
+                unset($rows[$nick->getId()]);
+            });
+        $errors = [];
+        $logger = $this->createStub(LoggerInterface::class);
+        $logger->method('error')->willReturnCallback(static function (string $message) use (&$errors): void {
+            $errors[] = $message;
+        });
+        $task = new PurgePendingDeletionNicknamesTask($repo, $dropService, $logger, $this->clock(), 3600, 7);
+
+        $task->run();
+        $task->run();
+        $task->run();
+
+        self::assertSame([[100, 0], [100, 100], [100, 0]], $pages);
+        self::assertSame([...range(1, 100), 101, ...range(1, 100)], $attempts);
+        self::assertSame(range(1, 100), array_keys($rows));
+        self::assertCount(200, $errors);
+        self::assertSame('Maintenance [nickserv.purge_pending_deletion_nicknames]: failed to drop pending-deletion nick Nick1 (id 1); skipping it until the next sweep.', $errors[0]);
     }
 
     #[Test]

@@ -15,6 +15,7 @@ use Doctrine\DBAL\Platforms\SQLitePlatform;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Query\ResultSetMappingBuilder;
+use Doctrine\ORM\QueryBuilder;
 use LogicException;
 use WeakMap;
 
@@ -36,11 +37,11 @@ use function strtr;
 
 class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterface
 {
-    /** Nicknames bound by one bulk lookup statement. */
-    private const int LOOKUP_CHUNK_SIZE = 1000;
+    /** Nicknames or ids bound by one bulk lookup statement; stays under SQLite's historic 999-parameter limit. */
+    private const int LOOKUP_CHUNK_SIZE = 900;
 
-    /** Accounts per last-seen UPDATE; each binds three parameters. */
-    private const int ACTIVITY_CHUNK_SIZE = 500;
+    /** Accounts per last-seen UPDATE; each binds three parameters, so one statement binds at most 900. */
+    private const int ACTIVITY_CHUNK_SIZE = 300;
 
     /** @var WeakMap<EntityManagerInterface, array<string, RegisteredNick|null>>|null */
     private static ?WeakMap $lookupCache = null;
@@ -194,21 +195,23 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
             return [];
         }
 
-        $queryBuilder = $this->em->createQueryBuilder();
-        $queryBuilder->select('n.id AS accountId, n.nickname AS nickname')
-            ->from(RegisteredNick::class, 'n')
-            ->where('n.id IN (:ids)')
-            ->setParameter('ids', $ids);
-
-        /** @var array<mixed> $result */
-        $result = $queryBuilder->getQuery()->getArrayResult();
         $nicknames = [];
-        foreach ($result as $row) {
-            if (!is_array($row) || !isset($row['accountId'], $row['nickname']) || !is_numeric($row['accountId']) || !is_string($row['nickname'])) {
-                continue;
-            }
+        foreach (array_chunk($ids, self::LOOKUP_CHUNK_SIZE) as $chunk) {
+            $queryBuilder = $this->em->createQueryBuilder();
+            $queryBuilder->select('n.id AS accountId, n.nickname AS nickname')
+                ->from(RegisteredNick::class, 'n')
+                ->where('n.id IN (:ids)')
+                ->setParameter('ids', $chunk);
 
-            $nicknames[(int) $row['accountId']] = $row['nickname'];
+            /** @var array<mixed> $result */
+            $result = $queryBuilder->getQuery()->getArrayResult();
+            foreach ($result as $row) {
+                if (!is_array($row) || !isset($row['accountId'], $row['nickname']) || !is_numeric($row['accountId']) || !is_string($row['nickname'])) {
+                    continue;
+                }
+
+                $nicknames[(int) $row['accountId']] = $row['nickname'];
+            }
         }
 
         return $nicknames;
@@ -240,7 +243,7 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
         return null !== $this->findByNicknameKey($nickname);
     }
 
-    public function findRegisteredInactiveSince(DateTimeImmutable $threshold, ?int $limit = null): array
+    public function findRegisteredInactiveSince(DateTimeImmutable $threshold, ?int $limit = null, int $afterId = 0): array
     {
         $qb = $this->em->createQueryBuilder();
         $qb->select('n')
@@ -252,15 +255,7 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
             ->setParameter('status', NickStatus::Registered)
             ->setParameter('threshold', $threshold->format('Y-m-d H:i:s'));
 
-        if (null !== $limit && $limit > 0) {
-            $qb->setMaxResults($limit);
-        }
-
-        /** @var array<mixed> $result */
-        $result = $qb->getQuery()->getResult();
-
-        /* @var array<RegisteredNick> */
-        return array_values(array_filter($result, static fn ($row): bool => $row instanceof RegisteredNick));
+        return $this->maintenancePage($qb, $limit, $afterId);
     }
 
     public function deleteExpiredPending(DateTimeImmutable $now): int
@@ -288,7 +283,7 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
             ->findBy(['status' => $status]);
     }
 
-    public function findExpiredSuspensions(DateTimeImmutable $now, ?int $limit = null): array
+    public function findExpiredSuspensions(DateTimeImmutable $now, ?int $limit = null, int $afterId = 0): array
     {
         $qb = $this->em->createQueryBuilder();
         $qb->select('n')
@@ -300,18 +295,10 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
             ->setParameter('status', NickStatus::Suspended)
             ->setParameter('now', $now->format('Y-m-d H:i:s'));
 
-        if (null !== $limit && $limit > 0) {
-            $qb->setMaxResults($limit);
-        }
-
-        /** @var array<mixed> $result */
-        $result = $qb->getQuery()->getResult();
-
-        /* @var array<RegisteredNick> */
-        return array_values(array_filter($result, static fn ($row): bool => $row instanceof RegisteredNick));
+        return $this->maintenancePage($qb, $limit, $afterId);
     }
 
-    public function findPendingDeletionBefore(DateTimeImmutable $threshold, ?int $limit = null): array
+    public function findPendingDeletionBefore(DateTimeImmutable $threshold, ?int $limit = null, int $afterId = 0): array
     {
         $qb = $this->em->createQueryBuilder();
         $qb->select('n')
@@ -323,15 +310,7 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
             ->setParameter('status', NickStatus::PendingDeletion)
             ->setParameter('threshold', $threshold->format('Y-m-d H:i:s'));
 
-        if (null !== $limit && $limit > 0) {
-            $qb->setMaxResults($limit);
-        }
-
-        /** @var array<mixed> $result */
-        $result = $qb->getQuery()->getResult();
-
-        /* @var array<RegisteredNick> */
-        return array_values(array_filter($result, static fn ($row): bool => $row instanceof RegisteredNick));
+        return $this->maintenancePage($qb, $limit, $afterId);
     }
 
     public function all(): array
@@ -444,5 +423,27 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
             $query->setParameter('seen' . $index, $nick->getLastSeenAt(), Types::DATETIME_IMMUTABLE);
         }
         $query->execute();
+    }
+
+    /**
+     * Applies the maintenance sweep cursor and page size to an id-ordered query.
+     *
+     * @return RegisteredNick[]
+     */
+    private function maintenancePage(QueryBuilder $qb, ?int $limit, int $afterId): array
+    {
+        if ($afterId > 0) {
+            $qb->andWhere('n.id > :afterId')->setParameter('afterId', $afterId);
+        }
+
+        if (null !== $limit && $limit > 0) {
+            $qb->setMaxResults($limit);
+        }
+
+        /** @var array<mixed> $result */
+        $result = $qb->getQuery()->getResult();
+
+        /* @var array<RegisteredNick> */
+        return array_values(array_filter($result, static fn ($row): bool => $row instanceof RegisteredNick));
     }
 }

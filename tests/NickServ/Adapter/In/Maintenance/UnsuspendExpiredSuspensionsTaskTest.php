@@ -21,7 +21,12 @@ use Psr\Log\NullLogger;
 use ReflectionClass;
 use RuntimeException;
 
+use function array_filter;
+use function array_keys;
+use function array_slice;
+use function array_values;
 use function count;
+use function range;
 
 #[CoversClass(UnsuspendExpiredSuspensionsTask::class)]
 final class UnsuspendExpiredSuspensionsTaskTest extends TestCase
@@ -240,7 +245,7 @@ final class UnsuspendExpiredSuspensionsTaskTest extends TestCase
         $debugNotifier->expects(self::once())->method('log')->with(self::SERVER_NAME, 'UNSUSPEND', 'Healthy');
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects(self::once())->method('error')->with(
-            'Maintenance [nickserv.unsuspend_expired_suspensions]: failed to auto-unsuspend nick Broken (id 1); skipping it until the next cycle.',
+            'Maintenance [nickserv.unsuspend_expired_suspensions]: failed to auto-unsuspend nick Broken (id 1); skipping it until the next sweep.',
             ['exception' => $failure],
         );
         $logger->expects(self::once())->method('info')->with('Maintenance [nickserv.unsuspend_expired_suspensions]: auto-unsuspended nick Healthy (id 2).');
@@ -256,7 +261,7 @@ final class UnsuspendExpiredSuspensionsTaskTest extends TestCase
     }
 
     #[Test]
-    public function laterBatchesOfTheSameCycleSkipSuspensionsThatAlreadyFailedWithoutShrinkingTheBatch(): void
+    public function laterBatchesOfTheSameCycleContinueAfterTheLastVisitedSuspensionWithoutShrinkingTheBatch(): void
     {
         $failing = $this->createNickWithId('Broken', 1);
         $second = $this->createNickWithId('Second', 2);
@@ -268,10 +273,10 @@ final class UnsuspendExpiredSuspensionsTaskTest extends TestCase
         $loads = [];
         $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $nickRepo->expects(self::exactly(2))->method('findExpiredSuspensions')
-            ->willReturnCallback(static function (DateTimeImmutable $now, int $limit) use ($failing, $second, $third, $fourth, &$loads): array {
-                $loads[] = $limit;
+            ->willReturnCallback(static function (DateTimeImmutable $now, int $limit, int $afterId) use ($failing, $second, $third, $fourth, &$loads): array {
+                $loads[] = [$limit, $afterId];
 
-                return 1 === count($loads) ? [$failing, $second] : [$failing, $third, $fourth];
+                return 1 === count($loads) ? [$failing, $second] : [$third, $fourth];
             });
         $attempts = [];
         $nickRepo->method('save')->willReturnCallback(static function (RegisteredNick $nick) use ($failing, &$attempts): void {
@@ -295,8 +300,52 @@ final class UnsuspendExpiredSuspensionsTaskTest extends TestCase
             maxBatchesPerCycle: 2,
         )->run();
 
-        self::assertSame([2, 3], $loads);
+        self::assertSame([[2, 0], [2, 2]], $loads);
         self::assertSame(['Broken', 'Second', 'Third', 'Fourth'], $attempts);
+    }
+
+    #[Test]
+    public function aFullPageOfSuspensionsThatKeepFailingDoesNotBlockLaterSuspensionsInTheNextCycle(): void
+    {
+        $rows = [];
+        for ($id = 1; $id <= 101; ++$id) {
+            $rows[$id] = $this->createNickWithId('Nick' . $id, $id);
+            $rows[$id]->suspend('Ban', new DateTimeImmutable('-1 hour'));
+        }
+        $pages = [];
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findExpiredSuspensions')
+            ->willReturnCallback(static function (DateTimeImmutable $now, int $limit, int $afterId = 0) use (&$rows, &$pages): array {
+                $pages[] = [$limit, $afterId];
+
+                return array_slice(array_values(array_filter($rows, static fn (RegisteredNick $nick): bool => $nick->getId() > $afterId)), 0, $limit);
+            });
+        $attempts = [];
+        $nickRepo->method('save')->willReturnCallback(static function (RegisteredNick $nick) use (&$rows, &$attempts): void {
+            $attempts[] = $nick->getId();
+            if ($nick->getId() <= 100) {
+                $nick->suspend('Ban', new DateTimeImmutable('-1 hour'));
+
+                throw new RuntimeException('database rejected the update');
+            }
+            unset($rows[$nick->getId()]);
+        });
+        $errors = [];
+        $logger = $this->createStub(LoggerInterface::class);
+        $logger->method('error')->willReturnCallback(static function (string $message) use (&$errors): void {
+            $errors[] = $message;
+        });
+        $task = new UnsuspendExpiredSuspensionsTask($nickRepo, $this->createStub(ServiceDebugNotifierInterface::class), $logger, $this->clock(), $this->createStub(NickServEventPublisher::class), self::SERVER_NAME, 3600);
+
+        $task->run();
+        $task->run();
+        $task->run();
+
+        self::assertSame([[100, 0], [100, 100], [100, 0]], $pages);
+        self::assertSame([...range(1, 100), 101, ...range(1, 100)], $attempts);
+        self::assertSame(range(1, 100), array_keys($rows));
+        self::assertCount(200, $errors);
+        self::assertSame('Maintenance [nickserv.unsuspend_expired_suspensions]: failed to auto-unsuspend nick Nick1 (id 1); skipping it until the next sweep.', $errors[0]);
     }
 
     #[Test]

@@ -16,25 +16,29 @@ use Psr\Log\LoggerInterface;
 use Throwable;
 
 use function count;
+use function max;
 use function sprintf;
 
-final readonly class UnsuspendExpiredSuspensionsTask implements MaintenanceTaskInterface
+final class UnsuspendExpiredSuspensionsTask implements MaintenanceTaskInterface
 {
     public const int DEFAULT_BATCH_SIZE = 100;
 
     private const int DEFAULT_MAX_BATCHES = 1;
 
+    /** Id of the last nick visited by the current sweep; 0 starts a new sweep. */
+    private int $cursor = 0;
+
     public function __construct(
-        private RegisteredNickRepositoryInterface $nickRepository,
-        private ServiceDebugNotifierInterface $debugNotifier,
-        private LoggerInterface $logger,
-        private Clock $clock,
-        private NickServEventPublisher $eventPublisher,
-        private string $serverName,
-        private int $intervalSeconds,
-        private ?EntityManagerInterface $entityManager = null,
-        private int $batchSize = self::DEFAULT_BATCH_SIZE,
-        private int $maxBatchesPerCycle = self::DEFAULT_MAX_BATCHES,
+        private readonly RegisteredNickRepositoryInterface $nickRepository,
+        private readonly ServiceDebugNotifierInterface $debugNotifier,
+        private readonly LoggerInterface $logger,
+        private readonly Clock $clock,
+        private readonly NickServEventPublisher $eventPublisher,
+        private readonly string $serverName,
+        private readonly int $intervalSeconds,
+        private readonly ?EntityManagerInterface $entityManager = null,
+        private readonly int $batchSize = self::DEFAULT_BATCH_SIZE,
+        private readonly int $maxBatchesPerCycle = self::DEFAULT_MAX_BATCHES,
     ) {}
 
     public function getName(): string
@@ -52,31 +56,30 @@ final readonly class UnsuspendExpiredSuspensionsTask implements MaintenanceTaskI
         return 195;
     }
 
+    /**
+     * Each cycle continues the sweep after the last visited id, so suspensions that keep failing
+     * are skipped until the next sweep instead of taking every page.
+     */
     public function run(): void
     {
         $batches = 0;
-        /** @var array<int, true> $failed nick ids that failed earlier in this cycle */
-        $failed = [];
 
         do {
-            // Failed rows stay in the result set; widen the page so they never take a slot.
-            $limit = $this->batchSize + count($failed);
-            $expired = $this->nickRepository->findExpiredSuspensions($this->clock->now(), $limit);
+            $expired = $this->nickRepository->findExpiredSuspensions($this->clock->now(), $this->batchSize, $this->cursor);
             if ([] === $expired) {
-                break;
+                $this->cursor = 0;
+
+                return;
             }
 
             foreach ($expired as $nick) {
-                if (isset($failed[$nick->getId()])) {
-                    continue;
-                }
+                $this->cursor = max($this->cursor, $nick->getId());
 
                 try {
                     $nick->unsuspend();
                     $this->nickRepository->save($nick);
                 } catch (Throwable $e) {
                     $this->recordSaveFailure($nick, $e);
-                    $failed[$nick->getId()] = true;
 
                     continue;
                 }
@@ -95,7 +98,13 @@ final readonly class UnsuspendExpiredSuspensionsTask implements MaintenanceTaskI
 
             $this->entityManager?->clear();
             ++$batches;
-        } while (count($expired) === $limit && $batches < $this->maxBatchesPerCycle);
+
+            if (count($expired) < $this->batchSize) {
+                $this->cursor = 0;
+
+                return;
+            }
+        } while ($batches < $this->maxBatchesPerCycle);
     }
 
     /**
@@ -119,7 +128,7 @@ final readonly class UnsuspendExpiredSuspensionsTask implements MaintenanceTaskI
         // Keep the half-applied unsuspend out of later flushes in this batch.
         $this->entityManager?->detach($nick);
         $this->logger->error(sprintf(
-            'Maintenance [%s]: failed to auto-unsuspend nick %s (id %d); skipping it until the next cycle.',
+            'Maintenance [%s]: failed to auto-unsuspend nick %s (id %d); skipping it until the next sweep.',
             $this->getName(),
             $nick->getNickname(),
             $nick->getId(),

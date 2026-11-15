@@ -60,10 +60,11 @@ interface RegisteredNickRepositoryInterface
     /**
      * Returns REGISTERED nicks whose last activity (lastSeenAt ?? registeredAt) is before the threshold.
      * Used for inactivity purge; excludes PENDING, SUSPENDED, FORBIDDEN.
+     * Ordered by id; $afterId > 0 returns only ids above it (maintenance sweep cursor).
      *
      * @return RegisteredNick[]
      */
-    public function findRegisteredInactiveSince(DateTimeImmutable $threshold, ?int $limit = null): array;
+    public function findRegisteredInactiveSince(DateTimeImmutable $threshold, ?int $limit = null, int $afterId = 0): array;
 
     /**
      * Removes all PENDING entries whose expiresAt is in the past.
@@ -74,17 +75,19 @@ interface RegisteredNickRepositoryInterface
     /**
      * Returns SUSPENDED nicks whose suspendedUntil is in the past.
      * Used for temporary suspension expiry; excludes permanent suspensions (suspendedUntil = null).
+     * Ordered by id; $afterId > 0 returns only ids above it (maintenance sweep cursor).
      *
      * @return RegisteredNick[]
      */
-    public function findExpiredSuspensions(DateTimeImmutable $now, ?int $limit = null): array;
+    public function findExpiredSuspensions(DateTimeImmutable $now, ?int $limit = null, int $afterId = 0): array;
 
     /**
      * Returns nicks manually dropped before the threshold and ready for hard deletion.
+     * Ordered by id; $afterId > 0 returns only ids above it (maintenance sweep cursor).
      *
      * @return RegisteredNick[]
      */
-    public function findPendingDeletionBefore(DateTimeImmutable $threshold, ?int $limit = null): array;
+    public function findPendingDeletionBefore(DateTimeImmutable $threshold, ?int $limit = null, int $afterId = 0): array;
 
     /** @return RegisteredNick[] */
     public function findByStatus(NickStatus $status): array;

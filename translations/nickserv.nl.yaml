@@ -801,6 +801,7 @@ forbid:
   cannot_forbid_root: "Kan rootgebruiker %nickname% niet verbieden."
   cannot_forbid_oper: "Kan IRC-operator %nickname% niet verbieden."
   cannot_forbid_service: "Kan service-bijnaam %nickname% niet verbieden."
+  key_conflict: "Kan %nickname% niet verbieden: deze botst met de geregistreerde bijnaam %registered%, die op dit netwerk een andere bijnaam is."
 
 # --- UNFORBID (IRCop) ---------------------------------------------------------
 unforbid:
