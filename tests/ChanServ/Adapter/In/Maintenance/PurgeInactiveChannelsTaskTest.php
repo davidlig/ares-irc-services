@@ -319,6 +319,116 @@ final class PurgeInactiveChannelsTaskTest extends TestCase
     }
 
     #[Test]
+    public function aChannelThatKeepsClosingTheEntityManagerIsSkippedEvenWhenAnEarlierChannelSucceedsEveryCycle(): void
+    {
+        $healthy = $this->inactiveChannel(1, '#healthy');
+        $poison = $this->inactiveChannel(2, '#poison');
+        $later = $this->inactiveChannel(3, '#later');
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('iterateRegisteredInactiveSince')->willReturn([$healthy, $poison, $later]);
+        $open = true;
+        $entityManager = $this->createStub(EntityManagerInterface::class);
+        $entityManager->method('isOpen')->willReturnCallback(static function () use (&$open): bool {
+            return $open;
+        });
+        $attempts = self::messages();
+        $dropService = $this->createStub(ChanDropService::class);
+        $dropService->method('hardDropChannel')->willReturnCallback(static function (RegisteredChannel $channel) use ($attempts, &$open): void {
+            $attempts->append($channel->getName());
+            if ('#poison' === $channel->getName()) {
+                $open = false;
+
+                throw new RuntimeException('deadlock');
+            }
+        });
+        $task = new PurgeInactiveChannelsTask($channelRepo, $dropService, $this->noPendingActivity(), $this->createStub(LoggerInterface::class), 3600, 90, $entityManager, $this->connection(true));
+
+        for ($cycle = 1; $cycle <= 3; ++$cycle) {
+            $open = true;
+            self::assertInstanceOf(RuntimeException::class, $this->runCatching($task));
+        }
+        $open = true;
+        $task->run();
+
+        self::assertSame(
+            ['#healthy', '#poison', '#healthy', '#poison', '#healthy', '#poison', '#healthy', '#later'],
+            $attempts->getArrayCopy(),
+            'an earlier channel that succeeds every cycle does not reset the budget of the failing channel',
+        );
+    }
+
+    #[Test]
+    public function aChannelThatUsedUpItsAttemptsGetsOneAttemptInALaterSweepAndIsThenSkippedAtOnce(): void
+    {
+        $poison = $this->inactiveChannel(1, '#poison');
+        $later = $this->inactiveChannel(2, '#later');
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('iterateRegisteredInactiveSince')->willReturn([$poison, $later]);
+        $open = true;
+        $poisonFails = new ArrayObject([true]);
+        $entityManager = $this->createStub(EntityManagerInterface::class);
+        $entityManager->method('isOpen')->willReturnCallback(static function () use (&$open): bool {
+            return $open;
+        });
+        $attempts = self::messages();
+        $dropService = $this->createStub(ChanDropService::class);
+        $dropService->method('hardDropChannel')->willReturnCallback(static function (RegisteredChannel $channel) use ($attempts, &$open, $poisonFails): void {
+            $attempts->append($channel->getName());
+            if (true === $poisonFails[0] && '#poison' === $channel->getName()) {
+                $open = false;
+
+                throw new RuntimeException('deadlock');
+            }
+        });
+        $databaseAnswers = new ArrayObject([true]);
+        $connection = $this->createStub(Connection::class);
+        $connection->method('getDatabasePlatform')->willReturn(new MySQLPlatform());
+        $connection->method('fetchOne')->willReturnCallback(static function () use ($databaseAnswers): int {
+            if (true !== $databaseAnswers[0]) {
+                throw new RuntimeException('server has gone away');
+            }
+
+            return 1;
+        });
+        $errors = self::messages();
+        $logger = $this->createStub(LoggerInterface::class);
+        $logger->method('error')->willReturnCallback(static function (string $message) use ($errors): void {
+            $errors[] = $message;
+        });
+        $task = new PurgeInactiveChannelsTask($channelRepo, $dropService, $this->noPendingActivity(), $logger, 3600, 90, $entityManager, $connection);
+        $cycle = function () use ($task, &$open): ?Throwable {
+            $open = true;
+
+            return $this->runCatching($task);
+        };
+
+        for ($run = 1; $run <= 3; ++$run) {
+            $cycle();
+        }
+        self::assertNull($cycle(), 'the first sweep ends once the exhausted channel is skipped');
+        $attempts->exchangeArray([]);
+
+        $databaseAnswers[0] = false;
+        self::assertInstanceOf(RuntimeException::class, $cycle());
+        $databaseAnswers[0] = true;
+        self::assertInstanceOf(RuntimeException::class, $cycle());
+        self::assertNull($cycle());
+        self::assertSame(['#poison', '#poison', '#later'], $attempts->getArrayCopy(), 'an outage is not counted; a counted failure skips the exhausted channel at once');
+        self::assertStringContainsString(
+            'failed to drop inactive channel #poison (id 1) again after it was skipped in an earlier sweep; skipping it until the next sweep and stopping this batch',
+            $errors->getArrayCopy()[4] ?? '',
+        );
+
+        $poisonFails[0] = false;
+        $attempts->exchangeArray([]);
+        self::assertNull($cycle());
+        $poisonFails[0] = true;
+        self::assertInstanceOf(RuntimeException::class, $cycle());
+        self::assertInstanceOf(RuntimeException::class, $cycle());
+        self::assertSame(['#poison', '#later', '#poison', '#poison'], $attempts->getArrayCopy(), 'a channel that succeeded gets a full budget again');
+    }
+
+    #[Test]
     public function aDatabaseOutageNeverSkipsAChannel(): void
     {
         $channel = $this->inactiveChannel(1, '#healthy');

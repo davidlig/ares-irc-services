@@ -37,7 +37,7 @@ final readonly class PurgePendingDeletionChannelsTask implements MaintenanceTask
         ?EntityManagerInterface $entityManager = null,
         ?Connection $connection = null,
     ) {
-        $this->failures = new ChannelSweepFailureBudget($entityManager, $connection);
+        $this->failures = new ChannelSweepFailureBudget($logger, $this->getName(), $entityManager, $connection);
     }
 
     public function getName(): string
@@ -75,7 +75,15 @@ final readonly class PurgePendingDeletionChannelsTask implements MaintenanceTask
             try {
                 $this->dropService->hardDropChannel($channel, $now, 'manual-grace-expired', null);
             } catch (Throwable $e) {
-                $this->recordFailure($channelId, $channelName, $e);
+                $this->failures->recordFailure(
+                    $channelId,
+                    $channelName,
+                    $e,
+                    'delete pending-deletion channel',
+                    fn (): bool => [] === $this->channelRepository->findByIds([$channelId]),
+                    'permanently deleted channel',
+                    'post-drop',
+                );
 
                 continue;
             }
@@ -90,54 +98,5 @@ final readonly class PurgePendingDeletionChannelsTask implements MaintenanceTask
         }
 
         $this->failures->finishSweep();
-    }
-
-    /**
-     * @throws Throwable when the EntityManager was closed by the failure
-     */
-    private function recordFailure(int $channelId, string $channelName, Throwable $e): void
-    {
-        if ($this->failures->entityManagerClosed()) {
-            if ($this->failures->closedEntityManagerFailure($channelId)) {
-                $this->logger->error(sprintf(
-                    'Maintenance [%s]: failed to delete pending-deletion channel %s (id %d) with the EntityManager closed %d times in a row; skipping it until the next sweep and stopping this batch.',
-                    $this->getName(),
-                    $channelName,
-                    $channelId,
-                    ChannelSweepFailureBudget::MAX_CLOSED_ENTITY_MANAGER_ATTEMPTS,
-                ), ['exception' => $e]);
-
-                throw $e;
-            }
-
-            $this->logger->error(sprintf(
-                'Maintenance [%s]: failed to delete pending-deletion channel %s (id %d); the EntityManager is closed, stopping this batch.',
-                $this->getName(),
-                $channelName,
-                $channelId,
-            ), ['exception' => $e]);
-
-            throw $e;
-        }
-
-        if ([] === $this->channelRepository->findByIds([$channelId])) {
-            $this->failures->completed($channelId, false);
-            $this->logger->error(sprintf(
-                'Maintenance [%s]: permanently deleted channel %s (id %d), but a post-drop step failed.',
-                $this->getName(),
-                $channelName,
-                $channelId,
-            ), ['exception' => $e]);
-
-            return;
-        }
-
-        $this->failures->completed($channelId, true);
-        $this->logger->error(sprintf(
-            'Maintenance [%s]: failed to delete pending-deletion channel %s (id %d); skipping it until the next sweep.',
-            $this->getName(),
-            $channelName,
-            $channelId,
-        ), ['exception' => $e]);
     }
 }

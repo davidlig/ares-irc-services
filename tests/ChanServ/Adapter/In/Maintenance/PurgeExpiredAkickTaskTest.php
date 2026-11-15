@@ -124,7 +124,7 @@ final class PurgeExpiredAkickTaskTest extends TestCase
     }
 
     #[Test]
-    public function loadsExpiredAkicksInBoundedBatchesAfterTheLastSeenId(): void
+    public function loadsExpiredAkicksInBoundedBatchesFromTheStartBecauseEachBatchIsDeleted(): void
     {
         $loads = [];
         $deleted = [];
@@ -133,7 +133,7 @@ final class PurgeExpiredAkickTaskTest extends TestCase
             ->willReturnCallback(function (?ChannelAkick $after, ?int $limit) use (&$loads): array {
                 $loads[] = [$after?->getId(), $limit];
 
-                return null === $after ? [$this->expired(1), $this->expired(2)] : [$this->expired(3)];
+                return 1 === count($loads) ? [$this->expired(1), $this->expired(2)] : [$this->expired(3)];
             });
         $akickRepo->expects(self::exactly(2))->method('deleteByIds')
             ->willReturnCallback(static function (array $ids) use (&$deleted): int {
@@ -146,12 +146,12 @@ final class PurgeExpiredAkickTaskTest extends TestCase
 
         new PurgeExpiredAkickTask($akickRepo, $logger, 3600, 2)->run();
 
-        self::assertSame([[null, 2], [2, 2]], $loads);
+        self::assertSame([[null, 2], [null, 2]], $loads);
         self::assertSame([[1, 2], [3]], $deleted);
     }
 
     #[Test]
-    public function capsTheBatchesPerCycleAndContinuesFromTheCursorNextCycle(): void
+    public function capsTheBatchesPerCycleAndContinuesWithTheRemainingEntriesNextCycle(): void
     {
         $loads = self::recorder();
         $deleted = self::recorder();
@@ -172,15 +172,14 @@ final class PurgeExpiredAkickTaskTest extends TestCase
         $task = new PurgeExpiredAkickTask($akickRepo, new NullLogger(), 3600, 2, 2);
 
         $task->run();
-        self::assertSame([[null, 2], [2, 2]], $loads->getArrayCopy(), 'the first cycle stops after two full batches');
+        self::assertSame([[null, 2], [null, 2]], $loads->getArrayCopy(), 'the first cycle stops after two full batches');
         self::assertSame([[1, 2], [3, 4]], $deleted->getArrayCopy());
 
         $task->run();
-        self::assertSame([[null, 2], [2, 2], [4, 2], [6, 2]], $loads->getArrayCopy(), 'the next cycle continues after the last deleted entry');
+        self::assertSame([[null, 2], [null, 2], [null, 2], [null, 2]], $loads->getArrayCopy(), 'the next cycle reads the entries left from the start');
         self::assertSame([[1, 2], [3, 4], [5, 6], [7]], $deleted->getArrayCopy());
 
         $task->run();
-        self::assertSame([null, 2], $loads[4], 'a short page ends the sweep, so the next cycle starts over');
         self::assertSame([8, 9], $deleted[4]);
     }
 
@@ -204,25 +203,26 @@ final class PurgeExpiredAkickTaskTest extends TestCase
     }
 
     #[Test]
-    public function aFailedDeleteKeepsTheCursorSoTheBatchIsRetriedNextCycle(): void
+    public function aFailedDeleteStopsTheCycleAndTheBatchIsReadAgainNextCycle(): void
     {
         $loads = self::recorder();
-        $deletes = 0;
+        $deletes = self::recorder();
         $akickRepo = $this->createStub(ChannelAkickRepositoryInterface::class);
         $akickRepo->method('findExpired')
-            ->willReturnCallback(function (?ChannelAkick $after, ?int $limit) use ($loads): array {
-                $loads[] = $after?->getId();
+            ->willReturnCallback(function (?ChannelAkick $after) use ($loads): array {
+                $loads[] = $after;
 
-                return null === $after ? [$this->expired(1), $this->expired(2)] : [$this->expired(3), $this->expired(4)];
+                return $loads->count() <= 2 ? [$this->expired(1), $this->expired(2)] : [];
             });
-        $akickRepo->method('deleteByIds')->willReturnCallback(static function (array $ids) use (&$deletes): int {
-            if (2 === ++$deletes) {
+        $akickRepo->method('deleteByIds')->willReturnCallback(static function (array $ids) use ($deletes): int {
+            $deletes[] = $ids;
+            if (1 === $deletes->count()) {
                 throw new RuntimeException('database unavailable');
             }
 
             return count($ids);
         });
-        $task = new PurgeExpiredAkickTask($akickRepo, new NullLogger(), 3600, 2, 2);
+        $task = new PurgeExpiredAkickTask($akickRepo, new NullLogger(), 3600, 2, 5);
 
         $failure = null;
         try {
@@ -231,12 +231,30 @@ final class PurgeExpiredAkickTaskTest extends TestCase
             $failure = $e;
         }
         self::assertInstanceOf(RuntimeException::class, $failure);
-        $loads->exchangeArray([]);
+        self::assertSame([null], $loads->getArrayCopy(), 'a failed delete ends the cycle');
 
         $task->run();
 
-        self::assertSame(2, $loads[0], 'the next cycle resumes after the last deleted entry, not after the failed batch');
-        self::assertSame(4, $deletes);
+        self::assertSame([[1, 2], [1, 2]], $deletes->getArrayCopy(), 'the next cycle deletes the same entries again');
+        self::assertSame([null, null, null], $loads->getArrayCopy(), 'every read starts from the first expired entry');
+    }
+
+    #[Test]
+    public function aBatchThatDeletesNothingEndsTheCycleInsteadOfReadingItAgain(): void
+    {
+        $loads = 0;
+        $akickRepo = $this->createStub(ChannelAkickRepositoryInterface::class);
+        $akickRepo->method('findExpired')
+            ->willReturnCallback(function () use (&$loads): array {
+                ++$loads;
+
+                return [$this->expired(1), $this->expired(2)];
+            });
+        $akickRepo->method('deleteByIds')->willReturn(0);
+
+        new PurgeExpiredAkickTask($akickRepo, new NullLogger(), 3600, 2, 5)->run();
+
+        self::assertSame(1, $loads);
     }
 
     private function expired(int $id): ChannelAkick
