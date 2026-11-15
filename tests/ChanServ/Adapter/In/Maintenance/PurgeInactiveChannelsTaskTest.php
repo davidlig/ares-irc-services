@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\ChanServ\Adapter\In\Maintenance;
 
+use App\ChanServ\Adapter\In\Maintenance\ChannelSweepFailureBudget;
 use App\ChanServ\Adapter\In\Maintenance\PurgeInactiveChannelsTask;
 use App\ChanServ\Adapter\Out\Persistence\ChannelActivityBuffer;
 use App\ChanServ\Application\Port\Out\ChannelActivityPendingQuery;
@@ -13,13 +14,17 @@ use App\ChanServ\Domain\Entity\RegisteredChannel;
 use ArrayObject;
 use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Platforms\MySQLPlatform;
+use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use Throwable;
 
 #[CoversClass(PurgeInactiveChannelsTask::class)]
+#[CoversClass(ChannelSweepFailureBudget::class)]
 final class PurgeInactiveChannelsTaskTest extends TestCase
 {
     #[Test]
@@ -206,5 +211,198 @@ final class PurgeInactiveChannelsTaskTest extends TestCase
         $task->run();
 
         self::assertSame(['#busy'], $dropped->getArrayCopy());
+    }
+
+    #[Test]
+    public function aChannelWhoseDropFailsOnItsOwnIsLoggedAndLaterChannelsStillExpire(): void
+    {
+        $failing = $this->inactiveChannel(1, '#broken');
+        $later = $this->inactiveChannel(2, '#later');
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('iterateRegisteredInactiveSince')->willReturn([$failing, $later]);
+        $channelRepo->method('findByIds')->willReturn([$failing]);
+        $dropped = self::messages();
+        $dropService = $this->createStub(ChanDropService::class);
+        $dropService->method('hardDropChannel')->willReturnCallback(static function (RegisteredChannel $channel) use ($dropped): void {
+            if ('#broken' === $channel->getName()) {
+                throw new RuntimeException('constraint violation');
+            }
+            $dropped->append($channel->getName());
+        });
+        $errors = self::messages();
+        $exceptions = self::recorder();
+        $logger = $this->createStub(LoggerInterface::class);
+        $logger->method('error')->willReturnCallback(static function (string $message, array $context) use ($errors, $exceptions): void {
+            $errors[] = $message;
+            $exceptions[] = $context['exception'] ?? null;
+        });
+
+        $task = new PurgeInactiveChannelsTask($channelRepo, $dropService, $this->noPendingActivity(), $logger, 3600, 90, $this->openEntityManager());
+        $task->run();
+
+        self::assertSame(['#later'], $dropped->getArrayCopy());
+        self::assertCount(1, $errors);
+        self::assertStringContainsString('failed to drop inactive channel #broken (id 1); skipping it until the next sweep', $errors->getArrayCopy()[0] ?? '');
+        self::assertInstanceOf(RuntimeException::class, $exceptions[0]);
+
+        $task->run();
+
+        self::assertSame(['#later', '#later'], $dropped->getArrayCopy(), 'a finished sweep retries the failed channel next cycle');
+        self::assertCount(2, $errors);
+    }
+
+    #[Test]
+    public function aPostDropFailureIsReportedAsADroppedChannel(): void
+    {
+        $channel = $this->inactiveChannel(4, '#gone');
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('iterateRegisteredInactiveSince')->willReturn([$channel]);
+        $channelRepo->method('findByIds')->willReturn([]);
+        $dropService = $this->createStub(ChanDropService::class);
+        $dropService->method('hardDropChannel')->willThrowException(new RuntimeException('listener failed'));
+        $errors = self::messages();
+        $logger = $this->createStub(LoggerInterface::class);
+        $logger->method('error')->willReturnCallback(static function (string $message) use ($errors): void {
+            $errors[] = $message;
+        });
+
+        new PurgeInactiveChannelsTask($channelRepo, $dropService, $this->noPendingActivity(), $logger, 3600, 90, $this->openEntityManager())->run();
+
+        self::assertCount(1, $errors);
+        self::assertStringContainsString('dropped inactive channel #gone (id 4), but a post-drop step failed', $errors->getArrayCopy()[0] ?? '');
+    }
+
+    #[Test]
+    public function aChannelThatKeepsClosingTheEntityManagerIsSkippedAfterThreeCyclesSoLaterChannelsExpire(): void
+    {
+        $poison = $this->inactiveChannel(1, '#poison');
+        $later = $this->inactiveChannel(2, '#later');
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('iterateRegisteredInactiveSince')->willReturn([$poison, $later]);
+        $open = true;
+        $entityManager = $this->createStub(EntityManagerInterface::class);
+        $entityManager->method('isOpen')->willReturnCallback(static function () use (&$open): bool {
+            return $open;
+        });
+        $attempts = self::messages();
+        $dropService = $this->createStub(ChanDropService::class);
+        $dropService->method('hardDropChannel')->willReturnCallback(static function (RegisteredChannel $channel) use ($attempts, &$open): void {
+            $attempts->append($channel->getName());
+            if ('#poison' === $channel->getName()) {
+                $open = false;
+
+                throw new RuntimeException('deadlock');
+            }
+        });
+        $errors = self::messages();
+        $logger = $this->createStub(LoggerInterface::class);
+        $logger->method('error')->willReturnCallback(static function (string $message) use ($errors): void {
+            $errors[] = $message;
+        });
+        $task = new PurgeInactiveChannelsTask($channelRepo, $dropService, $this->noPendingActivity(), $logger, 3600, 90, $entityManager, $this->connection(true));
+
+        for ($cycle = 1; $cycle <= 3; ++$cycle) {
+            $open = true;
+            self::assertInstanceOf(RuntimeException::class, $this->runCatching($task), 'a closed EntityManager stops the cycle');
+        }
+
+        self::assertSame(['#poison', '#poison', '#poison'], $attempts->getArrayCopy());
+        self::assertStringContainsString('failed to drop inactive channel #poison (id 1); the EntityManager is closed, stopping this batch', $errors->getArrayCopy()[0] ?? '');
+        self::assertStringContainsString('closed 3 times in a row; skipping it until the next sweep', $errors->getArrayCopy()[2] ?? '');
+
+        $open = true;
+        $task->run();
+        self::assertSame(['#poison', '#poison', '#poison', '#later'], $attempts->getArrayCopy());
+
+        $this->runCatching($task);
+        self::assertSame(['#poison', '#poison', '#poison', '#later', '#poison'], $attempts->getArrayCopy(), 'the next sweep retries the skipped channel');
+    }
+
+    #[Test]
+    public function aDatabaseOutageNeverSkipsAChannel(): void
+    {
+        $channel = $this->inactiveChannel(1, '#healthy');
+        $later = $this->inactiveChannel(2, '#later');
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('iterateRegisteredInactiveSince')->willReturn([$channel, $later]);
+        $entityManager = $this->createStub(EntityManagerInterface::class);
+        $entityManager->method('isOpen')->willReturn(false);
+        $attempts = self::messages();
+        $dropService = $this->createStub(ChanDropService::class);
+        $dropService->method('hardDropChannel')->willReturnCallback(static function (RegisteredChannel $channel) use ($attempts): void {
+            $attempts->append($channel->getName());
+
+            throw new RuntimeException('server has gone away');
+        });
+        $task = new PurgeInactiveChannelsTask($channelRepo, $dropService, $this->noPendingActivity(), $this->createStub(LoggerInterface::class), 3600, 90, $entityManager, $this->connection(false));
+
+        for ($cycle = 1; $cycle <= 5; ++$cycle) {
+            self::assertInstanceOf(RuntimeException::class, $this->runCatching($task));
+        }
+
+        self::assertSame(['#healthy', '#healthy', '#healthy', '#healthy', '#healthy'], $attempts->getArrayCopy());
+    }
+
+    private function inactiveChannel(int $id, string $name): RegisteredChannel
+    {
+        $channel = $this->createStub(RegisteredChannel::class);
+        $channel->method('getId')->willReturn($id);
+        $channel->method('getName')->willReturn($name);
+        $channel->method('getLastUsedAt')->willReturn(new DateTimeImmutable('-200 days'));
+        $channel->method('getCreatedAt')->willReturn(new DateTimeImmutable('-300 days'));
+
+        return $channel;
+    }
+
+    private function noPendingActivity(): ChannelActivityPendingQuery
+    {
+        $pending = $this->createStub(ChannelActivityPendingQuery::class);
+        $pending->method('hasPendingActivity')->willReturn(false);
+
+        return $pending;
+    }
+
+    private function openEntityManager(): EntityManagerInterface
+    {
+        $entityManager = $this->createStub(EntityManagerInterface::class);
+        $entityManager->method('isOpen')->willReturn(true);
+
+        return $entityManager;
+    }
+
+    private function connection(bool $answers): Connection
+    {
+        $connection = $this->createStub(Connection::class);
+        $connection->method('getDatabasePlatform')->willReturn(new MySQLPlatform());
+        if ($answers) {
+            $connection->method('fetchOne')->willReturn(1);
+        } else {
+            $connection->method('fetchOne')->willThrowException(new RuntimeException('server has gone away'));
+        }
+
+        return $connection;
+    }
+
+    private function runCatching(PurgeInactiveChannelsTask $task): ?Throwable
+    {
+        try {
+            $task->run();
+        } catch (Throwable $e) {
+            return $e;
+        }
+
+        return null;
+    }
+
+    /** @return ArrayObject<int, mixed> */
+    private static function recorder(): ArrayObject
+    {
+        return new ArrayObject();
+    }
+
+    /** @return ArrayObject<int, string> */
+    private static function messages(): ArrayObject
+    {
+        return new ArrayObject();
     }
 }

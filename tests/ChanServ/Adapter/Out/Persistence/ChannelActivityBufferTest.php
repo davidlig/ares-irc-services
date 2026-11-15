@@ -24,6 +24,7 @@ use function array_unique;
 use function array_values;
 use function count;
 use function in_array;
+use function sprintf;
 use function str_contains;
 use function str_starts_with;
 
@@ -200,7 +201,7 @@ final class ChannelActivityBufferTest extends TestCase
         $buffer->flush($usedAt->modify('+3 minutes'));
         self::assertTrue($buffer->hasPendingActivity(13));
         self::assertFalse($buffer->hasPendingActivity(14), 'The stuck row is written alone and does not split the chunk of the others.');
-        self::assertCount(1, $warnings, 'The warning is logged once per streak.');
+        self::assertCount(1, $warnings, 'The warning is not repeated on the next failing flush.');
         self::assertCount(3, $errors, 'A stuck row that fails again on a later flush is not logged again.');
 
         $connection->executeStatement('DROP TRIGGER poison_row');
@@ -208,6 +209,45 @@ final class ChannelActivityBufferTest extends TestCase
 
         self::assertFalse($buffer->hasPendingActivity(13));
         self::assertSame('2026-01-01 00:00:00', $connection->fetchOne('SELECT last_used_at FROM registered_channels WHERE id = 13'));
+    }
+
+    #[Test]
+    public function aStuckRowIsWarnedAgainEveryHundredConsecutiveFailuresSoItStaysVisible(): void
+    {
+        $connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
+        $connection->executeStatement('CREATE TABLE registered_channels (id INTEGER PRIMARY KEY, last_used_at DATETIME NULL)');
+        $connection->executeStatement('INSERT INTO registered_channels (id, last_used_at) VALUES (13, NULL)');
+        $connection->executeStatement("CREATE TRIGGER poison_row BEFORE UPDATE ON registered_channels WHEN NEW.id = 13 BEGIN SELECT RAISE(ABORT, 'poison row'); END");
+        $errors = self::recorder();
+        $warnings = self::recorder();
+        $logger = $this->createStub(LoggerInterface::class);
+        $logger->method('error')->willReturnCallback(static function (string $message) use ($errors): void {
+            $errors[] = $message;
+        });
+        $logger->method('warning')->willReturnCallback(static function (string $message, array $context) use ($warnings): void {
+            $exception = $context['exception'] ?? null;
+            $warnings[] = [$message, $context['channel_id'] ?? null, $context['attempts'] ?? null, $exception instanceof Throwable && str_contains($exception->getMessage(), 'poison row')];
+        });
+        $buffer = new ChannelActivityBuffer($connection, $logger);
+        $usedAt = new DateTimeImmutable('2026-01-01 00:00:00 UTC');
+        $buffer->record(13, $usedAt);
+
+        for ($flush = 1; $flush <= 102; ++$flush) {
+            $buffer->flush($usedAt->modify(sprintf('+%d minutes', $flush)));
+        }
+        self::assertCount(1, $warnings, 'Between reminders a stuck row is not logged on every flush.');
+
+        $buffer->flush($usedAt->modify('+103 minutes'));
+        $still = 'Deferred ChanServ channel activity for one channel still cannot be flushed; it stays pending, the channel is kept from inactivity expiry and the row is retried alone on later flushes.';
+        self::assertSame([$still, 13, 103, true], $warnings[1]);
+        for ($flush = 104; $flush <= 203; ++$flush) {
+            $buffer->flush($usedAt->modify(sprintf('+%d minutes', $flush)));
+        }
+
+        self::assertCount(3, $warnings);
+        self::assertSame([$still, 13, 203, true], $warnings[2]);
+        self::assertCount(2, $errors, 'Only the first two isolated failures are logged as errors.');
+        self::assertTrue($buffer->hasPendingActivity(13));
     }
 
     #[Test]

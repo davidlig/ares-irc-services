@@ -36,6 +36,9 @@ final class ChannelActivityBuffer implements ChannelActivityPendingQuery
     /** On this many consecutive isolated failures, a row is written once more with the current time. */
     private const int CURRENT_TIME_RETRY_AFTER_FAILURES = 3;
 
+    /** A row still failing after the current-time write is warned again every this many consecutive failures. */
+    private const int STUCK_ROW_WARNING_INTERVAL = 100;
+
     /** @var array<int, DateTimeImmutable> */
     private array $pending = [];
 
@@ -82,8 +85,9 @@ final class ChannelActivityBuffer implements ChannelActivityPendingQuery
      * written on its own on later flushes, so it no longer splits the chunk of the other rows.
      * Pending activity is never dropped. On the third consecutive isolated failure the row is
      * written once more, alone, with the current time; when that succeeds the channel leaves
-     * pending, otherwise a warning is logged once for the streak and the row stays pending (still
-     * kept from expiry) and keeps being written alone on later flushes. A successful write resets
+     * pending, otherwise a warning is logged and the row stays pending (still kept from expiry) and
+     * keeps being written alone on later flushes; while it keeps failing, the warning is repeated every
+     * {@see self::STUCK_ROW_WARNING_INTERVAL} consecutive failures with the attempt count. A successful write resets
      * the count; newer activity only replaces the pending timestamp and keeps counting.
      *
      * A failure that is not row-specific (the database does not answer) is never counted against
@@ -177,6 +181,14 @@ final class ChannelActivityBuffer implements ChannelActivityPendingQuery
         }
 
         if (self::CURRENT_TIME_RETRY_AFTER_FAILURES < $attempts) {
+            if (0 === ($attempts - self::CURRENT_TIME_RETRY_AFTER_FAILURES) % self::STUCK_ROW_WARNING_INTERVAL) {
+                $this->logger->warning('Deferred ChanServ channel activity for one channel still cannot be flushed; it stays pending, the channel is kept from inactivity expiry and the row is retried alone on later flushes.', [
+                    'channel_id' => $channelId,
+                    'attempts' => $attempts,
+                    'exception' => $exception,
+                ]);
+            }
+
             return;
         }
 
