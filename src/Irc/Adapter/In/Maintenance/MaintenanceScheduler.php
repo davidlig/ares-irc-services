@@ -6,6 +6,8 @@ namespace App\Irc\Adapter\In\Maintenance;
 
 use App\Irc\Application\Port\In\Maintenance\MaintenanceTaskInterface;
 use App\Irc\Application\Port\In\Maintenance\PrerequisiteAwareMaintenanceTaskInterface;
+use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\Persistence\ManagerRegistry;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -31,6 +33,12 @@ use function usort;
  * cycle (logged as a warning, not marked as run, so it is retried on the next tick)
  * when one of its declared prerequisites failed earlier in the cycle or was itself
  * skipped for that reason. A prerequisite that was not due this cycle does not block.
+ *
+ * A database error can close the Doctrine EntityManager, which would make every later
+ * Doctrine-backed task fail until restart. The scheduler therefore resets a closed
+ * EntityManager (logged as a warning) at the start of each cycle and after each failed
+ * task. The default EntityManager service is lazy, so the reset reopens it in place
+ * for every service that already holds it.
  */
 final class MaintenanceScheduler
 {
@@ -46,6 +54,7 @@ final class MaintenanceScheduler
     public function __construct(
         iterable $tasks,
         private readonly LoggerInterface $logger,
+        private readonly ?ManagerRegistry $managerRegistry = null,
     ) {
         $sorted = iterator_to_array($tasks, false);
         usort($sorted, static fn (MaintenanceTaskInterface $a, MaintenanceTaskInterface $b) => $a->getOrder() <=> $b->getOrder());
@@ -63,6 +72,7 @@ final class MaintenanceScheduler
         $blocked = [];
 
         $this->logger->info('Maintenance cycle started');
+        $this->resetClosedEntityManager(null);
 
         foreach ($this->sortedTasks as $task) {
             $last = $this->lastRun[$task->getName()] ?? 0.0;
@@ -102,6 +112,7 @@ final class MaintenanceScheduler
                     'error' => $e->getMessage(),
                     'exception' => $e,
                 ]);
+                $this->resetClosedEntityManager($task->getName());
             }
         }
 
@@ -113,6 +124,26 @@ final class MaintenanceScheduler
             'tasks_skipped' => $tasksSkipped,
             'cycle_duration_ms' => round($cycleDurationMs, 2),
         ]);
+    }
+
+    private function resetClosedEntityManager(?string $afterTask): void
+    {
+        if (null === $this->managerRegistry) {
+            return;
+        }
+
+        $context = ['after_task' => $afterTask];
+        try {
+            $manager = $this->managerRegistry->getManager();
+            if (!$manager instanceof EntityManagerInterface || $manager->isOpen()) {
+                return;
+            }
+
+            $this->logger->warning('Maintenance: the EntityManager is closed, resetting it', $context);
+            $this->managerRegistry->resetManager();
+        } catch (Throwable $e) {
+            $this->logger->error('Maintenance: resetting the closed EntityManager failed', $context + ['exception' => $e]);
+        }
     }
 
     /**

@@ -116,12 +116,20 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
                 hostname: $user->hostname,
                 ipBase64: $user->ipBase64,
             ));
+        } catch (Throwable $quitFailure) {
+            // The quit failure propagates instead of the departure failure, so log the departure
+            // failure here; otherwise it would be lost.
+            if (null !== $failure) {
+                $this->logQuitDepartureFailure($user, $failure['channel'], $failure['exception']);
+            }
+
+            throw $quitFailure;
         } finally {
             $this->userRepository->removeByUid($user->uid);
         }
 
         if (null !== $failure) {
-            throw $failure;
+            throw $failure['exception'];
         }
     }
 
@@ -461,8 +469,10 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
     /**
      * Dispatches one departure per channel; a failing departure does not stop the remaining ones.
      * Returns the first failure so the caller rethrows it after the quit; later failures are logged.
+     *
+     * @return array{channel: string, exception: Throwable}|null
      */
-    private function dispatchQuitDepartures(NetworkUser $user, string $reason): ?Throwable
+    private function dispatchQuitDepartures(NetworkUser $user, string $reason): ?array
     {
         $failure = null;
         foreach ($user->getChannelNames() as $channelNameStr) {
@@ -476,21 +486,26 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
                 ));
             } catch (Throwable $exception) {
                 if (null === $failure) {
-                    $failure = $exception;
+                    $failure = ['channel' => $channelNameStr, 'exception' => $exception];
 
                     continue;
                 }
 
-                $this->logger->error(sprintf(
-                    'Channel departure of %s (%s) from %s failed during quit.',
-                    $user->uid->value,
-                    $user->getNick()->value,
-                    $channelNameStr,
-                ), ['exception' => $exception]);
+                $this->logQuitDepartureFailure($user, $channelNameStr, $exception);
             }
         }
 
         return $failure;
+    }
+
+    private function logQuitDepartureFailure(NetworkUser $user, string $channelName, Throwable $exception): void
+    {
+        $this->logger->error(sprintf(
+            'Channel departure of %s (%s) from %s failed during quit.',
+            $user->uid->value,
+            $user->getNick()->value,
+            $channelName,
+        ), ['exception' => $exception]);
     }
 
     private function resolveUser(string $sourceId): ?NetworkUser

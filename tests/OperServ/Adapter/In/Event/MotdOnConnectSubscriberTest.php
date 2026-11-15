@@ -401,6 +401,44 @@ final class MotdOnConnectSubscriberTest extends TestCase
     }
 
     #[Test]
+    public function registeredBotNickDoesNotRenameTheUserHoldingIt(): void
+    {
+        $m = $this->motd('Hi', 'test!bot@h.com', 'PRIVMSG');
+        $r = $this->createStub(MotdRepository::class);
+        $r->method('findActiveAt')->willReturn([$m]);
+
+        $u = $this->createStub(ServiceUidRegistry::class);
+        $u->method('getUidByNickname')->willReturn(null);
+        $l = $this->createStub(NetworkUserLookupPort::class);
+        $l->method('findByNick')->willReturn(new SenderView(
+            uid: 'X',
+            nick: 'test',
+            ident: 'x',
+            hostname: 'x',
+            cloakedHost: 'x',
+            ipBase64: 'dA==',
+            isIdentified: true,
+            isOper: false,
+            serverSid: '001',
+        ));
+        $n = $this->createStub(NickAccountQuery::class);
+        $n->method('findIdByNick')->willReturn(1);
+
+        $f = $this->createMock(NickCollisionResolver::class);
+        $f->expects(self::never())->method('forceGuestNick');
+
+        $sa = $this->createMock(ProtocolServiceActionsInterface::class);
+        $sa->expects(self::never())->method('introducePseudoClient');
+
+        $c = $this->createStub(ActiveProtocolModuleHolderInterface::class);
+        $c->method('getProtocolModule')->willReturn($this->mod($sa));
+        $c->method('getServerSid')->willReturn('0A0');
+
+        $x = $this->sub(r: $r, u: $u, c: $c, l: $l, n: $n, f: $f);
+        $x->onSyncComplete();
+    }
+
+    #[Test]
     public function skipWhenNickRegisteredOnAsciiNetworkWithBrackets(): void
     {
         $m = $this->motd('Hi', 'news[!bot@h.com', 'PRIVMSG');

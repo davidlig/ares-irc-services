@@ -130,6 +130,11 @@ final class MotdOnConnectSubscriber implements EventSubscriberInterface
                 continue;
             }
 
+            // A registered nick is never taken by the pseudo-client, so its holder keeps it.
+            if (null !== $this->nickAccounts->findIdByNick($mask->nickname)) {
+                continue;
+            }
+
             $existingUser = $this->userLookup->findByNick($mask->nickname);
             if (null !== $existingUser) {
                 $this->nickCollisionResolver->forceGuestNick($existingUser->uid, null, 'motd-collision');
@@ -139,10 +144,6 @@ final class MotdOnConnectSubscriber implements EventSubscriberInterface
                     'nickname' => $mask->nickname,
                     'uid' => $existingUser->uid,
                 ]);
-            }
-
-            if (null !== $this->nickAccounts->findIdByNick($mask->nickname)) {
-                continue;
             }
 
             $module = $this->connectionHolder->getProtocolModule();

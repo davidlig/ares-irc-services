@@ -116,6 +116,92 @@ final class QuitDepartureFailureIntegrationTest extends TestCase
         }
     }
 
+    #[Test]
+    public function departureFailureIsLoggedWhenTheQuitDispatchAlsoFails(): void
+    {
+        $users = new InMemoryNetworkUserRepository();
+        $channels = new InMemoryChannelRepository();
+        $dispatcher = new EventDispatcher();
+        $logger = $this->createMock(LoggerInterface::class);
+        $dispatcher->addSubscriber(new NetworkStateSubscriber($users, $channels, new ChannelSyncCompletedRegistry()));
+        $dispatcher->addSubscriber(new NetworkEventEnricher(
+            $channels,
+            $users,
+            $dispatcher,
+            $this->createStub(SkipIdentifiedModeStripRegistry::class),
+            $this->createStub(ActiveChannelModeSupportProviderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
+            $logger,
+        ));
+
+        $quitter = $this->createUser(self::QUITTER, 'Quitter');
+        $users->add($quitter);
+        $channel = new Channel(new ChannelName('#first'), '+nt', new DateTimeImmutable('@1700000000'));
+        $channel->syncMember($quitter->uid, ChannelMemberRole::None);
+        $channels->save($channel);
+        $quitter->addChannel($channel->name);
+
+        $departureFailure = new RuntimeException('departure listener failed on #first');
+        $quitFailure = new RuntimeException('quit listener failed');
+        $quits = [];
+        $dispatcher->addListener(UserLeftChannelEvent::class, static function () use ($departureFailure): void {
+            throw $departureFailure;
+        }, 10);
+        $dispatcher->addListener(UserQuitNetworkEvent::class, static function (UserQuitNetworkEvent $event) use (&$quits, $quitFailure): void {
+            $quits[] = $event->uid->value;
+
+            throw $quitFailure;
+        }, 10);
+        $logger->expects(self::once())->method('error')->with(
+            'Channel departure of 001AAAAAA (Quitter) from #first failed during quit.',
+            ['exception' => $departureFailure],
+        );
+
+        $caught = null;
+        try {
+            $dispatcher->dispatch(new UserQuitReceivedEvent(self::QUITTER, 'Bye'));
+        } catch (Throwable $exception) {
+            $caught = $exception;
+        }
+
+        self::assertSame($quitFailure, $caught);
+        self::assertSame([self::QUITTER], $quits);
+        self::assertNull($users->findByUid(new Uid(self::QUITTER)));
+    }
+
+    #[Test]
+    public function quitDispatchFailureWithoutDepartureFailureLogsNothing(): void
+    {
+        $users = new InMemoryNetworkUserRepository();
+        $dispatcher = new EventDispatcher();
+        $logger = $this->createMock(LoggerInterface::class);
+        $dispatcher->addSubscriber(new NetworkEventEnricher(
+            new InMemoryChannelRepository(),
+            $users,
+            $dispatcher,
+            $this->createStub(SkipIdentifiedModeStripRegistry::class),
+            $this->createStub(ActiveChannelModeSupportProviderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
+            $logger,
+        ));
+        $users->add($this->createUser(self::QUITTER, 'Quitter'));
+        $quitFailure = new RuntimeException('quit listener failed');
+        $dispatcher->addListener(UserQuitNetworkEvent::class, static function () use ($quitFailure): void {
+            throw $quitFailure;
+        });
+        $logger->expects(self::never())->method('error');
+
+        $caught = null;
+        try {
+            $dispatcher->dispatch(new UserQuitReceivedEvent(self::QUITTER, 'Bye'));
+        } catch (Throwable $exception) {
+            $caught = $exception;
+        }
+
+        self::assertSame($quitFailure, $caught);
+        self::assertNull($users->findByUid(new Uid(self::QUITTER)));
+    }
+
     private function createUser(string $uid, string $nick): NetworkUser
     {
         return new NetworkUser(

@@ -7,6 +7,9 @@ namespace App\Tests\Irc\Adapter\In\Maintenance;
 use App\Irc\Adapter\In\Maintenance\MaintenanceScheduler;
 use App\Irc\Application\Port\In\Maintenance\MaintenanceTaskInterface;
 use App\Irc\Application\Port\In\Maintenance\PrerequisiteAwareMaintenanceTaskInterface;
+use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\Persistence\ManagerRegistry;
+use Doctrine\Persistence\ObjectManager;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -415,6 +418,123 @@ final class MaintenanceSchedulerTest extends TestCase
 
         self::assertSame(['task.flush', 'task.flush', 'task.purge', 'task.flush'], $holder->runOrder);
     }
+
+    #[Test]
+    public function aFailedTaskThatClosedTheEntityManagerResetsItSoLaterTasksRun(): void
+    {
+        $holder = new MaintenanceSchedulerTestState();
+        $persistence = new MaintenanceSchedulerTestPersistence();
+        $closingTask = new MaintenanceSchedulerTestClosingTask($holder, $persistence, 'task.closing', 100);
+        $laterTask = new MaintenanceSchedulerTestPersistenceTask($holder, $persistence, 'task.later', 200);
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::once())->method('warning')->with(
+            'Maintenance: the EntityManager is closed, resetting it',
+            ['after_task' => 'task.closing'],
+        );
+
+        $scheduler = new MaintenanceScheduler([$laterTask, $closingTask], $logger, $this->registryFor($persistence));
+        $scheduler->tick();
+
+        self::assertSame(['task.closing', 'task.later:open'], $holder->runOrder);
+        self::assertSame(1, $persistence->resets);
+    }
+
+    #[Test]
+    public function aFailedTaskWithAnOpenEntityManagerDoesNotResetIt(): void
+    {
+        $holder = new MaintenanceSchedulerTestState();
+        $persistence = new MaintenanceSchedulerTestPersistence();
+        $failingTask = new MaintenanceSchedulerTestTask($holder, 'task.failing', 100, true);
+        $laterTask = new MaintenanceSchedulerTestPersistenceTask($holder, $persistence, 'task.later', 200);
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::never())->method('warning');
+        $logger->expects(self::once())->method('error')->with('Maintenance task failed', self::anything());
+
+        $scheduler = new MaintenanceScheduler([$failingTask, $laterTask], $logger, $this->registryFor($persistence));
+        $scheduler->tick();
+
+        self::assertSame(['task.failing', 'task.later:open'], $holder->runOrder);
+        self::assertSame(0, $persistence->resets);
+    }
+
+    #[Test]
+    public function aCycleStartingWithAClosedEntityManagerResetsItBeforeTheFirstTask(): void
+    {
+        $holder = new MaintenanceSchedulerTestState();
+        $persistence = new MaintenanceSchedulerTestPersistence();
+        $persistence->closed = true;
+        $task = new MaintenanceSchedulerTestPersistenceTask($holder, $persistence, 'task.only', 100);
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::once())->method('warning')->with(
+            'Maintenance: the EntityManager is closed, resetting it',
+            ['after_task' => null],
+        );
+
+        $scheduler = new MaintenanceScheduler([$task], $logger, $this->registryFor($persistence));
+        $scheduler->tick();
+
+        self::assertSame(['task.only:open'], $holder->runOrder);
+        self::assertSame(1, $persistence->resets);
+    }
+
+    #[Test]
+    public function aFailingEntityManagerResetIsLoggedAndTheCycleContinues(): void
+    {
+        $holder = new MaintenanceSchedulerTestState();
+        $persistence = new MaintenanceSchedulerTestPersistence();
+        $persistence->closed = true;
+        $persistence->resetFailure = new RuntimeException('reset failed');
+        $task = new MaintenanceSchedulerTestPersistenceTask($holder, $persistence, 'task.only', 100);
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::once())->method('warning');
+        $logger->expects(self::once())->method('error')->with(
+            'Maintenance: resetting the closed EntityManager failed',
+            ['after_task' => null, 'exception' => $persistence->resetFailure],
+        );
+
+        $scheduler = new MaintenanceScheduler([$task], $logger, $this->registryFor($persistence));
+        $scheduler->tick();
+
+        self::assertSame(['task.only:closed'], $holder->runOrder);
+    }
+
+    #[Test]
+    public function aManagerThatIsNotAnEntityManagerIsNeverReset(): void
+    {
+        $holder = new MaintenanceSchedulerTestState();
+        $registry = $this->createMock(ManagerRegistry::class);
+        $registry->method('getManager')->willReturn($this->createStub(ObjectManager::class));
+        $registry->expects(self::never())->method('resetManager');
+
+        $scheduler = new MaintenanceScheduler(
+            [new MaintenanceSchedulerTestTask($holder, 'task.failing', 100, true)],
+            $this->createStub(LoggerInterface::class),
+            $registry,
+        );
+        $scheduler->tick();
+
+        self::assertSame(['task.failing'], $holder->runOrder);
+    }
+
+    private function registryFor(MaintenanceSchedulerTestPersistence $persistence): ManagerRegistry
+    {
+        $entityManager = $this->createStub(EntityManagerInterface::class);
+        $entityManager->method('isOpen')->willReturnCallback(static fn (): bool => !$persistence->closed);
+
+        $registry = $this->createStub(ManagerRegistry::class);
+        $registry->method('getManager')->willReturn($entityManager);
+        $registry->method('resetManager')->willReturnCallback(static function () use ($persistence, $entityManager): EntityManagerInterface {
+            if (null !== $persistence->resetFailure) {
+                throw $persistence->resetFailure;
+            }
+            ++$persistence->resets;
+            $persistence->closed = false;
+
+            return $entityManager;
+        });
+
+        return $registry;
+    }
 }
 
 final class MaintenanceSchedulerTestState
@@ -477,5 +597,51 @@ final class MaintenanceSchedulerTestDependentTask extends MaintenanceSchedulerTe
     public function getPrerequisiteTaskNames(): array
     {
         return $this->prerequisites;
+    }
+}
+
+final class MaintenanceSchedulerTestPersistence
+{
+    public bool $closed = false;
+
+    public int $resets = 0;
+
+    public ?RuntimeException $resetFailure = null;
+}
+
+/** Closes the EntityManager and fails, like a task whose flush hit a database error. */
+final class MaintenanceSchedulerTestClosingTask extends MaintenanceSchedulerTestTask
+{
+    public function __construct(
+        MaintenanceSchedulerTestState $holder,
+        private readonly MaintenanceSchedulerTestPersistence $persistence,
+        string $name,
+        int $order,
+    ) {
+        parent::__construct($holder, $name, $order, true);
+    }
+
+    public function run(): void
+    {
+        $this->persistence->closed = true;
+        parent::run();
+    }
+}
+
+/** Records whether the EntityManager was open when it ran. */
+final class MaintenanceSchedulerTestPersistenceTask extends MaintenanceSchedulerTestTask
+{
+    public function __construct(
+        private readonly MaintenanceSchedulerTestState $state,
+        private readonly MaintenanceSchedulerTestPersistence $persistence,
+        private readonly string $taskName,
+        int $order,
+    ) {
+        parent::__construct($state, $taskName, $order);
+    }
+
+    public function run(): void
+    {
+        $this->state->runOrder[] = $this->taskName . ($this->persistence->closed ? ':closed' : ':open');
     }
 }
