@@ -417,6 +417,98 @@ final class UnsuspendExpiredSuspensionsTaskTest extends TestCase
     }
 
     #[Test]
+    public function aSuspensionThatClosesTheEntityManagerThreeCyclesInARowIsSkippedSoLaterSuspensionsAreProcessed(): void
+    {
+        $nicks = [$this->createNickWithId('Poison', 1), $this->createNickWithId('Healthy', 2)];
+        $pages = [];
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findExpiredSuspensions')
+            ->willReturnCallback(static function (DateTimeImmutable $now, int $limit, int $afterId) use ($nicks, &$pages): array {
+                $pages[] = $afterId;
+
+                return array_values(array_filter($nicks, static fn (RegisteredNick $nick): bool => $nick->getId() > $afterId));
+            });
+        $open = true;
+        $attempts = [];
+        $nickRepo->method('save')->willReturnCallback(static function (RegisteredNick $nick) use (&$open, &$attempts): void {
+            $attempts[] = $nick->getNickname();
+            if ('Poison' === $nick->getNickname()) {
+                $open = false;
+
+                throw new RuntimeException('flush failed');
+            }
+        });
+        $errors = [];
+        $logger = $this->createStub(LoggerInterface::class);
+        $logger->method('error')->willReturnCallback(static function (string $message) use (&$errors): void {
+            $errors[] = $message;
+        });
+        $em = $this->createStub(EntityManagerInterface::class);
+        $em->method('isOpen')->willReturnCallback(static function () use (&$open): bool {
+            return $open;
+        });
+        $task = new UnsuspendExpiredSuspensionsTask($nickRepo, $this->createStub(ServiceDebugNotifierInterface::class), $logger, $this->clock(), $this->createStub(NickServEventPublisher::class), self::SERVER_NAME, 3600, $em);
+
+        $failures = 0;
+        for ($cycle = 0; $cycle < 4; ++$cycle) {
+            try {
+                $task->run();
+            } catch (RuntimeException) {
+                ++$failures;
+            }
+            $open = true;
+        }
+
+        self::assertSame(3, $failures);
+        self::assertSame([0, 0, 0, 1], $pages);
+        self::assertSame(['Poison', 'Poison', 'Poison', 'Healthy'], $attempts);
+        self::assertSame([
+            'Maintenance [nickserv.unsuspend_expired_suspensions]: failed to auto-unsuspend nick Poison (id 1); the EntityManager is closed, stopping this batch.',
+            'Maintenance [nickserv.unsuspend_expired_suspensions]: failed to auto-unsuspend nick Poison (id 1); the EntityManager is closed, stopping this batch.',
+            'Maintenance [nickserv.unsuspend_expired_suspensions]: failed to auto-unsuspend nick Poison (id 1) with the EntityManager closed 3 times in a row; skipping it until the next sweep and stopping this batch.',
+        ], $errors);
+    }
+
+    #[Test]
+    public function theClosedEntityManagerAttemptsRestartAfterTheSuspensionIsProcessed(): void
+    {
+        $nicks = [$this->createNickWithId('Flaky', 1), $this->createNickWithId('Healthy', 2)];
+        $pages = [];
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findExpiredSuspensions')
+            ->willReturnCallback(static function (DateTimeImmutable $now, int $limit, int $afterId) use ($nicks, &$pages): array {
+                $pages[] = $afterId;
+
+                return array_values(array_filter($nicks, static fn (RegisteredNick $nick): bool => $nick->getId() > $afterId));
+            });
+        $open = true;
+        $flakyAttempts = 0;
+        $nickRepo->method('save')->willReturnCallback(static function (RegisteredNick $nick) use (&$open, &$flakyAttempts): void {
+            if ('Flaky' === $nick->getNickname() && 3 !== ++$flakyAttempts) {
+                $open = false;
+
+                throw new RuntimeException('lock wait timeout');
+            }
+        });
+        $em = $this->createStub(EntityManagerInterface::class);
+        $em->method('isOpen')->willReturnCallback(static function () use (&$open): bool {
+            return $open;
+        });
+        $task = new UnsuspendExpiredSuspensionsTask($nickRepo, $this->createStub(ServiceDebugNotifierInterface::class), new NullLogger(), $this->clock(), $this->createStub(NickServEventPublisher::class), self::SERVER_NAME, 3600, $em);
+
+        for ($cycle = 0; $cycle < 6; ++$cycle) {
+            try {
+                $task->run();
+            } catch (RuntimeException) {
+            }
+            $open = true;
+        }
+
+        self::assertSame([0, 0, 0, 0, 0, 0], $pages);
+        self::assertSame(6, $flakyAttempts);
+    }
+
+    #[Test]
     public function aFailureAfterTheUnsuspendWasSavedIsLoggedAsUnsuspendedAndTheBatchContinues(): void
     {
         $first = $this->createNickWithId('First', 1);

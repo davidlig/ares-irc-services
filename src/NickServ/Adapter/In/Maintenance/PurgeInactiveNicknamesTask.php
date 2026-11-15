@@ -29,8 +29,16 @@ final class PurgeInactiveNicknamesTask implements MaintenanceTaskInterface
 
     private const int DEFAULT_MAX_BATCHES = 1;
 
+    /** Consecutive closed-EntityManager failures after which a row is skipped until the next sweep. */
+    private const int MAX_CLOSED_ENTITY_MANAGER_ATTEMPTS = 3;
+
     /** Id of the last nick visited by the current sweep; 0 starts a new sweep. */
     private int $cursor = 0;
+
+    /** Id of the row whose last attempt closed the EntityManager; 0 when the last row had its own outcome. */
+    private int $closedFailureId = 0;
+
+    private int $closedFailureAttempts = 0;
 
     public function __construct(
         private readonly RegisteredNickRepositoryInterface $nickRepository,
@@ -62,6 +70,10 @@ final class PurgeInactiveNicknamesTask implements MaintenanceTaskInterface
     /**
      * Each cycle continues the sweep after the last visited id, so nicks that keep failing
      * are skipped until the next sweep instead of taking every page.
+     *
+     * A failure that closes the EntityManager stops the batch with the cursor kept before the
+     * nick, so the next cycle retries it; after {@see self::MAX_CLOSED_ENTITY_MANAGER_ATTEMPTS} such
+     * failures in a row the nick is skipped until the next sweep, so it cannot block later rows.
      */
     public function run(): void
     {
@@ -100,6 +112,7 @@ final class PurgeInactiveNicknamesTask implements MaintenanceTaskInterface
                 // Advanced only after a row-specific outcome: a closed EntityManager rethrows above,
                 // so the next cycle retries this nick instead of skipping it.
                 $this->cursor = max($this->cursor, $id);
+                $this->closedFailureId = 0;
             }
 
             $this->entityManager?->clear();
@@ -116,13 +129,26 @@ final class PurgeInactiveNicknamesTask implements MaintenanceTaskInterface
     /**
      * Logs a failed drop accurately.
      *
-     * A closed EntityManager makes every later row fail too, so the batch stops and the task fails.
+     * A closed EntityManager makes every later row fail too, so the batch stops and the task fails;
+     * the nick is retried next cycle until it has closed the EntityManager too many times in a row.
      *
      * @throws Throwable when the EntityManager was closed by the failure
      */
     private function recordFailure(int $id, string $nickname, Throwable $e): void
     {
         if (null !== $this->entityManager && !$this->entityManager->isOpen()) {
+            if ($this->giveUpAfterClosedEntityManager($id)) {
+                $this->logger->error(sprintf(
+                    'Maintenance [%s]: failed to drop inactive nick %s (id %d) with the EntityManager closed %d times in a row; skipping it until the next sweep and stopping this batch.',
+                    $this->getName(),
+                    $nickname,
+                    $id,
+                    self::MAX_CLOSED_ENTITY_MANAGER_ATTEMPTS,
+                ), ['exception' => $e]);
+
+                throw $e;
+            }
+
             $this->logger->error(sprintf(
                 'Maintenance [%s]: failed to drop inactive nick %s (id %d); the EntityManager is closed, stopping this batch.',
                 $this->getName(),
@@ -150,5 +176,26 @@ final class PurgeInactiveNicknamesTask implements MaintenanceTaskInterface
             $nickname,
             $id,
         ), ['exception' => $e]);
+    }
+
+    /**
+     * Counts a closed-EntityManager failure of the row and, once it reached the limit in a row,
+     * moves the cursor past it so the next cycle continues with the later rows.
+     */
+    private function giveUpAfterClosedEntityManager(int $id): bool
+    {
+        if ($this->closedFailureId !== $id) {
+            $this->closedFailureId = $id;
+            $this->closedFailureAttempts = 0;
+        }
+
+        if (++$this->closedFailureAttempts < self::MAX_CLOSED_ENTITY_MANAGER_ATTEMPTS) {
+            return false;
+        }
+
+        $this->closedFailureId = 0;
+        $this->cursor = max($this->cursor, $id);
+
+        return true;
     }
 }

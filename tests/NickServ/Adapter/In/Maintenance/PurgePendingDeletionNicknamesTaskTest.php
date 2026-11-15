@@ -327,6 +327,106 @@ final class PurgePendingDeletionNicknamesTaskTest extends TestCase
     }
 
     #[Test]
+    public function aNickThatClosesTheEntityManagerThreeCyclesInARowIsSkippedSoLaterNicksAreProcessed(): void
+    {
+        $pages = [];
+        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repo->method('findPendingDeletionBefore')
+            ->willReturnCallback(function (DateTimeImmutable $threshold, int $limit, int $afterId) use (&$pages): array {
+                $pages[] = $afterId;
+
+                return array_values(array_filter(
+                    [$this->nick(1, 'Poison'), $this->nick(2, 'Healthy')],
+                    static fn (RegisteredNick $nick): bool => $nick->getId() > $afterId,
+                ));
+            });
+        $open = true;
+        $attempts = [];
+        $dropService = $this->createStub(NickDropService::class);
+        $dropService->method('hardDropNick')
+            ->willReturnCallback(static function (RegisteredNick $nick) use (&$open, &$attempts): void {
+                $attempts[] = $nick->getNickname();
+                if ('Poison' === $nick->getNickname()) {
+                    $open = false;
+
+                    throw new RuntimeException('foreign key violation');
+                }
+            });
+        $errors = [];
+        $logger = $this->createStub(LoggerInterface::class);
+        $logger->method('error')->willReturnCallback(static function (string $message) use (&$errors): void {
+            $errors[] = $message;
+        });
+        $em = $this->createStub(EntityManagerInterface::class);
+        $em->method('isOpen')->willReturnCallback(static function () use (&$open): bool {
+            return $open;
+        });
+        $task = new PurgePendingDeletionNicknamesTask($repo, $dropService, $logger, $this->clock(), 3600, 7, $em);
+
+        $failures = 0;
+        for ($cycle = 0; $cycle < 4; ++$cycle) {
+            try {
+                $task->run();
+            } catch (RuntimeException) {
+                ++$failures;
+            }
+            $open = true;
+        }
+
+        self::assertSame(3, $failures);
+        self::assertSame([0, 0, 0, 1], $pages);
+        self::assertSame(['Poison', 'Poison', 'Poison', 'Healthy'], $attempts);
+        self::assertSame([
+            'Maintenance [nickserv.purge_pending_deletion_nicknames]: failed to drop pending-deletion nick Poison (id 1); the EntityManager is closed, stopping this batch.',
+            'Maintenance [nickserv.purge_pending_deletion_nicknames]: failed to drop pending-deletion nick Poison (id 1); the EntityManager is closed, stopping this batch.',
+            'Maintenance [nickserv.purge_pending_deletion_nicknames]: failed to drop pending-deletion nick Poison (id 1) with the EntityManager closed 3 times in a row; skipping it until the next sweep and stopping this batch.',
+        ], $errors);
+    }
+
+    #[Test]
+    public function theClosedEntityManagerAttemptsRestartAfterTheNickIsProcessed(): void
+    {
+        $pages = [];
+        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repo->method('findPendingDeletionBefore')
+            ->willReturnCallback(function (DateTimeImmutable $threshold, int $limit, int $afterId) use (&$pages): array {
+                $pages[] = $afterId;
+
+                return array_values(array_filter(
+                    [$this->nick(1, 'Flaky'), $this->nick(2, 'Healthy')],
+                    static fn (RegisteredNick $nick): bool => $nick->getId() > $afterId,
+                ));
+            });
+        $open = true;
+        $flakyAttempts = 0;
+        $dropService = $this->createStub(NickDropService::class);
+        $dropService->method('hardDropNick')
+            ->willReturnCallback(static function (RegisteredNick $nick) use (&$open, &$flakyAttempts): void {
+                if ('Flaky' === $nick->getNickname() && 3 !== ++$flakyAttempts) {
+                    $open = false;
+
+                    throw new RuntimeException('lock wait timeout');
+                }
+            });
+        $em = $this->createStub(EntityManagerInterface::class);
+        $em->method('isOpen')->willReturnCallback(static function () use (&$open): bool {
+            return $open;
+        });
+        $task = new PurgePendingDeletionNicknamesTask($repo, $dropService, new NullLogger(), $this->clock(), 3600, 7, $em);
+
+        for ($cycle = 0; $cycle < 6; ++$cycle) {
+            try {
+                $task->run();
+            } catch (RuntimeException) {
+            }
+            $open = true;
+        }
+
+        self::assertSame([0, 0, 0, 0, 0, 0], $pages);
+        self::assertSame(6, $flakyAttempts);
+    }
+
+    #[Test]
     public function aFailureAfterTheDropCommittedIsLoggedAsDroppedAndTheBatchContinues(): void
     {
         $dropped = $this->nick(1, 'Gone');

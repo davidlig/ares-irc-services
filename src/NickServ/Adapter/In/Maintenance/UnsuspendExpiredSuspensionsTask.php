@@ -25,8 +25,16 @@ final class UnsuspendExpiredSuspensionsTask implements MaintenanceTaskInterface
 
     private const int DEFAULT_MAX_BATCHES = 1;
 
+    /** Consecutive closed-EntityManager failures after which a row is skipped until the next sweep. */
+    private const int MAX_CLOSED_ENTITY_MANAGER_ATTEMPTS = 3;
+
     /** Id of the last nick visited by the current sweep; 0 starts a new sweep. */
     private int $cursor = 0;
+
+    /** Id of the row whose last attempt closed the EntityManager; 0 when the last row had its own outcome. */
+    private int $closedFailureId = 0;
+
+    private int $closedFailureAttempts = 0;
 
     public function __construct(
         private readonly RegisteredNickRepositoryInterface $nickRepository,
@@ -59,6 +67,10 @@ final class UnsuspendExpiredSuspensionsTask implements MaintenanceTaskInterface
     /**
      * Each cycle continues the sweep after the last visited id, so suspensions that keep failing
      * are skipped until the next sweep instead of taking every page.
+     *
+     * A failure that closes the EntityManager stops the batch with the cursor kept before the
+     * suspension, so the next cycle retries it; after {@see self::MAX_CLOSED_ENTITY_MANAGER_ATTEMPTS} such
+     * failures in a row the suspension is skipped until the next sweep, so it cannot block later rows.
      */
     public function run(): void
     {
@@ -81,6 +93,7 @@ final class UnsuspendExpiredSuspensionsTask implements MaintenanceTaskInterface
                 } catch (Throwable $e) {
                     $this->recordSaveFailure($nick, $e);
                     $this->cursor = max($this->cursor, $id);
+                    $this->closedFailureId = 0;
 
                     continue;
                 }
@@ -88,6 +101,7 @@ final class UnsuspendExpiredSuspensionsTask implements MaintenanceTaskInterface
                 // Advanced only after a row-specific outcome: a closed EntityManager rethrows above,
                 // so the next cycle retries this suspension instead of skipping it.
                 $this->cursor = max($this->cursor, $id);
+                $this->closedFailureId = 0;
 
                 try {
                     $this->announce($nick);
@@ -113,13 +127,26 @@ final class UnsuspendExpiredSuspensionsTask implements MaintenanceTaskInterface
     }
 
     /**
-     * A closed EntityManager makes every later row fail too, so the batch stops and the task fails.
+     * A closed EntityManager makes every later row fail too, so the batch stops and the task fails;
+     * the suspension is retried next cycle until it has closed the EntityManager too many times in a row.
      *
      * @throws Throwable when the EntityManager was closed by the failure
      */
     private function recordSaveFailure(RegisteredNick $nick, Throwable $e): void
     {
         if (null !== $this->entityManager && !$this->entityManager->isOpen()) {
+            if ($this->giveUpAfterClosedEntityManager($nick->getId())) {
+                $this->logger->error(sprintf(
+                    'Maintenance [%s]: failed to auto-unsuspend nick %s (id %d) with the EntityManager closed %d times in a row; skipping it until the next sweep and stopping this batch.',
+                    $this->getName(),
+                    $nick->getNickname(),
+                    $nick->getId(),
+                    self::MAX_CLOSED_ENTITY_MANAGER_ATTEMPTS,
+                ), ['exception' => $e]);
+
+                throw $e;
+            }
+
             $this->logger->error(sprintf(
                 'Maintenance [%s]: failed to auto-unsuspend nick %s (id %d); the EntityManager is closed, stopping this batch.',
                 $this->getName(),
@@ -138,6 +165,27 @@ final class UnsuspendExpiredSuspensionsTask implements MaintenanceTaskInterface
             $nick->getNickname(),
             $nick->getId(),
         ), ['exception' => $e]);
+    }
+
+    /**
+     * Counts a closed-EntityManager failure of the row and, once it reached the limit in a row,
+     * moves the cursor past it so the next cycle continues with the later rows.
+     */
+    private function giveUpAfterClosedEntityManager(int $id): bool
+    {
+        if ($this->closedFailureId !== $id) {
+            $this->closedFailureId = $id;
+            $this->closedFailureAttempts = 0;
+        }
+
+        if (++$this->closedFailureAttempts < self::MAX_CLOSED_ENTITY_MANAGER_ATTEMPTS) {
+            return false;
+        }
+
+        $this->closedFailureId = 0;
+        $this->cursor = max($this->cursor, $id);
+
+        return true;
     }
 
     private function announce(RegisteredNick $nick): void
