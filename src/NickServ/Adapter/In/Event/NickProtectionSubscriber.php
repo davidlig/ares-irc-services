@@ -32,13 +32,14 @@ use App\NickServ\Domain\Entity\RegisteredNick;
 use Closure;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\Persistence\ManagerRegistry;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Throwable;
 
-use function array_chunk;
 use function array_map;
+use function array_slice;
 use function array_values;
 use function count;
 use function sprintf;
@@ -67,6 +68,7 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
         private ?NickServEventPublisher $batchEventPublisher = null,
         private LoggerInterface $logger = new NullLogger(),
         private ?EntityManagerInterface $entityManager = null,
+        private ?ManagerRegistry $managerRegistry = null,
     ) {}
 
     /**
@@ -124,19 +126,39 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
     {
         $occurredAt = $this->clock->now();
         $this->burstState->markComplete();
+        // The burst users already left the pending queue, so a closed EntityManager is reset once
+        // and the pass continues; the next chunk reloads its accounts from the fresh manager.
         $pending = $this->burstState->takePending();
+        $offset = 0;
+        $chunk = 0;
+        $resetDone = false;
 
-        foreach (array_chunk($pending, self::BURST_CHUNK_SIZE) as $index => $batch) {
+        while ($offset < count($pending)) {
+            $batch = array_values(array_slice($pending, $offset, self::BURST_CHUNK_SIZE));
+            ++$chunk;
             $handledUsers = 0;
             try {
-                $this->protectBurstChunk($batch, $occurredAt, $index + 1, $handledUsers);
+                $this->protectBurstChunk($batch, $occurredAt, $chunk, $handledUsers);
             } catch (Throwable $exception) {
                 if ($this->isEntityManagerClosed()) {
-                    // Every later user would fail against the closed EntityManager; stop the pass once.
+                    $remainingUsers = count($pending) - $offset - $handledUsers;
+                    if (!$resetDone && $this->resetClosedEntityManager($chunk)) {
+                        $resetDone = true;
+                        $this->logger->warning('NickServ burst protection: the EntityManager closed, resetting it and protecting the remaining burst users.', [
+                            'chunk' => $chunk,
+                            'remaining_users' => $remainingUsers,
+                            'exception' => $exception,
+                        ]);
+                        $offset += $handledUsers;
+
+                        continue;
+                    }
+
+                    // Every later user would fail against the closed EntityManager; with no reset left, stop the pass once.
                     // The error is the failure signal: the pass ends here without throwing out of the listener.
                     $this->logger->error('NickServ burst protection stopped: the EntityManager is closed, so the remaining burst users are left unprotected.', [
-                        'chunk' => $index + 1,
-                        'remaining_users' => count($pending) - $index * self::BURST_CHUNK_SIZE - $handledUsers,
+                        'chunk' => $chunk,
+                        'remaining_users' => $remainingUsers,
                         'exception' => $exception,
                     ]);
 
@@ -145,11 +167,12 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
 
                 // One failing chunk must not leave every later chunk unprotected.
                 $this->logger->error('NickServ burst protection chunk failed; continuing with the next chunk.', [
-                    'chunk' => $index + 1,
+                    'chunk' => $chunk,
                     'users' => count($batch),
                     'exception' => $exception,
                 ]);
             }
+            $offset += count($batch);
         }
     }
 
@@ -265,6 +288,27 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
         $this->flushQuitActivities();
     }
 
+    /** Resets the closed EntityManager so the pass can continue; false when no reset was possible. */
+    private function resetClosedEntityManager(int $chunk): bool
+    {
+        if (null === $this->managerRegistry) {
+            return false;
+        }
+
+        try {
+            $this->managerRegistry->resetManager();
+        } catch (Throwable $exception) {
+            $this->logger->error('NickServ burst protection could not reset the closed EntityManager.', [
+                'chunk' => $chunk,
+                'exception' => $exception,
+            ]);
+
+            return false;
+        }
+
+        return true;
+    }
+
     /**
      * Saves the chunk's activity and ends its batch even when protection fails. The first failure
      * is rethrown; a later cleanup failure is logged so it neither hides nor replaces it.
@@ -316,7 +360,7 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
 
     /**
      * One failing user is logged and skipped so the rest of its chunk is still protected,
-     * unless the failure closed the EntityManager: then the whole pass stops.
+     * unless the failure closed the EntityManager: then the chunk stops so the pass can reset it once or stop.
      */
     private function protectBurstUser(NetworkUser $user, ?RegisteredNick $account, DateTimeImmutable $occurredAt, PendingNickActivities $activityBatch, int $chunk): void
     {

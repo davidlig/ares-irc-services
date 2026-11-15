@@ -10,6 +10,7 @@ use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\Service\NickDropService;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use DateTimeImmutable;
+use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -30,6 +31,9 @@ use function range;
 #[CoversClass(PurgeInactiveNicknamesTask::class)]
 final class PurgeInactiveNicknamesTaskTest extends TestCase
 {
+    /** Whether the database answers the liveness probe in the outage tests. */
+    private bool $databaseUp = true;
+
     #[Test]
     public function getNameReturnsTaskName(): void
     {
@@ -388,6 +392,76 @@ final class PurgeInactiveNicknamesTaskTest extends TestCase
 
         self::assertSame([0, 1], $pages);
         self::assertSame(['First', 'Second', 'Second', 'Third'], $attempts);
+    }
+
+    #[Test]
+    public function aNickThatClosesTheEntityManagerDuringADatabaseOutageIsNeverSkipped(): void
+    {
+        $pages = [];
+        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repo->method('findRegisteredInactiveSince')
+            ->willReturnCallback(function (DateTimeImmutable $threshold, int $limit, int $afterId) use (&$pages): array {
+                $pages[] = $afterId;
+
+                return array_values(array_filter(
+                    [$this->nick(1, 'Stuck'), $this->nick(2, 'Later')],
+                    static fn (RegisteredNick $nick): bool => $nick->getId() > $afterId,
+                ));
+            });
+        $open = true;
+        $this->databaseUp = false;
+        $attempts = [];
+        $dropService = $this->createStub(NickDropService::class);
+        $dropService->method('dropNick')
+            ->willReturnCallback(function (RegisteredNick $nick) use (&$open, &$attempts): void {
+                $attempts[] = $nick->getNickname();
+                if (!$this->databaseUp) {
+                    $open = false;
+
+                    throw new RuntimeException('connection refused');
+                }
+            });
+        $errors = [];
+        $logger = $this->createStub(LoggerInterface::class);
+        $logger->method('error')->willReturnCallback(static function (string $message) use (&$errors): void {
+            $errors[] = $message;
+        });
+        $connection = $this->createStub(Connection::class);
+        $connection->method('fetchOne')->willReturnCallback(function (): int {
+            if (!$this->databaseUp) {
+                throw new RuntimeException('connection refused');
+            }
+
+            return 1;
+        });
+        $em = $this->createStub(EntityManagerInterface::class);
+        $em->method('getConnection')->willReturn($connection);
+        $em->method('isOpen')->willReturnCallback(static function () use (&$open): bool {
+            return $open;
+        });
+        $task = new PurgeInactiveNicknamesTask($repo, $dropService, $logger, $this->clock(), 3600, 90, $em);
+
+        $failures = 0;
+        for ($cycle = 0; $cycle < 4; ++$cycle) {
+            try {
+                $task->run();
+            } catch (RuntimeException) {
+                ++$failures;
+            }
+            $open = true;
+        }
+        $this->databaseUp = true;
+        $task->run();
+
+        self::assertSame(4, $failures);
+        self::assertSame([0, 0, 0, 0, 0], $pages);
+        self::assertSame(['Stuck', 'Stuck', 'Stuck', 'Stuck', 'Stuck', 'Later'], $attempts);
+        self::assertSame([
+            'Maintenance [nickserv.purge_inactive_nicknames]: failed to drop inactive nick Stuck (id 1); the EntityManager is closed, stopping this batch.',
+            'Maintenance [nickserv.purge_inactive_nicknames]: failed to drop inactive nick Stuck (id 1); the EntityManager is closed, stopping this batch.',
+            'Maintenance [nickserv.purge_inactive_nicknames]: failed to drop inactive nick Stuck (id 1); the EntityManager is closed, stopping this batch.',
+            'Maintenance [nickserv.purge_inactive_nicknames]: failed to drop inactive nick Stuck (id 1); the EntityManager is closed, stopping this batch.',
+        ], $errors);
     }
 
     #[Test]
