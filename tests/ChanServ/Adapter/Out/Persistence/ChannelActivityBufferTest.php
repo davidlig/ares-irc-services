@@ -158,7 +158,7 @@ final class ChannelActivityBufferTest extends TestCase
     }
 
     #[Test]
-    public function aRowThatFailsOnItsOwnThreeFlushesInARowIsDroppedWithAWarningOnARealConnection(): void
+    public function aRowThatFailsOnItsOwnThreeFlushesInARowIsNeverDroppedAndKeepsItsChannelFromExpiryOnARealConnection(): void
     {
         $connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
         $connection->executeStatement('CREATE TABLE registered_channels (id INTEGER PRIMARY KEY, last_used_at DATETIME NULL)');
@@ -182,23 +182,57 @@ final class ChannelActivityBufferTest extends TestCase
 
         $buffer->flush($usedAt);
         $buffer->flush($usedAt->modify('+1 minute'));
-        self::assertTrue($buffer->hasPendingActivity(13), 'Two isolated failures keep the row pending.');
         self::assertCount(0, $warnings);
-
         $buffer->flush($usedAt->modify('+2 minutes'));
 
-        self::assertFalse($buffer->hasPendingActivity(13), 'The third isolated failure drops the row, so the channel can expire again.');
+        self::assertTrue($buffer->hasPendingActivity(13), 'A row is never dropped, so the purge guard keeps protecting its channel.');
         $pending = new ReflectionProperty($buffer, 'pending');
-        self::assertSame([], $pending->getValue($buffer));
+        self::assertSame([13], array_keys((array) $pending->getValue($buffer)));
         self::assertNull($connection->fetchOne('SELECT last_used_at FROM registered_channels WHERE id = 13'));
         $isolated = 'Could not flush deferred ChanServ channel activity for one channel; it stays pending and the channel is kept from inactivity expiry.';
         $chunk = 'Could not flush a chunk of deferred ChanServ channel activity; it will be retried.';
         self::assertSame([[$chunk, null, null], [$isolated, 13, 1], [$isolated, 13, 2]], $errors->getArrayCopy());
-        $dropped = 'Dropped deferred ChanServ channel activity for one channel after repeated failures; the channel can expire for inactivity again.';
-        self::assertSame([[$dropped, 13, 3, true]], $warnings->getArrayCopy());
+        $stuck = 'Could not flush deferred ChanServ channel activity for one channel after repeated failures, not even with the current time; it stays pending, the channel is kept from inactivity expiry and the row is retried alone on later flushes.';
+        self::assertSame([[$stuck, 13, 3, true]], $warnings->getArrayCopy());
 
+        $buffer->record(14, $usedAt->modify('+3 minutes'));
+        $buffer->record(15, $usedAt->modify('+3 minutes'));
         $buffer->flush($usedAt->modify('+3 minutes'));
-        self::assertCount(1, $warnings, 'A dropped row is not written again.');
+        self::assertTrue($buffer->hasPendingActivity(13));
+        self::assertFalse($buffer->hasPendingActivity(14), 'The stuck row is written alone and does not split the chunk of the others.');
+        self::assertCount(1, $warnings, 'The warning is logged once per streak.');
+        self::assertCount(3, $errors, 'A stuck row that fails again on a later flush is not logged again.');
+
+        $connection->executeStatement('DROP TRIGGER poison_row');
+        $buffer->flush($usedAt->modify('+4 minutes'));
+
+        self::assertFalse($buffer->hasPendingActivity(13));
+        self::assertSame('2026-01-01 00:00:00', $connection->fetchOne('SELECT last_used_at FROM registered_channels WHERE id = 13'));
+    }
+
+    #[Test]
+    public function theThirdIsolatedFailureWritesTheCurrentTimeAndClearsThePendingActivityWhenThatWriteSucceeds(): void
+    {
+        $connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
+        $connection->executeStatement('CREATE TABLE registered_channels (id INTEGER PRIMARY KEY, last_used_at DATETIME NULL)');
+        $connection->executeStatement('INSERT INTO registered_channels (id, last_used_at) VALUES (13, NULL)');
+        $connection->executeStatement("CREATE TRIGGER poison_value BEFORE UPDATE ON registered_channels WHEN NEW.last_used_at = '2026-01-01 00:00:00' BEGIN SELECT RAISE(ABORT, 'poison value'); END");
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::exactly(2))->method('error');
+        $logger->expects(self::never())->method('warning');
+        $buffer = new ChannelActivityBuffer($connection, $logger);
+        $usedAt = new DateTimeImmutable('2026-01-01 00:00:00 UTC');
+        $buffer->record(13, $usedAt);
+
+        $buffer->flush($usedAt);
+        $buffer->flush($usedAt->modify('+1 minute'));
+        self::assertTrue($buffer->hasPendingActivity(13));
+        $buffer->flush($usedAt->modify('+2 minutes'));
+
+        self::assertFalse($buffer->hasPendingActivity(13), 'The current-time write clears the pending activity.');
+        self::assertSame('2026-01-01 00:02:00', $connection->fetchOne('SELECT last_used_at FROM registered_channels WHERE id = 13'));
+        $failures = new ReflectionProperty($buffer, 'rowFailures');
+        self::assertSame([], $failures->getValue($buffer));
     }
 
     #[Test]
@@ -263,7 +297,7 @@ final class ChannelActivityBufferTest extends TestCase
         $buffer->flush($later);
         $buffer->flush($later);
 
-        self::assertTrue($buffer->hasPendingActivity(7), 'Two failures after a successful write do not reach the drop threshold.');
+        self::assertTrue($buffer->hasPendingActivity(7), 'Two failures after a successful write do not reach the current-time retry.');
     }
 
     #[Test]
@@ -284,7 +318,7 @@ final class ChannelActivityBufferTest extends TestCase
         $buffer->record(7, $usedAt->modify('+4 minutes'));
         $buffer->flush($usedAt->modify('+4 minutes'));
 
-        self::assertFalse($buffer->hasPendingActivity(7));
+        self::assertTrue($buffer->hasPendingActivity(7), 'The third failure triggers the current-time write; the row is never dropped.');
     }
 
     #[Test]
@@ -328,7 +362,7 @@ final class ChannelActivityBufferTest extends TestCase
 
         $buffer->flush($usedAt);
 
-        self::assertFalse($buffer->hasPendingActivity(7));
+        self::assertTrue($buffer->hasPendingActivity(7), 'The third counted failure keeps the row pending.');
         self::assertCount(1, $warnings);
     }
 
