@@ -19,8 +19,10 @@ use function sprintf;
 
 /**
  * Removes expired G-lines in batches ordered by expiry, then id. A G-line whose
- * removal keeps failing is logged and left for the next cycle; the keyset cursor
- * moves past it so it never blocks the remaining rows or the later maintenance tasks.
+ * network removal (the GlineRemovedEvent listeners) keeps failing is logged and left
+ * for the next cycle; the keyset cursor moves past it so it never blocks the remaining
+ * rows or the later maintenance tasks. The debug-channel log is best-effort: its failure
+ * is logged on its own and never keeps a G-line that was removed from the network.
  */
 final readonly class PurgeExpiredGlinesTask implements MaintenanceTaskInterface
 {
@@ -87,13 +89,6 @@ final readonly class PurgeExpiredGlinesTask implements MaintenanceTaskInterface
                 cause: 'expired',
                 occurredAt: $occurredAt,
             ));
-
-            $this->debugNotifier->log(
-                operator: $this->serverName,
-                command: 'GLINE DEL',
-                target: $mask,
-                reason: 'expired',
-            );
         } catch (Throwable $e) {
             $this->logger->error(sprintf(
                 'Maintenance [%s]: failed to remove expired GLINE %s (id %d); skipping it until the next cycle.',
@@ -103,6 +98,22 @@ final readonly class PurgeExpiredGlinesTask implements MaintenanceTaskInterface
             ), ['exception' => $e]);
 
             return false;
+        }
+
+        try {
+            $this->debugNotifier->log(
+                operator: $this->serverName,
+                command: 'GLINE DEL',
+                target: $mask,
+                reason: 'expired',
+            );
+        } catch (Throwable $e) {
+            $this->logger->warning(sprintf(
+                'Maintenance [%s]: could not log the removal of expired GLINE %s (id %d) to the debug channel.',
+                $this->getName(),
+                $mask,
+                $glineId,
+            ), ['exception' => $e]);
         }
 
         $this->logger->info(sprintf(

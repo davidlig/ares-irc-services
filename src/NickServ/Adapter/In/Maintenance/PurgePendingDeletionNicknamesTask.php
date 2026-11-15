@@ -75,18 +75,55 @@ final readonly class PurgePendingDeletionNicknamesTask implements MaintenanceTas
                 try {
                     $this->dropService->hardDropNick($nick, $now, 'manual-grace-expired', null);
                 } catch (Throwable $e) {
-                    $failed[$nick->getId()] = true;
-                    $this->logger->error(sprintf(
-                        'Maintenance [%s]: failed to drop pending-deletion nick %s (id %d); skipping it until the next cycle.',
-                        $this->getName(),
-                        $nick->getNickname(),
-                        $nick->getId(),
-                    ), ['exception' => $e]);
+                    if (!$this->recordFailure($nick, $e)) {
+                        $failed[$nick->getId()] = true;
+                    }
                 }
             }
 
             $this->entityManager?->clear();
             ++$batches;
         } while (count($batch) === $limit && $batches < $this->maxBatchesPerCycle);
+    }
+
+    /**
+     * Logs a failed drop accurately and tells whether the row is gone.
+     *
+     * A closed EntityManager makes every later row fail too, so the batch stops and the task fails.
+     *
+     * @throws Throwable when the EntityManager was closed by the failure
+     */
+    private function recordFailure(RegisteredNick $nick, Throwable $e): bool
+    {
+        if (null !== $this->entityManager && !$this->entityManager->isOpen()) {
+            $this->logger->error(sprintf(
+                'Maintenance [%s]: failed to drop pending-deletion nick %s (id %d); the EntityManager is closed, stopping this batch.',
+                $this->getName(),
+                $nick->getNickname(),
+                $nick->getId(),
+            ), ['exception' => $e]);
+
+            throw $e;
+        }
+
+        if (null === $this->nickRepository->findById($nick->getId())) {
+            $this->logger->error(sprintf(
+                'Maintenance [%s]: dropped pending-deletion nick %s (id %d), but a post-drop step failed.',
+                $this->getName(),
+                $nick->getNickname(),
+                $nick->getId(),
+            ), ['exception' => $e]);
+
+            return true;
+        }
+
+        $this->logger->error(sprintf(
+            'Maintenance [%s]: failed to drop pending-deletion nick %s (id %d); skipping it until the next cycle.',
+            $this->getName(),
+            $nick->getNickname(),
+            $nick->getId(),
+        ), ['exception' => $e]);
+
+        return false;
     }
 }

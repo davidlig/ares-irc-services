@@ -173,7 +173,13 @@ final class PurgeInactiveChannelsTaskTest extends TestCase
         });
         $buffer = new ChannelActivityBuffer($connection);
         $buffer->record(7, new DateTimeImmutable('-1 minute'));
-        $buffer->flush();
+        $failure = null;
+        try {
+            $buffer->flush();
+        } catch (RuntimeException $e) {
+            $failure = $e;
+        }
+        self::assertInstanceOf(RuntimeException::class, $failure);
 
         /** @var ArrayObject<int, string> $dropped */
         $dropped = new ArrayObject();

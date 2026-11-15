@@ -19,9 +19,10 @@ use function count;
 use function sprintf;
 
 /**
- * Removes expired MOTDs in batches ordered by expiry, then id. A MOTD whose removal
- * keeps failing is logged and left for the next cycle; the keyset cursor moves past
- * it so it never blocks the remaining rows or the later maintenance tasks.
+ * Removes expired MOTDs in batches ordered by expiry, then id, using a keyset cursor.
+ * The finalized notice to the debug channel is best-effort: when it fails, the failure
+ * is logged on its own and the expired MOTD is still removed, so an unavailable debug
+ * channel never keeps expired rows forever.
  *
  * Requires the MOTD shown-counter flush (order 364) to have succeeded in the same
  * cycle, so the finalized notice reports a current shown count.
@@ -71,9 +72,8 @@ final readonly class PurgeExpiredMotdsTask implements PrerequisiteAwareMaintenan
             $ids = [];
             foreach ($expired as $motd) {
                 $after = $motd;
-                if ($this->finalize($motd)) {
-                    $ids[] = $motd->id;
-                }
+                $this->notifyFinalized($motd);
+                $ids[] = $motd->id;
             }
 
             if ([] !== $ids) {
@@ -82,18 +82,16 @@ final readonly class PurgeExpiredMotdsTask implements PrerequisiteAwareMaintenan
         } while (count($expired) === $this->batchSize);
     }
 
-    private function finalize(MotdEntry $motd): bool
+    private function notifyFinalized(MotdEntry $motd): void
     {
         try {
             $this->debugNotifier->notify($this->formatFinalizedMessage($motd));
         } catch (Throwable $e) {
-            $this->logger->error(sprintf(
-                'Maintenance [%s]: failed to remove expired MOTD id %d; skipping it until the next cycle.',
+            $this->logger->warning(sprintf(
+                'Maintenance [%s]: could not post the finalized notice for expired MOTD id %d to the debug channel; removing it anyway.',
                 $this->getName(),
                 $motd->id,
             ), ['exception' => $e]);
-
-            return false;
         }
 
         $this->logger->info(sprintf(
@@ -101,8 +99,6 @@ final readonly class PurgeExpiredMotdsTask implements PrerequisiteAwareMaintenan
             $this->getName(),
             $motd->id,
         ));
-
-        return true;
     }
 
     private function formatFinalizedMessage(MotdEntry $motd): string

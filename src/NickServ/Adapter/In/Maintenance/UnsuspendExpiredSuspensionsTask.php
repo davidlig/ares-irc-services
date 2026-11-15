@@ -72,13 +72,20 @@ final readonly class UnsuspendExpiredSuspensionsTask implements MaintenanceTaskI
                 }
 
                 try {
-                    $this->unsuspend($nick);
+                    $nick->unsuspend();
+                    $this->nickRepository->save($nick);
                 } catch (Throwable $e) {
+                    $this->recordSaveFailure($nick, $e);
                     $failed[$nick->getId()] = true;
-                    // Keep the half-applied unsuspend out of later flushes in this batch.
-                    $this->entityManager?->detach($nick);
+
+                    continue;
+                }
+
+                try {
+                    $this->announce($nick);
+                } catch (Throwable $e) {
                     $this->logger->error(sprintf(
-                        'Maintenance [%s]: failed to auto-unsuspend nick %s (id %d); skipping it until the next cycle.',
+                        'Maintenance [%s]: auto-unsuspended nick %s (id %d), but a post-unsuspend step failed.',
                         $this->getName(),
                         $nick->getNickname(),
                         $nick->getId(),
@@ -91,13 +98,39 @@ final readonly class UnsuspendExpiredSuspensionsTask implements MaintenanceTaskI
         } while (count($expired) === $limit && $batches < $this->maxBatchesPerCycle);
     }
 
-    private function unsuspend(RegisteredNick $nick): void
+    /**
+     * A closed EntityManager makes every later row fail too, so the batch stops and the task fails.
+     *
+     * @throws Throwable when the EntityManager was closed by the failure
+     */
+    private function recordSaveFailure(RegisteredNick $nick, Throwable $e): void
+    {
+        if (null !== $this->entityManager && !$this->entityManager->isOpen()) {
+            $this->logger->error(sprintf(
+                'Maintenance [%s]: failed to auto-unsuspend nick %s (id %d); the EntityManager is closed, stopping this batch.',
+                $this->getName(),
+                $nick->getNickname(),
+                $nick->getId(),
+            ), ['exception' => $e]);
+
+            throw $e;
+        }
+
+        // Keep the half-applied unsuspend out of later flushes in this batch.
+        $this->entityManager?->detach($nick);
+        $this->logger->error(sprintf(
+            'Maintenance [%s]: failed to auto-unsuspend nick %s (id %d); skipping it until the next cycle.',
+            $this->getName(),
+            $nick->getNickname(),
+            $nick->getId(),
+        ), ['exception' => $e]);
+    }
+
+    private function announce(RegisteredNick $nick): void
     {
         $nickname = $nick->getNickname();
         $nickId = $nick->getId();
 
-        $nick->unsuspend();
-        $this->nickRepository->save($nick);
         $this->eventPublisher->publish(new NickUnsuspendedEvent(
             nickId: $nickId,
             nickname: $nickname,

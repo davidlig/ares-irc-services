@@ -20,7 +20,6 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 use function in_array;
-use function iterator_to_array;
 
 #[CoversClass(DoctrineChannelRankPolicyRepository::class)]
 final class DoctrineChannelRankPolicyRepositoryTest extends TestCase
@@ -83,28 +82,6 @@ final class DoctrineChannelRankPolicyRepositoryTest extends TestCase
         $levels->expects(self::never())->method('listByChannel');
 
         self::assertNull(new DoctrineChannelRankPolicyRepository($channels, $access, $levels, $this->createStub(EntityManagerInterface::class), $this->activityBuffer())->findByName('#missing'));
-    }
-
-    #[Test]
-    public function itMapsAllRankPolicies(): void
-    {
-        $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
-        $channels->method('iterateAll')->willReturn([
-            $this->channel(1, '#one', 10, false, false),
-            $this->channel(2, '#two', 20, true, true),
-        ]);
-        $levels = $this->createStub(ChannelLevelRepositoryInterface::class);
-        $levels->method('listByChannel')->willReturn([new ChannelLevel(1, ChannelLevel::KEY_AUTOOP, 250)]);
-        $access = $this->createStub(ChannelAccessRepositoryInterface::class);
-        $access->method('listByChannel')->willReturn([new ChannelAccess(1, 21, 300)]);
-        $em = $this->createMock(EntityManagerInterface::class);
-        $em->expects(self::exactly(4))->method('detach');
-
-        $policies = iterator_to_array(new DoctrineChannelRankPolicyRepository($channels, $access, $levels, $em, $this->activityBuffer())->all());
-
-        self::assertCount(2, $policies);
-        self::assertSame('#one', $policies[0]->name);
-        self::assertSame('#two', $policies[1]->name);
     }
 
     #[Test]

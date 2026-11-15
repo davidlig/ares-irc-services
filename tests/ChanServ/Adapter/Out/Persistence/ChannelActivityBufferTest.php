@@ -57,7 +57,7 @@ final class ChannelActivityBufferTest extends TestCase
     }
 
     #[Test]
-    public function itRetainsPendingUpdatesWhenTheDatabaseWriteFailsAndLogsInsteadOfThrowing(): void
+    public function itRetainsPendingUpdatesWhenTheDatabaseWriteFailsAndReportsTheFailureAfterLoggingIt(): void
     {
         $connection = $this->createMock(Connection::class);
         $attempts = 0;
@@ -83,9 +83,20 @@ final class ChannelActivityBufferTest extends TestCase
         $buffer = new ChannelActivityBuffer($connection, $logger);
         $buffer->record(7, new DateTimeImmutable('2026-01-01 00:00:00 UTC'));
 
+        $failure = null;
+        try {
+            $buffer->flush();
+        } catch (RuntimeException $e) {
+            $failure = $e;
+        }
+        self::assertInstanceOf(RuntimeException::class, $failure);
+        self::assertSame('Could not flush 1 of 1 chunks of deferred ChanServ channel activity (1 channels kept pending).', $failure->getMessage());
+        self::assertSame('database unavailable', $failure->getPrevious()?->getMessage());
+        self::assertTrue($buffer->hasPendingActivity(7));
+
         $buffer->flush();
         $buffer->flush();
-        $buffer->flush();
+        self::assertFalse($buffer->hasPendingActivity(7));
     }
 
     #[Test]
@@ -131,7 +142,16 @@ final class ChannelActivityBufferTest extends TestCase
             $buffer->record($id, $usedAt);
         }
 
-        $buffer->flush($usedAt);
+        $failure = null;
+        try {
+            $buffer->flush($usedAt);
+        } catch (RuntimeException $e) {
+            $failure = $e;
+        }
+        $attemptedBeforeReport = count($statements);
+        self::assertInstanceOf(RuntimeException::class, $failure);
+        self::assertSame('Could not flush 1 of 3 chunks of deferred ChanServ channel activity (200 channels kept pending).', $failure->getMessage());
+        self::assertSame(3, $attemptedBeforeReport, 'Every chunk is attempted before the failure is reported.');
         $buffer->flush($usedAt);
 
         self::assertCount(4, $statements);
@@ -197,7 +217,13 @@ final class ChannelActivityBufferTest extends TestCase
         self::assertTrue($buffer->hasPendingActivity(5));
         self::assertFalse($buffer->hasPendingActivity(6));
 
-        $buffer->flush(new DateTimeImmutable('2026-01-01 00:00:10 UTC'));
+        $failure = null;
+        try {
+            $buffer->flush(new DateTimeImmutable('2026-01-01 00:00:10 UTC'));
+        } catch (RuntimeException $e) {
+            $failure = $e;
+        }
+        self::assertInstanceOf(RuntimeException::class, $failure);
         self::assertTrue($buffer->hasPendingActivity(5));
 
         $buffer->flush(new DateTimeImmutable('2026-01-01 00:00:20 UTC'));

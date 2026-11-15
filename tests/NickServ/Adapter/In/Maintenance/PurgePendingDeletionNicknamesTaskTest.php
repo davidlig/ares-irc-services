@@ -153,6 +153,7 @@ final class PurgePendingDeletionNicknamesTaskTest extends TestCase
         $failure = new RuntimeException('drop subscriber failed');
         $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $repo->method('findPendingDeletionBefore')->willReturn([$failing, $healthy]);
+        $repo->method('findById')->willReturn($failing);
         $dropped = [];
         $dropService = $this->createMock(NickDropService::class);
         $dropService->expects(self::exactly(2))->method('hardDropNick')
@@ -168,6 +169,7 @@ final class PurgePendingDeletionNicknamesTaskTest extends TestCase
             ['exception' => $failure],
         );
         $em = $this->createMock(EntityManagerInterface::class);
+        $em->method('isOpen')->willReturn(true);
         $em->expects(self::once())->method('clear');
 
         new PurgePendingDeletionNicknamesTask($repo, $dropService, $logger, $this->clock(), 3600, 7, $em)->run();
@@ -189,6 +191,7 @@ final class PurgePendingDeletionNicknamesTaskTest extends TestCase
                     ? [$failing, $this->nick(2, 'Second')]
                     : [$failing, $this->nick(3, 'Third'), $this->nick(4, 'Fourth')];
             });
+        $repo->method('findById')->willReturn($failing);
         $attempts = [];
         $dropService = $this->createStub(NickDropService::class);
         $dropService->method('hardDropNick')
@@ -205,6 +208,58 @@ final class PurgePendingDeletionNicknamesTaskTest extends TestCase
 
         self::assertSame([2, 3], $loads);
         self::assertSame(['Broken', 'Second', 'Third', 'Fourth'], $attempts);
+    }
+
+    #[Test]
+    public function aFailureThatClosesTheEntityManagerStopsTheBatchAndFailsTheTask(): void
+    {
+        $failing = $this->nick(1, 'Broken');
+        $failure = new RuntimeException('transaction rolled back');
+        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repo->method('findPendingDeletionBefore')->willReturn([$failing, $this->nick(2, 'Healthy')]);
+        $dropService = $this->createMock(NickDropService::class);
+        $dropService->expects(self::once())->method('hardDropNick')->willThrowException($failure);
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::once())->method('error')->with(
+            'Maintenance [nickserv.purge_pending_deletion_nicknames]: failed to drop pending-deletion nick Broken (id 1); the EntityManager is closed, stopping this batch.',
+            ['exception' => $failure],
+        );
+        $em = $this->createStub(EntityManagerInterface::class);
+        $em->method('isOpen')->willReturn(false);
+
+        $this->expectExceptionObject($failure);
+
+        new PurgePendingDeletionNicknamesTask($repo, $dropService, $logger, $this->clock(), 3600, 7, $em)->run();
+    }
+
+    #[Test]
+    public function aFailureAfterTheDropCommittedIsLoggedAsDroppedAndTheBatchContinues(): void
+    {
+        $dropped = $this->nick(1, 'Gone');
+        $failure = new RuntimeException('force rename failed');
+        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repo->method('findPendingDeletionBefore')->willReturn([$dropped, $this->nick(2, 'Healthy')]);
+        $repo->method('findById')->willReturn(null);
+        $attempts = [];
+        $dropService = $this->createStub(NickDropService::class);
+        $dropService->method('hardDropNick')
+            ->willReturnCallback(static function (RegisteredNick $nick) use ($dropped, $failure, &$attempts): void {
+                $attempts[] = $nick->getNickname();
+                if ($nick === $dropped) {
+                    throw $failure;
+                }
+            });
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::once())->method('error')->with(
+            'Maintenance [nickserv.purge_pending_deletion_nicknames]: dropped pending-deletion nick Gone (id 1), but a post-drop step failed.',
+            ['exception' => $failure],
+        );
+        $em = $this->createStub(EntityManagerInterface::class);
+        $em->method('isOpen')->willReturn(true);
+
+        new PurgePendingDeletionNicknamesTask($repo, $dropService, $logger, $this->clock(), 3600, 7, $em)->run();
+
+        self::assertSame(['Gone', 'Healthy'], $attempts);
     }
 
     private function nick(int $id, string $nickname): RegisteredNick

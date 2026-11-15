@@ -37,7 +37,7 @@ final class ChanServChannelActivityFlushSubscriberTest extends TestCase
         $buffer = new ChannelActivityBuffer($connection, $logger);
         $buffer->record(7, new DateTimeImmutable('2026-01-01 00:00:00 UTC'));
 
-        $subscriber = new ChanServChannelActivityFlushSubscriber($buffer);
+        $subscriber = new ChanServChannelActivityFlushSubscriber($buffer, $logger);
         $subscriber->onConnectionLost(new NetworkConnectionLostEvent());
     }
 
@@ -53,8 +53,15 @@ final class ChanServChannelActivityFlushSubscriberTest extends TestCase
         );
         $buffer = new ChannelActivityBuffer($connection, $logger);
         $buffer->record(7, new DateTimeImmutable('2026-01-01 00:00:00 UTC'));
+        $subscriberLogger = $this->createMock(LoggerInterface::class);
+        $subscriberLogger->expects(self::once())->method('warning')->with(
+            'Deferred ChanServ channel activity was not fully flushed on disconnection; it stays pending.',
+            self::callback(static fn (array $context): bool => $context['exception'] instanceof RuntimeException),
+        );
 
-        $subscriber = new ChanServChannelActivityFlushSubscriber($buffer);
+        $subscriber = new ChanServChannelActivityFlushSubscriber($buffer, $subscriberLogger);
         $subscriber->onConnectionLost(new NetworkConnectionLostEvent());
+
+        self::assertTrue($buffer->hasPendingActivity(7));
     }
 }

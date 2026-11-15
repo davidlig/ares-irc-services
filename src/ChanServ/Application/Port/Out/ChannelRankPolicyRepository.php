@@ -12,8 +12,5 @@ interface ChannelRankPolicyRepository
 
     public function findByNameForNick(string $channelName, ?int $nickId): ?ChannelRankPolicy;
 
-    /** @return iterable<ChannelRankPolicy> */
-    public function all(): iterable;
-
     public function touchLastUsed(int $channelId): void;
 }

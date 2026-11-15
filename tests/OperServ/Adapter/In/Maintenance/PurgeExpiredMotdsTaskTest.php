@@ -119,19 +119,13 @@ final class PurgeExpiredMotdsTaskTest extends TestCase
     }
 
     #[Test]
-    public function aMotdThatKeepsFailingIsLoggedAndSkippedWithoutBlockingLaterRows(): void
+    public function aFailingDebugNoticeIsLoggedOnItsOwnAndTheExpiredMotdIsStillRemoved(): void
     {
         $failure = new RuntimeException('debug channel unavailable');
-        $loads = [];
         $deleted = [];
         $motdRepository = $this->createMock(MotdRepository::class);
-        $motdRepository->expects(self::exactly(2))->method('findExpiredAt')
-            ->willReturnCallback(function (DateTimeImmutable $at, ?MotdEntry $after, ?int $limit) use (&$loads): array {
-                $loads[] = [$after?->id, $limit];
-
-                return null === $after ? [$this->expired(1), $this->expired(2)] : [$this->expired(3)];
-            });
-        $motdRepository->expects(self::exactly(2))->method('deleteByIds')
+        $motdRepository->expects(self::once())->method('findExpiredAt')->willReturn([$this->expired(1), $this->expired(2)]);
+        $motdRepository->expects(self::once())->method('deleteByIds')
             ->willReturnCallback(static function (array $ids) use (&$deleted): int {
                 $deleted[] = $ids;
 
@@ -146,19 +140,18 @@ final class PurgeExpiredMotdsTaskTest extends TestCase
             $notified[] = $message;
         });
         $logger = $this->createMock(LoggerInterface::class);
-        $logger->expects(self::once())->method('error')->with(
-            'Maintenance [operserv.purge_expired_motds]: failed to remove expired MOTD id 1; skipping it until the next cycle.',
+        $logger->expects(self::never())->method('error');
+        $logger->expects(self::once())->method('warning')->with(
+            'Maintenance [operserv.purge_expired_motds]: could not post the finalized notice for expired MOTD id 1 to the debug channel; removing it anyway.',
             ['exception' => $failure],
         );
         $logger->expects(self::exactly(2))->method('info');
 
-        $this->createTask(motdRepository: $motdRepository, debugNotifier: $debugNotifier, batchSize: 2, logger: $logger)->run();
+        $this->createTask(motdRepository: $motdRepository, debugNotifier: $debugNotifier, batchSize: 100, logger: $logger)->run();
 
-        self::assertSame([[null, 2], [2, 2]], $loads);
-        self::assertCount(2, $notified);
+        self::assertCount(1, $notified);
         self::assertStringContainsString('#2 ', $notified[0]);
-        self::assertStringContainsString('#3 ', $notified[1]);
-        self::assertSame([[2], [3]], $deleted);
+        self::assertSame([[1, 2]], $deleted);
     }
 
     private function expired(int $id): MotdEntry

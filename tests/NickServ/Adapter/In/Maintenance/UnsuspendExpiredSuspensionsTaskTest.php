@@ -245,6 +245,7 @@ final class UnsuspendExpiredSuspensionsTaskTest extends TestCase
         );
         $logger->expects(self::once())->method('info')->with('Maintenance [nickserv.unsuspend_expired_suspensions]: auto-unsuspended nick Healthy (id 2).');
         $em = $this->createMock(EntityManagerInterface::class);
+        $em->method('isOpen')->willReturn(true);
         $em->expects(self::once())->method('detach')->with($failing);
         $em->expects(self::once())->method('clear');
 
@@ -296,6 +297,64 @@ final class UnsuspendExpiredSuspensionsTaskTest extends TestCase
 
         self::assertSame([2, 3], $loads);
         self::assertSame(['Broken', 'Second', 'Third', 'Fourth'], $attempts);
+    }
+
+    #[Test]
+    public function aSaveFailureThatClosesTheEntityManagerStopsTheBatchAndFailsTheTask(): void
+    {
+        $failing = $this->createNickWithId('Broken', 1);
+        $failing->suspend('Ban', new DateTimeImmutable('-1 hour'));
+        $healthy = $this->createNickWithId('Healthy', 2);
+        $healthy->suspend('Ban', new DateTimeImmutable('-1 hour'));
+        $failure = new RuntimeException('flush failed');
+        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findExpiredSuspensions')->willReturn([$failing, $healthy]);
+        $nickRepo->expects(self::once())->method('save')->with($failing)->willThrowException($failure);
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::once())->method('error')->with(
+            'Maintenance [nickserv.unsuspend_expired_suspensions]: failed to auto-unsuspend nick Broken (id 1); the EntityManager is closed, stopping this batch.',
+            ['exception' => $failure],
+        );
+        $em = $this->createStub(EntityManagerInterface::class);
+        $em->method('isOpen')->willReturn(false);
+
+        $this->expectExceptionObject($failure);
+
+        new UnsuspendExpiredSuspensionsTask($nickRepo, $this->createStub(ServiceDebugNotifierInterface::class), $logger, $this->clock(), $this->createStub(NickServEventPublisher::class), self::SERVER_NAME, 3600, $em)->run();
+    }
+
+    #[Test]
+    public function aFailureAfterTheUnsuspendWasSavedIsLoggedAsUnsuspendedAndTheBatchContinues(): void
+    {
+        $first = $this->createNickWithId('First', 1);
+        $first->suspend('Ban', new DateTimeImmutable('-1 hour'));
+        $second = $this->createNickWithId('Second', 2);
+        $second->suspend('Ban', new DateTimeImmutable('-1 hour'));
+        $failure = new RuntimeException('debug channel unavailable');
+        $saved = [];
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findExpiredSuspensions')->willReturn([$first, $second]);
+        $nickRepo->method('save')->willReturnCallback(static function (RegisteredNick $nick) use (&$saved): void {
+            $saved[] = $nick->getNickname();
+        });
+        $debugNotifier = $this->createStub(ServiceDebugNotifierInterface::class);
+        $debugNotifier->method('log')->willReturnCallback(static function (string $operator, string $command, string $target) use ($failure): void {
+            if ('First' === $target) {
+                throw $failure;
+            }
+        });
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::once())->method('error')->with(
+            'Maintenance [nickserv.unsuspend_expired_suspensions]: auto-unsuspended nick First (id 1), but a post-unsuspend step failed.',
+            ['exception' => $failure],
+        );
+        $em = $this->createMock(EntityManagerInterface::class);
+        $em->expects(self::never())->method('detach');
+
+        new UnsuspendExpiredSuspensionsTask($nickRepo, $debugNotifier, $logger, $this->clock(), $this->createStub(NickServEventPublisher::class), self::SERVER_NAME, 3600, $em)->run();
+
+        self::assertSame(['First', 'Second'], $saved);
+        self::assertFalse($first->isSuspended());
     }
 
     private function createNickWithId(string $nickname, int $id): RegisteredNick

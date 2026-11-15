@@ -240,6 +240,28 @@ final class PurgeExpiredGlinesTaskTest extends TestCase
         self::assertSame([[2], [3]], $deleted);
     }
 
+    #[Test]
+    public function aFailingDebugLogIsLoggedOnItsOwnAndTheGlineRemovedFromTheNetworkIsDeleted(): void
+    {
+        $failure = new RuntimeException('debug channel unavailable');
+        $glineRepo = $this->createMock(GlineRepository::class);
+        $glineRepo->expects(self::once())->method('findExpiredAt')->willReturn([$this->expired(1)]);
+        $glineRepo->expects(self::once())->method('deleteByIds')->with([1])->willReturn(1);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch')->with(self::isInstanceOf(GlineRemovedEvent::class));
+        $debugNotifier = $this->createStub(ServiceDebugNotifierInterface::class);
+        $debugNotifier->method('log')->willThrowException($failure);
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::never())->method('error');
+        $logger->expects(self::once())->method('warning')->with(
+            'Maintenance [operserv.purge_expired_glines]: could not log the removal of expired GLINE *@host1.test (id 1) to the debug channel.',
+            ['exception' => $failure],
+        );
+        $logger->expects(self::once())->method('info')->with('Maintenance [operserv.purge_expired_glines]: removed expired GLINE *@host1.test (id 1).');
+
+        new PurgeExpiredGlinesTask($glineRepo, $debugNotifier, $eventDispatcher, $logger, self::SERVER_NAME, 3600)->run();
+    }
+
     private function expired(int $id): GlineEntry
     {
         return new GlineEntry('*@host' . $id . '.test', null, null, new DateTimeImmutable('-2 hours'), new DateTimeImmutable('-1 hour'), $id);

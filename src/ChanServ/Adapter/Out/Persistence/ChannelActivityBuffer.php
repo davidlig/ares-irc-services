@@ -10,6 +10,7 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\ParameterType;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use RuntimeException;
 use Throwable;
 
 use function array_chunk;
@@ -61,18 +62,29 @@ final class ChannelActivityBuffer implements ChannelActivityPendingQuery
     /**
      * Writes pending activity in chunks so no statement binds an unbounded number of parameters.
      *
-     * A failing chunk is logged and kept pending for the next flush; later chunks are still written
-     * and already-written chunks are cleared, so one failure never blocks the remaining channels nor
-     * the maintenance cycle that runs this flush.
+     * Every chunk is attempted: a failing chunk is logged and kept pending for the next flush,
+     * already-written chunks are cleared. Once all chunks were tried, any failure is reported
+     * with one exception, so the maintenance task running this flush fails and the tasks that
+     * require it are skipped for the cycle.
+     *
+     * @throws RuntimeException when at least one chunk could not be written
      */
     public function flush(?DateTimeImmutable $now = null): void
     {
         $this->pruneThrottleHistory($now ?? new DateTimeImmutable());
 
-        foreach (array_chunk($this->pending, self::CHANNELS_PER_STATEMENT, true) as $batch) {
+        $chunks = array_chunk($this->pending, self::CHANNELS_PER_STATEMENT, true);
+        $failedChunks = 0;
+        $failedChannels = 0;
+        $firstFailure = null;
+
+        foreach ($chunks as $batch) {
             try {
                 $this->writeBatch($batch);
             } catch (Throwable $exception) {
+                ++$failedChunks;
+                $failedChannels += count($batch);
+                $firstFailure ??= $exception;
                 $this->logger->error('Could not flush a chunk of deferred ChanServ channel activity; it will be retried.', [
                     'channels' => count($batch),
                     'exception' => $exception,
@@ -86,6 +98,10 @@ final class ChannelActivityBuffer implements ChannelActivityPendingQuery
                     unset($this->pending[$channelId]);
                 }
             }
+        }
+
+        if (null !== $firstFailure) {
+            throw new RuntimeException(sprintf('Could not flush %d of %d chunks of deferred ChanServ channel activity (%d channels kept pending).', $failedChunks, count($chunks), $failedChannels), 0, $firstFailure);
         }
     }
 
