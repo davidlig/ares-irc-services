@@ -44,11 +44,13 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Throwable;
 
 use function array_merge;
 use function array_unique;
 use function array_values;
 use function preg_match;
+use function sprintf;
 use function time;
 
 /**
@@ -99,26 +101,36 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
             return;
         }
 
-        foreach ($user->getChannelNames() as $channelNameStr) {
-            $this->eventDispatcher->dispatch(new UserLeftChannelEvent(
-                $user->uid,
-                $user->getNick(),
-                new ChannelName($channelNameStr),
-                $event->reason,
-                false,
+        $failure = $this->dispatchQuitDepartures($user, $event->reason);
+
+        // The quit is published even when a departure failed: the network state subscriber then
+        // drops the memberships whose departure never reached it, and the user is removed in any
+        // case, so a failing listener never leaves the quitting user as a ghost.
+        try {
+            $this->eventDispatcher->dispatch(new UserQuitNetworkEvent(
+                uid: $user->uid,
+                nick: $user->getNick(),
+                reason: $event->reason,
+                ident: $user->ident->value,
+                displayHost: $user->getDisplayHost(),
+                hostname: $user->hostname,
+                ipBase64: $user->ipBase64,
             ));
+        } catch (Throwable $quitFailure) {
+            // The quit failure propagates instead of the departure failure, so log the departure
+            // failure here; otherwise it would be lost.
+            if (null !== $failure) {
+                $this->logQuitDepartureFailure($user, $failure['channel'], $failure['exception']);
+            }
+
+            throw $quitFailure;
+        } finally {
+            $this->userRepository->removeByUid($user->uid);
         }
 
-        $this->userRepository->removeByUid($user->uid);
-        $this->eventDispatcher->dispatch(new UserQuitNetworkEvent(
-            uid: $user->uid,
-            nick: $user->getNick(),
-            reason: $event->reason,
-            ident: $user->ident->value,
-            displayHost: $user->getDisplayHost(),
-            hostname: $user->hostname,
-            ipBase64: $user->ipBase64,
-        ));
+        if (null !== $failure) {
+            throw $failure['exception'];
+        }
     }
 
     public function onUserNickChangeReceived(UserNickChangeReceivedEvent $event): void
@@ -202,7 +214,7 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
                     }
                 }
                 $this->channelRepository->save($channel);
-                $this->eventDispatcher->dispatch(new ExistingChannelJoinObservedEvent($channel, $channelSetupApplicable));
+                $this->eventDispatcher->dispatch(new ExistingChannelJoinObservedEvent($channel, $channelSetupApplicable, $event->fromBurstingServer));
                 foreach ($event->members as $member) {
                     $joinedMember = $channel->getMember($member['uid']);
                     $role = null !== $joinedMember ? $joinedMember->role : ChannelMemberRole::None;
@@ -291,7 +303,7 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
             if ($channel->getCreatedAt()->getTimestamp() !== $existingTimestamp) {
                 $this->eventDispatcher->dispatch(new ChannelSyncedEvent($channel, $channelSetupApplicable));
             } else {
-                $this->eventDispatcher->dispatch(new ExistingChannelJoinObservedEvent($channel, $channelSetupApplicable));
+                $this->eventDispatcher->dispatch(new ExistingChannelJoinObservedEvent($channel, $channelSetupApplicable, $event->fromBurstingServer));
             }
             foreach ($joinedUids as $uid) {
                 $member = $channel->getMember($uid);
@@ -452,6 +464,48 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
         }
 
         $this->eventDispatcher->dispatch(new UserHostChangedEvent($user->uid, $event->newHost));
+    }
+
+    /**
+     * Dispatches one departure per channel; a failing departure does not stop the remaining ones.
+     * Returns the first failure so the caller rethrows it after the quit; later failures are logged.
+     *
+     * @return array{channel: string, exception: Throwable}|null
+     */
+    private function dispatchQuitDepartures(NetworkUser $user, string $reason): ?array
+    {
+        $failure = null;
+        foreach ($user->getChannelNames() as $channelNameStr) {
+            try {
+                $this->eventDispatcher->dispatch(new UserLeftChannelEvent(
+                    $user->uid,
+                    $user->getNick(),
+                    new ChannelName($channelNameStr),
+                    $reason,
+                    false,
+                ));
+            } catch (Throwable $exception) {
+                if (null === $failure) {
+                    $failure = ['channel' => $channelNameStr, 'exception' => $exception];
+
+                    continue;
+                }
+
+                $this->logQuitDepartureFailure($user, $channelNameStr, $exception);
+            }
+        }
+
+        return $failure;
+    }
+
+    private function logQuitDepartureFailure(NetworkUser $user, string $channelName, Throwable $exception): void
+    {
+        $this->logger->error(sprintf(
+            'Channel departure of %s (%s) from %s failed during quit.',
+            $user->uid->value,
+            $user->getNick()->value,
+            $channelName,
+        ), ['exception' => $exception]);
     }
 
     private function resolveUser(string $sourceId): ?NetworkUser

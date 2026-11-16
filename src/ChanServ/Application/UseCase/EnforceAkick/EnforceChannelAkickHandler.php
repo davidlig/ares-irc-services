@@ -8,9 +8,10 @@ use App\ChanServ\Application\Port\Out\AkickActions;
 use App\ChanServ\Application\Port\Out\ChannelAkickRepositoryInterface;
 use App\ChanServ\Application\Port\Out\ChannelEntryNetworkQuery;
 use App\ChanServ\Application\Port\Out\ChanServActivitySink;
+use App\ChanServ\Application\Port\Out\NetworkIdentityFold;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
-use App\ChanServ\Domain\Policy\AkickMatchPolicy;
+use App\ChanServ\Domain\Policy\PreparedAkickRules;
 use App\ChanServ\Domain\ValueObject\AkickMask;
 use App\ChanServ\Domain\ValueObject\AkickRule;
 use DateTimeImmutable;
@@ -19,7 +20,6 @@ use InvalidArgumentException;
 use function array_values;
 use function spl_object_id;
 use function sprintf;
-use function strtolower;
 
 final readonly class EnforceChannelAkickHandler implements EnforceChannelAkickHandlerInterface
 {
@@ -28,13 +28,13 @@ final readonly class EnforceChannelAkickHandler implements EnforceChannelAkickHa
         private ChannelAkickRepositoryInterface $akicks,
         private ChannelEntryNetworkQuery $network,
         private AkickActions $actions,
-        private AkickMatchPolicy $matchPolicy,
         private ChanServActivitySink $activity,
+        private NetworkIdentityFold $identityFold,
     ) {}
 
     public function handle(EnforceChannelAkick $command): int
     {
-        $channel = $this->channels->findByChannelName(strtolower($command->channelName));
+        $channel = $this->channels->findByChannelName($command->channelName);
         if (null === $channel || $channel->isBlocked()) {
             return 0;
         }
@@ -79,11 +79,12 @@ final readonly class EnforceChannelAkickHandler implements EnforceChannelAkickHa
             $ruleMap[spl_object_id($rule)] = $akick;
         }
 
+        $prepared = PreparedAkickRules::prepare($rules, $this->identityFold->fold(...));
         $enforced = 0;
         $used = [];
         try {
             foreach ($members as $member) {
-                $matching = $this->matchPolicy->firstMatch($rules, $member->userMask, $now, $member->operator);
+                $matching = $prepared->firstMatch($member->userMask, $now, $member->operator);
                 if (null === $matching) {
                     continue;
                 }

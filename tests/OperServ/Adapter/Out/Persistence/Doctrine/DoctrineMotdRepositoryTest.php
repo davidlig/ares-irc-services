@@ -197,27 +197,12 @@ final class DoctrineMotdRepositoryTest extends TestCase
         self::assertSame('Welcome', $entries[0]->text);
     }
 
-    /** @return iterable<string, array{string, string}> */
-    public static function boundedQueryProvider(): iterable
-    {
-        yield 'active' => [
-            'findActiveAt',
-            'SELECT m FROM %s m
-                 WHERE m.enabled = true AND (m.expiresAt IS NULL OR m.expiresAt > :at)
-                 ORDER BY m.createdAt ASC',
-        ];
-        yield 'expired' => [
-            'findExpiredAt',
-            'SELECT m FROM %s m
-                 WHERE m.expiresAt IS NOT NULL AND m.expiresAt <= :at
-                 ORDER BY m.createdAt ASC',
-        ];
-    }
-
-    #[DataProvider('boundedQueryProvider')]
     #[Test]
-    public function findsMotdsUsingBoundedQuery(string $method, string $dql): void
+    public function findsActiveMotdsUsingBoundedQuery(): void
     {
+        $dql = 'SELECT m FROM %s m
+                 WHERE m.enabled = true AND (m.expiresAt IS NULL OR m.expiresAt > :at)
+                 ORDER BY m.createdAt ASC';
         $at = new DateTimeImmutable('2026-09-08T10:00:00+00:00');
         $motd = $this->record(7, expiresAt: $at);
         $query = $this->createMock(Query::class);
@@ -229,7 +214,7 @@ final class DoctrineMotdRepositoryTest extends TestCase
             ->willReturn($query);
         $adapter = new DoctrineMotdRepository($entityManager);
 
-        $entries = 'findActiveAt' === $method ? $adapter->findActiveAt($at) : $adapter->findExpiredAt($at);
+        $entries = $adapter->findActiveAt($at);
 
         self::assertCount(1, $entries);
         self::assertSame('Welcome', $entries[0]->text);

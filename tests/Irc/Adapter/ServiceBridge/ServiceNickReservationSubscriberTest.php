@@ -9,7 +9,6 @@ use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 use App\Irc\Adapter\ServiceBridge\ServiceNickReservationInventory;
 use App\Irc\Adapter\ServiceBridge\ServiceNickReservationSubscriber;
-use App\Irc\Application\Port\In\LocalUserQuitSyncPort;
 use App\Irc\Application\Port\In\ManagedServiceNickReservationLookup;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\ProtocolModuleInterface;
@@ -76,7 +75,6 @@ final class ServiceNickReservationSubscriberTest extends TestCase
             $userLookup,
             [$listener1, $listener2, $listener3],
             $this->createStub(ServiceNickReservationInventory::class),
-            $this->createStub(LocalUserQuitSyncPort::class),
             new NullLogger(),
         );
 
@@ -98,9 +96,6 @@ final class ServiceNickReservationSubscriberTest extends TestCase
         $connectionHolder = new ActiveConnectionHolder();
 
         $reservation = $this->createStub(ServiceNickReservationInterface::class);
-
-        $sync = $this->createMock(LocalUserQuitSyncPort::class);
-        $sync->expects(self::once())->method('apply')->with('001USER1', 'Service nickname reserved');
 
         $serviceActions = $this->createMock(ProtocolServiceActionsInterface::class);
         $serviceActions->expects(self::once())
@@ -140,7 +135,6 @@ final class ServiceNickReservationSubscriberTest extends TestCase
             $userLookup,
             [$listener],
             $this->createStub(ServiceNickReservationInventory::class),
-            $sync,
             new NullLogger(),
         );
 
@@ -164,7 +158,6 @@ final class ServiceNickReservationSubscriberTest extends TestCase
             $userLookup,
             [$listener],
             $this->createStub(ServiceNickReservationInventory::class),
-            $this->createStub(LocalUserQuitSyncPort::class),
             new NullLogger(),
         );
 
@@ -197,7 +190,6 @@ final class ServiceNickReservationSubscriberTest extends TestCase
             $userLookup,
             [$listener],
             $this->createStub(ServiceNickReservationInventory::class),
-            $this->createStub(LocalUserQuitSyncPort::class),
             new NullLogger(),
         );
 
@@ -232,6 +224,33 @@ final class ServiceNickReservationSubscriberTest extends TestCase
             ->onBurstComplete($this->burstEvent());
 
         self::assertSame([['OldOper', 'newoper']], $snapshots);
+    }
+
+    /**
+     * The inventory stores RFC 1459 folded keys, so `[Bot]` and `{Bot}` are one reservation.
+     */
+    #[Test]
+    public function onBurstCompleteTreatsRfc1459EquivalentWireNamesAsTheSameReservation(): void
+    {
+        $reservation = $this->createMock(ServiceNickReservationInterface::class);
+        $reservation->expects(self::never())->method('releaseNick');
+        $reservation->expects(self::once())->method('reserveNick')->with('{Bot}', 'Reserved for network services');
+
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::never())->method('warning');
+
+        $snapshots = [];
+        $inventory = $this->createMock(ServiceNickReservationInventory::class);
+        $inventory->expects(self::once())->method('namesForProtocol')->with('unreal')->willReturn(['[Bot]']);
+        $inventory->expects(self::once())->method('replaceForProtocol')
+            ->willReturnCallback(static function (string $protocol, array $names) use (&$snapshots): void {
+                $snapshots[] = $names;
+            });
+
+        $this->subscriberFor($reservation, $inventory, ['{Bot}'], 'unreal', $logger)
+            ->onBurstComplete($this->burstEvent());
+
+        self::assertSame([['[Bot]']], $snapshots);
     }
 
     #[Test]
@@ -584,7 +603,6 @@ final class ServiceNickReservationSubscriberTest extends TestCase
             $this->createStub(NetworkUserLookupPort::class),
             $listeners,
             $inventory,
-            $this->createStub(LocalUserQuitSyncPort::class),
             $logger,
         );
     }

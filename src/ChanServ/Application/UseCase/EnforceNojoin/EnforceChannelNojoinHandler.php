@@ -16,8 +16,6 @@ use App\ChanServ\Domain\Entity\ChannelLevel;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\Policy\ChannelAccessPolicy;
 
-use function strtolower;
-
 final readonly class EnforceChannelNojoinHandler implements EnforceChannelNojoinHandlerInterface
 {
     public function __construct(
@@ -33,7 +31,7 @@ final readonly class EnforceChannelNojoinHandler implements EnforceChannelNojoin
 
     public function handle(EnforceChannelNojoin $command): int
     {
-        $channel = $this->channels->findByChannelName(strtolower($command->channelName));
+        $channel = $this->channels->findByChannelName($command->channelName);
         if (null === $channel || $channel->isBlocked()) {
             return 0;
         }
@@ -74,7 +72,7 @@ final readonly class EnforceChannelNojoinHandler implements EnforceChannelNojoin
             $channel,
             $members,
             $requiredAccess,
-            static fn (string $nickname): ?ChanAccountView => $accounts[strtolower($nickname)] ?? null,
+            static fn (string $nickname): ?ChanAccountView => $accounts[$nickname] ?? null,
             static fn (int $nickId): ?int => $access[$nickId] ?? null,
         );
     }

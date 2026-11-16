@@ -22,7 +22,7 @@ final class DoctrineChannelMlockPolicyRepositoryTest extends TestCase
     {
         $channel = $this->channel(7, '#Case', true, true, '+kRO', ['k' => 'Secret']);
         $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
-        $channels->expects(self::once())->method('findByChannelName')->with('#case')->willReturn($channel);
+        $channels->expects(self::once())->method('findByChannelName')->with('#CASE')->willReturn($channel);
 
         $policy = new DoctrineChannelMlockPolicyRepository($channels)->findByName('#CASE');
 

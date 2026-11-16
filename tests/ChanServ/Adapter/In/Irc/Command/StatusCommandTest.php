@@ -25,6 +25,7 @@ use App\OperServ\Application\Port\Out\OperatorRoleAccess;
 use App\OperServ\Application\Security\OperatorAuthorizationService;
 use App\OperServ\Application\Security\OperatorPermissionPolicy;
 use App\OperServ\Application\Security\RootAuthorizationPolicy;
+use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use DateTimeImmutable;
 use DateTimeZone;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -221,8 +222,8 @@ final class StatusCommandTest extends TestCase
         $roleAccess = $this->createStub(OperatorRoleAccess::class);
         $roleAccess->method('hasAssignedRole')->willReturn($operatorAuthorized);
         $authorization = new OperatorAuthorizationService(
-            new RootAuthorizationPolicy(new ConfiguredRootIdentityRegistry('Root')),
-            new OperatorPermissionPolicy(new RootAuthorizationPolicy(new ConfiguredRootIdentityRegistry('Root')), $roleAccess),
+            new RootAuthorizationPolicy(new ConfiguredRootIdentityRegistry('Root', NegotiatedCaseMapping::network())),
+            new OperatorPermissionPolicy(new RootAuthorizationPolicy(new ConfiguredRootIdentityRegistry('Root', NegotiatedCaseMapping::network())), $roleAccess),
             $roleAccess,
         );
         new StatusCommand(new ShowRegistrationStatusHandler($repository), $authorization)->execute($context);

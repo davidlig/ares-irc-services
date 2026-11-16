@@ -36,6 +36,36 @@ final class ChannelUnsuspendedEventTest extends TestCase
         self::assertSame('192.168.1.1', $event->performedByIp);
         self::assertSame('user@host', $event->performedByHost);
         self::assertSame($occurredAt, $event->occurredAt);
+        self::assertFalse($event->isRetry, 'a producer announces the unsuspension itself by default');
+    }
+
+    #[Test]
+    public function aRetryKeepsEveryPropertyAndIsMarkedAsARetry(): void
+    {
+        $occurredAt = new DateTimeImmutable('2026-01-02 03:04:05');
+        $event = new ChannelUnsuspendedEvent(
+            channelId: 1,
+            channelName: '#Test',
+            channelNameLower: '#test',
+            performedBy: 'services.example.com',
+            performedByNickId: null,
+            performedByIp: '*',
+            performedByHost: '*',
+            occurredAt: $occurredAt,
+        );
+
+        $retry = $event->retry();
+
+        self::assertTrue($retry->isRetry);
+        self::assertFalse($event->isRetry);
+        self::assertSame(1, $retry->channelId);
+        self::assertSame('#Test', $retry->channelName);
+        self::assertSame('#test', $retry->channelNameLower);
+        self::assertSame('services.example.com', $retry->performedBy);
+        self::assertNull($retry->performedByNickId);
+        self::assertSame('*', $retry->performedByIp);
+        self::assertSame('*', $retry->performedByHost);
+        self::assertSame($occurredAt, $retry->occurredAt);
     }
 
     #[Test]

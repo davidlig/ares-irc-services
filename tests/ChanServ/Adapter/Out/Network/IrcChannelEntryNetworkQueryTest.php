@@ -60,6 +60,21 @@ final class IrcChannelEntryNetworkQueryTest extends TestCase
     }
 
     #[Test]
+    public function doesNotTreatAUserWhoseNickOnlyFoldsToTheChanservNickAsTheService(): void
+    {
+        // On an ascii-casemapping network chan{serv} is a different user from the Chan[Serv] service.
+        $users = $this->createStub(NetworkUserLookupPort::class);
+        $users->method('findByUid')->willReturnMap([
+            ['001A', $this->user('001A', 'chan{serv}')],
+            ['001B', $this->user('001B', 'CHAN[SERV]')],
+        ]);
+        $query = new IrcChannelEntryNetworkQuery($this->createStub(ChannelLookupPort::class), $users, 'Chan[Serv]', $this->createStub(BurstCompletePort::class));
+
+        self::assertFalse($query->findMember('001A')?->service);
+        self::assertTrue($query->findMember('001B')?->service);
+    }
+
+    #[Test]
     public function mapsIndividualMemberByNickname(): void
     {
         $users = $this->createStub(NetworkUserLookupPort::class);

@@ -12,6 +12,7 @@ use App\ChanServ\Domain\Entity\ChannelAccess;
 use App\ChanServ\Domain\Entity\ChannelAkick;
 use App\ChanServ\Domain\Entity\ChannelLevel;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
+use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
 use DateTimeImmutable;
 use InvalidArgumentException;
@@ -29,7 +30,7 @@ final class BurstChannelPageSourceTest extends DoctrineIntegrationTestCase
     public function noChannelsProduceNoPages(): void
     {
         $source = new BurstChannelPageSource(
-            new RegisteredChannelDoctrineRepository($this->entityManager),
+            new RegisteredChannelDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network()),
             new ChannelAkickDoctrineRepository($this->entityManager),
             $this->entityManager,
         );
@@ -41,7 +42,7 @@ final class BurstChannelPageSourceTest extends DoctrineIntegrationTestCase
     {
         $this->expectException(InvalidArgumentException::class);
         new BurstChannelPageSource(
-            new RegisteredChannelDoctrineRepository($this->entityManager),
+            new RegisteredChannelDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network()),
             new ChannelAkickDoctrineRepository($this->entityManager),
             $this->entityManager,
             0,
@@ -65,7 +66,7 @@ final class BurstChannelPageSourceTest extends DoctrineIntegrationTestCase
         $this->flushAndClear();
 
         $source = new BurstChannelPageSource(
-            new RegisteredChannelDoctrineRepository($this->entityManager),
+            new RegisteredChannelDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network()),
             new ChannelAkickDoctrineRepository($this->entityManager),
             $this->entityManager,
             2,

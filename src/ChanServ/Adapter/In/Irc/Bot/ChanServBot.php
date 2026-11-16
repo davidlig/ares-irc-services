@@ -23,7 +23,6 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 use function array_find;
 use function in_array;
-use function strtolower;
 use function time;
 
 /**
@@ -78,7 +77,7 @@ final class ChanServBot implements ChanServNotifierInterface, ChannelServiceActi
 
     public function sendNoticeToChannel(string $channelName, string $message): void
     {
-        $channel = $this->channels->findByChannelName(strtolower($channelName));
+        $channel = $this->channels->findByChannelName($channelName);
         if (null !== $channel && !$channel->isVerbose()) {
             return;
         }

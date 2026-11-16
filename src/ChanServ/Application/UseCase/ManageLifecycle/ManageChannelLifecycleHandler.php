@@ -13,6 +13,7 @@ use App\ChanServ\Application\Service\ChannelForbiddenService;
 use App\ChanServ\Application\Service\ChannelHistoryService;
 use App\ChanServ\Application\Service\ChannelSuspensionService;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
+use App\ChanServ\Domain\Exception\ChannelNameConflictException;
 use App\Shared\Application\Port\EventBusInterface;
 use App\Shared\Application\Time\RelativeExpiryParser;
 use LogicException;
@@ -86,12 +87,16 @@ final readonly class ManageChannelLifecycleHandler implements ManageChannelLifec
         if ($this->isRegistrationRequest($existing)) {
             return new ChannelLifecycleResult(ChannelLifecycleOutcome::NotRegistered);
         }
-        $this->forbiddenService->forbid(
-            $command->channelName,
-            $command->reason ?? throw new LogicException('A forbid reason is required.'),
-            $command->actorNickname,
-            $command->occurredAt,
-        );
+        try {
+            $this->forbiddenService->forbid(
+                $command->channelName,
+                $command->reason ?? throw new LogicException('A forbid reason is required.'),
+                $command->actorNickname,
+                $command->occurredAt,
+            );
+        } catch (ChannelNameConflictException) {
+            return new ChannelLifecycleResult(ChannelLifecycleOutcome::NameConflict);
+        }
 
         return new ChannelLifecycleResult(
             null !== $existing && $existing->isForbidden()

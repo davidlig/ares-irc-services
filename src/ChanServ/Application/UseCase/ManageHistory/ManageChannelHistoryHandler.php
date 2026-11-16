@@ -15,7 +15,6 @@ use function array_values;
 use function ceil;
 use function is_int;
 use function min;
-use function strtolower;
 
 final readonly class ManageChannelHistoryHandler implements ManageChannelHistoryHandlerInterface
 {
@@ -30,7 +29,7 @@ final readonly class ManageChannelHistoryHandler implements ManageChannelHistory
 
     public function handle(ManageChannelHistory $command): ManageChannelHistoryResult
     {
-        $channel = $this->channelRepository->findByChannelName(strtolower($command->channelName));
+        $channel = $this->channelRepository->findByChannelName($command->channelName);
         if (null === $channel) {
             return new ManageChannelHistoryResult(ManageChannelHistoryOutcome::ChannelNotRegistered);
         }

@@ -6,10 +6,12 @@ namespace App\OperServ\Adapter\In\Event;
 
 use App\Irc\Application\Port\In\ActiveProtocolModuleHolderInterface;
 use App\Irc\Application\Port\In\ChannelLookupPort;
+use App\Irc\Application\Port\In\NetworkIdentityEquivalence;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SendNoticePort;
 use App\Irc\Application\Port\In\ServiceChannelRegistrationPort;
 use App\Irc\Application\Port\In\ServiceUidRegistry;
+use App\Irc\Application\PublishedEvent\NetworkConnectionLostEvent;
 use App\Irc\Application\PublishedEvent\NetworkSynchronizationCompletedEvent;
 use App\Irc\Application\PublishedEvent\UserJoinedNetworkAppEvent;
 use App\NickServ\Application\Port\In\NickAccountQuery;
@@ -30,7 +32,6 @@ use function array_values;
 use function in_array;
 use function max;
 use function sprintf;
-use function strtolower;
 use function time;
 
 /**
@@ -38,10 +39,14 @@ use function time;
  *
  * Pseudo-clients (nick!ident@vhost) stay connected as long as at least one
  * active MOTD references them. Multiple MOTDs sharing the same mask reuse
- * the same pseudo-client, which quits only when the last MOTD is removed.
+ * the same pseudo-client, which quits only when the last MOTD is removed. Nicknames
+ * are compared with the casemapping the link negotiated, so `Bot[` and `bot{` share a
+ * pseudo-client under RFC 1459 but not under ASCII.
  *
  * Late MOTD additions (after sync) are reconciled on every user join.
- * On services restart, active pseudo-clients are re-introduced.
+ * On services restart, active pseudo-clients are re-introduced. The pseudo-clients live on the
+ * link, so their state is discarded when the link is lost and they are introduced again when the
+ * new link finishes its sync.
  */
 final class MotdOnConnectSubscriber implements EventSubscriberInterface
 {
@@ -50,7 +55,7 @@ final class MotdOnConnectSubscriber implements EventSubscriberInterface
     private bool $isSynced = false;
 
     /**
-     * Map of nickname_lower => pseudo-client aggregated info.
+     * Map of nickname folded with the negotiated casemapping => pseudo-client aggregated info.
      *
      * @var array<string, array{uid: string, mask: GlobalMessageMask, motdIds: int[]}>
      */
@@ -67,6 +72,7 @@ final class MotdOnConnectSubscriber implements EventSubscriberInterface
         private readonly NickAccountQuery $nickAccounts,
         private readonly SendNoticePort $sendNoticePort,
         private readonly NickCollisionResolver $nickCollisionResolver,
+        private readonly NetworkIdentityEquivalence $identityEquivalence,
         private readonly ?string $debugChannel,
         private readonly LoggerInterface $logger = new NullLogger(),
     ) {}
@@ -76,7 +82,14 @@ final class MotdOnConnectSubscriber implements EventSubscriberInterface
         return [
             NetworkSynchronizationCompletedEvent::class => ['onSyncComplete', -50],
             UserJoinedNetworkAppEvent::class => ['onUserJoined', -60],
+            NetworkConnectionLostEvent::class => ['onConnectionLost', 0],
         ];
+    }
+
+    public function onConnectionLost(NetworkConnectionLostEvent $event): void
+    {
+        $this->isSynced = false;
+        $this->pseudoClients = [];
     }
 
     public function onSyncComplete(): void
@@ -120,13 +133,18 @@ final class MotdOnConnectSubscriber implements EventSubscriberInterface
                 continue;
             }
 
-            $nickLower = strtolower($mask->nickname);
+            $nickLower = $this->identityEquivalence->fold($mask->nickname);
 
             if (isset($this->pseudoClients[$nickLower])) {
                 $pc = &$this->pseudoClients[$nickLower];
                 if (!in_array($motd->id, $pc['motdIds'], true)) {
                     $pc['motdIds'][] = $motd->id;
                 }
+                continue;
+            }
+
+            // A registered nick is never taken by the pseudo-client, so its holder keeps it.
+            if (null !== $this->nickAccounts->findIdByNick($mask->nickname)) {
                 continue;
             }
 
@@ -139,10 +157,6 @@ final class MotdOnConnectSubscriber implements EventSubscriberInterface
                     'nickname' => $mask->nickname,
                     'uid' => $existingUser->uid,
                 ]);
-            }
-
-            if (null !== $this->nickAccounts->findIdByNick($nickLower)) {
-                continue;
             }
 
             $module = $this->connectionHolder->getProtocolModule();
@@ -251,7 +265,7 @@ final class MotdOnConnectSubscriber implements EventSubscriberInterface
                 continue;
             }
 
-            $nickLower = strtolower($mask->nickname);
+            $nickLower = $this->identityEquivalence->fold($mask->nickname);
             $pc = $this->pseudoClients[$nickLower] ?? null;
 
             if (null !== $pc) {

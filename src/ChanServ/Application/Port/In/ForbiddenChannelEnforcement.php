@@ -10,8 +10,6 @@ interface ForbiddenChannelEnforcement
 
     public function releaseUnforbiddenChannel(string $channelName): void;
 
-    public function enforceAllForbiddenChannels(): void;
-
     public function enforceKnownForbiddenChannel(string $channelName): void;
 
     public function enforceForbiddenUserJoin(string $channelName, string $userUid): void;

@@ -138,7 +138,7 @@ final class ChanServEntryMsgSubscriberTest extends TestCase
         $this->channelRepository
             ->expects(self::once())
             ->method('findByChannelName')
-            ->with('#test')
+            ->with('#TeSt')
             ->willReturn($channel);
 
         $this->notifier

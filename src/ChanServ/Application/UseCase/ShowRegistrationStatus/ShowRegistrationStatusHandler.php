@@ -6,15 +6,13 @@ namespace App\ChanServ\Application\UseCase\ShowRegistrationStatus;
 
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 
-use function strtolower;
-
 final readonly class ShowRegistrationStatusHandler
 {
     public function __construct(private RegisteredChannelRepositoryInterface $channels) {}
 
     public function handle(string $channelName): ?RegistrationStatusView
     {
-        $channel = $this->channels->findByChannelName(strtolower($channelName));
+        $channel = $this->channels->findByChannelName($channelName);
         if (null === $channel) {
             return null;
         }

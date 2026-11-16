@@ -43,6 +43,7 @@ use App\MemoServ\Application\UseCase\NotifyChannelRegistration\NotifyChannelRegi
 use App\MemoServ\Application\UseCase\NotifyChannelRegistration\NotifyChannelRegistrationDecisionHandler;
 use App\MemoServ\Application\UseCase\Read\ReadMemoHandler;
 use App\Shared\Application\Port\EventBusInterface;
+use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversNothing;
@@ -182,7 +183,7 @@ final class RegistrationDecisionMemoRoutingTest extends DoctrineIntegrationTestC
                 $subscriber->onDecision($event);
             }
         });
-        $channels = new RegisteredChannelDoctrineRepository($this->entityManager);
+        $channels = new RegisteredChannelDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network());
         $activator = new ChannelRegistrationActivator(
             $this->createStub(ChannelLevelRepositoryInterface::class),
             $this->createStub(ChannelAkickRepositoryInterface::class),

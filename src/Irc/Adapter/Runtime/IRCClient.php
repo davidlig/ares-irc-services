@@ -11,6 +11,7 @@ use App\Irc\Adapter\Event\IncomingIrcMessageEvent;
 use App\Irc\Adapter\Event\IrcMessageProcessedEvent;
 use App\Irc\Adapter\Event\MessageReceivedEvent;
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
+use App\Irc\Adapter\Out\Persistence\ClosedEntityManagerReset;
 use App\Irc\Adapter\Protocol\ProtocolHandlerInterface;
 use App\Irc\Adapter\Security\SensitiveDataRedactor;
 use App\Irc\Application\BurstCompleteRegistry;
@@ -31,6 +32,9 @@ use function max;
 /**
  * Orchestrates the lifecycle of an IRC server-to-server link:
  * connect, run the read loop, and disconnect.
+ *
+ * Every incoming line is processed here, so this is also where a closed Doctrine
+ * EntityManager is reset before the line is handled.
  */
 class IRCClient implements IrcSessionInterface
 {
@@ -56,6 +60,7 @@ class IRCClient implements IrcSessionInterface
         private readonly LoggerInterface $logger = new NullLogger(),
         private readonly LoopSchedulerInterface $loopScheduler = new RevoltLoopScheduler(),
         ?SessionEventPump $eventPump = null,
+        private readonly ClosedEntityManagerReset $entityManagerReset = new ClosedEntityManagerReset(),
     ) {
         $this->eventPump = $eventPump ?? new SessionEventPump();
         if ($this->protocol instanceof SessionEventPumpAwareInterface) {
@@ -194,6 +199,10 @@ class IRCClient implements IrcSessionInterface
 
     private function processIncomingLine(string $rawLine): void
     {
+        // A command whose database write failed closes the EntityManager; reopen it before the next
+        // line so that one failure does not make every service fail until the next maintenance tick.
+        $this->entityManagerReset->resetIfClosed($this->logger, 'IRC');
+
         $message = $this->protocol->parseRawLine($rawLine);
 
         $this->eventDispatcher->dispatch(new IncomingIrcMessageEvent($message));

@@ -538,4 +538,11 @@ final class RegisteredChannelTest extends TestCase
         $channel->restoreFromPendingDeletion();
         self::assertFalse($channel->isBlocked());
     }
+
+    #[Test]
+    public function lookupKeyUsesTheRfc1459Fold(): void
+    {
+        self::assertSame('#{ares}|~', RegisteredChannel::register(new DateTimeImmutable(), '#[Ares]\\^', 1, 'd')->getNameLower());
+        self::assertSame('#plain', RegisteredChannel::register(new DateTimeImmutable(), '#Plain', 1, 'd')->getNameLower());
+    }
 }

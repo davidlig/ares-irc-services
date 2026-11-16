@@ -158,7 +158,7 @@ final class RegisterChannelHandlerTest extends TestCase
         $rejected->rejectRegistration('Rejected', 9, 'Reviewer', $at->modify('-2 days'), $at->modify('-1 day'));
         $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channels->expects(self::once())->method('existsByChannelName')->with('#test')->willReturn(true);
-        $channels->expects(self::once())->method('findByChannelName')->with('#test')->willReturn($rejected);
+        $channels->expects(self::once())->method('findByChannelNameKey')->with('#test')->willReturn($rejected);
         $channels->expects(self::never())->method('delete');
         $channels->expects(self::never())->method('save');
         $operator = $this->createStub(ChanServOperatorAccess::class);
@@ -187,7 +187,7 @@ final class RegisterChannelHandlerTest extends TestCase
         $existing = RegisteredChannel::register($at, '#test', 8, 'Existing');
         $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channels->expects(self::once())->method('existsByChannelName')->willReturn(true);
-        $channels->expects(self::once())->method('findByChannelName')->willReturn($existing);
+        $channels->expects(self::once())->method('findByChannelNameKey')->willReturn($existing);
         $channels->expects(self::never())->method('delete');
         $channels->expects(self::never())->method('save');
         $events = $this->createMock(EventBusInterface::class);
@@ -219,7 +219,7 @@ final class RegisterChannelHandlerTest extends TestCase
         $saved = null;
         $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channels->expects(self::once())->method('existsByChannelName')->willReturn(true);
-        $channels->expects(self::once())->method('findByChannelName')->willReturn($existing);
+        $channels->expects(self::once())->method('findByChannelNameKey')->willReturn($existing);
         $channels->expects(self::once())->method('countByFounderNickId')->with(7, true)->willReturn(0);
         $channels->expects(self::once())->method('delete')->with($existing)->willReturnCallback(static function () use (&$operations): void { $operations[] = 'delete'; });
         $channels->expects(self::once())->method('save')->willReturnCallback(static function (RegisteredChannel $channel) use (&$operations, &$saved): void {

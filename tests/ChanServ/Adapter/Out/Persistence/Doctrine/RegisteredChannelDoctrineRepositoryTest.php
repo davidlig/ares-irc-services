@@ -8,6 +8,9 @@ use App\ChanServ\Adapter\Out\Persistence\Doctrine\RegisteredChannelDoctrineRepos
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\ValueObject\ChannelStatus;
+use App\Irc\Domain\ValueObject\CaseMapping;
+use App\Shared\Domain\IrcIdentityFold;
+use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
 use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
@@ -32,7 +35,6 @@ use function max;
 use function sprintf;
 use function str_contains;
 use function str_ends_with;
-use function strtolower;
 use function strtr;
 
 #[CoversClass(RegisteredChannelDoctrineRepository::class)]
@@ -45,11 +47,11 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
     public function burstSnapshotShortCircuitsUnknownNamesAndTracksRegistrations(): void
     {
         $connection = $this->createMock(Connection::class);
-        $connection->expects(self::once())->method('fetchFirstColumn')->with('SELECT name_lower FROM registered_channels')->willReturn(['#known']);
+        $connection->expects(self::once())->method('fetchAllNumeric')->with('SELECT name_lower, name FROM registered_channels')->willReturn([['#known', '#Known']]);
         $em = $this->createMock(EntityManagerInterface::class);
         $em->method('getConnection')->willReturn($connection);
         $em->expects(self::never())->method('getRepository');
-        $repository = new RegisteredChannelDoctrineRepository($em);
+        $repository = new RegisteredChannelDoctrineRepository($em, NegotiatedCaseMapping::network());
         $repository->beginBurst();
 
         self::assertNull($repository->findByChannelName('#Missing'));
@@ -59,7 +61,7 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
     #[Test]
     public function burstSnapshotTracksChangesAndEndsWithoutStaleNames(): void
     {
-        $repository = new RegisteredChannelDoctrineRepository($this->entityManager);
+        $repository = new RegisteredChannelDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network());
         $original = RegisteredChannel::register(new DateTimeImmutable(), '#Original', 1, 'original');
         $repository->save($original);
         self::assertNull($repository->contains('#Original'));
@@ -84,15 +86,15 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
     public function burstSnapshotRejectsInvalidDatabaseName(): void
     {
         $connection = $this->createStub(Connection::class);
-        $connection->method('fetchFirstColumn')->willReturn([null]);
+        $connection->method('fetchAllNumeric')->willReturn([[null, '#name']]);
         $em = $this->createStub(EntityManagerInterface::class);
         $em->method('getConnection')->willReturn($connection);
         $this->expectException(UnexpectedValueException::class);
-        new RegisteredChannelDoctrineRepository($em)->beginBurst();
+        new RegisteredChannelDoctrineRepository($em, NegotiatedCaseMapping::network())->beginBurst();
     }
 
     #[Test]
-    public function pendingPagesAndCountsPreserveIterationOrder(): void
+    public function pendingPagesPreserveIterationOrder(): void
     {
         $at = new DateTimeImmutable();
         $this->entityManager->persist(RegisteredChannel::createPendingRegistration($at, '#z', 1, 'z'));
@@ -100,7 +102,6 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
         $this->entityManager->persist(RegisteredChannel::createPendingRegistration($at, '#A', 3, 'a'));
         $this->flushAndClear();
 
-        self::assertSame(2, $this->repository->countPendingRegistrations());
         self::assertSame(['#A'], array_map(static fn (RegisteredChannel $c): string => $c->getName(), $this->repository->findPendingPage(0, 1)));
         self::assertSame(['#z'], array_map(static fn (RegisteredChannel $c): string => $c->getName(), $this->repository->findPendingPage(1, 1)));
     }
@@ -149,7 +150,7 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
         $em = $this->createStub(EntityManagerInterface::class);
         $em->method('getConnection')->willReturn($connection);
 
-        self::assertSame(2, new RegisteredChannelDoctrineRepository($em)->countByPattern('#NAME!%_'));
+        self::assertSame(2, new RegisteredChannelDoctrineRepository($em, NegotiatedCaseMapping::network())->countByPattern('#NAME!%_'));
     }
 
     #[Test]
@@ -161,7 +162,7 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
         $em = $this->createStub(EntityManagerInterface::class);
         $em->method('getConnection')->willReturn($connection);
 
-        self::assertSame(0, new RegisteredChannelDoctrineRepository($em)->countByPattern('*'));
+        self::assertSame(0, new RegisteredChannelDoctrineRepository($em, NegotiatedCaseMapping::network())->countByPattern('*'));
     }
 
     /** @return iterable<string, array{string}> */
@@ -192,7 +193,7 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
                 self::callback(static fn (ResultSetMapping $mapping): bool => ChannelStatus::class === ($mapping->enumMappings['status'] ?? null)),
             )->willReturn($query);
 
-        self::assertSame([$entity], new RegisteredChannelDoctrineRepository($em)->searchByPattern('#Na*', 3, 2));
+        self::assertSame([$entity], new RegisteredChannelDoctrineRepository($em, NegotiatedCaseMapping::network())->searchByPattern('#Na*', 3, 2));
     }
 
     #[Test]
@@ -208,7 +209,7 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
         $connection->update('registered_channels', ['name_lower' => '#ÉcOlE'], ['name' => '#École']);
 
         foreach (['*', '#ALPHA', '#Al*', '*a*', '**a**', '#Literal!%_?[]\\\\Name', '#É*', '#é*', '#İ*', '#space ', '#space'] as $pattern) {
-            $like = strtr(strtolower($pattern), ['!' => '!!', '%' => '!%', '_' => '!_', '*' => '%']);
+            $like = strtr(IrcIdentityFold::fold($pattern), ['!' => '!!', '%' => '!%', '_' => '!_', '*' => '%']);
             $legacy = $connection->fetchFirstColumn(
                 "SELECT name FROM registered_channels WHERE LOWER(name_lower) LIKE ? ESCAPE '!' ORDER BY name_lower ASC, id ASC",
                 [$like],
@@ -274,6 +275,25 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
     }
 
     #[Test]
+    public function lookupsConfirmTheStoredChannelNameWithTheNegotiatedCasemapping(): void
+    {
+        $rfc1459 = new RegisteredChannelDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network());
+        $rfc1459->save(RegisteredChannel::register(new DateTimeImmutable(), '#foo[', 1, 'desc'));
+        $ascii = new RegisteredChannelDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network(CaseMapping::Ascii));
+
+        self::assertSame('#foo[', $ascii->findByChannelName('#FOO[')?->getName());
+        self::assertNull($ascii->findByChannelName('#foo{'));
+        self::assertSame('#foo[', $ascii->findByChannelNameKey('#foo{')?->getName());
+        self::assertTrue($ascii->existsByChannelName('#foo{'));
+        self::assertSame('#foo[', $rfc1459->findByChannelName('#foo{')?->getName());
+        $ascii->beginBurst();
+        $rfc1459->beginBurst();
+        self::assertTrue($ascii->contains('#FOO['));
+        self::assertFalse($ascii->contains('#foo{'));
+        self::assertTrue($rfc1459->contains('#foo{'));
+    }
+
+    #[Test]
     public function findByChannelNameIsCaseInsensitive(): void
     {
         $channel = RegisteredChannel::register(new DateTimeImmutable(), '#TestChannel', 1, 'Test');
@@ -283,6 +303,28 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
         self::assertNotNull($this->repository->findByChannelName('#TestChannel'));
         self::assertNotNull($this->repository->findByChannelName('#testchannel'));
         self::assertNotNull($this->repository->findByChannelName('#TESTCHANNEL'));
+    }
+
+    #[Test]
+    public function lookupsFoldChannelNamesWithTheRfc1459Mapping(): void
+    {
+        $this->repository->save(RegisteredChannel::register(new DateTimeImmutable(), '#[Ares]', 1, 'Ares'));
+        $this->repository->save(RegisteredChannel::register(new DateTimeImmutable(), '#{Ares}|Dev', 1, 'Dev'));
+        $this->flushAndClear();
+
+        self::assertSame('#{ares}', $this->entityManager->getConnection()->fetchOne("SELECT name_lower FROM registered_channels WHERE name = '#[Ares]'"));
+        self::assertSame('#[Ares]', $this->repository->findByChannelName('#{ARES}')?->getName());
+        self::assertTrue($this->repository->existsByChannelName('#{ares}'));
+        self::assertFalse($this->repository->existsByChannelName('#(ares)'));
+        self::assertSame(1, $this->repository->countByPattern('#{ares}'));
+        self::assertSame(2, $this->repository->countByPattern('#[ares]*'));
+        self::assertSame(['#[Ares]', '#{Ares}|Dev'], array_map(static fn (RegisteredChannel $channel): string => $channel->getName(), $this->repository->searchByPattern('#{ARES}*', 0, 10)));
+
+        $repository = new RegisteredChannelDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network());
+        $repository->beginBurst();
+        self::assertTrue($repository->contains('#{ARES}'));
+        self::assertNotNull($repository->findByChannelName('#[ares]\\dev'));
+        $repository->endBurst();
     }
 
     #[Test]
@@ -537,44 +579,9 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
         self::assertSame(100, $found->getSuccessorNickId());
     }
 
-    #[Test]
-    public function findForbiddenChannelsReturnsOnlyForbiddenChannels(): void
-    {
-        $forbidden = RegisteredChannel::createForbidden(new DateTimeImmutable(), '#forbidden1', 'Spam channel');
-        $forbidden2 = RegisteredChannel::createForbidden(new DateTimeImmutable(), '#forbidden2', 'Illegal content');
-        $active = RegisteredChannel::register(new DateTimeImmutable(), '#active', 1, 'Active channel');
-        $suspended = RegisteredChannel::register(new DateTimeImmutable(), '#suspended', 2, 'Suspended channel');
-        $suspended->suspend('Abuse');
-
-        $this->repository->save($forbidden);
-        $this->repository->save($forbidden2);
-        $this->repository->save($active);
-        $this->repository->save($suspended);
-        $this->flushAndClear();
-
-        $result = $this->repository->findForbiddenChannels();
-
-        self::assertCount(2, $result);
-        $names = array_map(static fn (RegisteredChannel $c): string => $c->getName(), $result);
-        self::assertContains('#forbidden1', $names);
-        self::assertContains('#forbidden2', $names);
-    }
-
-    #[Test]
-    public function findForbiddenChannelsReturnsEmptyArrayWhenNoneForbidden(): void
-    {
-        $active = RegisteredChannel::register(new DateTimeImmutable(), '#active', 1, 'Active channel');
-        $this->repository->save($active);
-        $this->flushAndClear();
-
-        $result = $this->repository->findForbiddenChannels();
-
-        self::assertSame([], $result);
-    }
-
     protected function setUp(): void
     {
         parent::setUp();
-        $this->repository = new RegisteredChannelDoctrineRepository($this->entityManager);
+        $this->repository = new RegisteredChannelDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network());
     }
 }

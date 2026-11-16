@@ -6,6 +6,7 @@ namespace App\Tests\NickServ\Application\Service;
 
 use App\Irc\Application\Port\In\NickChangePreservesIdentificationInterface;
 use App\Irc\Application\Port\In\ProtocolModuleInterface;
+use App\Irc\Domain\ValueObject\CaseMapping;
 use App\NickServ\Adapter\Out\InMemory\IdentifiedSessionRegistry;
 use App\NickServ\Adapter\Out\InMemory\PendingNickRestoreRegistry;
 use App\NickServ\Adapter\Out\InMemory\SessionLanguageRegistry;
@@ -27,8 +28,10 @@ use App\NickServ\Application\Service\NickProtectionService;
 use App\NickServ\Application\UseCase\IssueMigrationRescueToken\IssueMigrationRescueToken;
 use App\NickServ\Application\UseCase\IssueMigrationRescueToken\IssueMigrationRescueTokenHandlerInterface;
 use App\NickServ\Domain\Entity\RegisteredNick;
+use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
@@ -76,6 +79,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->guestNicknameGenerator(),
             $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
             $this->authenticationModeQuery(),
+            NegotiatedCaseMapping::nickServ(),
         );
 
         $service->onUserJoined($user, new DateTimeImmutable());
@@ -133,6 +137,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->guestNicknameGenerator(),
             $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
             $this->authenticationModeQuery(),
+            NegotiatedCaseMapping::nickServ(),
         );
 
         $service->onUserJoined($user, new DateTimeImmutable());
@@ -164,6 +169,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->guestNicknameGenerator(),
             $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
             $this->authenticationModeQuery(),
+            NegotiatedCaseMapping::nickServ(),
         );
 
         $service->enforceProtection($user, new DateTimeImmutable());
@@ -201,6 +207,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->guestNicknameGenerator(),
             $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
             $this->authenticationModeQuery(),
+            NegotiatedCaseMapping::nickServ(),
         );
 
         $service->enforceProtection($user, new DateTimeImmutable());
@@ -254,6 +261,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->guestNicknameGenerator(),
             $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
             $this->authenticationModeQuery(),
+            NegotiatedCaseMapping::nickServ(),
         );
 
         $service->enforceProtection($user, new DateTimeImmutable());
@@ -291,6 +299,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->guestNicknameGenerator(),
             $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
             $this->authenticationModeQuery(),
+            NegotiatedCaseMapping::nickServ(),
         );
 
         $service->onUserQuit('UID1', 'QuitNick', 'Leaving', 'ident', 'host.example', 'real.host', 'AAA=', new DateTimeImmutable());
@@ -328,6 +337,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->guestNicknameGenerator(),
             $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
             $this->authenticationModeQuery(),
+            NegotiatedCaseMapping::nickServ(),
         );
 
         $service->onUserQuit('UID1', 'UnknownNick', 'Bye', 'ident', 'host', 'real.host', 'AAA=', new DateTimeImmutable());
@@ -372,6 +382,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->guestNicknameGenerator(),
             $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
             $this->authenticationModeQuery(),
+            NegotiatedCaseMapping::nickServ(),
         );
 
         $service->onUserQuit('UID1', 'SomeNick', 'Quit', 'id', 'host', 'real.host', 'AAA=', new DateTimeImmutable());
@@ -416,6 +427,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->guestNicknameGenerator(),
             $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
             $this->authenticationModeQuery(),
+            NegotiatedCaseMapping::nickServ(),
         );
 
         $service->enforceProtection($user, new DateTimeImmutable());
@@ -462,6 +474,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->guestNicknameGenerator(),
             $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
             $this->authenticationModeQuery(),
+            NegotiatedCaseMapping::nickServ(),
         );
 
         $service->onNickChanged('UID1', 'OldNick', 'RegNick', new DateTimeImmutable());
@@ -494,6 +507,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->guestNicknameGenerator(),
             $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
             $this->authenticationModeQuery(),
+            NegotiatedCaseMapping::nickServ(),
         );
 
         $service->onNickChanged('UID1', 'OldNick', 'Guest-ABC123', new DateTimeImmutable());
@@ -541,6 +555,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->guestNicknameGenerator(),
             $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
             $this->authenticationModeQuery(),
+            NegotiatedCaseMapping::nickServ(),
         );
 
         $service->onNickChanged('UID1', 'Guest-XYZ', 'RegNick', new DateTimeImmutable());
@@ -588,9 +603,148 @@ final class NickProtectionServiceTest extends TestCase
             $this->guestNicknameGenerator(),
             $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
             $this->authenticationModeQuery(),
+            NegotiatedCaseMapping::nickServ(),
         );
 
         $service->onNickChanged('UID1', 'OldNick', 'RegNick', new DateTimeImmutable());
+    }
+
+    /** @return iterable<string, array{string, string}> */
+    public static function equivalentIdentifiedNicknames(): iterable
+    {
+        yield 'ascii case' => ['RegNick', 'REGNICK'];
+        yield 'rfc1459 fold' => ['[Reg]\\^', '{REG}|~'];
+    }
+
+    #[Test]
+    #[DataProvider('equivalentIdentifiedNicknames')]
+    public function onNickChangedSkipsProtectionForAnEquivalentIdentifiedNickname(string $registered, string $newNick): void
+    {
+        $burstState = new BurstState();
+        $burstState->markComplete();
+        $identifiedRegistry = new IdentifiedSessionRegistry();
+        $identifiedRegistry->register('UID1', $registered);
+
+        $account = RegisteredNick::createActive($registered, 'hash', 'u@e.com', 'en', new DateTimeImmutable());
+        $user = new NetworkUser('UID1', $newNick, 'i', 'h', 'c', 'ip', false);
+
+        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repo->method('findByNick')->willReturn($account);
+        $userLookup = $this->createStub(NickNetworkUserLookup::class);
+        $userLookup->method('findByUid')->willReturn($user);
+
+        $notifier = $this->createMock(NickNetworkActions::class);
+        $notifier->expects(self::never())->method('forceNick');
+        $notifier->expects(self::never())->method('setUserAccount');
+
+        $service = new NickProtectionService(
+            $repo,
+            $userLookup,
+            $notifier,
+            $burstState,
+            $identifiedRegistry,
+            new SessionLanguageRegistry(),
+            $this->createStub(PendingNickRestoreRegistryInterface::class),
+            $this->createStub(NickProtectionNotifier::class),
+            $this->createStub(NickServEventPublisher::class),
+            $this->createStub(ForbiddenNickService::class),
+            $this->createStub(NickChangeIdentificationPolicy::class),
+            $this->guestNicknameGenerator(),
+            $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
+            $this->authenticationModeQuery(),
+            NegotiatedCaseMapping::nickServ(),
+        );
+
+        $service->onNickChanged('UID1', 'OldNick', $newNick, new DateTimeImmutable());
+
+        self::assertSame($registered, $identifiedRegistry->findNick('UID1'));
+    }
+
+    #[Test]
+    public function onNickChangedLooksUpABraceSpellingOfTheIdentifiedNickOnAsciiNetworks(): void
+    {
+        $burstState = new BurstState();
+        $burstState->markComplete();
+        $identifiedRegistry = new IdentifiedSessionRegistry();
+        $identifiedRegistry->register('UID1', '[Reg]\\^');
+        $user = new NetworkUser('UID1', '{REG}|~', 'i', 'h', 'c', 'ip', false);
+
+        $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $repo->expects(self::once())->method('findByNick')->with('{REG}|~')->willReturn(null);
+        $userLookup = $this->createStub(NickNetworkUserLookup::class);
+        $userLookup->method('findByUid')->willReturn($user);
+        $notifier = $this->createMock(NickNetworkActions::class);
+        $notifier->expects(self::never())->method('forceNick');
+
+        $service = new NickProtectionService(
+            $repo,
+            $userLookup,
+            $notifier,
+            $burstState,
+            $identifiedRegistry,
+            new SessionLanguageRegistry(),
+            $this->createStub(PendingNickRestoreRegistryInterface::class),
+            $this->createStub(NickProtectionNotifier::class),
+            $this->createStub(NickServEventPublisher::class),
+            $this->createStub(ForbiddenNickService::class),
+            $this->createStub(NickChangeIdentificationPolicy::class),
+            $this->guestNicknameGenerator(),
+            $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
+            $this->authenticationModeQuery(),
+            NegotiatedCaseMapping::nickServ(CaseMapping::Ascii),
+        );
+
+        $service->onNickChanged('UID1', 'OldNick', '{REG}|~', new DateTimeImmutable());
+    }
+
+    /** @return iterable<string, array{CaseMapping, bool}> */
+    public static function identifiedSpellingOfABraceAccount(): iterable
+    {
+        yield 'ascii keeps brackets and braces apart' => [CaseMapping::Ascii, true];
+        yield 'rfc1459 folds brackets onto braces' => [CaseMapping::Rfc1459, false];
+    }
+
+    #[Test]
+    #[DataProvider('identifiedSpellingOfABraceAccount')]
+    public function anIdentifiedUserMatchesTheAccountUnderTheNegotiatedCaseMapping(CaseMapping $mapping, bool $renamed): void
+    {
+        $burstState = new BurstState();
+        $burstState->markComplete();
+        $identifiedRegistry = new IdentifiedSessionRegistry();
+        $identifiedRegistry->register('UID1', 'nick[');
+        $account = RegisteredNick::createActive('nick{', 'hash', 'u@e.com', 'en', new DateTimeImmutable());
+        new ReflectionClass(RegisteredNick::class)->getProperty('id')->setValue($account, 1);
+        $user = new NetworkUser('UID1', 'nick{', 'i', 'h', 'c', 'ip', true);
+        $now = new DateTimeImmutable('2026-11-15 12:00:00');
+
+        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $notifier = $this->createMock(NickNetworkActions::class);
+        $notifier->expects($renamed ? self::once() : self::never())->method('forceNick');
+
+        $service = new NickProtectionService(
+            $repo,
+            $this->createStub(NickNetworkUserLookup::class),
+            $notifier,
+            $burstState,
+            $identifiedRegistry,
+            new SessionLanguageRegistry(),
+            $this->createStub(PendingNickRestoreRegistryInterface::class),
+            $this->createStub(NickProtectionNotifier::class),
+            $this->createStub(NickServEventPublisher::class),
+            $this->createStub(ForbiddenNickService::class),
+            $this->createStub(NickChangeIdentificationPolicy::class),
+            $this->guestNicknameGenerator(),
+            $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
+            $this->authenticationModeQuery(),
+            NegotiatedCaseMapping::nickServ($mapping),
+        );
+
+        $lastSeenBefore = $account->getLastSeenAt();
+
+        $service->enforceProtectionWithAccount($user, $now, $account);
+
+        self::assertSame($renamed ? $lastSeenBefore : $now, $account->getLastSeenAt());
+        self::assertSame($renamed ? 'nick[' : 'nick{', $identifiedRegistry->findNick('UID1'));
     }
 
     #[Test]
@@ -636,6 +790,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->guestNicknameGenerator(),
             $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
             $this->authenticationModeQuery(),
+            NegotiatedCaseMapping::nickServ(),
         );
 
         $service->onNickChanged('UID1', 'OldNick', 'RegNick', new DateTimeImmutable());
@@ -686,6 +841,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->guestNicknameGenerator(),
             $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
             $this->authenticationModeQuery(),
+            NegotiatedCaseMapping::nickServ(),
         );
 
         $service->onNickChanged('UID1', 'OldNick', 'RegNick', new DateTimeImmutable());
@@ -732,6 +888,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->guestNicknameGenerator(),
             $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
             $this->authenticationModeQuery(),
+            NegotiatedCaseMapping::nickServ(),
         );
 
         $service->enforceProtection($user, new DateTimeImmutable());
@@ -783,6 +940,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->guestNicknameGenerator(),
             $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
             $this->authenticationModeQuery(),
+            NegotiatedCaseMapping::nickServ(),
         );
 
         $service->enforceProtection($user, new DateTimeImmutable());
@@ -824,6 +982,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->guestNicknameGenerator(),
             $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
             $this->authenticationModeQuery(),
+            NegotiatedCaseMapping::nickServ(),
         );
 
         $service->enforceProtection($user, new DateTimeImmutable());
@@ -894,6 +1053,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->guestNicknameGenerator(),
             $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
             $this->authenticationModeQuery(),
+            NegotiatedCaseMapping::nickServ(),
         );
 
         self::assertSame('OldIdentified', $identifiedRegistry->findNick('UID1'));
@@ -933,6 +1093,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->guestNicknameGenerator(),
             $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
             $this->authenticationModeQuery(),
+            NegotiatedCaseMapping::nickServ(),
         );
 
         $service->onUserQuit('UID1', 'QuitNick', '', '', 'host.example', 'real.host', 'AAA=', new DateTimeImmutable());
@@ -971,6 +1132,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->guestNicknameGenerator(),
             $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
             $this->authenticationModeQuery(),
+            NegotiatedCaseMapping::nickServ(),
         );
 
         $service->onUserQuit('UID1', 'QuitNick', 'Leaving now', 'myident', 'host.example', 'real.host', 'AAA=', new DateTimeImmutable());
@@ -1012,6 +1174,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->guestNicknameGenerator(),
             $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
             $this->authenticationModeQuery(),
+            NegotiatedCaseMapping::nickServ(),
         );
 
         // IPv4 base64 encoded: 192.168.1.100
@@ -1057,6 +1220,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->guestNicknameGenerator(),
             $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
             $this->authenticationModeQuery(),
+            NegotiatedCaseMapping::nickServ(),
         );
 
         // User not identified (not in registry)
@@ -1102,6 +1266,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->guestNicknameGenerator(),
             $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
             $this->authenticationModeQuery(),
+            NegotiatedCaseMapping::nickServ(),
         );
 
         $service->onUserQuit('UID1', 'QuitNick', 'Leaving', 'ident', 'display.host', 'real.isp.example', '', new DateTimeImmutable());
@@ -1145,6 +1310,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->guestNicknameGenerator(),
             $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
             $this->authenticationModeQuery(),
+            NegotiatedCaseMapping::nickServ(),
         );
 
         $service->onUserQuit('UID1', 'QuitNick', 'Leaving', 'ident', 'display.host', 'real.isp.example', '*', new DateTimeImmutable());
@@ -1188,6 +1354,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->guestNicknameGenerator(),
             $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
             $this->authenticationModeQuery(),
+            NegotiatedCaseMapping::nickServ(),
         );
 
         // Invalid base64 (not decodable) - decodeIp returns '*', and updateLastConnection treats '*' as null
@@ -1222,6 +1389,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->guestNicknameGenerator(),
             $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
             $this->authenticationModeQuery(),
+            NegotiatedCaseMapping::nickServ(),
         );
 
         $service->onNickChanged('UID1', 'OldNick', 'NewNick', new DateTimeImmutable());
@@ -1254,6 +1422,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->guestNicknameGenerator(),
             $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
             $this->authenticationModeQuery(),
+            NegotiatedCaseMapping::nickServ(),
         );
 
         $service->onNickChanged('UID1', 'OldNick', 'NewNick', new DateTimeImmutable());
@@ -1296,6 +1465,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->guestNicknameGenerator(),
             $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
             $this->authenticationModeQuery(),
+            NegotiatedCaseMapping::nickServ(),
         );
 
         $service->onNickChanged('UID1', 'OldNick', 'NewNick', new DateTimeImmutable());
@@ -1341,6 +1511,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->guestNicknameGenerator(),
             $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
             $this->authenticationModeQuery(),
+            NegotiatedCaseMapping::nickServ(),
         );
 
         $service->onNickChanged('UID1', 'OldNick', 'NewNick', new DateTimeImmutable());
@@ -1395,6 +1566,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->guestNicknameGenerator(),
             $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
             $this->authenticationModeQuery(),
+            NegotiatedCaseMapping::nickServ(),
         );
 
         $service->enforceProtection($user, new DateTimeImmutable());
@@ -1440,6 +1612,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->guestNicknameGenerator(),
             $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
             $this->authenticationModeQuery(),
+            NegotiatedCaseMapping::nickServ(),
         );
 
         $service->enforceProtection($user, new DateTimeImmutable());
@@ -1497,6 +1670,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->guestNicknameGenerator(),
             $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
             $this->authenticationModeQuery(),
+            NegotiatedCaseMapping::nickServ(),
         );
 
         $service->onNickChanged('UID1', 'OldNick', 'RegisteredNick', new DateTimeImmutable());
@@ -1570,6 +1744,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->guestNicknameGenerator(),
             $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
             $this->authenticationModeQuery(),
+            NegotiatedCaseMapping::nickServ(),
         );
 
         self::assertSame('OldIdentified', $identifiedRegistry->findNick('UID1'));
@@ -1643,6 +1818,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->guestNicknameGenerator(),
             $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
             $this->authenticationModeQuery(),
+            NegotiatedCaseMapping::nickServ(),
         );
 
         self::assertSame('OldIdentified', $identifiedRegistry->findNick('UID1'));
@@ -1664,7 +1840,7 @@ final class NickProtectionServiceTest extends TestCase
         $mode = $this->createStub(NicknameAuthenticationModeQuery::class);
         $mode->method('current')->willReturn(NicknameAuthenticationMode::NativeNick);
         $sessions = new IdentifiedSessionRegistry();
-        $service = new NickProtectionService($repo, $this->createStub(NickNetworkUserLookup::class), $this->createStub(NickNetworkActions::class), new BurstState(), $sessions, new SessionLanguageRegistry(), $this->createStub(PendingNickRestoreRegistryInterface::class), $this->createStub(NickProtectionNotifier::class), $this->createStub(NickServEventPublisher::class), $this->createStub(ForbiddenNickService::class), $this->createStub(NickChangeIdentificationPolicy::class), $this->guestNicknameGenerator(), $issuer, $mode);
+        $service = new NickProtectionService($repo, $this->createStub(NickNetworkUserLookup::class), $this->createStub(NickNetworkActions::class), new BurstState(), $sessions, new SessionLanguageRegistry(), $this->createStub(PendingNickRestoreRegistryInterface::class), $this->createStub(NickProtectionNotifier::class), $this->createStub(NickServEventPublisher::class), $this->createStub(ForbiddenNickService::class), $this->createStub(NickChangeIdentificationPolicy::class), $this->guestNicknameGenerator(), $issuer, $mode, NegotiatedCaseMapping::nickServ());
         $user = new NetworkUser('UID1', 'Alice', 'i', 'h', 'c', 'ip', isIdentified: true);
         $service->enforceProtection($user, $now);
         $service->enforceProtection($user, $now);
@@ -1690,6 +1866,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
             $this->authenticationModeQuery(),
             defaultLanguage: $language,
+            nickEquivalence: NegotiatedCaseMapping::nickServ(),
         );
     }
 

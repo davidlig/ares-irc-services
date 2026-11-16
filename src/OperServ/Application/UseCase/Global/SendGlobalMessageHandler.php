@@ -14,8 +14,6 @@ use App\OperServ\Application\Port\Out\OperatorAccountLookup;
 use App\OperServ\Domain\ValueObject\GlobalMessageMask;
 use ValueError;
 
-use function strtolower;
-
 /** Orchestrates GLOBAL delivery while keeping IRCd lifecycle operations behind one output port. */
 final readonly class SendGlobalMessageHandler
 {
@@ -60,7 +58,7 @@ final readonly class SendGlobalMessageHandler
             return SendGlobalMessageResult::nicknameConnected($sender->nickname);
         }
 
-        if (null !== $this->nickAccounts->findIdByNickname(strtolower($sender->nickname))) {
+        if (null !== $this->nickAccounts->findIdByNickname($sender->nickname)) {
             return SendGlobalMessageResult::nicknameRegistered($sender->nickname);
         }
 

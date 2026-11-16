@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Tests\OperServ\Adapter\Out\Irc;
 
 use App\Irc\Application\Port\In\ActiveProtocolModuleHolderInterface;
-use App\Irc\Application\Port\In\LocalUserQuitSyncPort;
 use App\Irc\Application\Port\In\ProtocolModuleInterface;
 use App\Irc\Application\Port\In\ProtocolServiceActionsInterface;
 use App\OperServ\Adapter\Out\Irc\ActiveConnectionKillNetworkUser;
@@ -27,9 +26,7 @@ final class ActiveConnectionKillNetworkUserTest extends TestCase
         $connection->method('getProtocolModule')->willReturn($module);
         $connection->method('getServerSid')->willReturn('001');
 
-        $sync = $this->createMock(LocalUserQuitSyncPort::class);
-        $sync->expects(self::once())->method('apply')->with('U1', 'reason');
-        self::assertTrue(new ActiveConnectionKillNetworkUser($connection, $sync)->kill('U1', 'reason'));
+        self::assertTrue(new ActiveConnectionKillNetworkUser($connection)->kill('U1', 'reason'));
     }
 
     #[Test]
@@ -39,6 +36,6 @@ final class ActiveConnectionKillNetworkUserTest extends TestCase
         $connection->method('getProtocolModule')->willReturn(null);
         $connection->method('getServerSid')->willReturn(null);
 
-        self::assertFalse(new ActiveConnectionKillNetworkUser($connection, $this->createStub(LocalUserQuitSyncPort::class))->kill('U1', 'reason'));
+        self::assertFalse(new ActiveConnectionKillNetworkUser($connection)->kill('U1', 'reason'));
     }
 }

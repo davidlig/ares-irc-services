@@ -17,14 +17,14 @@ interface ChannelRegistrationNetworkActions
     public function ensureRegisteredModeOnChannelSync(string $channelName): void;
 
     /**
-     * @param array<string, true> $registeredNames
-     * @param list<string>        $eligibleChannelNames
+     * @param array<string, string> $registeredNames      stored channel names keyed by their RFC 1459 key
+     * @param list<string>          $eligibleChannelNames
      */
     public function reconcileRegisteredMode(array $registeredNames, array $eligibleChannelNames): void;
 
     /**
-     * @param array<string, true> $registeredNames
-     * @param list<string>        $eligibleChannelNames
+     * @param array<string, string> $registeredNames      stored channel names keyed by their RFC 1459 key
+     * @param list<string>          $eligibleChannelNames
      */
     public function reconcilePermanentMode(array $registeredNames, array $eligibleChannelNames): void;
 }

@@ -27,8 +27,12 @@ interface MotdRepository
     /** @return list<MotdEntry> */
     public function findActiveAt(DateTimeImmutable $at): array;
 
-    /** @return list<MotdEntry> */
-    public function findExpiredAt(DateTimeImmutable $at): array;
+    /**
+     * Expired entries ordered by expiry then id, strictly after the $after keyset cursor.
+     *
+     * @return list<MotdEntry>
+     */
+    public function findExpiredAt(DateTimeImmutable $at, ?MotdEntry $after = null, ?int $limit = null): array;
 
     public function remove(MotdEntry $entry): void;
 

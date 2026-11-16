@@ -168,6 +168,30 @@ final class ForbiddenVhostServiceTest extends TestCase
     }
 
     #[Test]
+    public function unforbidWithDifferentCasingEvictsTheStoredPatternFromTheWarmCache(): void
+    {
+        // A case-insensitive collation finds the stored '*.Blocked' row for '*.BLOCKED'.
+        $stored = ForbiddenVhost::create('*.Blocked', null, new DateTimeImmutable());
+        $other = ForbiddenVhost::create('*.other', null, new DateTimeImmutable());
+        $this->repository
+            ->expects(self::once())
+            ->method('findAll')
+            ->willReturn([$stored, $other]);
+        $this->repository
+            ->expects(self::once())
+            ->method('findByPattern')
+            ->with('*.BLOCKED')
+            ->willReturn($stored);
+        $this->repository->expects(self::once())->method('remove')->with($stored);
+
+        self::assertTrue($this->service->matchesForbiddenPattern('new.blocked'));
+        self::assertTrue($this->service->unforbid('*.BLOCKED'));
+
+        self::assertFalse($this->service->matchesForbiddenPattern('new.blocked'));
+        self::assertTrue($this->service->matchesForbiddenPattern('x.other'));
+    }
+
+    #[Test]
     public function getAllReturnsAllForbiddenPatterns(): void
     {
         $forbidden1 = ForbiddenVhost::create('*.pirated.com', 1, new DateTimeImmutable());

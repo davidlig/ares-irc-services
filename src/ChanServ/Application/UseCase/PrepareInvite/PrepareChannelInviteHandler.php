@@ -9,8 +9,6 @@ use App\ChanServ\Application\Service\ChanServAccessHelper;
 use App\ChanServ\Domain\Entity\ChannelLevel;
 use App\ChanServ\Domain\Exception\ChannelNotRegisteredException;
 
-use function strtolower;
-
 final readonly class PrepareChannelInviteHandler implements PrepareChannelInviteHandlerInterface
 {
     public function __construct(
@@ -20,7 +18,7 @@ final readonly class PrepareChannelInviteHandler implements PrepareChannelInvite
 
     public function handle(PrepareChannelInvite $query): PrepareChannelInviteResult
     {
-        $channel = $this->channels->findByChannelName(strtolower($query->channelName));
+        $channel = $this->channels->findByChannelName($query->channelName);
         if (null === $channel) {
             throw ChannelNotRegisteredException::forChannel($query->channelName);
         }

@@ -14,8 +14,6 @@ use App\ChanServ\Domain\ValueObject\ChannelLevelSet;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 
-use function strtolower;
-
 final readonly class DoctrineChannelRankPolicyRepository implements ChannelRankPolicyRepository
 {
     private ChannelActivityBuffer $activityBuffer;
@@ -32,23 +30,16 @@ final readonly class DoctrineChannelRankPolicyRepository implements ChannelRankP
 
     public function findByName(string $channelName): ?ChannelRankPolicy
     {
-        $channel = $this->channels->findByChannelName(strtolower($channelName));
+        $channel = $this->channels->findByChannelName($channelName);
 
-        return null === $channel ? null : $this->snapshot($channel, false);
-    }
-
-    public function all(): iterable
-    {
-        foreach ($this->channels->iterateAll() as $channel) {
-            yield $this->snapshot($channel, true);
-        }
+        return null === $channel ? null : $this->snapshot($channel);
     }
 
     public function findByNameForNick(string $channelName, ?int $nickId): ?ChannelRankPolicy
     {
-        $channel = $this->channels->findByChannelName(strtolower($channelName));
+        $channel = $this->channels->findByChannelName($channelName);
 
-        return null === $channel ? null : $this->snapshot($channel, false, true, $nickId);
+        return null === $channel ? null : $this->snapshot($channel, true, $nickId);
     }
 
     public function touchLastUsed(int $channelId): void
@@ -56,14 +47,11 @@ final readonly class DoctrineChannelRankPolicyRepository implements ChannelRankP
         $this->activityBuffer->record($channelId, new DateTimeImmutable());
     }
 
-    private function snapshot(RegisteredChannel $channel, bool $detachComponents, bool $singleMember = false, ?int $nickId = null): ChannelRankPolicy
+    private function snapshot(RegisteredChannel $channel, bool $singleMember = false, ?int $nickId = null): ChannelRankPolicy
     {
         $levelOverrides = [];
         foreach ($this->levels->listByChannel($channel->getId()) as $level) {
             $levelOverrides[$level->getLevelKey()] = $level->getValue();
-            if ($detachComponents) {
-                $this->em->detach($level);
-            }
         }
 
         $accessByNickId = [];
@@ -71,9 +59,6 @@ final readonly class DoctrineChannelRankPolicyRepository implements ChannelRankP
         $entries = $singleMember ? (null === $entry ? [] : [$entry]) : $this->access->listByChannel($channel->getId());
         foreach ($entries as $entry) {
             $accessByNickId[$entry->getNickId()] = $entry->getLevel();
-            if ($detachComponents) {
-                $this->em->detach($entry);
-            }
         }
 
         return new ChannelRankPolicy(

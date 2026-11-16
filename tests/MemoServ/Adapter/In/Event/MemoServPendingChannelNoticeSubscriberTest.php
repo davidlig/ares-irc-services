@@ -109,7 +109,7 @@ final class MemoServPendingChannelNoticeSubscriberTest extends TestCase
     public function doesNotPresentWhenTheUseCaseReturnsNoNotice(): void
     {
         $channelPort = $this->createMock(MemoChannelPort::class);
-        $channelPort->expects(self::once())->method('findChannelByName')->with('#test')->willReturn(null);
+        $channelPort->expects(self::once())->method('findChannelByName')->with('#TeSt')->willReturn(null);
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
         $userLookup->method('findByUid')->willReturn($this->sender());
         $notifier = $this->createMock(MemoServNotifierInterface::class);
@@ -134,7 +134,7 @@ final class MemoServPendingChannelNoticeSubscriberTest extends TestCase
     public function mapsTheSenderAndPresentsTheSemanticResultUsingTheDefaultLanguage(): void
     {
         $channelPort = $this->createMock(MemoChannelPort::class);
-        $channelPort->expects(self::once())->method('findChannelByName')->with('#test')->willReturn(new MemoChannelView(5, '#Test'));
+        $channelPort->expects(self::once())->method('findChannelByName')->with('#TeSt')->willReturn(new MemoChannelView(5, '#Test'));
         $channelPort->expects(self::once())->method('canReadChannelMemos')->with(5, 10)->willReturn(true);
         $userAccountPort = $this->createMock(MemoUserAccountPort::class);
         $userAccountPort->expects(self::once())->method('findAccountByNick')->with('TestUser')->willReturn(new MemoAccountView(10, 'TestUser', ''));

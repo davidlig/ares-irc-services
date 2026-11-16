@@ -7,8 +7,7 @@ namespace App\ChanServ\Application\Service;
 use App\ChanServ\Application\Port\In\ChannelRegistrationLifecycle;
 use App\ChanServ\Application\Port\Out\ChannelRegistrationNetworkActions;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
-
-use function strtolower;
+use App\Shared\Domain\IrcIdentityFold;
 
 final readonly class ChannelRegistrationService implements ChannelRegistrationLifecycle
 {
@@ -29,7 +28,7 @@ final readonly class ChannelRegistrationService implements ChannelRegistrationLi
 
     public function channelSynchronized(string $channelName): void
     {
-        $registered = $this->channelRepository->findByChannelName(strtolower($channelName));
+        $registered = $this->channelRepository->findByChannelName($channelName);
         if (null === $registered || $registered->isBlocked()) {
             return;
         }
@@ -68,7 +67,7 @@ final readonly class ChannelRegistrationService implements ChannelRegistrationLi
     }
 
     /**
-     * @return array{array<string, true>, list<string>}
+     * @return array{array<string, string>, list<string>}
      */
     private function registrationSets(): array
     {
@@ -76,7 +75,7 @@ final readonly class ChannelRegistrationService implements ChannelRegistrationLi
         $eligibleChannelNames = [];
 
         foreach ($this->channelRepository->iterateAll() as $channel) {
-            $registeredNames[strtolower($channel->getName())] = true;
+            $registeredNames[IrcIdentityFold::fold($channel->getName())] = $channel->getName();
             if (!$channel->isBlocked()) {
                 $eligibleChannelNames[] = $channel->getName();
             }

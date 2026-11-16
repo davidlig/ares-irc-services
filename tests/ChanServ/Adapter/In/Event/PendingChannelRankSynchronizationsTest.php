@@ -28,4 +28,16 @@ final class PendingChannelRankSynchronizationsTest extends TestCase
         self::assertSame(['#second'], $pending->releaseMessageStartSnapshot());
         self::assertSame([], $pending->releaseMessageStartSnapshot());
     }
+
+    #[Test]
+    public function itKeepsChannelsThatAreDistinctUnderAsciiCasemappingApart(): void
+    {
+        $pending = new PendingChannelRankSynchronizations();
+        $pending->schedule('#a[');
+        $pending->schedule('#A{');
+        $pending->beginMessage();
+
+        self::assertSame(['#a[', '#a{'], $pending->releaseMessageStartSnapshot());
+        self::assertSame([], $pending->releaseMessageStartSnapshot());
+    }
 }

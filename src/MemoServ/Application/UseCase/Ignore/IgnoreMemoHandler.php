@@ -12,7 +12,6 @@ use App\MemoServ\Domain\Entity\MemoIgnore;
 
 use function array_unique;
 use function array_values;
-use function strtolower;
 
 final readonly class IgnoreMemoHandler implements IgnoreMemoHandlerInterface
 {
@@ -28,7 +27,7 @@ final readonly class IgnoreMemoHandler implements IgnoreMemoHandlerInterface
     {
         $channel = null;
         if (null !== $command->channelName) {
-            $channel = $this->channelPort->findChannelByName(strtolower($command->channelName));
+            $channel = $this->channelPort->findChannelByName($command->channelName);
             if (null === $channel) {
                 return IgnoreMemoResult::channelNotRegistered($command->channelName);
             }

@@ -30,11 +30,14 @@ use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\Irc\Application\Port\In\ChannelModeSupportInterface;
 use App\Irc\Domain\Event\ChannelTopicChangedEvent;
 use App\Irc\Domain\Network\Channel as IrcChannel;
+use App\Irc\Domain\ValueObject\CaseMapping;
 use App\Irc\Domain\ValueObject\ChannelName;
 use App\NickServ\Application\Port\In\NickProjection;
 use App\NickServ\Application\Port\In\NickProjectionQuery;
 use App\OperServ\Application\Port\In\GlineProjectionQuery;
 use App\OperServ\Application\Port\In\OperatorNetworkProjectionQuery;
+use App\Shared\Domain\IrcIdentityFold;
+use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -76,7 +79,7 @@ final class UdbChannelSyncSubscriberTest extends TestCase
         $nickRepo->method('findById')->willReturnCallback(static fn (int $id): ?NickProjection => 7 === $id ? $founder : null);
 
         $channelRepo = $this->createStub(ChannelProjectionQuery::class);
-        $channelRepo->method('findByName')->willReturn($this->createChannel('#chan', topic: 'Welcome'));
+        $channelRepo->method('findByNameKey')->willReturn($this->createChannel('#chan', topic: 'Welcome'));
 
         $inserts = [];
         $writer = $this->createStub(UdbRecordWriterInterface::class);
@@ -99,7 +102,7 @@ final class UdbChannelSyncSubscriberTest extends TestCase
     public function onChannelRegisteredIsSkippedForUnknownChannels(): void
     {
         $channelRepo = $this->createStub(ChannelProjectionQuery::class);
-        $channelRepo->method('findByName')->willReturn(null);
+        $channelRepo->method('findByNameKey')->willReturn(null);
 
         $writer = $this->createMock(UdbRecordWriterInterface::class);
         $writer->expects($this->never())->method('insert')->willReturn(true);
@@ -144,7 +147,7 @@ final class UdbChannelSyncSubscriberTest extends TestCase
     public function optionsRecordIsDeletedWhenNoFlagsRemain(): void
     {
         $channelRepo = $this->createStub(ChannelProjectionQuery::class);
-        $channelRepo->method('findByName')->willReturn(
+        $channelRepo->method('findByNameKey')->willReturn(
             $this->createChannel('#chan', suspended: true),
         );
 
@@ -199,7 +202,7 @@ final class UdbChannelSyncSubscriberTest extends TestCase
     public function onChannelSuspendedManagesSuspendedRecordAndOptions(): void
     {
         $channelRepo = $this->createStub(ChannelProjectionQuery::class);
-        $channelRepo->method('findByName')->willReturn($this->createChannel('#chan', mlockActive: true, topicLock: true, suspended: true));
+        $channelRepo->method('findByNameKey')->willReturn($this->createChannel('#chan', mlockActive: true, topicLock: true, suspended: true));
 
         $writer = $this->createMock(UdbRecordWriterInterface::class);
         $writer->expects($this->exactly(2))->method('insert')->willReturnCallback(static function (string $block, string $path, string $value): bool {
@@ -231,7 +234,7 @@ final class UdbChannelSyncSubscriberTest extends TestCase
     public function onChannelPendingDeletionInsertsTheTranslatedSuspendReason(): void
     {
         $channelRepo = $this->createStub(ChannelProjectionQuery::class);
-        $channelRepo->method('findByName')->willReturn($this->createChannel('#pending', pendingDeletion: true));
+        $channelRepo->method('findByNameKey')->willReturn($this->createChannel('#pending', pendingDeletion: true));
 
         $writer = $this->createMock(UdbRecordWriterInterface::class);
         $writer->expects($this->once())->method('insert')->willReturn(true)->with('C', '#pending::suspend', 'pending deletion reason');
@@ -264,7 +267,7 @@ final class UdbChannelSyncSubscriberTest extends TestCase
     public function onChannelUnsuspendedRemovesOptionsWhenNoLocksRemain(): void
     {
         $channelRepo = $this->createStub(ChannelProjectionQuery::class);
-        $channelRepo->method('findByName')->willReturn($this->createChannel('#chan'));
+        $channelRepo->method('findByNameKey')->willReturn($this->createChannel('#chan'));
 
         $deletes = [];
         $writer = $this->createStub(UdbRecordWriterInterface::class);
@@ -330,10 +333,8 @@ final class UdbChannelSyncSubscriberTest extends TestCase
     public function pendingDeletionAndRestoreReconcileOperatorOnlyBit(): void
     {
         $channelRepo = $this->createStub(ChannelProjectionQuery::class);
-        $channelRepo->method('findByName')->willReturnOnConsecutiveCalls(
-            $this->createChannel('#chan', pendingDeletion: true, ircopOnly: true),
-            $this->createChannel('#chan', ircopOnly: true),
-        );
+        $channelRepo->method('findByNameKey')->willReturn($this->createChannel('#chan', pendingDeletion: true, ircopOnly: true));
+        $channelRepo->method('findByName')->willReturn($this->createChannel('#chan', ircopOnly: true));
         $inserts = [];
         $writer = $this->createStub(UdbRecordWriterInterface::class);
         $writer->method('insert')->willReturnCallback(static function (string $block, string $path, string $value) use (&$inserts): bool {
@@ -478,6 +479,96 @@ final class UdbChannelSyncSubscriberTest extends TestCase
             ['C', '#both::options', '*6'],
             ['C', '#pending::suspend', 'pending deletion reason'],
         ], $inserts);
+    }
+
+    #[Test]
+    public function registerExportsAsciiNetworkChannelFromItsStoredKey(): void
+    {
+        $founder = new NickProjection(7, 'founder', null, null, false, null, false);
+        $nickRepo = $this->createStub(NickProjectionQuery::class);
+        $nickRepo->method('findById')->willReturn($founder);
+        $inserts = [];
+        $sub = $this->createSubscriber(
+            channelRepo: $this->asciiNetworkQuery($this->createChannel('#Ops[1]', topic: 'Welcome')),
+            nickRepo: $nickRepo,
+            writer: $this->recordingWriter($inserts),
+        );
+
+        $sub->onChannelRegistered(new ChannelRegisteredEvent(1, '#Ops[1]', '#ops{1}', new DateTimeImmutable('2026-01-01T00:00:00+00:00')));
+
+        self::assertSame(['#Ops[1]::founder' => 'founder', '#Ops[1]::topic' => 'Welcome'], $inserts);
+    }
+
+    #[Test]
+    public function pendingDeletionWritesAsciiNetworkChannelFromItsStoredKey(): void
+    {
+        $inserts = [];
+        $sub = $this->createSubscriber(
+            channelRepo: $this->asciiNetworkQuery($this->createChannel('#Ops[1]', mlockActive: true, pendingDeletion: true)),
+            writer: $this->recordingWriter($inserts),
+        );
+
+        $sub->onChannelPendingDeletion(new ChannelPendingDeletionEvent(1, '#Ops[1]', '#ops{1}', 'oper', new DateTimeImmutable('2026-01-01T00:00:00+00:00')));
+
+        self::assertSame(['#Ops[1]::suspend' => 'pending deletion reason', '#Ops[1]::options' => '*2'], $inserts);
+    }
+
+    #[Test]
+    public function suspendRefreshesAsciiNetworkChannelOptionsFromItsStoredKey(): void
+    {
+        $inserts = [];
+        $sub = $this->createSubscriber(
+            channelRepo: $this->asciiNetworkQuery($this->createChannel('#Ops[1]', mlockActive: true, topicLock: true, suspended: true)),
+            writer: $this->recordingWriter($inserts),
+        );
+
+        $sub->onChannelSuspended(new ChannelSuspendedEvent(1, '#Ops[1]', '#ops{1}', 'reason', null, null, 'oper', null, '', '', new DateTimeImmutable('2026-01-01T00:00:00+00:00')));
+
+        self::assertSame(['#Ops[1]::suspend' => 'reason', '#Ops[1]::options' => '*6'], $inserts);
+    }
+
+    #[Test]
+    public function unsuspendRefreshesAsciiNetworkChannelOptionsFromItsStoredKey(): void
+    {
+        $inserts = [];
+        $sub = $this->createSubscriber(
+            channelRepo: $this->asciiNetworkQuery($this->createChannel('#Ops[1]', topicLock: true)),
+            writer: $this->recordingWriter($inserts),
+        );
+
+        $sub->onChannelUnsuspended(new ChannelUnsuspendedEvent(1, '#Ops[1]', '#ops{1}', 'oper', null, '', '', new DateTimeImmutable('2026-01-01T00:00:00+00:00')));
+
+        self::assertSame(['#Ops[1]::options' => '*4'], $inserts);
+    }
+
+    /** ChanServ's projections on an ascii network: names must be ascii-equivalent, keys use the RFC 1459 fold. */
+    private function asciiNetworkQuery(ChannelProjection $stored): ChannelProjectionQuery
+    {
+        $ascii = NegotiatedCaseMapping::network(CaseMapping::Ascii);
+        $query = $this->createStub(ChannelProjectionQuery::class);
+        $query->method('findByNameKey')->willReturnCallback(
+            static fn (string $key): ?ChannelProjection => IrcIdentityFold::fold($key) === IrcIdentityFold::fold($stored->name) ? $stored : null,
+        );
+        $query->method('findByName')->willReturnCallback(
+            static fn (string $name): ?ChannelProjection => IrcIdentityFold::fold($name) === IrcIdentityFold::fold($stored->name) && $ascii->equivalent($stored->name, $name) ? $stored : null,
+        );
+
+        return $query;
+    }
+
+    /** @param array<string, string> $inserts */
+    private function recordingWriter(array &$inserts): UdbRecordWriterInterface
+    {
+        $writer = $this->createStub(UdbRecordWriterInterface::class);
+        $writer->method('insert')->willReturnCallback(static function (string $block, string $path, string $value) use (&$inserts): bool {
+            self::assertSame('C', $block);
+            $inserts[$path] = $value;
+
+            return true;
+        });
+        $writer->method('delete')->willReturn(true);
+
+        return $writer;
     }
 
     private function createSubscriber(

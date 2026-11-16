@@ -6,9 +6,8 @@ namespace App\NickServ\Adapter\Out\Persistence\Doctrine;
 
 use App\NickServ\Application\Port\Out\RegisterNickRepository;
 use App\NickServ\Domain\Entity\RegisteredNick;
+use App\Shared\Domain\IrcIdentityFold;
 use Doctrine\ORM\EntityManagerInterface;
-
-use function strtolower;
 
 final readonly class DoctrineRegisterNickRepository implements RegisterNickRepository
 {
@@ -18,7 +17,7 @@ final readonly class DoctrineRegisterNickRepository implements RegisterNickRepos
     {
         return $this->entityManager
             ->getRepository(RegisteredNick::class)
-            ->findOneBy(['nicknameLower' => strtolower($nickname)]);
+            ->findOneBy(['nicknameLower' => IrcIdentityFold::fold($nickname)]);
     }
 
     public function findByEmail(string $email): ?RegisteredNick

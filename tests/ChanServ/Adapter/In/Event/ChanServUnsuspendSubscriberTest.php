@@ -73,7 +73,21 @@ final class ChanServUnsuspendSubscriberTest extends TestCase
             ->onChannelUnsuspended($this->event('*'));
     }
 
-    private function event(string $performedBy): ChannelUnsuspendedEvent
+    #[Test]
+    public function aRetriedUnsuspensionRestoresTheChannelAgainWithoutRepeatingTheDebugNotice(): void
+    {
+        $restoration = $this->createMock(UnsuspendedChannelRestoration::class);
+        $restoration->expects(self::once())->method('restore')->with('#test')->willReturn('#Test');
+        $translator = $this->createMock(TranslatorInterface::class);
+        $translator->expects(self::never())->method('trans');
+        $debugNotifier = $this->createMock(ServiceDebugNotifierInterface::class);
+        $debugNotifier->expects(self::never())->method('log');
+
+        new ChanServUnsuspendSubscriber($restoration, $debugNotifier, $translator)
+            ->onChannelUnsuspended($this->event('*', true));
+    }
+
+    private function event(string $performedBy, bool $isRetry = false): ChannelUnsuspendedEvent
     {
         return new ChannelUnsuspendedEvent(
             channelId: 1,
@@ -84,6 +98,7 @@ final class ChanServUnsuspendSubscriberTest extends TestCase
             performedByIp: '*',
             performedByHost: '*',
             occurredAt: new DateTimeImmutable('2026-01-02 03:04:05'),
+            isRetry: $isRetry,
         );
     }
 }

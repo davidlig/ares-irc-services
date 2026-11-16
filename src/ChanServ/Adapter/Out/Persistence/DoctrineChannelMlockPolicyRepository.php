@@ -13,7 +13,6 @@ use App\ChanServ\Domain\ValueObject\ChannelSetting;
 use App\ChanServ\Domain\ValueObject\ModeName;
 
 use function str_split;
-use function strtolower;
 
 final readonly class DoctrineChannelMlockPolicyRepository implements ChannelMlockPolicyRepository
 {
@@ -21,7 +20,7 @@ final readonly class DoctrineChannelMlockPolicyRepository implements ChannelMloc
 
     public function findByName(string $channelName): ?ChannelMlockPolicy
     {
-        $channel = $this->channels->findByChannelName(strtolower($channelName));
+        $channel = $this->channels->findByChannelName($channelName);
 
         return null === $channel ? null : $this->forChannel($channel);
     }

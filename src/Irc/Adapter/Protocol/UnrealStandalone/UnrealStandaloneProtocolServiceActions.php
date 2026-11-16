@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Irc\Adapter\Protocol\UnrealStandalone;
 
 use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
+use App\Irc\Application\Port\In\LocalUserQuitSyncPort;
 use App\Irc\Application\Port\In\OperclassServiceActionsInterface;
 use App\Irc\Application\Port\In\ProtocolServiceActionsInterface;
 use Psr\Log\LoggerInterface;
@@ -29,6 +30,7 @@ final readonly class UnrealStandaloneProtocolServiceActions implements ProtocolS
 {
     public function __construct(
         private ActiveConnectionHolder $connectionHolder,
+        private LocalUserQuitSyncPort $localUserQuitSync,
         private UnrealStandaloneServiceIntroductionFormatter $introductionFormatter = new UnrealStandaloneServiceIntroductionFormatter(),
         private LoggerInterface $logger = new NullLogger(),
     ) {}
@@ -93,9 +95,14 @@ final readonly class UnrealStandaloneProtocolServiceActions implements ProtocolS
         $this->write(sprintf(':%s SVSNICK %s %s %d', $serverSid, $targetUid, $newNick, time()));
     }
 
+    /**
+     * The IRCd does not echo a service-issued KILL back to us, so the killed user is
+     * removed from local network state here for every caller (no ghost user).
+     */
     public function killUser(string $serverSid, string $targetUid, string $reason): void
     {
         $this->write(sprintf(':%s KILL %s :%s', $serverSid, $targetUid, $reason));
+        $this->localUserQuitSync->apply($targetUid, $reason);
     }
 
     public function setChannelModes(string $serverSid, string $channelName, string $modeStr, array $params = [], string $serviceUid = '', ?int $channelTimestamp = null): void

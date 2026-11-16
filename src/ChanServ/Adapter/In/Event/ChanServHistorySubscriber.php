@@ -58,6 +58,11 @@ final readonly class ChanServHistorySubscriber implements EventSubscriberInterfa
 
     public function onChannelUnsuspended(ChannelUnsuspendedEvent $event): void
     {
+        // A retry only restores the channel again; its history row was written by the first dispatch.
+        if ($event->isRetry) {
+            return;
+        }
+
         $this->historyService->recordAction(
             channelId: $event->channelId,
             action: 'UNSUSPEND',

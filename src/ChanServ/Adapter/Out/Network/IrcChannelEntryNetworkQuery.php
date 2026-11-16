@@ -80,6 +80,8 @@ final readonly class IrcChannelEntryNetworkQuery implements ChannelEntryNetworkQ
             userMask: $user->toUserMask(),
             identified: $user->isIdentified,
             operator: $user->isOper,
+            // Network semantics: ASCII case-insensitivity holds under every IRC casemapping and ChanServ
+            // holds its configured spelling, so this matches the service user only.
             service: 0 === strcasecmp($user->nick, $this->chanservNick),
             displayMask: $user->toDisplayMask(),
         );

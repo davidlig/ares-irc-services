@@ -48,7 +48,7 @@ final class RegisteredChannelSetupServiceTest extends TestCase
     public function existingNetworkChannelRestoresOnlyTheServiceRank(): void
     {
         $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
-        $channels->expects(self::once())->method('findByChannelName')->with('#opers')->willReturn(
+        $channels->expects(self::once())->method('findByChannelName')->with('#OPERS')->willReturn(
             RegisteredChannel::register(new DateTimeImmutable(), '#opers', 1, 'Debug'),
         );
         $modeLocks = $this->createMock(ChannelMlockPolicyRepository::class);

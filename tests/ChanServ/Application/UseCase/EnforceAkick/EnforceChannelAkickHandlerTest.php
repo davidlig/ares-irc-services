@@ -10,6 +10,7 @@ use App\ChanServ\Application\Port\Out\AkickActions;
 use App\ChanServ\Application\Port\Out\ChannelAkickRepositoryInterface;
 use App\ChanServ\Application\Port\Out\ChannelEntryNetworkQuery;
 use App\ChanServ\Application\Port\Out\ChanServActivitySink;
+use App\ChanServ\Application\Port\Out\NetworkIdentityFold;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\UseCase\EnforceAkick\EnforceChannelAkick;
 use App\ChanServ\Application\UseCase\EnforceAkick\EnforceChannelAkickHandler;
@@ -18,14 +19,18 @@ use App\ChanServ\Application\UseCase\EnforceAkick\SynchronizeAllChannelAkicks;
 use App\ChanServ\Application\UseCase\EnforceAkick\SynchronizeAllChannelAkicksHandler;
 use App\ChanServ\Domain\Entity\ChannelAkick;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
-use App\ChanServ\Domain\Policy\AkickMatchPolicy;
+use App\Tests\NickServ\Support\NegotiatedCaseMapping;
+use ArrayObject;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
+use function array_count_values;
+use function array_intersect;
 use function str_repeat;
+use function strtolower;
 
 #[CoversClass(ChannelEntryMember::class)]
 #[CoversClass(ChannelEntryNetworkState::class)]
@@ -100,6 +105,51 @@ final class EnforceChannelAkickHandlerTest extends TestCase
     }
 
     #[Test]
+    public function oneEnforcementPassFoldsEachRulePatternOnceAndEachMemberMaskOnce(): void
+    {
+        /** @var ArrayObject<int, string> $folded */
+        $folded = new ArrayObject();
+        $fold = new readonly class($folded) implements NetworkIdentityFold {
+            /** @param ArrayObject<int, string> $folded */
+            public function __construct(private ArrayObject $folded) {}
+
+            public function fold(string $value): string
+            {
+                $this->folded->append($value);
+
+                return strtolower($value);
+            }
+        };
+        $rules = [
+            ChannelAkick::create($this->now, 1, 2, 'Spam*!*@*'),
+            ChannelAkick::create($this->now, 1, 2, '*!*@Bad.Example'),
+            ChannelAkick::create($this->now, 1, 2, 'flood!*@*'),
+        ];
+        $members = [];
+        for ($index = 1; $index <= 5; ++$index) {
+            $members[] = $this->member('00' . $index . 'A', 'User' . $index . '!i@good.example');
+        }
+        $members[] = $this->member('009A', 'Guest!i@BAD.example');
+        $actions = $this->createMock(AkickActions::class);
+        $actions->expects(self::once())->method('banAndKick')->with('#Test', '009A', '*!*@Bad.Example', 'AKICK: *!*@Bad.Example');
+        $handler = new EnforceChannelAkickHandler(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(ChannelAkickRepositoryInterface::class),
+            $this->createStub(ChannelEntryNetworkQuery::class),
+            $actions,
+            $this->createStub(ChanServActivitySink::class),
+            $fold,
+        );
+
+        self::assertSame(1, $handler->handleKnownChannelWithAkicks($this->channel(), $members, $this->now, $rules));
+
+        $folds = $folded->getArrayCopy();
+        $patternFolds = array_count_values(array_intersect($folds, ['Spam*!*@*', '*!*@Bad.Example', 'flood!*@*']));
+        self::assertSame(['Spam*!*@*' => 1, '*!*@Bad.Example' => 1, 'flood!*@*' => 1], $patternFolds);
+        self::assertCount(3 + 6, $folds, 'Each member mask is folded once per pass, not once per rule.');
+    }
+
+    #[Test]
     public function preloadedAkicksSkipBlockedChannels(): void
     {
         $actions = $this->createMock(AkickActions::class);
@@ -133,8 +183,8 @@ final class EnforceChannelAkickHandlerTest extends TestCase
             $akicks,
             $this->createStub(ChannelEntryNetworkQuery::class),
             $actions,
-            new AkickMatchPolicy(),
             $activity,
+            NegotiatedCaseMapping::chanServ(),
         );
 
         self::assertSame(1, $handler->handleKnownChannel($this->channel(), [$this->member('001A', '[Foo]!u@h')], $this->now));
@@ -242,7 +292,7 @@ final class EnforceChannelAkickHandlerTest extends TestCase
     public function joinLoadsMemberAndUsesCanonicalRegisteredChannelName(): void
     {
         $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
-        $channels->expects(self::once())->method('findByChannelName')->with('#mixed')->willReturn($this->channel());
+        $channels->expects(self::once())->method('findByChannelName')->with('#MiXeD')->willReturn($this->channel());
         $network = $this->createStub(ChannelEntryNetworkQuery::class);
         $network->method('findMember')->willReturn($this->member('001A', 'nick!ident@example.test'));
         $akicks = $this->createStub(ChannelAkickRepositoryInterface::class);
@@ -302,7 +352,7 @@ final class EnforceChannelAkickHandlerTest extends TestCase
         ChannelEntryNetworkQuery $network,
         AkickActions $actions,
     ): EnforceChannelAkickHandler {
-        return new EnforceChannelAkickHandler($channels, $akicks, $network, $actions, new AkickMatchPolicy(), $this->createStub(ChanServActivitySink::class));
+        return new EnforceChannelAkickHandler($channels, $akicks, $network, $actions, $this->createStub(ChanServActivitySink::class), NegotiatedCaseMapping::chanServ());
     }
 
     private function channel(string $name = '#Test', bool $blocked = false): RegisteredChannel

@@ -10,27 +10,37 @@ use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\Service\NickDropService;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
+use Throwable;
 
 use function count;
 use function max;
 use function sprintf;
 
-final readonly class PurgePendingDeletionNicknamesTask implements MaintenanceTaskInterface
+final class PurgePendingDeletionNicknamesTask implements MaintenanceTaskInterface
 {
-    private const int DEFAULT_BATCH_SIZE = 100;
+    public const int DEFAULT_BATCH_SIZE = 100;
 
     private const int DEFAULT_MAX_BATCHES = 1;
 
+    /** Id of the last nick visited by the current sweep; 0 starts a new sweep. */
+    private int $cursor = 0;
+
+    private readonly ClosedEntityManagerRetryBudget $retryBudget;
+
     public function __construct(
-        private RegisteredNickRepositoryInterface $nickRepository,
-        private NickDropService $dropService,
-        private Clock $clock,
-        private int $intervalSeconds,
-        private int $dropGraceDays,
-        private ?EntityManagerInterface $entityManager = null,
-        private int $batchSize = self::DEFAULT_BATCH_SIZE,
-        private int $maxBatchesPerCycle = self::DEFAULT_MAX_BATCHES,
-    ) {}
+        private readonly RegisteredNickRepositoryInterface $nickRepository,
+        private readonly NickDropService $dropService,
+        private readonly LoggerInterface $logger,
+        private readonly Clock $clock,
+        private readonly int $intervalSeconds,
+        private readonly int $dropGraceDays,
+        private readonly ?EntityManagerInterface $entityManager = null,
+        private readonly int $batchSize = self::DEFAULT_BATCH_SIZE,
+        private readonly int $maxBatchesPerCycle = self::DEFAULT_MAX_BATCHES,
+    ) {
+        $this->retryBudget = new ClosedEntityManagerRetryBudget($this->logger, $this->getName());
+    }
 
     public function getName(): string
     {
@@ -47,6 +57,16 @@ final readonly class PurgePendingDeletionNicknamesTask implements MaintenanceTas
         return 210;
     }
 
+    /**
+     * Each cycle continues the sweep after the last visited id, so nicks that keep failing
+     * are skipped until the next sweep instead of taking every page.
+     *
+     * A failure that closes the EntityManager stops the batch with the cursor kept before the
+     * nick, so the next cycle retries it; after {@see ClosedEntityManagerRetryBudget::MAX_ATTEMPTS} such
+     * failures in a row while the database answers, the nick is skipped until the next sweep, so it
+     * cannot block later rows; in later sweeps it gets one attempt before it is skipped again, and
+     * a database outage never skips it.
+     */
     public function run(): void
     {
         $now = $this->clock->now();
@@ -54,22 +74,91 @@ final readonly class PurgePendingDeletionNicknamesTask implements MaintenanceTas
         $batches = 0;
 
         do {
-            $expired = $this->nickRepository->findPendingDeletionBefore($threshold, $this->batchSize);
-            if ([] === $expired) {
-                break;
+            $batch = $this->nickRepository->findPendingDeletionBefore($threshold, $this->batchSize, $this->cursor);
+            if ([] === $batch) {
+                $this->cursor = 0;
+
+                return;
             }
 
-            foreach ($expired as $nick) {
+            foreach ($batch as $nick) {
                 // @phpstan-ignore instanceof.alwaysTrue
                 if (!$nick instanceof RegisteredNick) {
                     continue;
                 }
 
-                $this->dropService->hardDropNick($nick, $now, 'manual-grace-expired', null);
+                // Doctrine unsets the id once the drop is flushed; keep what the failure log needs.
+                $id = $nick->getId();
+                $nickname = $nick->getNickname();
+
+                $failedOnItsOwn = false;
+                try {
+                    $this->dropService->hardDropNick($nick, $now, 'manual-grace-expired', null);
+                } catch (Throwable $e) {
+                    $failedOnItsOwn = $this->recordFailure($id, $nickname, $e);
+                }
+
+                // Advanced only after a row-specific outcome: a closed EntityManager rethrows above,
+                // so the next cycle retries this nick instead of skipping it.
+                $this->cursor = max($this->cursor, $id);
+                if ($failedOnItsOwn) {
+                    $this->retryBudget->rowFailedOnItsOwn($id);
+                } else {
+                    $this->retryBudget->rowSucceeded($id);
+                }
             }
 
             $this->entityManager?->clear();
             ++$batches;
-        } while (count($expired) === $this->batchSize && $batches < $this->maxBatchesPerCycle);
+
+            if (count($batch) < $this->batchSize) {
+                $this->cursor = 0;
+
+                return;
+            }
+        } while ($batches < $this->maxBatchesPerCycle);
+    }
+
+    /**
+     * Logs a failed drop accurately.
+     *
+     * A closed EntityManager makes every later row fail too, so the batch stops and the task fails;
+     * the nick is retried next cycle until it has closed the EntityManager too many times in a row.
+     *
+     * @return bool true when the nick still exists, i.e. the drop failed on its own
+     *
+     * @throws Throwable when the EntityManager was closed by the failure
+     */
+    private function recordFailure(int $id, string $nickname, Throwable $e): bool
+    {
+        $this->retryBudget->rethrowWhenClosed(
+            $id,
+            $this->entityManager,
+            $e,
+            sprintf('failed to drop pending-deletion nick %s (id %d)', $nickname, $id),
+            function () use ($id): void {
+                $this->cursor = max($this->cursor, $id);
+            },
+        );
+
+        if (null === $this->nickRepository->findById($id)) {
+            $this->logger->error(sprintf(
+                'Maintenance [%s]: dropped pending-deletion nick %s (id %d), but a post-drop step failed.',
+                $this->getName(),
+                $nickname,
+                $id,
+            ), ['exception' => $e]);
+
+            return false;
+        }
+
+        $this->logger->error(sprintf(
+            'Maintenance [%s]: failed to drop pending-deletion nick %s (id %d); skipping it until the next sweep.',
+            $this->getName(),
+            $nickname,
+            $id,
+        ), ['exception' => $e]);
+
+        return true;
     }
 }

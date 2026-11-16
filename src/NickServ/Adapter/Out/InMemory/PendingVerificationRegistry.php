@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace App\NickServ\Adapter\Out\InMemory;
 
 use App\NickServ\Adapter\In\Maintenance\PurgeExpiredPendingTask;
+use App\Shared\Domain\IrcIdentityFold;
 use DateTimeImmutable;
 
 use function hash_equals;
 use function sprintf;
-use function strtolower;
 
 /**
  * In-memory store for email verification tokens issued during REGISTER.
@@ -42,7 +42,7 @@ final class PendingVerificationRegistry
 
     public function store(string $nickname, string $token, DateTimeImmutable $expiresAt): void
     {
-        $this->entries[strtolower($nickname)] = [
+        $this->entries[IrcIdentityFold::fold($nickname)] = [
             'token' => $token,
             'expiresAt' => $expiresAt,
         ];
@@ -55,7 +55,7 @@ final class PendingVerificationRegistry
      */
     public function consume(string $nickname, string $token, DateTimeImmutable $now): bool
     {
-        $key = strtolower($nickname);
+        $key = IrcIdentityFold::fold($nickname);
         $entry = $this->entries[$key] ?? null;
 
         if (null === $entry) {
@@ -79,12 +79,12 @@ final class PendingVerificationRegistry
 
     public function has(string $nickname): bool
     {
-        return isset($this->entries[strtolower($nickname)]);
+        return isset($this->entries[IrcIdentityFold::fold($nickname)]);
     }
 
     public function remove(string $nickname): void
     {
-        unset($this->entries[strtolower($nickname)]);
+        unset($this->entries[IrcIdentityFold::fold($nickname)]);
     }
 
     /**
@@ -92,7 +92,7 @@ final class PendingVerificationRegistry
      */
     public function getLastResendAt(string $nickname): ?DateTimeImmutable
     {
-        return $this->lastResendAt[strtolower($nickname)] ?? null;
+        return $this->lastResendAt[IrcIdentityFold::fold($nickname)] ?? null;
     }
 
     /**
@@ -100,7 +100,7 @@ final class PendingVerificationRegistry
      */
     public function recordResend(string $nickname, DateTimeImmutable $now): void
     {
-        $this->lastResendAt[strtolower($nickname)] = $now;
+        $this->lastResendAt[IrcIdentityFold::fold($nickname)] = $now;
     }
 
     /**

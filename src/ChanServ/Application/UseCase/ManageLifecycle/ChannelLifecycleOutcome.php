@@ -13,6 +13,7 @@ enum ChannelLifecycleOutcome
     case NotRegistered;
     case Forbidden;
     case ForbiddenUpdated;
+    case NameConflict;
     case Unforbidden;
     case NotForbidden;
     case Restored;

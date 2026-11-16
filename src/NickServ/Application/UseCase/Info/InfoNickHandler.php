@@ -4,11 +4,10 @@ declare(strict_types=1);
 
 namespace App\NickServ\Application\UseCase\Info;
 
+use App\NickServ\Application\Port\Out\NetworkNickEquivalence;
 use App\NickServ\Application\Port\Out\NickAssociatedChannelsPort;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\Service\VhostDisplayResolver;
-
-use function strcasecmp;
 
 final readonly class InfoNickHandler implements InfoNickHandlerInterface
 {
@@ -16,6 +15,7 @@ final readonly class InfoNickHandler implements InfoNickHandlerInterface
         private RegisteredNickRepositoryInterface $nickRepository,
         private NickAssociatedChannelsPort $channelsPort,
         private VhostDisplayResolver $vhostDisplayResolver,
+        private NetworkNickEquivalence $nickEquivalence,
         private int $dropGraceDays = 7,
     ) {}
 
@@ -39,7 +39,7 @@ final readonly class InfoNickHandler implements InfoNickHandlerInterface
             );
         }
 
-        $isOwner = null !== $command->senderNick && 0 === strcasecmp($command->senderNick, $account->getNickname());
+        $isOwner = null !== $command->senderNick && $this->nickEquivalence->equivalent($command->senderNick, $account->getNickname());
         if ($account->isPrivate() && !$isOwner) {
             return InfoNickResult::private($account->getNickname());
         }

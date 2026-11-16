@@ -6,15 +6,12 @@ namespace App\ChanServ\Domain\Entity;
 
 use DateTimeImmutable;
 use InvalidArgumentException;
-use Stringable;
 
 use function ctype_alnum;
-use function fnmatch;
 use function sprintf;
 use function str_split;
 use function strlen;
 use function strpos;
-use function strtolower;
 use function substr;
 use function substr_count;
 
@@ -133,22 +130,6 @@ class ChannelAkick
     public function isExpired(DateTimeImmutable $now): bool
     {
         return null !== $this->expiresAt && $this->expiresAt < $now;
-    }
-
-    /**
-     * Checks if a user mask matches this AKICK mask.
-     *
-     * Uses fnmatch for wildcard matching (* and ?).
-     * Converts both masks to lowercase for case-insensitive comparison.
-     *
-     * @param string|Stringable $userMask Full mask (nick!user@host) to check against
-     */
-    public function matches(string|Stringable $userMask): bool
-    {
-        $pattern = strtolower($this->mask);
-        $subject = strtolower((string) $userMask);
-
-        return fnmatch($pattern, $subject);
     }
 
     public function updateReason(?string $reason): void

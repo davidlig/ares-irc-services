@@ -795,6 +795,7 @@ forbid:
   cannot_forbid_root: "Nie można zabronić użytkownika root %nickname%."
   cannot_forbid_oper: "Nie można zabronić operatora IRC %nickname%."
   cannot_forbid_service: "Nie można zabronić nicka serwisowego %nickname%."
+  key_conflict: "Nie można zabronić nicka %nickname%: koliduje z zarejestrowanym nickiem %registered%, który w tej sieci jest innym nickiem."
 
 # --- UNFORBID (IRCop) ---------------------------------------------------------
 unforbid:

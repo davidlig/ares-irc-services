@@ -16,6 +16,7 @@ use App\Irc\Adapter\Network\Event\UserMetadataReceivedEvent;
 use App\Irc\Adapter\Network\Event\UserModeReceivedEvent;
 use App\Irc\Adapter\Network\Event\UserNickChangeReceivedEvent;
 use App\Irc\Adapter\Network\Event\UserQuitReceivedEvent;
+use App\Irc\Adapter\Network\ServerBurstRegistry;
 use App\Irc\Adapter\Protocol\IRCMessage;
 use App\Irc\Adapter\Protocol\NetworkStateAdapterInterface;
 use App\Irc\Domain\Event\ServerDelinkedEvent;
@@ -72,6 +73,7 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
     public function __construct(
         private readonly EventDispatcherInterface $eventDispatcher,
         private readonly LoggerInterface $logger = new NullLogger(),
+        private readonly ServerBurstRegistry $burstRegistry = new ServerBurstRegistry(),
     ) {}
 
     public function getSupportedProtocol(): string
@@ -83,6 +85,7 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
     {
         match ($message->command) {
             'SERVER' => $this->handleServer($message),
+            'ENDBURST' => $this->handleEndburst($message),
             'ERROR' => $this->resetServerTree(),
             'UID' => $this->handleUid($message),
             'NICK' => $this->handleNick($message),
@@ -282,6 +285,7 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
                     }
                 }
             }
+            $this->burstRegistry->endBurst(...$delinkedSids);
 
             $this->eventDispatcher->dispatch(new ServerDelinkedEvent($resolvedSid, $reason, $delinkedSids));
 
@@ -291,22 +295,30 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
         $this->eventDispatcher->dispatch(new ServerDelinkedEvent($target, $reason, [$target]));
     }
 
+    /**
+     * Protocol 1206 SERVER grammar (https://docs.inspircd.org/server/messages/server/):
+     * - handshake (unprefixed): SERVER <name> <password> <sid> :<desc>
+     * - introduction (prefixed with the parent SID): :<parent> SERVER <name> <sid> [<key>=<value>]+ :<desc>
+     *   e.g. :36D SERVER irc.us.example.com 36E burst=1700000000000 hidden=0 :American IRC server.
+     */
     private function handleServer(IRCMessage $message): void
     {
         $name = $message->params[0] ?? '';
-        $sid = $message->params[2] ?? '';
 
         if (null === $message->prefix) {
+            $sid = $message->params[2] ?? '';
             if ('' !== $name) {
                 $this->directName = strtolower($name);
             }
             if ('' !== $sid) {
                 $this->directSid = $sid;
+                $this->burstRegistry->startBurst($sid);
             }
 
             return;
         }
 
+        $sid = $message->params[1] ?? '';
         $parent = $this->resolve($message->prefix);
         if (null === $parent || '' === $name || '' === $sid) {
             return;
@@ -314,7 +326,46 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
 
         if (!isset($this->servers[$sid])) {
             $this->servers[$sid] = ['name' => strtolower($name), 'parent' => $parent];
+            if (self::introducesBurstingServer($message)) {
+                $this->burstRegistry->startBurst($sid);
+            }
         }
+    }
+
+    /** The "burst=<ms>" key is present only while the introduced server is bursting. */
+    private static function introducesBurstingServer(IRCMessage $message): bool
+    {
+        foreach (array_slice($message->params, 2) as $parameter) {
+            if (str_starts_with((string) $parameter, 'burst=')) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * ENDBURST: end of burst of the source server, e.g. ":0A2 ENDBURST". InspIRCd sends it only
+     * for the server that linked; servers it introduced finish their burst with it.
+     */
+    private function handleEndburst(IRCMessage $message): void
+    {
+        $server = $this->originServer($message->prefix);
+        if (null === $server) {
+            return;
+        }
+
+        $finished = [];
+        $pending = [$server];
+        while (null !== ($sid = array_pop($pending))) {
+            $finished[] = $sid;
+            foreach ($this->servers as $id => $entry) {
+                if ($entry['parent'] === $sid) {
+                    $pending[] = $id;
+                }
+            }
+        }
+        $this->burstRegistry->endBurst(...$finished);
     }
 
     private function resetServerTree(): void
@@ -322,6 +373,20 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
         $this->directSid = null;
         $this->directName = null;
         $this->servers = [];
+        $this->burstRegistry->clear();
+    }
+
+    /**
+     * Server that sent a line: the line source itself when it names a known server (SID or name),
+     * the server part of a UID source, or the uplink for an unprefixed line.
+     */
+    private function originServer(?string $source): ?string
+    {
+        if (null === $source || '' === $source) {
+            return $this->directSid;
+        }
+
+        return $this->resolve($source) ?? (strlen($source) > 3 ? $this->resolve(substr($source, 0, 3)) : null);
     }
 
     private function resolve(string $identity): ?string
@@ -374,7 +439,15 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
             }
         }
 
-        $this->eventDispatcher->dispatch(new ChannelJoinReceivedEvent($channelName, $timestamp, $modeStr, $members, modeParams: $modeParams, parameterMergeRules: ['k' => ChannelModeParameterMerge::LexicalMinimum, 'l' => ChannelModeParameterMerge::NumericMaximum]));
+        $this->eventDispatcher->dispatch(new ChannelJoinReceivedEvent(
+            $channelName,
+            $timestamp,
+            $modeStr,
+            $members,
+            modeParams: $modeParams,
+            parameterMergeRules: ['k' => ChannelModeParameterMerge::LexicalMinimum, 'l' => ChannelModeParameterMerge::NumericMaximum],
+            fromBurstingServer: $this->burstRegistry->isBursting($this->originServer($message->prefix)),
+        ));
     }
 
     /**
@@ -472,7 +545,13 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
             'prefixLetters' => $prefixLetters,
         ]];
 
-        $this->eventDispatcher->dispatch(new ChannelJoinReceivedEvent($channelName, $creationTs, '', $members));
+        $this->eventDispatcher->dispatch(new ChannelJoinReceivedEvent(
+            $channelName,
+            $creationTs,
+            '',
+            $members,
+            fromBurstingServer: $this->burstRegistry->isBursting($this->originServer($uidStr)),
+        ));
     }
 
     /**

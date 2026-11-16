@@ -10,6 +10,10 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Throwable;
 
+/**
+ * Flushes deferred channel activity on disconnection. The buffer retains failed chunks for the
+ * next flush; the reported failure is logged here so a database failure never breaks shutdown.
+ */
 final readonly class ChanServChannelActivityFlushSubscriber implements EventSubscriberInterface
 {
     public function __construct(
@@ -26,10 +30,8 @@ final readonly class ChanServChannelActivityFlushSubscriber implements EventSubs
     {
         try {
             $this->activityBuffer->flush();
-        } catch (Throwable $exception) {
-            $this->logger->error('Could not flush deferred ChanServ channel activity during shutdown.', [
-                'exception' => $exception,
-            ]);
+        } catch (Throwable $e) {
+            $this->logger->warning('Deferred ChanServ channel activity was not fully flushed on disconnection; it stays pending.', ['exception' => $e]);
         }
     }
 }

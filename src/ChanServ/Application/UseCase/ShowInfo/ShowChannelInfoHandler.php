@@ -9,8 +9,6 @@ use App\ChanServ\Application\Port\Out\ChanUserAccountPort;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 
-use function strtolower;
-
 final readonly class ShowChannelInfoHandler implements ShowChannelInfoHandlerInterface
 {
     public function __construct(
@@ -22,7 +20,7 @@ final readonly class ShowChannelInfoHandler implements ShowChannelInfoHandlerInt
 
     public function handle(ShowChannelInfo $query): ?ChannelInfoView
     {
-        $channel = $this->channels->findByChannelName(strtolower($query->channelName));
+        $channel = $this->channels->findByChannelName($query->channelName);
         if (null === $channel) {
             return null;
         }

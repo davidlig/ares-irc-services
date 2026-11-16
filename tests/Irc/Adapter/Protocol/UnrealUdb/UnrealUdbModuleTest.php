@@ -24,6 +24,7 @@ use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbRecordWriter;
 use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbUserModeSupport;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbRawCommandHandlerInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbRawCommandResult;
+use App\Irc\Application\Port\In\LocalUserQuitSyncPort;
 use App\Irc\Application\Port\In\NativeNicknameAuthenticationInterface;
 use App\Irc\Application\Port\In\NickChangePreservesIdentificationInterface;
 use App\Irc\Domain\ValueObject\CaseMapping;
@@ -61,7 +62,7 @@ final class UnrealUdbModuleTest extends TestCase
         $handler = new UnrealUdbProtocolHandler('001', $this->createCoordinator(), new UdbSessionLock(sys_get_temp_dir()));
         $module = new UnrealUdbModule(
             $handler,
-            new UnrealUdbProtocolServiceActions($connectionHolder, $recordWriter, $sessionState),
+            new UnrealUdbProtocolServiceActions($connectionHolder, $recordWriter, $sessionState, $this->createStub(LocalUserQuitSyncPort::class)),
             new UnrealUdbChannelModeSupport(),
             new UnrealUdbUserModeSupport(),
             new UnrealUdbNickReservation($recordWriter, $this->createStub(UdbRecordRepositoryInterface::class)),
@@ -138,7 +139,7 @@ final class UnrealUdbModuleTest extends TestCase
         );
         $module = new UnrealUdbModule(
             new UnrealUdbProtocolHandler('001', $this->createCoordinator(), new UdbSessionLock(sys_get_temp_dir())),
-            new UnrealUdbProtocolServiceActions($connectionHolder, $recordWriter, $sessionState),
+            new UnrealUdbProtocolServiceActions($connectionHolder, $recordWriter, $sessionState, $this->createStub(LocalUserQuitSyncPort::class)),
             new UnrealUdbChannelModeSupport(),
             new UnrealUdbUserModeSupport(),
             new UnrealUdbNickReservation($recordWriter, $this->createStub(UdbRecordRepositoryInterface::class)),
@@ -187,7 +188,7 @@ final class UnrealUdbModuleTest extends TestCase
             $this->createStub(UdbRecordMutationStoreInterface::class),
         );
         $handler = new UnrealUdbProtocolHandler('001', $this->createCoordinator(), new UdbSessionLock(sys_get_temp_dir()));
-        $serviceActions = new UnrealUdbProtocolServiceActions($connectionHolder, $recordWriter, $sessionState);
+        $serviceActions = new UnrealUdbProtocolServiceActions($connectionHolder, $recordWriter, $sessionState, $this->createStub(LocalUserQuitSyncPort::class));
         $channelModeSupport = new UnrealUdbChannelModeSupport();
         $userModeSupport = new UnrealUdbUserModeSupport();
         $nickReservation = new UnrealUdbNickReservation($recordWriter, $this->createStub(UdbRecordRepositoryInterface::class));

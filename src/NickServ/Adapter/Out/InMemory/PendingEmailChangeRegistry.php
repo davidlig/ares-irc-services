@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace App\NickServ\Adapter\Out\InMemory;
 
 use App\NickServ\Application\Port\Out\PendingEmailChangeStore;
+use App\Shared\Domain\IrcIdentityFold;
 use DateTimeImmutable;
 
 use function hash_equals;
 use function sprintf;
 use function strcasecmp;
-use function strtolower;
 
 /**
  * In-memory store for pending email change confirmations.
@@ -35,7 +35,7 @@ final class PendingEmailChangeRegistry implements PendingEmailChangeStore
 
     public function store(string $nickname, string $newEmail, string $token, DateTimeImmutable $now): void
     {
-        $this->entries[strtolower($nickname)] = [
+        $this->entries[IrcIdentityFold::fold($nickname)] = [
             'newEmail' => $newEmail,
             'token' => $token,
             'expiresAt' => $now->modify(sprintf('+%d seconds', self::TTL_SECONDS)),
@@ -48,7 +48,7 @@ final class PendingEmailChangeRegistry implements PendingEmailChangeStore
      */
     public function consume(string $nickname, string $newEmail, string $token, DateTimeImmutable $now): bool
     {
-        $key = strtolower($nickname);
+        $key = IrcIdentityFold::fold($nickname);
         $entry = $this->entries[$key] ?? null;
 
         if (null === $entry) {
@@ -72,12 +72,12 @@ final class PendingEmailChangeRegistry implements PendingEmailChangeStore
 
     public function has(string $nickname): bool
     {
-        return isset($this->entries[strtolower($nickname)]);
+        return isset($this->entries[IrcIdentityFold::fold($nickname)]);
     }
 
     public function remove(string $nickname): void
     {
-        unset($this->entries[strtolower($nickname)]);
+        unset($this->entries[IrcIdentityFold::fold($nickname)]);
     }
 
     /**

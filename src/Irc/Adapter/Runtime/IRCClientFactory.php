@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Irc\Adapter\Runtime;
 
 use App\Irc\Adapter\Out\Connection\ConnectionFactoryInterface;
+use App\Irc\Adapter\Out\Persistence\ClosedEntityManagerReset;
 use App\Irc\Application\BurstCompleteRegistry;
 use App\Irc\Application\Port\In\ActiveProtocolModuleHolderInterface;
 use App\Irc\Domain\Server\ServerLink;
@@ -30,6 +31,7 @@ final readonly class IRCClientFactory implements IRCClientFactoryInterface
         private int $maintenanceDispatchIntervalSeconds,
         private LoggerInterface $logger = new NullLogger(),
         private LoopSchedulerInterface $loopScheduler = new RevoltLoopScheduler(),
+        private ClosedEntityManagerReset $entityManagerReset = new ClosedEntityManagerReset(),
     ) {}
 
     public function create(ServerLink $link): IRCClient
@@ -46,6 +48,7 @@ final readonly class IRCClientFactory implements IRCClientFactoryInterface
             $this->maintenanceDispatchIntervalSeconds,
             $this->logger,
             $this->loopScheduler,
+            entityManagerReset: $this->entityManagerReset,
         );
     }
 }

@@ -927,6 +927,7 @@ forbid:
   cannot_forbid_root: "Δεν μπορεί να απαγορευτεί ο root χρήστης %nickname%."
   cannot_forbid_oper: "Δεν μπορεί να απαγορευτεί ο IRC operator %nickname%."
   cannot_forbid_service: "Δεν μπορεί να απαγορευτεί το ψευδώνυμο υπηρεσίας %nickname%."
+  key_conflict: "Δεν μπορεί να απαγορευτεί το %nickname%: συγκρούεται με το καταχωρημένο ψευδώνυμο %registered%, που είναι διαφορετικό ψευδώνυμο σε αυτό το δίκτυο."
 
 # --- UNFORBID (IRCop) ---------------------------------------------------------
 unforbid:

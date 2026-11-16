@@ -8,10 +8,14 @@ use App\ChanServ\Adapter\Out\Persistence\Doctrine\ChannelAkickDoctrineRepository
 use App\ChanServ\Domain\Entity\ChannelAkick;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
 use DateTimeImmutable;
+use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use ReflectionProperty;
+
+use function array_map;
+use function array_values;
 
 #[CoversClass(ChannelAkickDoctrineRepository::class)]
 #[Group('integration')]
@@ -344,6 +348,33 @@ final class ChannelAkickDoctrineRepositoryTest extends DoctrineIntegrationTestCa
     }
 
     #[Test]
+    public function findExpiredPagesByExpiryThenIdAfterTheKeysetCursor(): void
+    {
+        $tiedExpiry = new DateTimeImmutable('-1 hour');
+        foreach (['*!*@first.com' => $tiedExpiry, '*!*@active.com' => new DateTimeImmutable('+1 hour'), '*!*@earliest.com' => new DateTimeImmutable('-2 hours'), '*!*@tied.com' => $tiedExpiry, '*!*@permanent.com' => null] as $mask => $expiresAt) {
+            $this->repository->save(ChannelAkick::create(new DateTimeImmutable(), channelId: 1, creatorNickId: 100, mask: $mask, expiresAt: $expiresAt));
+        }
+        $this->flushAndClear();
+
+        $firstPage = $this->repository->findExpired(null, 2);
+        $secondPage = $this->repository->findExpired($firstPage[1], 2);
+
+        self::assertSame(['*!*@earliest.com', '*!*@first.com', '*!*@tied.com'], self::masks($this->repository->findExpired()));
+        self::assertSame(['*!*@earliest.com', '*!*@first.com'], self::masks($firstPage));
+        self::assertSame(['*!*@tied.com'], self::masks($secondPage));
+        self::assertSame([], $this->repository->findExpired($secondPage[0], 2));
+    }
+
+    #[Test]
+    public function findExpiredRejectsACursorThatHasNoExpiry(): void
+    {
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('AKICK expiry cursor must be an expired entry.');
+
+        $this->repository->findExpired(ChannelAkick::create(new DateTimeImmutable(), channelId: 1, creatorNickId: 100, mask: '*!*@permanent.com'), 2);
+    }
+
+    #[Test]
     public function findByChannelIdsReturnsAkickForMultipleChannels(): void
     {
         $akick1 = ChannelAkick::create(new DateTimeImmutable(), channelId: 1, creatorNickId: 100, mask: '*!*@a1.com');
@@ -501,5 +532,15 @@ final class ChannelAkickDoctrineRepositoryTest extends DoctrineIntegrationTestCa
     {
         $ref = new ReflectionProperty($akick, 'createdAt');
         $ref->setValue($akick, $time);
+    }
+
+    /**
+     * @param array<ChannelAkick> $akicks
+     *
+     * @return list<string>
+     */
+    private static function masks(array $akicks): array
+    {
+        return array_values(array_map(static fn (ChannelAkick $akick): string => $akick->getMask(), $akicks));
     }
 }

@@ -788,6 +788,7 @@ forbid:
   success: "Channel %channel% has been forbidden."
   updated: "Forbidden reason for channel %channel% has been updated."
   channel_forbidden: "Channel %channel% is forbidden and cannot be used."
+  name_conflict: "Channel %channel% cannot be forbidden: its registration slot belongs to a different channel."
 
 # --- UNFORBID (IRCop) ---------------------------------------------------------
 unforbid:

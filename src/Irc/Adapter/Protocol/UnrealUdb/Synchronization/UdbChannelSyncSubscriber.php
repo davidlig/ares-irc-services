@@ -68,7 +68,7 @@ final class UdbChannelSyncSubscriber implements EventSubscriberInterface
 
     public function onChannelRegistered(ChannelRegisteredEvent $event): void
     {
-        $channel = $this->channels->findByName($event->channelNameLower);
+        $channel = $this->channels->findByNameKey($event->channelNameLower);
         if (null === $channel) {
             return;
         }
@@ -85,7 +85,7 @@ final class UdbChannelSyncSubscriber implements EventSubscriberInterface
 
     public function onChannelPendingDeletion(ChannelPendingDeletionEvent $event): void
     {
-        $channel = $this->channels->findByName($event->channelNameLower);
+        $channel = $this->channels->findByNameKey($event->channelNameLower);
         if (null === $channel) {
             return;
         }
@@ -97,7 +97,7 @@ final class UdbChannelSyncSubscriber implements EventSubscriberInterface
     public function onChannelRestored(ChannelRestoredEvent $event): void
     {
         $this->recordWriter->delete(self::BLOCK, sprintf('%s::suspend', $event->channelName));
-        $this->refreshOptions(strtolower($event->channelName));
+        $this->refreshOptions($this->channels->findByName(strtolower($event->channelName)));
     }
 
     public function onChannelFounderChanged(ChannelFounderChangedEvent $event): void
@@ -128,34 +128,34 @@ final class UdbChannelSyncSubscriber implements EventSubscriberInterface
     {
         $reason = '' !== $event->reason ? $event->reason : '1';
         $this->recordWriter->insert(self::BLOCK, sprintf('%s::suspend', $event->channelName), $reason);
-        $this->refreshOptions($event->channelNameLower);
+        $this->refreshOptions($this->channels->findByNameKey($event->channelNameLower));
     }
 
     public function onChannelUnsuspended(ChannelUnsuspendedEvent $event): void
     {
         $this->recordWriter->delete(self::BLOCK, sprintf('%s::suspend', $event->channelName));
-        $this->refreshOptions($event->channelNameLower);
+        $this->refreshOptions($this->channels->findByNameKey($event->channelNameLower));
     }
 
     public function onChannelMlockUpdated(ChannelMlockUpdatedEvent $event): void
     {
-        $this->refreshOptions(strtolower($event->channelName));
+        $this->refreshOptions($this->channels->findByName(strtolower($event->channelName)));
         $this->refreshMlock(strtolower($event->channelName));
     }
 
     public function onChannelTopiclockUpdated(ChannelTopiclockUpdatedEvent $event): void
     {
-        $this->refreshOptions(strtolower($event->channelName));
+        $this->refreshOptions($this->channels->findByName(strtolower($event->channelName)));
     }
 
     public function onChannelSecureUpdated(ChannelSecureUpdatedEvent $event): void
     {
-        $this->refreshOptions(strtolower($event->channelName));
+        $this->refreshOptions($this->channels->findByName(strtolower($event->channelName)));
     }
 
     public function onChannelIrcopOnlyUpdated(ChannelIrcopOnlyUpdatedEvent $event): void
     {
-        $this->refreshOptions(strtolower($event->channelName));
+        $this->refreshOptions($this->channels->findByName(strtolower($event->channelName)));
     }
 
     public function onChannelTopicChanged(ChannelTopicChangedEvent $event): void
@@ -189,9 +189,9 @@ final class UdbChannelSyncSubscriber implements EventSubscriberInterface
         }
     }
 
-    private function refreshMlock(string $channelNameLower): void
+    private function refreshMlock(string $channelName): void
     {
-        $channel = $this->channels->findByName($channelNameLower);
+        $channel = $this->channels->findByName($channelName);
         if (null === $channel || $channel->forbidden) {
             return;
         }
@@ -208,9 +208,8 @@ final class UdbChannelSyncSubscriber implements EventSubscriberInterface
     }
 
     /** Recomputes the numeric options record after any flag change. */
-    private function refreshOptions(string $channelNameLower): void
+    private function refreshOptions(?ChannelProjection $channel): void
     {
-        $channel = $this->channels->findByName($channelNameLower);
         if (null === $channel) {
             return;
         }

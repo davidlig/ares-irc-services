@@ -10,6 +10,7 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbClock;
 use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionStateInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbRecordWriterInterface;
 use App\Irc\Application\Port\In\ChannelModeSupportInterface;
+use App\Irc\Application\Port\In\LocalUserQuitSyncPort;
 use App\Irc\Application\Port\In\OperclassServiceActionsInterface;
 use App\Irc\Application\Port\In\ProtocolServiceActionsInterface;
 use Psr\Log\LoggerInterface;
@@ -45,6 +46,7 @@ final readonly class UnrealUdbProtocolServiceActions implements ProtocolServiceA
         private ActiveConnectionHolder $connectionHolder,
         private UdbRecordWriterInterface $recordWriter,
         private UdbSessionStateInterface $sessionState,
+        private LocalUserQuitSyncPort $localUserQuitSync,
         private UnrealUdbServiceIntroductionFormatter $introductionFormatter = new UnrealUdbServiceIntroductionFormatter(),
         private LoggerInterface $logger = new NullLogger(),
         private UdbClock $clock = new SystemUdbClock(),
@@ -111,9 +113,14 @@ final readonly class UnrealUdbProtocolServiceActions implements ProtocolServiceA
         $this->write(sprintf(':%s SVSNICK %s %s %d', $serverSid, $targetUid, $newNick, $this->clock->now()));
     }
 
+    /**
+     * The IRCd does not echo a service-issued KILL back to us, so the killed user is
+     * removed from local network state here for every caller (no ghost user).
+     */
     public function killUser(string $serverSid, string $targetUid, string $reason): void
     {
         $this->write(sprintf(':%s KILL %s :%s', $serverSid, $targetUid, $reason));
+        $this->localUserQuitSync->apply($targetUid, $reason);
     }
 
     public function setChannelModes(string $serverSid, string $channelName, string $modeStr, array $params = [], string $serviceUid = '', ?int $channelTimestamp = null): void

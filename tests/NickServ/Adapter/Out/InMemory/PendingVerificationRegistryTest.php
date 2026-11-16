@@ -135,6 +135,25 @@ final class PendingVerificationRegistryTest extends TestCase
         self::assertSame(4, $removed);
     }
 
+    #[Test]
+    public function nicknameKeysUseTheRfc1459Fold(): void
+    {
+        $registry = new PendingVerificationRegistry();
+        $now = new DateTimeImmutable('2026-01-01 00:00:00');
+        $registry->store('[Foo]', 'token', $now->modify('+1 hour'));
+        $registry->recordResend('[Foo]', $now);
+
+        self::assertTrue($registry->has('{FOO}'));
+        self::assertFalse($registry->has('(foo)'));
+        self::assertSame($now, $registry->getLastResendAt('{foo}'));
+        self::assertTrue($registry->consume('{foo}', 'token', $now));
+        self::assertFalse($registry->has('[foo]'));
+
+        $registry->store('Plain', 'token', $now->modify('+1 hour'));
+        $registry->remove('PLAIN');
+        self::assertFalse($registry->has('plain'));
+    }
+
     private function now(): DateTimeImmutable
     {
         return new DateTimeImmutable('2026-09-06 12:00:00 UTC');

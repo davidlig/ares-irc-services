@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Tests\OperServ\Application;
 
+use App\Irc\Domain\ValueObject\CaseMapping;
 use App\OperServ\Application\RootUserRegistry;
+use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -15,7 +17,7 @@ final class RootUserRegistryTest extends TestCase
     #[Test]
     public function isRootReturnsFalseForEmptyString(): void
     {
-        $registry = new RootUserRegistry('');
+        $registry = new RootUserRegistry('', NegotiatedCaseMapping::operServ());
         self::assertFalse($registry->isRoot('Admin'));
         self::assertFalse($registry->isRoot('Root'));
     }
@@ -23,7 +25,7 @@ final class RootUserRegistryTest extends TestCase
     #[Test]
     public function isRootReturnsFalseForAnyNickWhenNoRootUsers(): void
     {
-        $registry = new RootUserRegistry('');
+        $registry = new RootUserRegistry('', NegotiatedCaseMapping::operServ());
         self::assertFalse($registry->isRoot('SomeNick'));
         self::assertFalse($registry->isRoot('AnotherNick'));
     }
@@ -31,14 +33,14 @@ final class RootUserRegistryTest extends TestCase
     #[Test]
     public function isRootReturnsTrueForSingleRootUser(): void
     {
-        $registry = new RootUserRegistry('Admin');
+        $registry = new RootUserRegistry('Admin', NegotiatedCaseMapping::operServ());
         self::assertTrue($registry->isRoot('Admin'));
     }
 
     #[Test]
     public function isRootReturnsFalseForNonRootNick(): void
     {
-        $registry = new RootUserRegistry('Admin');
+        $registry = new RootUserRegistry('Admin', NegotiatedCaseMapping::operServ());
         self::assertFalse($registry->isRoot('User'));
         self::assertFalse($registry->isRoot('Guest'));
     }
@@ -46,7 +48,7 @@ final class RootUserRegistryTest extends TestCase
     #[Test]
     public function isRootIsCaseInsensitive(): void
     {
-        $registry = new RootUserRegistry('RootUser');
+        $registry = new RootUserRegistry('RootUser', NegotiatedCaseMapping::operServ());
         self::assertTrue($registry->isRoot('RootUser'));
         self::assertTrue($registry->isRoot('rootuser'));
         self::assertTrue($registry->isRoot('ROOTUSER'));
@@ -56,7 +58,7 @@ final class RootUserRegistryTest extends TestCase
     #[Test]
     public function isRootWorksWithMultipleRootUsers(): void
     {
-        $registry = new RootUserRegistry('Admin,Operator,Root');
+        $registry = new RootUserRegistry('Admin,Operator,Root', NegotiatedCaseMapping::operServ());
         self::assertTrue($registry->isRoot('Admin'));
         self::assertTrue($registry->isRoot('Operator'));
         self::assertTrue($registry->isRoot('Root'));
@@ -66,7 +68,7 @@ final class RootUserRegistryTest extends TestCase
     #[Test]
     public function isRootHandlesWhitespaceAroundNicks(): void
     {
-        $registry = new RootUserRegistry(' Admin , Operator , Root ');
+        $registry = new RootUserRegistry(' Admin , Operator , Root ', NegotiatedCaseMapping::operServ());
         self::assertTrue($registry->isRoot('Admin'));
         self::assertTrue($registry->isRoot('Operator'));
         self::assertTrue($registry->isRoot('Root'));
@@ -75,44 +77,66 @@ final class RootUserRegistryTest extends TestCase
     #[Test]
     public function getRootNicksReturnsEmptyArrayForEmptyString(): void
     {
-        $registry = new RootUserRegistry('');
+        $registry = new RootUserRegistry('', NegotiatedCaseMapping::operServ());
         self::assertSame([], $registry->getRootNicks());
     }
 
     #[Test]
     public function getRootNicksReturnsSingleNickInLowercase(): void
     {
-        $registry = new RootUserRegistry('Admin');
+        $registry = new RootUserRegistry('Admin', NegotiatedCaseMapping::operServ());
         self::assertSame(['admin'], $registry->getRootNicks());
     }
 
     #[Test]
     public function getRootNicksReturnsAllNicksInLowercase(): void
     {
-        $registry = new RootUserRegistry('Admin,Operator,Root');
+        $registry = new RootUserRegistry('Admin,Operator,Root', NegotiatedCaseMapping::operServ());
         self::assertSame(['admin', 'operator', 'root'], $registry->getRootNicks());
     }
 
     #[Test]
     public function getRootNicksPreservesOrder(): void
     {
-        $registry = new RootUserRegistry('First,Second,Third');
+        $registry = new RootUserRegistry('First,Second,Third', NegotiatedCaseMapping::operServ());
         self::assertSame(['first', 'second', 'third'], $registry->getRootNicks());
     }
 
     #[Test]
     public function getRootNicksHandlesWhitespace(): void
     {
-        $registry = new RootUserRegistry(' Admin , Operator , Root ');
+        $registry = new RootUserRegistry(' Admin , Operator , Root ', NegotiatedCaseMapping::operServ());
         self::assertSame(['admin', 'operator', 'root'], $registry->getRootNicks());
     }
 
     #[Test]
     public function caseInsensitiveMatchingWithMixedCaseInput(): void
     {
-        $registry = new RootUserRegistry('RoOtUsEr');
+        $registry = new RootUserRegistry('RoOtUsEr', NegotiatedCaseMapping::operServ());
         self::assertTrue($registry->isRoot('rootuser'));
         self::assertTrue($registry->isRoot('ROOTUSER'));
         self::assertTrue($registry->isRoot('RootUser'));
+    }
+
+    #[Test]
+    public function rootNicknamesUseTheRfc1459FoldAndListAsciiLoweredNames(): void
+    {
+        $registry = new RootUserRegistry('[Root]\\, {ROOT}|, Admin', NegotiatedCaseMapping::operServ());
+
+        self::assertTrue($registry->isRoot('{root}|'));
+        self::assertTrue($registry->isRoot('ADMIN'));
+        self::assertFalse($registry->isRoot('(root)|'));
+        self::assertSame(['[root]\\', '{root}|', 'admin'], $registry->getRootNicks());
+    }
+
+    #[Test]
+    public function everyConfiguredSpellingStaysARootOnAsciiNetworks(): void
+    {
+        $registry = new RootUserRegistry('Admin[, Admin{, admin[', NegotiatedCaseMapping::operServ(CaseMapping::Ascii));
+
+        self::assertSame(['admin[', 'admin{'], $registry->getRootNicks());
+        self::assertTrue($registry->isRoot('ADMIN['));
+        self::assertTrue($registry->isRoot('admin{'));
+        self::assertFalse($registry->isRoot('Admin]'));
     }
 }

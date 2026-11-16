@@ -328,7 +328,7 @@ final class RecordingGlineRepository implements GlineRepository
         ));
     }
 
-    public function findExpiredAt(DateTimeImmutable $at): array
+    public function findExpiredAt(DateTimeImmutable $at, ?GlineEntry $after = null, ?int $limit = null): array
     {
         return array_values(array_filter(
             $this->entries,

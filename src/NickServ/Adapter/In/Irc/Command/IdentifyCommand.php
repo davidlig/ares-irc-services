@@ -24,7 +24,6 @@ use App\Shared\Adapter\In\Irc\Presentation\Component;
 use App\Shared\Adapter\In\Irc\Presentation\Role;
 
 use function ceil;
-use function strcasecmp;
 
 final readonly class IdentifyCommand implements NickServCommandInterface
 {
@@ -194,8 +193,10 @@ final readonly class IdentifyCommand implements NickServCommandInterface
 
     private function handleSuccess(NickServContext $context, IdentifyNickResult $result, SenderView $sender, string $nickname): void
     {
+        // Network semantics: the sender already holds the nick only when the network resolves it to the sender.
         $currentHolder = $this->userLookup->findByNick($nickname);
-        if (null !== $currentHolder && $sender->uid !== $currentHolder->uid) {
+        $senderHoldsNick = null !== $currentHolder && $sender->uid === $currentHolder->uid;
+        if (null !== $currentHolder && !$senderHoldsNick) {
             $killReason = $context->transIn(
                 'identify.kill_reason',
                 ['nickname' => $nickname, 'source' => $sender->nick],
@@ -205,7 +206,7 @@ final readonly class IdentifyCommand implements NickServCommandInterface
             $context->replyEmphasized('identify.ghost_released', ['nickname' => $nickname], Role::Information, ['nickname']);
         }
 
-        if (0 !== strcasecmp($sender->nick, $nickname) || $this->pendingRegistry->peek($sender->uid)) {
+        if (!$senderHoldsNick || $this->pendingRegistry->peek($sender->uid)) {
             $context->getNotifier()->forceNick($sender->uid, $nickname);
         }
 

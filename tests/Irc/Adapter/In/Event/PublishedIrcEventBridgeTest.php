@@ -25,6 +25,7 @@ use App\Irc\Application\PublishedEvent\IrcMessageProcessingStartedEvent;
 use App\Irc\Application\PublishedEvent\NetworkConnectionEstablishedEvent;
 use App\Irc\Application\PublishedEvent\NetworkConnectionLostEvent;
 use App\Irc\Application\PublishedEvent\NetworkSynchronizationCompletedEvent;
+use App\Irc\Application\PublishedEvent\RemoteBurstEndedEvent;
 use App\Irc\Application\PublishedEvent\ServiceIntroductionRequestedEvent;
 use App\Irc\Application\PublishedEvent\UserDepartedChannelEvent;
 use App\Irc\Application\PublishedEvent\UserJoinedChannelEvent as PublishedUserJoinedChannelEvent;
@@ -62,6 +63,7 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 #[CoversClass(IrcMessageProcessingFinishedEvent::class)]
 #[CoversClass(NetworkConnectionEstablishedEvent::class)]
 #[CoversClass(NetworkSynchronizationCompletedEvent::class)]
+#[CoversClass(RemoteBurstEndedEvent::class)]
 #[CoversClass(ServiceIntroductionRequestedEvent::class)]
 #[CoversClass(PublishedUserJoinedChannelEvent::class)]
 #[CoversClass(UserDepartedChannelEvent::class)]
@@ -90,7 +92,10 @@ final class PublishedIrcEventBridgeTest extends TestCase
             NetworkBurstCompleteEvent::class => [
                 ['publishServiceIntroductionRequested', 100],
             ],
-            NetworkSyncCompleteEvent::class => ['publishNetworkSynchronizationCompleted', -256],
+            NetworkSyncCompleteEvent::class => [
+                ['publishRemoteBurstEnded', 2048],
+                ['publishNetworkSynchronizationCompleted', -256],
+            ],
             IrcMessageProcessedEvent::class => [
                 ['publishMessageHandled', -200],
                 ['publishMessageProcessingFinished', -257],
@@ -242,6 +247,18 @@ final class PublishedIrcEventBridgeTest extends TestCase
             && '001' === $event->serverSid);
 
         $bridge->publishNetworkSynchronizationCompleted(new NetworkSyncCompleteEvent(
+            $this->createStub(ConnectionInterface::class),
+            '001',
+        ));
+    }
+
+    #[Test]
+    public function publishesTheRemoteBurstEndWithoutConnection(): void
+    {
+        $bridge = $this->bridgeExpecting(static fn (object $event): bool => $event instanceof RemoteBurstEndedEvent
+            && '001' === $event->serverSid);
+
+        $bridge->publishRemoteBurstEnded(new NetworkSyncCompleteEvent(
             $this->createStub(ConnectionInterface::class),
             '001',
         ));

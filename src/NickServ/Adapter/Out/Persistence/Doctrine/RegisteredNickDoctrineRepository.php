@@ -4,18 +4,22 @@ declare(strict_types=1);
 
 namespace App\NickServ\Adapter\Out\Persistence\Doctrine;
 
+use App\Irc\Application\Port\In\NetworkIdentityEquivalence;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\NickServ\Domain\ValueObject\NickStatus;
+use App\Shared\Domain\IrcIdentityFold;
 use DateTimeImmutable;
 use Doctrine\DBAL\Platforms\AbstractMySQLPlatform;
 use Doctrine\DBAL\Platforms\SQLitePlatform;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Query\ResultSetMappingBuilder;
+use Doctrine\ORM\QueryBuilder;
 use LogicException;
 use WeakMap;
 
+use function array_chunk;
 use function array_filter;
 use function array_key_exists;
 use function array_map;
@@ -29,17 +33,25 @@ use function max;
 use function spl_object_id;
 use function sprintf;
 use function str_contains;
-use function strtolower;
 use function strtr;
 
 class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterface
 {
+    /** Nicknames or ids bound by one bulk lookup statement; stays under SQLite's historic 999-parameter limit. */
+    private const int LOOKUP_CHUNK_SIZE = 900;
+
+    /** Accounts per last-seen UPDATE; each binds three parameters, so one statement binds at most 900. */
+    private const int ACTIVITY_CHUNK_SIZE = 300;
+
     /** @var WeakMap<EntityManagerInterface, array<string, RegisteredNick|null>>|null */
     private static ?WeakMap $lookupCache = null;
 
     private static bool $lookupCacheActive = false;
 
-    public function __construct(private readonly EntityManagerInterface $em) {}
+    public function __construct(
+        private readonly EntityManagerInterface $em,
+        private readonly NetworkIdentityEquivalence $equivalence,
+    ) {}
 
     public function save(RegisteredNick $nick): void
     {
@@ -54,27 +66,17 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
             return;
         }
 
+        foreach ($nicks as $nick) {
+            if (!$this->em->contains($nick) || null === $nick->getLastSeenAt()) {
+                throw new LogicException('Activity batching requires managed accounts with a last-seen timestamp.');
+            }
+        }
+
         $this->em->wrapInTransaction(function () use ($nicks): void {
-            $cases = [];
-            $ids = [];
-            foreach ($nicks as $index => $nick) {
-                if (!$this->em->contains($nick) || null === $nick->getLastSeenAt()) {
-                    throw new LogicException('Activity batching requires managed accounts with a last-seen timestamp.');
-                }
-                $ids[] = $nick->getId();
-                $cases[] = sprintf('WHEN n.id = :id%d THEN :seen%d', $index, $index);
+            // Three bound parameters per account: keep every statement bounded.
+            foreach (array_chunk($nicks, self::ACTIVITY_CHUNK_SIZE) as $chunk) {
+                $this->updateLastSeenChunk($chunk);
             }
-            $query = $this->em->createQuery(sprintf(
-                'UPDATE %s n SET n.lastSeenAt = CASE %s ELSE n.lastSeenAt END WHERE n.id IN (:ids)',
-                RegisteredNick::class,
-                implode(' ', $cases),
-            ));
-            $query->setParameter('ids', $ids);
-            foreach ($nicks as $index => $nick) {
-                $query->setParameter('id' . $index, $nick->getId());
-                $query->setParameter('seen' . $index, $nick->getLastSeenAt(), Types::DATETIME_IMMUTABLE);
-            }
-            $query->execute();
             foreach ($nicks as $nick) {
                 // The bulk update bypasses change tracking. Keep the snapshot synchronized
                 // so the following transaction flush writes any other changed fields only.
@@ -96,7 +98,14 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
 
     public function findByNick(string $nickname): ?RegisteredNick
     {
-        $nicknameLower = strtolower($nickname);
+        $nick = $this->findByNicknameKey($nickname);
+
+        return null !== $nick && $this->equivalence->equivalent($nick->getNickname(), $nickname) ? $nick : null;
+    }
+
+    public function findByNicknameKey(string $nickname): ?RegisteredNick
+    {
+        $nicknameLower = IrcIdentityFold::fold($nickname);
         if (!self::$lookupCacheActive) {
             return $this->em
                 ->getRepository(RegisteredNick::class)
@@ -137,18 +146,32 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
 
     public function findByNicks(array $nicknames): array
     {
-        $nicknames = array_values(array_unique(array_map(strtolower(...), $nicknames)));
-        if ([] === $nicknames) {
+        $keys = array_values(array_unique(array_map(IrcIdentityFold::fold(...), $nicknames)));
+        if ([] === $keys) {
             return [];
         }
 
-        /** @var list<RegisteredNick> $accounts */
-        $accounts = $this->em->createQueryBuilder()
-            ->select('n')
-            ->from(RegisteredNick::class, 'n')
-            ->where('n.nicknameLower IN (:nicknames)')
-            ->setParameter('nicknames', $nicknames)
-            ->getQuery()->getResult();
+        $byKey = [];
+        foreach (array_chunk($keys, self::LOOKUP_CHUNK_SIZE) as $chunk) {
+            /** @var list<RegisteredNick> $found */
+            $found = $this->em->createQueryBuilder()
+                ->select('n')
+                ->from(RegisteredNick::class, 'n')
+                ->where('n.nicknameLower IN (:nicknames)')
+                ->setParameter('nicknames', $chunk)
+                ->getQuery()->getResult();
+            foreach ($found as $account) {
+                $byKey[$account->getNicknameLower()] = $account;
+            }
+        }
+
+        $accounts = [];
+        foreach ($nicknames as $nickname) {
+            $account = $byKey[IrcIdentityFold::fold($nickname)] ?? null;
+            if (null !== $account && $this->equivalence->equivalent($account->getNickname(), $nickname)) {
+                $accounts[$nickname] = $account;
+            }
+        }
 
         return $accounts;
     }
@@ -172,21 +195,23 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
             return [];
         }
 
-        $queryBuilder = $this->em->createQueryBuilder();
-        $queryBuilder->select('n.id AS accountId, n.nickname AS nickname')
-            ->from(RegisteredNick::class, 'n')
-            ->where('n.id IN (:ids)')
-            ->setParameter('ids', $ids);
-
-        /** @var array<mixed> $result */
-        $result = $queryBuilder->getQuery()->getArrayResult();
         $nicknames = [];
-        foreach ($result as $row) {
-            if (!is_array($row) || !isset($row['accountId'], $row['nickname']) || !is_numeric($row['accountId']) || !is_string($row['nickname'])) {
-                continue;
-            }
+        foreach (array_chunk($ids, self::LOOKUP_CHUNK_SIZE) as $chunk) {
+            $queryBuilder = $this->em->createQueryBuilder();
+            $queryBuilder->select('n.id AS accountId, n.nickname AS nickname')
+                ->from(RegisteredNick::class, 'n')
+                ->where('n.id IN (:ids)')
+                ->setParameter('ids', $chunk);
 
-            $nicknames[(int) $row['accountId']] = $row['nickname'];
+            /** @var array<mixed> $result */
+            $result = $queryBuilder->getQuery()->getArrayResult();
+            foreach ($result as $row) {
+                if (!is_array($row) || !isset($row['accountId'], $row['nickname']) || !is_numeric($row['accountId']) || !is_string($row['nickname'])) {
+                    continue;
+                }
+
+                $nicknames[(int) $row['accountId']] = $row['nickname'];
+            }
         }
 
         return $nicknames;
@@ -215,10 +240,10 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
 
     public function existsByNick(string $nickname): bool
     {
-        return null !== $this->findByNick($nickname);
+        return null !== $this->findByNicknameKey($nickname);
     }
 
-    public function findRegisteredInactiveSince(DateTimeImmutable $threshold, ?int $limit = null): array
+    public function findRegisteredInactiveSince(DateTimeImmutable $threshold, ?int $limit = null, int $afterId = 0): array
     {
         $qb = $this->em->createQueryBuilder();
         $qb->select('n')
@@ -230,15 +255,7 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
             ->setParameter('status', NickStatus::Registered)
             ->setParameter('threshold', $threshold->format('Y-m-d H:i:s'));
 
-        if (null !== $limit && $limit > 0) {
-            $qb->setMaxResults($limit);
-        }
-
-        /** @var array<mixed> $result */
-        $result = $qb->getQuery()->getResult();
-
-        /* @var array<RegisteredNick> */
-        return array_values(array_filter($result, static fn ($row): bool => $row instanceof RegisteredNick));
+        return $this->maintenancePage($qb, $limit, $afterId);
     }
 
     public function deleteExpiredPending(DateTimeImmutable $now): int
@@ -266,7 +283,7 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
             ->findBy(['status' => $status]);
     }
 
-    public function findExpiredSuspensions(DateTimeImmutable $now, ?int $limit = null): array
+    public function findExpiredSuspensions(DateTimeImmutable $now, ?int $limit = null, int $afterId = 0): array
     {
         $qb = $this->em->createQueryBuilder();
         $qb->select('n')
@@ -278,18 +295,10 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
             ->setParameter('status', NickStatus::Suspended)
             ->setParameter('now', $now->format('Y-m-d H:i:s'));
 
-        if (null !== $limit && $limit > 0) {
-            $qb->setMaxResults($limit);
-        }
-
-        /** @var array<mixed> $result */
-        $result = $qb->getQuery()->getResult();
-
-        /* @var array<RegisteredNick> */
-        return array_values(array_filter($result, static fn ($row): bool => $row instanceof RegisteredNick));
+        return $this->maintenancePage($qb, $limit, $afterId);
     }
 
-    public function findPendingDeletionBefore(DateTimeImmutable $threshold, ?int $limit = null): array
+    public function findPendingDeletionBefore(DateTimeImmutable $threshold, ?int $limit = null, int $afterId = 0): array
     {
         $qb = $this->em->createQueryBuilder();
         $qb->select('n')
@@ -301,15 +310,7 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
             ->setParameter('status', NickStatus::PendingDeletion)
             ->setParameter('threshold', $threshold->format('Y-m-d H:i:s'));
 
-        if (null !== $limit && $limit > 0) {
-            $qb->setMaxResults($limit);
-        }
-
-        /** @var array<mixed> $result */
-        $result = $qb->getQuery()->getResult();
-
-        /* @var array<RegisteredNick> */
-        return array_values(array_filter($result, static fn ($row): bool => $row instanceof RegisteredNick));
+        return $this->maintenancePage($qb, $limit, $afterId);
     }
 
     public function all(): array
@@ -389,7 +390,7 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
             $equality = $platform instanceof SQLitePlatform ? $expression . ' COLLATE NOCASE' : $expression;
             // Keep LIKE: equality can ignore trailing spaces or broaden linguistic matches.
             $predicate = $equality . ' = :exact AND ' . $predicate;
-            $parameters['exact'] = strtolower($pattern);
+            $parameters['exact'] = IrcIdentityFold::fold($pattern);
         }
 
         return [$predicate, $parameters];
@@ -397,6 +398,52 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
 
     private static function toLikePattern(string $pattern): string
     {
-        return strtr(strtolower($pattern), ['!' => '!!', '%' => '!%', '_' => '!_', '*' => '%']);
+        return strtr(IrcIdentityFold::fold($pattern), ['!' => '!!', '%' => '!%', '_' => '!_', '*' => '%']);
+    }
+
+    /**
+     * @param list<RegisteredNick> $nicks
+     */
+    private function updateLastSeenChunk(array $nicks): void
+    {
+        $cases = [];
+        $ids = [];
+        foreach ($nicks as $index => $nick) {
+            $ids[] = $nick->getId();
+            $cases[] = sprintf('WHEN n.id = :id%d THEN :seen%d', $index, $index);
+        }
+        $query = $this->em->createQuery(sprintf(
+            'UPDATE %s n SET n.lastSeenAt = CASE %s ELSE n.lastSeenAt END WHERE n.id IN (:ids)',
+            RegisteredNick::class,
+            implode(' ', $cases),
+        ));
+        $query->setParameter('ids', $ids);
+        foreach ($nicks as $index => $nick) {
+            $query->setParameter('id' . $index, $nick->getId());
+            $query->setParameter('seen' . $index, $nick->getLastSeenAt(), Types::DATETIME_IMMUTABLE);
+        }
+        $query->execute();
+    }
+
+    /**
+     * Applies the maintenance sweep cursor and page size to an id-ordered query.
+     *
+     * @return RegisteredNick[]
+     */
+    private function maintenancePage(QueryBuilder $qb, ?int $limit, int $afterId): array
+    {
+        if ($afterId > 0) {
+            $qb->andWhere('n.id > :afterId')->setParameter('afterId', $afterId);
+        }
+
+        if (null !== $limit && $limit > 0) {
+            $qb->setMaxResults($limit);
+        }
+
+        /** @var array<mixed> $result */
+        $result = $qb->getQuery()->getResult();
+
+        /* @var array<RegisteredNick> */
+        return array_values(array_filter($result, static fn ($row): bool => $row instanceof RegisteredNick));
     }
 }

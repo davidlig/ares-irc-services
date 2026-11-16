@@ -8,8 +8,6 @@ use App\MemoServ\Application\Port\Out\MemoChannelPort;
 use App\MemoServ\Application\Port\Out\MemoSettingsRepositoryInterface;
 use App\MemoServ\Domain\Entity\MemoSettings;
 
-use function strtolower;
-
 final readonly class DisableMemosHandler implements DisableMemosHandlerInterface
 {
     public function __construct(
@@ -30,7 +28,7 @@ final readonly class DisableMemosHandler implements DisableMemosHandlerInterface
     {
         /** @var string $channelName */
         $channelName = $command->channelName;
-        $channel = $this->channelPort->findChannelByName(strtolower($channelName));
+        $channel = $this->channelPort->findChannelByName($channelName);
         if (null === $channel) {
             return DisableMemosResult::channelNotRegistered($channelName);
         }

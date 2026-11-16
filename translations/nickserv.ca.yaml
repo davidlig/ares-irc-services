@@ -803,6 +803,7 @@ forbid:
   cannot_forbid_root: "No es pot prohibir l'usuari root %nickname%."
   cannot_forbid_oper: "No es pot prohibir l'operador d'IRC %nickname%."
   cannot_forbid_service: "No es pot prohibir el sobrenom de servei %nickname%."
+  key_conflict: "No es pot prohibir %nickname%: entra en conflicte amb el sobrenom registrat %registered%, que és un sobrenom diferent en aquesta xarxa."
 
 # --- UNFORBID (IRCop) ---------------------------------------------------------
 unforbid:

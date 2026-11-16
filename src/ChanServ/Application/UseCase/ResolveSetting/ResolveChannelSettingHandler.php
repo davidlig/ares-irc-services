@@ -12,7 +12,6 @@ use App\ChanServ\Domain\Exception\ChannelNotRegisteredException;
 use App\ChanServ\Domain\Exception\InsufficientAccessException;
 
 use function in_array;
-use function strtolower;
 
 final readonly class ResolveChannelSettingHandler implements ResolveChannelSettingHandlerInterface
 {
@@ -25,7 +24,7 @@ final readonly class ResolveChannelSettingHandler implements ResolveChannelSetti
 
     public function handle(ResolveChannelSetting $query): RegisteredChannel
     {
-        $channel = $this->channels->findByChannelName(strtolower($query->channelName));
+        $channel = $this->channels->findByChannelName($query->channelName);
         if (null === $channel) {
             throw ChannelNotRegisteredException::forChannel($query->channelName);
         }

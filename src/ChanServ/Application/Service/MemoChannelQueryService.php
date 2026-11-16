@@ -11,7 +11,6 @@ use App\ChanServ\Domain\Entity\ChannelLevel;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 
 use function array_find;
-use function strtolower;
 
 final readonly class MemoChannelQueryService implements MemoChannelQuery
 {
@@ -23,7 +22,7 @@ final readonly class MemoChannelQueryService implements MemoChannelQuery
     public function findByName(string $channelName): ?MemoChannel
     {
         return $this->toMemoChannel(
-            $this->available($this->channelRepository->findByChannelName(strtolower($channelName))),
+            $this->available($this->channelRepository->findByChannelName($channelName)),
         );
     }
 

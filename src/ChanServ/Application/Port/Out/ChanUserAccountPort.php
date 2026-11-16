@@ -13,7 +13,7 @@ interface ChanUserAccountPort
     /**
      * @param list<string> $nicknames
      *
-     * @return array<string, ChanAccountView> keyed by lowercase nickname
+     * @return array<string, ChanAccountView> keyed by each queried nickname whose registration is equivalent under the negotiated casemapping
      */
     public function findAccountsByNicks(array $nicknames): array;
 

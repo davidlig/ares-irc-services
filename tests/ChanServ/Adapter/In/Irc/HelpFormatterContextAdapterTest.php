@@ -947,7 +947,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
         $operatorAccess = $this->createMock(ChanServOperatorAccess::class);
         $operatorAccess->expects(self::once())
             ->method('hasPermission')
-            ->with('rootadmin', 1, true, true, ChanServPermission::DROP)
+            ->with('RootAdmin', 1, true, true, ChanServPermission::DROP)
             ->willReturn(true);
         $adapter = new HelpFormatterContextAdapter($context, $operatorAccess);
 
@@ -1005,7 +1005,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
         $operatorAccess = $this->createMock(ChanServOperatorAccess::class);
         $operatorAccess->expects(self::once())
             ->method('hasPermission')
-            ->with('operuser', 1, true, true, ChanServPermission::LIST)
+            ->with('OperUser', 1, true, true, ChanServPermission::LIST)
             ->willReturn(true);
 
         $commands = iterator_to_array(new HelpFormatterContextAdapter($context, $operatorAccess)->getIrcopCommands());
@@ -1030,7 +1030,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
         $operatorAccess = $this->createMock(ChanServOperatorAccess::class);
         $operatorAccess->expects(self::once())
             ->method('hasPermission')
-            ->with('operuser', 1, true, true, ChanServPermission::LIST)
+            ->with('OperUser', 1, true, true, ChanServPermission::LIST)
             ->willReturn(false);
 
         self::assertSame([], iterator_to_array(new HelpFormatterContextAdapter($context, $operatorAccess)->getIrcopCommands()));
@@ -1052,7 +1052,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
         $operatorAccess = $this->createMock(ChanServOperatorAccess::class);
         $operatorAccess->expects(self::once())
             ->method('hasPermission')
-            ->with('rootadmin', 1, true, true, ChanServPermission::LIST)
+            ->with('RootAdmin', 1, true, true, ChanServPermission::LIST)
             ->willReturn(true);
 
         $commands = iterator_to_array(new HelpFormatterContextAdapter($context, $operatorAccess)->getIrcopCommands());
@@ -1093,7 +1093,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
         $operatorAccess = $this->createMock(ChanServOperatorAccess::class);
         $operatorAccess->expects(self::once())
             ->method('hasAnyPermission')
-            ->with('rootadmin', 1, true, true, ChanServPermission::allIrcop())
+            ->with('RootAdmin', 1, true, true, ChanServPermission::allIrcop())
             ->willReturn(true);
         $adapter = new HelpFormatterContextAdapter($context, $operatorAccess);
 

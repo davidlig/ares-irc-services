@@ -11,7 +11,6 @@ use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 
 use function str_contains;
 use function strcasecmp;
-use function strtolower;
 
 final readonly class SynchronizeReceivedChannelTopicHandler implements SynchronizeReceivedChannelTopicHandlerInterface
 {
@@ -28,7 +27,7 @@ final readonly class SynchronizeReceivedChannelTopicHandler implements Synchroni
 
     public function handle(SynchronizeReceivedChannelTopic $command): void
     {
-        $registered = $this->channels->findByChannelName(strtolower($command->channelName));
+        $registered = $this->channels->findByChannelName($command->channelName);
         if (null === $registered || $registered->isBlocked()) {
             return;
         }
@@ -67,6 +66,8 @@ final readonly class SynchronizeReceivedChannelTopicHandler implements Synchroni
             return true;
         }
 
+        // Network semantics: ASCII case-insensitivity holds under every IRC casemapping and each service
+        // holds its configured spelling, so a distinct network user is never mistaken for a service.
         return 0 === strcasecmp($nickname, $this->chanservNick)
             || 0 === strcasecmp($nickname, $this->nickservNick);
     }

@@ -18,6 +18,7 @@ use App\ChanServ\Application\Port\Out\ChannelAccessRepositoryInterface;
 use App\ChanServ\Application\Port\Out\ChannelAkickRepositoryInterface;
 use App\ChanServ\Application\Port\Out\ChannelEntryNetworkQuery;
 use App\ChanServ\Application\Port\Out\ChannelLevelRepositoryInterface;
+use App\ChanServ\Application\Port\Out\ChanServActivitySink;
 use App\ChanServ\Application\Port\Out\ChanUserAccountPort;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\PublishedEvent\ChannelAkickChangedEvent;
@@ -33,7 +34,6 @@ use App\ChanServ\Domain\Entity\ChannelAkick;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\Exception\ChannelNotRegisteredException;
 use App\ChanServ\Domain\Policy\AkickAdditionPolicy;
-use App\ChanServ\Domain\Policy\AkickMatchPolicy;
 use App\ChanServ\Domain\Policy\AkickProtectionPolicy;
 use App\Irc\Adapter\Protocol\NullChannelModeSupport;
 use App\Irc\Application\Port\In\BurstCompletePort;
@@ -44,6 +44,7 @@ use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
 use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\Shared\Application\Port\EventBusInterface;
+use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversTrait;
@@ -57,7 +58,6 @@ use function assert;
 use function count;
 use function is_string;
 use function json_encode;
-use function str_contains;
 
 #[CoversTrait(ChanServArgumentDefinitionSupport::class)]
 #[CoversClass(AkickCommand::class)]
@@ -2277,7 +2277,6 @@ final class AkickCommandTest extends TestCase
         $akick->method('getReason')->willReturn('Spam');
         $akick->method('getCreatorNickId')->willReturn(1);
         $akick->method('getExpiresAt')->willReturn(null);
-        $akick->method('matches')->willReturnCallback(static fn (string $mask): bool => str_contains($mask, '.isp.com'));
 
         $nickRepo = $this->createStub(ChanUserAccountPort::class);
         $nickRepo->method('findNicknameById')->willReturn('TestNick');
@@ -2376,7 +2375,6 @@ final class AkickCommandTest extends TestCase
         $akick->method('getReason')->willReturn('Test');
         $akick->method('getCreatorNickId')->willReturn(1);
         $akick->method('getExpiresAt')->willReturn(null);
-        $akick->method('matches')->willReturn(true);
 
         $nickRepo = $this->createStub(ChanUserAccountPort::class);
         $nickRepo->method('findNicknameById')->willReturn('TestNick');
@@ -3228,11 +3226,12 @@ final class AkickCommandTest extends TestCase
             $accessRepository,
             $accessHelper,
             new AkickAdditionPolicy(),
-            new AkickMatchPolicy(),
             new AkickProtectionPolicy(),
             $network,
             $actions,
             new SymfonyChanServEventPublisher($eventDispatcher),
+            $this->createStub(ChanServActivitySink::class),
+            NegotiatedCaseMapping::chanServ(),
         ));
     }
 

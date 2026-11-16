@@ -27,7 +27,7 @@ readonly class ForbiddenNickService
 
     public function forbid(string $nickname, string $reason, ?string $operatorNick = null): RegisteredNick
     {
-        $account = $this->nickRepository->findByNick($nickname);
+        $account = $this->nickRepository->findByNicknameKey($nickname);
 
         if (null !== $account && !$account->isForbidden()) {
             $this->logger->info(sprintf(

@@ -13,6 +13,7 @@ use App\NickServ\Application\UseCase\Drop\DropNickHandler;
 use App\NickServ\Application\UseCase\Drop\DropNickOutcome;
 use App\NickServ\Application\UseCase\Drop\DropNickResult;
 use App\NickServ\Domain\Entity\RegisteredNick;
+use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -30,6 +31,7 @@ final class DropNickHandlerTest extends TestCase
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NickTargetValidator::class),
             $this->createStub(NickDropService::class),
+            NegotiatedCaseMapping::nickServ(),
         );
 
         $result = $handler->handle(new DropNick(targetNick: 'MyNick', operatorNick: 'mynick', occurredAt: new DateTimeImmutable()));
@@ -47,6 +49,7 @@ final class DropNickHandlerTest extends TestCase
             $repository,
             $this->createStub(NickTargetValidator::class),
             $this->createStub(NickDropService::class),
+            NegotiatedCaseMapping::nickServ(),
         );
 
         $result = $handler->handle(new DropNick(targetNick: 'Unknown', operatorNick: 'Oper', occurredAt: new DateTimeImmutable()));
@@ -68,6 +71,7 @@ final class DropNickHandlerTest extends TestCase
             $repository,
             $this->createStub(NickTargetValidator::class),
             $this->createStub(NickDropService::class),
+            NegotiatedCaseMapping::nickServ(),
         );
 
         $result = $handler->handle(new DropNick(targetNick: 'PendingNick', operatorNick: 'Oper', occurredAt: new DateTimeImmutable(), force: false));
@@ -89,6 +93,7 @@ final class DropNickHandlerTest extends TestCase
             $repository,
             $this->createStub(NickTargetValidator::class),
             $this->createStub(NickDropService::class),
+            NegotiatedCaseMapping::nickServ(),
         );
 
         $result = $handler->handle(new DropNick(
@@ -118,6 +123,7 @@ final class DropNickHandlerTest extends TestCase
             $repository,
             $this->createStub(NickTargetValidator::class),
             $dropService,
+            NegotiatedCaseMapping::nickServ(),
         );
 
         $result = $handler->handle(new DropNick(
@@ -146,6 +152,7 @@ final class DropNickHandlerTest extends TestCase
             $repository,
             $this->createStub(NickTargetValidator::class),
             $this->createStub(NickDropService::class),
+            NegotiatedCaseMapping::nickServ(),
         );
 
         $result = $handler->handle(new DropNick(targetNick: 'SuspendedNick', operatorNick: 'Oper', occurredAt: new DateTimeImmutable()));
@@ -169,6 +176,7 @@ final class DropNickHandlerTest extends TestCase
             $repository,
             $this->createStub(NickTargetValidator::class),
             $this->createStub(NickDropService::class),
+            NegotiatedCaseMapping::nickServ(),
         );
 
         $result = $handler->handle(new DropNick(targetNick: 'ForbiddenNick', operatorNick: 'Oper', occurredAt: new DateTimeImmutable()));
@@ -192,7 +200,7 @@ final class DropNickHandlerTest extends TestCase
         $validator->expects(self::once())->method('validate')->with('RootNick')
             ->willReturn(NickProtectabilityResult::root('RootNick'));
 
-        $handler = new DropNickHandler($repository, $validator, $this->createStub(NickDropService::class));
+        $handler = new DropNickHandler($repository, $validator, $this->createStub(NickDropService::class), NegotiatedCaseMapping::nickServ());
         $result = $handler->handle(new DropNick(targetNick: 'RootNick', operatorNick: 'Oper', occurredAt: new DateTimeImmutable()));
 
         self::assertSame(DropNickOutcome::CannotDropRoot, $result->outcome);
@@ -214,7 +222,7 @@ final class DropNickHandlerTest extends TestCase
         $validator->expects(self::once())->method('validate')->with('OperNick')
             ->willReturn(NickProtectabilityResult::ircop('OperNick'));
 
-        $handler = new DropNickHandler($repository, $validator, $this->createStub(NickDropService::class));
+        $handler = new DropNickHandler($repository, $validator, $this->createStub(NickDropService::class), NegotiatedCaseMapping::nickServ());
         $result = $handler->handle(new DropNick(targetNick: 'OperNick', operatorNick: 'Oper', occurredAt: new DateTimeImmutable()));
 
         self::assertSame(DropNickOutcome::CannotDropOper, $result->outcome);
@@ -236,7 +244,7 @@ final class DropNickHandlerTest extends TestCase
         $validator->expects(self::once())->method('validate')->with('NickServ')
             ->willReturn(NickProtectabilityResult::service('NickServ'));
 
-        $handler = new DropNickHandler($repository, $validator, $this->createStub(NickDropService::class));
+        $handler = new DropNickHandler($repository, $validator, $this->createStub(NickDropService::class), NegotiatedCaseMapping::nickServ());
         $result = $handler->handle(new DropNick(targetNick: 'NickServ', operatorNick: 'Oper', occurredAt: new DateTimeImmutable()));
 
         self::assertSame(DropNickOutcome::CannotDropService, $result->outcome);
@@ -258,7 +266,7 @@ final class DropNickHandlerTest extends TestCase
         $validator->expects(self::once())->method('validate')->with('ActiveNick')
             ->willReturn(NickProtectabilityResult::allowed('ActiveNick', $account));
 
-        $handler = new DropNickHandler($repository, $validator, $this->createStub(NickDropService::class));
+        $handler = new DropNickHandler($repository, $validator, $this->createStub(NickDropService::class), NegotiatedCaseMapping::nickServ());
         $result = $handler->handle(new DropNick(
             targetNick: 'ActiveNick',
             operatorNick: 'Oper',
@@ -288,7 +296,7 @@ final class DropNickHandlerTest extends TestCase
         $dropService = $this->createMock(NickDropService::class);
         $dropService->expects(self::once())->method('hardDropNick')->with($account, self::isInstanceOf(DateTimeImmutable::class), 'manual-force', 'Oper');
 
-        $handler = new DropNickHandler($repository, $validator, $dropService);
+        $handler = new DropNickHandler($repository, $validator, $dropService, NegotiatedCaseMapping::nickServ());
         $result = $handler->handle(new DropNick(
             targetNick: 'ActiveNick',
             operatorNick: 'Oper',
@@ -319,7 +327,7 @@ final class DropNickHandlerTest extends TestCase
         $dropService = $this->createMock(NickDropService::class);
         $dropService->expects(self::once())->method('softDropNick')->with($account, self::isInstanceOf(DateTimeImmutable::class), 'Oper');
 
-        $handler = new DropNickHandler($repository, $validator, $dropService);
+        $handler = new DropNickHandler($repository, $validator, $dropService, NegotiatedCaseMapping::nickServ());
         $result = $handler->handle(new DropNick(targetNick: 'ActiveNick', operatorNick: 'Oper', occurredAt: new DateTimeImmutable()));
 
         self::assertSame(DropNickOutcome::SoftDropSuccess, $result->outcome);

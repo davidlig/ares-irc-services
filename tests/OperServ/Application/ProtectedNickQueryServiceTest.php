@@ -9,6 +9,7 @@ use App\OperServ\Application\RootUserRegistry;
 use App\OperServ\Domain\Entity\OperIrcop;
 use App\OperServ\Domain\Entity\OperRole;
 use App\OperServ\Domain\Repository\OperIrcopRepositoryInterface;
+use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -25,7 +26,7 @@ final class ProtectedNickQueryServiceTest extends TestCase
         $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 42, $role);
         $repository = $this->createStub(OperIrcopRepositoryInterface::class);
         $repository->method('findByNickId')->willReturnMap([[42, $ircop], [99, null]]);
-        $query = new ProtectedNickQueryService(new RootUserRegistry('RootAdmin'), $repository);
+        $query = new ProtectedNickQueryService(new RootUserRegistry('RootAdmin', NegotiatedCaseMapping::operServ()), $repository);
 
         self::assertTrue($query->isRootNickname('rootadmin'));
         self::assertFalse($query->isRootNickname('Other'));

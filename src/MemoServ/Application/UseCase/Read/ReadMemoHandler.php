@@ -9,8 +9,6 @@ use App\MemoServ\Application\Port\Out\MemoRepositoryInterface;
 use App\MemoServ\Application\Port\Out\MemoUserAccountPort;
 use LogicException;
 
-use function strtolower;
-
 final readonly class ReadMemoHandler implements ReadMemoHandlerInterface
 {
     public function __construct(
@@ -22,7 +20,7 @@ final readonly class ReadMemoHandler implements ReadMemoHandlerInterface
     public function handle(ReadMemo $command): ReadMemoResult
     {
         if (null !== $command->channelName) {
-            $channel = $this->channelPort->findChannelByName(strtolower($command->channelName));
+            $channel = $this->channelPort->findChannelByName($command->channelName);
             if (null === $channel) {
                 return ReadMemoResult::channelNotRegistered($command->channelName);
             }

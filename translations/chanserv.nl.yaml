@@ -807,6 +807,7 @@ forbid:
   success: "Kanaal %channel% is verboden."
   updated: "Verbodsreden voor kanaal %channel% is bijgewerkt."
   channel_forbidden: "Kanaal %channel% is verboden en kan niet worden gebruikt."
+  name_conflict: "Kanaal %channel% kan niet worden verboden: de registratie hoort bij een ander kanaal."
 
 # --- UNFORBID (IRCop) ---------------------------------------------------------
 unforbid:

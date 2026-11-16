@@ -9,7 +9,14 @@ use function strtolower;
 
 final class PendingChannelRankSynchronizations
 {
-    /** @var array<string, true> */
+    /**
+     * Set of ASCII-lowered network channel names; each name is handed back to the network as is.
+     *
+     * ASCII lowering never merges two channels the network treats as distinct; on an rfc1459
+     * network two equivalent spellings only cost a harmless second synchronization pass.
+     *
+     * @var array<string, true>
+     */
     private array $pending = [];
 
     /** @var array<string, true> */
@@ -30,8 +37,9 @@ final class PendingChannelRankSynchronizations
     {
         $channels = array_keys($this->pendingAtMessageStart);
         foreach ($channels as $channelName) {
-            unset($this->pending[$channelName], $this->pendingAtMessageStart[$channelName]);
+            unset($this->pending[$channelName]);
         }
+        $this->pendingAtMessageStart = [];
 
         return $channels;
     }

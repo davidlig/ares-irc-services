@@ -15,6 +15,7 @@ use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\Irc\Application\Port\In\ChannelModeSupportInterface;
 use App\Irc\Application\Port\In\ChannelServiceActionsPort;
 use App\Irc\Application\Port\In\ChannelView;
+use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -274,6 +275,7 @@ final class ChanServPermanentChannelSubscriberTest extends TestCase
             $modeSupportProvider,
             $channelLookup,
             $channelServiceActions,
+            NegotiatedCaseMapping::network(),
         );
         $registrationLifecycle = new ChannelRegistrationService(
             $this->createStub(RegisteredChannelRepositoryInterface::class),

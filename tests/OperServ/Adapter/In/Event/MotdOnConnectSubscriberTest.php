@@ -7,6 +7,7 @@ namespace App\Tests\OperServ\Adapter\In\Event;
 use App\Irc\Application\Port\In\ActiveProtocolModuleHolderInterface;
 use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\Irc\Application\Port\In\ChannelView;
+use App\Irc\Application\Port\In\NetworkIdentityEquivalence;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\ProtocolModuleInterface;
 use App\Irc\Application\Port\In\ProtocolServiceActionsInterface;
@@ -15,9 +16,11 @@ use App\Irc\Application\Port\In\SendNoticePort;
 use App\Irc\Application\Port\In\ServiceChannelRegistrationPort;
 use App\Irc\Application\Port\In\ServiceNickReservationInterface;
 use App\Irc\Application\Port\In\ServiceUidRegistry;
+use App\Irc\Application\PublishedEvent\NetworkConnectionLostEvent;
 use App\Irc\Application\PublishedEvent\NetworkSynchronizationCompletedEvent;
 use App\Irc\Application\PublishedEvent\UserJoinedNetworkAppEvent;
 use App\Irc\Application\PublishedEvent\UserJoinedNetworkDTO;
+use App\Irc\Domain\ValueObject\CaseMapping;
 use App\NickServ\Application\Port\In\NickAccountQuery;
 use App\NickServ\Application\Port\In\NickCollisionResolver;
 use App\OperServ\Adapter\In\Event\MotdOnConnectSubscriber;
@@ -25,10 +28,14 @@ use App\OperServ\Adapter\Out\Irc\PseudoClientUidGenerator;
 use App\OperServ\Application\Model\MessageDelivery;
 use App\OperServ\Application\Port\Out\MotdEntry;
 use App\OperServ\Application\Port\Out\MotdRepository;
+use App\Shared\Domain\IrcIdentityFold;
+use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+
+use function count;
 
 #[CoversClass(MotdOnConnectSubscriber::class)]
 final class MotdOnConnectSubscriberTest extends TestCase
@@ -41,6 +48,7 @@ final class MotdOnConnectSubscriberTest extends TestCase
         $ev = MotdOnConnectSubscriber::getSubscribedEvents();
         self::assertArrayHasKey(NetworkSynchronizationCompletedEvent::class, $ev);
         self::assertArrayHasKey(UserJoinedNetworkAppEvent::class, $ev);
+        self::assertArrayHasKey(NetworkConnectionLostEvent::class, $ev);
     }
 
     #[Test]
@@ -157,6 +165,57 @@ final class MotdOnConnectSubscriberTest extends TestCase
         $x = $this->sub(r: $r, u: $u, c: $c, p: $p, l: $l, n: $n, s: $s);
         $x->onSyncComplete();
         $x->onUserJoined(new UserJoinedNetworkAppEvent($this->dto()));
+    }
+
+    /**
+     * The pseudo-client lived on the link that dropped; after a reconnect without a process restart it
+     * is introduced again on the new link, and MOTDs are sent from the new uid. Between the loss and
+     * the new sync no MOTD is delivered.
+     */
+    #[Test]
+    public function pseudoClientIsIntroducedAgainAfterTheLinkIsLost(): void
+    {
+        $m = $this->motd('Hi', 'test!bot@h.com', 'PRIVMSG');
+        $r = $this->createStub(MotdRepository::class);
+        $r->method('findActiveAt')->willReturn([$m]);
+        $u = $this->createStub(ServiceUidRegistry::class);
+        $u->method('getUidByNickname')->willReturn(null);
+        $l = $this->createStub(NetworkUserLookupPort::class);
+        $l->method('findByNick')->willReturn(null);
+        $n = $this->createStub(NickAccountQuery::class);
+        $n->method('findIdByNick')->willReturn(null);
+
+        $introduced = [];
+        $sa = $this->createMock(ProtocolServiceActionsInterface::class);
+        $sa->expects(self::exactly(2))->method('introducePseudoClient')->willReturnCallback(
+            static function (string $sid, string $nick, string $ident, string $vhost, string $uid) use (&$introduced): void {
+                $introduced[] = [$nick, $uid];
+            },
+        );
+        $sa->expects(self::never())->method('quitPseudoClient');
+        $c = $this->createStub(ActiveProtocolModuleHolderInterface::class);
+        $c->method('getProtocolModule')->willReturn($this->mod($sa));
+        $c->method('getServerSid')->willReturn('0A0');
+        $p = $this->createStub(PseudoClientUidGenerator::class);
+        $p->method('generate')->willReturnOnConsecutiveCalls('0A0Z00001', '0A0Z00002');
+
+        $sent = [];
+        $s = $this->createStub(SendNoticePort::class);
+        $s->method('sendMessage')->willReturnCallback(
+            static function (string $from, string $to, string $message) use (&$sent): void {
+                $sent[] = [$from, $message];
+            },
+        );
+
+        $x = $this->sub(r: $r, u: $u, c: $c, p: $p, l: $l, n: $n, s: $s);
+        $x->onSyncComplete();
+        $x->onConnectionLost(new NetworkConnectionLostEvent());
+        $x->onUserJoined(new UserJoinedNetworkAppEvent($this->dto()));
+        $x->onSyncComplete();
+        $x->onUserJoined(new UserJoinedNetworkAppEvent($this->dto()));
+
+        self::assertSame([['test', '0A0Z00001'], ['test', '0A0Z00002']], $introduced);
+        self::assertSame([['0A0Z00002', 'Hi']], $sent);
     }
 
     #[Test]
@@ -394,6 +453,86 @@ final class MotdOnConnectSubscriberTest extends TestCase
         $c->method('getServerSid')->willReturn('0A0');
 
         $x = $this->sub(r: $r, u: $u, c: $c, l: $l, n: $n);
+        $x->onSyncComplete();
+    }
+
+    #[Test]
+    public function registeredBotNickDoesNotRenameTheUserHoldingIt(): void
+    {
+        $m = $this->motd('Hi', 'test!bot@h.com', 'PRIVMSG');
+        $r = $this->createStub(MotdRepository::class);
+        $r->method('findActiveAt')->willReturn([$m]);
+
+        $u = $this->createStub(ServiceUidRegistry::class);
+        $u->method('getUidByNickname')->willReturn(null);
+        $l = $this->createStub(NetworkUserLookupPort::class);
+        $l->method('findByNick')->willReturn(new SenderView(
+            uid: 'X',
+            nick: 'test',
+            ident: 'x',
+            hostname: 'x',
+            cloakedHost: 'x',
+            ipBase64: 'dA==',
+            isIdentified: true,
+            isOper: false,
+            serverSid: '001',
+        ));
+        $n = $this->createStub(NickAccountQuery::class);
+        $n->method('findIdByNick')->willReturn(1);
+
+        $f = $this->createMock(NickCollisionResolver::class);
+        $f->expects(self::never())->method('forceGuestNick');
+
+        $sa = $this->createMock(ProtocolServiceActionsInterface::class);
+        $sa->expects(self::never())->method('introducePseudoClient');
+
+        $c = $this->createStub(ActiveProtocolModuleHolderInterface::class);
+        $c->method('getProtocolModule')->willReturn($this->mod($sa));
+        $c->method('getServerSid')->willReturn('0A0');
+
+        $x = $this->sub(r: $r, u: $u, c: $c, l: $l, n: $n, f: $f);
+        $x->onSyncComplete();
+    }
+
+    /**
+     * `Bot[` and `bot{` are one nick under RFC 1459 but two under ASCII, so the pseudo-clients follow
+     * the casemapping the link negotiated.
+     */
+    #[Test]
+    public function pseudoClientsAreKeyedByTheNegotiatedCaseMapping(): void
+    {
+        self::assertSame(2, $this->introducedPseudoClients(CaseMapping::Ascii));
+        self::assertSame(1, $this->introducedPseudoClients(CaseMapping::Rfc1459));
+    }
+
+    #[Test]
+    public function skipWhenNickRegisteredOnAsciiNetworkWithBrackets(): void
+    {
+        $m = $this->motd('Hi', 'news[!bot@h.com', 'PRIVMSG');
+        $r = $this->createStub(MotdRepository::class);
+        $r->method('findActiveAt')->willReturn([$m]);
+
+        $u = $this->createStub(ServiceUidRegistry::class);
+        $u->method('getUidByNickname')->willReturn(null);
+        $l = $this->createStub(NetworkUserLookupPort::class);
+        $l->method('findByNick')->willReturn(null);
+        $ascii = NegotiatedCaseMapping::network(CaseMapping::Ascii);
+        $n = $this->createStub(NickAccountQuery::class);
+        $n->method('findIdByNick')->willReturnCallback(
+            static fn (string $nick): ?int => IrcIdentityFold::fold($nick) === IrcIdentityFold::fold('News[') && $ascii->equivalent('News[', $nick) ? 1 : null,
+        );
+
+        $sa = $this->createMock(ProtocolServiceActionsInterface::class);
+        $sa->expects(self::never())->method('introducePseudoClient');
+
+        $c = $this->createStub(ActiveProtocolModuleHolderInterface::class);
+        $c->method('getProtocolModule')->willReturn($this->mod($sa));
+        $c->method('getServerSid')->willReturn('0A0');
+
+        $p = $this->createStub(PseudoClientUidGenerator::class);
+        $p->method('generate')->willReturn('0A0Z00001');
+
+        $x = $this->sub(r: $r, u: $u, c: $c, p: $p, l: $l, n: $n);
         $x->onSyncComplete();
     }
 
@@ -638,6 +777,50 @@ final class MotdOnConnectSubscriberTest extends TestCase
         );
     }
 
+    private function introducedPseudoClients(CaseMapping $mapping): int
+    {
+        $a = $this->motd('First', 'Bot[!bot@h.com', 'PRIVMSG');
+        $b = $this->motd('Second', 'bot{!bot@h.com', 'NOTICE');
+        $r = $this->createStub(MotdRepository::class);
+        $r->method('findActiveAt')->willReturn([$a, $b]);
+        $u = $this->createStub(ServiceUidRegistry::class);
+        $u->method('getUidByNickname')->willReturn(null);
+        $l = $this->createStub(NetworkUserLookupPort::class);
+        $l->method('findByNick')->willReturn(null);
+        $n = $this->createStub(NickAccountQuery::class);
+        $n->method('findIdByNick')->willReturn(null);
+
+        $introduced = [];
+        $sa = $this->createStub(ProtocolServiceActionsInterface::class);
+        $sa->method('introducePseudoClient')->willReturnCallback(
+            static function (string $sid, string $nick, string $ident, string $vhost, string $uid) use (&$introduced): void {
+                $introduced[] = $nick;
+            },
+        );
+        $c = $this->createStub(ActiveProtocolModuleHolderInterface::class);
+        $c->method('getProtocolModule')->willReturn($this->mod($sa));
+        $c->method('getServerSid')->willReturn('0A0');
+        $p = $this->createStub(PseudoClientUidGenerator::class);
+        $p->method('generate')->willReturnOnConsecutiveCalls('0A0Z00001', '0A0Z00002');
+
+        $sent = [];
+        $s = $this->createStub(SendNoticePort::class);
+        $s->method('sendMessage')->willReturnCallback(
+            static function (string $from, string $to, string $message) use (&$sent): void {
+                $sent[] = [$from, $message];
+            },
+        );
+
+        $x = $this->sub(r: $r, u: $u, c: $c, p: $p, l: $l, n: $n, s: $s, eq: NegotiatedCaseMapping::network($mapping));
+        $x->onSyncComplete();
+        $x->onUserJoined(new UserJoinedNetworkAppEvent($this->dto()));
+
+        $expectedSecondSender = 2 === count($introduced) ? '0A0Z00002' : '0A0Z00001';
+        self::assertSame([['0A0Z00001', 'First'], [$expectedSecondSender, 'Second']], $sent);
+
+        return count($introduced);
+    }
+
     private function sub(
         ?MotdRepository $r = null,
         ?ServiceUidRegistry $u = null,
@@ -650,6 +833,7 @@ final class MotdOnConnectSubscriberTest extends TestCase
         ?SendNoticePort $s = null,
         ?NickCollisionResolver $f = null,
         ?string $debugChannel = null,
+        ?NetworkIdentityEquivalence $eq = null,
     ): MotdOnConnectSubscriber {
         return new MotdOnConnectSubscriber(
             $r ?? $this->createStub(MotdRepository::class),
@@ -662,6 +846,7 @@ final class MotdOnConnectSubscriberTest extends TestCase
             $n ?? $this->createStub(NickAccountQuery::class),
             $s ?? $this->createStub(SendNoticePort::class),
             $f ?? $this->createStub(NickCollisionResolver::class),
+            $eq ?? NegotiatedCaseMapping::network(),
             $debugChannel,
         );
     }

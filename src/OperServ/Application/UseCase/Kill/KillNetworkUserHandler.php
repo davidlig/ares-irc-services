@@ -14,7 +14,6 @@ use App\OperServ\Application\Port\Out\OperatorRoleAccess;
 use App\OperServ\Application\Port\Out\RootIdentityRegistry;
 
 use function sprintf;
-use function strtolower;
 
 /** Orchestrates KILL without knowing IRC command syntax or presentation. */
 final readonly class KillNetworkUserHandler
@@ -70,7 +69,7 @@ final readonly class KillNetworkUserHandler
             return false;
         }
 
-        $accountId = $this->nickAccounts->findIdByNickname(strtolower($nickname));
+        $accountId = $this->nickAccounts->findIdByNickname($nickname);
 
         return null !== $accountId && $this->operatorRoles->hasAssignedRole($accountId);
     }

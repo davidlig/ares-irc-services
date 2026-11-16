@@ -24,6 +24,7 @@ use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\PublishedEvent\ChannelSettingsChangedEvent;
 use App\Irc\Domain\Event\UserJoinedChannelEvent;
 use App\Irc\Domain\Network\ChannelMemberRole;
+use App\Irc\Domain\ValueObject\CaseMapping;
 use App\Irc\Domain\ValueObject\ChannelName;
 use App\Irc\Domain\ValueObject\Uid;
 use App\NickServ\Application\Port\In\NickAccountData;
@@ -32,6 +33,8 @@ use App\OperServ\Application\Port\In\AuthorizationDecision;
 use App\OperServ\Application\Port\In\AuthorizationGrant;
 use App\OperServ\Application\Port\In\OperatorActor;
 use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
+use App\Shared\Domain\IrcIdentityFold;
+use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -839,6 +842,28 @@ final class IrcopsDebugChannelProtectionSubscriberTest extends TestCase
         $subscriber->onChannelDrop(new ChannelDropEvent(1, '#ops', '#ops', 'drop', $now, true));
     }
 
+    #[Test]
+    public function unsuspendReappliesIrcopOnlyOnAsciiNetworkChannelFromItsStoredKey(): void
+    {
+        $control = $this->createMock(OperatorOnlyChannelControl::class);
+        $control->expects(self::once())->method('activate')->with('#Ops[1]');
+        $control->expects(self::never())->method('deactivate');
+        $subscriber = $this->createSubscriber(registeredChannels: $this->asciiNetworkQuery($this->projection(name: '#Ops[1]')), operatorOnlyControl: $control);
+
+        $subscriber->onChannelUnsuspended(new ChannelUnsuspendedEvent(1, '#Ops[1]', '#ops{1}', 'Oper', null, '*', '*', new DateTimeImmutable('2026-09-26T00:00:00+00:00')));
+    }
+
+    #[Test]
+    public function restoreReappliesIrcopOnlyOnAsciiNetworkChannelFromItsStoredKey(): void
+    {
+        $control = $this->createMock(OperatorOnlyChannelControl::class);
+        $control->expects(self::once())->method('activate')->with('#Ops[1]');
+        $control->expects(self::never())->method('deactivate');
+        $subscriber = $this->createSubscriber(registeredChannels: $this->asciiNetworkQuery($this->projection(name: '#Ops[1]')), operatorOnlyControl: $control);
+
+        $subscriber->onChannelRestored(new ChannelRestoredEvent(1, '#Ops[1]', '#ops{1}', 'Oper', new DateTimeImmutable('2026-09-26T00:00:00+00:00')));
+    }
+
     private function createEvent(string $uid, string $channelName): UserJoinedChannelEvent
     {
         return new UserJoinedChannelEvent(
@@ -848,15 +873,31 @@ final class IrcopsDebugChannelProtectionSubscriberTest extends TestCase
         );
     }
 
-    private function projection(bool $ircopOnly = true, bool $suspended = false, bool $pendingDeletion = false): ChannelProjection
+    private function projection(bool $ircopOnly = true, bool $suspended = false, bool $pendingDeletion = false, string $name = '#ops'): ChannelProjection
     {
-        return new ChannelProjection(1, '#ops', 1, null, false, '', [], false, false, null, $suspended, $pendingDeletion, null, false, $ircopOnly);
+        return new ChannelProjection(1, $name, 1, null, false, '', [], false, false, null, $suspended, $pendingDeletion, null, false, $ircopOnly);
     }
 
     private function query(ChannelProjection $projection): ChannelProjectionQuery
     {
         $query = $this->createStub(ChannelProjectionQuery::class);
         $query->method('findByName')->willReturn($projection);
+        $query->method('findByNameKey')->willReturn($projection);
+
+        return $query;
+    }
+
+    /** ChanServ's projections on an ascii network: names must be ascii-equivalent, keys use the RFC 1459 fold. */
+    private function asciiNetworkQuery(ChannelProjection $stored): ChannelProjectionQuery
+    {
+        $ascii = NegotiatedCaseMapping::network(CaseMapping::Ascii);
+        $query = $this->createStub(ChannelProjectionQuery::class);
+        $query->method('findByNameKey')->willReturnCallback(
+            static fn (string $key): ?ChannelProjection => IrcIdentityFold::fold($key) === IrcIdentityFold::fold($stored->name) ? $stored : null,
+        );
+        $query->method('findByName')->willReturnCallback(
+            static fn (string $name): ?ChannelProjection => IrcIdentityFold::fold($name) === IrcIdentityFold::fold($stored->name) && $ascii->equivalent($stored->name, $name) ? $stored : null,
+        );
 
         return $query;
     }

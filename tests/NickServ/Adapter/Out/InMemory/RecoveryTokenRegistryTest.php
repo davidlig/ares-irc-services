@@ -167,6 +167,24 @@ final class RecoveryTokenRegistryTest extends TestCase
         $registry->recordRecover('Other', $this->now());
     }
 
+    #[Test]
+    public function nicknameKeysUseTheRfc1459Fold(): void
+    {
+        $registry = new RecoveryTokenRegistry();
+        $now = new DateTimeImmutable('2026-01-01 00:00:00');
+        $registry->store('[Foo]^', 'Token', $now->modify('+1 hour'));
+        $registry->recordRecover('[Foo]^', $now);
+
+        self::assertTrue($registry->matches('{FOO}~', 'token', $now));
+        self::assertFalse($registry->matches('(foo)~', 'token', $now));
+        self::assertSame($now, $registry->getLastRecoverAt('{foo}~'));
+        $registry->removeIfMatches('{foo}~', 'TOKEN');
+        self::assertFalse($registry->matches('[foo]^', 'token', $now));
+
+        $registry->store('Plain', 'token', $now->modify('+1 hour'));
+        self::assertTrue($registry->consume('PLAIN', 'token', $now));
+    }
+
     private function now(): DateTimeImmutable
     {
         return new DateTimeImmutable('2026-09-06 12:00:00 UTC');

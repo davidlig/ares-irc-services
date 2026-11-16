@@ -10,10 +10,8 @@ use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Domain\Entity\RegisteredNick;
 
 use function array_filter;
-use function array_map;
 use function array_unique;
 use function array_values;
-use function strtolower;
 
 final readonly class NickAccountResolver implements NickAccountQuery
 {
@@ -54,14 +52,14 @@ final readonly class NickAccountResolver implements NickAccountQuery
 
     public function findAccountsByNicks(array $nicknames): array
     {
-        $nicknames = array_values(array_unique(array_map(strtolower(...), $nicknames)));
+        $nicknames = array_values(array_unique($nicknames));
         if ([] === $nicknames) {
             return [];
         }
 
         $accounts = [];
-        foreach ($this->nickRepository->findByNicks($nicknames) as $account) {
-            $accounts[strtolower($account->getNickname())] = $this->toData($account);
+        foreach ($this->nickRepository->findByNicks($nicknames) as $nickname => $account) {
+            $accounts[$nickname] = $this->toData($account);
         }
 
         return $accounts;

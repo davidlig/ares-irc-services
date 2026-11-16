@@ -62,12 +62,19 @@ final class ForbiddenNickServiceTest extends TestCase
         $existingNick->activate();
 
         $nickRepository = $this->createMock(RegisteredNickRepositoryInterface::class);
-        $nickRepository->method('findByNick')->willReturn($existingNick);
+        $nickRepository->expects(self::once())->method('findByNicknameKey')->with('baduser')->willReturn($existingNick);
         $nickRepository->expects(self::once())->method('save');
+        $messages = [];
+        $logger = $this->createStub(NickServActivitySink::class);
+        $logger->method('info')->willReturnCallback(static function (string $message) use (&$messages): void {
+            $messages[] = $message;
+        });
 
-        $forbiddenService = $this->createService(nickRepository: $nickRepository);
+        $forbiddenService = $this->createService(nickRepository: $nickRepository, logger: $logger);
 
-        $result = $forbiddenService->forbid('BadUser', 'Spam', 'Admin');
+        $result = $forbiddenService->forbid('baduser', 'Spam', 'Admin');
+
+        self::assertContains('ForbiddenNick: Dropping existing account baduser (status: registered) before creating forbidden', $messages);
 
         self::assertTrue($result->isForbidden());
     }
@@ -326,6 +333,7 @@ final class ForbiddenNickServiceTest extends TestCase
         ?NickNetworkUserLookup $userLookup = null,
         ?NickProtectionNotifier $notifier = null,
         ?NicknameReservation $reservation = null,
+        ?NickServActivitySink $logger = null,
     ): ForbiddenNickService {
         return new ForbiddenNickService(
             $nickRepository ?? $this->createStub(RegisteredNickRepositoryInterface::class),
@@ -333,7 +341,7 @@ final class ForbiddenNickServiceTest extends TestCase
             $userLookup ?? $this->createStub(NickNetworkUserLookup::class),
             $notifier ?? $this->createStub(NickProtectionNotifier::class),
             $reservation ?? $this->createStub(NicknameReservation::class),
-            $this->createStub(NickServActivitySink::class),
+            $logger ?? $this->createStub(NickServActivitySink::class),
             'en',
         );
     }

@@ -9,11 +9,13 @@ use App\OperServ\Application\Port\Out\MotdCounterFlusher;
 
 final readonly class FlushMotdCountersTask implements MaintenanceTaskInterface
 {
+    public const string NAME = 'operserv.flush_motd_counters';
+
     public function __construct(private MotdCounterFlusher $flusher) {}
 
     public function getName(): string
     {
-        return 'operserv.flush_motd_counters';
+        return self::NAME;
     }
 
     public function getIntervalSeconds(): int

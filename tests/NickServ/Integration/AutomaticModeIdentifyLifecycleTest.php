@@ -12,7 +12,6 @@ use App\Irc\Adapter\Network\LocalUserModeSync;
 use App\Irc\Adapter\Network\NetworkStateSubscriber;
 use App\Irc\Adapter\ServiceBridge\CoreNetworkUserLookupAdapter;
 use App\Irc\Application\Port\In\ActiveProtocolModuleHolderInterface;
-use App\Irc\Application\Port\In\LocalUserQuitSyncPort;
 use App\Irc\Application\Port\In\ProtocolModuleInterface;
 use App\Irc\Application\Port\In\ProtocolServiceActionsInterface;
 use App\Irc\Application\Port\In\SenderView;
@@ -55,6 +54,7 @@ use App\NickServ\Application\UseCase\IssueMigrationRescueToken\IssueMigrationRes
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\NickServ\Domain\ValueObject\AutomaticModeProfile;
 use App\Shared\Application\Port\EventBusInterface;
+use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversNothing;
@@ -69,7 +69,7 @@ final class AutomaticModeIdentifyLifecycleTest extends DoctrineIntegrationTestCa
     public function testGuestIdentifyRestoresNicknameThenAppliesSavedModesWithoutIrcdEcho(): void
     {
         $now = new DateTimeImmutable('2026-11-01T18:00:00Z');
-        $registeredNicks = new RegisteredNickDoctrineRepository($this->entityManager);
+        $registeredNicks = new RegisteredNickDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network());
         $account = RegisteredNick::createActive('Pedro', 'test-hash', null, 'en', $now);
         $account->changeAutomaticModes(new AutomaticModeProfile(['bot']));
         $registeredNicks->save($account);
@@ -151,6 +151,7 @@ final class AutomaticModeIdentifyLifecycleTest extends DoctrineIntegrationTestCa
             $passwordHasher,
             $clock,
             $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
+            NegotiatedCaseMapping::nickServ(),
             5,
             900,
             1800,
@@ -180,7 +181,6 @@ final class AutomaticModeIdentifyLifecycleTest extends DoctrineIntegrationTestCa
             new LocalUserModeSync($dispatcher),
             $serviceUidGenerator,
             'services.example.test',
-            $this->createStub(LocalUserQuitSyncPort::class),
         );
 
         $authenticationMode = $this->createStub(NicknameAuthenticationModeQuery::class);

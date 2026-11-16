@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Adapter\Out\Persistence\Doctrine;
 
+use App\Irc\Domain\ValueObject\CaseMapping;
 use App\NickServ\Adapter\Out\Persistence\Doctrine\RegisteredNickDoctrineRepository;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\NickServ\Domain\ValueObject\AutomaticModeProfile;
 use App\NickServ\Domain\ValueObject\NickStatus;
+use App\Shared\Domain\IrcIdentityFold;
+use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
 use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
@@ -27,14 +30,15 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 
+use function array_keys;
 use function array_map;
 use function array_slice;
+use function array_values;
 use function count;
 use function max;
 use function sprintf;
 use function str_contains;
 use function str_ends_with;
-use function strtolower;
 use function strtr;
 
 #[CoversClass(RegisteredNickDoctrineRepository::class)]
@@ -70,7 +74,7 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
         $em = $this->createStub(EntityManagerInterface::class);
         $em->method('getConnection')->willReturn($connection);
 
-        self::assertSame(2, new RegisteredNickDoctrineRepository($em)->countByPattern('NAME!%_'));
+        self::assertSame(2, new RegisteredNickDoctrineRepository($em, NegotiatedCaseMapping::network())->countByPattern('NAME!%_'));
     }
 
     #[Test]
@@ -82,7 +86,7 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
         $em = $this->createStub(EntityManagerInterface::class);
         $em->method('getConnection')->willReturn($connection);
 
-        self::assertSame(0, new RegisteredNickDoctrineRepository($em)->countByPattern('*'));
+        self::assertSame(0, new RegisteredNickDoctrineRepository($em, NegotiatedCaseMapping::network())->countByPattern('*'));
     }
 
     /** @return iterable<string, array{string}> */
@@ -113,7 +117,7 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
                 self::callback(static fn (ResultSetMapping $mapping): bool => NickStatus::class === ($mapping->enumMappings['status'] ?? null)),
             )->willReturn($query);
 
-        self::assertSame([$entity], new RegisteredNickDoctrineRepository($em)->searchByPattern('Na*', 3, 2));
+        self::assertSame([$entity], new RegisteredNickDoctrineRepository($em, NegotiatedCaseMapping::network())->searchByPattern('Na*', 3, 2));
     }
 
     #[Test]
@@ -129,7 +133,7 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
         $connection->update('registered_nicks', ['nickname_lower' => 'ÉcOlE'], ['nickname' => 'École']);
 
         foreach (['*', 'ALPHA', 'Al*', '*a*', '**a**', 'Literal!%_?[]\\\\Name', 'É*', 'é*', 'İ*', 'space ', 'space'] as $pattern) {
-            $like = strtr(strtolower($pattern), ['!' => '!!', '%' => '!%', '_' => '!_', '*' => '%']);
+            $like = strtr(IrcIdentityFold::fold($pattern), ['!' => '!!', '%' => '!%', '_' => '!_', '*' => '%']);
             $legacy = $connection->fetchFirstColumn(
                 "SELECT nickname FROM registered_nicks WHERE LOWER(nickname_lower) LIKE ? ESCAPE '!' ORDER BY nickname_lower ASC, id ASC",
                 [$like],
@@ -219,6 +223,38 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
     }
 
     #[Test]
+    public function lookupsFoldNicknamesWithTheRfc1459Mapping(): void
+    {
+        $this->repository->save($this->createRegisteredNick('[Foo]\\^', 'foo@example.com'));
+        $this->repository->save($this->createRegisteredNick('{Foo}Bar', 'foobar@example.com'));
+        $this->flushAndClear();
+
+        self::assertSame('{foo}|~', $this->entityManager->getConnection()->fetchOne('SELECT nickname_lower FROM registered_nicks WHERE nickname = ?', ['[Foo]\\^']));
+        self::assertSame('[Foo]\\^', $this->repository->findByNick('{FOO}|~')?->getNickname());
+        self::assertSame('[Foo]\\^', $this->repository->findByNick('[foo]\\^')?->getNickname());
+        self::assertSame(['{foo}|~' => '[Foo]\\^', '[FOO]\\^' => '[Foo]\\^'], array_map(static fn (RegisteredNick $nick): string => $nick->getNickname(), $this->repository->findByNicks(['{foo}|~', '[FOO]\\^'])));
+        self::assertSame(1, $this->repository->countByPattern('{foo}|~'));
+        self::assertSame(2, $this->repository->countByPattern('[foo]*'));
+        self::assertSame(['{Foo}Bar', '[Foo]\\^'], array_map(static fn (RegisteredNick $nick): string => $nick->getNickname(), $this->repository->searchByPattern('{FOO}*', 0, 10)));
+        self::assertNull($this->repository->findByNick('(foo)|~'));
+    }
+
+    #[Test]
+    public function lookupsConfirmTheStoredNicknameWithTheNegotiatedCasemapping(): void
+    {
+        $this->repository->save($this->createRegisteredNick('Foo[', 'foo@example.com'));
+        $this->flushAndClear();
+        $ascii = new RegisteredNickDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network(CaseMapping::Ascii));
+
+        self::assertSame('Foo[', $ascii->findByNick('FOO[')?->getNickname());
+        self::assertNull($ascii->findByNick('foo{'));
+        self::assertSame(['FOO['], array_keys($ascii->findByNicks(['FOO[', 'foo{'])));
+        self::assertSame('Foo[', $ascii->findByNicknameKey('foo{')?->getNickname());
+        self::assertTrue($ascii->existsByNick('foo{'));
+        self::assertSame('Foo[', $this->repository->findByNick('foo{')?->getNickname());
+    }
+
+    #[Test]
     public function findByNicksReturnsMatchingAccountsCaseInsensitively(): void
     {
         $this->repository->save($this->createRegisteredNick('Alice', 'alice@example.com'));
@@ -227,8 +263,9 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
 
         self::assertSame([], $this->repository->findByNicks([]));
         $accounts = $this->repository->findByNicks(['ALICE', 'alice', 'Missing']);
-        self::assertCount(1, $accounts);
-        self::assertSame('Alice', $accounts[0]->getNickname());
+        self::assertSame(['ALICE', 'alice'], array_keys($accounts));
+        self::assertSame('Alice', $accounts['ALICE']->getNickname());
+        self::assertSame($accounts['ALICE'], $accounts['alice']);
     }
 
     #[Test]
@@ -239,8 +276,8 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
 
         self::assertSame([], $this->repository->findByNicknamesLower([]));
         $accounts = $this->repository->findByNicknamesLower(['ALICE', 'alice', 'missing']);
-        self::assertCount(1, $accounts);
-        self::assertSame('Alice', $accounts[0]->getNickname());
+        self::assertSame(['ALICE', 'alice'], array_keys($accounts));
+        self::assertSame('Alice', $accounts['alice']->getNickname());
     }
 
     #[Test]
@@ -334,7 +371,7 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
         $queryBuilder->expects(self::once())->method('getQuery')->willReturn($query);
         $entityManager = $this->createMock(EntityManagerInterface::class);
         $entityManager->expects(self::once())->method('createQueryBuilder')->willReturn($queryBuilder);
-        $repository = new RegisteredNickDoctrineRepository($entityManager);
+        $repository = new RegisteredNickDoctrineRepository($entityManager, NegotiatedCaseMapping::network());
 
         self::assertSame([3 => 'Alice'], $repository->findNicknamesByIds([1, 2, 3]));
     }
@@ -784,6 +821,34 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
     }
 
     #[Test]
+    public function maintenanceSweepQueriesReturnOnlyIdsAfterTheCursor(): void
+    {
+        $inactive = [];
+        $suspended = [];
+        $pending = [];
+        foreach ([1, 2, 3] as $n) {
+            $inactive[$n] = $this->createRegisteredNick('Idle' . $n, 'idle' . $n . '@example.com');
+            $inactive[$n]->markSeen(new DateTimeImmutable('-60 days'));
+            $suspended[$n] = $this->createRegisteredNick('Held' . $n, 'held' . $n . '@example.com');
+            $suspended[$n]->suspend('Reason', new DateTimeImmutable('-1 hour'));
+            $pending[$n] = $this->createRegisteredNick('Gone' . $n, 'gone' . $n . '@example.com');
+            $pending[$n]->markPendingDeletion(new DateTimeImmutable('-10 days'));
+            $this->repository->save($inactive[$n]);
+            $this->repository->save($suspended[$n]);
+            $this->repository->save($pending[$n]);
+        }
+        $this->entityManager->flush();
+
+        $idle = $this->repository->findRegisteredInactiveSince(new DateTimeImmutable('-30 days'), 1, $inactive[1]->getId());
+        $held = $this->repository->findExpiredSuspensions(new DateTimeImmutable(), 5, $suspended[2]->getId());
+        $gone = $this->repository->findPendingDeletionBefore(new DateTimeImmutable('-7 days'), null, $pending[1]->getId());
+
+        self::assertSame(['Idle2'], $this->nicknamesOf($idle));
+        self::assertSame(['Held3'], $this->nicknamesOf($held));
+        self::assertSame(['Gone2', 'Gone3'], $this->nicknamesOf($gone));
+    }
+
+    #[Test]
     public function findExpiredSuspensionsHonorsLimitAndOrdersByIdAscending(): void
     {
         $nick1 = $this->createRegisteredNick('Sus1', 'sus1@example.com');
@@ -843,7 +908,7 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
     protected function setUp(): void
     {
         parent::setUp();
-        $this->repository = new RegisteredNickDoctrineRepository($this->entityManager);
+        $this->repository = new RegisteredNickDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network());
     }
 
     /**
@@ -854,6 +919,16 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
     private function names(array $nicks): array
     {
         return array_map(static fn (RegisteredNick $nick): string => $nick->getNickname(), $nicks);
+    }
+
+    /**
+     * @param RegisteredNick[] $nicks
+     *
+     * @return list<string>
+     */
+    private function nicknamesOf(array $nicks): array
+    {
+        return array_values(array_map(static fn (RegisteredNick $nick): string => $nick->getNickname(), $nicks));
     }
 
     private function createRegisteredNick(string $nickname, string $email): RegisteredNick

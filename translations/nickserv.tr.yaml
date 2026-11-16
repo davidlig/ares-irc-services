@@ -796,6 +796,7 @@ forbid:
   cannot_forbid_root: "Root kullanıcı %nickname% yasaklanamaz."
   cannot_forbid_oper: "IRC operatörü %nickname% yasaklanamaz."
   cannot_forbid_service: "Hizmet rumuzu %nickname% yasaklanamaz."
+  key_conflict: "%nickname% yasaklanamaz: bu ağda farklı bir rumuz olan kayıtlı %registered% rumuzuyla çakışıyor."
 
 # --- UNFORBID (IRCop) ---------------------------------------------------------
 unforbid:

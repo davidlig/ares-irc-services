@@ -16,6 +16,7 @@ use App\Irc\Adapter\Protocol\UnrealStandalone\UnrealStandaloneProtocolHandler;
 use App\Irc\Adapter\Protocol\UnrealStandalone\UnrealStandaloneProtocolServiceActions;
 use App\Irc\Adapter\Protocol\UnrealStandalone\UnrealStandaloneServiceIntroductionFormatter;
 use App\Irc\Adapter\Protocol\UnrealStandalone\UnrealStandaloneUserModeSupport;
+use App\Irc\Application\Port\In\LocalUserQuitSyncPort;
 use App\Irc\Domain\ValueObject\CaseMapping;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -44,7 +45,7 @@ final class UnrealStandaloneModuleTest extends TestCase
         $connectionHolder = new ActiveConnectionHolder();
         $module = new UnrealStandaloneModule(
             $handler,
-            new UnrealStandaloneProtocolServiceActions($connectionHolder, new UnrealStandaloneServiceIntroductionFormatter(), new NullLogger()),
+            new UnrealStandaloneProtocolServiceActions($connectionHolder, $this->createStub(LocalUserQuitSyncPort::class), new UnrealStandaloneServiceIntroductionFormatter(), new NullLogger()),
             new UnrealStandaloneChannelModeSupport(),
             new UnrealStandaloneUserModeSupport(),
             new UnrealStandaloneNickReservation($connectionHolder, new NullLogger()),
@@ -118,7 +119,7 @@ final class UnrealStandaloneModuleTest extends TestCase
     {
         $handler = new UnrealStandaloneProtocolHandler('001');
         $connectionHolder = new ActiveConnectionHolder();
-        $serviceActions = new UnrealStandaloneProtocolServiceActions($connectionHolder, new UnrealStandaloneServiceIntroductionFormatter(), new NullLogger());
+        $serviceActions = new UnrealStandaloneProtocolServiceActions($connectionHolder, $this->createStub(LocalUserQuitSyncPort::class), new UnrealStandaloneServiceIntroductionFormatter(), new NullLogger());
         $channelModeSupport = new UnrealStandaloneChannelModeSupport();
         $userModeSupport = new UnrealStandaloneUserModeSupport();
         $nickReservation = new UnrealStandaloneNickReservation($connectionHolder, new NullLogger());

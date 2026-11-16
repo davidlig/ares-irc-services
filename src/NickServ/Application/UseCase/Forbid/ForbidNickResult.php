@@ -10,5 +10,7 @@ final readonly class ForbidNickResult
         public ForbidNickOutcome $outcome,
         public string $targetNickname,
         public string $reason,
+        /** Registered nick holding the same stored key, for TargetSharesKeyWithOtherNick. */
+        public ?string $registeredNickname = null,
     ) {}
 }

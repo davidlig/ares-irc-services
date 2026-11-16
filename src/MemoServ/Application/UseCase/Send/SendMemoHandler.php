@@ -14,7 +14,6 @@ use App\MemoServ\Domain\Entity\Memo;
 use App\MemoServ\Domain\Exception\MemoDisabledException;
 
 use function str_starts_with;
-use function strtolower;
 
 final readonly class SendMemoHandler implements SendMemoHandlerInterface
 {
@@ -46,7 +45,7 @@ final readonly class SendMemoHandler implements SendMemoHandlerInterface
 
     private function sendToChannel(SendMemo $command): SendMemoResult
     {
-        $channel = $this->channelPort->findChannelByName(strtolower($command->target));
+        $channel = $this->channelPort->findChannelByName($command->target);
         if (null === $channel) {
             return SendMemoResult::channelNotRegistered($command->target);
         }

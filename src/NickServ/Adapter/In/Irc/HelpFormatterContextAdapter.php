@@ -16,7 +16,6 @@ use App\Shared\Adapter\In\Irc\Presentation\Role;
 use function is_string;
 use function str_starts_with;
 use function strlen;
-use function strtolower;
 use function substr;
 
 /**
@@ -200,7 +199,7 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
 
         return $this->filterByPermission(
             $this->context->getRegistry()->all(),
-            strtolower($sender->nick),
+            $sender->nick,
             (int) $account->getId(),
             $sender->isIdentified,
             $sender->isOper,
@@ -217,7 +216,7 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
         }
 
         return $this->operatorAccess->hasAnyPermission(
-            strtolower($sender->nick),
+            $sender->nick,
             (int) $account->getId(),
             $sender->isIdentified,
             $sender->isOper,

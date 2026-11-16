@@ -6,11 +6,11 @@ namespace App\Irc\Adapter\ServiceBridge;
 
 use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
 use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
-use App\Irc\Application\Port\In\LocalUserQuitSyncPort;
 use App\Irc\Application\Port\In\ManagedServiceNickReservationLookup;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\ProtocolServiceActionsInterface;
 use App\Irc\Application\Port\In\ServiceCommandListenerInterface;
+use App\Shared\Domain\IrcIdentityFold;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -18,7 +18,6 @@ use Throwable;
 
 use function array_values;
 use function count;
-use function strtolower;
 
 /**
  * Reconciles protocol-native service nickname reservations before pseudo-clients are introduced.
@@ -45,7 +44,6 @@ final readonly class ServiceNickReservationSubscriber implements EventSubscriber
         private NetworkUserLookupPort $userLookup,
         private iterable $serviceListeners,
         private ServiceNickReservationInventory $inventory,
-        private LocalUserQuitSyncPort $localUserQuitSync,
         private LoggerInterface $logger = new NullLogger(),
     ) {}
 
@@ -75,7 +73,7 @@ final readonly class ServiceNickReservationSubscriber implements EventSubscriber
         $current = [];
         foreach ($this->serviceListeners as $listener) {
             $nick = $listener->getServiceName();
-            $current[strtolower($nick)] = $nick;
+            $current[IrcIdentityFold::fold($nick)] = $nick;
         }
 
         $protocol = $module->getProtocolName();
@@ -84,7 +82,7 @@ final readonly class ServiceNickReservationSubscriber implements EventSubscriber
         $canPersistInventory = true;
         try {
             foreach ($this->inventory->namesForProtocol($protocol) as $nick) {
-                $previous[strtolower($nick)] = $nick;
+                $previous[IrcIdentityFold::fold($nick)] = $nick;
             }
         } catch (Throwable $exception) {
             $this->logger->error('Could not load service nickname reservation inventory', [
@@ -105,7 +103,7 @@ final readonly class ServiceNickReservationSubscriber implements EventSubscriber
             $previous = [];
             try {
                 foreach ($reservation->findManagedServiceNicks(self::REASON) as $nick) {
-                    $previous[strtolower($nick)] = $nick;
+                    $previous[IrcIdentityFold::fold($nick)] = $nick;
                 }
             } catch (Throwable $exception) {
                 $this->logger->error('Could not discover managed service nickname reservations', [
@@ -194,7 +192,6 @@ final readonly class ServiceNickReservationSubscriber implements EventSubscriber
         ]);
 
         $serviceActions->killUser($serverSid, $existingUser->uid, 'Service nickname reserved');
-        $this->localUserQuitSync->apply($existingUser->uid, 'Service nickname reserved');
         $this->logger->info('Sent KILL for service nickname collision', ['nick' => $nick, 'uid' => $existingUser->uid]);
     }
 }

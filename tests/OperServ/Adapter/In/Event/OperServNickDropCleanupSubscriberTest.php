@@ -14,6 +14,8 @@ use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use ReflectionMethod;
+use ReflectionNamedType;
 
 #[CoversClass(OperServNickDropCleanupSubscriber::class)]
 final class OperServNickDropCleanupSubscriberTest extends TestCase
@@ -143,5 +145,18 @@ final class OperServNickDropCleanupSubscriberTest extends TestCase
 
         $subscriber = new OperServNickDropCleanupSubscriber($operIrcopRepo, $glineRepo, $motdRepo, $permissionCache);
         $subscriber->onNickDrop($event);
+    }
+
+    #[Test]
+    public function requiresThePermissionCacheSoADroppedIrcopNeverKeepsCachedPrivileges(): void
+    {
+        $parameter = new ReflectionMethod(OperServNickDropCleanupSubscriber::class, '__construct')->getParameters()[3];
+        $type = $parameter->getType();
+
+        self::assertSame('operatorPermissionCache', $parameter->getName());
+        self::assertFalse($parameter->isOptional());
+        self::assertInstanceOf(ReflectionNamedType::class, $type);
+        self::assertFalse($type->allowsNull());
+        self::assertSame(OperatorPermissionCache::class, $type->getName());
     }
 }

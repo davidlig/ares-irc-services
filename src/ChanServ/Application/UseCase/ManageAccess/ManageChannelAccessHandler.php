@@ -16,7 +16,6 @@ use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\Exception\ChannelNotRegisteredException;
 
 use function array_values;
-use function strtolower;
 
 final readonly class ManageChannelAccessHandler implements ManageChannelAccessHandlerInterface
 {
@@ -30,7 +29,7 @@ final readonly class ManageChannelAccessHandler implements ManageChannelAccessHa
 
     public function handle(ManageChannelAccess $command): ManageChannelAccessResult
     {
-        $channel = $this->channels->findByChannelName(strtolower($command->channelName));
+        $channel = $this->channels->findByChannelName($command->channelName);
         if (null === $channel) {
             throw ChannelNotRegisteredException::forChannel($command->channelName);
         }

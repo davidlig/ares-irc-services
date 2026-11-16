@@ -1,7 +1,69 @@
 ## [Unreleased]
 
+### Bug Fixes
+
+- InspIRCd: SQUIT by SID or by name removes users on the split server and on every downstream server. Burst `SERVER` introductions are read with the 1206 grammar (`:<parent> SERVER <name> <sid> [burst=…] hidden=… :<desc>`).
+- InspIRCd: Ares no longer advertises `CASEMAPPING=ascii` in its CAPAB; it links to networks with any casemapping and follows the one the remote announces.
+- Netsplit users leave every channel through the same path as QUIT and KILL, so per-channel departure events are produced.
+- The 2-second topic grace window is re-armed when a channel is rejoined with the same timestamp by a server that is still bursting (UnrealIRCd `EOS`, InspIRCd `ENDBURST` not yet received), so the split side's TOPIC cannot overwrite the stored topic after a netsplit heals, while a topic set right after an ordinary remote join is still saved.
+- Service-issued KILL removes the user from local state inside the protocol `killUser()`, so no caller can leave a ghost user.
+- UnrealUdb: end-of-burst nick protection no longer aborts when an identified IRCop receives an operclass; UDB record writes no longer detach NickServ's preloaded accounts. A failing protection chunk is logged and later chunks still run.
+- End-of-burst and channel account lookups, account-id lookups, the netsplit last-seen update and the deferred channel-activity flush are split into bounded statements of at most 900 parameters (under SQLite's historic 999 limit); a failing activity chunk is logged and retried on the next flush.
+- MEMO READ/DEL and GLINE DEL by index always act on the entry LIST showed, including entries created in the same second (id tiebreaker).
+- Expired GLINE, MOTD and AKICK purges load batches of 100. A maintenance row that keeps failing (expired GLINE/MOTD, inactive or pending-deletion nickname, expired suspension) is logged and skipped, and a failing maintenance task no longer stops the remaining tasks of the cycle. Tasks can declare prerequisites: a task whose prerequisite failed is skipped for that cycle with a warning and retried on the next tick (inactive-channel expiry requires the channel-activity flush; expired-MOTD purge requires the MOTD counter flush).
+- Inactive-channel expiry never drops a channel whose recorded activity has not been written to the database yet.
+- The channel-activity flush tries every chunk and retries the rows of a failed chunk one by one. A row that keeps failing is logged and stays pending (its channel stays safe from expiry) without failing the flush; only when the database itself does not answer does the flush report the failure, so the inactive-channel purge is skipped for that cycle.
+- NickServ maintenance stops a batch and fails the task when a drop or unsuspend closes the EntityManager, and reports failures after a committed drop accurately. Inactive purge, pending-deletion purge and suspension expiry continue each cycle after the last processed account, so rows that keep failing are retried on the next full sweep instead of blocking later rows.
+- A failing debug-channel notice no longer keeps expired MOTDs or G-lines forever; a G-line row is kept only when its network removal fails.
+- A server split loads each affected channel's ChanServ policy once and resolves only the departing members, so neither large netsplits nor small splits of very large channels stall the event loop. A split quit that fails is logged and the remaining split users still quit, so no ghost users are left in the network state.
+- End-of-burst nick protection logs a failing user and keeps protecting the rest of its chunk; when a failure closes the EntityManager it stops with one error instead of failing every remaining user.
+- Every configured root spelling (for example `Admin[,Admin{`) is kept and recognised.
+- ChanServ rank enforcement on join and channel sync no longer stays disabled until reconnect when an end-of-sync listener fails: the remote-burst window closes on the new Irc `RemoteBurstEndedEvent`, published before any other end-of-sync work.
+- UnrealUdb: a failed live record mutation clears the shared unit of work after rollback, so no entity is left with values the database no longer holds.
+- IDENTIFY, OP/VOICE and the other manual rank commands, pending rank synchronizations and the ChanServ service-nick checks use the network's own casemapping (or UID) to pick network users and channels; the RFC 1459 fold applies only to registered identities.
+- Rank enforcement no longer runs for continuation SJOIN/FJOIN lines during the burst on any protocol; the end-of-burst pass applies ranks after AKICK and NOJOIN.
+- NickServ `FORBID` and ChanServ `FORBID` never drop or rewrite a registration that only shares its stored RFC 1459 key with the target under the network's casemapping (for example `Admin[` when forbidding `Admin{` on an ascii network); the command is refused with a message naming both. This also keeps root and IRCop accounts protected.
+- The end-of-burst rank scope matches network channels with the negotiated casemapping, and AKICK patterns are folded once per rule per enforcement pass.
+- On ascii-casemapping networks, channels whose names contain `[]\^` are found by their stored key again after UNSUSPEND (rejoin and mode restore), after restore and unsuspend (IRCOPONLY is re-applied) and in UnrealUdb channel sync (register, pending deletion, suspend, unsuspend). A MOTD pseudo-client no longer takes a registered nick that differs only by `[`/`{`.
+- A QUIT, KILL or netsplit quit whose channel-departure listener fails no longer leaves the user in the network user and channel state; the remaining departures and the quit are still processed and the original error is still reported.
+- Deferred ChanServ channel activity is never dropped: a row that fails on its own three flushes in a row is written once more with the current time; if that also fails it stays pending (so the inactive-channel purge keeps protecting the channel), a warning is logged once and the row is retried alone on later flushes instead of forcing its chunk to be retried row by row. Failures while the database is unreachable are not counted.
+- NickServ purge and suspension-expiry tasks retry first a nick whose processing failed because the EntityManager closed, instead of skipping it until the next sweep. End-of-burst protection on a closed EntityManager reports the real number of users left unprotected and warns how many last-seen updates were not saved.
+- Auto-identification compares the identified nick with the account under the negotiated casemapping, so on ascii networks a user identified as `nick[` is not accepted for account `nick{`.
+- NickServ inactive/pending-deletion purge and suspension expiry no longer retry forever a nick whose processing closes the EntityManager: after 3 consecutive such failures it is logged and skipped until the next sweep, so later nicks are processed.
+- NickServ purge and unsuspend maintenance count a closed-EntityManager failure toward the 3-attempt skip only while the database still answers, so a database outage never skips a healthy nickname or leaves an expired suspension in force. The retry budget is shared by the three tasks.
+- End-of-burst nick protection resets a closed EntityManager once and keeps protecting the remaining burst users; it stops with an error only if the EntityManager closes again or cannot be reset.
+- ChanServ inactive-channel, pending-deletion and expired-suspension maintenance no longer let one channel that always fails block every later channel: the failure is logged and the channel is skipped until the next sweep; a failure that closes the EntityManager is skipped after 3 consecutive cycles only while the database still answers. The pending-deletion purge no longer reads the channel id after the drop removed it.
+- Deferred channel activity that still cannot be written after its warning is warned about again every 100 consecutive failures.
+- A server delink always publishes its "delink finished" event, even when a "delink started" listener fails, so ChanServ's split departure batch is always closed.
+- MOTD pseudo-clients follow the negotiated casemapping: on ascii networks `Bot[` and `bot{` are two pseudo-clients (one under rfc1459).
+- A closed EntityManager (for example after a failed REGISTER or IDENTIFY write) is reset before the next IRC line is processed, not only at the next maintenance tick.
+- Expired G-line, MOTD and AKICK purges handle at most 10 batches of 100 per maintenance cycle and continue on the next cycle, so a mass expiry no longer blocks the event loop.
+- After resetting a closed EntityManager during end-of-burst protection, the user whose protection closed it is skipped instead of retried, and the last-seen activity of the users already handled in that chunk is saved again on the fresh manager.
+- NickServ and ChanServ maintenance: a row skipped after exhausting its closed-EntityManager budget no longer gets a fresh 3-cycle budget every sweep; in later sweeps it gets one attempt and is skipped at once if it fails again. ChanServ counts these failures per channel, so another channel succeeding no longer resets the count. The skip handling lives in one budget class per service.
+- When an automatic channel unsuspension is saved but a follow-up step fails (UDB record removal, network restoration), it is reported as such and the unsuspension event is dispatched again in up to three later cycles.
+- A failing server-delink start listener is logged and every split user still quits; the delink finished event still always follows.
+- MOTD pseudo-client state is discarded when the network link is lost, so MOTD pseudo-clients are introduced again on the new link.
+- Retrying a failed post-unsuspension step only re-runs the UDB and network restoration (the event carries `isRetry`); it no longer writes a duplicate UNSUSPEND history entry or repeats the debug-channel notice. Pending retries are loaded with one query per cycle.
+- End-of-burst protection re-saves a chunk's last-seen activity when its own activity save closed the EntityManager, and blames and skips a user only when the EntityManager was open as that user's protection began.
+- The NickServ and ChanServ maintenance retry budgets keep a row's exhausted mark after a row-specific failure and move a remembered row to the newest position whenever it fails again, so the bounded memory forgets rows that stopped failing first.
+- The expired AKICK purge logs removals only after the delete succeeds, with a warning carrying the actual count when fewer entries were deleted than read.
+- When a quitting user's channel departure and the quit itself both fail, the departure failure is logged instead of being lost.
+- A maintenance task whose database error closed the Doctrine EntityManager no longer makes every later database-backed task fail until restart: the scheduler resets a closed EntityManager, with a warning, at the start of each cycle and after each failed task.
+- When the MOTD bot nick is a registered nickname, the user holding it is no longer renamed to a Guest nick; the MOTD pseudo-client is skipped as before.
+- `AKICK #channel CHECK nick` skips and logs corrupt stored masks instead of failing.
+- `VHOST UNFORBID` with different letter casing also removes the cached forbidden pattern on case-insensitive database collations.
+
+### Behaviour Changes
+
+- Since #164, a plain JOIN evaluates only the joining member's rank; other members' excess ranks are reconciled at the next full synchronization.
+- Since #166, `+r`/`+P` registration modes are reconciled once after all burst pages, and the ChanServ end-of-burst pass runs before OperServ G-line enforcement.
+- Since #172, NickServ `INFO` and `LIST` show the registration date as "last seen" for nicknames that have never been online, instead of "never seen".
+- Expired GLINE, MOTD and AKICK purges process rows in expiry order.
+- NickServ, ChanServ, MemoServ and OperServ compare nicknames and channel names with the casemapping the IRCd negotiates: on `ascii` networks `Foo[` and `Foo{` are different users and channels, on `rfc1459` networks they are the same. Stored lookup keys use the RFC 1459 fold, so a name whose RFC 1459 form is already registered cannot be registered again. AKICK matching follows the negotiated casemapping, so ChanServ agrees with the IRCd ban (no kick loop on `ascii` networks), and NickServ `INFO` shows the owner view only to the holder of an equivalent nickname. NickServ and ChanServ `LIST` sort by the folded key.
+
 ### Upgrade
 
+- Back up the database and run the migrations (`doctrine:migrations:migrate`). `Version20261114000001` rewrites `registered_nicks.nickname_lower`, `registered_channels.name_lower` and `service_nick_reservations.nickname_lower` with the RFC 1459 fold. It aborts without changing anything when two registered nicknames or two channels differ only by `[]\^` versus `{}|~`, and lists the conflicting names; drop or rename one of each listed pair before upgrading.
 - Production IRC logs now default to `info` and no longer include per-line debug traffic. Set `IRC_LOG_LEVEL=debug` to restore redacted incoming line logs.
 
 ## [2.5.0] - 2026-11-06

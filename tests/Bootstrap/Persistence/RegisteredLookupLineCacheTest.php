@@ -14,6 +14,7 @@ use App\Irc\Application\PublishedEvent\NetworkConnectionLostEvent;
 use App\NickServ\Adapter\Out\Persistence\Doctrine\RegisteredNickDoctrineRepository;
 use App\NickServ\Adapter\Out\Persistence\Doctrine\RegisteredNickLookupCacheClearSubscriber;
 use App\NickServ\Domain\Entity\RegisteredNick;
+use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use DateTimeImmutable;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Logging\Middleware;
@@ -54,7 +55,7 @@ final class RegisteredLookupLineCacheTest extends TestCase
     public function channelLookupsMemoizeHitsAndMissesUntilMessageBoundaryAndInvalidateOnWrites(): void
     {
         [$entityManager, $logger] = $this->createEntityManager();
-        $repository = new RegisteredChannelDoctrineRepository($entityManager);
+        $repository = new RegisteredChannelDoctrineRepository($entityManager, NegotiatedCaseMapping::network());
         $subscriber = new DoctrineIdentityMapClearSubscriber($entityManager);
         $cacheSubscriber = new RegisteredChannelLookupCacheClearSubscriber();
 
@@ -109,7 +110,7 @@ final class RegisteredLookupLineCacheTest extends TestCase
     public function nickLookupsMemoizeHitsAndMissesUntilMessageBoundaryAndInvalidateOnWrites(): void
     {
         [$entityManager, $logger] = $this->createEntityManager();
-        $repository = new RegisteredNickDoctrineRepository($entityManager);
+        $repository = new RegisteredNickDoctrineRepository($entityManager, NegotiatedCaseMapping::network());
         $subscriber = new DoctrineIdentityMapClearSubscriber($entityManager);
         $cacheSubscriber = new RegisteredNickLookupCacheClearSubscriber();
 

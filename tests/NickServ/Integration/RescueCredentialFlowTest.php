@@ -47,6 +47,7 @@ use App\NickServ\Domain\Entity\RegisteredNick;
 use App\NickServ\Domain\ValueObject\RegistrationMode;
 use App\OperServ\Adapter\Out\Persistence\Doctrine\DoctrineBadmailRepository;
 use App\OperServ\Application\UseCase\Badmail\BadmailEmailPolicy;
+use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversNothing;
@@ -64,7 +65,7 @@ final class RescueCredentialFlowTest extends DoctrineIntegrationTestCase
         $now = new DateTimeImmutable('2026-10-21T12:00:00Z');
         $db = $this->entityManager->getConnection();
         self::assertArrayNotHasKey('registration_mode', $db->createSchemaManager()->listTableColumns('registered_nicks'));
-        $repo = new RegisteredNickDoctrineRepository($this->entityManager);
+        $repo = new RegisteredNickDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network());
         $history = new NickHistoryService(new NickHistoryDoctrineRepository($this->entityManager));
         $regrepo = new DoctrineRegisterNickRepository($this->entityManager);
         $cas = new DoctrineRescueCredentialPersistence($this->entityManager);

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Tests\ChanServ\Domain\Entity;
 
 use App\ChanServ\Domain\Entity\ChannelAkick;
-use App\Irc\Domain\ValueObject\UserMask;
 use DateTimeImmutable;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -74,36 +73,6 @@ final class ChannelAkickTest extends TestCase
         $akick = ChannelAkick::create(new DateTimeImmutable(), 1, 2, '*!*@host.com', null, new DateTimeImmutable('-1 day'));
 
         self::assertTrue($akick->isExpired(new DateTimeImmutable()));
-    }
-
-    #[Test]
-    public function matchesWorksCorrectly(): void
-    {
-        $akick = ChannelAkick::create(new DateTimeImmutable(), 1, 2, '*!*@*.isp.com');
-
-        self::assertTrue($akick->matches('Nick!user@host.isp.com'));
-        self::assertTrue($akick->matches('NICK!user@HOST.ISP.COM'));
-        self::assertFalse($akick->matches('Nick!user@other.com'));
-    }
-
-    #[Test]
-    public function matchesWithWildcards(): void
-    {
-        $akick = ChannelAkick::create(new DateTimeImmutable(), 1, 2, 'Nick!*@*');
-
-        self::assertTrue($akick->matches('Nick!user@host'));
-        self::assertTrue($akick->matches('Nick!any@any'));
-        self::assertFalse($akick->matches('Other!user@host'));
-    }
-
-    #[Test]
-    public function matchesWithUserMaskObject(): void
-    {
-        $akick = ChannelAkick::create(new DateTimeImmutable(), 1, 2, '*!*@*.isp.com');
-
-        self::assertTrue($akick->matches(UserMask::fromString('Nick!user@host.isp.com')));
-        self::assertTrue($akick->matches(UserMask::fromString('NICK!user@HOST.ISP.COM')));
-        self::assertFalse($akick->matches(UserMask::fromString('Nick!user@other.com')));
     }
 
     #[Test]

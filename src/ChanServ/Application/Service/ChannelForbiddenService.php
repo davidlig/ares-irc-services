@@ -8,13 +8,14 @@ use App\ChanServ\Application\Port\In\ForbiddenChannelEnforcement;
 use App\ChanServ\Application\Port\Out\ChanNetworkActions;
 use App\ChanServ\Application\Port\Out\ChanServActivitySink;
 use App\ChanServ\Application\Port\Out\ChanServEventPublisher;
+use App\ChanServ\Application\Port\Out\NetworkIdentityFold;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\PublishedEvent\ChannelForbiddenEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelUnforbiddenEvent;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
+use App\ChanServ\Domain\Exception\ChannelNameConflictException;
 use DateTimeImmutable;
 
-use function count;
 use function sprintf;
 
 readonly class ChannelForbiddenService implements ForbiddenChannelEnforcement
@@ -25,8 +26,13 @@ readonly class ChannelForbiddenService implements ForbiddenChannelEnforcement
         private ChanNetworkActions $channelActions,
         private ChanServEventPublisher $eventPublisher,
         private ChanServActivitySink $logger,
+        private NetworkIdentityFold $identityFold,
     ) {}
 
+    /**
+     * @throws ChannelNameConflictException when the stored key belongs to a different channel under the
+     *                                      negotiated casemapping; that registration is left untouched
+     */
     public function forbid(
         string $channelName,
         string $reason,
@@ -34,7 +40,10 @@ readonly class ChannelForbiddenService implements ForbiddenChannelEnforcement
         DateTimeImmutable $occurredAt,
         string $defaultLanguage = 'en',
     ): RegisteredChannel {
-        $existing = $this->channelRepository->findByChannelName($channelName);
+        $existing = $this->channelRepository->findByChannelNameKey($channelName);
+        if (null !== $existing && $this->identityFold->fold($existing->getName()) !== $this->identityFold->fold($channelName)) {
+            throw ChannelNameConflictException::forChannel($channelName, $existing->getName());
+        }
 
         if (null !== $existing && $existing->isForbidden()) {
             $existing->updateForbiddenReason($reason);
@@ -178,32 +187,6 @@ readonly class ChannelForbiddenService implements ForbiddenChannelEnforcement
             'ChannelUnforbidden: bot left forbidden channel %s',
             $channelName,
         ));
-    }
-
-    public function enforceAllForbiddenChannels(): void
-    {
-        $forbiddenChannels = $this->channelRepository->findForbiddenChannels();
-        if ([] === $forbiddenChannels) {
-            return;
-        }
-
-        $this->logger->info(sprintf(
-            'ChanServForbiddenChannelBurst: enforcing %d forbidden channel(s)',
-            count($forbiddenChannels),
-        ));
-
-        foreach ($forbiddenChannels as $channel) {
-            if (!$this->channelActions->isChannelOnNetwork($channel->getName())) {
-                $this->logger->debug(sprintf(
-                    'ChanServForbiddenChannelBurst: channel %s not on network, skipping',
-                    $channel->getName(),
-                ));
-
-                continue;
-            }
-
-            $this->enforceForbiddenChannel($channel->getName());
-        }
     }
 
     public function enforceKnownForbiddenChannel(string $channelName): void

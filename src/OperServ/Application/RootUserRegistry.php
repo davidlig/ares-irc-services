@@ -4,35 +4,37 @@ declare(strict_types=1);
 
 namespace App\OperServ\Application;
 
-use function array_fill_keys;
+use App\OperServ\Application\Port\Out\NetworkNickEquivalence;
+
+use function array_any;
 use function array_filter;
-use function array_keys;
 use function array_map;
+use function array_unique;
+use function array_values;
 use function explode;
 use function strtolower;
 
 final readonly class RootUserRegistry
 {
-    /** @var array<string, true> */
+    /** @var list<string> every configured spelling, ASCII-lowered; one network may tell them apart */
     private array $rootNicksLower;
 
-    public function __construct(string $rootUsers)
+    public function __construct(string $rootUsers, private NetworkNickEquivalence $equivalence)
     {
-        $nicks = array_filter(array_map('trim', explode(',', $rootUsers)));
-        $this->rootNicksLower = array_fill_keys(
-            array_map('strtolower', $nicks),
-            true
-        );
+        $this->rootNicksLower = array_values(array_unique(array_map(
+            strtolower(...),
+            array_filter(array_map('trim', explode(',', $rootUsers))),
+        )));
     }
 
     public function isRoot(string $nick): bool
     {
-        return isset($this->rootNicksLower[strtolower($nick)]);
+        return array_any($this->rootNicksLower, fn (string $root): bool => $this->equivalence->equivalent($root, $nick));
     }
 
     /** @return list<string> */
     public function getRootNicks(): array
     {
-        return array_keys($this->rootNicksLower);
+        return $this->rootNicksLower;
     }
 }

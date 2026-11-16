@@ -15,6 +15,9 @@ use App\ChanServ\Application\UseCase\EnforceMlock\MlockEnforcementOutcome;
 use App\ChanServ\Application\UseCase\EnforceMlock\MlockEnforcementResult;
 use App\ChanServ\Application\UseCase\EnforceMlock\MlockEnforcementTrigger;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
+use App\Irc\Domain\ValueObject\CaseMapping;
+use App\Shared\Domain\IrcIdentityFold;
+use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -27,7 +30,7 @@ final class ChannelUnsuspensionServiceTest extends TestCase
     public function returnsNullWithoutNetworkEffectsWhenChannelNoLongerExists(): void
     {
         $repository = $this->createStub(RegisteredChannelRepositoryInterface::class);
-        $repository->method('findByChannelName')->willReturn(null);
+        $repository->method('findByChannelNameKey')->willReturn(null);
         $actions = $this->createMock(ChanNetworkActions::class);
         $actions->expects(self::never())->method('isChannelOnNetwork');
         $suspension = $this->createMock(ChannelSuspensionService::class);
@@ -43,7 +46,7 @@ final class ChannelUnsuspensionServiceTest extends TestCase
     {
         $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Test');
         $repository = $this->createStub(RegisteredChannelRepositoryInterface::class);
-        $repository->method('findByChannelName')->willReturn($channel);
+        $repository->method('findByChannelNameKey')->willReturn($channel);
         $actions = $this->createMock(ChanNetworkActions::class);
         $actions->expects(self::once())->method('isChannelOnNetwork')->with('#Test')->willReturn(true);
         $actions->expects(self::never())->method('joinChannelAsService');
@@ -72,7 +75,7 @@ final class ChannelUnsuspensionServiceTest extends TestCase
     {
         $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Test');
         $repository = $this->createStub(RegisteredChannelRepositoryInterface::class);
-        $repository->method('findByChannelName')->willReturn($channel);
+        $repository->method('findByChannelNameKey')->willReturn($channel);
         $sequence = [];
         $actions = $this->createMock(ChanNetworkActions::class);
         $actions->expects(self::once())->method('isChannelOnNetwork')->with('#Test')->willReturn(false);
@@ -97,6 +100,31 @@ final class ChannelUnsuspensionServiceTest extends TestCase
 
         self::assertSame('#Test', $this->service($repository, $actions, $suspension, $mlock, $logger)->restore('#test'));
         self::assertSame(['join', 'lift', 'mlock'], $sequence);
+    }
+
+    #[Test]
+    public function restoresAnAsciiNetworkChannelFromItsStoredKey(): void
+    {
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Ops[1]', 1, 'Ops');
+        $ascii = NegotiatedCaseMapping::network(CaseMapping::Ascii);
+        $repository = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $repository->method('findByChannelNameKey')->willReturnCallback(
+            static fn (string $name): ?RegisteredChannel => IrcIdentityFold::fold($name) === $channel->getNameLower() ? $channel : null,
+        );
+        $repository->method('findByChannelName')->willReturnCallback(
+            static fn (string $name): ?RegisteredChannel => IrcIdentityFold::fold($name) === $channel->getNameLower() && $ascii->equivalent($channel->getName(), $name) ? $channel : null,
+        );
+        $actions = $this->createMock(ChanNetworkActions::class);
+        $actions->expects(self::once())->method('isChannelOnNetwork')->with('#Ops[1]')->willReturn(false);
+        $actions->expects(self::once())->method('joinChannelAsService')->with('#Ops[1]');
+        $suspension = $this->createMock(ChannelSuspensionService::class);
+        $suspension->expects(self::once())->method('liftSuspension')->with($channel);
+        $mlock = $this->createMock(EnforceChannelMlockHandlerInterface::class);
+        $mlock->expects(self::once())->method('handle')
+            ->with(self::callback(static fn (EnforceChannelMlock $command): bool => '#Ops[1]' === $command->channelName))
+            ->willReturn(new MlockEnforcementResult(MlockEnforcementOutcome::NoChanges));
+
+        self::assertSame('#Ops[1]', $this->service($repository, $actions, $suspension, $mlock)->restore('#ops{1}'));
     }
 
     private function service(

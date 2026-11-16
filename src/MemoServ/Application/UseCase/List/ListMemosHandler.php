@@ -13,7 +13,6 @@ use LogicException;
 use function array_unique;
 use function array_values;
 use function count;
-use function strtolower;
 
 final readonly class ListMemosHandler implements ListMemosHandlerInterface
 {
@@ -26,7 +25,7 @@ final readonly class ListMemosHandler implements ListMemosHandlerInterface
     public function handle(ListMemos $command): ListMemosResult
     {
         if (null !== $command->channelName) {
-            $channel = $this->channelPort->findChannelByName(strtolower($command->channelName));
+            $channel = $this->channelPort->findChannelByName($command->channelName);
             if (null === $channel) {
                 return ListMemosResult::channelNotRegistered($command->channelName);
             }

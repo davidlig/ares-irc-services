@@ -16,7 +16,6 @@ use function is_string;
 use function mb_strlen;
 use function str_starts_with;
 use function strlen;
-use function strtolower;
 use function strtr;
 use function substr;
 
@@ -176,7 +175,7 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
 
         return $this->filterByPermission(
             $this->context->getRegistry()->all(),
-            strtolower($sender->nick),
+            $sender->nick,
             $account->id,
             $sender->isIdentified,
             $sender->isOper,
@@ -193,7 +192,7 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
         }
 
         return $this->operatorAccess->hasAnyPermission(
-            strtolower($sender->nick),
+            $sender->nick,
             $account->id,
             $sender->isIdentified,
             $sender->isOper,

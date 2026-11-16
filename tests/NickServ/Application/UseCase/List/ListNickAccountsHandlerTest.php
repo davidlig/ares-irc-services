@@ -51,6 +51,25 @@ final class ListNickAccountsHandlerTest extends TestCase
     }
 
     #[Test]
+    public function neverOnlineNickListsItsRegistrationDateAsLastSeen(): void
+    {
+        // Intended since #172: a never-online nick shows its registration date, not "never seen".
+        $registeredAt = new DateTimeImmutable('2026-01-01 12:00:00 UTC');
+        $nick = RegisteredNick::createActive('NeverOnline', 'hash', null, 'en', $registeredAt);
+        $repository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repository->method('countByPattern')->willReturn(1);
+        $repository->method('searchByPattern')->willReturn([$nick]);
+
+        $result = new ListNickAccountsHandler($repository, 2)->handle(new ListNickAccounts('*'));
+
+        self::assertCount(1, $result->entries);
+        self::assertSame('NeverOnline', $result->entries[0]->nickname);
+        self::assertSame($registeredAt, $result->entries[0]->registeredAt);
+        self::assertSame($registeredAt, $result->entries[0]->lastSeenAt);
+        self::assertNull($result->entries[0]->lastConnectIp);
+    }
+
+    #[Test]
     public function searchesRequestedPageAndReturnsTotalCount(): void
     {
         $repository = $this->createMock(RegisteredNickRepositoryInterface::class);

@@ -21,7 +21,6 @@ use App\Shared\Adapter\In\Irc\Presentation\Component;
 use App\Shared\Adapter\In\Irc\Presentation\Fragment;
 use App\Shared\Adapter\In\Irc\Presentation\Role;
 
-use function strtolower;
 use function strtoupper;
 
 final readonly class RegmodeCommand implements NickServCommandInterface, IrcopAuditableCommandInterface
@@ -118,7 +117,7 @@ final readonly class RegmodeCommand implements NickServCommandInterface, IrcopAu
         $action = strtoupper($context->args[0] ?? '');
         $mode = RegistrationMode::tryFrom($action);
         $authorized = $this->operatorAccess->hasPermission(
-            strtolower($sender->nick),
+            $sender->nick,
             $context->getSenderAccountId(),
             $sender->isIdentified,
             $sender->isOper,

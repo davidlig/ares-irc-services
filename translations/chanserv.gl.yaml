@@ -805,6 +805,7 @@ forbid:
   success: "A canle %channel% foi prohibida."
   updated: "O motivo de prohibición da canle %channel% foi actualizado."
   channel_forbidden: "A canle %channel% está prohibida e non se pode usar."
+  name_conflict: "A canle %channel% non se pode prohibir: o seu rexistro pertence a unha canle diferente."
 
 # --- UNFORBID (IRCop) ---------------------------------------------------------
 unforbid:

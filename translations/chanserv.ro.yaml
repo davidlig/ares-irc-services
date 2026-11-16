@@ -804,6 +804,7 @@ forbid:
   success: "Canalul %channel% a fost interzis."
   updated: "Motivul interzicerii pentru canalul %channel% a fost actualizat."
   channel_forbidden: "Canalul %channel% este interzis și nu poate fi folosit."
+  name_conflict: "Canalul %channel% nu poate fi interzis: înregistrarea sa aparține unui alt canal."
 
 # --- UNFORBID (IRCop) ---------------------------------------------------------
 unforbid:

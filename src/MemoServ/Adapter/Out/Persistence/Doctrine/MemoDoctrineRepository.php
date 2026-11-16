@@ -45,7 +45,7 @@ final readonly class MemoDoctrineRepository implements MemoRepositoryInterface
     {
         return $this->em
             ->getRepository(Memo::class)
-            ->findBy(['targetNickId' => $nickId], ['createdAt' => 'ASC']);
+            ->findBy(['targetNickId' => $nickId], ['createdAt' => 'ASC', 'id' => 'ASC']);
     }
 
     /**
@@ -55,7 +55,7 @@ final readonly class MemoDoctrineRepository implements MemoRepositoryInterface
     {
         return $this->em
             ->getRepository(Memo::class)
-            ->findBy(['targetChannelId' => $channelId], ['createdAt' => 'ASC']);
+            ->findBy(['targetChannelId' => $channelId], ['createdAt' => 'ASC', 'id' => 'ASC']);
     }
 
     public function countUnreadByTargetNick(int $nickId): int
@@ -150,6 +150,7 @@ final readonly class MemoDoctrineRepository implements MemoRepositoryInterface
             ->where('m.targetNickId = :nickId')
             ->setParameter('nickId', $nickId)
             ->orderBy('m.createdAt', 'ASC')
+            ->addOrderBy('m.id', 'ASC')
             ->setFirstResult($index - 1)
             ->setMaxResults(1)
             ->getQuery()
@@ -174,6 +175,7 @@ final readonly class MemoDoctrineRepository implements MemoRepositoryInterface
             ->where('m.targetChannelId = :channelId')
             ->setParameter('channelId', $channelId)
             ->orderBy('m.createdAt', 'ASC')
+            ->addOrderBy('m.id', 'ASC')
             ->setFirstResult($index - 1)
             ->setMaxResults(1)
             ->getQuery()

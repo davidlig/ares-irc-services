@@ -15,6 +15,7 @@ use App\Irc\Adapter\Network\Event\UserMetadataReceivedEvent;
 use App\Irc\Adapter\Network\Event\UserModeReceivedEvent;
 use App\Irc\Adapter\Network\Event\UserNickChangeReceivedEvent;
 use App\Irc\Adapter\Network\Event\UserQuitReceivedEvent;
+use App\Irc\Adapter\Network\ServerBurstRegistry;
 use App\Irc\Adapter\Protocol\IRCMessage;
 use App\Irc\Adapter\Protocol\NetworkStateAdapterInterface;
 use App\Irc\Domain\Event\ServerDelinkedEvent;
@@ -72,6 +73,7 @@ final class UnrealStandaloneNetworkStateAdapter implements NetworkStateAdapterIn
     public function __construct(
         private readonly EventDispatcherInterface $eventDispatcher,
         private readonly LoggerInterface $logger = new NullLogger(),
+        private readonly ServerBurstRegistry $burstRegistry = new ServerBurstRegistry(),
     ) {}
 
     public function getSupportedProtocol(): string
@@ -84,6 +86,7 @@ final class UnrealStandaloneNetworkStateAdapter implements NetworkStateAdapterIn
         match ($message->command) {
             'PROTOCTL' => $this->handleProtoctl($message),
             'SERVER', 'SID' => $this->handleServer($message),
+            'EOS' => $this->handleEos($message),
             'ERROR' => $this->resetServerTree(true),
             'UID' => $this->handleUid($message),
             'NICK' => $this->handleNick($message),
@@ -237,6 +240,7 @@ final class UnrealStandaloneNetworkStateAdapter implements NetworkStateAdapterIn
                     }
                 }
             }
+            $this->burstRegistry->endBurst(...$delinkedSids);
 
             $this->eventDispatcher->dispatch(new ServerDelinkedEvent($resolvedSid, $reason, $delinkedSids));
 
@@ -263,6 +267,7 @@ final class UnrealStandaloneNetworkStateAdapter implements NetworkStateAdapterIn
                 $sid = substr($parameter, 4);
                 if (1 === preg_match('/^[0-9][A-Z0-9]{2}$/D', $sid)) {
                     $this->directSid = $sid;
+                    $this->burstRegistry->startBurst($sid);
                 }
             }
         }
@@ -291,6 +296,19 @@ final class UnrealStandaloneNetworkStateAdapter implements NetworkStateAdapterIn
 
         if ('' !== $key && !isset($this->servers[$key])) {
             $this->servers[$key] = ['name' => strtolower($name), 'parent' => $parent];
+            $this->burstRegistry->startBurst($key);
+        }
+    }
+
+    /**
+     * EOS: end of burst of the source server, e.g. ":002 EOS". UnrealIRCd sends one per server,
+     * including servers behind the linking one, so only the source server stops bursting.
+     */
+    private function handleEos(IRCMessage $message): void
+    {
+        $server = $this->originServer($message->prefix);
+        if (null !== $server) {
+            $this->burstRegistry->endBurst($server);
         }
     }
 
@@ -302,6 +320,20 @@ final class UnrealStandaloneNetworkStateAdapter implements NetworkStateAdapterIn
         $this->directSid = null;
         $this->directName = null;
         $this->servers = [];
+        $this->burstRegistry->clear();
+    }
+
+    /**
+     * Server that sent a line: the line source itself when it names a known server (SID or name),
+     * the server part of a UID source, or the uplink for an unprefixed line.
+     */
+    private function originServer(?string $source): ?string
+    {
+        if (null === $source || '' === $source) {
+            return $this->directSid;
+        }
+
+        return $this->resolve($source) ?? (strlen($source) > 3 ? $this->resolve(substr($source, 0, 3)) : null);
     }
 
     private function resolve(string $identity): ?string
@@ -378,7 +410,15 @@ final class UnrealStandaloneNetworkStateAdapter implements NetworkStateAdapterIn
             }
         }
 
-        $this->eventDispatcher->dispatch(new ChannelJoinReceivedEvent($channelName, $timestamp, $modeStr, $members, $listModes, $modeParams));
+        $this->eventDispatcher->dispatch(new ChannelJoinReceivedEvent(
+            $channelName,
+            $timestamp,
+            $modeStr,
+            $members,
+            $listModes,
+            $modeParams,
+            fromBurstingServer: $this->burstRegistry->isBursting($this->originServer($message->prefix)),
+        ));
     }
 
     /**

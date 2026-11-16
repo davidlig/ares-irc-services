@@ -112,7 +112,7 @@ final readonly class IrcopsDebugChannelProtectionSubscriber implements EventSubs
 
     public function onChannelUnsuspended(ChannelUnsuspendedEvent $event): void
     {
-        if ($this->registeredChannels->findByName($event->channelNameLower)?->ircopOnly) {
+        if ($this->registeredChannels->findByNameKey($event->channelNameLower)?->ircopOnly) {
             $this->onIrcopOnlyUpdated(new ChannelIrcopOnlyUpdatedEvent($event->channelName));
         }
     }
@@ -124,7 +124,7 @@ final readonly class IrcopsDebugChannelProtectionSubscriber implements EventSubs
 
     public function onChannelRestored(ChannelRestoredEvent $event): void
     {
-        if ($this->registeredChannels->findByName($event->channelNameLower)?->ircopOnly) {
+        if ($this->registeredChannels->findByNameKey($event->channelNameLower)?->ircopOnly) {
             $this->onIrcopOnlyUpdated(new ChannelIrcopOnlyUpdatedEvent($event->channelName));
         }
     }

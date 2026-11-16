@@ -8,8 +8,10 @@ use App\ChanServ\Application\Port\Out\AkickActions;
 use App\ChanServ\Application\Port\Out\ChannelAccessRepositoryInterface;
 use App\ChanServ\Application\Port\Out\ChannelAkickRepositoryInterface;
 use App\ChanServ\Application\Port\Out\ChannelEntryNetworkQuery;
+use App\ChanServ\Application\Port\Out\ChanServActivitySink;
 use App\ChanServ\Application\Port\Out\ChanServEventPublisher;
 use App\ChanServ\Application\Port\Out\ChanUserAccountPort;
+use App\ChanServ\Application\Port\Out\NetworkIdentityFold;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\PublishedEvent\ChannelAkickChangedEvent;
 use App\ChanServ\Application\Service\ChanServAccessHelper;
@@ -18,8 +20,8 @@ use App\ChanServ\Domain\Entity\ChannelLevel;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\Exception\ChannelNotRegisteredException;
 use App\ChanServ\Domain\Policy\AkickAdditionPolicy;
-use App\ChanServ\Domain\Policy\AkickMatchPolicy;
 use App\ChanServ\Domain\Policy\AkickProtectionPolicy;
+use App\ChanServ\Domain\Policy\PreparedAkickRules;
 use App\ChanServ\Domain\ValueObject\AkickAdditionDecision;
 use App\ChanServ\Domain\ValueObject\AkickMask;
 use App\ChanServ\Domain\ValueObject\AkickRule;
@@ -33,7 +35,7 @@ use function array_values;
 use function count;
 use function ctype_digit;
 use function spl_object_id;
-use function strtolower;
+use function sprintf;
 
 final readonly class ManageChannelAkickHandler implements ManageChannelAkickHandlerInterface
 {
@@ -44,16 +46,17 @@ final readonly class ManageChannelAkickHandler implements ManageChannelAkickHand
         private ChannelAccessRepositoryInterface $access,
         private ChanServAccessHelper $accessPolicy,
         private AkickAdditionPolicy $additionPolicy,
-        private AkickMatchPolicy $matchPolicy,
         private AkickProtectionPolicy $protectionPolicy,
         private ChannelEntryNetworkQuery $network,
         private AkickActions $actions,
         private ChanServEventPublisher $events,
+        private ChanServActivitySink $activity,
+        private NetworkIdentityFold $identityFold,
     ) {}
 
     public function handle(ManageChannelAkick $command): ManageChannelAkickResult
     {
-        $channel = $this->channels->findByChannelName(strtolower($command->channelName));
+        $channel = $this->channels->findByChannelName($command->channelName);
         if (null === $channel) {
             throw ChannelNotRegisteredException::forChannel($command->channelName);
         }
@@ -126,7 +129,7 @@ final readonly class ManageChannelAkickHandler implements ManageChannelAkickHand
             return new ManageChannelAkickResult(ManageChannelAkickOutcome::DangerousMask, mask: $mask->value);
         }
 
-        $protected = $this->protectionPolicy->firstProtectedNickname($mask, $this->protectedNicknames($channel));
+        $protected = $this->protectionPolicy->firstProtectedNickname($mask, $this->protectedNicknames($channel), $this->identityFold->fold(...));
         if (null !== $protected) {
             return new ManageChannelAkickResult(ManageChannelAkickOutcome::ProtectedUser, protectedNickname: $protected);
         }
@@ -282,23 +285,29 @@ final readonly class ManageChannelAkickHandler implements ManageChannelAkickHand
         $ruleMap = [];
         $indexMap = [];
         foreach ($stored as $index => $akick) {
-            $rule = new AkickRule(
-                new AkickMask($akick->getMask()),
-                $akick->getReason(),
-                $akick->getExpiresAt(),
-            );
+            try {
+                $rule = new AkickRule(
+                    new AkickMask($akick->getMask()),
+                    $akick->getReason(),
+                    $akick->getExpiresAt(),
+                );
+            } catch (InvalidArgumentException) {
+                $this->activity->warning(sprintf('Skipping invalid AKICK rule for channel ID %d.', $channel->getId()));
+                continue;
+            }
             $rules[] = $rule;
             $ruleMap[spl_object_id($rule)] = $akick;
             $indexMap[spl_object_id($rule)] = $index + 1;
         }
 
+        $prepared = PreparedAkickRules::prepare($rules, $this->identityFold->fold(...));
         if ($command->founderEquivalent && null !== $member->displayMask && $member->displayMask !== $member->userMask) {
-            $realMatches = $this->matchPolicy->allMatches($rules, $member->userMask, $command->now, $member->operator);
-            $displayMatches = $this->matchPolicy->allMatches($rules, $member->displayMask, $command->now, $member->operator);
+            $realMatches = $prepared->allMatches($member->userMask, $command->now, $member->operator);
+            $displayMatches = $prepared->allMatches($member->displayMask, $command->now, $member->operator);
             $matches = $this->mergeMatches($realMatches, $displayMatches);
         } else {
             $mask = $command->founderEquivalent ? $member->userMask : $member->getVisibleMask();
-            $matches = $this->matchPolicy->allMatches($rules, $mask, $command->now, $member->operator);
+            $matches = $prepared->allMatches($mask, $command->now, $member->operator);
         }
 
         if ([] === $matches) {
@@ -438,9 +447,10 @@ final readonly class ManageChannelAkickHandler implements ManageChannelAkickHand
             }
         }
 
+        $prepared = PreparedAkickRules::prepare($rules, $this->identityFold->fold(...));
         $enforcedCount = 0;
         foreach ($channel->members as $member) {
-            $matching = $this->matchPolicy->firstMatch($rules, $member->userMask, $now, $member->operator);
+            $matching = $prepared->firstMatch($member->userMask, $now, $member->operator);
             if (null === $matching) {
                 continue;
             }

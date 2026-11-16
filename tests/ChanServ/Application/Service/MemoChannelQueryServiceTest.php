@@ -27,7 +27,7 @@ final class MemoChannelQueryServiceTest extends TestCase
         $channel = $this->channel(10, '#PHP', false, 1);
 
         $repository = $this->createMock(RegisteredChannelRepositoryInterface::class);
-        $repository->expects(self::once())->method('findByChannelName')->with('#php')->willReturn($channel);
+        $repository->expects(self::once())->method('findByChannelName')->with('#PHP')->willReturn($channel);
 
         $query = new MemoChannelQueryService($repository, $this->accessHelper());
 

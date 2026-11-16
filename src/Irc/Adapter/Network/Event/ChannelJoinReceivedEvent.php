@@ -21,6 +21,7 @@ final readonly class ChannelJoinReceivedEvent
      * @param array{b?: string[], e?: string[], I?: string[]}                                    $listModes
      * @param array<string, ChannelModeParameterMerge>                                           $parameterMergeRules
      * @param list<string>                                                                       $modeParams
+     * @param bool                                                                               $fromBurstingServer  true when the line originates from a server still sending its burst
      */
     public function __construct(
         public ChannelName $channelName,
@@ -30,5 +31,6 @@ final readonly class ChannelJoinReceivedEvent
         public array $listModes = [],
         public array $modeParams = [],
         public array $parameterMergeRules = ['k' => ChannelModeParameterMerge::LexicalMaximum, 'l' => ChannelModeParameterMerge::NumericMaximum],
+        public bool $fromBurstingServer = false,
     ) {}
 }

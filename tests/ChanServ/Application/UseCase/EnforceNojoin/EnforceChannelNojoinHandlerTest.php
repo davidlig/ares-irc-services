@@ -58,7 +58,7 @@ final class EnforceChannelNojoinHandlerTest extends TestCase
             $this->channel(founderId: 10),
             [$this->member('001A', 'Member', identified: true)],
             100,
-            ['member' => new ChanAccountView(20, 'Member', 'fr')],
+            ['Member' => new ChanAccountView(20, 'Member', 'fr')],
             [20 => 99],
         ));
     }
@@ -196,7 +196,7 @@ final class EnforceChannelNojoinHandlerTest extends TestCase
     {
         $channel = $this->channel();
         $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
-        $channels->expects(self::once())->method('findByChannelName')->with('#mixed')->willReturn($channel);
+        $channels->expects(self::once())->method('findByChannelName')->with('#MiXeD')->willReturn($channel);
         $network = $this->createStub(ChannelEntryNetworkQuery::class);
         $network->method('findMember')->willReturn($this->member('001A', 'Guest'));
         $levels = $this->createMock(ChannelLevelRepositoryInterface::class);

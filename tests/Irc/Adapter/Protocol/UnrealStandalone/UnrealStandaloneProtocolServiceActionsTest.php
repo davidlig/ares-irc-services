@@ -7,6 +7,7 @@ namespace App\Tests\Irc\Adapter\Protocol\UnrealStandalone;
 use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 use App\Irc\Adapter\Protocol\UnrealStandalone\UnrealStandaloneProtocolServiceActions;
+use App\Irc\Application\Port\In\LocalUserQuitSyncPort;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -23,7 +24,7 @@ final class UnrealStandaloneProtocolServiceActionsTest extends TestCase
     #[Test]
     public function setUserAccountSendsSvsloginAndSvs2modeForLogin(): void
     {
-        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder);
+        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->setUserAccount('001', '001ABCD', 'TestAccount');
 
@@ -35,7 +36,7 @@ final class UnrealStandaloneProtocolServiceActionsTest extends TestCase
     #[Test]
     public function setUserAccountSendsSvsloginAndSvs2modeForLogout(): void
     {
-        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder);
+        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->setUserAccount('001', '001ABCD', '0');
 
@@ -47,7 +48,7 @@ final class UnrealStandaloneProtocolServiceActionsTest extends TestCase
     #[Test]
     public function setUserModeSendsSvsmode(): void
     {
-        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder);
+        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->setUserMode('001', '001ABCD', '+i');
 
@@ -58,7 +59,7 @@ final class UnrealStandaloneProtocolServiceActionsTest extends TestCase
     #[Test]
     public function setUserOperclassSendsCompleteSvsoCommandAndCanClearIt(): void
     {
-        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder);
+        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->setUserOperclass('001', '001ABCD', 'TestNick', 'services:netadmin');
         $actions->setUserOperclass('001', '001ABCD', 'TestNick', null);
@@ -72,14 +73,14 @@ final class UnrealStandaloneProtocolServiceActionsTest extends TestCase
     #[Test]
     public function getAvailableOperclassesReturnsNull(): void
     {
-        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder);
+        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
         self::assertNull($actions->getAvailableOperclasses());
     }
 
     #[Test]
     public function forceNickSendsSvsnickWithTimestamp(): void
     {
-        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder);
+        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->forceNick('001', '001ABCD', 'NewNick');
 
@@ -88,9 +89,11 @@ final class UnrealStandaloneProtocolServiceActionsTest extends TestCase
     }
 
     #[Test]
-    public function killUserSendsKillCommand(): void
+    public function killUserSendsKillCommandAndRemovesTheUserLocally(): void
     {
-        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder);
+        $localUserQuitSync = $this->createMock(LocalUserQuitSyncPort::class);
+        $localUserQuitSync->expects(self::once())->method('apply')->with('001ABCD', 'Killed for abuse');
+        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder, $localUserQuitSync);
 
         $actions->killUser('001', '001ABCD', 'Killed for abuse');
 
@@ -101,7 +104,7 @@ final class UnrealStandaloneProtocolServiceActionsTest extends TestCase
     #[Test]
     public function setChannelModesSendsModeFromServer(): void
     {
-        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder);
+        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->setChannelModes('001', '#test', '+nt');
 
@@ -112,7 +115,7 @@ final class UnrealStandaloneProtocolServiceActionsTest extends TestCase
     #[Test]
     public function setChannelModesSendsModeFromService(): void
     {
-        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder);
+        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->setChannelModes('001', '#test', '+o', ['001ABCD'], '001CSRV');
 
@@ -123,7 +126,7 @@ final class UnrealStandaloneProtocolServiceActionsTest extends TestCase
     #[Test]
     public function setChannelMemberModeSendsModeFromServer(): void
     {
-        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder);
+        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->setChannelMemberMode('001', '#test', '001ABCD', 'o', true);
 
@@ -134,7 +137,7 @@ final class UnrealStandaloneProtocolServiceActionsTest extends TestCase
     #[Test]
     public function setChannelMemberModeRemovesMode(): void
     {
-        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder);
+        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->setChannelMemberMode('001', '#test', '001ABCD', 'o', false);
 
@@ -145,7 +148,7 @@ final class UnrealStandaloneProtocolServiceActionsTest extends TestCase
     #[Test]
     public function inviteUserToChannelSendsInvite(): void
     {
-        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder);
+        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->inviteUserToChannel('001', '#test', '001ABCD');
 
@@ -156,7 +159,7 @@ final class UnrealStandaloneProtocolServiceActionsTest extends TestCase
     #[Test]
     public function joinChannelAsServiceSendsJoin(): void
     {
-        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder);
+        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->joinChannelAsService('001', '#test', '001CSRV', 'q');
 
@@ -168,7 +171,7 @@ final class UnrealStandaloneProtocolServiceActionsTest extends TestCase
     #[Test]
     public function joinChannelAsServiceSkipsPrefixWhenEmpty(): void
     {
-        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder);
+        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->joinChannelAsService('001', '#test', '001CSRV', '');
 
@@ -179,7 +182,7 @@ final class UnrealStandaloneProtocolServiceActionsTest extends TestCase
     #[Test]
     public function setChannelTopicSetsTopic(): void
     {
-        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder);
+        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->setChannelTopic('001', '#test', 'New topic', '001CSRV');
 
@@ -190,7 +193,7 @@ final class UnrealStandaloneProtocolServiceActionsTest extends TestCase
     #[Test]
     public function setChannelTopicClearsTopicWhenNull(): void
     {
-        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder);
+        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->setChannelTopic('001', '#test', null, '001CSRV');
 
@@ -201,7 +204,7 @@ final class UnrealStandaloneProtocolServiceActionsTest extends TestCase
     #[Test]
     public function kickFromChannelSendsKickCommand(): void
     {
-        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder);
+        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->kickFromChannel('001', '#test', '001ABCD', 'Kicked for abuse', '001CSRV');
 
@@ -212,7 +215,7 @@ final class UnrealStandaloneProtocolServiceActionsTest extends TestCase
     #[Test]
     public function kickFromChannelUsesServerSidWhenServiceUidEmpty(): void
     {
-        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder);
+        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->kickFromChannel('001', '#test', '001ABCD', 'reason');
 
@@ -225,7 +228,7 @@ final class UnrealStandaloneProtocolServiceActionsTest extends TestCase
     {
         $connectionHolder = new ActiveConnectionHolder();
 
-        $actions = new UnrealStandaloneProtocolServiceActions($connectionHolder);
+        $actions = new UnrealStandaloneProtocolServiceActions($connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->setUserAccount('001', '001ABCD', 'TestAccount');
         $actions->setUserMode('001', '001ABCD', '+i');
@@ -239,7 +242,7 @@ final class UnrealStandaloneProtocolServiceActionsTest extends TestCase
     #[Test]
     public function addGlineSendsTklGlineCommand(): void
     {
-        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder);
+        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->addGline('001', 'testuser', 'test.host', 3600, 'Test ban');
 
@@ -250,7 +253,7 @@ final class UnrealStandaloneProtocolServiceActionsTest extends TestCase
     #[Test]
     public function addGlinePermanentBan(): void
     {
-        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder);
+        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->addGline('001', '*', '192.168.*', 0, 'Permanent ban');
 
@@ -261,7 +264,7 @@ final class UnrealStandaloneProtocolServiceActionsTest extends TestCase
     #[Test]
     public function removeGlineSendsTklRemoveCommand(): void
     {
-        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder);
+        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->removeGline('001', 'testuser', 'test.host');
 
@@ -272,7 +275,7 @@ final class UnrealStandaloneProtocolServiceActionsTest extends TestCase
     #[Test]
     public function removeGlineWithWildcards(): void
     {
-        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder);
+        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->removeGline('001', '*', '192.168.*');
 
@@ -283,7 +286,7 @@ final class UnrealStandaloneProtocolServiceActionsTest extends TestCase
     #[Test]
     public function introducePseudoClientSendsUidCommand(): void
     {
-        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder);
+        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->introducePseudoClient('001', 'GlobalBot', 'global', 'services.red', '001Z00001', 'Global Message Bot');
 
@@ -294,7 +297,7 @@ final class UnrealStandaloneProtocolServiceActionsTest extends TestCase
     #[Test]
     public function introducePseudoClientWithDifferentParams(): void
     {
-        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder);
+        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->introducePseudoClient('002', 'Announce', 'announce', 'irc.example.net', '002Z00005', 'Network Announcements');
 
@@ -305,7 +308,7 @@ final class UnrealStandaloneProtocolServiceActionsTest extends TestCase
     #[Test]
     public function quitPseudoClientSendsQuitCommand(): void
     {
-        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder);
+        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->quitPseudoClient('001', '001Z00001', 'Global message completed');
 
@@ -316,7 +319,7 @@ final class UnrealStandaloneProtocolServiceActionsTest extends TestCase
     #[Test]
     public function partChannelAsServiceSendsPartCommand(): void
     {
-        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder);
+        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->partChannelAsService('001', '#test', '001CSRV');
 
@@ -327,7 +330,7 @@ final class UnrealStandaloneProtocolServiceActionsTest extends TestCase
     #[Test]
     public function setUserVhostSetsVhostUsingChghost(): void
     {
-        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder);
+        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->setUserVhost('001', '001ABCD', 'custom.vhost.net');
 
@@ -338,7 +341,7 @@ final class UnrealStandaloneProtocolServiceActionsTest extends TestCase
     #[Test]
     public function setUserVhostWithSpacesUsesColon(): void
     {
-        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder);
+        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->setUserVhost('001', '001ABCD', 'custom vhost with spaces');
 
@@ -349,7 +352,7 @@ final class UnrealStandaloneProtocolServiceActionsTest extends TestCase
     #[Test]
     public function setUserVhostClearsVhostUsingSvs2mode(): void
     {
-        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder);
+        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->setUserVhost('001', '001ABCD', '');
 
@@ -360,7 +363,7 @@ final class UnrealStandaloneProtocolServiceActionsTest extends TestCase
     #[Test]
     public function introduceServiceSendsFormattedServiceIntroduction(): void
     {
-        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder);
+        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder, $this->createStub(LocalUserQuitSyncPort::class));
 
         $actions->introduceService('001', 'NickServ', 'NickServ', 'services.host', '001AAAAAA', 'Nickname Services', 'nickserv');
 

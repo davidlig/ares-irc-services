@@ -18,6 +18,7 @@ use App\Irc\Adapter\Protocol\UnrealStandalone\UnrealStandaloneProtocolServiceAct
 use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\Irc\Application\Port\In\ChannelServiceActionsPort;
 use App\Irc\Application\Port\In\ChannelSyncCompletedRegistryInterface;
+use App\Irc\Application\Port\In\LocalUserQuitSyncPort;
 use App\Irc\Application\Port\In\UidResolverInterface;
 use App\Irc\Application\PublishedEvent\ChannelTopicReceivedEvent;
 use DateTimeImmutable;
@@ -123,7 +124,7 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
         $connection->method('writeLine')->willReturnCallback(static function (string $line) use (&$written): void { $written[] = $line; });
         $holder = new ActiveConnectionHolder();
         new ReflectionClass($holder)->getProperty('connection')->setValue($holder, $connection);
-        $actions = new UnrealStandaloneProtocolServiceActions($holder);
+        $actions = new UnrealStandaloneProtocolServiceActions($holder, $this->createStub(LocalUserQuitSyncPort::class));
         $registered = $this->createMock(RegisteredChannel::class);
         $registered->expects(self::atLeastOnce())->method('isTopicLock')->willReturn(true);
         $registered->expects(self::atLeastOnce())->method('getTopic')->willReturn(null);
@@ -470,6 +471,27 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
     }
 
     #[Test]
+    public function keepsAUserSetterWhoseNickOnlyFoldsToTheServiceNick(): void
+    {
+        // On an ascii-casemapping network chan{serv} is a different user from the Chan[Serv] service.
+        $registered = $this->createMock(RegisteredChannel::class);
+        $registered->expects(self::atLeastOnce())->method('isTopicLock')->willReturn(false);
+        $registered->expects(self::once())->method('updateTopic')->with('New topic', self::isInstanceOf(DateTimeImmutable::class), 'chan{serv}');
+
+        $this->channelRepository->expects(self::once())->method('findByChannelName')->willReturn($registered);
+        $this->syncCompletedRegistry->expects(self::once())->method('isSyncCompleted')->willReturn(true);
+        $this->syncCompletedRegistry->expects(self::once())->method('getSyncCompletedAt')->willReturn(microtime(true) - 5);
+        $this->channelRepository->expects(self::once())->method('save')->with($registered);
+        $this->channelServiceActions->expects(self::never())->method('setChannelTopic');
+
+        $this->createSubscriber($this->uidResolver, 'Chan[Serv]')->onTopicReceived(new ChannelTopicReceivedEvent(
+            channelName: '#test',
+            topic: 'New topic',
+            setterNick: 'chan{serv}',
+        ));
+    }
+
+    #[Test]
     public function onTopicReceivedGracePeriodBoundaryJustUnderTwoSeconds(): void
     {
         $registered = $this->createMock(RegisteredChannel::class);
@@ -632,7 +654,7 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
         $this->subscriber = $this->createSubscriber($this->uidResolver);
     }
 
-    private function createSubscriber(UidResolverInterface $uidResolver): ChanServTopicSyncSubscriber
+    private function createSubscriber(UidResolverInterface $uidResolver, string $chanservNick = 'ChanServ'): ChanServTopicSyncSubscriber
     {
         return new ChanServTopicSyncSubscriber(new SynchronizeReceivedChannelTopicHandler(
             $this->channelRepository,
@@ -643,7 +665,7 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
             ),
             new IrcChannelTopicActions($this->channelServiceActions),
             new SystemChannelTopicClock(),
-            'ChanServ',
+            $chanservNick,
             'NickServ',
         ));
     }

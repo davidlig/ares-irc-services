@@ -118,12 +118,20 @@ final class ForbidCommand implements NickServCommandInterface, IrcopAuditableCom
             ForbidNickOutcome::TargetIsRoot => $this->replyRejected($context, 'forbid.cannot_forbid_root', $result->targetNickname),
             ForbidNickOutcome::TargetIsIrcop => $this->replyRejected($context, 'forbid.cannot_forbid_oper', $result->targetNickname),
             ForbidNickOutcome::TargetIsService => $this->replyRejected($context, 'forbid.cannot_forbid_service', $result->targetNickname),
+            ForbidNickOutcome::TargetSharesKeyWithOtherNick => $this->replyKeyConflict($context, $result->targetNickname, (string) $result->registeredNickname),
         };
     }
 
     private function replyRejected(NickServContext $context, string $key, string $nickname, Role $role = Role::Error): CommandOutcome
     {
         $context->replyEmphasized($key, ['%nickname%' => $nickname], $role, ['nickname']);
+
+        return CommandOutcome::rejected();
+    }
+
+    private function replyKeyConflict(NickServContext $context, string $nickname, string $registered): CommandOutcome
+    {
+        $context->replyEmphasized('forbid.key_conflict', ['%nickname%' => $nickname, '%registered%' => $registered], Role::Error, ['nickname', 'registered']);
 
         return CommandOutcome::rejected();
     }

@@ -6,12 +6,12 @@ namespace App\NickServ\Adapter\Out\InMemory;
 
 use App\NickServ\Application\Port\In\IdentifiedSessionQuery;
 use App\NickServ\Application\Port\Out\IdentifiedSessionTracker;
+use App\Shared\Domain\IrcIdentityFold;
 use Psr\Log\LoggerInterface;
 
 use function array_key_first;
 use function asort;
 use function count;
-use function strtolower;
 
 /**
  * In-memory registry that tracks which registered nickname each connected
@@ -27,7 +27,7 @@ final class IdentifiedSessionRegistry implements IdentifiedSessionQuery, Identif
     /** @var array<string, string> uid → registered nick */
     private array $sessions;
 
-    /** @var array<string, array<string, int>> lowercase nick → UIDs ordered by session registration */
+    /** @var array<string, array<string, int>> IrcIdentityFold nick → UIDs ordered by session registration */
     private array $uidsByNick = [];
 
     /** @var array<string, int> */
@@ -49,7 +49,7 @@ final class IdentifiedSessionRegistry implements IdentifiedSessionQuery, Identif
             $this->sessionOrder[$uid] = $this->nextOrder++;
         }
         $this->sessions[$uid] = $registeredNick;
-        $lowerNick = strtolower($registeredNick);
+        $lowerNick = IrcIdentityFold::fold($registeredNick);
         $this->uidsByNick[$lowerNick][$uid] = $this->sessionOrder[$uid];
         asort($this->uidsByNick[$lowerNick]);
         $this->logger?->debug('IdentifiedSessionRegistry: registered session', ['uid' => $uid, 'nick' => $registeredNick, 'total' => count($this->sessions)]);
@@ -59,7 +59,7 @@ final class IdentifiedSessionRegistry implements IdentifiedSessionQuery, Identif
     {
         $registered = $this->findNick($uid);
 
-        return null !== $registered && strtolower($registered) === strtolower($registeredNickname);
+        return null !== $registered && IrcIdentityFold::equals($registered, $registeredNickname);
     }
 
     /** Returns the registered nick for the UID, or null if not tracked. */
@@ -71,7 +71,7 @@ final class IdentifiedSessionRegistry implements IdentifiedSessionQuery, Identif
     /** Returns the UID for a registered nick, or null if not identified. */
     public function findUidByNick(string $registeredNick): ?string
     {
-        $lowerNick = strtolower($registeredNick);
+        $lowerNick = IrcIdentityFold::fold($registeredNick);
         $this->logger?->debug('IdentifiedSessionRegistry: searching for nick', ['search' => $registeredNick, 'total' => count($this->sessions)]);
 
         return isset($this->uidsByNick[$lowerNick]) ? array_key_first($this->uidsByNick[$lowerNick]) : null;
@@ -108,7 +108,7 @@ final class IdentifiedSessionRegistry implements IdentifiedSessionQuery, Identif
 
     private function removeFromNickIndex(string $uid, string $nick): void
     {
-        $lowerNick = strtolower($nick);
+        $lowerNick = IrcIdentityFold::fold($nick);
         unset($this->uidsByNick[$lowerNick][$uid]);
         if ([] === $this->uidsByNick[$lowerNick]) {
             unset($this->uidsByNick[$lowerNick]);

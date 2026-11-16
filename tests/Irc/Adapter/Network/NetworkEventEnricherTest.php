@@ -1096,6 +1096,42 @@ final class NetworkEventEnricherTest extends TestCase
     }
 
     #[Test]
+    public function newerTimestampJoinFromABurstingServerForwardsTheBurstOrigin(): void
+    {
+        $channel = new Channel(new ChannelName('#test'), '+n', new DateTimeImmutable('@1704067200'));
+        $repo = $this->createStub(ChannelRepositoryInterface::class);
+        $repo->method('findByName')->willReturn($channel);
+        $events = [];
+        $dispatcher = $this->createMock(EventDispatcherInterface::class);
+        $dispatcher->expects(self::exactly(2))->method('dispatch')->willReturnCallback(
+            static function (object $event) use (&$events): object {
+                $events[] = $event;
+
+                return $event;
+            },
+        );
+        $enricher = new NetworkEventEnricher(
+            $repo,
+            $this->createStub(NetworkUserRepositoryInterface::class),
+            $dispatcher,
+            $this->createStub(SkipIdentifiedModeStripRegistry::class),
+            $this->createStub(ActiveChannelModeSupportProviderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
+        );
+        $enricher->onChannelJoinReceived(new ChannelJoinReceivedEvent(
+            new ChannelName('#test'),
+            1704067201,
+            '+t',
+            [['uid' => new Uid('001NEW'), 'role' => ChannelMemberRole::None]],
+            fromBurstingServer: true,
+        ));
+
+        self::assertInstanceOf(ExistingChannelJoinObservedEvent::class, $events[0]);
+        self::assertTrue($events[0]->fromBurstingServer);
+        self::assertSame(1704067200, $channel->getCreatedAt()->getTimestamp());
+    }
+
+    #[Test]
     public function olderTimestampJoinResynchronizesTheExistingChannel(): void
     {
         $channel = new Channel(new ChannelName('#test'), '+n', new DateTimeImmutable('@1704067200'));

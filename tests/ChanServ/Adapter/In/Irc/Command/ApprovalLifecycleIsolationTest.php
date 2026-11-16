@@ -30,6 +30,7 @@ use App\OperServ\Application\Port\Out\OperatorRoleAccess;
 use App\OperServ\Application\Security\OperatorPermissionPolicy;
 use App\OperServ\Application\Security\RootAuthorizationPolicy;
 use App\Shared\Application\Port\EventBusInterface;
+use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
 use DateTimeImmutable;
 use LogicException;
@@ -124,7 +125,7 @@ final class ApprovalLifecycleIsolationTest extends DoctrineIntegrationTestCase
             $this->construct(ChannelHistoryService::class),
         );
         $policy = new OperatorPermissionPolicy(
-            new RootAuthorizationPolicy(new ConfiguredRootIdentityRegistry('Root')),
+            new RootAuthorizationPolicy(new ConfiguredRootIdentityRegistry('Root', NegotiatedCaseMapping::network())),
             $this->createStub(OperatorRoleAccess::class),
         );
         $checker = $this->createStub(ChanAuthorizationCheckerInterface::class);

@@ -10,8 +10,6 @@ use App\ChanServ\Application\Port\Out\ChanNetworkActions;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\Port\Out\RegisteredChannelSetupActions;
 
-use function strtolower;
-
 final readonly class RegisteredChannelSetupService implements RegisteredChannelSetup
 {
     public function __construct(
@@ -23,7 +21,7 @@ final readonly class RegisteredChannelSetupService implements RegisteredChannelS
 
     public function restore(string $channelName): void
     {
-        $registered = $this->channels->findByChannelName(strtolower($channelName));
+        $registered = $this->channels->findByChannelName($channelName);
         if (null === $registered || $registered->isBlocked()) {
             return;
         }

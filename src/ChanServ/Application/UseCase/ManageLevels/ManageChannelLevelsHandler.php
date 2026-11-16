@@ -10,7 +10,6 @@ use App\ChanServ\Application\Service\ChannelHistoryService;
 use App\ChanServ\Domain\Entity\ChannelLevel;
 
 use function in_array;
-use function strtolower;
 
 final readonly class ManageChannelLevelsHandler implements ManageChannelLevelsHandlerInterface
 {
@@ -22,7 +21,7 @@ final readonly class ManageChannelLevelsHandler implements ManageChannelLevelsHa
 
     public function handle(ManageChannelLevels $command): ManageChannelLevelsResult
     {
-        $channel = $this->channels->findByChannelName(strtolower($command->channelName));
+        $channel = $this->channels->findByChannelName($command->channelName);
         if (null === $channel) {
             return new ManageChannelLevelsResult(ManageChannelLevelsOutcome::ChannelNotRegistered);
         }

@@ -15,6 +15,7 @@ use App\Irc\Adapter\Protocol\InspIRCd\InspIRCdProtocolHandler;
 use App\Irc\Adapter\Protocol\InspIRCd\InspIRCdProtocolServiceActions;
 use App\Irc\Adapter\Protocol\InspIRCd\InspIRCdServiceIntroductionFormatter;
 use App\Irc\Adapter\Protocol\InspIRCd\InspIRCdUserModeSupport;
+use App\Irc\Application\Port\In\LocalUserQuitSyncPort;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -43,7 +44,7 @@ final class InspIRCdModuleTest extends TestCase
         $connectionHolder = new ActiveConnectionHolder();
         $module = new InspIRCdModule(
             $handler,
-            new InspIRCdProtocolServiceActions($connectionHolder, new InspIRCdServiceIntroductionFormatter(), new NullLogger()),
+            new InspIRCdProtocolServiceActions($connectionHolder, $this->createStub(LocalUserQuitSyncPort::class), new InspIRCdServiceIntroductionFormatter(), new NullLogger()),
             $this->modeSupportFactory->createDefault(),
             new InspIRCdUserModeSupport(),
             new InspIRCdNickReservation($connectionHolder, new NullLogger()),
@@ -140,7 +141,7 @@ final class InspIRCdModuleTest extends TestCase
     {
         $handler = new InspIRCdProtocolHandler('A0A');
         $connectionHolder = new ActiveConnectionHolder();
-        $serviceActions = new InspIRCdProtocolServiceActions($connectionHolder, new InspIRCdServiceIntroductionFormatter(), new NullLogger());
+        $serviceActions = new InspIRCdProtocolServiceActions($connectionHolder, $this->createStub(LocalUserQuitSyncPort::class), new InspIRCdServiceIntroductionFormatter(), new NullLogger());
         $channelModeSupport = $this->modeSupportFactory->createDefault();
         $userModeSupport = new InspIRCdUserModeSupport();
         $nickReservation = new InspIRCdNickReservation($connectionHolder, new NullLogger());

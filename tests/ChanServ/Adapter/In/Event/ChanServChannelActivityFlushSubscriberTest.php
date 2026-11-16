@@ -32,10 +32,10 @@ final class ChanServChannelActivityFlushSubscriberTest extends TestCase
     {
         $connection = $this->createMock(Connection::class);
         $connection->expects(self::once())->method('executeStatement')->willReturn(1);
-        $buffer = new ChannelActivityBuffer($connection);
-        $buffer->record(7, new DateTimeImmutable('2026-01-01 00:00:00 UTC'));
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects(self::never())->method('error');
+        $buffer = new ChannelActivityBuffer($connection, $logger);
+        $buffer->record(7, new DateTimeImmutable('2026-01-01 00:00:00 UTC'));
 
         $subscriber = new ChanServChannelActivityFlushSubscriber($buffer, $logger);
         $subscriber->onConnectionLost(new NetworkConnectionLostEvent());
@@ -46,15 +46,23 @@ final class ChanServChannelActivityFlushSubscriberTest extends TestCase
     {
         $connection = $this->createMock(Connection::class);
         $connection->expects(self::once())->method('executeStatement')->willThrowException(new RuntimeException('db unavailable'));
-        $buffer = new ChannelActivityBuffer($connection);
-        $buffer->record(7, new DateTimeImmutable('2026-01-01 00:00:00 UTC'));
+        $connection->method('fetchOne')->willThrowException(new RuntimeException('db unavailable'));
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects(self::once())->method('error')->with(
-            'Could not flush deferred ChanServ channel activity during shutdown.',
+            'Could not flush a chunk of deferred ChanServ channel activity; it will be retried.',
+            self::callback(static fn (array $context): bool => $context['exception'] instanceof RuntimeException),
+        );
+        $buffer = new ChannelActivityBuffer($connection, $logger);
+        $buffer->record(7, new DateTimeImmutable('2026-01-01 00:00:00 UTC'));
+        $subscriberLogger = $this->createMock(LoggerInterface::class);
+        $subscriberLogger->expects(self::once())->method('warning')->with(
+            'Deferred ChanServ channel activity was not fully flushed on disconnection; it stays pending.',
             self::callback(static fn (array $context): bool => $context['exception'] instanceof RuntimeException),
         );
 
-        $subscriber = new ChanServChannelActivityFlushSubscriber($buffer, $logger);
+        $subscriber = new ChanServChannelActivityFlushSubscriber($buffer, $subscriberLogger);
         $subscriber->onConnectionLost(new NetworkConnectionLostEvent());
+
+        self::assertTrue($buffer->hasPendingActivity(7));
     }
 }

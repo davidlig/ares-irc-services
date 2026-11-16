@@ -8,6 +8,8 @@ use App\ChanServ\Application\Port\Out\RegisteredChannelBurstSnapshot;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\ValueObject\ChannelStatus;
+use App\Irc\Application\Port\In\NetworkIdentityEquivalence;
+use App\Shared\Domain\IrcIdentityFold;
 use DateTimeImmutable;
 use Doctrine\DBAL\Platforms\AbstractMySQLPlatform;
 use Doctrine\DBAL\Platforms\SQLitePlatform;
@@ -24,14 +26,13 @@ use function is_numeric;
 use function is_string;
 use function max;
 use function str_contains;
-use function strtolower;
 use function strtr;
 
 final class RegisteredChannelDoctrineRepository implements RegisteredChannelRepositoryInterface, RegisteredChannelBurstSnapshot
 {
     private const int PAGE_SIZE = 500;
 
-    /** @var array<string, true>|null */
+    /** @var array<string, string>|null stored names keyed by their RFC 1459 key */
     private ?array $burstNames = null;
 
     /** @var WeakMap<EntityManagerInterface, array<string, RegisteredChannel|null>>|null */
@@ -39,17 +40,20 @@ final class RegisteredChannelDoctrineRepository implements RegisteredChannelRepo
 
     private static bool $lookupCacheActive = false;
 
-    public function __construct(private readonly EntityManagerInterface $em) {}
+    public function __construct(
+        private readonly EntityManagerInterface $em,
+        private readonly NetworkIdentityEquivalence $equivalence,
+    ) {}
 
     public function beginBurst(): void
     {
         $this->burstNames = null;
         $names = [];
-        foreach ($this->em->getConnection()->fetchFirstColumn('SELECT name_lower FROM registered_channels') as $name) {
-            if (!is_string($name)) {
+        foreach ($this->em->getConnection()->fetchAllNumeric('SELECT name_lower, name FROM registered_channels') as [$key, $name]) {
+            if (!is_string($key) || !is_string($name)) {
                 throw new UnexpectedValueException('Invalid registered channel name in burst snapshot.');
             }
-            $names[$name] = true;
+            $names[$key] = $name;
         }
         $this->burstNames = $names;
     }
@@ -61,7 +65,12 @@ final class RegisteredChannelDoctrineRepository implements RegisteredChannelRepo
 
     public function contains(string $channelName): ?bool
     {
-        return null === $this->burstNames ? null : isset($this->burstNames[strtolower($channelName)]);
+        if (null === $this->burstNames) {
+            return null;
+        }
+        $stored = $this->burstNames[IrcIdentityFold::fold($channelName)] ?? null;
+
+        return null !== $stored && $this->equivalence->equivalent($stored, $channelName);
     }
 
     public function save(RegisteredChannel $channel): void
@@ -70,7 +79,7 @@ final class RegisteredChannelDoctrineRepository implements RegisteredChannelRepo
         $this->em->persist($channel);
         $this->em->flush();
         if (null !== $this->burstNames) {
-            $this->burstNames[strtolower($channel->getName())] = true;
+            $this->burstNames[IrcIdentityFold::fold($channel->getName())] = $channel->getName();
         }
     }
 
@@ -80,13 +89,20 @@ final class RegisteredChannelDoctrineRepository implements RegisteredChannelRepo
         $this->em->remove($channel);
         $this->em->flush();
         if (null !== $this->burstNames) {
-            unset($this->burstNames[strtolower($channel->getName())]);
+            unset($this->burstNames[IrcIdentityFold::fold($channel->getName())]);
         }
     }
 
     public function findByChannelName(string $channelName): ?RegisteredChannel
     {
-        $nameLower = strtolower($channelName);
+        $channel = $this->findByChannelNameKey($channelName);
+
+        return null !== $channel && $this->equivalence->equivalent($channel->getName(), $channelName) ? $channel : null;
+    }
+
+    public function findByChannelNameKey(string $channelName): ?RegisteredChannel
+    {
+        $nameLower = IrcIdentityFold::fold($channelName);
         if (null !== $this->burstNames && !isset($this->burstNames[$nameLower])) {
             return null;
         }
@@ -159,7 +175,7 @@ final class RegisteredChannelDoctrineRepository implements RegisteredChannelRepo
 
     public function existsByChannelName(string $channelName): bool
     {
-        return null !== $this->findByChannelName($channelName);
+        return null !== $this->findByChannelNameKey($channelName);
     }
 
     /**
@@ -185,13 +201,6 @@ final class RegisteredChannelDoctrineRepository implements RegisteredChannelRepo
         }
 
         return (int) $query->getQuery()->getSingleScalarResult();
-    }
-
-    public function countPendingRegistrations(): int
-    {
-        return (int) $this->em->createQueryBuilder()->select('COUNT(c.id)')
-            ->from(RegisteredChannel::class, 'c')->where('c.status = :status')
-            ->setParameter('status', ChannelStatus::Pending)->getQuery()->getSingleScalarResult();
     }
 
     public function findPendingPage(int $offset, int $limit): array
@@ -278,21 +287,6 @@ final class RegisteredChannelDoctrineRepository implements RegisteredChannelRepo
             ->execute();
     }
 
-    public function findForbiddenChannels(): array
-    {
-        $qb = $this->em->createQueryBuilder();
-        $qb->select('c')
-            ->from(RegisteredChannel::class, 'c')
-            ->where('c.status = :status')
-            ->setParameter('status', ChannelStatus::Forbidden);
-
-        /** @var array<mixed> $result */
-        $result = $qb->getQuery()->getResult();
-
-        /* @var array<RegisteredChannel> */
-        return array_values(array_filter($result, static fn ($row): bool => $row instanceof RegisteredChannel));
-    }
-
     private function invalidateLookup(string $nameLower): void
     {
         $cache = self::$lookupCache;
@@ -339,7 +333,7 @@ final class RegisteredChannelDoctrineRepository implements RegisteredChannelRepo
             $equality = $platform instanceof SQLitePlatform ? $expression . ' COLLATE NOCASE' : $expression;
             // Keep LIKE: equality can ignore trailing spaces or broaden linguistic matches.
             $predicate = $equality . ' = :exact AND ' . $predicate;
-            $parameters['exact'] = strtolower($pattern);
+            $parameters['exact'] = IrcIdentityFold::fold($pattern);
         }
 
         $predicate .= ' AND c.status NOT IN (:registrationPending, :registrationRejected)';
@@ -394,6 +388,6 @@ final class RegisteredChannelDoctrineRepository implements RegisteredChannelRepo
 
     private static function toLikePattern(string $pattern): string
     {
-        return strtr(strtolower($pattern), ['!' => '!!', '%' => '!%', '_' => '!_', '*' => '%']);
+        return strtr(IrcIdentityFold::fold($pattern), ['!' => '!!', '%' => '!%', '_' => '!_', '*' => '%']);
     }
 }
