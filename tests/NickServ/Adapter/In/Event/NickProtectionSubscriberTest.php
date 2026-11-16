@@ -817,6 +817,153 @@ final class NickProtectionSubscriberTest extends TestCase
     }
 
     #[Test]
+    public function aChunkWhoseActivitySaveClosesTheEntityManagerSavesThatActivityAgainAfterTheReset(): void
+    {
+        $this->networkUserLookup->expects(self::never())->method('findByUid');
+        $this->notifier->expects(self::never())->method('setUserVhost');
+        $accounts = $this->burstAccounts(3);
+        $reloaded = $this->burstAccounts(3);
+        $lookups = [];
+        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repo->method('findByNicknamesLower')->willReturnCallback(static function (array $nicknames) use ($accounts, $reloaded, &$lookups): array {
+            // The second lookup is the first one after the reset: it reads the fresh manager.
+            $source = [] === $lookups ? $accounts : $reloaded;
+            $found = [];
+            foreach ($nicknames as $nickname) {
+                self::assertIsString($nickname);
+                $lookups[] = $nickname;
+                $found[$nickname] = $source[$nickname];
+            }
+
+            return $found;
+        });
+        $failure = new RuntimeException('deadlock found when trying to get lock');
+        $closed = false;
+        $saveAttempts = 0;
+        $saved = [];
+        $repo->method('saveActivityBatch')->willReturnCallback(static function (array $batch) use ($failure, &$closed, &$saveAttempts, &$saved): void {
+            if (1 === ++$saveAttempts) {
+                $closed = true;
+
+                throw $failure;
+            }
+            $saved[] = array_map(static fn (mixed $account): RegisteredNick => $account instanceof RegisteredNick ? $account : throw new LogicException('Only accounts are saved.'), $batch);
+        });
+        $entityManager = $this->createStub(EntityManagerInterface::class);
+        $entityManager->method('isOpen')->willReturnCallback(static function () use (&$closed): bool {
+            return !$closed;
+        });
+        $registry = $this->createMock(ManagerRegistry::class);
+        $registry->expects(self::once())->method('resetManager')->willReturnCallback(function () use (&$closed): ObjectManager {
+            $closed = false;
+
+            return $this->createStub(ObjectManager::class);
+        });
+        $logger = $this->recordingLogger();
+        $this->initializeSubscriber($repo, null, null, $logger, $entityManager, $registry);
+        $this->networkUserLookup->expects(self::never())->method('findByUid');
+        $this->notifier->expects(self::never())->method('setUserVhost');
+        foreach ($accounts as $nickname => $account) {
+            $this->burstState->addPending(new NetworkUser('UID' . $account->getId(), $nickname, 'i', 'h', 'c', 'ip', true));
+        }
+
+        $this->subscriber->onBurstComplete(new NetworkSynchronizationCompletedEvent('001'));
+
+        self::assertSame(['User1', 'User2', 'User3', 'User1', 'User2', 'User3'], $lookups);
+        self::assertCount(1, $saved);
+        self::assertSame(['User1', 'User2', 'User3'], array_map(static fn (RegisteredNick $account): string => $account->getNickname(), $saved[0]));
+        foreach ($saved[0] as $account) {
+            self::assertSame($reloaded[$account->getNickname()], $account);
+            self::assertSame($this->now, $account->getLastSeenAt());
+        }
+        self::assertSame([
+            [
+                'level' => 'warning',
+                'message' => 'NickServ burst protection: the EntityManager closed, resetting it and protecting the remaining burst users.',
+                'context' => ['chunk' => 1, 'remaining_users' => 0, 'exception' => $failure],
+            ],
+        ], $logger->records);
+    }
+
+    #[Test]
+    public function aUserWhoseProtectionStartsWithTheEntityManagerAlreadyClosedIsNotBlamedAndIsProtectedAgain(): void
+    {
+        $this->networkUserLookup->expects(self::never())->method('findByUid');
+        $this->notifier->expects(self::never())->method('setUserVhost');
+        $accounts = $this->burstAccounts(3);
+        $lookups = [];
+        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repo->method('findByNicknamesLower')->willReturnCallback(static function (array $nicknames) use ($accounts, &$lookups): array {
+            $found = [];
+            foreach ($nicknames as $nickname) {
+                self::assertIsString($nickname);
+                $lookups[] = $nickname;
+                $found[$nickname] = $accounts[$nickname];
+            }
+
+            return $found;
+        });
+        $saved = [];
+        $repo->method('saveActivityBatch')->willReturnCallback(static function (array $batch) use (&$saved): void {
+            $saved[] = count($batch);
+        });
+        $failure = new RuntimeException('the EntityManager is closed');
+        $closed = false;
+        $starts = 0;
+        // A batch-start listener swallows its own database error, leaving the EntityManager closed.
+        $batchPublisher = $this->createStub(NickServEventPublisher::class);
+        $batchPublisher->method('publish')->willReturnCallback(static function (object $event) use (&$closed, &$starts): void {
+            if ($event instanceof NickBurstBatchStartedEvent && 1 === ++$starts) {
+                $closed = true;
+            }
+        });
+        $identified = [];
+        $publisher = $this->createStub(NickServEventPublisher::class);
+        $publisher->method('publish')->willReturnCallback(static function (object $event) use ($failure, &$closed, &$identified): void {
+            self::assertInstanceOf(NickIdentifiedEvent::class, $event);
+            if ($closed) {
+                throw $failure;
+            }
+            $identified[] = $event->nickname;
+        });
+        $entityManager = $this->createStub(EntityManagerInterface::class);
+        $entityManager->method('isOpen')->willReturnCallback(static function () use (&$closed): bool {
+            return !$closed;
+        });
+        $registry = $this->createMock(ManagerRegistry::class);
+        $registry->expects(self::once())->method('resetManager')->willReturnCallback(function () use (&$closed): ObjectManager {
+            $closed = false;
+
+            return $this->createStub(ObjectManager::class);
+        });
+        $logger = $this->recordingLogger();
+        $this->initializeSubscriber($repo, $publisher, $batchPublisher, $logger, $entityManager, $registry);
+        $this->networkUserLookup->expects(self::never())->method('findByUid');
+        $this->notifier->expects(self::never())->method('setUserVhost');
+        foreach ($accounts as $nickname => $account) {
+            $this->burstState->addPending(new NetworkUser('UID' . $account->getId(), $nickname, 'i', 'h', 'c', 'ip', true));
+        }
+
+        $this->subscriber->onBurstComplete(new NetworkSynchronizationCompletedEvent('001'));
+
+        self::assertSame(['User1', 'User2', 'User3'], $identified);
+        self::assertSame(['User1', 'User2', 'User3', 'User1', 'User2', 'User3'], $lookups);
+        self::assertSame([3], $saved);
+        self::assertSame([
+            [
+                'level' => 'warning',
+                'message' => 'NickServ burst protection did not save the last-seen activity of 1 users: the EntityManager is closed.',
+                'context' => ['chunk' => 1],
+            ],
+            [
+                'level' => 'warning',
+                'message' => 'NickServ burst protection: the EntityManager closed, resetting it and protecting the remaining burst users.',
+                'context' => ['chunk' => 1, 'remaining_users' => 3, 'exception' => $failure],
+            ],
+        ], $logger->records);
+    }
+
+    #[Test]
     public function anEntityManagerThatClosesAgainAfterTheResetStopsBurstProtection(): void
     {
         $this->networkUserLookup->expects(self::never())->method('findByUid');

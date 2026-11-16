@@ -84,9 +84,68 @@ final class ClosedEntityManagerRetryBudgetTest extends TestCase
         $em = $this->entityManager();
         $this->exhaust($budget, 7, $em);
 
-        $budget->rowSettled(7);
+        $budget->rowSucceeded(7);
 
         self::assertSame([self::STOP, self::STOP, self::EXHAUSTED], [$this->closedFailure($budget, 7, $em), $this->closedFailure($budget, 7, $em), $this->closedFailure($budget, 7, $em)]);
+    }
+
+    #[Test]
+    public function aSkippedRowThatFailsOnItsOwnKeepsItsExhaustedMark(): void
+    {
+        $budget = $this->budget();
+        $em = $this->entityManager();
+        $this->exhaust($budget, 7, $em);
+
+        $budget->rowFailedOnItsOwn(7);
+
+        self::assertSame(self::AGAIN, $this->closedFailure($budget, 7, $em));
+    }
+
+    #[Test]
+    public function aRowThatFailsOnItsOwnDropsItsCount(): void
+    {
+        $budget = $this->budget();
+        $em = $this->entityManager();
+        $this->closedFailure($budget, 7, $em);
+        $this->closedFailure($budget, 7, $em);
+
+        $budget->rowFailedOnItsOwn(7);
+
+        self::assertSame([self::STOP, self::STOP, self::EXHAUSTED], [$this->closedFailure($budget, 7, $em), $this->closedFailure($budget, 7, $em), $this->closedFailure($budget, 7, $em)]);
+    }
+
+    #[Test]
+    public function aRememberedRowThatClosesTheEntityManagerAgainBecomesTheNewestRemembered(): void
+    {
+        $budget = $this->budget();
+        $em = $this->entityManager();
+        for ($row = 1; $row <= ClosedEntityManagerRetryBudget::MAX_REMEMBERED_ROWS; ++$row) {
+            $this->exhaust($budget, $row, $em);
+        }
+
+        self::assertSame(self::AGAIN, $this->closedFailure($budget, 1, $em));
+        $this->exhaust($budget, ClosedEntityManagerRetryBudget::MAX_REMEMBERED_ROWS + 1, $em);
+
+        self::assertSame(self::AGAIN, $this->closedFailure($budget, 1, $em));
+        self::assertSame(self::STOP, $this->closedFailure($budget, 2, $em));
+    }
+
+    #[Test]
+    public function aRememberedRowThatFailsOnItsOwnBecomesTheNewestRemembered(): void
+    {
+        $budget = $this->budget();
+        $em = $this->entityManager();
+        for ($row = 1; $row <= ClosedEntityManagerRetryBudget::MAX_REMEMBERED_ROWS; ++$row) {
+            $this->exhaust($budget, $row, $em);
+        }
+
+        $budget->rowFailedOnItsOwn(1);
+        $budget->rowFailedOnItsOwn(ClosedEntityManagerRetryBudget::MAX_REMEMBERED_ROWS + 2);
+        $this->exhaust($budget, ClosedEntityManagerRetryBudget::MAX_REMEMBERED_ROWS + 1, $em);
+
+        self::assertSame(self::AGAIN, $this->closedFailure($budget, 1, $em));
+        self::assertSame(self::STOP, $this->closedFailure($budget, 2, $em));
+        self::assertSame(self::STOP, $this->closedFailure($budget, ClosedEntityManagerRetryBudget::MAX_REMEMBERED_ROWS + 2, $em));
     }
 
     #[Test]
@@ -149,14 +208,14 @@ final class ClosedEntityManagerRetryBudgetTest extends TestCase
     }
 
     #[Test]
-    public function aSettledRowDropsItsCount(): void
+    public function aSucceededRowDropsItsCount(): void
     {
         $budget = $this->budget();
         $em = $this->entityManager();
         $this->closedFailure($budget, 7, $em);
         $this->closedFailure($budget, 7, $em);
 
-        $budget->rowSettled(7);
+        $budget->rowSucceeded(7);
 
         self::assertSame([self::STOP, self::STOP, self::EXHAUSTED], [$this->closedFailure($budget, 7, $em), $this->closedFailure($budget, 7, $em), $this->closedFailure($budget, 7, $em)]);
     }

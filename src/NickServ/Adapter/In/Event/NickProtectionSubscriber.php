@@ -51,7 +51,7 @@ use function str_contains;
  * Orchestrates burst (BurstState) and calls IdentifiedUserVhostSync then NickProtection
  * so vhost sync and protection stay in separate application services.
  *
- * @phpstan-type BurstChunkProgressShape array{handledUsers: int, userFailed: bool, unsavedActivityNicknames: list<string>}
+ * @phpstan-type BurstChunkProgressShape array{handledUsers: int, userInProgress: bool, userFailed: bool, unsavedActivityNicknames: list<string>}
  */
 final readonly class NickProtectionSubscriber implements EventSubscriberInterface
 {
@@ -138,7 +138,7 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
         while ($offset < count($pending)) {
             $batch = array_values(array_slice($pending, $offset, self::BURST_CHUNK_SIZE));
             ++$chunk;
-            $progress = ['handledUsers' => 0, 'userFailed' => false, 'unsavedActivityNicknames' => []];
+            $progress = ['handledUsers' => 0, 'userInProgress' => false, 'userFailed' => false, 'unsavedActivityNicknames' => []];
             try {
                 $this->protectBurstChunk($batch, $occurredAt, $chunk, $progress);
             } catch (Throwable $exception) {
@@ -310,8 +310,9 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
      * Continues the pass on the fresh EntityManager and returns how far the offset moves.
      *
      * When protecting one user closed the EntityManager, that user is skipped, so a user that always
-     * fails neither closes the fresh manager again nor repeats its side effects, and the last-seen
-     * activity of the users handled before it is saved again from accounts reloaded by nickname.
+     * fails neither closes the fresh manager again nor repeats its side effects. Otherwise the pass
+     * resumes at the first user not handled yet. Either way, the last-seen activity the closed
+     * manager did not save is saved again from accounts reloaded by nickname.
      *
      * @param int                     $remainingUsers burst users not handled yet, the failing user included
      * @param list<NetworkUser>       $batch
@@ -325,6 +326,7 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
                 'remaining_users' => $remainingUsers,
                 'exception' => $exception,
             ]);
+            $this->saveActivitiesAgain($progress['unsavedActivityNicknames'], $chunk, $occurredAt);
 
             return $progress['handledUsers'];
         }
@@ -387,8 +389,11 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
         try {
             $this->batchEventPublisher?->publish($batchStarted);
             foreach ($batch as $user) {
-                $progress['userFailed'] = true;
+                // The user is blamed for a closed EntityManager only when it was open as its protection began.
+                $progress['userInProgress'] = true;
+                $progress['userFailed'] = !$this->isEntityManagerClosed();
                 $this->protectBurstUser($user, $accounts[$user->nick] ?? null, $occurredAt, $activityBatch, $chunk);
+                $progress['userInProgress'] = false;
                 $progress['userFailed'] = false;
                 ++$progress['handledUsers'];
             }
@@ -400,15 +405,17 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
             if ([] === $activities) {
                 return;
             }
+            $progress['unsavedActivityNicknames'] = $this->handledActivityNicknames($activities, $batch, $accounts, $progress);
             if ($this->isEntityManagerClosed()) {
-                $progress['unsavedActivityNicknames'] = $this->handledActivityNicknames($activities, $batch, $accounts, $progress);
                 $this->logger->warning(sprintf('NickServ burst protection did not save the last-seen activity of %d users: the EntityManager is closed.', count($activities)), [
                     'chunk' => $chunk,
                 ]);
 
                 return;
             }
+            // Kept until the save succeeds: a save that closes the EntityManager is repeated after the reset.
             $this->nickProtectionService->saveActivities($activities);
+            $progress['unsavedActivityNicknames'] = [];
         });
         $failure = $this->finishBurstChunkStep($failure, $chunk, 'end its batch', function () use ($batchStarted): void {
             $this->batchEventPublisher?->publish(new NickBurstBatchFinishedEvent($batchStarted->token));
@@ -420,7 +427,8 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
 
     /**
      * Nicknames of the activities collected for users whose protection ran to an outcome, so the
-     * user whose protection closed the EntityManager is left out.
+     * user whose protection was interrupted by the closed EntityManager is left out: it is either
+     * skipped or protected again.
      *
      * @param list<RegisteredNick>          $activities
      * @param list<NetworkUser>             $batch
@@ -431,10 +439,10 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
      */
     private function handledActivityNicknames(array $activities, array $batch, array $accounts, array $progress): array
     {
-        $failedAccount = $progress['userFailed'] ? ($accounts[$batch[$progress['handledUsers']]->nick] ?? null) : null;
+        $interruptedAccount = $progress['userInProgress'] ? ($accounts[$batch[$progress['handledUsers']]->nick] ?? null) : null;
         $nicknames = [];
         foreach ($activities as $account) {
-            if ($account !== $failedAccount) {
+            if ($account !== $interruptedAccount) {
                 $nicknames[] = $account->getNickname();
             }
         }

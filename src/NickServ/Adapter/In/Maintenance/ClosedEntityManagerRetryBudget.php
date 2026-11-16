@@ -23,7 +23,7 @@ use function sprintf;
  *
  * A row that used up its attempts is remembered across sweeps: in a later sweep it gets a single
  * attempt and, if it closes the EntityManager again, it is skipped at once instead of blocking
- * the task for another full budget.
+ * the task for another full budget. Only a success clears that mark; a row-specific failure keeps it.
  */
 final class ClosedEntityManagerRetryBudget
 {
@@ -76,12 +76,24 @@ final class ClosedEntityManagerRetryBudget
         throw $failure;
     }
 
-    /** Called after a row reached its own outcome: it no longer counts as failing. */
-    public function rowSettled(int $rowId): void
+    /** Called after a row succeeded: it no longer counts as failing and gets a full budget again. */
+    public function rowSucceeded(int $rowId): void
     {
-        $this->rowId = 0;
-        $this->attempts = 0;
+        $this->resetStreak();
         unset($this->exhaustedRows[$rowId]);
+    }
+
+    /**
+     * Called after a row failed with the EntityManager still open: its closed-EntityManager streak
+     * ends, but an exhausted row stays remembered, so alternating failure types never earn it a
+     * fresh budget.
+     */
+    public function rowFailedOnItsOwn(int $rowId): void
+    {
+        $this->resetStreak();
+        if (isset($this->exhaustedRows[$rowId])) {
+            $this->remember($rowId);
+        }
     }
 
     /**
@@ -96,6 +108,7 @@ final class ClosedEntityManagerRetryBudget
         }
 
         if (isset($this->exhaustedRows[$rowId])) {
+            $this->remember($rowId);
             $skipRow();
 
             return ' again after it was skipped in an earlier sweep; skipping it until the next sweep and stopping this batch.';
@@ -110,8 +123,7 @@ final class ClosedEntityManagerRetryBudget
             return '; the EntityManager is closed, stopping this batch.';
         }
 
-        $this->rowId = 0;
-        $this->attempts = 0;
+        $this->resetStreak();
         $this->remember($rowId);
         $skipRow();
 
@@ -121,8 +133,16 @@ final class ClosedEntityManagerRetryBudget
         );
     }
 
+    private function resetStreak(): void
+    {
+        $this->rowId = 0;
+        $this->attempts = 0;
+    }
+
+    /** Remembers the row as the newest exhausted one, so a row that keeps failing is forgotten last. */
     private function remember(int $rowId): void
     {
+        unset($this->exhaustedRows[$rowId]);
         $this->exhaustedRows[$rowId] = true;
         if (count($this->exhaustedRows) > self::MAX_REMEMBERED_ROWS) {
             unset($this->exhaustedRows[array_key_first($this->exhaustedRows)]);

@@ -401,6 +401,68 @@ final class PurgePendingDeletionNicknamesTaskTest extends TestCase
     }
 
     #[Test]
+    public function aSkippedNickThatFailsOnItsOwnInALaterSweepIsStillSkippedAtOnceWhenItClosesTheEntityManagerAgain(): void
+    {
+        $pages = [];
+        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repo->method('findPendingDeletionBefore')
+            ->willReturnCallback(function (DateTimeImmutable $threshold, int $limit, int $afterId) use (&$pages): array {
+                $pages[] = $afterId;
+
+                return array_values(array_filter(
+                    [$this->nick(1, 'Poison'), $this->nick(2, 'Healthy')],
+                    static fn (RegisteredNick $nick): bool => $nick->getId() > $afterId,
+                ));
+            });
+        $repo->method('findById')->willReturnCallback(fn (int $id): RegisteredNick => $this->nick($id, 'Poison'));
+        $open = true;
+        $attempts = [];
+        $dropService = $this->createStub(NickDropService::class);
+        $dropService->method('hardDropNick')
+            ->willReturnCallback(static function (RegisteredNick $nick) use (&$open, &$attempts): void {
+                $attempts[] = $nick->getNickname();
+                if ('Poison' !== $nick->getNickname()) {
+                    return;
+                }
+                // The fourth attempt fails on its own; every other one closes the EntityManager.
+                if (4 !== count(array_keys($attempts, 'Poison', true))) {
+                    $open = false;
+                }
+
+                throw new RuntimeException('foreign key violation');
+            });
+        $errors = [];
+        $logger = $this->createStub(LoggerInterface::class);
+        $logger->method('error')->willReturnCallback(static function (string $message) use (&$errors): void {
+            $errors[] = $message;
+        });
+        $em = $this->createStub(EntityManagerInterface::class);
+        $em->method('isOpen')->willReturnCallback(static function () use (&$open): bool {
+            return $open;
+        });
+        $task = new PurgePendingDeletionNicknamesTask($repo, $dropService, $logger, $this->clock(), 3600, 7, $em);
+
+        $failures = 0;
+        for ($cycle = 0; $cycle < 7; ++$cycle) {
+            try {
+                $task->run();
+            } catch (RuntimeException) {
+                ++$failures;
+            }
+            $open = true;
+        }
+
+        self::assertSame(4, $failures);
+        self::assertSame([0, 0, 0, 1, 0, 0, 1], $pages);
+        self::assertSame(['Poison', 'Poison', 'Poison', 'Healthy', 'Poison', 'Healthy', 'Poison', 'Healthy'], $attempts);
+        self::assertSame([
+            'Maintenance [nickserv.purge_pending_deletion_nicknames]: failed to drop pending-deletion nick Poison (id 1) with the EntityManager closed 3 times in a row; skipping it until the next sweep and stopping this batch.',
+            'Maintenance [nickserv.purge_pending_deletion_nicknames]: failed to drop pending-deletion nick Poison (id 1); skipping it until the next sweep.',
+            'Maintenance [nickserv.purge_pending_deletion_nicknames]: failed to drop pending-deletion nick Poison (id 1) again after it was skipped in an earlier sweep; skipping it until the next sweep and stopping this batch.',
+        ], array_slice($errors, 2));
+    }
+
+    #[Test]
     public function aNickThatClosesTheEntityManagerThreeCyclesInARowIsSkippedSoLaterNicksAreProcessed(): void
     {
         $pages = [];

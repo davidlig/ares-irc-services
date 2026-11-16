@@ -101,16 +101,21 @@ final class PurgeInactiveNicknamesTask implements MaintenanceTaskInterface
                 $id = $nick->getId();
                 $nickname = $nick->getNickname();
 
+                $failedOnItsOwn = false;
                 try {
                     $this->dropService->dropNick($nick, $now, 'inactivity', null);
                 } catch (Throwable $e) {
-                    $this->recordFailure($id, $nickname, $e);
+                    $failedOnItsOwn = $this->recordFailure($id, $nickname, $e);
                 }
 
                 // Advanced only after a row-specific outcome: a closed EntityManager rethrows above,
                 // so the next cycle retries this nick instead of skipping it.
                 $this->cursor = max($this->cursor, $id);
-                $this->retryBudget->rowSettled($id);
+                if ($failedOnItsOwn) {
+                    $this->retryBudget->rowFailedOnItsOwn($id);
+                } else {
+                    $this->retryBudget->rowSucceeded($id);
+                }
             }
 
             $this->entityManager?->clear();
@@ -130,9 +135,11 @@ final class PurgeInactiveNicknamesTask implements MaintenanceTaskInterface
      * A closed EntityManager makes every later row fail too, so the batch stops and the task fails;
      * the nick is retried next cycle until it has closed the EntityManager too many times in a row.
      *
+     * @return bool true when the nick still exists, i.e. the drop failed on its own
+     *
      * @throws Throwable when the EntityManager was closed by the failure
      */
-    private function recordFailure(int $id, string $nickname, Throwable $e): void
+    private function recordFailure(int $id, string $nickname, Throwable $e): bool
     {
         $this->retryBudget->rethrowWhenClosed(
             $id,
@@ -152,7 +159,7 @@ final class PurgeInactiveNicknamesTask implements MaintenanceTaskInterface
                 $id,
             ), ['exception' => $e]);
 
-            return;
+            return false;
         }
 
         $this->logger->error(sprintf(
@@ -161,5 +168,7 @@ final class PurgeInactiveNicknamesTask implements MaintenanceTaskInterface
             $nickname,
             $id,
         ), ['exception' => $e]);
+
+        return true;
     }
 }

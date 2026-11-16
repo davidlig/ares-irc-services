@@ -91,7 +91,7 @@ final class UnsuspendExpiredSuspensionsTask implements MaintenanceTaskInterface
                 } catch (Throwable $e) {
                     $this->recordSaveFailure($nick, $e);
                     $this->cursor = max($this->cursor, $id);
-                    $this->retryBudget->rowSettled($id);
+                    $this->retryBudget->rowFailedOnItsOwn($id);
 
                     continue;
                 }
@@ -99,7 +99,7 @@ final class UnsuspendExpiredSuspensionsTask implements MaintenanceTaskInterface
                 // Advanced only after a row-specific outcome: a closed EntityManager rethrows above,
                 // so the next cycle retries this suspension instead of skipping it.
                 $this->cursor = max($this->cursor, $id);
-                $this->retryBudget->rowSettled($id);
+                $this->retryBudget->rowSucceeded($id);
 
                 try {
                     $this->announce($nick);

@@ -536,6 +536,63 @@ final class UnsuspendExpiredSuspensionsTaskTest extends TestCase
     }
 
     #[Test]
+    public function aSkippedSuspensionThatFailsOnItsOwnInALaterSweepIsStillSkippedAtOnceWhenItClosesTheEntityManagerAgain(): void
+    {
+        $pages = [];
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findExpiredSuspensions')
+            ->willReturnCallback(function (DateTimeImmutable $now, int $limit, int $afterId) use (&$pages): array {
+                $pages[] = $afterId;
+                $nicks = [$this->createNickWithId('Poison', 1), $this->createNickWithId('Healthy', 2)];
+
+                return array_values(array_filter($nicks, static fn (RegisteredNick $nick): bool => $nick->getId() > $afterId));
+            });
+        $open = true;
+        $attempts = [];
+        $nickRepo->method('save')->willReturnCallback(static function (RegisteredNick $nick) use (&$open, &$attempts): void {
+            $attempts[] = $nick->getNickname();
+            if ('Poison' !== $nick->getNickname()) {
+                return;
+            }
+            // The fourth attempt fails on its own; every other one closes the EntityManager.
+            if (4 !== count(array_keys($attempts, 'Poison', true))) {
+                $open = false;
+            }
+
+            throw new RuntimeException('flush failed');
+        });
+        $errors = [];
+        $logger = $this->createStub(LoggerInterface::class);
+        $logger->method('error')->willReturnCallback(static function (string $message) use (&$errors): void {
+            $errors[] = $message;
+        });
+        $em = $this->createStub(EntityManagerInterface::class);
+        $em->method('isOpen')->willReturnCallback(static function () use (&$open): bool {
+            return $open;
+        });
+        $task = new UnsuspendExpiredSuspensionsTask($nickRepo, $this->createStub(ServiceDebugNotifierInterface::class), $logger, $this->clock(), $this->createStub(NickServEventPublisher::class), self::SERVER_NAME, 3600, $em);
+
+        $failures = 0;
+        for ($cycle = 0; $cycle < 7; ++$cycle) {
+            try {
+                $task->run();
+            } catch (RuntimeException) {
+                ++$failures;
+            }
+            $open = true;
+        }
+
+        self::assertSame(4, $failures);
+        self::assertSame([0, 0, 0, 1, 0, 0, 1], $pages);
+        self::assertSame(['Poison', 'Poison', 'Poison', 'Healthy', 'Poison', 'Healthy', 'Poison', 'Healthy'], $attempts);
+        self::assertSame([
+            'Maintenance [nickserv.unsuspend_expired_suspensions]: failed to auto-unsuspend nick Poison (id 1) with the EntityManager closed 3 times in a row; skipping it until the next sweep and stopping this batch.',
+            'Maintenance [nickserv.unsuspend_expired_suspensions]: failed to auto-unsuspend nick Poison (id 1); skipping it until the next sweep.',
+            'Maintenance [nickserv.unsuspend_expired_suspensions]: failed to auto-unsuspend nick Poison (id 1) again after it was skipped in an earlier sweep; skipping it until the next sweep and stopping this batch.',
+        ], array_slice($errors, 2));
+    }
+
+    #[Test]
     public function theClosedEntityManagerAttemptsRestartAfterTheSuspensionIsProcessed(): void
     {
         $nicks = [$this->createNickWithId('Flaky', 1), $this->createNickWithId('Healthy', 2)];
