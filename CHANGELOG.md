@@ -43,6 +43,10 @@
 - When an automatic channel unsuspension is saved but a follow-up step fails (UDB record removal, network restoration), it is reported as such and the unsuspension event is dispatched again in up to three later cycles.
 - A failing server-delink start listener is logged and every split user still quits; the delink finished event still always follows.
 - MOTD pseudo-client state is discarded when the network link is lost, so MOTD pseudo-clients are introduced again on the new link.
+- Retrying a failed post-unsuspension step only re-runs the UDB and network restoration (the event carries `isRetry`); it no longer writes a duplicate UNSUSPEND history entry or repeats the debug-channel notice. Pending retries are loaded with one query per cycle.
+- End-of-burst protection re-saves a chunk's last-seen activity when its own activity save closed the EntityManager, and blames and skips a user only when the EntityManager was open as that user's protection began.
+- The NickServ and ChanServ maintenance retry budgets keep a row's exhausted mark after a row-specific failure and move a remembered row to the newest position whenever it fails again, so the bounded memory forgets rows that stopped failing first.
+- The expired AKICK purge logs removals only after the delete succeeds, with a warning carrying the actual count when fewer entries were deleted than read.
 - When a quitting user's channel departure and the quit itself both fail, the departure failure is logged instead of being lost.
 - A maintenance task whose database error closed the Doctrine EntityManager no longer makes every later database-backed task fail until restart: the scheduler resets a closed EntityManager, with a warning, at the start of each cycle and after each failed task.
 - When the MOTD bot nick is a registered nickname, the user holding it is no longer renamed to a Guest nick; the MOTD pseudo-client is skipped as before.
