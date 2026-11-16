@@ -75,7 +75,7 @@ final readonly class PurgePendingDeletionChannelsTask implements MaintenanceTask
             try {
                 $this->dropService->hardDropChannel($channel, $now, 'manual-grace-expired', null);
             } catch (Throwable $e) {
-                $this->failures->recordFailure(
+                $this->failures->recordFailureAfterPossibleCommit(
                     $channelId,
                     $channelName,
                     $e,

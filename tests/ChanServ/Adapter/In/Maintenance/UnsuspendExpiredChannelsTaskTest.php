@@ -23,6 +23,8 @@ use RuntimeException;
 use Throwable;
 
 use function array_filter;
+use function array_map;
+use function array_slice;
 use function array_values;
 use function in_array;
 
@@ -298,7 +300,7 @@ final class UnsuspendExpiredChannelsTaskTest extends TestCase
         $resuspended->suspend('Abuse', new DateTimeImmutable('-1 hour'));
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('iterateExpiredSuspensions')->willReturnOnConsecutiveCalls([$dropped, $resuspended], [], []);
-        $channelRepo->method('findByIds')->willReturnCallback(static fn (array $ids): array => 2 === $ids[0] ? [$resuspended] : []);
+        $channelRepo->method('findByIds')->willReturnCallback(static fn (array $ids): array => in_array(2, $ids, true) ? [$resuspended] : []);
         $dispatched = self::messages();
         $eventDispatcher = $this->createStub(EventBusInterface::class);
         $eventDispatcher->method('dispatch')->willReturnCallback(static function (ChannelUnsuspendedEvent $event) use ($dispatched): never {
@@ -364,6 +366,116 @@ final class UnsuspendExpiredChannelsTaskTest extends TestCase
 
         self::assertSame(['#restored', '#later', '#restored', '#restored'], $dispatched->getArrayCopy());
         self::assertStringContainsString('failed to dispatch the unsuspension of channel #restored (id 1) again; trying again next cycle and stopping this batch', $errors->getArrayCopy()[1] ?? '');
+    }
+
+    #[Test]
+    public function aRetriedDispatchIsMarkedAsARetrySoOnlyTheRestorationRunsAgain(): void
+    {
+        $channel = $this->createChannelWithId('#restored', 1, 'Restored');
+        $channel->suspend('Abuse', new DateTimeImmutable('-1 hour'));
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('iterateExpiredSuspensions')->willReturnOnConsecutiveCalls([$channel], [], []);
+        $channelRepo->method('findByIds')->willReturn([$channel]);
+        /** @var ArrayObject<int, ChannelUnsuspendedEvent> $events */
+        $events = new ArrayObject();
+        $eventDispatcher = $this->createStub(EventBusInterface::class);
+        $eventDispatcher->method('dispatch')->willReturnCallback(static function (ChannelUnsuspendedEvent $event) use ($events): ChannelUnsuspendedEvent {
+            $events[] = $event;
+            if (2 > $events->count()) {
+                throw new RuntimeException('UDB write failed');
+            }
+
+            return $event;
+        });
+        $task = new UnsuspendExpiredChannelsTask($channelRepo, $eventDispatcher, new NullLogger(), self::SERVER_NAME, 3600, $this->openEntityManager());
+
+        $task->run();
+        $task->run();
+        $task->run();
+
+        $flags = array_map(static fn (ChannelUnsuspendedEvent $event): bool => $event->isRetry, $events->getArrayCopy());
+        self::assertSame([false, true], $flags, 'history and the debug notice see the first dispatch only');
+        [$first, $retry] = $events->getArrayCopy();
+        self::assertSame($first->occurredAt, $retry->occurredAt);
+        self::assertSame('#restored', $retry->channelNameLower);
+    }
+
+    #[Test]
+    public function thePendingChannelsOfACycleAreLoadedWithOneQuery(): void
+    {
+        $first = $this->createChannelWithId('#first', 1, 'First');
+        $first->suspend('Abuse', new DateTimeImmutable('-1 hour'));
+        $second = $this->createChannelWithId('#second', 2, 'Second');
+        $second->suspend('Abuse', new DateTimeImmutable('-1 hour'));
+        $loads = self::recorder();
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('iterateExpiredSuspensions')->willReturnOnConsecutiveCalls([$first, $second], [], []);
+        $channelRepo->method('findByIds')->willReturnCallback(static function (array $ids) use ($loads, $first, $second): array {
+            $loads[] = $ids;
+
+            return [$second, $first];
+        });
+        $dispatched = self::messages();
+        $eventDispatcher = $this->createStub(EventBusInterface::class);
+        $eventDispatcher->method('dispatch')->willReturnCallback(static function (ChannelUnsuspendedEvent $event) use ($dispatched): ChannelUnsuspendedEvent {
+            $dispatched[] = $event->channelName;
+            if (2 >= $dispatched->count()) {
+                throw new RuntimeException('UDB write failed');
+            }
+
+            return $event;
+        });
+        $task = new UnsuspendExpiredChannelsTask($channelRepo, $eventDispatcher, new NullLogger(), self::SERVER_NAME, 3600, $this->openEntityManager());
+
+        $task->run();
+        self::assertSame([], $loads->getArrayCopy(), 'nothing is pending in the first cycle');
+
+        $task->run();
+        $task->run();
+
+        self::assertSame([[1, 2]], $loads->getArrayCopy(), 'one query loads every pending channel, and none is left afterwards');
+        self::assertSame(['#first', '#second', '#first', '#second'], $dispatched->getArrayCopy());
+    }
+
+    #[Test]
+    public function aPendingChannelThatFailsAgainIsRememberedAsTheNewestOne(): void
+    {
+        $channels = [];
+        for ($id = 1; $id <= UnsuspendExpiredChannelsTask::MAX_PENDING_UNSUSPENSION_DISPATCHES + 1; ++$id) {
+            $channel = $this->createChannelWithId('#chan' . $id, $id, 'Channel');
+            $channel->suspend('Abuse', new DateTimeImmutable('-1 hour'));
+            $channels[$id] = $channel;
+        }
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('iterateExpiredSuspensions')->willReturnOnConsecutiveCalls(
+            [$channels[1]],
+            [$channels[2]],
+            array_values(array_slice($channels, 2, null, true)),
+        );
+        $channelRepo->method('findByIds')->willReturnCallback(
+            static fn (array $ids): array => array_values(array_filter(
+                $channels,
+                static fn (RegisteredChannel $channel): bool => in_array($channel->getId(), $ids, true),
+            )),
+        );
+        $retried = self::messages();
+        $eventDispatcher = $this->createStub(EventBusInterface::class);
+        $eventDispatcher->method('dispatch')->willReturnCallback(static function (ChannelUnsuspendedEvent $event) use ($retried): never {
+            if ($event->isRetry) {
+                $retried[] = $event->channelName;
+            }
+
+            throw new RuntimeException('UDB write failed');
+        });
+        $task = new UnsuspendExpiredChannelsTask($channelRepo, $eventDispatcher, new NullLogger(), self::SERVER_NAME, 3600, $this->openEntityManager());
+
+        $task->run();
+        $task->run();
+        self::assertSame(['#chan1'], $retried->getArrayCopy(), '#chan1 failed again after #chan2 was added');
+
+        $task->run();
+
+        self::assertSame(['#chan1', '#chan1'], $retried->getArrayCopy(), 'the oldest pending channel is #chan2, so it is the one forgotten');
     }
 
     #[Test]

@@ -27,7 +27,9 @@ use function sprintf;
  *
  * A channel that used up its attempts is remembered across sweeps: in a later sweep it gets a
  * single attempt and, if it closes the EntityManager again, it is settled at once instead of
- * blocking the task for another full budget. A database outage is never counted against a channel.
+ * blocking the task for another full budget; failing again makes it the newest remembered channel,
+ * so the bound forgets channels that stopped failing first. A database outage is never counted
+ * against a channel.
  *
  * Without an EntityManager every failure counts as row-specific; without a connection the
  * database is assumed to answer.
@@ -75,6 +77,7 @@ final class ChannelSweepFailureBudget
         unset($this->attempts[$channelId]);
         if ($failed) {
             $this->settled[$channelId] = true;
+            $this->refreshExhausted($channelId);
 
             return;
         }
@@ -83,56 +86,86 @@ final class ChannelSweepFailureBudget
     }
 
     /**
-     * Handles a failed channel and logs it with the task's wording:
+     * Handles a failed channel and logs it as "failed to <$failedAction> #chan (id N)":
      * - the EntityManager is closed: counts the failure (see the class docblock) and rethrows it,
      *   so the task stops the cycle;
-     * - $committed tells the change was committed despite the failure: the channel is done and is
-     *   reported as "<$committedAction> #chan (id N), but a <$postStep> step failed";
      * - otherwise the channel is skipped until the next sweep.
-     *
-     * @param string               $failedAction    logged as "failed to <$failedAction> #chan (id N)"
-     * @param Closure(): bool|null $committed       asked only while the EntityManager is open
-     * @param string               $committedAction e.g. "dropped inactive channel"
-     * @param string               $postStep        e.g. "post-drop"
      *
      * @throws Throwable $failure when it closed the EntityManager
      */
-    public function recordFailure(
+    public function recordFailure(int $channelId, string $channelName, Throwable $failure, string $failedAction): void
+    {
+        $this->rethrowWhenClosed($channelId, $channelName, $failure, $failedAction);
+        $this->skipUntilNextSweep($channelId, $channelName, $failure, $failedAction);
+    }
+
+    /**
+     * Like {@see self::recordFailure()} for a change that may have been committed before the
+     * failure: when $committed tells it was, the channel is done and is reported as
+     * "<$committedAction> #chan (id N), but a <$postStep> step failed".
+     *
+     * @param Closure(): bool $committed       asked only while the EntityManager is open
+     * @param string          $committedAction e.g. "dropped inactive channel"
+     * @param string          $postStep        e.g. "post-drop"
+     *
+     * @throws Throwable $failure when it closed the EntityManager
+     */
+    public function recordFailureAfterPossibleCommit(
         int $channelId,
         string $channelName,
         Throwable $failure,
         string $failedAction,
-        ?Closure $committed = null,
-        string $committedAction = '',
-        string $postStep = '',
+        Closure $committed,
+        string $committedAction,
+        string $postStep,
     ): void {
-        if ($this->entityManagerClosed()) {
-            $this->logger->error(sprintf(
-                'Maintenance [%s]: failed to %s %s (id %d)%s',
-                $this->taskName,
-                $failedAction,
-                $channelName,
-                $channelId,
-                $this->closedEntityManagerFailure($channelId),
-            ), ['exception' => $failure]);
+        $this->rethrowWhenClosed($channelId, $channelName, $failure, $failedAction);
 
-            throw $failure;
-        }
-
-        if (null !== $committed && $committed()) {
-            $this->completed($channelId, false);
-            $this->logger->error(sprintf(
-                'Maintenance [%s]: %s %s (id %d), but a %s step failed.',
-                $this->taskName,
-                $committedAction,
-                $channelName,
-                $channelId,
-                $postStep,
-            ), ['exception' => $failure]);
+        if (!$committed()) {
+            $this->skipUntilNextSweep($channelId, $channelName, $failure, $failedAction);
 
             return;
         }
 
+        $this->completed($channelId, false);
+        $this->logger->error(sprintf(
+            'Maintenance [%s]: %s %s (id %d), but a %s step failed.',
+            $this->taskName,
+            $committedAction,
+            $channelName,
+            $channelId,
+            $postStep,
+        ), ['exception' => $failure]);
+    }
+
+    public function finishSweep(): void
+    {
+        $this->settled = [];
+    }
+
+    /**
+     * @throws Throwable $failure when it closed the EntityManager
+     */
+    private function rethrowWhenClosed(int $channelId, string $channelName, Throwable $failure, string $failedAction): void
+    {
+        if (!$this->entityManagerClosed()) {
+            return;
+        }
+
+        $this->logger->error(sprintf(
+            'Maintenance [%s]: failed to %s %s (id %d)%s',
+            $this->taskName,
+            $failedAction,
+            $channelName,
+            $channelId,
+            $this->closedEntityManagerFailure($channelId),
+        ), ['exception' => $failure]);
+
+        throw $failure;
+    }
+
+    private function skipUntilNextSweep(int $channelId, string $channelName, Throwable $failure, string $failedAction): void
+    {
         $this->completed($channelId, true);
         $this->logger->error(sprintf(
             'Maintenance [%s]: failed to %s %s (id %d); skipping it until the next sweep.',
@@ -143,9 +176,16 @@ final class ChannelSweepFailureBudget
         ), ['exception' => $failure]);
     }
 
-    public function finishSweep(): void
+    /**
+     * A remembered channel that failed again becomes the newest one, so the bound forgets
+     * channels that stopped failing first.
+     */
+    private function refreshExhausted(int $channelId): void
     {
-        $this->settled = [];
+        if (isset($this->exhausted[$channelId])) {
+            unset($this->exhausted[$channelId]);
+            $this->exhausted[$channelId] = true;
+        }
     }
 
     /**
@@ -161,6 +201,7 @@ final class ChannelSweepFailureBudget
 
         if (isset($this->exhausted[$channelId])) {
             $this->settled[$channelId] = true;
+            $this->refreshExhausted($channelId);
 
             return ' again after it was skipped in an earlier sweep; skipping it until the next sweep and stopping this batch.';
         }

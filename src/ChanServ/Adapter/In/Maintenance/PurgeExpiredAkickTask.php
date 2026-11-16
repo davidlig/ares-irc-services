@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace App\ChanServ\Adapter\In\Maintenance;
 
 use App\ChanServ\Application\Port\Out\ChannelAkickRepositoryInterface;
+use App\ChanServ\Domain\Entity\ChannelAkick;
 use App\Irc\Application\Port\In\Maintenance\MaintenanceTaskInterface;
 use Psr\Log\LoggerInterface;
 
 use function count;
+use function implode;
 use function sprintf;
 
 /**
@@ -17,8 +19,9 @@ use function sprintf;
  *
  * Every batch is deleted before the next one is read, so each read starts from the first expired
  * entry and no cursor is needed. Each cycle deletes at most $maxBatchesPerCycle batches; the rest
- * is deleted in later cycles. A failed delete stops the cycle, and a batch that deletes nothing
- * ends it too, so the same entries are never read again within one cycle.
+ * is deleted in later cycles. Removals are logged only after their delete succeeded. A failed
+ * delete stops the cycle, and a batch that deletes nothing ends it too, so the same entries are
+ * never read again within one cycle.
  *
  * Order 350: ChanServ AKICK cleanup (after channel purge).
  */
@@ -61,23 +64,47 @@ final readonly class PurgeExpiredAkickTask implements MaintenanceTaskInterface
 
             $ids = [];
             foreach ($expired as $akick) {
-                $akickId = $akick->getId();
-                $ids[] = $akickId;
-
-                $this->logger->info(sprintf(
-                    'Maintenance [%s]: removed expired AKICK %s (id %d) from channel %d.',
-                    $this->getName(),
-                    $akick->getMask(),
-                    $akickId,
-                    $akick->getChannelId(),
-                ));
+                $ids[] = $akick->getId();
             }
 
             $deleted = $this->akickRepository->deleteByIds($ids);
+            $this->logRemoved($expired, $ids, $deleted);
 
             if (count($expired) < $this->batchSize || 0 === $deleted) {
                 return;
             }
+        }
+    }
+
+    /**
+     * Each entry is logged only when the whole batch was deleted; otherwise it is unknown which
+     * entries were removed (another process deleted the rest), so only the count is reported.
+     *
+     * @param array<ChannelAkick> $expired
+     * @param list<int>           $ids
+     */
+    private function logRemoved(array $expired, array $ids, int $deleted): void
+    {
+        if (count($ids) !== $deleted) {
+            $this->logger->warning(sprintf(
+                'Maintenance [%s]: removed %d of %d expired AKICK entries (ids %s); the others were already gone.',
+                $this->getName(),
+                $deleted,
+                count($ids),
+                implode(', ', $ids),
+            ));
+
+            return;
+        }
+
+        foreach ($expired as $akick) {
+            $this->logger->info(sprintf(
+                'Maintenance [%s]: removed expired AKICK %s (id %d) from channel %d.',
+                $this->getName(),
+                $akick->getMask(),
+                $akick->getId(),
+                $akick->getChannelId(),
+            ));
         }
     }
 }

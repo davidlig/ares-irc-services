@@ -151,6 +151,26 @@ final class ChanServHistorySubscriberTest extends TestCase
     }
 
     #[Test]
+    public function aRetriedUnsuspensionDoesNotRecordASecondHistoryRow(): void
+    {
+        $historyRepo = $this->createMock(ChannelHistoryRepositoryInterface::class);
+        $historyRepo->expects(self::never())->method('save');
+        $subscriber = new ChanServHistorySubscriber(new ChannelHistoryService($historyRepo), $this->createStub(ChanUserAccountPort::class));
+
+        $subscriber->onChannelUnsuspended(new ChannelUnsuspendedEvent(
+            channelId: 10,
+            channelName: '#test',
+            channelNameLower: '#test',
+            performedBy: 'services.example.com',
+            performedByNickId: null,
+            performedByIp: '*',
+            performedByHost: '*',
+            occurredAt: new DateTimeImmutable(),
+            isRetry: true,
+        ));
+    }
+
+    #[Test]
     public function onChannelFounderChangedRecordsHistory(): void
     {
         $historyRepo = $this->createMock(ChannelHistoryRepositoryInterface::class);

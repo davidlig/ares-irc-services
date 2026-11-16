@@ -68,7 +68,7 @@ final class PurgeExpiredAkickTaskTest extends TestCase
         $akickRepo = $this->createMock(ChannelAkickRepositoryInterface::class);
         $akickRepo->expects(self::once())->method('findExpired')->willReturn([$expiredAkick1, $expiredAkick2]);
         $akickRepo->expects(self::never())->method('remove');
-        $akickRepo->expects(self::once())->method('deleteByIds')->with([101, 102]);
+        $akickRepo->expects(self::once())->method('deleteByIds')->with([101, 102])->willReturn(2);
 
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects(self::exactly(2))->method('info');
@@ -255,6 +255,42 @@ final class PurgeExpiredAkickTaskTest extends TestCase
         new PurgeExpiredAkickTask($akickRepo, new NullLogger(), 3600, 2, 5)->run();
 
         self::assertSame(1, $loads);
+    }
+
+    #[Test]
+    public function nothingIsLoggedAsRemovedWhenTheDeleteFails(): void
+    {
+        $akickRepo = $this->createStub(ChannelAkickRepositoryInterface::class);
+        $akickRepo->method('findExpired')->willReturn([$this->expired(1), $this->expired(2)]);
+        $akickRepo->method('deleteByIds')->willThrowException(new RuntimeException('database unavailable'));
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::never())->method('info');
+        $logger->expects(self::never())->method('warning');
+
+        $this->expectException(RuntimeException::class);
+
+        new PurgeExpiredAkickTask($akickRepo, $logger, 3600, 2)->run();
+    }
+
+    #[Test]
+    public function aDeleteThatRemovesFewerEntriesThanTheBatchLogsTheDeletedCount(): void
+    {
+        $akickRepo = $this->createStub(ChannelAkickRepositoryInterface::class);
+        $akickRepo->method('findExpired')->willReturn([$this->expired(1), $this->expired(2)]);
+        $akickRepo->method('deleteByIds')->willReturn(1);
+        $warnings = self::recorder();
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::never())->method('info');
+        $logger->method('warning')->willReturnCallback(static function (string $message) use ($warnings): void {
+            $warnings[] = $message;
+        });
+
+        new PurgeExpiredAkickTask($akickRepo, $logger, 3600, 2, 1)->run();
+
+        self::assertSame(
+            ['Maintenance [chanserv.purge_expired_akick]: removed 1 of 2 expired AKICK entries (ids 1, 2); the others were already gone.'],
+            $warnings->getArrayCopy(),
+        );
     }
 
     private function expired(int $id): ChannelAkick

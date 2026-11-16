@@ -107,7 +107,7 @@ final readonly class PurgeInactiveChannelsTask implements PrerequisiteAwareMaint
             try {
                 $this->dropService->hardDropChannel($channel, $now, 'inactivity');
             } catch (Throwable $e) {
-                $this->failures->recordFailure(
+                $this->failures->recordFailureAfterPossibleCommit(
                     $channelId,
                     $channelName,
                     $e,

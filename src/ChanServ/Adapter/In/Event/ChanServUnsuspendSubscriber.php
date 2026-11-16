@@ -27,7 +27,8 @@ final readonly class ChanServUnsuspendSubscriber implements EventSubscriberInter
     public function onChannelUnsuspended(ChannelUnsuspendedEvent $event): void
     {
         $channelName = $this->restoration->restore($event->channelNameLower);
-        if (null === $channelName) {
+        // A retry only restores the channel again; the first dispatch already sent the notice.
+        if (null === $channelName || $event->isRetry) {
             return;
         }
 
