@@ -19,7 +19,7 @@ return new Config()
         // Base Symfony rules
         '@Symfony' => true,
 
-        // Specific rules for modern PHP (8.5+)
+        // PHP 8.5 is the newest migration ruleset available in this fixer version.
         '@PHP8x5Migration' => true,
 
         // Mandatory strict typing

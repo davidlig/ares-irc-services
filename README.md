@@ -1,6 +1,6 @@
 # Ares IRC Services
 
-[![PHP](https://img.shields.io/badge/PHP-8.5%2B-777BB4?style=flat&logo=php)](https://php.net)
+[![PHP](https://img.shields.io/badge/PHP-8.6%2B-777BB4?style=flat&logo=php)](https://php.net)
 [![Symfony](https://img.shields.io/badge/Symfony-7.4-black?style=flat&logo=symfony)](https://symfony.com)
 [![License](https://img.shields.io/badge/license-AGPL--3.0--or--later-blue.svg)](LICENSE)
 [![Coverage](https://codecov.io/gh/davidlig/ares-irc-services/branch/main/graph/badge.svg)](https://codecov.io/gh/davidlig/ares-irc-services)
@@ -9,7 +9,7 @@
 
 > **Under active development.** Functionality and APIs may change.
 
-A modular, protocol-agnostic IRC services daemon built for **PHP >= 8.5** and **Symfony 7.4**, following **Clean Architecture / DDD** principles. It ships with NickServ, ChanServ, MemoServ, and OperServ — all protocol-independent via a strategy pattern backed by a tagged-service registry.
+A modular, protocol-agnostic IRC services daemon built for **PHP >= 8.6** and **Symfony 7.4**, following **Clean Architecture / DDD** principles. It ships with NickServ, ChanServ, MemoServ, and OperServ — all protocol-independent via a strategy pattern backed by a tagged-service registry.
 
 ---
 
@@ -135,7 +135,7 @@ configuration. See OperServ HELP for available commands and permissions.
 
 | Dependency | Minimum version |
 |------------|----------------|
-| PHP | >= 8.5 |
+| PHP | >= 8.6 |
 | Symfony | 7.4 |
 | Composer | 2.x |
 

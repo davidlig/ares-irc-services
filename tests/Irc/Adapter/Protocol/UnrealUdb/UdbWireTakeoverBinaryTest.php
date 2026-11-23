@@ -173,13 +173,14 @@ final class UdbWireTakeoverBinaryTest extends DoctrineIntegrationTestCase
         $takeover = $this->takeover();
         foreach ([['sqlString', null], ['sqlInt', null], ['sqlInt', '9223372036854775808'], ['sqlBinary', null]] as [$name, $value]) {
             try {
-                new ReflectionMethod(UdbWireTakeover::class, $name)->invoke($takeover, $value);
+                $method = new ReflectionMethod(UdbWireTakeover::class, $name);
+                $method->invoke($method->isStatic() ? null : $takeover, $value);
                 self::fail('Malformed SQL fields must be rejected.');
             } catch (UnexpectedValueException $error) {
                 self::assertStringContainsString('persisted', $error->getMessage());
             }
         }
-        self::assertSame(7, new ReflectionMethod(UdbWireTakeover::class, 'sqlInt')->invoke($takeover, '7'));
+        self::assertSame(7, new ReflectionMethod(UdbWireTakeover::class, 'sqlInt')->invoke(null, '7'));
         foreach (['stagedDbRows', 'stagedValidationRows'] as $name) {
             $rows = new ReflectionMethod(UdbWireTakeover::class, $name)->invoke($takeover, UdbBlock::Ips);
             self::assertInstanceOf(Traversable::class, $rows);

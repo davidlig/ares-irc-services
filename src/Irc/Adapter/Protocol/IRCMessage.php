@@ -71,7 +71,7 @@ readonly class IRCMessage
             $rawLine = substr($rawLine, 0, $colonPos);
         }
 
-        $parts = explode(' ', trim($rawLine));
+        $parts = explode(' ', trim($rawLine, " \t\n\r\0\x0B"));
         $command = (string) array_shift($parts);
 
         return new self(

@@ -32,13 +32,13 @@ final class RegistrationModeHandlerTest extends TestCase
         $repository->expects(self::once())->method('change')->with(RegistrationMode::Approval)->willReturn(RegistrationMode::Direct);
         $audit = $this->createMock(ChanAuditSink::class);
         $audit->expects(self::once())->method('log')->with(
-            operator: 'OperNick',
-            command: 'REGMODE',
-            target: 'registration-mode',
-            targetHost: null,
-            targetIp: null,
-            reason: 'APPROVAL',
-            extra: ['previous' => 'DIRECT', 'mode' => 'APPROVAL'],
+            'OperNick',
+            'REGMODE',
+            'registration-mode',
+            null,
+            null,
+            'APPROVAL',
+            ['previous' => 'DIRECT', 'mode' => 'APPROVAL'],
         );
 
         self::assertSame(RegistrationMode::Direct, new RegistrationModeHandler($repository, $audit)->change(RegistrationMode::Approval, 'OperNick'));

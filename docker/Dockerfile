@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.4
 # Multi-arch build for amd64 and arm64
 
-FROM php:8.5-cli-trixie AS php-base
+FROM php:8.6-cli-trixie AS php-base
 
 # Install runtime certificates and compile PHP extensions.
 # pdo_mysql uses the built-in mysqlnd driver and does not require external client libraries.

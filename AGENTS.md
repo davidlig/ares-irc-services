@@ -9,7 +9,7 @@ for the current task; do not load every skill by default.
 
 ## 1. Project Baseline
 
-- PHP >= 8.5
+- PHP >= 8.6
 - Symfony 7.4
 - Doctrine ORM 3.6
 - PHPUnit 13
