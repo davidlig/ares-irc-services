@@ -11,6 +11,7 @@
 ###< symfony/framework-bundle ###
 /.deptrac.cache
 /.vscode/
+/.opencode/mcp.env
 /backups/
 ###> phpunit/phpunit ###
 /phpunit.xml

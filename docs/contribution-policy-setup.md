@@ -239,7 +239,7 @@ existing rule and all unrelated settings; do not replace it with a relaxed rules
 - **Require status checks to pass before merging**: enabled.
 - **Require branches to be up to date before merging**: enabled (`strict: true`).
 - Preserve these five existing check contexts and their **GitHub Actions** source:
-  - `PHP 8.5 — Lint, CS & Tests`
+  - `PHP — Lint, CS & Tests`
   - `Migrations — sqlite`
   - `Migrations — mariadb`
   - `Migrations — postgres`

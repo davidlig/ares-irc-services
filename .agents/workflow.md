@@ -85,15 +85,6 @@ Use scoped PHPStan during difficult work if useful.
 
 ## 8. Final verification
 
-### DressCode for scoped work
-
-- Run `vendor/bin/dresscode fix -f agent` to format and print the diff it wrote.
-- Use `vendor/bin/dresscode check <paths> -f agent` to check only the paths in scope.
-- Use `vendor/bin/dresscode explain <key>` to look up a reported decision.
-- Never use `--fix-risky` without naming the fix to enable.
-- Never add a `// dresscode:ignore` or `dresscode:disable` directive without explaining why in a comment.
-
-
 ```bash
 php -l path/to/modified.php
 
@@ -132,6 +123,14 @@ Allow Prettier-selected quoting only when interpreted content is unchanged; reta
 where YAML escape decoding is required.
 
 Never report an unexecuted gate as passed.
+
+### DressCode for scoped work
+
+- Run `vendor/bin/dresscode fix -f agent` to format and print the diff it wrote.
+- Use `vendor/bin/dresscode check <paths> -f agent` to check only the paths in scope.
+- Use `vendor/bin/dresscode explain <key>` to look up a reported decision.
+- Never use `--fix-risky` without naming the fix to enable.
+- Never add a `// dresscode:ignore` or `dresscode:disable` directive without explaining why in a comment.
 
 ## 9. Documentation consistency
 

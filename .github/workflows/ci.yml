@@ -8,7 +8,7 @@ on:
 
 jobs:
   test:
-    name: PHP 8.6 — Lint, CS & Tests
+    name: PHP — Lint, CS & Tests
     runs-on: ubuntu-26.04
     permissions:
       id-token: write

@@ -13,12 +13,13 @@
         "ext-mbstring": "*",
         "ext-pdo_mysql": "*",
         "ext-pdo_sqlite": "*",
-        "amphp/amp": "^3.1",
-        "amphp/socket": "^2.4.2",
+        "amphp/amp": "3.1.*",
+        "amphp/dns": "2.4.*",
+        "amphp/socket": "2.4.*",
         "doctrine/doctrine-bundle": "3.2.*",
         "doctrine/doctrine-migrations-bundle": "4.0.*",
         "doctrine/orm": "3.6.*",
-        "revolt/event-loop": "^1.1",
+        "revolt/event-loop": "1.1.*",
         "symfony/console": "7.4.*",
         "symfony/doctrine-messenger": "7.4.*",
         "symfony/dotenv": "7.4.*",
@@ -94,9 +95,13 @@
             "docker": false
         }
     },
+    "suggest": {
+        "ext-sockets": "Sets TCP_USER_TIMEOUT so a lost uplink with unacknowledged data is detected in about two minutes"
+    },
     "require-dev": {
         "deptrac/deptrac": "^4.7.2",
         "dresscode/dresscode": "^1.4",
+        "nette/neon": "^4.0",
         "phpstan/phpstan": "^2.3.7",
         "phpstan/phpstan-phpunit": "^2.1.2",
         "phpunit/phpunit": "^13.4.8"

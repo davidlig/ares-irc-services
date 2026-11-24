@@ -145,8 +145,10 @@ Composer directly requires `ext-ctype`, `ext-iconv`, `ext-mbstring`, `ext-pdo_my
 `ext-pdo_sqlite` (with PDO). Install both declared PDO drivers even if you use only one database.
 For PostgreSQL, also install `ext-pdo_pgsql`. Transitive dependencies and development tools may
 require additional extensions; use the platform check below for the installed dependency set.
-`ext-sockets` is not required by the Amp socket transport. Docker includes `pcntl` for graceful
-daemon signal handling.
+`ext-sockets` is optional but recommended: without it the uplink cannot set `TCP_USER_TIMEOUT`, and
+a link lost while data is waiting for acknowledgement is detected only after TCP retransmissions give
+up (about 15 minutes on Linux). Docker includes `sockets`, and `pcntl` for graceful daemon signal
+handling.
 
 Verify your setup with:
 

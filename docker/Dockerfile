@@ -6,13 +6,14 @@ FROM php:8.6-cli-trixie AS php-base
 # Install runtime certificates and compile PHP extensions.
 # pdo_mysql uses the built-in mysqlnd driver and does not require external client libraries.
 # pcntl is kept for graceful daemon signal handling (SIGTERM, SIGINT).
-# sockets is removed as amphp/socket does not require ext-sockets.
+# sockets sets TCP_USER_TIMEOUT so a lost uplink with unacknowledged data is closed in time.
 # Pre-installed build dependencies ($PHPIZE_DEPS) are purged after extension compilation.
 RUN apt-get update && \
     apt-get install -y --no-install-recommends ca-certificates && \
     docker-php-ext-install -j$(nproc) \
         pdo_mysql \
-        pcntl && \
+        pcntl \
+        sockets && \
     apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false $PHPIZE_DEPS && \
     rm -rf /var/lib/apt/lists/*
 

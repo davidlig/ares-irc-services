@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\Out\Connection;
 
+use Amp\CancelledException;
 use Amp\Socket\ClientTlsContext;
 use Amp\Socket\ConnectContext;
-use Amp\Socket\RetrySocketConnector;
+use Amp\Socket\ConnectException;
 use Amp\Socket\Socket;
 use Amp\Socket\SocketConnector;
 use Amp\TimeoutCancellation;
@@ -17,9 +18,11 @@ use function implode;
 use function is_string;
 use function rtrim;
 use function sprintf;
+use function str_contains;
 use function strlen;
 use function strpos;
 use function substr;
+use function trim;
 
 class SocketConnection implements ConnectionInterface
 {
@@ -45,13 +48,15 @@ class SocketConnection implements ConnectionInterface
         private readonly LoggerInterface $logger = new NullLogger(),
         ?SocketConnector $connector = null,
     ) {
-        // Preserve the retry policy used by Amp's default connector.
-        $this->connector = $connector ?? new RetrySocketConnector(new KeepAliveSocketConnector());
+        // Keep the retry policy of Amp's default connector.
+        $this->connector = $connector ?? new RetryingSocketConnector(new KeepAliveSocketConnector(logger: $logger));
     }
 
     public function connect(): void
     {
-        $uri = sprintf('%s:%d', $this->host, $this->port);
+        // IPv6 literals need brackets in the URI but not in the TLS peer name.
+        $host = trim($this->host, '[]');
+        $uri = sprintf(str_contains($host, ':') ? '[%s]:%d' : '%s:%d', $host, $this->port);
 
         $this->logger->info('Opening TCP connection.', [
             'address' => $uri,
@@ -66,7 +71,7 @@ class SocketConnection implements ConnectionInterface
             ->withTcpNoDelay();
 
         if ($this->useTls) {
-            $tlsContext = new ClientTlsContext($this->host);
+            $tlsContext = new ClientTlsContext($host);
             if (!$this->tlsVerifyPeer) {
                 $tlsContext = $tlsContext->withoutPeerVerification();
                 $this->logger->warning('TLS peer verification is disabled for IRC connection.', [
@@ -79,9 +84,13 @@ class SocketConnection implements ConnectionInterface
 
         $cancellation = new TimeoutCancellation((float) $this->timeoutSeconds);
 
+        $socket = null;
+        $stage = 'no connection';
+
         try {
             $socket = $this->connector->connect($uri, $connectContext, $cancellation);
             if ($this->useTls) {
+                $stage = 'TLS handshake did not complete';
                 $socket->setupTls($cancellation);
             }
 
@@ -92,14 +101,27 @@ class SocketConnection implements ConnectionInterface
 
             $this->logger->info('TCP connection established.', ['address' => $uri]);
         } catch (\Throwable $e) {
+            // A failed TLS handshake leaves the TCP socket connected but not stored.
+            $socket?->close();
             $this->status = ConnectionStatus::Error;
+
+            // The connect deadline is the only cancellation, so name it and the stage it ended,
+            // also when a connector reports it inside its own failure message.
+            $deadline = sprintf('%s within %d second%s', $stage, $this->timeoutSeconds, 1 === $this->timeoutSeconds ? '' : 's');
+            $carried = $e instanceof CancelledException ? $e->getPrevious() : null;
+            $reason = match (true) {
+                $carried instanceof ConnectException => $deadline . '; ' . $carried->getMessage(),
+                $e instanceof CancelledException => $deadline,
+                $cancellation->isRequested() => $deadline . '; ' . $e->getMessage(),
+                default => $e->getMessage(),
+            };
 
             $this->logger->error('TCP connection failed.', [
                 'address' => $uri,
-                'error' => $e->getMessage(),
+                'error' => $reason,
             ]);
 
-            throw new \RuntimeException(sprintf('Failed to connect to %s: %s', $uri, $e->getMessage()), 0, $e);
+            throw new \RuntimeException(sprintf('Failed to connect to %s: %s', $uri, $reason), 0, $e);
         }
     }
 

@@ -11,6 +11,7 @@ use Amp\DeferredFuture;
 use Amp\Socket\BindContext;
 use Amp\Socket\Certificate;
 use Amp\Socket\ConnectContext;
+use Amp\Socket\ConnectException;
 use Amp\Socket\InternetAddress;
 use Amp\Socket\ResourceServerSocket;
 use Amp\Socket\ResourceSocket;
@@ -25,6 +26,7 @@ use App\Irc\Adapter\Out\Connection\KeepAliveSocketConnector;
 use App\Irc\Adapter\Out\Connection\SocketConnection;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\RequiresOperatingSystemFamily;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -436,12 +438,134 @@ final class SocketConnectionTest extends TestCase
     }
 
     #[Test]
+    public function connectBracketsIpv6HostsAndKeepsTheBareTlsPeerName(): void
+    {
+        $socket = $this->createStub(Socket::class);
+        $connector = $this->createMock(SocketConnector::class);
+        $connector->expects(self::once())->method('connect')->with(
+            '[::1]:6697',
+            self::callback(static function (ConnectContext $context): bool {
+                self::assertSame('::1', $context->getTlsContext()?->getPeerName());
+
+                return true;
+            }),
+            self::isInstanceOf(Cancellation::class),
+        )->willReturn($socket);
+        $connection = new SocketConnection('::1', 6697, true, 5, connector: $connector);
+
+        $connection->connect();
+
+        self::assertSame(ConnectionStatus::Connected, $connection->getStatus());
+    }
+
+    #[Test]
+    public function connectReportsTheDeadlineWhenNoAttemptFinishesInTime(): void
+    {
+        $connector = $this->createStub(SocketConnector::class);
+        $connector->method('connect')->willThrowException(new CancelledException());
+        $connection = new SocketConnection('example.test', 7000, false, 5, connector: $connector);
+
+        try {
+            $connection->connect();
+            self::fail('Expected the connect deadline to be reported.');
+        } catch (\RuntimeException $error) {
+            self::assertSame('Failed to connect to example.test:7000: no connection within 5 seconds', $error->getMessage());
+            self::assertInstanceOf(CancelledException::class, $error->getPrevious());
+            self::assertSame(ConnectionStatus::Error, $connection->getStatus());
+        }
+    }
+
+    #[Test]
+    public function connectNamesTheDeadlineWhenItEndsAnAttemptAfterEarlierFailures(): void
+    {
+        $connector = $this->createStub(SocketConnector::class);
+        $connector->method('connect')->willReturnCallback(static function (string $uri, ConnectContext $context, Cancellation $cancellation): never {
+            try {
+                delay(5, cancellation: $cancellation);
+            } catch (CancelledException $cancelled) {
+                throw new ConnectException('Connection to example.test:7000 was cancelled after 1 failed attempt: attempt 1: refused', previous: $cancelled);
+            }
+
+            throw new ConnectException('Not reached');
+        });
+        $connection = new SocketConnection('example.test', 7000, false, 1, connector: $connector);
+
+        try {
+            $connection->connect();
+            self::fail('Expected the connect deadline to be reported.');
+        } catch (\RuntimeException $error) {
+            self::assertSame(
+                'Failed to connect to example.test:7000: no connection within 1 second; Connection to example.test:7000 was cancelled after 1 failed attempt: attempt 1: refused',
+                $error->getMessage(),
+            );
+        }
+    }
+
+    #[Test]
+    public function connectAddsTheFailuresACancellationCarriesToTheDeadline(): void
+    {
+        $connector = $this->createStub(SocketConnector::class);
+        $connector->method('connect')->willThrowException(new CancelledException(new ConnectException('Connection to example.test:7000 was cancelled after 1 failed attempt: attempt 1: refused')));
+        $connection = new SocketConnection('example.test', 7000, false, 5, connector: $connector);
+
+        try {
+            $connection->connect();
+            self::fail('Expected the connect deadline to be reported.');
+        } catch (\RuntimeException $error) {
+            self::assertSame(
+                'Failed to connect to example.test:7000: no connection within 5 seconds; Connection to example.test:7000 was cancelled after 1 failed attempt: attempt 1: refused',
+                $error->getMessage(),
+            );
+        }
+    }
+
+    #[Test]
+    public function connectReportsATlsHandshakeThatDoesNotFinishInTime(): void
+    {
+        $socket = $this->createMock(Socket::class);
+        $socket->expects(self::once())->method('setupTls')->willThrowException(new CancelledException());
+        $socket->expects(self::once())->method('close');
+        $connector = $this->createStub(SocketConnector::class);
+        $connector->method('connect')->willReturn($socket);
+        $connection = new SocketConnection('example.test', 7000, true, 5, connector: $connector);
+
+        try {
+            $connection->connect();
+            self::fail('Expected the TLS handshake deadline to be reported.');
+        } catch (\RuntimeException $error) {
+            self::assertSame('Failed to connect to example.test:7000: TLS handshake did not complete within 5 seconds', $error->getMessage());
+            self::assertSame(ConnectionStatus::Error, $connection->getStatus());
+        }
+    }
+
+    #[Test]
+    public function connectClosesTheSocketWhenTheTlsHandshakeFails(): void
+    {
+        $socket = $this->createMock(Socket::class);
+        $socket->expects(self::once())->method('setupTls')->willThrowException(new \RuntimeException('handshake failed'));
+        $socket->expects(self::once())->method('close');
+        $connector = $this->createMock(SocketConnector::class);
+        $connector->expects(self::once())->method('connect')->willReturn($socket);
+        $connection = new SocketConnection('example.test', 7000, true, 5, connector: $connector);
+
+        try {
+            $connection->connect();
+            self::fail('Expected the TLS handshake to fail.');
+        } catch (\RuntimeException $error) {
+            self::assertSame('Failed to connect to example.test:7000: handshake failed', $error->getMessage());
+            self::assertSame(ConnectionStatus::Error, $connection->getStatus());
+        }
+    }
+
+    #[Test]
+    #[RequiresOperatingSystemFamily('Linux')]
     public function connectSetsKeepAliveForPlainTcp(): void
     {
         $this->assertKeepAliveOnLocalConnection(null);
     }
 
     #[Test]
+    #[RequiresOperatingSystemFamily('Linux')]
     public function connectSetsKeepAliveForTls(): void
     {
         if (!extension_loaded('sockets')) {
@@ -1101,8 +1225,9 @@ final class SocketConnectionTest extends TestCase
             try {
                 $connection->connect();
             } catch (\RuntimeException $e) {
-                self::assertSame('Failed to connect to 127.77.3.1:' . $port . ': The operation was cancelled', $e->getMessage());
-                self::assertInstanceOf(CancelledException::class, $e->getPrevious());
+                self::assertStringStartsWith('Failed to connect to 127.77.3.1:' . $port . ': Connection to 127.77.3.1:' . $port . ' gave up after 1 failed attempt; the next retry would not fit in the time left: attempt 1: ', $e->getMessage());
+                self::assertStringContainsString('refused', $e->getMessage());
+                self::assertInstanceOf(ConnectException::class, $e->getPrevious());
                 self::assertSame(ConnectionStatus::Error, $connection->getStatus());
 
                 return;
