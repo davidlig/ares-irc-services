@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\Out\Connection;
 
+use Amp\Socket\SocketConnector;
 use App\Irc\Domain\Server\ServerLink;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -13,6 +14,7 @@ class SocketConnectionFactory implements ConnectionFactoryInterface
     public function __construct(
         private readonly int $timeoutSeconds = 30,
         private readonly LoggerInterface $logger = new NullLogger(),
+        private readonly ?SocketConnector $connector = null,
     ) {}
 
     public function create(ServerLink $link): ConnectionInterface
@@ -24,6 +26,7 @@ class SocketConnectionFactory implements ConnectionFactoryInterface
             tlsVerifyPeer: $link->tlsVerifyPeer,
             timeoutSeconds: $this->timeoutSeconds,
             logger: $this->logger,
+            connector: $this->connector,
         );
     }
 }

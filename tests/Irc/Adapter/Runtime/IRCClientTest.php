@@ -37,6 +37,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use Revolt\EventLoop;
 use RuntimeException;
 use stdClass;
 use Symfony\Component\Messenger\Envelope;
@@ -63,6 +64,17 @@ final class IRCClientTest extends TestCase
     private IRCClient $client;
 
     private ServerLink $link;
+
+    #[Test]
+    public function runLogsTheActiveEventLoopDriver(): void
+    {
+        $handler = new TestHandler();
+        $this->createClient(logger: new Logger('irc', [$handler]))->run();
+
+        $records = $handler->getRecords();
+        self::assertSame('Entering read loop.', $records[0]->message);
+        self::assertSame(['protocol' => 'unreal', 'loop_driver' => EventLoop::getDriver()::class], $records[0]->context);
+    }
 
     #[Test]
     public function connectCallsConnectionAndHandshakeAndDispatchesConnectionEstablished(): void

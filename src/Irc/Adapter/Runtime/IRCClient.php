@@ -23,6 +23,7 @@ use App\Shared\Application\Port\EventBusInterface;
 use LogicException;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use Revolt\EventLoop;
 use Throwable;
 
 use function Amp\async;
@@ -107,6 +108,7 @@ class IRCClient implements IrcSessionInterface
     {
         $this->logger->info('Entering read loop.', [
             'protocol' => $this->protocol->getProtocolName(),
+            'loop_driver' => EventLoop::getDriver()::class,
         ]);
 
         if (!$this->connection->isConnected()) {

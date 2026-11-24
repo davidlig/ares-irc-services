@@ -6,15 +6,15 @@ namespace App\Irc\Adapter\Out\Connection;
 
 use Amp\Socket\ClientTlsContext;
 use Amp\Socket\ConnectContext;
+use Amp\Socket\RetrySocketConnector;
 use Amp\Socket\Socket;
+use Amp\Socket\SocketConnector;
 use Amp\TimeoutCancellation;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use RuntimeException;
 use Throwable;
 
-use function Amp\Socket\connect;
-use function Amp\Socket\connectTls;
 use function implode;
 use function is_string;
 use function rtrim;
@@ -34,6 +34,8 @@ class SocketConnection implements ConnectionInterface
 
     private ?Socket $socket = null;
 
+    private readonly SocketConnector $connector;
+
     private string $recvBuffer = '';
 
     public function __construct(
@@ -43,7 +45,11 @@ class SocketConnection implements ConnectionInterface
         private readonly int $timeoutSeconds = 30,
         private readonly bool $tlsVerifyPeer = true,
         private readonly LoggerInterface $logger = new NullLogger(),
-    ) {}
+        ?SocketConnector $connector = null,
+    ) {
+        // Preserve the retry policy used by Amp's default connector.
+        $this->connector = $connector ?? new RetrySocketConnector(new KeepAliveSocketConnector());
+    }
 
     public function connect(): void
     {
@@ -76,9 +82,12 @@ class SocketConnection implements ConnectionInterface
         $cancellation = new TimeoutCancellation((float) $this->timeoutSeconds);
 
         try {
-            $this->socket = $this->useTls
-                ? connectTls($uri, $connectContext, $cancellation)
-                : connect($uri, $connectContext, $cancellation);
+            $socket = $this->connector->connect($uri, $connectContext, $cancellation);
+            if ($this->useTls) {
+                $socket->setupTls($cancellation);
+            }
+
+            $this->socket = $socket;
 
             $this->status = ConnectionStatus::Connected;
             $this->recvBuffer = '';
