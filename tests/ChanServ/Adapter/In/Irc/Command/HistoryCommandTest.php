@@ -1125,12 +1125,10 @@ final class HistoryCommandTest extends TestCase
         $historyRepo->method('findByChannelId')->willReturn([$entry]);
 
         $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static function (string $id, array $parameters = []): string {
-            return match ($id) {
-                'history.message.akick_enforce' => strtr('AKICK enforced (%count% kicked)', $parameters),
-                'history.view.entry' => strtr('#%id% %action% by %operator% — %message%', $parameters),
-                default => $id,
-            };
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $parameters = []): string => match ($id) {
+            'history.message.akick_enforce' => strtr('AKICK enforced (%count% kicked)', $parameters),
+            'history.view.entry' => strtr('#%id% %action% by %operator% — %message%', $parameters),
+            default => $id,
         });
 
         $messages = [];

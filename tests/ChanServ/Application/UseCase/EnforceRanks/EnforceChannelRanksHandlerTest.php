@@ -92,13 +92,11 @@ final class EnforceChannelRanksHandlerTest extends TestCase
     {
         $member = $this->member(identified: true, nickId: 20, ranks: [ChannelRank::Owner, ChannelRank::Administrator, ChannelRank::Operator]);
         $actions = $this->createMock(ChannelRankActions::class);
-        $actions->expects(self::once())->method('apply')->with('#test', self::callback(static function (array $changes): bool {
-            return 2 === count($changes)
+        $actions->expects(self::once())->method('apply')->with('#test', self::callback(static fn (array $changes): bool => 2 === count($changes)
                 && $changes[0] instanceof MemberRankChange
                 && $changes[1] instanceof MemberRankChange
                 && ChannelRank::Owner === $changes[0]->change->rank
-                && ChannelRank::Administrator === $changes[1]->change->rank;
-        }));
+                && ChannelRank::Administrator === $changes[1]->change->rank));
 
         $this->handler($this->policyRepository($this->policy(secure: true, access: [20 => 300])), $this->network([$member]), $actions)
             ->handle(new EnforceChannelRanks('#test', RankEnforcementTrigger::MemberJoined, '001A', joinedRank: ChannelRank::Owner, reconcileOnJoin: true));

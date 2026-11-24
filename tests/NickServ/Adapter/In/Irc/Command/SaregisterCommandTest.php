@@ -99,13 +99,11 @@ final class SaregisterCommandTest extends TestCase
     public function handlesTokenModeSuccess(): void
     {
         $handler = $this->createMock(SaregisterNickHandlerInterface::class);
-        $handler->expects(self::once())->method('handle')->with(self::callback(function (SaregisterNick $cmd): bool {
-            return 'Alice' === $cmd->nickname
+        $handler->expects(self::once())->method('handle')->with(self::callback(fn (SaregisterNick $cmd): bool => 'Alice' === $cmd->nickname
                 && 'secretPass' === $cmd->password
                 && null === $cmd->email
                 && 'OperNick' === $cmd->actorNickname
-                && 'en' === $cmd->language;
-        }))->willReturn(SaregisterNickResult::registeredToken('Alice', 'rescue-token-123'));
+                && 'en' === $cmd->language))->willReturn(SaregisterNickResult::registeredToken('Alice', 'rescue-token-123'));
 
         $command = new SaregisterCommand($handler);
         $messages = [];
@@ -122,12 +120,10 @@ final class SaregisterCommandTest extends TestCase
     public function handlesEmailModeSuccess(): void
     {
         $handler = $this->createMock(SaregisterNickHandlerInterface::class);
-        $handler->expects(self::once())->method('handle')->with(self::callback(function (SaregisterNick $cmd): bool {
-            return 'Bob' === $cmd->nickname
+        $handler->expects(self::once())->method('handle')->with(self::callback(fn (SaregisterNick $cmd): bool => 'Bob' === $cmd->nickname
                 && 'secretPass' === $cmd->password
                 && 'bob@example.com' === $cmd->email
-                && 'OperNick' === $cmd->actorNickname;
-        }))->willReturn(SaregisterNickResult::registeredEmail('Bob', 'bob@example.com'));
+                && 'OperNick' === $cmd->actorNickname))->willReturn(SaregisterNickResult::registeredEmail('Bob', 'bob@example.com'));
 
         $command = new SaregisterCommand($handler);
         $messages = [];

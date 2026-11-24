@@ -118,11 +118,9 @@ final class RegisterChannelHandlerTest extends TestCase
         $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channels->expects(self::once())->method('existsByChannelName')->with('#test')->willReturn(false);
         $channels->expects(self::once())->method('countByFounderNickId')->with(7, true)->willReturn(0);
-        $channels->expects(self::once())->method('save')->with(self::callback(static function (RegisteredChannel $channel): bool {
-            return $channel->isPendingRegistration()
+        $channels->expects(self::once())->method('save')->with(self::callback(static fn (RegisteredChannel $channel): bool => $channel->isPendingRegistration()
                 && ChannelStatus::Pending === $channel->getStatus()
-                && 7 === $channel->getFounderNickId();
-        }));
+                && 7 === $channel->getFounderNickId()));
         $throttle = $this->createMock(ChannelRegisterThrottlePort::class);
         $throttle->expects(self::once())->method('getRemainingCooldownSeconds')->with(7, 21600)->willReturn(0);
         $throttle->expects(self::once())->method('recordRegistration')->with(7);

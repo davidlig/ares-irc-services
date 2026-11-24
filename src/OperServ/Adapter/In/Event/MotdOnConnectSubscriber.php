@@ -159,7 +159,7 @@ final class MotdOnConnectSubscriber implements EventSubscriberInterface
 
             $module = $this->connectionHolder->getProtocolModule();
             $serverSid = $this->connectionHolder->getServerSid();
-            $nickReservation = null !== $module ? $module->getNickReservation() : null;
+            $nickReservation = $module?->getNickReservation();
 
             if (null === $module || null === $serverSid || null === $nickReservation) {
                 return;

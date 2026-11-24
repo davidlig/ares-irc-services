@@ -1009,14 +1009,12 @@ final class ManageChannelAkickHandlerTest extends TestCase
         $actions->expects(self::once())->method('banAndKick')->with('#test', 'UID1', '*!*@bad.com', 'Spam reason');
 
         $events = $this->createMock(ChanServEventPublisher::class);
-        $events->expects(self::once())->method('publish')->with(self::callback(static function (object $event): bool {
-            return $event instanceof ChannelAkickChangedEvent
+        $events->expects(self::once())->method('publish')->with(self::callback(static fn (object $event): bool => $event instanceof ChannelAkickChangedEvent
                 && 1 === $event->channelId
                 && '#test' === $event->channelName
                 && 'ENFORCE' === $event->action
                 && 1 === $event->count
-                && 'Founder' === $event->performedBy;
-        }));
+                && 'Founder' === $event->performedBy));
 
         $handler = $this->createHandler(
             channels: $channels,

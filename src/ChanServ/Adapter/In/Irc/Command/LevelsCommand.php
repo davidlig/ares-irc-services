@@ -190,7 +190,7 @@ final readonly class LevelsCommand implements ChanServCommandInterface
         $senderAccount = $context->senderAccount;
         $result = $this->manageLevels->handle(new ManageChannelLevels(
             $channelName,
-            null === $senderAccount ? null : $senderAccount->id,
+            $senderAccount?->id,
             $context->isLevelFounder,
             $action,
             $this->visibleLevelKeys($modeSupport),

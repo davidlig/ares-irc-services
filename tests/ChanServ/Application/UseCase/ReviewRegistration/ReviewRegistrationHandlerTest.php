@@ -166,9 +166,7 @@ final class ReviewRegistrationHandlerTest extends TestCase
         $events = $this->createMock(EventBusInterface::class);
         $events->expects(self::exactly(2))->method('dispatch')->with(self::callback(static fn (object $event): bool => $event instanceof ChannelRegistrationDecisionEvent || $event instanceof ChannelRegisteredEvent));
         $history = $this->createMock(ChannelHistoryRepositoryInterface::class);
-        $history->expects(self::once())->method('save')->with(self::callback(static function (ChannelHistory $entry): bool {
-            return 'CREG_ACCEPT' === $entry->getAction() && 'ApprovingOper' === $entry->getPerformedBy();
-        }));
+        $history->expects(self::once())->method('save')->with(self::callback(static fn (ChannelHistory $entry): bool => 'CREG_ACCEPT' === $entry->getAction() && 'ApprovingOper' === $entry->getPerformedBy()));
 
         $accounts = $this->createMock(ChanUserAccountPort::class);
         $accounts->expects(self::once())->method('findAccountById')->with(7)->willReturn(new ChanAccountView(7, 'Requester', 'en'));

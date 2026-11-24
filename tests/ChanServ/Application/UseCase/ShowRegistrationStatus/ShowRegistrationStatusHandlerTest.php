@@ -32,9 +32,7 @@ final class ShowRegistrationStatusHandlerTest extends TestCase
         $drop->markPendingDeletion($at);
         $channelsByName = ['#pending' => $pending, '#rejected' => $rejected, '#active' => $active, '#suspended' => $suspended, '#forbidden' => $forbidden, '#drop' => $drop];
         $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
-        $channels->method('findByChannelName')->willReturnCallback(static function (string $name) use ($channelsByName): ?RegisteredChannel {
-            return $channelsByName[$name] ?? null;
-        });
+        $channels->method('findByChannelName')->willReturnCallback(static fn (string $name): ?RegisteredChannel => $channelsByName[$name] ?? null);
         $handler = new ShowRegistrationStatusHandler($channels);
 
         self::assertNull($handler->handle('#missing'));

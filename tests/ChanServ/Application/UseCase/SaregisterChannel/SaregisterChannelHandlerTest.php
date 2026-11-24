@@ -188,11 +188,9 @@ final class SaregisterChannelHandlerTest extends TestCase
         $activator = new ChannelRegistrationActivator($levels, $akicks);
 
         $events = $this->createMock(EventBusInterface::class);
-        $events->expects(self::once())->method('dispatch')->with(self::callback(function (object $event): bool {
-            return $event instanceof ChannelRegisteredEvent
+        $events->expects(self::once())->method('dispatch')->with(self::callback(fn (object $event): bool => $event instanceof ChannelRegisteredEvent
                 && 123 === $event->channelId
-                && '#MyChan' === $event->channelName;
-        }));
+                && '#MyChan' === $event->channelName));
 
         $historyRepo = $this->createMock(ChannelHistoryRepositoryInterface::class);
         $historyRepo->expects(self::once())->method('save');

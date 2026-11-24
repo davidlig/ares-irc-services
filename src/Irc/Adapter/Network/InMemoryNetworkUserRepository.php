@@ -48,8 +48,7 @@ class InMemoryNetworkUserRepository implements NetworkUserRepositoryInterface, E
         $user->useCaseMapping($this->caseMapping);
         $existing = $this->users[$user->uid->value] ?? null;
         if (null !== $existing) {
-            unset($this->byNick[$this->caseMapping->fold($existing->getNick()->value)]);
-            unset($this->byServerSid[$existing->serverSid][$existing->uid->value]);
+            unset($this->byNick[$this->caseMapping->fold($existing->getNick()->value)], $this->byServerSid[$existing->serverSid][$existing->uid->value]);
             if ([] === ($this->byServerSid[$existing->serverSid] ?? [])) {
                 unset($this->byServerSid[$existing->serverSid]);
             }
@@ -64,8 +63,7 @@ class InMemoryNetworkUserRepository implements NetworkUserRepositoryInterface, E
     {
         $user = $this->users[$uid->value] ?? null;
         if (null !== $user) {
-            unset($this->byNick[$this->caseMapping->fold($user->getNick()->value)]);
-            unset($this->byServerSid[$user->serverSid][$uid->value]);
+            unset($this->byNick[$this->caseMapping->fold($user->getNick()->value)], $this->byServerSid[$user->serverSid][$uid->value]);
             if ([] === ($this->byServerSid[$user->serverSid] ?? [])) {
                 unset($this->byServerSid[$user->serverSid]);
             }

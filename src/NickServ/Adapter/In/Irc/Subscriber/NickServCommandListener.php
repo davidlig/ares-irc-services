@@ -64,10 +64,7 @@ final readonly class NickServCommandListener implements ServiceCommandListenerIn
 
         try {
             $this->nickServService->dispatch($text, $sender);
-        } catch (NickAlreadyRegisteredException $e) {
-            $messageType = $this->messageTypeResolver->prefersPrivateMessages($sender->nick) ? 'PRIVMSG' : 'NOTICE';
-            $this->sendNotice->sendMessage($this->nickServBot->getUid(), $sender->uid, $e->getMessage(), $messageType);
-        } catch (InvalidCredentialsException $e) {
+        } catch (NickAlreadyRegisteredException|InvalidCredentialsException $e) {
             $messageType = $this->messageTypeResolver->prefersPrivateMessages($sender->nick) ? 'PRIVMSG' : 'NOTICE';
             $this->sendNotice->sendMessage($this->nickServBot->getUid(), $sender->uid, $e->getMessage(), $messageType);
         } catch (\Throwable $e) {

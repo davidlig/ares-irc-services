@@ -790,7 +790,7 @@ final class SocketConnectionTest extends TestCase
         $socket->method('isReadable')->willReturn(true);
         // A partial oversized line must be rejected before another read, even at EOF.
         $reads = count($chunks);
-        if (strlen($chunks[0]) > SocketConnection::MAX_LINE_BYTES && false === strpos($chunks[0], "\n")) {
+        if (strlen($chunks[0]) > SocketConnection::MAX_LINE_BYTES && !str_contains($chunks[0], "\n")) {
             $reads = 1;
         }
         $socket->expects(self::exactly($reads))->method('read')->willReturn(...$chunks);

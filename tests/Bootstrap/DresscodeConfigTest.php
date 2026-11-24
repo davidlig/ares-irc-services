@@ -22,11 +22,7 @@ final class DresscodeConfigTest extends TestCase
         $config = Neon::decodeFile($path);
         self::assertIsArray($config);
 
-        $standards = $config['use'];
-        if ('symfony' !== $standards) {
-            self::assertIsArray($standards);
-            self::assertContains('symfony', $standards);
-        }
+        self::assertSame(['symfony', 'modernizations', 'deprecations', 'cleanup', 'correctness'], $config['use']);
 
         self::assertSame(['strictTypes' => ['declaration' => 'required']], $config['file']);
 

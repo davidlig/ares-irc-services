@@ -1,4 +1,4 @@
-use: symfony
+use: [symfony, modernizations, deprecations, cleanup, correctness]
 
 paths: [.]
 excludePaths:
@@ -91,7 +91,31 @@ literals:
 phpdoc:
 	annotation:
 		nativeTypeOnly: forbidden
+		# A regular comment must not become reflection metadata.
+		plainComment: keep
+
+# Keep intentional diagnostics, catch boundaries, and existing comment/control structure.
+mistakes:
+	consecutivePhpdocs: keep
+	errorSuppression: keep
+	exceptionWhereThrowableBelongs: keep
+	strictArgument: keep
+
+controlFlow:
+	ifReturningTrueFalse: keep
 
 upgrading:
+	functions:
+		# Preserve array-pointer semantics and support iterable/by-reference loop inputs.
+		arrayFirstLast: keep
+		arraySearchFunctions: keep
 	syntax:
 		octalPrefix: required
+		# Preserve reflection-visible class and property declarations, including ORM entities.
+		promotedProperties: keep
+		readonlyClasses: keep
+		# Keep explicit null acceptance, evaluation order, and existing warning behavior.
+		newInInitializer: keep
+		pipe: keep
+		spreadForArrayMerge: keep
+		throwExpression: keep

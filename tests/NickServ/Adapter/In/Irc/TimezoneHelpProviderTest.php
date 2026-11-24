@@ -171,8 +171,8 @@ final class TimezoneHelpProviderTest extends TestCase
         $regions = $provider->getRegions();
 
         $expectedOrder = ['Africa', 'America', 'Antarctica', 'Arctic', 'Asia', 'Atlantic', 'Australia', 'Europe', 'Indian', 'Pacific'];
-        $expectedInRegions = array_filter($expectedOrder, static fn ($r) => in_array($r, $regions, true));
-        $actualInExpected = array_filter($regions, static fn ($r) => in_array($r, $expectedOrder, true));
+        $expectedInRegions = array_filter($expectedOrder, in_array(?, $regions, true));
+        $actualInExpected = array_filter($regions, in_array(?, $expectedOrder, true));
 
         self::assertSame($expectedInRegions, $actualInExpected, 'Regions should be in PHP manual order');
     }

@@ -905,14 +905,12 @@ final class NetworkEventEnricherTest extends TestCase
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
         $eventDispatcher->expects(self::once())
             ->method('dispatch')
-            ->with(self::callback(static function (object $event): bool {
-                return $event instanceof UserLeftChannelEvent
+            ->with(self::callback(static fn (object $event): bool => $event instanceof UserLeftChannelEvent
                     && '001ABCDEF' === $event->uid->value
                     && 'TargetNick' === $event->nick->value
                     && '#test' === $event->channel->value
                     && 'Kicked by ChanServ' === $event->reason
-                    && true === $event->wasKicked;
-            }));
+                    && true === $event->wasKicked));
 
         $enricher = new NetworkEventEnricher(
             $this->createStub(ChannelRepositoryInterface::class),

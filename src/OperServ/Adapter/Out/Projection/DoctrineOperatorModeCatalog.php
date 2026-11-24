@@ -15,6 +15,6 @@ final readonly class DoctrineOperatorModeCatalog implements OperatorModeCatalog
     {
         $module = $this->connection->getProtocolModule();
 
-        return null === $module ? null : $module->getUserModeSupport()->getIrcOpUserModes();
+        return $module?->getUserModeSupport()->getIrcOpUserModes();
     }
 }

@@ -173,11 +173,9 @@ final class SaregisterNickHandlerTest extends TestCase
         });
 
         $eventPublisher = $this->createMock(RegistrationEventPublisher::class);
-        $eventPublisher->expects(self::once())->method('publish')->with(self::callback(function (object $event): bool {
-            return $event instanceof NickPasswordHashAvailable
+        $eventPublisher->expects(self::once())->method('publish')->with(self::callback(fn (object $event): bool => $event instanceof NickPasswordHashAvailable
                 && 'NewNick' === $event->nickname
-                && 'hashed_password' === $event->passwordHash;
-        }));
+                && 'hashed_password' === $event->passwordHash));
 
         $historyRepo = $this->createMock(NickHistoryRepositoryInterface::class);
         $historyRepo->expects(self::once())->method('save');

@@ -170,8 +170,6 @@ final class ConsumerProcessManager implements ConsumerProcessManagerInterface
             $command,
             $descriptorSpec,
             $pipes,
-            null,
-            null,
         );
 
         // @codeCoverageIgnoreStart

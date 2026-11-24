@@ -264,8 +264,8 @@ final class UdbWireTakeover
             $same = $prior['block'] === $block->letter()
                 && $prior['operation'] === $frame->kind->value
                 && $prior['path'] === $path
-                && (null === $prior['value'] ? null : $this->sqlBinary($prior['value'])) === (null !== $value ? $value->logicalValue() : null)
-                && (null === $value ? null : self::sqlInt($prior['value_kind'])) === (null !== $value ? $value->kind->value : null);
+                && (null === $prior['value'] ? null : $this->sqlBinary($prior['value'])) === ($value?->logicalValue())
+                && (null === $value ? null : self::sqlInt($prior['value_kind'])) === ($value?->kind->value);
 
             return $same ? UdbWireTakeoverOutcome::ignored() : UdbWireTakeoverOutcome::error($block, $this->roundId ?? UdbUnsignedDecimal::fromInt(1), $frame->kind->value, 5);
         }

@@ -211,9 +211,7 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
             }
         };
         $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
-        $channels->method('findByChannelName')->willReturnCallback(static function () use ($state): ?RegisteredChannel {
-            return $state->current;
-        });
+        $channels->method('findByChannelName')->willReturnCallback(static fn (): ?RegisteredChannel => $state->current);
         $channels->method('delete')->willReturnCallback(static function (RegisteredChannel $deletedChannel) use ($state): void {
             self::assertSame('#private', $deletedChannel->getName());
             $state->current = null;

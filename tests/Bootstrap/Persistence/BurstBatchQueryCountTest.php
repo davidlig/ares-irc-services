@@ -67,6 +67,7 @@ use PHPUnit\Framework\TestCase;
 use function array_filter;
 use function array_map;
 use function count;
+use function str_ends_with;
 use function str_starts_with;
 use function substr;
 use function sys_get_temp_dir;
@@ -139,7 +140,7 @@ final class BurstBatchQueryCountTest extends TestCase
 
             return $members;
         };
-        $host = static fn (string $nick): string => '_1' === substr($nick, -2) || '_2' === substr($nick, -2) ? 'bad.host' : 'host';
+        $host = static fn (string $nick): string => str_ends_with($nick, '_1') || str_ends_with($nick, '_2') ? 'bad.host' : 'host';
         $channels = new RegisteredChannelDoctrineRepository($em, NegotiatedCaseMapping::network());
         $akickRepo = new ChannelAkickDoctrineRepository($em);
         $source = new BurstChannelPageSource($channels, $akickRepo, $em);

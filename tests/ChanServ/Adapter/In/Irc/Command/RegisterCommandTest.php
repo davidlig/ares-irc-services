@@ -123,9 +123,7 @@ final class RegisterCommandTest extends TestCase
             $messages[] = $message;
         });
         $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static function (string $key, array $parameters): string {
-            return 'register.restricted_until' === $key ? $key . '|%remaining_seconds%' : $key;
-        });
+        $translator->method('trans')->willReturnCallback(static fn (string $key, array $parameters): string => 'register.restricted_until' === $key ? $key . '|%remaining_seconds%' : $key);
         $channelLookup = $this->createStub(ChannelLookupPort::class);
         $channelLookup->method('findByChannelName')->willReturn($this->channelViewWithSenderPrefix('#test', 'UID1', ['o']));
 

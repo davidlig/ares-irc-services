@@ -750,8 +750,8 @@ final class LevelsCommandTest extends TestCase
             public array $messages = [];
         };
         $levels = $this->createMock(ChannelLevelRepositoryInterface::class);
-        $levels->method('listByChannel')->willReturnCallback(static function () use ($state): array { return array_values($state->stored); });
-        $levels->method('findByChannelAndKey')->willReturnCallback(static function (int $id, string $key) use ($state): ?ChannelLevel { return $state->stored[$key] ?? null; });
+        $levels->method('listByChannel')->willReturnCallback(static fn (): array => array_values($state->stored));
+        $levels->method('findByChannelAndKey')->willReturnCallback(static fn (int $id, string $key): ?ChannelLevel => $state->stored[$key] ?? null);
         $levels->expects(self::once())->method('save')->willReturnCallback(static function (ChannelLevel $level) use ($state): void { $state->stored[$level->getLevelKey()] = $level; });
         $levels->expects(self::once())->method('removeAllForChannel')->with(1)->willReturnCallback(static function () use ($state): void { $state->stored = []; });
         $state->messages = [];

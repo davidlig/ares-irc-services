@@ -675,13 +675,11 @@ final class NickServServiceTest extends TestCase
             $messages[] = $message;
         });
         $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static function (string $id, array $parameters = []): string {
-            return match ($id) {
-                'set.password.syntax' => 'SET PASSWORD <new_password>',
-                'saset.password.syntax' => 'SASET <nickname> PASSWORD <new_password>',
-                'error.syntax' => 'Syntax: ' . (is_string($parameters['%syntax%'] ?? null) ? $parameters['%syntax%'] : ''),
-                default => $id,
-            };
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $parameters = []): string => match ($id) {
+            'set.password.syntax' => 'SET PASSWORD <new_password>',
+            'saset.password.syntax' => 'SASET <nickname> PASSWORD <new_password>',
+            'error.syntax' => 'Syntax: ' . (is_string($parameters['%syntax%'] ?? null) ? $parameters['%syntax%'] : ''),
+            default => $id,
         });
         $dispatchedEvents = [];
         $events = $this->createMock(EventBusInterface::class);

@@ -191,12 +191,10 @@ final class ChanServHistorySubscriberTest extends TestCase
         $oldFounder = new ChanAccountView(1, 'OldFounder', 'en');
         $newFounder = new ChanAccountView(2, 'NewFounder', 'en');
         $accountPort = $this->createStub(ChanUserAccountPort::class);
-        $accountPort->method('findAccountById')->willReturnCallback(static function (int $id) use ($oldFounder, $newFounder): ?ChanAccountView {
-            return match ($id) {
-                1 => $oldFounder,
-                2 => $newFounder,
-                default => null,
-            };
+        $accountPort->method('findAccountById')->willReturnCallback(static fn (int $id): ?ChanAccountView => match ($id) {
+            1 => $oldFounder,
+            2 => $newFounder,
+            default => null,
         });
         $subscriber = new ChanServHistorySubscriber($historyService, $accountPort);
 
@@ -269,12 +267,10 @@ final class ChanServHistorySubscriberTest extends TestCase
         $oldSucc = new ChanAccountView(5, 'OldSucc', 'en');
         $newSucc = new ChanAccountView(6, 'NewSucc', 'en');
         $accountPort = $this->createStub(ChanUserAccountPort::class);
-        $accountPort->method('findAccountById')->willReturnCallback(static function (int $id) use ($oldSucc, $newSucc): ?ChanAccountView {
-            return match ($id) {
-                5 => $oldSucc,
-                6 => $newSucc,
-                default => null,
-            };
+        $accountPort->method('findAccountById')->willReturnCallback(static fn (int $id): ?ChanAccountView => match ($id) {
+            5 => $oldSucc,
+            6 => $newSucc,
+            default => null,
         });
         $subscriber = new ChanServHistorySubscriber($historyService, $accountPort);
 
@@ -312,11 +308,9 @@ final class ChanServHistorySubscriberTest extends TestCase
         $historyService = new ChannelHistoryService($historyRepo);
         $newSucc = new ChanAccountView(6, 'NewSucc', 'en');
         $accountPort = $this->createStub(ChanUserAccountPort::class);
-        $accountPort->method('findAccountById')->willReturnCallback(static function (int $id) use ($newSucc): ?ChanAccountView {
-            return match ($id) {
-                6 => $newSucc,
-                default => null,
-            };
+        $accountPort->method('findAccountById')->willReturnCallback(static fn (int $id): ?ChanAccountView => match ($id) {
+            6 => $newSucc,
+            default => null,
         });
         $subscriber = new ChanServHistorySubscriber($historyService, $accountPort);
 
@@ -352,11 +346,9 @@ final class ChanServHistorySubscriberTest extends TestCase
         $historyService = new ChannelHistoryService($historyRepo);
         $oldSucc = new ChanAccountView(5, 'OldSucc', 'en');
         $accountPort = $this->createStub(ChanUserAccountPort::class);
-        $accountPort->method('findAccountById')->willReturnCallback(static function (int $id) use ($oldSucc): ?ChanAccountView {
-            return match ($id) {
-                5 => $oldSucc,
-                default => null,
-            };
+        $accountPort->method('findAccountById')->willReturnCallback(static fn (int $id): ?ChanAccountView => match ($id) {
+            5 => $oldSucc,
+            default => null,
         });
         $subscriber = new ChanServHistorySubscriber($historyService, $accountPort);
 
