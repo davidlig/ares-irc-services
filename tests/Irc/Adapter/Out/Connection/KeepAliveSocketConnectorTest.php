@@ -78,6 +78,21 @@ final class KeepAliveSocketConnectorTest extends TestCase
     }
 
     #[Test]
+    public function restrictsDnsToIpv6WhenBoundToAnIpv6Address(): void
+    {
+        $resolver = $this->createMock(DnsResolver::class);
+        $resolver->expects(self::once())
+            ->method('resolve')
+            ->with('uplink.test', DnsRecord::AAAA)
+            ->willThrowException(new DnsException('No AAAA record'));
+
+        $this->expectException(ConnectException::class);
+        $this->expectExceptionMessage('DNS resolution for uplink.test failed: No AAAA record');
+
+        new KeepAliveSocketConnector(dnsResolver: $resolver)->connect('uplink.test:7000', new ConnectContext()->withBindTo('[::1]:0'));
+    }
+
+    #[Test]
     public function formatsImmediateStreamErrorsAndRestoresThePreviousHandler(): void
     {
         $path = tempnam(sys_get_temp_dir(), 'ares-socket-');
