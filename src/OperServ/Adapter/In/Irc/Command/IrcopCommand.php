@@ -17,7 +17,6 @@ use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentValidator;
 use App\Shared\Adapter\In\Irc\Presentation\Component;
 use App\Shared\Adapter\In\Irc\Presentation\Role;
-use DateTimeImmutable;
 
 use function count;
 use function in_array;
@@ -106,7 +105,7 @@ final readonly class IrcopCommand implements OperServCommandInterface
 
         $first = strtoupper($c->args[0] ?? '');
         $action = match ($first) {
-            'ADD' => IrcopAction::Add,'DEL' => IrcopAction::Delete,'LIST' => IrcopAction::List,default => IrcopAction::Unknown
+            'ADD' => IrcopAction::Add, 'DEL' => IrcopAction::Delete, 'LIST' => IrcopAction::List, default => IrcopAction::Unknown
         };
         $nick = $c->args[1] ?? '';
         $role = $c->args[2] ?? '';
@@ -121,7 +120,8 @@ final readonly class IrcopCommand implements OperServCommandInterface
 
                 return;
             }
-        }$r = $this->handler->handle(new ManageIrcop($action, $c->sender->nick, $c->senderAccountId(), new DateTimeImmutable(), $nick, strtoupper($role)));
+        }
+        $r = $this->handler->handle(new ManageIrcop($action, $c->sender->nick, $c->senderAccountId(), new \DateTimeImmutable(), $nick, strtoupper($role)));
         $this->present($c, $first, $r);
     }
 
@@ -153,7 +153,8 @@ final readonly class IrcopCommand implements OperServCommandInterface
             $c->reply('ircop.list.empty', [], Role::Information);
 
             return;
-        }$c->replyComponent(Component::DecoratedHeader, 'ircop.list.header');
+        }
+        $c->replyComponent(Component::DecoratedHeader, 'ircop.list.header');
         foreach ($r->entries as $e) {
             $c->replyRaw($c->renderComponent(Component::IndentedRow, sprintf('%-20s %-10s %s', $e->nickname, $e->role, $c->formatDate($e->addedAt))));
         }

@@ -23,17 +23,12 @@ use Amp\TimeoutCancellation;
 use App\Irc\Adapter\Out\Connection\ConnectionStatus;
 use App\Irc\Adapter\Out\Connection\KeepAliveSocketConnector;
 use App\Irc\Adapter\Out\Connection\SocketConnection;
-use OpenSSLAsymmetricKey;
-use OpenSSLCertificateSigningRequest;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
-use ReflectionProperty;
-use RuntimeException;
-use Socket as SystemSocket;
 
 use function Amp\async;
 use function Amp\delay;
@@ -93,7 +88,7 @@ final class SocketConnectionTest extends TestCase
     public function writeLineThrowsWhenNotConnected(): void
     {
         $conn = new SocketConnection('127.0.0.1', 7000);
-        $this->expectException(RuntimeException::class);
+        $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Cannot write: connection is not open.');
         $conn->writeLine('PING');
     }
@@ -146,7 +141,7 @@ final class SocketConnectionTest extends TestCase
     public function writeLineWithArrayThrowsWhenNotConnected(): void
     {
         $connection = new SocketConnection('127.0.0.1', 7000);
-        $this->expectException(RuntimeException::class);
+        $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Cannot write: connection is not open.');
 
         $connection->writeLine(['PING']);
@@ -300,7 +295,7 @@ final class SocketConnectionTest extends TestCase
         $socket->method('isClosed')->willReturn(true);
         $socket->expects(self::never())->method('write');
         $connection = $this->connectionWithSocket($socket);
-        $this->expectException(RuntimeException::class);
+        $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Cannot write: connection is not open.');
 
         $connection->writeLine(['PING']);
@@ -330,7 +325,7 @@ final class SocketConnectionTest extends TestCase
         try {
             $connection->writeLine([$fullLine, $fullLine, 'NEVER SENT']);
             self::fail('Expected batch write failure');
-        } catch (RuntimeException $exception) {
+        } catch (\RuntimeException $exception) {
             self::assertSame('Failed to write to the IRC connection.', $exception->getMessage());
             self::assertSame($failure, $exception->getPrevious());
             self::assertSame(ConnectionStatus::Error, $connection->getStatus());
@@ -458,10 +453,10 @@ final class SocketConnectionTest extends TestCase
 
         try {
             $key = openssl_pkey_new(['private_key_bits' => 2048]);
-            self::assertInstanceOf(OpenSSLAsymmetricKey::class, $key);
+            self::assertInstanceOf(\OpenSSLAsymmetricKey::class, $key);
             $request = openssl_csr_new(['commonName' => '127.0.0.1'], $key);
-            self::assertInstanceOf(OpenSSLCertificateSigningRequest::class, $request);
-            self::assertInstanceOf(OpenSSLAsymmetricKey::class, $key);
+            self::assertInstanceOf(\OpenSSLCertificateSigningRequest::class, $request);
+            self::assertInstanceOf(\OpenSSLAsymmetricKey::class, $key);
             $cert = openssl_csr_sign($request, null, $key, 1);
             self::assertNotFalse($cert);
             self::assertTrue(openssl_x509_export($cert, $certPem));
@@ -645,7 +640,7 @@ final class SocketConnectionTest extends TestCase
         $conn = new SocketConnection('127.0.0.1', $port, false, 2);
         $conn->connect();
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Incoming line exceeded maximum buffer size of ' . SocketConnection::MAX_LINE_BYTES . ' bytes.');
 
         try {
@@ -673,7 +668,7 @@ final class SocketConnectionTest extends TestCase
         $conn = new SocketConnection('127.0.0.1', $port, false, 2);
         $conn->connect();
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Incoming line exceeded maximum buffer size of ' . SocketConnection::MAX_LINE_BYTES . ' bytes.');
 
         try {
@@ -812,7 +807,7 @@ final class SocketConnectionTest extends TestCase
         try {
             $connection->readLine();
             self::fail('Expected oversized line rejection');
-        } catch (RuntimeException $exception) {
+        } catch (\RuntimeException $exception) {
             self::assertSame('Incoming line exceeded maximum buffer size of ' . SocketConnection::MAX_LINE_BYTES . ' bytes.', $exception->getMessage());
             self::assertSame(ConnectionStatus::Error, $connection->getStatus());
             self::assertTrue($closed);
@@ -839,7 +834,7 @@ final class SocketConnectionTest extends TestCase
         $conn = new SocketConnection('127.0.0.1', $port, false, 2);
         $conn->connect();
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Incoming line exceeded maximum buffer size of ' . SocketConnection::MAX_LINE_BYTES . ' bytes.');
 
         try {
@@ -973,16 +968,16 @@ final class SocketConnectionTest extends TestCase
 
         $conn = new SocketConnection('127.0.0.1', 7000);
 
-        $statusProp = new ReflectionProperty(SocketConnection::class, 'status');
+        $statusProp = new \ReflectionProperty(SocketConnection::class, 'status');
         $statusProp->setValue($conn, ConnectionStatus::Connected);
 
-        $socketProp = new ReflectionProperty(SocketConnection::class, 'socket');
+        $socketProp = new \ReflectionProperty(SocketConnection::class, 'socket');
         $socketProp->setValue($conn, $stubSocket);
 
         try {
             $conn->writeLine('PING');
             self::fail('Expected write exception');
-        } catch (RuntimeException $e) {
+        } catch (\RuntimeException $e) {
             self::assertSame('Failed to write to the IRC connection.', $e->getMessage());
             self::assertSame(ConnectionStatus::Error, $conn->getStatus());
         }
@@ -998,16 +993,16 @@ final class SocketConnectionTest extends TestCase
 
         $conn = new SocketConnection('127.0.0.1', 7000);
 
-        $statusProp = new ReflectionProperty(SocketConnection::class, 'status');
+        $statusProp = new \ReflectionProperty(SocketConnection::class, 'status');
         $statusProp->setValue($conn, ConnectionStatus::Connected);
 
-        $socketProp = new ReflectionProperty(SocketConnection::class, 'socket');
+        $socketProp = new \ReflectionProperty(SocketConnection::class, 'socket');
         $socketProp->setValue($conn, $stubSocket);
 
         try {
             $conn->readLine();
             self::fail('Expected read exception');
-        } catch (RuntimeException $e) {
+        } catch (\RuntimeException $e) {
             self::assertStringContainsString('Error reading from IRC connection: Simulated read failure', $e->getMessage());
             self::assertSame(ConnectionStatus::Error, $conn->getStatus());
         }
@@ -1059,7 +1054,7 @@ final class SocketConnectionTest extends TestCase
         try {
             $connection->connect();
             $accepted = $peer->await();
-            $socket = new ReflectionProperty(SocketConnection::class, 'socket')->getValue($connection);
+            $socket = new \ReflectionProperty(SocketConnection::class, 'socket')->getValue($connection);
             self::assertInstanceOf(ResourceSocket::class, $socket);
             self::assertSame(null === $tls ? TlsState::Disabled : TlsState::Enabled, $socket->getTlsState());
             $systemSocket ??= self::importSocket($socket);
@@ -1077,7 +1072,7 @@ final class SocketConnectionTest extends TestCase
         }
     }
 
-    private static function importSocket(ResourceSocket $socket): SystemSocket
+    private static function importSocket(ResourceSocket $socket): \Socket
     {
         $stream = $socket->getResource();
         self::assertIsResource($stream);
@@ -1105,7 +1100,7 @@ final class SocketConnectionTest extends TestCase
         try {
             try {
                 $connection->connect();
-            } catch (RuntimeException $e) {
+            } catch (\RuntimeException $e) {
                 self::assertSame('Failed to connect to 127.77.3.1:' . $port . ': The operation was cancelled', $e->getMessage());
                 self::assertInstanceOf(CancelledException::class, $e->getPrevious());
                 self::assertSame(ConnectionStatus::Error, $connection->getStatus());
@@ -1132,8 +1127,8 @@ final class SocketConnectionTest extends TestCase
     private function connectionWithSocket(Socket $socket, ?LoggerInterface $logger = null, ?SocketConnector $connector = null): SocketConnection
     {
         $connection = new SocketConnection('127.0.0.1', 7000, logger: $logger ?? new NullLogger(), connector: $connector ?? new KeepAliveSocketConnector());
-        new ReflectionProperty(SocketConnection::class, 'status')->setValue($connection, ConnectionStatus::Connected);
-        new ReflectionProperty(SocketConnection::class, 'socket')->setValue($connection, $socket);
+        new \ReflectionProperty(SocketConnection::class, 'status')->setValue($connection, ConnectionStatus::Connected);
+        new \ReflectionProperty(SocketConnection::class, 'socket')->setValue($connection, $socket);
 
         return $connection;
     }

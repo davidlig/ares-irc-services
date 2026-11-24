@@ -6,11 +6,9 @@ namespace App\Tests\NickServ\Adapter\Out\InMemory;
 
 use App\NickServ\Adapter\Out\InMemory\RecoveryTokenRegistry;
 use DateTimeImmutable;
-use OverflowException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
 
 use function serialize;
 use function strtolower;
@@ -62,7 +60,7 @@ final class RecoveryTokenRegistryTest extends TestCase
 
         $registry->recordRecover('Nick', $this->now());
 
-        self::assertInstanceOf(DateTimeImmutable::class, $registry->getLastRecoverAt('Nick'));
+        self::assertInstanceOf(\DateTimeImmutable::class, $registry->getLastRecoverAt('Nick'));
     }
 
     #[Test]
@@ -84,7 +82,7 @@ final class RecoveryTokenRegistryTest extends TestCase
         $registry->recordRecover('OldNick', $this->now());
 
         // Simulate aging by setting lastRecoverAt to an old timestamp
-        $reflection = new ReflectionClass($registry);
+        $reflection = new \ReflectionClass($registry);
         $prop = $reflection->getProperty('lastRecoverAt');
         /** @var array<string, DateTimeImmutable> $lastRecoverAt */
         $lastRecoverAt = $prop->getValue($registry);
@@ -106,7 +104,7 @@ final class RecoveryTokenRegistryTest extends TestCase
         $removed = $registry->pruneExpired($this->now(), 86400);
 
         self::assertSame(0, $removed);
-        self::assertInstanceOf(DateTimeImmutable::class, $registry->getLastRecoverAt('FreshNick'));
+        self::assertInstanceOf(\DateTimeImmutable::class, $registry->getLastRecoverAt('FreshNick'));
     }
 
     #[Test]
@@ -158,12 +156,12 @@ final class RecoveryTokenRegistryTest extends TestCase
         try {
             $registry->store('Other', 'three', $this->now()->modify('+1 hour'));
             self::fail('Capacity must fail closed.');
-        } catch (OverflowException) {
+        } catch (\OverflowException) {
             self::assertTrue($registry->matches('Nick', 'two', $this->now()));
         }
         $registry->recordRecover('Nick', $this->now());
         $registry->recordRecover('Nick', $this->now());
-        $this->expectException(OverflowException::class);
+        $this->expectException(\OverflowException::class);
         $registry->recordRecover('Other', $this->now());
     }
 
@@ -171,7 +169,7 @@ final class RecoveryTokenRegistryTest extends TestCase
     public function nicknameKeysUseTheRfc1459Fold(): void
     {
         $registry = new RecoveryTokenRegistry();
-        $now = new DateTimeImmutable('2026-01-01 00:00:00');
+        $now = new \DateTimeImmutable('2026-01-01 00:00:00');
         $registry->store('[Foo]^', 'Token', $now->modify('+1 hour'));
         $registry->recordRecover('[Foo]^', $now);
 
@@ -185,8 +183,8 @@ final class RecoveryTokenRegistryTest extends TestCase
         self::assertTrue($registry->consume('PLAIN', 'token', $now));
     }
 
-    private function now(): DateTimeImmutable
+    private function now(): \DateTimeImmutable
     {
-        return new DateTimeImmutable('2026-09-06 12:00:00 UTC');
+        return new \DateTimeImmutable('2026-09-06 12:00:00 UTC');
     }
 }

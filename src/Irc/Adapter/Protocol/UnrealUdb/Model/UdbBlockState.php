@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace App\Irc\Adapter\Protocol\UnrealUdb\Model;
 
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbChecksum;
-use DateTimeImmutable;
-use InvalidArgumentException;
 
 use function preg_match;
 
@@ -22,24 +20,24 @@ class UdbBlockState
 {
     private int $id;
 
-    private DateTimeImmutable $modifiedAt;
+    private \DateTimeImmutable $modifiedAt;
 
     private string $checksum;
 
     public function __construct(
         private readonly string $block,
         ?string $checksum = null,
-        ?DateTimeImmutable $modifiedAt = null,
+        ?\DateTimeImmutable $modifiedAt = null,
         private int $recordCount = 0,
     ) {
         $blockType = UdbBlock::fromLetter($block);
         if (null === $blockType) {
-            throw new InvalidArgumentException('A UDB block state requires a canonical block letter.');
+            throw new \InvalidArgumentException('A UDB block state requires a canonical block letter.');
         }
         $this->checksum = $checksum ?? UdbChecksum::empty($blockType);
         self::assertChecksum($this->checksum);
         self::assertRecordCount($recordCount);
-        $this->modifiedAt = $modifiedAt ?? new DateTimeImmutable();
+        $this->modifiedAt = $modifiedAt ?? new \DateTimeImmutable();
     }
 
     public function getId(): int
@@ -67,7 +65,7 @@ class UdbBlockState
         return $this->recordCount;
     }
 
-    public function getModifiedAt(): DateTimeImmutable
+    public function getModifiedAt(): \DateTimeImmutable
     {
         return $this->modifiedAt;
     }
@@ -75,27 +73,27 @@ class UdbBlockState
     public function update(
         string $checksum,
         int $recordCount,
-        ?DateTimeImmutable $modifiedAt = null,
+        ?\DateTimeImmutable $modifiedAt = null,
     ): void {
         self::assertChecksum($checksum);
         self::assertRecordCount($recordCount);
 
         $this->checksum = $checksum;
         $this->recordCount = $recordCount;
-        $this->modifiedAt = $modifiedAt ?? new DateTimeImmutable();
+        $this->modifiedAt = $modifiedAt ?? new \DateTimeImmutable();
     }
 
     private static function assertChecksum(string $checksum): void
     {
         if (1 !== preg_match('/^[0-9a-f]{64}$/D', $checksum)) {
-            throw new InvalidArgumentException('A UDB block checksum must be a lowercase SHA-256 digest.');
+            throw new \InvalidArgumentException('A UDB block checksum must be a lowercase SHA-256 digest.');
         }
     }
 
     private static function assertRecordCount(int $recordCount): void
     {
         if (0 > $recordCount) {
-            throw new InvalidArgumentException('A UDB block record count cannot be negative.');
+            throw new \InvalidArgumentException('A UDB block record count cannot be negative.');
         }
     }
 }

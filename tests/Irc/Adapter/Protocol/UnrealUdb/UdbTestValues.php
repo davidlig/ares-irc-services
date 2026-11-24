@@ -13,7 +13,6 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Reconciliation\UdbCapturedSnapshot;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbMutation;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbChecksum;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbUnsignedDecimal;
-use RuntimeException;
 
 use function bin2hex;
 use function chmod;
@@ -30,7 +29,7 @@ final class UdbTestValues
     public static function fromLogical(UdbBlock $block, string $path, string $value): UdbValue
     {
         return UdbSchema::typedValueForStoredRecord($block->letter(), $path, $value)
-            ?? throw new RuntimeException('Test fixture does not satisfy the canonical UDB value schema.');
+            ?? throw new \RuntimeException('Test fixture does not satisfy the canonical UDB value schema.');
     }
 
     /**
@@ -95,7 +94,7 @@ final class UdbTestValues
     {
         $directory = sys_get_temp_dir() . '/udb-test-' . bin2hex(random_bytes(12));
         if (!mkdir($directory, 0o700)) {
-            throw new RuntimeException('Unable to create temporary UDB snapshot fixture.');
+            throw new \RuntimeException('Unable to create temporary UDB snapshot fixture.');
         }
         $files = [];
         $digests = [];
@@ -104,7 +103,7 @@ final class UdbTestValues
             $file = $directory . '/' . $block->letter() . '.rows';
             $stream = fopen($file, 'x');
             if (false === $stream) {
-                throw new RuntimeException('Unable to create temporary UDB snapshot block fixture.');
+                throw new \RuntimeException('Unable to create temporary UDB snapshot block fixture.');
             }
             chmod($file, 0o600);
             $rows = self::typedMap($block, $blocks[$block->letter()] ?? []);

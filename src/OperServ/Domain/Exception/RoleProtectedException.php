@@ -4,11 +4,9 @@ declare(strict_types=1);
 
 namespace App\OperServ\Domain\Exception;
 
-use Exception;
-
 use function sprintf;
 
-final class RoleProtectedException extends Exception
+final class RoleProtectedException extends \Exception
 {
     public static function forRole(string $roleName): self
     {

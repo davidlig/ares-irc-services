@@ -25,14 +25,9 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\ParameterType;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\EntityManagerInterface;
-use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
-use ReflectionMethod;
-use ReflectionProperty;
 use Symfony\Contracts\Translation\TranslatorInterface;
-use Traversable;
-use UnexpectedValueException;
 
 use function fclose;
 use function fopen;
@@ -54,13 +49,13 @@ final class UdbWireTakeoverBinaryTest extends DoctrineIntegrationTestCase
         UdbStagingSchemaFixture::create($this->entityManager->getConnection());
         $takeover = $this->takeover();
         $generation = str_repeat('a', 32);
-        new ReflectionProperty(UdbWireTakeover::class, 'generationId')->setValue($takeover, $generation);
-        $insert = new ReflectionMethod(UdbWireTakeover::class, 'stageInsert');
+        new \ReflectionProperty(UdbWireTakeover::class, 'generationId')->setValue($takeover, $generation);
+        $insert = new \ReflectionMethod(UdbWireTakeover::class, 'stageInsert');
         foreach (['Alice::pass' => 'crypt:fixture', 'alice::vhost' => 'fixture.test', 'bob::swhois' => 'other'] as $path => $value) {
             $identity = UdbRecord::identity($path, 'N');
             $insert->invoke($takeover, 'udb_staged_records', ['generation_id' => $generation, 'block' => 'N', 'path' => $path, 'identity_path' => $identity, 'identity_hash' => hash('sha256', $identity, true), 'value' => $value, 'value_kind' => 1]);
         }
-        $apply = new ReflectionMethod(UdbWireTakeover::class, 'applyTailMutation');
+        $apply = new \ReflectionMethod(UdbWireTakeover::class, 'applyTailMutation');
         $apply->invoke($takeover, UdbBlock::Nicks, 'INS', 'ALICE::FORBID', 'first reason', 1);
         $apply->invoke($takeover, UdbBlock::Nicks, 'INS', 'Alice::Forbid', 'updated reason', 1);
         self::assertSame(['Alice::Forbid' => 'updated reason', 'bob::swhois' => 'other'], $this->entityManager->getConnection()->fetchAllKeyValue('SELECT path, value FROM udb_staged_records ORDER BY path'));
@@ -72,15 +67,15 @@ final class UdbWireTakeoverBinaryTest extends DoctrineIntegrationTestCase
         UdbStagingSchemaFixture::create($this->entityManager->getConnection());
         $takeover = $this->takeover();
         $generation = str_repeat('a', 32);
-        new ReflectionProperty(UdbWireTakeover::class, 'generationId')->setValue($takeover, $generation);
-        $insert = new ReflectionMethod(UdbWireTakeover::class, 'stageInsert');
+        new \ReflectionProperty(UdbWireTakeover::class, 'generationId')->setValue($takeover, $generation);
+        $insert = new \ReflectionMethod(UdbWireTakeover::class, 'stageInsert');
         // Corrupt private SQL metadata, not a claimed cryptographic collision.
         $hash = hash('sha256', 'alice::forbid', true);
         $insert->invoke($takeover, 'udb_staged_records', ['generation_id' => $generation, 'block' => 'N', 'path' => 'bob::swhois', 'identity_path' => 'bob::swhois', 'identity_hash' => $hash, 'value' => 'other', 'value_kind' => 1]);
         try {
-            new ReflectionMethod(UdbWireTakeover::class, 'applyTailMutation')->invoke($takeover, UdbBlock::Nicks, 'INS', 'alice::forbid', 'fixture reason', 1);
+            new \ReflectionMethod(UdbWireTakeover::class, 'applyTailMutation')->invoke($takeover, UdbBlock::Nicks, 'INS', 'alice::forbid', 'fixture reason', 1);
             self::fail('Conflicting identity metadata cannot replace another nick.');
-        } catch (LogicException $failure) {
+        } catch (\LogicException $failure) {
             self::assertStringContainsString('conflicting binary identity', $failure->getMessage());
         }
         self::assertSame(['bob::swhois' => 'other'], $this->entityManager->getConnection()->fetchAllKeyValue('SELECT path, value FROM udb_staged_records'));
@@ -89,15 +84,15 @@ final class UdbWireTakeoverBinaryTest extends DoctrineIntegrationTestCase
     #[Test]
     public function stagingBindsLogicalValuesAsBinaryAndKeepsAbsentTailValuesNull(): void
     {
-        $types = new ReflectionMethod(UdbWireTakeover::class, 'stagingTypes')->invoke(null, ['value' => "fixture\0\xff"]);
+        $types = new \ReflectionMethod(UdbWireTakeover::class, 'stagingTypes')->invoke(null, ['value' => "fixture\0\xff"]);
         self::assertSame(['value' => Types::BINARY], $types);
-        self::assertSame(['value' => ParameterType::NULL], new ReflectionMethod(UdbWireTakeover::class, 'stagingTypes')->invoke(null, ['value' => null]));
+        self::assertSame(['value' => ParameterType::NULL], new \ReflectionMethod(UdbWireTakeover::class, 'stagingTypes')->invoke(null, ['value' => null]));
     }
 
     #[Test]
     public function stagingTypesBindBooleanAndBinaryIncludingCriteriaExplicitly(): void
     {
-        $types = new ReflectionMethod(UdbWireTakeover::class, 'stagingTypes')->invoke(null, ['promoted' => false, 'complete' => true, 'identity_path' => "a\0b", 'identity_hash' => "\xff\0", 'id' => 7, 'value' => null]);
+        $types = new \ReflectionMethod(UdbWireTakeover::class, 'stagingTypes')->invoke(null, ['promoted' => false, 'complete' => true, 'identity_path' => "a\0b", 'identity_hash' => "\xff\0", 'id' => 7, 'value' => null]);
         self::assertSame(['promoted' => Types::BOOLEAN, 'complete' => Types::BOOLEAN, 'identity_path' => Types::BINARY, 'identity_hash' => Types::BINARY, 'id' => Types::INTEGER, 'value' => ParameterType::NULL], $types);
     }
 
@@ -109,7 +104,7 @@ final class UdbWireTakeoverBinaryTest extends DoctrineIntegrationTestCase
         try {
             fwrite($stream, "a\0\xffb");
             rewind($stream);
-            $method = new ReflectionMethod(UdbWireTakeover::class, 'sqlBinary');
+            $method = new \ReflectionMethod(UdbWireTakeover::class, 'sqlBinary');
             self::assertSame("a\0\xffb", $method->invoke($this->takeover(), $stream));
             self::assertSame("a\0\xffb", $method->invoke($this->takeover(), "a\0\xffb"));
         } finally {
@@ -120,14 +115,14 @@ final class UdbWireTakeoverBinaryTest extends DoctrineIntegrationTestCase
     #[Test]
     public function rawBooleanFormsAreDecodedRatherThanTruthinessCast(): void
     {
-        $method = new ReflectionMethod(UdbWireTakeover::class, 'sqlBoolean');
+        $method = new \ReflectionMethod(UdbWireTakeover::class, 'sqlBoolean');
         foreach ([false, 0, '0', 'f', 'false'] as $value) {
             self::assertFalse($method->invoke($this->takeover(), $value));
         }
         foreach ([true, 1, '1', 't', 'true'] as $value) {
             self::assertTrue($method->invoke($this->takeover(), $value));
         }
-        $this->expectException(UnexpectedValueException::class);
+        $this->expectException(\UnexpectedValueException::class);
         $method->invoke($this->takeover(), 'unknown');
     }
 
@@ -137,17 +132,17 @@ final class UdbWireTakeoverBinaryTest extends DoctrineIntegrationTestCase
         UdbStagingSchemaFixture::create($this->entityManager->getConnection());
         $takeover = $this->takeover();
         $generation = str_repeat('a', 32);
-        new ReflectionProperty(UdbWireTakeover::class, 'generationId')->setValue($takeover, $generation);
-        $insert = new ReflectionMethod(UdbWireTakeover::class, 'stageInsert');
+        new \ReflectionProperty(UdbWireTakeover::class, 'generationId')->setValue($takeover, $generation);
+        $insert = new \ReflectionMethod(UdbWireTakeover::class, 'stageInsert');
         $identities = [];
         for ($index = 0; $index < 257; ++$index) {
             $identity = "I\0" . sprintf('%04d', $index) . "\0clones";
             $identities[] = $identity;
             $insert->invoke($takeover, 'udb_staged_records', ['generation_id' => $generation, 'block' => 'I', 'path' => 'host' . $index . '::clones', 'identity_path' => $identity, 'identity_hash' => hash('sha256', $identity, true), 'value' => '*1', 'value_kind' => 2]);
         }
-        new ReflectionMethod(UdbWireTakeover::class, 'stageUpdate')->invoke($takeover, 'udb_staged_records', ['value' => '*9'], ['generation_id' => $generation, 'identity_hash' => hash('sha256', $identities[256], true)]);
-        $rows = new ReflectionMethod(UdbWireTakeover::class, 'stagedValidationRows')->invoke($takeover, UdbBlock::Ips);
-        self::assertInstanceOf(Traversable::class, $rows);
+        new \ReflectionMethod(UdbWireTakeover::class, 'stageUpdate')->invoke($takeover, 'udb_staged_records', ['value' => '*9'], ['generation_id' => $generation, 'identity_hash' => hash('sha256', $identities[256], true)]);
+        $rows = new \ReflectionMethod(UdbWireTakeover::class, 'stagedValidationRows')->invoke($takeover, UdbBlock::Ips);
+        self::assertInstanceOf(\Traversable::class, $rows);
         $actual = iterator_to_array($rows, false);
         self::assertCount(257, $actual);
         $paths = [];
@@ -163,7 +158,7 @@ final class UdbWireTakeoverBinaryTest extends DoctrineIntegrationTestCase
         }
         self::assertSame($identities, $paths);
         self::assertSame('9', $lastValue->value);
-        new ReflectionMethod(UdbWireTakeover::class, 'replaceBlockFromStage')->invoke($takeover, UdbBlock::Ips);
+        new \ReflectionMethod(UdbWireTakeover::class, 'replaceBlockFromStage')->invoke($takeover, UdbBlock::Ips);
         self::assertSame(257, $this->entityManager->getConnection()->fetchOne("SELECT COUNT(*) FROM udb_records WHERE block = 'I'"));
     }
 
@@ -173,17 +168,17 @@ final class UdbWireTakeoverBinaryTest extends DoctrineIntegrationTestCase
         $takeover = $this->takeover();
         foreach ([['sqlString', null], ['sqlInt', null], ['sqlInt', '9223372036854775808'], ['sqlBinary', null]] as [$name, $value]) {
             try {
-                $method = new ReflectionMethod(UdbWireTakeover::class, $name);
+                $method = new \ReflectionMethod(UdbWireTakeover::class, $name);
                 $method->invoke($method->isStatic() ? null : $takeover, $value);
                 self::fail('Malformed SQL fields must be rejected.');
-            } catch (UnexpectedValueException $error) {
+            } catch (\UnexpectedValueException $error) {
                 self::assertStringContainsString('persisted', $error->getMessage());
             }
         }
-        self::assertSame(7, new ReflectionMethod(UdbWireTakeover::class, 'sqlInt')->invoke(null, '7'));
+        self::assertSame(7, new \ReflectionMethod(UdbWireTakeover::class, 'sqlInt')->invoke(null, '7'));
         foreach (['stagedDbRows', 'stagedValidationRows'] as $name) {
-            $rows = new ReflectionMethod(UdbWireTakeover::class, $name)->invoke($takeover, UdbBlock::Ips);
-            self::assertInstanceOf(Traversable::class, $rows);
+            $rows = new \ReflectionMethod(UdbWireTakeover::class, $name)->invoke($takeover, UdbBlock::Ips);
+            self::assertInstanceOf(\Traversable::class, $rows);
             self::assertSame([], iterator_to_array($rows, false));
         }
         self::assertNull($takeover->roundId());
@@ -192,22 +187,22 @@ final class UdbWireTakeoverBinaryTest extends DoctrineIntegrationTestCase
         self::assertFalse($takeover->canPromote());
         foreach ([['stageReusableBlock', [UdbBlock::Ips, UdbUnsignedDecimal::fromInt(1), str_repeat('a', 64), 0]], ['applyTailMutation', [UdbBlock::Ips, 'DRP', '', null, null]], ['validatePersistedStage', [UdbBlock::Ips]], ['validateGenerationMetadata', []]] as [$name, $args]) {
             try {
-                new ReflectionMethod(UdbWireTakeover::class, $name)->invokeArgs($takeover, $args);
+                new \ReflectionMethod(UdbWireTakeover::class, $name)->invokeArgs($takeover, $args);
                 self::fail('An unprepared private stage cannot be operated upon.');
-            } catch (LogicException $error) {
+            } catch (\LogicException $error) {
                 self::assertNotSame('', $error->getMessage());
             }
         }
         foreach ([['value' => 'bad', 'value_kind' => 255], ['value' => '*bad', 'value_kind' => 2]] as $row) {
             try {
-                new ReflectionMethod(UdbWireTakeover::class, 'valueFromRow')->invoke($takeover, $row);
+                new \ReflectionMethod(UdbWireTakeover::class, 'valueFromRow')->invoke($takeover, $row);
                 self::fail('Invalid typed persisted values must fail.');
-            } catch (LogicException $error) {
+            } catch (\LogicException $error) {
                 self::assertStringContainsString('persisted', $error->getMessage());
             }
         }
-        self::assertFalse(new ReflectionMethod(UdbWireTakeover::class, 'validTypedPath')->invoke($takeover, UdbBlock::Nicks, 'bad%ZZ', UdbValue::string('x')));
-        self::assertFalse(new ReflectionMethod(UdbWireTakeover::class, 'validTypedPath')->invoke($takeover, UdbBlock::Nicks, str_repeat('a', 8193), UdbValue::string('x')));
+        self::assertFalse(new \ReflectionMethod(UdbWireTakeover::class, 'validTypedPath')->invoke($takeover, UdbBlock::Nicks, 'bad%ZZ', UdbValue::string('x')));
+        self::assertFalse(new \ReflectionMethod(UdbWireTakeover::class, 'validTypedPath')->invoke($takeover, UdbBlock::Nicks, str_repeat('a', 8193), UdbValue::string('x')));
     }
 
     #[Test]
@@ -215,13 +210,13 @@ final class UdbWireTakeoverBinaryTest extends DoctrineIntegrationTestCase
     {
         UdbStagingSchemaFixture::create($this->entityManager->getConnection());
         $takeover = $this->takeover();
-        new ReflectionProperty(UdbWireTakeover::class, 'generationId')->setValue($takeover, str_repeat('a', 32));
-        $apply = new ReflectionMethod(UdbWireTakeover::class, 'applyTailMutation');
+        new \ReflectionProperty(UdbWireTakeover::class, 'generationId')->setValue($takeover, str_repeat('a', 32));
+        $apply = new \ReflectionMethod(UdbWireTakeover::class, 'applyTailMutation');
         foreach ([['INS', '192.0.2.1::clones', '*1', 255], ['INS', '192.0.2.1::clones', '*bad', 2], ['INS', '192.0.2.1::clones', 'wrong', 1], ['BAD', '', null, null]] as [$op, $path, $value, $kind]) {
             try {
                 $apply->invoke($takeover, UdbBlock::Ips, $op, $path, $value, $kind);
                 self::fail('Corrupt replay input must not modify the generation.');
-            } catch (LogicException $error) {
+            } catch (\LogicException $error) {
                 self::assertStringContainsString('staged', $error->getMessage());
             }
         }
@@ -241,17 +236,17 @@ final class UdbWireTakeoverBinaryTest extends DoctrineIntegrationTestCase
         $connection->method('fetchOne')->willReturnCallback(static fn (string $sql): false|int => str_starts_with($sql, 'SELECT id FROM') ? false : 500000);
         $em = $this->createStub(EntityManagerInterface::class);
         $em->method('getConnection')->willReturn($connection);
-        $exporter = new ReflectionProperty(UdbWireTakeover::class, 'exporter')->getValue($this->takeover());
+        $exporter = new \ReflectionProperty(UdbWireTakeover::class, 'exporter')->getValue($this->takeover());
         self::assertInstanceOf(UdbRecordExporter::class, $exporter);
         $takeover = new UdbWireTakeover(new FakeUdbRecords(), new FakeBlockStates(), $em, $exporter);
         foreach (['generationId' => str_repeat('a', 32), 'rootSid' => '001', 'rootEpoch' => str_repeat('1', 16), 'tailWatermark' => UdbUnsignedDecimal::fromInt(0)] as $property => $value) {
-            new ReflectionProperty(UdbWireTakeover::class, $property)->setValue($takeover, $value);
+            new \ReflectionProperty(UdbWireTakeover::class, $property)->setValue($takeover, $value);
         }
         $outcome = $takeover->acceptMutation(new UdbFrame(UdbFrameKind::Del, '001', '*', epoch: str_repeat('1', 16), sequence: 1, path: 'I::192.0.2.1'));
         self::assertSame(UdbWireTakeoverOutcomeKind::Error, $outcome->kind);
-        $this->expectException(LogicException::class);
+        $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('record limit');
-        new ReflectionMethod(UdbWireTakeover::class, 'applyTailMutation')->invoke($takeover, UdbBlock::Ips, 'INS', '192.0.2.1::clones', '*1', 2);
+        new \ReflectionMethod(UdbWireTakeover::class, 'applyTailMutation')->invoke($takeover, UdbBlock::Ips, 'INS', '192.0.2.1::clones', '*1', 2);
     }
 
     private function takeover(): UdbWireTakeover

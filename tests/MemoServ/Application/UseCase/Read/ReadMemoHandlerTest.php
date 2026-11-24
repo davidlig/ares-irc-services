@@ -13,7 +13,6 @@ use App\MemoServ\Application\UseCase\Read\ReadMemoHandler;
 use App\MemoServ\Application\UseCase\Read\ReadMemoOutcome;
 use App\MemoServ\Application\UseCase\Read\ReadMemoResult;
 use App\MemoServ\Domain\Entity\Memo;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -32,8 +31,8 @@ final class ReadMemoHandlerTest extends TestCase
     #[Test]
     public function readsNickMemoSuccessfully(): void
     {
-        $createdAt = new DateTimeImmutable('2026-09-07 10:00:00 UTC');
-        $readAt = new DateTimeImmutable('2026-09-07 11:00:00 UTC');
+        $createdAt = new \DateTimeImmutable('2026-09-07 10:00:00 UTC');
+        $readAt = new \DateTimeImmutable('2026-09-07 11:00:00 UTC');
         $memo = new Memo(1, null, 2, 'Secret message', $createdAt);
         $memoRepo = $this->createMock(MemoRepositoryInterface::class);
         $memoRepo->method('findByTargetNickAndIndex')->willReturn($memo);
@@ -59,7 +58,7 @@ final class ReadMemoHandlerTest extends TestCase
     #[Test]
     public function readsNickMemoUsesIdFallbackWhenNicknameNotFound(): void
     {
-        $memo = new Memo(1, null, 42, 'Secret message', new DateTimeImmutable());
+        $memo = new Memo(1, null, 42, 'Secret message', new \DateTimeImmutable());
         $memoRepo = $this->createStub(MemoRepositoryInterface::class);
         $memoRepo->method('findByTargetNickAndIndex')->willReturn($memo);
         $this->memoRepository = $memoRepo;
@@ -69,7 +68,7 @@ final class ReadMemoHandlerTest extends TestCase
         $this->userAccountPort = $userAccountPort;
 
         $handler = $this->createHandler();
-        $result = $handler->handle(new ReadMemo(1, null, 1, new DateTimeImmutable()));
+        $result = $handler->handle(new ReadMemo(1, null, 1, new \DateTimeImmutable()));
 
         self::assertSame(ReadMemoOutcome::Success, $result->outcome);
         self::assertSame('42', $result->from);
@@ -78,7 +77,7 @@ final class ReadMemoHandlerTest extends TestCase
     #[Test]
     public function serviceSenderSnapshotTakesPrecedenceOverHumanAccountLookup(): void
     {
-        $memo = new Memo(1, null, null, 'Decision', new DateTimeImmutable(), 'ChannelBot');
+        $memo = new Memo(1, null, null, 'Decision', new \DateTimeImmutable(), 'ChannelBot');
         $repository = $this->createStub(MemoRepositoryInterface::class);
         $repository->method('findByTargetNickAndIndex')->willReturn($memo);
         $this->memoRepository = $repository;
@@ -86,7 +85,7 @@ final class ReadMemoHandlerTest extends TestCase
         $accounts->expects(self::never())->method('findNicknameById');
         $this->userAccountPort = $accounts;
 
-        $result = $this->createHandler()->handle(new ReadMemo(1, null, 1, new DateTimeImmutable()));
+        $result = $this->createHandler()->handle(new ReadMemo(1, null, 1, new \DateTimeImmutable()));
 
         self::assertSame('ChannelBot', $result->from);
     }
@@ -99,7 +98,7 @@ final class ReadMemoHandlerTest extends TestCase
         $this->memoRepository = $memoRepo;
 
         $handler = $this->createHandler();
-        $result = $handler->handle(new ReadMemo(1, null, 99, new DateTimeImmutable()));
+        $result = $handler->handle(new ReadMemo(1, null, 99, new \DateTimeImmutable()));
 
         self::assertSame(ReadMemoOutcome::NotFound, $result->outcome);
         self::assertSame(99, $result->index);
@@ -113,7 +112,7 @@ final class ReadMemoHandlerTest extends TestCase
         $channelPort->expects(self::once())->method('canReadChannelMemos')->with(5, 1)->willReturn(true);
         $this->channelPort = $channelPort;
 
-        $memo = new Memo(null, 5, 2, 'Channel message', new DateTimeImmutable());
+        $memo = new Memo(null, 5, 2, 'Channel message', new \DateTimeImmutable());
         $memoRepo = $this->createMock(MemoRepositoryInterface::class);
         $memoRepo->method('findByTargetChannelAndIndex')->willReturn($memo);
         $memoRepo->expects(self::once())->method('save')->with($memo);
@@ -124,7 +123,7 @@ final class ReadMemoHandlerTest extends TestCase
         $this->userAccountPort = $userAccountPort;
 
         $handler = $this->createHandler();
-        $result = $handler->handle(new ReadMemo(1, '#ares', 1, new DateTimeImmutable()));
+        $result = $handler->handle(new ReadMemo(1, '#ares', 1, new \DateTimeImmutable()));
 
         self::assertSame(ReadMemoOutcome::Success, $result->outcome);
         self::assertSame('Bob', $result->from);
@@ -139,7 +138,7 @@ final class ReadMemoHandlerTest extends TestCase
         $this->channelPort = $channelPort;
 
         $handler = $this->createHandler();
-        $result = $handler->handle(new ReadMemo(1, '#unknown', 1, new DateTimeImmutable()));
+        $result = $handler->handle(new ReadMemo(1, '#unknown', 1, new \DateTimeImmutable()));
 
         self::assertSame(ReadMemoOutcome::ChannelNotRegistered, $result->outcome);
         self::assertSame('#unknown', $result->channelName);
@@ -158,7 +157,7 @@ final class ReadMemoHandlerTest extends TestCase
         $this->memoRepository = $memoRepo;
 
         $handler = $this->createHandler();
-        $result = $handler->handle(new ReadMemo(1, '#Ares', 99, new DateTimeImmutable()));
+        $result = $handler->handle(new ReadMemo(1, '#Ares', 99, new \DateTimeImmutable()));
 
         self::assertSame(ReadMemoOutcome::NotFound, $result->outcome);
         self::assertSame(99, $result->index);
@@ -177,7 +176,7 @@ final class ReadMemoHandlerTest extends TestCase
         $memoRepository->expects(self::never())->method('save');
         $this->memoRepository = $memoRepository;
 
-        $result = $this->createHandler()->handle(new ReadMemo(1, '#ares', 1, new DateTimeImmutable()));
+        $result = $this->createHandler()->handle(new ReadMemo(1, '#ares', 1, new \DateTimeImmutable()));
 
         self::assertSame(ReadMemoOutcome::AccessDenied, $result->outcome);
         self::assertSame('#Ares', $result->channelName);

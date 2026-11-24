@@ -27,7 +27,6 @@ use App\Irc\Domain\ValueObject\ChannelName;
 use App\Irc\Domain\ValueObject\Ident;
 use App\Irc\Domain\ValueObject\Nick;
 use App\Irc\Domain\ValueObject\Uid;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -68,7 +67,7 @@ final class SquitNetsplitIntegrationTest extends TestCase
 
         $chanName = new ChannelName('#test');
         $registry->markSyncCompleted($chanName->value);
-        $channel = new Channel($chanName, '+nt', new DateTimeImmutable('@1700000000'));
+        $channel = new Channel($chanName, '+nt', new \DateTimeImmutable('@1700000000'));
         $channelRepo->save($channel);
 
         foreach (['0A1AAAAAA', '0A2BBBBBB', '0A3CCCCCC', '0A4DDDDDD'] as $uidStr) {
@@ -157,7 +156,7 @@ final class SquitNetsplitIntegrationTest extends TestCase
 
         $chanName = new ChannelName('#test');
         $registry->markSyncCompleted($chanName->value);
-        $channel = new Channel($chanName, '+nt', new DateTimeImmutable('@1700000000'));
+        $channel = new Channel($chanName, '+nt', new \DateTimeImmutable('@1700000000'));
         $channelRepo->save($channel);
 
         foreach (['001AAAAAA', '002BBBBBB', '003CCCCCC', '004DDDDDD'] as $uidStr) {
@@ -246,7 +245,7 @@ final class SquitNetsplitIntegrationTest extends TestCase
 
         $chanName = new ChannelName('#test');
         $registry->markSyncCompleted($chanName->value);
-        $channel = new Channel($chanName, '+nt', new DateTimeImmutable('@1700000000'));
+        $channel = new Channel($chanName, '+nt', new \DateTimeImmutable('@1700000000'));
         $channelRepo->save($channel);
 
         foreach (['001AAAAAA', '002BBBBBB', '003CCCCCC', '004DDDDDD'] as $uidStr) {
@@ -324,8 +323,8 @@ final class SquitNetsplitIntegrationTest extends TestCase
         foreach ([$split, $remaining] as $user) {
             $users->add($user);
         }
-        $sharedChannel = new Channel($shared, '', new DateTimeImmutable('@1700000000'));
-        $onlyChannel = new Channel($only, '', new DateTimeImmutable('@1700000000'));
+        $sharedChannel = new Channel($shared, '', new \DateTimeImmutable('@1700000000'));
+        $onlyChannel = new Channel($only, '', new \DateTimeImmutable('@1700000000'));
         $split->addChannel($shared);
         $split->addChannel($only);
         $remaining->addChannel($shared);
@@ -390,7 +389,7 @@ final class SquitNetsplitIntegrationTest extends TestCase
             'cloaked.example.com',
             'vhost.example.com',
             '+i',
-            new DateTimeImmutable(),
+            new \DateTimeImmutable(),
             'Real Name',
             $serverSid,
             'base64ip',

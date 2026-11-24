@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\NickServ\Application\PublishedEvent;
 
 use App\NickServ\Application\Port\In\NickServEvent;
-use DateTimeImmutable;
 
 /** Dispatched inside the database transaction exclusively for persistent cleanup. */
 final readonly class NickDropCleanupEvent implements NickServEvent
@@ -15,6 +14,6 @@ final readonly class NickDropCleanupEvent implements NickServEvent
         public string $nickname,
         public string $nicknameLower,
         public string $reason,
-        public DateTimeImmutable $occurredAt,
+        public \DateTimeImmutable $occurredAt,
     ) {}
 }

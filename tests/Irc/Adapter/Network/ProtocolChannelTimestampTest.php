@@ -22,7 +22,6 @@ use App\Irc\Domain\Repository\ChannelRepositoryInterface;
 use App\Irc\Domain\Repository\NetworkUserRepositoryInterface;
 use App\Irc\Domain\ValueObject\ChannelName;
 use App\Irc\Domain\ValueObject\Uid;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -37,7 +36,7 @@ final class ProtocolChannelTimestampTest extends TestCase
     #[Test]
     public function lowerTimestampReplacesGenerationStateButKeepsMembers(): void
     {
-        $channel = new Channel(new ChannelName('#channel'), '+ntk', new DateTimeImmutable('@200'));
+        $channel = new Channel(new ChannelName('#channel'), '+ntk', new \DateTimeImmutable('@200'));
         $oldUid = new Uid('old');
         $channel->syncMember($oldUid, ChannelMemberRole::Op);
         $channel->applyModeParam('k', 'obsolete');
@@ -62,7 +61,7 @@ final class ProtocolChannelTimestampTest extends TestCase
     #[Test]
     public function higherTimestampCannotReplaceExistingGenerationState(): void
     {
-        $channel = new Channel(new ChannelName('#channel'), '+ntk', new DateTimeImmutable('@100'));
+        $channel = new Channel(new ChannelName('#channel'), '+ntk', new \DateTimeImmutable('@100'));
         $channel->syncMember(new Uid('existing'), ChannelMemberRole::Op);
         $channel->applyModeParam('k', 'winner');
         $channel->addBan('winner!*@*');
@@ -86,7 +85,7 @@ final class ProtocolChannelTimestampTest extends TestCase
     #[Test]
     public function equalTimestampMergesGenerationStateAndPrefixLetters(): void
     {
-        $channel = new Channel(new ChannelName('#channel'), '+nt', new DateTimeImmutable('@100'));
+        $channel = new Channel(new ChannelName('#channel'), '+nt', new \DateTimeImmutable('@100'));
         $existingUid = new Uid('existing');
         $channel->syncMember($existingUid, ChannelMemberRole::Op, ['o']);
         $channel->applyModeParam('l', '10');
@@ -118,7 +117,7 @@ final class ProtocolChannelTimestampTest extends TestCase
             foreach (['lower', 'equal', 'higher'] as $relation) {
                 $initialTimestamp = 'lower' === $relation ? 200 : ('higher' === $relation ? 50 : 100);
                 $incomingTimestamp = 'higher' === $relation ? 100 : 100;
-                $channel = new Channel(new ChannelName('#channel'), '+ntlk', new DateTimeImmutable('@' . $initialTimestamp));
+                $channel = new Channel(new ChannelName('#channel'), '+ntlk', new \DateTimeImmutable('@' . $initialTimestamp));
                 $existingUid = new Uid('existing');
                 $channel->syncMember($existingUid, ChannelMemberRole::Op, ['o']);
                 $channel->applyModeParam('l', '10');

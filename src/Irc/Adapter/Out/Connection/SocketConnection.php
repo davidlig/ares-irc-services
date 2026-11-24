@@ -12,8 +12,6 @@ use Amp\Socket\SocketConnector;
 use Amp\TimeoutCancellation;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
-use RuntimeException;
-use Throwable;
 
 use function implode;
 use function is_string;
@@ -93,7 +91,7 @@ class SocketConnection implements ConnectionInterface
             $this->recvBuffer = '';
 
             $this->logger->info('TCP connection established.', ['address' => $uri]);
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             $this->status = ConnectionStatus::Error;
 
             $this->logger->error('TCP connection failed.', [
@@ -101,7 +99,7 @@ class SocketConnection implements ConnectionInterface
                 'error' => $e->getMessage(),
             ]);
 
-            throw new RuntimeException(sprintf('Failed to connect to %s: %s', $uri, $e->getMessage()), 0, $e);
+            throw new \RuntimeException(sprintf('Failed to connect to %s: %s', $uri, $e->getMessage()), 0, $e);
         }
     }
 
@@ -166,14 +164,14 @@ class SocketConnection implements ConnectionInterface
 
             try {
                 $chunk = $this->socket?->read();
-            } catch (Throwable $e) {
+            } catch (\Throwable $e) {
                 $this->status = ConnectionStatus::Error;
 
                 $this->logger->error('Error reading from IRC connection.', [
                     'error' => $e->getMessage(),
                 ]);
 
-                throw new RuntimeException(sprintf('Error reading from IRC connection: %s', $e->getMessage()), 0, $e);
+                throw new \RuntimeException(sprintf('Error reading from IRC connection: %s', $e->getMessage()), 0, $e);
             }
 
             if (null === $chunk) {
@@ -233,7 +231,7 @@ class SocketConnection implements ConnectionInterface
             'max_line_bytes' => self::MAX_LINE_BYTES,
         ]);
 
-        throw new RuntimeException(sprintf('Incoming line exceeded maximum buffer size of %d bytes.', self::MAX_LINE_BYTES));
+        throw new \RuntimeException(sprintf('Incoming line exceeded maximum buffer size of %d bytes.', self::MAX_LINE_BYTES));
     }
 
     /** @param list<string> $parts */
@@ -245,19 +243,19 @@ class SocketConnection implements ConnectionInterface
     private function writePayload(string $payload): void
     {
         if (!$this->isConnected()) {
-            throw new RuntimeException('Cannot write: connection is not open.');
+            throw new \RuntimeException('Cannot write: connection is not open.');
         }
 
         try {
             $this->socket?->write($payload);
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             $this->status = ConnectionStatus::Error;
 
             $this->logger->error('Failed to write to the IRC connection.', [
                 'error' => $e->getMessage(),
             ]);
 
-            throw new RuntimeException('Failed to write to the IRC connection.', 0, $e);
+            throw new \RuntimeException('Failed to write to the IRC connection.', 0, $e);
         }
     }
 }

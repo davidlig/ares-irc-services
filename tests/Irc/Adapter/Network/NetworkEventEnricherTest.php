@@ -42,12 +42,10 @@ use App\Irc\Domain\ValueObject\ChannelName;
 use App\Irc\Domain\ValueObject\Ident;
 use App\Irc\Domain\ValueObject\Nick;
 use App\Irc\Domain\ValueObject\Uid;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-use ReflectionMethod;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 use function time;
@@ -124,7 +122,7 @@ final class NetworkEventEnricherTest extends TestCase
             'cloak.example',
             'vhost.example',
             '+i',
-            new DateTimeImmutable('2024-01-01'),
+            new \DateTimeImmutable('2024-01-01'),
             'Real',
             '001',
             '*',
@@ -176,7 +174,7 @@ final class NetworkEventEnricherTest extends TestCase
             'cloak.example',
             'vhost.example',
             '+i',
-            new DateTimeImmutable('2024-01-01'),
+            new \DateTimeImmutable('2024-01-01'),
             'Real',
             '001',
             '*',
@@ -224,7 +222,7 @@ final class NetworkEventEnricherTest extends TestCase
             'cloak.example',
             'vhost.example',
             '+i',
-            new DateTimeImmutable('2024-01-01'),
+            new \DateTimeImmutable('2024-01-01'),
             'Real',
             '001',
             '*',
@@ -292,7 +290,7 @@ final class NetworkEventEnricherTest extends TestCase
             'cloak.example',
             'vhost.example',
             '+i',
-            new DateTimeImmutable('2024-01-01'),
+            new \DateTimeImmutable('2024-01-01'),
             'Real',
             '001',
             '*',
@@ -338,7 +336,7 @@ final class NetworkEventEnricherTest extends TestCase
             'cloak.example',
             'vhost.example',
             '+i',
-            new DateTimeImmutable('2024-01-01'),
+            new \DateTimeImmutable('2024-01-01'),
             'Real',
             '001',
             '*',
@@ -389,7 +387,7 @@ final class NetworkEventEnricherTest extends TestCase
             'cloak.example',
             'vhost.example',
             '+i',
-            new DateTimeImmutable('2024-01-01'),
+            new \DateTimeImmutable('2024-01-01'),
             'Real',
             '001',
             '*',
@@ -480,7 +478,7 @@ final class NetworkEventEnricherTest extends TestCase
             'cloak.example',
             'vhost.example',
             '+i',
-            new DateTimeImmutable('2024-01-01'),
+            new \DateTimeImmutable('2024-01-01'),
             'Real',
             '001',
             '*',
@@ -556,7 +554,7 @@ final class NetworkEventEnricherTest extends TestCase
     #[Test]
     public function onChannelModeReceivedUpdatesChannelAndDispatchesChannelModesChangedEvent(): void
     {
-        $channel = new Channel(new ChannelName('#chan'), '+n', new DateTimeImmutable('@0'));
+        $channel = new Channel(new ChannelName('#chan'), '+n', new \DateTimeImmutable('@0'));
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
         $channelRepo->method('findByName')->willReturn($channel);
         $channelRepo->expects(self::once())->method('save')->with(self::identicalTo($channel));
@@ -609,7 +607,7 @@ final class NetworkEventEnricherTest extends TestCase
     #[Test]
     public function onChannelListModeReceivedAddsBanAndDispatchesChannelModesChangedEvent(): void
     {
-        $channel = new Channel(new ChannelName('#chan'), '', new DateTimeImmutable('@0'));
+        $channel = new Channel(new ChannelName('#chan'), '', new \DateTimeImmutable('@0'));
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
         $channelRepo->method('findByName')->willReturn($channel);
         $channelRepo->expects(self::once())->method('save');
@@ -640,7 +638,7 @@ final class NetworkEventEnricherTest extends TestCase
     #[Test]
     public function onChannelTopicReceivedUpdatesTopicAndDispatchesChannelTopicChangedEvent(): void
     {
-        $channel = new Channel(new ChannelName('#chan'), '', new DateTimeImmutable('@0'));
+        $channel = new Channel(new ChannelName('#chan'), '', new \DateTimeImmutable('@0'));
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
         $channelRepo->method('findByName')->willReturn($channel);
         $channelRepo->expects(self::once())->method('save');
@@ -722,7 +720,7 @@ final class NetworkEventEnricherTest extends TestCase
             'cloak.example',
             'vhost.example',
             '+i',
-            new DateTimeImmutable('2024-01-01'),
+            new \DateTimeImmutable('2024-01-01'),
             'Real',
             '001',
             '*',
@@ -786,7 +784,7 @@ final class NetworkEventEnricherTest extends TestCase
             'cloak.example',
             'vhost.example',
             '+i',
-            new DateTimeImmutable('2024-01-01'),
+            new \DateTimeImmutable('2024-01-01'),
             'Real',
             '001',
             '*',
@@ -842,7 +840,7 @@ final class NetworkEventEnricherTest extends TestCase
     #[Test]
     public function applyOutgoingChannelModesUpdatesChannelModesWithoutDispatchingEvent(): void
     {
-        $channel = new Channel(new ChannelName('#chan'), '+n', new DateTimeImmutable('@0'));
+        $channel = new Channel(new ChannelName('#chan'), '+n', new \DateTimeImmutable('@0'));
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
         $channelRepo->method('findByName')->willReturn($channel);
         $channelRepo->expects(self::once())->method('save');
@@ -896,7 +894,7 @@ final class NetworkEventEnricherTest extends TestCase
             'host.example.com',
             'host.example.com',
             '',
-            new DateTimeImmutable(),
+            new \DateTimeImmutable(),
             'Real Name',
             '001',
             '127.0.0.1',
@@ -971,7 +969,7 @@ final class NetworkEventEnricherTest extends TestCase
     #[Test]
     public function onChannelJoinReceivedExistingChannelUpdatesAndDispatchesChannelSyncedEvent(): void
     {
-        $existingChannel = new Channel(new ChannelName('#test'), '+n', new DateTimeImmutable('@0'));
+        $existingChannel = new Channel(new ChannelName('#test'), '+n', new \DateTimeImmutable('@0'));
         $existingChannel->syncMember(new Uid('001EXISTING'), ChannelMemberRole::Op, ['o']);
 
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
@@ -1015,7 +1013,7 @@ final class NetworkEventEnricherTest extends TestCase
     #[Test]
     public function onChannelJoinReceivedDispatchesUserJoinedChannelEventForExistingChannel(): void
     {
-        $existingChannel = new Channel(new ChannelName('#test'), '+n', new DateTimeImmutable('@1704067200'));
+        $existingChannel = new Channel(new ChannelName('#test'), '+n', new \DateTimeImmutable('@1704067200'));
 
         $channelRepo = $this->createStub(ChannelRepositoryInterface::class);
         $channelRepo->method('findByName')->willReturn($existingChannel);
@@ -1058,7 +1056,7 @@ final class NetworkEventEnricherTest extends TestCase
     #[Test]
     public function newerTimestampJoinDoesNotResynchronizeTheExistingChannel(): void
     {
-        $channel = new Channel(new ChannelName('#test'), '+n', new DateTimeImmutable('@1704067200'));
+        $channel = new Channel(new ChannelName('#test'), '+n', new \DateTimeImmutable('@1704067200'));
         $channel->syncMember(new Uid('001OLD'), ChannelMemberRole::Op, ['o']);
         $repo = $this->createMock(ChannelRepositoryInterface::class);
         $repo->method('findByName')->willReturn($channel);
@@ -1098,7 +1096,7 @@ final class NetworkEventEnricherTest extends TestCase
     #[Test]
     public function newerTimestampJoinFromABurstingServerForwardsTheBurstOrigin(): void
     {
-        $channel = new Channel(new ChannelName('#test'), '+n', new DateTimeImmutable('@1704067200'));
+        $channel = new Channel(new ChannelName('#test'), '+n', new \DateTimeImmutable('@1704067200'));
         $repo = $this->createStub(ChannelRepositoryInterface::class);
         $repo->method('findByName')->willReturn($channel);
         $events = [];
@@ -1134,7 +1132,7 @@ final class NetworkEventEnricherTest extends TestCase
     #[Test]
     public function olderTimestampJoinResynchronizesTheExistingChannel(): void
     {
-        $channel = new Channel(new ChannelName('#test'), '+n', new DateTimeImmutable('@1704067200'));
+        $channel = new Channel(new ChannelName('#test'), '+n', new \DateTimeImmutable('@1704067200'));
         $repo = $this->createStub(ChannelRepositoryInterface::class);
         $repo->method('findByName')->willReturn($channel);
         $events = [];
@@ -1171,7 +1169,7 @@ final class NetworkEventEnricherTest extends TestCase
     #[Test]
     public function equalTimestampModeMergeReconcilesWithoutResynchronizing(): void
     {
-        $channel = new Channel(new ChannelName('#test'), '+n', new DateTimeImmutable('@1704067200'));
+        $channel = new Channel(new ChannelName('#test'), '+n', new \DateTimeImmutable('@1704067200'));
         $repo = $this->createStub(ChannelRepositoryInterface::class);
         $repo->method('findByName')->willReturn($channel);
         $events = [];
@@ -1207,7 +1205,7 @@ final class NetworkEventEnricherTest extends TestCase
     #[Test]
     public function onChannelListModeReceivedWithExemptModeAddsExempt(): void
     {
-        $channel = new Channel(new ChannelName('#chan'), '', new DateTimeImmutable('@0'));
+        $channel = new Channel(new ChannelName('#chan'), '', new \DateTimeImmutable('@0'));
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
         $channelRepo->method('findByName')->willReturn($channel);
         $channelRepo->expects(self::once())->method('save');
@@ -1238,7 +1236,7 @@ final class NetworkEventEnricherTest extends TestCase
     #[Test]
     public function onChannelListModeReceivedWithInviteExceptionModeAddsInviteException(): void
     {
-        $channel = new Channel(new ChannelName('#chan'), '', new DateTimeImmutable('@0'));
+        $channel = new Channel(new ChannelName('#chan'), '', new \DateTimeImmutable('@0'));
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
         $channelRepo->method('findByName')->willReturn($channel);
         $channelRepo->expects(self::once())->method('save');
@@ -1269,7 +1267,7 @@ final class NetworkEventEnricherTest extends TestCase
     #[Test]
     public function onChannelListModeReceivedEmptyMaskBreaksLoop(): void
     {
-        $channel = new Channel(new ChannelName('#chan'), '', new DateTimeImmutable('@0'));
+        $channel = new Channel(new ChannelName('#chan'), '', new \DateTimeImmutable('@0'));
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
         $channelRepo->method('findByName')->willReturn($channel);
         $channelRepo->expects(self::once())->method('save');
@@ -1293,7 +1291,7 @@ final class NetworkEventEnricherTest extends TestCase
     public function onChannelJoinReceivedWithListModesEIAddsExemptsAndInviteExceptions(): void
     {
         $dispatched = [];
-        $channel = new Channel(new ChannelName('#test'), '+n', new DateTimeImmutable('@0'));
+        $channel = new Channel(new ChannelName('#test'), '+n', new \DateTimeImmutable('@0'));
 
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
         $channelRepo->method('findByName')->willReturn(null);
@@ -1330,7 +1328,7 @@ final class NetworkEventEnricherTest extends TestCase
     #[Test]
     public function onChannelModeReceivedWithChannelFoundAppliesModes(): void
     {
-        $channel = new Channel(new ChannelName('#chan'), '+n', new DateTimeImmutable('@0'));
+        $channel = new Channel(new ChannelName('#chan'), '+n', new \DateTimeImmutable('@0'));
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
         $channelRepo->method('findByName')->willReturn($channel);
         $channelRepo->expects(self::once())->method('save');
@@ -1376,13 +1374,13 @@ final class NetworkEventEnricherTest extends TestCase
             'cloak.example',
             'vhost.example',
             '+i',
-            new DateTimeImmutable('2024-01-01'),
+            new \DateTimeImmutable('2024-01-01'),
             'Real',
             '001',
             '*',
         );
 
-        $channel = new Channel(new ChannelName('#chan'), '+n', new DateTimeImmutable('@0'));
+        $channel = new Channel(new ChannelName('#chan'), '+n', new \DateTimeImmutable('@0'));
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
         $channelRepo->method('findByName')->willReturn($channel);
         $channelRepo->expects(self::once())->method('save');
@@ -1414,7 +1412,7 @@ final class NetworkEventEnricherTest extends TestCase
     #[Test]
     public function onChannelModeReceivedWithListModesAddsAndRemoves(): void
     {
-        $channel = new Channel(new ChannelName('#chan'), '+n', new DateTimeImmutable('@0'));
+        $channel = new Channel(new ChannelName('#chan'), '+n', new \DateTimeImmutable('@0'));
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
         $channelRepo->method('findByName')->willReturn($channel);
         $channelRepo->expects(self::once())->method('save');
@@ -1443,7 +1441,7 @@ final class NetworkEventEnricherTest extends TestCase
     #[Test]
     public function onChannelModeReceivedWithChannelSettingModesAppliesParam(): void
     {
-        $channel = new Channel(new ChannelName('#chan'), '+n', new DateTimeImmutable('@0'));
+        $channel = new Channel(new ChannelName('#chan'), '+n', new \DateTimeImmutable('@0'));
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
         $channelRepo->method('findByName')->willReturn($channel);
         $channelRepo->expects(self::once())->method('save');
@@ -1490,7 +1488,7 @@ final class NetworkEventEnricherTest extends TestCase
     #[Test]
     public function applyOutgoingChannelModesEmptyModeStrUpdatesChannelWithoutEvent(): void
     {
-        $channel = new Channel(new ChannelName('#chan'), '+n', new DateTimeImmutable('@0'));
+        $channel = new Channel(new ChannelName('#chan'), '+n', new \DateTimeImmutable('@0'));
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
         $channelRepo->method('findByName')->willReturn($channel);
         $channelRepo->expects(self::once())->method('save');
@@ -1512,7 +1510,7 @@ final class NetworkEventEnricherTest extends TestCase
     #[Test]
     public function applyOutgoingChannelModesWithParamsAppliesModeParam(): void
     {
-        $channel = new Channel(new ChannelName('#chan'), '+n', new DateTimeImmutable('@0'));
+        $channel = new Channel(new ChannelName('#chan'), '+n', new \DateTimeImmutable('@0'));
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
         $channelRepo->method('findByName')->willReturn($channel);
         $channelRepo->expects(self::once())->method('save');
@@ -1548,7 +1546,7 @@ final class NetworkEventEnricherTest extends TestCase
             'cloak.example',
             'vhost.example',
             '+i',
-            new DateTimeImmutable('2024-01-01'),
+            new \DateTimeImmutable('2024-01-01'),
             'Real',
             '001',
             '*',
@@ -1582,7 +1580,7 @@ final class NetworkEventEnricherTest extends TestCase
             'cloak.example',
             'vhost.example',
             '+i',
-            new DateTimeImmutable('2024-01-01'),
+            new \DateTimeImmutable('2024-01-01'),
             'Real',
             '001',
             '*',
@@ -1616,7 +1614,7 @@ final class NetworkEventEnricherTest extends TestCase
             'cloak.example',
             'vhost.example',
             '+i',
-            new DateTimeImmutable('2024-01-01'),
+            new \DateTimeImmutable('2024-01-01'),
             'Real',
             '001',
             '*',
@@ -1675,7 +1673,7 @@ final class NetworkEventEnricherTest extends TestCase
             'cloak.example',
             'vhost.example',
             '+i',
-            new DateTimeImmutable('2024-01-01'),
+            new \DateTimeImmutable('2024-01-01'),
             'Real',
             '001',
             '*',
@@ -1703,7 +1701,7 @@ final class NetworkEventEnricherTest extends TestCase
     #[Test]
     public function applyOutgoingChannelModesSkipsPrefixModes(): void
     {
-        $channel = new Channel(new ChannelName('#chan'), '+nt', new DateTimeImmutable('@0'));
+        $channel = new Channel(new ChannelName('#chan'), '+nt', new \DateTimeImmutable('@0'));
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
         $channelRepo->method('findByName')->willReturn($channel);
         $channelRepo->expects(self::once())->method('save');
@@ -1732,7 +1730,7 @@ final class NetworkEventEnricherTest extends TestCase
     #[Test]
     public function applyOutgoingChannelModesAppliesListModes(): void
     {
-        $channel = new Channel(new ChannelName('#chan'), '+n', new DateTimeImmutable('@0'));
+        $channel = new Channel(new ChannelName('#chan'), '+n', new \DateTimeImmutable('@0'));
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
         $channelRepo->method('findByName')->willReturn($channel);
         $channelRepo->expects(self::exactly(2))->method('save');
@@ -1766,7 +1764,7 @@ final class NetworkEventEnricherTest extends TestCase
     #[Test]
     public function applyOutgoingChannelModesClearsParamOnUnsetMode(): void
     {
-        $channel = new Channel(new ChannelName('#chan'), '+nk', new DateTimeImmutable('@0'));
+        $channel = new Channel(new ChannelName('#chan'), '+nk', new \DateTimeImmutable('@0'));
         $channel->applyModeParam('k', 'secretkey');
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
         $channelRepo->method('findByName')->willReturn($channel);
@@ -1795,7 +1793,7 @@ final class NetworkEventEnricherTest extends TestCase
     #[Test]
     public function onChannelModeReceivedWithChannelFoundDoesNotCreateNewChannel(): void
     {
-        $channel = new Channel(new ChannelName('#chan'), '+n', new DateTimeImmutable('@0'));
+        $channel = new Channel(new ChannelName('#chan'), '+n', new \DateTimeImmutable('@0'));
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
         $channelRepo->method('findByName')->willReturn($channel);
         $channelRepo->expects(self::once())->method('save');
@@ -1854,7 +1852,7 @@ final class NetworkEventEnricherTest extends TestCase
     #[Test]
     public function onChannelModeReceivedWithPrefixModeUserNotFoundSkipsGracefully(): void
     {
-        $channel = new Channel(new ChannelName('#chan'), '+n', new DateTimeImmutable('@0'));
+        $channel = new Channel(new ChannelName('#chan'), '+n', new \DateTimeImmutable('@0'));
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
         $channelRepo->method('findByName')->willReturn($channel);
         $channelRepo->expects(self::once())->method('save');
@@ -1894,7 +1892,7 @@ final class NetworkEventEnricherTest extends TestCase
     #[Test]
     public function onChannelJoinReceivedWithModeParamsAppliesThemToChannel(): void
     {
-        $channel = new Channel(new ChannelName('#test'), '+n', new DateTimeImmutable('@0'));
+        $channel = new Channel(new ChannelName('#test'), '+n', new \DateTimeImmutable('@0'));
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
         $channelRepo->method('findByName')->willReturn($channel);
         $channelRepo->expects(self::once())->method('save');
@@ -1931,7 +1929,7 @@ final class NetworkEventEnricherTest extends TestCase
     #[Test]
     public function onChannelJoinReceivedWithMinusModeStrSkipsParamApplication(): void
     {
-        $channel = new Channel(new ChannelName('#test'), '+lk', new DateTimeImmutable('@0'));
+        $channel = new Channel(new ChannelName('#test'), '+lk', new \DateTimeImmutable('@0'));
         $channel->applyModeParam('k', 'oldkey');
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
         $channelRepo->method('findByName')->willReturn($channel);
@@ -1969,7 +1967,7 @@ final class NetworkEventEnricherTest extends TestCase
     #[Test]
     public function onChannelJoinReceivedModeParamsExhaustedBreaksLoop(): void
     {
-        $channel = new Channel(new ChannelName('#test'), '+n', new DateTimeImmutable('@0'));
+        $channel = new Channel(new ChannelName('#test'), '+n', new \DateTimeImmutable('@0'));
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
         $channelRepo->method('findByName')->willReturn(null);
         $channelRepo->expects(self::once())->method('save');
@@ -2006,7 +2004,7 @@ final class NetworkEventEnricherTest extends TestCase
     #[Test]
     public function onChannelJoinReceivedExistingChannelDoesNotOverwriteTimestampWithZero(): void
     {
-        $originalTimestamp = new DateTimeImmutable('@1704067200');
+        $originalTimestamp = new \DateTimeImmutable('@1704067200');
         $existingChannel = new Channel(new ChannelName('#test'), '+n', $originalTimestamp);
 
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
@@ -2039,7 +2037,7 @@ final class NetworkEventEnricherTest extends TestCase
     #[Test]
     public function onChannelJoinReceivedExistingChannelDoesNotOverwriteModesWithEmptyString(): void
     {
-        $existingChannel = new Channel(new ChannelName('#test'), '+nrM', new DateTimeImmutable('@1704067200'));
+        $existingChannel = new Channel(new ChannelName('#test'), '+nrM', new \DateTimeImmutable('@1704067200'));
 
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
         $channelRepo->method('findByName')->willReturn($existingChannel);
@@ -2071,7 +2069,7 @@ final class NetworkEventEnricherTest extends TestCase
     #[Test]
     public function onChannelJoinReceivedHigherTimestampPreservesExistingGeneration(): void
     {
-        $originalTimestamp = new DateTimeImmutable('@1000000000');
+        $originalTimestamp = new \DateTimeImmutable('@1000000000');
         $existingChannel = new Channel(new ChannelName('#test'), '+n', $originalTimestamp);
 
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
@@ -2151,13 +2149,13 @@ final class NetworkEventEnricherTest extends TestCase
             'cloak.example',
             'vhost.example',
             '+i',
-            new DateTimeImmutable('2024-01-01'),
+            new \DateTimeImmutable('2024-01-01'),
             'Real',
             '001',
             '*',
         );
 
-        $channel = new Channel(new ChannelName('#chan'), '+n', new DateTimeImmutable('@0'));
+        $channel = new Channel(new ChannelName('#chan'), '+n', new \DateTimeImmutable('@0'));
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
         $channelRepo->method('findByName')->willReturn($channel);
         $channelRepo->expects(self::once())->method('save');
@@ -2189,7 +2187,7 @@ final class NetworkEventEnricherTest extends TestCase
     #[Test]
     public function onChannelModeReceivedListModeParamsExhaustedBreaksLoop(): void
     {
-        $channel = new Channel(new ChannelName('#chan'), '+n', new DateTimeImmutable('@0'));
+        $channel = new Channel(new ChannelName('#chan'), '+n', new \DateTimeImmutable('@0'));
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
         $channelRepo->method('findByName')->willReturn($channel);
         $channelRepo->expects(self::once())->method('save');
@@ -2218,7 +2216,7 @@ final class NetworkEventEnricherTest extends TestCase
     #[Test]
     public function onChannelModeReceivedChannelSettingModeParamsExhaustedBreaksLoop(): void
     {
-        $channel = new Channel(new ChannelName('#chan'), '+n', new DateTimeImmutable('@0'));
+        $channel = new Channel(new ChannelName('#chan'), '+n', new \DateTimeImmutable('@0'));
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
         $channelRepo->method('findByName')->willReturn($channel);
         $channelRepo->expects(self::once())->method('save');
@@ -2247,7 +2245,7 @@ final class NetworkEventEnricherTest extends TestCase
     #[Test]
     public function onChannelModeReceivedRemovesExemptMode(): void
     {
-        $channel = new Channel(new ChannelName('#chan'), '+n', new DateTimeImmutable('@0'));
+        $channel = new Channel(new ChannelName('#chan'), '+n', new \DateTimeImmutable('@0'));
         $channel->addExempt('*!*@exempt.host');
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
         $channelRepo->method('findByName')->willReturn($channel);
@@ -2285,7 +2283,7 @@ final class NetworkEventEnricherTest extends TestCase
     #[Test]
     public function onChannelModeReceivedRemovesInviteException(): void
     {
-        $channel = new Channel(new ChannelName('#chan'), '+n', new DateTimeImmutable('@0'));
+        $channel = new Channel(new ChannelName('#chan'), '+n', new \DateTimeImmutable('@0'));
         $channel->addInviteException('*!*@invite.host');
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
         $channelRepo->method('findByName')->willReturn($channel);
@@ -2323,7 +2321,7 @@ final class NetworkEventEnricherTest extends TestCase
     #[Test]
     public function onChannelModeReceivedClearsModeParamOnUnset(): void
     {
-        $channel = new Channel(new ChannelName('#chan'), '+nk', new DateTimeImmutable('@0'));
+        $channel = new Channel(new ChannelName('#chan'), '+nk', new \DateTimeImmutable('@0'));
         $channel->applyModeParam('k', 'secretkey');
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
         $channelRepo->method('findByName')->willReturn($channel);
@@ -2361,7 +2359,7 @@ final class NetworkEventEnricherTest extends TestCase
     #[Test]
     public function onChannelModeReceivedWithMixedAddRemoveModes(): void
     {
-        $channel = new Channel(new ChannelName('#chan'), '+nt', new DateTimeImmutable('@0'));
+        $channel = new Channel(new ChannelName('#chan'), '+nt', new \DateTimeImmutable('@0'));
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
         $channelRepo->method('findByName')->willReturn($channel);
         $channelRepo->expects(self::once())->method('save');
@@ -2421,7 +2419,7 @@ final class NetworkEventEnricherTest extends TestCase
     #[Test]
     public function onChannelModeReceivedEmptyModeStrMergesCorrectly(): void
     {
-        $channel = new Channel(new ChannelName('#chan'), '+nt', new DateTimeImmutable('@0'));
+        $channel = new Channel(new ChannelName('#chan'), '+nt', new \DateTimeImmutable('@0'));
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
         $channelRepo->method('findByName')->willReturn($channel);
         $channelRepo->expects(self::once())->method('save');
@@ -2453,7 +2451,7 @@ final class NetworkEventEnricherTest extends TestCase
     #[Test]
     public function onChannelModeReceivedUnsetsChannelSettingMode(): void
     {
-        $channel = new Channel(new ChannelName('#chan'), '+nkl', new DateTimeImmutable('@0'));
+        $channel = new Channel(new ChannelName('#chan'), '+nkl', new \DateTimeImmutable('@0'));
         $channel->applyModeParam('k', 'secretkey');
         $channel->applyModeParam('l', '100');
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
@@ -2500,7 +2498,7 @@ final class NetworkEventEnricherTest extends TestCase
             'cloak.host',
             'vhost',
             '+i',
-            new DateTimeImmutable('@0'),
+            new \DateTimeImmutable('@0'),
             'Real Name',
             '001',
             'aXB4',
@@ -2543,7 +2541,7 @@ final class NetworkEventEnricherTest extends TestCase
             'cloak.host',
             'vhost',
             '+i',
-            new DateTimeImmutable('@0'),
+            new \DateTimeImmutable('@0'),
             'Real Name',
             '001',
             'aXB4',
@@ -2586,7 +2584,7 @@ final class NetworkEventEnricherTest extends TestCase
             'cloak.host',
             'vhost',
             '+i',
-            new DateTimeImmutable('@0'),
+            new \DateTimeImmutable('@0'),
             'Real Name',
             '001',
             'aXB4',
@@ -2629,7 +2627,7 @@ final class NetworkEventEnricherTest extends TestCase
             'cloak.host',
             'vhost',
             '+i',
-            new DateTimeImmutable('@0'),
+            new \DateTimeImmutable('@0'),
             'Real Name',
             '001',
             'aXB4',
@@ -2672,7 +2670,7 @@ final class NetworkEventEnricherTest extends TestCase
             'cloak.host',
             'vhost',
             '+i',
-            new DateTimeImmutable('@0'),
+            new \DateTimeImmutable('@0'),
             'Real Name',
             '001',
             'aXB4',
@@ -2736,7 +2734,7 @@ final class NetworkEventEnricherTest extends TestCase
             'cloak.host',
             'vhost',
             '+i',
-            new DateTimeImmutable('@0'),
+            new \DateTimeImmutable('@0'),
             'Real Name',
             '001',
             'aXB4',
@@ -2762,7 +2760,7 @@ final class NetworkEventEnricherTest extends TestCase
     #[Test]
     public function onChannelModeReceivedWithEmptyDeltaReturnsCurrentModes(): void
     {
-        $channel = new Channel(new ChannelName('#chan'), '+nt', new DateTimeImmutable('@0'));
+        $channel = new Channel(new ChannelName('#chan'), '+nt', new \DateTimeImmutable('@0'));
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
         $channelRepo->method('findByName')->willReturn($channel);
         $channelRepo->expects(self::once())->method('save');
@@ -2796,7 +2794,7 @@ final class NetworkEventEnricherTest extends TestCase
     {
         $synchronizer = new ChannelModeStateSynchronizer();
 
-        $ref = new ReflectionMethod($synchronizer, 'mergeModeString');
+        $ref = new \ReflectionMethod($synchronizer, 'mergeModeString');
         $result = $ref->invoke($synchronizer, '+nt', '');
 
         self::assertSame('+nt', $result);
@@ -2807,7 +2805,7 @@ final class NetworkEventEnricherTest extends TestCase
     {
         $synchronizer = new ChannelModeStateSynchronizer();
 
-        $ref = new ReflectionMethod($synchronizer, 'mergeModeString');
+        $ref = new \ReflectionMethod($synchronizer, 'mergeModeString');
         $result = $ref->invoke($synchronizer, '+nt', '+t+m');
 
         self::assertSame('+ntm', $result);
@@ -2816,7 +2814,7 @@ final class NetworkEventEnricherTest extends TestCase
     #[Test]
     public function onChannelModeReceivedHandlesUnsetWithoutParamWithoutBreakingLoop(): void
     {
-        $channel = new Channel(new ChannelName('#chan'), '+ntl', new DateTimeImmutable('@0'));
+        $channel = new Channel(new ChannelName('#chan'), '+ntl', new \DateTimeImmutable('@0'));
         $channel->applyModeParam('l', '50');
 
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
@@ -2856,7 +2854,7 @@ final class NetworkEventEnricherTest extends TestCase
     #[Test]
     public function onChannelModeReceivedHandlesUnsetWithParamConsumingParam(): void
     {
-        $channel = new Channel(new ChannelName('#chan'), '+ntk', new DateTimeImmutable('@0'));
+        $channel = new Channel(new ChannelName('#chan'), '+ntk', new \DateTimeImmutable('@0'));
         $channel->applyModeParam('k', 'oldsecret');
 
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
@@ -2894,7 +2892,7 @@ final class NetworkEventEnricherTest extends TestCase
     #[Test]
     public function applyOutgoingChannelModesHandlesUnsetWithParamConsumingParam(): void
     {
-        $channel = new Channel(new ChannelName('#chan'), '+ntk', new DateTimeImmutable('@0'));
+        $channel = new Channel(new ChannelName('#chan'), '+ntk', new \DateTimeImmutable('@0'));
         $channel->applyModeParam('k', 'oldsecret');
 
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);

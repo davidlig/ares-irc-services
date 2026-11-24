@@ -9,7 +9,6 @@ use App\OperServ\Application\Port\Out\MotdCounterFlusher;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Throwable;
 
 final readonly class FlushMotdCountersOnDisconnectSubscriber implements EventSubscriberInterface
 {
@@ -27,7 +26,7 @@ final readonly class FlushMotdCountersOnDisconnectSubscriber implements EventSub
     {
         try {
             $this->flusher->flushShownCounts();
-        } catch (Throwable $exception) {
+        } catch (\Throwable $exception) {
             $this->logger->error('Could not flush MOTD delivery statistics during disconnect.', [
                 'exception' => $exception,
             ]);

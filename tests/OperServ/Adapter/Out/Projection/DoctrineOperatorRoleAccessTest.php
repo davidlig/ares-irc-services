@@ -10,7 +10,6 @@ use App\OperServ\Domain\Entity\OperIrcop;
 use App\OperServ\Domain\Entity\OperPermission;
 use App\OperServ\Domain\Entity\OperRole;
 use App\OperServ\Domain\Repository\OperIrcopRepositoryInterface;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -35,7 +34,7 @@ final class DoctrineOperatorRoleAccessTest extends TestCase
     {
         $role = OperRole::create('ADMIN');
         $role->addPermission(OperPermission::create('operserv.kill'));
-        $operator = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 10, $role);
+        $operator = OperIrcop::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), 10, $role);
         $operators = $this->createMock(OperIrcopRepositoryInterface::class);
         $operators->expects(self::once())->method('findByNickIdWithRolePermissions')->with(10)->willReturn($operator);
         $access = new DoctrineOperatorRoleAccess($operators, new OperatorPermissionCache());

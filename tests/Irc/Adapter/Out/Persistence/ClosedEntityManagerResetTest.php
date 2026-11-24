@@ -13,7 +13,6 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-use RuntimeException;
 
 #[CoversClass(ClosedEntityManagerReset::class)]
 final class ClosedEntityManagerResetTest extends TestCase
@@ -53,7 +52,7 @@ final class ClosedEntityManagerResetTest extends TestCase
     #[Test]
     public function aFailingResetIsLoggedAndNotThrown(): void
     {
-        $failure = new RuntimeException('reset failed');
+        $failure = new \RuntimeException('reset failed');
         $registry = $this->registry(open: false);
         $registry->expects(self::once())->method('resetManager')->willThrowException($failure);
         $logger = $this->createMock(LoggerInterface::class);

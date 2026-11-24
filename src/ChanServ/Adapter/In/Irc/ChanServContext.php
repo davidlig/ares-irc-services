@@ -18,10 +18,6 @@ use App\Shared\Adapter\In\Irc\Presentation\Fragment;
 use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
 use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
 use App\Shared\Adapter\In\Irc\Presentation\Role;
-use DateTimeImmutable;
-use DateTimeInterface;
-use DateTimeZone;
-use InvalidArgumentException;
 use Symfony\Component\Translation\TranslatorBagInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -156,15 +152,15 @@ final readonly class ChanServContext implements IrcopAuthorizationSubject
         return $this->timezone;
     }
 
-    public function formatDate(?DateTimeInterface $date): string
+    public function formatDate(?\DateTimeInterface $date): string
     {
         if (null === $date) {
             return '—';
         }
 
-        $dt = $date instanceof DateTimeImmutable ? $date : DateTimeImmutable::createFromInterface($date);
+        $dt = $date instanceof \DateTimeImmutable ? $date : \DateTimeImmutable::createFromInterface($date);
 
-        return $dt->setTimezone(new DateTimeZone($this->timezone))->format('d/m/Y H:i T');
+        return $dt->setTimezone(new \DateTimeZone($this->timezone))->format('d/m/Y H:i T');
     }
 
     public function getRegistry(): ChanServCommandRegistry
@@ -229,7 +225,7 @@ final readonly class ChanServContext implements IrcopAuthorizationSubject
             } elseif (is_int($value) || is_float($value) || is_bool($value) || null === $value) {
                 $result[$key] = (string) $value;
             } else {
-                throw new InvalidArgumentException('IRC presentation parameters must be scalar or fragments.');
+                throw new \InvalidArgumentException('IRC presentation parameters must be scalar or fragments.');
             }
         }
 

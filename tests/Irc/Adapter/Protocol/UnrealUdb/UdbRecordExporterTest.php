@@ -21,12 +21,10 @@ use App\OperServ\Application\Port\In\GlineProjection;
 use App\OperServ\Application\Port\In\GlineProjectionQuery;
 use App\OperServ\Application\Port\In\OperatorNetworkProjection;
 use App\OperServ\Application\Port\In\OperatorNetworkProjectionQuery;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
-use RuntimeException;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function str_repeat;
@@ -170,7 +168,7 @@ final class UdbRecordExporterTest extends TestCase
     public function permanentAndCurrentNickSuspensionsExportTheirReason(): void
     {
         $permanent = $this->createNick('Permanent', suspended: true, suspensionReason: 'permanent reason');
-        $temporary = $this->createNick('Temporary', suspended: true, suspensionReason: 'temporary reason', suspendedUntil: new DateTimeImmutable('2026-08-30 10:30:01'));
+        $temporary = $this->createNick('Temporary', suspended: true, suspensionReason: 'temporary reason', suspendedUntil: new \DateTimeImmutable('2026-08-30 10:30:01'));
 
         self::assertSame(['Permanent::suspend' => 'permanent reason'], $this->exporter->nickRecords($permanent));
         self::assertSame(['Temporary::suspend' => 'temporary reason'], $this->exporter->nickRecords($temporary));
@@ -179,8 +177,8 @@ final class UdbRecordExporterTest extends TestCase
     #[Test]
     public function expiredNickSuspensionsAreNotExportedAtOrAfterExpiry(): void
     {
-        $atExpiry = $this->createNick('AtExpiry', suspended: true, suspensionReason: 'expired', suspendedUntil: new DateTimeImmutable('2026-08-30 10:30:00'));
-        $pastExpiry = $this->createNick('PastExpiry', suspended: true, suspensionReason: 'expired', suspendedUntil: new DateTimeImmutable('2026-08-30 10:29:59'));
+        $atExpiry = $this->createNick('AtExpiry', suspended: true, suspensionReason: 'expired', suspendedUntil: new \DateTimeImmutable('2026-08-30 10:30:00'));
+        $pastExpiry = $this->createNick('PastExpiry', suspended: true, suspensionReason: 'expired', suspendedUntil: new \DateTimeImmutable('2026-08-30 10:29:59'));
 
         self::assertSame([], $this->exporter->nickRecords($atExpiry));
         self::assertSame([], $this->exporter->nickRecords($pastExpiry));
@@ -322,11 +320,11 @@ final class UdbRecordExporterTest extends TestCase
     #[Test]
     public function temporaryGlineRecordsContainExpiresBeforeReason(): void
     {
-        $createdAt = new DateTimeImmutable('2026-08-30 10:00:00');
-        $gline = new GlineProjection('*@bad.example', 'abuse', $createdAt, new DateTimeImmutable('2026-08-30 11:00:00'));
+        $createdAt = new \DateTimeImmutable('2026-08-30 10:00:00');
+        $gline = new GlineProjection('*@bad.example', 'abuse', $createdAt, new \DateTimeImmutable('2026-08-30 11:00:00'));
 
         self::assertSame([
-            'G::*@bad.example::expires' => '*' . new DateTimeImmutable('2026-08-30 11:00:00')->getTimestamp(),
+            'G::*@bad.example::expires' => '*' . new \DateTimeImmutable('2026-08-30 11:00:00')->getTimestamp(),
             'G::*@bad.example::reason' => 'abuse',
         ], $this->exporter->glineRecords($gline));
     }
@@ -336,7 +334,7 @@ final class UdbRecordExporterTest extends TestCase
     {
         self::assertSame([
             'G::*@bad.example::reason' => 'abuse',
-        ], $this->exporter->glineRecords(new GlineProjection('*@bad.example', 'abuse', new DateTimeImmutable('2026-08-30 10:00:00'), null)));
+        ], $this->exporter->glineRecords(new GlineProjection('*@bad.example', 'abuse', new \DateTimeImmutable('2026-08-30 10:00:00'), null)));
     }
 
     #[Test]
@@ -345,15 +343,15 @@ final class UdbRecordExporterTest extends TestCase
         self::assertSame([], $this->exporter->glineRecords(new GlineProjection(
             '*@bad.example',
             'abuse',
-            new DateTimeImmutable('2026-08-30 09:00:00'),
-            new DateTimeImmutable('2026-08-30 10:30:00'),
+            new \DateTimeImmutable('2026-08-30 09:00:00'),
+            new \DateTimeImmutable('2026-08-30 10:30:00'),
         )));
     }
 
     #[Test]
     public function glineWithoutReasonExportsNothing(): void
     {
-        self::assertSame([], $this->exporter->glineRecords(new GlineProjection('*@bad.example', null, new DateTimeImmutable('2026-08-30 10:00:00'), null)));
+        self::assertSame([], $this->exporter->glineRecords(new GlineProjection('*@bad.example', null, new \DateTimeImmutable('2026-08-30 10:00:00'), null)));
     }
 
     #[Test]
@@ -416,7 +414,7 @@ final class UdbRecordExporterTest extends TestCase
     #[Test]
     public function encodedBlockRecordsAggregatesAllActiveGlines(): void
     {
-        $createdAt = new DateTimeImmutable('2026-08-30 10:00:00');
+        $createdAt = new \DateTimeImmutable('2026-08-30 10:00:00');
         $this->glines->method('active')->willReturn([
             new GlineProjection('*@first.example', 'first reason', $createdAt, null),
             new GlineProjection('*@second.example', 'second reason', $createdAt, null),
@@ -438,7 +436,7 @@ final class UdbRecordExporterTest extends TestCase
         $nick = $this->createNick('davidlig', vhost: 'bad vhost with spaces');
         $this->nicks->method('all')->willReturn([$nick]);
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Current SQL export contains an invalid N-block record.');
 
         $this->exporter->encodedBlockRecords(UdbBlock::Nicks);
@@ -480,7 +478,7 @@ final class UdbRecordExporterTest extends TestCase
             $this->channelLookup,
             $this->createModeSupportProvider(),
             $this->suspendReasonResolver,
-            clock: new MutableUdbClock(new DateTimeImmutable('2026-08-30 10:30:00')->getTimestamp()),
+            clock: new MutableUdbClock(new \DateTimeImmutable('2026-08-30 10:30:00')->getTimestamp()),
         );
     }
 
@@ -521,7 +519,7 @@ final class UdbRecordExporterTest extends TestCase
         bool $pendingVerification = false,
         bool $suspended = false,
         ?string $suspensionReason = null,
-        ?DateTimeImmutable $suspendedUntil = null,
+        ?\DateTimeImmutable $suspendedUntil = null,
     ): NickProjection {
         return new NickProjection(42, $nickname, $passwordHash ?? 'argon2id:$argon2id$hash', $vhost, $forbidden, $forbiddenReason, $pendingVerification, $suspended, $suspensionReason, $suspendedUntil);
     }

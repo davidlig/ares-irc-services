@@ -4,15 +4,13 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Application\UseCase\RegisterChannel;
 
-use DateTimeImmutable;
-
 final readonly class RegisterChannelResult
 {
     private function __construct(
         public RegisterChannelOutcome $outcome,
         public ?int $remainingMinutes = null,
         public ?int $maximumChannels = null,
-        public ?DateTimeImmutable $restrictedUntil = null,
+        public ?\DateTimeImmutable $restrictedUntil = null,
     ) {}
 
     public static function registered(): self
@@ -25,7 +23,7 @@ final readonly class RegisterChannelResult
         return new self(RegisterChannelOutcome::AwaitingApproval);
     }
 
-    public static function registrationRestricted(?DateTimeImmutable $restrictedUntil): self
+    public static function registrationRestricted(?\DateTimeImmutable $restrictedUntil): self
     {
         return new self(RegisterChannelOutcome::RegistrationRestricted, restrictedUntil: $restrictedUntil);
     }

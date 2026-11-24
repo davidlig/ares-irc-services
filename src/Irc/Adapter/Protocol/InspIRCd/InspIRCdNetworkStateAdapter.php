@@ -27,8 +27,6 @@ use App\Irc\Domain\ValueObject\ChannelName;
 use App\Irc\Domain\ValueObject\Ident;
 use App\Irc\Domain\ValueObject\Nick;
 use App\Irc\Domain\ValueObject\Uid;
-use DateTimeImmutable;
-use InvalidArgumentException;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
@@ -145,7 +143,7 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
             $uid = new Uid($uidStr);
             $ident = new Ident($username);
             $realIdent = new Ident($params[5]);
-        } catch (InvalidArgumentException $e) {
+        } catch (\InvalidArgumentException $e) {
             $this->logger->warning('UID skipped: invalid value — ' . $e->getMessage(), [
                 'raw' => $message->toRawLine(),
             ]);
@@ -153,7 +151,7 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
             return;
         }
 
-        $connectedAt = new DateTimeImmutable('@' . $connectedAtRaw);
+        $connectedAt = new \DateTimeImmutable('@' . $connectedAtRaw);
 
         $user = new NetworkUser(
             uid: $uid,
@@ -211,7 +209,7 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
             $event = 'FHOST' === $message->command
                 ? new UserIdentityReceivedEvent($message->prefix, displayHost: $display, realHost: $real)
                 : new UserIdentityReceivedEvent($message->prefix, displayIdent: null === $display ? null : new Ident($display), realIdent: null === $real ? null : new Ident($real));
-        } catch (InvalidArgumentException) {
+        } catch (\InvalidArgumentException) {
             return;
         }
         $this->eventDispatcher->dispatch($event);
@@ -422,7 +420,7 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
 
         try {
             $channelName = new ChannelName($channelStr);
-        } catch (InvalidArgumentException) {
+        } catch (\InvalidArgumentException) {
             return;
         }
 
@@ -507,7 +505,7 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
 
         try {
             return new Uid($uidStr);
-        } catch (InvalidArgumentException) {
+        } catch (\InvalidArgumentException) {
             return null;
         }
     }
@@ -535,7 +533,7 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
         try {
             $uid = new Uid($uidStr);
             $channelName = new ChannelName($channelStr);
-        } catch (InvalidArgumentException) {
+        } catch (\InvalidArgumentException) {
             return;
         }
 
@@ -584,7 +582,7 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
 
         try {
             $channelName = new ChannelName($channelStr);
-        } catch (InvalidArgumentException) {
+        } catch (\InvalidArgumentException) {
             return;
         }
 
@@ -603,7 +601,7 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
 
         try {
             $channelName = new ChannelName($channelStr);
-        } catch (InvalidArgumentException) {
+        } catch (\InvalidArgumentException) {
             return;
         }
 
@@ -625,7 +623,7 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
 
         try {
             $channelName = new ChannelName($channelStr);
-        } catch (InvalidArgumentException) {
+        } catch (\InvalidArgumentException) {
             return;
         }
 
@@ -643,7 +641,7 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
 
         try {
             $channelName = new ChannelName($channelStr);
-        } catch (InvalidArgumentException) {
+        } catch (\InvalidArgumentException) {
             return;
         }
 
@@ -678,7 +676,7 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
 
         try {
             $channelName = new ChannelName($channelStr);
-        } catch (InvalidArgumentException) {
+        } catch (\InvalidArgumentException) {
             return;
         }
 
@@ -697,7 +695,7 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
         if (str_starts_with($target, '#')) {
             try {
                 $channelName = new ChannelName($target);
-            } catch (InvalidArgumentException) {
+            } catch (\InvalidArgumentException) {
                 return;
             }
 

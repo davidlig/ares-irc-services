@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Tests\Irc\Adapter\Runtime;
 
 use App\Irc\Adapter\Runtime\SessionEventPump;
-use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -90,7 +89,7 @@ final class SessionEventPumpTest extends TestCase
         $this->pump->enqueue(function () use (&$caught): void {
             try {
                 $this->pump->drain();
-            } catch (LogicException $e) {
+            } catch (\LogicException $e) {
                 $caught = true;
                 self::assertSame('SessionEventPump is already running.', $e->getMessage());
             } finally {
@@ -243,7 +242,7 @@ final class SessionEventPumpTest extends TestCase
         }
         self::assertSame(SessionEventPump::MAX_QUEUE_SIZE, $this->pump->getPeakQueueSize());
 
-        $this->expectException(LogicException::class);
+        $this->expectException(\LogicException::class);
         $this->pump->enqueue(static function (): void {});
     }
 
@@ -264,7 +263,7 @@ final class SessionEventPumpTest extends TestCase
         try {
             $this->pump->enqueueCoalesced('overflow', static function (): void {});
             self::fail('A coalesced task cannot exceed the hard queue capacity.');
-        } catch (LogicException $e) {
+        } catch (\LogicException $e) {
             self::assertSame('SessionEventPump queue capacity exceeded.', $e->getMessage());
         }
 

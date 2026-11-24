@@ -6,7 +6,6 @@ namespace App\Irc\Adapter\Runtime;
 
 use Amp\DeferredFuture;
 use Closure;
-use LogicException;
 use SplQueue;
 
 use function count;
@@ -23,7 +22,7 @@ final class SessionEventPump
     public const int READER_LOW_WATER = 1024;
 
     /** @var SplQueue<Closure(): void> */
-    private SplQueue $queue;
+    private \SplQueue $queue;
 
     /** @var array<string, Closure(): void> */
     private array $coalescedTasks = [];
@@ -42,7 +41,7 @@ final class SessionEventPump
 
     public function __construct()
     {
-        $this->queue = new SplQueue();
+        $this->queue = new \SplQueue();
     }
 
     /**
@@ -50,14 +49,14 @@ final class SessionEventPump
      *
      * @param Closure(): void $task
      */
-    public function enqueue(Closure $task): void
+    public function enqueue(\Closure $task): void
     {
         if ($this->stopped) {
             return;
         }
 
         if (count($this->queue) >= self::MAX_QUEUE_SIZE) {
-            throw new LogicException('SessionEventPump queue capacity exceeded.');
+            throw new \LogicException('SessionEventPump queue capacity exceeded.');
         }
 
         $this->queue->enqueue($task);
@@ -75,7 +74,7 @@ final class SessionEventPump
      *
      * @param Closure(): void $task
      */
-    public function enqueueCoalesced(string $key, Closure $task): void
+    public function enqueueCoalesced(string $key, \Closure $task): void
     {
         if ($this->stopped) {
             return;
@@ -94,7 +93,7 @@ final class SessionEventPump
                 unset($this->coalescedTasks[$key]);
                 $latest();
             });
-        } catch (LogicException $e) {
+        } catch (\LogicException $e) {
             unset($this->coalescedTasks[$key]);
             throw $e;
         }
@@ -122,7 +121,7 @@ final class SessionEventPump
     public function drain(): void
     {
         if ($this->running) {
-            throw new LogicException('SessionEventPump is already running.');
+            throw new \LogicException('SessionEventPump is already running.');
         }
 
         $this->running = true;
@@ -154,7 +153,7 @@ final class SessionEventPump
     public function stop(): void
     {
         $this->stopped = true;
-        $this->queue = new SplQueue();
+        $this->queue = new \SplQueue();
         $this->coalescedTasks = [];
         if (null !== $this->readerCapacity) {
             $capacity = $this->readerCapacity;

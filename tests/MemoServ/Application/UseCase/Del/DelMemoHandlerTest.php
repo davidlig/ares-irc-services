@@ -12,7 +12,6 @@ use App\MemoServ\Application\UseCase\Del\DelMemoHandler;
 use App\MemoServ\Application\UseCase\Del\DelMemoOutcome;
 use App\MemoServ\Application\UseCase\Del\DelMemoResult;
 use App\MemoServ\Domain\Entity\Memo;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -29,7 +28,7 @@ final class DelMemoHandlerTest extends TestCase
     #[Test]
     public function deletesNickMemoSuccessfully(): void
     {
-        $memo = new Memo(1, null, 2, 'To delete', new DateTimeImmutable());
+        $memo = new Memo(1, null, 2, 'To delete', new \DateTimeImmutable());
         $memoRepo = $this->createMock(MemoRepositoryInterface::class);
         $memoRepo->method('findByTargetNickAndIndex')->willReturn($memo);
         $memoRepo->expects(self::once())->method('delete')->with($memo);
@@ -64,7 +63,7 @@ final class DelMemoHandlerTest extends TestCase
         $channelPort->expects(self::once())->method('canManageChannelMemos')->with(5, 1)->willReturn(true);
         $this->channelPort = $channelPort;
 
-        $memo = new Memo(null, 5, 2, 'Channel memo', new DateTimeImmutable());
+        $memo = new Memo(null, 5, 2, 'Channel memo', new \DateTimeImmutable());
         $memoRepo = $this->createMock(MemoRepositoryInterface::class);
         $memoRepo->method('findByTargetChannelAndIndex')->willReturn($memo);
         $memoRepo->expects(self::once())->method('delete')->with($memo);

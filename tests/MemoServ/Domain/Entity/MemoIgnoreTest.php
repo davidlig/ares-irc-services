@@ -5,11 +5,9 @@ declare(strict_types=1);
 namespace App\Tests\MemoServ\Domain\Entity;
 
 use App\MemoServ\Domain\Entity\MemoIgnore;
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionProperty;
 
 #[CoversClass(MemoIgnore::class)]
 final class MemoIgnoreTest extends TestCase
@@ -37,7 +35,7 @@ final class MemoIgnoreTest extends TestCase
     #[Test]
     public function constructorThrowsWhenBothTargetsSet(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Exactly one of targetNickId or targetChannelId must be set');
 
         new MemoIgnore(10, 5, 20);
@@ -46,7 +44,7 @@ final class MemoIgnoreTest extends TestCase
     #[Test]
     public function constructorThrowsWhenNeitherTargetSet(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Exactly one of targetNickId or targetChannelId must be set');
 
         new MemoIgnore(null, null, 20);
@@ -56,7 +54,7 @@ final class MemoIgnoreTest extends TestCase
     public function getIdReturnsReflectedId(): void
     {
         $ignore = new MemoIgnore(1, null, 2);
-        $prop = new ReflectionProperty(MemoIgnore::class, 'id');
+        $prop = new \ReflectionProperty(MemoIgnore::class, 'id');
         $prop->setValue($ignore, 99);
 
         self::assertSame(99, $ignore->getId());

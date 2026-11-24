@@ -24,11 +24,9 @@ use App\NickServ\Application\UseCase\History\NickHistoryEntryView;
 use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
 use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
 use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Stringable;
 use Symfony\Component\Translation\Loader\ArrayLoader;
 use Symfony\Component\Translation\Translator;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -239,7 +237,7 @@ final class HistoryCommandTest extends TestCase
             entries: [
                 new NickHistoryEntryView(
                     id: 10,
-                    performedAt: new DateTimeImmutable('2026-09-06 12:00:00 UTC'),
+                    performedAt: new \DateTimeImmutable('2026-09-06 12:00:00 UTC'),
                     action: 'EMAIL_CHANGE',
                     performedBy: 'Admin',
                     performedByNickId: 1,
@@ -257,7 +255,7 @@ final class HistoryCommandTest extends TestCase
                 ),
                 new NickHistoryEntryView(
                     id: 2,
-                    performedAt: new DateTimeImmutable('2026-09-06 12:00:00 UTC'),
+                    performedAt: new \DateTimeImmutable('2026-09-06 12:00:00 UTC'),
                     action: 'MANUAL_NOTE',
                     performedBy: 'Oper2',
                     performedByNickId: null,
@@ -293,7 +291,7 @@ final class HistoryCommandTest extends TestCase
             targetNick: 'Target',
             entries: [new NickHistoryEntryView(
                 id: 11,
-                performedAt: new DateTimeImmutable('2026-09-06 12:00:00 UTC'),
+                performedAt: new \DateTimeImmutable('2026-09-06 12:00:00 UTC'),
                 action: 'SASET_MODES_CLEAR',
                 performedBy: 'Admin',
                 performedByNickId: 1,
@@ -395,7 +393,7 @@ final class HistoryCommandTest extends TestCase
     public function historyViewUsesStructuredHeaderActionAndNavigation(): void
     {
         $handler = $this->createStub(HistoryNickHandlerInterface::class);
-        $handler->method('handle')->willReturn(HistoryNickResult::viewSuccess('Alice', [new NickHistoryEntryView(1, new DateTimeImmutable('2026-01-01 UTC'), 'NOTE', 'Oper', null, true, '%nickname%')], 1, 1, 2, 1, 2, false));
+        $handler->method('handle')->willReturn(HistoryNickResult::viewSuccess('Alice', [new NickHistoryEntryView(1, new \DateTimeImmutable('2026-01-01 UTC'), 'NOTE', 'Oper', null, true, '%nickname%')], 1, 1, 2, 1, 2, false));
         $translator = new Translator('es');
         $translator->addLoader('yaml', new IrcYamlTranslationLoader());
         $translator->addResource('yaml', dirname(__DIR__, 6) . '/translations/nickserv.es.yaml', 'es', 'nickserv');
@@ -451,7 +449,7 @@ final class HistoryCommandTest extends TestCase
             ksort($params);
             $formatted = [];
             foreach ($params as $key => $value) {
-                $formatted[] = (string) $key . ': ' . (is_scalar($value) || $value instanceof Stringable ? (string) $value : '');
+                $formatted[] = (string) $key . ': ' . (is_scalar($value) || $value instanceof \Stringable ? (string) $value : '');
             }
 
             return $id . ' [' . implode(', ', $formatted) . ']';
@@ -494,7 +492,7 @@ final class HistoryCommandTest extends TestCase
     private function clock(): Clock
     {
         $clock = $this->createStub(Clock::class);
-        $clock->method('now')->willReturn(new DateTimeImmutable('2026-09-06 12:00:00 UTC'));
+        $clock->method('now')->willReturn(new \DateTimeImmutable('2026-09-06 12:00:00 UTC'));
 
         return $clock;
     }

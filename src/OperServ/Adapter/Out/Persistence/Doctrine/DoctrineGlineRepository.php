@@ -7,9 +7,7 @@ namespace App\OperServ\Adapter\Out\Persistence\Doctrine;
 use App\OperServ\Application\Port\Out\GlineEntry;
 use App\OperServ\Application\Port\Out\GlineRepository;
 use App\OperServ\Domain\Entity\Gline;
-use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
-use LogicException;
 
 use function array_filter;
 use function array_map;
@@ -61,7 +59,7 @@ final readonly class DoctrineGlineRepository implements GlineRepository
         return $this->entries($glines);
     }
 
-    public function findActiveAt(DateTimeImmutable $at): array
+    public function findActiveAt(\DateTimeImmutable $at): array
     {
         /** @var list<mixed> $glines */
         $glines = $this->entityManager
@@ -72,13 +70,13 @@ final readonly class DoctrineGlineRepository implements GlineRepository
         return $this->entries($glines);
     }
 
-    public function findExpiredAt(DateTimeImmutable $at, ?GlineEntry $after = null, ?int $limit = null): array
+    public function findExpiredAt(\DateTimeImmutable $at, ?GlineEntry $after = null, ?int $limit = null): array
     {
         $dql = 'SELECT g FROM %s g WHERE g.expiresAt IS NOT NULL AND g.expiresAt <= :at';
         $parameters = ['at' => $at];
         if (null !== $after) {
             if (null === $after->expiresAt || null === $after->id) {
-                throw new LogicException('GLINE expiry cursor must be a persisted expired entry.');
+                throw new \LogicException('GLINE expiry cursor must be a persisted expired entry.');
             }
             $dql .= ' AND g.expiresAt >= :afterExpiresAt AND (g.expiresAt > :afterExpiresAt OR g.id > :afterId)';
             $parameters['afterExpiresAt'] = $after->expiresAt;
@@ -106,7 +104,7 @@ final readonly class DoctrineGlineRepository implements GlineRepository
             ->getSingleScalarResult();
     }
 
-    public function save(string $mask, ?int $creatorAccountId, string $reason, DateTimeImmutable $createdAt, ?DateTimeImmutable $expiresAt): void
+    public function save(string $mask, ?int $creatorAccountId, string $reason, \DateTimeImmutable $createdAt, ?\DateTimeImmutable $expiresAt): void
     {
         $this->entityManager->persist(Gline::create($createdAt, $mask, $creatorAccountId, $reason, $expiresAt));
         $this->entityManager->flush();
@@ -152,7 +150,7 @@ final readonly class DoctrineGlineRepository implements GlineRepository
     {
         $id = $gline->getId();
         if (0 >= $id) {
-            throw new LogicException('Persisted GLINE entry must have an identifier.');
+            throw new \LogicException('Persisted GLINE entry must have an identifier.');
         }
 
         return new GlineEntry(

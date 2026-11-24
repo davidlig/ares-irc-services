@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace App\MemoServ\Domain\Entity;
 
-use DateTimeImmutable;
-use InvalidArgumentException;
-
 use function sprintf;
 use function strlen;
 
@@ -30,28 +27,28 @@ class Memo
 
     private string $message;
 
-    private DateTimeImmutable $createdAt;
+    private \DateTimeImmutable $createdAt;
 
-    private ?DateTimeImmutable $readAt = null;
+    private ?\DateTimeImmutable $readAt = null;
 
     public function __construct(
         ?int $targetNickId,
         ?int $targetChannelId,
         ?int $senderNickId,
         string $message,
-        DateTimeImmutable $createdAt,
+        \DateTimeImmutable $createdAt,
         ?string $senderName = null,
     ) {
         $nickSet = null !== $targetNickId;
         $channelSet = null !== $targetChannelId;
         if ($nickSet === $channelSet) {
-            throw new InvalidArgumentException('Exactly one of targetNickId or targetChannelId must be set.');
+            throw new \InvalidArgumentException('Exactly one of targetNickId or targetChannelId must be set.');
         }
         if ((null === $senderNickId) === (null === $senderName)) {
-            throw new InvalidArgumentException('Exactly one sender representation must be set.');
+            throw new \InvalidArgumentException('Exactly one sender representation must be set.');
         }
         if (null !== $senderName && '' === $senderName) {
-            throw new InvalidArgumentException('Service sender name cannot be empty.');
+            throw new \InvalidArgumentException('Service sender name cannot be empty.');
         }
         $this->targetNickId = $targetNickId;
         $this->targetChannelId = $targetChannelId;
@@ -92,12 +89,12 @@ class Memo
         return $this->message;
     }
 
-    public function getCreatedAt(): DateTimeImmutable
+    public function getCreatedAt(): \DateTimeImmutable
     {
         return $this->createdAt;
     }
 
-    public function getReadAt(): ?DateTimeImmutable
+    public function getReadAt(): ?\DateTimeImmutable
     {
         return $this->readAt;
     }
@@ -107,7 +104,7 @@ class Memo
         return null !== $this->readAt;
     }
 
-    public function markAsRead(DateTimeImmutable $at): void
+    public function markAsRead(\DateTimeImmutable $at): void
     {
         $this->readAt = $at;
     }
@@ -115,7 +112,7 @@ class Memo
     private static function assertValidMessage(string $message): void
     {
         if (strlen($message) > self::MESSAGE_MAX_LENGTH) {
-            throw new InvalidArgumentException(sprintf('Message cannot exceed %d characters.', self::MESSAGE_MAX_LENGTH));
+            throw new \InvalidArgumentException(sprintf('Message cannot exceed %d characters.', self::MESSAGE_MAX_LENGTH));
         }
     }
 }

@@ -4,11 +4,9 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Domain\Exception;
 
-use DomainException;
-
 use function sprintf;
 
-final class ChannelLimitExceededException extends DomainException
+final class ChannelLimitExceededException extends \DomainException
 {
     public static function forNickname(string $nickname, int $maxChannels): self
     {

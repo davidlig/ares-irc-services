@@ -4,11 +4,9 @@ declare(strict_types=1);
 
 namespace App\NickServ\Domain\Exception;
 
-use DomainException;
-
 use function sprintf;
 
-final class NickAlreadyRegisteredException extends DomainException
+final class NickAlreadyRegisteredException extends \DomainException
 {
     public function __construct(string $nickname)
     {

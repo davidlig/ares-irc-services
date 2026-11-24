@@ -13,7 +13,6 @@ use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use stdClass;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\VoterInterface;
 
@@ -70,7 +69,7 @@ final class IdentifiedVoterTest extends TestCase
         $context = $this->authorizationSubject('Alice', 42, true, false);
 
         self::assertSame(VoterInterface::ACCESS_ABSTAIN, $voter->vote($token, $context, ['OTHER']));
-        self::assertSame(VoterInterface::ACCESS_ABSTAIN, $voter->vote($token, new stdClass(), ['IDENTIFIED']));
+        self::assertSame(VoterInterface::ACCESS_ABSTAIN, $voter->vote($token, new \stdClass(), ['IDENTIFIED']));
     }
 
     private function authorizationSubject(?string $nickname, ?int $accountId, bool $identified, bool $ircOperator): IrcopAuthorizationSubject

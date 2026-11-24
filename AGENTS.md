@@ -14,7 +14,7 @@ for the current task; do not load every skill by default.
 - Doctrine ORM 3.6
 - PHPUnit 13
 - PHPStan 2.x at `--level=max`
-- PHP-CS-Fixer with `.php-cs-fixer.dist.php`
+- DressCode with `dresscode.neon`
 - Long-running IRC services daemon
 - Doctrine mappings are XML and live outside Domain code
 - All user-visible translation keys exist in all 14 supported languages:
@@ -456,7 +456,7 @@ Read `.agents/testing.md`.
 - PHPStan `max` reports zero errors;
 - do not add suppression comments to hide design/type problems;
 - do not add PHPStan baselines for new code;
-- follow `.php-cs-fixer.dist.php`;
+- follow `dresscode.neon`;
 - preserve project-enforced Yoda-condition style;
 - prefer cohesive classes over `Helper`, `Manager`, `Utils`, or broad `Service` buckets;
 - create interfaces only for real boundaries/substitutability/design reasons.
@@ -503,7 +503,7 @@ php bin/console lint:yaml . --exclude vendor/ --parse-tags
 
 ./vendor/bin/phpstan analyse src/ tests/ --level=max --error-format=raw --no-progress
 
-./vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php
+./vendor/bin/dresscode fix
 composer yaml-fix
 composer yaml-check
 
@@ -513,7 +513,7 @@ composer yaml-check
 Run any configured architecture dependency gate (for example Deptrac) at its project-defined step.
 
 Install the locked development formatter with `npm ci` (Node 24/npm; not production requirements).
-Run `composer yaml-fix` immediately after PHP-CS-Fixer. It formats all `.yaml` and `.yml` files
+Run `composer yaml-fix` immediately after DressCode. It formats all `.yaml` and `.yml` files
 under `config/`, `translations/` and `.github/workflows/`, plus root `deptrac.yaml`, using only
 the locally installed Prettier. Review formatting changes and run the non-mutating `composer yaml-check` before
 completion. For bulk normalization, compare before/after Symfony-parsed values, types and custom

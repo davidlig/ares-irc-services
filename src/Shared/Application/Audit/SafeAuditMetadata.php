@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Shared\Application\Audit;
 
-use InvalidArgumentException;
-
 use function in_array;
 use function is_scalar;
 use function is_string;
@@ -42,20 +40,20 @@ final class SafeAuditMetadata
         $safe = [];
         foreach ($metadata as $key => $value) {
             if (!is_string($key) || '' === trim($key)) {
-                throw new InvalidArgumentException('Command audit metadata keys must be non-empty strings.');
+                throw new \InvalidArgumentException('Command audit metadata keys must be non-empty strings.');
             }
 
             if (!is_scalar($value) && null !== $value) {
-                throw new InvalidArgumentException(sprintf('Command audit metadata "%s" must be scalar or null.', $key));
+                throw new \InvalidArgumentException(sprintf('Command audit metadata "%s" must be scalar or null.', $key));
             }
 
             $normalizedKey = self::normalize($key);
             if (self::containsSensitiveTerm($normalizedKey)) {
-                throw new InvalidArgumentException(sprintf('Sensitive command audit metadata key "%s" is forbidden.', $key));
+                throw new \InvalidArgumentException(sprintf('Sensitive command audit metadata key "%s" is forbidden.', $key));
             }
 
             if (in_array($normalizedKey, self::RAW_PAYLOAD_KEYS, true)) {
-                throw new InvalidArgumentException(sprintf('Raw command audit metadata key "%s" is forbidden.', $key));
+                throw new \InvalidArgumentException(sprintf('Raw command audit metadata key "%s" is forbidden.', $key));
             }
 
             $safe[$key] = $value;
@@ -76,7 +74,7 @@ final class SafeAuditMetadata
 
         foreach ($metadata as $key => $value) {
             if (str_contains(self::normalize($key), 'value') && null !== $value && '' !== $value) {
-                throw new InvalidArgumentException('Sensitive command audit options cannot include a value.');
+                throw new \InvalidArgumentException('Sensitive command audit options cannot include a value.');
             }
         }
     }

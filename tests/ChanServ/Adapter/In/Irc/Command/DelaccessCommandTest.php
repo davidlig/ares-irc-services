@@ -23,7 +23,6 @@ use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
 use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\Shared\Application\Port\EventBusInterface;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -56,7 +55,7 @@ final class DelaccessCommandTest extends TestCase
     #[Test]
     public function replyNotIdentifiedWhenSenderAccountNull(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 1, 'Desc');
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
@@ -99,7 +98,7 @@ final class DelaccessCommandTest extends TestCase
     #[Test]
     public function replyFounderNotInAccessWhenSenderIsFounder(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 1, 'Desc');
         $account = new ChanAccountView(1, 'User', 'en');
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
@@ -315,7 +314,7 @@ final class DelaccessCommandTest extends TestCase
     #[Test]
     public function founderCannotDeleteOwnAccessAsFounderNotInAccessList(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 1, 'Desc');
         $founderAccount = new ChanAccountView(1, 'Founder', 'en');
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);

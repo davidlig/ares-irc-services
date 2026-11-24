@@ -9,14 +9,11 @@ use App\OperServ\Adapter\In\Maintenance\PurgeExpiredMotdsTask;
 use App\OperServ\Application\Model\MessageDelivery;
 use App\OperServ\Application\Port\Out\MotdEntry;
 use App\OperServ\Application\Port\Out\MotdRepository;
-use DateTimeImmutable;
-use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
-use RuntimeException;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function array_filter;
@@ -66,7 +63,7 @@ final class PurgeExpiredMotdsTaskTest extends TestCase
     #[Test]
     public function runRemovesExpiredMotdsAndNotifiesDebug(): void
     {
-        $expired = new MotdEntry(1, 'Expired', 'Bot1', MessageDelivery::Interactive, true, new DateTimeImmutable('-2 hours'), new DateTimeImmutable('-1 hour'), 1);
+        $expired = new MotdEntry(1, 'Expired', 'Bot1', MessageDelivery::Interactive, true, new \DateTimeImmutable('-2 hours'), new \DateTimeImmutable('-1 hour'), 1);
 
         $motdRepository = $this->createMock(MotdRepository::class);
         $motdRepository->expects(self::once())->method('findExpiredAt')->willReturn([$expired]);
@@ -103,7 +100,7 @@ final class PurgeExpiredMotdsTaskTest extends TestCase
         $deleted = [];
         $motdRepository = $this->createMock(MotdRepository::class);
         $motdRepository->expects(self::exactly(2))->method('findExpiredAt')
-            ->willReturnCallback(function (DateTimeImmutable $at, ?MotdEntry $after, ?int $limit) use (&$loads): array {
+            ->willReturnCallback(function (\DateTimeImmutable $at, ?MotdEntry $after, ?int $limit) use (&$loads): array {
                 $loads[] = [$after?->id, $limit];
 
                 return null === $after ? [$this->expired(1), $this->expired(2)] : [$this->expired(3)];
@@ -126,7 +123,7 @@ final class PurgeExpiredMotdsTaskTest extends TestCase
     #[Test]
     public function aFailingDebugNoticeIsLoggedOnItsOwnAndTheExpiredMotdIsStillRemoved(): void
     {
-        $failure = new RuntimeException('debug channel unavailable');
+        $failure = new \RuntimeException('debug channel unavailable');
         $deleted = [];
         $motdRepository = $this->createMock(MotdRepository::class);
         $motdRepository->expects(self::once())->method('findExpiredAt')->willReturn([$this->expired(1), $this->expired(2)]);
@@ -169,7 +166,7 @@ final class PurgeExpiredMotdsTaskTest extends TestCase
         $state = new PurgeExpiredMotdsTestState([1, 2, 3, 4, 5, 6, 7]);
         $motdRepository = $this->createStub(MotdRepository::class);
         $motdRepository->method('findExpiredAt')->willReturnCallback(
-            function (DateTimeImmutable $at, ?MotdEntry $after, ?int $limit) use ($state): array {
+            function (\DateTimeImmutable $at, ?MotdEntry $after, ?int $limit) use ($state): array {
                 $state->loads[] = [$after?->id, $limit];
                 $page = array_values(array_filter($state->ids, static fn (int $id): bool => $id > ($after->id ?? 0)));
 
@@ -212,7 +209,7 @@ final class PurgeExpiredMotdsTaskTest extends TestCase
 
     private function expired(int $id): MotdEntry
     {
-        return new MotdEntry($id, 'Expired ' . $id, 'Bot1', MessageDelivery::Interactive, true, new DateTimeImmutable('-2 hours'), new DateTimeImmutable('-1 hour'), 0);
+        return new MotdEntry($id, 'Expired ' . $id, 'Bot1', MessageDelivery::Interactive, true, new \DateTimeImmutable('-2 hours'), new \DateTimeImmutable('-1 hour'), 0);
     }
 
     private function createTask(
@@ -228,7 +225,7 @@ final class PurgeExpiredMotdsTaskTest extends TestCase
             if ('motd.list.shown_count' === $id) {
                 $count = $params['%count%'] ?? null;
                 if (!is_string($count)) {
-                    throw new LogicException('Expected a string MOTD count.');
+                    throw new \LogicException('Expected a string MOTD count.');
                 }
 
                 return 'shown ' . $count . ' times';
@@ -241,7 +238,7 @@ final class PurgeExpiredMotdsTaskTest extends TestCase
                 $date = $params['%date%'] ?? null;
                 $shownCount = $params['%shown_count%'] ?? null;
                 if (!is_string($idValue) || !is_string($type) || !is_string($message) || !is_string($date) || !is_string($shownCount)) {
-                    throw new LogicException('Expected string MOTD translation parameters.');
+                    throw new \LogicException('Expected string MOTD translation parameters.');
                 }
 
                 return 'MOTD message #' . $idValue . ' has ended: [' . $type . '] ' . $message . ' | ' . $date . ' | ' . $shownCount;

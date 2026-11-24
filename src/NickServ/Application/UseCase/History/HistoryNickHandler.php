@@ -8,7 +8,6 @@ use App\NickServ\Application\Port\Out\NickHistoryRepositoryInterface;
 use App\NickServ\Application\Port\Out\NickTransactionBoundary;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\Service\NickHistoryService;
-use LogicException;
 
 use function array_values;
 use function ceil;
@@ -78,7 +77,7 @@ final readonly class HistoryNickHandler implements HistoryNickHandlerInterface
     {
         $actorNickname = $command->operatorNick;
         if (null === $actorNickname) {
-            throw new LogicException('HISTORY CLEAR requires its originating nickname.');
+            throw new \LogicException('HISTORY CLEAR requires its originating nickname.');
         }
 
         $count = $this->transactionBoundary->transactional(function () use ($command, $nickId, $actorNickname): int {
@@ -96,7 +95,7 @@ final readonly class HistoryNickHandler implements HistoryNickHandlerInterface
         });
 
         if (!is_int($count)) {
-            throw new LogicException('Nick history transaction must return the deleted count.');
+            throw new \LogicException('Nick history transaction must return the deleted count.');
         }
 
         return HistoryNickResult::clearSuccess($command->nickname, $count);

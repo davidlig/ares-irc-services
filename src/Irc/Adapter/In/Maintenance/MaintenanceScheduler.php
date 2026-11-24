@@ -8,7 +8,6 @@ use App\Irc\Adapter\Out\Persistence\ClosedEntityManagerReset;
 use App\Irc\Application\Port\In\Maintenance\MaintenanceTaskInterface;
 use App\Irc\Application\Port\In\Maintenance\PrerequisiteAwareMaintenanceTaskInterface;
 use Psr\Log\LoggerInterface;
-use Throwable;
 
 use function count;
 use function hrtime;
@@ -102,7 +101,7 @@ final class MaintenanceScheduler
                     'task' => $task->getName(),
                     'duration_ms' => round($durationMs, 2),
                 ]);
-            } catch (Throwable $e) {
+            } catch (\Throwable $e) {
                 $blocked[$task->getName()] = true;
                 $tasksFailed[] = $task->getName();
                 $this->logger->error('Maintenance task failed', [

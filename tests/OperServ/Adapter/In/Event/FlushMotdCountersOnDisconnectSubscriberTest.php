@@ -11,7 +11,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-use RuntimeException;
 
 #[CoversClass(FlushMotdCountersOnDisconnectSubscriber::class)]
 final class FlushMotdCountersOnDisconnectSubscriberTest extends TestCase
@@ -29,7 +28,7 @@ final class FlushMotdCountersOnDisconnectSubscriberTest extends TestCase
     public function failedFlushDoesNotInterruptDisconnect(): void
     {
         $flusher = $this->createMock(MotdCounterFlusher::class);
-        $flusher->expects(self::once())->method('flushShownCounts')->willThrowException(new RuntimeException('database unavailable'));
+        $flusher->expects(self::once())->method('flushShownCounts')->willThrowException(new \RuntimeException('database unavailable'));
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects(self::once())->method('error');
 

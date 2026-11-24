@@ -28,11 +28,9 @@ use App\Shared\Adapter\In\Irc\Presentation\Appearance;
 use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
 use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
 use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Stringable;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function implode;
@@ -198,7 +196,7 @@ final class SendCommandTest extends TestCase
     {
         $sender = new SenderView('001ABC', 'TestUser', 'ident', 'host', 'cloak', 'ip');
         $account = new MemoAccountView(1, 'TestUser', 'en');
-        $before = new DateTimeImmutable();
+        $before = new \DateTimeImmutable();
 
         $handler = $this->createMock(SendMemoHandlerInterface::class);
         $handler->expects(self::once())
@@ -422,7 +420,7 @@ final class SendCommandTest extends TestCase
                 ksort($params);
                 $formatted = [];
                 foreach ($params as $key => $value) {
-                    $formatted[] = (string) $key . ': ' . (is_scalar($value) || $value instanceof Stringable ? (string) $value : '');
+                    $formatted[] = (string) $key . ': ' . (is_scalar($value) || $value instanceof \Stringable ? (string) $value : '');
                 }
 
                 return $id . ' [' . implode(', ', $formatted) . ']';

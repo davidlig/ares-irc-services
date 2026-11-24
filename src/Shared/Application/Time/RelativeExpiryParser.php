@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace App\Shared\Application\Time;
 
-use DateInterval;
-use DateTimeImmutable;
-
 use function preg_match;
 use function strtolower;
 use function trim;
@@ -15,7 +12,7 @@ final readonly class RelativeExpiryParser
 {
     private const string RELATIVE_PATTERN = '/^(\d+)([dhm])$/';
 
-    public static function parse(string $value, DateTimeImmutable $now): ?DateTimeImmutable
+    public static function parse(string $value, \DateTimeImmutable $now): ?\DateTimeImmutable
     {
         $value = self::normalize($value);
 
@@ -28,7 +25,7 @@ final readonly class RelativeExpiryParser
             return null;
         }
 
-        return $now->add(new DateInterval(self::intervalSpec((int) $matches[1], $matches[2])));
+        return $now->add(new \DateInterval(self::intervalSpec((int) $matches[1], $matches[2])));
     }
 
     public static function isPermanent(string $value): bool

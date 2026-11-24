@@ -27,11 +27,9 @@ use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
 use App\Irc\Application\Port\In\ServiceNicknameRegistry;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
 use Symfony\Component\Translation\Translator;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -53,7 +51,7 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function infoUsesLocalizedStyledLabelAndFounderFragment(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#Test', 1, 'Desc');
         $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channels->method('findByChannelName')->willReturn($channel);
         $accounts = $this->createStub(ChanUserAccountPort::class);
@@ -73,7 +71,7 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function infoRendersVerboseInOptionsWhenEnabledWithTranslator(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#Test', 1, 'Desc');
         $channel->configureTopicLock(true);
         $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channels->method('findByChannelName')->willReturn($channel);
@@ -98,7 +96,7 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function infoOmitsVerboseFromOptionsWhenDisabledWithTranslator(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#Test', 1, 'Desc');
         $channel->configureTopicLock(true);
         $channel->configureVerbose(false);
         $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
@@ -144,8 +142,8 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function showsPendingDeletionStatus(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Desc');
-        $channel->markPendingDeletion(new DateTimeImmutable('2026-05-01 12:00:00'));
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 1, 'Desc');
+        $channel->markPendingDeletion(new \DateTimeImmutable('2026-05-01 12:00:00'));
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $nickRepo = $this->createStub(ChanUserAccountPort::class);
@@ -186,7 +184,7 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function successRepliesHeaderFounderAndFooter(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#Test', 1, 'Desc');
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $founder = new ChanAccountView(1, 'FounderNick', 'en');
@@ -212,7 +210,7 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function showsSuccessorWhenSet(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#Test', 1, 'Desc');
         $channel->assignSuccessor(2);
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
@@ -238,7 +236,7 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function showsDescriptionWhenSet(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'My Channel Description');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#Test', 1, 'My Channel Description');
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $founder = new ChanAccountView(1, 'FounderNick', 'en');
@@ -262,7 +260,7 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function showsUrlWhenSet(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#Test', 1, 'Desc');
         $channel->updateUrl('https://example.com');
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
@@ -287,7 +285,7 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function showsEmailWhenSet(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#Test', 1, 'Desc');
         $channel->updateEmail('test@example.com');
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
@@ -312,10 +310,10 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function showsUrlAndEmailAfterTopicAndTopicSetter(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#Test', 1, 'Desc');
         $channel->updateUrl('https://example.com');
         $channel->updateEmail('test@example.com');
-        $channel->updateTopic('Welcome', new DateTimeImmutable('2026-01-01 00:00:00'), 'TopicSetter');
+        $channel->updateTopic('Welcome', new \DateTimeImmutable('2026-01-01 00:00:00'), 'TopicSetter');
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $nickRepo = $this->createStub(ChanUserAccountPort::class);
@@ -338,7 +336,7 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function omitsOptionsWhenAllChannelOptionsAreOff(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#Test', 1, 'Desc');
         $channel->configureVerbose(false);
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
@@ -363,7 +361,7 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function showsOnlyEnabledChannelOptions(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#Test', 1, 'Desc');
         $channel->configureTopicLock(true);
         $channel->configureMlock(true, '+nt');
         $channel->configureSecure(true);
@@ -395,7 +393,7 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function showsVerboseAppendedAfterExistingEnabledOptionsWhenEnabled(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#Test', 1, 'Desc');
         $channel->configureTopicLock(true);
         $channel->configureMlock(true, '+nt');
         $channel->configureSecure(true);
@@ -431,7 +429,7 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function showsVerboseAloneWhenOnlyVerboseIsEnabled(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#Test', 1, 'Desc');
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $nickRepo = $this->createStub(ChanUserAccountPort::class);
@@ -462,7 +460,7 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function showsIrcopOnlyWhenEnabled(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#Test', 1, 'Desc');
         $channel->configureIrcopOnly(true);
         $channel->configureVerbose(false);
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
@@ -492,7 +490,7 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function neverEmitsStandaloneVerboseRowWhenVerboseIsEnabled(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#Test', 1, 'Desc');
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $nickRepo = $this->createStub(ChanUserAccountPort::class);
@@ -523,7 +521,7 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function neverEmitsStandaloneVerboseRowWhenVerboseIsDisabled(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#Test', 1, 'Desc');
         $channel->configureVerbose(false);
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
@@ -555,7 +553,7 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function privateInfoDeniesUnidentifiedCallersBeforeAnyOtherOutput(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#Test', 1, 'Desc');
         $channel->configurePrivate(true);
         $channel->suspend('Sensitive status');
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
@@ -576,9 +574,9 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function privateInfoAllowsIdentifiedAccessEntry(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#Test', 1, 'Desc');
         $channel->configurePrivate(true);
-        new ReflectionClass($channel)->getProperty('id')->setValue($channel, 1);
+        new \ReflectionClass($channel)->getProperty('id')->setValue($channel, 1);
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $access = $this->createStub(ChannelAccessRepositoryInterface::class);
@@ -609,9 +607,9 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function privateInfoDeniesIdentifiedCallerWithoutAccessEntry(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#Test', 1, 'Desc');
         $channel->configurePrivate(true);
-        new ReflectionClass($channel)->getProperty('id')->setValue($channel, 1);
+        new \ReflectionClass($channel)->getProperty('id')->setValue($channel, 1);
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $access = $this->createStub(ChannelAccessRepositoryInterface::class);
@@ -645,7 +643,7 @@ final class InfoCommandTest extends TestCase
             [new ChanAccountView(1, 'Founder', 'en'), new SenderView('UID1', 'Founder', 'i', 'h', 'c', 'ip', isIdentified: true)],
             [null, new SenderView('UID2', 'Oper', 'i', 'h', 'c', 'ip', isOper: true)],
         ] as [$account, $sender]) {
-            $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
+            $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#Test', 1, 'Desc');
             $channel->configurePrivate(true);
             $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
             $channelRepo->method('findByChannelName')->willReturn($channel);
@@ -670,8 +668,8 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function showsTopicWhenSet(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
-        $channel->updateTopic('Welcome to the channel', new DateTimeImmutable('2026-01-01 00:00:00'), 'TopicSetter');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channel->updateTopic('Welcome to the channel', new \DateTimeImmutable('2026-01-01 00:00:00'), 'TopicSetter');
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $founder = new ChanAccountView(1, 'FounderNick', 'en');
@@ -696,7 +694,7 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function showsMlockWhenActive(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#Test', 1, 'Desc');
         $channel->configureMlock(true, '+nt');
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
@@ -721,7 +719,7 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function showsMlockNoModesWhenActiveButEmpty(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#Test', 1, 'Desc');
         $channel->configureMlock(true, '');
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
@@ -849,7 +847,7 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function showsSuspendedStatusForSuspendedChannel(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#Test', 1, 'Desc');
         $channel->suspend('Abuse violation');
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
@@ -876,8 +874,8 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function showsSuspendedStatusWithExpiryForTimedSuspension(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
-        $channel->suspend('Spam', new DateTimeImmutable('+7 days'));
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channel->suspend('Spam', new \DateTimeImmutable('+7 days'));
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $founder = new ChanAccountView(1, 'FounderNick', 'en');
@@ -903,7 +901,7 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function showsSuspendedStatusWithoutReasonWhenReasonIsNull(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#Test', 1, 'Desc');
         $channel->suspend('Abuse', null);
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
@@ -949,7 +947,7 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function showsForbiddenStatusForForbiddenChannel(): void
     {
-        $channel = RegisteredChannel::createForbidden(new DateTimeImmutable(), '#Test', 'Spam channel');
+        $channel = RegisteredChannel::createForbidden(new \DateTimeImmutable(), '#Test', 'Spam channel');
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
 
@@ -975,8 +973,8 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function showsForbiddenStatusWithoutReasonWhenReasonIsNull(): void
     {
-        $reflection = new ReflectionClass(RegisteredChannel::class);
-        $channel = RegisteredChannel::createForbidden(new DateTimeImmutable(), '#Test', 'Some reason');
+        $reflection = new \ReflectionClass(RegisteredChannel::class);
+        $channel = RegisteredChannel::createForbidden(new \DateTimeImmutable(), '#Test', 'Some reason');
         $reasonProp = $reflection->getProperty('forbiddenReason');
         $reasonProp->setValue($channel, null);
 
@@ -1002,7 +1000,7 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function showsNoExpireLineWhenNoExpireIsOn(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#Test', 1, 'Desc');
         $channel->changeNoExpire(true);
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
@@ -1027,7 +1025,7 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function doesNotShowNoExpireLineWhenNoExpireIsOff(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#Test', 1, 'Desc');
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $founder = new ChanAccountView(1, 'FounderNick', 'en');
@@ -1051,8 +1049,8 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function hidesTopicWhenChannelHasSecretMode(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
-        $channel->updateTopic('Secret topic', new DateTimeImmutable('2026-01-01 00:00:00'), 'TopicSetter');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channel->updateTopic('Secret topic', new \DateTimeImmutable('2026-01-01 00:00:00'), 'TopicSetter');
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $founder = new ChanAccountView(1, 'FounderNick', 'en');
@@ -1079,8 +1077,8 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function hidesTopicWhenChannelHasPrivateMode(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
-        $channel->updateTopic('Private topic', new DateTimeImmutable('2026-01-01 00:00:00'), 'TopicSetter');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channel->updateTopic('Private topic', new \DateTimeImmutable('2026-01-01 00:00:00'), 'TopicSetter');
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $founder = new ChanAccountView(1, 'FounderNick', 'en');
@@ -1107,8 +1105,8 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function showsTopicWhenSenderIsFounderEvenWithSecretMode(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
-        $channel->updateTopic('Secret topic', new DateTimeImmutable('2026-01-01 00:00:00'), 'TopicSetter');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channel->updateTopic('Secret topic', new \DateTimeImmutable('2026-01-01 00:00:00'), 'TopicSetter');
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $founder = new ChanAccountView(1, 'FounderNick', 'en');
@@ -1139,8 +1137,8 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function showsTopicWhenSenderIsOperEvenWithPrivateMode(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
-        $channel->updateTopic('Private topic', new DateTimeImmutable('2026-01-01 00:00:00'), 'TopicSetter');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channel->updateTopic('Private topic', new \DateTimeImmutable('2026-01-01 00:00:00'), 'TopicSetter');
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $founder = new ChanAccountView(1, 'FounderNick', 'en');
@@ -1169,8 +1167,8 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function hidesTopicWhenSenderIdentifiedButNotFounderWithPrivateMode(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
-        $channel->updateTopic('Private topic', new DateTimeImmutable('2026-01-01 00:00:00'), 'TopicSetter');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channel->updateTopic('Private topic', new \DateTimeImmutable('2026-01-01 00:00:00'), 'TopicSetter');
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $founder = new ChanAccountView(1, 'FounderNick', 'en');
@@ -1201,8 +1199,8 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function hidesTopicWhenSenderNullAndChannelHasSecretMode(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
-        $channel->updateTopic('Secret topic', new DateTimeImmutable('2026-01-01 00:00:00'), 'TopicSetter');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channel->updateTopic('Secret topic', new \DateTimeImmutable('2026-01-01 00:00:00'), 'TopicSetter');
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $founder = new ChanAccountView(1, 'FounderNick', 'en');
@@ -1247,8 +1245,8 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function showsTopicWhenChannelHasNoSecretOrPrivateMode(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
-        $channel->updateTopic('Public topic', new DateTimeImmutable('2026-01-01 00:00:00'), 'TopicSetter');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channel->updateTopic('Public topic', new \DateTimeImmutable('2026-01-01 00:00:00'), 'TopicSetter');
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $founder = new ChanAccountView(1, 'FounderNick', 'en');
@@ -1275,8 +1273,8 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function hidesTopicWhenMlockContainsSecretMode(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
-        $channel->updateTopic('Secret topic via MLOCK', new DateTimeImmutable('2026-01-01 00:00:00'), 'TopicSetter');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channel->updateTopic('Secret topic via MLOCK', new \DateTimeImmutable('2026-01-01 00:00:00'), 'TopicSetter');
         $channel->configureMlock(true, '+nts');
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
@@ -1304,8 +1302,8 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function hidesTopicWhenMlockContainsPrivateMode(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
-        $channel->updateTopic('Private topic via MLOCK', new DateTimeImmutable('2026-01-01 00:00:00'), 'TopicSetter');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channel->updateTopic('Private topic via MLOCK', new \DateTimeImmutable('2026-01-01 00:00:00'), 'TopicSetter');
         $channel->configureMlock(true, '+ntp');
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
@@ -1333,8 +1331,8 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function showsTopicWhenMlockHasNoSecretOrPrivate(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
-        $channel->updateTopic('Public topic with MLOCK', new DateTimeImmutable('2026-01-01 00:00:00'), 'TopicSetter');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channel->updateTopic('Public topic with MLOCK', new \DateTimeImmutable('2026-01-01 00:00:00'), 'TopicSetter');
         $channel->configureMlock(true, '+nt');
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);

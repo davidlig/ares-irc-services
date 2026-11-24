@@ -8,7 +8,6 @@ use App\ChanServ\Domain\Policy\ChannelAccessPolicy;
 use App\ChanServ\Domain\ValueObject\AccessLevel;
 use App\ChanServ\Domain\ValueObject\ChannelLevel;
 use App\ChanServ\Domain\ValueObject\ChannelLevelSet;
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -66,10 +65,10 @@ final class ChannelAccessPolicyTest extends TestCase
         try {
             AccessLevel::fromEffective(501);
             self::fail('Expected invalid effective access.');
-        } catch (InvalidArgumentException) {
+        } catch (\InvalidArgumentException) {
         }
 
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         AccessLevel::fromStored(0);
     }
 
@@ -102,10 +101,10 @@ final class ChannelAccessPolicyTest extends TestCase
         try {
             ChannelLevelSet::fromOverrides(['UNKNOWN' => 1]);
             self::fail('Expected unknown level failure.');
-        } catch (InvalidArgumentException) {
+        } catch (\InvalidArgumentException) {
         }
 
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         ChannelLevelSet::defaults()->withOverride(ChannelLevel::NoJoin, 500);
     }
 

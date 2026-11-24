@@ -13,7 +13,6 @@ use App\ChanServ\Domain\ValueObject\ChannelModeLock;
 use App\Shared\Adapter\In\Irc\Presentation\Component;
 use App\Shared\Adapter\In\Irc\Presentation\Fragment;
 use App\Shared\Adapter\In\Irc\Presentation\Role;
-use DateTimeImmutable;
 
 use function array_map;
 use function implode;
@@ -44,7 +43,7 @@ final readonly class SetMlockHandler implements SetOptionHandlerInterface
             $channel,
             $modeLock,
             $context->sender->nick,
-            new DateTimeImmutable(),
+            new \DateTimeImmutable(),
         ));
         $modesDisplay = '';
         if ($on) {

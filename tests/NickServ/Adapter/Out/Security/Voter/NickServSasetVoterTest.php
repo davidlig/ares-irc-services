@@ -16,8 +16,6 @@ use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
-use stdClass;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\VoterInterface;
 
@@ -76,7 +74,7 @@ final class NickServSasetVoterTest extends TestCase
         $token = $this->createStub(TokenInterface::class);
 
         self::assertSame(VoterInterface::ACCESS_ABSTAIN, $voter->vote($token, $this->createNickServContext(null, null), ['OTHER']));
-        self::assertSame(VoterInterface::ACCESS_ABSTAIN, $voter->vote($token, new stdClass(), [NickServPermission::SASET]));
+        self::assertSame(VoterInterface::ACCESS_ABSTAIN, $voter->vote($token, new \stdClass(), [NickServPermission::SASET]));
     }
 
     private function sender(string $nickname, bool $identified, bool $ircOperator): SenderView
@@ -86,7 +84,7 @@ final class NickServSasetVoterTest extends TestCase
 
     private function createNickServContext(?SenderView $sender, ?RegisteredNick $account): NickServContext
     {
-        $reflection = new ReflectionClass(NickServContext::class);
+        $reflection = new \ReflectionClass(NickServContext::class);
         $context = $reflection->newInstanceWithoutConstructor();
         $reflection->getProperty('sender')->setValue($context, $sender);
         $reflection->getProperty('senderAccount')->setValue($context, $account);

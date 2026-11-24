@@ -7,8 +7,6 @@ namespace App\Irc\Domain\Network;
 use App\Irc\Domain\ValueObject\CaseMapping;
 use App\Irc\Domain\ValueObject\ChannelName;
 use App\Irc\Domain\ValueObject\Uid;
-use DateTimeImmutable;
-use DateTimeInterface;
 
 use function array_filter;
 use function array_values;
@@ -45,7 +43,7 @@ class Channel
     public function __construct(
         public readonly ChannelName $name,
         string $modes,
-        private DateTimeImmutable $createdAt,
+        private \DateTimeImmutable $createdAt,
         private CaseMapping $caseMapping = CaseMapping::Ascii,
     ) {
         $this->modes = $modes;
@@ -155,12 +153,12 @@ class Channel
         }
     }
 
-    public function getCreatedAt(): DateTimeImmutable
+    public function getCreatedAt(): \DateTimeImmutable
     {
         return $this->createdAt;
     }
 
-    public function updateCreatedAt(DateTimeImmutable $ts): void
+    public function updateCreatedAt(\DateTimeImmutable $ts): void
     {
         $this->createdAt = $ts;
     }
@@ -247,7 +245,7 @@ class Channel
             'modes' => $this->modes,
             'topic' => $this->topic,
             'members' => $this->getMemberCount(),
-            'createdAt' => $this->createdAt->format(DateTimeInterface::ATOM),
+            'createdAt' => $this->createdAt->format(\DateTimeInterface::ATOM),
         ];
     }
 

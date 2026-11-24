@@ -16,7 +16,6 @@ use App\NickServ\Application\UseCase\Info\InfoNickResult;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\NickServ\Domain\ValueObject\NickStatus;
 use App\Tests\NickServ\Support\NegotiatedCaseMapping;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -26,7 +25,7 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(InfoNickResult::class)]
 final class InfoNickHandlerTest extends TestCase
 {
-    private DateTimeImmutable $now;
+    private \DateTimeImmutable $now;
 
     #[Test]
     public function returnsNotRegisteredWhenNotFound(): void
@@ -262,7 +261,7 @@ final class InfoNickHandlerTest extends TestCase
     public function neverOnlineNickReportsItsRegistrationDateAsLastSeen(): void
     {
         // Intended since #172: INFO shows the registration date instead of "never seen".
-        $registeredAt = new DateTimeImmutable('2026-01-01 12:00:00 UTC');
+        $registeredAt = new \DateTimeImmutable('2026-01-01 12:00:00 UTC');
         $nick = RegisteredNick::createActive('NeverOnline', 'hash', null, 'en', $registeredAt);
         $repository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $repository->method('findByNick')->willReturn($nick);
@@ -300,7 +299,7 @@ final class InfoNickHandlerTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->now = new DateTimeImmutable('2026-09-06 16:00:00 UTC');
+        $this->now = new \DateTimeImmutable('2026-09-06 16:00:00 UTC');
     }
 
     private function createHandler(

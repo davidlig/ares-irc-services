@@ -21,11 +21,9 @@ use App\ChanServ\Domain\Entity\ChannelAkick;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use ArrayObject;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RuntimeException;
 
 use function array_count_values;
 use function array_intersect;
@@ -40,7 +38,7 @@ use function strtolower;
 #[CoversClass(SynchronizeAllChannelAkicksHandler::class)]
 final class EnforceChannelAkickHandlerTest extends TestCase
 {
-    private DateTimeImmutable $now;
+    private \DateTimeImmutable $now;
 
     #[Test]
     public function joinSkipsUnavailableBlockedAndMissingMembers(): void
@@ -61,9 +59,9 @@ final class EnforceChannelAkickHandlerTest extends TestCase
     public function firstCurrentMatchIsEnforcedWithFallbackAndOperatorsAreExempt(): void
     {
         $channel = $this->channel();
-        $expired = ChannelAkick::create(new DateTimeImmutable(), 1, 2, '*!*@example.test', 'expired', new DateTimeImmutable('2026-09-07 11:59:59 UTC'));
-        $first = ChannelAkick::create(new DateTimeImmutable(), 1, 2, 'nick!*@example.test');
-        $later = ChannelAkick::create(new DateTimeImmutable(), 1, 2, 'nick!*@*', 'later');
+        $expired = ChannelAkick::create(new \DateTimeImmutable(), 1, 2, '*!*@example.test', 'expired', new \DateTimeImmutable('2026-09-07 11:59:59 UTC'));
+        $first = ChannelAkick::create(new \DateTimeImmutable(), 1, 2, 'nick!*@example.test');
+        $later = ChannelAkick::create(new \DateTimeImmutable(), 1, 2, 'nick!*@*', 'later');
         $akicks = $this->createStub(ChannelAkickRepositoryInterface::class);
         $akicks->method('listByChannel')->willReturn([$expired, $first, $later]);
         $actions = $this->createMock(AkickActions::class);
@@ -108,10 +106,10 @@ final class EnforceChannelAkickHandlerTest extends TestCase
     public function oneEnforcementPassFoldsEachRulePatternOnceAndEachMemberMaskOnce(): void
     {
         /** @var ArrayObject<int, string> $folded */
-        $folded = new ArrayObject();
+        $folded = new \ArrayObject();
         $fold = new readonly class($folded) implements NetworkIdentityFold {
             /** @param ArrayObject<int, string> $folded */
-            public function __construct(private ArrayObject $folded) {}
+            public function __construct(private \ArrayObject $folded) {}
 
             public function fold(string $value): string
             {
@@ -195,7 +193,7 @@ final class EnforceChannelAkickHandlerTest extends TestCase
     #[Test]
     public function matchingAkickIncrementsUsesAndRecordsLastUsedAtAndSaves(): void
     {
-        $akick = ChannelAkick::create(new DateTimeImmutable(), 1, 2, '*!*@example.test');
+        $akick = ChannelAkick::create(new \DateTimeImmutable(), 1, 2, '*!*@example.test');
         self::assertSame(0, $akick->getUses());
         self::assertNull($akick->getLastUsedAt());
 
@@ -253,7 +251,7 @@ final class EnforceChannelAkickHandlerTest extends TestCase
         $akicks->method('listByChannel')->willReturn([$akick]);
         $akicks->expects(self::once())->method('saveAll')->with([$akick]);
         $actions = $this->createStub(AkickActions::class);
-        $actions->method('banAndKick')->willThrowException(new RuntimeException('network failed'));
+        $actions->method('banAndKick')->willThrowException(new \RuntimeException('network failed'));
         $handler = $this->handler(
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $akicks,
@@ -263,7 +261,7 @@ final class EnforceChannelAkickHandlerTest extends TestCase
         try {
             $handler->handleKnownChannel($this->channel(), [$this->member('001A', 'nick!i@example.test')], $this->now);
             self::fail('The network error must propagate.');
-        } catch (RuntimeException $error) {
+        } catch (\RuntimeException $error) {
             self::assertSame('network failed', $error->getMessage());
         }
         self::assertSame(1, $akick->getUses());
@@ -275,7 +273,7 @@ final class EnforceChannelAkickHandlerTest extends TestCase
     {
         $akicks = $this->createStub(ChannelAkickRepositoryInterface::class);
         $akicks->method('listByChannel')->willReturn([
-            ChannelAkick::create(new DateTimeImmutable(), 1, 2, '*!*@example.test', 'reason', $this->now),
+            ChannelAkick::create(new \DateTimeImmutable(), 1, 2, '*!*@example.test', 'reason', $this->now),
         ]);
         $actions = $this->createMock(AkickActions::class);
         $actions->expects(self::once())->method('banAndKick')->with('#Test', '001A', '*!*@example.test', 'reason');
@@ -296,7 +294,7 @@ final class EnforceChannelAkickHandlerTest extends TestCase
         $network = $this->createStub(ChannelEntryNetworkQuery::class);
         $network->method('findMember')->willReturn($this->member('001A', 'nick!ident@example.test'));
         $akicks = $this->createStub(ChannelAkickRepositoryInterface::class);
-        $akicks->method('listByChannel')->willReturn([ChannelAkick::create(new DateTimeImmutable(), 1, 2, '*!*@example.test')]);
+        $akicks->method('listByChannel')->willReturn([ChannelAkick::create(new \DateTimeImmutable(), 1, 2, '*!*@example.test')]);
         $actions = $this->createMock(AkickActions::class);
         $actions->expects(self::once())->method('banAndKick')->with('#Test', '001A', '*!*@example.test', 'AKICK: *!*@example.test');
 
@@ -343,7 +341,7 @@ final class EnforceChannelAkickHandlerTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->now = new DateTimeImmutable('2026-09-07 12:00:00 UTC');
+        $this->now = new \DateTimeImmutable('2026-09-07 12:00:00 UTC');
     }
 
     private function handler(

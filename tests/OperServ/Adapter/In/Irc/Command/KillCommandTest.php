@@ -27,7 +27,6 @@ use App\OperServ\Application\UseCase\Kill\KillNetworkUserResult;
 use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
 use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
 use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -98,12 +97,12 @@ final class KillCommandTest extends TestCase
         $network = new KillCommandNetwork($trace);
         $audit = new KillCommandAudit($trace);
         $translation = new KillCommandTranslation();
-        $before = new DateTimeImmutable();
+        $before = new \DateTimeImmutable();
 
         new KillCommand($this->handler(new KillCommandUsers(['Target' => $target]), new KillCommandRoots(), $network, $audit))
             ->execute($this->context(['Target', 'repeated', 'abuse'], $translation, new KillCommandNotifier($trace)));
 
-        $after = new DateTimeImmutable();
+        $after = new \DateTimeImmutable();
         self::assertSame(['effect', 'audit', 'reply'], $trace->events);
         self::assertSame([['001BBB', 'Killed (OperServ: RootOper): repeated abuse']], $network->kills);
         self::assertNotNull($audit->record);

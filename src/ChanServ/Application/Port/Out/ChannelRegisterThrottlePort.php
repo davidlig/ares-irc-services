@@ -4,11 +4,9 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Application\Port\Out;
 
-use DateTimeImmutable;
-
 interface ChannelRegisterThrottlePort
 {
-    public function getLastRegistrationAt(int $nickId): ?DateTimeImmutable;
+    public function getLastRegistrationAt(int $nickId): ?\DateTimeImmutable;
 
     public function recordRegistration(int $nickId): void;
 

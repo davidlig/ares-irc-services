@@ -13,8 +13,6 @@ use App\NickServ\Domain\Entity\RegisteredNick;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
-use stdClass;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\VoterInterface;
 
@@ -167,7 +165,7 @@ final class NickServIdentifiedOwnerVoterTest extends TestCase
     {
         $token = $this->createStub(TokenInterface::class);
 
-        $result = $this->voter->vote($token, new stdClass(), [NickServPermission::IDENTIFIED_OWNER]);
+        $result = $this->voter->vote($token, new \stdClass(), [NickServPermission::IDENTIFIED_OWNER]);
 
         self::assertSame(VoterInterface::ACCESS_ABSTAIN, $result);
     }
@@ -179,7 +177,7 @@ final class NickServIdentifiedOwnerVoterTest extends TestCase
 
     private function createNickServContext(?SenderView $sender, ?RegisteredNick $account): NickServContext
     {
-        $reflection = new ReflectionClass(NickServContext::class);
+        $reflection = new \ReflectionClass(NickServContext::class);
         $context = $reflection->newInstanceWithoutConstructor();
 
         $senderProp = $reflection->getProperty('sender');

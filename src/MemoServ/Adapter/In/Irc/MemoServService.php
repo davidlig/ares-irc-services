@@ -19,7 +19,6 @@ use App\Shared\Application\Port\EventBusInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Contracts\Translation\TranslatorInterface;
-use Throwable;
 
 use function array_shift;
 use function count;
@@ -146,7 +145,7 @@ final readonly class MemoServService
             ));
         } catch (MemoDisabledException $e) {
             $context->reply('send.service_disabled_for_target', ['target' => $context->emphasize($e->target)], Role::Error);
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             $this->logger->error('MemoServ dispatch error: ' . $e->getMessage(), [
                 'exception' => $e,
                 'sender' => $sender->uid,

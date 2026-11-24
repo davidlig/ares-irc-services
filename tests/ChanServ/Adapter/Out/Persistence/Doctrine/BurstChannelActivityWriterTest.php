@@ -7,7 +7,6 @@ namespace App\Tests\ChanServ\Adapter\Out\Persistence\Doctrine;
 use App\ChanServ\Adapter\Out\Persistence\Doctrine\BurstChannelActivityWriter;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -17,8 +16,8 @@ final class BurstChannelActivityWriterTest extends DoctrineIntegrationTestCase
     #[Test]
     public function updatesOnlySelectedChannelActivitiesInOneBatch(): void
     {
-        $old = new DateTimeImmutable('2026-01-01 00:00:00');
-        $now = new DateTimeImmutable('2026-02-01 00:00:00');
+        $old = new \DateTimeImmutable('2026-01-01 00:00:00');
+        $now = new \DateTimeImmutable('2026-02-01 00:00:00');
         $first = RegisteredChannel::register($old, '#first', 1, 'first');
         $second = RegisteredChannel::register($old, '#second', 1, 'second');
         $this->entityManager->persist($first);

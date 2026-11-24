@@ -13,13 +13,10 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbLogicalDigest;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbNativeRowCodec;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbPathCodec;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbWireCodec;
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionMethod;
-use RuntimeException;
 
 use function array_fill;
 use function fclose;
@@ -55,8 +52,8 @@ final class UdbBinaryBoundaryCoverageTest extends TestCase
         try {
             fwrite($stream, $bytes);
             rewind($stream);
-            $read = new ReflectionMethod(UdbLogicalDigest::class, 'readFrame');
-            $this->expectException(RuntimeException::class);
+            $read = new \ReflectionMethod(UdbLogicalDigest::class, 'readFrame');
+            $this->expectException(\RuntimeException::class);
             $this->expectExceptionMessage($message);
             $read->invoke(null, $stream);
         } finally {
@@ -77,7 +74,7 @@ final class UdbBinaryBoundaryCoverageTest extends TestCase
     {
         $rows = ['nick::pass' => UdbValue::string('*literal')];
         self::assertSame(UdbLogicalDigest::fromRecords(UdbBlock::Nicks, [['nick::pass', $rows['nick::pass']]]), UdbChecksum::fromMap(UdbBlock::Nicks, $rows));
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('typed values');
         UdbLogicalDigest::fromMap(UdbBlock::Nicks, ['nick::pass' => 'untyped']);
     }
@@ -85,7 +82,7 @@ final class UdbBinaryBoundaryCoverageTest extends TestCase
     #[Test]
     public function invalidTypedRecordIsRejectedBeforeSpooling(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('typed');
         UdbLogicalDigest::fromRecords(UdbBlock::Nicks, [['nick', 'untyped']]);
     }
@@ -115,26 +112,26 @@ final class UdbBinaryBoundaryCoverageTest extends TestCase
     #[Test]
     public function conversionWidthAndEncodingBudgetRejectUnrepresentableOutput(): void
     {
-        $encode = new ReflectionMethod(UdbNativeRowCodec::class, 'encodeUnsignedWidth');
+        $encode = new \ReflectionMethod(UdbNativeRowCodec::class, 'encodeUnsignedWidth');
         self::assertSame("\xff", $encode->invoke(null, '255', 1));
         try {
             $encode->invoke(null, '256', 1);
             self::fail('A narrowed binary width must reject overflow.');
-        } catch (InvalidArgumentException $error) {
+        } catch (\InvalidArgumentException $error) {
             self::assertSame('UDB numeric value exceeds uint64.', $error->getMessage());
         }
-        $path = new ReflectionMethod(UdbPathCodec::class, 'encodeWithinLimits');
+        $path = new \ReflectionMethod(UdbPathCodec::class, 'encodeWithinLimits');
         self::assertSame('%3A', $path->invoke(null, ':', 1, 3));
         self::assertNull($path->invoke(null, ':', 1, 2));
         self::assertNull($path->invoke(null, 'ab', 2, 1));
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         UdbNativeRowCodec::components(UdbBlock::Nicks, 'bad%ZZ');
     }
 
     #[Test]
     public function duplicateCanonicalRowsRejectTheCandidateInsteadOfCountingTwice(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('canonical key collision');
         UdbLogicalDigest::fromRecords(UdbBlock::Nicks, [['Nick::pass', UdbValue::string('one')], ['nick::PASS', UdbValue::string('two')]]);
     }
@@ -142,18 +139,18 @@ final class UdbBinaryBoundaryCoverageTest extends TestCase
     #[Test]
     public function checkedAggregateArithmeticRejectsNegativeAndOverflow(): void
     {
-        $add = new ReflectionMethod(UdbLogicalDigest::class, 'checkedAdd');
+        $add = new \ReflectionMethod(UdbLogicalDigest::class, 'checkedAdd');
         self::assertSame(PHP_INT_MAX, $add->invoke(null, PHP_INT_MAX - 1, 1));
         foreach ([[PHP_INT_MAX, 1], [0, -1]] as [$left, $right]) {
             try {
                 $add->invoke(null, $left, $right);
                 self::fail('Invalid aggregate arithmetic must fail closed.');
-            } catch (RuntimeException $error) {
+            } catch (\RuntimeException $error) {
                 self::assertStringContainsString('integer range', $error->getMessage());
             }
         }
-        $pack = new ReflectionMethod(UdbLogicalDigest::class, 'packUint64');
-        $this->expectException(InvalidArgumentException::class);
+        $pack = new \ReflectionMethod(UdbLogicalDigest::class, 'packUint64');
+        $this->expectException(\InvalidArgumentException::class);
         $pack->invoke(null, -1);
     }
 
@@ -163,8 +160,8 @@ final class UdbBinaryBoundaryCoverageTest extends TestCase
         self::assertFalse(UdbPathCodec::isCanonicalPath(implode('::', array_fill(0, 9, 'a'))));
         self::assertTrue(UdbPathCodec::fitsWireLine('001', '002', 'PUT', 'N::nick', 'fixture'));
         self::assertFalse(UdbPathCodec::fitsWireLine('001', '002', 'PUT', str_repeat('a', 16384), 'fixture'));
-        $this->expectException(InvalidArgumentException::class);
-        new ReflectionMethod(UdbWireCodec::class, 'line')->invoke(null, str_repeat('a', 16384));
+        $this->expectException(\InvalidArgumentException::class);
+        new \ReflectionMethod(UdbWireCodec::class, 'line')->invoke(null, str_repeat('a', 16384));
     }
 
     #[Test]
@@ -175,9 +172,9 @@ final class UdbBinaryBoundaryCoverageTest extends TestCase
         try {
             $row = str_repeat('x', 16777217);
             file_put_contents($file, pack('N2', 1, strlen($row)) . str_repeat("\0", 32) . 'a' . $row);
-            $this->expectException(InvalidArgumentException::class);
+            $this->expectException(\InvalidArgumentException::class);
             $this->expectExceptionMessage('radix depth');
-            new ReflectionMethod(UdbLogicalDigest::class, 'leaf')->invoke(null, UdbBlock::Nicks, 0, $file, 256, str_repeat("\0", 32), sys_get_temp_dir());
+            new \ReflectionMethod(UdbLogicalDigest::class, 'leaf')->invoke(null, UdbBlock::Nicks, 0, $file, 256, str_repeat("\0", 32), sys_get_temp_dir());
         } finally {
             unlink($file);
         }

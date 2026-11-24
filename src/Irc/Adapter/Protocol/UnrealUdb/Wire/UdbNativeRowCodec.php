@@ -7,7 +7,6 @@ namespace App\Irc\Adapter\Protocol\UnrealUdb\Wire;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbBlock;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbValue;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbValueKind;
-use InvalidArgumentException;
 
 use function array_map;
 use function chr;
@@ -29,9 +28,9 @@ final class UdbNativeRowCodec
     public static function components(UdbBlock $block, string $path): array
     {
         if (!UdbPathCodec::isCanonicalPath($path)) {
-            throw new InvalidArgumentException('A UDB logical row has a non-canonical path.');
+            throw new \InvalidArgumentException('A UDB logical row has a non-canonical path.');
         }
-        $components = array_map(static fn (string $component): string => UdbPathCodec::decodeComponent($component) ?? throw new InvalidArgumentException('A UDB logical path component is invalid.'), explode('::', $path));
+        $components = array_map(static fn (string $component): string => UdbPathCodec::decodeComponent($component) ?? throw new \InvalidArgumentException('A UDB logical path component is invalid.'), explode('::', $path));
         $keyException = UdbBlock::Lines === $block && isset($components[1]) && 'f' === strtolower($components[0]);
         foreach ($components as $index => $component) {
             if ($keyException && 1 === $index) {
@@ -95,7 +94,7 @@ final class UdbNativeRowCodec
 
     public static function decimalToLittleEndian(string $value): string
     {
-        $decimal = (string) (UdbUnsignedDecimal::parse($value) ?? throw new InvalidArgumentException('UDB numeric value is not uint64.'));
+        $decimal = (string) (UdbUnsignedDecimal::parse($value) ?? throw new \InvalidArgumentException('UDB numeric value is not uint64.'));
 
         return self::encodeUnsignedWidth($decimal, 8);
     }
@@ -108,7 +107,7 @@ final class UdbNativeRowCodec
             $bytes .= chr($remainder & 255);
         }
         if ('0' !== $decimal) {
-            throw new InvalidArgumentException('UDB numeric value exceeds uint64.');
+            throw new \InvalidArgumentException('UDB numeric value exceeds uint64.');
         }
 
         return $bytes;

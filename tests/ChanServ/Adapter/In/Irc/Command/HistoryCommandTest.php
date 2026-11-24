@@ -30,14 +30,11 @@ use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
 use App\Irc\Application\Port\In\ServiceNicknameRegistry;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversTrait;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
 use Symfony\Contracts\Translation\TranslatorInterface;
-use UnexpectedValueException;
 
 use function strtr;
 
@@ -373,7 +370,7 @@ final class HistoryCommandTest extends TestCase
         $channelRepo->method('findByChannelName')->willReturn($channel);
 
         $history = ChannelHistory::record(
-            new DateTimeImmutable(),
+            new \DateTimeImmutable(),
             channelId: 999,
             action: 'TEST',
             performedBy: 'OtherUser',
@@ -401,7 +398,7 @@ final class HistoryCommandTest extends TestCase
         $channelRepo->method('findByChannelName')->willReturn($channel);
 
         $history = ChannelHistory::record(
-            new DateTimeImmutable(),
+            new \DateTimeImmutable(),
             channelId: 1,
             action: 'TEST',
             performedBy: 'OperUser',
@@ -593,7 +590,7 @@ final class HistoryCommandTest extends TestCase
         $channelRepo->method('findByChannelName')->willReturn($channel);
 
         $history1 = ChannelHistory::record(
-            new DateTimeImmutable(),
+            new \DateTimeImmutable(),
             channelId: 1,
             action: 'SUSPEND',
             performedBy: 'OperUser',
@@ -604,7 +601,7 @@ final class HistoryCommandTest extends TestCase
         $history1 = self::historyWithId($history1, 1);
 
         $history2 = ChannelHistory::record(
-            new DateTimeImmutable(),
+            new \DateTimeImmutable(),
             channelId: 1,
             action: 'SET_EMAIL',
             performedBy: 'User',
@@ -615,7 +612,7 @@ final class HistoryCommandTest extends TestCase
         $history2 = self::historyWithId($history2, 2);
 
         $history3 = ChannelHistory::record(
-            new DateTimeImmutable(),
+            new \DateTimeImmutable(),
             channelId: 1,
             action: 'RECOVER',
             performedBy: 'Admin',
@@ -645,7 +642,7 @@ final class HistoryCommandTest extends TestCase
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $entry = ChannelHistory::record(
-            new DateTimeImmutable(),
+            new \DateTimeImmutable(),
             channelId: 1,
             action: 'LEVELS_SET',
             performedBy: 'Founder',
@@ -698,7 +695,7 @@ final class HistoryCommandTest extends TestCase
         try {
             new HistoryCommand($handler)->execute($context);
             self::fail('Malformed transaction results must be rejected.');
-        } catch (UnexpectedValueException $exception) {
+        } catch (\UnexpectedValueException $exception) {
             self::assertSame('Channel history transaction must return the deleted row count.', $exception->getMessage());
         }
 
@@ -716,7 +713,7 @@ final class HistoryCommandTest extends TestCase
         $nickRepo->method('findAccountById')->willReturn(null);
 
         $history1 = ChannelHistory::record(
-            new DateTimeImmutable(),
+            new \DateTimeImmutable(),
             channelId: 1,
             action: 'TEST',
             performedBy: 'OldUser',
@@ -755,7 +752,7 @@ final class HistoryCommandTest extends TestCase
         $nickRepo->expects(self::once())->method('findNicknamesByIds')->with([999])->willReturn([999 => 'KnownOper']);
 
         $history1 = ChannelHistory::record(
-            new DateTimeImmutable(),
+            new \DateTimeImmutable(),
             channelId: 1,
             action: 'TEST',
             performedBy: 'KnownOper',
@@ -791,7 +788,7 @@ final class HistoryCommandTest extends TestCase
         $channelRepo->method('findByChannelName')->willReturn($channel);
 
         $history1 = ChannelHistory::record(
-            new DateTimeImmutable(),
+            new \DateTimeImmutable(),
             channelId: 1,
             action: 'SUSPEND',
             performedBy: 'OperUser',
@@ -989,7 +986,7 @@ final class HistoryCommandTest extends TestCase
         $channelRepo->method('findByChannelName')->willReturn($channel);
 
         $history1 = ChannelHistory::record(
-            new DateTimeImmutable(),
+            new \DateTimeImmutable(),
             channelId: 1,
             action: 'SUCCESSOR',
             performedBy: 'OperUser',
@@ -1020,7 +1017,7 @@ final class HistoryCommandTest extends TestCase
         $channelRepo->method('findByChannelName')->willReturn($channel);
 
         $history1 = ChannelHistory::record(
-            new DateTimeImmutable(),
+            new \DateTimeImmutable(),
             channelId: 1,
             action: 'FOUNDER',
             performedBy: 'OperUser',
@@ -1051,7 +1048,7 @@ final class HistoryCommandTest extends TestCase
         $channelRepo->method('findByChannelName')->willReturn($channel);
 
         $history1 = ChannelHistory::record(
-            new DateTimeImmutable(),
+            new \DateTimeImmutable(),
             channelId: 1,
             action: 'ACCESS_ADD',
             performedBy: 'OperUser',
@@ -1082,7 +1079,7 @@ final class HistoryCommandTest extends TestCase
         $channelRepo->method('findByChannelName')->willReturn($channel);
 
         $history1 = ChannelHistory::record(
-            new DateTimeImmutable(),
+            new \DateTimeImmutable(),
             channelId: 1,
             action: 'AKICK_ADD',
             performedBy: 'OperUser',
@@ -1113,7 +1110,7 @@ final class HistoryCommandTest extends TestCase
         $channelRepo->method('findByChannelName')->willReturn($channel);
 
         $entry = ChannelHistory::record(
-            new DateTimeImmutable(),
+            new \DateTimeImmutable(),
             channelId: 1,
             action: 'AKICK_ENFORCE',
             performedBy: 'OperUser',
@@ -1219,9 +1216,9 @@ final class HistoryCommandTest extends TestCase
 
     private function createChannelWithId(string $channelName, int $id): RegisteredChannel
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), $channelName, 1, 'Test channel');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), $channelName, 1, 'Test channel');
 
-        $reflection = new ReflectionClass(RegisteredChannel::class);
+        $reflection = new \ReflectionClass(RegisteredChannel::class);
         $idProp = $reflection->getProperty('id');
         $idProp->setValue($channel, $id);
 

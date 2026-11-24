@@ -17,7 +17,6 @@ use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentValidator;
 use App\Shared\Adapter\In\Irc\Presentation\Component;
 use App\Shared\Adapter\In\Irc\Presentation\Role;
-use DateTimeImmutable;
 
 use function array_merge;
 use function array_slice;
@@ -160,8 +159,8 @@ final readonly class RoleCommand implements OperServCommandInterface
 
             return;
         }
-        [$action,$role,$value,$description] = $this->parse($c, $sub);
-        $r = $this->handler->handle(new ManageRole($action, $c->sender->nick, new DateTimeImmutable(), $role, $value, description: $description));
+        [$action, $role, $value, $description] = $this->parse($c, $sub);
+        $r = $this->handler->handle(new ManageRole($action, $c->sender->nick, new \DateTimeImmutable(), $role, $value, description: $description));
         $this->present($c, $sub, $r, $role, $value);
     }
 
@@ -270,7 +269,8 @@ final readonly class RoleCommand implements OperServCommandInterface
             $c->reply('role.list.empty', [], Role::Information);
 
             return;
-        }$c->replyComponent(Component::DecoratedHeader, 'role.list.header');
+        }
+        $c->replyComponent(Component::DecoratedHeader, 'role.list.header');
         foreach ($r->roles as $role) {
             $c->replyRaw($c->renderComponent(Component::IndentedRow, sprintf('%-12s%-40s%s', $role->name, $role->description, $role->protected ? ' [PROTECTED]' : '')));
         }
@@ -309,7 +309,8 @@ final readonly class RoleCommand implements OperServCommandInterface
             $c->reply('role.modes.view.empty', ['%role%' => $c->emphasize((string) $r->role?->name)], Role::Information);
 
             return;
-        }$c->replyComponent(Component::DecoratedHeader, 'role.modes.view.header', ['%role%' => $c->emphasize((string) $r->role?->name)]);
+        }
+        $c->replyComponent(Component::DecoratedHeader, 'role.modes.view.header', ['%role%' => $c->emphasize((string) $r->role?->name)]);
         $c->replyComponent(Component::IndentedRow, 'role.modes.view.line', ['%modes%' => $c->emphasize((string) ('+' . implode('', $r->values)))]);
     }
 
@@ -319,7 +320,8 @@ final readonly class RoleCommand implements OperServCommandInterface
             $c->reply('role.vhost.view.empty', ['%role%' => $c->emphasize((string) $r->role?->name)], Role::Information);
 
             return;
-        }$c->replyComponent(Component::DecoratedHeader, 'role.vhost.view.header', ['%role%' => $c->emphasize((string) $r->role?->name)]);
+        }
+        $c->replyComponent(Component::DecoratedHeader, 'role.vhost.view.header', ['%role%' => $c->emphasize((string) $r->role?->name)]);
         $c->replyComponent(Component::IndentedRow, 'role.vhost.view.line', ['%pattern%' => $c->fragment($r->values[0], Component::Positive)]);
         $c->replyComponent(Component::IndentedRow, 'role.vhost.view.example', ['%pattern%' => $r->values[0], '%example_nickname%' => $c->emphasize($c->trans('role.vhost.view.example_nickname'))]);
     }
@@ -330,7 +332,8 @@ final readonly class RoleCommand implements OperServCommandInterface
             $c->reply('role.operclass.list.empty', [], Role::Information);
 
             return;
-        }$c->replyComponent(Component::DecoratedHeader, 'role.operclass.list.header');
+        }
+        $c->replyComponent(Component::DecoratedHeader, 'role.operclass.list.header');
         foreach ($r->values as $o) {
             $c->replyRaw($c->renderComponent(Component::IndentedRow, $o));
         }

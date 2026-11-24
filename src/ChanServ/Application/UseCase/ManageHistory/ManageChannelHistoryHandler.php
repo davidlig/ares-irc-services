@@ -9,7 +9,6 @@ use App\ChanServ\Application\Port\Out\ChanTransactionBoundary;
 use App\ChanServ\Application\Port\Out\ChanUserAccountPort;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\Service\ChannelHistoryService;
-use UnexpectedValueException;
 
 use function array_values;
 use function ceil;
@@ -143,7 +142,7 @@ final readonly class ManageChannelHistoryHandler implements ManageChannelHistory
             return $count;
         });
         if (!is_int($count)) {
-            throw new UnexpectedValueException('Channel history transaction must return the deleted row count.');
+            throw new \UnexpectedValueException('Channel history transaction must return the deleted row count.');
         }
 
         return new ManageChannelHistoryResult(ManageChannelHistoryOutcome::Cleared, total: $count);

@@ -9,14 +9,12 @@ use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\NickServ\Domain\ValueObject\NickStatus;
 use App\Shared\Domain\IrcIdentityFold;
-use DateTimeImmutable;
 use Doctrine\DBAL\Platforms\AbstractMySQLPlatform;
 use Doctrine\DBAL\Platforms\SQLitePlatform;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Query\ResultSetMappingBuilder;
 use Doctrine\ORM\QueryBuilder;
-use LogicException;
 use WeakMap;
 
 use function array_chunk;
@@ -44,7 +42,7 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
     private const int ACTIVITY_CHUNK_SIZE = 300;
 
     /** @var WeakMap<EntityManagerInterface, array<string, RegisteredNick|null>>|null */
-    private static ?WeakMap $lookupCache = null;
+    private static ?\WeakMap $lookupCache = null;
 
     private static bool $lookupCacheActive = false;
 
@@ -68,7 +66,7 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
 
         foreach ($nicks as $nick) {
             if (!$this->em->contains($nick) || null === $nick->getLastSeenAt()) {
-                throw new LogicException('Activity batching requires managed accounts with a last-seen timestamp.');
+                throw new \LogicException('Activity batching requires managed accounts with a last-seen timestamp.');
             }
         }
 
@@ -112,7 +110,7 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
                 ->findOneBy(['nicknameLower' => $nicknameLower]);
         }
 
-        $cache = self::$lookupCache ??= new WeakMap();
+        $cache = self::$lookupCache ??= new \WeakMap();
         $byNickname = $cache[$this->em] ?? [];
         if (array_key_exists($nicknameLower, $byNickname)) {
             $cached = $byNickname[$nicknameLower];
@@ -243,7 +241,7 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
         return null !== $this->findByNicknameKey($nickname);
     }
 
-    public function findRegisteredInactiveSince(DateTimeImmutable $threshold, ?int $limit = null, int $afterId = 0): array
+    public function findRegisteredInactiveSince(\DateTimeImmutable $threshold, ?int $limit = null, int $afterId = 0): array
     {
         $qb = $this->em->createQueryBuilder();
         $qb->select('n')
@@ -258,7 +256,7 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
         return $this->maintenancePage($qb, $limit, $afterId);
     }
 
-    public function deleteExpiredPending(DateTimeImmutable $now): int
+    public function deleteExpiredPending(\DateTimeImmutable $now): int
     {
         $result = $this->em
             ->createQuery(
@@ -283,7 +281,7 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
             ->findBy(['status' => $status]);
     }
 
-    public function findExpiredSuspensions(DateTimeImmutable $now, ?int $limit = null, int $afterId = 0): array
+    public function findExpiredSuspensions(\DateTimeImmutable $now, ?int $limit = null, int $afterId = 0): array
     {
         $qb = $this->em->createQueryBuilder();
         $qb->select('n')
@@ -298,7 +296,7 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
         return $this->maintenancePage($qb, $limit, $afterId);
     }
 
-    public function findPendingDeletionBefore(DateTimeImmutable $threshold, ?int $limit = null, int $afterId = 0): array
+    public function findPendingDeletionBefore(\DateTimeImmutable $threshold, ?int $limit = null, int $afterId = 0): array
     {
         $qb = $this->em->createQueryBuilder();
         $qb->select('n')

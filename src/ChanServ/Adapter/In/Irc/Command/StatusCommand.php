@@ -15,7 +15,6 @@ use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use App\Shared\Adapter\In\Irc\Presentation\Component;
-use DateTimeZone;
 
 final readonly class StatusCommand implements ChanServCommandInterface
 {
@@ -151,7 +150,7 @@ final readonly class StatusCommand implements ChanServCommandInterface
         }
         if ($operator && null !== $status->restrictedUntil) {
             $context->replyRaw(new ChanServDetailPresenter()->row($context, 'status.restriction_until', [
-                '%date%' => $status->restrictedUntil->setTimezone(new DateTimeZone('UTC'))->format('d/m/Y H:i T'),
+                '%date%' => $status->restrictedUntil->setTimezone(new \DateTimeZone('UTC'))->format('d/m/Y H:i T'),
             ]));
         }
     }

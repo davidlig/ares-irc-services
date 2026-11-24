@@ -9,8 +9,6 @@ use App\OperServ\Application\Port\In\Audit\CommandAuditRecord;
 use App\OperServ\Application\Port\In\CommandAuditRecorder;
 use App\OperServ\Application\Port\Out\MotdEntry;
 use App\OperServ\Application\Port\Out\MotdRepository;
-use DateInterval;
-use DateTimeImmutable;
 
 use function array_map;
 use function count;
@@ -111,7 +109,7 @@ final readonly class ManageMotdHandler implements ManageMotdHandlerInterface
         return new ManageMotdResult(ManageMotdOutcome::Cleaned, removedCount: count($entries));
     }
 
-    private function expiresAt(string $duration, DateTimeImmutable $occurredAt): ?DateTimeImmutable
+    private function expiresAt(string $duration, \DateTimeImmutable $occurredAt): ?\DateTimeImmutable
     {
         if ('0' === $duration) {
             return null;
@@ -129,10 +127,10 @@ final readonly class ManageMotdHandler implements ManageMotdHandlerInterface
             default => (int) $matches[1],
         };
 
-        return $occurredAt->add(new DateInterval('PT' . $seconds . 'S'));
+        return $occurredAt->add(new \DateInterval('PT' . $seconds . 'S'));
     }
 
-    private function listEntry(MotdEntry $entry, DateTimeImmutable $occurredAt): MotdListEntry
+    private function listEntry(MotdEntry $entry, \DateTimeImmutable $occurredAt): MotdListEntry
     {
         return new MotdListEntry(
             $entry->id,

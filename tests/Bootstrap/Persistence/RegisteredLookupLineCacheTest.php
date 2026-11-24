@@ -15,7 +15,6 @@ use App\NickServ\Adapter\Out\Persistence\Doctrine\RegisteredNickDoctrineReposito
 use App\NickServ\Adapter\Out\Persistence\Doctrine\RegisteredNickLookupCacheClearSubscriber;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\Tests\NickServ\Support\NegotiatedCaseMapping;
-use DateTimeImmutable;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Logging\Middleware;
 use Doctrine\ORM\Configuration;
@@ -73,7 +72,7 @@ final class RegisteredLookupLineCacheTest extends TestCase
 
         $cacheSubscriber->onIrcMessageProcessingStarted();
         self::assertNull($repository->findByChannelName('#Created'));
-        $repository->save(RegisteredChannel::register(new DateTimeImmutable(), '#Created', 1, 'Created'));
+        $repository->save(RegisteredChannel::register(new \DateTimeImmutable(), '#Created', 1, 'Created'));
         $found = $repository->findByChannelName('#created');
         self::assertNotNull($found);
         self::assertSame($found, $repository->findByChannelName('#CREATED'));
@@ -201,8 +200,8 @@ final class RegisteredLookupLineCacheTest extends TestCase
             '$argon2id$v=19$m=65536,t=4,p=1$test$test',
             strtolower($nickname) . '@example.com',
             'en',
-            new DateTimeImmutable('+24 hours'),
-            new DateTimeImmutable(),
+            new \DateTimeImmutable('+24 hours'),
+            new \DateTimeImmutable(),
         );
         $nick->activate();
 

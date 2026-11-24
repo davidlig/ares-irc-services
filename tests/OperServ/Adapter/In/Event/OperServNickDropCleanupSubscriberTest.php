@@ -10,12 +10,9 @@ use App\OperServ\Application\Port\Out\GlineRepository;
 use App\OperServ\Application\Port\Out\MotdRepository;
 use App\OperServ\Application\Port\Out\OperatorPermissionCache;
 use App\OperServ\Domain\Repository\OperIrcopRepositoryInterface;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionMethod;
-use ReflectionNamedType;
 
 #[CoversClass(OperServNickDropCleanupSubscriber::class)]
 final class OperServNickDropCleanupSubscriberTest extends TestCase
@@ -37,7 +34,7 @@ final class OperServNickDropCleanupSubscriberTest extends TestCase
             nickname: 'TestUser',
             nicknameLower: 'testuser',
             reason: 'manual',
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
         );
 
         $operIrcopRepo = $this->createMock(OperIrcopRepositoryInterface::class);
@@ -77,7 +74,7 @@ final class OperServNickDropCleanupSubscriberTest extends TestCase
             nickname: 'OldUser',
             nicknameLower: 'olduser',
             reason: 'inactivity',
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
         );
 
         $operIrcopRepo = $this->createMock(OperIrcopRepositoryInterface::class);
@@ -116,7 +113,7 @@ final class OperServNickDropCleanupSubscriberTest extends TestCase
             nickname: 'GlineCreator',
             nicknameLower: 'glinecreator',
             reason: 'manual',
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
         );
 
         $operIrcopRepo = $this->createMock(OperIrcopRepositoryInterface::class);
@@ -150,12 +147,12 @@ final class OperServNickDropCleanupSubscriberTest extends TestCase
     #[Test]
     public function requiresThePermissionCacheSoADroppedIrcopNeverKeepsCachedPrivileges(): void
     {
-        $parameter = new ReflectionMethod(OperServNickDropCleanupSubscriber::class, '__construct')->getParameters()[3];
+        $parameter = new \ReflectionMethod(OperServNickDropCleanupSubscriber::class, '__construct')->getParameters()[3];
         $type = $parameter->getType();
 
         self::assertSame('operatorPermissionCache', $parameter->getName());
         self::assertFalse($parameter->isOptional());
-        self::assertInstanceOf(ReflectionNamedType::class, $type);
+        self::assertInstanceOf(\ReflectionNamedType::class, $type);
         self::assertFalse($type->allowsNull());
         self::assertSame(OperatorPermissionCache::class, $type->getName());
     }

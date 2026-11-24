@@ -19,12 +19,12 @@ final class RegisterThrottleRegistry
     /** @var array<string, DateTimeImmutable> client key (host/IP) -> last attempt time */
     private array $lastAttemptAt = [];
 
-    public function getLastAttemptAt(string $clientKey): ?DateTimeImmutable
+    public function getLastAttemptAt(string $clientKey): ?\DateTimeImmutable
     {
         return $this->lastAttemptAt[$clientKey] ?? null;
     }
 
-    public function recordAttempt(string $clientKey, DateTimeImmutable $now): void
+    public function recordAttempt(string $clientKey, \DateTimeImmutable $now): void
     {
         $this->lastAttemptAt[$clientKey] = $now;
     }
@@ -33,7 +33,7 @@ final class RegisterThrottleRegistry
      * Returns the number of seconds the client must wait before REGISTER is allowed again,
      * or 0 if allowed.
      */
-    public function getRemainingCooldownSeconds(string $clientKey, int $minIntervalSeconds, DateTimeImmutable $now): int
+    public function getRemainingCooldownSeconds(string $clientKey, int $minIntervalSeconds, \DateTimeImmutable $now): int
     {
         if ($minIntervalSeconds <= 0) {
             return 0;
@@ -54,7 +54,7 @@ final class RegisterThrottleRegistry
      * Removes entries whose cooldown has already expired (no longer affect REGISTER).
      * Returns the number of keys removed. Used by maintenance to free memory.
      */
-    public function pruneExpiredCooldowns(int $minIntervalSeconds, DateTimeImmutable $now): int
+    public function pruneExpiredCooldowns(int $minIntervalSeconds, \DateTimeImmutable $now): int
     {
         if ($minIntervalSeconds <= 0) {
             return 0;

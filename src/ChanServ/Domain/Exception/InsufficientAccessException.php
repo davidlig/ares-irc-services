@@ -4,11 +4,9 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Domain\Exception;
 
-use DomainException;
-
 use function sprintf;
 
-final class InsufficientAccessException extends DomainException
+final class InsufficientAccessException extends \DomainException
 {
     public function __construct(
         string $message,

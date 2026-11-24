@@ -8,7 +8,6 @@ use App\NickServ\Application\Port\Out\RegistrationMailSender;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
-use Throwable;
 
 final readonly class MessengerRegistrationMailSender implements RegistrationMailSender
 {
@@ -35,7 +34,7 @@ final readonly class MessengerRegistrationMailSender implements RegistrationMail
                 $locale,
             );
             $this->messageBus->dispatch(new RegistrationVerificationEmail($email, $subject, $body));
-        } catch (Throwable $exception) {
+        } catch (\Throwable $exception) {
             $this->logger->error('NickServ REGISTER: failed to dispatch verification email', [
                 'nick' => $nickname,
                 'recipient' => $email,

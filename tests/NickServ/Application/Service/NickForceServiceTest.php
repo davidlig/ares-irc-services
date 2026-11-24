@@ -16,11 +16,9 @@ use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\PublishedEvent\UserDeidentifiedEvent;
 use App\NickServ\Application\Service\NickForceService;
 use App\NickServ\Domain\Entity\RegisteredNick;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
 
 use function str_starts_with;
 use function strlen;
@@ -337,10 +335,10 @@ final class NickForceServiceTest extends TestCase
 
     private function createNickWithId(string $nickname, int $id): RegisteredNick
     {
-        $nick = RegisteredNick::createPending($nickname, 'hash', 'test@example.com', 'en', new DateTimeImmutable('+1 hour'), new DateTimeImmutable());
+        $nick = RegisteredNick::createPending($nickname, 'hash', 'test@example.com', 'en', new \DateTimeImmutable('+1 hour'), new \DateTimeImmutable());
         $nick->activate();
 
-        $reflection = new ReflectionClass(RegisteredNick::class);
+        $reflection = new \ReflectionClass(RegisteredNick::class);
         $idProp = $reflection->getProperty('id');
         $idProp->setValue($nick, $id);
 

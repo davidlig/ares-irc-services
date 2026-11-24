@@ -13,7 +13,6 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-use stdClass;
 
 #[CoversClass(ServiceCommandGateway::class)]
 final class ServiceCommandGatewayTest extends TestCase
@@ -243,7 +242,7 @@ final class ServiceCommandGatewayTest extends TestCase
     public function skipsNonListenerItemsInIterable(): void
     {
         $gateway = new ServiceCommandGateway(
-            listeners: [$this->nickservListener, new stdClass(), $this->chanservListener],
+            listeners: [$this->nickservListener, new \stdClass(), $this->chanservListener],
             logger: $this->logger,
         );
         $message = new IRCMessage(

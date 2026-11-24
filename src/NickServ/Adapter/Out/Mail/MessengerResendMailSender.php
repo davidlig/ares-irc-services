@@ -8,7 +8,6 @@ use App\NickServ\Application\Port\Out\ResendMailSender;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
-use Throwable;
 
 final readonly class MessengerResendMailSender implements ResendMailSender
 {
@@ -35,7 +34,7 @@ final readonly class MessengerResendMailSender implements ResendMailSender
                 $locale,
             );
             $this->messageBus->dispatch(new RegistrationVerificationEmail($email, $subject, $body));
-        } catch (Throwable $exception) {
+        } catch (\Throwable $exception) {
             $this->logger->error('NickServ RESEND: failed to dispatch verification email', [
                 'nick' => $nickname,
                 'recipient' => $email,

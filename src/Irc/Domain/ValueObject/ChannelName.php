@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Irc\Domain\ValueObject;
 
-use InvalidArgumentException;
-
 use function preg_match;
 use function sprintf;
 use function str_starts_with;
@@ -20,15 +18,15 @@ readonly class ChannelName
     public function __construct(public string $value)
     {
         if (!str_starts_with($value, '#')) {
-            throw new InvalidArgumentException(sprintf('Channel name "%s" must start with #.', $value));
+            throw new \InvalidArgumentException(sprintf('Channel name "%s" must start with #.', $value));
         }
 
         if (strlen($value) < 2) {
-            throw new InvalidArgumentException('Channel name cannot be just "#".');
+            throw new \InvalidArgumentException('Channel name cannot be just "#".');
         }
 
         if (preg_match('/[\s\x00\x07,:]/', $value)) {
-            throw new InvalidArgumentException(sprintf('Channel name "%s" contains invalid characters.', $value));
+            throw new \InvalidArgumentException(sprintf('Channel name "%s" contains invalid characters.', $value));
         }
     }
 

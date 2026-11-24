@@ -10,12 +10,10 @@ use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\ValueObject\ChannelStatus;
 use App\Irc\Application\Port\In\NetworkIdentityEquivalence;
 use App\Shared\Domain\IrcIdentityFold;
-use DateTimeImmutable;
 use Doctrine\DBAL\Platforms\AbstractMySQLPlatform;
 use Doctrine\DBAL\Platforms\SQLitePlatform;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Query\ResultSetMappingBuilder;
-use UnexpectedValueException;
 use WeakMap;
 
 use function array_filter;
@@ -36,7 +34,7 @@ final class RegisteredChannelDoctrineRepository implements RegisteredChannelRepo
     private ?array $burstNames = null;
 
     /** @var WeakMap<EntityManagerInterface, array<string, RegisteredChannel|null>>|null */
-    private static ?WeakMap $lookupCache = null;
+    private static ?\WeakMap $lookupCache = null;
 
     private static bool $lookupCacheActive = false;
 
@@ -51,7 +49,7 @@ final class RegisteredChannelDoctrineRepository implements RegisteredChannelRepo
         $names = [];
         foreach ($this->em->getConnection()->fetchAllNumeric('SELECT name_lower, name FROM registered_channels') as [$key, $name]) {
             if (!is_string($key) || !is_string($name)) {
-                throw new UnexpectedValueException('Invalid registered channel name in burst snapshot.');
+                throw new \UnexpectedValueException('Invalid registered channel name in burst snapshot.');
             }
             $names[$key] = $name;
         }
@@ -113,7 +111,7 @@ final class RegisteredChannelDoctrineRepository implements RegisteredChannelRepo
                 ->findOneBy(['nameLower' => $nameLower]);
         }
 
-        $cache = self::$lookupCache ??= new WeakMap();
+        $cache = self::$lookupCache ??= new \WeakMap();
         $byName = $cache[$this->em] ?? [];
         if (array_key_exists($nameLower, $byName)) {
             $cached = $byName[$nameLower];
@@ -242,7 +240,7 @@ final class RegisteredChannelDoctrineRepository implements RegisteredChannelRepo
         return $this->iterateMatching(null, []);
     }
 
-    public function iterateRegisteredInactiveSince(DateTimeImmutable $threshold): iterable
+    public function iterateRegisteredInactiveSince(\DateTimeImmutable $threshold): iterable
     {
         return $this->iterateMatching(
             'c.status = :activeStatus AND COALESCE(c.lastUsedAt, c.createdAt) < :threshold AND c.noExpire = false',
@@ -250,7 +248,7 @@ final class RegisteredChannelDoctrineRepository implements RegisteredChannelRepo
         );
     }
 
-    public function iterateExpiredSuspensions(DateTimeImmutable $now): iterable
+    public function iterateExpiredSuspensions(\DateTimeImmutable $now): iterable
     {
         return $this->iterateMatching(
             'c.status = :status AND c.suspendedUntil IS NOT NULL AND c.suspendedUntil <= :now',
@@ -258,7 +256,7 @@ final class RegisteredChannelDoctrineRepository implements RegisteredChannelRepo
         );
     }
 
-    public function iteratePendingDeletionBefore(DateTimeImmutable $threshold): iterable
+    public function iteratePendingDeletionBefore(\DateTimeImmutable $threshold): iterable
     {
         return $this->iterateMatching(
             'c.status = :status AND c.pendingDeletionAt IS NOT NULL AND c.pendingDeletionAt <= :threshold',

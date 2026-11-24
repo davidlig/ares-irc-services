@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\NickServ\Adapter\In\Irc;
 
 use App\Irc\Application\Port\In\UserVhostSetter;
-use App\NickServ\Adapter\In\Irc\Bot\NickServBot;
 
 /**
  * Abstracts the IRC send operations needed by NickServ.

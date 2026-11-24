@@ -53,12 +53,10 @@ use App\OperServ\Application\Port\In\Audit\CommandAuditCategory;
 use App\OperServ\Application\Port\In\Audit\CommandAuditRecord;
 use App\OperServ\Application\Port\In\CommandAuditRecorder;
 use App\Shared\Application\Port\EventBusInterface;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-use RuntimeException;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\Translation\Translator;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -397,8 +395,8 @@ final class ChanServServiceTest extends TestCase
     public function allowsListToInspectChannelsPendingDeletion(): void
     {
         $sender = new SenderView('UID1', 'OperUser', 'ident', 'host', 'cloak', 'ip', true, true, '001', 'cloak');
-        $pending = RegisteredChannel::register(new DateTimeImmutable(), '#pending', 1, 'Pending deletion');
-        $pending->markPendingDeletion(new DateTimeImmutable());
+        $pending = RegisteredChannel::register(new \DateTimeImmutable(), '#pending', 1, 'Pending deletion');
+        $pending->markPendingDeletion(new \DateTimeImmutable());
 
         $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channels->method('findByChannelName')->willReturn($pending);
@@ -1008,7 +1006,7 @@ final class ChanServServiceTest extends TestCase
 
             public function execute(ChanServContext $context): void
             {
-                throw new RuntimeException('Handler failed for test');
+                throw new \RuntimeException('Handler failed for test');
             }
         };
 
@@ -1016,7 +1014,7 @@ final class ChanServServiceTest extends TestCase
         $logger->expects(self::once())->method('error')
             ->with(
                 'ChanServ dispatch error: Handler failed for test',
-                self::callback(static fn (array $context): bool => isset($context['exception']) && $context['exception'] instanceof RuntimeException
+                self::callback(static fn (array $context): bool => isset($context['exception']) && $context['exception'] instanceof \RuntimeException
                         && isset($context['sender']) && 'UID1' === $context['sender'])
             );
 
@@ -1041,7 +1039,7 @@ final class ChanServServiceTest extends TestCase
             $logger,
         );
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Handler failed for test');
 
         $service->dispatch('THROW', $sender);

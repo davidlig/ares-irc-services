@@ -59,20 +59,15 @@ use App\OperServ\Domain\Entity\OperRole;
 use App\OperServ\Domain\Repository\OperIrcopRepositoryInterface;
 use App\Shared\Application\Port\EventBusInterface;
 use App\Tests\NickServ\Support\NegotiatedCaseMapping;
-use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Persistence\ObjectManager;
-use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\AbstractLogger;
 use Psr\Log\NullLogger;
-use ReflectionProperty;
-use RuntimeException;
-use Stringable;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
 use function array_map;
@@ -100,7 +95,7 @@ final class NickProtectionSubscriberTest extends TestCase
 
     private RecordingSyncNetworkIdentificationHandler $syncNetworkIdentification;
 
-    private DateTimeImmutable $now;
+    private \DateTimeImmutable $now;
 
     #[Test]
     public function getSubscribedEventsReturnsAllHandlersWithPriorities(): void
@@ -274,7 +269,7 @@ final class NickProtectionSubscriberTest extends TestCase
         $account = RegisteredNick::createPending('Alice', 'hash', 'alice@example.com', 'en', $this->now, $this->now);
         $account->activate();
         $account->changeVhost('alice.example');
-        new ReflectionProperty(RegisteredNick::class, 'id')->setValue($account, 42);
+        new \ReflectionProperty(RegisteredNick::class, 'id')->setValue($account, 42);
         $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $repo->expects(self::once())->method('findByNicknamesLower')->with(['ALICE'])->willReturn(['ALICE' => $account]);
         $repo->expects(self::never())->method('findByNick');
@@ -303,8 +298,8 @@ final class NickProtectionSubscriberTest extends TestCase
         $bob = RegisteredNick::createPending('Bob', 'hash', 'b@example.com', 'en', $this->now, $this->now);
         $alice->activate();
         $bob->activate();
-        new ReflectionProperty(RegisteredNick::class, 'id')->setValue($alice, 1);
-        new ReflectionProperty(RegisteredNick::class, 'id')->setValue($bob, 2);
+        new \ReflectionProperty(RegisteredNick::class, 'id')->setValue($alice, 1);
+        new \ReflectionProperty(RegisteredNick::class, 'id')->setValue($bob, 2);
         $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $repo->method('findByNicknamesLower')->willReturn(['Alice' => $alice, 'Bob' => $bob]);
         $repo->expects(self::never())->method('save');
@@ -330,12 +325,12 @@ final class NickProtectionSubscriberTest extends TestCase
         $this->notifier->expects(self::never())->method('setUserVhost');
         $alice = RegisteredNick::createPending('Alice', 'hash', 'a@example.com', 'en', $this->now, $this->now);
         $alice->activate();
-        new ReflectionProperty(RegisteredNick::class, 'id')->setValue($alice, 1);
+        new \ReflectionProperty(RegisteredNick::class, 'id')->setValue($alice, 1);
         $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $repo->method('findByNicknamesLower')->willReturn(['Alice' => $alice]);
         $repo->expects(self::once())->method('saveActivityBatch')->with([$alice]);
         $publisher = $this->createMock(NickServEventPublisher::class);
-        $publisher->expects(self::once())->method('publish')->willThrowException(new RuntimeException('listener failed'));
+        $publisher->expects(self::once())->method('publish')->willThrowException(new \RuntimeException('listener failed'));
         $this->initializeSubscriber($repo, $publisher);
         $this->networkUserLookup->expects(self::never())->method('findByUid');
         $this->notifier->expects(self::never())->method('setUserVhost');
@@ -351,7 +346,7 @@ final class NickProtectionSubscriberTest extends TestCase
     {
         $this->networkUserLookup->expects(self::never())->method('findByUid');
         $this->notifier->expects(self::never())->method('setUserVhost');
-        $failure = new RuntimeException('preload failed');
+        $failure = new \RuntimeException('preload failed');
         $publisher = $this->createStub(NickServEventPublisher::class);
         $publisher->method('publish')->willReturnCallback(static function ($event) use ($failure): void {
             if ($event instanceof NickBurstBatchStartedEvent) {
@@ -382,12 +377,12 @@ final class NickProtectionSubscriberTest extends TestCase
         $bob = RegisteredNick::createPending('Bob', 'hash', 'b@example.com', 'en', $this->now, $this->now);
         $alice->activate();
         $bob->activate();
-        new ReflectionProperty(RegisteredNick::class, 'id')->setValue($alice, 1);
-        new ReflectionProperty(RegisteredNick::class, 'id')->setValue($bob, 2);
+        new \ReflectionProperty(RegisteredNick::class, 'id')->setValue($alice, 1);
+        new \ReflectionProperty(RegisteredNick::class, 'id')->setValue($bob, 2);
         $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $repo->method('findByNicknamesLower')->willReturn(['Alice' => $alice, 'Bob' => $bob]);
         $repo->expects(self::once())->method('saveActivityBatch')->with([$alice, $bob]);
-        $failure = new RuntimeException('listener failed');
+        $failure = new \RuntimeException('listener failed');
         $publisher = $this->createStub(NickServEventPublisher::class);
         $calls = 0;
         $publisher->method('publish')->willReturnCallback(static function () use ($failure, &$calls): void {
@@ -421,13 +416,13 @@ final class NickProtectionSubscriberTest extends TestCase
         for ($number = 1; $number <= 201; ++$number) {
             $account = RegisteredNick::createPending('User' . $number, 'hash', $number . '@example.com', 'en', $this->now, $this->now);
             $account->activate();
-            new ReflectionProperty(RegisteredNick::class, 'id')->setValue($account, $number);
+            new \ReflectionProperty(RegisteredNick::class, 'id')->setValue($account, $number);
             $accounts['User' . $number] = $account;
         }
         $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $repo->expects(self::once())->method('findByNicknamesLower')->willReturn($accounts);
         $repo->expects(self::never())->method('saveActivityBatch');
-        $failure = new RuntimeException('transaction rolled back');
+        $failure = new \RuntimeException('transaction rolled back');
         $closed = false;
         $attempts = 0;
         $publisher = $this->createStub(NickServEventPublisher::class);
@@ -485,7 +480,7 @@ final class NickProtectionSubscriberTest extends TestCase
         for ($number = 1; $number <= 400; ++$number) {
             $account = RegisteredNick::createPending('User' . $number, 'hash', $number . '@example.com', 'en', $this->now, $this->now);
             $account->activate();
-            new ReflectionProperty(RegisteredNick::class, 'id')->setValue($account, $number);
+            new \ReflectionProperty(RegisteredNick::class, 'id')->setValue($account, $number);
             $accounts['User' . $number] = $account;
         }
         $saved = [];
@@ -494,7 +489,7 @@ final class NickProtectionSubscriberTest extends TestCase
         $repo->method('saveActivityBatch')->willReturnCallback(static function (array $batch) use (&$saved): void {
             $saved[] = count($batch);
         });
-        $failure = new RuntimeException('transaction rolled back');
+        $failure = new \RuntimeException('transaction rolled back');
         $closed = false;
         $attempts = 0;
         $publisher = $this->createStub(NickServEventPublisher::class);
@@ -562,10 +557,10 @@ final class NickProtectionSubscriberTest extends TestCase
         );
         $repo->method('saveActivityBatch')->willReturnCallback(
             static function (array $batch) use (&$saved): void {
-                $saved[] = array_map(static fn (mixed $account): RegisteredNick => $account instanceof RegisteredNick ? $account : throw new LogicException('Only accounts are saved.'), $batch);
+                $saved[] = array_map(static fn (mixed $account): RegisteredNick => $account instanceof RegisteredNick ? $account : throw new \LogicException('Only accounts are saved.'), $batch);
             },
         );
-        $failure = new RuntimeException('transaction rolled back');
+        $failure = new \RuntimeException('transaction rolled back');
         $closed = false;
         $identified = [];
         $publisher = $this->createStub(NickServEventPublisher::class);
@@ -630,7 +625,7 @@ final class NickProtectionSubscriberTest extends TestCase
         $this->notifier->expects(self::never())->method('setUserVhost');
         $accounts = $this->burstAccounts(201);
         $lookups = 0;
-        $failure = new RuntimeException('connection lost');
+        $failure = new \RuntimeException('connection lost');
         $closed = false;
         $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $repo->method('findByNicknamesLower')->willReturnCallback(static function (array $nicknames) use ($accounts, $failure, &$closed, &$lookups): array {
@@ -704,7 +699,7 @@ final class NickProtectionSubscriberTest extends TestCase
         $repo->method('saveActivityBatch')->willReturnCallback(static function (array $batch) use (&$saved): void {
             $saved[] = count($batch);
         });
-        $failure = new RuntimeException('transaction rolled back');
+        $failure = new \RuntimeException('transaction rolled back');
         $closed = false;
         $publisher = $this->createStub(NickServEventPublisher::class);
         $publisher->method('publish')->willReturnCallback(static function (object $event) use ($failure, &$closed): void {
@@ -758,7 +753,7 @@ final class NickProtectionSubscriberTest extends TestCase
         $this->notifier->expects(self::never())->method('setUserVhost');
         $accounts = $this->burstAccounts(3);
         $lookups = 0;
-        $resaveFailure = new RuntimeException('lock wait timeout');
+        $resaveFailure = new \RuntimeException('lock wait timeout');
         $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $repo->method('findByNicknamesLower')->willReturnCallback(static function (array $nicknames) use ($accounts, &$lookups): array {
             ++$lookups;
@@ -778,7 +773,7 @@ final class NickProtectionSubscriberTest extends TestCase
             }
             $saved[] = $batch[0]->getNickname();
         });
-        $failure = new RuntimeException('transaction rolled back');
+        $failure = new \RuntimeException('transaction rolled back');
         $closed = false;
         $publisher = $this->createStub(NickServEventPublisher::class);
         $publisher->method('publish')->willReturnCallback(static function (object $event) use ($failure, &$closed): void {
@@ -837,7 +832,7 @@ final class NickProtectionSubscriberTest extends TestCase
 
             return $found;
         });
-        $failure = new RuntimeException('deadlock found when trying to get lock');
+        $failure = new \RuntimeException('deadlock found when trying to get lock');
         $closed = false;
         $saveAttempts = 0;
         $saved = [];
@@ -847,7 +842,7 @@ final class NickProtectionSubscriberTest extends TestCase
 
                 throw $failure;
             }
-            $saved[] = array_map(static fn (mixed $account): RegisteredNick => $account instanceof RegisteredNick ? $account : throw new LogicException('Only accounts are saved.'), $batch);
+            $saved[] = array_map(static fn (mixed $account): RegisteredNick => $account instanceof RegisteredNick ? $account : throw new \LogicException('Only accounts are saved.'), $batch);
         });
         $entityManager = $this->createStub(EntityManagerInterface::class);
         $entityManager->method('isOpen')->willReturnCallback(static function () use (&$closed): bool {
@@ -907,7 +902,7 @@ final class NickProtectionSubscriberTest extends TestCase
         $repo->method('saveActivityBatch')->willReturnCallback(static function (array $batch) use (&$saved): void {
             $saved[] = count($batch);
         });
-        $failure = new RuntimeException('the EntityManager is closed');
+        $failure = new \RuntimeException('the EntityManager is closed');
         $closed = false;
         $starts = 0;
         // A batch-start listener swallows its own database error, leaving the EntityManager closed.
@@ -971,8 +966,8 @@ final class NickProtectionSubscriberTest extends TestCase
         $accounts = $this->burstAccounts(400);
         $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $repo->method('findByNicknamesLower')->willReturn($accounts);
-        $failure = new RuntimeException('transaction rolled back');
-        $again = new RuntimeException('transaction rolled back again');
+        $failure = new \RuntimeException('transaction rolled back');
+        $again = new \RuntimeException('transaction rolled back again');
         $closed = false;
         $attempts = 0;
         $publisher = $this->createStub(NickServEventPublisher::class);
@@ -1037,8 +1032,8 @@ final class NickProtectionSubscriberTest extends TestCase
         $accounts = $this->burstAccounts(201);
         $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $repo->method('findByNicknamesLower')->willReturn($accounts);
-        $failure = new RuntimeException('transaction rolled back');
-        $resetFailure = new RuntimeException('cannot reset');
+        $failure = new \RuntimeException('transaction rolled back');
+        $resetFailure = new \RuntimeException('cannot reset');
         $closed = false;
         $attempts = 0;
         $publisher = $this->createStub(NickServEventPublisher::class);
@@ -1093,7 +1088,7 @@ final class NickProtectionSubscriberTest extends TestCase
         $this->notifier->expects(self::never())->method('setUserVhost');
         $account = RegisteredNick::createPending('Foo[', 'hash', 'f@example.com', 'en', $this->now, $this->now);
         $account->activate();
-        new ReflectionProperty(RegisteredNick::class, 'id')->setValue($account, 1);
+        new \ReflectionProperty(RegisteredNick::class, 'id')->setValue($account, 1);
         $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $repo->expects(self::once())->method('findByNicknamesLower')->with(['Foo[', 'foo{'])->willReturn(['Foo[' => $account]);
         $repo->expects(self::once())->method('saveActivityBatch')->with([$account]);
@@ -1113,8 +1108,8 @@ final class NickProtectionSubscriberTest extends TestCase
     {
         $this->networkUserLookup->expects(self::never())->method('findByUid');
         $this->notifier->expects(self::never())->method('setUserVhost');
-        $startFailure = new RuntimeException('preload failed');
-        $finishFailure = new RuntimeException('finish failed');
+        $startFailure = new \RuntimeException('preload failed');
+        $finishFailure = new \RuntimeException('finish failed');
         $batchPublisher = $this->createStub(NickServEventPublisher::class);
         $batchPublisher->method('publish')->willReturnCallback(static function ($event) use ($startFailure, $finishFailure): void {
             throw $event instanceof NickBurstBatchStartedEvent ? $startFailure : $finishFailure;
@@ -1148,12 +1143,12 @@ final class NickProtectionSubscriberTest extends TestCase
         $this->notifier->expects(self::never())->method('setUserVhost');
         $alice = RegisteredNick::createPending('Alice', 'hash', 'a@example.com', 'en', $this->now, $this->now);
         $alice->activate();
-        new ReflectionProperty(RegisteredNick::class, 'id')->setValue($alice, 1);
-        $saveFailure = new RuntimeException('save failed');
+        new \ReflectionProperty(RegisteredNick::class, 'id')->setValue($alice, 1);
+        $saveFailure = new \RuntimeException('save failed');
         $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $repo->method('findByNicknamesLower')->willReturn(['Alice' => $alice]);
         $repo->expects(self::once())->method('saveActivityBatch')->with([$alice])->willThrowException($saveFailure);
-        $chunkFailure = new RuntimeException('listener failed');
+        $chunkFailure = new \RuntimeException('listener failed');
         $publisher = $this->createStub(NickServEventPublisher::class);
         $publisher->method('publish')->willThrowException($chunkFailure);
         $batchEvents = [];
@@ -1191,7 +1186,7 @@ final class NickProtectionSubscriberTest extends TestCase
         $this->networkUserLookup->expects(self::never())->method('findByUid');
         $this->notifier->expects(self::never())->method('setUserVhost');
         $alice = RegisteredNick::createPending('Alice', 'hash', 'a@example.com', 'en', $this->now, $this->now);
-        new ReflectionProperty(RegisteredNick::class, 'id')->setValue($alice, 1);
+        new \ReflectionProperty(RegisteredNick::class, 'id')->setValue($alice, 1);
         $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $repo->method('findByNicknamesLower')->willReturn(['Alice' => $alice]);
         $events = [];
@@ -1223,7 +1218,7 @@ final class NickProtectionSubscriberTest extends TestCase
             static function ($event) use (&$events): void {
                 $events[] = $event;
                 if ($event instanceof NickBurstBatchStartedEvent) {
-                    throw new RuntimeException('preload failed');
+                    throw new \RuntimeException('preload failed');
                 }
             },
         );
@@ -1249,8 +1244,8 @@ final class NickProtectionSubscriberTest extends TestCase
         $bob = RegisteredNick::createPending('Bob', 'hash', 'b@example.com', 'en', $this->now, $this->now);
         $alice->activate();
         $bob->activate();
-        new ReflectionProperty(RegisteredNick::class, 'id')->setValue($alice, 1);
-        new ReflectionProperty(RegisteredNick::class, 'id')->setValue($bob, 2);
+        new \ReflectionProperty(RegisteredNick::class, 'id')->setValue($alice, 1);
+        new \ReflectionProperty(RegisteredNick::class, 'id')->setValue($bob, 2);
         $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $nickRepo->method('findByNicknamesLower')->willReturn(['Alice' => $alice, 'Bob' => $bob]);
         $nickRepo->expects(self::once())->method('saveActivityBatch')->with([$alice, $bob]);
@@ -1627,8 +1622,8 @@ final class NickProtectionSubscriberTest extends TestCase
         $this->notifier->expects(self::never())->method('setUserVhost');
         $alice = RegisteredNick::createPending('Alice', 'hash', 'a@example.com', 'en', $this->now, $this->now);
         $bob = RegisteredNick::createPending('Bob', 'hash', 'b@example.com', 'en', $this->now, $this->now);
-        new ReflectionProperty(RegisteredNick::class, 'id')->setValue($alice, 1);
-        new ReflectionProperty(RegisteredNick::class, 'id')->setValue($bob, 2);
+        new \ReflectionProperty(RegisteredNick::class, 'id')->setValue($alice, 1);
+        new \ReflectionProperty(RegisteredNick::class, 'id')->setValue($bob, 2);
         $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $repo->method('findByNick')->willReturnMap([['Alice', $alice], ['Bob', $bob]]);
         $repo->expects(self::never())->method('save');
@@ -1652,7 +1647,7 @@ final class NickProtectionSubscriberTest extends TestCase
         $this->networkUserLookup->expects(self::never())->method('findByUid');
         $this->notifier->expects(self::never())->method('setUserVhost');
         $alice = RegisteredNick::createPending('Alice', 'hash', 'a@example.com', 'en', $this->now, $this->now);
-        new ReflectionProperty(RegisteredNick::class, 'id')->setValue($alice, 1);
+        new \ReflectionProperty(RegisteredNick::class, 'id')->setValue($alice, 1);
         $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $repo->method('findByNick')->willReturn($alice);
         $repo->expects(self::never())->method('save');
@@ -1672,10 +1667,10 @@ final class NickProtectionSubscriberTest extends TestCase
         $this->networkUserLookup->expects(self::never())->method('findByUid');
         $this->notifier->expects(self::never())->method('setUserVhost');
         $alice = RegisteredNick::createPending('Alice', 'hash', 'a@example.com', 'en', $this->now, $this->now);
-        new ReflectionProperty(RegisteredNick::class, 'id')->setValue($alice, 1);
+        new \ReflectionProperty(RegisteredNick::class, 'id')->setValue($alice, 1);
         $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $repo->method('findByNick')->willReturn($alice);
-        $repo->expects(self::once())->method('saveActivityBatch')->willThrowException(new RuntimeException('write failed'));
+        $repo->expects(self::once())->method('saveActivityBatch')->willThrowException(new \RuntimeException('write failed'));
         $this->initializeSubscriber($repo);
         $this->networkUserLookup->expects(self::never())->method('findByUid');
         $this->notifier->expects(self::never())->method('setUserVhost');
@@ -1684,7 +1679,7 @@ final class NickProtectionSubscriberTest extends TestCase
         try {
             $this->subscriber->onIrcMessageProcessed(new IrcMessageHandledEvent());
             self::fail('The persistence failure must propagate.');
-        } catch (RuntimeException $e) {
+        } catch (\RuntimeException $e) {
             self::assertSame('write failed', $e->getMessage());
         }
         $this->subscriber->onConnectionLost(new NetworkConnectionLostEvent());
@@ -1899,8 +1894,8 @@ final class NickProtectionSubscriberTest extends TestCase
             'hash',
             'u@e.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable()
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable()
         );
         $account->activate();
         $account->changeVhost('test.vhost');
@@ -2081,7 +2076,7 @@ final class NickProtectionSubscriberTest extends TestCase
         $this->burstState = new BurstState();
         $this->networkUserLookup = $this->createMock(NetworkUserLookupPort::class);
         $this->notifier = $this->createMock(NickNetworkActions::class);
-        $this->now = new DateTimeImmutable('2026-01-02 03:04:05');
+        $this->now = new \DateTimeImmutable('2026-01-02 03:04:05');
         $this->clock = $this->createStub(Clock::class);
         $this->clock->method('now')->willReturn($this->now);
         $this->syncNetworkIdentification = new RecordingSyncNetworkIdentificationHandler();
@@ -2147,7 +2142,7 @@ final class NickProtectionSubscriberTest extends TestCase
         for ($number = 1; $number <= $count; ++$number) {
             $account = RegisteredNick::createPending('User' . $number, 'hash', $number . '@example.com', 'en', $this->now, $this->now);
             $account->activate();
-            new ReflectionProperty(RegisteredNick::class, 'id')->setValue($account, $number);
+            new \ReflectionProperty(RegisteredNick::class, 'id')->setValue($account, $number);
             $accounts['User' . $number] = $account;
         }
 
@@ -2164,7 +2159,7 @@ final class NickProtectionSubscriberTest extends TestCase
             public array $records = [];
 
             /** @param array<mixed> $context */
-            public function log($level, string|Stringable $message, array $context = []): void
+            public function log($level, \Stringable|string $message, array $context = []): void
             {
                 $this->records[] = ['level' => $level, 'message' => (string) $message, 'context' => $context];
             }

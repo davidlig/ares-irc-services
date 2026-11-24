@@ -17,14 +17,10 @@ use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\ValueObject\RegistrationMode;
 use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
-use DateTimeImmutable;
 use Doctrine\DBAL\Exception\DriverException;
-use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\TestWith;
-use ReflectionClass;
-use ReflectionNamedType;
 
 use function array_column;
 use function array_key_exists;
@@ -50,7 +46,7 @@ final class ApprovalRestrictionCleanupTest extends DoctrineIntegrationTestCase
     #[Test]
     public function recoverableDropAndRestorePreserveRegistrationUntilDefinitiveDrop(): void
     {
-        $at = new DateTimeImmutable('2026-10-27T12:00:00+00:00');
+        $at = new \DateTimeImmutable('2026-10-27T12:00:00+00:00');
         $channels = new RegisteredChannelDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network());
         $channel = RegisteredChannel::register($at, '#test', 7, 'description');
         $channels->save($channel);
@@ -72,7 +68,7 @@ final class ApprovalRestrictionCleanupTest extends DoctrineIntegrationTestCase
     #[TestWith([true])]
     public function expiredRejectionReplacementStartsFreshAndFailurePreservesRejection(bool $fail): void
     {
-        $at = new DateTimeImmutable('2026-10-27T12:00:00+00:00');
+        $at = new \DateTimeImmutable('2026-10-27T12:00:00+00:00');
         $channels = new RegisteredChannelDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network());
         $channel = RegisteredChannel::createPendingRegistration($at->modify('-2 days'), '#test', 7, 'description');
         $channel->rejectRegistration('Reason', 9, 'Root', $at->modify('-2 days'), $at->modify('-1 day'));
@@ -111,7 +107,7 @@ final class ApprovalRestrictionCleanupTest extends DoctrineIntegrationTestCase
     #[Test]
     public function requesterCleanupOrphansRejectionsButPreservesRestrictions(): void
     {
-        $at = new DateTimeImmutable('2026-10-26T12:00:00+00:00');
+        $at = new \DateTimeImmutable('2026-10-26T12:00:00+00:00');
         $channels = new RegisteredChannelDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network());
         foreach ([['#finite', $at->modify('+24 hours')], ['#indefinite', null]] as [$name, $until]) {
             $request = RegisteredChannel::createPendingRegistration($at, $name, 7, 'description');
@@ -129,7 +125,7 @@ final class ApprovalRestrictionCleanupTest extends DoctrineIntegrationTestCase
         self::assertSame(['#finite', '#indefinite'], array_column($rows, 'name'));
         $founderIds = array_map(static function (mixed $value): int {
             if (!is_numeric($value)) {
-                throw new LogicException('Expected numeric founder identifiers.');
+                throw new \LogicException('Expected numeric founder identifiers.');
             }
 
             return (int) $value;
@@ -175,7 +171,7 @@ final class ApprovalRestrictionCleanupTest extends DoctrineIntegrationTestCase
      */
     private function construct(string $class, array $overrides = []): object
     {
-        $reflection = new ReflectionClass($class);
+        $reflection = new \ReflectionClass($class);
         $arguments = [];
         foreach ($reflection->getConstructor()?->getParameters() ?? [] as $parameter) {
             if (array_key_exists($parameter->getName(), $overrides)) {
@@ -184,12 +180,12 @@ final class ApprovalRestrictionCleanupTest extends DoctrineIntegrationTestCase
                 $arguments[] = $parameter->getDefaultValue();
             } else {
                 $type = $parameter->getType();
-                if (!$type instanceof ReflectionNamedType) {
-                    throw new LogicException('Test helper requires named constructor parameter types.');
+                if (!$type instanceof \ReflectionNamedType) {
+                    throw new \LogicException('Test helper requires named constructor parameter types.');
                 }
                 $typeName = $type->getName();
                 if (!class_exists($typeName) && !interface_exists($typeName)) {
-                    throw new LogicException('Test helper requires class constructor parameter types.');
+                    throw new \LogicException('Test helper requires class constructor parameter types.');
                 }
                 $arguments[] = $this->createStub($typeName);
             }

@@ -25,7 +25,6 @@ use App\Irc\Domain\ValueObject\ChannelName;
 use App\Irc\Domain\ValueObject\Ident;
 use App\Irc\Domain\ValueObject\Nick;
 use App\Irc\Domain\ValueObject\Uid;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -86,7 +85,7 @@ final class NetworkStateSubscriberTest extends TestCase
         $nick = new Nick('TestUser');
         $user = $this->createMock(NetworkUser::class);
         $user->expects(self::atLeastOnce())->method('getChannelNames')->willReturn(['#test', '#other']);
-        $channel = new Channel(new ChannelName('#test'), '', new DateTimeImmutable('@0'));
+        $channel = new Channel(new ChannelName('#test'), '', new \DateTimeImmutable('@0'));
         $channel->syncMember(new Uid('001OTHER'), ChannelMemberRole::None);
 
         $this->userRepository->expects(self::once())
@@ -144,7 +143,7 @@ final class NetworkStateSubscriberTest extends TestCase
     {
         $uid = new Uid('001ABC123');
         $name = new ChannelName('#test');
-        $channel = new Channel($name, '+nt', new DateTimeImmutable('@123'));
+        $channel = new Channel($name, '+nt', new \DateTimeImmutable('@123'));
         $channel->syncMember($uid, ChannelMemberRole::Op);
         $registry = new ChannelSyncCompletedRegistry();
         $registry->markSyncCompleted('#TEST');
@@ -166,7 +165,7 @@ final class NetworkStateSubscriberTest extends TestCase
     {
         $uid = new Uid('001ABC123');
         $name = new ChannelName('#test');
-        $channel = new Channel($name, '+nt', new DateTimeImmutable('@123'));
+        $channel = new Channel($name, '+nt', new \DateTimeImmutable('@123'));
         $channel->syncMember($uid, ChannelMemberRole::Op);
         $user = $this->createUser('001ABC123', 'TestUser');
         $user->addChannel($name);
@@ -281,7 +280,7 @@ final class NetworkStateSubscriberTest extends TestCase
     public function onChannelSyncedSavesChannelAndUpdatesUsers(): void
     {
         $channelName = new ChannelName('#test');
-        $channel = new Channel($channelName, '', new DateTimeImmutable('@0'));
+        $channel = new Channel($channelName, '', new \DateTimeImmutable('@0'));
         $uid = new Uid('001ABC123');
 
         $channel->syncMember($uid, ChannelMemberRole::Op);
@@ -435,7 +434,7 @@ final class NetworkStateSubscriberTest extends TestCase
             'cloaked.example.com',
             'vhost.example.com',
             '+i',
-            new DateTimeImmutable(),
+            new \DateTimeImmutable(),
             'Real Name',
             '001',
             'base64ip',

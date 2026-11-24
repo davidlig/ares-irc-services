@@ -8,7 +8,6 @@ use App\Irc\Adapter\Event\ConnectionEstablishedEvent;
 use App\Irc\Adapter\Event\ConnectionLostEvent;
 use App\Irc\Adapter\Event\IncomingIrcMessageEvent;
 use App\Irc\Adapter\Security\SensitiveDataRedactor;
-use DateTimeInterface;
 use Monolog\Level;
 use Monolog\Logger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -51,7 +50,7 @@ final readonly class IRCEventSubscriber implements EventSubscriberInterface
             'host' => (string) $event->serverLink->host,
             'port' => $event->serverLink->port->value,
             'tls' => $event->serverLink->useTls,
-            'occurred' => $event->occurredAt->format(DateTimeInterface::ATOM),
+            'occurred' => $event->occurredAt->format(\DateTimeInterface::ATOM),
         ]);
     }
 
@@ -60,7 +59,7 @@ final readonly class IRCEventSubscriber implements EventSubscriberInterface
         $this->logger->warning('Server link lost.', [
             'server' => (string) $event->serverLink->serverName,
             'reason' => null === $event->reason ? 'unknown' : SensitiveDataRedactor::redactIrcLine($event->reason),
-            'occurred' => $event->occurredAt->format(DateTimeInterface::ATOM),
+            'occurred' => $event->occurredAt->format(\DateTimeInterface::ATOM),
         ]);
     }
 

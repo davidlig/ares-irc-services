@@ -20,7 +20,6 @@ use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use App\Shared\Adapter\In\Irc\Presentation\Component;
 use App\Shared\Adapter\In\Irc\Presentation\Fragment;
 use App\Shared\Adapter\In\Irc\Presentation\Role;
-use DateTimeImmutable;
 
 use function array_slice;
 use function implode;
@@ -161,7 +160,7 @@ final readonly class CregCommand implements ChanServCommandInterface, IrcopAudit
             channelExistsOnNetwork: null !== $channelView,
             operatorAccountId: $context->senderAccount->id,
             operatorNickname: $operator->nick,
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
             rejectionReason: $reason,
             requesterHasRequiredChannelRank: $requesterHasRequiredChannelRank,
             requesterUid: $requester?->uid,

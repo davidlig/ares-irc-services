@@ -8,8 +8,6 @@ use App\NickServ\Adapter\Out\Persistence\Doctrine\DoctrineRescueCredentialPersis
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\NickServ\Domain\ValueObject\NickStatus;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
-use DateTimeImmutable;
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -26,7 +24,7 @@ final class DoctrineRescueCredentialPersistenceTest extends DoctrineIntegrationT
     {
         $nick = $this->account();
         $store = new DoctrineRescueCredentialPersistence($this->entityManager);
-        $now = new DateTimeImmutable('2026-01-01');
+        $now = new \DateTimeImmutable('2026-01-01');
         $hash = str_repeat('a', 64);
         self::assertTrue($store->confirm($nick->getId(), NickStatus::Pending, null, $hash, $now));
         self::assertTrue($nick->isRegistered());
@@ -45,7 +43,7 @@ final class DoctrineRescueCredentialPersistenceTest extends DoctrineIntegrationT
         $nick->activate();
         $this->entityManager->flush();
         $store = new DoctrineRescueCredentialPersistence($this->entityManager);
-        $now = new DateTimeImmutable('2026-01-01');
+        $now = new \DateTimeImmutable('2026-01-01');
         $hash = str_repeat('a', 64);
         self::assertTrue($store->confirm($nick->getId(), NickStatus::Registered, null, $hash, $now));
         self::assertFalse($store->confirm($nick->getId(), NickStatus::Registered, null, str_repeat('b', 64), $now));
@@ -60,7 +58,7 @@ final class DoctrineRescueCredentialPersistenceTest extends DoctrineIntegrationT
     public function expiredAndDisabledAccountsStayUnchanged(): void
     {
         $store = new DoctrineRescueCredentialPersistence($this->entityManager);
-        $now = new DateTimeImmutable('2026-01-02');
+        $now = new \DateTimeImmutable('2026-01-02');
         $hash = str_repeat('a', 64);
         $nick = $this->account();
         self::assertFalse($store->confirm($nick->getId(), NickStatus::Pending, null, $hash, $now));
@@ -81,8 +79,8 @@ final class DoctrineRescueCredentialPersistenceTest extends DoctrineIntegrationT
     public function malformedStoredHashIsRejected(): void
     {
         $store = new DoctrineRescueCredentialPersistence($this->entityManager);
-        $this->expectException(InvalidArgumentException::class);
-        $store->confirm(1, NickStatus::Registered, null, 'plaintext', new DateTimeImmutable('2026-01-01'));
+        $this->expectException(\InvalidArgumentException::class);
+        $store->confirm(1, NickStatus::Registered, null, 'plaintext', new \DateTimeImmutable('2026-01-01'));
     }
 
     #[Test]
@@ -93,8 +91,8 @@ final class DoctrineRescueCredentialPersistenceTest extends DoctrineIntegrationT
         $nick->replaceRescueTokenHash($hash);
         $this->entityManager->flush();
         $store = new DoctrineRescueCredentialPersistence($this->entityManager);
-        self::assertFalse($store->confirm($nick->getId(), NickStatus::Pending, str_repeat('b', 64), $hash, new DateTimeImmutable('2026-01-01')));
-        self::assertTrue($store->confirm($nick->getId(), NickStatus::Pending, $hash, $hash, new DateTimeImmutable('2026-01-01')));
+        self::assertFalse($store->confirm($nick->getId(), NickStatus::Pending, str_repeat('b', 64), $hash, new \DateTimeImmutable('2026-01-01')));
+        self::assertTrue($store->confirm($nick->getId(), NickStatus::Pending, $hash, $hash, new \DateTimeImmutable('2026-01-01')));
         self::assertSame($hash, $nick->getRescueTokenHash());
         self::assertTrue($nick->isRegistered());
     }
@@ -102,7 +100,7 @@ final class DoctrineRescueCredentialPersistenceTest extends DoctrineIntegrationT
     #[Test]
     public function rejectedOperationsPreserveWholeRowAndRotationSurvivesFlush(): void
     {
-        $now = new DateTimeImmutable('2026-01-01');
+        $now = new \DateTimeImmutable('2026-01-01');
         $nick = RegisteredNick::createPending('Snapshot', 'old-password', 'snapshot@example.test', 'en', $now->modify('+1 hour'), $now);
         $this->entityManager->persist($nick);
         $this->entityManager->flush();
@@ -140,7 +138,7 @@ final class DoctrineRescueCredentialPersistenceTest extends DoctrineIntegrationT
         $nick->activate();
         $this->entityManager->flush();
         $store = new DoctrineRescueCredentialPersistence($this->entityManager);
-        $now = new DateTimeImmutable('2026-01-01');
+        $now = new \DateTimeImmutable('2026-01-01');
         $hash = str_repeat('a', 64);
         self::assertTrue($store->rotateAfterRecovery($nick->getId(), null, 'new-password', $hash, $now));
         self::assertSame($hash, $nick->getRescueTokenHash());
@@ -152,7 +150,7 @@ final class DoctrineRescueCredentialPersistenceTest extends DoctrineIntegrationT
 
     private function account(string $name = 'Rescue'): RegisteredNick
     {
-        $nick = RegisteredNick::createPending($name, 'old-password', strtolower($name) . '@example.com', 'en', new DateTimeImmutable('2026-01-02'), new DateTimeImmutable('2026-01-01'));
+        $nick = RegisteredNick::createPending($name, 'old-password', strtolower($name) . '@example.com', 'en', new \DateTimeImmutable('2026-01-02'), new \DateTimeImmutable('2026-01-01'));
         $this->entityManager->persist($nick);
         $this->entityManager->flush();
 

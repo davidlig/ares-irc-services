@@ -16,7 +16,6 @@ use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\Exception\ChannelNameConflictException;
 use App\Shared\Application\Port\EventBusInterface;
 use App\Shared\Application\Time\RelativeExpiryParser;
-use LogicException;
 
 use function strtolower;
 
@@ -90,7 +89,7 @@ final readonly class ManageChannelLifecycleHandler implements ManageChannelLifec
         try {
             $this->forbiddenService->forbid(
                 $command->channelName,
-                $command->reason ?? throw new LogicException('A forbid reason is required.'),
+                $command->reason ?? throw new \LogicException('A forbid reason is required.'),
                 $command->actorNickname,
                 $command->occurredAt,
             );
@@ -210,7 +209,7 @@ final readonly class ManageChannelLifecycleHandler implements ManageChannelLifec
             return new ChannelLifecycleResult(ChannelLifecycleOutcome::InvalidDuration);
         }
 
-        $reason = $command->reason ?? throw new LogicException('A suspension reason is required.');
+        $reason = $command->reason ?? throw new \LogicException('A suspension reason is required.');
         $channel->suspend($reason, $expiresAt);
         $this->channels->save($channel);
         $this->suspensionService->enforceSuspension($channel);

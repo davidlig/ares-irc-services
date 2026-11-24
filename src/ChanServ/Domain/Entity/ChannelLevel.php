@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Domain\Entity;
 
-use InvalidArgumentException;
-
 use function sprintf;
 
 /**
@@ -132,7 +130,7 @@ class ChannelLevel
     private static function assertValidValue(int $value): void
     {
         if ($value < self::LEVEL_MIN || $value > self::LEVEL_MAX) {
-            throw new InvalidArgumentException(sprintf('Level value must be between %d and %d.', self::LEVEL_MIN, self::LEVEL_MAX));
+            throw new \InvalidArgumentException(sprintf('Level value must be between %d and %d.', self::LEVEL_MIN, self::LEVEL_MAX));
         }
     }
 }

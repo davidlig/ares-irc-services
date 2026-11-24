@@ -162,7 +162,7 @@ final readonly class UdbRecordExporter
             $path = UdbPathCodec::encodePath($components);
             $typedValue = UdbSchema::typedValueFor($block, $components, $value);
             if (null === $path || null === $typedValue) {
-                throw new RuntimeException(sprintf('Current SQL export contains an invalid %s-block record.', $block->letter()));
+                throw new \RuntimeException(sprintf('Current SQL export contains an invalid %s-block record.', $block->letter()));
             }
 
             $records[$path] = $typedValue;

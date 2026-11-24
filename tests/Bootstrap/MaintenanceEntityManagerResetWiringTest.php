@@ -14,8 +14,6 @@ use Doctrine\Persistence\ManagerRegistry;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use Psr\Log\NullLogger;
-use ReflectionProperty;
-use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 /**
@@ -35,7 +33,7 @@ final class MaintenanceEntityManagerResetWiringTest extends KernelTestCase
         self::assertInstanceOf(MaintenanceScheduler::class, $scheduler);
 
         self::assertSame($container->get('doctrine'), $this->registryOf(
-            new ReflectionProperty(MaintenanceScheduler::class, 'entityManagerReset')->getValue($scheduler),
+            new \ReflectionProperty(MaintenanceScheduler::class, 'entityManagerReset')->getValue($scheduler),
         ));
     }
 
@@ -49,7 +47,7 @@ final class MaintenanceEntityManagerResetWiringTest extends KernelTestCase
         self::assertInstanceOf(IRCClientFactory::class, $factory);
 
         self::assertSame($container->get('doctrine'), $this->registryOf(
-            new ReflectionProperty(IRCClientFactory::class, 'entityManagerReset')->getValue($factory),
+            new \ReflectionProperty(IRCClientFactory::class, 'entityManagerReset')->getValue($factory),
         ));
     }
 
@@ -67,7 +65,7 @@ final class MaintenanceEntityManagerResetWiringTest extends KernelTestCase
         $closingTask = new MaintenanceEntityManagerResetTask('test.closing', 100, static function () use ($entityManager): void {
             $entityManager->close();
 
-            throw new RuntimeException('database error');
+            throw new \RuntimeException('database error');
         });
         $laterTask = new MaintenanceEntityManagerResetTask('test.later', 200, static function () use ($entityManager, $observed): void {
             $observed->openInLaterTask = $entityManager->isOpen();
@@ -83,7 +81,7 @@ final class MaintenanceEntityManagerResetWiringTest extends KernelTestCase
     {
         self::assertInstanceOf(ClosedEntityManagerReset::class, $reset);
 
-        return new ReflectionProperty(ClosedEntityManagerReset::class, 'managerRegistry')->getValue($reset);
+        return new \ReflectionProperty(ClosedEntityManagerReset::class, 'managerRegistry')->getValue($reset);
     }
 }
 
@@ -98,7 +96,7 @@ final readonly class MaintenanceEntityManagerResetTask implements MaintenanceTas
     public function __construct(
         private string $name,
         private int $order,
-        private Closure $work,
+        private \Closure $work,
     ) {}
 
     public function getName(): string

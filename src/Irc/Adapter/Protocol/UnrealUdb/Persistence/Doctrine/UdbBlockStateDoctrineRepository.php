@@ -6,7 +6,6 @@ namespace App\Irc\Adapter\Protocol\UnrealUdb\Persistence\Doctrine;
 
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbBlockState;
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbBlockStateRepositoryInterface;
-use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 
 use function array_filter;
@@ -33,7 +32,7 @@ final readonly class UdbBlockStateDoctrineRepository implements UdbBlockStateRep
         string $block,
         string $checksum,
         int $recordCount,
-        ?DateTimeImmutable $modifiedAt = null,
+        ?\DateTimeImmutable $modifiedAt = null,
     ): void {
         $existing = $this->em
             ->createQuery('SELECT s FROM App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbBlockState s WHERE s.block = :block')

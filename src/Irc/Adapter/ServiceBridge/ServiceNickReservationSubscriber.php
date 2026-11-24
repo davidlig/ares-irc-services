@@ -14,7 +14,6 @@ use App\Shared\Domain\IrcIdentityFold;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Throwable;
 
 use function array_values;
 use function count;
@@ -84,7 +83,7 @@ final readonly class ServiceNickReservationSubscriber implements EventSubscriber
             foreach ($this->inventory->namesForProtocol($protocol) as $nick) {
                 $previous[IrcIdentityFold::fold($nick)] = $nick;
             }
-        } catch (Throwable $exception) {
+        } catch (\Throwable $exception) {
             $this->logger->error('Could not load service nickname reservation inventory', [
                 'protocol' => $protocol,
                 'exception' => $exception->getMessage(),
@@ -105,7 +104,7 @@ final readonly class ServiceNickReservationSubscriber implements EventSubscriber
                 foreach ($reservation->findManagedServiceNicks(self::REASON) as $nick) {
                     $previous[IrcIdentityFold::fold($nick)] = $nick;
                 }
-            } catch (Throwable $exception) {
+            } catch (\Throwable $exception) {
                 $this->logger->error('Could not discover managed service nickname reservations', [
                     'protocol' => $protocol,
                     'exception' => $exception->getMessage(),
@@ -118,7 +117,7 @@ final readonly class ServiceNickReservationSubscriber implements EventSubscriber
             // every historical name before any permanent network effect.
             try {
                 $this->inventory->replaceForProtocol($protocol, array_values($previous + $current));
-            } catch (Throwable $exception) {
+            } catch (\Throwable $exception) {
                 $this->logger->error('Could not prepare service nickname reservation inventory', [
                     'protocol' => $protocol,
                     'exception' => $exception->getMessage(),
@@ -145,7 +144,7 @@ final readonly class ServiceNickReservationSubscriber implements EventSubscriber
 
             try {
                 $reservation->releaseNick($nick);
-            } catch (Throwable $exception) {
+            } catch (\Throwable $exception) {
                 $this->logger->error('Could not release obsolete service nickname reservation', [
                     'nick' => $nick,
                     'protocol' => $protocol,
@@ -165,7 +164,7 @@ final readonly class ServiceNickReservationSubscriber implements EventSubscriber
         if ($canPersistInventory && $hasLiveLookup) {
             try {
                 $this->inventory->replaceForProtocol($protocol, array_values($failedReleases + $current));
-            } catch (Throwable $exception) {
+            } catch (\Throwable $exception) {
                 $this->logger->error('Could not save service nickname reservation inventory', [
                     'protocol' => $protocol,
                     'exception' => $exception->getMessage(),

@@ -9,7 +9,6 @@ use App\Irc\Domain\ValueObject\ChannelName;
 use App\Irc\Domain\ValueObject\Ident;
 use App\Irc\Domain\ValueObject\Nick;
 use App\Irc\Domain\ValueObject\Uid;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -146,7 +145,7 @@ final class NetworkUserTest extends TestCase
             cloakedHost: 'hidden.example.com',
             virtualHost: 'vhost.example.com',
             modes: '+iwx',
-            connectedAt: new DateTimeImmutable('2024-01-01T00:00:00Z'),
+            connectedAt: new \DateTimeImmutable('2024-01-01T00:00:00Z'),
             realName: 'Test User',
             serverSid: '001',
             ipBase64: 'abcd',
@@ -167,7 +166,7 @@ final class NetworkUserTest extends TestCase
             cloakedHost: 'cloak.example',
             virtualHost: 'vhost.example',
             modes: $modes,
-            connectedAt: new DateTimeImmutable('2024-01-01T00:00:00Z'),
+            connectedAt: new \DateTimeImmutable('2024-01-01T00:00:00Z'),
             realName: 'Real Name',
             serverSid: '001',
             ipBase64: $ipBase64,

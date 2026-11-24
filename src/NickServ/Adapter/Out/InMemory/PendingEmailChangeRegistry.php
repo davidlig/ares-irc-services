@@ -33,7 +33,7 @@ final class PendingEmailChangeRegistry implements PendingEmailChangeStore
         $this->entries = [];
     }
 
-    public function store(string $nickname, string $newEmail, string $token, DateTimeImmutable $now): void
+    public function store(string $nickname, string $newEmail, string $token, \DateTimeImmutable $now): void
     {
         $this->entries[IrcIdentityFold::fold($nickname)] = [
             'newEmail' => $newEmail,
@@ -46,7 +46,7 @@ final class PendingEmailChangeRegistry implements PendingEmailChangeStore
      * Validates and consumes the token for this nick and new email.
      * Returns true if valid and not expired; removes the entry. False otherwise.
      */
-    public function consume(string $nickname, string $newEmail, string $token, DateTimeImmutable $now): bool
+    public function consume(string $nickname, string $newEmail, string $token, \DateTimeImmutable $now): bool
     {
         $key = IrcIdentityFold::fold($nickname);
         $entry = $this->entries[$key] ?? null;
@@ -84,7 +84,7 @@ final class PendingEmailChangeRegistry implements PendingEmailChangeStore
      * Removes entries whose token has expired. Returns the number of entries removed.
      * Used by maintenance to free memory.
      */
-    public function pruneExpired(DateTimeImmutable $now): int
+    public function pruneExpired(\DateTimeImmutable $now): int
     {
         $removed = 0;
 

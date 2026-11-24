@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\NickServ\Application\UseCase\Suspend;
 
-use DateTimeImmutable;
-
 final readonly class SuspendNickResult
 {
     public function __construct(
@@ -13,6 +11,6 @@ final readonly class SuspendNickResult
         public string $targetNickname,
         public string $duration,
         public string $reason,
-        public ?DateTimeImmutable $expiresAt = null,
+        public ?\DateTimeImmutable $expiresAt = null,
     ) {}
 }

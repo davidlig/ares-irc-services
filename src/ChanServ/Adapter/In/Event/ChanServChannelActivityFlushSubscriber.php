@@ -8,7 +8,6 @@ use App\ChanServ\Adapter\Out\Persistence\ChannelActivityBuffer;
 use App\Irc\Application\PublishedEvent\NetworkConnectionLostEvent;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Throwable;
 
 /**
  * Flushes deferred channel activity on disconnection. The buffer retains failed chunks for the
@@ -30,7 +29,7 @@ final readonly class ChanServChannelActivityFlushSubscriber implements EventSubs
     {
         try {
             $this->activityBuffer->flush();
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             $this->logger->warning('Deferred ChanServ channel activity was not fully flushed on disconnection; it stays pending.', ['exception' => $e]);
         }
     }

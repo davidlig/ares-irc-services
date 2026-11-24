@@ -143,6 +143,7 @@ final readonly class UnifiedHelpFormatter
         $lines[] = ' ';
         $lines[] = ' ';
         $lines[] = $context->trans('help.general_footer');
+
         // Caller appends help.footer after the final general-help hint.
 
         return $lines;

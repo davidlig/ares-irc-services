@@ -19,7 +19,6 @@ use App\OperServ\Application\PublishedEvent\OperRoleForcedVhostChangedEvent;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Throwable;
 
 use function sprintf;
 
@@ -168,7 +167,7 @@ final class UdbNickSyncSubscriber implements EventSubscriberInterface
             if ($saved) {
                 return;
             }
-        } catch (Throwable) {
+        } catch (\Throwable) {
             // The SQL preference is already committed. Preserve later listeners;
             // a future authoritative snapshot reconciles the native projection.
         }

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\NickServ\Adapter\Out\InMemory;
 
 use App\NickServ\Application\Port\Out\ResendThrottle;
-use DateTimeImmutable;
 
 use function sprintf;
 
@@ -13,7 +12,7 @@ final readonly class InMemoryResendThrottle implements ResendThrottle
 {
     public function __construct(private PendingVerificationRegistry $registry) {}
 
-    public function remainingCooldownSeconds(string $nickname, int $intervalSeconds, DateTimeImmutable $now): int
+    public function remainingCooldownSeconds(string $nickname, int $intervalSeconds, \DateTimeImmutable $now): int
     {
         $lastResendAt = $this->registry->getLastResendAt($nickname);
         if (null === $lastResendAt || $intervalSeconds <= 0) {
@@ -28,7 +27,7 @@ final readonly class InMemoryResendThrottle implements ResendThrottle
         return 0;
     }
 
-    public function recordResend(string $nickname, DateTimeImmutable $now): void
+    public function recordResend(string $nickname, \DateTimeImmutable $now): void
     {
         $this->registry->recordResend($nickname, $now);
     }

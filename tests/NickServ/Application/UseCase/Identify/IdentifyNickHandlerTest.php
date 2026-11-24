@@ -22,11 +22,9 @@ use App\NickServ\Application\UseCase\IssueMigrationRescueToken\IssueMigrationRes
 use App\NickServ\Application\UseCase\IssueMigrationRescueToken\IssueMigrationRescueTokenHandlerInterface;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\Tests\NickServ\Support\NegotiatedCaseMapping;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionProperty;
 
 use function str_repeat;
 
@@ -367,7 +365,7 @@ final class IdentifyNickHandlerTest extends TestCase
     {
         $account = RegisteredNick::createPending('Alice', 'hash', 'a@example.com', 'en', $this->now()->modify('+1 hour'), $this->now());
         $account->activate();
-        new ReflectionProperty($account, 'id')->setValue($account, 42);
+        new \ReflectionProperty($account, 'id')->setValue($account, 42);
         $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $repo->method('findByNick')->willReturn($account);
         $sessions = $this->createStub(IdentifiedSessionTracker::class);
@@ -388,7 +386,7 @@ final class IdentifyNickHandlerTest extends TestCase
         $hasher = new PhpPasswordHasher();
         $hash = $hasher->hash('abc');
         $account = RegisteredNick::createActive('alice', $hash, null, 'en', $this->now(), str_repeat('a', 64));
-        new ReflectionProperty($account, 'id')->setValue($account, 1);
+        new \ReflectionProperty($account, 'id')->setValue($account, 1);
         $result = $this->createHandlerForAccount($account, passwordHasher: $hasher)->handle($this->createCommand('alice', 'abc'));
         self::assertSame(IdentifyNickOutcome::Success, $result->outcome);
         self::assertSame($hash, $account->getPasswordHash());
@@ -473,8 +471,8 @@ final class IdentifyNickHandlerTest extends TestCase
         return $clock;
     }
 
-    private function now(): DateTimeImmutable
+    private function now(): \DateTimeImmutable
     {
-        return new DateTimeImmutable('2026-09-06 12:00:00 UTC');
+        return new \DateTimeImmutable('2026-09-06 12:00:00 UTC');
     }
 }

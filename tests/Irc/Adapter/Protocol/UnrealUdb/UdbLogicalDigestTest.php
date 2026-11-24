@@ -8,7 +8,6 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbBlock;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbValue;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbLogicalDigest;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbUnsignedDecimal;
-use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -40,7 +39,7 @@ final class UdbLogicalDigestTest extends TestCase
     public function typedKindAndBlockArePartOfTheDigest(): void
     {
         $string = [['nick::pass', UdbValue::string('*5')]];
-        $number = [['nick::pass', UdbValue::number(UdbUnsignedDecimal::parse('5') ?? throw new LogicException('The test uint64 fixture must be valid.'))]];
+        $number = [['nick::pass', UdbValue::number(UdbUnsignedDecimal::parse('5') ?? throw new \LogicException('The test uint64 fixture must be valid.'))]];
 
         self::assertNotSame(UdbLogicalDigest::fromRecords(UdbBlock::Nicks, $string), UdbLogicalDigest::fromRecords(UdbBlock::Nicks, $number));
         self::assertNotSame(UdbLogicalDigest::fromRecords(UdbBlock::Nicks, $string), UdbLogicalDigest::fromRecords(UdbBlock::Channels, $string));

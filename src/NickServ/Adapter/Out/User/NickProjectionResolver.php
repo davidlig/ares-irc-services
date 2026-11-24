@@ -10,7 +10,6 @@ use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\NickServ\Domain\ValueObject\AutomaticModeProfile;
 use App\NickServ\Domain\ValueObject\NickStatus;
-use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 
 use function array_map;
@@ -75,8 +74,8 @@ final readonly class NickProjectionResolver implements NickProjectionQuery
 
         $suspendedUntil = $row['suspendedUntil'] ?? null;
         if (is_string($suspendedUntil)) {
-            $suspendedUntil = new DateTimeImmutable($suspendedUntil);
-        } elseif (!$suspendedUntil instanceof DateTimeImmutable) {
+            $suspendedUntil = new \DateTimeImmutable($suspendedUntil);
+        } elseif (!$suspendedUntil instanceof \DateTimeImmutable) {
             $suspendedUntil = null;
         }
         $suspendedUntil = $suspended ? $suspendedUntil : null;

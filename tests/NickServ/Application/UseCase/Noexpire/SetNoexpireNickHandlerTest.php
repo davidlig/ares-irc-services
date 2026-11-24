@@ -13,7 +13,6 @@ use App\NickServ\Application\UseCase\Noexpire\SetNoexpireNickOutcome;
 use App\NickServ\Application\UseCase\Noexpire\SetNoexpireNickResult;
 use App\NickServ\Domain\Entity\NickHistory;
 use App\NickServ\Domain\Entity\RegisteredNick;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -89,8 +88,8 @@ final class SetNoexpireNickHandlerTest extends TestCase
             && [] === $entry->getExtraData()));
         $account->method('getId')->willReturn(42);
         $handler = new SetNoexpireNickHandler($repository, new NickHistoryService($historyRepository));
-        $result = $handler->handle(new SetNoexpireNick('ActiveNick', true, new DateTimeImmutable('2026-09-06 UTC'), 'Oper'));
-        $repeatResult = $handler->handle(new SetNoexpireNick('ActiveNick', true, new DateTimeImmutable('2026-09-06 UTC'), 'Oper'));
+        $result = $handler->handle(new SetNoexpireNick('ActiveNick', true, new \DateTimeImmutable('2026-09-06 UTC'), 'Oper'));
+        $repeatResult = $handler->handle(new SetNoexpireNick('ActiveNick', true, new \DateTimeImmutable('2026-09-06 UTC'), 'Oper'));
 
         self::assertSame(SetNoexpireNickOutcome::Success, $result->outcome);
         self::assertSame('ActiveNick', $result->nickname);
@@ -100,7 +99,7 @@ final class SetNoexpireNickHandlerTest extends TestCase
 
     private function input(string $nickname, bool $noexpire): SetNoexpireNick
     {
-        return new SetNoexpireNick($nickname, $noexpire, new DateTimeImmutable('2026-09-06 UTC'), 'Oper');
+        return new SetNoexpireNick($nickname, $noexpire, new \DateTimeImmutable('2026-09-06 UTC'), 'Oper');
     }
 
     private function handler(RegisteredNickRepositoryInterface $repository): SetNoexpireNickHandler

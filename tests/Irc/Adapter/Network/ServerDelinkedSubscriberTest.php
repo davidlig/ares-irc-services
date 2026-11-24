@@ -16,13 +16,11 @@ use App\Irc\Domain\ValueObject\Ident;
 use App\Irc\Domain\ValueObject\Nick;
 use App\Irc\Domain\ValueObject\Uid;
 use ArrayObject;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-use RuntimeException;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
@@ -112,7 +110,7 @@ final class ServerDelinkedSubscriberTest extends TestCase
         $users->add($this->createUser('001BBBBBB', 'Bob', '002'));
         $users->add($this->createUser('001CCCCCC', 'Carol', '002'));
         $users->add($this->createUser('001DDDDDD', 'Dave', '003'));
-        $failure = new RuntimeException('departure listener failed');
+        $failure = new \RuntimeException('departure listener failed');
         $finished = new class {
             /** @var list<string> */
             public array $serverSids = [];
@@ -156,7 +154,7 @@ final class ServerDelinkedSubscriberTest extends TestCase
         $users = new InMemoryNetworkUserRepository();
         $users->add($this->createUser('001AAAAAA', 'Alice', '002'));
         $users->add($this->createUser('001BBBBBB', 'Bob', '002'));
-        $failure = new RuntimeException('started listener failed');
+        $failure = new \RuntimeException('started listener failed');
         $finished = new class {
             /** @var list<string> */
             public array $serverSids = [];
@@ -196,8 +194,8 @@ final class ServerDelinkedSubscriberTest extends TestCase
     {
         $users = new InMemoryNetworkUserRepository();
         $users->add($this->createUser('001AAAAAA', 'Alice', '002'));
-        $startedFailure = new RuntimeException('started listener failed');
-        $finishedFailure = new RuntimeException('finished listener failed');
+        $startedFailure = new \RuntimeException('started listener failed');
+        $finishedFailure = new \RuntimeException('finished listener failed');
         $dispatcher = new EventDispatcher();
         $dispatcher->addListener(ServerDelinkStartedEvent::class, static function () use ($startedFailure): void {
             throw $startedFailure;
@@ -220,7 +218,7 @@ final class ServerDelinkedSubscriberTest extends TestCase
             new ServerDelinkedSubscriber($users, $dispatcher, $this->logger)
                 ->onServerDelinked(new ServerDelinkedEvent('002', 'Server split'));
             self::fail('The finished listener failure must propagate.');
-        } catch (RuntimeException $exception) {
+        } catch (\RuntimeException $exception) {
             self::assertSame($finishedFailure, $exception);
         }
 
@@ -302,9 +300,9 @@ final class ServerDelinkedSubscriberTest extends TestCase
     }
 
     /** @return ArrayObject<int, object> */
-    private function recordDispatches(int $count): ArrayObject
+    private function recordDispatches(int $count): \ArrayObject
     {
-        $dispatched = new ArrayObject();
+        $dispatched = new \ArrayObject();
         $this->eventDispatcher->expects(self::exactly($count))
             ->method('dispatch')
             ->willReturnCallback(static function (object $event) use ($dispatched): object {
@@ -321,7 +319,7 @@ final class ServerDelinkedSubscriberTest extends TestCase
      *
      * @return list<array<int, string>>
      */
-    private function describe(ArrayObject $dispatched): array
+    private function describe(\ArrayObject $dispatched): array
     {
         $described = [];
         foreach ($dispatched as $event) {
@@ -345,7 +343,7 @@ final class ServerDelinkedSubscriberTest extends TestCase
             'cloaked.example.com',
             'vhost.example.com',
             '+i',
-            new DateTimeImmutable(),
+            new \DateTimeImmutable(),
             'Real Name',
             $serverSid,
             'base64ip',

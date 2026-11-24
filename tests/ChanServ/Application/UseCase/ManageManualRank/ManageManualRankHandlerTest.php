@@ -25,11 +25,9 @@ use App\ChanServ\Domain\Exception\ChannelNotRegisteredException;
 use App\ChanServ\Domain\Exception\InsufficientAccessException;
 use App\ChanServ\Domain\ValueObject\ChannelRank;
 use App\ChanServ\Domain\ValueObject\RankChangeAction;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionProperty;
 
 use function count;
 
@@ -291,8 +289,8 @@ final class ManageManualRankHandlerTest extends TestCase
 
     private function channel(): RegisteredChannel
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Channel', 1, 'Description');
-        $id = new ReflectionProperty(RegisteredChannel::class, 'id');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#Channel', 1, 'Description');
+        $id = new \ReflectionProperty(RegisteredChannel::class, 'id');
         $id->setValue($channel, 11);
 
         return $channel;

@@ -30,7 +30,6 @@ use App\OperServ\Application\Port\Out\MotdEntry;
 use App\OperServ\Application\Port\Out\MotdRepository;
 use App\Shared\Domain\IrcIdentityFold;
 use App\Tests\NickServ\Support\NegotiatedCaseMapping;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -588,7 +587,7 @@ final class MotdOnConnectSubscriberTest extends TestCase
     #[Test]
     public function futureExpiryReserveDuration(): void
     {
-        $m = $this->motd('Timed', 'timer!bot@h.example', 'NOTICE', null, new DateTimeImmutable('+1 hour'));
+        $m = $this->motd('Timed', 'timer!bot@h.example', 'NOTICE', null, new \DateTimeImmutable('+1 hour'));
         $r = $this->createStub(MotdRepository::class);
         $r->method('findActiveAt')->willReturn([$m]);
 
@@ -763,7 +762,7 @@ final class MotdOnConnectSubscriberTest extends TestCase
         string $botNickname,
         string $messageType,
         ?int $creatorAccountId = null,
-        ?DateTimeImmutable $expiresAt = null,
+        ?\DateTimeImmutable $expiresAt = null,
     ): MotdEntry {
         return new MotdEntry(
             $this->nextMotdId++,
@@ -771,7 +770,7 @@ final class MotdOnConnectSubscriberTest extends TestCase
             $botNickname,
             'PRIVMSG' === $messageType ? MessageDelivery::Interactive : MessageDelivery::NonInteractive,
             true,
-            new DateTimeImmutable('2026-09-08T00:00:00+00:00'),
+            new \DateTimeImmutable('2026-09-08T00:00:00+00:00'),
             $expiresAt,
             0,
         );

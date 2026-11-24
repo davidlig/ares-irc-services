@@ -7,7 +7,6 @@ namespace App\Tests\NickServ\Application\Service;
 use App\NickServ\Application\Port\Out\NickHistoryRepositoryInterface;
 use App\NickServ\Application\Service\NickHistoryService;
 use App\NickServ\Domain\Entity\NickHistory;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -27,7 +26,7 @@ final class NickHistoryServiceTest extends TestCase
             });
 
         $service = new NickHistoryService($repo);
-        $fixedTime = new DateTimeImmutable('2024-01-15 10:30:00');
+        $fixedTime = new \DateTimeImmutable('2024-01-15 10:30:00');
 
         $history = $service->recordAction(
             nickId: 123,
@@ -70,7 +69,7 @@ final class NickHistoryServiceTest extends TestCase
             performedBy: 'Oper',
             performedByNickId: 2,
             message: 'history.message.userip',
-            performedAt: new DateTimeImmutable('2026-01-01 UTC'),
+            performedAt: new \DateTimeImmutable('2026-01-01 UTC'),
         );
 
         self::assertSame([], $history->getExtraData());
@@ -92,7 +91,7 @@ final class NickHistoryServiceTest extends TestCase
             performedByIp: '10.0.0.1',
             performedByHost: 'user@host',
             message: 'history.message.password_changed',
-            performedAt: new DateTimeImmutable('2024-01-15 10:30:00'),
+            performedAt: new \DateTimeImmutable('2024-01-15 10:30:00'),
             extraData: [],
         );
 
@@ -115,7 +114,7 @@ final class NickHistoryServiceTest extends TestCase
             performedByIp: '2001:db8::1',
             performedByHost: 'user@ipv6.example',
             message: 'history.message.email_changed',
-            performedAt: new DateTimeImmutable('2024-01-15 10:30:00'),
+            performedAt: new \DateTimeImmutable('2024-01-15 10:30:00'),
             extraData: ['old_email' => 'old@example.com', 'new_email' => 'new@example.com'],
         );
 
@@ -131,7 +130,7 @@ final class NickHistoryServiceTest extends TestCase
         $repo = $this->createStub(NickHistoryRepositoryInterface::class);
         $service = new NickHistoryService($repo);
 
-        $performedAt = new DateTimeImmutable('2024-01-15 10:30:00');
+        $performedAt = new \DateTimeImmutable('2024-01-15 10:30:00');
         $history = $service->recordAction(
             nickId: 1,
             action: 'TEST',

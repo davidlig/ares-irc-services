@@ -19,7 +19,6 @@ use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use App\Shared\Adapter\In\Irc\Presentation\Component;
 use App\Shared\Adapter\In\Irc\Presentation\Fragment;
 use App\Shared\Adapter\In\Irc\Presentation\Role;
-use DateTimeImmutable;
 
 use function array_slice;
 use function implode;
@@ -138,7 +137,7 @@ final readonly class SaregisterCommand implements ChanServCommandInterface, Irco
             actorNickname: $sender->nick,
             actorAccountId: $context->senderAccount?->id,
             actorIrcOperator: $sender->isOper,
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
         ));
 
         return $this->present($context, $channelName, $result);

@@ -10,7 +10,6 @@ use App\Irc\Application\Port\In\ChannelView;
 use App\Irc\Domain\Repository\ChannelRepositoryInterface;
 use App\Irc\Domain\ValueObject\ChannelName;
 use App\Irc\Domain\ValueObject\Uid;
-use InvalidArgumentException;
 
 /**
  * Core implements ChannelLookupPort: resolves a channel by name and returns
@@ -26,7 +25,7 @@ final readonly class CoreChannelLookupAdapter implements ChannelLookupPort
     {
         try {
             $name = new ChannelName($channelName);
-        } catch (InvalidArgumentException) {
+        } catch (\InvalidArgumentException) {
             return null;
         }
 
@@ -60,7 +59,7 @@ final readonly class CoreChannelLookupAdapter implements ChannelLookupPort
     {
         try {
             $channel = $this->channelRepository->findByName(new ChannelName($channelName));
-        } catch (InvalidArgumentException) {
+        } catch (\InvalidArgumentException) {
             return null;
         }
         if (null === $channel) {
@@ -82,7 +81,7 @@ final readonly class CoreChannelLookupAdapter implements ChannelLookupPort
         try {
             $channel = $this->channelRepository->findByName(new ChannelName($channelName));
             $id = new Uid($uid);
-        } catch (InvalidArgumentException) {
+        } catch (\InvalidArgumentException) {
             return null;
         }
         if (null === $channel) {

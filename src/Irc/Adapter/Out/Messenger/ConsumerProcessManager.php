@@ -10,7 +10,6 @@ use App\Irc\Adapter\Runtime\RevoltLoopScheduler;
 use Closure;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
-use RuntimeException;
 
 use function fclose;
 use function is_resource;
@@ -47,7 +46,7 @@ final class ConsumerProcessManager implements ConsumerProcessManagerInterface
     private ?string $supervisorId = null;
 
     /** @var Closure(): float */
-    private readonly Closure $now;
+    private readonly \Closure $now;
 
     private ?float $startedAt = null;
 
@@ -63,7 +62,7 @@ final class ConsumerProcessManager implements ConsumerProcessManagerInterface
         private readonly string $consolePath,
         private readonly array $transportNames = ['async', 'async_emails'],
         private readonly LoopSchedulerInterface $scheduler = new RevoltLoopScheduler(),
-        ?Closure $now = null,
+        ?\Closure $now = null,
         private readonly LoggerInterface $logger = new NullLogger(),
         private readonly int $stopGraceSeconds = 10,
     ) {
@@ -178,7 +177,7 @@ final class ConsumerProcessManager implements ConsumerProcessManagerInterface
         // @codeCoverageIgnoreStart
         // Cannot test proc_open failure in unit tests - requires OS-level failure.
         if (false === $proc || !is_resource($proc)) {
-            throw new RuntimeException('Failed to start Messenger consumer process.');
+            throw new \RuntimeException('Failed to start Messenger consumer process.');
         }
         // @codeCoverageIgnoreEnd
 

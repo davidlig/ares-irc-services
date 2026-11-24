@@ -8,7 +8,6 @@ use App\ChanServ\Application\Port\Out\FounderChangeMailSender;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
-use Throwable;
 
 use function sprintf;
 
@@ -40,7 +39,7 @@ final readonly class MessengerFounderChangeMailSender implements FounderChangeMa
             ], 'mail', $locale);
 
             $this->messageBus->dispatch(new FounderChangeEmail($email, $subject, $body));
-        } catch (Throwable $exception) {
+        } catch (\Throwable $exception) {
             $this->logger->error('ChanServ SET FOUNDER: failed to send email', [
                 'channel' => $channelName,
                 'recipient' => $email,

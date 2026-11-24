@@ -9,7 +9,6 @@ use App\MemoServ\Application\UseCase\NotifyChannelRegistration\NotifyChannelRegi
 use App\MemoServ\Application\UseCase\NotifyChannelRegistration\NotifyChannelRegistrationDecisionHandlerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Throwable;
 
 /** Bridges ChanServ's published decision event into MemoServ's local use case. */
 final readonly class MemoServChannelRegistrationDecisionSubscriber implements EventSubscriberInterface
@@ -38,14 +37,14 @@ final readonly class MemoServChannelRegistrationDecisionSubscriber implements Ev
                 $event->restrictedUntil,
                 $event->occurredAt,
             ));
-        } catch (Throwable) {
+        } catch (\Throwable) {
             try {
                 $this->logger->warning('Could not store a channel registration decision memo.', [
                     'channel_id' => $event->channelId,
                     'requester_account_id' => $event->requesterAccountId,
                     'accepted' => $event->accepted,
                 ]);
-            } catch (Throwable) {
+            } catch (\Throwable) {
                 // The already persisted ChanServ decision must remain successful even if logging is unavailable.
             }
         }

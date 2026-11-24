@@ -5,11 +5,9 @@ declare(strict_types=1);
 namespace App\Tests\ChanServ\Domain\Entity;
 
 use App\ChanServ\Domain\Entity\ChannelAccess;
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
 
 #[CoversClass(ChannelAccess::class)]
 final class ChannelAccessTest extends TestCase
@@ -27,7 +25,7 @@ final class ChannelAccessTest extends TestCase
     #[Test]
     public function constructorRejectsLevelBelowMin(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Access level must be between 1 and 499');
 
         new ChannelAccess(1, 10, 0);
@@ -46,7 +44,7 @@ final class ChannelAccessTest extends TestCase
     #[Test]
     public function constructorRejectsLevelAboveMax(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Access level must be between 1 and 499');
 
         new ChannelAccess(1, 10, 500);
@@ -66,7 +64,7 @@ final class ChannelAccessTest extends TestCase
     {
         $access = new ChannelAccess(1, 10, 50);
 
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
 
         $access->updateLevel(0);
     }
@@ -75,7 +73,7 @@ final class ChannelAccessTest extends TestCase
     public function updateLevelRejectsLevelAboveMax(): void
     {
         $access = new ChannelAccess(1, 10, 50);
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $access->updateLevel(500);
     }
 
@@ -83,7 +81,7 @@ final class ChannelAccessTest extends TestCase
     public function getIdReturnsValueSetByPersistence(): void
     {
         $access = new ChannelAccess(1, 10, 50);
-        $reflection = new ReflectionClass($access);
+        $reflection = new \ReflectionClass($access);
         $idProp = $reflection->getProperty('id');
         $idProp->setValue($access, 99);
 

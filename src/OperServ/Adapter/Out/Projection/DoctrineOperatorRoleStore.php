@@ -12,7 +12,6 @@ use App\OperServ\Domain\Entity\OperRole;
 use App\OperServ\Domain\Repository\OperIrcopRepositoryInterface;
 use App\OperServ\Domain\Repository\OperPermissionRepositoryInterface;
 use App\OperServ\Domain\Repository\OperRoleRepositoryInterface;
-use LogicException;
 
 use function array_map;
 use function array_values;
@@ -100,7 +99,7 @@ final readonly class DoctrineOperatorRoleStore implements OperatorRoleStore
 
     private function require(string $name): OperRole
     {
-        return $this->roles->findByName($name) ?? throw new LogicException('Role disappeared during mutation.');
+        return $this->roles->findByName($name) ?? throw new \LogicException('Role disappeared during mutation.');
     }
 
     private function invalidateRoleAssignments(OperRole $role): void

@@ -7,7 +7,6 @@ namespace App\Tests\Bootstrap\DependencyInjection;
 use App\Kernel;
 use App\NickServ\Adapter\Out\Random\SecureRecoveryPasswordGenerator;
 use App\NickServ\Application\Service\PasswordPolicy;
-use Exception;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -35,7 +34,7 @@ final class PasswordPolicyConfigurationTest extends TestCase
             $container = $kernel->getContainer()->get('test.service_container');
             self::assertInstanceOf(TestContainer::class, $container);
             if (!$valid) {
-                $this->expectException(Exception::class);
+                $this->expectException(\Exception::class);
                 $this->expectExceptionMessage(null !== $minimum && (!ctype_digit($minimum) || 1 > (int) $minimum) ? 'NICKSERV_PASSWORD_MIN_LENGTH' : 'NICKSERV_PASSWORD_COMPLEXITY');
             }
             $policy = $container->get(PasswordPolicy::class);

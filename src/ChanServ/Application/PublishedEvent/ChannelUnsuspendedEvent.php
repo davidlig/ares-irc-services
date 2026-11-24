@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\ChanServ\Application\PublishedEvent;
 
 use App\ChanServ\Application\Port\In\ChanServEvent;
-use DateTimeImmutable;
 
 /**
  * Dispatched when a channel suspension is lifted.
@@ -25,7 +24,7 @@ final readonly class ChannelUnsuspendedEvent implements ChanServEvent
         public ?int $performedByNickId,
         public string $performedByIp,
         public string $performedByHost,
-        public DateTimeImmutable $occurredAt,
+        public \DateTimeImmutable $occurredAt,
         public bool $isRetry = false,
     ) {}
 

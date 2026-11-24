@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\MemoServ\Application\UseCase\NotifyChannelRegistration;
 
-use DateTimeImmutable;
-
 final readonly class NotifyChannelRegistrationDecision
 {
     public function __construct(
@@ -16,7 +14,7 @@ final readonly class NotifyChannelRegistrationDecision
         public string $operatorNickname,
         public bool $accepted,
         public ?string $rejectionReason,
-        public ?DateTimeImmutable $restrictedUntil,
-        public DateTimeImmutable $occurredAt,
+        public ?\DateTimeImmutable $restrictedUntil,
+        public \DateTimeImmutable $occurredAt,
     ) {}
 }

@@ -13,8 +13,6 @@ use App\OperServ\Domain\Entity\OperPermission;
 use App\OperServ\Domain\Entity\OperRole;
 use App\OperServ\Domain\Repository\OperIrcopRepositoryInterface;
 use App\OperServ\Domain\Repository\OperRoleRepositoryInterface;
-use DateTimeImmutable;
-use LogicException;
 
 use function array_map;
 use function array_values;
@@ -39,7 +37,7 @@ final readonly class DoctrineOperatorAssignmentStore implements OperatorAssignme
         return array_values(array_map($this->record(...), $this->assignments->findAll()));
     }
 
-    public function assign(int $id, OperatorRoleRecord $role, ?int $by, DateTimeImmutable $addedAt): void
+    public function assign(int $id, OperatorRoleRecord $role, ?int $by, \DateTimeImmutable $addedAt): void
     {
         $legacy = $this->role($role->name);
         $current = $this->assignments->findByNickId($id);
@@ -63,7 +61,7 @@ final readonly class DoctrineOperatorAssignmentStore implements OperatorAssignme
 
     private function role(string $name): OperRole
     {
-        return $this->roles->findByName($name) ?? throw new LogicException('Role disappeared during assignment.');
+        return $this->roles->findByName($name) ?? throw new \LogicException('Role disappeared during assignment.');
     }
 
     private function record(OperIrcop $a): OperatorAssignmentRecord

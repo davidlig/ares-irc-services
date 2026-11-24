@@ -9,7 +9,6 @@ use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RuntimeException;
 
 #[CoversClass(DoctrineTransactionManager::class)]
 final class DoctrineTransactionManagerTest extends TestCase
@@ -52,7 +51,7 @@ final class DoctrineTransactionManagerTest extends TestCase
                 $operation();
                 $calls[] = 'rollback';
 
-                throw new RuntimeException('rollback');
+                throw new \RuntimeException('rollback');
             },
         );
         $manager = new DoctrineTransactionManager($entityManager);
@@ -65,7 +64,7 @@ final class DoctrineTransactionManagerTest extends TestCase
                 });
             });
             self::fail('The transaction exception was not rethrown.');
-        } catch (RuntimeException $exception) {
+        } catch (\RuntimeException $exception) {
             self::assertSame('rollback', $exception->getMessage());
         }
 

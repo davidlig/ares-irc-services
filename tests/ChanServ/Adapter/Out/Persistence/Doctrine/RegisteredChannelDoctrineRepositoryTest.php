@@ -12,7 +12,6 @@ use App\Irc\Domain\ValueObject\CaseMapping;
 use App\Shared\Domain\IrcIdentityFold;
 use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
-use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Platforms\MariaDBPlatform;
 use Doctrine\DBAL\Platforms\MySQLPlatform;
@@ -25,7 +24,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
-use UnexpectedValueException;
 
 use function array_map;
 use function array_slice;
@@ -62,7 +60,7 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
     public function burstSnapshotTracksChangesAndEndsWithoutStaleNames(): void
     {
         $repository = new RegisteredChannelDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network());
-        $original = RegisteredChannel::register(new DateTimeImmutable(), '#Original', 1, 'original');
+        $original = RegisteredChannel::register(new \DateTimeImmutable(), '#Original', 1, 'original');
         $repository->save($original);
         self::assertNull($repository->contains('#Original'));
         $repository->beginBurst();
@@ -71,7 +69,7 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
         self::assertNotNull($repository->findByChannelName('#ORIGINAL'));
         self::assertNull($repository->findByChannelName('#new'));
 
-        $new = RegisteredChannel::register(new DateTimeImmutable(), '#New', 1, 'new');
+        $new = RegisteredChannel::register(new \DateTimeImmutable(), '#New', 1, 'new');
         $repository->save($new);
         self::assertNotNull($repository->findByChannelName('#NEW'));
         $repository->delete($original);
@@ -89,14 +87,14 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
         $connection->method('fetchAllNumeric')->willReturn([[null, '#name']]);
         $em = $this->createStub(EntityManagerInterface::class);
         $em->method('getConnection')->willReturn($connection);
-        $this->expectException(UnexpectedValueException::class);
+        $this->expectException(\UnexpectedValueException::class);
         new RegisteredChannelDoctrineRepository($em, NegotiatedCaseMapping::network())->beginBurst();
     }
 
     #[Test]
     public function pendingPagesPreserveIterationOrder(): void
     {
-        $at = new DateTimeImmutable();
+        $at = new \DateTimeImmutable();
         $this->entityManager->persist(RegisteredChannel::createPendingRegistration($at, '#z', 1, 'z'));
         $this->entityManager->persist(RegisteredChannel::register($at, '#middle', 2, 'active'));
         $this->entityManager->persist(RegisteredChannel::createPendingRegistration($at, '#A', 3, 'a'));
@@ -109,7 +107,7 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
     #[Test]
     public function founderCountCanExcludeRejectedRegistrations(): void
     {
-        $at = new DateTimeImmutable();
+        $at = new \DateTimeImmutable();
         $this->entityManager->persist(RegisteredChannel::register($at, '#active', 7, 'active'));
         $this->entityManager->persist(RegisteredChannel::createPendingRegistration($at, '#pending', 7, 'pending'));
         $rejected = RegisteredChannel::createPendingRegistration($at, '#rejected', 7, 'rejected');
@@ -178,7 +176,7 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
     {
         $connection = $this->createStub(Connection::class);
         $connection->method('getDatabasePlatform')->willReturn(new MySQLPlatform());
-        $entity = RegisteredChannel::register(new DateTimeImmutable('2026-09-27'), '#native', 1, 'Test');
+        $entity = RegisteredChannel::register(new \DateTimeImmutable('2026-09-27'), '#native', 1, 'Test');
         $query = $this->createMock(NativeQuery::class);
         $query->expects(self::once())->method('setParameters')
             ->with(['pattern' => '#na%', 'registrationPending' => 'pending', 'registrationRejected' => 'rejected'])->willReturnSelf();
@@ -200,7 +198,7 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
     public function listPreservesLegacyMatchesForUnicodeLiteralsAndPageBoundaries(): void
     {
         foreach (['#Alpha', '#Alpine', '#Literal!%_?[]\\\\Name', '#École', '#éclair', '#İstanbul', '#space '] as $index => $name) {
-            $this->entityManager->persist(RegisteredChannel::register(new DateTimeImmutable('2026-09-27'), $name, 1, 'Test'));
+            $this->entityManager->persist(RegisteredChannel::register(new \DateTimeImmutable('2026-09-27'), $name, 1, 'Test'));
         }
         $this->flushAndClear();
         $connection = $this->entityManager->getConnection();
@@ -225,7 +223,7 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
     #[Test]
     public function associationReadsFilterRequestsBeforeHydrationWithoutChangingGenericOwnershipReads(): void
     {
-        $at = new DateTimeImmutable('-1 day');
+        $at = new \DateTimeImmutable('-1 day');
         $active = RegisteredChannel::register($at, '#owner-a', 7, 'active');
         $suspended = RegisteredChannel::register($at, '#owner-b', 7, 'suspended');
         $suspended->suspend('test');
@@ -262,7 +260,7 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
     #[Test]
     public function savePersistsChannel(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Test channel');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 1, 'Test channel');
 
         $this->repository->save($channel);
         $this->flushAndClear();
@@ -278,7 +276,7 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
     public function lookupsConfirmTheStoredChannelNameWithTheNegotiatedCasemapping(): void
     {
         $rfc1459 = new RegisteredChannelDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network());
-        $rfc1459->save(RegisteredChannel::register(new DateTimeImmutable(), '#foo[', 1, 'desc'));
+        $rfc1459->save(RegisteredChannel::register(new \DateTimeImmutable(), '#foo[', 1, 'desc'));
         $ascii = new RegisteredChannelDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network(CaseMapping::Ascii));
 
         self::assertSame('#foo[', $ascii->findByChannelName('#FOO[')?->getName());
@@ -296,7 +294,7 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
     #[Test]
     public function findByChannelNameIsCaseInsensitive(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#TestChannel', 1, 'Test');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#TestChannel', 1, 'Test');
         $this->repository->save($channel);
         $this->flushAndClear();
 
@@ -308,8 +306,8 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
     #[Test]
     public function lookupsFoldChannelNamesWithTheRfc1459Mapping(): void
     {
-        $this->repository->save(RegisteredChannel::register(new DateTimeImmutable(), '#[Ares]', 1, 'Ares'));
-        $this->repository->save(RegisteredChannel::register(new DateTimeImmutable(), '#{Ares}|Dev', 1, 'Dev'));
+        $this->repository->save(RegisteredChannel::register(new \DateTimeImmutable(), '#[Ares]', 1, 'Ares'));
+        $this->repository->save(RegisteredChannel::register(new \DateTimeImmutable(), '#{Ares}|Dev', 1, 'Dev'));
         $this->flushAndClear();
 
         self::assertSame('#{ares}', $this->entityManager->getConnection()->fetchOne("SELECT name_lower FROM registered_channels WHERE name = '#[Ares]'"));
@@ -337,17 +335,17 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
     public function countsAndSearchesByStrictCaseInsensitiveGlobWithBoundedStablePages(): void
     {
         $channels = [
-            RegisteredChannel::register(new DateTimeImmutable(), '#davidlig', 1, 'Davidlig'),
-            RegisteredChannel::register(new DateTimeImmutable(), '#davinia', 2, 'Davinia'),
-            RegisteredChannel::register(new DateTimeImmutable(), '#david', 3, 'David'),
-            RegisteredChannel::register(new DateTimeImmutable(), '#davi', 4, 'Davi'),
+            RegisteredChannel::register(new \DateTimeImmutable(), '#davidlig', 1, 'Davidlig'),
+            RegisteredChannel::register(new \DateTimeImmutable(), '#davinia', 2, 'Davinia'),
+            RegisteredChannel::register(new \DateTimeImmutable(), '#david', 3, 'David'),
+            RegisteredChannel::register(new \DateTimeImmutable(), '#davi', 4, 'Davi'),
         ];
         $channels[1]->suspend('Test suspension');
-        $channels[2]->markPendingDeletion(new DateTimeImmutable());
-        $channels[3] = RegisteredChannel::createForbidden(new DateTimeImmutable(), '#davi', 'Test forbidden');
-        $pending = RegisteredChannel::createPendingRegistration(new DateTimeImmutable(), '#davipending', 1, 'pending');
-        $rejected = RegisteredChannel::createPendingRegistration(new DateTimeImmutable(), '#davirejected', 1, 'rejected');
-        $rejected->rejectRegistration('test', 99, 'Reviewer', new DateTimeImmutable(), null);
+        $channels[2]->markPendingDeletion(new \DateTimeImmutable());
+        $channels[3] = RegisteredChannel::createForbidden(new \DateTimeImmutable(), '#davi', 'Test forbidden');
+        $pending = RegisteredChannel::createPendingRegistration(new \DateTimeImmutable(), '#davipending', 1, 'pending');
+        $rejected = RegisteredChannel::createPendingRegistration(new \DateTimeImmutable(), '#davirejected', 1, 'rejected');
+        $rejected->rejectRegistration('test', 99, 'Reviewer', new \DateTimeImmutable(), null);
         $channels[] = $pending;
         $channels[] = $rejected;
         foreach ($channels as $channel) {
@@ -371,7 +369,7 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
     #[Test]
     public function existsByChannelNameReturnsTrueWhenExists(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Test');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 1, 'Test');
         $this->repository->save($channel);
         $this->flushAndClear();
 
@@ -388,9 +386,9 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
     #[Test]
     public function findByFounderNickIdReturnsChannels(): void
     {
-        $channel1 = RegisteredChannel::register(new DateTimeImmutable(), '#alpha', 1, 'Alpha');
-        $channel2 = RegisteredChannel::register(new DateTimeImmutable(), '#beta', 1, 'Beta');
-        $channel3 = RegisteredChannel::register(new DateTimeImmutable(), '#gamma', 2, 'Gamma');
+        $channel1 = RegisteredChannel::register(new \DateTimeImmutable(), '#alpha', 1, 'Alpha');
+        $channel2 = RegisteredChannel::register(new \DateTimeImmutable(), '#beta', 1, 'Beta');
+        $channel3 = RegisteredChannel::register(new \DateTimeImmutable(), '#gamma', 2, 'Gamma');
 
         $this->repository->save($channel1);
         $this->repository->save($channel2);
@@ -416,13 +414,13 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
     #[Test]
     public function findBySuccessorNickIdReturnsChannels(): void
     {
-        $channel1 = RegisteredChannel::register(new DateTimeImmutable(), '#alpha', 1, 'Alpha');
+        $channel1 = RegisteredChannel::register(new \DateTimeImmutable(), '#alpha', 1, 'Alpha');
         $channel1->assignSuccessor(10);
 
-        $channel2 = RegisteredChannel::register(new DateTimeImmutable(), '#beta', 2, 'Beta');
+        $channel2 = RegisteredChannel::register(new \DateTimeImmutable(), '#beta', 2, 'Beta');
         $channel2->assignSuccessor(10);
 
-        $channel3 = RegisteredChannel::register(new DateTimeImmutable(), '#gamma', 3, 'Gamma');
+        $channel3 = RegisteredChannel::register(new \DateTimeImmutable(), '#gamma', 3, 'Gamma');
         $channel3->assignSuccessor(20);
 
         $this->repository->save($channel1);
@@ -441,7 +439,7 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
     #[Test]
     public function deleteRemovesChannel(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Test');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 1, 'Test');
         $this->repository->save($channel);
         $this->entityManager->flush();
 
@@ -456,7 +454,7 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
     {
         for ($number = 500; $number >= 0; --$number) {
             $this->entityManager->persist(RegisteredChannel::register(
-                new DateTimeImmutable(),
+                new \DateTimeImmutable(),
                 sprintf('#channel-%03d', $number),
                 1,
                 'Batch',
@@ -479,22 +477,22 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
     #[Test]
     public function iterateFilteredMaintenanceScansKeepTheirPredicates(): void
     {
-        $old = RegisteredChannel::register(new DateTimeImmutable('-60 days'), '#old', 1, 'Old');
-        $fresh = RegisteredChannel::register(new DateTimeImmutable(), '#fresh', 1, 'Fresh');
-        $suspended = RegisteredChannel::register(new DateTimeImmutable(), '#suspended', 1, 'Suspended');
-        $suspended->suspend('Expired', new DateTimeImmutable('-1 day'));
-        $pending = RegisteredChannel::register(new DateTimeImmutable(), '#pending', 1, 'Pending');
-        $pending->markPendingDeletion(new DateTimeImmutable('-8 days'));
-        $protected = RegisteredChannel::register(new DateTimeImmutable('-60 days'), '#protected', 2, 'Protected');
+        $old = RegisteredChannel::register(new \DateTimeImmutable('-60 days'), '#old', 1, 'Old');
+        $fresh = RegisteredChannel::register(new \DateTimeImmutable(), '#fresh', 1, 'Fresh');
+        $suspended = RegisteredChannel::register(new \DateTimeImmutable(), '#suspended', 1, 'Suspended');
+        $suspended->suspend('Expired', new \DateTimeImmutable('-1 day'));
+        $pending = RegisteredChannel::register(new \DateTimeImmutable(), '#pending', 1, 'Pending');
+        $pending->markPendingDeletion(new \DateTimeImmutable('-8 days'));
+        $protected = RegisteredChannel::register(new \DateTimeImmutable('-60 days'), '#protected', 2, 'Protected');
         $protected->changeNoExpire(true);
         foreach ([$old, $fresh, $suspended, $pending, $protected] as $channel) {
             $this->entityManager->persist($channel);
         }
         $this->flushAndClear();
 
-        $inactive = iterator_to_array($this->repository->iterateRegisteredInactiveSince(new DateTimeImmutable('-30 days')));
-        $expired = iterator_to_array($this->repository->iterateExpiredSuspensions(new DateTimeImmutable()));
-        $deleted = iterator_to_array($this->repository->iteratePendingDeletionBefore(new DateTimeImmutable('-7 days')));
+        $inactive = iterator_to_array($this->repository->iterateRegisteredInactiveSince(new \DateTimeImmutable('-30 days')));
+        $expired = iterator_to_array($this->repository->iterateExpiredSuspensions(new \DateTimeImmutable()));
+        $deleted = iterator_to_array($this->repository->iteratePendingDeletionBefore(new \DateTimeImmutable('-7 days')));
 
         self::assertSame(['#old'], array_map(static fn (RegisteredChannel $c): string => $c->getName(), $inactive));
         self::assertSame(['#suspended'], array_map(static fn (RegisteredChannel $c): string => $c->getName(), $expired));
@@ -504,9 +502,9 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
     #[Test]
     public function findByIdsReturnsMatchingChannels(): void
     {
-        $channel1 = RegisteredChannel::register(new DateTimeImmutable(), '#alpha', 1, 'A');
-        $channel2 = RegisteredChannel::register(new DateTimeImmutable(), '#beta', 2, 'B');
-        $channel3 = RegisteredChannel::register(new DateTimeImmutable(), '#gamma', 3, 'G');
+        $channel1 = RegisteredChannel::register(new \DateTimeImmutable(), '#alpha', 1, 'A');
+        $channel2 = RegisteredChannel::register(new \DateTimeImmutable(), '#beta', 2, 'B');
+        $channel3 = RegisteredChannel::register(new \DateTimeImmutable(), '#gamma', 3, 'G');
 
         $this->repository->save($channel1);
         $this->repository->save($channel2);
@@ -532,13 +530,13 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
     #[Test]
     public function clearSuccessorNickIdSetsSuccessorToNull(): void
     {
-        $channel1 = RegisteredChannel::register(new DateTimeImmutable(), '#alpha', 1, 'Alpha');
+        $channel1 = RegisteredChannel::register(new \DateTimeImmutable(), '#alpha', 1, 'Alpha');
         $channel1->assignSuccessor(100);
 
-        $channel2 = RegisteredChannel::register(new DateTimeImmutable(), '#beta', 2, 'Beta');
+        $channel2 = RegisteredChannel::register(new \DateTimeImmutable(), '#beta', 2, 'Beta');
         $channel2->assignSuccessor(100);
 
-        $channel3 = RegisteredChannel::register(new DateTimeImmutable(), '#gamma', 3, 'Gamma');
+        $channel3 = RegisteredChannel::register(new \DateTimeImmutable(), '#gamma', 3, 'Gamma');
         $channel3->assignSuccessor(200);
 
         $this->repository->save($channel1);
@@ -565,7 +563,7 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
     #[Test]
     public function clearSuccessorNickIdDoesNothingWhenNoMatch(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Test');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 1, 'Test');
         $channel->assignSuccessor(100);
 
         $this->repository->save($channel);

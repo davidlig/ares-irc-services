@@ -18,9 +18,6 @@ use App\Shared\Adapter\In\Irc\Presentation\Fragment;
 use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
 use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
 use App\Shared\Adapter\In\Irc\Presentation\Role;
-use DateTimeImmutable;
-use DateTimeZone;
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -72,7 +69,7 @@ final class MemoServContextTest extends TestCase
         try {
             $styled->replyComponent(Component::Row, 'row', ['value' => ['invalid']]);
             self::fail('A non-text presentation parameter must be rejected.');
-        } catch (InvalidArgumentException $exception) {
+        } catch (\InvalidArgumentException $exception) {
             self::assertSame('IRC presentation parameters must be text or fragments.', $exception->getMessage());
         }
         self::assertSame($beforeInvalid, implode("\n", $sent));
@@ -333,7 +330,7 @@ final class MemoServContextTest extends TestCase
     public function formatDateFormatsWithContextTimezone(): void
     {
         $context = $this->createMinimalContext('UTC');
-        $date = new DateTimeImmutable('2025-03-14 12:00:00', new DateTimeZone('UTC'));
+        $date = new \DateTimeImmutable('2025-03-14 12:00:00', new \DateTimeZone('UTC'));
 
         $formatted = $context->formatDate($date);
 

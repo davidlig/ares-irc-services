@@ -10,7 +10,6 @@ use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\UseCase\ShowInfo\ShowChannelInfo;
 use App\ChanServ\Application\UseCase\ShowInfo\ShowChannelInfoHandler;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -21,7 +20,7 @@ final class ShowChannelInfoHandlerTest extends TestCase
     #[Test]
     public function pendingRegistrationIsNotShownAsRegisteredInfo(): void
     {
-        $channel = RegisteredChannel::createPendingRegistration(new DateTimeImmutable(), '#pending', 7, 'private detail');
+        $channel = RegisteredChannel::createPendingRegistration(new \DateTimeImmutable(), '#pending', 7, 'private detail');
         $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channels->expects(self::once())->method('findByChannelName')->with('#pending')->willReturn($channel);
         $handler = new ShowChannelInfoHandler(
@@ -36,7 +35,7 @@ final class ShowChannelInfoHandlerTest extends TestCase
     #[Test]
     public function rejectedRegistrationIsNotShownAsRegisteredInfo(): void
     {
-        $at = new DateTimeImmutable();
+        $at = new \DateTimeImmutable();
         $channel = RegisteredChannel::createPendingRegistration($at, '#rejected', 7, 'private detail');
         $channel->rejectRegistration('Reason', 9, 'OperNick', $at, null);
         $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
@@ -53,7 +52,7 @@ final class ShowChannelInfoHandlerTest extends TestCase
     #[Test]
     public function returnsChannelInfoViewWithVerboseState(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 1, 'Desc');
         $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channels->expects(self::once())->method('findByChannelName')->with('#test')->willReturn($channel);
         $handler = new ShowChannelInfoHandler(

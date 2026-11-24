@@ -31,10 +31,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
-use RuntimeException;
-use stdClass;
 use Symfony\Contracts\Translation\TranslatorInterface;
-use Throwable;
 
 use function array_fill;
 
@@ -102,10 +99,10 @@ final class MemoServCommandListenerTest extends TestCase
     #[Test]
     public function dispatchesSuccessfully(): void
     {
-        $state = new stdClass();
+        $state = new \stdClass();
         $state->executed = false;
         $cmd = new class($state) implements MemoServCommandInterface {
-            public function __construct(private stdClass $state) {}
+            public function __construct(private \stdClass $state) {}
 
             public function getName(): string
             {
@@ -194,7 +191,7 @@ final class MemoServCommandListenerTest extends TestCase
     #[Test]
     public function logsErrorOnGenericThrowable(): void
     {
-        $exception = new RuntimeException('Database failure');
+        $exception = new \RuntimeException('Database failure');
         $cmd = $this->createThrowCommand('FAIL', $exception);
 
         $userLookup = $this->createMock(NetworkUserLookupPort::class);
@@ -294,12 +291,12 @@ final class MemoServCommandListenerTest extends TestCase
         );
     }
 
-    private function createThrowCommand(string $name, Throwable $e): MemoServCommandInterface
+    private function createThrowCommand(string $name, \Throwable $e): MemoServCommandInterface
     {
         return new class($name, $e) implements MemoServCommandInterface {
             public function __construct(
                 private readonly string $name,
-                private readonly Throwable $exception,
+                private readonly \Throwable $exception,
             ) {}
 
             public function getName(): string

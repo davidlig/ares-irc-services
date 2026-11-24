@@ -5,11 +5,9 @@ declare(strict_types=1);
 namespace App\Tests\NickServ\Adapter\Out\InMemory;
 
 use App\NickServ\Adapter\Out\InMemory\RegisterThrottleRegistry;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
 
 #[CoversClass(RegisterThrottleRegistry::class)]
 final class RegisterThrottleRegistryTest extends TestCase
@@ -40,7 +38,7 @@ final class RegisterThrottleRegistryTest extends TestCase
 
         $registry->recordAttempt('key', $this->now());
 
-        self::assertInstanceOf(DateTimeImmutable::class, $registry->getLastAttemptAt('key'));
+        self::assertInstanceOf(\DateTimeImmutable::class, $registry->getLastAttemptAt('key'));
     }
 
     #[Test]
@@ -77,8 +75,8 @@ final class RegisterThrottleRegistryTest extends TestCase
         $registry->recordAttempt('client1', $this->now());
         $registry->recordAttempt('client2', $this->now());
 
-        self::assertInstanceOf(DateTimeImmutable::class, $registry->getLastAttemptAt('client1'));
-        self::assertInstanceOf(DateTimeImmutable::class, $registry->getLastAttemptAt('client2'));
+        self::assertInstanceOf(\DateTimeImmutable::class, $registry->getLastAttemptAt('client1'));
+        self::assertInstanceOf(\DateTimeImmutable::class, $registry->getLastAttemptAt('client2'));
     }
 
     #[Test]
@@ -122,7 +120,7 @@ final class RegisterThrottleRegistryTest extends TestCase
         $registry->recordAttempt('fresh', $this->now());
         $removed = $registry->pruneExpiredCooldowns(3600, $this->now());
         self::assertSame(0, $removed);
-        self::assertInstanceOf(DateTimeImmutable::class, $registry->getLastAttemptAt('fresh'));
+        self::assertInstanceOf(\DateTimeImmutable::class, $registry->getLastAttemptAt('fresh'));
     }
 
     #[Test]
@@ -138,7 +136,7 @@ final class RegisterThrottleRegistryTest extends TestCase
         $registry = new RegisterThrottleRegistry();
 
         $oldDatetime = $this->now()->modify('-3600 seconds');
-        $reflection = new ReflectionClass($registry);
+        $reflection = new \ReflectionClass($registry);
         $property = $reflection->getProperty('lastAttemptAt');
         $property->setValue($registry, [
             'old1' => $oldDatetime,
@@ -175,7 +173,7 @@ final class RegisterThrottleRegistryTest extends TestCase
         // With minInterval of 3600 seconds, nothing should be pruned immediately
         $removed = $registry->pruneExpiredCooldowns(3600, $this->now());
         self::assertSame(0, $removed, 'Nothing should be pruned with large minInterval');
-        self::assertInstanceOf(DateTimeImmutable::class, $registry->getLastAttemptAt('fresh'));
+        self::assertInstanceOf(\DateTimeImmutable::class, $registry->getLastAttemptAt('fresh'));
 
         // With minInterval of 0, nothing should be pruned (per guard clause)
         $registry->recordAttempt('another', $this->now());
@@ -189,15 +187,15 @@ final class RegisterThrottleRegistryTest extends TestCase
         $registry = new RegisterThrottleRegistry();
 
         $oldDatetime = $this->now()->modify('-10 seconds');
-        $reflection = new ReflectionClass($registry);
+        $reflection = new \ReflectionClass($registry);
         $property = $reflection->getProperty('lastAttemptAt');
         $property->setValue($registry, ['client1' => $oldDatetime]);
 
         self::assertSame(0, $registry->getRemainingCooldownSeconds('client1', 1, $this->now()));
     }
 
-    private function now(): DateTimeImmutable
+    private function now(): \DateTimeImmutable
     {
-        return new DateTimeImmutable('2026-09-06 12:00:00 UTC');
+        return new \DateTimeImmutable('2026-09-06 12:00:00 UTC');
     }
 }

@@ -8,7 +8,6 @@ use App\MemoServ\Application\Model\MemoListItem;
 use App\MemoServ\Application\Port\Out\MemoChannelPort;
 use App\MemoServ\Application\Port\Out\MemoRepositoryInterface;
 use App\MemoServ\Application\Port\Out\MemoUserAccountPort;
-use LogicException;
 
 use function array_unique;
 use function array_values;
@@ -57,7 +56,7 @@ final readonly class ListMemosHandler implements ListMemosHandlerInterface
 
             $senderNickId = $memo->getSenderNickId();
             if (null === $senderNickId) {
-                throw new LogicException('Memo sender representation is missing.');
+                throw new \LogicException('Memo sender representation is missing.');
             }
             $senderNickPositions[$senderNickId][] = count($senderDisplays);
             $senderDisplays[] = (string) $senderNickId;

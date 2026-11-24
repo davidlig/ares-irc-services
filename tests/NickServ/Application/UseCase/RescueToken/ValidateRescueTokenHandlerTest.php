@@ -13,7 +13,6 @@ use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\UseCase\RescueToken\ValidateRescueTokenHandler;
 use App\NickServ\Domain\Entity\RegisteredNick;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -29,7 +28,7 @@ final class ValidateRescueTokenHandlerTest extends TestCase
     #[Test]
     public function onlyActiveConfirmedCredentialCanAuthorize(): void
     {
-        $now = new DateTimeImmutable('2026-10-21T12:00:00Z');
+        $now = new \DateTimeImmutable('2026-10-21T12:00:00Z');
         $codec = new UuidRescueTokenCodec();
         $token = '550e8400-e29b-41d4-a716-446655440000';
         $account = RegisteredNick::createPending('Alice', 'password-hash', 'alice@example.test', 'en', $now->modify('+1 hour'), $now);
@@ -48,7 +47,7 @@ final class ValidateRescueTokenHandlerTest extends TestCase
     #[Test]
     public function sharedClientAndAccountBudgetsBlockFurtherAttempts(): void
     {
-        $now = new DateTimeImmutable('2026-10-21T12:00:00Z');
+        $now = new \DateTimeImmutable('2026-10-21T12:00:00Z');
         $repository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $account = $this->createStub(RegisteredNick::class);
         $account->method('isRegistered')->willReturn(true);
@@ -73,7 +72,7 @@ final class ValidateRescueTokenHandlerTest extends TestCase
         $account->method('isRegistered')->willReturn(true);
         $repository->method('findById')->willReturnOnConsecutiveCalls(null, $account);
         $clock = $this->createStub(Clock::class);
-        $clock->method('now')->willReturn(new DateTimeImmutable());
+        $clock->method('now')->willReturn(new \DateTimeImmutable());
         $handler = new ValidateRescueTokenHandler($repository, new UuidRescueTokenCodec(), new InMemoryRescueAttemptLimiter(), $clock);
         self::assertSame(RescueTokenValidationOutcome::Unavailable, $handler->validate(new RescueTokenValidation(1, 'bad', 'client'))->outcome);
         self::assertSame(RescueTokenValidationOutcome::Unavailable, $handler->validate(new RescueTokenValidation(1, 'bad', 'client'))->outcome);

@@ -21,16 +21,11 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbNativeRowCodec;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbUnsignedDecimal;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbValueEncoder;
 use Closure;
-use InvalidArgumentException;
-use OverflowException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionProperty;
-use RuntimeException;
 use Throwable;
-use UnexpectedValueException;
 
 use function file_put_contents;
 use function iterator_to_array;
@@ -85,7 +80,7 @@ final class UdbNativeContractFailureTest extends TestCase
     {
         $state = new UdbAuthorityState();
         $state->startDatasetStream(new UdbStreamOrigin('002', '0123456789abcdef'));
-        $this->expectException(UnexpectedValueException::class);
+        $this->expectException(\UnexpectedValueException::class);
         $state->advanceDatasetCheckpoint(new UdbStreamOrigin('001', '1111111111111111'));
     }
 
@@ -94,8 +89,8 @@ final class UdbNativeContractFailureTest extends TestCase
     {
         $state = new UdbAuthorityState();
         $origin = new UdbStreamOrigin('002', '0123456789abcdef');
-        $state->recordDatasetCheckpoint(new UdbDatasetCheckpoint($origin, UdbUnsignedDecimal::parse(UdbUnsignedDecimal::MAX) ?? throw new RuntimeException('Invalid fixture.')));
-        $this->expectException(OverflowException::class);
+        $state->recordDatasetCheckpoint(new UdbDatasetCheckpoint($origin, UdbUnsignedDecimal::parse(UdbUnsignedDecimal::MAX) ?? throw new \RuntimeException('Invalid fixture.')));
+        $this->expectException(\OverflowException::class);
         $state->advanceDatasetCheckpoint($origin);
     }
 
@@ -107,8 +102,8 @@ final class UdbNativeContractFailureTest extends TestCase
         $checkpoint = new UdbDatasetCheckpoint($origin, UdbUnsignedDecimal::fromInt(1));
         $state->recordDatasetCheckpoint($checkpoint);
         $state->recordImportedCheckpoint($checkpoint);
-        new ReflectionProperty(UdbAuthorityState::class, 'datasetWatermark')->setValue($state, 'invalid');
-        new ReflectionProperty(UdbAuthorityState::class, 'originWatermark')->setValue($state, 'invalid');
+        new \ReflectionProperty(UdbAuthorityState::class, 'datasetWatermark')->setValue($state, 'invalid');
+        new \ReflectionProperty(UdbAuthorityState::class, 'originWatermark')->setValue($state, 'invalid');
         self::assertNull($state->getDatasetCheckpoint());
         self::assertNull($state->getImportedCheckpoint());
     }
@@ -116,21 +111,21 @@ final class UdbNativeContractFailureTest extends TestCase
     /** @return iterable<string, array{Closure(): mixed, class-string<Throwable>}> */
     public static function invalidContracts(): iterable
     {
-        yield 'invalid SID' => [static fn () => new UdbStreamOrigin('bad', '0123456789abcdef'), InvalidArgumentException::class];
-        yield 'invalid epoch' => [static fn () => new UdbStreamOrigin('002', 'ABCDEF0123456789'), InvalidArgumentException::class];
-        yield 'invalid block state' => [static fn () => new UdbBlockState('?', str_repeat('a', 64), recordCount: 0), InvalidArgumentException::class];
-        yield 'unknown record field' => [static fn () => new UdbRecord('S', 'unknown', 'value'), InvalidArgumentException::class];
-        yield 'nonempty NONE' => [static fn () => new UdbRecord('N', 'alice', 'value', UdbValueKind::None), InvalidArgumentException::class];
-        yield 'unmarked number' => [static fn () => new UdbRecord('I', '1.2.3.4::clones', '5', UdbValueKind::Number), InvalidArgumentException::class];
-        yield 'numeric overflow' => [static fn () => UdbNativeRowCodec::decimalToLittleEndian('18446744073709551616'), InvalidArgumentException::class];
-        yield 'oversized string' => [static fn () => UdbValueEncoder::encode(UdbValue::string(str_repeat('v', 4097))), InvalidArgumentException::class];
-        yield 'untyped logical map' => [static fn () => UdbLogicalDigest::fromMap(UdbBlock::Settings, ['clones' => '*5']), InvalidArgumentException::class];
+        yield 'invalid SID' => [static fn () => new UdbStreamOrigin('bad', '0123456789abcdef'), \InvalidArgumentException::class];
+        yield 'invalid epoch' => [static fn () => new UdbStreamOrigin('002', 'ABCDEF0123456789'), \InvalidArgumentException::class];
+        yield 'invalid block state' => [static fn () => new UdbBlockState('?', str_repeat('a', 64), recordCount: 0), \InvalidArgumentException::class];
+        yield 'unknown record field' => [static fn () => new UdbRecord('S', 'unknown', 'value'), \InvalidArgumentException::class];
+        yield 'nonempty NONE' => [static fn () => new UdbRecord('N', 'alice', 'value', UdbValueKind::None), \InvalidArgumentException::class];
+        yield 'unmarked number' => [static fn () => new UdbRecord('I', '1.2.3.4::clones', '5', UdbValueKind::Number), \InvalidArgumentException::class];
+        yield 'numeric overflow' => [static fn () => UdbNativeRowCodec::decimalToLittleEndian('18446744073709551616'), \InvalidArgumentException::class];
+        yield 'oversized string' => [static fn () => UdbValueEncoder::encode(UdbValue::string(str_repeat('v', 4097))), \InvalidArgumentException::class];
+        yield 'untyped logical map' => [static fn () => UdbLogicalDigest::fromMap(UdbBlock::Settings, ['clones' => '*5']), \InvalidArgumentException::class];
     }
 
     /** @param class-string<Throwable> $exception */
     #[Test]
     #[DataProvider('invalidContracts')]
-    public function malformedContractInputsAreRejected(Closure $operation, string $exception): void
+    public function malformedContractInputsAreRejected(\Closure $operation, string $exception): void
     {
         $this->expectException($exception);
         $operation();
@@ -143,7 +138,7 @@ final class UdbNativeContractFailureTest extends TestCase
         try {
             $record->updateValue('bad');
             self::fail('Invalid number accepted.');
-        } catch (InvalidArgumentException) {
+        } catch (\InvalidArgumentException) {
             self::assertSame('*5', $record->getValue());
         }
     }
@@ -188,7 +183,7 @@ final class UdbNativeContractFailureTest extends TestCase
         self::assertIsString($file);
         file_put_contents($file, pack('NCN', 0, 255, 0));
         try {
-            $this->expectException(RuntimeException::class);
+            $this->expectException(\RuntimeException::class);
             iterator_to_array(UdbCapturedSnapshot::readFile($file));
         } finally {
             unlink($file);
@@ -202,7 +197,7 @@ final class UdbNativeContractFailureTest extends TestCase
         self::assertIsString($file);
         file_put_contents($file, 'bad');
         try {
-            $this->expectException(RuntimeException::class);
+            $this->expectException(\RuntimeException::class);
             iterator_to_array(UdbCapturedSnapshot::readFile($file));
         } finally {
             unlink($file);

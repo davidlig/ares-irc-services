@@ -11,7 +11,6 @@ use App\NickServ\Domain\ValueObject\NickStatus;
 use App\Shared\Domain\IrcIdentityFold;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\ORM\EntityManagerInterface;
-use UnexpectedValueException;
 
 use function array_chunk;
 use function array_map;
@@ -77,9 +76,9 @@ final readonly class NickAccountBatchDoctrineQuery implements NickAccountBatchQu
             $timezone = $row['timezone'];
             $email = $row['email'];
             if ((!is_int($id) && !(is_string($id) && is_numeric($id))) || !is_string($nickname) || !is_string($lower) || !is_string($status) || !is_string($language) || (null !== $timezone && !is_string($timezone)) || (null !== $email && !is_string($email))) {
-                throw new UnexpectedValueException('Invalid nickname account data in burst lookup.');
+                throw new \UnexpectedValueException('Invalid nickname account data in burst lookup.');
             }
-            $nickStatus = NickStatus::tryFrom($status) ?? throw new UnexpectedValueException('Invalid nickname status in burst lookup.');
+            $nickStatus = NickStatus::tryFrom($status) ?? throw new \UnexpectedValueException('Invalid nickname status in burst lookup.');
             $accounts[$lower] = new NickAccountData((int) $id, $nickname, $language, $timezone ?? 'UTC', NickStatus::Registered === $nickStatus, NickStatus::Suspended === $nickStatus, $email);
         }
 

@@ -9,7 +9,6 @@ use App\Irc\Application\Port\In\ServiceDebugNotifierRegistry;
 use App\OperServ\Adapter\Out\Irc\ActiveConnectionCommandAuditPresenter;
 use App\OperServ\Application\Port\In\Audit\CommandAuditCategory;
 use App\OperServ\Application\Port\In\Audit\CommandAuditRecord;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -40,7 +39,7 @@ final class ActiveConnectionCommandAuditPresenterTest extends TestCase
                 service: 'operserv',
                 actor: 'Root',
                 operation: 'ROLE',
-                occurredAt: new DateTimeImmutable('2026-09-08T10:15:00+00:00'),
+                occurredAt: new \DateTimeImmutable('2026-09-08T10:15:00+00:00'),
                 target: 'ADMIN',
                 reason: 'approved',
                 permission: 'ROOT',
@@ -72,7 +71,7 @@ final class ActiveConnectionCommandAuditPresenterTest extends TestCase
             $service,
             'Oper',
             'KILL',
-            new DateTimeImmutable('2026-09-08T10:15:00+00:00'),
+            new \DateTimeImmutable('2026-09-08T10:15:00+00:00'),
         );
     }
 }

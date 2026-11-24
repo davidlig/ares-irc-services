@@ -21,7 +21,6 @@ use Amp\Socket\SocketAddressType;
 use Amp\Socket\SocketConnector;
 use Amp\TimeoutCancellation;
 use Revolt\EventLoop;
-use Throwable;
 
 use function Amp\Dns\dnsResolver;
 use function Amp\Socket\Internal\parseUri;
@@ -174,7 +173,7 @@ final readonly class KeepAliveSocketConnector implements SocketConnector
             }
 
             return ResourceSocket::fromClientSocket($socket, $context->getTlsContext());
-        } catch (Throwable $exception) {
+        } catch (\Throwable $exception) {
             fclose($socket);
 
             throw $exception;

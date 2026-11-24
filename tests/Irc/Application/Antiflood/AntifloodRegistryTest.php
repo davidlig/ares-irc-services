@@ -8,7 +8,6 @@ use App\Irc\Application\Antiflood\AntifloodRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
 
 #[CoversClass(AntifloodRegistry::class)]
 final class AntifloodRegistryTest extends TestCase
@@ -106,7 +105,7 @@ final class AntifloodRegistryTest extends TestCase
         $registry = new AntifloodRegistry();
 
         $oldTimestamp = self::NOW - 100;
-        $reflection = new ReflectionClass($registry);
+        $reflection = new \ReflectionClass($registry);
         $property = $reflection->getProperty('timestampsByKey');
         $property->setValue($registry, ['key1' => [$oldTimestamp]]);
 
@@ -142,7 +141,7 @@ final class AntifloodRegistryTest extends TestCase
         $registry = new AntifloodRegistry();
 
         $oldTimestamp = self::NOW - 3600;
-        $reflection = new ReflectionClass($registry);
+        $reflection = new \ReflectionClass($registry);
         $property = $reflection->getProperty('timestampsByKey');
         $property->setValue($registry, [
             'key1' => [$oldTimestamp],
@@ -190,7 +189,7 @@ final class AntifloodRegistryTest extends TestCase
         $registry = new AntifloodRegistry();
 
         $oldTimestamp = self::NOW - 10;
-        $reflection = new ReflectionClass($registry);
+        $reflection = new \ReflectionClass($registry);
         $property = $reflection->getProperty('timestampsByKey');
         $property->setValue($registry, ['key1' => [$oldTimestamp, $oldTimestamp, $oldTimestamp]]);
 
@@ -217,7 +216,7 @@ final class AntifloodRegistryTest extends TestCase
         $registry = new AntifloodRegistry();
 
         $oldTimestamp = self::NOW - 100;
-        $reflection = new ReflectionClass($registry);
+        $reflection = new \ReflectionClass($registry);
         $property = $reflection->getProperty('timestampsByKey');
         $property->setValue($registry, ['key1' => [$oldTimestamp, $oldTimestamp, $oldTimestamp]]);
 
@@ -246,7 +245,7 @@ final class AntifloodRegistryTest extends TestCase
         $registry = new AntifloodRegistry();
 
         $oldTimestamp = self::NOW - 100;
-        $reflection = new ReflectionClass($registry);
+        $reflection = new \ReflectionClass($registry);
         $lockoutProperty = $reflection->getProperty('lockoutUntilByKey');
         $lockoutProperty->setValue($registry, ['key1' => $oldTimestamp + 1]);
 
@@ -300,7 +299,7 @@ final class AntifloodRegistryTest extends TestCase
         $registry = new AntifloodRegistry();
 
         $oldTimestamp = self::NOW - 3600;
-        $reflection = new ReflectionClass($registry);
+        $reflection = new \ReflectionClass($registry);
         $property = $reflection->getProperty('timestampsByKey');
         $property->setValue($registry, [
             'key1' => [$oldTimestamp],
@@ -326,7 +325,7 @@ final class AntifloodRegistryTest extends TestCase
         $registry = new AntifloodRegistry();
 
         $oldTimestamp = self::NOW - 100;
-        $reflection = new ReflectionClass($registry);
+        $reflection = new \ReflectionClass($registry);
         $lockoutProperty = $reflection->getProperty('lockoutUntilByKey');
         $lockoutProperty->setValue($registry, ['key1' => $oldTimestamp + 1]);
 
@@ -339,7 +338,7 @@ final class AntifloodRegistryTest extends TestCase
         $registry = new AntifloodRegistry();
 
         $oldTimestamp = self::NOW - 3600;
-        $reflection = new ReflectionClass($registry);
+        $reflection = new \ReflectionClass($registry);
         $timestampsProperty = $reflection->getProperty('timestampsByKey');
         $timestampsProperty->setValue($registry, ['key1' => [$oldTimestamp]]);
 
@@ -355,7 +354,7 @@ final class AntifloodRegistryTest extends TestCase
     {
         $registry = new AntifloodRegistry();
 
-        $reflection = new ReflectionClass($registry);
+        $reflection = new \ReflectionClass($registry);
         $lockoutProperty = $reflection->getProperty('lockoutUntilByKey');
         $lockoutProperty->setValue($registry, ['key1' => self::NOW - 60]);
 
@@ -397,7 +396,7 @@ final class AntifloodRegistryTest extends TestCase
         $registry = new AntifloodRegistry();
 
         $oldTimestamp = self::NOW - 100;
-        $reflection = new ReflectionClass($registry);
+        $reflection = new \ReflectionClass($registry);
         $lockoutProperty = $reflection->getProperty('lockoutUntilByKey');
         $lockoutProperty->setValue($registry, ['key1' => $oldTimestamp + 1]);
 
@@ -415,7 +414,7 @@ final class AntifloodRegistryTest extends TestCase
         $registry = new AntifloodRegistry();
 
         $oldTimestamp = self::NOW - 3600;
-        $reflection = new ReflectionClass($registry);
+        $reflection = new \ReflectionClass($registry);
         $property = $reflection->getProperty('timestampsByKey');
         $property->setValue($registry, ['key1' => [$oldTimestamp]]);
 
@@ -432,7 +431,7 @@ final class AntifloodRegistryTest extends TestCase
     {
         $registry = new AntifloodRegistry();
 
-        $reflection = new ReflectionClass($registry);
+        $reflection = new \ReflectionClass($registry);
         $lockoutProperty = $reflection->getProperty('lockoutUntilByKey');
         $lockoutProperty->setValue($registry, ['key1' => self::NOW - 60]);
 

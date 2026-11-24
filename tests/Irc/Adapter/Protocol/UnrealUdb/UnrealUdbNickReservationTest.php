@@ -12,7 +12,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RuntimeException;
 
 #[CoversClass(UnrealUdbNickReservation::class)]
 final class UnrealUdbNickReservationTest extends TestCase
@@ -178,7 +177,7 @@ final class UnrealUdbNickReservationTest extends TestCase
         );
         $reservation = new UnrealUdbNickReservation($writer, $this->emptyRecords());
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage($message);
         if ('reserve' === $operation) {
             $reservation->reserveNick($nick, 'Reserved for network services');

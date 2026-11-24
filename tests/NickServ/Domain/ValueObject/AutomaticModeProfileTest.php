@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Tests\NickServ\Domain\ValueObject;
 
 use App\NickServ\Domain\ValueObject\AutomaticModeProfile;
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
@@ -20,7 +19,7 @@ final class AutomaticModeProfileTest extends TestCase
 
     public function testRejectsRawLettersAndUnknownIntentions(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         new AutomaticModeProfile(['o']);
     }
 }

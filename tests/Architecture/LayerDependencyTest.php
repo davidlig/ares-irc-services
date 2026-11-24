@@ -7,9 +7,6 @@ namespace App\Tests\Architecture;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RecursiveDirectoryIterator;
-use RecursiveIteratorIterator;
-use ReflectionClass;
 use SplFileInfo;
 
 use function array_unique;
@@ -457,7 +454,7 @@ final class LayerDependencyTest extends TestCase
             return false;
         }
 
-        return new ReflectionClass($name)->isInternal();
+        return new \ReflectionClass($name)->isInternal();
     }
 
     private static function isFrameworkOrInfrastructure(string $name): bool
@@ -598,9 +595,9 @@ final class LayerDependencyTest extends TestCase
                 continue;
             }
 
-            $directory = new RecursiveDirectoryIterator($absolutePath);
+            $directory = new \RecursiveDirectoryIterator($absolutePath);
             foreach ($directory as $entry) {
-                if (!$entry instanceof SplFileInfo) {
+                if (!$entry instanceof \SplFileInfo) {
                     continue;
                 }
 
@@ -630,7 +627,7 @@ final class LayerDependencyTest extends TestCase
         }
 
         $files = [];
-        $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($absolutePath));
+        $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($absolutePath));
 
         /** @var SplFileInfo $entry */
         foreach ($iterator as $entry) {

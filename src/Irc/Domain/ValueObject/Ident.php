@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Irc\Domain\ValueObject;
 
-use InvalidArgumentException;
-
 /**
  * IRC username/ident (the part before @ in user@host).
  */
@@ -14,7 +12,7 @@ readonly class Ident
     public function __construct(public string $value)
     {
         if ('' === $value) {
-            throw new InvalidArgumentException('Ident cannot be empty.');
+            throw new \InvalidArgumentException('Ident cannot be empty.');
         }
     }
 

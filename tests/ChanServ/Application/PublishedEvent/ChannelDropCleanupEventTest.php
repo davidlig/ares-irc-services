@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Tests\ChanServ\Application\PublishedEvent;
 
 use App\ChanServ\Application\PublishedEvent\ChannelDropCleanupEvent;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -16,7 +15,7 @@ final class ChannelDropCleanupEventTest extends TestCase
     #[Test]
     public function exposesDropDataWithExplicitOccurrenceTime(): void
     {
-        $occurredAt = new DateTimeImmutable('2026-09-05 12:00:00');
+        $occurredAt = new \DateTimeImmutable('2026-09-05 12:00:00');
 
         $event = new ChannelDropCleanupEvent(
             channelId: 42,
@@ -36,7 +35,7 @@ final class ChannelDropCleanupEventTest extends TestCase
     #[Test]
     public function supportsCleanupWithOnlyIdentityAndOccurrenceTime(): void
     {
-        $occurredAt = new DateTimeImmutable('2026-09-05 13:00:00');
+        $occurredAt = new \DateTimeImmutable('2026-09-05 13:00:00');
 
         $event = new ChannelDropCleanupEvent(7, $occurredAt);
 

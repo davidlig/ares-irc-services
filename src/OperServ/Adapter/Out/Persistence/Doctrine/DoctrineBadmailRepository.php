@@ -9,7 +9,6 @@ use App\OperServ\Application\UseCase\Badmail\BadmailEntryView;
 use App\OperServ\Domain\Entity\BadmailEntry;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
-use UnexpectedValueException;
 
 use function array_map;
 use function is_numeric;
@@ -57,7 +56,7 @@ final readonly class DoctrineBadmailRepository implements BadmailRepository
     {
         $count = $this->em->getConnection()->fetchOne("SELECT COUNT(*) FROM operserv_badmail WHERE domain LIKE ? ESCAPE '!'", [self::pattern($pattern)]);
         if (!is_numeric($count)) {
-            throw new UnexpectedValueException('Invalid blocked-domain count.');
+            throw new \UnexpectedValueException('Invalid blocked-domain count.');
         }
 
         return (int) $count;
@@ -78,7 +77,7 @@ final readonly class DoctrineBadmailRepository implements BadmailRepository
         $domain = $row['domain'];
         $reason = $row['reason'];
         if (!is_numeric($id) || !is_string($domain) || !is_string($reason)) {
-            throw new UnexpectedValueException('Invalid blocked-domain row.');
+            throw new \UnexpectedValueException('Invalid blocked-domain row.');
         }
 
         return new BadmailEntryView((int) $id, $domain, $reason);

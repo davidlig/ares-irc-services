@@ -7,7 +7,6 @@ namespace App\Tests\NickServ\Adapter\In\Event;
 use App\NickServ\Adapter\In\Event\NickHistoryNickDropSubscriber;
 use App\NickServ\Application\Port\Out\NickHistoryRepositoryInterface;
 use App\NickServ\Application\PublishedEvent\NickDropCleanupEvent;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -39,7 +38,7 @@ final class NickHistoryNickDropSubscriberTest extends TestCase
             nickname: 'TestUser',
             nicknameLower: 'testuser',
             reason: 'manual',
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
         );
 
         $this->historyRepository
@@ -58,7 +57,7 @@ final class NickHistoryNickDropSubscriberTest extends TestCase
             nickname: 'AnotherUser',
             nicknameLower: 'anotheruser',
             reason: 'inactivity',
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
         );
 
         $this->historyRepository

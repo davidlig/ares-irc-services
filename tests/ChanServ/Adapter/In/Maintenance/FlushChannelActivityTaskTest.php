@@ -12,7 +12,6 @@ use App\ChanServ\Application\Service\ChanDropService;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\Irc\Adapter\In\Maintenance\MaintenanceScheduler;
 use ArrayObject;
-use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DriverManager;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -20,7 +19,6 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
-use RuntimeException;
 
 #[CoversClass(FlushChannelActivityTask::class)]
 final class FlushChannelActivityTaskTest extends TestCase
@@ -33,7 +31,7 @@ final class FlushChannelActivityTaskTest extends TestCase
             ->with(self::stringContains('UPDATE registered_channels'), self::anything(), self::anything())
             ->willReturn(1);
         $buffer = new ChannelActivityBuffer($connection);
-        $buffer->record(7, new DateTimeImmutable('2026-01-01 00:00:00 UTC'));
+        $buffer->record(7, new \DateTimeImmutable('2026-01-01 00:00:00 UTC'));
         $task = new FlushChannelActivityTask($buffer);
 
         self::assertSame('chanserv.flush_channel_activity', $task->getName());
@@ -50,24 +48,24 @@ final class FlushChannelActivityTaskTest extends TestCase
         $connection->expects(self::exactly(2))->method('executeStatement')->willReturnCallback(
             static function () use (&$attempts): int {
                 if (0 === $attempts++) {
-                    throw new RuntimeException('database unavailable');
+                    throw new \RuntimeException('database unavailable');
                 }
 
                 return 1;
             },
         );
-        $connection->method('fetchOne')->willThrowException(new RuntimeException('database unavailable'));
+        $connection->method('fetchOne')->willThrowException(new \RuntimeException('database unavailable'));
         $buffer = new ChannelActivityBuffer($connection);
-        $buffer->record(7, new DateTimeImmutable('2026-01-01 00:00:00 UTC'));
+        $buffer->record(7, new \DateTimeImmutable('2026-01-01 00:00:00 UTC'));
         $task = new FlushChannelActivityTask($buffer);
 
         $failure = null;
         try {
             $task->run();
-        } catch (RuntimeException $e) {
+        } catch (\RuntimeException $e) {
             $failure = $e;
         }
-        self::assertInstanceOf(RuntimeException::class, $failure);
+        self::assertInstanceOf(\RuntimeException::class, $failure);
         self::assertStringStartsWith('Could not flush 1 of 1 chunks', $failure->getMessage());
 
         self::assertSame(0, $task->getIntervalSeconds());
@@ -79,10 +77,10 @@ final class FlushChannelActivityTaskTest extends TestCase
     public function aFailedFlushSkipsTheInactiveChannelPurgeInTheSameSchedulerCycle(): void
     {
         $connection = $this->createStub(Connection::class);
-        $connection->method('executeStatement')->willThrowException(new RuntimeException('database unavailable'));
-        $connection->method('fetchOne')->willThrowException(new RuntimeException('database unavailable'));
+        $connection->method('executeStatement')->willThrowException(new \RuntimeException('database unavailable'));
+        $connection->method('fetchOne')->willThrowException(new \RuntimeException('database unavailable'));
         $buffer = new ChannelActivityBuffer($connection);
-        $buffer->record(7, new DateTimeImmutable('2026-01-01 00:00:00 UTC'));
+        $buffer->record(7, new \DateTimeImmutable('2026-01-01 00:00:00 UTC'));
         $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channels->expects(self::never())->method('iterateRegisteredInactiveSince');
         $purge = new PurgeInactiveChannelsTask($channels, $this->createStub(ChanDropService::class), $buffer, new NullLogger(), 0, 90);
@@ -106,15 +104,15 @@ final class FlushChannelActivityTaskTest extends TestCase
         $connection->executeStatement('INSERT INTO registered_channels (id, last_used_at) VALUES (7, NULL), (8, NULL)');
         $connection->executeStatement("CREATE TRIGGER poison_row BEFORE UPDATE ON registered_channels WHEN NEW.id = 7 BEGIN SELECT RAISE(ABORT, 'poison row'); END");
         $buffer = new ChannelActivityBuffer($connection);
-        $buffer->record(7, new DateTimeImmutable('-1 minute'));
-        $buffer->record(8, new DateTimeImmutable('-1 minute'));
+        $buffer->record(7, new \DateTimeImmutable('-1 minute'));
+        $buffer->record(8, new \DateTimeImmutable('-1 minute'));
         $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channels->method('iterateRegisteredInactiveSince')->willReturn([
             $this->inactiveChannel(7, '#poisoned'),
             $this->inactiveChannel(9, '#idle'),
         ]);
         /** @var ArrayObject<int, string> $dropped */
-        $dropped = new ArrayObject();
+        $dropped = new \ArrayObject();
         $drops = $this->createStub(ChanDropService::class);
         $drops->method('hardDropChannel')->willReturnCallback(static function (RegisteredChannel $channel) use ($dropped): void {
             $dropped->append($channel->getName());
@@ -139,8 +137,8 @@ final class FlushChannelActivityTaskTest extends TestCase
         $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('getId')->willReturn($id);
         $channel->method('getName')->willReturn($name);
-        $channel->method('getLastUsedAt')->willReturn(new DateTimeImmutable('-200 days'));
-        $channel->method('getCreatedAt')->willReturn(new DateTimeImmutable('-300 days'));
+        $channel->method('getLastUsedAt')->willReturn(new \DateTimeImmutable('-200 days'));
+        $channel->method('getCreatedAt')->willReturn(new \DateTimeImmutable('-300 days'));
 
         return $channel;
     }

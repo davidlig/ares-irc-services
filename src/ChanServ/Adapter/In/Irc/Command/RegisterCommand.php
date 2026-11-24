@@ -19,7 +19,6 @@ use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use App\Shared\Adapter\In\Irc\Presentation\Component;
 use App\Shared\Adapter\In\Irc\Presentation\Fragment;
 use App\Shared\Adapter\In\Irc\Presentation\Role;
-use DateTimeImmutable;
 
 use function array_slice;
 use function implode;
@@ -122,7 +121,7 @@ final readonly class RegisterCommand implements ChanServCommandInterface, Audita
 
             return CommandOutcome::rejected();
         }
-        $occurredAt = new DateTimeImmutable();
+        $occurredAt = new \DateTimeImmutable();
         $result = $this->handler->handle(new RegisterChannel(
             channelName: $channelName,
             description: implode(' ', array_slice($context->args, 1)),
@@ -144,7 +143,7 @@ final readonly class RegisterCommand implements ChanServCommandInterface, Audita
         };
     }
 
-    private function present(ChanServContext $context, string $channelName, RegisterChannelResult $result, DateTimeImmutable $occurredAt): void
+    private function present(ChanServContext $context, string $channelName, RegisterChannelResult $result, \DateTimeImmutable $occurredAt): void
     {
         match ($result->outcome) {
             RegisterChannelOutcome::Registered => $context->reply('register.success', ['%channel%' => new Fragment($channelName, Component::Emphasis)], Role::Success),

@@ -9,7 +9,6 @@ use App\Irc\Adapter\Protocol\NetworkStateAdapterInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbAuthorityStateRepositoryInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbConnectionPreflight;
 use App\Irc\Adapter\Runtime\ProtocolRuntimeModuleInterface;
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -58,7 +57,7 @@ final class ProtocolCompositionTest extends TestCase
         $module->method('getProtocolName')->willReturn('unreal');
         $composition = new ProtocolComposition('unknown', [$module], [], $this->createUdbPreflight());
 
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('No protocol module is registered for "unknown". Available: unreal.');
 
         $composition->protocolModule();
@@ -71,7 +70,7 @@ final class ProtocolCompositionTest extends TestCase
         $adapter->method('getSupportedProtocol')->willReturn('inspircd');
         $composition = new ProtocolComposition('unknown', [], [$adapter], $this->createUdbPreflight());
 
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('No network state adapter is registered for "unknown". Available: inspircd.');
 
         $composition->networkStateAdapter();

@@ -29,11 +29,9 @@ use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
 use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
 use App\Shared\Adapter\In\Irc\Presentation\Role;
 use App\Shared\Application\Port\EventBusInterface;
-use DateTimeImmutable;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Contracts\Translation\TranslatorInterface;
-use Throwable;
 
 use function array_shift;
 use function array_slice;
@@ -212,7 +210,7 @@ final readonly class ChanServService
             $this->dispatchFounderAuditEvent($handler, $context, $sender, $cmdName, $args, $isLevelFounder, $account);
         } catch (ChannelAlreadyRegisteredException|ChannelNotRegisteredException|InsufficientAccessException $e) {
             throw $e;
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             $this->logger->error('ChanServ dispatch error: ' . $e->getMessage(), [
                 'exception' => $e,
                 'sender' => $sender->uid,
@@ -278,7 +276,7 @@ final readonly class ChanServService
         $channelName = $context->getChannelNameArg(0);
         if (null !== $channelName) {
             $channel = $this->channelRepository->findByChannelName($channelName);
-            if (null !== $channel && $channel->isCurrentlySuspended(new DateTimeImmutable())) {
+            if (null !== $channel && $channel->isCurrentlySuspended(new \DateTimeImmutable())) {
                 $context->reply('suspend.channel_suspended', ['%channel%' => new Fragment($channelName, Component::Emphasis)], Role::Error);
 
                 return true;
@@ -332,7 +330,7 @@ final readonly class ChanServService
                         service: $this->notifier->getServiceKey(),
                         actor: $sender->nick,
                         operation: $cmdName,
-                        occurredAt: new DateTimeImmutable(),
+                        occurredAt: new \DateTimeImmutable(),
                         permission: ChanServPermission::LEVEL_FOUNDER,
                         target: $auditChannelName,
                         targetHost: sprintf('%s@%s', $sender->ident, $sender->hostname),

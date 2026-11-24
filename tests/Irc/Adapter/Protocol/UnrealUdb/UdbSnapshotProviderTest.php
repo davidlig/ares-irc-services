@@ -20,9 +20,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionMethod;
-use RuntimeException;
-use UnexpectedValueException;
 
 use function array_diff;
 use function array_values;
@@ -54,7 +51,7 @@ final class UdbSnapshotProviderTest extends TestCase
         $connection->method('getDatabasePlatform')->willReturn(new SQLitePlatform());
         $connection->method('fetchAssociative')->willReturn(['dataset_sid' => '002', 'dataset_epoch' => '0123456789abcdef', 'dataset_watermark' => '7']);
         $connection->method('fetchAllAssociative')->willReturn([['id' => 1, 'path' => 'alice::swhois', 'value' => 7, 'value_kind' => 1]]);
-        $this->expectException(UnexpectedValueException::class);
+        $this->expectException(\UnexpectedValueException::class);
         $this->expectExceptionMessage('invalid SQL fields');
         new UdbSnapshotProvider($connection)->capture();
     }
@@ -142,7 +139,7 @@ final class UdbSnapshotProviderTest extends TestCase
         try {
             new UdbSnapshotProvider($this->connection)->capture();
             self::fail('Invalid native rows must not produce a snapshot.');
-        } catch (UnexpectedValueException $error) {
+        } catch (\UnexpectedValueException $error) {
             self::assertSame('A persisted UDB row does not match the canonical schema.', $error->getMessage());
             self::assertFalse($this->connection->isTransactionActive());
         }
@@ -171,8 +168,7 @@ final class UdbSnapshotProviderTest extends TestCase
             self::assertSame(1, $snapshot->count(UdbBlock::Ips));
             self::assertSame(UdbChecksum::fromMap(UdbBlock::Ips, ['1.2.3.4::clones' => UdbValue::number(UdbUnsignedDecimal::fromInt(5))]), $snapshot->digest(UdbBlock::Ips));
             self::assertTrue(
-                [['1.2.3.4::clones', UdbValue::number(UdbUnsignedDecimal::fromInt(5))]] ==
-                iterator_to_array($snapshot->records(UdbBlock::Ips), false),
+                [['1.2.3.4::clones', UdbValue::number(UdbUnsignedDecimal::fromInt(5))]] == iterator_to_array($snapshot->records(UdbBlock::Ips), false),
             );
         } finally {
             $snapshot->close();
@@ -195,8 +191,7 @@ final class UdbSnapshotProviderTest extends TestCase
                 [
                     ['alice', UdbValue::none()],
                     ['alice::vhost', UdbValue::string('')],
-                ] ==
-                iterator_to_array(UdbCapturedSnapshot::readFile($file), false),
+                ] == iterator_to_array(UdbCapturedSnapshot::readFile($file), false),
             );
         } finally {
             unlink($file);
@@ -211,7 +206,7 @@ final class UdbSnapshotProviderTest extends TestCase
         try {
             new UdbSnapshotProvider($this->connection)->capture();
             self::fail('A missing checkpoint was accepted.');
-        } catch (UnexpectedValueException) {
+        } catch (\UnexpectedValueException) {
             self::assertFalse($this->connection->isTransactionActive());
         }
     }
@@ -236,7 +231,7 @@ final class UdbSnapshotProviderTest extends TestCase
         try {
             new UdbSnapshotProvider($this->connection)->capture();
             self::fail('A corrupted row was accepted.');
-        } catch (UnexpectedValueException) {
+        } catch (\UnexpectedValueException) {
             self::assertFalse($this->connection->isTransactionActive());
         }
     }
@@ -248,7 +243,7 @@ final class UdbSnapshotProviderTest extends TestCase
         try {
             new UdbSnapshotProvider($this->connection)->capture();
             self::fail('An invalid checkpoint was accepted.');
-        } catch (UnexpectedValueException) {
+        } catch (\UnexpectedValueException) {
             self::assertFalse($this->connection->isTransactionActive());
         }
     }
@@ -256,13 +251,13 @@ final class UdbSnapshotProviderTest extends TestCase
     #[Test]
     public function integerBoundaryAcceptsDecimalSqlStringsAndRejectsOverflow(): void
     {
-        $decode = new ReflectionMethod(UdbSnapshotProvider::class, 'sqlInt');
+        $decode = new \ReflectionMethod(UdbSnapshotProvider::class, 'sqlInt');
         self::assertSame(7, $decode->invoke(null, '7'));
         foreach ([null, 'bad', '9223372036854775808'] as $invalid) {
             try {
                 $decode->invoke(null, $invalid);
                 self::fail('Invalid SQL integer must not enter pagination.');
-            } catch (UnexpectedValueException $error) {
+            } catch (\UnexpectedValueException $error) {
                 self::assertStringContainsString('integer', $error->getMessage());
             }
         }
@@ -276,7 +271,7 @@ final class UdbSnapshotProviderTest extends TestCase
         try {
             new UdbSnapshotProvider($this->connection)->capture();
             self::fail('An invalid checkpoint must prevent capture.');
-        } catch (UnexpectedValueException $error) {
+        } catch (\UnexpectedValueException $error) {
             self::assertStringContainsString('watermark', $error->getMessage());
         }
         self::assertFalse($this->connection->isTransactionActive());
@@ -292,7 +287,7 @@ final class UdbSnapshotProviderTest extends TestCase
             try {
                 new UdbSnapshotProvider($this->connection)->capture();
                 self::fail('A corrupt row must not publish a snapshot.');
-            } catch (UnexpectedValueException $error) {
+            } catch (\UnexpectedValueException $error) {
                 self::assertStringContainsString('persisted', $error->getMessage());
             }
             self::assertFalse($this->connection->isTransactionActive());
@@ -305,7 +300,7 @@ final class UdbSnapshotProviderTest extends TestCase
         $connection = $this->createMock(Connection::class);
         $connection->method('getDatabasePlatform')->willReturn(new PostgreSQLPlatform());
         $connection->expects(self::once())->method('setTransactionIsolation')->with(TransactionIsolationLevel::REPEATABLE_READ);
-        new ReflectionMethod(UdbSnapshotProvider::class, 'setConsistentIsolation')->invoke(new UdbSnapshotProvider($connection));
+        new \ReflectionMethod(UdbSnapshotProvider::class, 'setConsistentIsolation')->invoke(new UdbSnapshotProvider($connection));
     }
 
     #[Test]
@@ -317,14 +312,14 @@ final class UdbSnapshotProviderTest extends TestCase
         $connection->method('fetchAssociative')->willReturnCallback(static function () use ($before): array {
             $new = array_values(array_diff(glob(sys_get_temp_dir() . '/ares-udb4-*') ?: [], $before));
             if (1 !== count($new)) {
-                throw new RuntimeException('The private test spool must be unique.');
+                throw new \RuntimeException('The private test spool must be unique.');
             }
             file_put_contents($new[0] . '/partial.rows', 'partial');
 
             return ['dataset_sid' => '002', 'dataset_epoch' => str_repeat('1', 16), 'dataset_watermark' => '0'];
         });
         $connection->method('fetchAllAssociative')->willReturn([['id' => 1, 'path' => 7, 'value' => 'x', 'value_kind' => 1]]);
-        $this->expectException(UnexpectedValueException::class);
+        $this->expectException(\UnexpectedValueException::class);
         try {
             new UdbSnapshotProvider($connection)->capture();
         } finally {

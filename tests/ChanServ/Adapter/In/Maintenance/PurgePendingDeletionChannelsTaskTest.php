@@ -10,15 +10,11 @@ use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\Service\ChanDropService;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use ArrayObject;
-use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
-use Error;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-use RuntimeException;
-use Throwable;
 
 #[CoversClass(PurgePendingDeletionChannelsTask::class)]
 #[CoversClass(ChannelSweepFailureBudget::class)]
@@ -53,8 +49,8 @@ final class PurgePendingDeletionChannelsTaskTest extends TestCase
         $repo = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $repo->expects(self::once())
             ->method('iteratePendingDeletionBefore')
-            ->with(self::callback(static function (DateTimeImmutable $threshold): bool {
-                $expected = new DateTimeImmutable()->modify('-7 days');
+            ->with(self::callback(static function (\DateTimeImmutable $threshold): bool {
+                $expected = new \DateTimeImmutable()->modify('-7 days');
 
                 return $expected->format('Y-m-d') === $threshold->format('Y-m-d');
             }))
@@ -63,7 +59,7 @@ final class PurgePendingDeletionChannelsTaskTest extends TestCase
         $dropService = $this->createMock(ChanDropService::class);
         $dropService->expects(self::once())->method('hardDropChannel')->with(
             $channel,
-            self::isInstanceOf(DateTimeImmutable::class),
+            self::isInstanceOf(\DateTimeImmutable::class),
             'manual-grace-expired',
             null,
         );
@@ -87,7 +83,7 @@ final class PurgePendingDeletionChannelsTaskTest extends TestCase
         $dropService = $this->createStub(ChanDropService::class);
         $dropService->method('hardDropChannel')->willReturnCallback(function (RegisteredChannel $channel): void {
             if ('#broken' === $channel->getName()) {
-                throw new RuntimeException('constraint violation');
+                throw new \RuntimeException('constraint violation');
             }
             $this->dropped[$channel->getName()] = true;
         });
@@ -107,7 +103,7 @@ final class PurgePendingDeletionChannelsTaskTest extends TestCase
 
         self::assertCount(1, $errors);
         self::assertStringContainsString('failed to delete pending-deletion channel #broken (id 1); skipping it until the next sweep', $errors->getArrayCopy()[0] ?? '');
-        self::assertInstanceOf(RuntimeException::class, $exceptions[0]);
+        self::assertInstanceOf(\RuntimeException::class, $exceptions[0]);
         self::assertSame(['#later' => true], $this->dropped);
         self::assertCount(1, $infos);
         self::assertStringContainsString('permanently deleted channel #later (id 2)', $infos->getArrayCopy()[0] ?? '');
@@ -121,7 +117,7 @@ final class PurgePendingDeletionChannelsTaskTest extends TestCase
         $repo->method('iteratePendingDeletionBefore')->willReturn([$channel]);
         $repo->method('findByIds')->willReturn([]);
         $dropService = $this->createStub(ChanDropService::class);
-        $dropService->method('hardDropChannel')->willThrowException(new RuntimeException('listener failed'));
+        $dropService->method('hardDropChannel')->willThrowException(new \RuntimeException('listener failed'));
         $errors = self::messages();
         $logger = $this->createStub(LoggerInterface::class);
         $logger->method('error')->willReturnCallback(static function (string $message) use ($errors): void {
@@ -153,7 +149,7 @@ final class PurgePendingDeletionChannelsTaskTest extends TestCase
             if ('#poison' === $channel->getName()) {
                 $open = false;
 
-                throw new RuntimeException('deadlock');
+                throw new \RuntimeException('deadlock');
             }
         });
         $errors = self::messages();
@@ -168,10 +164,10 @@ final class PurgePendingDeletionChannelsTaskTest extends TestCase
             $failure = null;
             try {
                 $task->run();
-            } catch (Throwable $e) {
+            } catch (\Throwable $e) {
                 $failure = $e;
             }
-            self::assertInstanceOf(RuntimeException::class, $failure);
+            self::assertInstanceOf(\RuntimeException::class, $failure);
         }
         $open = true;
         $task->run();
@@ -190,7 +186,7 @@ final class PurgePendingDeletionChannelsTaskTest extends TestCase
         $channel->method('getName')->willReturn($name);
         $channel->method('getId')->willReturnCallback(function () use ($id, $name): int {
             if (isset($this->dropped[$name])) {
-                throw new Error('Typed property must not be accessed before initialization');
+                throw new \Error('Typed property must not be accessed before initialization');
             }
 
             return $id;
@@ -200,14 +196,14 @@ final class PurgePendingDeletionChannelsTaskTest extends TestCase
     }
 
     /** @return ArrayObject<int, mixed> */
-    private static function recorder(): ArrayObject
+    private static function recorder(): \ArrayObject
     {
-        return new ArrayObject();
+        return new \ArrayObject();
     }
 
     /** @return ArrayObject<int, string> */
-    private static function messages(): ArrayObject
+    private static function messages(): \ArrayObject
     {
-        return new ArrayObject();
+        return new \ArrayObject();
     }
 }

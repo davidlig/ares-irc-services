@@ -6,7 +6,6 @@ namespace App\Tests\ChanServ\Adapter\In\Maintenance;
 
 use App\ChanServ\Adapter\In\Maintenance\CleanupChannelHistoryTask;
 use App\ChanServ\Application\Port\Out\ChannelHistoryRepositoryInterface;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -79,8 +78,8 @@ final class CleanupChannelHistoryTaskTest extends TestCase
         $historyRepo = $this->createMock(ChannelHistoryRepositoryInterface::class);
         $historyRepo->expects(self::once())
             ->method('deleteOlderThan')
-            ->with(self::callback(static function (DateTimeImmutable $threshold) use ($retentionDays): bool {
-                $expected = new DateTimeImmutable()->modify(sprintf('-%d days', $retentionDays));
+            ->with(self::callback(static function (\DateTimeImmutable $threshold) use ($retentionDays): bool {
+                $expected = new \DateTimeImmutable()->modify(sprintf('-%d days', $retentionDays));
 
                 return $threshold->format('Y-m-d') === $expected->format('Y-m-d');
             }))

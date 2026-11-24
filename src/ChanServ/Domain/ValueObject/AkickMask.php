@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\ChanServ\Domain\ValueObject;
 
 use Closure;
-use InvalidArgumentException;
 
 use function ctype_alnum;
 use function str_contains;
@@ -24,7 +23,7 @@ final readonly class AkickMask
     public function __construct(public string $value)
     {
         if ('' === $value || self::MAX_LENGTH < strlen($value) || !str_contains($value, '!') || !str_contains($value, '@')) {
-            throw new InvalidArgumentException('AKICK mask must be a non-empty nick!ident@host pattern of at most 255 characters.');
+            throw new \InvalidArgumentException('AKICK mask must be a non-empty nick!ident@host pattern of at most 255 characters.');
         }
     }
 
@@ -34,7 +33,7 @@ final readonly class AkickMask
      *
      * @param Closure(string): string $fold negotiated identity fold
      */
-    public function matches(string $userMask, Closure $fold): bool
+    public function matches(string $userMask, \Closure $fold): bool
     {
         return self::glob($fold($this->value), $fold($userMask));
     }
@@ -47,7 +46,7 @@ final readonly class AkickMask
      *
      * @return Closure(string): bool receives a nick!ident@host folded with $fold
      */
-    public function matcher(Closure $fold): Closure
+    public function matcher(\Closure $fold): \Closure
     {
         $pattern = $fold($this->value);
 
@@ -55,7 +54,7 @@ final readonly class AkickMask
     }
 
     /** @param Closure(string): string $fold negotiated identity fold */
-    public function nicknameMatches(string $nickname, Closure $fold): bool
+    public function nicknameMatches(string $nickname, \Closure $fold): bool
     {
         return self::glob($fold($this->nicknamePattern()), $fold($nickname));
     }

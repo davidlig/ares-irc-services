@@ -5,9 +5,6 @@ declare(strict_types=1);
 namespace App\Irc\Adapter\Protocol\UnrealUdb\Model;
 
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbUnsignedDecimal;
-use DateTimeImmutable;
-use OverflowException;
-use UnexpectedValueException;
 
 /**
  * Explicit approval for the complete local UDB dataset.
@@ -21,7 +18,7 @@ class UdbAuthorityState
 
     private int $id;
 
-    private ?DateTimeImmutable $approvedAt = null;
+    private ?\DateTimeImmutable $approvedAt = null;
 
     private ?string $fingerprint = null;
 
@@ -48,7 +45,7 @@ class UdbAuthorityState
         return $this->approved && self::CURRENT_PROTOCOL_REVISION === $this->protocolRevision;
     }
 
-    public function getApprovedAt(): ?DateTimeImmutable
+    public function getApprovedAt(): ?\DateTimeImmutable
     {
         return $this->approvedAt;
     }
@@ -121,11 +118,11 @@ class UdbAuthorityState
     {
         $checkpoint = $this->getDatasetCheckpoint();
         if (null === $checkpoint || $checkpoint->origin->sid !== $origin->sid || $checkpoint->origin->epoch !== $origin->epoch) {
-            throw new UnexpectedValueException('The active UDB dataset origin changed during a mutation.');
+            throw new \UnexpectedValueException('The active UDB dataset origin changed during a mutation.');
         }
         $watermark = $checkpoint->watermark->increment();
         if (null === $watermark) {
-            throw new OverflowException('The UDB dataset sequence is exhausted for this epoch.');
+            throw new \OverflowException('The UDB dataset sequence is exhausted for this epoch.');
         }
         $this->datasetWatermark = (string) $watermark;
 
@@ -144,7 +141,7 @@ class UdbAuthorityState
         $this->approved = true;
         $this->fingerprint = $fingerprint;
         $this->protocolRevision = self::CURRENT_PROTOCOL_REVISION;
-        $this->approvedAt = new DateTimeImmutable();
+        $this->approvedAt = new \DateTimeImmutable();
     }
 
     public function revoke(): void

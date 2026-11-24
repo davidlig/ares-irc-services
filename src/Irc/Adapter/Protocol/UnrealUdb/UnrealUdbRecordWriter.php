@@ -16,7 +16,6 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbPathCodec;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbUnsignedDecimal;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
-use Throwable;
 
 use function explode;
 
@@ -132,7 +131,7 @@ final readonly class UnrealUdbRecordWriter implements UdbRecordWriterInterface
             $sequence = $this->mutations->upsertWithManifest($block, $encodedPath, $value, $origin);
 
             return true;
-        } catch (Throwable $exception) {
+        } catch (\Throwable $exception) {
             $this->logger->error('UDB store insert failed; mutation not propagated.', [
                 'block' => $block,
                 'path' => $encodedPath,
@@ -149,7 +148,7 @@ final readonly class UnrealUdbRecordWriter implements UdbRecordWriterInterface
             $sequence = $this->mutations->deleteCascadeWithManifest($block, $encodedPath, $origin);
 
             return true;
-        } catch (Throwable $exception) {
+        } catch (\Throwable $exception) {
             $this->logger->error('UDB store delete failed; mutation not propagated.', [
                 'block' => $block,
                 'path' => $encodedPath,

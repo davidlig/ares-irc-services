@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Domain\ValueObject;
 
-use DateTimeImmutable;
-use InvalidArgumentException;
-
 use function strlen;
 
 final readonly class AkickRule
@@ -18,16 +15,16 @@ final readonly class AkickRule
     public function __construct(
         public AkickMask $mask,
         ?string $reason = null,
-        public ?DateTimeImmutable $expiresAt = null,
+        public ?\DateTimeImmutable $expiresAt = null,
     ) {
         if (null !== $reason && self::MAX_REASON_LENGTH < strlen($reason)) {
-            throw new InvalidArgumentException('AKICK reason cannot exceed 255 characters.');
+            throw new \InvalidArgumentException('AKICK reason cannot exceed 255 characters.');
         }
 
         $this->reason = '' === $reason ? null : $reason;
     }
 
-    public function isExpiredAt(DateTimeImmutable $now): bool
+    public function isExpiredAt(\DateTimeImmutable $now): bool
     {
         return null !== $this->expiresAt && $this->expiresAt < $now;
     }

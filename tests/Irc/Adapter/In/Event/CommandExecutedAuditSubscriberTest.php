@@ -16,7 +16,6 @@ use App\OperServ\Application\Port\In\CommandAuditRecorder;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use stdClass;
 
 #[CoversClass(CommandExecutedAuditSubscriber::class)]
 final class CommandExecutedAuditSubscriberTest extends TestCase
@@ -93,7 +92,7 @@ final class CommandExecutedAuditSubscriberTest extends TestCase
         $subscriber = new CommandExecutedAuditSubscriber($audit);
         $auditable = new class implements PublishedIrcopAuditableCommandInterface {};
 
-        $subscriber->onPublishedCommandExecuted($this->publishedEvent(new stdClass(), 'operserv.raw', PublishedCommandOutcome::success(new PublishedIrcopAuditData('KILL'))));
+        $subscriber->onPublishedCommandExecuted($this->publishedEvent(new \stdClass(), 'operserv.raw', PublishedCommandOutcome::success(new PublishedIrcopAuditData('KILL'))));
         $subscriber->onPublishedCommandExecuted($this->publishedEvent($auditable, 'operserv.raw', PublishedCommandOutcome::rejected()));
         $subscriber->onPublishedCommandExecuted($this->publishedEvent($auditable, 'operserv.raw', PublishedCommandOutcome::success()));
         $subscriber->onPublishedCommandExecuted($this->publishedEvent($auditable, null, PublishedCommandOutcome::success(new PublishedIrcopAuditData('KILL'))));

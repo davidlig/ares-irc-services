@@ -28,14 +28,11 @@ use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\Shared\Application\Port\EventBusInterface;
-use DateTimeImmutable;
-use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversTrait;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use ReflectionMethod;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(RestoreCommand::class)]
@@ -49,9 +46,9 @@ final class RestoreCommandTest extends TestCase
     public function lifecycleRequestRequiresSender(): void
     {
         $messages = [];
-        $method = new ReflectionMethod(RestoreCommand::class, 'lifecycleRequest');
+        $method = new \ReflectionMethod(RestoreCommand::class, 'lifecycleRequest');
 
-        $this->expectException(LogicException::class);
+        $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('A sender is required for channel lifecycle commands.');
 
         $method->invoke(
@@ -86,14 +83,14 @@ final class RestoreCommandTest extends TestCase
     #[Test]
     public function executeRestoresPendingDeletionChannel(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Desc');
-        $channel->markPendingDeletion(new DateTimeImmutable());
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 1, 'Desc');
+        $channel->markPendingDeletion(new \DateTimeImmutable());
 
         $repo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $repo->method('findByChannelName')->willReturn($channel);
 
         $dropService = $this->createMock(ChanDropService::class);
-        $dropService->expects(self::once())->method('restoreChannel')->with($channel, self::isInstanceOf(DateTimeImmutable::class), 'OperUser');
+        $dropService->expects(self::once())->method('restoreChannel')->with($channel, self::isInstanceOf(\DateTimeImmutable::class), 'OperUser');
 
         $messages = [];
         $context = $this->createContext(['#test'], $messages);
@@ -112,7 +109,7 @@ final class RestoreCommandTest extends TestCase
     #[Test]
     public function executeRepliesWhenChannelIsNotPendingDeletion(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 1, 'Desc');
 
         $repo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $repo->method('findByChannelName')->willReturn($channel);
@@ -140,8 +137,8 @@ final class RestoreCommandTest extends TestCase
     #[Test]
     public function executeReturnsRejectedWhenValidatedChannelHasNoSender(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Desc');
-        $channel->markPendingDeletion(new DateTimeImmutable());
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 1, 'Desc');
+        $channel->markPendingDeletion(new \DateTimeImmutable());
         $repository = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $repository->method('findByChannelName')->willReturn($channel);
         $dropService = $this->createMock(ChanDropService::class);

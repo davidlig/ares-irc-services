@@ -5,14 +5,13 @@ declare(strict_types=1);
 namespace App\NickServ\Adapter\Out\InMemory;
 
 use App\NickServ\Application\Port\Out\PendingNickProtectionRegistryInterface;
-use DateTimeImmutable;
 
 final class PendingNickProtectionRegistry implements PendingNickProtectionRegistryInterface
 {
     /** @var array<string, float> Map of UID => expiry timestamp */
     private array $pending = [];
 
-    public function schedule(string $uid, DateTimeImmutable $now, float $delaySeconds = 0.5): void
+    public function schedule(string $uid, \DateTimeImmutable $now, float $delaySeconds = 0.5): void
     {
         $this->pending[$uid] = (float) $now->format('U.u') + $delaySeconds;
     }
@@ -30,7 +29,7 @@ final class PendingNickProtectionRegistry implements PendingNickProtectionRegist
     /**
      * @return string[]
      */
-    public function flushExpired(DateTimeImmutable $now): array
+    public function flushExpired(\DateTimeImmutable $now): array
     {
         if ([] === $this->pending) {
             return [];

@@ -6,7 +6,6 @@ namespace App\Tests\NickServ\Adapter\Out\InMemory;
 
 use App\NickServ\Adapter\Out\InMemory\PendingRegistrationVerificationStore;
 use App\NickServ\Adapter\Out\InMemory\PendingVerificationRegistry;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -17,7 +16,7 @@ final class PendingRegistrationVerificationStoreTest extends TestCase
     #[Test]
     public function storesTheChallengeInRegistry(): void
     {
-        $now = new DateTimeImmutable('2026-09-06 12:00:00 UTC');
+        $now = new \DateTimeImmutable('2026-09-06 12:00:00 UTC');
         $registry = new PendingVerificationRegistry();
         $adapter = new PendingRegistrationVerificationStore($registry);
 
@@ -30,7 +29,7 @@ final class PendingRegistrationVerificationStoreTest extends TestCase
     #[Test]
     public function consumesTheChallengeViaAdapter(): void
     {
-        $now = new DateTimeImmutable('2026-09-06 12:00:00 UTC');
+        $now = new \DateTimeImmutable('2026-09-06 12:00:00 UTC');
         $registry = new PendingVerificationRegistry();
         $adapter = new PendingRegistrationVerificationStore($registry);
 

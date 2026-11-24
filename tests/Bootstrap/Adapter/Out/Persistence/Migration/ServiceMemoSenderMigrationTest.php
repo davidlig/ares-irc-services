@@ -10,7 +10,6 @@ use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
-use RuntimeException;
 
 #[CoversNothing]
 final class ServiceMemoSenderMigrationTest extends TestCase
@@ -52,7 +51,7 @@ final class ServiceMemoSenderMigrationTest extends TestCase
         $connection->executeStatement("INSERT INTO memos (sender_nick_id, sender_name, message, created_at) VALUES (NULL, 'ChannelBot', 'service', '2026-10-27 10:00:00')");
 
         $rollback = new Version20261027000001($connection, new NullLogger());
-        $this->expectException(RuntimeException::class);
+        $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Cannot remove service memo sender support');
         $rollback->preDown($connection->createSchemaManager()->introspectSchema());
         $rollback->down($connection->createSchemaManager()->introspectSchema());

@@ -9,7 +9,6 @@ use App\ChanServ\Application\Port\Out\ChannelHistoryRepositoryInterface;
 use App\ChanServ\Application\PublishedEvent\ChannelDropCleanupEvent;
 use App\ChanServ\Application\UseCase\CleanupChannelHistory\CleanupChannelHistory;
 use App\ChanServ\Application\UseCase\CleanupChannelHistory\CleanupChannelHistoryHandler;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -37,7 +36,7 @@ final class ChanServHistoryChannelDropSubscriberTest extends TestCase
 
         $subscriber->onChannelDrop(new ChannelDropCleanupEvent(
             channelId: 999,
-            occurredAt: new DateTimeImmutable('2026-01-02 03:04:05'),
+            occurredAt: new \DateTimeImmutable('2026-01-02 03:04:05'),
             channelName: '#other',
             channelNameLower: '#other',
             reason: 'inactivity',

@@ -14,7 +14,6 @@ use App\Irc\Application\Port\In\ChannelModeSupportInterface;
 use App\Irc\Application\Port\In\ProtocolServiceActionsInterface;
 use App\Irc\Application\Port\In\ServiceNickReservationInterface;
 use App\Irc\Application\Port\In\UserModeSupportInterface;
-use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -64,27 +63,27 @@ final class RawAwareRuntimeModule implements ProtocolRuntimeModuleInterface, Raw
 
     public function getHandler(): ProtocolHandlerInterface
     {
-        throw new LogicException('Not needed by this test.');
+        throw new \LogicException('Not needed by this test.');
     }
 
     public function getServiceActions(): ProtocolServiceActionsInterface
     {
-        throw new LogicException('Not needed by this test.');
+        throw new \LogicException('Not needed by this test.');
     }
 
     public function getChannelModeSupport(): ChannelModeSupportInterface
     {
-        throw new LogicException('Not needed by this test.');
+        throw new \LogicException('Not needed by this test.');
     }
 
     public function getNickReservation(): ServiceNickReservationInterface
     {
-        throw new LogicException('Not needed by this test.');
+        throw new \LogicException('Not needed by this test.');
     }
 
     public function getUserModeSupport(): UserModeSupportInterface
     {
-        throw new LogicException('Not needed by this test.');
+        throw new \LogicException('Not needed by this test.');
     }
 
     public function getMaxNickLength(): int

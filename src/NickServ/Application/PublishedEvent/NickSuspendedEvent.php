@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\NickServ\Application\PublishedEvent;
 
 use App\NickServ\Application\Port\In\NickServEvent;
-use DateTimeImmutable;
 
 /**
  * Dispatched when a nickname is suspended.
@@ -17,11 +16,11 @@ final readonly class NickSuspendedEvent implements NickServEvent
         public string $nickname,
         public string $reason,
         public ?string $duration,
-        public ?DateTimeImmutable $expiresAt,
+        public ?\DateTimeImmutable $expiresAt,
         public string $performedBy,
         public ?int $performedByNickId,
         public string $performedByIp,
         public string $performedByHost,
-        public DateTimeImmutable $occurredAt,
+        public \DateTimeImmutable $occurredAt,
     ) {}
 }

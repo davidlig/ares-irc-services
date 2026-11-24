@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Application\UseCase\ManageHistory;
 
-use DateTimeImmutable;
-
 final readonly class ManageChannelHistory
 {
     public function __construct(
@@ -15,7 +13,7 @@ final readonly class ManageChannelHistory
         public ?int $actorAccountId,
         public string $actorIp,
         public string $actorHost,
-        public DateTimeImmutable $occurredAt,
+        public \DateTimeImmutable $occurredAt,
         public ?string $message = null,
         public ?int $entryId = null,
         public int $page = 1,

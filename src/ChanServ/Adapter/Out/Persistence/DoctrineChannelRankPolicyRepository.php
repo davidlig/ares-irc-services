@@ -11,7 +11,6 @@ use App\ChanServ\Application\Port\Out\ChannelRankPolicyRepository;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\ValueObject\ChannelLevelSet;
-use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 
 final readonly class DoctrineChannelRankPolicyRepository implements ChannelRankPolicyRepository
@@ -44,7 +43,7 @@ final readonly class DoctrineChannelRankPolicyRepository implements ChannelRankP
 
     public function touchLastUsed(int $channelId): void
     {
-        $this->activityBuffer->record($channelId, new DateTimeImmutable());
+        $this->activityBuffer->record($channelId, new \DateTimeImmutable());
     }
 
     private function snapshot(RegisteredChannel $channel, bool $singleMember = false, ?int $nickId = null): ChannelRankPolicy

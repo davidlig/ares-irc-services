@@ -6,7 +6,6 @@ namespace App\ChanServ\Adapter\In\Maintenance;
 
 use App\ChanServ\Application\Port\Out\ChannelHistoryRepositoryInterface;
 use App\Irc\Application\Port\In\Maintenance\MaintenanceTaskInterface;
-use DateTimeImmutable;
 use Psr\Log\LoggerInterface;
 
 use function sprintf;
@@ -41,7 +40,7 @@ final readonly class CleanupChannelHistoryTask implements MaintenanceTaskInterfa
             return;
         }
 
-        $threshold = new DateTimeImmutable()->modify(sprintf('-%d days', $this->retentionDays));
+        $threshold = new \DateTimeImmutable()->modify(sprintf('-%d days', $this->retentionDays));
         $deleted = $this->historyRepository->deleteOlderThan($threshold);
 
         if ($deleted > 0) {

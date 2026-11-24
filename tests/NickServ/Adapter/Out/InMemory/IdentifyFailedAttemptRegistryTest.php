@@ -5,11 +5,9 @@ declare(strict_types=1);
 namespace App\Tests\NickServ\Adapter\Out\InMemory;
 
 use App\NickServ\Adapter\Out\InMemory\IdentifyFailedAttemptRegistry;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
 
 #[CoversClass(IdentifyFailedAttemptRegistry::class)]
 final class IdentifyFailedAttemptRegistryTest extends TestCase
@@ -130,7 +128,7 @@ final class IdentifyFailedAttemptRegistryTest extends TestCase
         $registry = new IdentifyFailedAttemptRegistry();
 
         $oldTimestamp = $this->now()->getTimestamp() - 3600;
-        $reflection = new ReflectionClass($registry);
+        $reflection = new \ReflectionClass($registry);
         $property = $reflection->getProperty('failuresByKey');
         $property->setValue($registry, [
             'key1' => [$oldTimestamp],
@@ -205,7 +203,7 @@ final class IdentifyFailedAttemptRegistryTest extends TestCase
         $registry = new IdentifyFailedAttemptRegistry();
 
         $oldTimestamp = $this->now()->getTimestamp() - 10;
-        $reflection = new ReflectionClass($registry);
+        $reflection = new \ReflectionClass($registry);
         $property = $reflection->getProperty('failuresByKey');
         $property->setValue($registry, ['key' => [$oldTimestamp, $oldTimestamp, $oldTimestamp]]);
 
@@ -229,7 +227,7 @@ final class IdentifyFailedAttemptRegistryTest extends TestCase
         $registry = new IdentifyFailedAttemptRegistry();
 
         $oldTimestamp = $this->now()->getTimestamp() - 10;
-        $reflection = new ReflectionClass($registry);
+        $reflection = new \ReflectionClass($registry);
         $property = $reflection->getProperty('failuresByKey');
         $property->setValue($registry, ['key' => [$oldTimestamp, $oldTimestamp, $oldTimestamp]]);
 
@@ -259,15 +257,15 @@ final class IdentifyFailedAttemptRegistryTest extends TestCase
         $registry = new IdentifyFailedAttemptRegistry();
 
         $oldTimestamp = $this->now()->getTimestamp() - 10;
-        $reflection = new ReflectionClass($registry);
+        $reflection = new \ReflectionClass($registry);
         $property = $reflection->getProperty('failuresByKey');
         $property->setValue($registry, ['key' => [$oldTimestamp, $oldTimestamp, $oldTimestamp]]);
 
         self::assertSame(0, $registry->getRemainingLockoutSeconds('key', 3, 100, 1, $this->now()));
     }
 
-    private function now(): DateTimeImmutable
+    private function now(): \DateTimeImmutable
     {
-        return new DateTimeImmutable('2026-09-06 12:00:00 UTC');
+        return new \DateTimeImmutable('2026-09-06 12:00:00 UTC');
     }
 }

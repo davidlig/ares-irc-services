@@ -13,7 +13,6 @@ use App\NickServ\Application\UseCase\Userip\GetUseripOutcome;
 use App\NickServ\Application\UseCase\Userip\GetUseripResult;
 use App\NickServ\Domain\Entity\NickHistory;
 use App\NickServ\Domain\Entity\RegisteredNick;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -30,11 +29,11 @@ final class GetUseripHandlerTest extends TestCase
         $repository->expects(self::never())->method('findByNick');
         $handler = new GetUseripHandler($repository, new NickHistoryService($this->createStub(NickHistoryRepositoryInterface::class)));
 
-        $resultNullIp = $handler->handle(new GetUserip(nickname: 'OfflineNick', actorNickname: 'Oper', occurredAt: new DateTimeImmutable('2026-09-06 UTC'), ip: null, hostname: 'host.net'));
+        $resultNullIp = $handler->handle(new GetUserip(nickname: 'OfflineNick', actorNickname: 'Oper', occurredAt: new \DateTimeImmutable('2026-09-06 UTC'), ip: null, hostname: 'host.net'));
         self::assertSame(GetUseripOutcome::NotOnline, $resultNullIp->outcome);
         self::assertSame('OfflineNick', $resultNullIp->nickname);
 
-        $resultNullHost = $handler->handle(new GetUserip(nickname: 'OfflineNick', actorNickname: 'Oper', occurredAt: new DateTimeImmutable('2026-09-06 UTC'), ip: '1.2.3.4', hostname: null));
+        $resultNullHost = $handler->handle(new GetUserip(nickname: 'OfflineNick', actorNickname: 'Oper', occurredAt: new \DateTimeImmutable('2026-09-06 UTC'), ip: '1.2.3.4', hostname: null));
         self::assertSame(GetUseripOutcome::NotOnline, $resultNullHost->outcome);
         self::assertSame('OfflineNick', $resultNullHost->nickname);
     }
@@ -58,7 +57,7 @@ final class GetUseripHandlerTest extends TestCase
             ip: '192.168.1.50',
             hostname: 'user.isp.com',
             actorNickname: 'Oper',
-            occurredAt: new DateTimeImmutable('2026-09-06 UTC'),
+            occurredAt: new \DateTimeImmutable('2026-09-06 UTC'),
         ));
 
         self::assertSame(GetUseripOutcome::Success, $result->outcome);
@@ -79,7 +78,7 @@ final class GetUseripHandlerTest extends TestCase
         $result = $handler->handle(new GetUserip(
             nickname: 'Unregistered',
             actorNickname: 'Oper',
-            occurredAt: new DateTimeImmutable('2026-09-06 UTC'),
+            occurredAt: new \DateTimeImmutable('2026-09-06 UTC'),
             ip: '192.0.2.9',
             hostname: 'client.example',
         ));

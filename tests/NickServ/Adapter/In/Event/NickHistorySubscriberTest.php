@@ -14,7 +14,6 @@ use App\NickServ\Application\PublishedEvent\NickSuspendedEvent;
 use App\NickServ\Application\PublishedEvent\NickUnsuspendedEvent;
 use App\NickServ\Application\Service\NickHistoryService;
 use App\NickServ\Domain\Entity\NickHistory;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -69,13 +68,13 @@ final class NickHistorySubscriberTest extends TestCase
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $subscriber = new NickHistorySubscriber($historyService, $nickRepo);
 
-        $occurredAt = new DateTimeImmutable('2024-01-15 10:30:00');
+        $occurredAt = new \DateTimeImmutable('2024-01-15 10:30:00');
         $event = new NickSuspendedEvent(
             nickId: 123,
             nickname: 'TestNick',
             reason: 'Spamming',
             duration: '7d',
-            expiresAt: new DateTimeImmutable('2024-01-22 10:30:00'),
+            expiresAt: new \DateTimeImmutable('2024-01-22 10:30:00'),
             performedBy: 'OperNick',
             performedByNickId: 456,
             performedByIp: '192.168.1.100',
@@ -116,7 +115,7 @@ final class NickHistorySubscriberTest extends TestCase
             performedByNickId: 456,
             performedByIp: '192.168.1.100',
             performedByHost: 'oper@example.com',
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
         );
 
         $subscriber->onNickSuspended($event);
@@ -149,7 +148,7 @@ final class NickHistorySubscriberTest extends TestCase
             performedByNickId: 456,
             performedByIp: '192.168.1.100',
             performedByHost: 'oper@example.com',
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
         );
 
         $subscriber->onNickUnsuspended($event);
@@ -183,7 +182,7 @@ final class NickHistorySubscriberTest extends TestCase
             performedByNickId: 123,
             performedByIp: '192.168.1.1',
             performedByHost: 'test@example.com',
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
         );
 
         $subscriber->onNickPasswordChanged($event);
@@ -217,7 +216,7 @@ final class NickHistorySubscriberTest extends TestCase
             performedByNickId: 456,
             performedByIp: '192.168.1.100',
             performedByHost: 'oper@example.com',
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
         );
 
         $subscriber->onNickPasswordChanged($event);
@@ -256,7 +255,7 @@ final class NickHistorySubscriberTest extends TestCase
             performedByNickId: 123,
             performedByIp: '192.168.1.1',
             performedByHost: 'test@example.com',
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
         );
 
         $subscriber->onNickEmailChanged($event);
@@ -295,7 +294,7 @@ final class NickHistorySubscriberTest extends TestCase
             performedByNickId: 456,
             performedByIp: '192.168.1.100',
             performedByHost: 'oper@example.com',
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
         );
 
         $subscriber->onNickEmailChanged($event);
@@ -331,7 +330,7 @@ final class NickHistorySubscriberTest extends TestCase
             performedByNickId: null,
             performedByIp: '192.168.1.1',
             performedByHost: 'test@example.com',
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
         );
 
         $subscriber->onNickRecovered($event);

@@ -13,9 +13,6 @@ use App\NickServ\Application\Port\Out\ResendThrottle;
 use App\NickServ\Application\Port\Out\TemporaryRescueTokenStore;
 use App\NickServ\Application\Service\NickHistoryService;
 use App\NickServ\Domain\ValueObject\RegistrationMode;
-use LogicException;
-use OverflowException;
-use Throwable;
 
 use function filter_var;
 use function sprintf;
@@ -67,12 +64,12 @@ final readonly class ResendVerificationHandler implements ResendVerificationHand
             return ResendVerificationResult::noPending();
         }
         $token = $this->tokenGenerator->generate();
-        $hash = $this->tokenGenerator->hash($token) ?? throw new LogicException('Generated rescue token is invalid.');
+        $hash = $this->tokenGenerator->hash($token) ?? throw new \LogicException('Generated rescue token is invalid.');
         $expiresAt = $now->modify(sprintf('+%d seconds', $this->verificationTokenTtlSeconds));
         $this->temporaryTokens->prune($now);
         try {
             $this->temporaryTokens->replace($account->getId(), $hash, $expiresAt);
-        } catch (OverflowException) {
+        } catch (\OverflowException) {
             return ResendVerificationResult::mailDeliveryFailed();
         }
 
@@ -86,7 +83,7 @@ final readonly class ResendVerificationHandler implements ResendVerificationHand
                 $token,
                 $command->language,
             );
-        } catch (Throwable) {
+        } catch (\Throwable) {
             return ResendVerificationResult::mailDeliveryFailed();
         }
 

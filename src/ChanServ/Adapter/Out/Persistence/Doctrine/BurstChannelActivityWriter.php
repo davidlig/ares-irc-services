@@ -6,14 +6,13 @@ namespace App\ChanServ\Adapter\Out\Persistence\Doctrine;
 
 use App\ChanServ\Application\Port\Out\BurstChannelActivity;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
-use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 
 final readonly class BurstChannelActivityWriter implements BurstChannelActivity
 {
     public function __construct(private EntityManagerInterface $em) {}
 
-    public function touchByIds(array $channelIds, DateTimeImmutable $at): void
+    public function touchByIds(array $channelIds, \DateTimeImmutable $at): void
     {
         if ([] === $channelIds) {
             return;

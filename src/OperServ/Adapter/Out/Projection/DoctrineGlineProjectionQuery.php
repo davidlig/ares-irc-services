@@ -8,7 +8,6 @@ use App\OperServ\Application\Port\In\GlineProjection;
 use App\OperServ\Application\Port\In\GlineProjectionQuery;
 use App\OperServ\Application\Port\Out\GlineEntry;
 use App\OperServ\Application\Port\Out\GlineRepository;
-use DateTimeImmutable;
 
 use function array_map;
 
@@ -20,7 +19,7 @@ final readonly class DoctrineGlineProjectionQuery implements GlineProjectionQuer
     {
         return array_map(
             static fn (GlineEntry $gline): GlineProjection => new GlineProjection($gline->mask, $gline->reason, $gline->createdAt, $gline->expiresAt),
-            $this->glines->findActiveAt(new DateTimeImmutable()),
+            $this->glines->findActiveAt(new \DateTimeImmutable()),
         );
     }
 }

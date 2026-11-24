@@ -10,10 +10,7 @@ use App\OperServ\Application\Port\Out\GlineEntry;
 use App\OperServ\Application\Port\Out\GlineRepository;
 use App\OperServ\Application\PublishedEvent\GlineRemovedEvent;
 use App\Shared\Application\Port\EventBusInterface;
-use DateTimeImmutable;
-use LogicException;
 use Psr\Log\LoggerInterface;
-use Throwable;
 
 use function count;
 use function sprintf;
@@ -67,7 +64,7 @@ final class PurgeExpiredGlinesTask implements MaintenanceTaskInterface
 
     public function run(): void
     {
-        $occurredAt = new DateTimeImmutable();
+        $occurredAt = new \DateTimeImmutable();
         $batches = 0;
 
         do {
@@ -77,7 +74,7 @@ final class PurgeExpiredGlinesTask implements MaintenanceTaskInterface
             foreach ($expired as $gline) {
                 $glineId = $gline->id;
                 if (null === $glineId) {
-                    throw new LogicException('Persisted GLINE entry must have an identifier.');
+                    throw new \LogicException('Persisted GLINE entry must have an identifier.');
                 }
 
                 $after = $gline;
@@ -100,7 +97,7 @@ final class PurgeExpiredGlinesTask implements MaintenanceTaskInterface
         } while ($batches < $this->maxBatchesPerCycle);
     }
 
-    private function remove(string $mask, int $glineId, DateTimeImmutable $occurredAt): bool
+    private function remove(string $mask, int $glineId, \DateTimeImmutable $occurredAt): bool
     {
         try {
             $this->eventDispatcher->dispatch(new GlineRemovedEvent(
@@ -110,7 +107,7 @@ final class PurgeExpiredGlinesTask implements MaintenanceTaskInterface
                 cause: 'expired',
                 occurredAt: $occurredAt,
             ));
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             $this->logger->error(sprintf(
                 'Maintenance [%s]: failed to remove expired GLINE %s (id %d); skipping it until the next cycle.',
                 $this->getName(),
@@ -128,7 +125,7 @@ final class PurgeExpiredGlinesTask implements MaintenanceTaskInterface
                 target: $mask,
                 reason: 'expired',
             );
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             $this->logger->warning(sprintf(
                 'Maintenance [%s]: could not log the removal of expired GLINE %s (id %d) to the debug channel.',
                 $this->getName(),

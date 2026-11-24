@@ -11,16 +11,12 @@ use App\ChanServ\Application\PublishedEvent\ChannelUnsuspendedEvent;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\Shared\Application\Port\EventBusInterface;
 use ArrayObject;
-use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
-use ReflectionProperty;
-use RuntimeException;
-use Throwable;
 
 use function array_filter;
 use function array_map;
@@ -80,10 +76,10 @@ final class UnsuspendExpiredChannelsTaskTest extends TestCase
     public function runUnsuspendsExpiredChannelsAndDispatchesEvents(): void
     {
         $channel1 = $this->createChannelWithId('#expired1', 1, 'Expired 1');
-        $channel1->suspend('Abuse', new DateTimeImmutable('-1 hour'));
+        $channel1->suspend('Abuse', new \DateTimeImmutable('-1 hour'));
 
         $channel2 = $this->createChannelWithId('#expired2', 2, 'Expired 2');
-        $channel2->suspend('Spam', new DateTimeImmutable('-2 hours'));
+        $channel2->suspend('Spam', new \DateTimeImmutable('-2 hours'));
 
         $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepo->expects(self::once())
@@ -131,14 +127,14 @@ final class UnsuspendExpiredChannelsTaskTest extends TestCase
     public function aChannelThatFailsToUnsuspendIsLoggedAndLaterChannelsAreStillUnsuspended(): void
     {
         $failing = $this->createChannelWithId('#broken', 1, 'Broken');
-        $failing->suspend('Abuse', new DateTimeImmutable('-1 hour'));
+        $failing->suspend('Abuse', new \DateTimeImmutable('-1 hour'));
         $later = $this->createChannelWithId('#later', 2, 'Later');
-        $later->suspend('Spam', new DateTimeImmutable('-1 hour'));
+        $later->suspend('Spam', new \DateTimeImmutable('-1 hour'));
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('iterateExpiredSuspensions')->willReturn([$failing, $later]);
         $channelRepo->method('save')->willReturnCallback(static function (RegisteredChannel $channel): void {
             if ('#broken' === $channel->getName()) {
-                throw new RuntimeException('constraint violation');
+                throw new \RuntimeException('constraint violation');
             }
         });
         $dispatched = self::messages();
@@ -161,7 +157,7 @@ final class UnsuspendExpiredChannelsTaskTest extends TestCase
         self::assertSame(['#later'], $dispatched->getArrayCopy());
         self::assertCount(1, $errors);
         self::assertStringContainsString('failed to auto-unsuspend channel #broken (id 1); skipping it until the next sweep', $errors->getArrayCopy()[0] ?? '');
-        self::assertInstanceOf(RuntimeException::class, $exceptions[0]);
+        self::assertInstanceOf(\RuntimeException::class, $exceptions[0]);
     }
 
     #[Test]
@@ -176,9 +172,9 @@ final class UnsuspendExpiredChannelsTaskTest extends TestCase
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('iterateExpiredSuspensions')->willReturnCallback(function (): array {
             $poison = $this->createChannelWithId('#poison', 1, 'Poison');
-            $poison->suspend('Abuse', new DateTimeImmutable('-1 hour'));
+            $poison->suspend('Abuse', new \DateTimeImmutable('-1 hour'));
             $later = $this->createChannelWithId('#later', 2, 'Later');
-            $later->suspend('Spam', new DateTimeImmutable('-1 hour'));
+            $later->suspend('Spam', new \DateTimeImmutable('-1 hour'));
 
             return [$poison, $later];
         });
@@ -187,7 +183,7 @@ final class UnsuspendExpiredChannelsTaskTest extends TestCase
             if ('#poison' === $channel->getName()) {
                 $open = false;
 
-                throw new RuntimeException('deadlock');
+                throw new \RuntimeException('deadlock');
             }
         });
         $errors = self::messages();
@@ -202,10 +198,10 @@ final class UnsuspendExpiredChannelsTaskTest extends TestCase
             $failure = null;
             try {
                 $task->run();
-            } catch (Throwable $e) {
+            } catch (\Throwable $e) {
                 $failure = $e;
             }
-            self::assertInstanceOf(RuntimeException::class, $failure);
+            self::assertInstanceOf(\RuntimeException::class, $failure);
         }
         $open = true;
         $task->run();
@@ -219,9 +215,9 @@ final class UnsuspendExpiredChannelsTaskTest extends TestCase
     public function aFailureAfterTheUnsuspensionCommittedIsReportedAndTheEventIsDispatchedAgainNextCycle(): void
     {
         $channel = $this->createChannelWithId('#restored', 1, 'Restored');
-        $channel->suspend('Abuse', new DateTimeImmutable('-1 hour'));
+        $channel->suspend('Abuse', new \DateTimeImmutable('-1 hour'));
         $later = $this->createChannelWithId('#later', 2, 'Later');
-        $later->suspend('Spam', new DateTimeImmutable('-1 hour'));
+        $later->suspend('Spam', new \DateTimeImmutable('-1 hour'));
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('iterateExpiredSuspensions')->willReturnOnConsecutiveCalls([$channel, $later], [], []);
         $channelRepo->method('findByIds')->willReturn([$channel]);
@@ -230,7 +226,7 @@ final class UnsuspendExpiredChannelsTaskTest extends TestCase
         $eventDispatcher->method('dispatch')->willReturnCallback(static function (ChannelUnsuspendedEvent $event) use ($dispatched): ChannelUnsuspendedEvent {
             $dispatched[] = $event->channelName;
             if (1 === $dispatched->count()) {
-                throw new RuntimeException('UDB write failed');
+                throw new \RuntimeException('UDB write failed');
             }
 
             return $event;
@@ -263,7 +259,7 @@ final class UnsuspendExpiredChannelsTaskTest extends TestCase
     public function aPostUnsuspendStepThatKeepsFailingIsGivenUpAfterThreeMoreAttempts(): void
     {
         $channel = $this->createChannelWithId('#restored', 1, 'Restored');
-        $channel->suspend('Abuse', new DateTimeImmutable('-1 hour'));
+        $channel->suspend('Abuse', new \DateTimeImmutable('-1 hour'));
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('iterateExpiredSuspensions')->willReturnOnConsecutiveCalls([$channel], [], [], [], []);
         $channelRepo->method('findByIds')->willReturn([$channel]);
@@ -272,7 +268,7 @@ final class UnsuspendExpiredChannelsTaskTest extends TestCase
         $eventDispatcher->method('dispatch')->willReturnCallback(static function () use (&$dispatches): never {
             ++$dispatches;
 
-            throw new RuntimeException('UDB write failed');
+            throw new \RuntimeException('UDB write failed');
         });
         $errors = self::messages();
         $logger = $this->createStub(LoggerInterface::class);
@@ -295,9 +291,9 @@ final class UnsuspendExpiredChannelsTaskTest extends TestCase
     public function theUnsuspensionIsNotDispatchedAgainForAChannelThatWasDroppedOrSuspendedAgain(): void
     {
         $dropped = $this->createChannelWithId('#dropped', 1, 'Dropped');
-        $dropped->suspend('Abuse', new DateTimeImmutable('-1 hour'));
+        $dropped->suspend('Abuse', new \DateTimeImmutable('-1 hour'));
         $resuspended = $this->createChannelWithId('#resuspended', 2, 'Resuspended');
-        $resuspended->suspend('Abuse', new DateTimeImmutable('-1 hour'));
+        $resuspended->suspend('Abuse', new \DateTimeImmutable('-1 hour'));
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('iterateExpiredSuspensions')->willReturnOnConsecutiveCalls([$dropped, $resuspended], [], []);
         $channelRepo->method('findByIds')->willReturnCallback(static fn (array $ids): array => in_array(2, $ids, true) ? [$resuspended] : []);
@@ -306,7 +302,7 @@ final class UnsuspendExpiredChannelsTaskTest extends TestCase
         $eventDispatcher->method('dispatch')->willReturnCallback(static function (ChannelUnsuspendedEvent $event) use ($dispatched): never {
             $dispatched[] = $event->channelName;
 
-            throw new RuntimeException('UDB write failed');
+            throw new \RuntimeException('UDB write failed');
         });
         $task = new UnsuspendExpiredChannelsTask($channelRepo, $eventDispatcher, new NullLogger(), self::SERVER_NAME, 3600, $this->openEntityManager());
 
@@ -322,9 +318,9 @@ final class UnsuspendExpiredChannelsTaskTest extends TestCase
     public function aPostUnsuspendFailureThatClosedTheEntityManagerStopsTheCycleAndIsDispatchedAgainLater(): void
     {
         $channel = $this->createChannelWithId('#restored', 1, 'Restored');
-        $channel->suspend('Abuse', new DateTimeImmutable('-1 hour'));
+        $channel->suspend('Abuse', new \DateTimeImmutable('-1 hour'));
         $later = $this->createChannelWithId('#later', 2, 'Later');
-        $later->suspend('Spam', new DateTimeImmutable('-1 hour'));
+        $later->suspend('Spam', new \DateTimeImmutable('-1 hour'));
         $open = true;
         $entityManager = $this->createStub(EntityManagerInterface::class);
         $entityManager->method('isOpen')->willReturnCallback(static function () use (&$open): bool {
@@ -340,7 +336,7 @@ final class UnsuspendExpiredChannelsTaskTest extends TestCase
             if (in_array($dispatched->count(), [1, 3], true)) {
                 $open = false;
 
-                throw new RuntimeException('deadlock');
+                throw new \RuntimeException('deadlock');
             }
 
             return $event;
@@ -352,12 +348,12 @@ final class UnsuspendExpiredChannelsTaskTest extends TestCase
         });
         $task = new UnsuspendExpiredChannelsTask($channelRepo, $eventDispatcher, $logger, self::SERVER_NAME, 3600, $entityManager);
 
-        self::assertInstanceOf(RuntimeException::class, $this->runCatching($task), 'a closed EntityManager stops the cycle');
+        self::assertInstanceOf(\RuntimeException::class, $this->runCatching($task), 'a closed EntityManager stops the cycle');
         self::assertSame(['#restored'], $dispatched->getArrayCopy());
         self::assertStringContainsString('auto-unsuspended channel #restored (id 1), but a post-unsuspend step failed; dispatching its unsuspension again next cycle and stopping this batch', $errors->getArrayCopy()[0] ?? '');
 
         $open = true;
-        self::assertInstanceOf(RuntimeException::class, $this->runCatching($task), 'a repeated dispatch that closes the EntityManager fails the cycle');
+        self::assertInstanceOf(\RuntimeException::class, $this->runCatching($task), 'a repeated dispatch that closes the EntityManager fails the cycle');
         self::assertSame(['#restored', '#later', '#restored'], $dispatched->getArrayCopy(), 'the stopped batch continues first, then the event is dispatched again');
 
         $open = true;
@@ -372,17 +368,17 @@ final class UnsuspendExpiredChannelsTaskTest extends TestCase
     public function aRetriedDispatchIsMarkedAsARetrySoOnlyTheRestorationRunsAgain(): void
     {
         $channel = $this->createChannelWithId('#restored', 1, 'Restored');
-        $channel->suspend('Abuse', new DateTimeImmutable('-1 hour'));
+        $channel->suspend('Abuse', new \DateTimeImmutable('-1 hour'));
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('iterateExpiredSuspensions')->willReturnOnConsecutiveCalls([$channel], [], []);
         $channelRepo->method('findByIds')->willReturn([$channel]);
         /** @var ArrayObject<int, ChannelUnsuspendedEvent> $events */
-        $events = new ArrayObject();
+        $events = new \ArrayObject();
         $eventDispatcher = $this->createStub(EventBusInterface::class);
         $eventDispatcher->method('dispatch')->willReturnCallback(static function (ChannelUnsuspendedEvent $event) use ($events): ChannelUnsuspendedEvent {
             $events[] = $event;
             if (2 > $events->count()) {
-                throw new RuntimeException('UDB write failed');
+                throw new \RuntimeException('UDB write failed');
             }
 
             return $event;
@@ -404,9 +400,9 @@ final class UnsuspendExpiredChannelsTaskTest extends TestCase
     public function thePendingChannelsOfACycleAreLoadedWithOneQuery(): void
     {
         $first = $this->createChannelWithId('#first', 1, 'First');
-        $first->suspend('Abuse', new DateTimeImmutable('-1 hour'));
+        $first->suspend('Abuse', new \DateTimeImmutable('-1 hour'));
         $second = $this->createChannelWithId('#second', 2, 'Second');
-        $second->suspend('Abuse', new DateTimeImmutable('-1 hour'));
+        $second->suspend('Abuse', new \DateTimeImmutable('-1 hour'));
         $loads = self::recorder();
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('iterateExpiredSuspensions')->willReturnOnConsecutiveCalls([$first, $second], [], []);
@@ -420,7 +416,7 @@ final class UnsuspendExpiredChannelsTaskTest extends TestCase
         $eventDispatcher->method('dispatch')->willReturnCallback(static function (ChannelUnsuspendedEvent $event) use ($dispatched): ChannelUnsuspendedEvent {
             $dispatched[] = $event->channelName;
             if (2 >= $dispatched->count()) {
-                throw new RuntimeException('UDB write failed');
+                throw new \RuntimeException('UDB write failed');
             }
 
             return $event;
@@ -443,7 +439,7 @@ final class UnsuspendExpiredChannelsTaskTest extends TestCase
         $channels = [];
         for ($id = 1; $id <= UnsuspendExpiredChannelsTask::MAX_PENDING_UNSUSPENSION_DISPATCHES + 1; ++$id) {
             $channel = $this->createChannelWithId('#chan' . $id, $id, 'Channel');
-            $channel->suspend('Abuse', new DateTimeImmutable('-1 hour'));
+            $channel->suspend('Abuse', new \DateTimeImmutable('-1 hour'));
             $channels[$id] = $channel;
         }
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
@@ -465,7 +461,7 @@ final class UnsuspendExpiredChannelsTaskTest extends TestCase
                 $retried[] = $event->channelName;
             }
 
-            throw new RuntimeException('UDB write failed');
+            throw new \RuntimeException('UDB write failed');
         });
         $task = new UnsuspendExpiredChannelsTask($channelRepo, $eventDispatcher, new NullLogger(), self::SERVER_NAME, 3600, $this->openEntityManager());
 
@@ -484,7 +480,7 @@ final class UnsuspendExpiredChannelsTaskTest extends TestCase
         $channels = [];
         for ($id = 1; $id <= UnsuspendExpiredChannelsTask::MAX_PENDING_UNSUSPENSION_DISPATCHES + 1; ++$id) {
             $channel = $this->createChannelWithId('#chan' . $id, $id, 'Channel');
-            $channel->suspend('Abuse', new DateTimeImmutable('-1 hour'));
+            $channel->suspend('Abuse', new \DateTimeImmutable('-1 hour'));
             $channels[$id] = $channel;
         }
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
@@ -495,12 +491,12 @@ final class UnsuspendExpiredChannelsTaskTest extends TestCase
                 static fn (RegisteredChannel $channel): bool => in_array($channel->getId(), $ids, true),
             )),
         );
-        $failing = new ArrayObject([true]);
+        $failing = new \ArrayObject([true]);
         $dispatched = self::messages();
         $eventDispatcher = $this->createStub(EventBusInterface::class);
         $eventDispatcher->method('dispatch')->willReturnCallback(static function (ChannelUnsuspendedEvent $event) use ($dispatched, $failing): ChannelUnsuspendedEvent {
             if (true === $failing[0]) {
-                throw new RuntimeException('UDB write failed');
+                throw new \RuntimeException('UDB write failed');
             }
             $dispatched[] = $event->channelName;
 
@@ -524,11 +520,11 @@ final class UnsuspendExpiredChannelsTaskTest extends TestCase
         return $entityManager;
     }
 
-    private function runCatching(UnsuspendExpiredChannelsTask $task): ?Throwable
+    private function runCatching(UnsuspendExpiredChannelsTask $task): ?\Throwable
     {
         try {
             $task->run();
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             return $e;
         }
 
@@ -537,23 +533,23 @@ final class UnsuspendExpiredChannelsTaskTest extends TestCase
 
     private function createChannelWithId(string $name, int $id, string $description): RegisteredChannel
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), $name, 1, $description);
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), $name, 1, $description);
 
-        $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
+        $ref = new \ReflectionProperty(RegisteredChannel::class, 'id');
         $ref->setValue($channel, $id);
 
         return $channel;
     }
 
     /** @return ArrayObject<int, mixed> */
-    private static function recorder(): ArrayObject
+    private static function recorder(): \ArrayObject
     {
-        return new ArrayObject();
+        return new \ArrayObject();
     }
 
     /** @return ArrayObject<int, string> */
-    private static function messages(): ArrayObject
+    private static function messages(): \ArrayObject
     {
-        return new ArrayObject();
+        return new \ArrayObject();
     }
 }

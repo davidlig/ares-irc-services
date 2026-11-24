@@ -6,11 +6,9 @@ namespace App\Tests\OperServ\Domain\Entity;
 
 use App\OperServ\Domain\Entity\OperIrcop;
 use App\OperServ\Domain\Entity\OperRole;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
 
 #[CoversClass(OperIrcop::class)]
 final class OperIrcopTest extends TestCase
@@ -19,7 +17,7 @@ final class OperIrcopTest extends TestCase
     public function createWithAllParameters(): void
     {
         $role = $this->createStub(OperRole::class);
-        $addedAt = new DateTimeImmutable('2026-01-01T00:00:00+00:00');
+        $addedAt = new \DateTimeImmutable('2026-01-01T00:00:00+00:00');
 
         $ircop = OperIrcop::create(
             $addedAt,
@@ -41,7 +39,7 @@ final class OperIrcopTest extends TestCase
         $role = $this->createStub(OperRole::class);
 
         $ircop = OperIrcop::create(
-            new DateTimeImmutable('2026-01-01T00:00:00+00:00'),
+            new \DateTimeImmutable('2026-01-01T00:00:00+00:00'),
             nickId: 100,
             role: $role,
         );
@@ -58,7 +56,7 @@ final class OperIrcopTest extends TestCase
         $role = $this->createStub(OperRole::class);
 
         $ircop = OperIrcop::create(
-            new DateTimeImmutable('2026-01-01T00:00:00+00:00'),
+            new \DateTimeImmutable('2026-01-01T00:00:00+00:00'),
             nickId: 1,
             role: $role,
             addedById: null,
@@ -75,7 +73,7 @@ final class OperIrcopTest extends TestCase
         $role = $this->createStub(OperRole::class);
 
         $ircop = OperIrcop::create(
-            new DateTimeImmutable('2026-01-01T00:00:00+00:00'),
+            new \DateTimeImmutable('2026-01-01T00:00:00+00:00'),
             nickId: 5,
             role: $role,
             addedById: 99,
@@ -90,7 +88,7 @@ final class OperIrcopTest extends TestCase
     public function getNickIdReturnsCorrectValue(): void
     {
         $role = $this->createStub(OperRole::class);
-        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 777, role: $role);
+        $ircop = OperIrcop::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 777, role: $role);
 
         self::assertSame(777, $ircop->getNickId());
     }
@@ -99,7 +97,7 @@ final class OperIrcopTest extends TestCase
     public function getRoleReturnsCorrectInstance(): void
     {
         $role = $this->createStub(OperRole::class);
-        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 1, role: $role);
+        $ircop = OperIrcop::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 1, role: $role);
 
         self::assertSame($role, $ircop->getRole());
     }
@@ -110,7 +108,7 @@ final class OperIrcopTest extends TestCase
         $originalRole = $this->createStub(OperRole::class);
         $newRole = $this->createStub(OperRole::class);
 
-        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 1, role: $originalRole);
+        $ircop = OperIrcop::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 1, role: $originalRole);
 
         self::assertSame($originalRole, $ircop->getRole());
 
@@ -123,7 +121,7 @@ final class OperIrcopTest extends TestCase
     public function getAddedAtReturnsDateTimeImmutable(): void
     {
         $role = $this->createStub(OperRole::class);
-        $addedAt = new DateTimeImmutable('2026-01-01T00:00:00+00:00');
+        $addedAt = new \DateTimeImmutable('2026-01-01T00:00:00+00:00');
         $ircop = OperIrcop::create($addedAt, nickId: 1, role: $role);
 
         self::assertSame($addedAt, $ircop->getAddedAt());
@@ -135,7 +133,7 @@ final class OperIrcopTest extends TestCase
         $role = $this->createStub(OperRole::class);
 
         $ircop = OperIrcop::create(
-            new DateTimeImmutable('2026-01-01T00:00:00+00:00'),
+            new \DateTimeImmutable('2026-01-01T00:00:00+00:00'),
             nickId: 1,
             role: $role,
             addedById: 500,
@@ -150,7 +148,7 @@ final class OperIrcopTest extends TestCase
         $role = $this->createStub(OperRole::class);
 
         $ircop = OperIrcop::create(
-            new DateTimeImmutable('2026-01-01T00:00:00+00:00'),
+            new \DateTimeImmutable('2026-01-01T00:00:00+00:00'),
             nickId: 1,
             role: $role,
             reason: 'Trusted user',
@@ -165,7 +163,7 @@ final class OperIrcopTest extends TestCase
         $role = $this->createStub(OperRole::class);
 
         $ircop = OperIrcop::create(
-            new DateTimeImmutable('2026-01-01T00:00:00+00:00'),
+            new \DateTimeImmutable('2026-01-01T00:00:00+00:00'),
             nickId: 1,
             role: $role,
             reason: 'Original reason',
@@ -184,7 +182,7 @@ final class OperIrcopTest extends TestCase
         $role = $this->createStub(OperRole::class);
 
         $ircop = OperIrcop::create(
-            new DateTimeImmutable('2026-01-01T00:00:00+00:00'),
+            new \DateTimeImmutable('2026-01-01T00:00:00+00:00'),
             nickId: 1,
             role: $role,
             reason: 'Will be cleared',
@@ -203,7 +201,7 @@ final class OperIrcopTest extends TestCase
         $role = $this->createStub(OperRole::class);
 
         $ircop = OperIrcop::create(
-            new DateTimeImmutable('2026-01-01T00:00:00+00:00'),
+            new \DateTimeImmutable('2026-01-01T00:00:00+00:00'),
             nickId: 1,
             role: $role,
             reason: null,
@@ -221,9 +219,9 @@ final class OperIrcopTest extends TestCase
     {
         $role = $this->createStub(OperRole::class);
 
-        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 1, role: $role);
+        $ircop = OperIrcop::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 1, role: $role);
 
-        $reflection = new ReflectionClass($ircop);
+        $reflection = new \ReflectionClass($ircop);
         $idProp = $reflection->getProperty('id');
         $idProp->setValue($ircop, 999);
 

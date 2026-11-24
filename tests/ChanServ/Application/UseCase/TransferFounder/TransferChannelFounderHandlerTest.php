@@ -22,14 +22,11 @@ use App\ChanServ\Domain\Entity\ChannelAccess;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\Policy\FounderTransferPolicy;
 use App\ChanServ\Domain\ValueObject\FounderTransferDecision;
-use DateTimeImmutable;
-use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use ReflectionMethod;
 
 #[CoversClass(TransferChannelFounderHandler::class)]
 #[CoversClass(TransferChannelFounder::class)]
@@ -210,9 +207,9 @@ final class TransferChannelFounderHandlerTest extends TestCase
     #[Test]
     public function allowedDecisionCannotBePresentedAsADenial(): void
     {
-        $method = new ReflectionMethod(TransferChannelFounderHandler::class, 'denied');
+        $method = new \ReflectionMethod(TransferChannelFounderHandler::class, 'denied');
 
-        $this->expectException(LogicException::class);
+        $this->expectException(\LogicException::class);
 
         $method->invoke(
             $this->handler(),
@@ -252,7 +249,7 @@ final class TransferChannelFounderHandlerTest extends TestCase
         ?string $token = null,
         ?FounderTransferActor $actor = new FounderTransferActor('Actor', 99, '127.0.0.1', 'ident@host.test', 'ip:client'),
         bool $founderEquivalent = false,
-        ?DateTimeImmutable $requestedAt = null,
+        ?\DateTimeImmutable $requestedAt = null,
     ): TransferChannelFounder {
         return new TransferChannelFounder(
             $channel ?? $this->channel(),
@@ -262,7 +259,7 @@ final class TransferChannelFounderHandlerTest extends TestCase
             $founderEquivalent,
             'ChanServ',
             'es',
-            $requestedAt ?? new DateTimeImmutable('2026-09-07 12:00:00 UTC'),
+            $requestedAt ?? new \DateTimeImmutable('2026-09-07 12:00:00 UTC'),
         );
     }
 

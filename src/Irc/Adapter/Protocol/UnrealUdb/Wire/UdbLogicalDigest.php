@@ -6,14 +6,11 @@ namespace App\Irc\Adapter\Protocol\UnrealUdb\Wire;
 
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbBlock;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbValue;
-use InvalidArgumentException;
-use RuntimeException;
 
 use function array_key_exists;
 use function array_slice;
 use function bin2hex;
 use function chr;
-use function count;
 use function fclose;
 use function feof;
 use function fopen;
@@ -74,7 +71,7 @@ final class UdbLogicalDigest
     {
         $directory = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'udb4-' . bin2hex(random_bytes(16));
         if (!mkdir($directory, 0o700)) {
-            throw new RuntimeException('Unable to create private UDB digest spool.');
+            throw new \RuntimeException('Unable to create private UDB digest spool.');
         }
 
         /** @var array<int, string> $partitions */
@@ -82,7 +79,7 @@ final class UdbLogicalDigest
         try {
             foreach ($records as [$path, $value]) {
                 if (!$value instanceof UdbValue) {
-                    throw new InvalidArgumentException('UDB logical rows require explicit typed values.');
+                    throw new \InvalidArgumentException('UDB logical rows require explicit typed values.');
                 }
                 $parts = UdbNativeRowCodec::components($block, $path);
                 $row = UdbNativeRowCodec::encode($block, $parts, $value);
@@ -141,7 +138,7 @@ final class UdbLogicalDigest
             $last = null;
             foreach ($rows as $row) {
                 if (null !== $last && $last === $row['sort']) {
-                    throw new InvalidArgumentException('UDB logical rows contain a canonical key collision.');
+                    throw new \InvalidArgumentException('UDB logical rows contain a canonical key collision.');
                 }
                 $last = $row['sort'];
                 $content .= pack('V', strlen($row['row'])) . $row['row'];
@@ -150,7 +147,7 @@ final class UdbLogicalDigest
             return ['digest' => hash('sha256', "UDB4/leaf\0" . $position . $content . $totals, true), 'count' => $count, 'weight' => $weight];
         }
         if (256 === $depth) {
-            throw new InvalidArgumentException('UDB logical key hashes collide beyond the radix depth.');
+            throw new \InvalidArgumentException('UDB logical key hashes collide beyond the radix depth.');
         }
 
         $leftFile = $directory . DIRECTORY_SEPARATOR . sprintf('l%04x-%03d-%s', $partition, $depth, bin2hex($prefix));
@@ -185,7 +182,7 @@ final class UdbLogicalDigest
         }
         $handle = fopen($file, 'r');
         if (false === $handle) {
-            throw new RuntimeException('Unable to read UDB digest spool.');
+            throw new \RuntimeException('Unable to read UDB digest spool.');
         }
         $count = 0;
         $weight = 0;
@@ -215,7 +212,7 @@ final class UdbLogicalDigest
         }
         $handle = fopen($file, 'r');
         if (false === $handle) {
-            throw new RuntimeException('Unable to read UDB digest spool.');
+            throw new \RuntimeException('Unable to read UDB digest spool.');
         }
         $rows = [];
         try {
@@ -249,14 +246,14 @@ final class UdbLogicalDigest
         }
         $lengths = 40 === strlen($header) ? unpack('Nsort/Nrow', substr($header, 0, 8)) : false;
         if (false === $lengths || !is_int($lengths['sort'] ?? null) || !is_int($lengths['row'] ?? null)) {
-            throw new RuntimeException(40 !== strlen($header) ? 'Corrupt UDB digest spool header.' : 'Corrupt UDB digest spool lengths.');
+            throw new \RuntimeException(40 !== strlen($header) ? 'Corrupt UDB digest spool header.' : 'Corrupt UDB digest spool lengths.');
         }
         $sortLength = $lengths['sort'];
         $rowLength = $lengths['row'];
         $sort = self::readExact($handle, $sortLength);
         $row = self::readExact($handle, $rowLength);
         if (strlen($sort) !== $sortLength || strlen($row) !== $rowLength) {
-            throw new RuntimeException('Corrupt UDB digest spool row.');
+            throw new \RuntimeException('Corrupt UDB digest spool row.');
         }
 
         return ['hash' => substr($header, 8, 32), 'sort' => $sort, 'row' => $row];
@@ -286,7 +283,7 @@ final class UdbLogicalDigest
         $leftHandle = fopen($left, 'w');
         $rightHandle = fopen($right, 'w');
         if (false === $input || false === $leftHandle || false === $rightHandle) {
-            throw new RuntimeException('Unable to split UDB digest spool.');
+            throw new \RuntimeException('Unable to split UDB digest spool.');
         }
         try {
             while (!feof($input)) {
@@ -309,7 +306,7 @@ final class UdbLogicalDigest
     {
         $handle = fopen($path, 'a');
         if (false === $handle) {
-            throw new RuntimeException('Unable to append UDB digest spool.');
+            throw new \RuntimeException('Unable to append UDB digest spool.');
         }
         try {
             self::writeAll($handle, $value);
@@ -325,7 +322,7 @@ final class UdbLogicalDigest
         while ($offset < strlen($value)) {
             $written = fwrite($handle, substr($value, $offset));
             if (false === $written || 0 === $written) {
-                throw new RuntimeException('Unable to write UDB digest spool.');
+                throw new \RuntimeException('Unable to write UDB digest spool.');
             }
             $offset += $written;
         }
@@ -339,7 +336,7 @@ final class UdbLogicalDigest
     private static function packUint64(int $value): string
     {
         if (0 > $value) {
-            throw new InvalidArgumentException('UDB checksum totals cannot be negative.');
+            throw new \InvalidArgumentException('UDB checksum totals cannot be negative.');
         }
 
         // Aggregate totals are bounded PHP integers, unlike row uint64 values.
@@ -350,7 +347,7 @@ final class UdbLogicalDigest
     private static function checkedAdd(int $left, int $right): int
     {
         if (0 > $right || $left > PHP_INT_MAX - $right) {
-            throw new RuntimeException('UDB checksum aggregate exceeds the platform integer range.');
+            throw new \RuntimeException('UDB checksum aggregate exceeds the platform integer range.');
         }
 
         return $left + $right;
@@ -363,7 +360,7 @@ final class UdbLogicalDigest
     {
         foreach ($records as $path => $value) {
             if (!is_string($path) || !$value instanceof UdbValue) {
-                throw new InvalidArgumentException('UDB logical maps require canonical paths and typed values.');
+                throw new \InvalidArgumentException('UDB logical maps require canonical paths and typed values.');
             }
             yield [$path, $value];
         }

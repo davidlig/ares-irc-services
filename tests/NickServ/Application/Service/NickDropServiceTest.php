@@ -17,11 +17,9 @@ use App\NickServ\Application\PublishedEvent\NickDropEvent;
 use App\NickServ\Application\Service\NickDropService;
 use App\NickServ\Application\Service\NickForceService;
 use App\NickServ\Domain\Entity\RegisteredNick;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
 
 #[CoversClass(NickDropService::class)]
 final class NickDropServiceTest extends TestCase
@@ -95,7 +93,7 @@ final class NickDropServiceTest extends TestCase
             'Guest-',
         );
 
-        $service->dropNick($nick, new DateTimeImmutable(), 'manual', 'OperUser');
+        $service->dropNick($nick, new \DateTimeImmutable(), 'manual', 'OperUser');
 
         self::assertSame(['transaction-start', 'cleanup', 'delete', 'commit', 'post-commit'], $calls);
     }
@@ -137,7 +135,7 @@ final class NickDropServiceTest extends TestCase
             'Guest-',
         );
 
-        $service->dropNick($nick, new DateTimeImmutable(), 'manual', 'OperUser');
+        $service->dropNick($nick, new \DateTimeImmutable(), 'manual', 'OperUser');
     }
 
     #[Test]
@@ -184,7 +182,7 @@ final class NickDropServiceTest extends TestCase
             'Guest-',
         );
 
-        $service->dropNick($nick, new DateTimeImmutable(), 'inactivity', null);
+        $service->dropNick($nick, new \DateTimeImmutable(), 'inactivity', null);
     }
 
     #[Test]
@@ -230,7 +228,7 @@ final class NickDropServiceTest extends TestCase
             'Guest-',
         );
 
-        $service->dropNick($nick, new DateTimeImmutable(), 'manual', null);
+        $service->dropNick($nick, new \DateTimeImmutable(), 'manual', null);
     }
 
     #[Test]
@@ -266,7 +264,7 @@ final class NickDropServiceTest extends TestCase
             'Guest-',
         );
 
-        $service->softDropNick($nick, new DateTimeImmutable(), 'OperUser');
+        $service->softDropNick($nick, new \DateTimeImmutable(), 'OperUser');
 
         self::assertTrue($nick->isPendingDeletion());
     }
@@ -298,7 +296,7 @@ final class NickDropServiceTest extends TestCase
             'Guest-',
         );
 
-        $service->softDropNick($nick, new DateTimeImmutable(), 'OperUser');
+        $service->softDropNick($nick, new \DateTimeImmutable(), 'OperUser');
 
         self::assertNull($sessionRegistry->findUidByNick('SoftOnline'));
     }
@@ -329,7 +327,7 @@ final class NickDropServiceTest extends TestCase
             'Guest-',
         );
 
-        $service->softDropNick($nick, new DateTimeImmutable());
+        $service->softDropNick($nick, new \DateTimeImmutable());
 
         self::assertNull($sessionRegistry->findUidByNick('OfflineSession'));
     }
@@ -338,7 +336,7 @@ final class NickDropServiceTest extends TestCase
     public function restoreNickRestoresAndSaves(): void
     {
         $nick = $this->createNickWithId('RestoreNick', 302);
-        $nick->markPendingDeletion(new DateTimeImmutable('-1 day'));
+        $nick->markPendingDeletion(new \DateTimeImmutable('-1 day'));
 
         $nickRepository = $this->createMock(RegisteredNickRepositoryInterface::class);
         $nickRepository->expects(self::once())->method('save')->with($nick);
@@ -383,10 +381,10 @@ final class NickDropServiceTest extends TestCase
 
     private function createNickWithId(string $nickname, int $id): RegisteredNick
     {
-        $nick = RegisteredNick::createPending($nickname, 'hash', 'test@example.com', 'en', new DateTimeImmutable('+1 hour'), new DateTimeImmutable());
+        $nick = RegisteredNick::createPending($nickname, 'hash', 'test@example.com', 'en', new \DateTimeImmutable('+1 hour'), new \DateTimeImmutable());
         $nick->activate();
 
-        $reflection = new ReflectionClass(RegisteredNick::class);
+        $reflection = new \ReflectionClass(RegisteredNick::class);
         $idProp = $reflection->getProperty('id');
         $idProp->setValue($nick, $id);
 

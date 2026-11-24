@@ -12,7 +12,6 @@ use App\ChanServ\Application\UseCase\List\ListRegisteredChannelsHandler;
 use App\ChanServ\Application\UseCase\List\ListRegisteredChannelsResult;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\ValueObject\ChannelStatus;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -28,8 +27,8 @@ final class ListRegisteredChannelsHandlerTest extends TestCase
     #[Test]
     public function returnsFilteredPageWithFounderNamesAndAllChannelStatuses(): void
     {
-        $registeredAt = new DateTimeImmutable('2026-01-01T12:00:00+00:00');
-        $lastUsedAt = new DateTimeImmutable('2026-02-03T04:05:00+00:00');
+        $registeredAt = new \DateTimeImmutable('2026-01-01T12:00:00+00:00');
+        $lastUsedAt = new \DateTimeImmutable('2026-02-03T04:05:00+00:00');
         $active = RegisteredChannel::register($registeredAt, '#david', 10, 'Active');
         $suspended = RegisteredChannel::register($registeredAt, '#davidlig', 20, 'Suspended');
         $suspended->suspend('Suspended');
@@ -80,7 +79,7 @@ final class ListRegisteredChannelsHandlerTest extends TestCase
     #[Test]
     public function normalizesPageAndRequestsOnlyThatBoundedPage(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#chan', 42, 'Channel');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#chan', 42, 'Channel');
         $repository = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $repository->expects(self::once())->method('countByPattern')->with('#*')->willReturn(5);
         $repository->expects(self::once())

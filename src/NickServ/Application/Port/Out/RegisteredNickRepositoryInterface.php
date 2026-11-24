@@ -6,7 +6,6 @@ namespace App\NickServ\Application\Port\Out;
 
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\NickServ\Domain\ValueObject\NickStatus;
-use DateTimeImmutable;
 
 interface RegisteredNickRepositoryInterface
 {
@@ -64,13 +63,13 @@ interface RegisteredNickRepositoryInterface
      *
      * @return RegisteredNick[]
      */
-    public function findRegisteredInactiveSince(DateTimeImmutable $threshold, ?int $limit = null, int $afterId = 0): array;
+    public function findRegisteredInactiveSince(\DateTimeImmutable $threshold, ?int $limit = null, int $afterId = 0): array;
 
     /**
      * Removes all PENDING entries whose expiresAt is in the past.
      * Returns the number of deleted records.
      */
-    public function deleteExpiredPending(DateTimeImmutable $now): int;
+    public function deleteExpiredPending(\DateTimeImmutable $now): int;
 
     /**
      * Returns SUSPENDED nicks whose suspendedUntil is in the past.
@@ -79,7 +78,7 @@ interface RegisteredNickRepositoryInterface
      *
      * @return RegisteredNick[]
      */
-    public function findExpiredSuspensions(DateTimeImmutable $now, ?int $limit = null, int $afterId = 0): array;
+    public function findExpiredSuspensions(\DateTimeImmutable $now, ?int $limit = null, int $afterId = 0): array;
 
     /**
      * Returns nicks manually dropped before the threshold and ready for hard deletion.
@@ -87,7 +86,7 @@ interface RegisteredNickRepositoryInterface
      *
      * @return RegisteredNick[]
      */
-    public function findPendingDeletionBefore(DateTimeImmutable $threshold, ?int $limit = null, int $afterId = 0): array;
+    public function findPendingDeletionBefore(\DateTimeImmutable $threshold, ?int $limit = null, int $afterId = 0): array;
 
     /** @return RegisteredNick[] */
     public function findByStatus(NickStatus $status): array;

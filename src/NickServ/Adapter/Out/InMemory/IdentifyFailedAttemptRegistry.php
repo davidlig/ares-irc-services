@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\NickServ\Adapter\Out\InMemory;
 
 use App\NickServ\Application\Port\Out\IdentifyLockoutTracker;
-use DateTimeImmutable;
 
 use function array_filter;
 use function array_values;
@@ -23,7 +22,7 @@ final class IdentifyFailedAttemptRegistry implements IdentifyLockoutTracker
     /** @var array<string, list<int>> client key -> list of failure timestamps (Unix) */
     private array $failuresByKey = [];
 
-    public function recordFailedAttempt(string $clientKey, int $windowSeconds, DateTimeImmutable $now): void
+    public function recordFailedAttempt(string $clientKey, int $windowSeconds, \DateTimeImmutable $now): void
     {
         $timestamp = $now->getTimestamp();
         $cutoff = $timestamp - $windowSeconds;
@@ -50,7 +49,7 @@ final class IdentifyFailedAttemptRegistry implements IdentifyLockoutTracker
         int $maxAttempts,
         int $windowSeconds,
         int $lockoutSeconds,
-        DateTimeImmutable $now,
+        \DateTimeImmutable $now,
     ): int {
         if ($maxAttempts <= 0 || $lockoutSeconds <= 0) {
             return 0;
@@ -80,7 +79,7 @@ final class IdentifyFailedAttemptRegistry implements IdentifyLockoutTracker
      * Removes client keys whose failure timestamps are all outside the window.
      * Returns the number of keys removed. Used by maintenance to free memory.
      */
-    public function pruneStale(int $windowSeconds, DateTimeImmutable $now): int
+    public function pruneStale(int $windowSeconds, \DateTimeImmutable $now): int
     {
         $cutoff = $now->getTimestamp() - $windowSeconds;
         $removed = 0;

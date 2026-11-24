@@ -11,7 +11,6 @@ use App\OperServ\Application\Port\Out\BadmailRepository;
 use App\OperServ\Application\Security\OperServPermission;
 use App\OperServ\Domain\Entity\BadmailEntry;
 use App\OperServ\Domain\ValueObject\EmailDomain;
-use InvalidArgumentException;
 
 use function ceil;
 use function in_array;
@@ -64,12 +63,12 @@ final readonly class ManageBadmailHandler
     {
         try {
             $domain = new EmailDomain($input->domain);
-        } catch (InvalidArgumentException) {
+        } catch (\InvalidArgumentException) {
             return new BadmailResult(BadmailOutcome::InvalidDomain);
         }
         try {
             $entry = new BadmailEntry($domain->value, $input->reason);
-        } catch (InvalidArgumentException) {
+        } catch (\InvalidArgumentException) {
             return new BadmailResult(BadmailOutcome::InvalidReason);
         }
 

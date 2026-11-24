@@ -10,8 +10,6 @@ use App\Irc\Domain\ValueObject\Ident;
 use App\Irc\Domain\ValueObject\Nick;
 use App\Irc\Domain\ValueObject\Uid;
 use App\Irc\Domain\ValueObject\UserMask;
-use DateTimeImmutable;
-use DateTimeInterface;
 
 use function array_filter;
 use function array_values;
@@ -53,7 +51,7 @@ class NetworkUser
         public readonly string $cloakedHost,
         string $virtualHost,
         string $modes,
-        public readonly DateTimeImmutable $connectedAt,
+        public readonly \DateTimeImmutable $connectedAt,
         public readonly string $realName,
         public readonly string $serverSid,
         public readonly string $ipBase64,
@@ -241,7 +239,7 @@ class NetworkUser
             'realName' => $this->realName,
             'server' => $this->serverSid,
             'ip' => $this->getIpAddress(),
-            'connectedAt' => $this->connectedAt->format(DateTimeInterface::ATOM),
+            'connectedAt' => $this->connectedAt->format(\DateTimeInterface::ATOM),
         ];
     }
 }

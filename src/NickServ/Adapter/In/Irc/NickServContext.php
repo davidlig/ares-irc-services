@@ -16,11 +16,6 @@ use App\Shared\Adapter\In\Irc\Presentation\Fragment;
 use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
 use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
 use App\Shared\Adapter\In\Irc\Presentation\Role;
-use DateTimeImmutable;
-use DateTimeInterface;
-use DateTimeZone;
-use InvalidArgumentException;
-use Stringable;
 use Symfony\Component\Translation\TranslatorBagInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -212,10 +207,10 @@ readonly class NickServContext implements IrcopAuthorizationSubject
             if (!in_array(trim($name, '%'), $emphasized, true) || $value instanceof Fragment) {
                 continue;
             }
-            if (null === $value || is_scalar($value) || $value instanceof Stringable) {
+            if (null === $value || is_scalar($value) || $value instanceof \Stringable) {
                 $params[$name] = new Fragment((string) $value, Component::Emphasis);
             } else {
-                throw new InvalidArgumentException('Emphasized parameters must be scalar or Stringable.');
+                throw new \InvalidArgumentException('Emphasized parameters must be scalar or Stringable.');
             }
         }
         $this->reply($key, $params, $role);
@@ -408,15 +403,15 @@ readonly class NickServContext implements IrcopAuthorizationSubject
      * Formats a date/time in the user's timezone for display.
      * Use this for any date or time shown to the user so SET TIMEZONE applies everywhere.
      */
-    public function formatDate(?DateTimeInterface $date): string
+    public function formatDate(?\DateTimeInterface $date): string
     {
         if (null === $date) {
             return '—';
         }
 
-        $dt = $date instanceof DateTimeImmutable ? $date : DateTimeImmutable::createFromInterface($date);
+        $dt = $date instanceof \DateTimeImmutable ? $date : \DateTimeImmutable::createFromInterface($date);
 
-        return $dt->setTimezone(new DateTimeZone($this->timezone))->format('d/m/Y H:i T');
+        return $dt->setTimezone(new \DateTimeZone($this->timezone))->format('d/m/Y H:i T');
     }
 
     public function getRegistry(): NickServCommandRegistry
@@ -493,10 +488,10 @@ readonly class NickServContext implements IrcopAuthorizationSubject
         foreach ($params as $key => $value) {
             if ($value instanceof Fragment || is_string($value)) {
                 $wrapped['%' . trim($key, '%') . '%'] = $value;
-            } elseif (null === $value || is_scalar($value) || $value instanceof Stringable) {
+            } elseif (null === $value || is_scalar($value) || $value instanceof \Stringable) {
                 $wrapped['%' . trim($key, '%') . '%'] = (string) $value;
             } else {
-                throw new InvalidArgumentException('Presentation parameters must be scalar, Stringable or Fragment.');
+                throw new \InvalidArgumentException('Presentation parameters must be scalar, Stringable or Fragment.');
             }
         }
 

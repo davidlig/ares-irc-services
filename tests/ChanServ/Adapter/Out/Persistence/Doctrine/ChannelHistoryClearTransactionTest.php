@@ -19,11 +19,9 @@ use App\ChanServ\Domain\Entity\ChannelHistory;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
-use RuntimeException;
 
 use function array_map;
 
@@ -80,7 +78,7 @@ final class ChannelHistoryClearTransactionTest extends DoctrineIntegrationTestCa
             public function save(ChannelHistory $history): void
             {
                 if ('HISTORY_CLEAR' === $history->getAction()) {
-                    throw new RuntimeException('replacement insertion failed');
+                    throw new \RuntimeException('replacement insertion failed');
                 }
                 $this->inner->save($history);
             }
@@ -110,7 +108,7 @@ final class ChannelHistoryClearTransactionTest extends DoctrineIntegrationTestCa
                 return $this->inner->deleteByChannelId($channelId);
             }
 
-            public function deleteOlderThan(DateTimeImmutable $threshold): int
+            public function deleteOlderThan(\DateTimeImmutable $threshold): int
             {
                 return $this->inner->deleteOlderThan($threshold);
             }
@@ -119,7 +117,7 @@ final class ChannelHistoryClearTransactionTest extends DoctrineIntegrationTestCa
         try {
             $this->handler($repository, $failingRepository)->handle($this->clearCommand());
             self::fail('Expected replacement history insertion to fail.');
-        } catch (RuntimeException $exception) {
+        } catch (\RuntimeException $exception) {
             self::assertSame('replacement insertion failed', $exception->getMessage());
         }
 
@@ -143,7 +141,7 @@ final class ChannelHistoryClearTransactionTest extends DoctrineIntegrationTestCa
 
     private function persistChannel(): RegisteredChannel
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable('2026-01-01'), '#history', 7, 'Test');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable('2026-01-01'), '#history', 7, 'Test');
         $this->entityManager->persist($channel);
         $this->entityManager->flush();
 
@@ -159,7 +157,7 @@ final class ChannelHistoryClearTransactionTest extends DoctrineIntegrationTestCa
             7,
             'ignored-ip',
             'ignored-host',
-            new DateTimeImmutable('2026-02-01'),
+            new \DateTimeImmutable('2026-02-01'),
         );
     }
 
@@ -170,7 +168,7 @@ final class ChannelHistoryClearTransactionTest extends DoctrineIntegrationTestCa
             action: $action,
             performedBy: 'Previous',
             performedByNickId: 7,
-            performedAt: new DateTimeImmutable('SECOND' === $action ? '2026-01-11' : '2026-01-10'),
+            performedAt: new \DateTimeImmutable('SECOND' === $action ? '2026-01-11' : '2026-01-10'),
             message: 'previous entry',
         );
     }

@@ -10,7 +10,6 @@ use App\OperServ\Application\Port\In\Audit\CommandAuditCategory;
 use App\OperServ\Application\Port\In\Audit\CommandAuditRecord;
 use App\OperServ\Application\Port\In\CommandAuditRecorder;
 use App\OperServ\Application\Port\In\OperatorAuthorizationAttribute;
-use DateTimeImmutable;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 final readonly class CommandExecutedAuditSubscriber implements EventSubscriberInterface
@@ -73,7 +72,7 @@ final readonly class CommandExecutedAuditSubscriber implements EventSubscriberIn
             service: $service,
             actor: $actor,
             operation: $operation,
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
             permission: $permission,
             target: $target,
             targetHost: $targetHost,

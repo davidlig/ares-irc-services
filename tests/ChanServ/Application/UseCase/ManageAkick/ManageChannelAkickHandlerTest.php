@@ -28,7 +28,6 @@ use App\ChanServ\Domain\Exception\ChannelNotRegisteredException;
 use App\ChanServ\Domain\Policy\AkickAdditionPolicy;
 use App\ChanServ\Domain\Policy\AkickProtectionPolicy;
 use App\Tests\NickServ\Support\NegotiatedCaseMapping;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -36,7 +35,7 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(ManageChannelAkickHandler::class)]
 final class ManageChannelAkickHandlerTest extends TestCase
 {
-    private DateTimeImmutable $now;
+    private \DateTimeImmutable $now;
 
     #[Test]
     public function testIncompleteActionInputHasNoSideEffects(): void
@@ -1046,7 +1045,7 @@ final class ManageChannelAkickHandlerTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->now = new DateTimeImmutable('2026-10-30 12:00:00');
+        $this->now = new \DateTimeImmutable('2026-10-30 12:00:00');
     }
 
     private function createHandler(

@@ -16,11 +16,9 @@ use App\ChanServ\Application\PublishedEvent\ChannelPendingDeletionEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelRestoredEvent;
 use App\ChanServ\Application\Service\ChanDropService;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionProperty;
 
 #[CoversClass(ChanDropService::class)]
 final class ChanDropServiceTest extends TestCase
@@ -85,7 +83,7 @@ final class ChanDropServiceTest extends TestCase
             $transactionBoundary,
         );
 
-        $service->dropChannel($channel, new DateTimeImmutable(), 'manual', 'OperUser');
+        $service->dropChannel($channel, new \DateTimeImmutable(), 'manual', 'OperUser');
 
         self::assertSame(['transaction-start', 'cleanup', 'delete', 'commit', 'post-commit'], $calls);
     }
@@ -125,7 +123,7 @@ final class ChanDropServiceTest extends TestCase
             $this->immediateTransactionBoundary(),
         );
 
-        $service->dropChannel($channel, new DateTimeImmutable(), 'inactivity');
+        $service->dropChannel($channel, new \DateTimeImmutable(), 'inactivity');
     }
 
     #[Test]
@@ -161,7 +159,7 @@ final class ChanDropServiceTest extends TestCase
             $this->immediateTransactionBoundary(),
         );
 
-        $service->dropChannel($channel, new DateTimeImmutable(), 'manual');
+        $service->dropChannel($channel, new \DateTimeImmutable(), 'manual');
     }
 
     #[Test]
@@ -173,7 +171,7 @@ final class ChanDropServiceTest extends TestCase
         $channelRepository->expects(self::once())->method('save')->with($channel);
         $channelRepository->expects(self::never())->method('delete');
 
-        $occurredAt = new DateTimeImmutable();
+        $occurredAt = new \DateTimeImmutable();
         $eventPublisher = $this->createMock(ChanServEventPublisher::class);
         $eventPublisher->expects(self::once())->method('publish')->with(self::callback(
             static fn (object $event): bool => $event instanceof ChannelPendingDeletionEvent
@@ -210,12 +208,12 @@ final class ChanDropServiceTest extends TestCase
     public function restoreChannelRestoresAndSaves(): void
     {
         $channel = $this->createChannelWithId('#restore', 202);
-        $channel->markPendingDeletion(new DateTimeImmutable());
+        $channel->markPendingDeletion(new \DateTimeImmutable());
 
         $channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepository->expects(self::once())->method('save')->with($channel);
 
-        $occurredAt = new DateTimeImmutable();
+        $occurredAt = new \DateTimeImmutable();
         $eventPublisher = $this->createMock(ChanServEventPublisher::class);
         $eventPublisher->expects(self::once())->method('publish')->with(self::callback(
             static fn (object $event): bool => $event instanceof ChannelRestoredEvent
@@ -271,7 +269,7 @@ final class ChanDropServiceTest extends TestCase
             $this->immediateTransactionBoundary(),
         );
 
-        $service->softDropChannel($channel, new DateTimeImmutable());
+        $service->softDropChannel($channel, new \DateTimeImmutable());
     }
 
     #[Test]
@@ -279,7 +277,7 @@ final class ChanDropServiceTest extends TestCase
     {
         $channel = $this->createChannelWithId('#restoreperm', 206);
         $channel->changeNoExpire(true);
-        $channel->markPendingDeletion(new DateTimeImmutable());
+        $channel->markPendingDeletion(new \DateTimeImmutable());
 
         $channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepository->expects(self::once())->method('save')->with($channel);
@@ -298,14 +296,14 @@ final class ChanDropServiceTest extends TestCase
             $this->immediateTransactionBoundary(),
         );
 
-        $service->restoreChannel($channel, new DateTimeImmutable());
+        $service->restoreChannel($channel, new \DateTimeImmutable());
     }
 
     private function createChannelWithId(string $name, int $id): RegisteredChannel
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), $name, 1, 'Test description');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), $name, 1, 'Test description');
 
-        $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
+        $ref = new \ReflectionProperty(RegisteredChannel::class, 'id');
         $ref->setValue($channel, $id);
 
         return $channel;

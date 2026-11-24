@@ -23,9 +23,6 @@ use App\Shared\Adapter\In\Irc\Presentation\Fragment;
 use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
 use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
 use App\Shared\Adapter\In\Irc\Presentation\Role;
-use DateTime;
-use DateTimeZone;
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -284,7 +281,7 @@ final class ChanServContextTest extends TestCase
             $translator,
         );
 
-        $date = new DateTime('2024-01-15 10:30:00', new DateTimeZone('UTC'));
+        $date = new \DateTime('2024-01-15 10:30:00', new \DateTimeZone('UTC'));
         $result = $context->formatDate($date);
 
         self::assertStringContainsString('15/01/2024', $result);
@@ -438,7 +435,7 @@ final class ChanServContextTest extends TestCase
         $translator->addResource('array', ['notice' => 'Channel %channel%'], 'en', 'chanserv');
         $context = $this->createContext(new SenderView('UID1', 'Nick', 'i', 'h', 'c', 'ip'), $notifier, $translator);
 
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('IRC presentation parameters must be scalar or fragments.');
         $context->reply('notice', ['channel' => ['#channel']], Role::Information);
     }

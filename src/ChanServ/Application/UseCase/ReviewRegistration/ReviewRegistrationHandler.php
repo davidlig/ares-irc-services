@@ -14,7 +14,6 @@ use App\ChanServ\Application\PublishedEvent\ChannelRegistrationDecisionEvent;
 use App\ChanServ\Application\Service\ChannelHistoryService;
 use App\ChanServ\Application\Service\ChannelRegistrationActivator;
 use App\Shared\Application\Port\EventBusInterface;
-use InvalidArgumentException;
 
 use function array_filter;
 use function count;
@@ -35,7 +34,7 @@ final readonly class ReviewRegistrationHandler implements ReviewRegistrationHand
         private int $rejectionCooldownHours = 24,
     ) {
         if ($rejectionCooldownHours < 0) {
-            throw new InvalidArgumentException('Channel registration rejection cooldown cannot be negative.');
+            throw new \InvalidArgumentException('Channel registration rejection cooldown cannot be negative.');
         }
     }
 

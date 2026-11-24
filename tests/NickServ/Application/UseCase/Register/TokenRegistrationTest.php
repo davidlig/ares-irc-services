@@ -6,11 +6,9 @@ namespace App\Tests\NickServ\Application\UseCase\Register;
 
 use App\NickServ\Application\UseCase\Register\RegisterNick;
 use App\NickServ\Domain\Entity\RegisteredNick;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
 
 use function method_exists;
 
@@ -21,8 +19,8 @@ final class TokenRegistrationTest extends TestCase
     #[Test]
     public function tokenPendingCanOmitEmailAndDoesNotHavePersistentCredential(): void
     {
-        $nick = RegisteredNick::createPending('Token', 'hash', null, 'en', new DateTimeImmutable('+1 hour'), new DateTimeImmutable());
-        self::assertFalse(new ReflectionClass($nick)->hasProperty('registrationMode'));
+        $nick = RegisteredNick::createPending('Token', 'hash', null, 'en', new \DateTimeImmutable('+1 hour'), new \DateTimeImmutable());
+        self::assertFalse(new \ReflectionClass($nick)->hasProperty('registrationMode'));
         self::assertFalse(method_exists($nick, 'getRegistrationMode'));
         self::assertNull($nick->getEmail());
         self::assertNull($nick->getRescueTokenHash());

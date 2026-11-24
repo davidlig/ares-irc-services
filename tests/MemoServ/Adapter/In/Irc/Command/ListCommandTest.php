@@ -20,11 +20,9 @@ use App\Shared\Adapter\In\Irc\Presentation\Appearance;
 use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
 use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
 use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Stringable;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function implode;
@@ -51,7 +49,7 @@ final class ListCommandTest extends TestCase
         )));
         $handler = $this->createStub(ListMemosHandlerInterface::class);
         $handler->method('handle')->willReturn(ListMemosResult::success('#chan', [
-            new MemoListItem(index: 1, senderDisplay: 'Bob', createdAt: new DateTimeImmutable('2026-09-06 12:00:00 UTC'), message: 'raw %target%', isRead: false),
+            new MemoListItem(index: 1, senderDisplay: 'Bob', createdAt: new \DateTimeImmutable('2026-09-06 12:00:00 UTC'), message: 'raw %target%', isRead: false),
         ]));
         $context = new MemoServContext(
             new SenderView('UID', 'Nick', 'i', 'h', 'c', 'ip'),
@@ -144,7 +142,7 @@ final class ListCommandTest extends TestCase
     {
         $sender = new SenderView('001ABC', 'TestUser', 'ident', 'host', 'cloak', 'ip');
         $account = new MemoAccountView(1, 'TestUser', 'en');
-        $date = new DateTimeImmutable('2026-09-06 12:00:00 UTC');
+        $date = new \DateTimeImmutable('2026-09-06 12:00:00 UTC');
 
         $longMessage = str_repeat('x', 60);
 
@@ -237,7 +235,7 @@ final class ListCommandTest extends TestCase
             ksort($params);
             $formatted = [];
             foreach ($params as $key => $value) {
-                $formatted[] = (string) $key . ': ' . (is_scalar($value) || $value instanceof Stringable ? (string) $value : '');
+                $formatted[] = (string) $key . ': ' . (is_scalar($value) || $value instanceof \Stringable ? (string) $value : '');
             }
 
             return $id . ' [' . implode(', ', $formatted) . ']';

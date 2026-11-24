@@ -11,7 +11,6 @@ use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use UnexpectedValueException;
 
 #[CoversClass(DoctrineBadmailRepository::class)]
 final class DoctrineBadmailRepositoryTest extends TestCase
@@ -23,7 +22,7 @@ final class DoctrineBadmailRepositoryTest extends TestCase
         $connection->method('fetchOne')->willReturn(false);
         $em = $this->createStub(EntityManagerInterface::class);
         $em->method('getConnection')->willReturn($connection);
-        $this->expectException(UnexpectedValueException::class);
+        $this->expectException(\UnexpectedValueException::class);
         new DoctrineBadmailRepository($em)->countMatching('*');
     }
 
@@ -35,7 +34,7 @@ final class DoctrineBadmailRepositoryTest extends TestCase
         $connection->method('fetchAllAssociative')->willReturn([['id' => 1, 'domain' => null, 'reason' => 'reason']]);
         $em = $this->createStub(EntityManagerInterface::class);
         $em->method('getConnection')->willReturn($connection);
-        $this->expectException(UnexpectedValueException::class);
+        $this->expectException(\UnexpectedValueException::class);
         new DoctrineBadmailRepository($em)->page('*', 0, 50);
     }
 }

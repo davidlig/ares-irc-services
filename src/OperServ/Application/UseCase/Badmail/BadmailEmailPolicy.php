@@ -7,7 +7,6 @@ namespace App\OperServ\Application\UseCase\Badmail;
 use App\OperServ\Application\Port\In\EmailDomainPolicy;
 use App\OperServ\Application\Port\Out\BadmailRepository;
 use App\OperServ\Domain\ValueObject\EmailDomain;
-use InvalidArgumentException;
 
 use function strrpos;
 use function substr;
@@ -24,7 +23,7 @@ final readonly class BadmailEmailPolicy implements EmailDomainPolicy
         }
         try {
             $domain = new EmailDomain(substr($email, $separator + 1));
-        } catch (InvalidArgumentException) {
+        } catch (\InvalidArgumentException) {
             // Preserve existing address validation, including domain literals.
             return false;
         }

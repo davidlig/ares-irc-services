@@ -4,18 +4,16 @@ declare(strict_types=1);
 
 namespace App\NickServ\Application\UseCase\Status;
 
-use DateTimeImmutable;
-
 final readonly class StatusNickResult
 {
     private function __construct(
         public StatusNickOutcome $outcome,
         public string $nickname,
-        public ?DateTimeImmutable $expiresAt = null,
+        public ?\DateTimeImmutable $expiresAt = null,
         public int $expiresInMinutes = 0,
         public ?string $reason = null,
-        public ?DateTimeImmutable $suspendedUntil = null,
-        public ?DateTimeImmutable $pendingDeletionAt = null,
+        public ?\DateTimeImmutable $suspendedUntil = null,
+        public ?\DateTimeImmutable $pendingDeletionAt = null,
     ) {}
 
     public static function unregisteredOffline(string $nickname): self
@@ -30,7 +28,7 @@ final readonly class StatusNickResult
 
     public static function pending(
         string $nickname,
-        ?DateTimeImmutable $expiresAt = null,
+        ?\DateTimeImmutable $expiresAt = null,
         int $expiresInMinutes = 0,
     ): self {
         return new self(
@@ -59,7 +57,7 @@ final readonly class StatusNickResult
     public static function suspended(
         string $nickname,
         ?string $reason = null,
-        ?DateTimeImmutable $suspendedUntil = null,
+        ?\DateTimeImmutable $suspendedUntil = null,
     ): self {
         return new self(
             StatusNickOutcome::Suspended,
@@ -78,7 +76,7 @@ final readonly class StatusNickResult
         );
     }
 
-    public static function pendingDeletion(string $nickname, ?DateTimeImmutable $pendingDeletionAt = null): self
+    public static function pendingDeletion(string $nickname, ?\DateTimeImmutable $pendingDeletionAt = null): self
     {
         return new self(
             StatusNickOutcome::PendingDeletion,

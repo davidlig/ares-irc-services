@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\ChanServ\Application\UseCase\ShowRegistrationStatus;
 
 use App\ChanServ\Domain\ValueObject\ChannelStatus;
-use DateTimeImmutable;
 
 final readonly class RegistrationStatusView
 {
@@ -14,7 +13,7 @@ final readonly class RegistrationStatusView
         public int $requesterAccountId,
         public ?string $rejectionReason,
         public ?string $rejectedByNickname,
-        public ?DateTimeImmutable $rejectedAt,
-        public ?DateTimeImmutable $restrictedUntil,
+        public ?\DateTimeImmutable $rejectedAt,
+        public ?\DateTimeImmutable $restrictedUntil,
     ) {}
 }

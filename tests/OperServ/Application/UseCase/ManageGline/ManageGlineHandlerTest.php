@@ -24,7 +24,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionMethod;
 
 use function array_fill_keys;
 use function array_filter;
@@ -50,7 +49,7 @@ final class ManageGlineHandlerTest extends TestCase
         $network = new RecordingGlineNetworkActions();
         $audit = new RecordingGlineAuditRecorder();
         $handler = $this->handler($repository, $network, $audit, ['BadNick' => new GlineUser('BadNick', 'ident', 'example.test')]);
-        $now = new DateTimeImmutable('2026-09-08T10:00:00+00:00');
+        $now = new \DateTimeImmutable('2026-09-08T10:00:00+00:00');
 
         $result = $handler->handle(new ManageGline(GlineAction::Add, 'Oper', 44, $now, 'BadNick', '1d', 'abuse'));
 
@@ -79,7 +78,7 @@ final class ManageGlineHandlerTest extends TestCase
         $audit = new RecordingGlineAuditRecorder();
         $handler = $this->handler($repository, $network, $audit, ['Root' => new GlineUser('Root', 'rootident', 'host.test')], ['Root']);
 
-        $result = $handler->handle(new ManageGline(GlineAction::Add, 'Oper', 44, new DateTimeImmutable(), 'root*@host.test', '0', 'reason'));
+        $result = $handler->handle(new ManageGline(GlineAction::Add, 'Oper', 44, new \DateTimeImmutable(), 'root*@host.test', '0', 'reason'));
 
         self::assertSame(ManageGlineOutcome::ProtectedUser, $result->outcome);
         self::assertSame('Root', $result->protectedNickname);
@@ -91,12 +90,12 @@ final class ManageGlineHandlerTest extends TestCase
     #[Test]
     public function deletesIndexedEntryAndAuditsIt(): void
     {
-        $entry = new GlineEntry('ident@host.test', 4, 'reason', new DateTimeImmutable('2026-09-01'), null);
+        $entry = new GlineEntry('ident@host.test', 4, 'reason', new \DateTimeImmutable('2026-09-01'), null);
         $repository = new RecordingGlineRepository(entries: [$entry]);
         $network = new RecordingGlineNetworkActions();
         $audit = new RecordingGlineAuditRecorder();
 
-        $result = $this->handler($repository, $network, $audit)->handle(new ManageGline(GlineAction::Delete, 'Oper', 44, new DateTimeImmutable(), '1'));
+        $result = $this->handler($repository, $network, $audit)->handle(new ManageGline(GlineAction::Delete, 'Oper', 44, new \DateTimeImmutable(), '1'));
 
         self::assertSame(ManageGlineOutcome::Deleted, $result->outcome);
         self::assertSame([$entry], $repository->removed);
@@ -109,14 +108,14 @@ final class ManageGlineHandlerTest extends TestCase
     #[Test]
     public function listsEntriesWithCreatorNicknames(): void
     {
-        $entry = new GlineEntry('*@host.test', 7, null, new DateTimeImmutable('2026-09-01'), null);
-        $missingCreator = new GlineEntry('*@other.test', 8, null, new DateTimeImmutable('2026-08-01'), null);
-        $repeatedCreator = new GlineEntry('*@third.test', 7, null, new DateTimeImmutable('2026-07-01'), null);
+        $entry = new GlineEntry('*@host.test', 7, null, new \DateTimeImmutable('2026-09-01'), null);
+        $missingCreator = new GlineEntry('*@other.test', 8, null, new \DateTimeImmutable('2026-08-01'), null);
+        $repeatedCreator = new GlineEntry('*@third.test', 7, null, new \DateTimeImmutable('2026-07-01'), null);
         $repository = new RecordingGlineRepository(entries: [$entry, $missingCreator, $repeatedCreator]);
 
         $users = new GlineTestUserLookup([], [7 => 'Creator'], [7 => 'Creator']);
         $result = new ManageGlineHandler($repository, $users, new GlineTestProtectedSubjects([]), new RecordingGlineNetworkActions(), new RecordingGlineAuditRecorder())
-            ->handle(new ManageGline(GlineAction::List, 'Oper', 44, new DateTimeImmutable()));
+            ->handle(new ManageGline(GlineAction::List, 'Oper', 44, new \DateTimeImmutable()));
 
         self::assertSame(ManageGlineOutcome::Listed, $result->outcome);
         self::assertSame('Creator', $result->entries[0]->creatorNickname);
@@ -129,7 +128,7 @@ final class ManageGlineHandlerTest extends TestCase
     #[Test]
     public function listsEntriesWithoutCreatorIdsWithoutBatchLookup(): void
     {
-        $entry = new GlineEntry('*@host.test', null, 'reason', new DateTimeImmutable('2026-09-01'), null);
+        $entry = new GlineEntry('*@host.test', null, 'reason', new \DateTimeImmutable('2026-09-01'), null);
         $users = new GlineTestUserLookup([], []);
         $handler = new ManageGlineHandler(
             new RecordingGlineRepository(entries: [$entry]),
@@ -139,7 +138,7 @@ final class ManageGlineHandlerTest extends TestCase
             new RecordingGlineAuditRecorder(),
         );
 
-        $result = $handler->handle(new ManageGline(GlineAction::List, 'Oper', 44, new DateTimeImmutable()));
+        $result = $handler->handle(new ManageGline(GlineAction::List, 'Oper', 44, new \DateTimeImmutable()));
 
         self::assertSame(ManageGlineOutcome::Listed, $result->outcome);
         self::assertSame('*@host.test', $result->entries[0]->mask);
@@ -168,7 +167,7 @@ final class ManageGlineHandlerTest extends TestCase
     /** @return iterable<string, array{ManageGline, array<string, GlineUser>, ManageGlineOutcome}> */
     public static function rejectedAdds(): iterable
     {
-        $now = new DateTimeImmutable('2026-09-08T10:00:00+00:00');
+        $now = new \DateTimeImmutable('2026-09-08T10:00:00+00:00');
 
         yield 'missing required arguments' => [new ManageGline(GlineAction::Add, 'Oper', 1, $now), [], ManageGlineOutcome::InvalidRequest];
         yield 'invalid mask with bang' => [new ManageGline(GlineAction::Add, 'Oper', 1, $now, 'nick!ident@host', '1h', 'reason'), [], ManageGlineOutcome::InvalidMask];
@@ -181,8 +180,8 @@ final class ManageGlineHandlerTest extends TestCase
     #[Test]
     public function rejectsExistingActiveEntryButReplacesExpiredEntry(): void
     {
-        $now = new DateTimeImmutable('2026-09-08T10:00:00+00:00');
-        $active = new GlineEntry('active@host.test', null, null, $now, new DateTimeImmutable('2026-09-09'));
+        $now = new \DateTimeImmutable('2026-09-08T10:00:00+00:00');
+        $active = new GlineEntry('active@host.test', null, null, $now, new \DateTimeImmutable('2026-09-09'));
         $activeRepository = new RecordingGlineRepository([$active]);
 
         self::assertSame(
@@ -191,7 +190,7 @@ final class ManageGlineHandlerTest extends TestCase
                 ->handle(new ManageGline(GlineAction::Add, 'Oper', 1, $now, 'active@host.test', '1h', 'reason'))->outcome,
         );
 
-        $expired = new GlineEntry('expired@host.test', null, null, $now, new DateTimeImmutable('2026-09-07'));
+        $expired = new GlineEntry('expired@host.test', null, null, $now, new \DateTimeImmutable('2026-09-07'));
         $expiredRepository = new RecordingGlineRepository([$expired]);
         $result = $this->handler($expiredRepository, new RecordingGlineNetworkActions(), new RecordingGlineAuditRecorder())
             ->handle(new ManageGline(GlineAction::Add, 'Oper', 1, $now, 'expired@host.test', '0', 'reason'));
@@ -204,7 +203,7 @@ final class ManageGlineHandlerTest extends TestCase
     public function enforcesConfiguredLimitAfterDiscardingNoEntry(): void
     {
         $repository = new RecordingGlineRepository([
-            new GlineEntry('existing@host.test', null, null, new DateTimeImmutable(), null),
+            new GlineEntry('existing@host.test', null, null, new \DateTimeImmutable(), null),
         ]);
         $handler = new ManageGlineHandler(
             $repository,
@@ -215,7 +214,7 @@ final class ManageGlineHandlerTest extends TestCase
             1,
         );
 
-        $result = $handler->handle(new ManageGline(GlineAction::Add, 'Oper', 1, new DateTimeImmutable(), 'new@host.test', '0', 'reason'));
+        $result = $handler->handle(new ManageGline(GlineAction::Add, 'Oper', 1, new \DateTimeImmutable(), 'new@host.test', '0', 'reason'));
 
         self::assertSame(ManageGlineOutcome::LimitReached, $result->outcome);
         self::assertSame(1, $result->limit);
@@ -225,7 +224,7 @@ final class ManageGlineHandlerTest extends TestCase
     public function handlesInvalidAndMissingDeleteSelectors(): void
     {
         $handler = $this->handler(new RecordingGlineRepository(), new RecordingGlineNetworkActions(), new RecordingGlineAuditRecorder());
-        $now = new DateTimeImmutable();
+        $now = new \DateTimeImmutable();
 
         self::assertSame(ManageGlineOutcome::InvalidRequest, $handler->handle(new ManageGline(GlineAction::Delete, 'Oper', 1, $now))->outcome);
         self::assertSame(ManageGlineOutcome::NotFound, $handler->handle(new ManageGline(GlineAction::Delete, 'Oper', 1, $now, 'missing@host.test'))->outcome);
@@ -238,7 +237,7 @@ final class ManageGlineHandlerTest extends TestCase
         $repository = new RecordingGlineRepository();
 
         $result = $this->handler($repository, new RecordingGlineNetworkActions(), new RecordingGlineAuditRecorder())
-            ->handle(new ManageGline(GlineAction::List, 'Oper', 1, new DateTimeImmutable(), listPattern: '*@missing'));
+            ->handle(new ManageGline(GlineAction::List, 'Oper', 1, new \DateTimeImmutable(), listPattern: '*@missing'));
 
         self::assertSame(ManageGlineOutcome::ListEmpty, $result->outcome);
     }
@@ -247,7 +246,7 @@ final class ManageGlineHandlerTest extends TestCase
     public function reportsUnknownAction(): void
     {
         $result = $this->handler(new RecordingGlineRepository(), new RecordingGlineNetworkActions(), new RecordingGlineAuditRecorder())
-            ->handle(new ManageGline(GlineAction::Unknown, 'Oper', 1, new DateTimeImmutable()));
+            ->handle(new ManageGline(GlineAction::Unknown, 'Oper', 1, new \DateTimeImmutable()));
 
         self::assertSame(ManageGlineOutcome::UnknownAction, $result->outcome);
     }
@@ -256,7 +255,7 @@ final class ManageGlineHandlerTest extends TestCase
     public function defensiveMatcherRejectsMaskWithoutSeparator(): void
     {
         $handler = $this->handler(new RecordingGlineRepository(), new RecordingGlineNetworkActions(), new RecordingGlineAuditRecorder());
-        $method = new ReflectionMethod($handler, 'matches');
+        $method = new \ReflectionMethod($handler, 'matches');
 
         self::assertFalse($method->invoke($handler, 'nickname', new GlineUser('Nick', 'ident', 'host.test')));
     }
@@ -320,7 +319,7 @@ final class RecordingGlineRepository implements GlineRepository
         return $this->entries;
     }
 
-    public function findActiveAt(DateTimeImmutable $at): array
+    public function findActiveAt(\DateTimeImmutable $at): array
     {
         return array_values(array_filter(
             $this->entries,
@@ -328,7 +327,7 @@ final class RecordingGlineRepository implements GlineRepository
         ));
     }
 
-    public function findExpiredAt(DateTimeImmutable $at, ?GlineEntry $after = null, ?int $limit = null): array
+    public function findExpiredAt(\DateTimeImmutable $at, ?GlineEntry $after = null, ?int $limit = null): array
     {
         return array_values(array_filter(
             $this->entries,
@@ -341,7 +340,7 @@ final class RecordingGlineRepository implements GlineRepository
         return count($this->entries);
     }
 
-    public function save(string $mask, ?int $creatorAccountId, string $reason, DateTimeImmutable $createdAt, ?DateTimeImmutable $expiresAt): void
+    public function save(string $mask, ?int $creatorAccountId, string $reason, \DateTimeImmutable $createdAt, ?\DateTimeImmutable $expiresAt): void
     {
         $this->saved[] = [$mask, $creatorAccountId, $reason, $createdAt, $expiresAt];
     }
@@ -379,7 +378,7 @@ final class RecordingGlineNetworkActions implements GlineNetworkActions
     /** @var list<string> */
     public array $removed = [];
 
-    public function add(string $mask, ?DateTimeImmutable $expiresAt, string $reason): void
+    public function add(string $mask, ?\DateTimeImmutable $expiresAt, string $reason): void
     {
         $this->added[] = [$mask, $expiresAt, $reason];
     }

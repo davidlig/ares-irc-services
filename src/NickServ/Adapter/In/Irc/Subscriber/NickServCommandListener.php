@@ -14,7 +14,6 @@ use App\NickServ\Domain\Exception\InvalidCredentialsException;
 use App\NickServ\Domain\Exception\NickAlreadyRegisteredException;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
-use Throwable;
 
 /**
  * Registers NickServ with the Service Command Gateway. Receives (senderUid, text)
@@ -71,7 +70,7 @@ final readonly class NickServCommandListener implements ServiceCommandListenerIn
         } catch (InvalidCredentialsException $e) {
             $messageType = $this->messageTypeResolver->prefersPrivateMessages($sender->nick) ? 'PRIVMSG' : 'NOTICE';
             $this->sendNotice->sendMessage($this->nickServBot->getUid(), $sender->uid, $e->getMessage(), $messageType);
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             $this->logger->error('NickServ dispatch error: ' . $e->getMessage(), [
                 'exception' => $e,
                 'sender' => $sender->uid,

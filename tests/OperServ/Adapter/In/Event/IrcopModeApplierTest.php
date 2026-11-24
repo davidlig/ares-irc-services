@@ -17,12 +17,10 @@ use App\OperServ\Adapter\In\Event\IrcopModeApplier;
 use App\OperServ\Domain\Entity\OperIrcop;
 use App\OperServ\Domain\Entity\OperRole;
 use App\OperServ\Domain\Repository\OperIrcopRepositoryInterface;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
-use UnexpectedValueException;
 
 use function base64_encode;
 use function inet_pton;
@@ -434,7 +432,7 @@ final class IrcopModeApplierTest extends TestCase
         $role->changeUserModes(['H', 'q']);
         $roleId = 1;
 
-        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 42, $role, null, null);
+        $ircop = OperIrcop::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), 42, $role, null, null);
 
         $ircopRepository = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepository->method('findByRoleId')->willReturn([$ircop]);
@@ -500,7 +498,7 @@ final class IrcopModeApplierTest extends TestCase
         $role->changeUserModes(['q']);
         $roleId = 1;
 
-        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 42, $role, null, null);
+        $ircop = OperIrcop::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), 42, $role, null, null);
 
         $ircopRepository = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepository->method('findByRoleId')->willReturn([$ircop]);
@@ -541,7 +539,7 @@ final class IrcopModeApplierTest extends TestCase
         $role->changeUserModes(['q']);
         $roleId = 1;
 
-        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 42, $role, null, null);
+        $ircop = OperIrcop::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), 42, $role, null, null);
 
         $ircopRepository = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepository->method('findByRoleId')->willReturn([$ircop]);
@@ -584,7 +582,7 @@ final class IrcopModeApplierTest extends TestCase
         $role->changeUserModes(['q']);
         $roleId = 1;
 
-        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 42, $role, null, null);
+        $ircop = OperIrcop::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), 42, $role, null, null);
 
         $ircopRepository = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepository->method('findByRoleId')->willReturn([$ircop]);
@@ -647,7 +645,7 @@ final class IrcopModeApplierTest extends TestCase
         $role = OperRole::create('ADMIN', 'Admin role');
         $roleId = 1;
 
-        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 42, $role, null, null);
+        $ircop = OperIrcop::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), 42, $role, null, null);
 
         $ircopRepository = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepository->method('findByRoleId')->willReturn([$ircop]);
@@ -692,7 +690,7 @@ final class IrcopModeApplierTest extends TestCase
         $role = OperRole::create('ADMIN', 'Admin role');
         $roleId = 1;
 
-        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 42, $role, null, null);
+        $ircop = OperIrcop::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), 42, $role, null, null);
 
         $ircopRepository = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepository->method('findByRoleId')->willReturn([$ircop]);
@@ -737,7 +735,7 @@ final class IrcopModeApplierTest extends TestCase
                 $modeString = '';
                 foreach ($modes as $mode) {
                     if (!is_string($mode)) {
-                        throw new UnexpectedValueException('User modes must be strings.');
+                        throw new \UnexpectedValueException('User modes must be strings.');
                     }
 
                     $modeString .= $mode;

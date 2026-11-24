@@ -24,11 +24,9 @@ use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
 use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\Shared\Application\Port\EventBusInterface;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionProperty;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(SetPrivateHandler::class)]
@@ -60,8 +58,8 @@ final class SetPrivateHandlerTest extends TestCase
     #[Test]
     public function enablesAndDisablesPrivateAndPersistsBothChanges(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Test');
-        new ReflectionProperty(RegisteredChannel::class, 'id')->setValue($channel, 1);
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 1, 'Test');
+        new \ReflectionProperty(RegisteredChannel::class, 'id')->setValue($channel, 1);
         $repository = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $repository->expects(self::exactly(2))->method('save')->with($channel);
         $messages = [];
@@ -83,8 +81,8 @@ final class SetPrivateHandlerTest extends TestCase
     #[Test]
     public function doesNothingWhenSettingRequestCannotBeBuiltWithoutSender(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Test');
-        new ReflectionProperty(RegisteredChannel::class, 'id')->setValue($channel, 1);
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 1, 'Test');
+        new \ReflectionProperty(RegisteredChannel::class, 'id')->setValue($channel, 1);
         $repository = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $repository->expects(self::never())->method('save');
         $messages = [];

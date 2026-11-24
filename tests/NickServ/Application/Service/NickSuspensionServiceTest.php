@@ -10,7 +10,6 @@ use App\NickServ\Application\Port\Out\NickServActivitySink;
 use App\NickServ\Application\Service\NickForceService;
 use App\NickServ\Application\Service\NickSuspensionService;
 use App\NickServ\Domain\Entity\RegisteredNick;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -26,8 +25,8 @@ final class NickSuspensionServiceTest extends TestCase
             'hash',
             'test@example.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable()
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable()
         );
         $account->activate();
 
@@ -63,8 +62,8 @@ final class NickSuspensionServiceTest extends TestCase
             'hash',
             'test@example.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable()
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable()
         );
         $account->activate();
 

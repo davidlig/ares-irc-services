@@ -18,7 +18,6 @@ use App\OperServ\Application\UseCase\Global\SendGlobalMessageOutcome;
 use App\OperServ\Application\UseCase\Global\SendGlobalMessageResult;
 use App\OperServ\Domain\ValueObject\GlobalMessageMask;
 use App\Shared\Domain\IrcIdentityFold;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -46,7 +45,7 @@ final class SendGlobalMessageHandlerTest extends TestCase
             return true;
         }));
         $result = $this->handler(new GlobalTestUsers(), new GlobalTestAccounts(), $network, $audit)
-            ->handle(new SendGlobalMessage('Oper', 'NickServ', MessageDelivery::NonInteractive, 'password=never-audit', new DateTimeImmutable('2026-09-08T10:00:00+00:00')));
+            ->handle(new SendGlobalMessage('Oper', 'NickServ', MessageDelivery::NonInteractive, 'password=never-audit', new \DateTimeImmutable('2026-09-08T10:00:00+00:00')));
 
         self::assertSame(SendGlobalMessageOutcome::Sent, $result->outcome);
         self::assertSame([['SVC001', 'password=never-audit', MessageDelivery::NonInteractive]], $network->serviceMessages);
@@ -59,7 +58,7 @@ final class SendGlobalMessageHandlerTest extends TestCase
         $network = new GlobalTestTransport(['NickServ' => 'SVC001']);
 
         $result = $this->handler(new GlobalTestUsers(), new GlobalTestAccounts(), $network)
-            ->handle(new SendGlobalMessage('Oper', 'NickServ!service@services.test', MessageDelivery::NonInteractive, 'hello', new DateTimeImmutable()));
+            ->handle(new SendGlobalMessage('Oper', 'NickServ!service@services.test', MessageDelivery::NonInteractive, 'hello', new \DateTimeImmutable()));
 
         self::assertSame(SendGlobalMessageOutcome::Sent, $result->outcome);
         self::assertSame('NickServ', $result->senderNickname);
@@ -72,8 +71,8 @@ final class SendGlobalMessageHandlerTest extends TestCase
         $network = new GlobalTestTransport(['NickServ' => 'SVC001'], serviceCount: null);
         $handler = $this->handler(new GlobalTestUsers(), new GlobalTestAccounts(), $network);
 
-        $direct = $handler->handle(new SendGlobalMessage('Oper', 'NickServ', MessageDelivery::NonInteractive, 'hello', new DateTimeImmutable()));
-        $parsed = $handler->handle(new SendGlobalMessage('Oper', 'NickServ!service@services.test', MessageDelivery::NonInteractive, 'hello', new DateTimeImmutable()));
+        $direct = $handler->handle(new SendGlobalMessage('Oper', 'NickServ', MessageDelivery::NonInteractive, 'hello', new \DateTimeImmutable()));
+        $parsed = $handler->handle(new SendGlobalMessage('Oper', 'NickServ!service@services.test', MessageDelivery::NonInteractive, 'hello', new \DateTimeImmutable()));
 
         self::assertSame(SendGlobalMessageOutcome::NetworkUnavailable, $direct->outcome);
         self::assertSame('NickServ', $direct->senderNickname);
@@ -85,15 +84,15 @@ final class SendGlobalMessageHandlerTest extends TestCase
     public function validatesMaskAndRejectsConnectedOrRegisteredPseudoNickname(): void
     {
         $invalid = $this->handler(new GlobalTestUsers(), new GlobalTestAccounts(), new GlobalTestTransport())
-            ->handle(new SendGlobalMessage('Oper', 'invalid', MessageDelivery::NonInteractive, 'message', new DateTimeImmutable()));
+            ->handle(new SendGlobalMessage('Oper', 'invalid', MessageDelivery::NonInteractive, 'message', new \DateTimeImmutable()));
         self::assertSame(SendGlobalMessageOutcome::InvalidMask, $invalid->outcome);
 
         $connected = $this->handler(new GlobalTestUsers(['Temp' => new NetworkUser('U1', 'Temp', 'i', 'h', '', false, false)]), new GlobalTestAccounts(), new GlobalTestTransport())
-            ->handle(new SendGlobalMessage('Oper', 'Temp!ident@host.test', MessageDelivery::NonInteractive, 'message', new DateTimeImmutable()));
+            ->handle(new SendGlobalMessage('Oper', 'Temp!ident@host.test', MessageDelivery::NonInteractive, 'message', new \DateTimeImmutable()));
         self::assertSame(SendGlobalMessageOutcome::NicknameConnected, $connected->outcome);
 
         $registered = $this->handler(new GlobalTestUsers(), new GlobalTestAccounts(['temp' => 9]), new GlobalTestTransport())
-            ->handle(new SendGlobalMessage('Oper', 'Temp!ident@host.test', MessageDelivery::NonInteractive, 'message', new DateTimeImmutable()));
+            ->handle(new SendGlobalMessage('Oper', 'Temp!ident@host.test', MessageDelivery::NonInteractive, 'message', new \DateTimeImmutable()));
         self::assertSame(SendGlobalMessageOutcome::NicknameRegistered, $registered->outcome);
     }
 
@@ -102,14 +101,14 @@ final class SendGlobalMessageHandlerTest extends TestCase
     {
         $network = new GlobalTestTransport(temporaryCount: 3);
         $result = $this->handler(new GlobalTestUsers(), new GlobalTestAccounts(), $network)
-            ->handle(new SendGlobalMessage('Oper', 'Temp!ident@host.test', MessageDelivery::Interactive, 'hello', new DateTimeImmutable()));
+            ->handle(new SendGlobalMessage('Oper', 'Temp!ident@host.test', MessageDelivery::Interactive, 'hello', new \DateTimeImmutable()));
 
         self::assertSame(SendGlobalMessageOutcome::Sent, $result->outcome);
         self::assertSame('Temp', $result->senderNickname);
         self::assertSame([['Temp!ident@host.test', 'hello', MessageDelivery::Interactive, 'Oper']], $network->temporaryMessages);
 
         $unavailable = $this->handler(new GlobalTestUsers(), new GlobalTestAccounts(), new GlobalTestTransport(temporaryCount: null))
-            ->handle(new SendGlobalMessage('Oper', 'Temp!ident@host.test', MessageDelivery::Interactive, 'hello', new DateTimeImmutable()));
+            ->handle(new SendGlobalMessage('Oper', 'Temp!ident@host.test', MessageDelivery::Interactive, 'hello', new \DateTimeImmutable()));
         self::assertSame(SendGlobalMessageOutcome::NetworkUnavailable, $unavailable->outcome);
     }
 
@@ -118,7 +117,7 @@ final class SendGlobalMessageHandlerTest extends TestCase
     {
         $network = new GlobalTestTransport();
         $result = $this->handler(new GlobalTestUsers(), new GlobalTestAccounts(), $network)
-            ->handle(new SendGlobalMessage('Oper', 'NickServ', null, 'hello', new DateTimeImmutable()));
+            ->handle(new SendGlobalMessage('Oper', 'NickServ', null, 'hello', new \DateTimeImmutable()));
 
         self::assertSame(SendGlobalMessageOutcome::InvalidMessageType, $result->outcome);
         self::assertSame([], $network->serviceMessages);

@@ -10,7 +10,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-use RuntimeException;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -51,7 +50,7 @@ final class MessengerRegistrationMailSenderTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturn('translated');
         $dispatcher = $this->createMock(MessageBusInterface::class);
-        $dispatcher->expects(self::once())->method('dispatch')->willThrowException(new RuntimeException('transport failed'));
+        $dispatcher->expects(self::once())->method('dispatch')->willThrowException(new \RuntimeException('transport failed'));
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects(self::once())->method('error')->with(
             'NickServ REGISTER: failed to dispatch verification email',
@@ -60,14 +59,14 @@ final class MessengerRegistrationMailSenderTest extends TestCase
 
                 return 'Nick' === $context['nick']
                     && 'user@example.com' === $context['recipient']
-                    && RuntimeException::class === $context['exception_class']
+                    && \RuntimeException::class === $context['exception_class']
                     && !str_contains($serialized, 'secret-token');
             }),
         );
 
         $sender = new MessengerRegistrationMailSender($dispatcher, $translator, $logger, 'NickServ');
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('transport failed');
         $sender->sendVerification('Nick', 'user@example.com', 'secret-token', 'en');
     }

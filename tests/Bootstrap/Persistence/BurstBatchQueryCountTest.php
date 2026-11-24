@@ -54,7 +54,6 @@ use App\NickServ\Application\Port\In\NickAccountQuery;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use ArrayObject;
-use DateTimeImmutable;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Logging\Middleware;
 use Doctrine\ORM\Configuration;
@@ -112,7 +111,7 @@ final class BurstBatchQueryCountTest extends TestCase
         $connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true], $config);
         $em = new EntityManager($connection, $config);
         new SchemaTool($em)->createSchema($em->getMetadataFactory()->getAllMetadata());
-        $createdAt = new DateTimeImmutable('2026-01-01 00:00:00 UTC');
+        $createdAt = new \DateTimeImmutable('2026-01-01 00:00:00 UTC');
         for ($i = 1; $i <= $channelCount; ++$i) {
             $connection->insert('registered_channels', ['id' => $i, 'name' => '#c' . $i, 'name_lower' => '#c' . $i, 'founder_nick_id' => 99999, 'description' => 'Fixture', 'entrymsg' => '', 'topic_lock' => 0, 'mlock_active' => 0, 'mlock' => '', 'mlock_params' => '{}', 'secure' => 0, 'created_at' => '2026-01-01 00:00:00', 'status' => 'active']);
             $connection->insert('channel_levels', ['channel_id' => $i, 'level_key' => 'NOJOIN', 'value' => 1]);
@@ -127,7 +126,7 @@ final class BurstBatchQueryCountTest extends TestCase
         $em->clear();
 
         /** @var ArrayObject<string, true> $removed */
-        $removed = new ArrayObject();
+        $removed = new \ArrayObject();
         $liveMembers = static function (string $channelName) use ($membersPerChannel, $removed): array {
             $number = substr($channelName, 2);
             $members = [];
@@ -195,7 +194,7 @@ final class BurstBatchQueryCountTest extends TestCase
         $scope->begin();
         $handler = new SynchronizeBurstChannelsHandler($source, $network, $accounts, $this->createStub(ForbiddenChannelEnforcement::class), $akicks, $nojoin, $rankNetwork, $ranks, $mlockPolicies, $this->createStub(EnforceChannelMlockHandlerInterface::class), $this->createStub(ApplyStoredChannelTopicHandlerInterface::class), $this->createStub(ChannelRegistrationLifecycle::class), $scope, new BurstChannelActivityWriter($em));
         $logger->enabled = true;
-        $handler->handle(new DateTimeImmutable('2026-02-01 UTC'));
+        $handler->handle(new \DateTimeImmutable('2026-02-01 UTC'));
         self::assertSame([], $em->getUnitOfWork()->getIdentityMap()[RegisteredNick::class] ?? []);
         foreach ($em->getUnitOfWork()->getIdentityMap() as $entities) {
             self::assertSame([], $entities);

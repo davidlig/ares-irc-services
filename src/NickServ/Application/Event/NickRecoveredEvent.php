@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\NickServ\Application\Event;
 
 use App\NickServ\Application\Port\In\NickServEvent;
-use DateTimeImmutable;
 
 /**
  * Dispatched when a nickname is recovered via email token.
@@ -20,6 +19,6 @@ final readonly class NickRecoveredEvent implements NickServEvent
         public ?int $performedByNickId,
         public string $performedByIp,
         public string $performedByHost,
-        public DateTimeImmutable $occurredAt,
+        public \DateTimeImmutable $occurredAt,
     ) {}
 }

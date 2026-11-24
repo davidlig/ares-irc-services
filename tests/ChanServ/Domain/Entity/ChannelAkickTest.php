@@ -5,12 +5,9 @@ declare(strict_types=1);
 namespace App\Tests\ChanServ\Domain\Entity;
 
 use App\ChanServ\Domain\Entity\ChannelAkick;
-use DateTimeImmutable;
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
 
 use function str_repeat;
 
@@ -20,31 +17,31 @@ final class ChannelAkickTest extends TestCase
     #[Test]
     public function createSetsAllProperties(): void
     {
-        $expiresAt = new DateTimeImmutable('+7 days');
-        $akick = ChannelAkick::create(new DateTimeImmutable(), 1, 2, '*!*@*.isp.com', 'Spammer', $expiresAt);
+        $expiresAt = new \DateTimeImmutable('+7 days');
+        $akick = ChannelAkick::create(new \DateTimeImmutable(), 1, 2, '*!*@*.isp.com', 'Spammer', $expiresAt);
 
         self::assertSame(1, $akick->getChannelId());
         self::assertSame(2, $akick->getCreatorNickId());
         self::assertSame('*!*@*.isp.com', $akick->getMask());
         self::assertSame('Spammer', $akick->getReason());
         self::assertSame($expiresAt, $akick->getExpiresAt());
-        self::assertFalse($akick->isExpired(new DateTimeImmutable()));
+        self::assertFalse($akick->isExpired(new \DateTimeImmutable()));
     }
 
     #[Test]
     public function createWithNullReasonAndExpiry(): void
     {
-        $akick = ChannelAkick::create(new DateTimeImmutable(), 1, 2, '*!*@host.com');
+        $akick = ChannelAkick::create(new \DateTimeImmutable(), 1, 2, '*!*@host.com');
 
         self::assertNull($akick->getReason());
         self::assertNull($akick->getExpiresAt());
-        self::assertFalse($akick->isExpired(new DateTimeImmutable()));
+        self::assertFalse($akick->isExpired(new \DateTimeImmutable()));
     }
 
     #[Test]
     public function createWithEmptyStringReasonSetsNull(): void
     {
-        $akick = ChannelAkick::create(new DateTimeImmutable(), 1, 2, '*!*@host.com', '');
+        $akick = ChannelAkick::create(new \DateTimeImmutable(), 1, 2, '*!*@host.com', '');
 
         self::assertNull($akick->getReason());
     }
@@ -52,16 +49,16 @@ final class ChannelAkickTest extends TestCase
     #[Test]
     public function recordUsageIncrementsUsesAndSetsLastUsedAt(): void
     {
-        $akick = ChannelAkick::create(new DateTimeImmutable(), 1, 2, '*!*@host.com');
+        $akick = ChannelAkick::create(new \DateTimeImmutable(), 1, 2, '*!*@host.com');
         self::assertSame(0, $akick->getUses());
         self::assertNull($akick->getLastUsedAt());
 
-        $now = new DateTimeImmutable('2026-10-30 12:00:00');
+        $now = new \DateTimeImmutable('2026-10-30 12:00:00');
         $akick->recordUsage($now);
         self::assertSame(1, $akick->getUses());
         self::assertSame($now, $akick->getLastUsedAt());
 
-        $later = new DateTimeImmutable('2026-10-30 13:00:00');
+        $later = new \DateTimeImmutable('2026-10-30 13:00:00');
         $akick->recordUsage($later);
         self::assertSame(2, $akick->getUses());
         self::assertSame($later, $akick->getLastUsedAt());
@@ -70,15 +67,15 @@ final class ChannelAkickTest extends TestCase
     #[Test]
     public function isExpiredReturnsTrueWhenExpired(): void
     {
-        $akick = ChannelAkick::create(new DateTimeImmutable(), 1, 2, '*!*@host.com', null, new DateTimeImmutable('-1 day'));
+        $akick = ChannelAkick::create(new \DateTimeImmutable(), 1, 2, '*!*@host.com', null, new \DateTimeImmutable('-1 day'));
 
-        self::assertTrue($akick->isExpired(new DateTimeImmutable()));
+        self::assertTrue($akick->isExpired(new \DateTimeImmutable()));
     }
 
     #[Test]
     public function updateReason(): void
     {
-        $akick = ChannelAkick::create(new DateTimeImmutable(), 1, 2, '*!*@host.com', 'Old reason');
+        $akick = ChannelAkick::create(new \DateTimeImmutable(), 1, 2, '*!*@host.com', 'Old reason');
 
         $akick->updateReason('New reason');
 
@@ -88,8 +85,8 @@ final class ChannelAkickTest extends TestCase
     #[Test]
     public function updateExpiry(): void
     {
-        $akick = ChannelAkick::create(new DateTimeImmutable(), 1, 2, '*!*@host.com');
-        $newExpiry = new DateTimeImmutable('+30 days');
+        $akick = ChannelAkick::create(new \DateTimeImmutable(), 1, 2, '*!*@host.com');
+        $newExpiry = new \DateTimeImmutable('+30 days');
 
         $akick->updateExpiry($newExpiry);
 
@@ -111,8 +108,8 @@ final class ChannelAkickTest extends TestCase
     #[Test]
     public function invalidMaskThrowsException(): void
     {
-        $this->expectException(InvalidArgumentException::class);
-        ChannelAkick::create(new DateTimeImmutable(), 1, 2, 'invalid');
+        $this->expectException(\InvalidArgumentException::class);
+        ChannelAkick::create(new \DateTimeImmutable(), 1, 2, 'invalid');
     }
 
     #[Test]
@@ -120,8 +117,8 @@ final class ChannelAkickTest extends TestCase
     {
         $longMask = str_repeat('a', 256) . '!user@host.com';
 
-        $this->expectException(InvalidArgumentException::class);
-        ChannelAkick::create(new DateTimeImmutable(), 1, 2, $longMask);
+        $this->expectException(\InvalidArgumentException::class);
+        ChannelAkick::create(new \DateTimeImmutable(), 1, 2, $longMask);
     }
 
     #[Test]
@@ -129,16 +126,16 @@ final class ChannelAkickTest extends TestCase
     {
         $longReason = str_repeat('a', 256);
 
-        $this->expectException(InvalidArgumentException::class);
-        ChannelAkick::create(new DateTimeImmutable(), 1, 2, '*!*@host.com', $longReason);
+        $this->expectException(\InvalidArgumentException::class);
+        ChannelAkick::create(new \DateTimeImmutable(), 1, 2, '*!*@host.com', $longReason);
     }
 
     #[Test]
     public function getCreatedAtReturnsSetTime(): void
     {
-        $before = new DateTimeImmutable();
-        $akick = ChannelAkick::create(new DateTimeImmutable(), 1, 2, '*!*@host.com');
-        $after = new DateTimeImmutable();
+        $before = new \DateTimeImmutable();
+        $akick = ChannelAkick::create(new \DateTimeImmutable(), 1, 2, '*!*@host.com');
+        $after = new \DateTimeImmutable();
 
         self::assertGreaterThanOrEqual($before, $akick->getCreatedAt());
         self::assertLessThanOrEqual($after, $akick->getCreatedAt());
@@ -147,9 +144,9 @@ final class ChannelAkickTest extends TestCase
     #[Test]
     public function getIdReturnsIdAfterReflectionSet(): void
     {
-        $akick = ChannelAkick::create(new DateTimeImmutable(), 1, 2, '*!*@host.com');
+        $akick = ChannelAkick::create(new \DateTimeImmutable(), 1, 2, '*!*@host.com');
 
-        $reflection = new ReflectionClass($akick);
+        $reflection = new \ReflectionClass($akick);
         $property = $reflection->getProperty('id');
         $property->setValue($akick, 42);
 

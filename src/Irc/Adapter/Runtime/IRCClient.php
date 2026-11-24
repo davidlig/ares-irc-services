@@ -20,11 +20,9 @@ use App\Irc\Application\Port\In\Maintenance\RunMaintenanceCycle;
 use App\Irc\Domain\Server\ServerLink;
 use App\Shared\Application\Port\AsyncMessageDispatcherInterface;
 use App\Shared\Application\Port\EventBusInterface;
-use LogicException;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Revolt\EventLoop;
-use Throwable;
 
 use function Amp\async;
 use function gc_collect_cycles;
@@ -86,7 +84,7 @@ class IRCClient implements IrcSessionInterface
         $this->connection->connect();
         try {
             $this->protocol->performHandshake($this->connection, $link);
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             $this->connection->disconnect();
             if ($this->protocol instanceof SessionEventPumpAwareInterface) {
                 $this->protocol->setEventPump(null);
@@ -150,7 +148,7 @@ class IRCClient implements IrcSessionInterface
                         $this->processIncomingLine($rawLine);
                     });
                 }
-            } catch (Throwable $e) {
+            } catch (\Throwable $e) {
                 if (!$this->finalized) {
                     $this->eventPump->awaitReaderCapacity();
                     $this->eventPump->enqueue(static function () use ($e): void {
@@ -171,7 +169,7 @@ class IRCClient implements IrcSessionInterface
 
         try {
             $this->eventPump->drain();
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             $this->firstCloseReason ??= $e->getMessage();
             throw $e;
         } finally {
@@ -244,7 +242,7 @@ class IRCClient implements IrcSessionInterface
             $this->eventPump->enqueueCoalesced('maintenance', function (): void {
                 $this->executeMaintenance();
             });
-        } catch (LogicException) {
+        } catch (\LogicException) {
         }
     }
 
@@ -259,7 +257,7 @@ class IRCClient implements IrcSessionInterface
      * Idempotent: safe to call multiple times, cancels timers, stops event pump,
      * dispatches ConnectionLostEvent exactly once, and disconnects transport.
      */
-    private function finalizeSession(string $reason, ?Throwable $exception = null): void
+    private function finalizeSession(string $reason, ?\Throwable $exception = null): void
     {
         if ($this->finalized) {
             return;

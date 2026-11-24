@@ -11,6 +11,7 @@ enum ForbidNickOutcome
     case TargetIsRoot;
     case TargetIsIrcop;
     case TargetIsService;
+
     /** The stored key belongs to a different nick under the negotiated casemapping. */
     case TargetSharesKeyWithOtherNick;
 }

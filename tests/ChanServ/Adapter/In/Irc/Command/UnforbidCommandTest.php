@@ -26,7 +26,6 @@ use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
 use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\Shared\Application\Port\EventBusInterface;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -175,7 +174,7 @@ final class UnforbidCommandTest extends TestCase
         $sender = $this->createSender();
 
         $forbiddenService = $this->createMock(ChannelForbiddenService::class);
-        $forbiddenService->expects(self::once())->method('unforbid')->with('#test', 'OperUser', self::isInstanceOf(DateTimeImmutable::class))->willReturn(true);
+        $forbiddenService->expects(self::once())->method('unforbid')->with('#test', 'OperUser', self::isInstanceOf(\DateTimeImmutable::class))->willReturn(true);
 
         $cmd = $this->createCommandWith($forbiddenService);
 
@@ -193,7 +192,7 @@ final class UnforbidCommandTest extends TestCase
         $sender = $this->createSender();
 
         $forbiddenService = $this->createMock(ChannelForbiddenService::class);
-        $forbiddenService->expects(self::once())->method('unforbid')->with('#test', 'OperUser', self::isInstanceOf(DateTimeImmutable::class))->willReturn(false);
+        $forbiddenService->expects(self::once())->method('unforbid')->with('#test', 'OperUser', self::isInstanceOf(\DateTimeImmutable::class))->willReturn(false);
 
         $cmd = $this->createCommandWith($forbiddenService);
 

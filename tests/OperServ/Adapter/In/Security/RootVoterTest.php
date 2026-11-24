@@ -13,7 +13,6 @@ use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use stdClass;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\VoterInterface;
 
@@ -59,7 +58,7 @@ final class RootVoterTest extends TestCase
 
         self::assertSame(VoterInterface::ACCESS_DENIED, $voter->vote($token, $this->subject(null, null, false, false), ['ROOT']));
         self::assertSame(VoterInterface::ACCESS_ABSTAIN, $voter->vote($token, $this->subject('RootAdmin', 1, true, false), ['OTHER']));
-        self::assertSame(VoterInterface::ACCESS_ABSTAIN, $voter->vote($token, new stdClass(), ['ROOT']));
+        self::assertSame(VoterInterface::ACCESS_ABSTAIN, $voter->vote($token, new \stdClass(), ['ROOT']));
     }
 
     private function subject(?string $nickname, ?int $accountId, bool $identified, bool $ircOperator): IrcopAuthorizationSubject

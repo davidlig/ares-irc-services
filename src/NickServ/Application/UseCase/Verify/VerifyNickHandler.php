@@ -18,7 +18,6 @@ use App\NickServ\Application\PublishedEvent\NickPasswordHashAvailable;
 use App\NickServ\Application\Service\NickHistoryService;
 use App\NickServ\Domain\ValueObject\NickStatus;
 use App\Shared\Domain\IrcIdentityFold;
-use DateTimeImmutable;
 
 final readonly class VerifyNickHandler implements VerifyNickHandlerInterface
 {
@@ -90,7 +89,7 @@ final readonly class VerifyNickHandler implements VerifyNickHandlerInterface
         return VerifyNickResult::success($account->getNickname());
     }
 
-    private function recordActivation(VerifyNick $command, int $nickId, DateTimeImmutable $occurredAt): void
+    private function recordActivation(VerifyNick $command, int $nickId, \DateTimeImmutable $occurredAt): void
     {
         $this->history->recordWithExplicitMetadata(
             nickId: $nickId,

@@ -8,7 +8,6 @@ use App\OperServ\Adapter\Out\Projection\DoctrineGlineProjectionQuery;
 use App\OperServ\Application\Port\In\GlineProjection;
 use App\OperServ\Application\Port\Out\GlineEntry;
 use App\OperServ\Application\Port\Out\GlineRepository;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -20,8 +19,8 @@ final class DoctrineGlineProjectionQueryTest extends TestCase
     #[Test]
     public function projectsEveryActiveGlineWithoutExposingDomainEntities(): void
     {
-        $expiresAt = new DateTimeImmutable('+1 hour');
-        $createdAt = new DateTimeImmutable('2026-01-01T00:00:00+00:00');
+        $expiresAt = new \DateTimeImmutable('+1 hour');
+        $createdAt = new \DateTimeImmutable('2026-01-01T00:00:00+00:00');
         $gline = new GlineEntry('*@bad.example', 7, 'abuse', $createdAt, $expiresAt, 1);
         $repository = $this->createStub(GlineRepository::class);
         $repository->method('findActiveAt')->willReturn([$gline]);

@@ -30,7 +30,6 @@ use App\OperServ\Adapter\Out\Logging\PsrCommandAuditSink;
 use App\OperServ\Application\Port\In\Audit\CommandAuditCategory;
 use App\OperServ\Application\UseCase\RecordCommandAudit;
 use ArrayObject;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\TestWith;
@@ -50,7 +49,7 @@ final class CregCommandTest extends TestCase
     #[TestWith([false])]
     public function successfulDecisionsKeepTheirExistingIrcopLogTrace(bool $accepted): void
     {
-        $pending = RegisteredChannel::createPendingRegistration(new DateTimeImmutable(), '#test', 7, 'Description');
+        $pending = RegisteredChannel::createPendingRegistration(new \DateTimeImmutable(), '#test', 7, 'Description');
         $review = $this->createStub(ReviewRegistrationHandlerInterface::class);
         $review->method('handle')->willReturn(new ReviewRegistrationResult($accepted ? ReviewRegistrationOutcome::Accepted : ReviewRegistrationOutcome::Rejected));
         [$command, $context, $messages] = $this->context(
@@ -59,7 +58,7 @@ final class CregCommandTest extends TestCase
             $this->createStub(ChanUserAccountPort::class),
             $review,
         );
-        $before = new DateTimeImmutable();
+        $before = new \DateTimeImmutable();
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects(self::once())->method('info')->with('Security command audit', self::callback(
             static fn (array $data): bool => CommandAuditCategory::OperatorAction->value === $data['category']
@@ -71,8 +70,8 @@ final class CregCommandTest extends TestCase
                 && ($accepted ? 'accepted' : 'rejected') === $data['metadata_decision']
                 && ($accepted ? !isset($data['reason']) : 'Needs more detail' === $data['reason'])
                 && is_string($data['occurred_at'])
-                && $before->getTimestamp() <= new DateTimeImmutable($data['occurred_at'])->getTimestamp()
-                && new DateTimeImmutable($data['occurred_at'])->getTimestamp() <= new DateTimeImmutable()->getTimestamp(),
+                && $before->getTimestamp() <= new \DateTimeImmutable($data['occurred_at'])->getTimestamp()
+                && new \DateTimeImmutable($data['occurred_at'])->getTimestamp() <= new \DateTimeImmutable()->getTimestamp(),
         ));
         $audit = new CommandExecutedAuditSubscriber(new RecordCommandAudit([new PsrCommandAuditSink($logger)]));
 
@@ -110,7 +109,7 @@ final class CregCommandTest extends TestCase
     #[Test]
     public function pendingListsRequesterSubmissionAndDescription(): void
     {
-        $pending = RegisteredChannel::createPendingRegistration(new DateTimeImmutable('2026-10-26T12:00:00+00:00'), '#test', 7, 'Description');
+        $pending = RegisteredChannel::createPendingRegistration(new \DateTimeImmutable('2026-10-26T12:00:00+00:00'), '#test', 7, 'Description');
         $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channels->method('findPendingPage')->willReturn([$pending]);
         $accounts = $this->createStub(ChanUserAccountPort::class);
@@ -127,7 +126,7 @@ final class CregCommandTest extends TestCase
     #[Test]
     public function acceptRevalidatesCurrentRequesterRankBeforeCallingReview(): void
     {
-        $pending = RegisteredChannel::createPendingRegistration(new DateTimeImmutable(), '#test', 7, 'Description');
+        $pending = RegisteredChannel::createPendingRegistration(new \DateTimeImmutable(), '#test', 7, 'Description');
         $channels = $this->channelRepository($pending);
         $accounts = $this->createStub(ChanUserAccountPort::class);
         $accounts->method('findNicknameById')->willReturn('Requester');
@@ -144,7 +143,7 @@ final class CregCommandTest extends TestCase
     #[Test]
     public function acceptCannotBorrowApproverRankWhenRequesterHasOnlyVoice(): void
     {
-        $pending = RegisteredChannel::createPendingRegistration(new DateTimeImmutable(), '#test', 7, 'Description');
+        $pending = RegisteredChannel::createPendingRegistration(new \DateTimeImmutable(), '#test', 7, 'Description');
         $accounts = $this->createStub(ChanUserAccountPort::class);
         $accounts->method('findNicknameById')->willReturn('Requester');
         $review = $this->createMock(ReviewRegistrationHandlerInterface::class);
@@ -158,7 +157,7 @@ final class CregCommandTest extends TestCase
     #[Test]
     public function rejectRequiresNonblankReasonAndHasNoReviewSideEffectsOtherwise(): void
     {
-        $pending = RegisteredChannel::createPendingRegistration(new DateTimeImmutable(), '#test', 7, 'Description');
+        $pending = RegisteredChannel::createPendingRegistration(new \DateTimeImmutable(), '#test', 7, 'Description');
         $channels = $this->channelRepository($pending);
         $accounts = $this->createStub(ChanUserAccountPort::class);
         $review = $this->createMock(ReviewRegistrationHandlerInterface::class);
@@ -172,7 +171,7 @@ final class CregCommandTest extends TestCase
     #[Test]
     public function missingApproverIdentityCannotReachReviewHandler(): void
     {
-        $pending = RegisteredChannel::createPendingRegistration(new DateTimeImmutable(), '#test', 7, 'Description');
+        $pending = RegisteredChannel::createPendingRegistration(new \DateTimeImmutable(), '#test', 7, 'Description');
         $review = $this->createMock(ReviewRegistrationHandlerInterface::class);
         $review->expects(self::never())->method('handle');
         [$command, $context, $messages] = $this->context(['REJECT', '#test', 'Reason'], $this->channelRepository($pending), $this->createStub(ChanUserAccountPort::class), $review, withOperatorAccount: false);
@@ -184,7 +183,7 @@ final class CregCommandTest extends TestCase
     #[Test]
     public function rejectPassesRequiredReasonAndReportsSuccess(): void
     {
-        $pending = RegisteredChannel::createPendingRegistration(new DateTimeImmutable(), '#test', 7, 'Description');
+        $pending = RegisteredChannel::createPendingRegistration(new \DateTimeImmutable(), '#test', 7, 'Description');
         $channels = $this->channelRepository($pending);
         $accounts = $this->createStub(ChanUserAccountPort::class);
         $review = $this->createMock(ReviewRegistrationHandlerInterface::class);
@@ -207,7 +206,7 @@ final class CregCommandTest extends TestCase
             [ReviewRegistrationOutcome::RequesterInactive, 'creg.requester_inactive'],
             [ReviewRegistrationOutcome::RequesterIneligible, 'creg.requester_ineligible'],
         ] as [$failure, $message]) {
-            $pending = RegisteredChannel::createPendingRegistration(new DateTimeImmutable(), '#test', 7, 'Description');
+            $pending = RegisteredChannel::createPendingRegistration(new \DateTimeImmutable(), '#test', 7, 'Description');
             $channels = $this->channelRepository($pending);
             $review = $this->createMock(ReviewRegistrationHandlerInterface::class);
             $review->expects(self::once())->method('handle')->willReturn(new ReviewRegistrationResult($failure));
@@ -221,7 +220,7 @@ final class CregCommandTest extends TestCase
     #[Test]
     public function missingRequesterMembershipDoesNotBorrowOperatorRank(): void
     {
-        $pending = RegisteredChannel::createPendingRegistration(new DateTimeImmutable(), '#test', 7, 'Description');
+        $pending = RegisteredChannel::createPendingRegistration(new \DateTimeImmutable(), '#test', 7, 'Description');
         $accounts = $this->createStub(ChanUserAccountPort::class);
         $accounts->method('findNicknameById')->willReturn('Requester');
         $review = $this->createMock(ReviewRegistrationHandlerInterface::class);
@@ -268,7 +267,7 @@ final class CregCommandTest extends TestCase
         string $memberUid = 'UID2',
     ): array {
         /** @var ArrayObject<int, string> $messages */
-        $messages = new ArrayObject();
+        $messages = new \ArrayObject();
         $notifier = $this->createStub(ChanServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $uid, string $message) use (&$messages): void { $messages[] = $message; });
         $translator = $this->createStub(TranslatorInterface::class);

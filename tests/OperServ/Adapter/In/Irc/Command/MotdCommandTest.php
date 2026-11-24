@@ -22,7 +22,6 @@ use App\OperServ\Application\UseCase\ManageMotd\MotdListEntry;
 use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
 use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
 use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -164,7 +163,7 @@ final class MotdCommandTest extends TestCase
         $notifier = new RecordingMotdCommandNotifier();
         $result = new ManageMotdResult(ManageMotdOutcome::Listed, entries: [
             new MotdListEntry(1, 'Expired', '', MessageDelivery::NonInteractive, true, true, null, 0),
-            new MotdListEntry(2, 'Enabled', 'NickServ', MessageDelivery::Interactive, true, false, new DateTimeImmutable('2026-09-08T10:00:00+00:00'), 2),
+            new MotdListEntry(2, 'Enabled', 'NickServ', MessageDelivery::Interactive, true, false, new \DateTimeImmutable('2026-09-08T10:00:00+00:00'), 2),
             new MotdListEntry(3, 'Disabled', 'OperServ', MessageDelivery::NonInteractive, false, false, null, 3),
         ]);
 

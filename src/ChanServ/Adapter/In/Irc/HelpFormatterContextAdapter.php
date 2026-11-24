@@ -10,7 +10,6 @@ use App\ChanServ\Application\Port\Out\ChanServOperatorAccess;
 use App\ChanServ\Application\Security\ChanServPermission;
 use App\Shared\Adapter\In\Irc\Presentation\Component;
 use App\Shared\Adapter\In\Irc\Presentation\Fragment;
-use InvalidArgumentException;
 
 use function is_string;
 use function mb_strlen;
@@ -205,7 +204,7 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
     {
         $value = $params[$name] ?? null;
         if (!is_string($value)) {
-            throw new InvalidArgumentException('HELP presentation parameter must be a string: ' . $name);
+            throw new \InvalidArgumentException('HELP presentation parameter must be a string: ' . $name);
         }
 
         return $value;

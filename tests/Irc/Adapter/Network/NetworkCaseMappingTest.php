@@ -26,7 +26,6 @@ use App\Irc\Domain\ValueObject\Nick;
 use App\Irc\Domain\ValueObject\Port;
 use App\Irc\Domain\ValueObject\ServerName;
 use App\Irc\Domain\ValueObject\Uid;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -51,7 +50,7 @@ final class NetworkCaseMappingTest extends TestCase
         $dispatcher->addSubscriber($channels);
         $dispatcher->addSubscriber(new CaseMappingSessionSubscriber($dispatcher));
         $link = new ServerLink(new ServerName('test.example'), new Hostname('localhost'), new Port(6667), new LinkPassword('synthetic'), 'Test');
-        $channel = new Channel(new ChannelName('#room[a]'), '', new DateTimeImmutable('@0'));
+        $channel = new Channel(new ChannelName('#room[a]'), '', new \DateTimeImmutable('@0'));
         $channels->save($channel);
         foreach ([new ConnectionEstablishedEvent($link), new ConnectionLostEvent($link, 'closed')] as $event) {
             $dispatcher->dispatch(new CaseMappingChangedEvent(CaseMapping::Rfc1459));
@@ -72,7 +71,7 @@ final class NetworkCaseMappingTest extends TestCase
         foreach ([$users, $channels, $sync] as $subscriber) {
             $dispatcher->addSubscriber($subscriber);
         }
-        $channel = new Channel(new ChannelName('#room[a]'), '', new DateTimeImmutable('@0'));
+        $channel = new Channel(new ChannelName('#room[a]'), '', new \DateTimeImmutable('@0'));
         $channels->save($channel);
         $handler = new InspIRCdProtocolHandler(eventDispatcher: $dispatcher);
         $connection = $this->createStub(ConnectionInterface::class);
@@ -92,10 +91,10 @@ final class NetworkCaseMappingTest extends TestCase
         $sync = new ChannelSyncCompletedRegistry();
         $name = new ChannelName('#room[a]');
         $alias = new ChannelName('#ROOM{A}');
-        $user = new NetworkUser(new Uid('001AAAAAA'), new Nick('nick[a]'), new Ident('ident'), 'host', 'cloak', '*', '+', new DateTimeImmutable('@0'), 'Real', '001', '*');
+        $user = new NetworkUser(new Uid('001AAAAAA'), new Nick('nick[a]'), new Ident('ident'), 'host', 'cloak', '*', '+', new \DateTimeImmutable('@0'), 'Real', '001', '*');
         $user->addChannel($name);
         $users->add($user);
-        $channel = new Channel($name, '', new DateTimeImmutable('@0'));
+        $channel = new Channel($name, '', new \DateTimeImmutable('@0'));
         $channel->addBan('nick[a]!*@*');
         $channels->save($channel);
         $sync->markSyncCompleted($name->value);

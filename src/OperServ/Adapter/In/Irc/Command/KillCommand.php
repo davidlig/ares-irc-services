@@ -14,7 +14,6 @@ use App\OperServ\Application\UseCase\Kill\KillNetworkUserResult;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use App\Shared\Adapter\In\Irc\Presentation\Role;
-use DateTimeImmutable;
 
 use function array_slice;
 use function implode;
@@ -104,7 +103,7 @@ final readonly class KillCommand implements OperServCommandInterface
             serviceNickname: $context->getBotName(),
             targetNickname: $context->args[0],
             reason: implode(' ', array_slice($context->args, 1)),
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
         )));
     }
 

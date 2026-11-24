@@ -10,7 +10,6 @@ use Closure;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
 
 use function array_slice;
 use function count;
@@ -95,7 +94,7 @@ final class ConsumerProcessManagerTest extends TestCase
 
             $manager->start();
 
-            $reflection = new ReflectionClass($manager);
+            $reflection = new \ReflectionClass($manager);
             $pipesProperty = $reflection->getProperty('pipes');
             $pipes = $pipesProperty->getValue($manager);
 
@@ -158,7 +157,7 @@ final class ConsumerProcessManagerTest extends TestCase
             $manager->start();
             $manager->stop();
 
-            $reflection = new ReflectionClass($manager);
+            $reflection = new \ReflectionClass($manager);
             $processProperty = $reflection->getProperty('process');
             $processProperty->setValue($manager, null);
 
@@ -177,13 +176,13 @@ final class ConsumerProcessManagerTest extends TestCase
         $now = 0.0;
         $scheduler = new class implements LoopSchedulerInterface {
             /** @var Closure(string): void|null */
-            public ?Closure $callback = null;
+            public ?\Closure $callback = null;
 
             public bool $cancelled = false;
 
             public int $repeatCount = 0;
 
-            public function repeat(float $intervalSeconds, Closure $callback): string
+            public function repeat(float $intervalSeconds, \Closure $callback): string
             {
                 TestCase::assertSame(1.0, $intervalSeconds);
                 ++$this->repeatCount;
@@ -192,7 +191,7 @@ final class ConsumerProcessManagerTest extends TestCase
                 return 'consumer-supervisor';
             }
 
-            public function delay(float $delaySeconds, Closure $callback): string
+            public function delay(float $delaySeconds, \Closure $callback): string
             {
                 TestCase::fail('Consumer supervisor must not schedule a one-shot timer.');
             }
@@ -263,16 +262,16 @@ final class ConsumerProcessManagerTest extends TestCase
         $now = 0.0;
         $scheduler = new class implements LoopSchedulerInterface {
             /** @var Closure(string): void|null */
-            public ?Closure $callback = null;
+            public ?\Closure $callback = null;
 
-            public function repeat(float $intervalSeconds, Closure $callback): string
+            public function repeat(float $intervalSeconds, \Closure $callback): string
             {
                 $this->callback = $callback;
 
                 return 'supervisor';
             }
 
-            public function delay(float $delaySeconds, Closure $callback): string
+            public function delay(float $delaySeconds, \Closure $callback): string
             {
                 TestCase::fail('Consumer supervisor must not schedule a one-shot timer.');
             }
@@ -288,7 +287,7 @@ final class ConsumerProcessManagerTest extends TestCase
             self::assertTrue($manager->isRunning());
             self::assertNotNull($scheduler->callback);
 
-            $reflection = new ReflectionClass($manager);
+            $reflection = new \ReflectionClass($manager);
             $restartDelay = $reflection->getProperty('restartDelaySeconds');
             $restartDelay->setValue($manager, 30);
             $now = 61.0;
@@ -310,16 +309,16 @@ final class ConsumerProcessManagerTest extends TestCase
         $now = 0.0;
         $scheduler = new class implements LoopSchedulerInterface {
             /** @var Closure(string): void|null */
-            public ?Closure $callback = null;
+            public ?\Closure $callback = null;
 
-            public function repeat(float $intervalSeconds, Closure $callback): string
+            public function repeat(float $intervalSeconds, \Closure $callback): string
             {
                 $this->callback = $callback;
 
                 return 'supervisor';
             }
 
-            public function delay(float $delaySeconds, Closure $callback): string
+            public function delay(float $delaySeconds, \Closure $callback): string
             {
                 TestCase::fail('Consumer supervisor must not schedule a one-shot timer.');
             }
@@ -334,7 +333,7 @@ final class ConsumerProcessManagerTest extends TestCase
             $manager->start();
             self::assertNotNull($scheduler->callback);
 
-            $reflection = new ReflectionClass($manager);
+            $reflection = new \ReflectionClass($manager);
             $process = $reflection->getProperty('process')->getValue($manager);
             self::assertIsResource($process);
             proc_terminate($process, SIGKILL);
@@ -381,7 +380,7 @@ final class ConsumerProcessManagerTest extends TestCase
             $manager->stop();
 
             self::assertFalse($manager->isRunning());
-            $reflection = new ReflectionClass($manager);
+            $reflection = new \ReflectionClass($manager);
             self::assertNull($reflection->getProperty('process')->getValue($manager));
             self::assertNull($reflection->getProperty('pipes')->getValue($manager));
         } finally {

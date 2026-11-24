@@ -8,7 +8,6 @@ use App\NickServ\Adapter\Out\Persistence\Doctrine\NickHistoryDoctrineRepository;
 use App\NickServ\Application\Port\Out\NickHistoryRepositoryInterface;
 use App\NickServ\Domain\Entity\NickHistory;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
@@ -62,7 +61,7 @@ final class NickHistoryDoctrineRepositoryTest extends DoctrineIntegrationTestCas
             performedBy: 'OPER',
             performedByNickId: 10,
             message: 'Suspended',
-            performedAt: new DateTimeImmutable('2024-01-15 10:30:00'),
+            performedAt: new \DateTimeImmutable('2024-01-15 10:30:00'),
             extraData: ['reason' => 'Spam', 'duration' => '7d']
         );
 
@@ -84,9 +83,9 @@ final class NickHistoryDoctrineRepositoryTest extends DoctrineIntegrationTestCas
     #[Test]
     public function findByNickIdReturnsHistoryOrderedByPerformedAtDesc(): void
     {
-        $history1 = $this->createHistory(1, 'SET_PASSWORD', 'User1', 1, 'First', new DateTimeImmutable('-2 hours'));
-        $history2 = $this->createHistory(1, 'SET_EMAIL', 'User1', 1, 'Second', new DateTimeImmutable('-1 hour'));
-        $history3 = $this->createHistory(1, 'SET_URL', 'User1', 1, 'Third', new DateTimeImmutable('now'));
+        $history1 = $this->createHistory(1, 'SET_PASSWORD', 'User1', 1, 'First', new \DateTimeImmutable('-2 hours'));
+        $history2 = $this->createHistory(1, 'SET_EMAIL', 'User1', 1, 'Second', new \DateTimeImmutable('-1 hour'));
+        $history3 = $this->createHistory(1, 'SET_URL', 'User1', 1, 'Third', new \DateTimeImmutable('now'));
 
         $this->repository->save($history1);
         $this->repository->save($history2);
@@ -143,9 +142,9 @@ final class NickHistoryDoctrineRepositoryTest extends DoctrineIntegrationTestCas
     #[Test]
     public function findByNickIdWithOffset(): void
     {
-        $history1 = $this->createHistory(1, 'ACTION1', 'User', 1, 'One', new DateTimeImmutable('-3 hours'));
-        $history2 = $this->createHistory(1, 'ACTION2', 'User', 1, 'Two', new DateTimeImmutable('-2 hours'));
-        $history3 = $this->createHistory(1, 'ACTION3', 'User', 1, 'Three', new DateTimeImmutable('-1 hour'));
+        $history1 = $this->createHistory(1, 'ACTION1', 'User', 1, 'One', new \DateTimeImmutable('-3 hours'));
+        $history2 = $this->createHistory(1, 'ACTION2', 'User', 1, 'Two', new \DateTimeImmutable('-2 hours'));
+        $history3 = $this->createHistory(1, 'ACTION3', 'User', 1, 'Three', new \DateTimeImmutable('-1 hour'));
 
         $this->repository->save($history1);
         $this->repository->save($history2);
@@ -161,10 +160,10 @@ final class NickHistoryDoctrineRepositoryTest extends DoctrineIntegrationTestCas
     #[Test]
     public function findByNickIdWithLimitAndOffset(): void
     {
-        $history1 = $this->createHistory(1, 'ACTION1', 'User', 1, 'One', new DateTimeImmutable('-3 hours'));
-        $history2 = $this->createHistory(1, 'ACTION2', 'User', 1, 'Two', new DateTimeImmutable('-2 hours'));
-        $history3 = $this->createHistory(1, 'ACTION3', 'User', 1, 'Three', new DateTimeImmutable('-1 hour'));
-        $history4 = $this->createHistory(1, 'ACTION4', 'User', 1, 'Four', new DateTimeImmutable('now'));
+        $history1 = $this->createHistory(1, 'ACTION1', 'User', 1, 'One', new \DateTimeImmutable('-3 hours'));
+        $history2 = $this->createHistory(1, 'ACTION2', 'User', 1, 'Two', new \DateTimeImmutable('-2 hours'));
+        $history3 = $this->createHistory(1, 'ACTION3', 'User', 1, 'Three', new \DateTimeImmutable('-1 hour'));
+        $history4 = $this->createHistory(1, 'ACTION4', 'User', 1, 'Four', new \DateTimeImmutable('now'));
 
         $this->repository->save($history1);
         $this->repository->save($history2);
@@ -253,16 +252,16 @@ final class NickHistoryDoctrineRepositoryTest extends DoctrineIntegrationTestCas
     #[Test]
     public function deleteOlderThanRemovesOnlyOlderEntries(): void
     {
-        $old1 = $this->createHistory(1, 'OLD1', 'User', 1, 'Old 1', new DateTimeImmutable('-10 days'));
-        $old2 = $this->createHistory(1, 'OLD2', 'User', 1, 'Old 2', new DateTimeImmutable('-8 days'));
-        $recent = $this->createHistory(1, 'RECENT', 'User', 1, 'Recent', new DateTimeImmutable('-1 day'));
+        $old1 = $this->createHistory(1, 'OLD1', 'User', 1, 'Old 1', new \DateTimeImmutable('-10 days'));
+        $old2 = $this->createHistory(1, 'OLD2', 'User', 1, 'Old 2', new \DateTimeImmutable('-8 days'));
+        $recent = $this->createHistory(1, 'RECENT', 'User', 1, 'Recent', new \DateTimeImmutable('-1 day'));
 
         $this->repository->save($old1);
         $this->repository->save($old2);
         $this->repository->save($recent);
         $this->flushAndClear();
 
-        $threshold = new DateTimeImmutable('-5 days');
+        $threshold = new \DateTimeImmutable('-5 days');
         $count = $this->repository->deleteOlderThan($threshold);
         $this->flushAndClear();
 
@@ -276,11 +275,11 @@ final class NickHistoryDoctrineRepositoryTest extends DoctrineIntegrationTestCas
     #[Test]
     public function deleteOlderThanReturnsZeroWhenNoneOlder(): void
     {
-        $history = $this->createHistory(1, 'RECENT', 'User', 1, 'Recent', new DateTimeImmutable('-1 day'));
+        $history = $this->createHistory(1, 'RECENT', 'User', 1, 'Recent', new \DateTimeImmutable('-1 day'));
         $this->repository->save($history);
         $this->flushAndClear();
 
-        $threshold = new DateTimeImmutable('-30 days');
+        $threshold = new \DateTimeImmutable('-30 days');
         $count = $this->repository->deleteOlderThan($threshold);
 
         self::assertSame(0, $count);
@@ -290,10 +289,10 @@ final class NickHistoryDoctrineRepositoryTest extends DoctrineIntegrationTestCas
     #[Test]
     public function deleteOlderThanWithBoundaryExactly(): void
     {
-        $threshold = new DateTimeImmutable('-5 days');
+        $threshold = new \DateTimeImmutable('-5 days');
         $exactly5Days = $threshold->modify('+1 second');
 
-        $older = $this->createHistory(1, 'OLDER', 'User', 1, 'Older', new DateTimeImmutable('-6 days'));
+        $older = $this->createHistory(1, 'OLDER', 'User', 1, 'Older', new \DateTimeImmutable('-6 days'));
         $exact = $this->createHistory(1, 'EXACT', 'User', 1, 'Exact', $exactly5Days);
 
         $this->repository->save($older);
@@ -336,7 +335,7 @@ final class NickHistoryDoctrineRepositoryTest extends DoctrineIntegrationTestCas
         string $performedBy,
         ?int $performedByNickId,
         string $message,
-        ?DateTimeImmutable $performedAt = null
+        ?\DateTimeImmutable $performedAt = null
     ): NickHistory {
         return NickHistory::record(
             nickId: $nickId,
@@ -344,7 +343,7 @@ final class NickHistoryDoctrineRepositoryTest extends DoctrineIntegrationTestCas
             performedBy: $performedBy,
             performedByNickId: $performedByNickId,
             message: $message,
-            performedAt: $performedAt ?? new DateTimeImmutable('2024-01-15 10:30:00')
+            performedAt: $performedAt ?? new \DateTimeImmutable('2024-01-15 10:30:00')
         );
     }
 }

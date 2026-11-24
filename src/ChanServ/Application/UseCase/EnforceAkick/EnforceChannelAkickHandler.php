@@ -14,8 +14,6 @@ use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\Policy\PreparedAkickRules;
 use App\ChanServ\Domain\ValueObject\AkickMask;
 use App\ChanServ\Domain\ValueObject\AkickRule;
-use DateTimeImmutable;
-use InvalidArgumentException;
 
 use function array_values;
 use function spl_object_id;
@@ -47,7 +45,7 @@ final readonly class EnforceChannelAkickHandler implements EnforceChannelAkickHa
         return $this->handleKnownChannel($channel, [$member], $command->now);
     }
 
-    public function handleKnownChannel(RegisteredChannel $channel, array $members, DateTimeImmutable $now): int
+    public function handleKnownChannel(RegisteredChannel $channel, array $members, \DateTimeImmutable $now): int
     {
         if ($channel->isBlocked()) {
             return 0;
@@ -56,7 +54,7 @@ final readonly class EnforceChannelAkickHandler implements EnforceChannelAkickHa
         return $this->handleKnownChannelWithAkicks($channel, $members, $now, array_values($this->akicks->listByChannel($channel->getId())));
     }
 
-    public function handleKnownChannelWithAkicks(RegisteredChannel $channel, array $members, DateTimeImmutable $now, array $akicks): int
+    public function handleKnownChannelWithAkicks(RegisteredChannel $channel, array $members, \DateTimeImmutable $now, array $akicks): int
     {
         if ($channel->isBlocked()) {
             return 0;
@@ -71,7 +69,7 @@ final readonly class EnforceChannelAkickHandler implements EnforceChannelAkickHa
                     $akick->getReason(),
                     $akick->getExpiresAt(),
                 );
-            } catch (InvalidArgumentException) {
+            } catch (\InvalidArgumentException) {
                 $this->activity->warning(sprintf('Skipping invalid AKICK rule for channel ID %d.', $channel->getId()));
                 continue;
             }

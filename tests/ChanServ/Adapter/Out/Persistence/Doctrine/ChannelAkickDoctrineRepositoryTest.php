@@ -7,12 +7,9 @@ namespace App\Tests\ChanServ\Adapter\Out\Persistence\Doctrine;
 use App\ChanServ\Adapter\Out\Persistence\Doctrine\ChannelAkickDoctrineRepository;
 use App\ChanServ\Domain\Entity\ChannelAkick;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
-use DateTimeImmutable;
-use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
-use ReflectionProperty;
 
 use function array_map;
 use function array_values;
@@ -27,7 +24,7 @@ final class ChannelAkickDoctrineRepositoryTest extends DoctrineIntegrationTestCa
     public function savePersistsAkick(): void
     {
         $akick = ChannelAkick::create(
-            new DateTimeImmutable(),
+            new \DateTimeImmutable(),
             channelId: 1,
             creatorNickId: 100,
             mask: '*!*@test.com',
@@ -51,8 +48,8 @@ final class ChannelAkickDoctrineRepositoryTest extends DoctrineIntegrationTestCa
     #[Test]
     public function saveAllPersistsMultipleAkicks(): void
     {
-        $first = ChannelAkick::create(new DateTimeImmutable(), 1, 100, '*!*@first.test');
-        $second = ChannelAkick::create(new DateTimeImmutable(), 1, 100, '*!*@second.test');
+        $first = ChannelAkick::create(new \DateTimeImmutable(), 1, 100, '*!*@first.test');
+        $second = ChannelAkick::create(new \DateTimeImmutable(), 1, 100, '*!*@second.test');
         $this->repository->saveAll([$first, $second]);
         $this->flushAndClear();
 
@@ -64,7 +61,7 @@ final class ChannelAkickDoctrineRepositoryTest extends DoctrineIntegrationTestCa
     public function saveWithNullReason(): void
     {
         $akick = ChannelAkick::create(
-            new DateTimeImmutable(),
+            new \DateTimeImmutable(),
             channelId: 1,
             creatorNickId: 100,
             mask: '*!*@host.com',
@@ -84,10 +81,10 @@ final class ChannelAkickDoctrineRepositoryTest extends DoctrineIntegrationTestCa
     #[Test]
     public function saveWithExpiryDate(): void
     {
-        $expiresAt = new DateTimeImmutable('+7 days');
+        $expiresAt = new \DateTimeImmutable('+7 days');
 
         $akick = ChannelAkick::create(
-            new DateTimeImmutable(),
+            new \DateTimeImmutable(),
             channelId: 1,
             creatorNickId: 100,
             mask: '*!*@temp.com',
@@ -108,7 +105,7 @@ final class ChannelAkickDoctrineRepositoryTest extends DoctrineIntegrationTestCa
     public function removeDeletesAkick(): void
     {
         $akick = ChannelAkick::create(
-            new DateTimeImmutable(),
+            new \DateTimeImmutable(),
             channelId: 1,
             creatorNickId: 100,
             mask: '*!*@remove.com',
@@ -137,14 +134,14 @@ final class ChannelAkickDoctrineRepositoryTest extends DoctrineIntegrationTestCa
     #[Test]
     public function listByChannelReturnsAkickOrderedByCreatedAt(): void
     {
-        $akick1 = ChannelAkick::create(new DateTimeImmutable(), channelId: 1, creatorNickId: 100, mask: '*!*@first.com');
-        $akick2 = ChannelAkick::create(new DateTimeImmutable(), channelId: 1, creatorNickId: 101, mask: '*!*@second.com');
-        $akick3 = ChannelAkick::create(new DateTimeImmutable(), channelId: 1, creatorNickId: 102, mask: '*!*@third.com');
+        $akick1 = ChannelAkick::create(new \DateTimeImmutable(), channelId: 1, creatorNickId: 100, mask: '*!*@first.com');
+        $akick2 = ChannelAkick::create(new \DateTimeImmutable(), channelId: 1, creatorNickId: 101, mask: '*!*@second.com');
+        $akick3 = ChannelAkick::create(new \DateTimeImmutable(), channelId: 1, creatorNickId: 102, mask: '*!*@third.com');
 
         // Set explicit timestamps to ensure ordering without usleep
-        $this->setCreatedAt($akick1, new DateTimeImmutable('-3 seconds'));
-        $this->setCreatedAt($akick2, new DateTimeImmutable('-2 seconds'));
-        $this->setCreatedAt($akick3, new DateTimeImmutable('-1 second'));
+        $this->setCreatedAt($akick1, new \DateTimeImmutable('-3 seconds'));
+        $this->setCreatedAt($akick2, new \DateTimeImmutable('-2 seconds'));
+        $this->setCreatedAt($akick3, new \DateTimeImmutable('-1 second'));
 
         $this->repository->save($akick1);
         $this->repository->save($akick2);
@@ -162,9 +159,9 @@ final class ChannelAkickDoctrineRepositoryTest extends DoctrineIntegrationTestCa
     #[Test]
     public function listByChannelReturnsOnlyForSpecificChannel(): void
     {
-        $akick1 = ChannelAkick::create(new DateTimeImmutable(), channelId: 1, creatorNickId: 100, mask: '*!*@chan1.com');
-        $akick2 = ChannelAkick::create(new DateTimeImmutable(), channelId: 2, creatorNickId: 100, mask: '*!*@chan2.com');
-        $akick3 = ChannelAkick::create(new DateTimeImmutable(), channelId: 1, creatorNickId: 101, mask: '*!*@chan1b.com');
+        $akick1 = ChannelAkick::create(new \DateTimeImmutable(), channelId: 1, creatorNickId: 100, mask: '*!*@chan1.com');
+        $akick2 = ChannelAkick::create(new \DateTimeImmutable(), channelId: 2, creatorNickId: 100, mask: '*!*@chan2.com');
+        $akick3 = ChannelAkick::create(new \DateTimeImmutable(), channelId: 1, creatorNickId: 101, mask: '*!*@chan1b.com');
 
         $this->repository->save($akick1);
         $this->repository->save($akick2);
@@ -186,7 +183,7 @@ final class ChannelAkickDoctrineRepositoryTest extends DoctrineIntegrationTestCa
     public function findByChannelAndMaskReturnsMatchingAkick(): void
     {
         $akick = ChannelAkick::create(
-            new DateTimeImmutable(),
+            new \DateTimeImmutable(),
             channelId: 1,
             creatorNickId: 100,
             mask: '*!*@specific.com',
@@ -206,7 +203,7 @@ final class ChannelAkickDoctrineRepositoryTest extends DoctrineIntegrationTestCa
     public function findByChannelAndMaskReturnsNullForWrongChannel(): void
     {
         $akick = ChannelAkick::create(
-            new DateTimeImmutable(),
+            new \DateTimeImmutable(),
             channelId: 1,
             creatorNickId: 100,
             mask: '*!*@test.com'
@@ -222,7 +219,7 @@ final class ChannelAkickDoctrineRepositoryTest extends DoctrineIntegrationTestCa
     public function findByChannelAndMaskReturnsNullForWrongMask(): void
     {
         $akick = ChannelAkick::create(
-            new DateTimeImmutable(),
+            new \DateTimeImmutable(),
             channelId: 1,
             creatorNickId: 100,
             mask: '*!*@test.com'
@@ -243,9 +240,9 @@ final class ChannelAkickDoctrineRepositoryTest extends DoctrineIntegrationTestCa
     #[Test]
     public function countByChannelReturnsCorrectCount(): void
     {
-        $akick1 = ChannelAkick::create(new DateTimeImmutable(), channelId: 1, creatorNickId: 100, mask: '*!*@a.com');
-        $akick2 = ChannelAkick::create(new DateTimeImmutable(), channelId: 1, creatorNickId: 101, mask: '*!*@b.com');
-        $akick3 = ChannelAkick::create(new DateTimeImmutable(), channelId: 2, creatorNickId: 100, mask: '*!*@c.com');
+        $akick1 = ChannelAkick::create(new \DateTimeImmutable(), channelId: 1, creatorNickId: 100, mask: '*!*@a.com');
+        $akick2 = ChannelAkick::create(new \DateTimeImmutable(), channelId: 1, creatorNickId: 101, mask: '*!*@b.com');
+        $akick3 = ChannelAkick::create(new \DateTimeImmutable(), channelId: 2, creatorNickId: 100, mask: '*!*@c.com');
 
         $this->repository->save($akick1);
         $this->repository->save($akick2);
@@ -260,11 +257,11 @@ final class ChannelAkickDoctrineRepositoryTest extends DoctrineIntegrationTestCa
     #[Test]
     public function findExpiredReturnsOnlyExpiredAkick(): void
     {
-        $expiredPast = new DateTimeImmutable('-1 hour');
-        $futureExpiry = new DateTimeImmutable('+1 hour');
+        $expiredPast = new \DateTimeImmutable('-1 hour');
+        $futureExpiry = new \DateTimeImmutable('+1 hour');
 
         $expired = ChannelAkick::create(
-            new DateTimeImmutable(),
+            new \DateTimeImmutable(),
             channelId: 1,
             creatorNickId: 100,
             mask: '*!*@expired.com',
@@ -273,7 +270,7 @@ final class ChannelAkickDoctrineRepositoryTest extends DoctrineIntegrationTestCa
         );
 
         $stillValid = ChannelAkick::create(
-            new DateTimeImmutable(),
+            new \DateTimeImmutable(),
             channelId: 1,
             creatorNickId: 101,
             mask: '*!*@valid.com',
@@ -282,7 +279,7 @@ final class ChannelAkickDoctrineRepositoryTest extends DoctrineIntegrationTestCa
         );
 
         $noExpiry = ChannelAkick::create(
-            new DateTimeImmutable(),
+            new \DateTimeImmutable(),
             channelId: 1,
             creatorNickId: 102,
             mask: '*!*@permanent.com',
@@ -304,7 +301,7 @@ final class ChannelAkickDoctrineRepositoryTest extends DoctrineIntegrationTestCa
     public function findExpiredReturnsEmptyArrayWhenNone(): void
     {
         $akick = ChannelAkick::create(
-            new DateTimeImmutable(),
+            new \DateTimeImmutable(),
             channelId: 1,
             creatorNickId: 100,
             mask: '*!*@permanent.com'
@@ -319,11 +316,11 @@ final class ChannelAkickDoctrineRepositoryTest extends DoctrineIntegrationTestCa
     #[Test]
     public function findExpiredReturnsMultipleExpired(): void
     {
-        $past1 = new DateTimeImmutable('-1 hour');
-        $past2 = new DateTimeImmutable('-2 hours');
+        $past1 = new \DateTimeImmutable('-1 hour');
+        $past2 = new \DateTimeImmutable('-2 hours');
 
         $expired1 = ChannelAkick::create(
-            new DateTimeImmutable(),
+            new \DateTimeImmutable(),
             channelId: 1,
             creatorNickId: 100,
             mask: '*!*@exp1.com',
@@ -331,7 +328,7 @@ final class ChannelAkickDoctrineRepositoryTest extends DoctrineIntegrationTestCa
         );
 
         $expired2 = ChannelAkick::create(
-            new DateTimeImmutable(),
+            new \DateTimeImmutable(),
             channelId: 2,
             creatorNickId: 101,
             mask: '*!*@exp2.com',
@@ -350,9 +347,9 @@ final class ChannelAkickDoctrineRepositoryTest extends DoctrineIntegrationTestCa
     #[Test]
     public function findExpiredPagesByExpiryThenIdAfterTheKeysetCursor(): void
     {
-        $tiedExpiry = new DateTimeImmutable('-1 hour');
-        foreach (['*!*@first.com' => $tiedExpiry, '*!*@active.com' => new DateTimeImmutable('+1 hour'), '*!*@earliest.com' => new DateTimeImmutable('-2 hours'), '*!*@tied.com' => $tiedExpiry, '*!*@permanent.com' => null] as $mask => $expiresAt) {
-            $this->repository->save(ChannelAkick::create(new DateTimeImmutable(), channelId: 1, creatorNickId: 100, mask: $mask, expiresAt: $expiresAt));
+        $tiedExpiry = new \DateTimeImmutable('-1 hour');
+        foreach (['*!*@first.com' => $tiedExpiry, '*!*@active.com' => new \DateTimeImmutable('+1 hour'), '*!*@earliest.com' => new \DateTimeImmutable('-2 hours'), '*!*@tied.com' => $tiedExpiry, '*!*@permanent.com' => null] as $mask => $expiresAt) {
+            $this->repository->save(ChannelAkick::create(new \DateTimeImmutable(), channelId: 1, creatorNickId: 100, mask: $mask, expiresAt: $expiresAt));
         }
         $this->flushAndClear();
 
@@ -368,18 +365,18 @@ final class ChannelAkickDoctrineRepositoryTest extends DoctrineIntegrationTestCa
     #[Test]
     public function findExpiredRejectsACursorThatHasNoExpiry(): void
     {
-        $this->expectException(LogicException::class);
+        $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('AKICK expiry cursor must be an expired entry.');
 
-        $this->repository->findExpired(ChannelAkick::create(new DateTimeImmutable(), channelId: 1, creatorNickId: 100, mask: '*!*@permanent.com'), 2);
+        $this->repository->findExpired(ChannelAkick::create(new \DateTimeImmutable(), channelId: 1, creatorNickId: 100, mask: '*!*@permanent.com'), 2);
     }
 
     #[Test]
     public function findByChannelIdsReturnsAkickForMultipleChannels(): void
     {
-        $akick1 = ChannelAkick::create(new DateTimeImmutable(), channelId: 1, creatorNickId: 100, mask: '*!*@a1.com');
-        $akick2 = ChannelAkick::create(new DateTimeImmutable(), channelId: 2, creatorNickId: 100, mask: '*!*@a2.com');
-        $akick3 = ChannelAkick::create(new DateTimeImmutable(), channelId: 3, creatorNickId: 100, mask: '*!*@a3.com');
+        $akick1 = ChannelAkick::create(new \DateTimeImmutable(), channelId: 1, creatorNickId: 100, mask: '*!*@a1.com');
+        $akick2 = ChannelAkick::create(new \DateTimeImmutable(), channelId: 2, creatorNickId: 100, mask: '*!*@a2.com');
+        $akick3 = ChannelAkick::create(new \DateTimeImmutable(), channelId: 3, creatorNickId: 100, mask: '*!*@a3.com');
 
         $this->repository->save($akick1);
         $this->repository->save($akick2);
@@ -400,7 +397,7 @@ final class ChannelAkickDoctrineRepositoryTest extends DoctrineIntegrationTestCa
     #[Test]
     public function findByChannelIdsReturnsEmptyArrayWhenNoneMatch(): void
     {
-        $akick = ChannelAkick::create(new DateTimeImmutable(), channelId: 1, creatorNickId: 100, mask: '*!*@test.com');
+        $akick = ChannelAkick::create(new \DateTimeImmutable(), channelId: 1, creatorNickId: 100, mask: '*!*@test.com');
 
         $this->repository->save($akick);
         $this->flushAndClear();
@@ -411,10 +408,10 @@ final class ChannelAkickDoctrineRepositoryTest extends DoctrineIntegrationTestCa
     #[Test]
     public function findByChannelIdsReturnsAllMatchingChannels(): void
     {
-        $akick1 = ChannelAkick::create(new DateTimeImmutable(), channelId: 1, creatorNickId: 100, mask: '*!*@1.com');
-        $akick2 = ChannelAkick::create(new DateTimeImmutable(), channelId: 2, creatorNickId: 101, mask: '*!*@2.com');
-        $akick3 = ChannelAkick::create(new DateTimeImmutable(), channelId: 1, creatorNickId: 102, mask: '*!*@1b.com');
-        $akick4 = ChannelAkick::create(new DateTimeImmutable(), channelId: 3, creatorNickId: 103, mask: '*!*@3.com');
+        $akick1 = ChannelAkick::create(new \DateTimeImmutable(), channelId: 1, creatorNickId: 100, mask: '*!*@1.com');
+        $akick2 = ChannelAkick::create(new \DateTimeImmutable(), channelId: 2, creatorNickId: 101, mask: '*!*@2.com');
+        $akick3 = ChannelAkick::create(new \DateTimeImmutable(), channelId: 1, creatorNickId: 102, mask: '*!*@1b.com');
+        $akick4 = ChannelAkick::create(new \DateTimeImmutable(), channelId: 3, creatorNickId: 103, mask: '*!*@3.com');
 
         $this->repository->save($akick1);
         $this->repository->save($akick2);
@@ -430,9 +427,9 @@ final class ChannelAkickDoctrineRepositoryTest extends DoctrineIntegrationTestCa
     #[Test]
     public function clearCreatorNickIdSetsCreatorToNull(): void
     {
-        $akick1 = ChannelAkick::create(new DateTimeImmutable(), channelId: 1, creatorNickId: 100, mask: '*!*@test1.com');
-        $akick2 = ChannelAkick::create(new DateTimeImmutable(), channelId: 2, creatorNickId: 100, mask: '*!*@test2.com');
-        $akick3 = ChannelAkick::create(new DateTimeImmutable(), channelId: 1, creatorNickId: 200, mask: '*!*@test3.com');
+        $akick1 = ChannelAkick::create(new \DateTimeImmutable(), channelId: 1, creatorNickId: 100, mask: '*!*@test1.com');
+        $akick2 = ChannelAkick::create(new \DateTimeImmutable(), channelId: 2, creatorNickId: 100, mask: '*!*@test2.com');
+        $akick3 = ChannelAkick::create(new \DateTimeImmutable(), channelId: 1, creatorNickId: 200, mask: '*!*@test3.com');
 
         $this->repository->save($akick1);
         $this->repository->save($akick2);
@@ -458,7 +455,7 @@ final class ChannelAkickDoctrineRepositoryTest extends DoctrineIntegrationTestCa
     #[Test]
     public function clearCreatorNickIdDoesNothingWhenNoMatch(): void
     {
-        $akick = ChannelAkick::create(new DateTimeImmutable(), channelId: 1, creatorNickId: 100, mask: '*!*@test.com');
+        $akick = ChannelAkick::create(new \DateTimeImmutable(), channelId: 1, creatorNickId: 100, mask: '*!*@test.com');
         $this->repository->save($akick);
         $this->flushAndClear();
 
@@ -473,9 +470,9 @@ final class ChannelAkickDoctrineRepositoryTest extends DoctrineIntegrationTestCa
     #[Test]
     public function deleteByIdsDeletesOnlyMatchingIds(): void
     {
-        $akick1 = ChannelAkick::create(new DateTimeImmutable(), channelId: 1, creatorNickId: 100, mask: '*!*@test1.com');
-        $akick2 = ChannelAkick::create(new DateTimeImmutable(), channelId: 2, creatorNickId: 100, mask: '*!*@test2.com');
-        $akick3 = ChannelAkick::create(new DateTimeImmutable(), channelId: 1, creatorNickId: 200, mask: '*!*@test3.com');
+        $akick1 = ChannelAkick::create(new \DateTimeImmutable(), channelId: 1, creatorNickId: 100, mask: '*!*@test1.com');
+        $akick2 = ChannelAkick::create(new \DateTimeImmutable(), channelId: 2, creatorNickId: 100, mask: '*!*@test2.com');
+        $akick3 = ChannelAkick::create(new \DateTimeImmutable(), channelId: 1, creatorNickId: 200, mask: '*!*@test3.com');
 
         $this->repository->save($akick1);
         $this->repository->save($akick2);
@@ -495,9 +492,9 @@ final class ChannelAkickDoctrineRepositoryTest extends DoctrineIntegrationTestCa
     #[Test]
     public function deleteByChannelIdDeletesOnlyMatchingChannel(): void
     {
-        $akick1 = ChannelAkick::create(new DateTimeImmutable(), channelId: 1, creatorNickId: 100, mask: '*!*@test1.com');
-        $akick2 = ChannelAkick::create(new DateTimeImmutable(), channelId: 2, creatorNickId: 100, mask: '*!*@test2.com');
-        $akick3 = ChannelAkick::create(new DateTimeImmutable(), channelId: 1, creatorNickId: 200, mask: '*!*@test3.com');
+        $akick1 = ChannelAkick::create(new \DateTimeImmutable(), channelId: 1, creatorNickId: 100, mask: '*!*@test1.com');
+        $akick2 = ChannelAkick::create(new \DateTimeImmutable(), channelId: 2, creatorNickId: 100, mask: '*!*@test2.com');
+        $akick3 = ChannelAkick::create(new \DateTimeImmutable(), channelId: 1, creatorNickId: 200, mask: '*!*@test3.com');
 
         $this->repository->save($akick1);
         $this->repository->save($akick2);
@@ -515,7 +512,7 @@ final class ChannelAkickDoctrineRepositoryTest extends DoctrineIntegrationTestCa
     #[Test]
     public function deleteByChannelIdReturnsZeroWhenNoMatch(): void
     {
-        $akick = ChannelAkick::create(new DateTimeImmutable(), channelId: 1, creatorNickId: 100, mask: '*!*@test.com');
+        $akick = ChannelAkick::create(new \DateTimeImmutable(), channelId: 1, creatorNickId: 100, mask: '*!*@test.com');
         $this->repository->save($akick);
         $this->flushAndClear();
 
@@ -528,9 +525,9 @@ final class ChannelAkickDoctrineRepositoryTest extends DoctrineIntegrationTestCa
         $this->repository = new ChannelAkickDoctrineRepository($this->entityManager);
     }
 
-    private function setCreatedAt(ChannelAkick $akick, DateTimeImmutable $time): void
+    private function setCreatedAt(ChannelAkick $akick, \DateTimeImmutable $time): void
     {
-        $ref = new ReflectionProperty($akick, 'createdAt');
+        $ref = new \ReflectionProperty($akick, 'createdAt');
         $ref->setValue($akick, $time);
     }
 

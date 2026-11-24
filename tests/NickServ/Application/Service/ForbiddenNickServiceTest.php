@@ -13,7 +13,6 @@ use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\Service\ForbiddenNickService;
 use App\NickServ\Application\Service\NickForceService;
 use App\NickServ\Domain\Entity\RegisteredNick;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -56,8 +55,8 @@ final class ForbiddenNickServiceTest extends TestCase
             'hash',
             'test@example.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable()
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable()
         );
         $existingNick->activate();
 
@@ -254,8 +253,8 @@ final class ForbiddenNickServiceTest extends TestCase
             'hash',
             'email@test.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable()
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable()
         );
         $nick->activate();
 

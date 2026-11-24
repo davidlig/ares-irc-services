@@ -6,7 +6,6 @@ namespace App\NickServ\Adapter\Out\InMemory;
 
 use App\Irc\Application\Port\In\SkipIdentifiedModeStripRegistry;
 use App\NickServ\Application\Port\Out\PendingNickRestoreRegistryInterface;
-use App\NickServ\Application\Service\NickProtectionService;
 
 /**
  * Tracks UIDs for which services sent an SVSNICK to restore a registered nick

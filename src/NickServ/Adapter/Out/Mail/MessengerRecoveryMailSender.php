@@ -8,7 +8,6 @@ use App\NickServ\Application\Port\Out\RecoveryMailSender;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
-use Throwable;
 
 final readonly class MessengerRecoveryMailSender implements RecoveryMailSender
 {
@@ -35,7 +34,7 @@ final readonly class MessengerRecoveryMailSender implements RecoveryMailSender
                 $locale,
             );
             $this->messageBus->dispatch(new RegistrationVerificationEmail($email, $subject, $body));
-        } catch (Throwable $exception) {
+        } catch (\Throwable $exception) {
             $this->logger->error('NickServ RECOVER: failed to dispatch recovery email', [
                 'nick' => $nickname,
                 'recipient' => $email,

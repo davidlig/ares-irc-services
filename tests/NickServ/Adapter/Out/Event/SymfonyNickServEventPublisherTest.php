@@ -11,9 +11,6 @@ use App\Shared\Application\Port\EventBusInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionMethod;
-use stdClass;
-use TypeError;
 
 #[CoversClass(SymfonyNickServEventPublisher::class)]
 final class SymfonyNickServEventPublisherTest extends TestCase
@@ -42,7 +39,7 @@ final class SymfonyNickServEventPublisherTest extends TestCase
     {
         $eventBus = $this->createMock(EventBusInterface::class);
         $eventBus->expects(self::never())->method('dispatch');
-        $this->expectException(TypeError::class);
-        new ReflectionMethod(SymfonyNickServEventPublisher::class, 'publish')->invoke(new SymfonyNickServEventPublisher($eventBus), new stdClass());
+        $this->expectException(\TypeError::class);
+        new \ReflectionMethod(SymfonyNickServEventPublisher::class, 'publish')->invoke(new SymfonyNickServEventPublisher($eventBus), new \stdClass());
     }
 }

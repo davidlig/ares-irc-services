@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\NickServ\Application\UseCase\Identify;
 
-use LogicException;
-
 final readonly class IdentifyNickResult
 {
     private function __construct(
@@ -19,7 +17,7 @@ final readonly class IdentifyNickResult
 
     public function requireNickname(): string
     {
-        return $this->nickname ?? throw new LogicException('Identify result does not contain a nickname.');
+        return $this->nickname ?? throw new \LogicException('Identify result does not contain a nickname.');
     }
 
     public static function success(

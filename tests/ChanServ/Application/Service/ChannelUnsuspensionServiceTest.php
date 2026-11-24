@@ -18,7 +18,6 @@ use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\Irc\Domain\ValueObject\CaseMapping;
 use App\Shared\Domain\IrcIdentityFold;
 use App\Tests\NickServ\Support\NegotiatedCaseMapping;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -44,7 +43,7 @@ final class ChannelUnsuspensionServiceTest extends TestCase
     #[Test]
     public function liftsThenEnforcesMlockWhenChannelIsOnNetwork(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Test');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#Test', 1, 'Test');
         $repository = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $repository->method('findByChannelNameKey')->willReturn($channel);
         $actions = $this->createMock(ChanNetworkActions::class);
@@ -73,7 +72,7 @@ final class ChannelUnsuspensionServiceTest extends TestCase
     #[Test]
     public function recreatesMissingNetworkChannelBeforeLiftAndMlock(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Test');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#Test', 1, 'Test');
         $repository = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $repository->method('findByChannelNameKey')->willReturn($channel);
         $sequence = [];
@@ -105,7 +104,7 @@ final class ChannelUnsuspensionServiceTest extends TestCase
     #[Test]
     public function restoresAnAsciiNetworkChannelFromItsStoredKey(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Ops[1]', 1, 'Ops');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#Ops[1]', 1, 'Ops');
         $ascii = NegotiatedCaseMapping::network(CaseMapping::Ascii);
         $repository = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $repository->method('findByChannelNameKey')->willReturnCallback(

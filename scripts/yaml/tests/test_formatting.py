@@ -127,14 +127,14 @@ class YamlFormattingTest(unittest.TestCase):
             self.assertEqual(0, result.returncode, result.stdout + result.stderr)
             self.assertEqual(before, self.snapshot())
 
-    def test_ci_checks_yaml_immediately_after_php_cs_fixer(self):
+    def test_ci_checks_yaml_immediately_after_dresscode(self):
         code = (
             'require $argv[1]; echo json_encode(Symfony\\Component\\Yaml\\Yaml::parseFile($argv[2]));'
         )
         result = self.command("php", "-r", code, str(ROOT / "vendor/autoload.php"), str(ROOT / ".github/workflows/ci.yml"))
         self.assertEqual(0, result.returncode, result.stderr)
         steps = json.loads(result.stdout)["jobs"]["test"]["steps"]
-        cs_index = next(i for i, step in enumerate(steps) if "php-cs-fixer" in step.get("run", ""))
+        cs_index = next(i for i, step in enumerate(steps) if step.get("run") == "./vendor/bin/dresscode check")
         self.assertEqual("composer yaml-check", steps[cs_index + 1].get("run"))
         setup_index = next(i for i, step in enumerate(steps) if step.get("uses", "").startswith("actions/setup-node@"))
         self.assertEqual("24", str(steps[setup_index]["with"]["node-version"]))

@@ -21,7 +21,6 @@ use App\NickServ\Application\Port\In\NickProjectionQuery;
 use App\OperServ\Application\Port\In\GlineProjection;
 use App\OperServ\Application\Port\In\GlineProjectionQuery;
 use App\OperServ\Application\Port\In\OperatorNetworkProjectionQuery;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -133,7 +132,7 @@ final class UdbStoreInitializerTest extends TestCase
                 new ChannelProjection(1, '#chan', 7, null, false, '', [], false, false, null, false, false),
             ]);
             $glines->method('active')->willReturn([
-                new GlineProjection('*@bad.example', 'abuse', new DateTimeImmutable(), null),
+                new GlineProjection('*@bad.example', 'abuse', new \DateTimeImmutable(), null),
             ]);
         }
 

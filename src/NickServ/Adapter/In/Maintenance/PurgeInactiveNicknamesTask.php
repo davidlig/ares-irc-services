@@ -104,7 +104,7 @@ final class PurgeInactiveNicknamesTask implements MaintenanceTaskInterface
                 $failedOnItsOwn = false;
                 try {
                     $this->dropService->dropNick($nick, $now, 'inactivity', null);
-                } catch (Throwable $e) {
+                } catch (\Throwable $e) {
                     $failedOnItsOwn = $this->recordFailure($id, $nickname, $e);
                 }
 
@@ -139,7 +139,7 @@ final class PurgeInactiveNicknamesTask implements MaintenanceTaskInterface
      *
      * @throws Throwable when the EntityManager was closed by the failure
      */
-    private function recordFailure(int $id, string $nickname, Throwable $e): bool
+    private function recordFailure(int $id, string $nickname, \Throwable $e): bool
     {
         $this->retryBudget->rethrowWhenClosed(
             $id,

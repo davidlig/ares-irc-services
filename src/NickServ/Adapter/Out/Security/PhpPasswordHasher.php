@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\NickServ\Adapter\Out\Security;
 
 use App\NickServ\Application\Port\Out\PasswordHasher;
-use RuntimeException;
 
 use function password_hash;
 use function password_verify;
@@ -26,8 +25,9 @@ final readonly class PhpPasswordHasher implements PasswordHasher
         // PASSWORD_BCRYPT is always valid, and memory exhaustion would kill the process.
         // @phpstan-ignore identical.alwaysFalse
         if (false === $hash) {
-            throw new RuntimeException('Password hashing failed.');
+            throw new \RuntimeException('Password hashing failed.');
         }
+
         // @codeCoverageIgnoreEnd
 
         return $hash;

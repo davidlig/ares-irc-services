@@ -6,7 +6,6 @@ namespace App\NickServ\Application\Service;
 
 use App\NickServ\Application\Port\Out\NickHistoryRepositoryInterface;
 use App\NickServ\Domain\Entity\NickHistory;
-use DateTimeImmutable;
 
 use function array_merge;
 
@@ -39,7 +38,7 @@ final readonly class NickHistoryService
         string $performedByIp,
         string $performedByHost,
         string $message,
-        DateTimeImmutable $performedAt,
+        \DateTimeImmutable $performedAt,
         array $extraData = [],
     ): NickHistory {
         $extra = array_merge([
@@ -69,7 +68,7 @@ final readonly class NickHistoryService
         string $performedBy,
         ?int $performedByNickId,
         string $message,
-        DateTimeImmutable $performedAt,
+        \DateTimeImmutable $performedAt,
         array $extraData = [],
     ): NickHistory {
         $history = NickHistory::record(

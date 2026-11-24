@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Irc\Adapter\Protocol\UnrealUdb\Persistence;
 
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbBlockState;
-use DateTimeImmutable;
 
 interface UdbBlockStateRepositoryInterface
 {
@@ -21,6 +20,6 @@ interface UdbBlockStateRepositoryInterface
         string $block,
         string $checksum,
         int $recordCount,
-        ?DateTimeImmutable $modifiedAt = null,
+        ?\DateTimeImmutable $modifiedAt = null,
     ): void;
 }

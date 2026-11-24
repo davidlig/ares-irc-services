@@ -14,10 +14,8 @@ use App\Irc\Application\IrcSessionInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RuntimeException;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
-use Throwable;
 
 use function array_merge;
 
@@ -201,7 +199,7 @@ final class ConnectCommandTest extends TestCase
     #[Test]
     public function executeWhenHandlerThrowsReturnsFailureAndDisplaysError(): void
     {
-        $handler = new HandlerStub(null, new RuntimeException('Connection refused.'));
+        $handler = new HandlerStub(null, new \RuntimeException('Connection refused.'));
 
         $consumerManager = $this->createMock(ConsumerProcessManagerInterface::class);
         $consumerManager->expects(self::never())->method('start');
@@ -419,7 +417,7 @@ final class HandlerStub implements ConnectToServerHandlerInterface
 
     public function __construct(
         private readonly ?IrcSessionInterface $client,
-        private readonly ?Throwable $throw = null,
+        private readonly ?\Throwable $throw = null,
     ) {}
 
     public function handle(ConnectToServerCommand $command): IrcSessionInterface
@@ -430,7 +428,7 @@ final class HandlerStub implements ConnectToServerHandlerInterface
         }
 
         if (null === $this->client) {
-            throw new RuntimeException('Handler client was not configured.');
+            throw new \RuntimeException('Handler client was not configured.');
         }
 
         return $this->client;

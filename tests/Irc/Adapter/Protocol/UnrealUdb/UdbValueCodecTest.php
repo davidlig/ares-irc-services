@@ -8,8 +8,6 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbValue;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbUnsignedDecimal;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbValueDecoder;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbValueEncoder;
-use InvalidArgumentException;
-use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -55,7 +53,7 @@ final class UdbValueCodecTest extends TestCase
     #[Test]
     public function encoderRejectsNulStrings(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         UdbValueEncoder::encode(UdbValue::string("fixture\0tail"));
     }
 
@@ -72,6 +70,6 @@ final class UdbValueCodecTest extends TestCase
 
     private static function number(string $decimal): UdbUnsignedDecimal
     {
-        return UdbUnsignedDecimal::parse($decimal) ?? throw new LogicException('The test uint64 fixture must be valid.');
+        return UdbUnsignedDecimal::parse($decimal) ?? throw new \LogicException('The test uint64 fixture must be valid.');
     }
 }

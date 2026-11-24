@@ -30,11 +30,9 @@ use App\NickServ\Domain\Entity\RegisteredNick;
 use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
 use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
 use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
 use Symfony\Component\Translation\Translator;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -186,7 +184,7 @@ final class ForbidVhostCommandTest extends TestCase
     #[Test]
     public function addRejectsDuplicatePattern(): void
     {
-        $existing = ForbiddenVhost::create('pirated.com', 1, new DateTimeImmutable());
+        $existing = ForbiddenVhost::create('pirated.com', 1, new \DateTimeImmutable());
 
         $repo = $this->createMock(ForbiddenVhostRepositoryInterface::class);
         $repo->expects(self::once())->method('findByPattern')->with('pirated.com')->willReturn($existing);
@@ -219,7 +217,7 @@ final class ForbidVhostCommandTest extends TestCase
     #[Test]
     public function delRemovesPattern(): void
     {
-        $existing = ForbiddenVhost::create('pirated.com', 1, new DateTimeImmutable());
+        $existing = ForbiddenVhost::create('pirated.com', 1, new \DateTimeImmutable());
 
         $repo = $this->createMock(ForbiddenVhostRepositoryInterface::class);
         $repo->expects(self::once())->method('findByPattern')->with('pirated.com')->willReturn($existing);
@@ -270,8 +268,8 @@ final class ForbidVhostCommandTest extends TestCase
     #[Test]
     public function listShowsAllPatterns(): void
     {
-        $forbidden1 = ForbiddenVhost::create('pirated.com', 10, new DateTimeImmutable());
-        $forbidden2 = ForbiddenVhost::create('badhost.com', 20, new DateTimeImmutable());
+        $forbidden1 = ForbiddenVhost::create('pirated.com', 10, new \DateTimeImmutable());
+        $forbidden2 = ForbiddenVhost::create('badhost.com', 20, new \DateTimeImmutable());
 
         $repo = $this->createMock(ForbiddenVhostRepositoryInterface::class);
         $repo->expects(self::once())->method('findAll')->willReturn([$forbidden1, $forbidden2]);
@@ -364,7 +362,7 @@ final class ForbidVhostCommandTest extends TestCase
     #[Test]
     public function listShowsUnknownCreatorWhenNoCreatorId(): void
     {
-        $forbidden = ForbiddenVhost::create('pirated.com', null, new DateTimeImmutable());
+        $forbidden = ForbiddenVhost::create('pirated.com', null, new \DateTimeImmutable());
 
         $repo = $this->createMock(ForbiddenVhostRepositoryInterface::class);
         $repo->expects(self::once())->method('findAll')->willReturn([$forbidden]);
@@ -383,7 +381,7 @@ final class ForbidVhostCommandTest extends TestCase
     #[Test]
     public function listShowsUnknownCreatorWhenCreatorNotSender(): void
     {
-        $forbidden = ForbiddenVhost::create('pirated.com', 999, new DateTimeImmutable());
+        $forbidden = ForbiddenVhost::create('pirated.com', 999, new \DateTimeImmutable());
 
         $repo = $this->createMock(ForbiddenVhostRepositoryInterface::class);
         $repo->expects(self::once())->method('findAll')->willReturn([$forbidden]);
@@ -402,8 +400,8 @@ final class ForbidVhostCommandTest extends TestCase
     #[Test]
     public function listShowsCreatorNameWhenCreatorIsSender(): void
     {
-        $ref = new ReflectionClass(ForbiddenVhost::class);
-        $forbidden = ForbiddenVhost::create('pirated.com', 1, new DateTimeImmutable());
+        $ref = new \ReflectionClass(ForbiddenVhost::class);
+        $forbidden = ForbiddenVhost::create('pirated.com', 1, new \DateTimeImmutable());
         $idProp = $ref->getProperty('id');
         $idProp->setValue($forbidden, 10);
 
@@ -445,7 +443,7 @@ final class ForbidVhostCommandTest extends TestCase
     #[Test]
     public function getAuditDataReturnsDataAfterSuccessfulDel(): void
     {
-        $existing = ForbiddenVhost::create('pirated.com', 1, new DateTimeImmutable());
+        $existing = ForbiddenVhost::create('pirated.com', 1, new \DateTimeImmutable());
 
         $repo = $this->createMock(ForbiddenVhostRepositoryInterface::class);
         $repo->expects(self::once())->method('findByPattern')->with('pirated.com')->willReturn($existing);
@@ -467,7 +465,7 @@ final class ForbidVhostCommandTest extends TestCase
     #[Test]
     public function listUsesOneStyledPatternFragment(): void
     {
-        $forbidden = ForbiddenVhost::create('pirated.com', 1, new DateTimeImmutable('2026-01-01 UTC'));
+        $forbidden = ForbiddenVhost::create('pirated.com', 1, new \DateTimeImmutable('2026-01-01 UTC'));
         $repository = $this->createStub(ForbiddenVhostRepositoryInterface::class);
         $repository->method('findAll')->willReturn([$forbidden]);
         $translator = new Translator('es');
@@ -624,7 +622,7 @@ final class ForbidVhostCommandTest extends TestCase
     private function clock(): Clock
     {
         $clock = $this->createStub(Clock::class);
-        $clock->method('now')->willReturn(new DateTimeImmutable('2026-09-06 12:00:00 UTC'));
+        $clock->method('now')->willReturn(new \DateTimeImmutable('2026-09-06 12:00:00 UTC'));
 
         return $clock;
     }

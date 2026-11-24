@@ -38,7 +38,6 @@ use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
 use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
 use App\Shared\Application\Port\EventBusInterface;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Group;
 use Symfony\Component\Translation\Translator;
@@ -67,7 +66,7 @@ final class MemoServLiveMemoTest extends DoctrineIntegrationTestCase
 
     public function testDelAllChangesOnlySelectedInboxAndGracefullyReportsEmpty(): void
     {
-        $now = new DateTimeImmutable();
+        $now = new \DateTimeImmutable();
         foreach ([new Memo(1, null, 2, 'Received', $now), new Memo(1, null, 3, 'Read', $now), new Memo(2, null, 1, 'Sent', $now), new Memo(null, 5, 1, 'Channel', $now)] as $memo) {
             $this->repository->save($memo);
         }
@@ -89,8 +88,8 @@ final class MemoServLiveMemoTest extends DoctrineIntegrationTestCase
 
     public function testRejectionsPreserveDataAndNumericDelStillWorks(): void
     {
-        $this->repository->save(new Memo(null, 5, 2, 'Keep', new DateTimeImmutable()));
-        $this->repository->save(new Memo(1, null, 2, 'Personal', new DateTimeImmutable()));
+        $this->repository->save(new Memo(null, 5, 2, 'Keep', new \DateTimeImmutable()));
+        $this->repository->save(new Memo(1, null, 2, 'Personal', new \DateTimeImmutable()));
         $before = $this->entityManager->getConnection()->fetchAllAssociative('SELECT * FROM memos');
         $this->canManage = false;
         $this->service->dispatch('DEL #room ALL', $this->sender());

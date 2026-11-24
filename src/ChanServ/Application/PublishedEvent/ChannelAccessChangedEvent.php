@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\ChanServ\Application\PublishedEvent;
 
 use App\ChanServ\Application\Port\In\ChanServEvent;
-use DateTimeImmutable;
 
 final readonly class ChannelAccessChangedEvent implements ChanServEvent
 {
@@ -20,6 +19,6 @@ final readonly class ChannelAccessChangedEvent implements ChanServEvent
         public ?int $performedByNickId,
         public string $performedByIp,
         public string $performedByHost,
-        public DateTimeImmutable $occurredAt,
+        public \DateTimeImmutable $occurredAt,
     ) {}
 }

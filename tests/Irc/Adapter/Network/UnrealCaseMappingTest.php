@@ -10,7 +10,6 @@ use App\Irc\Adapter\Protocol\UnrealStandalone\UnrealStandaloneNetworkStateAdapte
 use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbNetworkStateAdapter;
 use App\Irc\Domain\Network\Channel;
 use App\Irc\Domain\ValueObject\ChannelName;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -33,7 +32,7 @@ final class UnrealCaseMappingTest extends TestCase
             $adapter->handleMessage(IRCMessage::fromRawLine('PROTOCTL CASEMAPPING=rfc1459 SID=001'));
             $adapter->handleMessage(IRCMessage::fromRawLine('ERROR :disconnect'));
             $adapter->handleMessage(IRCMessage::fromRawLine('PROTOCTL SID=002'));
-            $channel = new Channel(new ChannelName('#new[a]'), '', new DateTimeImmutable('@0'));
+            $channel = new Channel(new ChannelName('#new[a]'), '', new \DateTimeImmutable('@0'));
             $channels->save($channel);
             self::assertNull($channels->findByName(new ChannelName('#NEW{A}')));
             self::assertSame($channel, $channels->findByName(new ChannelName('#NEW[A]')));
@@ -46,7 +45,7 @@ final class UnrealCaseMappingTest extends TestCase
         $dispatcher = new EventDispatcher();
         $channels = new InMemoryChannelRepository();
         $dispatcher->addSubscriber($channels);
-        $channel = new Channel(new ChannelName('#room[a]'), '', new DateTimeImmutable('@0'));
+        $channel = new Channel(new ChannelName('#room[a]'), '', new \DateTimeImmutable('@0'));
         $channels->save($channel);
         foreach ([new UnrealStandaloneNetworkStateAdapter($dispatcher), new UnrealUdbNetworkStateAdapter($dispatcher)] as $adapter) {
             foreach (['rfc1459', 'ascii', 'strict-rfc1459', 'ascii'] as $mapping) {

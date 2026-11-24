@@ -53,11 +53,9 @@ use App\OperServ\Application\Port\In\OperatorNetworkProjectionQuery;
 use App\Shared\Application\Port\EventBusInterface;
 use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Psr\Log\LoggerInterface;
-use RuntimeException;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -97,7 +95,7 @@ final class AutomaticModeVerificationRecordWriter implements UdbRecordWriterInte
     {
         if (str_ends_with($path, '::modes')) {
             if ($this->throwModes) {
-                throw new RuntimeException('Synthetic native projection failure.');
+                throw new \RuntimeException('Synthetic native projection failure.');
             }
 
             return !$this->rejectModes;
@@ -124,7 +122,7 @@ final class AutomaticModeVerificationLifecycleTest extends DoctrineIntegrationTe
         bool $rejectModes,
         bool $throwModes,
     ): void {
-        $now = new DateTimeImmutable('2026-11-01T18:00:00Z');
+        $now = new \DateTimeImmutable('2026-11-01T18:00:00Z');
         $repository = new RegisteredNickDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network());
         $account = RegisteredNick::createPending('Ares', self::PASSWORD_HASH, null, 'en', $now->modify('+1 hour'), $now);
         $account->changeVhost('ares.example.test');

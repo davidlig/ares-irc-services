@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Tests\ChanServ\Domain\Entity;
 
 use App\ChanServ\Domain\Entity\ChannelHistory;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -16,7 +15,7 @@ final class ChannelHistoryTest extends TestCase
     #[Test]
     public function recordCreatesHistoryEntry(): void
     {
-        $performedAt = new DateTimeImmutable('2024-01-15 10:30:00');
+        $performedAt = new \DateTimeImmutable('2024-01-15 10:30:00');
 
         $history = ChannelHistory::record(
             channelId: 42,
@@ -42,7 +41,7 @@ final class ChannelHistoryTest extends TestCase
     public function recordWithNullPerformedByNickId(): void
     {
         $history = ChannelHistory::record(
-            new DateTimeImmutable('2026-01-02 03:04:05'),
+            new \DateTimeImmutable('2026-01-02 03:04:05'),
             channelId: 42,
             action: 'SET_FOUNDER',
             performedBy: 'UnregisteredOper',
@@ -56,7 +55,7 @@ final class ChannelHistoryTest extends TestCase
     #[Test]
     public function recordWithExplicitPerformedAt(): void
     {
-        $performedAt = new DateTimeImmutable('2026-01-02 03:04:05');
+        $performedAt = new \DateTimeImmutable('2026-01-02 03:04:05');
 
         $history = ChannelHistory::record(
             $performedAt,
@@ -74,7 +73,7 @@ final class ChannelHistoryTest extends TestCase
     public function recordWithEmptyExtraData(): void
     {
         $history = ChannelHistory::record(
-            new DateTimeImmutable('2026-01-02 03:04:05'),
+            new \DateTimeImmutable('2026-01-02 03:04:05'),
             channelId: 1,
             action: 'UNSUSPEND',
             performedBy: 'Admin',
@@ -89,7 +88,7 @@ final class ChannelHistoryTest extends TestCase
     #[Test]
     public function toArrayReturnsCorrectFormat(): void
     {
-        $performedAt = new DateTimeImmutable('2024-01-15 10:30:00');
+        $performedAt = new \DateTimeImmutable('2024-01-15 10:30:00');
 
         $history = ChannelHistory::record(
             channelId: 42,
@@ -122,7 +121,7 @@ final class ChannelHistoryTest extends TestCase
             action: 'TEST',
             performedBy: 'Admin',
             performedByNickId: 5,
-            performedAt: new DateTimeImmutable('2024-01-15 10:30:00'),
+            performedAt: new \DateTimeImmutable('2024-01-15 10:30:00'),
             message: 'Test message',
         );
 

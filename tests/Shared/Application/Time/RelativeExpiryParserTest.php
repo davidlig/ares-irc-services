@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Tests\Shared\Application\Time;
 
 use App\Shared\Application\Time\RelativeExpiryParser;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -18,7 +17,7 @@ final class RelativeExpiryParserTest extends TestCase
     #[DataProvider('relativeExpiryProvider')]
     public function parseReturnsExpectedDateForRelativeExpiry(string $value, string $expected): void
     {
-        $now = new DateTimeImmutable('2026-05-10 12:00:00');
+        $now = new \DateTimeImmutable('2026-05-10 12:00:00');
 
         self::assertSame($expected, RelativeExpiryParser::parse($value, $now)?->format('Y-m-d H:i:s'));
     }
@@ -35,14 +34,14 @@ final class RelativeExpiryParserTest extends TestCase
     #[Test]
     public function parseReturnsNullForPermanentExpiry(): void
     {
-        self::assertNull(RelativeExpiryParser::parse(' 0 ', new DateTimeImmutable('2026-05-10 12:00:00')));
+        self::assertNull(RelativeExpiryParser::parse(' 0 ', new \DateTimeImmutable('2026-05-10 12:00:00')));
     }
 
     #[Test]
     #[DataProvider('invalidExpiryProvider')]
     public function parseReturnsNullForInvalidExpiry(string $value): void
     {
-        self::assertNull(RelativeExpiryParser::parse($value, new DateTimeImmutable('2026-05-10 12:00:00')));
+        self::assertNull(RelativeExpiryParser::parse($value, new \DateTimeImmutable('2026-05-10 12:00:00')));
     }
 
     /** @return iterable<string, array{string}> */

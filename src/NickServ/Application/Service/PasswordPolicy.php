@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\NickServ\Application\Service;
 
-use InvalidArgumentException;
-
 use function in_array;
 use function mb_strlen;
 use function strpbrk;
@@ -24,10 +22,10 @@ final readonly class PasswordPolicy
     public function __construct(public int $minimumLength = 8, public string $complexity = 'none')
     {
         if (1 > $minimumLength) {
-            throw new InvalidArgumentException('NICKSERV_PASSWORD_MIN_LENGTH must be a positive integer.');
+            throw new \InvalidArgumentException('NICKSERV_PASSWORD_MIN_LENGTH must be a positive integer.');
         }
         if (!in_array($complexity, ['none', 'low', 'mid', 'high'], true)) {
-            throw new InvalidArgumentException('NICKSERV_PASSWORD_COMPLEXITY must be one of: none, low, mid, high.');
+            throw new \InvalidArgumentException('NICKSERV_PASSWORD_COMPLEXITY must be one of: none, low, mid, high.');
         }
     }
 

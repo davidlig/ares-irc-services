@@ -4,14 +4,12 @@ declare(strict_types=1);
 
 namespace App\Irc\Domain\ValueObject;
 
-use InvalidArgumentException;
-
 readonly class LinkPassword
 {
     public function __construct(public string $value)
     {
         if ('' === $value) {
-            throw new InvalidArgumentException('Link password cannot be empty.');
+            throw new \InvalidArgumentException('Link password cannot be empty.');
         }
     }
 

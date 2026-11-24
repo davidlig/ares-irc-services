@@ -7,13 +7,9 @@ namespace App\Tests\NickServ\Domain\Entity;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\NickServ\Domain\ValueObject\AutomaticModeProfile;
 use App\NickServ\Domain\ValueObject\NickStatus;
-use DateTimeImmutable;
-use InvalidArgumentException;
-use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
 
 use function str_repeat;
 
@@ -23,8 +19,8 @@ final class RegisteredNickTest extends TestCase
     #[Test]
     public function registrationsInitiallyUseRegistrationTimeAsLastSeen(): void
     {
-        $registeredAt = new DateTimeImmutable('2026-01-02 03:04:05');
-        $pending = RegisteredNick::createPending('Pending', 'hash', 'p@example.com', 'en', new DateTimeImmutable('2026-01-03'), $registeredAt);
+        $registeredAt = new \DateTimeImmutable('2026-01-02 03:04:05');
+        $pending = RegisteredNick::createPending('Pending', 'hash', 'p@example.com', 'en', new \DateTimeImmutable('2026-01-03'), $registeredAt);
         $active = RegisteredNick::createActive('Active', 'hash', 'a@example.com', 'en', $registeredAt);
 
         self::assertSame($registeredAt, $pending->getLastSeenAt());
@@ -34,7 +30,7 @@ final class RegisteredNickTest extends TestCase
     #[Test]
     public function createPendingSetsInitialState(): void
     {
-        $expiresAt = new DateTimeImmutable('+1 hour');
+        $expiresAt = new \DateTimeImmutable('+1 hour');
 
         $nick = RegisteredNick::createPending(
             'Nick',
@@ -42,7 +38,7 @@ final class RegisteredNickTest extends TestCase
             'user@example.com',
             'en',
             $expiresAt,
-            new DateTimeImmutable(),
+            new \DateTimeImmutable(),
         );
 
         self::assertSame(NickStatus::Pending, $nick->getStatus());
@@ -53,7 +49,7 @@ final class RegisteredNickTest extends TestCase
         self::assertSame('hash', $nick->getPasswordHash());
         self::assertSame('user@example.com', $nick->getEmail());
         self::assertSame('en', $nick->getLanguage());
-        self::assertInstanceOf(DateTimeImmutable::class, $nick->getRegisteredAt());
+        self::assertInstanceOf(\DateTimeImmutable::class, $nick->getRegisteredAt());
         self::assertSame($expiresAt->getTimestamp(), $nick->getExpiresAt()?->getTimestamp());
         self::assertNull($nick->getReason());
         self::assertFalse($nick->isNoExpire());
@@ -62,7 +58,7 @@ final class RegisteredNickTest extends TestCase
     #[Test]
     public function createPendingWithInvalidEmailThrows(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Invalid email');
 
         RegisteredNick::createPending(
@@ -70,8 +66,8 @@ final class RegisteredNickTest extends TestCase
             'hash',
             'not-an-email',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable(),
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable(),
         );
     }
 
@@ -99,8 +95,8 @@ final class RegisteredNickTest extends TestCase
             'hash',
             'user@example.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable(),
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable(),
         );
 
         $nick->activate();
@@ -119,8 +115,8 @@ final class RegisteredNickTest extends TestCase
             'hash',
             'user@example.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable(),
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable(),
         );
 
         $nick->activate();
@@ -144,12 +140,12 @@ final class RegisteredNickTest extends TestCase
             'hash',
             'user@example.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable(),
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable(),
         );
 
         $nick->activate();
-        $expiresAt = new DateTimeImmutable('+7 days');
+        $expiresAt = new \DateTimeImmutable('+7 days');
         $nick->suspend('Abuse', $expiresAt);
 
         self::assertTrue($nick->isSuspended());
@@ -165,8 +161,8 @@ final class RegisteredNickTest extends TestCase
             'hash',
             'user@example.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable(),
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable(),
         );
 
         $nick->activate();
@@ -185,12 +181,12 @@ final class RegisteredNickTest extends TestCase
             'hash',
             'user@example.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable(),
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable(),
         );
 
         $nick->activate();
-        $nick->suspend('Abuse', new DateTimeImmutable('+7 days'));
+        $nick->suspend('Abuse', new \DateTimeImmutable('+7 days'));
         self::assertNotNull($nick->getSuspendedUntil());
 
         $nick->unsuspend();
@@ -208,13 +204,13 @@ final class RegisteredNickTest extends TestCase
             'hash',
             'user@example.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable(),
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable(),
         );
 
         $nick->activate();
 
-        self::assertFalse($nick->isCurrentlySuspended(new DateTimeImmutable()));
+        self::assertFalse($nick->isCurrentlySuspended(new \DateTimeImmutable()));
     }
 
     #[Test]
@@ -225,14 +221,14 @@ final class RegisteredNickTest extends TestCase
             'hash',
             'user@example.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable(),
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable(),
         );
 
         $nick->activate();
         $nick->suspend('Permanent ban', null);
 
-        self::assertTrue($nick->isCurrentlySuspended(new DateTimeImmutable()));
+        self::assertTrue($nick->isCurrentlySuspended(new \DateTimeImmutable()));
     }
 
     #[Test]
@@ -243,14 +239,14 @@ final class RegisteredNickTest extends TestCase
             'hash',
             'user@example.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable(),
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable(),
         );
 
         $nick->activate();
-        $nick->suspend('Temporary ban', new DateTimeImmutable('+7 days'));
+        $nick->suspend('Temporary ban', new \DateTimeImmutable('+7 days'));
 
-        self::assertTrue($nick->isCurrentlySuspended(new DateTimeImmutable()));
+        self::assertTrue($nick->isCurrentlySuspended(new \DateTimeImmutable()));
     }
 
     #[Test]
@@ -261,14 +257,14 @@ final class RegisteredNickTest extends TestCase
             'hash',
             'user@example.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable(),
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable(),
         );
 
         $nick->activate();
-        $nick->suspend('Expired ban', new DateTimeImmutable('-1 second'));
+        $nick->suspend('Expired ban', new \DateTimeImmutable('-1 second'));
 
-        self::assertFalse($nick->isCurrentlySuspended(new DateTimeImmutable()));
+        self::assertFalse($nick->isCurrentlySuspended(new \DateTimeImmutable()));
     }
 
     #[Test]
@@ -279,11 +275,11 @@ final class RegisteredNickTest extends TestCase
             'hash',
             'user@example.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable(),
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable(),
         );
 
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Unsupported language');
 
         $nick->changeLanguage('xx');
@@ -297,8 +293,8 @@ final class RegisteredNickTest extends TestCase
             'hash',
             'user@example.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable(),
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable(),
         );
 
         $nick->changeTimezone('UTC');
@@ -322,11 +318,11 @@ final class RegisteredNickTest extends TestCase
             'hash',
             'user@example.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable(),
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable(),
         );
 
-        $this->expectException(LogicException::class);
+        $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('Cannot update forbidden reason on a non-forbidden account.');
 
         $nick->updateForbiddenReason('New reason');
@@ -340,28 +336,28 @@ final class RegisteredNickTest extends TestCase
             'hash',
             'user@example.com',
             'en',
-            new DateTimeImmutable('-1 hour'),
-            new DateTimeImmutable(),
+            new \DateTimeImmutable('-1 hour'),
+            new \DateTimeImmutable(),
         );
 
-        self::assertTrue($expired->isExpired(new DateTimeImmutable()));
+        self::assertTrue($expired->isExpired(new \DateTimeImmutable()));
 
         $notExpired = RegisteredNick::createPending(
             'Nick2',
             'hash',
             'user2@example.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable(),
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable(),
         );
 
-        self::assertFalse($notExpired->isExpired(new DateTimeImmutable()));
+        self::assertFalse($notExpired->isExpired(new \DateTimeImmutable()));
     }
 
     #[Test]
     public function languageValidationRejectsUnsupportedLanguages(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
 
         RegisteredNick::createForbidden('Nick', 'Reason', 'xx');
     }
@@ -374,11 +370,11 @@ final class RegisteredNickTest extends TestCase
             'hash',
             'user@example.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable(),
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable(),
         );
 
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
 
         $nick->changeEmail('not-an-email');
     }
@@ -391,8 +387,8 @@ final class RegisteredNickTest extends TestCase
             'hash',
             'user@example.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable(),
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable(),
         );
 
         $nick->changeEmail('new@example.com');
@@ -408,8 +404,8 @@ final class RegisteredNickTest extends TestCase
             'hash',
             'user@example.com',
             'EN',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable(),
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable(),
         );
 
         self::assertSame('en', $nick->getLanguage());
@@ -427,17 +423,17 @@ final class RegisteredNickTest extends TestCase
             'hash',
             'user@example.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable(),
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable(),
         );
 
         self::assertSame($nick->getRegisteredAt(), $nick->getLastSeenAt());
         self::assertNull($nick->getLastQuitMessage());
 
-        $nick->markSeen(new DateTimeImmutable());
+        $nick->markSeen(new \DateTimeImmutable());
         $nick->updateQuitMessage('Quit');
 
-        self::assertInstanceOf(DateTimeImmutable::class, $nick->getLastSeenAt());
+        self::assertInstanceOf(\DateTimeImmutable::class, $nick->getLastSeenAt());
         self::assertSame('Quit', $nick->getLastQuitMessage());
     }
 
@@ -449,8 +445,8 @@ final class RegisteredNickTest extends TestCase
             'hash',
             'user@example.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable(),
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable(),
         );
 
         self::assertNull($nick->getLastConnectIp());
@@ -470,8 +466,8 @@ final class RegisteredNickTest extends TestCase
             'hash',
             'user@example.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable(),
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable(),
         );
 
         $nick->updateLastConnection('192.168.1.1', 'user.isp.example');
@@ -492,8 +488,8 @@ final class RegisteredNickTest extends TestCase
             'hash',
             'user@example.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable(),
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable(),
         );
 
         $nick->updateLastConnection('192.168.1.1', 'user.isp.example');
@@ -513,8 +509,8 @@ final class RegisteredNickTest extends TestCase
             'hash',
             'user@example.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable(),
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable(),
         );
 
         $nick->updateLastConnection('192.168.1.1', '');
@@ -531,8 +527,8 @@ final class RegisteredNickTest extends TestCase
             'hash',
             'user@example.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable(),
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable(),
         );
 
         self::assertNull($nick->getLastConnectIp());
@@ -547,8 +543,8 @@ final class RegisteredNickTest extends TestCase
             'hash',
             'user@example.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable(),
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable(),
         );
 
         self::assertFalse($nick->isPrivate());
@@ -569,8 +565,8 @@ final class RegisteredNickTest extends TestCase
             'hash',
             'user@example.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable(),
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable(),
         );
 
         $nick->changeVhost('vhost.example.com');
@@ -585,7 +581,7 @@ final class RegisteredNickTest extends TestCase
         $nick->changeTimezone(null);
         self::assertNull($nick->getTimezone());
 
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
 
         $nick->changeTimezone('Not/AZone');
     }
@@ -598,8 +594,8 @@ final class RegisteredNickTest extends TestCase
             'old-hash',
             'user@example.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable(),
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable(),
         );
 
         self::assertSame('old-hash', $nick->getPasswordHash());
@@ -617,11 +613,11 @@ final class RegisteredNickTest extends TestCase
             'hash',
             'user@example.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable(),
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable(),
         );
 
-        $reflection = new ReflectionClass($nick);
+        $reflection = new \ReflectionClass($nick);
         $idProp = $reflection->getProperty('id');
         $idProp->setValue($nick, 99);
 
@@ -636,8 +632,8 @@ final class RegisteredNickTest extends TestCase
             'hash',
             'user@example.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable(),
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable(),
         );
 
         self::assertFalse($nick->isNoExpire());
@@ -651,8 +647,8 @@ final class RegisteredNickTest extends TestCase
             'hash',
             'user@example.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable(),
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable(),
         );
 
         self::assertFalse($nick->isNoExpire());
@@ -670,8 +666,8 @@ final class RegisteredNickTest extends TestCase
             'hash',
             'user@example.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable(),
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable(),
         );
 
         $nick->changeNoExpire(true);
@@ -685,14 +681,14 @@ final class RegisteredNickTest extends TestCase
     #[Test]
     public function markPendingDeletionAndRestore(): void
     {
-        $at = new DateTimeImmutable('2026-05-01 12:00:00');
+        $at = new \DateTimeImmutable('2026-05-01 12:00:00');
         $nick = RegisteredNick::createPending(
             'Nick',
             'hash',
             'user@example.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable()
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable()
         );
         $nick->activate();
 
@@ -720,14 +716,14 @@ final class RegisteredNickTest extends TestCase
             'hash',
             'user@example.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable()
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable()
         );
 
-        $this->expectException(LogicException::class);
+        $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('Only registered accounts can be marked for deletion.');
 
-        $nick->markPendingDeletion(new DateTimeImmutable());
+        $nick->markPendingDeletion(new \DateTimeImmutable());
     }
 
     #[Test]
@@ -738,12 +734,12 @@ final class RegisteredNickTest extends TestCase
             'hash',
             'user@example.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable()
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable()
         );
         $nick->activate();
 
-        $this->expectException(LogicException::class);
+        $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('Only accounts pending deletion can be restored.');
 
         $nick->restoreFromPendingDeletion();
@@ -752,14 +748,14 @@ final class RegisteredNickTest extends TestCase
     #[Test]
     public function rescueHashIsNullableValidatedAndOwnedByEligibleAccounts(): void
     {
-        $nick = RegisteredNick::createPending('Rescue', 'password', 'r@example.com', 'en', new DateTimeImmutable('+1 hour'), new DateTimeImmutable());
+        $nick = RegisteredNick::createPending('Rescue', 'password', 'r@example.com', 'en', new \DateTimeImmutable('+1 hour'), new \DateTimeImmutable());
         self::assertNull($nick->getRescueTokenHash());
         $nick->replaceRescueTokenHash(str_repeat('a', 64));
         self::assertSame(str_repeat('a', 64), $nick->getRescueTokenHash());
         $nick->activate();
         $nick->replaceRescueTokenHash(str_repeat('b', 64));
         self::assertSame(str_repeat('b', 64), $nick->getRescueTokenHash());
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $nick->replaceRescueTokenHash('plaintext');
     }
 
@@ -767,22 +763,22 @@ final class RegisteredNickTest extends TestCase
     public function forbiddenAccountsCannotOwnRescueCredentials(): void
     {
         $nick = RegisteredNick::createForbidden('Forbidden', 'reason');
-        $this->expectException(LogicException::class);
+        $this->expectException(\LogicException::class);
         $nick->replaceRescueTokenHash(str_repeat('a', 64));
     }
 
     #[Test]
     public function pendingAccountCanOmitEmailWithoutPersistingDeliveryMode(): void
     {
-        $nick = RegisteredNick::createPending('Alice', 'hash', null, 'en', new DateTimeImmutable('+1 hour'), new DateTimeImmutable());
+        $nick = RegisteredNick::createPending('Alice', 'hash', null, 'en', new \DateTimeImmutable('+1 hour'), new \DateTimeImmutable());
         self::assertNull($nick->getEmail());
-        self::assertFalse(new ReflectionClass($nick)->hasProperty('registrationMode'));
+        self::assertFalse(new \ReflectionClass($nick)->hasProperty('registrationMode'));
     }
 
     #[Test]
     public function pendingDeadlineRenewalPreservesIdentityAndCredential(): void
     {
-        $now = new DateTimeImmutable('2026-10-22T12:59:00Z');
+        $now = new \DateTimeImmutable('2026-10-22T12:59:00Z');
         $nick = RegisteredNick::createPending('Renew', 'hash', 'a@example.com', 'en', $now->modify('+60 seconds'), $now->modify('-59 minutes'));
         $nick->renewPendingRegistration($now, $now->modify('+1 hour'));
         self::assertSame($now->modify('+1 hour')->format('c'), $nick->getExpiresAt()?->format('c'));
@@ -794,7 +790,7 @@ final class RegisteredNickTest extends TestCase
     #[Test]
     public function renewalCannotReviveExpiredOrActiveAccounts(): void
     {
-        $now = new DateTimeImmutable('2026-10-22T12:59:00Z');
+        $now = new \DateTimeImmutable('2026-10-22T12:59:00Z');
         foreach ([false, true] as $active) {
             $nick = RegisteredNick::createPending('Renew', 'hash', 'a@example.com', 'en', $now, $now->modify('-1 hour'));
             if ($active) {
@@ -803,7 +799,7 @@ final class RegisteredNickTest extends TestCase
             try {
                 $nick->renewPendingRegistration($now, $now->modify('+1 hour'));
                 self::fail('An expired or active registration cannot be renewed.');
-            } catch (LogicException) {
+            } catch (\LogicException) {
                 self::assertSame($active, $nick->isRegistered());
             }
         }
@@ -812,16 +808,16 @@ final class RegisteredNickTest extends TestCase
     #[Test]
     public function renewalRequiresFutureDeadline(): void
     {
-        $now = new DateTimeImmutable('2026-10-22T12:59:00Z');
+        $now = new \DateTimeImmutable('2026-10-22T12:59:00Z');
         $nick = RegisteredNick::createPending('Renew', 'hash', 'a@example.com', 'en', $now->modify('+1 minute'), $now);
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $nick->renewPendingRegistration($now, $now);
     }
 
     #[Test]
     public function createActiveCreatesRegisteredAccountWithOptionalRescueToken(): void
     {
-        $now = new DateTimeImmutable('2026-10-30T15:00:00Z');
+        $now = new \DateTimeImmutable('2026-10-30T15:00:00Z');
         $hash = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
         $nick = RegisteredNick::createActive(
             nickname: 'ActiveNick',
@@ -847,7 +843,7 @@ final class RegisteredNickTest extends TestCase
     #[Test]
     public function createActiveAllowsNullEmail(): void
     {
-        $now = new DateTimeImmutable('2026-10-30T15:00:00Z');
+        $now = new \DateTimeImmutable('2026-10-30T15:00:00Z');
         $nick = RegisteredNick::createActive(
             nickname: 'NoEmailNick',
             passwordHash: 'passhash',
@@ -864,7 +860,7 @@ final class RegisteredNickTest extends TestCase
     #[Test]
     public function automaticModePreferencesStartEmptyAndAreReplacedSemantically(): void
     {
-        $nick = RegisteredNick::createActive('Pedro', 'hash', null, 'en', new DateTimeImmutable());
+        $nick = RegisteredNick::createActive('Pedro', 'hash', null, 'en', new \DateTimeImmutable());
         self::assertSame([], $nick->getAutomaticModes()->intentions);
         $nick->changeAutomaticModes(new AutomaticModeProfile(['bot', 'invisible']));
         self::assertSame(['bot', 'invisible'], $nick->getAutomaticModes()->intentions);
@@ -875,7 +871,7 @@ final class RegisteredNickTest extends TestCase
     #[Test]
     public function lookupKeyUsesTheRfc1459Fold(): void
     {
-        $at = new DateTimeImmutable('2026-01-01');
+        $at = new \DateTimeImmutable('2026-01-01');
 
         self::assertSame('{foo}|~', RegisteredNick::createPending('[Foo]\\^', 'h', 'a@example.com', 'en', $at, $at)->getNicknameLower());
         self::assertSame('{foo}', RegisteredNick::createActive('[Foo]', 'h', null, 'en', $at)->getNicknameLower());

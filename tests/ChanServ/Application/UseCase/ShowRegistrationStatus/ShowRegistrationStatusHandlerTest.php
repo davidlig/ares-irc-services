@@ -9,7 +9,6 @@ use App\ChanServ\Application\UseCase\ShowRegistrationStatus\RegistrationStatusVi
 use App\ChanServ\Application\UseCase\ShowRegistrationStatus\ShowRegistrationStatusHandler;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\ValueObject\ChannelStatus;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -21,7 +20,7 @@ final class ShowRegistrationStatusHandlerTest extends TestCase
     #[Test]
     public function returnsNullForMissingAndMapsEveryLifecycleState(): void
     {
-        $at = new DateTimeImmutable('2026-10-26T12:00:00+00:00');
+        $at = new \DateTimeImmutable('2026-10-26T12:00:00+00:00');
         $pending = RegisteredChannel::createPendingRegistration($at, '#pending', 7, 'description');
         $rejected = RegisteredChannel::createPendingRegistration($at, '#rejected', 8, 'description');
         $rejected->rejectRegistration('Reason', 9, 'Reviewer', $at, $at->modify('+24 hours'));

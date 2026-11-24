@@ -42,18 +42,23 @@ final readonly class ManageIrcopHandler implements ManageIrcopHandlerInterface
     {
         if ('' === $c->nickname || '' === $c->roleName) {
             return new ManageIrcopResult(IrcopOutcome::InvalidRequest);
-        }$account = $this->accounts->findByNickname($c->nickname);
+        }
+        $account = $this->accounts->findByNickname($c->nickname);
         if (null === $account) {
             return new ManageIrcopResult(IrcopOutcome::NickNotRegistered, nickname: $c->nickname);
-        }if (!$account->registered) {
+        }
+        if (!$account->registered) {
             return new ManageIrcopResult(IrcopOutcome::NickNotActive, nickname: $c->nickname);
-        }$role = $this->roles->findByName($c->roleName);
+        }
+        $role = $this->roles->findByName($c->roleName);
         if (null === $role) {
             return new ManageIrcopResult(IrcopOutcome::RoleNotFound, nickname: $c->nickname, role: $c->roleName);
-        }$old = $this->assignments->findByNickId($account->id);
+        }
+        $old = $this->assignments->findByNickId($account->id);
         if (null !== $old && $old->role->name === $role->name) {
             return new ManageIrcopResult(IrcopOutcome::AlreadyAssigned, $c->nickname, $role->name);
-        }$this->assignments->assign($account->id, $role, $c->actorAccountId, $c->occurredAt);
+        }
+        $this->assignments->assign($account->id, $role, $c->actorAccountId, $c->occurredAt);
         $outcome = null === $old ? IrcopOutcome::Added : IrcopOutcome::RoleChanged;
         $this->recordAudit(
             $c,
@@ -74,10 +79,12 @@ final readonly class ManageIrcopHandler implements ManageIrcopHandlerInterface
         $account = $this->accounts->findByNickname($nickname);
         if (null === $account) {
             return new ManageIrcopResult(IrcopOutcome::NickNotRegistered, nickname: $nickname);
-        }$assignment = $this->assignments->findByNickId($account->id);
+        }
+        $assignment = $this->assignments->findByNickId($account->id);
         if (null === $assignment) {
             return new ManageIrcopResult(IrcopOutcome::NotAssigned, nickname: $nickname);
-        }$this->assignments->remove($account->id);
+        }
+        $this->assignments->remove($account->id);
         $this->recordAudit($command, 'IRCOP DEL', $nickname, ['role' => $assignment->role->name]);
         $this->network->remove($account->id, $nickname, $assignment->role);
 

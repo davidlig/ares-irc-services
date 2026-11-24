@@ -60,9 +60,9 @@ final class ClosedEntityManagerRetryBudget
     public function rethrowWhenClosed(
         int $rowId,
         ?EntityManagerInterface $entityManager,
-        Throwable $failure,
+        \Throwable $failure,
         string $failedTo,
-        Closure $skipRow,
+        \Closure $skipRow,
     ): void {
         if (null === $entityManager || $entityManager->isOpen()) {
             return;
@@ -101,7 +101,7 @@ final class ClosedEntityManagerRetryBudget
      *
      * @param Closure(): void $skipRow
      */
-    private function judge(int $rowId, EntityManagerInterface $entityManager, Closure $skipRow): string
+    private function judge(int $rowId, EntityManagerInterface $entityManager, \Closure $skipRow): string
     {
         if (!$this->databaseAnswers($entityManager)) {
             return '; the EntityManager is closed, stopping this batch.';
@@ -155,7 +155,7 @@ final class ClosedEntityManagerRetryBudget
         try {
             $connection = $entityManager->getConnection();
             $connection->fetchOne($connection->getDatabasePlatform()->getDummySelectSQL());
-        } catch (Throwable) {
+        } catch (\Throwable) {
             return false;
         }
 

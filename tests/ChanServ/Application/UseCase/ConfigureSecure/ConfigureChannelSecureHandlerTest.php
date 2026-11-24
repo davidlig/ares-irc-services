@@ -14,11 +14,9 @@ use App\ChanServ\Application\UseCase\ConfigureSecure\ConfigureChannelSecure;
 use App\ChanServ\Application\UseCase\ConfigureSecure\ConfigureChannelSecureHandler;
 use App\ChanServ\Domain\Entity\ChannelHistory;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionProperty;
 
 #[CoversClass(ConfigureChannelSecure::class)]
 #[CoversClass(ConfigureChannelSecureHandler::class)]
@@ -27,8 +25,8 @@ final class ConfigureChannelSecureHandlerTest extends TestCase
     #[Test]
     public function itPersistsAndPublishesWhenSecureIsEnabled(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Test');
-        new ReflectionProperty(RegisteredChannel::class, 'id')->setValue($channel, 1);
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 1, 'Test');
+        new \ReflectionProperty(RegisteredChannel::class, 'id')->setValue($channel, 1);
         $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channels->expects(self::once())->method('save')->with($channel);
         $events = $this->createMock(ChanServEventPublisher::class);
@@ -40,7 +38,7 @@ final class ConfigureChannelSecureHandlerTest extends TestCase
         $history = $this->createMock(ChannelHistoryRepositoryInterface::class);
         $history->expects(self::once())->method('save')->willReturnCallback(static function (ChannelHistory $entry) use (&$saved): void { $saved = $entry; });
 
-        new ConfigureChannelSecureHandler($channels, $events, new ChannelHistoryService($history))->handle(new ConfigureChannelSecure($channel, true, 'Founder', new DateTimeImmutable()));
+        new ConfigureChannelSecureHandler($channels, $events, new ChannelHistoryService($history))->handle(new ConfigureChannelSecure($channel, true, 'Founder', new \DateTimeImmutable()));
 
         self::assertTrue($channel->isSecure());
         self::assertInstanceOf(ChannelSecureUpdatedEvent::class, $published[0]);
@@ -57,8 +55,8 @@ final class ConfigureChannelSecureHandlerTest extends TestCase
     #[Test]
     public function itPersistsWithoutPublishingWhenSecureIsDisabled(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Test');
-        new ReflectionProperty(RegisteredChannel::class, 'id')->setValue($channel, 1);
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 1, 'Test');
+        new \ReflectionProperty(RegisteredChannel::class, 'id')->setValue($channel, 1);
         $channel->configureSecure(true);
         $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channels->expects(self::once())->method('save')->with($channel);
@@ -67,7 +65,7 @@ final class ConfigureChannelSecureHandlerTest extends TestCase
             static fn (object $event): bool => $event instanceof ChannelSecureUpdatedEvent && '#test' === $event->channelName,
         ));
 
-        new ConfigureChannelSecureHandler($channels, $events, $this->historyService())->handle(new ConfigureChannelSecure($channel, false, 'Founder', new DateTimeImmutable()));
+        new ConfigureChannelSecureHandler($channels, $events, $this->historyService())->handle(new ConfigureChannelSecure($channel, false, 'Founder', new \DateTimeImmutable()));
 
         self::assertFalse($channel->isSecure());
     }

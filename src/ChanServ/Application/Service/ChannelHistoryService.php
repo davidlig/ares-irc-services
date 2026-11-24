@@ -6,7 +6,6 @@ namespace App\ChanServ\Application\Service;
 
 use App\ChanServ\Application\Port\Out\ChannelHistoryRepositoryInterface;
 use App\ChanServ\Domain\Entity\ChannelHistory;
-use DateTimeImmutable;
 
 use function array_merge;
 
@@ -26,7 +25,7 @@ final readonly class ChannelHistoryService
         ?int $performedByNickId,
         string $performedByIp,
         string $performedByHost,
-        DateTimeImmutable $performedAt,
+        \DateTimeImmutable $performedAt,
         string $message,
         array $extraData = [],
     ): ChannelHistory {
@@ -57,7 +56,7 @@ final readonly class ChannelHistoryService
         string $action,
         string $performedBy,
         ?int $performedByNickId,
-        DateTimeImmutable $performedAt,
+        \DateTimeImmutable $performedAt,
         string $message,
         array $extraData = [],
     ): ChannelHistory {

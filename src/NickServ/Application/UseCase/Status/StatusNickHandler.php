@@ -7,7 +7,6 @@ namespace App\NickServ\Application\UseCase\Status;
 use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Domain\ValueObject\NickStatus;
-use DateTimeImmutable;
 
 use function ceil;
 use function max;
@@ -50,7 +49,7 @@ final readonly class StatusNickHandler implements StatusNickHandlerInterface
         };
     }
 
-    private function handlePending(string $nickname, ?DateTimeImmutable $expiresAt): StatusNickResult
+    private function handlePending(string $nickname, ?\DateTimeImmutable $expiresAt): StatusNickResult
     {
         $minutes = 0;
         if (null !== $expiresAt) {

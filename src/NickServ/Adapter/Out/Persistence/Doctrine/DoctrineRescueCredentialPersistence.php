@@ -7,10 +7,8 @@ namespace App\NickServ\Adapter\Out\Persistence\Doctrine;
 use App\NickServ\Application\Port\Out\RescueCredentialPersistence;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\NickServ\Domain\ValueObject\NickStatus;
-use DateTimeImmutable;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\EntityManagerInterface;
-use InvalidArgumentException;
 
 use function preg_match;
 
@@ -18,7 +16,7 @@ final readonly class DoctrineRescueCredentialPersistence implements RescueCreden
 {
     public function __construct(private EntityManagerInterface $entityManager) {}
 
-    public function confirm(int $accountId, NickStatus $expectedStatus, ?string $expectedHash, string $newHash, DateTimeImmutable $now): bool
+    public function confirm(int $accountId, NickStatus $expectedStatus, ?string $expectedHash, string $newHash, \DateTimeImmutable $now): bool
     {
         if (NickStatus::Pending !== $expectedStatus && NickStatus::Registered !== $expectedStatus) {
             return false;
@@ -55,7 +53,7 @@ final readonly class DoctrineRescueCredentialPersistence implements RescueCreden
         });
     }
 
-    public function rotateAfterRecovery(int $accountId, ?string $expectedHash, string $newPasswordHash, string $newTokenHash, DateTimeImmutable $now): bool
+    public function rotateAfterRecovery(int $accountId, ?string $expectedHash, string $newPasswordHash, string $newTokenHash, \DateTimeImmutable $now): bool
     {
         $this->assertHash($newTokenHash);
         $params = ['password' => $newPasswordHash, 'hash' => $newTokenHash, 'id' => $accountId];
@@ -90,7 +88,7 @@ final readonly class DoctrineRescueCredentialPersistence implements RescueCreden
     private function assertHash(string $hash): void
     {
         if (1 !== preg_match('/^[0-9a-f]{64}$/D', $hash)) {
-            throw new InvalidArgumentException('Rescue credential must be a lowercase SHA-256 hash.');
+            throw new \InvalidArgumentException('Rescue credential must be a lowercase SHA-256 hash.');
         }
     }
 }

@@ -22,13 +22,9 @@ use App\NickServ\Application\UseCase\Register\RegisterNickResult;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\NickServ\Domain\ValueObject\NickStatus;
 use App\NickServ\Domain\ValueObject\RegistrationMode;
-use DateTimeImmutable;
-use OverflowException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionProperty;
-use RuntimeException;
 
 use function str_repeat;
 
@@ -37,7 +33,7 @@ use function str_repeat;
 #[CoversClass(RegisterNickResult::class)]
 final class RegisterNickHandlerTest extends TestCase
 {
-    private DateTimeImmutable $now;
+    private \DateTimeImmutable $now;
 
     #[Test]
     public function rejectsThrottledClientBeforeOtherValidation(): void
@@ -126,7 +122,7 @@ final class RegisterNickHandlerTest extends TestCase
         $repository = $this->createMock(RegisterNickRepository::class);
         $repository->expects(self::once())->method('findByEmail')->with('user@example.com')->willReturn(null);
         $repository->expects(self::once())->method('findByNick')->with('NewNick')->willReturn(null);
-        $repository->expects(self::once())->method('save')->willReturnCallback(static fn (RegisteredNick $nick) => new ReflectionProperty($nick, 'id')->setValue($nick, 42))->with(self::callback(fn (RegisteredNick $nick): bool => 'NewNick' === $nick->getNickname()
+        $repository->expects(self::once())->method('save')->willReturnCallback(static fn (RegisteredNick $nick) => new \ReflectionProperty($nick, 'id')->setValue($nick, 42))->with(self::callback(fn (RegisteredNick $nick): bool => 'NewNick' === $nick->getNickname()
                 && null === $nick->getRescueTokenHash()
                 && 'hashed-password' === $nick->getPasswordHash()
                 && 'user@example.com' === $nick->getEmail()
@@ -172,11 +168,11 @@ final class RegisterNickHandlerTest extends TestCase
         $repository = $this->createMock(RegisterNickRepository::class);
         $repository->method('findByEmail')->willReturn(null);
         $repository->method('findByNick')->willReturn(null);
-        $repository->expects(self::once())->method('save')->willReturnCallback(static fn (RegisteredNick $nick) => new ReflectionProperty($nick, 'id')->setValue($nick, 42));
+        $repository->expects(self::once())->method('save')->willReturnCallback(static fn (RegisteredNick $nick) => new \ReflectionProperty($nick, 'id')->setValue($nick, 42));
         $verificationStore = $this->createMock(TemporaryRescueTokenStore::class);
         $verificationStore->expects(self::once())->method('replace');
         $mail = $this->createMock(RegistrationMailSender::class);
-        $mail->expects(self::once())->method('sendVerification')->willThrowException(new RuntimeException('transport failed'));
+        $mail->expects(self::once())->method('sendVerification')->willThrowException(new \RuntimeException('transport failed'));
         $throttle = $this->createMock(RegistrationThrottle::class);
         $throttle->method('remainingCooldownSeconds')->willReturn(0);
         $throttle->expects(self::once())->method('recordAttempt')->with('ip:client', $this->now);
@@ -202,7 +198,7 @@ final class RegisterNickHandlerTest extends TestCase
         $repo->expects(self::once())->method('save')->willReturnCallback(static function (RegisteredNick $nick): void {
             self::assertNull($nick->getRescueTokenHash());
             self::assertNull($nick->getEmail());
-            new ReflectionProperty($nick, 'id')->setValue($nick, 42);
+            new \ReflectionProperty($nick, 'id')->setValue($nick, 42);
         });
         $store = $this->createMock(TemporaryRescueTokenStore::class);
         $store->expects(self::once())->method('prune')->with($this->now);
@@ -219,9 +215,9 @@ final class RegisterNickHandlerTest extends TestCase
     {
         foreach ([RegistrationMode::Email, RegistrationMode::Token] as $mode) {
             $repo = $this->createMock(RegisterNickRepository::class);
-            $repo->expects(self::exactly(2))->method('save')->willReturnCallback(static fn (RegisteredNick $nick) => new ReflectionProperty($nick, 'id')->setValue($nick, 42));
+            $repo->expects(self::exactly(2))->method('save')->willReturnCallback(static fn (RegisteredNick $nick) => new \ReflectionProperty($nick, 'id')->setValue($nick, 42));
             $store = $this->createStub(TemporaryRescueTokenStore::class);
-            $store->method('replace')->willThrowException(new OverflowException());
+            $store->method('replace')->willThrowException(new \OverflowException());
             $throttle = new InMemoryRegistrationThrottle(new RegisterThrottleRegistry());
             $handler = $this->handler(repository: $repo, verificationStore: $store, throttle: $throttle, mode: $mode);
             $expected = RegistrationMode::Token === $mode ? RegisterNickOutcome::TemporarilyUnavailable : RegisterNickOutcome::MailDeliveryFailed;
@@ -243,9 +239,9 @@ final class RegisterNickHandlerTest extends TestCase
     public function fullTemporaryStoreReportsUnavailableWithoutClaimingDelivery(): void
     {
         $repo = $this->createStub(RegisterNickRepository::class);
-        $repo->method('save')->willReturnCallback(static fn (RegisteredNick $nick) => new ReflectionProperty($nick, 'id')->setValue($nick, 42));
+        $repo->method('save')->willReturnCallback(static fn (RegisteredNick $nick) => new \ReflectionProperty($nick, 'id')->setValue($nick, 42));
         $store = $this->createStub(TemporaryRescueTokenStore::class);
-        $store->method('replace')->willThrowException(new OverflowException());
+        $store->method('replace')->willThrowException(new \OverflowException());
         $result = $this->handler(repository: $repo, verificationStore: $store, mode: RegistrationMode::Token)->handle($this->input(email: null));
         self::assertSame(RegisterNickOutcome::TemporarilyUnavailable, $result->outcome);
         self::assertNull($result->token);
@@ -275,7 +271,7 @@ final class RegisterNickHandlerTest extends TestCase
         $repo->expects(self::once())->method('save')->willReturnCallback(static function (RegisteredNick $nick): void {
             self::assertTrue($nick->isPending());
             self::assertNull($nick->getRescueTokenHash());
-            new ReflectionProperty($nick, 'id')->setValue($nick, 42);
+            new \ReflectionProperty($nick, 'id')->setValue($nick, 42);
         });
         $store = $this->createMock(TemporaryRescueTokenStore::class);
         $store->expects(self::once())->method('replace')->with(42, str_repeat('a', 64), $this->now->modify('+3600 seconds'));
@@ -315,7 +311,7 @@ final class RegisterNickHandlerTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->now = new DateTimeImmutable('2026-09-06 12:00:00 UTC');
+        $this->now = new \DateTimeImmutable('2026-09-06 12:00:00 UTC');
     }
 
     private function input(

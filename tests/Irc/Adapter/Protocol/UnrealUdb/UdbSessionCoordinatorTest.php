@@ -42,15 +42,10 @@ use App\NickServ\Application\Port\In\NickProjectionQuery;
 use App\OperServ\Application\Port\In\GlineProjectionQuery;
 use App\OperServ\Application\Port\In\OperatorNetworkProjectionQuery;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
-use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
-use ReflectionClass;
-use ReflectionMethod;
-use ReflectionProperty;
-use RuntimeException;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function array_fill;
@@ -150,7 +145,7 @@ final class UdbSessionCoordinatorTest extends DoctrineIntegrationTestCase
     #[Test]
     public function completeWireBootstrapDoesNothingWithoutWireAuthority(): void
     {
-        new ReflectionMethod(UdbSessionCoordinator::class, 'completeWireBootstrap')->invoke($this->coordinator);
+        new \ReflectionMethod(UdbSessionCoordinator::class, 'completeWireBootstrap')->invoke($this->coordinator);
 
         self::assertSame([], $this->written);
     }
@@ -158,7 +153,7 @@ final class UdbSessionCoordinatorTest extends DoctrineIntegrationTestCase
     #[Test]
     public function reconciliationOfferDoesNothingBeforeThePeerIsAuthorized(): void
     {
-        new ReflectionMethod(UdbSessionCoordinator::class, 'offerReconciliation')->invoke($this->coordinator);
+        new \ReflectionMethod(UdbSessionCoordinator::class, 'offerReconciliation')->invoke($this->coordinator);
 
         self::assertSame([], $this->written);
         self::assertNull($this->coordinator->activeRoundId());
@@ -170,7 +165,7 @@ final class UdbSessionCoordinatorTest extends DoctrineIntegrationTestCase
         $this->prepareLink();
         $this->written = [];
 
-        new ReflectionMethod(UdbSessionCoordinator::class, 'sendHel')->invoke($this->coordinator);
+        new \ReflectionMethod(UdbSessionCoordinator::class, 'sendHel')->invoke($this->coordinator);
 
         self::assertSame([], $this->written);
     }
@@ -549,9 +544,9 @@ final class UdbSessionCoordinatorTest extends DoctrineIntegrationTestCase
         $coordinator->onLinkReady($connection);
         $coordinator->handleFrame($this->peerHel(), $connection);
         $coordinator->handleFrame($this->peerHelAck(), $connection);
-        $snapshot = new ReflectionProperty(UdbSessionCoordinator::class, 'roundSnapshot')->getValue($coordinator);
+        $snapshot = new \ReflectionProperty(UdbSessionCoordinator::class, 'roundSnapshot')->getValue($coordinator);
         self::assertInstanceOf(UdbCapturedSnapshot::class, $snapshot);
-        $files = new ReflectionProperty(UdbCapturedSnapshot::class, 'files')->getValue($snapshot);
+        $files = new \ReflectionProperty(UdbCapturedSnapshot::class, 'files')->getValue($snapshot);
         self::assertIsArray($files);
         self::assertIsString($files['I']);
         $path = str_repeat('x', 8193);
@@ -1187,11 +1182,11 @@ final class UdbSessionCoordinatorTest extends DoctrineIntegrationTestCase
             ->method('error')
             ->with('Rejected duplicate or out-of-order committed UDB mutation sequence.');
         $coordinator = new UdbSessionCoordinator('002', $this->blockStates, $this->snapshots, $logger);
-        new ReflectionClass(UdbSessionCoordinator::class)
+        new \ReflectionClass(UdbSessionCoordinator::class)
             ->getProperty('mutationSequence')
             ->setValue($coordinator, UdbUnsignedDecimal::parse(UdbUnsignedDecimal::MAX));
 
-        $coordinator->enqueueMutation(UdbTestValues::mutation('N', 'nick::vhost', 'host.example')->assigned(UdbUnsignedDecimal::parse(UdbUnsignedDecimal::MAX) ?? throw new LogicException('Invalid maximum fixture.'), new UdbStreamOrigin('002', $coordinator->epoch())));
+        $coordinator->enqueueMutation(UdbTestValues::mutation('N', 'nick::vhost', 'host.example')->assigned(UdbUnsignedDecimal::parse(UdbUnsignedDecimal::MAX) ?? throw new \LogicException('Invalid maximum fixture.'), new UdbStreamOrigin('002', $coordinator->epoch())));
 
         self::assertSame(0, $coordinator->queuedMutationCount());
         self::assertTrue($coordinator->isResyncPending());
@@ -1665,11 +1660,11 @@ final class UdbSessionCoordinatorTest extends DoctrineIntegrationTestCase
             transfers: $transfers,
         );
 
-        new ReflectionMethod(UdbSessionCoordinator::class, 'offerReconciliation')->invoke($coordinator);
-        new ReflectionMethod(UdbSessionCoordinator::class, 'serveBlock')->invoke($coordinator, UdbBlock::Ips, 20);
-        new ReflectionMethod(UdbSessionCoordinator::class, 'flushMutations')->invoke($coordinator);
+        new \ReflectionMethod(UdbSessionCoordinator::class, 'offerReconciliation')->invoke($coordinator);
+        new \ReflectionMethod(UdbSessionCoordinator::class, 'serveBlock')->invoke($coordinator, UdbBlock::Ips, 20);
+        new \ReflectionMethod(UdbSessionCoordinator::class, 'flushMutations')->invoke($coordinator);
         $peer->reset();
-        new ReflectionMethod(UdbSessionCoordinator::class, 'serveBlock')->invoke($coordinator, UdbBlock::Ips, 20);
+        new \ReflectionMethod(UdbSessionCoordinator::class, 'serveBlock')->invoke($coordinator, UdbBlock::Ips, 20);
 
         self::assertNull($coordinator->activeRoundId());
         self::assertFalse($coordinator->isAuthorityReady());
@@ -1747,7 +1742,7 @@ final class UdbSessionCoordinatorTest extends DoctrineIntegrationTestCase
         $logger->expects($this->once())->method('warning');
 
         $coordinator = new UdbSessionCoordinator('002', $this->blockStates, $this->snapshots, $logger);
-        new ReflectionMethod(UdbSessionCoordinator::class, 'write')->invoke($coordinator, ':002 DB 001 HEL 4 x');
+        new \ReflectionMethod(UdbSessionCoordinator::class, 'write')->invoke($coordinator, ':002 DB 001 HEL 4 x');
     }
 
     #[Test]
@@ -2323,7 +2318,7 @@ final class UdbSessionCoordinatorTest extends DoctrineIntegrationTestCase
         $takeover = $this->createWireTakeover();
         $authority = $this->createStub(UdbAuthorityStateRepositoryInterface::class);
         $authority->method('isApproved')->willReturn(false);
-        $authority->method('approve')->willThrowException(new RuntimeException('Database down.'));
+        $authority->method('approve')->willThrowException(new \RuntimeException('Database down.'));
         $coordinator = $this->bootstrapCoordinator($takeover, $logger, $authority);
         $coordinator->setOwnName(self::OWN_NAME);
         $coordinator->onRemoteServer('001', 'ircd.example.net');
@@ -2644,7 +2639,7 @@ final class UdbSessionCoordinatorTest extends DoctrineIntegrationTestCase
     #[Test]
     public function retryWireBootstrapIsANoOpWhenTheStoreIsAlreadyApproved(): void
     {
-        new ReflectionMethod(UdbSessionCoordinator::class, 'retryWireBootstrap')->invoke($this->coordinator);
+        new \ReflectionMethod(UdbSessionCoordinator::class, 'retryWireBootstrap')->invoke($this->coordinator);
 
         self::assertSame([], $this->written);
     }
@@ -2782,7 +2777,7 @@ final class UdbSessionCoordinatorTest extends DoctrineIntegrationTestCase
     #[Test]
     public function queuedAdmissionIsUniqueBoundedAndResetAcrossRounds(): void
     {
-        $enqueue = new ReflectionMethod(UdbSessionCoordinator::class, 'enqueueRes');
+        $enqueue = new \ReflectionMethod(UdbSessionCoordinator::class, 'enqueueRes');
         $round = UdbUnsignedDecimal::fromInt(1);
         foreach (UdbBlock::all() as $block) {
             self::assertTrue($enqueue->invoke($this->coordinator, $block, $round));
@@ -2797,7 +2792,7 @@ final class UdbSessionCoordinatorTest extends DoctrineIntegrationTestCase
     public function foreignOrUncommittedMutationsForceResyncWithoutWirePublication(): void
     {
         $this->coordinator->enqueueMutation(new UdbMutation('N', 'nick::pass', UdbValue::string('fixture')));
-        self::assertTrue(new ReflectionProperty(UdbSessionCoordinator::class, 'resyncPending')->getValue($this->coordinator));
+        self::assertTrue(new \ReflectionProperty(UdbSessionCoordinator::class, 'resyncPending')->getValue($this->coordinator));
         self::assertSame([], $this->written);
     }
 
@@ -2815,7 +2810,7 @@ final class UdbSessionCoordinatorTest extends DoctrineIntegrationTestCase
         foreach ($this->bootstrapRecords() as [$block, $path, $value]) {
             $this->stageBootstrapRecord($coordinator, $connection, $block, $path, $value);
         }
-        $token = new ReflectionProperty(UdbSessionCoordinator::class, 'pendingTailBarrierToken')->getValue($coordinator);
+        $token = new \ReflectionProperty(UdbSessionCoordinator::class, 'pendingTailBarrierToken')->getValue($coordinator);
         self::assertIsString($token);
         $this->entityManager->getConnection()->executeStatement('UPDATE udb_staged_transfers SET digest = ?', [str_repeat('a', 64)]);
         $this->written = [];
@@ -2853,7 +2848,7 @@ final class UdbSessionCoordinatorTest extends DoctrineIntegrationTestCase
     {
         $this->makeReady();
         self::assertTrue($this->coordinator->isAuthorityReady());
-        $queue = new ReflectionProperty(UdbSessionCoordinator::class, 'mutationQueue')->getValue($this->coordinator);
+        $queue = new \ReflectionProperty(UdbSessionCoordinator::class, 'mutationQueue')->getValue($this->coordinator);
         self::assertInstanceOf(UdbMutationQueue::class, $queue);
         $queue->enqueue(UdbMutation::dropBlock(UdbBlock::Ips));
         $sequence = UdbUnsignedDecimal::fromInt(1);
@@ -2870,10 +2865,10 @@ final class UdbSessionCoordinatorTest extends DoctrineIntegrationTestCase
     {
         $this->makeReady();
         $round = UdbUnsignedDecimal::fromInt(99);
-        new ReflectionProperty(UdbSessionCoordinator::class, 'manifestRoundId')->setValue($this->coordinator, $round);
-        new ReflectionProperty(UdbSessionCoordinator::class, 'manifestRoundDeadline')->setValue($this->coordinator, $this->clock->now() + 60);
-        new ReflectionMethod(UdbSessionCoordinator::class, 'enqueueRes')->invoke($this->coordinator, UdbBlock::Ips, $round);
-        $transfers = new ReflectionProperty(UdbSessionCoordinator::class, 'transfers')->getValue($this->coordinator);
+        new \ReflectionProperty(UdbSessionCoordinator::class, 'manifestRoundId')->setValue($this->coordinator, $round);
+        new \ReflectionProperty(UdbSessionCoordinator::class, 'manifestRoundDeadline')->setValue($this->coordinator, $this->clock->now() + 60);
+        new \ReflectionMethod(UdbSessionCoordinator::class, 'enqueueRes')->invoke($this->coordinator, UdbBlock::Ips, $round);
+        $transfers = new \ReflectionProperty(UdbSessionCoordinator::class, 'transfers')->getValue($this->coordinator);
         self::assertInstanceOf(UdbOutboundTransferTracker::class, $transfers);
         $transfers->track(UdbBlock::Nicks, UdbUnsignedDecimal::fromInt(99), 'tx1', str_repeat('a', 64), UdbUnsignedDecimal::fromInt(0), $this->clock->now());
         $this->written = [];
@@ -3004,8 +2999,8 @@ final class UdbSessionCoordinatorTest extends DoctrineIntegrationTestCase
 
     private function committedMutation(UdbSessionCoordinator $coordinator, string $block, string $path, ?string $value): UdbMutation
     {
-        $epoch = new ReflectionProperty(UdbSessionCoordinator::class, 'epoch')->getValue($coordinator);
-        $current = new ReflectionProperty(UdbSessionCoordinator::class, 'mutationSequence')->getValue($coordinator);
+        $epoch = new \ReflectionProperty(UdbSessionCoordinator::class, 'epoch')->getValue($coordinator);
+        $current = new \ReflectionProperty(UdbSessionCoordinator::class, 'mutationSequence')->getValue($coordinator);
         self::assertIsString($epoch);
         self::assertInstanceOf(UdbUnsignedDecimal::class, $current);
         $sequence = $current->increment();

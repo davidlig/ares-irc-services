@@ -9,7 +9,6 @@ use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\Service\NickDropService;
 use App\NickServ\Domain\Entity\RegisteredNick;
-use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -17,8 +16,6 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
-use RuntimeException;
-use stdClass;
 
 use function array_fill;
 use function array_filter;
@@ -202,7 +199,7 @@ final class PurgeInactiveNicknamesTaskTest extends TestCase
     public function runSkipsNonRegisteredNickInstancesInResult(): void
     {
         $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $repo->method('findRegisteredInactiveSince')->willReturn([new stdClass()]);
+        $repo->method('findRegisteredInactiveSince')->willReturn([new \stdClass()]);
 
         $dropService = $this->createMock(NickDropService::class);
         $dropService->expects(self::never())->method('dropNick');
@@ -223,7 +220,7 @@ final class PurgeInactiveNicknamesTaskTest extends TestCase
     {
         $failing = $this->nick(1, 'Broken');
         $healthy = $this->nick(2, 'Healthy');
-        $failure = new RuntimeException('drop subscriber failed');
+        $failure = new \RuntimeException('drop subscriber failed');
         $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $repo->method('findRegisteredInactiveSince')->willReturn([$failing, $healthy]);
         $repo->method('findById')->willReturn($failing);
@@ -260,7 +257,7 @@ final class PurgeInactiveNicknamesTaskTest extends TestCase
         $pages = [];
         $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $repo->method('findRegisteredInactiveSince')
-            ->willReturnCallback(static function (DateTimeImmutable $threshold, int $limit, int $afterId = 0) use (&$rows, &$pages): array {
+            ->willReturnCallback(static function (\DateTimeImmutable $threshold, int $limit, int $afterId = 0) use (&$rows, &$pages): array {
                 $pages[] = [$limit, $afterId];
 
                 return array_slice(array_values(array_filter($rows, static fn (RegisteredNick $nick): bool => $nick->getId() > $afterId)), 0, $limit);
@@ -272,7 +269,7 @@ final class PurgeInactiveNicknamesTaskTest extends TestCase
             ->willReturnCallback(static function (RegisteredNick $nick) use (&$rows, &$attempts): void {
                 $attempts[] = $nick->getId();
                 if ($nick->getId() <= 100) {
-                    throw new RuntimeException('drop subscriber failed');
+                    throw new \RuntimeException('drop subscriber failed');
                 }
                 unset($rows[$nick->getId()]);
             });
@@ -301,7 +298,7 @@ final class PurgeInactiveNicknamesTaskTest extends TestCase
         $loads = [];
         $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $repo->expects(self::exactly(2))->method('findRegisteredInactiveSince')
-            ->willReturnCallback(function (DateTimeImmutable $threshold, int $limit, int $afterId) use ($failing, &$loads): array {
+            ->willReturnCallback(function (\DateTimeImmutable $threshold, int $limit, int $afterId) use ($failing, &$loads): array {
                 $loads[] = [$limit, $afterId];
 
                 return 1 === count($loads)
@@ -315,7 +312,7 @@ final class PurgeInactiveNicknamesTaskTest extends TestCase
             ->willReturnCallback(static function (RegisteredNick $nick) use ($failing, &$attempts): void {
                 $attempts[] = $nick->getNickname();
                 if ($nick === $failing) {
-                    throw new RuntimeException('drop subscriber failed');
+                    throw new \RuntimeException('drop subscriber failed');
                 }
             });
         $logger = $this->createMock(LoggerInterface::class);
@@ -331,7 +328,7 @@ final class PurgeInactiveNicknamesTaskTest extends TestCase
     public function aFailureThatClosesTheEntityManagerStopsTheBatchAndFailsTheTask(): void
     {
         $failing = $this->nick(1, 'Broken');
-        $failure = new RuntimeException('transaction rolled back');
+        $failure = new \RuntimeException('transaction rolled back');
         $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $repo->method('findRegisteredInactiveSince')->willReturn([$failing, $this->nick(2, 'Healthy')]);
         $dropService = $this->createMock(NickDropService::class);
@@ -355,7 +352,7 @@ final class PurgeInactiveNicknamesTaskTest extends TestCase
         $pages = [];
         $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $repo->method('findRegisteredInactiveSince')
-            ->willReturnCallback(function (DateTimeImmutable $threshold, int $limit, int $afterId) use (&$pages): array {
+            ->willReturnCallback(function (\DateTimeImmutable $threshold, int $limit, int $afterId) use (&$pages): array {
                 $pages[] = $afterId;
 
                 return array_values(array_filter(
@@ -372,7 +369,7 @@ final class PurgeInactiveNicknamesTaskTest extends TestCase
                 if ('Second' === $nick->getNickname() && 2 === count($attempts)) {
                     $open = false;
 
-                    throw new RuntimeException('transaction rolled back');
+                    throw new \RuntimeException('transaction rolled back');
                 }
             });
         $em = $this->createStub(EntityManagerInterface::class);
@@ -384,7 +381,7 @@ final class PurgeInactiveNicknamesTaskTest extends TestCase
         try {
             $task->run();
             self::fail('The closed EntityManager must fail the task.');
-        } catch (RuntimeException $e) {
+        } catch (\RuntimeException $e) {
             self::assertSame('transaction rolled back', $e->getMessage());
         }
         $open = true;
@@ -400,7 +397,7 @@ final class PurgeInactiveNicknamesTaskTest extends TestCase
         $pages = [];
         $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $repo->method('findRegisteredInactiveSince')
-            ->willReturnCallback(function (DateTimeImmutable $threshold, int $limit, int $afterId) use (&$pages): array {
+            ->willReturnCallback(function (\DateTimeImmutable $threshold, int $limit, int $afterId) use (&$pages): array {
                 $pages[] = $afterId;
 
                 return array_values(array_filter(
@@ -418,7 +415,7 @@ final class PurgeInactiveNicknamesTaskTest extends TestCase
                 if (!$this->databaseUp) {
                     $open = false;
 
-                    throw new RuntimeException('connection refused');
+                    throw new \RuntimeException('connection refused');
                 }
             });
         $errors = [];
@@ -429,7 +426,7 @@ final class PurgeInactiveNicknamesTaskTest extends TestCase
         $connection = $this->createStub(Connection::class);
         $connection->method('fetchOne')->willReturnCallback(function (): int {
             if (!$this->databaseUp) {
-                throw new RuntimeException('connection refused');
+                throw new \RuntimeException('connection refused');
             }
 
             return 1;
@@ -445,7 +442,7 @@ final class PurgeInactiveNicknamesTaskTest extends TestCase
         for ($cycle = 0; $cycle < 4; ++$cycle) {
             try {
                 $task->run();
-            } catch (RuntimeException) {
+            } catch (\RuntimeException) {
                 ++$failures;
             }
             $open = true;
@@ -470,7 +467,7 @@ final class PurgeInactiveNicknamesTaskTest extends TestCase
         $pages = [];
         $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $repo->method('findRegisteredInactiveSince')
-            ->willReturnCallback(function (DateTimeImmutable $threshold, int $limit, int $afterId) use (&$pages): array {
+            ->willReturnCallback(function (\DateTimeImmutable $threshold, int $limit, int $afterId) use (&$pages): array {
                 $pages[] = $afterId;
 
                 return array_values(array_filter(
@@ -487,7 +484,7 @@ final class PurgeInactiveNicknamesTaskTest extends TestCase
                 if ('Poison' === $nick->getNickname()) {
                     $open = false;
 
-                    throw new RuntimeException('foreign key violation');
+                    throw new \RuntimeException('foreign key violation');
                 }
             });
         $errors = [];
@@ -505,7 +502,7 @@ final class PurgeInactiveNicknamesTaskTest extends TestCase
         for ($cycle = 0; $cycle < 4; ++$cycle) {
             try {
                 $task->run();
-            } catch (RuntimeException) {
+            } catch (\RuntimeException) {
                 ++$failures;
             }
             $open = true;
@@ -527,7 +524,7 @@ final class PurgeInactiveNicknamesTaskTest extends TestCase
         $pages = [];
         $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $repo->method('findRegisteredInactiveSince')
-            ->willReturnCallback(function (DateTimeImmutable $threshold, int $limit, int $afterId) use (&$pages): array {
+            ->willReturnCallback(function (\DateTimeImmutable $threshold, int $limit, int $afterId) use (&$pages): array {
                 $pages[] = $afterId;
 
                 return array_values(array_filter(
@@ -544,7 +541,7 @@ final class PurgeInactiveNicknamesTaskTest extends TestCase
                 if ('Poison' === $nick->getNickname()) {
                     $open = false;
 
-                    throw new RuntimeException('foreign key violation');
+                    throw new \RuntimeException('foreign key violation');
                 }
             });
         $errors = [];
@@ -562,7 +559,7 @@ final class PurgeInactiveNicknamesTaskTest extends TestCase
         for ($cycle = 0; $cycle < 8; ++$cycle) {
             try {
                 $task->run();
-            } catch (RuntimeException) {
+            } catch (\RuntimeException) {
                 ++$failures;
             }
             $open = true;
@@ -584,7 +581,7 @@ final class PurgeInactiveNicknamesTaskTest extends TestCase
         $pages = [];
         $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $repo->method('findRegisteredInactiveSince')
-            ->willReturnCallback(function (DateTimeImmutable $threshold, int $limit, int $afterId) use (&$pages): array {
+            ->willReturnCallback(function (\DateTimeImmutable $threshold, int $limit, int $afterId) use (&$pages): array {
                 $pages[] = $afterId;
 
                 return array_values(array_filter(
@@ -607,7 +604,7 @@ final class PurgeInactiveNicknamesTaskTest extends TestCase
                     $open = false;
                 }
 
-                throw new RuntimeException('foreign key violation');
+                throw new \RuntimeException('foreign key violation');
             });
         $errors = [];
         $logger = $this->createStub(LoggerInterface::class);
@@ -624,7 +621,7 @@ final class PurgeInactiveNicknamesTaskTest extends TestCase
         for ($cycle = 0; $cycle < 7; ++$cycle) {
             try {
                 $task->run();
-            } catch (RuntimeException) {
+            } catch (\RuntimeException) {
                 ++$failures;
             }
             $open = true;
@@ -646,7 +643,7 @@ final class PurgeInactiveNicknamesTaskTest extends TestCase
         $pages = [];
         $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $repo->method('findRegisteredInactiveSince')
-            ->willReturnCallback(function (DateTimeImmutable $threshold, int $limit, int $afterId) use (&$pages): array {
+            ->willReturnCallback(function (\DateTimeImmutable $threshold, int $limit, int $afterId) use (&$pages): array {
                 $pages[] = $afterId;
 
                 return array_values(array_filter(
@@ -662,7 +659,7 @@ final class PurgeInactiveNicknamesTaskTest extends TestCase
                 if ('Flaky' === $nick->getNickname() && 3 !== ++$flakyAttempts) {
                     $open = false;
 
-                    throw new RuntimeException('lock wait timeout');
+                    throw new \RuntimeException('lock wait timeout');
                 }
             });
         $em = $this->createStub(EntityManagerInterface::class);
@@ -674,7 +671,7 @@ final class PurgeInactiveNicknamesTaskTest extends TestCase
         for ($cycle = 0; $cycle < 6; ++$cycle) {
             try {
                 $task->run();
-            } catch (RuntimeException) {
+            } catch (\RuntimeException) {
             }
             $open = true;
         }
@@ -687,7 +684,7 @@ final class PurgeInactiveNicknamesTaskTest extends TestCase
     public function aFailureAfterTheDropCommittedIsLoggedAsDroppedAndTheBatchContinues(): void
     {
         $dropped = $this->nick(1, 'Gone');
-        $failure = new RuntimeException('force rename failed');
+        $failure = new \RuntimeException('force rename failed');
         $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $repo->method('findRegisteredInactiveSince')->willReturn([$dropped, $this->nick(2, 'Healthy')]);
         $repo->method('findById')->willReturn(null);
@@ -730,8 +727,8 @@ final class PurgeInactiveNicknamesTaskTest extends TestCase
         return $clock;
     }
 
-    private function now(): DateTimeImmutable
+    private function now(): \DateTimeImmutable
     {
-        return new DateTimeImmutable('2026-09-06 12:00:00 UTC');
+        return new \DateTimeImmutable('2026-09-06 12:00:00 UTC');
     }
 }

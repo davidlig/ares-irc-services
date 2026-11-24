@@ -201,7 +201,7 @@ final class RegmodeCommandTest extends TestCase
     private function commandContext(RegistrationModeHandlerInterface $handler, array $arguments, bool $withoutSender = false, ?ChanServCommandRegistry $registry = null): array
     {
         /** @var ArrayObject<int, string> $messages */
-        $messages = new ArrayObject();
+        $messages = new \ArrayObject();
         $notifier = $this->createStub(ChanServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $uid, string $message) use (&$messages): void { $messages[] = $message; });
         $translator = $this->createStub(TranslatorInterface::class);

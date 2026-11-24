@@ -16,13 +16,11 @@ use App\OperServ\Adapter\In\Event\ForcedVhostApplier;
 use App\OperServ\Domain\Entity\OperIrcop;
 use App\OperServ\Domain\Entity\OperRole;
 use App\OperServ\Domain\Repository\OperIrcopRepositoryInterface;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\AbstractLogger;
 use Psr\Log\NullLogger;
-use ReflectionClass;
 use Stringable;
 
 #[CoversClass(ForcedVhostApplier::class)]
@@ -60,7 +58,7 @@ final class ForcedVhostApplierTest extends TestCase
     public function applyForcedVhostReturnsFalseWhenRoleHasNoPattern(): void
     {
         $role = OperRole::create('ADMIN', 'Admin role', true);
-        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 123, $role);
+        $ircop = OperIrcop::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), 123, $role);
 
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepo->method('findByNickId')->willReturn($ircop);
@@ -92,7 +90,7 @@ final class ForcedVhostApplierTest extends TestCase
     {
         $role = OperRole::create('ADMIN', 'Admin role', true);
         $role->changeForcedVhostPattern('admin.network');
-        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 123, $role);
+        $ircop = OperIrcop::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), 123, $role);
 
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepo->method('findByNickId')->willReturn($ircop);
@@ -127,7 +125,7 @@ final class ForcedVhostApplierTest extends TestCase
     {
         $role = OperRole::create('ADMIN', 'Admin role', true);
         $role->changeForcedVhostPattern('admin.network');
-        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 123, $role);
+        $ircop = OperIrcop::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), 123, $role);
         $ircopRepository = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepository->method('findByNickId')->willReturn($ircop);
         $connectionHolder = $this->createStub(ActiveProtocolModuleHolderInterface::class);
@@ -154,7 +152,7 @@ final class ForcedVhostApplierTest extends TestCase
     {
         $role = OperRole::create('ADMIN', 'Admin role', true);
         $role->changeForcedVhostPattern('staff.ares');
-        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 123, $role);
+        $ircop = OperIrcop::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), 123, $role);
 
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepo->method('findByNickId')->willReturn($ircop);
@@ -217,7 +215,7 @@ final class ForcedVhostApplierTest extends TestCase
     {
         $role = OperRole::create('ADMIN', 'Admin role', true);
         $role->changeForcedVhostPattern('admin.network');
-        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 123, $role);
+        $ircop = OperIrcop::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), 123, $role);
 
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepo->method('findByRoleId')->willReturn([$ircop]);
@@ -258,7 +256,7 @@ final class ForcedVhostApplierTest extends TestCase
     public function updateVhostForRoleClearsVhostWhenPatternIsNull(): void
     {
         $role = OperRole::create('ADMIN', 'Admin role', true);
-        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 123, $role);
+        $ircop = OperIrcop::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), 123, $role);
 
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepo->method('findByRoleId')->willReturn([$ircop]);
@@ -299,7 +297,7 @@ final class ForcedVhostApplierTest extends TestCase
     public function updateVhostForRoleSkipsNotIdentifiedIrcops(): void
     {
         $role = OperRole::create('ADMIN', 'Admin role', true);
-        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 123, $role);
+        $ircop = OperIrcop::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), 123, $role);
 
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepo->method('findByRoleId')->willReturn([$ircop]);
@@ -336,7 +334,7 @@ final class ForcedVhostApplierTest extends TestCase
     {
         $role = OperRole::create('ADMIN', 'Admin role', true);
         $role->changeForcedVhostPattern('');
-        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 123, $role);
+        $ircop = OperIrcop::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), 123, $role);
 
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepo->method('findByNickId')->willReturn($ircop);
@@ -370,7 +368,7 @@ final class ForcedVhostApplierTest extends TestCase
     {
         $role = OperRole::create('ADMIN', 'Admin role', true);
         $role->changeForcedVhostPattern('invalid-pattern-no-dot');
-        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 123, $role);
+        $ircop = OperIrcop::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), 123, $role);
 
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepo->method('findByNickId')->willReturn($ircop);
@@ -388,7 +386,7 @@ final class ForcedVhostApplierTest extends TestCase
             public array $warnings = [];
 
             /** @param array<string, mixed> $context */
-            public function log(mixed $level, string|Stringable $message, array $context = []): void
+            public function log(mixed $level, \Stringable|string $message, array $context = []): void
             {
                 if ('warning' === $level) {
                     $this->warnings[] = ['message' => $message, 'context' => $context];
@@ -418,7 +416,7 @@ final class ForcedVhostApplierTest extends TestCase
     public function updateVhostForRoleSkipsWhenNickNotFound(): void
     {
         $role = OperRole::create('ADMIN', 'Admin role', true);
-        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 123, $role);
+        $ircop = OperIrcop::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), 123, $role);
 
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepo->method('findByRoleId')->willReturn([$ircop]);
@@ -451,7 +449,7 @@ final class ForcedVhostApplierTest extends TestCase
     public function updateVhostForRoleSkipsWhenUserNotFound(): void
     {
         $role = OperRole::create('ADMIN', 'Admin role', true);
-        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 123, $role);
+        $ircop = OperIrcop::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), 123, $role);
 
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepo->method('findByRoleId')->willReturn([$ircop]);
@@ -490,7 +488,7 @@ final class ForcedVhostApplierTest extends TestCase
     public function updateVhostForRoleLogsWarningWhenPatternInvalid(): void
     {
         $role = OperRole::create('ADMIN', 'Admin role', true);
-        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 123, $role);
+        $ircop = OperIrcop::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), 123, $role);
 
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepo->method('findByRoleId')->willReturn([$ircop]);
@@ -517,7 +515,7 @@ final class ForcedVhostApplierTest extends TestCase
             public array $warnings = [];
 
             /** @param array<string, mixed> $context */
-            public function log(mixed $level, string|Stringable $message, array $context = []): void
+            public function log(mixed $level, \Stringable|string $message, array $context = []): void
             {
                 if ('warning' === $level) {
                     $this->warnings[] = ['message' => $message, 'context' => $context];
@@ -545,13 +543,13 @@ final class ForcedVhostApplierTest extends TestCase
     #[Test]
     public function updateVhostForRoleRestoresPersonalVhostWhenPatternRemoved(): void
     {
-        $roleRefl = new ReflectionClass(OperRole::class);
+        $roleRefl = new \ReflectionClass(OperRole::class);
         $roleIdProp = $roleRefl->getProperty('id');
 
         $role = OperRole::create('ADMIN', 'Admin role', true);
         $roleIdProp->setValue($role, 1);
         $role->changeForcedVhostPattern('admin.network');
-        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 123, $role);
+        $ircop = OperIrcop::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), 123, $role);
 
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepo->method('findByRoleId')->willReturn([$ircop]);
@@ -581,7 +579,7 @@ final class ForcedVhostApplierTest extends TestCase
             public array $infos = [];
 
             /** @param array<string, mixed> $context */
-            public function log(mixed $level, string|Stringable $message, array $context = []): void
+            public function log(mixed $level, \Stringable|string $message, array $context = []): void
             {
                 if ('info' === $level) {
                     $this->infos[] = ['message' => $message, 'context' => $context];

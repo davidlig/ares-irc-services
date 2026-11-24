@@ -8,7 +8,6 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbUnsignedDecimal;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ValueError;
 
 #[CoversClass(UdbUnsignedDecimal::class)]
 final class UdbUnsignedDecimalTest extends TestCase
@@ -61,7 +60,7 @@ final class UdbUnsignedDecimalTest extends TestCase
     #[Test]
     public function fromIntRejectsNegativeValues(): void
     {
-        $this->expectException(ValueError::class);
+        $this->expectException(\ValueError::class);
 
         UdbUnsignedDecimal::fromInt(-1);
     }

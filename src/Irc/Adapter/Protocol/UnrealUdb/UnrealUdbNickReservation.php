@@ -10,7 +10,6 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbRecordWriterInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbPathCodec;
 use App\Irc\Application\Port\In\ManagedServiceNickReservationLookup;
 use App\Irc\Application\Port\In\ServiceNickReservationInterface;
-use RuntimeException;
 
 use function array_values;
 use function count;
@@ -71,7 +70,7 @@ final readonly class UnrealUdbNickReservation implements ServiceNickReservationI
     public function reserveNick(string $nick, string $reason): void
     {
         if (!$this->recordWriter->insert(self::BLOCK, sprintf('%s::forbid', $nick), $reason)) {
-            throw new RuntimeException('Could not reserve service nickname in UDB.');
+            throw new \RuntimeException('Could not reserve service nickname in UDB.');
         }
 
         if (0 === strcasecmp($nick, $this->nickservNick)) {
@@ -79,7 +78,7 @@ final readonly class UnrealUdbNickReservation implements ServiceNickReservationI
             if (!$this->recordWriter->insert('S', 'nickserv', $mask)
                 || !$this->recordWriter->insert('S', 'ipserv', $mask)
             ) {
-                throw new RuntimeException('Could not publish NickServ identity in UDB.');
+                throw new \RuntimeException('Could not publish NickServ identity in UDB.');
             }
 
             return;
@@ -88,7 +87,7 @@ final readonly class UnrealUdbNickReservation implements ServiceNickReservationI
         if (0 === strcasecmp($nick, $this->chanservNick)) {
             $mask = sprintf('%s!%s@%s', $nick, $this->chanservIdent, $this->servicesVhost);
             if (!$this->recordWriter->insert('S', 'chanserv', $mask)) {
-                throw new RuntimeException('Could not publish ChanServ identity in UDB.');
+                throw new \RuntimeException('Could not publish ChanServ identity in UDB.');
             }
         }
     }
@@ -102,14 +101,14 @@ final readonly class UnrealUdbNickReservation implements ServiceNickReservationI
     public function releaseNick(string $nick): void
     {
         if (!$this->recordWriter->delete(self::BLOCK, sprintf('%s::forbid', $nick))) {
-            throw new RuntimeException('Could not release service nickname in UDB.');
+            throw new \RuntimeException('Could not release service nickname in UDB.');
         }
 
         if (0 === strcasecmp($nick, $this->nickservNick)) {
             if (!$this->recordWriter->delete('S', 'nickserv')
                 || !$this->recordWriter->delete('S', 'ipserv')
             ) {
-                throw new RuntimeException('Could not remove NickServ identity from UDB.');
+                throw new \RuntimeException('Could not remove NickServ identity from UDB.');
             }
 
             return;
@@ -117,7 +116,7 @@ final readonly class UnrealUdbNickReservation implements ServiceNickReservationI
 
         if (0 === strcasecmp($nick, $this->chanservNick)) {
             if (!$this->recordWriter->delete('S', 'chanserv')) {
-                throw new RuntimeException('Could not remove ChanServ identity from UDB.');
+                throw new \RuntimeException('Could not remove ChanServ identity from UDB.');
             }
         }
     }

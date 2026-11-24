@@ -29,12 +29,10 @@ use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
 use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\Shared\Application\Port\EventBusInterface;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(UnsuspendCommand::class)]
@@ -184,7 +182,7 @@ final class UnsuspendCommandTest extends TestCase
     public function executeWithNotSuspendedChannelRepliesNotSuspended(): void
     {
         $sender = $this->createSender();
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Test channel');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 1, 'Test channel');
 
         $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepository->method('findByChannelName')->willReturn($channel);
@@ -206,9 +204,9 @@ final class UnsuspendCommandTest extends TestCase
     public function executeWithSuspendedChannelUnsuspendsSuccessfully(): void
     {
         $sender = $this->createSender();
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Test channel');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 1, 'Test channel');
         $channel->suspend('Abuse', null);
-        $reflection = new ReflectionClass(RegisteredChannel::class);
+        $reflection = new \ReflectionClass(RegisteredChannel::class);
         $idProp = $reflection->getProperty('id');
         $idProp->setValue($channel, 1);
 
@@ -252,7 +250,7 @@ final class UnsuspendCommandTest extends TestCase
     #[Test]
     public function executeReturnsRejectedWhenValidatedChannelHasNoSender(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Test channel');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 1, 'Test channel');
         $channel->suspend('Abuse', null);
         $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepository->method('findByChannelName')->willReturn($channel);
@@ -269,9 +267,9 @@ final class UnsuspendCommandTest extends TestCase
     public function getAuditDataReturnsDataAfterExecute(): void
     {
         $sender = $this->createSender();
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Test channel');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 1, 'Test channel');
         $channel->suspend('Abuse', null);
-        $reflection = new ReflectionClass(RegisteredChannel::class);
+        $reflection = new \ReflectionClass(RegisteredChannel::class);
         $idProp = $reflection->getProperty('id');
         $idProp->setValue($channel, 1);
 
@@ -297,9 +295,9 @@ final class UnsuspendCommandTest extends TestCase
     public function executeWithEmptyIpBase64DecodesAsAsterisk(): void
     {
         $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', '', false, true, 'SID1', 'h', 'o');
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Test channel');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 1, 'Test channel');
         $channel->suspend('Abuse', null);
-        $reflection = new ReflectionClass(RegisteredChannel::class);
+        $reflection = new \ReflectionClass(RegisteredChannel::class);
         $idProp = $reflection->getProperty('id');
         $idProp->setValue($channel, 1);
 
@@ -332,9 +330,9 @@ final class UnsuspendCommandTest extends TestCase
     {
         $invalidBase64 = '!!!invalid!!!';
         $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', $invalidBase64, false, true, 'SID1', 'h', 'o');
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Test channel');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 1, 'Test channel');
         $channel->suspend('Abuse', null);
-        $reflection = new ReflectionClass(RegisteredChannel::class);
+        $reflection = new \ReflectionClass(RegisteredChannel::class);
         $idProp = $reflection->getProperty('id');
         $idProp->setValue($channel, 1);
 

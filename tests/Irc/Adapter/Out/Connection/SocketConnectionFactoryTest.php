@@ -14,7 +14,6 @@ use App\Irc\Domain\ValueObject\ServerName;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionProperty;
 
 #[CoversClass(SocketConnectionFactory::class)]
 final class SocketConnectionFactoryTest extends TestCase
@@ -37,8 +36,8 @@ final class SocketConnectionFactoryTest extends TestCase
 
         self::assertInstanceOf(SocketConnection::class, $connection);
 
-        $refTls = new ReflectionProperty(SocketConnection::class, 'useTls');
-        $refVerify = new ReflectionProperty(SocketConnection::class, 'tlsVerifyPeer');
+        $refTls = new \ReflectionProperty(SocketConnection::class, 'useTls');
+        $refVerify = new \ReflectionProperty(SocketConnection::class, 'tlsVerifyPeer');
         self::assertFalse($refTls->getValue($connection));
         self::assertTrue($refVerify->getValue($connection));
     }
@@ -60,8 +59,8 @@ final class SocketConnectionFactoryTest extends TestCase
 
         self::assertInstanceOf(SocketConnection::class, $connection);
 
-        $refTls = new ReflectionProperty(SocketConnection::class, 'useTls');
-        $refVerify = new ReflectionProperty(SocketConnection::class, 'tlsVerifyPeer');
+        $refTls = new \ReflectionProperty(SocketConnection::class, 'useTls');
+        $refVerify = new \ReflectionProperty(SocketConnection::class, 'tlsVerifyPeer');
         self::assertTrue($refTls->getValue($connection));
         self::assertFalse($refVerify->getValue($connection));
     }

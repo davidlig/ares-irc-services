@@ -18,7 +18,6 @@ use App\ChanServ\Application\UseCase\ManageAccess\ManageChannelAccessOutcome;
 use App\ChanServ\Domain\Entity\ChannelAccess;
 use App\ChanServ\Domain\Entity\ChannelLevel;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
@@ -57,7 +56,7 @@ final class ManageChannelAccessHandlerTest extends TestCase
             'Founder',
             'ip',
             'host',
-            new DateTimeImmutable('2026-01-01'),
+            new \DateTimeImmutable('2026-01-01'),
         ));
 
         self::assertSame(ManageChannelAccessOutcome::Listed, $result->outcome);
@@ -91,7 +90,7 @@ final class ManageChannelAccessHandlerTest extends TestCase
             'Founder',
             'ip',
             'host',
-            new DateTimeImmutable('2026-01-01'),
+            new \DateTimeImmutable('2026-01-01'),
         ));
 
         self::assertSame(ManageChannelAccessOutcome::ListEmpty, $result->outcome);
@@ -136,7 +135,7 @@ final class ManageChannelAccessHandlerTest extends TestCase
                 'Actor',
                 'ip',
                 'host',
-                new DateTimeImmutable('2026-01-01'),
+                new \DateTimeImmutable('2026-01-01'),
                 'Target',
                 ManageChannelAccessAction::Add === $action ? 100 : null,
             ));
@@ -182,7 +181,7 @@ final class ManageChannelAccessHandlerTest extends TestCase
                 'Founder',
                 'ip',
                 'host',
-                new DateTimeImmutable('2026-01-01'),
+                new \DateTimeImmutable('2026-01-01'),
                 targetNickname: $target,
                 level: $level,
             ));

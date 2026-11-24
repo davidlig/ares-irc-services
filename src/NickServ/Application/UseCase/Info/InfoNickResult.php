@@ -6,7 +6,6 @@ namespace App\NickServ\Application\UseCase\Info;
 
 use App\NickServ\Application\Port\Out\AssociatedChannel;
 use App\NickServ\Domain\ValueObject\NickStatus;
-use DateTimeImmutable;
 
 final readonly class InfoNickResult
 {
@@ -17,14 +16,14 @@ final readonly class InfoNickResult
         public InfoNickOutcome $outcome,
         public string $nickname,
         public ?string $reason = null,
-        public ?DateTimeImmutable $pendingDeletionAt = null,
-        public ?DateTimeImmutable $deletionExpiresAt = null,
+        public ?\DateTimeImmutable $pendingDeletionAt = null,
+        public ?\DateTimeImmutable $deletionExpiresAt = null,
         public ?NickStatus $status = null,
         public ?string $suspendedReason = null,
-        public ?DateTimeImmutable $suspendedUntil = null,
-        public ?DateTimeImmutable $registeredAt = null,
+        public ?\DateTimeImmutable $suspendedUntil = null,
+        public ?\DateTimeImmutable $registeredAt = null,
         public bool $lastSeenOnline = false,
-        public ?DateTimeImmutable $lastSeenAt = null,
+        public ?\DateTimeImmutable $lastSeenAt = null,
         public ?string $lastQuitMessage = null,
         public ?string $lastConnectIp = null,
         public ?string $lastConnectHost = null,
@@ -48,8 +47,8 @@ final readonly class InfoNickResult
 
     public static function pendingDeletion(
         string $nickname,
-        ?DateTimeImmutable $pendingDeletionAt = null,
-        ?DateTimeImmutable $deletionExpiresAt = null,
+        ?\DateTimeImmutable $pendingDeletionAt = null,
+        ?\DateTimeImmutable $deletionExpiresAt = null,
     ): self {
         return new self(
             InfoNickOutcome::PendingDeletion,
@@ -71,10 +70,10 @@ final readonly class InfoNickResult
         string $nickname,
         NickStatus $status,
         ?string $suspendedReason,
-        ?DateTimeImmutable $suspendedUntil,
-        ?DateTimeImmutable $registeredAt,
+        ?\DateTimeImmutable $suspendedUntil,
+        ?\DateTimeImmutable $registeredAt,
         bool $lastSeenOnline,
-        ?DateTimeImmutable $lastSeenAt,
+        ?\DateTimeImmutable $lastSeenAt,
         ?string $lastQuitMessage,
         ?string $lastConnectIp,
         ?string $lastConnectHost,

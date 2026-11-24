@@ -8,7 +8,6 @@ use App\Bootstrap\Adapter\Out\Messenger\SymfonyAsyncMessageDispatcher;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use stdClass;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
 
@@ -18,7 +17,7 @@ final class SymfonyAsyncMessageDispatcherTest extends TestCase
     #[Test]
     public function dispatchDelegatesToSymfonyMessageBusAndReturnsEnvelope(): void
     {
-        $message = new stdClass();
+        $message = new \stdClass();
         $envelope = new Envelope($message);
         $messageBus = $this->createMock(MessageBusInterface::class);
         $messageBus

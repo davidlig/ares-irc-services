@@ -29,12 +29,10 @@ use App\NickServ\Application\UseCase\IssueMigrationRescueToken\IssueMigrationRes
 use App\NickServ\Application\UseCase\IssueMigrationRescueToken\IssueMigrationRescueTokenHandlerInterface;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\Tests\NickServ\Support\NegotiatedCaseMapping;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
 
 use function base64_encode;
 use function inet_pton;
@@ -82,7 +80,7 @@ final class NickProtectionServiceTest extends TestCase
             NegotiatedCaseMapping::nickServ(),
         );
 
-        $service->onUserJoined($user, new DateTimeImmutable());
+        $service->onUserJoined($user, new \DateTimeImmutable());
 
         $pending = $burstState->takePending();
         self::assertCount(1, $pending);
@@ -100,8 +98,8 @@ final class NickProtectionServiceTest extends TestCase
             'hash',
             'u@e.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable()
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable()
         );
         $account->activate();
         $account->switchMsg(true);
@@ -140,7 +138,7 @@ final class NickProtectionServiceTest extends TestCase
             NegotiatedCaseMapping::nickServ(),
         );
 
-        $service->onUserJoined($user, new DateTimeImmutable());
+        $service->onUserJoined($user, new \DateTimeImmutable());
     }
 
     #[Test]
@@ -172,7 +170,7 @@ final class NickProtectionServiceTest extends TestCase
             NegotiatedCaseMapping::nickServ(),
         );
 
-        $service->enforceProtection($user, new DateTimeImmutable());
+        $service->enforceProtection($user, new \DateTimeImmutable());
     }
 
     #[Test]
@@ -210,7 +208,7 @@ final class NickProtectionServiceTest extends TestCase
             NegotiatedCaseMapping::nickServ(),
         );
 
-        $service->enforceProtection($user, new DateTimeImmutable());
+        $service->enforceProtection($user, new \DateTimeImmutable());
     }
 
     #[Test]
@@ -224,13 +222,13 @@ final class NickProtectionServiceTest extends TestCase
             'hash',
             'u@e.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable()
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable()
         );
         $account->activate();
 
         // Set ID via reflection since it's set by Doctrine on persistence
-        $reflection = new ReflectionClass($account);
+        $reflection = new \ReflectionClass($account);
         $idProp = $reflection->getProperty('id');
         $idProp->setValue($account, 1);
 
@@ -264,7 +262,7 @@ final class NickProtectionServiceTest extends TestCase
             NegotiatedCaseMapping::nickServ(),
         );
 
-        $service->enforceProtection($user, new DateTimeImmutable());
+        $service->enforceProtection($user, new \DateTimeImmutable());
     }
 
     #[Test]
@@ -275,8 +273,8 @@ final class NickProtectionServiceTest extends TestCase
             'hash',
             'u@e.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable()
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable()
         );
         $account->activate();
 
@@ -302,7 +300,7 @@ final class NickProtectionServiceTest extends TestCase
             NegotiatedCaseMapping::nickServ(),
         );
 
-        $service->onUserQuit('UID1', 'QuitNick', 'Leaving', 'ident', 'host.example', 'real.host', 'AAA=', new DateTimeImmutable());
+        $service->onUserQuit('UID1', 'QuitNick', 'Leaving', 'ident', 'host.example', 'real.host', 'AAA=', new \DateTimeImmutable());
 
         self::assertNotNull($account->getLastSeenAt());
         self::assertStringContainsString('Leaving', $account->getLastQuitMessage() ?? '');
@@ -340,7 +338,7 @@ final class NickProtectionServiceTest extends TestCase
             NegotiatedCaseMapping::nickServ(),
         );
 
-        $service->onUserQuit('UID1', 'UnknownNick', 'Bye', 'ident', 'host', 'real.host', 'AAA=', new DateTimeImmutable());
+        $service->onUserQuit('UID1', 'UnknownNick', 'Bye', 'ident', 'host', 'real.host', 'AAA=', new \DateTimeImmutable());
 
         self::assertNull($identifiedRegistry->findNick('UID1'));
         self::assertFalse($pendingRegistry->peek('UID1'));
@@ -356,8 +354,8 @@ final class NickProtectionServiceTest extends TestCase
             'hash',
             'u@e.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable()
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable()
         );
         $account->activate();
         $identifiedRegistry = new IdentifiedSessionRegistry();
@@ -385,7 +383,7 @@ final class NickProtectionServiceTest extends TestCase
             NegotiatedCaseMapping::nickServ(),
         );
 
-        $service->onUserQuit('UID1', 'SomeNick', 'Quit', 'id', 'host', 'real.host', 'AAA=', new DateTimeImmutable());
+        $service->onUserQuit('UID1', 'SomeNick', 'Quit', 'id', 'host', 'real.host', 'AAA=', new \DateTimeImmutable());
 
         self::assertNotNull($account->getLastSeenAt());
         self::assertNull($identifiedRegistry->findNick('UID1'));
@@ -402,8 +400,8 @@ final class NickProtectionServiceTest extends TestCase
             'hash',
             'u@e.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable()
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable()
         );
         self::assertFalse($account->isRegistered());
 
@@ -430,7 +428,7 @@ final class NickProtectionServiceTest extends TestCase
             NegotiatedCaseMapping::nickServ(),
         );
 
-        $service->enforceProtection($user, new DateTimeImmutable());
+        $service->enforceProtection($user, new \DateTimeImmutable());
     }
 
     #[Test]
@@ -443,8 +441,8 @@ final class NickProtectionServiceTest extends TestCase
             'hash',
             'u@e.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable()
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable()
         );
         $account->activate();
         $user = new NetworkUser('UID1', 'RegNick', 'i', 'h', 'c', 'ip', false);
@@ -477,7 +475,7 @@ final class NickProtectionServiceTest extends TestCase
             NegotiatedCaseMapping::nickServ(),
         );
 
-        $service->onNickChanged('UID1', 'OldNick', 'RegNick', new DateTimeImmutable());
+        $service->onNickChanged('UID1', 'OldNick', 'RegNick', new \DateTimeImmutable());
     }
 
     #[Test]
@@ -510,7 +508,7 @@ final class NickProtectionServiceTest extends TestCase
             NegotiatedCaseMapping::nickServ(),
         );
 
-        $service->onNickChanged('UID1', 'OldNick', 'Guest-ABC123', new DateTimeImmutable());
+        $service->onNickChanged('UID1', 'OldNick', 'Guest-ABC123', new \DateTimeImmutable());
     }
 
     #[Test]
@@ -523,8 +521,8 @@ final class NickProtectionServiceTest extends TestCase
             'hash',
             'u@e.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable()
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable()
         );
         $account->activate();
         $user = new NetworkUser('UID1', 'RegNick', 'i', 'h', 'c', 'ip', false);
@@ -558,7 +556,7 @@ final class NickProtectionServiceTest extends TestCase
             NegotiatedCaseMapping::nickServ(),
         );
 
-        $service->onNickChanged('UID1', 'Guest-XYZ', 'RegNick', new DateTimeImmutable());
+        $service->onNickChanged('UID1', 'Guest-XYZ', 'RegNick', new \DateTimeImmutable());
     }
 
     #[Test]
@@ -574,8 +572,8 @@ final class NickProtectionServiceTest extends TestCase
             'hash',
             'u@e.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable()
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable()
         );
         $account->activate();
         $user = new NetworkUser('UID1', 'RegNick', 'i', 'h', 'c', 'ip', false);
@@ -606,7 +604,7 @@ final class NickProtectionServiceTest extends TestCase
             NegotiatedCaseMapping::nickServ(),
         );
 
-        $service->onNickChanged('UID1', 'OldNick', 'RegNick', new DateTimeImmutable());
+        $service->onNickChanged('UID1', 'OldNick', 'RegNick', new \DateTimeImmutable());
     }
 
     /** @return iterable<string, array{string, string}> */
@@ -625,7 +623,7 @@ final class NickProtectionServiceTest extends TestCase
         $identifiedRegistry = new IdentifiedSessionRegistry();
         $identifiedRegistry->register('UID1', $registered);
 
-        $account = RegisteredNick::createActive($registered, 'hash', 'u@e.com', 'en', new DateTimeImmutable());
+        $account = RegisteredNick::createActive($registered, 'hash', 'u@e.com', 'en', new \DateTimeImmutable());
         $user = new NetworkUser('UID1', $newNick, 'i', 'h', 'c', 'ip', false);
 
         $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
@@ -655,7 +653,7 @@ final class NickProtectionServiceTest extends TestCase
             NegotiatedCaseMapping::nickServ(),
         );
 
-        $service->onNickChanged('UID1', 'OldNick', $newNick, new DateTimeImmutable());
+        $service->onNickChanged('UID1', 'OldNick', $newNick, new \DateTimeImmutable());
 
         self::assertSame($registered, $identifiedRegistry->findNick('UID1'));
     }
@@ -694,7 +692,7 @@ final class NickProtectionServiceTest extends TestCase
             NegotiatedCaseMapping::nickServ(CaseMapping::Ascii),
         );
 
-        $service->onNickChanged('UID1', 'OldNick', '{REG}|~', new DateTimeImmutable());
+        $service->onNickChanged('UID1', 'OldNick', '{REG}|~', new \DateTimeImmutable());
     }
 
     /** @return iterable<string, array{CaseMapping, bool}> */
@@ -712,10 +710,10 @@ final class NickProtectionServiceTest extends TestCase
         $burstState->markComplete();
         $identifiedRegistry = new IdentifiedSessionRegistry();
         $identifiedRegistry->register('UID1', 'nick[');
-        $account = RegisteredNick::createActive('nick{', 'hash', 'u@e.com', 'en', new DateTimeImmutable());
-        new ReflectionClass(RegisteredNick::class)->getProperty('id')->setValue($account, 1);
+        $account = RegisteredNick::createActive('nick{', 'hash', 'u@e.com', 'en', new \DateTimeImmutable());
+        new \ReflectionClass(RegisteredNick::class)->getProperty('id')->setValue($account, 1);
         $user = new NetworkUser('UID1', 'nick{', 'i', 'h', 'c', 'ip', true);
-        $now = new DateTimeImmutable('2026-11-15 12:00:00');
+        $now = new \DateTimeImmutable('2026-11-15 12:00:00');
 
         $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $notifier = $this->createMock(NickNetworkActions::class);
@@ -758,8 +756,8 @@ final class NickProtectionServiceTest extends TestCase
             'hash',
             'u@e.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable()
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable()
         );
         $account->activate();
         $user = new NetworkUser('UID1', 'RegNick', 'i', 'h', 'c', 'ip', true);
@@ -793,7 +791,7 @@ final class NickProtectionServiceTest extends TestCase
             NegotiatedCaseMapping::nickServ(),
         );
 
-        $service->onNickChanged('UID1', 'OldNick', 'RegNick', new DateTimeImmutable());
+        $service->onNickChanged('UID1', 'OldNick', 'RegNick', new \DateTimeImmutable());
     }
 
     #[Test]
@@ -806,8 +804,8 @@ final class NickProtectionServiceTest extends TestCase
             'hash',
             'u@e.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable()
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable()
         );
         $account->activate();
         $user = new NetworkUser('UID1', 'RegNick', 'i', 'h', 'c', 'ip', isIdentified: true);
@@ -844,7 +842,7 @@ final class NickProtectionServiceTest extends TestCase
             NegotiatedCaseMapping::nickServ(),
         );
 
-        $service->onNickChanged('UID1', 'OldNick', 'RegNick', new DateTimeImmutable());
+        $service->onNickChanged('UID1', 'OldNick', 'RegNick', new \DateTimeImmutable());
     }
 
     #[Test]
@@ -858,8 +856,8 @@ final class NickProtectionServiceTest extends TestCase
             'hash',
             'u@e.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable()
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable()
         );
         $account->activate();
 
@@ -891,7 +889,7 @@ final class NickProtectionServiceTest extends TestCase
             NegotiatedCaseMapping::nickServ(),
         );
 
-        $service->enforceProtection($user, new DateTimeImmutable());
+        $service->enforceProtection($user, new \DateTimeImmutable());
     }
 
     #[Test]
@@ -904,12 +902,12 @@ final class NickProtectionServiceTest extends TestCase
             'hash',
             'u@e.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable()
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable()
         );
         $account->activate();
 
-        $reflection = new ReflectionClass($account);
+        $reflection = new \ReflectionClass($account);
         $idProp = $reflection->getProperty('id');
         $idProp->setValue($account, 1);
 
@@ -943,7 +941,7 @@ final class NickProtectionServiceTest extends TestCase
             NegotiatedCaseMapping::nickServ(),
         );
 
-        $service->enforceProtection($user, new DateTimeImmutable());
+        $service->enforceProtection($user, new \DateTimeImmutable());
     }
 
     #[Test]
@@ -956,8 +954,8 @@ final class NickProtectionServiceTest extends TestCase
             'hash',
             'u@e.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable()
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable()
         );
         // Account is NOT activated — stays in pending state (not registered)
 
@@ -985,7 +983,7 @@ final class NickProtectionServiceTest extends TestCase
             NegotiatedCaseMapping::nickServ(),
         );
 
-        $service->enforceProtection($user, new DateTimeImmutable());
+        $service->enforceProtection($user, new \DateTimeImmutable());
     }
 
     #[Test]
@@ -1001,8 +999,8 @@ final class NickProtectionServiceTest extends TestCase
             'hash',
             'u@e.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable()
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable()
         );
         $oldAccount->activate();
         $this->setNickId($oldAccount, 1);
@@ -1011,8 +1009,8 @@ final class NickProtectionServiceTest extends TestCase
             'hash',
             'u@e.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable()
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable()
         );
         $account->activate();
         $this->setNickId($account, 2);
@@ -1057,7 +1055,7 @@ final class NickProtectionServiceTest extends TestCase
         );
 
         self::assertSame('OldIdentified', $identifiedRegistry->findNick('UID1'));
-        $service->onNickChanged('UID1', 'OldIdentified', 'RegNick', new DateTimeImmutable());
+        $service->onNickChanged('UID1', 'OldIdentified', 'RegNick', new \DateTimeImmutable());
         self::assertNull($identifiedRegistry->findNick('UID1'));
     }
 
@@ -1069,8 +1067,8 @@ final class NickProtectionServiceTest extends TestCase
             'hash',
             'u@e.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable()
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable()
         );
         $account->activate();
 
@@ -1096,7 +1094,7 @@ final class NickProtectionServiceTest extends TestCase
             NegotiatedCaseMapping::nickServ(),
         );
 
-        $service->onUserQuit('UID1', 'QuitNick', '', '', 'host.example', 'real.host', 'AAA=', new DateTimeImmutable());
+        $service->onUserQuit('UID1', 'QuitNick', '', '', 'host.example', 'real.host', 'AAA=', new \DateTimeImmutable());
         self::assertSame('host.example', $account->getLastQuitMessage());
     }
 
@@ -1108,8 +1106,8 @@ final class NickProtectionServiceTest extends TestCase
             'hash',
             'u@e.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable()
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable()
         );
         $account->activate();
 
@@ -1135,7 +1133,7 @@ final class NickProtectionServiceTest extends TestCase
             NegotiatedCaseMapping::nickServ(),
         );
 
-        $service->onUserQuit('UID1', 'QuitNick', 'Leaving now', 'myident', 'host.example', 'real.host', 'AAA=', new DateTimeImmutable());
+        $service->onUserQuit('UID1', 'QuitNick', 'Leaving now', 'myident', 'host.example', 'real.host', 'AAA=', new \DateTimeImmutable());
         self::assertSame('Leaving now (myident@host.example)', $account->getLastQuitMessage());
     }
 
@@ -1147,8 +1145,8 @@ final class NickProtectionServiceTest extends TestCase
             'hash',
             'u@e.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable()
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable()
         );
         $account->activate();
 
@@ -1180,7 +1178,7 @@ final class NickProtectionServiceTest extends TestCase
         // IPv4 base64 encoded: 192.168.1.100
         // inet_pton('192.168.1.100') = bytes [C0,A8,01,64] = base64_encode -> 'wKgBZA=='
         $ipBase64 = base64_encode(inet_pton('192.168.1.100') ?: '');
-        $service->onUserQuit('UID1', 'QuitNick', 'Leaving', 'ident', 'display.host', 'real.isp.example', $ipBase64, new DateTimeImmutable());
+        $service->onUserQuit('UID1', 'QuitNick', 'Leaving', 'ident', 'display.host', 'real.isp.example', $ipBase64, new \DateTimeImmutable());
 
         self::assertSame('192.168.1.100', $account->getLastConnectIp());
         self::assertSame('real.isp.example', $account->getLastConnectHost());
@@ -1194,8 +1192,8 @@ final class NickProtectionServiceTest extends TestCase
             'hash',
             'u@e.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable()
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable()
         );
         $account->activate();
         self::assertNull($account->getLastConnectIp());
@@ -1224,7 +1222,7 @@ final class NickProtectionServiceTest extends TestCase
         );
 
         // User not identified (not in registry)
-        $service->onUserQuit('UID1', 'QuitNick', 'Leaving', 'ident', 'display.host', 'real.isp.example', 'AICQAGQ=', new DateTimeImmutable());
+        $service->onUserQuit('UID1', 'QuitNick', 'Leaving', 'ident', 'display.host', 'real.isp.example', 'AICQAGQ=', new \DateTimeImmutable());
 
         // Should remain null because user was not identified
         self::assertNull($account->getLastConnectIp());
@@ -1239,8 +1237,8 @@ final class NickProtectionServiceTest extends TestCase
             'hash',
             'u@e.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable()
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable()
         );
         $account->activate();
 
@@ -1269,7 +1267,7 @@ final class NickProtectionServiceTest extends TestCase
             NegotiatedCaseMapping::nickServ(),
         );
 
-        $service->onUserQuit('UID1', 'QuitNick', 'Leaving', 'ident', 'display.host', 'real.isp.example', '', new DateTimeImmutable());
+        $service->onUserQuit('UID1', 'QuitNick', 'Leaving', 'ident', 'display.host', 'real.isp.example', '', new \DateTimeImmutable());
 
         self::assertNull($account->getLastConnectIp());
         self::assertNull($account->getLastConnectHost());
@@ -1283,8 +1281,8 @@ final class NickProtectionServiceTest extends TestCase
             'hash',
             'u@e.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable()
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable()
         );
         $account->activate();
 
@@ -1313,7 +1311,7 @@ final class NickProtectionServiceTest extends TestCase
             NegotiatedCaseMapping::nickServ(),
         );
 
-        $service->onUserQuit('UID1', 'QuitNick', 'Leaving', 'ident', 'display.host', 'real.isp.example', '*', new DateTimeImmutable());
+        $service->onUserQuit('UID1', 'QuitNick', 'Leaving', 'ident', 'display.host', 'real.isp.example', '*', new \DateTimeImmutable());
 
         self::assertNull($account->getLastConnectIp());
         self::assertNull($account->getLastConnectHost());
@@ -1327,8 +1325,8 @@ final class NickProtectionServiceTest extends TestCase
             'hash',
             'u@e.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable()
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable()
         );
         $account->activate();
 
@@ -1358,7 +1356,7 @@ final class NickProtectionServiceTest extends TestCase
         );
 
         // Invalid base64 (not decodable) - decodeIp returns '*', and updateLastConnection treats '*' as null
-        $service->onUserQuit('UID1', 'QuitNick', 'Leaving', 'ident', 'display.host', 'real.isp.example', '!!!invalid!!!', new DateTimeImmutable());
+        $service->onUserQuit('UID1', 'QuitNick', 'Leaving', 'ident', 'display.host', 'real.isp.example', '!!!invalid!!!', new \DateTimeImmutable());
 
         // When IP decoding fails, it returns '*', which is treated as empty by updateLastConnection
         self::assertNull($account->getLastConnectIp());
@@ -1392,7 +1390,7 @@ final class NickProtectionServiceTest extends TestCase
             NegotiatedCaseMapping::nickServ(),
         );
 
-        $service->onNickChanged('UID1', 'OldNick', 'NewNick', new DateTimeImmutable());
+        $service->onNickChanged('UID1', 'OldNick', 'NewNick', new \DateTimeImmutable());
     }
 
     #[Test]
@@ -1425,7 +1423,7 @@ final class NickProtectionServiceTest extends TestCase
             NegotiatedCaseMapping::nickServ(),
         );
 
-        $service->onNickChanged('UID1', 'OldNick', 'NewNick', new DateTimeImmutable());
+        $service->onNickChanged('UID1', 'OldNick', 'NewNick', new \DateTimeImmutable());
     }
 
     #[Test]
@@ -1439,8 +1437,8 @@ final class NickProtectionServiceTest extends TestCase
             'hash',
             'u@e.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable()
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable()
         );
         self::assertFalse($account->isRegistered());
 
@@ -1468,7 +1466,7 @@ final class NickProtectionServiceTest extends TestCase
             NegotiatedCaseMapping::nickServ(),
         );
 
-        $service->onNickChanged('UID1', 'OldNick', 'NewNick', new DateTimeImmutable());
+        $service->onNickChanged('UID1', 'OldNick', 'NewNick', new \DateTimeImmutable());
     }
 
     #[Test]
@@ -1482,8 +1480,8 @@ final class NickProtectionServiceTest extends TestCase
             'hash',
             'u@e.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable()
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable()
         );
         $account->activate();
 
@@ -1514,7 +1512,7 @@ final class NickProtectionServiceTest extends TestCase
             NegotiatedCaseMapping::nickServ(),
         );
 
-        $service->onNickChanged('UID1', 'OldNick', 'NewNick', new DateTimeImmutable());
+        $service->onNickChanged('UID1', 'OldNick', 'NewNick', new \DateTimeImmutable());
     }
 
     #[Test]
@@ -1528,12 +1526,12 @@ final class NickProtectionServiceTest extends TestCase
             'hash',
             'u@e.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable()
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable()
         );
         $account->activate();
 
-        $reflection = new ReflectionClass($account);
+        $reflection = new \ReflectionClass($account);
         $idProp = $reflection->getProperty('id');
         $idProp->setValue($account, 1);
 
@@ -1569,7 +1567,7 @@ final class NickProtectionServiceTest extends TestCase
             NegotiatedCaseMapping::nickServ(),
         );
 
-        $service->enforceProtection($user, new DateTimeImmutable());
+        $service->enforceProtection($user, new \DateTimeImmutable());
 
         self::assertNull($identifiedRegistry->findNick('UID1'));
     }
@@ -1585,8 +1583,8 @@ final class NickProtectionServiceTest extends TestCase
             'hash',
             'u@e.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable()
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable()
         );
 
         $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
@@ -1615,7 +1613,7 @@ final class NickProtectionServiceTest extends TestCase
             NegotiatedCaseMapping::nickServ(),
         );
 
-        $service->enforceProtection($user, new DateTimeImmutable());
+        $service->enforceProtection($user, new \DateTimeImmutable());
     }
 
     #[Test]
@@ -1629,12 +1627,12 @@ final class NickProtectionServiceTest extends TestCase
             'hash',
             'u@e.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable()
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable()
         );
         $account->activate();
 
-        $reflection = new ReflectionClass($account);
+        $reflection = new \ReflectionClass($account);
         $idProp = $reflection->getProperty('id');
         $idProp->setValue($account, 1);
 
@@ -1673,7 +1671,7 @@ final class NickProtectionServiceTest extends TestCase
             NegotiatedCaseMapping::nickServ(),
         );
 
-        $service->onNickChanged('UID1', 'OldNick', 'RegisteredNick', new DateTimeImmutable());
+        $service->onNickChanged('UID1', 'OldNick', 'RegisteredNick', new \DateTimeImmutable());
 
         self::assertNull($identifiedRegistry->findNick('UID1'));
     }
@@ -1691,8 +1689,8 @@ final class NickProtectionServiceTest extends TestCase
             'hash',
             'u@e.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable()
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable()
         );
         $oldAccount->activate();
         $this->setNickId($oldAccount, 1);
@@ -1701,8 +1699,8 @@ final class NickProtectionServiceTest extends TestCase
             'hash',
             'u@e.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable()
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable()
         );
         $account->activate();
         $this->setNickId($account, 2);
@@ -1748,7 +1746,7 @@ final class NickProtectionServiceTest extends TestCase
         );
 
         self::assertSame('OldIdentified', $identifiedRegistry->findNick('UID1'));
-        $service->onNickChanged('UID1', 'OldIdentified', 'RegNick', new DateTimeImmutable());
+        $service->onNickChanged('UID1', 'OldIdentified', 'RegNick', new \DateTimeImmutable());
         self::assertSame('OldIdentified', $identifiedRegistry->findNick('UID1'));
     }
 
@@ -1765,8 +1763,8 @@ final class NickProtectionServiceTest extends TestCase
             'hash',
             'u@e.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable()
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable()
         );
         $oldAccount->activate();
         $this->setNickId($oldAccount, 1);
@@ -1775,8 +1773,8 @@ final class NickProtectionServiceTest extends TestCase
             'hash',
             'u@e.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable()
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable()
         );
         $account->activate();
         $this->setNickId($account, 2);
@@ -1822,14 +1820,14 @@ final class NickProtectionServiceTest extends TestCase
         );
 
         self::assertSame('OldIdentified', $identifiedRegistry->findNick('UID1'));
-        $service->onNickChanged('UID1', 'OldIdentified', 'RegNick', new DateTimeImmutable());
+        $service->onNickChanged('UID1', 'OldIdentified', 'RegNick', new \DateTimeImmutable());
         self::assertNull($identifiedRegistry->findNick('UID1'));
     }
 
     #[Test]
     public function nativeAuthenticatedBindingIssuesOneMigrationChallengeOnReconstruction(): void
     {
-        $now = new DateTimeImmutable('2026-09-06');
+        $now = new \DateTimeImmutable('2026-09-06');
         $account = RegisteredNick::createPending('Alice', 'hash', 'a@example.com', 'en', $now->modify('+1 hour'), $now);
         $account->activate();
         $this->setNickId($account, 42);
@@ -1872,7 +1870,7 @@ final class NickProtectionServiceTest extends TestCase
 
     private function setNickId(RegisteredNick $nick, int $id): void
     {
-        $reflection = new ReflectionClass($nick);
+        $reflection = new \ReflectionClass($nick);
         $property = $reflection->getProperty('id');
         $property->setValue($nick, $id);
     }

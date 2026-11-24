@@ -9,7 +9,6 @@ use App\Irc\Application\PublishedEvent\CommandExecutedEvent;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use stdClass;
 
 #[CoversClass(CommandExecutedEvent::class)]
 final class CommandExecutedEventTest extends TestCase
@@ -17,7 +16,7 @@ final class CommandExecutedEventTest extends TestCase
     #[Test]
     public function exposesExecutionMetadata(): void
     {
-        $command = new stdClass();
+        $command = new \stdClass();
         $outcome = CommandOutcome::rejected();
 
         $event = new CommandExecutedEvent($command, 'nickserv', 'Oper', 'DROP', 'nickserv.drop', $outcome);

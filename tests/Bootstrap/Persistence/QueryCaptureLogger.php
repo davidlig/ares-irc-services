@@ -6,7 +6,6 @@ namespace App\Tests\Bootstrap\Persistence;
 
 use Doctrine\DBAL\ParameterType;
 use Psr\Log\AbstractLogger;
-use Stringable;
 
 use function array_values;
 use function assert;
@@ -26,7 +25,7 @@ final class QueryCaptureLogger extends AbstractLogger
         $this->queries = [];
     }
 
-    public function log(mixed $level, string|Stringable $message, array $context = []): void
+    public function log(mixed $level, \Stringable|string $message, array $context = []): void
     {
         if (!$this->enabled || !isset($context['sql'])) {
             return;

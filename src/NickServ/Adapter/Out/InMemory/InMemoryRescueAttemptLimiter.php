@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace App\NickServ\Adapter\Out\InMemory;
 
 use App\NickServ\Application\Port\Out\RescueAttemptLimiter;
-use DateTimeImmutable;
-use InvalidArgumentException;
 
 use function array_filter;
 use function array_values;
@@ -28,11 +26,11 @@ final class InMemoryRescueAttemptLimiter implements RescueAttemptLimiter
         private readonly int $maxBuckets = 10000,
     ) {
         if (min($maxAttempts, $windowSeconds, $lockoutSeconds, $maxBuckets) < 1) {
-            throw new InvalidArgumentException('Rescue limiter configuration must be positive.');
+            throw new \InvalidArgumentException('Rescue limiter configuration must be positive.');
         }
     }
 
-    public function remainingCooldownSeconds(int $accountId, string $clientKey, DateTimeImmutable $now): int
+    public function remainingCooldownSeconds(int $accountId, string $clientKey, \DateTimeImmutable $now): int
     {
         return max(
             0,
@@ -42,7 +40,7 @@ final class InMemoryRescueAttemptLimiter implements RescueAttemptLimiter
         );
     }
 
-    public function recordFailure(int $accountId, string $clientKey, DateTimeImmutable $now): void
+    public function recordFailure(int $accountId, string $clientKey, \DateTimeImmutable $now): void
     {
         $this->prune($now);
         if (0 < $this->remainingCooldownSeconds($accountId, $clientKey, $now)) {
@@ -69,7 +67,7 @@ final class InMemoryRescueAttemptLimiter implements RescueAttemptLimiter
         // Shared budgets cannot safely be reset by successful authentication.
     }
 
-    public function prune(DateTimeImmutable $now): int
+    public function prune(\DateTimeImmutable $now): int
     {
         $removed = 0;
         $timestamp = $now->getTimestamp();

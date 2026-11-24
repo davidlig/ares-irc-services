@@ -26,12 +26,9 @@ use App\ChanServ\Domain\Entity\ChannelLevel;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\ValueObject\ChannelStatus;
 use App\Shared\Application\Port\EventBusInterface;
-use DateTimeImmutable;
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionProperty;
 
 use function count;
 
@@ -43,7 +40,7 @@ final class ReviewRegistrationHandlerTest extends TestCase
     #[Test]
     public function reviewInputRetainsAllCurrentDecisionFacts(): void
     {
-        $at = new DateTimeImmutable('2026-10-26T12:00:00+00:00');
+        $at = new \DateTimeImmutable('2026-10-26T12:00:00+00:00');
         $request = new ReviewRegistration('#test', true, 9, 'Reviewer', $at, 'Needs a topic', true);
 
         self::assertSame('#test', $request->channelName);
@@ -58,7 +55,7 @@ final class ReviewRegistrationHandlerTest extends TestCase
     #[Test]
     public function acceptanceRejectsChannelMissingFromNetworkBeforeIdentityLookup(): void
     {
-        $at = new DateTimeImmutable('2026-10-26T12:00:00+00:00');
+        $at = new \DateTimeImmutable('2026-10-26T12:00:00+00:00');
         $pending = $this->pendingChannel($at);
         $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channels->expects(self::once())->method('findByChannelName')->willReturn($pending);
@@ -83,7 +80,7 @@ final class ReviewRegistrationHandlerTest extends TestCase
     #[Test]
     public function zeroCooldownCreatesIndefiniteRejectedStateAndNegativeCooldownIsInvalid(): void
     {
-        $at = new DateTimeImmutable('2026-10-26T12:00:00+00:00');
+        $at = new \DateTimeImmutable('2026-10-26T12:00:00+00:00');
         $pending = $this->pendingChannel($at);
         $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channels->expects(self::once())->method('findByChannelName')->willReturn($pending);
@@ -108,7 +105,7 @@ final class ReviewRegistrationHandlerTest extends TestCase
         self::assertTrue($pending->isRejectedRegistration());
         self::assertNull($pending->getRegistrationRestrictedUntil());
 
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         new ReviewRegistrationHandler(
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             new ChannelRegistrationActivator($this->createStub(ChannelLevelRepositoryInterface::class), $this->createStub(ChannelAkickRepositoryInterface::class)),
@@ -125,7 +122,7 @@ final class ReviewRegistrationHandlerTest extends TestCase
     #[Test]
     public function acceptanceIsRefusedWhenRequesterAccountIsNoLongerActive(): void
     {
-        $at = new DateTimeImmutable('2026-10-26T12:00:00+00:00');
+        $at = new \DateTimeImmutable('2026-10-26T12:00:00+00:00');
         $channel = $this->pendingChannel($at);
         $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channels->expects(self::once())->method('findByChannelName')->willReturn($channel);
@@ -155,7 +152,7 @@ final class ReviewRegistrationHandlerTest extends TestCase
     #[Test]
     public function acceptActivatesPendingChannelPublishesEventsAndWritesApprovingNicknameToHistory(): void
     {
-        $at = new DateTimeImmutable('2026-10-26T12:00:00+00:00');
+        $at = new \DateTimeImmutable('2026-10-26T12:00:00+00:00');
         $channel = $this->pendingChannel($at);
         $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channels->expects(self::once())->method('findByChannelName')->with('#test')->willReturn($channel);
@@ -196,7 +193,7 @@ final class ReviewRegistrationHandlerTest extends TestCase
     #[Test]
     public function rejectStoresReasonOperatorAndFixedCooldownAndDoesNotActivate(): void
     {
-        $at = new DateTimeImmutable('2026-10-26T12:00:00+00:00');
+        $at = new \DateTimeImmutable('2026-10-26T12:00:00+00:00');
         $channel = $this->pendingChannel($at);
         $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channels->method('findByChannelName')->willReturn($channel);
@@ -238,7 +235,7 @@ final class ReviewRegistrationHandlerTest extends TestCase
     #[Test]
     public function acceptanceRejectsRequesterWithoutCurrentChannelEligibility(): void
     {
-        $at = new DateTimeImmutable('2026-10-26T12:00:00+00:00');
+        $at = new \DateTimeImmutable('2026-10-26T12:00:00+00:00');
         $channel = $this->pendingChannel($at);
         $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channels->expects(self::once())->method('findByChannelName')->willReturn($channel);
@@ -268,12 +265,12 @@ final class ReviewRegistrationHandlerTest extends TestCase
     #[Test]
     public function acceptanceEnforcesActiveChannelLimitAndExistingChannelConflicts(): void
     {
-        $at = new DateTimeImmutable('2026-10-26T12:00:00+00:00');
+        $at = new \DateTimeImmutable('2026-10-26T12:00:00+00:00');
         $pending = $this->pendingChannel($at);
         $competitors = [];
         foreach (['#one', '#two', '#three'] as $index => $name) {
             $competitor = RegisteredChannel::register($at, $name, 7, 'existing');
-            new ReflectionProperty(RegisteredChannel::class, 'id')->setValue($competitor, 51 + $index);
+            new \ReflectionProperty(RegisteredChannel::class, 'id')->setValue($competitor, 51 + $index);
             $competitors[] = $competitor;
         }
         $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
@@ -306,7 +303,7 @@ final class ReviewRegistrationHandlerTest extends TestCase
     #[Test]
     public function existingNonPendingChannelCannotBeReviewed(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 7, 'already active');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 7, 'already active');
         $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channels->expects(self::once())->method('findByChannelName')->willReturn($channel);
         $channels->expects(self::never())->method('save');
@@ -321,18 +318,18 @@ final class ReviewRegistrationHandlerTest extends TestCase
             requesterSessions: $this->createStub(IdentifiedRequesterSession::class),
         );
 
-        self::assertSame(ReviewRegistrationOutcome::NotPending, $handler->handle(new ReviewRegistration('#test', true, 9, 'Operator', new DateTimeImmutable()))->outcome);
+        self::assertSame(ReviewRegistrationOutcome::NotPending, $handler->handle(new ReviewRegistration('#test', true, 9, 'Operator', new \DateTimeImmutable()))->outcome);
     }
 
     #[Test]
     public function acceptanceCountsSuspendedOwnedChannelsLikeOrdinaryRegistration(): void
     {
-        $at = new DateTimeImmutable('2026-10-26T12:00:00+00:00');
+        $at = new \DateTimeImmutable('2026-10-26T12:00:00+00:00');
         $pending = $this->pendingChannel($at);
         $owned = [];
         foreach (['#one', '#two', '#three'] as $index => $name) {
             $channel = RegisteredChannel::register($at, $name, 7, 'owned');
-            new ReflectionProperty(RegisteredChannel::class, 'id')->setValue($channel, 70 + $index);
+            new \ReflectionProperty(RegisteredChannel::class, 'id')->setValue($channel, 70 + $index);
             $channel->suspend('policy');
             $owned[] = $channel;
         }
@@ -363,10 +360,10 @@ final class ReviewRegistrationHandlerTest extends TestCase
         self::assertTrue($pending->isPendingRegistration());
     }
 
-    private function pendingChannel(DateTimeImmutable $at): RegisteredChannel
+    private function pendingChannel(\DateTimeImmutable $at): RegisteredChannel
     {
         $channel = RegisteredChannel::createPendingRegistration($at, '#test', 7, 'Description');
-        new ReflectionProperty(RegisteredChannel::class, 'id')->setValue($channel, 41);
+        new \ReflectionProperty(RegisteredChannel::class, 'id')->setValue($channel, 41);
 
         return $channel;
     }

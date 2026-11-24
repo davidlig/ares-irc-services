@@ -13,7 +13,6 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
-use RuntimeException;
 
 use function array_map;
 use function array_shift;
@@ -217,7 +216,7 @@ final class PurgeExpiredAkickTaskTest extends TestCase
         $akickRepo->method('deleteByIds')->willReturnCallback(static function (array $ids) use ($deletes): int {
             $deletes[] = $ids;
             if (1 === $deletes->count()) {
-                throw new RuntimeException('database unavailable');
+                throw new \RuntimeException('database unavailable');
             }
 
             return count($ids);
@@ -227,10 +226,10 @@ final class PurgeExpiredAkickTaskTest extends TestCase
         $failure = null;
         try {
             $task->run();
-        } catch (RuntimeException $e) {
+        } catch (\RuntimeException $e) {
             $failure = $e;
         }
-        self::assertInstanceOf(RuntimeException::class, $failure);
+        self::assertInstanceOf(\RuntimeException::class, $failure);
         self::assertSame([null], $loads->getArrayCopy(), 'a failed delete ends the cycle');
 
         $task->run();
@@ -262,12 +261,12 @@ final class PurgeExpiredAkickTaskTest extends TestCase
     {
         $akickRepo = $this->createStub(ChannelAkickRepositoryInterface::class);
         $akickRepo->method('findExpired')->willReturn([$this->expired(1), $this->expired(2)]);
-        $akickRepo->method('deleteByIds')->willThrowException(new RuntimeException('database unavailable'));
+        $akickRepo->method('deleteByIds')->willThrowException(new \RuntimeException('database unavailable'));
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects(self::never())->method('info');
         $logger->expects(self::never())->method('warning');
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(\RuntimeException::class);
 
         new PurgeExpiredAkickTask($akickRepo, $logger, 3600, 2)->run();
     }
@@ -304,8 +303,8 @@ final class PurgeExpiredAkickTaskTest extends TestCase
     }
 
     /** @return ArrayObject<int, mixed> */
-    private static function recorder(): ArrayObject
+    private static function recorder(): \ArrayObject
     {
-        return new ArrayObject();
+        return new \ArrayObject();
     }
 }

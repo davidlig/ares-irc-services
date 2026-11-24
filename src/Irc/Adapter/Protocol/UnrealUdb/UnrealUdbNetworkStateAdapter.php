@@ -27,9 +27,6 @@ use App\Irc\Domain\ValueObject\ChannelName;
 use App\Irc\Domain\ValueObject\Ident;
 use App\Irc\Domain\ValueObject\Nick;
 use App\Irc\Domain\ValueObject\Uid;
-use DateMalformedStringException;
-use DateTimeImmutable;
-use InvalidArgumentException;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
@@ -119,8 +116,7 @@ final class UnrealUdbNetworkStateAdapter implements NetworkStateAdapterInterface
             return;
         }
 
-        [, , $timestamp, $username, $hostname, $uidStr, $serviceStamp, $umodes, $virthost, $cloakedHost, $ipBase64]
-            = $message->params;
+        [, , $timestamp, $username, $hostname, $uidStr, $serviceStamp, $umodes, $virthost, $cloakedHost, $ipBase64] = $message->params;
 
         $nickStr = $message->params[0];
         $gecos = $message->trailing ?? '';
@@ -132,13 +128,13 @@ final class UnrealUdbNetworkStateAdapter implements NetworkStateAdapterInterface
             if (1 !== preg_match('/^[0-9]+$/D', $timestamp)
                 || strlen($decimal) > strlen($maximum)
                 || (strlen($decimal) === strlen($maximum) && strcmp($decimal, $maximum) > 0)) {
-                throw new InvalidArgumentException('Invalid unsigned UID timestamp.');
+                throw new \InvalidArgumentException('Invalid unsigned UID timestamp.');
             }
-            $connectedAt = new DateTimeImmutable('@' . (int) $timestamp);
+            $connectedAt = new \DateTimeImmutable('@' . (int) $timestamp);
             $nick = new Nick($nickStr);
             $uid = new Uid($uidStr);
             $ident = new Ident($username);
-        } catch (DateMalformedStringException|InvalidArgumentException $e) {
+        } catch (\DateMalformedStringException|\InvalidArgumentException $e) {
             $this->logger->warning('UID skipped: invalid value — ' . $e->getMessage(), [
                 'raw' => $message->toRawLine(),
             ]);
@@ -367,7 +363,7 @@ final class UnrealUdbNetworkStateAdapter implements NetworkStateAdapterInterface
 
         try {
             $channelName = new ChannelName($channelStr);
-        } catch (InvalidArgumentException) {
+        } catch (\InvalidArgumentException) {
             $this->logger->warning('SJOIN: invalid channel name: ' . $channelStr);
 
             return;
@@ -466,7 +462,7 @@ final class UnrealUdbNetworkStateAdapter implements NetworkStateAdapterInterface
 
         try {
             $uid = new Uid($entry);
-        } catch (InvalidArgumentException) {
+        } catch (\InvalidArgumentException) {
             $this->logger->debug('SJOIN: skipping non-UID member entry: ' . $entry);
 
             return null;
@@ -541,7 +537,7 @@ final class UnrealUdbNetworkStateAdapter implements NetworkStateAdapterInterface
 
         try {
             $channelName = new ChannelName($channelStr);
-        } catch (InvalidArgumentException) {
+        } catch (\InvalidArgumentException) {
             return;
         }
 
@@ -560,7 +556,7 @@ final class UnrealUdbNetworkStateAdapter implements NetworkStateAdapterInterface
 
         try {
             $channelName = new ChannelName($channelStr);
-        } catch (InvalidArgumentException) {
+        } catch (\InvalidArgumentException) {
             return;
         }
 
@@ -634,7 +630,7 @@ final class UnrealUdbNetworkStateAdapter implements NetworkStateAdapterInterface
 
         try {
             $channelName = new ChannelName($channelStr);
-        } catch (InvalidArgumentException) {
+        } catch (\InvalidArgumentException) {
             return;
         }
 
@@ -656,7 +652,7 @@ final class UnrealUdbNetworkStateAdapter implements NetworkStateAdapterInterface
 
         try {
             $channelName = new ChannelName($channelStr);
-        } catch (InvalidArgumentException) {
+        } catch (\InvalidArgumentException) {
             return;
         }
 

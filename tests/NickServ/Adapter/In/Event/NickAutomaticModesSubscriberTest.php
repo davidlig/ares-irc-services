@@ -25,7 +25,6 @@ use App\NickServ\Application\Service\NickHistoryService;
 use App\NickServ\Domain\Entity\NickHistory;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\NickServ\Domain\ValueObject\AutomaticModeProfile;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\EventDispatcher\EventDispatcher;
@@ -45,7 +44,7 @@ final class NickAutomaticModesSubscriberTest extends TestCase
     public function testHistoryHasActorAndBeforeAfterAndPreferenceChangeAppliesImmediately(): void
     {
         $dispatcher = $this->dispatcher();
-        $time = new DateTimeImmutable('2026-11-01T10:00:00Z');
+        $time = new \DateTimeImmutable('2026-11-01T10:00:00Z');
         $dispatcher->dispatch(new NickAutomaticModesChangedEvent(12, 'Pedro', [], ['bot'], 'Admin', 9, '127.0.0.1', 'id@host', $time));
         self::assertSame(['+B'], $this->calls);
         $beforeClear = $this->history;
@@ -127,7 +126,7 @@ final class NickAutomaticModesSubscriberTest extends TestCase
 
     private function dispatcher(): EventDispatcher
     {
-        $nick = RegisteredNick::createActive('Pedro', 'hash', null, 'en', new DateTimeImmutable());
+        $nick = RegisteredNick::createActive('Pedro', 'hash', null, 'en', new \DateTimeImmutable());
         $nick->changeAutomaticModes(new AutomaticModeProfile(['bot']));
         $nicks = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nicks->method('findByNick')->willReturn($nick);

@@ -15,7 +15,6 @@ use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use App\Shared\Adapter\In\Irc\Presentation\Component;
 use App\Shared\Adapter\In\Irc\Presentation\Fragment;
 use App\Shared\Adapter\In\Irc\Presentation\Role;
-use DateTimeImmutable;
 
 use function base64_decode;
 use function inet_ntop;
@@ -122,7 +121,7 @@ final readonly class DelaccessCommand implements ChanServCommandInterface
             nickname: $sender->nick,
             actorIp: $this->decodeIp($sender->ipBase64),
             actorHost: sprintf('%s@%s', $sender->ident, $sender->hostname),
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
             founderEquivalent: $context->isLevelFounder,
         ));
         if (RemoveOwnChannelAccessOutcome::NotRegistered === $outcome) {

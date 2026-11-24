@@ -7,7 +7,6 @@ namespace App\Tests\NickServ\Application\Service;
 use App\NickServ\Application\Port\Out\ForbiddenVhostRepositoryInterface;
 use App\NickServ\Application\Service\ForbiddenVhostService;
 use App\NickServ\Domain\Entity\ForbiddenVhost;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -29,7 +28,7 @@ final class ForbiddenVhostServiceTest extends TestCase
             ->with(self::callback(static fn (ForbiddenVhost $vhost) => '*.pirated.com' === $vhost->getPattern()
                     && 123 === $vhost->getCreatedByNickId()));
 
-        $result = $this->service->forbid('*.pirated.com', 123, new DateTimeImmutable());
+        $result = $this->service->forbid('*.pirated.com', 123, new \DateTimeImmutable());
 
         self::assertSame('*.pirated.com', $result->getPattern());
         self::assertSame(123, $result->getCreatedByNickId());
@@ -38,7 +37,7 @@ final class ForbiddenVhostServiceTest extends TestCase
     #[Test]
     public function unforbidRemovesExistingPattern(): void
     {
-        $forbidden = ForbiddenVhost::create('*.pirated.com', 123, new DateTimeImmutable());
+        $forbidden = ForbiddenVhost::create('*.pirated.com', 123, new \DateTimeImmutable());
 
         $this->repository
             ->expects(self::once())
@@ -77,8 +76,8 @@ final class ForbiddenVhostServiceTest extends TestCase
     #[Test]
     public function matchesForbiddenPatternReturnsTrueWhenMatch(): void
     {
-        $forbidden1 = ForbiddenVhost::create('*.pirated.com', 1, new DateTimeImmutable());
-        $forbidden2 = ForbiddenVhost::create('badhost.*', 2, new DateTimeImmutable());
+        $forbidden1 = ForbiddenVhost::create('*.pirated.com', 1, new \DateTimeImmutable());
+        $forbidden2 = ForbiddenVhost::create('badhost.*', 2, new \DateTimeImmutable());
 
         $this->repository
             ->expects(self::once())
@@ -93,8 +92,8 @@ final class ForbiddenVhostServiceTest extends TestCase
     #[Test]
     public function matchesForbiddenPatternReturnsFalseWhenNoMatch(): void
     {
-        $forbidden1 = ForbiddenVhost::create('*.pirated.com', 1, new DateTimeImmutable());
-        $forbidden2 = ForbiddenVhost::create('badhost.*', 2, new DateTimeImmutable());
+        $forbidden1 = ForbiddenVhost::create('*.pirated.com', 1, new \DateTimeImmutable());
+        $forbidden2 = ForbiddenVhost::create('badhost.*', 2, new \DateTimeImmutable());
 
         $this->repository
             ->expects(self::once())
@@ -125,7 +124,7 @@ final class ForbiddenVhostServiceTest extends TestCase
         $this->repository
             ->expects(self::once())
             ->method('findAll')
-            ->willReturn([ForbiddenVhost::create('*.blocked', null, new DateTimeImmutable())]);
+            ->willReturn([ForbiddenVhost::create('*.blocked', null, new \DateTimeImmutable())]);
 
         self::assertTrue($this->service->matchesForbiddenPattern('one.blocked'));
         self::assertFalse($this->service->matchesForbiddenPattern('allowed.example'));
@@ -141,7 +140,7 @@ final class ForbiddenVhostServiceTest extends TestCase
         $this->repository->expects(self::once())->method('save');
 
         self::assertFalse($this->service->matchesForbiddenPattern('new.blocked'));
-        $this->service->forbid('*.blocked', null, new DateTimeImmutable());
+        $this->service->forbid('*.blocked', null, new \DateTimeImmutable());
 
         self::assertTrue($this->service->matchesForbiddenPattern('new.blocked'));
     }
@@ -149,7 +148,7 @@ final class ForbiddenVhostServiceTest extends TestCase
     #[Test]
     public function removingForbiddenPatternStopsMatchingAfterCacheWarmup(): void
     {
-        $forbidden = ForbiddenVhost::create('*.blocked', null, new DateTimeImmutable());
+        $forbidden = ForbiddenVhost::create('*.blocked', null, new \DateTimeImmutable());
         $this->repository
             ->expects(self::once())
             ->method('findAll')
@@ -171,8 +170,8 @@ final class ForbiddenVhostServiceTest extends TestCase
     public function unforbidWithDifferentCasingEvictsTheStoredPatternFromTheWarmCache(): void
     {
         // A case-insensitive collation finds the stored '*.Blocked' row for '*.BLOCKED'.
-        $stored = ForbiddenVhost::create('*.Blocked', null, new DateTimeImmutable());
-        $other = ForbiddenVhost::create('*.other', null, new DateTimeImmutable());
+        $stored = ForbiddenVhost::create('*.Blocked', null, new \DateTimeImmutable());
+        $other = ForbiddenVhost::create('*.other', null, new \DateTimeImmutable());
         $this->repository
             ->expects(self::once())
             ->method('findAll')
@@ -194,8 +193,8 @@ final class ForbiddenVhostServiceTest extends TestCase
     #[Test]
     public function getAllReturnsAllForbiddenPatterns(): void
     {
-        $forbidden1 = ForbiddenVhost::create('*.pirated.com', 1, new DateTimeImmutable());
-        $forbidden2 = ForbiddenVhost::create('badhost.*', 2, new DateTimeImmutable());
+        $forbidden1 = ForbiddenVhost::create('*.pirated.com', 1, new \DateTimeImmutable());
+        $forbidden2 = ForbiddenVhost::create('badhost.*', 2, new \DateTimeImmutable());
 
         $this->repository
             ->expects(self::once())

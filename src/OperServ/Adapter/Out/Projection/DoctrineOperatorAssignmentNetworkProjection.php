@@ -12,7 +12,6 @@ use App\OperServ\Application\PublishedEvent\OperIrcopChangedEvent;
 use App\OperServ\Domain\Entity\OperRole;
 use App\OperServ\Domain\Repository\OperRoleRepositoryInterface;
 use App\Shared\Application\Port\EventBusInterface;
-use LogicException;
 
 final readonly class DoctrineOperatorAssignmentNetworkProjection implements OperatorAssignmentNetworkProjection
 {
@@ -47,6 +46,6 @@ final readonly class DoctrineOperatorAssignmentNetworkProjection implements Oper
 
     private function role(string $name): OperRole
     {
-        return $this->roles->findByName($name) ?? throw new LogicException('Role disappeared during projection.');
+        return $this->roles->findByName($name) ?? throw new \LogicException('Role disappeared during projection.');
     }
 }

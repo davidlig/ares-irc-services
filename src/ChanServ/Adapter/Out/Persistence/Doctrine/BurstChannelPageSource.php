@@ -12,7 +12,6 @@ use App\ChanServ\Domain\Entity\ChannelAccess;
 use App\ChanServ\Domain\Entity\ChannelLevel;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use Doctrine\ORM\EntityManagerInterface;
-use InvalidArgumentException;
 
 use function array_map;
 use function array_values;
@@ -27,7 +26,7 @@ final readonly class BurstChannelPageSource implements BurstChannelPages
         private int $pageSize = 200,
     ) {
         if (1 > $this->pageSize) {
-            throw new InvalidArgumentException('Burst page size must be positive.');
+            throw new \InvalidArgumentException('Burst page size must be positive.');
         }
     }
 

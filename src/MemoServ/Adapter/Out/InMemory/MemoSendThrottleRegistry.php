@@ -19,14 +19,14 @@ final class MemoSendThrottleRegistry implements MemoThrottlePort
     /** @var array<string, DateTimeImmutable> sender UID -> last send time */
     private array $lastSendAt = [];
 
-    public function getLastSendAt(string $senderUid): ?DateTimeImmutable
+    public function getLastSendAt(string $senderUid): ?\DateTimeImmutable
     {
         return $this->lastSendAt[$senderUid] ?? null;
     }
 
     public function recordSend(string $senderUid): void
     {
-        $this->lastSendAt[$senderUid] = new DateTimeImmutable();
+        $this->lastSendAt[$senderUid] = new \DateTimeImmutable();
     }
 
     /**
@@ -45,7 +45,7 @@ final class MemoSendThrottleRegistry implements MemoThrottlePort
         }
 
         $nextAllowedAt = $last->modify(sprintf('+%d seconds', $minIntervalSeconds));
-        $now = new DateTimeImmutable();
+        $now = new \DateTimeImmutable();
 
         return max(0, $nextAllowedAt->getTimestamp() - $now->getTimestamp());
     }

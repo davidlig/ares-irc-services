@@ -32,12 +32,10 @@ use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
 use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\Shared\Application\Port\EventBusInterface;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionProperty;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function strcasecmp;
@@ -118,7 +116,7 @@ final class RegisterCommandTest extends TestCase
         $sender = new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip');
         $account = new ChanAccountView(1, 'User', 'en');
         $handler = $this->createStub(RegisterChannelHandlerInterface::class);
-        $handler->method('handle')->willReturn(RegisterChannelResult::registrationRestricted(new DateTimeImmutable('+1 hour')));
+        $handler->method('handle')->willReturn(RegisterChannelResult::registrationRestricted(new \DateTimeImmutable('+1 hour')));
         $messages = [];
         $notifier = $this->createStub(ChanServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void {
@@ -238,7 +236,7 @@ final class RegisterCommandTest extends TestCase
         $channelRepo->method('existsByChannelName')->willReturn(false);
         $channelRepo->method('countByFounderNickId')->willReturn(0);
         $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function (RegisteredChannel $channel): void {
-            $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
+            $ref = new \ReflectionProperty(RegisteredChannel::class, 'id');
             $ref->setValue($channel, 1);
         });
         $levelRepo = $this->createMock(ChannelLevelRepositoryInterface::class);
@@ -269,7 +267,7 @@ final class RegisterCommandTest extends TestCase
         $channelRepo->method('existsByChannelName')->willReturn(false);
         $channelRepo->method('countByFounderNickId')->willReturn(0);
         $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function (RegisteredChannel $channel): void {
-            $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
+            $ref = new \ReflectionProperty(RegisteredChannel::class, 'id');
             $ref->setValue($channel, 77);
         });
         $levelRepo = $this->createMock(ChannelLevelRepositoryInterface::class);
@@ -312,7 +310,7 @@ final class RegisterCommandTest extends TestCase
         $channelRepo->method('existsByChannelName')->willReturn(false);
         $channelRepo->method('countByFounderNickId')->willReturn(0);
         $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function (RegisteredChannel $channel): void {
-            $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
+            $ref = new \ReflectionProperty(RegisteredChannel::class, 'id');
             $ref->setValue($channel, 1);
         });
         $levelRepo = $this->createMock(ChannelLevelRepositoryInterface::class);
@@ -438,7 +436,7 @@ final class RegisterCommandTest extends TestCase
                 || 10 !== $ch->getFounderNickId()) {
                 return false;
             }
-            $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
+            $ref = new \ReflectionProperty(RegisteredChannel::class, 'id');
             $ref->setValue($ch, 1);
 
             return true;
@@ -472,7 +470,7 @@ final class RegisterCommandTest extends TestCase
         $channelRepo->method('existsByChannelName')->willReturn(false);
         $channelRepo->method('countByFounderNickId')->willReturn(0);
         $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function (RegisteredChannel $channel): void {
-            $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
+            $ref = new \ReflectionProperty(RegisteredChannel::class, 'id');
             $ref->setValue($channel, 42);
         });
         $levelRepo = $this->createMock(ChannelLevelRepositoryInterface::class);
@@ -535,8 +533,8 @@ final class RegisterCommandTest extends TestCase
     {
         $sender = new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip');
         $account = new ChanAccountView(10, 'User', 'en');
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 10, 'Desc');
-        $channel->markPendingDeletion(new DateTimeImmutable());
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 10, 'Desc');
+        $channel->markPendingDeletion(new \DateTimeImmutable());
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('existsByChannelName')->willReturn(true);
         $channelRepo->method('findByChannelName')->willReturn($channel);
@@ -573,7 +571,7 @@ final class RegisterCommandTest extends TestCase
         $channelRepo->method('existsByChannelName')->willReturn(false);
         $channelRepo->method('countByFounderNickId')->willReturn(0);
         $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function (RegisteredChannel $channel): void {
-            $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
+            $ref = new \ReflectionProperty(RegisteredChannel::class, 'id');
             $ref->setValue($channel, 1);
         });
         $levelRepo = $this->createMock(ChannelLevelRepositoryInterface::class);
@@ -629,7 +627,7 @@ final class RegisterCommandTest extends TestCase
         $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('existsByChannelName')->willReturn(false);
         $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function (RegisteredChannel $channel): void {
-            $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
+            $ref = new \ReflectionProperty(RegisteredChannel::class, 'id');
             $ref->setValue($channel, 1);
         });
         $levelRepo = $this->createMock(ChannelLevelRepositoryInterface::class);
@@ -662,7 +660,7 @@ final class RegisterCommandTest extends TestCase
         $channelRepo->method('existsByChannelName')->willReturn(false);
         $channelRepo->method('countByFounderNickId')->willReturn(0);
         $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function (RegisteredChannel $channel): void {
-            $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
+            $ref = new \ReflectionProperty(RegisteredChannel::class, 'id');
             $ref->setValue($channel, 1);
         });
         $levelRepo = $this->createMock(ChannelLevelRepositoryInterface::class);
@@ -695,7 +693,7 @@ final class RegisterCommandTest extends TestCase
         $channelRepo->expects(self::once())->method('existsByChannelName')->with('#testchan')->willReturn(false);
         $channelRepo->method('countByFounderNickId')->willReturn(0);
         $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function (RegisteredChannel $channel): void {
-            $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
+            $ref = new \ReflectionProperty(RegisteredChannel::class, 'id');
             $ref->setValue($channel, 1);
         });
         $levelRepo = $this->createMock(ChannelLevelRepositoryInterface::class);
@@ -898,7 +896,7 @@ final class RegisterCommandTest extends TestCase
         $channelRepo->method('existsByChannelName')->willReturn(false);
         $channelRepo->method('countByFounderNickId')->willReturn(0);
         $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function (RegisteredChannel $channel): void {
-            $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
+            $ref = new \ReflectionProperty(RegisteredChannel::class, 'id');
             $ref->setValue($channel, 1);
         });
         $levelRepo = $this->createMock(ChannelLevelRepositoryInterface::class);
@@ -931,7 +929,7 @@ final class RegisterCommandTest extends TestCase
         $channelRepo->method('existsByChannelName')->willReturn(false);
         $channelRepo->method('countByFounderNickId')->willReturn(0);
         $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function (RegisteredChannel $channel): void {
-            $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
+            $ref = new \ReflectionProperty(RegisteredChannel::class, 'id');
             $ref->setValue($channel, 1);
         });
         $levelRepo = $this->createMock(ChannelLevelRepositoryInterface::class);
@@ -968,7 +966,7 @@ final class RegisterCommandTest extends TestCase
         $channelRepo->method('existsByChannelName')->willReturn(false);
         $channelRepo->method('countByFounderNickId')->willReturn(3);
         $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function (RegisteredChannel $channel): void {
-            $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
+            $ref = new \ReflectionProperty(RegisteredChannel::class, 'id');
             $ref->setValue($channel, 1);
         });
         $levelRepo = $this->createMock(ChannelLevelRepositoryInterface::class);
@@ -1001,7 +999,7 @@ final class RegisterCommandTest extends TestCase
         $channelRepo->method('existsByChannelName')->willReturn(false);
         $channelRepo->method('countByFounderNickId')->willReturn(3);
         $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function (RegisteredChannel $channel): void {
-            $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
+            $ref = new \ReflectionProperty(RegisteredChannel::class, 'id');
             $ref->setValue($channel, 1);
         });
         $levelRepo = $this->createMock(ChannelLevelRepositoryInterface::class);
@@ -1034,7 +1032,7 @@ final class RegisterCommandTest extends TestCase
         $channelRepo->method('existsByChannelName')->willReturn(false);
         $channelRepo->method('countByFounderNickId')->willReturn(0);
         $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function (RegisteredChannel $channel): void {
-            $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
+            $ref = new \ReflectionProperty(RegisteredChannel::class, 'id');
             $ref->setValue($channel, 1);
         });
         $levelRepo = $this->createMock(ChannelLevelRepositoryInterface::class);
@@ -1067,7 +1065,7 @@ final class RegisterCommandTest extends TestCase
         $channelRepo->method('existsByChannelName')->willReturn(false);
         $channelRepo->method('countByFounderNickId')->willReturn(0);
         $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function (RegisteredChannel $channel): void {
-            $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
+            $ref = new \ReflectionProperty(RegisteredChannel::class, 'id');
             $ref->setValue($channel, 1);
         });
         $levelRepo = $this->createMock(ChannelLevelRepositoryInterface::class);

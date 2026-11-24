@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\MemoServ\Domain\Entity;
 
-use InvalidArgumentException;
-
 /**
  * Whether memo reception is enabled for a nick or channel.
  * No row = enabled by default. One row per nick or per channel.
@@ -28,7 +26,7 @@ class MemoSettings
         $nickSet = null !== $targetNickId;
         $channelSet = null !== $targetChannelId;
         if ($nickSet === $channelSet) {
-            throw new InvalidArgumentException('Exactly one of targetNickId or targetChannelId must be set.');
+            throw new \InvalidArgumentException('Exactly one of targetNickId or targetChannelId must be set.');
         }
         $this->targetNickId = $targetNickId;
         $this->targetChannelId = $targetChannelId;

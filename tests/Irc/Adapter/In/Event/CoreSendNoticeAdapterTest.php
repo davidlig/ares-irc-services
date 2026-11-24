@@ -15,7 +15,6 @@ use App\Irc\Adapter\Runtime\ProtocolRuntimeModuleInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RuntimeException;
 
 #[CoversClass(CoreSendNoticeAdapter::class)]
 final class CoreSendNoticeAdapterTest extends TestCase
@@ -145,7 +144,7 @@ final class CoreSendNoticeAdapterTest extends TestCase
     #[Test]
     public function sendMessageDoesNotWriteAPartiallyFormattedResponse(): void
     {
-        $failure = new RuntimeException('Formatting failed');
+        $failure = new \RuntimeException('Formatting failed');
         $connection = $this->createMock(ConnectionInterface::class);
         $connection->method('isConnected')->willReturn(true);
         $connection->expects(self::never())->method('writeLine');
@@ -165,7 +164,7 @@ final class CoreSendNoticeAdapterTest extends TestCase
         try {
             $this->adapter->sendMessage('001NS', '001USER', "FIRST\nSECOND", 'NOTICE');
             self::fail('Expected formatting failure');
-        } catch (RuntimeException $exception) {
+        } catch (\RuntimeException $exception) {
             self::assertSame($failure, $exception);
         }
     }
@@ -173,7 +172,7 @@ final class CoreSendNoticeAdapterTest extends TestCase
     #[Test]
     public function sendMessagePropagatesTheBatchWriteFailureSynchronously(): void
     {
-        $failure = new RuntimeException('Write failed');
+        $failure = new \RuntimeException('Write failed');
         $connection = $this->createMock(ConnectionInterface::class);
         $connection->method('isConnected')->willReturn(true);
         $connection->expects(self::once())->method('writeLine')->with(['NOTICE 001USER :Hi'])->willThrowException($failure);
@@ -187,7 +186,7 @@ final class CoreSendNoticeAdapterTest extends TestCase
         try {
             $this->adapter->sendNotice('001NS', '001USER', 'Hi');
             self::fail('Expected write failure');
-        } catch (RuntimeException $exception) {
+        } catch (\RuntimeException $exception) {
             self::assertSame($failure, $exception);
         }
     }

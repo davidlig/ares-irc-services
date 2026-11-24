@@ -8,7 +8,6 @@ use App\NickServ\Adapter\In\Irc\TimezoneHelpProvider;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
 
 use function array_filter;
 use function in_array;
@@ -216,7 +215,7 @@ final class TimezoneHelpProviderTest extends TestCase
     #[Test]
     public function ensureLoadedInitializesByRegionWhenNull(): void
     {
-        $reflection = new ReflectionClass(TimezoneHelpProvider::class);
+        $reflection = new \ReflectionClass(TimezoneHelpProvider::class);
         $property = $reflection->getProperty('byRegion');
         $property->setValue(null, null);
 

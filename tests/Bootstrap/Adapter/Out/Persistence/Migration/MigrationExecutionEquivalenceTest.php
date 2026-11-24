@@ -19,7 +19,6 @@ use Doctrine\Migrations\Version\Version;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionProperty;
 
 use function array_reverse;
 use function array_search;
@@ -39,7 +38,7 @@ final class MigrationExecutionEquivalenceTest extends TestCase
     {
         $connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
         $this->factory($connection)->getMetadataStorage()->ensureInitialized();
-        $type = new ReflectionProperty(Deprecation::class, 'type');
+        $type = new \ReflectionProperty(Deprecation::class, 'type');
         $previousType = $type->getValue();
         Deprecation::enableTrackingDeprecations();
         $before = Deprecation::getTriggeredDeprecations();

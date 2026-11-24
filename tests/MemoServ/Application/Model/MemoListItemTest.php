@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Tests\MemoServ\Application\Model;
 
 use App\MemoServ\Application\Model\MemoListItem;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -16,7 +15,7 @@ final class MemoListItemTest extends TestCase
     #[Test]
     public function createsInstance(): void
     {
-        $date = new DateTimeImmutable();
+        $date = new \DateTimeImmutable();
         $item = new MemoListItem(1, 'Bob', $date, 'Hello', false);
 
         self::assertSame(1, $item->index);

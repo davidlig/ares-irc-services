@@ -22,11 +22,9 @@ use App\ChanServ\Domain\Exception\ChannelAlreadyRegisteredException;
 use App\ChanServ\Domain\ValueObject\ChannelStatus;
 use App\ChanServ\Domain\ValueObject\RegistrationMode;
 use App\Shared\Application\Port\EventBusInterface;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionProperty;
 
 use function serialize;
 
@@ -37,7 +35,7 @@ final class RegisterChannelHandlerTest extends TestCase
     #[Test]
     public function registrationResultsExposeEachOutcomeAndItsOptionalDetails(): void
     {
-        $until = new DateTimeImmutable('2026-10-27T12:00:00+00:00');
+        $until = new \DateTimeImmutable('2026-10-27T12:00:00+00:00');
         self::assertSame(RegisterChannelOutcome::Registered, RegisterChannelResult::registered()->outcome);
         self::assertSame(RegisterChannelOutcome::AwaitingApproval, RegisterChannelResult::awaitingApproval()->outcome);
         $restricted = RegisterChannelResult::registrationRestricted($until);
@@ -58,12 +56,12 @@ final class RegisterChannelHandlerTest extends TestCase
     #[Test]
     public function directRegistrationActivatesAndPublishesTheExistingRegisteredEvent(): void
     {
-        $at = new DateTimeImmutable('2026-10-26T12:00:00+00:00');
+        $at = new \DateTimeImmutable('2026-10-26T12:00:00+00:00');
         $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channels->expects(self::once())->method('existsByChannelName')->with('#test')->willReturn(false);
         $channels->expects(self::once())->method('countByFounderNickId')->with(7, true)->willReturn(0);
         $channels->expects(self::once())->method('save')->with(self::callback(static function (RegisteredChannel $channel): bool {
-            new ReflectionProperty(RegisteredChannel::class, 'id')->setValue($channel, 42);
+            new \ReflectionProperty(RegisteredChannel::class, 'id')->setValue($channel, 42);
 
             return ChannelStatus::Active === $channel->getStatus() && 7 === $channel->getFounderNickId();
         }));
@@ -91,7 +89,7 @@ final class RegisterChannelHandlerTest extends TestCase
     #[Test]
     public function directRegistrationRejectsMissingNetworkChannelWithoutPersistingOrConsumingThrottle(): void
     {
-        $at = new DateTimeImmutable('2026-10-26T12:00:00+00:00');
+        $at = new \DateTimeImmutable('2026-10-26T12:00:00+00:00');
         $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channels->expects(self::once())->method('existsByChannelName')->willReturn(false);
         $channels->expects(self::never())->method('save');
@@ -116,7 +114,7 @@ final class RegisterChannelHandlerTest extends TestCase
     #[Test]
     public function approvalModePersistsBlockedRequestWithoutRegisteringOrPublishing(): void
     {
-        $at = new DateTimeImmutable('2026-10-26T12:00:00+00:00');
+        $at = new \DateTimeImmutable('2026-10-26T12:00:00+00:00');
         $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channels->expects(self::once())->method('existsByChannelName')->with('#test')->willReturn(false);
         $channels->expects(self::once())->method('countByFounderNickId')->with(7, true)->willReturn(0);
@@ -153,7 +151,7 @@ final class RegisterChannelHandlerTest extends TestCase
     #[Test]
     public function expiredRejectedRequestIsNotDeletedWhenNewRequestFailsIdentityValidation(): void
     {
-        $at = new DateTimeImmutable('2026-10-26T12:00:00+00:00');
+        $at = new \DateTimeImmutable('2026-10-26T12:00:00+00:00');
         $rejected = RegisteredChannel::createPendingRegistration($at->modify('-2 days'), '#test', 8, 'old');
         $rejected->rejectRegistration('Rejected', 9, 'Reviewer', $at->modify('-2 days'), $at->modify('-1 day'));
         $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
@@ -183,7 +181,7 @@ final class RegisterChannelHandlerTest extends TestCase
     #[Test]
     public function registeredChannelConflictPreservesExistingRegistration(): void
     {
-        $at = new DateTimeImmutable('2026-10-26T12:00:00+00:00');
+        $at = new \DateTimeImmutable('2026-10-26T12:00:00+00:00');
         $existing = RegisteredChannel::register($at, '#test', 8, 'Existing');
         $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channels->expects(self::once())->method('existsByChannelName')->willReturn(true);
@@ -212,7 +210,7 @@ final class RegisterChannelHandlerTest extends TestCase
     #[Test]
     public function expiredRejectionIsReplacedAtomicallyAfterEligibilityValidation(): void
     {
-        $at = new DateTimeImmutable('2026-10-26T12:00:00+00:00');
+        $at = new \DateTimeImmutable('2026-10-26T12:00:00+00:00');
         $existing = RegisteredChannel::createPendingRegistration($at->modify('-2 days'), '#test', 8, 'Old request');
         $existing->rejectRegistration('Reason', 9, 'Reviewer', $at->modify('-2 days'), $at->modify('-1 day'));
         $operations = [];

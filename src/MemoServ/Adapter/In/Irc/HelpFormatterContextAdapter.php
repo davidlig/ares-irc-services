@@ -8,8 +8,6 @@ use App\MemoServ\Adapter\In\Irc\Help\HelpableCommandInterface;
 use App\MemoServ\Adapter\In\Irc\Help\HelpFormatterContextInterface;
 use App\Shared\Adapter\In\Irc\Presentation\Component;
 use App\Shared\Adapter\In\Irc\Presentation\Fragment;
-use InvalidArgumentException;
-use Stringable;
 
 use function explode;
 use function is_scalar;
@@ -140,10 +138,10 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
 
     private function helpValue(mixed $value): string
     {
-        if (null === $value || is_scalar($value) || $value instanceof Stringable) {
+        if (null === $value || is_scalar($value) || $value instanceof \Stringable) {
             return (string) $value;
         }
 
-        throw new InvalidArgumentException('HELP parameters must be text.');
+        throw new \InvalidArgumentException('HELP parameters must be text.');
     }
 }

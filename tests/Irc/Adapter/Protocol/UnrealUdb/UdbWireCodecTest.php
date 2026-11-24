@@ -12,7 +12,6 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbFrameKind;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbOclgViewDigest;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbUnsignedDecimal;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbWireCodec;
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -71,7 +70,7 @@ final class UdbWireCodecTest extends TestCase
     #[Test]
     public function invalidDigestIsRejectedWithoutSubstitution(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         UdbWireCodec::begin('002', '001', 1, UdbBlock::Nicks, 'tx', 'INVALID', 0);
     }
 

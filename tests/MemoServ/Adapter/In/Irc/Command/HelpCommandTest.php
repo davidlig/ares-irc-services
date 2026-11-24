@@ -26,8 +26,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RuntimeException;
-use Stringable;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function array_fill;
@@ -274,7 +272,7 @@ final class HelpCommandTest extends TestCase
     #[DataProvider('helpArguments')]
     public function renderingFailureSendsNoPartialHelp(array $arguments): void
     {
-        $failure = new RuntimeException('Translation failed at the final footer.');
+        $failure = new \RuntimeException('Translation failed at the final footer.');
         $translation = $this->createStub(TranslatorInterface::class);
         $translation->method('trans')->willReturnCallback(static function (string $key) use ($failure): string {
             if (in_array($key, ['help.general_footer', 'help.syntax_label'], true)) {
@@ -303,7 +301,7 @@ final class HelpCommandTest extends TestCase
         try {
             new HelpCommand(new UnifiedHelpFormatter())->execute($context);
             self::fail('The translation failure must propagate synchronously.');
-        } catch (RuntimeException $caught) {
+        } catch (\RuntimeException $caught) {
             self::assertSame($failure, $caught);
         }
         self::assertSame([], $replies);
@@ -314,7 +312,7 @@ final class HelpCommandTest extends TestCase
     #[DataProvider('helpArguments')]
     public function transportFailurePropagatesSynchronously(array $arguments): void
     {
-        $failure = new RuntimeException('Connection write failed.');
+        $failure = new \RuntimeException('Connection write failed.');
         $target = $this->createDummyCommand('IGNORE', subcommands: [[
             'name' => 'ADD',
             'desc_key' => 'ignore.add.short',
@@ -335,7 +333,7 @@ final class HelpCommandTest extends TestCase
         try {
             new HelpCommand(new UnifiedHelpFormatter())->execute($context);
             self::fail('The send failure must propagate during HELP execution.');
-        } catch (RuntimeException $caught) {
+        } catch (\RuntimeException $caught) {
             self::assertSame($failure, $caught);
         }
         self::assertSame([], $replies);
@@ -384,7 +382,7 @@ final class HelpCommandTest extends TestCase
         array &$replies = [],
         iterable $commands = [],
         ?TranslatorInterface $translation = null,
-        ?RuntimeException $sendFailure = null,
+        ?\RuntimeException $sendFailure = null,
         string $language = 'en',
         ?IrcRenderer $renderer = null,
     ): MemoServContext {
@@ -406,7 +404,7 @@ final class HelpCommandTest extends TestCase
             ksort($params);
             $formatted = [];
             foreach ($params as $key => $value) {
-                $formatted[] = (string) $key . ': ' . (is_scalar($value) || $value instanceof Stringable ? (string) $value : '');
+                $formatted[] = (string) $key . ': ' . (is_scalar($value) || $value instanceof \Stringable ? (string) $value : '');
             }
 
             return $id . ' [' . implode(', ', $formatted) . ']';

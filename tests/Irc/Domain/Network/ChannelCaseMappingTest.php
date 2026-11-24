@@ -7,7 +7,6 @@ namespace App\Tests\Irc\Domain\Network;
 use App\Irc\Domain\Network\Channel;
 use App\Irc\Domain\ValueObject\CaseMapping;
 use App\Irc\Domain\ValueObject\ChannelName;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -20,7 +19,7 @@ final class ChannelCaseMappingTest extends TestCase
     public function listMapsPreserveFirstSpellingAndInsertionOrder(): void
     {
         foreach (CaseMapping::cases() as $mapping) {
-            $channel = new Channel(new ChannelName('#test'), '', new DateTimeImmutable('@0'), $mapping);
+            $channel = new Channel(new ChannelName('#test'), '', new \DateTimeImmutable('@0'), $mapping);
             foreach ([['addBan', 'removeBan', 'getBans'], ['addExempt', 'removeExempt', 'getExempts'], ['addInviteException', 'removeInviteException', 'getInviteExceptions']] as [$add, $remove, $get]) {
                 $channel->$add('nick[a]!*@*');
                 $channel->$add('second!*@*');

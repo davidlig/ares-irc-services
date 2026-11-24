@@ -9,7 +9,6 @@ use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
 
 #[CoversClass(PendingEmailChangeRegistry::class)]
 final class PendingEmailChangeRegistryTest extends TestCase
@@ -116,7 +115,7 @@ final class PendingEmailChangeRegistryTest extends TestCase
         $registry = new PendingEmailChangeRegistry();
         $registry->store('Nick', 'new@example.com', 'token123', $this->now());
 
-        $reflection = new ReflectionClass($registry);
+        $reflection = new \ReflectionClass($registry);
         $property = $reflection->getProperty('entries');
 
         /** @var array<string, array{newEmail: string, token: string, expiresAt: DateTimeImmutable}> $entries */
@@ -134,7 +133,7 @@ final class PendingEmailChangeRegistryTest extends TestCase
         $registry = new PendingEmailChangeRegistry();
         $registry->store('Nick1', 'a@b.com', 'token1', $this->now());
 
-        $reflection = new ReflectionClass($registry);
+        $reflection = new \ReflectionClass($registry);
         $property = $reflection->getProperty('entries');
 
         /** @var array<string, array{newEmail: string, token: string, expiresAt: DateTimeImmutable}> $entries */
@@ -155,7 +154,7 @@ final class PendingEmailChangeRegistryTest extends TestCase
     public function nicknameKeysUseTheRfc1459Fold(): void
     {
         $registry = new PendingEmailChangeRegistry();
-        $now = new DateTimeImmutable('2026-01-01 00:00:00');
+        $now = new \DateTimeImmutable('2026-01-01 00:00:00');
         $registry->store('[Foo]\\', 'new@example.com', 'token', $now);
 
         self::assertTrue($registry->has('{FOO}|'));
@@ -168,8 +167,8 @@ final class PendingEmailChangeRegistryTest extends TestCase
         self::assertFalse($registry->has('plain'));
     }
 
-    private function now(): DateTimeImmutable
+    private function now(): \DateTimeImmutable
     {
-        return new DateTimeImmutable('2026-09-06 12:00:00 UTC');
+        return new \DateTimeImmutable('2026-09-06 12:00:00 UTC');
     }
 }

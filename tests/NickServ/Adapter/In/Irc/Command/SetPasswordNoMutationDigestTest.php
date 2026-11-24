@@ -39,7 +39,7 @@ final class SetPasswordNoMutationDigestTest extends TestCase
         };
         $handler = new class($mutate) implements SetNickSettingHandlerInterface {
             /** @param Closure(SetNickSetting): void $mutate */
-            public function __construct(private readonly Closure $mutate) {}
+            public function __construct(private readonly \Closure $mutate) {}
 
             public function handle(SetNickSetting $input): SetNickSettingResult
             {

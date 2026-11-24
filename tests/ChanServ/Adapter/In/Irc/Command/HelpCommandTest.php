@@ -31,7 +31,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RuntimeException;
 use Symfony\Component\Translation\Translator;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -52,7 +51,7 @@ final class HelpCommandTest extends TestCase
         $translator->addLoader('irc', new IrcYamlTranslationLoader());
         $translator->addResource('irc', dirname(__DIR__, 6) . '/translations/chanserv.es.yaml', 'es', 'chanserv');
         /** @var ArrayObject<int, string> $messages */
-        $messages = new ArrayObject();
+        $messages = new \ArrayObject();
         $notifier = $this->createStub(ChanServNotifierInterface::class);
         $notifier->method('getNick')->willReturn('Canales');
         $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void {
@@ -86,7 +85,7 @@ final class HelpCommandTest extends TestCase
         $translator->addLoader('irc', new IrcYamlTranslationLoader());
         $translator->addResource('irc', dirname(__DIR__, 6) . '/translations/chanserv.en.yaml', 'en', 'chanserv');
         /** @var ArrayObject<int, string> $messages */
-        $messages = new ArrayObject();
+        $messages = new \ArrayObject();
         $notifier = $this->createStub(ChanServNotifierInterface::class);
         $notifier->method('getNick')->willReturn('Channels');
         $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use ($messages): void { $messages[] = $message; });
@@ -1293,7 +1292,7 @@ final class HelpCommandTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static function (string $key): string {
             if ('help.header' === $key) {
-                throw new RuntimeException('Cannot render header');
+                throw new \RuntimeException('Cannot render header');
             }
 
             return $key;
@@ -1307,7 +1306,7 @@ final class HelpCommandTest extends TestCase
         ]);
         $registry = new ChanServCommandRegistry([$handler]);
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Cannot render header');
 
         $this->createCommand()->execute($this->createContext($args, $notifier, $translator, $registry));
@@ -1327,11 +1326,11 @@ final class HelpCommandTest extends TestCase
     public function completeHelpPropagatesSynchronousTransportFailure(): void
     {
         $notifier = $this->createMock(ChanServNotifierInterface::class);
-        $notifier->expects(self::once())->method('sendMessage')->willThrowException(new RuntimeException('Connection write failed'));
+        $notifier->expects(self::once())->method('sendMessage')->willThrowException(new \RuntimeException('Connection write failed'));
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $key): string => $key);
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Connection write failed');
 
         $this->createCommand()->execute($this->createContext([], $notifier, $translator, new ChanServCommandRegistry([])));

@@ -7,7 +7,6 @@ namespace App\Tests\ChanServ\Application\Service;
 use App\ChanServ\Application\Port\Out\ChannelHistoryRepositoryInterface;
 use App\ChanServ\Application\Service\ChannelHistoryService;
 use App\ChanServ\Domain\Entity\ChannelHistory;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -27,7 +26,7 @@ final class ChannelHistoryServiceTest extends TestCase
             });
 
         $service = new ChannelHistoryService($repo);
-        $fixedTime = new DateTimeImmutable('2024-01-15 10:30:00');
+        $fixedTime = new \DateTimeImmutable('2024-01-15 10:30:00');
 
         $history = $service->recordAction(
             channelId: 123,
@@ -72,7 +71,7 @@ final class ChannelHistoryServiceTest extends TestCase
             performedByNickId: null,
             performedByIp: '10.0.0.1',
             performedByHost: 'user@host',
-            performedAt: new DateTimeImmutable('2026-01-02 03:04:05'),
+            performedAt: new \DateTimeImmutable('2026-01-02 03:04:05'),
             message: 'history.message.founder_changed',
             extraData: [],
         );
@@ -95,7 +94,7 @@ final class ChannelHistoryServiceTest extends TestCase
             performedByNickId: 1,
             performedByIp: '2001:db8::1',
             performedByHost: 'user@ipv6.example',
-            performedAt: new DateTimeImmutable('2026-01-02 03:04:05'),
+            performedAt: new \DateTimeImmutable('2026-01-02 03:04:05'),
             message: 'history.message.access_add',
             extraData: ['target_nickname' => 'Target', 'level' => '100'],
         );
@@ -112,7 +111,7 @@ final class ChannelHistoryServiceTest extends TestCase
         $repo = $this->createStub(ChannelHistoryRepositoryInterface::class);
         $service = new ChannelHistoryService($repo);
 
-        $performedAt = new DateTimeImmutable('2026-01-02 03:04:05');
+        $performedAt = new \DateTimeImmutable('2026-01-02 03:04:05');
         $history = $service->recordAction(
             channelId: 1,
             action: 'TEST',
@@ -140,7 +139,7 @@ final class ChannelHistoryServiceTest extends TestCase
             action: 'LEVELS_SET',
             performedBy: 'Founder',
             performedByNickId: 2,
-            performedAt: new DateTimeImmutable('2026-01-02 03:04:05'),
+            performedAt: new \DateTimeImmutable('2026-01-02 03:04:05'),
             message: 'history.message.levels_set',
             extraData: ['option' => 'AUTOOP', 'old_value' => 5, 'new_value' => 10],
         );

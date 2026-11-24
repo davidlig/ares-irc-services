@@ -94,7 +94,7 @@ final class PurgePendingDeletionNicknamesTask implements MaintenanceTaskInterfac
                 $failedOnItsOwn = false;
                 try {
                     $this->dropService->hardDropNick($nick, $now, 'manual-grace-expired', null);
-                } catch (Throwable $e) {
+                } catch (\Throwable $e) {
                     $failedOnItsOwn = $this->recordFailure($id, $nickname, $e);
                 }
 
@@ -129,7 +129,7 @@ final class PurgePendingDeletionNicknamesTask implements MaintenanceTaskInterfac
      *
      * @throws Throwable when the EntityManager was closed by the failure
      */
-    private function recordFailure(int $id, string $nickname, Throwable $e): bool
+    private function recordFailure(int $id, string $nickname, \Throwable $e): bool
     {
         $this->retryBudget->rethrowWhenClosed(
             $id,

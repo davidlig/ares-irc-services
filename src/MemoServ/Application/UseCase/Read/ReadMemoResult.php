@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\MemoServ\Application\UseCase\Read;
 
-use DateTimeImmutable;
-
 final readonly class ReadMemoResult
 {
     private function __construct(
@@ -13,11 +11,11 @@ final readonly class ReadMemoResult
         public ?int $index = null,
         public ?string $from = null,
         public ?string $message = null,
-        public ?DateTimeImmutable $createdAt = null,
+        public ?\DateTimeImmutable $createdAt = null,
         public ?string $channelName = null,
     ) {}
 
-    public static function success(int $index, string $from, string $message, DateTimeImmutable $createdAt): self
+    public static function success(int $index, string $from, string $message, \DateTimeImmutable $createdAt): self
     {
         return new self(
             outcome: ReadMemoOutcome::Success,

@@ -15,7 +15,6 @@ use App\ChanServ\Application\PublishedEvent\ChannelDropEvent;
 use App\ChanServ\Application\UseCase\CleanupDroppedNick\CleanupDroppedNickData;
 use App\ChanServ\Application\UseCase\CleanupDroppedNick\CleanupDroppedNickDataHandler;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -52,7 +51,7 @@ final class CleanupDroppedNickDataHandlerTest extends TestCase
 
         $this->handler($accessRepository, $akickRepository, $channelRepository)->handle(new CleanupDroppedNickData(
             42,
-            new DateTimeImmutable('2026-01-02 03:04:05'),
+            new \DateTimeImmutable('2026-01-02 03:04:05'),
         ));
 
         self::assertSame(['access', 'akick', 'successor', 'founder'], $calls);
@@ -83,7 +82,7 @@ final class CleanupDroppedNickDataHandlerTest extends TestCase
             $eventPublisher,
             $this->createStub(ChanTransactionBoundary::class),
             $activitySink,
-        )->handle(new CleanupDroppedNickData(51, new DateTimeImmutable('2026-01-02 03:04:05')));
+        )->handle(new CleanupDroppedNickData(51, new \DateTimeImmutable('2026-01-02 03:04:05')));
     }
 
     #[Test]
@@ -130,7 +129,7 @@ final class CleanupDroppedNickDataHandlerTest extends TestCase
             $eventPublisher,
             $transactionBoundary,
             $activitySink,
-        )->handle(new CleanupDroppedNickData(52, new DateTimeImmutable('2026-01-02 03:04:05')));
+        )->handle(new CleanupDroppedNickData(52, new \DateTimeImmutable('2026-01-02 03:04:05')));
 
         self::assertSame('cleanup,delete,after_commit_registered,activity', implode(',', $calls));
         self::assertIsCallable($afterCommit);
@@ -141,7 +140,7 @@ final class CleanupDroppedNickDataHandlerTest extends TestCase
     #[Test]
     public function preservesRejectedNameRestrictionsWhenRequesterNicknameIsDropped(): void
     {
-        $at = new DateTimeImmutable('2026-10-26T12:00:00+00:00');
+        $at = new \DateTimeImmutable('2026-10-26T12:00:00+00:00');
         $finite = RegisteredChannel::createPendingRegistration($at, '#finite', 7, 'description');
         $finite->rejectRegistration('Reason', 9, 'Reviewer', $at, $at->modify('+24 hours'));
         $indefinite = RegisteredChannel::createPendingRegistration($at, '#indefinite', 7, 'description');
@@ -180,7 +179,7 @@ final class CleanupDroppedNickDataHandlerTest extends TestCase
     #[Test]
     public function removesPendingRequestWithoutPublishingRegisteredChannelDropEvents(): void
     {
-        $pending = RegisteredChannel::createPendingRegistration(new DateTimeImmutable(), '#pending', 7, 'description');
+        $pending = RegisteredChannel::createPendingRegistration(new \DateTimeImmutable(), '#pending', 7, 'description');
         $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channels->method('findByFounderNickId')->willReturn([$pending]);
         $channels->expects(self::once())->method('delete')->with($pending);
@@ -188,7 +187,7 @@ final class CleanupDroppedNickDataHandlerTest extends TestCase
         $events = $this->createMock(ChanServEventPublisher::class);
         $events->expects(self::never())->method('publish');
 
-        $this->handler($this->createStub(ChannelAccessRepositoryInterface::class), $this->createStub(ChannelAkickRepositoryInterface::class), $channels, $events)->handle(new CleanupDroppedNickData(7, new DateTimeImmutable()));
+        $this->handler($this->createStub(ChannelAccessRepositoryInterface::class), $this->createStub(ChannelAkickRepositoryInterface::class), $channels, $events)->handle(new CleanupDroppedNickData(7, new \DateTimeImmutable()));
     }
 
     private function handler(

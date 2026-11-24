@@ -23,7 +23,6 @@ use App\Shared\Adapter\In\Irc\Presentation\Appearance;
 use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
 use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
 use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -108,11 +107,11 @@ final class IrcopCommandTest extends TestCase
                 return new ManageIrcopResult(IrcopOutcome::RoleChanged, 'Target', 'ADMIN', 'OPER');
             });
         $translation = new IrcopCommandTranslation();
-        $before = new DateTimeImmutable();
+        $before = new \DateTimeImmutable();
 
         new IrcopCommand($handler)->execute($this->context(['ADD', 'Target', 'admin'], $translation));
 
-        $after = new DateTimeImmutable();
+        $after = new \DateTimeImmutable();
         self::assertInstanceOf(ManageIrcop::class, $received);
         self::assertSame(IrcopAction::Add, $received->action);
         self::assertSame('RootOper', $received->actorNickname);
@@ -258,7 +257,7 @@ final class IrcopCommandTest extends TestCase
         $handler = $this->createStub(ManageIrcopHandlerInterface::class);
         $handler->method('handle')->willReturn(new ManageIrcopResult(
             IrcopOutcome::Listed,
-            entries: [new IrcopListEntry('Target', 'ADMIN', new DateTimeImmutable('2026-01-01 12:00:00'))],
+            entries: [new IrcopListEntry('Target', 'ADMIN', new \DateTimeImmutable('2026-01-01 12:00:00'))],
         ));
         $translation = new IrcopCommandTranslation();
         new IrcopCommand($handler)->execute($this->context(['LIST'], $translation));

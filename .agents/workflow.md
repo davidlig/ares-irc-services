@@ -85,6 +85,15 @@ Use scoped PHPStan during difficult work if useful.
 
 ## 8. Final verification
 
+### DressCode for scoped work
+
+- Run `vendor/bin/dresscode fix -f agent` to format and print the diff it wrote.
+- Use `vendor/bin/dresscode check <paths> -f agent` to check only the paths in scope.
+- Use `vendor/bin/dresscode explain <key>` to look up a reported decision.
+- Never use `--fix-risky` without naming the fix to enable.
+- Never add a `// dresscode:ignore` or `dresscode:disable` directive without explaining why in a comment.
+
+
 ```bash
 php -l path/to/modified.php
 
@@ -94,7 +103,7 @@ php bin/console lint:yaml . --exclude vendor/ --parse-tags
 
 ./vendor/bin/phpstan analyse src/ tests/ --level=max --error-format=raw --no-progress
 
-./vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php
+./vendor/bin/dresscode fix
 composer yaml-fix
 composer yaml-check
 
@@ -104,7 +113,7 @@ composer yaml-check
 Also run the configured architecture dependency gate.
 
 Install the pinned YAML formatter with `npm ci` using Node 24/npm for development and CI only.
-Run `composer yaml-fix` immediately after PHP-CS-Fixer. The npm equivalents are `npm run yaml:fix`
+Run `composer yaml-fix` immediately after DressCode. The npm equivalents are `npm run yaml:fix`
 and `npm run yaml:check`; they use the locally installed, locked Prettier without implicit downloads.
 Both commands cover all `.yaml` and `.yml` files under `config/`, `translations/` and
 `.github/workflows/`, plus root `deptrac.yaml`. Review formatting changes and run the non-mutating

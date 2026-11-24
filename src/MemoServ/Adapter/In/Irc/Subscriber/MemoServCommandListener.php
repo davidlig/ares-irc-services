@@ -10,7 +10,6 @@ use App\MemoServ\Adapter\In\Irc\Bot\MemoServBot;
 use App\MemoServ\Adapter\In\Irc\MemoServService;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
-use Throwable;
 
 /**
  * Registers MemoServ with the Service Command Gateway. Receives (senderUid, text)
@@ -51,7 +50,7 @@ final readonly class MemoServCommandListener implements ServiceCommandListenerIn
 
         try {
             $this->memoServService->dispatch($text, $sender);
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             $this->logger->error('MemoServ dispatch error: ' . $e->getMessage(), [
                 'exception' => $e,
                 'sender' => $sender->uid,

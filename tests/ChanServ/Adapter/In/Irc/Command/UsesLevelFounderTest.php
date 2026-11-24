@@ -30,8 +30,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
-use ReflectionMethod;
 
 #[CoversClass(AccessCommand::class)]
 #[CoversClass(AdminCommand::class)]
@@ -95,8 +93,8 @@ final class UsesLevelFounderTest extends TestCase
     #[DataProvider('commandDataProvider')]
     public function usesLevelFounderReturnsExpectedValue(string $handlerClass, bool $expected): void
     {
-        $method = new ReflectionMethod($handlerClass, 'usesLevelFounder');
-        $instance = new ReflectionClass($handlerClass)
+        $method = new \ReflectionMethod($handlerClass, 'usesLevelFounder');
+        $instance = new \ReflectionClass($handlerClass)
             ->newInstanceWithoutConstructor();
         self::assertSame($expected, $method->invoke($instance));
     }

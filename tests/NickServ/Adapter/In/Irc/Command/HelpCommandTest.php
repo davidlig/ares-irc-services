@@ -38,8 +38,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RuntimeException;
-use Stringable;
 use Symfony\Component\Translation\Translator;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -1283,7 +1281,7 @@ final class HelpCommandTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static function (string $key): string {
             if ('help.footer' === $key) {
-                throw new RuntimeException('Cannot render footer');
+                throw new \RuntimeException('Cannot render footer');
             }
 
             return $key;
@@ -1299,7 +1297,7 @@ final class HelpCommandTest extends TestCase
         ]);
         $registry = new NickServCommandRegistry([$handler]);
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Cannot render footer');
 
         $this->createHelpCommand()->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $args, $notifier, $translator, $registry));
@@ -1323,11 +1321,11 @@ final class HelpCommandTest extends TestCase
     public function completeHelpPropagatesSynchronousTransportFailure(): void
     {
         $notifier = $this->createMock(NickServNotifierInterface::class);
-        $notifier->expects(self::once())->method('sendMessage')->willThrowException(new RuntimeException('Connection write failed'));
+        $notifier->expects(self::once())->method('sendMessage')->willThrowException(new \RuntimeException('Connection write failed'));
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $key): string => $key);
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Connection write failed');
 
         $this->createHelpCommand()->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), [], $notifier, $translator, new NickServCommandRegistry([])));
@@ -1703,7 +1701,7 @@ final class HelpCommandTest extends TestCase
         foreach ($parameters as $key => $value) {
             $stringParameters[$key] = match (true) {
                 is_scalar($value) => (string) $value,
-                $value instanceof Stringable => (string) $value,
+                $value instanceof \Stringable => (string) $value,
                 default => '',
             };
         }

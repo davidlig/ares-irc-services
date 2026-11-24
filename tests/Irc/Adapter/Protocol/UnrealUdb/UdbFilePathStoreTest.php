@@ -8,7 +8,6 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbFilePathStore;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RuntimeException;
 use Symfony\Component\Lock\Exception\LockConflictedException;
 use Symfony\Component\Lock\Key;
 
@@ -113,7 +112,7 @@ final class UdbFilePathStoreTest extends TestCase
     {
         $store = new UdbFilePathStore($this->directory . '/missing/.udb.lock');
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Unable to open the UDB lock file.');
         $store->save(new Key('udb-session'));
     }

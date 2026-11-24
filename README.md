@@ -596,7 +596,7 @@ make coverage
 through `TEST_ARGS`. `make coverage` runs the exact 100% coverage gate. Reserve it for final
 verification; do not run a standalone full suite immediately before or after it.
 
-### Code style (PHP-CS-Fixer)
+### Code style (DressCode)
 
 ```bash
 composer cs-fix     # auto-fix
@@ -620,7 +620,7 @@ locally installed formatter, never an implicit download through `npx`. All three
 include nested `.yaml` and `.yml` files. Formatting uses two spaces, LF endings, preferred
 double quotes, and preserved prose wrapping. Check mode fails when normalization is needed.
 
-Run `composer yaml-fix` immediately after PHP-CS-Fixer, review the diff, and run
+Run `composer yaml-fix` immediately after DressCode, review the diff, and run
 `composer yaml-check` before completion. When normalizing existing YAML, compare before/after
 Symfony-parsed values, types and custom tags across the entire scope, including `deptrac.yaml`.
 Preserve IRC escapes, physical multiline blocks, `!irc` tags, placeholders, meaningful spaces
@@ -639,7 +639,7 @@ php -l path/to/file.php                                 # syntax check
 php bin/console lint:container                           # DI validation
 php bin/console lint:yaml . --exclude vendor/ --parse-tags  # YAML lint
 composer phpstan                                        # PHPStan level max
-./vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php  # format
+./vendor/bin/dresscode fix                               # format
 composer yaml-fix                                       # normalize YAML immediately afterward
 composer yaml-check                                     # check without writing; review the diff
 composer architecture                                   # Deptrac architecture boundaries

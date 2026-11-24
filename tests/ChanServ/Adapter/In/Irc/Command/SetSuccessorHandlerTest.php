@@ -29,7 +29,6 @@ use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
 use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\Shared\Application\Port\EventBusInterface;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -368,7 +367,7 @@ final class SetSuccessorHandlerTest extends TestCase
         $history = $this->createMock(ChannelHistoryRepositoryInterface::class);
         $history->expects(self::never())->method('save');
         $events = $this->createMock(EventBusInterface::class);
-        $when = new DateTimeImmutable('2026-01-02');
+        $when = new \DateTimeImmutable('2026-01-02');
         $events->expects(self::once())->method('dispatch')->with(self::callback(static function (ChannelSuccessorChangedEvent $event) use ($newSuccessorId, $when): bool {
             self::assertSame(42, $event->channelId);
             self::assertSame('#test', $event->channelName);

@@ -22,21 +22,18 @@ use App\ChanServ\Domain\Entity\ChannelHistory;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\Exception\ChannelNameConflictException;
 use App\Shared\Application\Port\EventBusInterface;
-use DateTimeImmutable;
-use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
-use ReflectionProperty;
 
 #[CoversClass(ManageChannelLifecycleHandler::class)]
 #[CoversClass(ManageChannelLifecycle::class)]
 #[CoversClass(ChannelLifecycleResult::class)]
 final class ManageChannelLifecycleHandlerTest extends TestCase
 {
-    private DateTimeImmutable $now;
+    private \DateTimeImmutable $now;
 
     #[Test]
     public function ircopOnlyCanBeEnabledAndDisabledWithPublishedUpdates(): void
@@ -230,7 +227,7 @@ final class ManageChannelLifecycleHandlerTest extends TestCase
         $forbidden = $this->createMock(ChannelForbiddenService::class);
         $forbidden->expects(self::never())->method('forbid');
 
-        $this->expectException(LogicException::class);
+        $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('A forbid reason is required.');
 
         $this->handler($this->channelsReturning(null), forbidden: $forbidden)
@@ -406,7 +403,7 @@ final class ManageChannelLifecycleHandlerTest extends TestCase
     #[Test]
     public function suspendRequiresReason(): void
     {
-        $this->expectException(LogicException::class);
+        $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('A suspension reason is required.');
 
         $this->handler($this->channelsReturning($this->channel()))
@@ -527,7 +524,7 @@ final class ManageChannelLifecycleHandlerTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->now = new DateTimeImmutable('2026-09-09T10:00:00+00:00');
+        $this->now = new \DateTimeImmutable('2026-09-09T10:00:00+00:00');
     }
 
     private function command(
@@ -535,7 +532,7 @@ final class ManageChannelLifecycleHandlerTest extends TestCase
         ?string $reason = null,
         ?string $duration = null,
         bool $force = false,
-        ?DateTimeImmutable $occurredAt = null,
+        ?\DateTimeImmutable $occurredAt = null,
     ): ManageChannelLifecycle {
         return new ManageChannelLifecycle(
             channelName: '#test',
@@ -554,7 +551,7 @@ final class ManageChannelLifecycleHandlerTest extends TestCase
     private function channel(): RegisteredChannel
     {
         $channel = RegisteredChannel::register($this->now, '#test', 1, 'Test channel');
-        new ReflectionProperty(RegisteredChannel::class, 'id')->setValue($channel, 42);
+        new \ReflectionProperty(RegisteredChannel::class, 'id')->setValue($channel, 42);
 
         return $channel;
     }

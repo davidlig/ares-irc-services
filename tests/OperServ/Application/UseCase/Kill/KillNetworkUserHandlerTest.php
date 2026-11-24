@@ -18,7 +18,6 @@ use App\OperServ\Application\UseCase\Kill\KillNetworkUserHandler;
 use App\OperServ\Application\UseCase\Kill\KillNetworkUserOutcome;
 use App\OperServ\Application\UseCase\Kill\KillNetworkUserResult;
 use App\Shared\Domain\IrcIdentityFold;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -49,7 +48,7 @@ final class KillNetworkUserHandlerTest extends TestCase
             return true;
         }));
         $result = $this->handler(new KillTestUsers(['Target' => $this->target()]), new KillTestRoots(), new KillTestAccounts(), new KillTestRoles(), $network, $audit)
-            ->handle(new KillNetworkUser('Oper', 'OperServ', 'Target', 'abuse', new DateTimeImmutable('2026-09-08T10:00:00+00:00')));
+            ->handle(new KillNetworkUser('Oper', 'OperServ', 'Target', 'abuse', new \DateTimeImmutable('2026-09-08T10:00:00+00:00')));
 
         self::assertSame(KillNetworkUserOutcome::Killed, $result->outcome);
         self::assertSame([['UID123', 'Killed (OperServ: Oper): abuse']], $network->kills);
@@ -59,16 +58,16 @@ final class KillNetworkUserHandlerTest extends TestCase
     public function refusesMissingRootAndRegisteredIrcOperatorTargets(): void
     {
         $missing = $this->handler(new KillTestUsers(), new KillTestRoots(), new KillTestAccounts(), new KillTestRoles(), new KillTestNetwork())
-            ->handle(new KillNetworkUser('Oper', 'OperServ', 'Gone', 'reason', new DateTimeImmutable()));
+            ->handle(new KillNetworkUser('Oper', 'OperServ', 'Gone', 'reason', new \DateTimeImmutable()));
         self::assertSame(KillNetworkUserOutcome::NotOnline, $missing->outcome);
 
         $root = $this->handler(new KillTestUsers(['Root' => $this->target('Root')]), new KillTestRoots(['root']), new KillTestAccounts(), new KillTestRoles(), new KillTestNetwork())
-            ->handle(new KillNetworkUser('Oper', 'OperServ', 'Root', 'reason', new DateTimeImmutable()));
+            ->handle(new KillNetworkUser('Oper', 'OperServ', 'Root', 'reason', new \DateTimeImmutable()));
         self::assertSame(KillNetworkUserOutcome::ProtectedRoot, $root->outcome);
 
         $operator = $this->target('Ircop', true, true);
         $protected = $this->handler(new KillTestUsers(['Ircop' => $operator]), new KillTestRoots(), new KillTestAccounts(['ircop' => 12]), new KillTestRoles([12]), new KillTestNetwork())
-            ->handle(new KillNetworkUser('Oper', 'OperServ', 'Ircop', 'reason', new DateTimeImmutable()));
+            ->handle(new KillNetworkUser('Oper', 'OperServ', 'Ircop', 'reason', new \DateTimeImmutable()));
         self::assertSame(KillNetworkUserOutcome::ProtectedIrcOperator, $protected->outcome);
     }
 
@@ -78,7 +77,7 @@ final class KillNetworkUserHandlerTest extends TestCase
         $audit = $this->createMock(CommandAuditRecorder::class);
         $audit->expects(self::never())->method('record');
         $result = $this->handler(new KillTestUsers(['Target' => $this->target()]), new KillTestRoots(), new KillTestAccounts(), new KillTestRoles(), new KillTestNetwork(false), $audit)
-            ->handle(new KillNetworkUser('Oper', 'OperServ', 'Target', 'reason', new DateTimeImmutable()));
+            ->handle(new KillNetworkUser('Oper', 'OperServ', 'Target', 'reason', new \DateTimeImmutable()));
 
         self::assertSame(KillNetworkUserOutcome::NetworkUnavailable, $result->outcome);
     }
@@ -181,7 +180,8 @@ final class KillTestNetwork implements KillNetworkUserPort
     {
         if (!$this->available) {
             return false;
-        } $this->kills[] = [$targetUid, $reason];
+        }
+        $this->kills[] = [$targetUid, $reason];
 
         return true;
     }

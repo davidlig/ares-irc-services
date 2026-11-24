@@ -9,7 +9,6 @@ use App\NickServ\Application\PublishedEvent\NickBurstBatchStartedEvent;
 use App\OperServ\Adapter\Out\Persistence\Doctrine\BurstIrcopCache;
 use App\OperServ\Domain\Repository\OperIrcopRepositoryInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Throwable;
 
 final readonly class NickBurstIrcopCacheSubscriber implements EventSubscriberInterface
 {
@@ -32,7 +31,7 @@ final readonly class NickBurstIrcopCacheSubscriber implements EventSubscriberInt
         try {
             $assignments = $this->ircopRepository->findByNickIds($event->nickIds);
             $this->burstCache->primeBatch($event->token, $assignments, $event->nickIds);
-        } catch (Throwable $exception) {
+        } catch (\Throwable $exception) {
             $this->burstCache->finishBatch($event->token);
             throw $exception;
         }

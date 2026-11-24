@@ -12,7 +12,6 @@ use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\Service\ChanDropService;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use ArrayObject;
-use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Platforms\MySQLPlatform;
 use Doctrine\ORM\EntityManagerInterface;
@@ -20,8 +19,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-use RuntimeException;
-use Throwable;
 
 #[CoversClass(PurgeInactiveChannelsTask::class)]
 #[CoversClass(ChannelSweepFailureBudget::class)]
@@ -113,15 +110,15 @@ final class PurgeInactiveChannelsTaskTest extends TestCase
         $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('getId')->willReturn(1);
         $channel->method('getName')->willReturn('#test');
-        $lastUsed = new DateTimeImmutable('2024-01-01 12:00:00');
+        $lastUsed = new \DateTimeImmutable('2024-01-01 12:00:00');
         $channel->method('getLastUsedAt')->willReturn($lastUsed);
-        $channel->method('getCreatedAt')->willReturn(new DateTimeImmutable('2023-01-01'));
+        $channel->method('getCreatedAt')->willReturn(new \DateTimeImmutable('2023-01-01'));
 
         $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepo->expects(self::once())
             ->method('iterateRegisteredInactiveSince')
-            ->with(self::callback(static function (DateTimeImmutable $t): bool {
-                $expected = new DateTimeImmutable()->modify('-90 days');
+            ->with(self::callback(static function (\DateTimeImmutable $t): bool {
+                $expected = new \DateTimeImmutable()->modify('-90 days');
 
                 return $t->format('Y-m-d') === $expected->format('Y-m-d');
             }))
@@ -131,7 +128,7 @@ final class PurgeInactiveChannelsTaskTest extends TestCase
         $dropService = $this->createMock(ChanDropService::class);
         $dropService->expects(self::once())->method('hardDropChannel')->with(
             $channel,
-            self::isInstanceOf(DateTimeImmutable::class),
+            self::isInstanceOf(\DateTimeImmutable::class),
             'inactivity',
         );
 
@@ -162,8 +159,8 @@ final class PurgeInactiveChannelsTaskTest extends TestCase
         $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('getId')->willReturn(7);
         $channel->method('getName')->willReturn('#busy');
-        $channel->method('getLastUsedAt')->willReturn(new DateTimeImmutable('-200 days'));
-        $channel->method('getCreatedAt')->willReturn(new DateTimeImmutable('-300 days'));
+        $channel->method('getLastUsedAt')->willReturn(new \DateTimeImmutable('-200 days'));
+        $channel->method('getCreatedAt')->willReturn(new \DateTimeImmutable('-300 days'));
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('iterateRegisteredInactiveSince')->willReturn([$channel]);
 
@@ -171,24 +168,24 @@ final class PurgeInactiveChannelsTaskTest extends TestCase
         $connection = $this->createStub(Connection::class);
         $connection->method('executeStatement')->willReturnCallback(static function () use (&$writes): int {
             if (0 === $writes++) {
-                throw new RuntimeException('database unavailable');
+                throw new \RuntimeException('database unavailable');
             }
 
             return 1;
         });
-        $connection->method('fetchOne')->willThrowException(new RuntimeException('database unavailable'));
+        $connection->method('fetchOne')->willThrowException(new \RuntimeException('database unavailable'));
         $buffer = new ChannelActivityBuffer($connection);
-        $buffer->record(7, new DateTimeImmutable('-1 minute'));
+        $buffer->record(7, new \DateTimeImmutable('-1 minute'));
         $failure = null;
         try {
             $buffer->flush();
-        } catch (RuntimeException $e) {
+        } catch (\RuntimeException $e) {
             $failure = $e;
         }
-        self::assertInstanceOf(RuntimeException::class, $failure);
+        self::assertInstanceOf(\RuntimeException::class, $failure);
 
         /** @var ArrayObject<int, string> $dropped */
-        $dropped = new ArrayObject();
+        $dropped = new \ArrayObject();
         $dropService = $this->createStub(ChanDropService::class);
         $dropService->method('hardDropChannel')->willReturnCallback(static function (RegisteredChannel $dropping) use ($dropped): void {
             $dropped->append($dropping->getName());
@@ -225,7 +222,7 @@ final class PurgeInactiveChannelsTaskTest extends TestCase
         $dropService = $this->createStub(ChanDropService::class);
         $dropService->method('hardDropChannel')->willReturnCallback(static function (RegisteredChannel $channel) use ($dropped): void {
             if ('#broken' === $channel->getName()) {
-                throw new RuntimeException('constraint violation');
+                throw new \RuntimeException('constraint violation');
             }
             $dropped->append($channel->getName());
         });
@@ -243,7 +240,7 @@ final class PurgeInactiveChannelsTaskTest extends TestCase
         self::assertSame(['#later'], $dropped->getArrayCopy());
         self::assertCount(1, $errors);
         self::assertStringContainsString('failed to drop inactive channel #broken (id 1); skipping it until the next sweep', $errors->getArrayCopy()[0] ?? '');
-        self::assertInstanceOf(RuntimeException::class, $exceptions[0]);
+        self::assertInstanceOf(\RuntimeException::class, $exceptions[0]);
 
         $task->run();
 
@@ -259,7 +256,7 @@ final class PurgeInactiveChannelsTaskTest extends TestCase
         $channelRepo->method('iterateRegisteredInactiveSince')->willReturn([$channel]);
         $channelRepo->method('findByIds')->willReturn([]);
         $dropService = $this->createStub(ChanDropService::class);
-        $dropService->method('hardDropChannel')->willThrowException(new RuntimeException('listener failed'));
+        $dropService->method('hardDropChannel')->willThrowException(new \RuntimeException('listener failed'));
         $errors = self::messages();
         $logger = $this->createStub(LoggerInterface::class);
         $logger->method('error')->willReturnCallback(static function (string $message) use ($errors): void {
@@ -291,7 +288,7 @@ final class PurgeInactiveChannelsTaskTest extends TestCase
             if ('#poison' === $channel->getName()) {
                 $open = false;
 
-                throw new RuntimeException('deadlock');
+                throw new \RuntimeException('deadlock');
             }
         });
         $errors = self::messages();
@@ -303,7 +300,7 @@ final class PurgeInactiveChannelsTaskTest extends TestCase
 
         for ($cycle = 1; $cycle <= 3; ++$cycle) {
             $open = true;
-            self::assertInstanceOf(RuntimeException::class, $this->runCatching($task), 'a closed EntityManager stops the cycle');
+            self::assertInstanceOf(\RuntimeException::class, $this->runCatching($task), 'a closed EntityManager stops the cycle');
         }
 
         self::assertSame(['#poison', '#poison', '#poison'], $attempts->getArrayCopy());
@@ -338,14 +335,14 @@ final class PurgeInactiveChannelsTaskTest extends TestCase
             if ('#poison' === $channel->getName()) {
                 $open = false;
 
-                throw new RuntimeException('deadlock');
+                throw new \RuntimeException('deadlock');
             }
         });
         $task = new PurgeInactiveChannelsTask($channelRepo, $dropService, $this->noPendingActivity(), $this->createStub(LoggerInterface::class), 3600, 90, $entityManager, $this->connection(true));
 
         for ($cycle = 1; $cycle <= 3; ++$cycle) {
             $open = true;
-            self::assertInstanceOf(RuntimeException::class, $this->runCatching($task));
+            self::assertInstanceOf(\RuntimeException::class, $this->runCatching($task));
         }
         $open = true;
         $task->run();
@@ -365,7 +362,7 @@ final class PurgeInactiveChannelsTaskTest extends TestCase
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('iterateRegisteredInactiveSince')->willReturn([$poison, $later]);
         $open = true;
-        $poisonFails = new ArrayObject([true]);
+        $poisonFails = new \ArrayObject([true]);
         $entityManager = $this->createStub(EntityManagerInterface::class);
         $entityManager->method('isOpen')->willReturnCallback(static function () use (&$open): bool {
             return $open;
@@ -377,15 +374,15 @@ final class PurgeInactiveChannelsTaskTest extends TestCase
             if (true === $poisonFails[0] && '#poison' === $channel->getName()) {
                 $open = false;
 
-                throw new RuntimeException('deadlock');
+                throw new \RuntimeException('deadlock');
             }
         });
-        $databaseAnswers = new ArrayObject([true]);
+        $databaseAnswers = new \ArrayObject([true]);
         $connection = $this->createStub(Connection::class);
         $connection->method('getDatabasePlatform')->willReturn(new MySQLPlatform());
         $connection->method('fetchOne')->willReturnCallback(static function () use ($databaseAnswers): int {
             if (true !== $databaseAnswers[0]) {
-                throw new RuntimeException('server has gone away');
+                throw new \RuntimeException('server has gone away');
             }
 
             return 1;
@@ -396,7 +393,7 @@ final class PurgeInactiveChannelsTaskTest extends TestCase
             $errors[] = $message;
         });
         $task = new PurgeInactiveChannelsTask($channelRepo, $dropService, $this->noPendingActivity(), $logger, 3600, 90, $entityManager, $connection);
-        $cycle = function () use ($task, &$open): ?Throwable {
+        $cycle = function () use ($task, &$open): ?\Throwable {
             $open = true;
 
             return $this->runCatching($task);
@@ -409,9 +406,9 @@ final class PurgeInactiveChannelsTaskTest extends TestCase
         $attempts->exchangeArray([]);
 
         $databaseAnswers[0] = false;
-        self::assertInstanceOf(RuntimeException::class, $cycle());
+        self::assertInstanceOf(\RuntimeException::class, $cycle());
         $databaseAnswers[0] = true;
-        self::assertInstanceOf(RuntimeException::class, $cycle());
+        self::assertInstanceOf(\RuntimeException::class, $cycle());
         self::assertNull($cycle());
         self::assertSame(['#poison', '#poison', '#later'], $attempts->getArrayCopy(), 'an outage is not counted; a counted failure skips the exhausted channel at once');
         self::assertStringContainsString(
@@ -423,8 +420,8 @@ final class PurgeInactiveChannelsTaskTest extends TestCase
         $attempts->exchangeArray([]);
         self::assertNull($cycle());
         $poisonFails[0] = true;
-        self::assertInstanceOf(RuntimeException::class, $cycle());
-        self::assertInstanceOf(RuntimeException::class, $cycle());
+        self::assertInstanceOf(\RuntimeException::class, $cycle());
+        self::assertInstanceOf(\RuntimeException::class, $cycle());
         self::assertSame(['#poison', '#later', '#poison', '#poison'], $attempts->getArrayCopy(), 'a channel that succeeded gets a full budget again');
     }
 
@@ -442,12 +439,12 @@ final class PurgeInactiveChannelsTaskTest extends TestCase
         $dropService->method('hardDropChannel')->willReturnCallback(static function (RegisteredChannel $channel) use ($attempts): void {
             $attempts->append($channel->getName());
 
-            throw new RuntimeException('server has gone away');
+            throw new \RuntimeException('server has gone away');
         });
         $task = new PurgeInactiveChannelsTask($channelRepo, $dropService, $this->noPendingActivity(), $this->createStub(LoggerInterface::class), 3600, 90, $entityManager, $this->connection(false));
 
         for ($cycle = 1; $cycle <= 5; ++$cycle) {
-            self::assertInstanceOf(RuntimeException::class, $this->runCatching($task));
+            self::assertInstanceOf(\RuntimeException::class, $this->runCatching($task));
         }
 
         self::assertSame(['#healthy', '#healthy', '#healthy', '#healthy', '#healthy'], $attempts->getArrayCopy());
@@ -458,8 +455,8 @@ final class PurgeInactiveChannelsTaskTest extends TestCase
         $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('getId')->willReturn($id);
         $channel->method('getName')->willReturn($name);
-        $channel->method('getLastUsedAt')->willReturn(new DateTimeImmutable('-200 days'));
-        $channel->method('getCreatedAt')->willReturn(new DateTimeImmutable('-300 days'));
+        $channel->method('getLastUsedAt')->willReturn(new \DateTimeImmutable('-200 days'));
+        $channel->method('getCreatedAt')->willReturn(new \DateTimeImmutable('-300 days'));
 
         return $channel;
     }
@@ -487,17 +484,17 @@ final class PurgeInactiveChannelsTaskTest extends TestCase
         if ($answers) {
             $connection->method('fetchOne')->willReturn(1);
         } else {
-            $connection->method('fetchOne')->willThrowException(new RuntimeException('server has gone away'));
+            $connection->method('fetchOne')->willThrowException(new \RuntimeException('server has gone away'));
         }
 
         return $connection;
     }
 
-    private function runCatching(PurgeInactiveChannelsTask $task): ?Throwable
+    private function runCatching(PurgeInactiveChannelsTask $task): ?\Throwable
     {
         try {
             $task->run();
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             return $e;
         }
 
@@ -505,14 +502,14 @@ final class PurgeInactiveChannelsTaskTest extends TestCase
     }
 
     /** @return ArrayObject<int, mixed> */
-    private static function recorder(): ArrayObject
+    private static function recorder(): \ArrayObject
     {
-        return new ArrayObject();
+        return new \ArrayObject();
     }
 
     /** @return ArrayObject<int, string> */
-    private static function messages(): ArrayObject
+    private static function messages(): \ArrayObject
     {
-        return new ArrayObject();
+        return new \ArrayObject();
     }
 }

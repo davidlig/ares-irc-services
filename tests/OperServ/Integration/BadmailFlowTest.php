@@ -17,8 +17,6 @@ use App\OperServ\Application\UseCase\Badmail\ManageBadmailHandler;
 use App\OperServ\Domain\Entity\BadmailEntry;
 use App\OperServ\Domain\ValueObject\EmailDomain;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
-use DateTimeImmutable;
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -41,28 +39,28 @@ final class BadmailFlowTest extends DoctrineIntegrationTestCase
         $repository = new DoctrineBadmailRepository($this->entityManager);
         $handler = new ManageBadmailHandler($this->createStub(CommandAuditRecorder::class), $repository, 1);
         foreach ([' B.Example.ORG ', 'a.example.org', 'xn--bcher-kva.example'] as $domain) {
-            self::assertSame(BadmailOutcome::Added, $handler->handle(new ManageBadmail(BadmailAction::Add, true, 'Operator', new DateTimeImmutable('2026-10-25T00:00:00Z'), domain: $domain, reason: ' Administrative reason '))->outcome);
+            self::assertSame(BadmailOutcome::Added, $handler->handle(new ManageBadmail(BadmailAction::Add, true, 'Operator', new \DateTimeImmutable('2026-10-25T00:00:00Z'), domain: $domain, reason: ' Administrative reason '))->outcome);
         }
-        $first = $handler->handle(new ManageBadmail(BadmailAction::List, true, 'Operator', new DateTimeImmutable('2026-10-25T00:00:00Z'), pattern: '*'));
+        $first = $handler->handle(new ManageBadmail(BadmailAction::List, true, 'Operator', new \DateTimeImmutable('2026-10-25T00:00:00Z'), pattern: '*'));
         self::assertSame(3, $first->total);
         self::assertSame('b.example.org', $first->entries[0]->domain);
         self::assertSame('Administrative reason', $first->entries[0]->reason);
         $id = $first->entries[0]->id;
-        $second = $handler->handle(new ManageBadmail(BadmailAction::List, true, 'Operator', new DateTimeImmutable('2026-10-25T00:00:00Z'), pattern: '*EXAMPLE.ORG', page: 2));
+        $second = $handler->handle(new ManageBadmail(BadmailAction::List, true, 'Operator', new \DateTimeImmutable('2026-10-25T00:00:00Z'), pattern: '*EXAMPLE.ORG', page: 2));
         self::assertSame('a.example.org', $second->entries[0]->domain);
         self::assertGreaterThan($id, $second->entries[0]->id);
         $secondId = $second->entries[0]->id;
-        self::assertSame(BadmailOutcome::Deleted, $handler->handle(new ManageBadmail(BadmailAction::Delete, true, 'Operator', new DateTimeImmutable('2026-10-25T00:00:00Z'), id: $id))->outcome);
-        self::assertSame($secondId, $handler->handle(new ManageBadmail(BadmailAction::List, true, 'Operator', new DateTimeImmutable('2026-10-25T00:00:00Z'), pattern: 'a.example.org'))->entries[0]->id);
-        self::assertSame([], $handler->handle(new ManageBadmail(BadmailAction::List, true, 'Operator', new DateTimeImmutable('2026-10-25T00:00:00Z'), pattern: '*', page: 99))->entries);
+        self::assertSame(BadmailOutcome::Deleted, $handler->handle(new ManageBadmail(BadmailAction::Delete, true, 'Operator', new \DateTimeImmutable('2026-10-25T00:00:00Z'), id: $id))->outcome);
+        self::assertSame($secondId, $handler->handle(new ManageBadmail(BadmailAction::List, true, 'Operator', new \DateTimeImmutable('2026-10-25T00:00:00Z'), pattern: 'a.example.org'))->entries[0]->id);
+        self::assertSame([], $handler->handle(new ManageBadmail(BadmailAction::List, true, 'Operator', new \DateTimeImmutable('2026-10-25T00:00:00Z'), pattern: '*', page: 99))->entries);
         foreach (['%', '_', '?', '[ab]*', '!'] as $literal) {
-            self::assertSame(0, $handler->handle(new ManageBadmail(BadmailAction::List, true, 'Operator', new DateTimeImmutable('2026-10-25T00:00:00Z'), pattern: $literal))->total);
+            self::assertSame(0, $handler->handle(new ManageBadmail(BadmailAction::List, true, 'Operator', new \DateTimeImmutable('2026-10-25T00:00:00Z'), pattern: $literal))->total);
         }
-        self::assertSame(1, $handler->handle(new ManageBadmail(BadmailAction::List, true, 'Operator', new DateTimeImmutable('2026-10-25T00:00:00Z'), pattern: '*', page: 0))->page);
-        self::assertSame(BadmailOutcome::Cleared, $handler->handle(new ManageBadmail(BadmailAction::Clear, true, 'Operator', new DateTimeImmutable('2026-10-25T00:00:00Z')))->outcome);
-        self::assertSame(0, $handler->handle(new ManageBadmail(BadmailAction::List, true, 'Operator', new DateTimeImmutable('2026-10-25T00:00:00Z'), pattern: '*'))->total);
-        $handler->handle(new ManageBadmail(BadmailAction::Add, true, 'Operator', new DateTimeImmutable('2026-10-25T00:00:00Z'), domain: 'later.example', reason: 'new'));
-        self::assertGreaterThan($secondId, $handler->handle(new ManageBadmail(BadmailAction::List, true, 'Operator', new DateTimeImmutable('2026-10-25T00:00:00Z'), pattern: '*'))->entries[0]->id);
+        self::assertSame(1, $handler->handle(new ManageBadmail(BadmailAction::List, true, 'Operator', new \DateTimeImmutable('2026-10-25T00:00:00Z'), pattern: '*', page: 0))->page);
+        self::assertSame(BadmailOutcome::Cleared, $handler->handle(new ManageBadmail(BadmailAction::Clear, true, 'Operator', new \DateTimeImmutable('2026-10-25T00:00:00Z')))->outcome);
+        self::assertSame(0, $handler->handle(new ManageBadmail(BadmailAction::List, true, 'Operator', new \DateTimeImmutable('2026-10-25T00:00:00Z'), pattern: '*'))->total);
+        $handler->handle(new ManageBadmail(BadmailAction::Add, true, 'Operator', new \DateTimeImmutable('2026-10-25T00:00:00Z'), domain: 'later.example', reason: 'new'));
+        self::assertGreaterThan($secondId, $handler->handle(new ManageBadmail(BadmailAction::List, true, 'Operator', new \DateTimeImmutable('2026-10-25T00:00:00Z'), pattern: '*'))->entries[0]->id);
     }
 
     #[Test]
@@ -70,25 +68,25 @@ final class BadmailFlowTest extends DoctrineIntegrationTestCase
     {
         $repository = new DoctrineBadmailRepository($this->entityManager);
         $handler = new ManageBadmailHandler($this->createStub(CommandAuditRecorder::class), $repository, 0);
-        $handler->handle(new ManageBadmail(BadmailAction::Add, true, 'Operator', new DateTimeImmutable('2026-10-25T00:00:00Z'), domain: 'example.org', reason: 'reason'));
+        $handler->handle(new ManageBadmail(BadmailAction::Add, true, 'Operator', new \DateTimeImmutable('2026-10-25T00:00:00Z'), domain: 'example.org', reason: 'reason'));
         $before = $this->rows();
         $inputs = [
-            [new ManageBadmail(BadmailAction::Clear, false, 'Operator', new DateTimeImmutable('2026-10-25T00:00:00Z')), BadmailOutcome::Denied],
-            [new ManageBadmail(BadmailAction::Add, true, 'Operator', new DateTimeImmutable('2026-10-25T00:00:00Z'), domain: 'EXAMPLE.ORG', reason: 'other'), BadmailOutcome::Duplicate],
-            [new ManageBadmail(BadmailAction::Add, true, 'Operator', new DateTimeImmutable('2026-10-25T00:00:00Z'), domain: 'example.org.', reason: 'reason'), BadmailOutcome::InvalidDomain],
-            [new ManageBadmail(BadmailAction::Add, true, 'Operator', new DateTimeImmutable('2026-10-25T00:00:00Z'), domain: 'other.org', reason: '  '), BadmailOutcome::InvalidReason],
-            [new ManageBadmail(BadmailAction::Delete, true, 'Operator', new DateTimeImmutable('2026-10-25T00:00:00Z'), id: 999), BadmailOutcome::NotFound],
-            [new ManageBadmail(BadmailAction::Delete, true, 'Operator', new DateTimeImmutable('2026-10-25T00:00:00Z')), BadmailOutcome::InvalidId],
-            [new ManageBadmail(BadmailAction::Delete, true, 'Operator', new DateTimeImmutable('2026-10-25T00:00:00Z'), id: 0), BadmailOutcome::InvalidId],
-            [new ManageBadmail(BadmailAction::List, true, 'Operator', new DateTimeImmutable('2026-10-25T00:00:00Z'), pattern: ''), BadmailOutcome::InvalidPattern],
+            [new ManageBadmail(BadmailAction::Clear, false, 'Operator', new \DateTimeImmutable('2026-10-25T00:00:00Z')), BadmailOutcome::Denied],
+            [new ManageBadmail(BadmailAction::Add, true, 'Operator', new \DateTimeImmutable('2026-10-25T00:00:00Z'), domain: 'EXAMPLE.ORG', reason: 'other'), BadmailOutcome::Duplicate],
+            [new ManageBadmail(BadmailAction::Add, true, 'Operator', new \DateTimeImmutable('2026-10-25T00:00:00Z'), domain: 'example.org.', reason: 'reason'), BadmailOutcome::InvalidDomain],
+            [new ManageBadmail(BadmailAction::Add, true, 'Operator', new \DateTimeImmutable('2026-10-25T00:00:00Z'), domain: 'other.org', reason: '  '), BadmailOutcome::InvalidReason],
+            [new ManageBadmail(BadmailAction::Delete, true, 'Operator', new \DateTimeImmutable('2026-10-25T00:00:00Z'), id: 999), BadmailOutcome::NotFound],
+            [new ManageBadmail(BadmailAction::Delete, true, 'Operator', new \DateTimeImmutable('2026-10-25T00:00:00Z')), BadmailOutcome::InvalidId],
+            [new ManageBadmail(BadmailAction::Delete, true, 'Operator', new \DateTimeImmutable('2026-10-25T00:00:00Z'), id: 0), BadmailOutcome::InvalidId],
+            [new ManageBadmail(BadmailAction::List, true, 'Operator', new \DateTimeImmutable('2026-10-25T00:00:00Z'), pattern: ''), BadmailOutcome::InvalidPattern],
         ];
         foreach ($inputs as [$input, $outcome]) {
             self::assertSame($outcome, $handler->handle($input)->outcome);
             self::assertSame($before, $this->rows());
         }
         self::assertTrue($this->entityManager->isOpen());
-        self::assertSame(BadmailOutcome::Added, $handler->handle(new ManageBadmail(BadmailAction::Add, true, 'Operator', new DateTimeImmutable('2026-10-25T00:00:00Z'), domain: 'later.org', reason: 'reason'))->outcome);
-        self::assertSame(1, $handler->handle(new ManageBadmail(BadmailAction::List, true, 'Operator', new DateTimeImmutable('2026-10-25T00:00:00Z'), pattern: '*'))->pageSize);
+        self::assertSame(BadmailOutcome::Added, $handler->handle(new ManageBadmail(BadmailAction::Add, true, 'Operator', new \DateTimeImmutable('2026-10-25T00:00:00Z'), domain: 'later.org', reason: 'reason'))->outcome);
+        self::assertSame(1, $handler->handle(new ManageBadmail(BadmailAction::List, true, 'Operator', new \DateTimeImmutable('2026-10-25T00:00:00Z'), pattern: '*'))->pageSize);
     }
 
     #[Test]
@@ -96,7 +94,7 @@ final class BadmailFlowTest extends DoctrineIntegrationTestCase
     {
         $repository = new DoctrineBadmailRepository($this->entityManager);
         $handler = new ManageBadmailHandler($this->createStub(CommandAuditRecorder::class), $repository, 50);
-        $handler->handle(new ManageBadmail(BadmailAction::Add, true, 'Operator', new DateTimeImmutable('2026-10-25T00:00:00Z'), domain: ' EXAMPLE.ORG ', reason: 'reason'));
+        $handler->handle(new ManageBadmail(BadmailAction::Add, true, 'Operator', new \DateTimeImmutable('2026-10-25T00:00:00Z'), domain: ' EXAMPLE.ORG ', reason: 'reason'));
         $policy = new BadmailEmailPolicy($repository);
         self::assertTrue($policy->isBlocked('User@EXAMPLE.ORG'));
         self::assertTrue($policy->isBlocked('"a@b"@example.org'));
@@ -120,7 +118,7 @@ final class BadmailFlowTest extends DoctrineIntegrationTestCase
             try {
                 new EmailDomain($domain);
                 self::fail('Accepted invalid domain: ' . $domain);
-            } catch (InvalidArgumentException $exception) {
+            } catch (\InvalidArgumentException $exception) {
                 self::assertSame('Invalid email domain.', $exception->getMessage());
             }
         }
@@ -134,7 +132,7 @@ final class BadmailFlowTest extends DoctrineIntegrationTestCase
         $audit = $this->createMock(CommandAuditRecorder::class);
         $audit->expects(self::exactly(3))->method('record')->willReturnCallback(static function (CommandAuditRecord $record) use (&$records): void { $records[] = $record; });
         $handler = new ManageBadmailHandler($audit, new DoctrineBadmailRepository($this->entityManager), 50);
-        $now = new DateTimeImmutable('2026-10-25T00:00:00Z');
+        $now = new \DateTimeImmutable('2026-10-25T00:00:00Z');
         $handler->handle(new ManageBadmail(BadmailAction::Add, true, 'Staff', $now, domain: 'example.org', reason: ' administrative reason '));
         $handler->handle(new ManageBadmail(BadmailAction::Add, true, 'Staff', $now, domain: 'EXAMPLE.ORG', reason: 'duplicate'));
         $id = $this->entityManager->getConnection()->fetchOne('SELECT id FROM operserv_badmail');

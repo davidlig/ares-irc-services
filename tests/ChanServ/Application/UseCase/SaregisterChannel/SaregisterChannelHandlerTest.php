@@ -20,18 +20,16 @@ use App\ChanServ\Application\UseCase\SaregisterChannel\SaregisterChannelOutcome;
 use App\ChanServ\Application\UseCase\SaregisterChannel\SaregisterChannelResult;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\Shared\Application\Port\EventBusInterface;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionProperty;
 
 #[CoversClass(SaregisterChannelHandler::class)]
 #[CoversClass(SaregisterChannel::class)]
 #[CoversClass(SaregisterChannelResult::class)]
 final class SaregisterChannelHandlerTest extends TestCase
 {
-    private DateTimeImmutable $now;
+    private \DateTimeImmutable $now;
 
     #[Test]
     public function rejectsInvalidChannelName(): void
@@ -148,7 +146,7 @@ final class SaregisterChannelHandlerTest extends TestCase
         $channelRepo->method('existsByChannelName')->willReturn(false);
         $channelRepo->expects(self::never())->method('findByFounderNickId');
         $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function (RegisteredChannel $chan): void {
-            new ReflectionProperty($chan, 'id')->setValue($chan, 77);
+            new \ReflectionProperty($chan, 'id')->setValue($chan, 77);
         });
 
         $events = $this->createMock(EventBusInterface::class);
@@ -180,7 +178,7 @@ final class SaregisterChannelHandlerTest extends TestCase
             self::assertSame('#MyChan', $chan->getName());
             self::assertSame(50, $chan->getFounderNickId());
             self::assertSame('Channel description', $chan->getDescription());
-            new ReflectionProperty($chan, 'id')->setValue($chan, 123);
+            new \ReflectionProperty($chan, 'id')->setValue($chan, 123);
         });
 
         $levels = $this->createMock(ChannelLevelRepositoryInterface::class);
@@ -236,7 +234,7 @@ final class SaregisterChannelHandlerTest extends TestCase
         $channelRepo->method('findByFounderNickId')->willReturn([]);
         $channelRepo->expects(self::once())->method('delete')->with($expiredRejected);
         $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function (RegisteredChannel $chan): void {
-            new ReflectionProperty($chan, 'id')->setValue($chan, 777);
+            new \ReflectionProperty($chan, 'id')->setValue($chan, 777);
         });
 
         $accounts = $this->createStub(ChanUserAccountPort::class);
@@ -272,7 +270,7 @@ final class SaregisterChannelHandlerTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->now = new DateTimeImmutable('2026-10-30T15:00:00Z');
+        $this->now = new \DateTimeImmutable('2026-10-30T15:00:00Z');
     }
 
     private function handler(
@@ -285,7 +283,7 @@ final class SaregisterChannelHandlerTest extends TestCase
     ): SaregisterChannelHandler {
         $defaultRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $defaultRepo->method('save')->willReturnCallback(static function (RegisteredChannel $chan): void {
-            new ReflectionProperty($chan, 'id')->setValue($chan, 1);
+            new \ReflectionProperty($chan, 'id')->setValue($chan, 1);
         });
 
         $defaultAccounts = $this->createStub(ChanUserAccountPort::class);

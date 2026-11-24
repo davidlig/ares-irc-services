@@ -16,7 +16,6 @@ use App\ChanServ\Application\PublishedEvent\ChannelSuspendedEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelUnsuspendedEvent;
 use App\ChanServ\Application\Service\ChannelHistoryService;
 use App\ChanServ\Domain\Entity\ChannelHistory;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -68,12 +67,12 @@ final class ChanServHistorySubscriberTest extends TestCase
             channelNameLower: '#test',
             reason: 'Spamming',
             duration: '7d',
-            expiresAt: new DateTimeImmutable('2024-01-22 10:30:00'),
+            expiresAt: new \DateTimeImmutable('2024-01-22 10:30:00'),
             performedBy: 'OperNick',
             performedByNickId: 456,
             performedByIp: '192.168.1.100',
             performedByHost: 'oper@example.com',
-            occurredAt: new DateTimeImmutable('2024-01-15 10:30:00'),
+            occurredAt: new \DateTimeImmutable('2024-01-15 10:30:00'),
         );
 
         $subscriber->onChannelSuspended($event);
@@ -110,7 +109,7 @@ final class ChanServHistorySubscriberTest extends TestCase
             performedByNickId: 456,
             performedByIp: '192.168.1.100',
             performedByHost: 'oper@example.com',
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
         );
 
         $subscriber->onChannelSuspended($event);
@@ -144,7 +143,7 @@ final class ChanServHistorySubscriberTest extends TestCase
             performedByNickId: 456,
             performedByIp: '192.168.1.100',
             performedByHost: 'oper@example.com',
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
         );
 
         $subscriber->onChannelUnsuspended($event);
@@ -165,7 +164,7 @@ final class ChanServHistorySubscriberTest extends TestCase
             performedByNickId: null,
             performedByIp: '*',
             performedByHost: '*',
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
             isRetry: true,
         ));
     }
@@ -211,7 +210,7 @@ final class ChanServHistorySubscriberTest extends TestCase
             performedByIp: '192.168.1.100',
             performedByHost: 'oper@example.com',
             byOperator: true,
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
         );
 
         $subscriber->onChannelFounderChanged($event);
@@ -246,7 +245,7 @@ final class ChanServHistorySubscriberTest extends TestCase
             performedByIp: '192.168.1.100',
             performedByHost: 'oper@example.com',
             byOperator: true,
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
         );
 
         $subscriber->onChannelFounderChanged($event);
@@ -288,7 +287,7 @@ final class ChanServHistorySubscriberTest extends TestCase
             performedByNickId: 1,
             performedByIp: '10.0.0.1',
             performedByHost: 'founder@host',
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
         );
 
         $subscriber->onChannelSuccessorChanged($event);
@@ -330,7 +329,7 @@ final class ChanServHistorySubscriberTest extends TestCase
             performedByNickId: 1,
             performedByIp: '10.0.0.1',
             performedByHost: 'founder@host',
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
         );
 
         $subscriber->onChannelSuccessorChanged($event);
@@ -370,7 +369,7 @@ final class ChanServHistorySubscriberTest extends TestCase
             performedByNickId: 1,
             performedByIp: '10.0.0.1',
             performedByHost: 'founder@host',
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
         );
 
         $subscriber->onChannelSuccessorChanged($event);
@@ -408,7 +407,7 @@ final class ChanServHistorySubscriberTest extends TestCase
             performedByNickId: 1,
             performedByIp: '10.0.0.1',
             performedByHost: 'founder@host',
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
         );
 
         $subscriber->onChannelAccessChanged($event);
@@ -446,7 +445,7 @@ final class ChanServHistorySubscriberTest extends TestCase
             performedByNickId: 1,
             performedByIp: '10.0.0.1',
             performedByHost: 'founder@host',
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
         );
 
         $subscriber->onChannelAccessChanged($event);
@@ -483,7 +482,7 @@ final class ChanServHistorySubscriberTest extends TestCase
             performedByNickId: 1,
             performedByIp: '10.0.0.1',
             performedByHost: 'founder@host',
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
         );
 
         $subscriber->onChannelAkickChanged($event);
@@ -517,7 +516,7 @@ final class ChanServHistorySubscriberTest extends TestCase
             performedByNickId: 1,
             performedByIp: '10.0.0.1',
             performedByHost: 'founder@host',
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
         );
 
         $subscriber->onChannelAkickChanged($event);
@@ -554,7 +553,7 @@ final class ChanServHistorySubscriberTest extends TestCase
             performedByNickId: 1,
             performedByIp: '10.0.0.1',
             performedByHost: 'founder@host',
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
         );
 
         $subscriber->onChannelAkickChanged($event);
@@ -590,7 +589,7 @@ final class ChanServHistorySubscriberTest extends TestCase
             performedByNickId: 1,
             performedByIp: '10.0.0.1',
             performedByHost: 'founder@host',
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
         );
 
         $subscriber->onChannelAkickChanged($event);
@@ -626,7 +625,7 @@ final class ChanServHistorySubscriberTest extends TestCase
             performedByNickId: 1,
             performedByIp: '10.0.0.1',
             performedByHost: 'founder@host',
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
             count: 3,
         );
 

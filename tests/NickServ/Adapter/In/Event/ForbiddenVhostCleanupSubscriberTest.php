@@ -7,7 +7,6 @@ namespace App\Tests\NickServ\Adapter\In\Event;
 use App\NickServ\Adapter\In\Event\ForbiddenVhostCleanupSubscriber;
 use App\NickServ\Application\Port\Out\ForbiddenVhostRepositoryInterface;
 use App\NickServ\Application\PublishedEvent\NickDropCleanupEvent;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -37,7 +36,7 @@ final class ForbiddenVhostCleanupSubscriberTest extends TestCase
             nickname: 'TestNick',
             nicknameLower: 'testnick',
             reason: 'manual',
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
         );
 
         $repository
@@ -59,7 +58,7 @@ final class ForbiddenVhostCleanupSubscriberTest extends TestCase
             nickname: 'OtherNick',
             nicknameLower: 'othernick',
             reason: 'manual',
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
         );
 
         $repository

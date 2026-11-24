@@ -9,7 +9,6 @@ use App\ChanServ\Application\Port\Out\ChanNetworkActions;
 use App\ChanServ\Application\Port\Out\ChanServActivitySink;
 use App\ChanServ\Application\Service\ChannelSuspensionService;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\Stub;
@@ -30,7 +29,7 @@ final class ChannelSuspensionServiceTest extends TestCase
     #[Test]
     public function enforceSuspensionRemovesRegistrationModesAndSendsNotice(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Test');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 1, 'Test');
         $channel->suspend('Abuse');
 
         $channelActions = $this->createMock(ChanNetworkActions::class);
@@ -49,7 +48,7 @@ final class ChannelSuspensionServiceTest extends TestCase
     #[Test]
     public function enforceSuspensionPassesEmptyStringForEmptyReason(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Test');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 1, 'Test');
         $channel->suspend('');
 
         $channelActions = $this->createMock(ChanNetworkActions::class);
@@ -68,7 +67,7 @@ final class ChannelSuspensionServiceTest extends TestCase
     #[Test]
     public function liftSuspensionRestoresRegistrationModes(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Test');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 1, 'Test');
 
         $channelActions = $this->createMock(ChanNetworkActions::class);
         $channelActions->expects(self::once())

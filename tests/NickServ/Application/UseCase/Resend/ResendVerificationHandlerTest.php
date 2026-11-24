@@ -21,13 +21,9 @@ use App\NickServ\Application\UseCase\Resend\ResendVerificationResult;
 use App\NickServ\Domain\Entity\NickHistory;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\NickServ\Domain\ValueObject\RegistrationMode;
-use DateTimeImmutable;
-use OverflowException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionProperty;
-use RuntimeException;
 
 use function hash;
 use function str_repeat;
@@ -74,9 +70,9 @@ final class ResendVerificationHandlerTest extends TestCase
     public function resendRenewsPendingDeadlineAndMemoryChallengeWithoutPersistingToken(): void
     {
         $account = RegisteredNick::createPending('Alice', 'hash', 'alice@example.com', 'en', $this->now()->modify('+30 seconds'), $this->now());
-        new ReflectionProperty($account, 'id')->setValue($account, 42);
+        new \ReflectionProperty($account, 'id')->setValue($account, 42);
         $expiry = $account->getExpiresAt();
-        self::assertInstanceOf(DateTimeImmutable::class, $expiry);
+        self::assertInstanceOf(\DateTimeImmutable::class, $expiry);
         $temporary = new InMemoryTemporaryRescueTokenStore();
         $oldHash = str_repeat('a', 64);
         $temporary->replace(42, $oldHash, $expiry);
@@ -121,7 +117,7 @@ final class ResendVerificationHandlerTest extends TestCase
         $temporary->expects(self::once())->method('prune')->with($this->now());
         $temporary->expects(self::once())->method('replace')->with(42, self::matchesRegularExpression('/^[0-9a-f]{64}$/D'), $account->getExpiresAt());
         $mail = $this->createStub(ResendMailSender::class);
-        $mail->method('sendResend')->willThrowException(new RuntimeException('mail failed'));
+        $mail->method('sendResend')->willThrowException(new \RuntimeException('mail failed'));
         $historyRepository = $this->createMock(NickHistoryRepositoryInterface::class);
         $historyRepository->expects(self::never())->method('save');
         $result = $this->handler($account, temporary: $temporary, mail: $mail, history: new NickHistoryService($historyRepository))->handle($this->input());
@@ -134,7 +130,7 @@ final class ResendVerificationHandlerTest extends TestCase
     public function capacityFailureDoesNotClaimDelivery(): void
     {
         $temporary = $this->createStub(TemporaryRescueTokenStore::class);
-        $temporary->method('replace')->willThrowException(new OverflowException());
+        $temporary->method('replace')->willThrowException(new \OverflowException());
         $mail = $this->createMock(ResendMailSender::class);
         $mail->expects(self::never())->method('sendResend');
         $account = $this->account();
@@ -151,15 +147,15 @@ final class ResendVerificationHandlerTest extends TestCase
         return new ResendVerification('Alice', 'es', 'Alice', '192.0.2.2');
     }
 
-    private function now(): DateTimeImmutable
+    private function now(): \DateTimeImmutable
     {
-        return new DateTimeImmutable('2026-09-06 14:00:00 UTC');
+        return new \DateTimeImmutable('2026-09-06 14:00:00 UTC');
     }
 
     private function account(): RegisteredNick
     {
         $account = RegisteredNick::createPending('Alice', 'hash', 'alice@example.com', 'en', $this->now()->modify('+1 hour'), $this->now());
-        new ReflectionProperty($account, 'id')->setValue($account, 42);
+        new \ReflectionProperty($account, 'id')->setValue($account, 42);
 
         return $account;
     }

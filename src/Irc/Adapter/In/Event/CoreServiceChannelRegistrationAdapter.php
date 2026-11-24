@@ -11,8 +11,6 @@ use App\Irc\Domain\Network\ChannelMemberRole;
 use App\Irc\Domain\Repository\ChannelRepositoryInterface;
 use App\Irc\Domain\ValueObject\ChannelName;
 use App\Irc\Domain\ValueObject\Uid;
-use DateTimeImmutable;
-use InvalidArgumentException;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
@@ -43,7 +41,7 @@ final readonly class CoreServiceChannelRegistrationAdapter implements ServiceCha
     ): void {
         try {
             $name = new ChannelName($channelName);
-        } catch (InvalidArgumentException) {
+        } catch (\InvalidArgumentException) {
             $this->logger->warning('Invalid channel name for service channel registration', [
                 'channel' => $channelName,
             ]);
@@ -63,7 +61,7 @@ final readonly class CoreServiceChannelRegistrationAdapter implements ServiceCha
             $channel = new Channel(
                 name: $name,
                 modes: $modes,
-                createdAt: new DateTimeImmutable('@' . $channelTimestamp),
+                createdAt: new \DateTimeImmutable('@' . $channelTimestamp),
             );
             $channel->syncMember($uid, $role, $prefixLetters);
             $this->channelRepository->save($channel);
@@ -78,7 +76,7 @@ final readonly class CoreServiceChannelRegistrationAdapter implements ServiceCha
         }
 
         if ($channel->getCreatedAt()->getTimestamp() > $channelTimestamp) {
-            $channel->updateCreatedAt(new DateTimeImmutable('@' . $channelTimestamp));
+            $channel->updateCreatedAt(new \DateTimeImmutable('@' . $channelTimestamp));
         }
 
         if (!$channel->isMember($uid)) {
@@ -97,7 +95,7 @@ final readonly class CoreServiceChannelRegistrationAdapter implements ServiceCha
     {
         try {
             $name = new ChannelName($channelName);
-        } catch (InvalidArgumentException) {
+        } catch (\InvalidArgumentException) {
             return;
         }
 

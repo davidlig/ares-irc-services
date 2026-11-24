@@ -8,7 +8,6 @@ use App\ChanServ\Application\PublishedEvent\ChannelAccessChangedEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelAkickChangedEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelFounderChangedEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelSuccessorChangedEvent;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -22,7 +21,7 @@ final class ChannelHistoryEventsTest extends TestCase
     #[Test]
     public function channelFounderChangedEventCanBeConstructed(): void
     {
-        $occurredAt = new DateTimeImmutable('2024-01-15 10:30:00');
+        $occurredAt = new \DateTimeImmutable('2024-01-15 10:30:00');
         $event = new ChannelFounderChangedEvent(
             channelId: 10,
             channelName: '#test',
@@ -60,7 +59,7 @@ final class ChannelHistoryEventsTest extends TestCase
             performedByNickId: 1,
             performedByIp: '10.0.0.1',
             performedByHost: 'founder@host',
-            occurredAt: new DateTimeImmutable('2026-01-02 03:04:05'),
+            occurredAt: new \DateTimeImmutable('2026-01-02 03:04:05'),
             byOperator: false,
         );
 
@@ -70,7 +69,7 @@ final class ChannelHistoryEventsTest extends TestCase
     #[Test]
     public function channelSuccessorChangedEventCanBeConstructed(): void
     {
-        $occurredAt = new DateTimeImmutable('2024-01-15 10:30:00');
+        $occurredAt = new \DateTimeImmutable('2024-01-15 10:30:00');
         $event = new ChannelSuccessorChangedEvent(
             channelId: 10,
             channelName: '#test',
@@ -104,7 +103,7 @@ final class ChannelHistoryEventsTest extends TestCase
             performedByNickId: 1,
             performedByIp: '10.0.0.1',
             performedByHost: 'founder@host',
-            occurredAt: new DateTimeImmutable('2026-01-02 03:04:05'),
+            occurredAt: new \DateTimeImmutable('2026-01-02 03:04:05'),
         );
 
         self::assertSame(5, $event->oldSuccessorNickId);
@@ -114,7 +113,7 @@ final class ChannelHistoryEventsTest extends TestCase
     #[Test]
     public function channelAccessChangedEventAdd(): void
     {
-        $occurredAt = new DateTimeImmutable('2024-01-15 10:30:00');
+        $occurredAt = new \DateTimeImmutable('2024-01-15 10:30:00');
         $event = new ChannelAccessChangedEvent(
             channelId: 10,
             channelName: '#test',
@@ -154,7 +153,7 @@ final class ChannelHistoryEventsTest extends TestCase
             performedByNickId: 1,
             performedByIp: '10.0.0.1',
             performedByHost: 'founder@host',
-            occurredAt: new DateTimeImmutable('2026-01-02 03:04:05'),
+            occurredAt: new \DateTimeImmutable('2026-01-02 03:04:05'),
         );
 
         self::assertSame('DEL', $event->action);
@@ -164,7 +163,7 @@ final class ChannelHistoryEventsTest extends TestCase
     #[Test]
     public function channelAkickChangedEventAdd(): void
     {
-        $occurredAt = new DateTimeImmutable('2024-01-15 10:30:00');
+        $occurredAt = new \DateTimeImmutable('2024-01-15 10:30:00');
         $event = new ChannelAkickChangedEvent(
             channelId: 10,
             channelName: '#test',
@@ -201,7 +200,7 @@ final class ChannelHistoryEventsTest extends TestCase
             performedByNickId: 1,
             performedByIp: '10.0.0.1',
             performedByHost: 'founder@host',
-            occurredAt: new DateTimeImmutable('2026-01-02 03:04:05'),
+            occurredAt: new \DateTimeImmutable('2026-01-02 03:04:05'),
         );
 
         self::assertSame('DEL', $event->action);

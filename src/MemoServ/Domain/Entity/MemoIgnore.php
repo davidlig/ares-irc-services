@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\MemoServ\Domain\Entity;
 
-use InvalidArgumentException;
-
 /**
  * Ignore list entry: a nick or channel ignores memos from another nick.
  * For nick: targetNickId set, targetChannelId null.
@@ -29,7 +27,7 @@ class MemoIgnore
         $nickSet = null !== $targetNickId;
         $channelSet = null !== $targetChannelId;
         if ($nickSet === $channelSet) {
-            throw new InvalidArgumentException('Exactly one of targetNickId or targetChannelId must be set.');
+            throw new \InvalidArgumentException('Exactly one of targetNickId or targetChannelId must be set.');
         }
         $this->targetNickId = $targetNickId;
         $this->targetChannelId = $targetChannelId;
