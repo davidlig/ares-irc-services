@@ -60,7 +60,7 @@ final class ServicesListIntegrationTest extends KernelTestCase
 
         self::assertInstanceOf(CtcpVersionResponder::class, $responder);
         self::assertSame(
-            'Ares IRC Services v2.5.0 - David Abuín Fontán | https://ares-services.davidlig.net',
+            'Ares IRC Services v2.6.0 - David Abuín Fontán | https://ares-services.davidlig.net',
             $responder->getVersionResponse(),
         );
     }

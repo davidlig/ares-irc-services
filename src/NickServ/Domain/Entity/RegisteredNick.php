@@ -8,10 +8,7 @@ use App\NickServ\Domain\ValueObject\AutomaticModeProfile;
 use App\NickServ\Domain\ValueObject\NickStatus;
 use App\Shared\Domain\IrcIdentityFold;
 use DateTimeImmutable;
-use DateTimeZone;
-use Exception;
 use InvalidArgumentException;
-use LogicException;
 
 use function filter_var;
 use function implode;
@@ -61,18 +58,18 @@ class RegisteredNick
     private string $language;
 
     /** Null for FORBIDDEN entries. */
-    private ?DateTimeImmutable $registeredAt;
+    private ?\DateTimeImmutable $registeredAt;
 
     /** Only set while status is PENDING; null once the account is activated. */
-    private ?DateTimeImmutable $expiresAt = null;
+    private ?\DateTimeImmutable $expiresAt = null;
 
     /** Human-readable reason for SUSPENDED or FORBIDDEN status. */
     private ?string $reason = null;
 
     /** Expiration date for temporary suspensions. Null = permanent suspension. */
-    private ?DateTimeImmutable $suspendedUntil = null;
+    private ?\DateTimeImmutable $suspendedUntil = null;
 
-    private ?DateTimeImmutable $lastSeenAt = null;
+    private ?\DateTimeImmutable $lastSeenAt = null;
 
     private ?string $lastQuitMessage = null;
 
@@ -101,7 +98,7 @@ class RegisteredNick
     private bool $noExpire = false;
 
     /** Set when a manual DROP starts the recoverable deletion grace period. */
-    private ?DateTimeImmutable $pendingDeletionAt = null;
+    private ?\DateTimeImmutable $pendingDeletionAt = null;
 
     /**
      * Creates a new pending registration awaiting credential verification.
@@ -111,8 +108,8 @@ class RegisteredNick
         string $passwordHash,
         ?string $email,
         string $language,
-        DateTimeImmutable $expiresAt,
-        DateTimeImmutable $registeredAt,
+        \DateTimeImmutable $expiresAt,
+        \DateTimeImmutable $registeredAt,
     ): self {
         $nick = new self();
         $nick->nickname = $nickname;
@@ -137,7 +134,7 @@ class RegisteredNick
         string $passwordHash,
         ?string $email,
         string $language,
-        DateTimeImmutable $registeredAt,
+        \DateTimeImmutable $registeredAt,
         ?string $rescueTokenHash = null,
     ): self {
         $nick = new self();
@@ -187,13 +184,13 @@ class RegisteredNick
         $this->expiresAt = null;
     }
 
-    public function renewPendingRegistration(DateTimeImmutable $now, DateTimeImmutable $expiresAt): void
+    public function renewPendingRegistration(\DateTimeImmutable $now, \DateTimeImmutable $expiresAt): void
     {
         if (!$this->isPending() || null === $this->expiresAt || $this->expiresAt <= $now) {
-            throw new LogicException('Only an unexpired pending registration can be renewed.');
+            throw new \LogicException('Only an unexpired pending registration can be renewed.');
         }
         if ($expiresAt <= $now) {
-            throw new InvalidArgumentException('The renewed deadline must be in the future.');
+            throw new \InvalidArgumentException('The renewed deadline must be in the future.');
         }
         $this->expiresAt = $expiresAt;
     }
@@ -204,7 +201,7 @@ class RegisteredNick
      * @param string             $reason Reason for suspension
      * @param ?DateTimeImmutable $until  Expiration date (null = permanent)
      */
-    public function suspend(string $reason, ?DateTimeImmutable $until = null): void
+    public function suspend(string $reason, ?\DateTimeImmutable $until = null): void
     {
         $this->status = NickStatus::Suspended;
         $this->reason = $reason;
@@ -236,10 +233,10 @@ class RegisteredNick
         return NickStatus::PendingDeletion === $this->status;
     }
 
-    public function markPendingDeletion(DateTimeImmutable $at): void
+    public function markPendingDeletion(\DateTimeImmutable $at): void
     {
         if (!$this->isRegistered()) {
-            throw new LogicException('Only registered accounts can be marked for deletion.');
+            throw new \LogicException('Only registered accounts can be marked for deletion.');
         }
 
         $this->status = NickStatus::PendingDeletion;
@@ -249,7 +246,7 @@ class RegisteredNick
     public function restoreFromPendingDeletion(): void
     {
         if (!$this->isPendingDeletion()) {
-            throw new LogicException('Only accounts pending deletion can be restored.');
+            throw new \LogicException('Only accounts pending deletion can be restored.');
         }
 
         $this->status = NickStatus::Registered;
@@ -266,7 +263,7 @@ class RegisteredNick
      * A permanent suspension (suspendedUntil = null) returns true.
      * A temporary suspension returns true only if suspendedUntil > now.
      */
-    public function isCurrentlySuspended(DateTimeImmutable $now): bool
+    public function isCurrentlySuspended(\DateTimeImmutable $now): bool
     {
         if (!$this->isSuspended()) {
             return false;
@@ -291,12 +288,12 @@ class RegisteredNick
     public function updateForbiddenReason(string $reason): void
     {
         if (!$this->isForbidden()) {
-            throw new LogicException('Cannot update forbidden reason on a non-forbidden account.');
+            throw new \LogicException('Cannot update forbidden reason on a non-forbidden account.');
         }
         $this->reason = $reason;
     }
 
-    public function isExpired(DateTimeImmutable $now): bool
+    public function isExpired(\DateTimeImmutable $now): bool
     {
         return NickStatus::Pending === $this->status
             && null !== $this->expiresAt
@@ -338,12 +335,12 @@ class RegisteredNick
         return $this->language;
     }
 
-    public function getRegisteredAt(): ?DateTimeImmutable
+    public function getRegisteredAt(): ?\DateTimeImmutable
     {
         return $this->registeredAt;
     }
 
-    public function getExpiresAt(): ?DateTimeImmutable
+    public function getExpiresAt(): ?\DateTimeImmutable
     {
         return $this->expiresAt;
     }
@@ -353,17 +350,17 @@ class RegisteredNick
         return $this->reason;
     }
 
-    public function getSuspendedUntil(): ?DateTimeImmutable
+    public function getSuspendedUntil(): ?\DateTimeImmutable
     {
         return $this->suspendedUntil;
     }
 
-    public function getPendingDeletionAt(): ?DateTimeImmutable
+    public function getPendingDeletionAt(): ?\DateTimeImmutable
     {
         return $this->pendingDeletionAt;
     }
 
-    public function getPendingDeletionExpiresAt(int $graceDays): ?DateTimeImmutable
+    public function getPendingDeletionExpiresAt(int $graceDays): ?\DateTimeImmutable
     {
         if (null === $this->pendingDeletionAt || $graceDays <= 0) {
             return $this->pendingDeletionAt;
@@ -372,7 +369,7 @@ class RegisteredNick
         return $this->pendingDeletionAt->modify(sprintf('+%d days', $graceDays));
     }
 
-    public function getLastSeenAt(): ?DateTimeImmutable
+    public function getLastSeenAt(): ?\DateTimeImmutable
     {
         return $this->lastSeenAt;
     }
@@ -420,10 +417,10 @@ class RegisteredNick
     public function replaceRescueTokenHash(string $hash): void
     {
         if (!$this->isPending() && !$this->isRegistered()) {
-            throw new LogicException('Only pending or registered accounts can own rescue credentials.');
+            throw new \LogicException('Only pending or registered accounts can own rescue credentials.');
         }
         if (1 !== preg_match('/^[0-9a-f]{64}$/D', $hash)) {
-            throw new InvalidArgumentException('Rescue credential must be a lowercase SHA-256 hash.');
+            throw new \InvalidArgumentException('Rescue credential must be a lowercase SHA-256 hash.');
         }
         $this->rescueTokenHash = $hash;
     }
@@ -444,7 +441,7 @@ class RegisteredNick
         $this->language = self::normalizeLanguage($language);
     }
 
-    public function markSeen(DateTimeImmutable $at): void
+    public function markSeen(\DateTimeImmutable $at): void
     {
         $this->lastSeenAt = $at;
     }
@@ -513,9 +510,9 @@ class RegisteredNick
 
         $tz = trim($timezone);
         try {
-            new DateTimeZone($tz);
-        } catch (Exception) {
-            throw new InvalidArgumentException(sprintf('Invalid timezone "%s". Use a valid PHP timezone (e.g. UTC, Europe/Madrid).', $timezone));
+            new \DateTimeZone($tz);
+        } catch (\Exception) {
+            throw new \InvalidArgumentException(sprintf('Invalid timezone "%s". Use a valid PHP timezone (e.g. UTC, Europe/Madrid).', $timezone));
         }
 
         $this->timezone = $tz;
@@ -534,7 +531,7 @@ class RegisteredNick
     private static function assertValidEmail(?string $email): void
     {
         if (null !== $email && false === filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            throw new InvalidArgumentException('Invalid email address.');
+            throw new \InvalidArgumentException('Invalid email address.');
         }
     }
 
@@ -542,7 +539,7 @@ class RegisteredNick
     {
         $lang = strtolower($language);
         if (!in_array($lang, self::SUPPORTED_LANGUAGES, true)) {
-            throw new InvalidArgumentException(sprintf('Unsupported language "%s". Supported: %s.', $language, implode(', ', self::SUPPORTED_LANGUAGES)));
+            throw new \InvalidArgumentException(sprintf('Unsupported language "%s". Supported: %s.', $language, implode(', ', self::SUPPORTED_LANGUAGES)));
         }
 
         return $lang;

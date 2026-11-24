@@ -17,7 +17,6 @@ use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentValidator;
 use App\Shared\Adapter\In\Irc\Presentation\Component;
 use App\Shared\Adapter\In\Irc\Presentation\Role;
-use DateTimeImmutable;
 
 use function array_slice;
 use function count;
@@ -126,7 +125,7 @@ final readonly class GlineCommand implements OperServCommandInterface
             $action,
             $context->sender->nick,
             $context->senderAccountId(),
-            new DateTimeImmutable(),
+            new \DateTimeImmutable(),
             match ($action) {
                 GlineAction::Add, GlineAction::Delete => trim($context->args[1] ?? ''),
                 default => null,

@@ -8,7 +8,6 @@ use App\OperServ\Domain\Entity\OperPermission;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
 
 #[CoversClass(OperPermission::class)]
 final class OperPermissionTest extends TestCase
@@ -61,7 +60,7 @@ final class OperPermissionTest extends TestCase
     public function getIdReturnsValueSetByPersistence(): void
     {
         $permission = OperPermission::create('operserv.test');
-        $reflection = new ReflectionClass($permission);
+        $reflection = new \ReflectionClass($permission);
         $idProp = $reflection->getProperty('id');
         $idProp->setValue($permission, 123);
 

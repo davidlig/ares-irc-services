@@ -8,7 +8,6 @@ use App\NickServ\Application\Port\Out\SaregisterMailSender;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
-use Throwable;
 
 final readonly class MessengerSaregisterMailSender implements SaregisterMailSender
 {
@@ -35,7 +34,7 @@ final readonly class MessengerSaregisterMailSender implements SaregisterMailSend
                 $locale,
             );
             $this->messageBus->dispatch(new RegistrationVerificationEmail($email, $subject, $body));
-        } catch (Throwable $exception) {
+        } catch (\Throwable $exception) {
             $this->logger->error('NickServ SAREGISTER: failed to dispatch rescue token email', [
                 'nick' => $nickname,
                 'recipient' => $email,

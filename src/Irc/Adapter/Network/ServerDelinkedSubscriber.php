@@ -13,7 +13,6 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
-use Throwable;
 
 use function count;
 use function sprintf;
@@ -67,7 +66,7 @@ final readonly class ServerDelinkedSubscriber implements EventSubscriberInterfac
         try {
             try {
                 $this->eventDispatcher->dispatch(new ServerDelinkStartedEvent($event->serverSid));
-            } catch (Throwable $exception) {
+            } catch (\Throwable $exception) {
                 $this->logger->error(sprintf(
                     'Delink start listener for server %s failed; quitting its users anyway.',
                     $event->serverSid,
@@ -77,7 +76,7 @@ final readonly class ServerDelinkedSubscriber implements EventSubscriberInterfac
             foreach ($affected as $user) {
                 try {
                     $this->eventDispatcher->dispatch(new UserQuitReceivedEvent($user->uid->value, $reason));
-                } catch (Throwable $exception) {
+                } catch (\Throwable $exception) {
                     $this->logger->error(sprintf(
                         'Split quit for %s (%s) failed; continuing with the remaining users of server %s.',
                         $user->uid->value,

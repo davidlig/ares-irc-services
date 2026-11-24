@@ -4,11 +4,9 @@ declare(strict_types=1);
 
 namespace App\MemoServ\Domain\Exception;
 
-use RuntimeException;
-
 use function sprintf;
 
-class MemoDisabledException extends RuntimeException
+class MemoDisabledException extends \RuntimeException
 {
     public function __construct(
         string $message,

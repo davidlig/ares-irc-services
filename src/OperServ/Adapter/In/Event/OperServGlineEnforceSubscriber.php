@@ -10,7 +10,6 @@ use App\Irc\Application\PublishedEvent\NetworkSynchronizationCompletedEvent;
 use App\OperServ\Application\Port\Out\GlineEntry;
 use App\OperServ\Application\Port\Out\GlineRepository;
 use App\OperServ\Domain\Entity\Gline;
-use DateTimeImmutable;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -36,7 +35,7 @@ final readonly class OperServGlineEnforceSubscriber implements EventSubscriberIn
 
     public function onSyncComplete(NetworkSynchronizationCompletedEvent $event): void
     {
-        $glines = $this->glineRepository->findActiveAt(new DateTimeImmutable());
+        $glines = $this->glineRepository->findActiveAt(new \DateTimeImmutable());
 
         if ([] === $glines) {
             return;

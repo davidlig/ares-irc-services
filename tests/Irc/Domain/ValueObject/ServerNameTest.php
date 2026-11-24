@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Tests\Irc\Domain\ValueObject;
 
 use App\Irc\Domain\ValueObject\ServerName;
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -25,7 +24,7 @@ final class ServerNameTest extends TestCase
     #[Test]
     public function emptyServerNameThrows(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Server name cannot be empty');
 
         new ServerName('');
@@ -34,7 +33,7 @@ final class ServerNameTest extends TestCase
     #[Test]
     public function mustContainDot(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('must be a FQDN containing at least one dot');
 
         new ServerName('localhost');

@@ -1,0 +1,121 @@
+use: [symfony, modernizations, deprecations, cleanup, correctness]
+
+paths: [.]
+excludePaths:
+	- var
+	- vendor
+	- bin/console
+	- public/index.php
+	- config/reference.php
+	# DressCode also scans ignored files; leave local evidence and the generated UDB peer untouched.
+	- odd/evidence
+	- integration/udb4/ares_peer.php
+
+# Already ignored by Git and Docker along with the other generated state.
+cacheDir: var/dresscode
+
+file:
+	strictTypes:
+		declaration: required
+
+indentation:
+	heredoc: 1
+
+braces:
+	emptyBody:
+		class: collapsed
+		function: collapsed
+		closure: collapsed
+		anonymousClass: collapsed
+
+blankLines:
+	betweenTraitUses: 0
+	betweenMemberKinds: 1
+	betweenMembers:
+		constant: 1
+		property: 1
+	beforeDocumentedMember: 1
+
+multiline:
+	items:
+		argument: perLine
+	edges:
+		argument: apart
+	trailingComma:
+		parameter: optional
+		matchArm: optional
+
+spacing:
+	concatenation: '$a . $b'
+
+qualification:
+	class:
+		otherNamespace: imported
+		phpdoc: imported
+		currentNamespace: bare
+	function:
+		optimized: imported
+		global: imported
+	constant:
+		global: [imported, bare]
+		optimized: [imported, bare]
+
+imports:
+	grouping:
+		function: separated
+	order:
+		kinds: [class, function, constant]
+		names: alphabetical
+
+classes:
+	members:
+		order: [traitUse, enumCase, constant, property, constructor, destructor, magicMethod, publicMethod, protectedMethod, privateMethod]
+	modifiers:
+		implied: forbidden
+	instantiationWrapping: forbidden
+
+types:
+	unionOrder: alphabetical
+
+expressions:
+	comparison:
+		yoda: required
+	assignment:
+		targetInValue: forbidden
+	coalesce: keep
+
+literals:
+	arraySyntax:
+		list: short
+
+phpdoc:
+	annotation:
+		nativeTypeOnly: forbidden
+		# A regular comment must not become reflection metadata.
+		plainComment: keep
+
+# Keep intentional diagnostics, catch boundaries, and existing comment/control structure.
+mistakes:
+	consecutivePhpdocs: keep
+	errorSuppression: keep
+	exceptionWhereThrowableBelongs: keep
+	strictArgument: keep
+
+controlFlow:
+	ifReturningTrueFalse: keep
+
+upgrading:
+	functions:
+		# Preserve array-pointer semantics and support iterable/by-reference loop inputs.
+		arrayFirstLast: keep
+		arraySearchFunctions: keep
+	syntax:
+		octalPrefix: required
+		# Preserve reflection-visible class and property declarations, including ORM entities.
+		promotedProperties: keep
+		readonlyClasses: keep
+		# Keep explicit null acceptance, evaluation order, and existing warning behavior.
+		newInInitializer: keep
+		pipe: keep
+		spreadForArrayMerge: keep
+		throwExpression: keep

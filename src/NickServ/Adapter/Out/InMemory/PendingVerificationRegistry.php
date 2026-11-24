@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\NickServ\Adapter\Out\InMemory;
 
-use App\NickServ\Adapter\In\Maintenance\PurgeExpiredPendingTask;
 use App\Shared\Domain\IrcIdentityFold;
 use DateTimeImmutable;
 
@@ -40,7 +39,7 @@ final class PendingVerificationRegistry
         $this->lastResendAt = [];
     }
 
-    public function store(string $nickname, string $token, DateTimeImmutable $expiresAt): void
+    public function store(string $nickname, string $token, \DateTimeImmutable $expiresAt): void
     {
         $this->entries[IrcIdentityFold::fold($nickname)] = [
             'token' => $token,
@@ -53,7 +52,7 @@ final class PendingVerificationRegistry
      * Returns true if the token matches and has not expired, then removes the entry.
      * Returns false if the token is missing, mismatched, or expired.
      */
-    public function consume(string $nickname, string $token, DateTimeImmutable $now): bool
+    public function consume(string $nickname, string $token, \DateTimeImmutable $now): bool
     {
         $key = IrcIdentityFold::fold($nickname);
         $entry = $this->entries[$key] ?? null;
@@ -90,7 +89,7 @@ final class PendingVerificationRegistry
     /**
      * Returns the last time a RESEND was successfully sent for this nick, or null.
      */
-    public function getLastResendAt(string $nickname): ?DateTimeImmutable
+    public function getLastResendAt(string $nickname): ?\DateTimeImmutable
     {
         return $this->lastResendAt[IrcIdentityFold::fold($nickname)] ?? null;
     }
@@ -98,7 +97,7 @@ final class PendingVerificationRegistry
     /**
      * Records that a RESEND was just sent for this nick (for throttling).
      */
-    public function recordResend(string $nickname, DateTimeImmutable $now): void
+    public function recordResend(string $nickname, \DateTimeImmutable $now): void
     {
         $this->lastResendAt[IrcIdentityFold::fold($nickname)] = $now;
     }
@@ -107,7 +106,7 @@ final class PendingVerificationRegistry
      * Removes expired verification entries and lastResendAt entries older than maxAgeSecondsForResend.
      * Returns the total number of entries removed. Used by maintenance to free memory.
      */
-    public function pruneExpired(DateTimeImmutable $now, int $maxAgeSecondsForResend = 86400): int
+    public function pruneExpired(\DateTimeImmutable $now, int $maxAgeSecondsForResend = 86400): int
     {
         $resendCutoff = $now->modify(sprintf('-%d seconds', $maxAgeSecondsForResend));
         $removed = 0;

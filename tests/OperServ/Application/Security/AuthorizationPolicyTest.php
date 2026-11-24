@@ -16,7 +16,6 @@ use App\OperServ\Application\Security\RootAuthorizationPolicy;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
 
 use function array_map;
 use function in_array;
@@ -94,7 +93,7 @@ final class AuthorizationPolicyTest extends TestCase
     #[Test]
     public function authorizationAttributesAreNonInstantiableConstants(): void
     {
-        $reflection = new ReflectionClass(OperatorAuthorizationAttribute::class);
+        $reflection = new \ReflectionClass(OperatorAuthorizationAttribute::class);
         $instance = $reflection->newInstanceWithoutConstructor();
         $constructor = $reflection->getConstructor();
         self::assertNotNull($constructor);

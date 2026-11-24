@@ -1,4 +1,4 @@
-## [Unreleased]
+## [2.6.0] - Unreleased
 
 ### Bug Fixes
 
@@ -52,6 +52,9 @@
 - When the MOTD bot nick is a registered nickname, the user holding it is no longer renamed to a Guest nick; the MOTD pseudo-client is skipped as before.
 - `AKICK #channel CHECK nick` skips and logs corrupt stored masks instead of failing.
 - `VHOST UNFORBID` with different letter casing also removes the cached forbidden pattern on case-insensitive database collations.
+- IRC uplinks configured with an IPv6 address (for example `::1`) connect; the address was previously rejected as an invalid URI.
+- When an uplink hostname resolves to several addresses, each attempt gets an equal share of the time left, so an address that never answers no longer uses up the whole connect timeout before the next one is tried. DNS resolution and connect retries also stay within the connect timeout.
+- When the connect timeout ends, the error keeps the earlier failure reasons (for example `connection refused`) or says `no connection within N seconds` (`TLS handshake did not complete within N seconds` when TCP connected), instead of only "The operation was cancelled".
 
 ### Behaviour Changes
 
@@ -61,10 +64,23 @@
 - Expired GLINE, MOTD and AKICK purges process rows in expiry order.
 - NickServ, ChanServ, MemoServ and OperServ compare nicknames and channel names with the casemapping the IRCd negotiates: on `ascii` networks `Foo[` and `Foo{` are different users and channels, on `rfc1459` networks they are the same. Stored lookup keys use the RFC 1459 fold, so a name whose RFC 1459 form is already registered cannot be registered again. AKICK matching follows the negotiated casemapping, so ChanServ agrees with the IRCd ban (no kick loop on `ascii` networks), and NickServ `INFO` shows the owner view only to the holder of an equivalent nickname. NickServ and ChanServ `LIST` sort by the folded key.
 
+### Improvements
+
+- Revolt 1.1 uses PHP 8.6's IoPoll driver with epoll on supported Linux systems.
+- Plain and TLS IRC uplinks use TCP keepalive and `TCP_USER_TIMEOUT` to detect a silently lost link in about two minutes, also when data is waiting for acknowledgement. `TCP_USER_TIMEOUT` needs `ext-sockets`.
+
 ### Upgrade
 
 - Back up the database and run the migrations (`doctrine:migrations:migrate`). `Version20261114000001` rewrites `registered_nicks.nickname_lower`, `registered_channels.name_lower` and `service_nick_reservations.nickname_lower` with the RFC 1459 fold. It aborts without changing anything when two registered nicknames or two channels differ only by `[]\^` versus `{}|~`, and lists the conflicting names; drop or rename one of each listed pair before upgrading.
 - Production IRC logs now default to `info` and no longer include per-line debug traffic. Set `IRC_LOG_LEVEL=debug` to restore redacted incoming line logs.
+- PHP 8.6 or later is required. The Docker base image is now `php:8.6-cli-trixie` and includes `ext-sockets`; install `ext-sockets` on bare-metal hosts too. To roll back the event-loop driver, set `REVOLT_DRIVER=Revolt\EventLoop\Driver\StreamSelectDriver` as a real process or container environment variable; Revolt reads it with `getenv()`, so an entry in `.env` or `.env.local` has no effect.
+- On PHP 8.6, `trim()` also strips form feed (`\f`), so a form feed around command arguments, G-line masks, vhosts or SJOIN entries is now removed like other whitespace. Raw IRC lines keep the previous character list.
+
+### Development
+
+- DressCode replaces PHP-CS-Fixer for coding standards. The `composer cs-check` and `composer cs-fix` commands are unchanged.
+- The required CI status check is renamed from `PHP 8.5 — Lint, CS & Tests` to `PHP — Lint, CS & Tests`; update branch protection to require the new name.
+- The tracked OpenCode configuration (`.opencode/opencode.json`, the IRC MCP autostart plugin and `mcp.env.example`) is removed; only `.opencode/.gitignore` remains.
 
 ## [2.5.0] - 2026-11-06
 

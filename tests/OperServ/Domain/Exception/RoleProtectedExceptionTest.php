@@ -8,7 +8,6 @@ use App\OperServ\Domain\Exception\RoleProtectedException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RuntimeException;
 
 #[CoversClass(RoleProtectedException::class)]
 final class RoleProtectedExceptionTest extends TestCase
@@ -33,7 +32,7 @@ final class RoleProtectedExceptionTest extends TestCase
     #[Test]
     public function forRoleAcceptsPreviousException(): void
     {
-        $previous = new RuntimeException('Previous error');
+        $previous = new \RuntimeException('Previous error');
         $e = RoleProtectedException::forRole('TestRole');
         $e = new RoleProtectedException($e->getMessage(), 0, $previous);
 

@@ -14,7 +14,6 @@ use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\Shared\Adapter\In\Irc\Presentation\Component;
 use App\Shared\Adapter\In\Irc\Presentation\Fragment;
 use App\Shared\Adapter\In\Irc\Presentation\Role;
-use DateTimeImmutable;
 
 use function base64_decode;
 use function ceil;
@@ -54,7 +53,7 @@ final readonly class SetFounderHandler implements SetOptionHandlerInterface
             founderEquivalent: $context->isLevelFounder,
             serviceNickname: $context->getNotifier()->getNick(),
             locale: $context->getLanguage(),
-            requestedAt: new DateTimeImmutable(),
+            requestedAt: new \DateTimeImmutable(),
         ));
         if (null === $actor) {
             return;

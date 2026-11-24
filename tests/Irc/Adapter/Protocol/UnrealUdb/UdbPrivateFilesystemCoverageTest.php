@@ -15,8 +15,6 @@ use Doctrine\DBAL\Platforms\SQLitePlatform;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionMethod;
-use RuntimeException;
 
 use function fclose;
 use function fopen;
@@ -46,7 +44,7 @@ final class UdbPrivateFilesystemCoverageTest extends TestCase
                 try {
                     $capture();
                     self::fail('Private spool creation failure must abort capture.');
-                } catch (RuntimeException $error) {
+                } catch (\RuntimeException $error) {
                     self::assertStringContainsString('private UDB', $error->getMessage());
                 }
             }
@@ -58,21 +56,21 @@ final class UdbPrivateFilesystemCoverageTest extends TestCase
     {
         $methods = [];
         foreach (['measure', 'readRows', 'append', 'split'] as $name) {
-            $methods[$name] = new ReflectionMethod(UdbLogicalDigest::class, $name);
+            $methods[$name] = new \ReflectionMethod(UdbLogicalDigest::class, $name);
         }
         $this->withFaults(static function () use ($methods): void {
             foreach ([['measure', ['/private']], ['readRows', ['/private']], ['append', ['/private', 'x']], ['split', ['/private', 0, '/left', '/right']]] as [$name, $args]) {
                 try {
                     $methods[$name]->invokeArgs(null, $args);
                     self::fail('Failed spool opening must be visible.');
-                } catch (RuntimeException $error) {
+                } catch (\RuntimeException $error) {
                     self::assertStringContainsString('spool', $error->getMessage());
                 }
             }
             try {
                 iterator_to_array(UdbCapturedSnapshot::readFile('/private'), false);
                 self::fail('Failed snapshot opening must not yield empty success.');
-            } catch (RuntimeException $error) {
+            } catch (\RuntimeException $error) {
                 self::assertStringContainsString('opened', $error->getMessage());
             }
         });
@@ -80,11 +78,11 @@ final class UdbPrivateFilesystemCoverageTest extends TestCase
         $stream = fopen('udbcoverage://zero', 'w');
         self::assertIsResource($stream);
         try {
-            foreach ([static fn () => UdbCapturedSnapshot::appendRow($stream, 'nick', UdbValue::none()), static fn () => new ReflectionMethod(UdbLogicalDigest::class, 'writeAll')->invoke(null, $stream, 'x')] as $write) {
+            foreach ([static fn () => UdbCapturedSnapshot::appendRow($stream, 'nick', UdbValue::none()), static fn () => new \ReflectionMethod(UdbLogicalDigest::class, 'writeAll')->invoke(null, $stream, 'x')] as $write) {
                 try {
                     $write();
                     self::fail('A zero-byte write must terminate with failure.');
-                } catch (RuntimeException $error) {
+                } catch (\RuntimeException $error) {
                     self::assertStringContainsString('spool', $error->getMessage());
                 }
             }
@@ -97,7 +95,7 @@ final class UdbPrivateFilesystemCoverageTest extends TestCase
     #[Test]
     public function absentSplitInputIsAnEmptyPartitionNotAnOpenError(): void
     {
-        $split = new ReflectionMethod(UdbLogicalDigest::class, 'split');
+        $split = new \ReflectionMethod(UdbLogicalDigest::class, 'split');
         self::assertNull($split->invoke(null, null, 0, '/unused-left', '/unused-right'));
     }
 
@@ -111,7 +109,7 @@ final class UdbPrivateFilesystemCoverageTest extends TestCase
         UdbCoverageFaultStream::$allowDirectory = true;
         try {
             $this->withFaults(function () use ($provider): void {
-                $this->expectException(RuntimeException::class);
+                $this->expectException(\RuntimeException::class);
                 $this->expectExceptionMessage('snapshot block spool');
                 $provider->capture();
             });

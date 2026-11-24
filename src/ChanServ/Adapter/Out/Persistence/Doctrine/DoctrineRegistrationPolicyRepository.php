@@ -9,8 +9,6 @@ use App\ChanServ\Domain\ValueObject\RegistrationMode;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\DBAL\Platforms\AbstractMySQLPlatform;
-use RuntimeException;
-use UnexpectedValueException;
 
 use function is_string;
 use function json_decode;
@@ -55,7 +53,7 @@ final readonly class DoctrineRegistrationPolicyRepository implements Registratio
             }
         }
 
-        throw new RuntimeException('Registration policy changed concurrently; retry the command.');
+        throw new \RuntimeException('Registration policy changed concurrently; retry the command.');
     }
 
     private function decodeMode(mixed $value): RegistrationMode
@@ -64,11 +62,11 @@ final readonly class DoctrineRegistrationPolicyRepository implements Registratio
             return RegistrationMode::Direct;
         }
         if (!is_string($value)) {
-            throw new UnexpectedValueException('Registration mode must be stored as JSON text.');
+            throw new \UnexpectedValueException('Registration mode must be stored as JSON text.');
         }
         $decoded = json_decode($value, true, 512, JSON_THROW_ON_ERROR);
         if (!is_string($decoded)) {
-            throw new UnexpectedValueException('Registration mode must be a JSON string.');
+            throw new \UnexpectedValueException('Registration mode must be a JSON string.');
         }
 
         return RegistrationMode::from($decoded);

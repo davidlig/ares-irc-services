@@ -11,7 +11,6 @@ use App\ChanServ\Application\PublishedEvent\ChannelSuccessorChangedEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelTopiclockUpdatedEvent;
 use App\ChanServ\Application\Service\ChannelHistoryService;
 use App\Shared\Application\Port\EventBusInterface;
-use InvalidArgumentException;
 
 use function filter_var;
 use function strtolower;
@@ -76,7 +75,7 @@ final readonly class UpdateChannelSettingHandler implements UpdateChannelSetting
     {
         try {
             $command->channel->updateEntrymsg($command->value);
-        } catch (InvalidArgumentException) {
+        } catch (\InvalidArgumentException) {
             return new UpdateChannelSettingResult(UpdateChannelSettingOutcome::EntryMessageTooLong);
         }
         $this->channels->save($command->channel);

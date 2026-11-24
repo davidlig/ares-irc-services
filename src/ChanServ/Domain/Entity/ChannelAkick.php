@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Domain\Entity;
 
-use DateTimeImmutable;
-use InvalidArgumentException;
-
 use function ctype_alnum;
 use function sprintf;
 use function str_split;
@@ -41,21 +38,21 @@ class ChannelAkick
 
     private ?string $reason = null;
 
-    private DateTimeImmutable $createdAt;
+    private \DateTimeImmutable $createdAt;
 
-    private ?DateTimeImmutable $expiresAt = null;
+    private ?\DateTimeImmutable $expiresAt = null;
 
     private int $uses = 0;
 
-    private ?DateTimeImmutable $lastUsedAt = null;
+    private ?\DateTimeImmutable $lastUsedAt = null;
 
     private function __construct(
-        DateTimeImmutable $createdAt,
+        \DateTimeImmutable $createdAt,
         int $channelId,
         int $creatorNickId,
         string $mask,
         ?string $reason,
-        ?DateTimeImmutable $expiresAt,
+        ?\DateTimeImmutable $expiresAt,
     ) {
         $this->channelId = $channelId;
         $this->creatorNickId = $creatorNickId;
@@ -66,12 +63,12 @@ class ChannelAkick
     }
 
     public static function create(
-        DateTimeImmutable $createdAt,
+        \DateTimeImmutable $createdAt,
         int $channelId,
         int $creatorNickId,
         string $mask,
         ?string $reason = null,
-        ?DateTimeImmutable $expiresAt = null,
+        ?\DateTimeImmutable $expiresAt = null,
     ): self {
         return new self($createdAt, $channelId, $creatorNickId, $mask, $reason, $expiresAt);
     }
@@ -101,12 +98,12 @@ class ChannelAkick
         return $this->reason;
     }
 
-    public function getExpiresAt(): ?DateTimeImmutable
+    public function getExpiresAt(): ?\DateTimeImmutable
     {
         return $this->expiresAt;
     }
 
-    public function getCreatedAt(): DateTimeImmutable
+    public function getCreatedAt(): \DateTimeImmutable
     {
         return $this->createdAt;
     }
@@ -116,18 +113,18 @@ class ChannelAkick
         return $this->uses;
     }
 
-    public function getLastUsedAt(): ?DateTimeImmutable
+    public function getLastUsedAt(): ?\DateTimeImmutable
     {
         return $this->lastUsedAt;
     }
 
-    public function recordUsage(DateTimeImmutable $usedAt): void
+    public function recordUsage(\DateTimeImmutable $usedAt): void
     {
         ++$this->uses;
         $this->lastUsedAt = $usedAt;
     }
 
-    public function isExpired(DateTimeImmutable $now): bool
+    public function isExpired(\DateTimeImmutable $now): bool
     {
         return null !== $this->expiresAt && $this->expiresAt < $now;
     }
@@ -137,7 +134,7 @@ class ChannelAkick
         $this->setReason($reason);
     }
 
-    public function updateExpiry(?DateTimeImmutable $expiresAt): void
+    public function updateExpiry(?\DateTimeImmutable $expiresAt): void
     {
         $this->expiresAt = $expiresAt;
     }
@@ -182,11 +179,11 @@ class ChannelAkick
     private function setMask(string $mask): void
     {
         if ('' === $mask || strlen($mask) > self::MAX_MASK_LENGTH) {
-            throw new InvalidArgumentException(sprintf('Mask must be between 1 and %d characters.', self::MAX_MASK_LENGTH));
+            throw new \InvalidArgumentException(sprintf('Mask must be between 1 and %d characters.', self::MAX_MASK_LENGTH));
         }
 
         if (!self::isValidMask($mask)) {
-            throw new InvalidArgumentException('Invalid mask format. Must contain at least one ! and one @ (e.g., *!*@*.isp.com).');
+            throw new \InvalidArgumentException('Invalid mask format. Must contain at least one ! and one @ (e.g., *!*@*.isp.com).');
         }
 
         $this->mask = $mask;
@@ -195,7 +192,7 @@ class ChannelAkick
     private function setReason(?string $reason): void
     {
         if (null !== $reason && strlen($reason) > self::MAX_REASON_LENGTH) {
-            throw new InvalidArgumentException(sprintf('Reason cannot exceed %d characters.', self::MAX_REASON_LENGTH));
+            throw new \InvalidArgumentException(sprintf('Reason cannot exceed %d characters.', self::MAX_REASON_LENGTH));
         }
 
         $this->reason = '' !== $reason ? $reason : null;

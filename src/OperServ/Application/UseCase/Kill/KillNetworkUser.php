@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\OperServ\Application\UseCase\Kill;
 
-use DateTimeImmutable;
-
 /** Typed intention to disconnect a connected user through OperServ. */
 final readonly class KillNetworkUser
 {
@@ -14,6 +12,6 @@ final readonly class KillNetworkUser
         public string $serviceNickname,
         public string $targetNickname,
         public string $reason,
-        public DateTimeImmutable $occurredAt,
+        public \DateTimeImmutable $occurredAt,
     ) {}
 }

@@ -7,7 +7,6 @@ namespace App\Tests\Irc\Adapter\Network;
 use App\Irc\Adapter\Network\InMemoryChannelRepository;
 use App\Irc\Domain\Network\Channel;
 use App\Irc\Domain\ValueObject\ChannelName;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -140,6 +139,6 @@ final class InMemoryChannelRepositoryTest extends TestCase
 
     private function createChannel(string $name): Channel
     {
-        return new Channel(new ChannelName($name), '', new DateTimeImmutable());
+        return new Channel(new ChannelName($name), '', new \DateTimeImmutable());
     }
 }

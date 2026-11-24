@@ -29,12 +29,10 @@ use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
 use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\Shared\Application\Port\EventBusInterface;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use ReflectionProperty;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(DropCommand::class)]
@@ -192,7 +190,7 @@ final class DropCommandTest extends TestCase
         $channelRepository->method('findByChannelName')->willReturn($channel);
 
         $dropService = $this->createMock(ChanDropService::class);
-        $dropService->expects(self::once())->method('softDropChannel')->with($channel, self::isInstanceOf(DateTimeImmutable::class), 'OperUser');
+        $dropService->expects(self::once())->method('softDropChannel')->with($channel, self::isInstanceOf(\DateTimeImmutable::class), 'OperUser');
 
         $cmd = $this->createCommandWith($channelRepository, $dropService);
 
@@ -213,7 +211,7 @@ final class DropCommandTest extends TestCase
     {
         $sender = $this->createSender();
         $channel = $this->createChannelWithId('#test', 42);
-        $channel->markPendingDeletion(new DateTimeImmutable());
+        $channel->markPendingDeletion(new \DateTimeImmutable());
         $repo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $repo->method('findByChannelName')->willReturn($channel);
         $dropService = $this->createMock(ChanDropService::class);
@@ -228,13 +226,13 @@ final class DropCommandTest extends TestCase
     #[Test]
     public function authorizedDropImmediatelyReleasesRejectedChannelDuringFiniteRestriction(): void
     {
-        $at = new DateTimeImmutable();
+        $at = new \DateTimeImmutable();
         $channel = RegisteredChannel::createPendingRegistration($at->modify('-1 hour'), '#test', 7, 'request');
         $channel->rejectRegistration('Reason', 9, 'Reviewer', $at->modify('-1 hour'), $at->modify('+1 hour'));
         $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channels->method('findByChannelName')->willReturn($channel);
         $dropService = $this->createMock(ChanDropService::class);
-        $dropService->expects(self::once())->method('hardDropChannel')->with($channel, self::isInstanceOf(DateTimeImmutable::class), 'registration-restriction-released', 'OperUser');
+        $dropService->expects(self::once())->method('hardDropChannel')->with($channel, self::isInstanceOf(\DateTimeImmutable::class), 'registration-restriction-released', 'OperUser');
         $dropService->expects(self::never())->method('softDropChannel');
         $command = $this->createCommandWith($channels, $dropService);
         $messages = [];
@@ -247,13 +245,13 @@ final class DropCommandTest extends TestCase
     #[Test]
     public function authorizedForceDropAlsoImmediatelyReleasesRejectedChannel(): void
     {
-        $at = new DateTimeImmutable();
+        $at = new \DateTimeImmutable();
         $channel = RegisteredChannel::createPendingRegistration($at->modify('-1 hour'), '#test', 7, 'request');
         $channel->rejectRegistration('Reason', 9, 'Reviewer', $at->modify('-1 hour'), $at->modify('+1 hour'));
         $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channels->method('findByChannelName')->willReturn($channel);
         $dropService = $this->createMock(ChanDropService::class);
-        $dropService->expects(self::once())->method('hardDropChannel')->with($channel, self::isInstanceOf(DateTimeImmutable::class), 'registration-restriction-released', 'OperUser');
+        $dropService->expects(self::once())->method('hardDropChannel')->with($channel, self::isInstanceOf(\DateTimeImmutable::class), 'registration-restriction-released', 'OperUser');
         $authorization = $this->createStub(AuthorizationCheckerInterface::class);
         $authorization->method('isGranted')->willReturn(true);
         $messages = [];
@@ -269,16 +267,16 @@ final class DropCommandTest extends TestCase
     public function expiredOrIndefiniteRejectedChannelUsesExistingDropForExplicitRelease(): void
     {
         foreach ([
-            'expired' => new DateTimeImmutable('-1 hour'),
+            'expired' => new \DateTimeImmutable('-1 hour'),
             'indefinite' => null,
         ] as $restriction) {
-            $at = new DateTimeImmutable();
+            $at = new \DateTimeImmutable();
             $channel = RegisteredChannel::createPendingRegistration($at->modify('-2 days'), '#test', 7, 'request');
             $channel->rejectRegistration('Reason', 9, 'Reviewer', $at->modify('-1 day'), $restriction);
             $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
             $channels->method('findByChannelName')->willReturn($channel);
             $dropService = $this->createMock(ChanDropService::class);
-            $dropService->expects(self::once())->method('hardDropChannel')->with($channel, self::isInstanceOf(DateTimeImmutable::class), 'registration-restriction-released', 'OperUser');
+            $dropService->expects(self::once())->method('hardDropChannel')->with($channel, self::isInstanceOf(\DateTimeImmutable::class), 'registration-restriction-released', 'OperUser');
             $dropService->expects(self::never())->method('softDropChannel');
             $command = $this->createCommandWith($channels, $dropService);
             $messages = [];
@@ -294,7 +292,7 @@ final class DropCommandTest extends TestCase
     {
         $sender = $this->createSender();
         $channel = $this->createChannelWithId('#test', 42);
-        $channel->markPendingDeletion(new DateTimeImmutable());
+        $channel->markPendingDeletion(new \DateTimeImmutable());
         $repo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $repo->method('findByChannelName')->willReturn($channel);
         $authorization = $this->createStub(AuthorizationCheckerInterface::class);
@@ -313,13 +311,13 @@ final class DropCommandTest extends TestCase
     {
         $sender = $this->createSender();
         $channel = $this->createChannelWithId('#test', 42);
-        $channel->markPendingDeletion(new DateTimeImmutable());
+        $channel->markPendingDeletion(new \DateTimeImmutable());
         $repo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $repo->method('findByChannelName')->willReturn($channel);
         $authorization = $this->createStub(AuthorizationCheckerInterface::class);
         $authorization->method('isGranted')->willReturn(true);
         $dropService = $this->createMock(ChanDropService::class);
-        $dropService->expects(self::once())->method('hardDropChannel')->with($channel, self::isInstanceOf(DateTimeImmutable::class), 'manual-force', 'OperUser');
+        $dropService->expects(self::once())->method('hardDropChannel')->with($channel, self::isInstanceOf(\DateTimeImmutable::class), 'manual-force', 'OperUser');
 
         $messages = [];
         $cmd = $this->createCommandWith($repo, $dropService, $authorization);
@@ -379,9 +377,9 @@ final class DropCommandTest extends TestCase
 
     private function createChannelWithId(string $name, int $id): RegisteredChannel
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), $name, 1, 'Test description');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), $name, 1, 'Test description');
 
-        $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
+        $ref = new \ReflectionProperty(RegisteredChannel::class, 'id');
         $ref->setValue($channel, $id);
 
         return $channel;

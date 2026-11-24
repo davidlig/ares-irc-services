@@ -4,15 +4,13 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Domain\Exception;
 
-use DomainException;
-
 use function sprintf;
 
 /**
  * The requested channel shares its stored lookup key with a registration of another channel on
  * this network (the names differ under the negotiated casemapping), so it cannot act on that row.
  */
-final class ChannelNameConflictException extends DomainException
+final class ChannelNameConflictException extends \DomainException
 {
     public function __construct(
         string $message,

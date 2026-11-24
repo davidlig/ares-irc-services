@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Irc\Domain\ValueObject;
 
-use InvalidArgumentException;
-
 use function sprintf;
 
 /**
@@ -17,7 +15,7 @@ readonly class UserMask
     private function __construct(public string $value)
     {
         if ('' === $value) {
-            throw new InvalidArgumentException('UserMask cannot be empty.');
+            throw new \InvalidArgumentException('UserMask cannot be empty.');
         }
     }
 

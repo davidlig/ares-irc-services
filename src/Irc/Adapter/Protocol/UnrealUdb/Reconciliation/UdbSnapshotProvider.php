@@ -17,9 +17,6 @@ use Doctrine\DBAL\Platforms\SQLitePlatform;
 use Doctrine\DBAL\TransactionIsolationLevel;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
-use RuntimeException;
-use Throwable;
-use UnexpectedValueException;
 
 use function bin2hex;
 use function chmod;
@@ -52,7 +49,7 @@ final readonly class UdbSnapshotProvider implements UdbSnapshotProviderInterface
     {
         $directory = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'ares-udb4-' . bin2hex(random_bytes(16));
         if (!mkdir($directory, 0o700)) {
-            throw new RuntimeException('Unable to create private UDB snapshot spool.');
+            throw new \RuntimeException('Unable to create private UDB snapshot spool.');
         }
         chmod($directory, 0o700);
         $files = [];
@@ -63,11 +60,11 @@ final readonly class UdbSnapshotProvider implements UdbSnapshotProviderInterface
             $this->connection->beginTransaction();
             $checkpointRow = $this->connection->fetchAssociative('SELECT dataset_sid, dataset_epoch, dataset_watermark FROM udb_authority_state WHERE id = 1');
             if (false === $checkpointRow || !is_string($checkpointRow['dataset_sid']) || !is_string($checkpointRow['dataset_epoch']) || !is_string($checkpointRow['dataset_watermark'])) {
-                throw new UnexpectedValueException('The UDB dataset checkpoint has not been initialized.');
+                throw new \UnexpectedValueException('The UDB dataset checkpoint has not been initialized.');
             }
             $watermark = UdbUnsignedDecimal::parse($checkpointRow['dataset_watermark']);
             if (null === $watermark) {
-                throw new UnexpectedValueException('The persisted UDB dataset watermark is invalid.');
+                throw new \UnexpectedValueException('The persisted UDB dataset watermark is invalid.');
             }
             $checkpoint = new UdbDatasetCheckpoint(new UdbStreamOrigin($checkpointRow['dataset_sid'], $checkpointRow['dataset_epoch']), $watermark);
 
@@ -75,7 +72,7 @@ final readonly class UdbSnapshotProvider implements UdbSnapshotProviderInterface
                 $file = $directory . DIRECTORY_SEPARATOR . $block->letter() . '.rows';
                 $stream = fopen($file, 'x');
                 if (false === $stream) {
-                    throw new RuntimeException('Unable to open private UDB snapshot block spool.');
+                    throw new \RuntimeException('Unable to open private UDB snapshot block spool.');
                 }
                 chmod($file, 0o600);
                 $files[$block->letter()] = $file;
@@ -95,26 +92,26 @@ final readonly class UdbSnapshotProvider implements UdbSnapshotProviderInterface
                             $path = $row['path'];
                             try {
                                 $raw = Type::getType(Types::BINARY)->convertToPHPValue($row['value'], $this->connection->getDatabasePlatform());
-                            } catch (Throwable $exception) {
-                                throw new UnexpectedValueException('A persisted UDB row has invalid SQL fields.', previous: $exception);
+                            } catch (\Throwable $exception) {
+                                throw new \UnexpectedValueException('A persisted UDB row has invalid SQL fields.', previous: $exception);
                             }
                             if (!is_string($path) || !is_string($raw)) {
-                                throw new UnexpectedValueException('A persisted UDB row has invalid SQL fields.');
+                                throw new \UnexpectedValueException('A persisted UDB row has invalid SQL fields.');
                             }
                             $kind = UdbValueKind::tryFrom(self::sqlInt($row['value_kind']));
                             if (null === $kind) {
-                                throw new UnexpectedValueException('A persisted UDB row has an unknown value kind.');
+                                throw new \UnexpectedValueException('A persisted UDB row has an unknown value kind.');
                             }
                             $value = match ($kind) {
                                 UdbValueKind::None => UdbValue::none(),
                                 UdbValueKind::String => UdbValue::string($raw),
-                                UdbValueKind::Number => UdbValue::number(UdbUnsignedDecimal::parse(substr($raw, 1)) ?? throw new UnexpectedValueException('A persisted UDB number is invalid.')),
+                                UdbValueKind::Number => UdbValue::number(UdbUnsignedDecimal::parse(substr($raw, 1)) ?? throw new \UnexpectedValueException('A persisted UDB number is invalid.')),
                             };
                             if ($value->logicalValue() !== $raw) {
-                                throw new UnexpectedValueException('A persisted UDB row does not match its stored value kind.');
+                                throw new \UnexpectedValueException('A persisted UDB row does not match its stored value kind.');
                             }
                             if (!UdbSchema::matchesStoredRecordType($block->letter(), $path, $value)) {
-                                throw new UnexpectedValueException('A persisted UDB row does not match the canonical schema.');
+                                throw new \UnexpectedValueException('A persisted UDB row does not match the canonical schema.');
                             }
                             UdbCapturedSnapshot::appendRow($stream, $path, $value);
                             ++$counts[$block->letter()];
@@ -132,7 +129,7 @@ final readonly class UdbSnapshotProvider implements UdbSnapshotProviderInterface
             }
 
             return new UdbCapturedSnapshot($directory, $files, $digests, $counts, $checkpoint);
-        } catch (Throwable $exception) {
+        } catch (\Throwable $exception) {
             if ($this->connection->isTransactionActive()) {
                 $this->connection->rollBack();
             }
@@ -175,7 +172,7 @@ final readonly class UdbSnapshotProvider implements UdbSnapshotProviderInterface
         }
         if (!is_string($value) || !ctype_digit($value) || strlen($value) > strlen((string) PHP_INT_MAX)
             || (strlen($value) === strlen((string) PHP_INT_MAX) && strcmp($value, (string) PHP_INT_MAX) > 0)) {
-            throw new UnexpectedValueException('A persisted UDB integer field is invalid.');
+            throw new \UnexpectedValueException('A persisted UDB integer field is invalid.');
         }
 
         return (int) $value;

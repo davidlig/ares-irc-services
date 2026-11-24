@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\ChanServ\Application\Port\Out;
 
 use App\ChanServ\Domain\Entity\RegisteredChannel;
-use DateTimeImmutable;
 
 interface RegisteredChannelRepositoryInterface
 {
@@ -71,21 +70,21 @@ interface RegisteredChannelRepositoryInterface
      *
      * @return iterable<RegisteredChannel>
      */
-    public function iterateRegisteredInactiveSince(DateTimeImmutable $threshold): iterable;
+    public function iterateRegisteredInactiveSince(\DateTimeImmutable $threshold): iterable;
 
     /**
      * Entities are detached from the identity map as the iterator advances; persist and flush per item when mutating.
      *
      * @return iterable<RegisteredChannel>
      */
-    public function iterateExpiredSuspensions(DateTimeImmutable $now): iterable;
+    public function iterateExpiredSuspensions(\DateTimeImmutable $now): iterable;
 
     /**
      * Entities are detached from the identity map as the iterator advances; persist and flush per item when mutating.
      *
      * @return iterable<RegisteredChannel>
      */
-    public function iteratePendingDeletionBefore(DateTimeImmutable $threshold): iterable;
+    public function iteratePendingDeletionBefore(\DateTimeImmutable $threshold): iterable;
 
     /**
      * @param int[] $ids

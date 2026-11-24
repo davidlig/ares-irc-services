@@ -6,8 +6,6 @@ namespace App\Tests\MemoServ\Adapter\Out\Translation;
 
 use App\MemoServ\Adapter\Out\Translation\ChannelRegistrationMemoTextAdapter;
 use App\MemoServ\Application\UseCase\NotifyChannelRegistration\NotifyChannelRegistrationDecision;
-use DateTimeImmutable;
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -47,8 +45,8 @@ final class ChannelRegistrationMemoTextAdapterTest extends TestCase
             'Op',
             false,
             str_repeat('é', 200),
-            new DateTimeImmutable('2026-10-26T12:00:30+02:00'),
-            new DateTimeImmutable('2026-10-26T10:00:00+00:00'),
+            new \DateTimeImmutable('2026-10-26T12:00:30+02:00'),
+            new \DateTimeImmutable('2026-10-26T10:00:00+00:00'),
         );
 
         $messages = new ChannelRegistrationMemoTextAdapter($translator)->render($input, 'es');
@@ -72,7 +70,7 @@ final class ChannelRegistrationMemoTextAdapterTest extends TestCase
             ['registration_decision.rejected', ['%channel%' => '#chan'], 'memoserv', 'en', 'Rejected #chan.'],
             ['registration_decision.reason', ['%reason%' => 'policy'], 'memoserv', 'en', 'Reason: policy'],
         ]);
-        $input = new NotifyChannelRegistrationDecision(4, '#chan', 12, 7, 'Op', false, 'policy', null, new DateTimeImmutable('2026-10-26T10:00:00+00:00'));
+        $input = new NotifyChannelRegistrationDecision(4, '#chan', 12, 7, 'Op', false, 'policy', null, new \DateTimeImmutable('2026-10-26T10:00:00+00:00'));
 
         $messages = new ChannelRegistrationMemoTextAdapter($translator)->render($input, 'en');
 
@@ -99,7 +97,7 @@ final class ChannelRegistrationMemoTextAdapterTest extends TestCase
             true,
             null,
             null,
-            new DateTimeImmutable('2026-10-26T10:00:00+00:00'),
+            new \DateTimeImmutable('2026-10-26T10:00:00+00:00'),
         ), 'fr');
 
         self::assertSame(['Accepted #chan.'], $messages);
@@ -111,7 +109,7 @@ final class ChannelRegistrationMemoTextAdapterTest extends TestCase
         $translator = $this->createMock(TranslatorInterface::class);
         $translator->expects(self::never())->method('trans');
 
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         new ChannelRegistrationMemoTextAdapter($translator)->render(new NotifyChannelRegistrationDecision(
             4,
             '#chan',
@@ -121,7 +119,7 @@ final class ChannelRegistrationMemoTextAdapterTest extends TestCase
             false,
             null,
             null,
-            new DateTimeImmutable('2026-10-26T10:00:00+00:00'),
+            new \DateTimeImmutable('2026-10-26T10:00:00+00:00'),
         ), 'en');
     }
 
@@ -131,7 +129,7 @@ final class ChannelRegistrationMemoTextAdapterTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturn("\xFF");
 
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         new ChannelRegistrationMemoTextAdapter($translator)->render(new NotifyChannelRegistrationDecision(
             4,
             '#chan',
@@ -141,7 +139,7 @@ final class ChannelRegistrationMemoTextAdapterTest extends TestCase
             true,
             null,
             null,
-            new DateTimeImmutable('2026-10-26T10:00:00+00:00'),
+            new \DateTimeImmutable('2026-10-26T10:00:00+00:00'),
         ), 'en');
     }
 }

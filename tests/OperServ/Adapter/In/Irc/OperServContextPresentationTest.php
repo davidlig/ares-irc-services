@@ -17,7 +17,6 @@ use App\Shared\Adapter\In\Irc\Presentation\Fragment;
 use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
 use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
 use App\Shared\Adapter\In\Irc\Presentation\Role;
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -75,7 +74,7 @@ final class OperServContextPresentationTest extends TestCase
         try {
             $styled->replyComponent(Component::Row, 'row', ['value' => ['invalid']]);
             self::fail('A non-text presentation parameter must be rejected.');
-        } catch (InvalidArgumentException $exception) {
+        } catch (\InvalidArgumentException $exception) {
             self::assertSame('IRC presentation parameters must be text or fragments.', $exception->getMessage());
         }
         self::assertSame($beforeInvalid, implode("\n", $sent));

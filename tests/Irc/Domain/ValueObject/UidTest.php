@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Tests\Irc\Domain\ValueObject;
 
 use App\Irc\Domain\ValueObject\Uid;
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -27,7 +26,7 @@ final class UidTest extends TestCase
     #[Test]
     public function emptyUidThrowsException(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('UID cannot be empty.');
 
         new Uid('');
@@ -36,7 +35,7 @@ final class UidTest extends TestCase
     #[Test]
     public function tooLongUidThrowsException(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('UID must not exceed');
 
         new Uid(str_repeat('x', 129));
@@ -54,7 +53,7 @@ final class UidTest extends TestCase
     #[Test]
     public function controlCharsAreRejected(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('UID must not contain control characters.');
 
         new Uid("abc\n");

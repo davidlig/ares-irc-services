@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Irc\Domain\ValueObject;
 
-use InvalidArgumentException;
-
 use function sprintf;
 use function str_contains;
 
@@ -17,11 +15,11 @@ readonly class ServerName
     public function __construct(public string $value)
     {
         if ('' === $value) {
-            throw new InvalidArgumentException('Server name cannot be empty.');
+            throw new \InvalidArgumentException('Server name cannot be empty.');
         }
 
         if (!str_contains($value, '.')) {
-            throw new InvalidArgumentException(sprintf('Server name "%s" must be a FQDN containing at least one dot.', $value));
+            throw new \InvalidArgumentException(sprintf('Server name "%s" must be a FQDN containing at least one dot.', $value));
         }
     }
 

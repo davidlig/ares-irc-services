@@ -7,7 +7,6 @@ namespace App\Tests\NickServ\Adapter\Out\Persistence\Doctrine;
 use App\Migrations\Version20260927000001;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
-use DateTimeImmutable;
 use Doctrine\Migrations\Configuration\Configuration;
 use Doctrine\Migrations\Configuration\Connection\ExistingConnection;
 use Doctrine\Migrations\Configuration\Migration\ExistingConfiguration;
@@ -52,8 +51,8 @@ final class WhoipIndexTest extends DoctrineIntegrationTestCase
             'hash',
             'migration@example.com',
             'en',
-            new DateTimeImmutable('2026-09-28'),
-            new DateTimeImmutable('2026-09-27'),
+            new \DateTimeImmutable('2026-09-28'),
+            new \DateTimeImmutable('2026-09-27'),
         );
         $nick->updateLastConnection('203.0.113.7', 'test.example');
         $this->entityManager->persist($nick);

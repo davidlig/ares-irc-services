@@ -21,8 +21,6 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
-use ReflectionClass;
-use RuntimeException;
 
 #[CoversClass(ServiceNickReservationSubscriber::class)]
 final class ServiceNickReservationSubscriberTest extends TestCase
@@ -54,7 +52,7 @@ final class ServiceNickReservationSubscriberTest extends TestCase
         $module = $this->createStub(ProtocolModuleInterface::class);
         $module->method('getNickReservation')->willReturn($reservation);
 
-        $connectionHolderReflection = new ReflectionClass($connectionHolder);
+        $connectionHolderReflection = new \ReflectionClass($connectionHolder);
         $moduleProperty = $connectionHolderReflection->getProperty('protocolModule');
         $moduleProperty->setValue($connectionHolder, $module);
 
@@ -106,7 +104,7 @@ final class ServiceNickReservationSubscriberTest extends TestCase
         $module->method('getNickReservation')->willReturn($reservation);
         $module->method('getServiceActions')->willReturn($serviceActions);
 
-        $connectionHolderReflection = new ReflectionClass($connectionHolder);
+        $connectionHolderReflection = new \ReflectionClass($connectionHolder);
         $moduleProperty = $connectionHolderReflection->getProperty('protocolModule');
         $moduleProperty->setValue($connectionHolder, $module);
 
@@ -178,7 +176,7 @@ final class ServiceNickReservationSubscriberTest extends TestCase
         $module = $this->createStub(ProtocolModuleInterface::class);
         $module->method('getNickReservation')->willReturn(null);
 
-        $connectionHolderReflection = new ReflectionClass($connectionHolder);
+        $connectionHolderReflection = new \ReflectionClass($connectionHolder);
         $moduleProperty = $connectionHolderReflection->getProperty('protocolModule');
         $moduleProperty->setValue($connectionHolder, $module);
 
@@ -322,10 +320,10 @@ final class ServiceNickReservationSubscriberTest extends TestCase
         $reservation->expects(self::never())->method('reserveNick');
 
         $inventory = $this->createMock(ServiceNickReservationInventory::class);
-        $inventory->method('namesForProtocol')->willThrowException(new RuntimeException('inventory unavailable'));
+        $inventory->method('namesForProtocol')->willThrowException(new \RuntimeException('inventory unavailable'));
         $inventory->expects(self::never())->method('replaceForProtocol');
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('inventory unavailable');
 
         $this->subscriberFor($reservation, $inventory, ['NewNick'], 'unreal')
@@ -343,7 +341,7 @@ final class ServiceNickReservationSubscriberTest extends TestCase
         $reservation->expects(self::once())->method('reserveNick')->with('NewNick', 'Reserved for network services');
 
         $inventory = $this->createMock(ServiceNickReservationInventory::class);
-        $inventory->method('namesForProtocol')->willThrowException(new RuntimeException('inventory unavailable'));
+        $inventory->method('namesForProtocol')->willThrowException(new \RuntimeException('inventory unavailable'));
         $inventory->expects(self::never())->method('replaceForProtocol');
 
         $this->subscriberFor($reservation, $inventory, ['NewNick'], 'unrealudb')
@@ -388,7 +386,7 @@ final class ServiceNickReservationSubscriberTest extends TestCase
         ]);
         $reservation->method('findManagedServiceNicks')->willReturn(['OldNick']);
         $reservation->expects(self::once())->method('releaseNick')->with('OldNick')
-            ->willThrowException(new RuntimeException('network unavailable'));
+            ->willThrowException(new \RuntimeException('network unavailable'));
         $reservation->expects(self::once())->method('reserveNick')->with('NewNick', 'Reserved for network services');
 
         $snapshots = [];
@@ -456,7 +454,7 @@ final class ServiceNickReservationSubscriberTest extends TestCase
             ServiceNickReservationInterface::class,
             ManagedServiceNickReservationLookup::class,
         ]);
-        $reservation->method('findManagedServiceNicks')->willThrowException(new RuntimeException('store unavailable'));
+        $reservation->method('findManagedServiceNicks')->willThrowException(new \RuntimeException('store unavailable'));
         $reservation->expects(self::never())->method('releaseNick');
         $reservation->expects(self::once())->method('reserveNick')->with('NewNick', 'Reserved for network services');
 
@@ -482,7 +480,7 @@ final class ServiceNickReservationSubscriberTest extends TestCase
         $inventory = $this->createMock(ServiceNickReservationInventory::class);
         $inventory->method('namesForProtocol')->willReturn([]);
         $inventory->expects(self::once())->method('replaceForProtocol')->with('unrealudb', ['NewNick'])
-            ->willThrowException(new RuntimeException('database unavailable'));
+            ->willThrowException(new \RuntimeException('database unavailable'));
 
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects(self::once())->method('error')->with(
@@ -505,9 +503,9 @@ final class ServiceNickReservationSubscriberTest extends TestCase
         $inventory = $this->createMock(ServiceNickReservationInventory::class);
         $inventory->method('namesForProtocol')->willReturn([]);
         $inventory->expects(self::once())->method('replaceForProtocol')
-            ->willThrowException(new RuntimeException('database unavailable'));
+            ->willThrowException(new \RuntimeException('database unavailable'));
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('database unavailable');
 
         $this->subscriberFor($reservation, $inventory, ['NewNick'], 'unreal')
@@ -527,7 +525,7 @@ final class ServiceNickReservationSubscriberTest extends TestCase
             {
                 ++$this->reserveCalls;
                 if (1 === $this->reserveCalls) {
-                    throw new RuntimeException('network unavailable');
+                    throw new \RuntimeException('network unavailable');
                 }
             }
 
@@ -561,7 +559,7 @@ final class ServiceNickReservationSubscriberTest extends TestCase
             $this->subscriberFor($reservation, $inventory, ['NewNick'], 'inspircd')
                 ->onBurstComplete($this->burstEvent());
             self::fail('Expected the first reservation to fail.');
-        } catch (RuntimeException $exception) {
+        } catch (\RuntimeException $exception) {
             self::assertSame('network unavailable', $exception->getMessage());
         }
 
@@ -589,7 +587,7 @@ final class ServiceNickReservationSubscriberTest extends TestCase
         $module->method('getProtocolName')->willReturn($protocol);
         $module->method('getNickReservation')->willReturn($reservation);
         $module->method('getServiceActions')->willReturn($this->createStub(ProtocolServiceActionsInterface::class));
-        new ReflectionClass($holder)->getProperty('protocolModule')->setValue($holder, $module);
+        new \ReflectionClass($holder)->getProperty('protocolModule')->setValue($holder, $module);
 
         $listeners = [];
         foreach ($names as $name) {

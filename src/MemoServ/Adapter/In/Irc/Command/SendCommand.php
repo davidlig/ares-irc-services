@@ -22,7 +22,6 @@ use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
 use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
 use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
 use App\Shared\Adapter\In\Irc\Presentation\Role;
-use DateTimeImmutable;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function array_slice;
@@ -132,7 +131,7 @@ final readonly class SendCommand implements MemoServCommandInterface
             senderUid: $context->sender->uid,
             target: $targetArg,
             message: $message,
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
         ));
 
         switch ($result->outcome) {

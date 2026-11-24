@@ -7,17 +7,13 @@ namespace App\Tests\OperServ\Adapter\Out\Persistence\Doctrine;
 use App\OperServ\Adapter\Out\Persistence\Doctrine\DoctrineGlineRepository;
 use App\OperServ\Application\Port\Out\GlineEntry;
 use App\OperServ\Domain\Entity\Gline;
-use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\EntityRepository;
 use Doctrine\ORM\Query;
-use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionProperty;
-use stdClass;
 
 use function sprintf;
 
@@ -32,7 +28,7 @@ final class DoctrineGlineRepositoryTest extends TestCase
         $objectRepository = $this->createMock(EntityRepository::class);
         $objectRepository->expects(self::exactly(2))->method('findOneBy')
             ->with(self::logicalOr(['mask' => '*@host.test'], ['mask' => '*@missing.test']))
-            ->willReturnOnConsecutiveCalls($gline, new stdClass());
+            ->willReturnOnConsecutiveCalls($gline, new \stdClass());
         $entityManager = $this->createStub(EntityManagerInterface::class);
         $entityManager->method('getRepository')->willReturn($objectRepository);
         $adapter = new DoctrineGlineRepository($entityManager);
@@ -54,7 +50,7 @@ final class DoctrineGlineRepositoryTest extends TestCase
         $objectRepository = $this->createMock(EntityRepository::class);
         $objectRepository->expects(self::once())->method('findBy')
             ->with([], ['createdAt' => 'DESC', 'id' => 'DESC'])
-            ->willReturn([$gline, new stdClass()]);
+            ->willReturn([$gline, new \stdClass()]);
         $entityManager = $this->createStub(EntityManagerInterface::class);
         $entityManager->method('getRepository')->willReturn($objectRepository);
 
@@ -102,7 +98,7 @@ final class DoctrineGlineRepositoryTest extends TestCase
     #[Test]
     public function executesBoundedQueries(string $method, string $dql, string $parameterValue): void
     {
-        $at = new DateTimeImmutable('2026-09-08T10:00:00+00:00');
+        $at = new \DateTimeImmutable('2026-09-08T10:00:00+00:00');
         $gline = $this->gline(7);
         $query = $this->createMock(Query::class);
         $expectedValue = 'at' === $parameterValue ? $at : $parameterValue;
@@ -138,8 +134,8 @@ final class DoctrineGlineRepositoryTest extends TestCase
     #[Test]
     public function persistsNewGline(): void
     {
-        $createdAt = new DateTimeImmutable('2026-09-08T10:00:00+00:00');
-        $expiresAt = new DateTimeImmutable('2026-09-09T10:00:00+00:00');
+        $createdAt = new \DateTimeImmutable('2026-09-08T10:00:00+00:00');
+        $expiresAt = new \DateTimeImmutable('2026-09-09T10:00:00+00:00');
         $entityManager = $this->createMock(EntityManagerInterface::class);
         $entityManager->expects(self::once())->method('persist')->with(self::callback(
             static fn (Gline $gline): bool => '*@host.test' === $gline->getMask()
@@ -225,7 +221,7 @@ final class DoctrineGlineRepositoryTest extends TestCase
         $entityManager = $this->createStub(EntityManagerInterface::class);
         $entityManager->method('getRepository')->willReturn($objectRepository);
 
-        $this->expectException(LogicException::class);
+        $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('Persisted GLINE entry must have an identifier.');
 
         new DoctrineGlineRepository($entityManager)->findByMask('*@host.test');
@@ -234,13 +230,13 @@ final class DoctrineGlineRepositoryTest extends TestCase
     private function gline(int $id): Gline
     {
         $gline = Gline::create(
-            new DateTimeImmutable('2026-09-08T10:00:00+00:00'),
+            new \DateTimeImmutable('2026-09-08T10:00:00+00:00'),
             '*@host.test',
             42,
             'abuse',
-            new DateTimeImmutable('2026-09-09T10:00:00+00:00'),
+            new \DateTimeImmutable('2026-09-09T10:00:00+00:00'),
         );
-        new ReflectionProperty(Gline::class, 'id')->setValue($gline, $id);
+        new \ReflectionProperty(Gline::class, 'id')->setValue($gline, $id);
 
         return $gline;
     }
@@ -251,8 +247,8 @@ final class DoctrineGlineRepositoryTest extends TestCase
             '*@host.test',
             42,
             'abuse',
-            new DateTimeImmutable('2026-09-08T10:00:00+00:00'),
-            new DateTimeImmutable('2026-09-09T10:00:00+00:00'),
+            new \DateTimeImmutable('2026-09-08T10:00:00+00:00'),
+            new \DateTimeImmutable('2026-09-09T10:00:00+00:00'),
             $id,
         );
     }

@@ -7,7 +7,6 @@ namespace App\Tests\NickServ\Adapter\In\Maintenance;
 use App\NickServ\Adapter\In\Maintenance\CleanupHistoryTask;
 use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\NickHistoryRepositoryInterface;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -82,7 +81,7 @@ final class CleanupHistoryTaskTest extends TestCase
         $historyRepo = $this->createMock(NickHistoryRepositoryInterface::class);
         $historyRepo->expects(self::once())
             ->method('deleteOlderThan')
-            ->with(new DateTimeImmutable(self::NOW)->modify(sprintf('-%d days', $retentionDays)))
+            ->with(new \DateTimeImmutable(self::NOW)->modify(sprintf('-%d days', $retentionDays)))
             ->willReturn(0);
 
         $logger = $this->createMock(LoggerInterface::class);
@@ -148,7 +147,7 @@ final class CleanupHistoryTaskTest extends TestCase
     private function clock(): Clock
     {
         $clock = $this->createStub(Clock::class);
-        $clock->method('now')->willReturn(new DateTimeImmutable(self::NOW));
+        $clock->method('now')->willReturn(new \DateTimeImmutable(self::NOW));
 
         return $clock;
     }

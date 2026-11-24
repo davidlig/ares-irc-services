@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Application\UseCase\RegisterChannel;
 
-use DateTimeImmutable;
-
 final readonly class RegisterChannel
 {
     public function __construct(
@@ -17,6 +15,6 @@ final readonly class RegisterChannel
         public bool $actorIrcOperator,
         public bool $channelExistsOnNetwork,
         public bool $hasRequiredChannelRank,
-        public DateTimeImmutable $occurredAt,
+        public \DateTimeImmutable $occurredAt,
     ) {}
 }

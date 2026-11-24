@@ -5,11 +5,9 @@ declare(strict_types=1);
 namespace App\Tests\MemoServ\Domain\Entity;
 
 use App\MemoServ\Domain\Entity\MemoSettings;
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionProperty;
 
 #[CoversClass(MemoSettings::class)]
 final class MemoSettingsTest extends TestCase
@@ -37,7 +35,7 @@ final class MemoSettingsTest extends TestCase
     #[Test]
     public function constructorThrowsWhenBothTargetsSet(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Exactly one of targetNickId or targetChannelId must be set');
 
         new MemoSettings(10, 5, true);
@@ -46,7 +44,7 @@ final class MemoSettingsTest extends TestCase
     #[Test]
     public function constructorThrowsWhenNeitherTargetSet(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Exactly one of targetNickId or targetChannelId must be set');
 
         new MemoSettings(null, null, true);
@@ -69,7 +67,7 @@ final class MemoSettingsTest extends TestCase
     public function getIdReturnsReflectedId(): void
     {
         $settings = new MemoSettings(1, null, true);
-        $prop = new ReflectionProperty(MemoSettings::class, 'id');
+        $prop = new \ReflectionProperty(MemoSettings::class, 'id');
         $prop->setValue($settings, 77);
 
         self::assertSame(77, $settings->getId());

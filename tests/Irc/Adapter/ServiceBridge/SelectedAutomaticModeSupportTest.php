@@ -18,7 +18,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
-use RuntimeException;
 
 #[CoversClass(SelectedAutomaticModeSupport::class)]
 final class SelectedAutomaticModeSupportTest extends TestCase
@@ -60,7 +59,7 @@ final class SelectedAutomaticModeSupportTest extends TestCase
     public function testDeliveryFailureDoesNotSynchronizeOrThrowIntoOtherSavedEventListeners(): void
     {
         $actions = $this->createMock(ProtocolServiceActionsInterface::class);
-        $actions->expects(self::once())->method('setUserMode')->willThrowException(new RuntimeException('offline'));
+        $actions->expects(self::once())->method('setUserMode')->willThrowException(new \RuntimeException('offline'));
         $holder = $this->holder($this->createStub(ProtocolHandlerInterface::class), $actions);
         $sync = $this->createMock(LocalUserModeSyncPort::class);
         $sync->expects(self::never())->method('apply');

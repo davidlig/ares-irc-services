@@ -1,4 +1,3 @@
-
 ###> symfony/framework-bundle ###
 /.env.local
 /.env.local.php
@@ -10,17 +9,10 @@
 /node_modules/
 /pnpm-lock.yaml
 ###< symfony/framework-bundle ###
-/.php-cs-fixer.cache
 /.deptrac.cache
 /.vscode/
-/backups/
 /.opencode/mcp.env
-
-###> friendsofphp/php-cs-fixer ###
-/.php-cs-fixer.php
-/.php-cs-fixer.cache
-###< friendsofphp/php-cs-fixer ###
-
+/backups/
 ###> phpunit/phpunit ###
 /phpunit.xml
 /.phpunit.cache/

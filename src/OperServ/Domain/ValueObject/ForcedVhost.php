@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\OperServ\Domain\ValueObject;
 
-use DomainException;
-
 use function preg_match;
 use function preg_replace;
 use function strlen;
@@ -28,15 +26,15 @@ final readonly class ForcedVhost
         $normalized = trim($pattern);
 
         if ('' === $normalized) {
-            throw new DomainException('VHost pattern cannot be empty.');
+            throw new \DomainException('VHost pattern cannot be empty.');
         }
 
         if (strlen($normalized) > self::MAX_LENGTH) {
-            throw new DomainException('VHost pattern exceeds maximum length of ' . self::MAX_LENGTH . ' characters.');
+            throw new \DomainException('VHost pattern exceeds maximum length of ' . self::MAX_LENGTH . ' characters.');
         }
 
         if (1 !== preg_match(self::VHOST_PATTERN, $normalized)) {
-            throw new DomainException('Invalid vhost pattern format. Valid characters: a-z, A-Z, 0-9, hyphen (-) and dot (.). Must have at least one dot, cannot start/end with - or .');
+            throw new \DomainException('Invalid vhost pattern format. Valid characters: a-z, A-Z, 0-9, hyphen (-) and dot (.). Must have at least one dot, cannot start/end with - or .');
         }
 
         return new self($normalized);

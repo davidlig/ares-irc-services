@@ -7,7 +7,6 @@ namespace App\Tests\NickServ\Adapter\In\Maintenance;
 use App\NickServ\Adapter\In\Maintenance\PurgeExpiredPendingTask;
 use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -83,8 +82,8 @@ final class PurgeExpiredPendingTaskTest extends TestCase
         return $clock;
     }
 
-    private function now(): DateTimeImmutable
+    private function now(): \DateTimeImmutable
     {
-        return new DateTimeImmutable('2026-09-06 12:00:00 UTC');
+        return new \DateTimeImmutable('2026-09-06 12:00:00 UTC');
     }
 }

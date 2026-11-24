@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\NickServ\Application\Port\Out;
 
 use App\NickServ\Domain\Entity\NickHistory;
-use DateTimeImmutable;
 
 /**
  * Repository for managing nickname history entries.
@@ -53,5 +52,5 @@ interface NickHistoryRepositoryInterface
      *
      * @return int Number of entries deleted
      */
-    public function deleteOlderThan(DateTimeImmutable $threshold): int;
+    public function deleteOlderThan(\DateTimeImmutable $threshold): int;
 }

@@ -7,7 +7,6 @@ namespace App\OperServ\Adapter\Out\Persistence\Doctrine;
 use App\OperServ\Domain\Entity\OperIrcop;
 use App\OperServ\Domain\Repository\OperIrcopRepositoryInterface;
 use Doctrine\ORM\EntityManagerInterface;
-use UnexpectedValueException;
 
 use function array_unique;
 use function array_values;
@@ -63,7 +62,7 @@ final readonly class OperIrcopDoctrineRepository implements OperIrcopRepositoryI
             return $result;
         }
 
-        throw new UnexpectedValueException('Authorization query did not return an IRCOP assignment.');
+        throw new \UnexpectedValueException('Authorization query did not return an IRCOP assignment.');
     }
 
     public function findAll(): array

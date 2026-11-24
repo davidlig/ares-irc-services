@@ -5,11 +5,9 @@ declare(strict_types=1);
 namespace App\Tests\ChanServ\Domain\Entity;
 
 use App\ChanServ\Domain\Entity\ChannelLevel;
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionProperty;
 
 #[CoversClass(ChannelLevel::class)]
 final class ChannelLevelTest extends TestCase
@@ -37,7 +35,7 @@ final class ChannelLevelTest extends TestCase
     #[Test]
     public function constructorRejectsValueBelowMin(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Level value must be between');
 
         new ChannelLevel(1, ChannelLevel::KEY_AUTOOP, -2);
@@ -46,7 +44,7 @@ final class ChannelLevelTest extends TestCase
     #[Test]
     public function constructorRejectsValueAboveMax(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Level value must be between');
 
         new ChannelLevel(1, ChannelLevel::KEY_AUTOOP, 500);
@@ -77,7 +75,7 @@ final class ChannelLevelTest extends TestCase
     {
         $level = new ChannelLevel(1, ChannelLevel::KEY_AUTOOP, 100);
 
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Level value must be between');
 
         $level->updateLevelValue(-2);
@@ -88,7 +86,7 @@ final class ChannelLevelTest extends TestCase
     {
         $level = new ChannelLevel(1, ChannelLevel::KEY_AUTOOP, 100);
 
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Level value must be between');
 
         $level->updateLevelValue(500);
@@ -98,7 +96,7 @@ final class ChannelLevelTest extends TestCase
     public function getIdReturnsThePersistedIdentifier(): void
     {
         $level = new ChannelLevel(1, ChannelLevel::KEY_AUTOOP, 300);
-        $id = new ReflectionProperty(ChannelLevel::class, 'id');
+        $id = new \ReflectionProperty(ChannelLevel::class, 'id');
         $id->setValue($level, 42);
 
         self::assertSame(42, $level->getId());

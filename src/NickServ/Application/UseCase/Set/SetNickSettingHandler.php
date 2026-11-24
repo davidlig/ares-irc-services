@@ -27,7 +27,6 @@ use App\NickServ\Application\Service\PasswordPolicy;
 use App\NickServ\Application\Service\VhostDisplayResolver;
 use App\NickServ\Application\Service\VhostValidator;
 use App\NickServ\Domain\Entity\RegisteredNick;
-use InvalidArgumentException;
 
 use function explode;
 use function filter_var;
@@ -224,7 +223,7 @@ final readonly class SetNickSettingHandler implements SetNickSettingHandlerInter
 
         try {
             $account->changeLanguage($input->value);
-        } catch (InvalidArgumentException) {
+        } catch (\InvalidArgumentException) {
             return $this->result(SetNickSettingOutcome::InvalidLanguage, $input);
         }
 
@@ -265,7 +264,7 @@ final readonly class SetNickSettingHandler implements SetNickSettingHandlerInter
 
         try {
             $account->changeTimezone($timezone);
-        } catch (InvalidArgumentException) {
+        } catch (\InvalidArgumentException) {
             return $this->result(SetNickSettingOutcome::InvalidTimezone, $input, value: $timezone);
         }
 

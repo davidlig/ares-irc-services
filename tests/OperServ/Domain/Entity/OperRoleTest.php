@@ -9,7 +9,6 @@ use App\OperServ\Domain\Entity\OperRole;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
 
 #[CoversClass(OperRole::class)]
 final class OperRoleTest extends TestCase
@@ -205,7 +204,7 @@ final class OperRoleTest extends TestCase
     {
         $role = OperRole::create('Test');
 
-        $reflection = new ReflectionClass($role);
+        $reflection = new \ReflectionClass($role);
         $idProp = $reflection->getProperty('id');
         $idProp->setValue($role, 42);
 
@@ -217,7 +216,7 @@ final class OperRoleTest extends TestCase
     {
         $role = OperRole::create('Test');
 
-        $reflection = new ReflectionClass($role);
+        $reflection = new \ReflectionClass($role);
         $idProp = $reflection->getProperty('id');
         $idProp->setValue($role, 123);
 
@@ -263,7 +262,7 @@ final class OperRoleTest extends TestCase
     public function getUserModesReturnsEmptyArrayForInvalidJson(): void
     {
         $role = OperRole::create('Test');
-        $property = new ReflectionClass(OperRole::class)->getProperty('userModes');
+        $property = new \ReflectionClass(OperRole::class)->getProperty('userModes');
         $property->setValue($role, '{invalid');
 
         self::assertSame([], $role->getUserModes());

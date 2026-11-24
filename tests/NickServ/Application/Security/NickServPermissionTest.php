@@ -8,7 +8,6 @@ use App\NickServ\Application\Security\NickServPermission;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
 
 #[CoversClass(NickServPermission::class)]
 final class NickServPermissionTest extends TestCase
@@ -23,7 +22,7 @@ final class NickServPermissionTest extends TestCase
     #[Test]
     public function constructorCanBeInvokedViaReflectionForCoverage(): void
     {
-        $reflection = new ReflectionClass(NickServPermission::class);
+        $reflection = new \ReflectionClass(NickServPermission::class);
         $constructor = $reflection->getConstructor();
         self::assertNotNull($constructor);
         $constructor->invoke($reflection->newInstanceWithoutConstructor());

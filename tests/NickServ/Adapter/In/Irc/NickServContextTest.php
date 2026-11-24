@@ -20,9 +20,6 @@ use App\Shared\Adapter\In\Irc\Presentation\Fragment;
 use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
 use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
 use App\Shared\Adapter\In\Irc\Presentation\Role;
-use DateTimeImmutable;
-use DateTimeZone;
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -170,7 +167,7 @@ final class NickServContextTest extends TestCase
             $translator,
             [],
         );
-        $date = new DateTimeImmutable('2024-06-15 14:30:00', new DateTimeZone('UTC'));
+        $date = new \DateTimeImmutable('2024-06-15 14:30:00', new \DateTimeZone('UTC'));
 
         $formatted = $context->formatDate($date);
 
@@ -622,7 +619,7 @@ final class NickServContextTest extends TestCase
         $notifier = $this->createMock(NickServNotifierInterface::class);
         $notifier->expects(self::never())->method('sendMessage');
         $context = $this->createContext(new SenderView('UID', 'Alice', 'i', 'h', 'c', 'ip'), $notifier, new Translator('en'));
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Emphasized parameters must be scalar or Stringable.');
         $context->replyEmphasized('text', ['value' => ['unexpected']], Role::Error, ['value']);
     }
@@ -633,7 +630,7 @@ final class NickServContextTest extends TestCase
         $notifier = $this->createMock(NickServNotifierInterface::class);
         $notifier->expects(self::never())->method('sendMessage');
         $context = $this->createContext(new SenderView('UID', 'Alice', 'i', 'h', 'c', 'ip'), $notifier, new Translator('en'), renderer: new IrcRenderer(new FixedStyleProvider(PresentationStyle::default())));
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Presentation parameters must be scalar, Stringable or Fragment.');
         $context->reply('text', ['value' => ['unexpected']], Role::Error);
     }

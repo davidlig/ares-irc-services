@@ -12,7 +12,6 @@ use App\Irc\Domain\Network\ChannelMemberRole;
 use App\Irc\Domain\Repository\ChannelRepositoryInterface;
 use App\Irc\Domain\ValueObject\ChannelName;
 use App\Irc\Domain\ValueObject\Uid;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -27,7 +26,7 @@ final class CoreChannelLookupAdapterTest extends TestCase
     #[Test]
     public function summaryReturnsChannelStateWithoutMemberProjection(): void
     {
-        $channel = new Channel(new ChannelName('#test'), '+nt', new DateTimeImmutable('@42'));
+        $channel = new Channel(new ChannelName('#test'), '+nt', new \DateTimeImmutable('@42'));
         $channel->syncMember(new Uid('U1'), ChannelMemberRole::Op);
         $channel->updateTopic('A topic');
         $repository = $this->createStub(ChannelRepositoryInterface::class);
@@ -48,7 +47,7 @@ final class CoreChannelLookupAdapterTest extends TestCase
     #[Test]
     public function findMemberReturnsOnlyTheRequestedMember(): void
     {
-        $channel = new Channel(new ChannelName('#test'), '+n', new DateTimeImmutable('@1'));
+        $channel = new Channel(new ChannelName('#test'), '+n', new \DateTimeImmutable('@1'));
         $channel->syncMember(new Uid('U1'), ChannelMemberRole::Op, ['o', 'v']);
         $channel->syncMember(new Uid('U2'), ChannelMemberRole::Voice);
         $repo = $this->createStub(ChannelRepositoryInterface::class);
@@ -91,7 +90,7 @@ final class CoreChannelLookupAdapterTest extends TestCase
     public function findByChannelNameReturnsChannelViewWhenChannelExists(): void
     {
         $name = new ChannelName('#test');
-        $createdAt = new DateTimeImmutable('2020-01-01 12:00:00');
+        $createdAt = new \DateTimeImmutable('2020-01-01 12:00:00');
         $channel = new Channel($name, '+nt', $createdAt);
         $channel->syncMember(new Uid('001ABC'), ChannelMemberRole::Op);
         $channel->updateTopic('Hello world');
@@ -116,7 +115,7 @@ final class CoreChannelLookupAdapterTest extends TestCase
     public function findByChannelNameMapsAllMemberRolesToModeLetters(): void
     {
         $name = new ChannelName('#multi');
-        $createdAt = new DateTimeImmutable('2020-01-01 12:00:00');
+        $createdAt = new \DateTimeImmutable('2020-01-01 12:00:00');
         $channel = new Channel($name, '+nt', $createdAt);
         $channel->syncMember(new Uid('001V'), ChannelMemberRole::Voice);
         $channel->syncMember(new Uid('002H'), ChannelMemberRole::HalfOp);
@@ -154,8 +153,8 @@ final class CoreChannelLookupAdapterTest extends TestCase
     #[Test]
     public function listAllReturnsAllChannelsAsViews(): void
     {
-        $createdAt1 = new DateTimeImmutable('2020-01-01 12:00:00');
-        $createdAt2 = new DateTimeImmutable('2020-01-02 12:00:00');
+        $createdAt1 = new \DateTimeImmutable('2020-01-01 12:00:00');
+        $createdAt2 = new \DateTimeImmutable('2020-01-02 12:00:00');
         $channel1 = new Channel(new ChannelName('#test'), '+nt', $createdAt1);
         $channel1->syncMember(new Uid('001ABC'), ChannelMemberRole::Op);
         $channel2 = new Channel(new ChannelName('#other'), '+n', $createdAt2);
@@ -179,7 +178,7 @@ final class CoreChannelLookupAdapterTest extends TestCase
     public function listAllMapsAllMemberRolesToModeLetters(): void
     {
         $name = new ChannelName('#multi');
-        $createdAt = new DateTimeImmutable('2020-01-01 12:00:00');
+        $createdAt = new \DateTimeImmutable('2020-01-01 12:00:00');
         $channel = new Channel($name, '+nt', $createdAt);
         $channel->syncMember(new Uid('001V'), ChannelMemberRole::Voice);
         $channel->syncMember(new Uid('002H'), ChannelMemberRole::HalfOp);
@@ -207,7 +206,7 @@ final class CoreChannelLookupAdapterTest extends TestCase
     #[Test]
     public function iterateModeSnapshotsDoesNotMaterializeChannelMembers(): void
     {
-        $channel = new class(new ChannelName('#large'), '+ntr', new DateTimeImmutable()) extends Channel {
+        $channel = new class(new ChannelName('#large'), '+ntr', new \DateTimeImmutable()) extends Channel {
             public function getMembers(): array
             {
                 TestCase::fail('Mode-only channel sweeps must not materialize members.');

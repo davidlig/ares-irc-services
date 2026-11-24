@@ -20,11 +20,9 @@ use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
 use App\Irc\Application\Port\In\ServiceNicknameRegistry;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Stringable;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function implode;
@@ -58,8 +56,8 @@ final class ListCommandTest extends TestCase
     #[Test]
     public function mapsPatternAndPageThenPresentsFounderAndSafeAuditData(): void
     {
-        $registeredAt = new DateTimeImmutable('2026-01-01 12:00:00 UTC');
-        $lastUsedAt = new DateTimeImmutable('2026-02-03 04:05:00 UTC');
+        $registeredAt = new \DateTimeImmutable('2026-01-01 12:00:00 UTC');
+        $lastUsedAt = new \DateTimeImmutable('2026-02-03 04:05:00 UTC');
         $entry = new ListedRegisteredChannel('#davidlig', 'Davinia', $registeredAt, $lastUsedAt, ChannelStatus::Active);
         $handler = $this->createMock(ListRegisteredChannelsHandlerInterface::class);
         $handler->expects(self::once())
@@ -233,7 +231,7 @@ final class ListCommandTest extends TestCase
             ksort($params);
             $formatted = [];
             foreach ($params as $key => $value) {
-                $formatted[] = (string) $key . ': ' . (is_scalar($value) || $value instanceof Stringable ? (string) $value : '');
+                $formatted[] = (string) $key . ': ' . (is_scalar($value) || $value instanceof \Stringable ? (string) $value : '');
             }
 
             return $id . ' [' . implode(', ', $formatted) . ']';

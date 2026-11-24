@@ -31,7 +31,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-use RuntimeException;
 use Symfony\Component\Translation\Translator;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -741,7 +740,7 @@ final class MemoServServiceTest extends TestCase
 
             public function execute(MemoServContext $context): null
             {
-                throw new RuntimeException('Unexpected crash');
+                throw new \RuntimeException('Unexpected crash');
             }
         };
 
@@ -766,7 +765,7 @@ final class MemoServServiceTest extends TestCase
             $authorizationContext,
         );
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Unexpected crash');
 
         $service->dispatch('THROW', $sender);

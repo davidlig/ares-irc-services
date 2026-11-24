@@ -19,11 +19,9 @@ use App\ChanServ\Application\UseCase\ClearUsers\ClearChannelUsersOutcome;
 use App\ChanServ\Application\UseCase\ClearUsers\ClearChannelUsersResult;
 use App\ChanServ\Domain\Entity\ChannelHistory;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionProperty;
 
 #[CoversClass(ClearChannelAccess::class)]
 #[CoversClass(ClearChannelAccessHandler::class)]
@@ -119,8 +117,8 @@ final class ClearChannelHandlersTest extends TestCase
 
     private function channels(): RegisteredChannelRepositoryInterface
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Channel', 1, 'Description');
-        new ReflectionProperty(RegisteredChannel::class, 'id')->setValue($channel, 11);
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#Channel', 1, 'Description');
+        new \ReflectionProperty(RegisteredChannel::class, 'id')->setValue($channel, 11);
         $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channels->method('findByChannelName')->willReturn($channel);
 
@@ -134,11 +132,11 @@ final class ClearChannelHandlersTest extends TestCase
 
     private function accessCommand(string $channelName): ClearChannelAccess
     {
-        return new ClearChannelAccess($channelName, 'Founder', new DateTimeImmutable('2026-01-02'));
+        return new ClearChannelAccess($channelName, 'Founder', new \DateTimeImmutable('2026-01-02'));
     }
 
     private function usersCommand(string $channelName): ClearChannelUsers
     {
-        return new ClearChannelUsers($channelName, 'reason', 'Founder', new DateTimeImmutable('2026-01-02'));
+        return new ClearChannelUsers($channelName, 'reason', 'Founder', new \DateTimeImmutable('2026-01-02'));
     }
 }

@@ -19,12 +19,12 @@ final class DeterministicLoopScheduler implements LoopSchedulerInterface
     /** @var array<string, Closure> */
     private array $cancelledCallbacks = [];
 
-    public function repeat(float $intervalSeconds, Closure $callback): string
+    public function repeat(float $intervalSeconds, \Closure $callback): string
     {
         return $this->store($callback);
     }
 
-    public function delay(float $delaySeconds, Closure $callback): string
+    public function delay(float $delaySeconds, \Closure $callback): string
     {
         return $this->store($callback);
     }
@@ -61,7 +61,7 @@ final class DeterministicLoopScheduler implements LoopSchedulerInterface
         $callback($id);
     }
 
-    private function store(Closure $callback): string
+    private function store(\Closure $callback): string
     {
         $id = 'watcher-' . ++$this->sequence;
         $this->callbacks[$id] = $callback;

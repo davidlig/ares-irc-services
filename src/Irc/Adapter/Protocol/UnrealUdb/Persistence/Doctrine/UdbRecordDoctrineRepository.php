@@ -12,7 +12,6 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbRecordRepositoryInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbUnsignedDecimal;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\EntityManagerInterface;
-use UnexpectedValueException;
 
 use function array_column;
 use function str_starts_with;
@@ -35,18 +34,18 @@ final readonly class UdbRecordDoctrineRepository implements UdbRecordRepositoryI
         foreach ($rows as $row) {
             $kind = UdbValueKind::tryFrom($row['valueKind']);
             if (null === $kind) {
-                throw new UnexpectedValueException('A persisted UDB record has an unknown value kind.');
+                throw new \UnexpectedValueException('A persisted UDB record has an unknown value kind.');
             }
             $value = match ($kind) {
                 UdbValueKind::None => UdbValue::none(),
-                UdbValueKind::Number => UdbValue::number(UdbUnsignedDecimal::parse(substr($row['value'], 1)) ?? throw new UnexpectedValueException('A persisted numeric UDB value is malformed.')),
+                UdbValueKind::Number => UdbValue::number(UdbUnsignedDecimal::parse(substr($row['value'], 1)) ?? throw new \UnexpectedValueException('A persisted numeric UDB value is malformed.')),
                 UdbValueKind::String => UdbValue::string($row['value']),
             };
             if ($value->kind !== $kind || $value->logicalValue() !== $row['value']) {
-                throw new UnexpectedValueException('A persisted UDB record value does not match its value kind.');
+                throw new \UnexpectedValueException('A persisted UDB record value does not match its value kind.');
             }
             if (!UdbSchema::matchesStoredRecordType($block, $row['path'], $value)) {
-                throw new UnexpectedValueException('A persisted UDB record does not match its canonical schema.');
+                throw new \UnexpectedValueException('A persisted UDB record does not match its canonical schema.');
             }
             $records[$row['path']] = $value;
         }
@@ -57,7 +56,7 @@ final readonly class UdbRecordDoctrineRepository implements UdbRecordRepositoryI
     public function upsert(string $block, string $path, UdbValue $value): bool
     {
         if (!UdbSchema::matchesStoredRecordType($block, $path, $value)) {
-            throw new UnexpectedValueException('The typed UDB record does not match its canonical schema.');
+            throw new \UnexpectedValueException('The typed UDB record does not match its canonical schema.');
         }
         $logical = $value->logicalValue();
         $existing = $this->findRecord($block, $path);
@@ -102,10 +101,10 @@ final readonly class UdbRecordDoctrineRepository implements UdbRecordRepositoryI
 
             foreach ($records as $path => $value) {
                 if (!$value instanceof UdbValue) {
-                    throw new UnexpectedValueException('A typed UDB seed block contains an untyped value.');
+                    throw new \UnexpectedValueException('A typed UDB seed block contains an untyped value.');
                 }
                 if (!UdbSchema::matchesStoredRecordType($block, $path, $value)) {
-                    throw new UnexpectedValueException('A typed UDB seed block contains a schema-invalid value.');
+                    throw new \UnexpectedValueException('A typed UDB seed block contains a schema-invalid value.');
                 }
                 $identity = UdbRecord::identity($path, $block);
                 $id = $existing[$identity] ?? null;
@@ -136,10 +135,10 @@ final readonly class UdbRecordDoctrineRepository implements UdbRecordRepositoryI
                 ->execute();
             foreach ($records as $path => $value) {
                 if (!$value instanceof UdbValue) {
-                    throw new UnexpectedValueException('A typed UDB block contains an untyped value.');
+                    throw new \UnexpectedValueException('A typed UDB block contains an untyped value.');
                 }
                 if (!UdbSchema::matchesStoredRecordType($block, $path, $value)) {
-                    throw new UnexpectedValueException('A typed UDB block contains a schema-invalid value.');
+                    throw new \UnexpectedValueException('A typed UDB block contains a schema-invalid value.');
                 }
                 $this->em->persist(new UdbRecord($block, $path, $value->logicalValue(), $value->kind));
             }

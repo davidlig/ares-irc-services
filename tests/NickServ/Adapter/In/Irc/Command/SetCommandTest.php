@@ -20,11 +20,9 @@ use App\NickServ\Application\UseCase\Set\SetNickSettingOption;
 use App\NickServ\Application\UseCase\Set\SetNickSettingOutcome;
 use App\NickServ\Application\UseCase\Set\SetNickSettingResult;
 use App\NickServ\Domain\Entity\RegisteredNick;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function array_column;
@@ -294,11 +292,11 @@ final class SetCommandTest extends TestCase
             'hash',
             'alice@example.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable(),
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable(),
         );
         $account->activate();
-        new ReflectionClass($account)->getProperty('id')->setValue($account, $id);
+        new \ReflectionClass($account)->getProperty('id')->setValue($account, $id);
 
         return $account;
     }

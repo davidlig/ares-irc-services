@@ -12,8 +12,6 @@ use App\ChanServ\Domain\ValueObject\AkickMask;
 use App\ChanServ\Domain\ValueObject\AkickRule;
 use App\Irc\Domain\ValueObject\CaseMapping;
 use App\Tests\NickServ\Support\NegotiatedCaseMapping;
-use DateTimeImmutable;
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -31,7 +29,7 @@ final class AkickPolicyTest extends TestCase
     #[Test]
     public function matchingIsCaseInsensitiveAndFirstNonExpiredRuleWins(): void
     {
-        $now = new DateTimeImmutable('2026-09-07 12:00:00');
+        $now = new \DateTimeImmutable('2026-09-07 12:00:00');
         $expired = new AkickRule(new AkickMask('Bad*!*@*'), expiresAt: $now->modify('-1 second'));
         $first = new AkickRule(new AkickMask('bad*!*@*'), 'first');
         $later = new AkickRule(new AkickMask('*!*@*'), 'later');
@@ -42,7 +40,7 @@ final class AkickPolicyTest extends TestCase
     #[Test]
     public function matchingTreatsBracketsAndBackslashesAsLiteralWhilePreservingWildcards(): void
     {
-        $now = new DateTimeImmutable('2026-09-07 12:00:00');
+        $now = new \DateTimeImmutable('2026-09-07 12:00:00');
         $brackets = new AkickRule(new AkickMask('[Foo]!*@*'));
         $backslash = new AkickRule(new AkickMask('a\\b!*@*'));
         $wildcard = new AkickRule(new AkickMask('Bad?!*@*.example'));
@@ -68,7 +66,7 @@ final class AkickPolicyTest extends TestCase
     #[Test]
     public function expirationAtExactInstantIsStillValidAndOperatorsAreExempt(): void
     {
-        $now = new DateTimeImmutable('2026-09-07 12:00:00');
+        $now = new \DateTimeImmutable('2026-09-07 12:00:00');
         $rule = new AkickRule(new AkickMask('*!*@host'), expiresAt: $now);
 
         self::assertSame($rule, PreparedAkickRules::prepare([$rule], NegotiatedCaseMapping::fold())->firstMatch('nick!ident@host', $now, false));
@@ -79,7 +77,7 @@ final class AkickPolicyTest extends TestCase
     #[Test]
     public function allMatchesReturnsAllActiveMatchingRules(): void
     {
-        $now = new DateTimeImmutable('2026-09-07 12:00:00');
+        $now = new \DateTimeImmutable('2026-09-07 12:00:00');
         $rule1 = new AkickRule(new AkickMask('bad*!*@*'), 'first');
         $rule2 = new AkickRule(new AkickMask('*!*@host'), 'second');
         $expired = new AkickRule(new AkickMask('bad*!*@*'), 'expired', expiresAt: $now->modify('-1 second'));
@@ -95,7 +93,7 @@ final class AkickPolicyTest extends TestCase
     #[Test]
     public function preparedRulesFoldEachPatternOnceAndMatchLikeTheMaskItself(): void
     {
-        $now = new DateTimeImmutable('2026-09-07 12:00:00');
+        $now = new \DateTimeImmutable('2026-09-07 12:00:00');
         $calls = [];
         $fold = static function (string $value) use (&$calls): string {
             $calls[] = $value;
@@ -158,10 +156,10 @@ final class AkickPolicyTest extends TestCase
         try {
             new AkickMask('nick@host');
             self::fail('Expected missing ident separator to fail.');
-        } catch (InvalidArgumentException) {
+        } catch (\InvalidArgumentException) {
         }
 
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         new AkickMask(str_repeat('a', AkickMask::MAX_LENGTH) . '!*@host');
     }
 
@@ -177,14 +175,14 @@ final class AkickPolicyTest extends TestCase
     #[Test]
     public function reasonCannotExceedTheLegacyLimit(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         new AkickRule(new AkickMask('*!*@safe.example'), str_repeat('r', AkickRule::MAX_REASON_LENGTH + 1));
     }
 
     #[Test]
     public function additionRejectsActiveDuplicatesAndLimitButReplacesExpiredDuplicate(): void
     {
-        $now = new DateTimeImmutable('2026-09-07 12:00:00');
+        $now = new \DateTimeImmutable('2026-09-07 12:00:00');
         $policy = new AkickAdditionPolicy();
 
         self::assertSame(AkickAdditionDecision::Add, $policy->decide(99, null, $now));
@@ -202,14 +200,14 @@ final class AkickPolicyTest extends TestCase
     #[Test]
     public function additionRejectsNegativeEntryCounts(): void
     {
-        $this->expectException(InvalidArgumentException::class);
-        new AkickAdditionPolicy()->decide(-1, null, new DateTimeImmutable());
+        $this->expectException(\InvalidArgumentException::class);
+        new AkickAdditionPolicy()->decide(-1, null, new \DateTimeImmutable());
     }
 
     #[Test]
     public function matchingFoldsNicknamesWithTheRfc1459Mapping(): void
     {
-        $now = new DateTimeImmutable('2026-09-07 12:00:00');
+        $now = new \DateTimeImmutable('2026-09-07 12:00:00');
         $rule = new AkickRule(new AkickMask('[bad]*!*@*'));
         $braces = new AkickRule(new AkickMask('{bad}\\^!*@*'));
         $ascii = new AkickRule(new AkickMask('Bad*!*@*'));
@@ -233,7 +231,7 @@ final class AkickPolicyTest extends TestCase
     #[Test]
     public function asciiNetworksKeepBracketsAndBracesApartSoNoKickLoopsAgainstTheIrcdBan(): void
     {
-        $now = new DateTimeImmutable('2026-11-15 12:00:00');
+        $now = new \DateTimeImmutable('2026-11-15 12:00:00');
         $rule = new AkickRule(new AkickMask('[bot]*!*@*'));
         $ascii = NegotiatedCaseMapping::fold(CaseMapping::Ascii);
 

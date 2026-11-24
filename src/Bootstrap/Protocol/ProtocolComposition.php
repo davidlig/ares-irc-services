@@ -10,7 +10,6 @@ use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbModule;
 use App\Irc\Adapter\Runtime\ProtocolRuntimeModuleInterface;
 use App\Irc\Application\Connect\ConnectionPreflightResult;
 use App\Irc\Application\Connect\ProtocolConnectionPreflightInterface;
-use InvalidArgumentException;
 
 use function array_keys;
 use function implode;
@@ -50,12 +49,12 @@ final readonly class ProtocolComposition implements ProtocolConnectionPreflightI
 
     public function protocolModule(): ProtocolRuntimeModuleInterface
     {
-        return $this->modules[$this->protocolName] ?? throw new InvalidArgumentException(sprintf('No protocol module is registered for "%s". Available: %s.', $this->protocolName, implode(', ', array_keys($this->modules))));
+        return $this->modules[$this->protocolName] ?? throw new \InvalidArgumentException(sprintf('No protocol module is registered for "%s". Available: %s.', $this->protocolName, implode(', ', array_keys($this->modules))));
     }
 
     public function networkStateAdapter(): NetworkStateAdapterInterface
     {
-        return $this->networkStateAdapters[$this->protocolName] ?? throw new InvalidArgumentException(sprintf('No network state adapter is registered for "%s". Available: %s.', $this->protocolName, implode(', ', array_keys($this->networkStateAdapters))));
+        return $this->networkStateAdapters[$this->protocolName] ?? throw new \InvalidArgumentException(sprintf('No network state adapter is registered for "%s". Available: %s.', $this->protocolName, implode(', ', array_keys($this->networkStateAdapters))));
     }
 
     public function prepare(): ConnectionPreflightResult

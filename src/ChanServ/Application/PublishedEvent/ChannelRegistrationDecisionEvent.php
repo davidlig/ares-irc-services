@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\ChanServ\Application\PublishedEvent;
 
 use App\ChanServ\Application\Port\In\ChanServEvent;
-use DateTimeImmutable;
 
 /** Published after persistence succeeds; null restrictedUntil on rejection means indefinite. */
 final readonly class ChannelRegistrationDecisionEvent implements ChanServEvent
@@ -18,7 +17,7 @@ final readonly class ChannelRegistrationDecisionEvent implements ChanServEvent
         public string $operatorNickname,
         public bool $accepted,
         public ?string $rejectionReason,
-        public ?DateTimeImmutable $restrictedUntil,
-        public DateTimeImmutable $occurredAt,
+        public ?\DateTimeImmutable $restrictedUntil,
+        public \DateTimeImmutable $occurredAt,
     ) {}
 }

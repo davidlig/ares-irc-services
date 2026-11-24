@@ -21,12 +21,10 @@ use App\Irc\Application\Port\In\ChannelSyncCompletedRegistryInterface;
 use App\Irc\Application\Port\In\LocalUserQuitSyncPort;
 use App\Irc\Application\Port\In\UidResolverInterface;
 use App\Irc\Application\PublishedEvent\ChannelTopicReceivedEvent;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
 
 use function microtime;
 
@@ -123,7 +121,7 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
         $connection->method('isConnected')->willReturn(true);
         $connection->method('writeLine')->willReturnCallback(static function (string $line) use (&$written): void { $written[] = $line; });
         $holder = new ActiveConnectionHolder();
-        new ReflectionClass($holder)->getProperty('connection')->setValue($holder, $connection);
+        new \ReflectionClass($holder)->getProperty('connection')->setValue($holder, $connection);
         $actions = new UnrealStandaloneProtocolServiceActions($holder, $this->createStub(LocalUserQuitSyncPort::class));
         $registered = $this->createMock(RegisteredChannel::class);
         $registered->expects(self::atLeastOnce())->method('isTopicLock')->willReturn(true);
@@ -228,7 +226,7 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
     {
         $registered = $this->createMock(RegisteredChannel::class);
         $registered->expects(self::atLeastOnce())->method('isTopicLock')->willReturn(false);
-        $registered->expects(self::once())->method('updateTopic')->with('New topic', self::isInstanceOf(DateTimeImmutable::class), null);
+        $registered->expects(self::once())->method('updateTopic')->with('New topic', self::isInstanceOf(\DateTimeImmutable::class), null);
 
         $this->channelRepository
             ->expects(self::once())
@@ -293,7 +291,7 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
     {
         $registered = $this->createMock(RegisteredChannel::class);
         $registered->expects(self::atLeastOnce())->method('isTopicLock')->willReturn(false);
-        $registered->expects(self::once())->method('updateTopic')->with('New topic', self::isInstanceOf(DateTimeImmutable::class), null);
+        $registered->expects(self::once())->method('updateTopic')->with('New topic', self::isInstanceOf(\DateTimeImmutable::class), null);
 
         $this->channelRepository
             ->expects(self::once())
@@ -327,7 +325,7 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
     {
         $registered = $this->createMock(RegisteredChannel::class);
         $registered->expects(self::atLeastOnce())->method('isTopicLock')->willReturn(false);
-        $registered->expects(self::once())->method('updateTopic')->with('New topic', self::isInstanceOf(DateTimeImmutable::class), null);
+        $registered->expects(self::once())->method('updateTopic')->with('New topic', self::isInstanceOf(\DateTimeImmutable::class), null);
 
         $this->channelRepository
             ->expects(self::once())
@@ -361,7 +359,7 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
     {
         $registered = $this->createMock(RegisteredChannel::class);
         $registered->expects(self::atLeastOnce())->method('isTopicLock')->willReturn(false);
-        $registered->expects(self::once())->method('updateTopic')->with('New topic', self::isInstanceOf(DateTimeImmutable::class), null);
+        $registered->expects(self::once())->method('updateTopic')->with('New topic', self::isInstanceOf(\DateTimeImmutable::class), null);
 
         $this->channelRepository
             ->expects(self::once())
@@ -395,7 +393,7 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
     {
         $registered = $this->createMock(RegisteredChannel::class);
         $registered->expects(self::atLeastOnce())->method('isTopicLock')->willReturn(false);
-        $registered->expects(self::once())->method('updateTopic')->with('New topic', self::isInstanceOf(DateTimeImmutable::class), null);
+        $registered->expects(self::once())->method('updateTopic')->with('New topic', self::isInstanceOf(\DateTimeImmutable::class), null);
 
         $this->channelRepository
             ->expects(self::once())
@@ -435,7 +433,7 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
     {
         $registered = $this->createMock(RegisteredChannel::class);
         $registered->expects(self::atLeastOnce())->method('isTopicLock')->willReturn(false);
-        $registered->expects(self::once())->method('updateTopic')->with('New topic', self::isInstanceOf(DateTimeImmutable::class), 'TestUser');
+        $registered->expects(self::once())->method('updateTopic')->with('New topic', self::isInstanceOf(\DateTimeImmutable::class), 'TestUser');
 
         $this->channelRepository
             ->expects(self::once())
@@ -476,7 +474,7 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
         // On an ascii-casemapping network chan{serv} is a different user from the Chan[Serv] service.
         $registered = $this->createMock(RegisteredChannel::class);
         $registered->expects(self::atLeastOnce())->method('isTopicLock')->willReturn(false);
-        $registered->expects(self::once())->method('updateTopic')->with('New topic', self::isInstanceOf(DateTimeImmutable::class), 'chan{serv}');
+        $registered->expects(self::once())->method('updateTopic')->with('New topic', self::isInstanceOf(\DateTimeImmutable::class), 'chan{serv}');
 
         $this->channelRepository->expects(self::once())->method('findByChannelName')->willReturn($registered);
         $this->syncCompletedRegistry->expects(self::once())->method('isSyncCompleted')->willReturn(true);
@@ -563,7 +561,7 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
 
         $registered = $this->createMock(RegisteredChannel::class);
         $registered->expects(self::atLeastOnce())->method('isTopicLock')->willReturn(false);
-        $registered->expects(self::once())->method('updateTopic')->with('New topic', self::isInstanceOf(DateTimeImmutable::class), 'davidlig');
+        $registered->expects(self::once())->method('updateTopic')->with('New topic', self::isInstanceOf(\DateTimeImmutable::class), 'davidlig');
 
         $this->channelRepository
             ->expects(self::once())
@@ -609,7 +607,7 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
 
         $registered = $this->createMock(RegisteredChannel::class);
         $registered->expects(self::atLeastOnce())->method('isTopicLock')->willReturn(false);
-        $registered->expects(self::once())->method('updateTopic')->with('New topic', self::isInstanceOf(DateTimeImmutable::class), null);
+        $registered->expects(self::once())->method('updateTopic')->with('New topic', self::isInstanceOf(\DateTimeImmutable::class), null);
 
         $this->channelRepository
             ->expects(self::once())

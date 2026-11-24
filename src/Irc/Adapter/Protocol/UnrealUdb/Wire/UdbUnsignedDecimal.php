@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\Protocol\UnrealUdb\Wire;
 
-use Stringable;
-use ValueError;
-
 use function intdiv;
 use function ltrim;
 use function preg_match;
@@ -18,7 +15,7 @@ use function strrev;
 use const PHP_INT_MAX;
 
 /** Canonical unsigned-long decimal used by the UDB v4 wire contract. */
-final readonly class UdbUnsignedDecimal implements Stringable
+final readonly class UdbUnsignedDecimal implements \Stringable
 {
     public const string MAX = '18446744073709551615';
 
@@ -49,7 +46,7 @@ final readonly class UdbUnsignedDecimal implements Stringable
     public static function fromInt(int $value): self
     {
         if (0 > $value) {
-            throw new ValueError(sprintf('UDB unsigned decimals cannot be negative: %d.', $value));
+            throw new \ValueError(sprintf('UDB unsigned decimals cannot be negative: %d.', $value));
         }
 
         return new self((string) $value);

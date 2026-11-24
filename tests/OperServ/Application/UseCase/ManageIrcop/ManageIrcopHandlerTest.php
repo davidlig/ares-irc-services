@@ -22,7 +22,6 @@ use App\OperServ\Application\UseCase\ManageIrcop\ManageIrcop;
 use App\OperServ\Application\UseCase\ManageIrcop\ManageIrcopHandler;
 use App\OperServ\Application\UseCase\ManageIrcop\ManageIrcopResult;
 use DateTimeImmutable;
-use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -40,7 +39,7 @@ use function array_values;
 #[CoversClass(OperatorRoleRecord::class)]
 final class ManageIrcopHandlerTest extends TestCase
 {
-    private DateTimeImmutable $occurredAt;
+    private \DateTimeImmutable $occurredAt;
 
     #[Test]
     public function addsOperatorAndRecordsRootAuditAfterPersistenceBeforeProjection(): void
@@ -73,7 +72,7 @@ final class ManageIrcopHandlerTest extends TestCase
         $operations = new IrcopOperationLog();
         $oldRole = $this->role(1, 'OPER');
         $newRole = $this->role(2, 'ADMIN');
-        $assignment = new OperatorAssignmentRecord(7, $oldRole, new DateTimeImmutable('2026-09-01'));
+        $assignment = new OperatorAssignmentRecord(7, $oldRole, new \DateTimeImmutable('2026-09-01'));
         $assignments = new MemoryOperatorAssignmentStore($operations, [7 => $assignment]);
         $network = new RecordingOperatorAssignmentProjection($operations);
         $audit = new RecordingIrcopAudit($operations);
@@ -97,7 +96,7 @@ final class ManageIrcopHandlerTest extends TestCase
     {
         $operations = new IrcopOperationLog();
         $role = $this->role(1, 'OPER');
-        $assignment = new OperatorAssignmentRecord(7, $role, new DateTimeImmutable('2026-09-01'));
+        $assignment = new OperatorAssignmentRecord(7, $role, new \DateTimeImmutable('2026-09-01'));
         $assignments = new MemoryOperatorAssignmentStore($operations, [7 => $assignment]);
         $network = new RecordingOperatorAssignmentProjection($operations);
         $audit = new RecordingIrcopAudit($operations);
@@ -127,7 +126,7 @@ final class ManageIrcopHandlerTest extends TestCase
             'UnknownRole' => new OperatorAccountData(10, 'UnknownRole', true),
         ]);
         $assignments = new MemoryOperatorAssignmentStore($operations, [
-            9 => new OperatorAssignmentRecord(9, $role, new DateTimeImmutable('2026-09-01')),
+            9 => new OperatorAssignmentRecord(9, $role, new \DateTimeImmutable('2026-09-01')),
         ]);
         $audit = new RecordingIrcopAudit($operations);
         $handler = $this->handler($accounts, $assignments, new MemoryIrcopRoleStore(['OPER' => $role]), new RecordingOperatorAssignmentProjection($operations), $audit);
@@ -163,7 +162,7 @@ final class ManageIrcopHandlerTest extends TestCase
     {
         $operations = new IrcopOperationLog();
         $role = $this->role(1, 'OPER');
-        $addedAt = new DateTimeImmutable('2026-09-01');
+        $addedAt = new \DateTimeImmutable('2026-09-01');
         $assignments = new MemoryOperatorAssignmentStore($operations, [
             7 => new OperatorAssignmentRecord(7, $role, $addedAt),
             8 => new OperatorAssignmentRecord(8, $role, $addedAt),
@@ -204,7 +203,7 @@ final class ManageIrcopHandlerTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->occurredAt = new DateTimeImmutable('2026-09-08T11:30:00+00:00');
+        $this->occurredAt = new \DateTimeImmutable('2026-09-08T11:30:00+00:00');
     }
 
     private function handler(
@@ -302,7 +301,7 @@ final class MemoryOperatorAssignmentStore implements OperatorAssignmentStore
         return array_values($this->assignments);
     }
 
-    public function assign(int $nickId, OperatorRoleRecord $role, ?int $addedById, DateTimeImmutable $addedAt): void
+    public function assign(int $nickId, OperatorRoleRecord $role, ?int $addedById, \DateTimeImmutable $addedAt): void
     {
         $this->operations->entries[] = 'assign';
         $this->assigned[] = [$nickId, $role, $addedById, $addedAt];
@@ -332,32 +331,32 @@ final readonly class MemoryIrcopRoleStore implements OperatorRoleStore
 
     public function create(string $name, string $description): OperatorRoleRecord
     {
-        throw new LogicException('Not used.');
+        throw new \LogicException('Not used.');
     }
 
     public function remove(string $name): void
     {
-        throw new LogicException('Not used.');
+        throw new \LogicException('Not used.');
     }
 
     public function setPermissions(string $roleName, array $permissions): void
     {
-        throw new LogicException('Not used.');
+        throw new \LogicException('Not used.');
     }
 
     public function setUserModes(string $roleName, array $modes): void
     {
-        throw new LogicException('Not used.');
+        throw new \LogicException('Not used.');
     }
 
     public function setForcedVhostPattern(string $roleName, ?string $pattern): void
     {
-        throw new LogicException('Not used.');
+        throw new \LogicException('Not used.');
     }
 
     public function setOperclass(string $roleName, ?string $operclass): void
     {
-        throw new LogicException('Not used.');
+        throw new \LogicException('Not used.');
     }
 }
 

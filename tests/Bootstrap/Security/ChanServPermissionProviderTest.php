@@ -10,7 +10,6 @@ use App\OperServ\Application\Security\PermissionProviderInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
 
 #[CoversClass(ChanServPermissionProvider::class)]
 #[CoversClass(ChanServPermission::class)]
@@ -47,7 +46,7 @@ final class ChanServPermissionProviderTest extends TestCase
     #[Test]
     public function constructorCanBeInvokedViaReflectionForCoverage(): void
     {
-        $reflection = new ReflectionClass(ChanServPermission::class);
+        $reflection = new \ReflectionClass(ChanServPermission::class);
         $constructor = $reflection->getConstructor();
         self::assertNotNull($constructor);
         $constructor->invoke($reflection->newInstanceWithoutConstructor());

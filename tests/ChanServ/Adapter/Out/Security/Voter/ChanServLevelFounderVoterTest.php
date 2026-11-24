@@ -16,8 +16,6 @@ use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
-use stdClass;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\VoterInterface;
 
@@ -73,7 +71,7 @@ final class ChanServLevelFounderVoterTest extends TestCase
         $token = $this->createStub(TokenInterface::class);
 
         self::assertSame(VoterInterface::ACCESS_ABSTAIN, $voter->vote($token, $this->createChanServContext(null, null), ['chanserv.drop']));
-        self::assertSame(VoterInterface::ACCESS_ABSTAIN, $voter->vote($token, new stdClass(), [ChanServPermission::LEVEL_FOUNDER]));
+        self::assertSame(VoterInterface::ACCESS_ABSTAIN, $voter->vote($token, new \stdClass(), [ChanServPermission::LEVEL_FOUNDER]));
     }
 
     private function sender(string $nickname, bool $identified, bool $ircOperator): SenderView
@@ -83,7 +81,7 @@ final class ChanServLevelFounderVoterTest extends TestCase
 
     private function createChanServContext(?SenderView $sender, ?ChanAccountView $account): ChanServContext
     {
-        $reflection = new ReflectionClass(ChanServContext::class);
+        $reflection = new \ReflectionClass(ChanServContext::class);
         $context = $reflection->newInstanceWithoutConstructor();
         $reflection->getProperty('sender')->setValue($context, $sender);
         $reflection->getProperty('senderAccount')->setValue($context, $account);

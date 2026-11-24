@@ -65,11 +65,9 @@ use App\NickServ\Application\UseCase\Set\SetNickSettingResult;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\NickServ\Domain\ValueObject\RegistrationMode;
 use App\Shared\Application\Port\EventBusInterface;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use ReflectionProperty;
 use Symfony\Component\Translation\Translator;
 
 use function dirname;
@@ -175,8 +173,8 @@ final class PasswordPolicyRoutingTest extends TestCase
      */
     private function service(PasswordPolicy $policy, array &$messages, ?bool $accepted, string $expectedPassword = '', string $locale = 'es'): array
     {
-        $account = RegisteredNick::createActive('Target', 'old-hash', null, $locale, new DateTimeImmutable(), str_repeat('a', 64));
-        new ReflectionProperty($account, 'id')->setValue($account, 1);
+        $account = RegisteredNick::createActive('Target', 'old-hash', null, $locale, new \DateTimeImmutable(), str_repeat('a', 64));
+        new \ReflectionProperty($account, 'id')->setValue($account, 1);
         $writes = new class {
             public int $count = 0;
         };
@@ -186,12 +184,12 @@ final class PasswordPolicyRoutingTest extends TestCase
         $registrationRepo = $this->createStub(RegisterNickRepository::class);
         $registrationRepo->method('save')->willReturnCallback(static function (RegisteredNick $nick) use ($writes): void {
             ++$writes->count;
-            new ReflectionProperty($nick, 'id')->setValue($nick, 2);
+            new \ReflectionProperty($nick, 'id')->setValue($nick, 2);
         });
         $hasher = $this->createMock(PasswordHasher::class);
         $hasher->expects(true === $accepted ? self::once() : self::never())->method('hash')->with($expectedPassword)->willReturn('new-hash');
         $clock = $this->createStub(Clock::class);
-        $clock->method('now')->willReturn(new DateTimeImmutable('2026-11-03T18:00:00Z'));
+        $clock->method('now')->willReturn(new \DateTimeImmutable('2026-11-03T18:00:00Z'));
         $mode = $this->createStub(RegistrationModeQuery::class);
         $mode->method('current')->willReturn(RegistrationMode::Token);
         if (false === $accepted) {

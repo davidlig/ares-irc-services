@@ -27,9 +27,9 @@ final class FounderChangeTokenRegistry implements FounderChangeTokenPort, InMemo
     private array $lastRequestAt = [];
 
     /** @param ?Closure(): DateTimeImmutable $clock */
-    public function __construct(private readonly ?Closure $clock = null) {}
+    public function __construct(private readonly ?\Closure $clock = null) {}
 
-    public function store(int $channelId, int $newFounderNickId, string $token, DateTimeImmutable $expiresAt): void
+    public function store(int $channelId, int $newFounderNickId, string $token, \DateTimeImmutable $expiresAt): void
     {
         $this->entries[$channelId] = [
             'newFounderNickId' => $newFounderNickId,
@@ -56,7 +56,7 @@ final class FounderChangeTokenRegistry implements FounderChangeTokenPort, InMemo
         return $this->validateAndConsumeToken($entry, $token, $channelId);
     }
 
-    public function getLastRequestAt(int $channelId): ?DateTimeImmutable
+    public function getLastRequestAt(int $channelId): ?\DateTimeImmutable
     {
         return $this->lastRequestAt[$channelId] ?? null;
     }
@@ -87,9 +87,9 @@ final class FounderChangeTokenRegistry implements FounderChangeTokenPort, InMemo
         return $removed;
     }
 
-    private function now(): DateTimeImmutable
+    private function now(): \DateTimeImmutable
     {
-        return null !== $this->clock ? ($this->clock)() : new DateTimeImmutable();
+        return null !== $this->clock ? ($this->clock)() : new \DateTimeImmutable();
     }
 
     /**

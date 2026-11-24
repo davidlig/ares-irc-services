@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Tests\ChanServ\Application\PublishedEvent;
 
 use App\ChanServ\Application\PublishedEvent\ChannelPendingDeletionEvent;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -16,7 +15,7 @@ final class ChannelPendingDeletionEventTest extends TestCase
     #[Test]
     public function constructionAndProperties(): void
     {
-        $at = new DateTimeImmutable('2026-09-19 13:36:00');
+        $at = new \DateTimeImmutable('2026-09-19 13:36:00');
         $event = new ChannelPendingDeletionEvent(7, '#Test2', '#test2', 'OperNick', $at);
 
         self::assertSame(7, $event->channelId);
@@ -29,7 +28,7 @@ final class ChannelPendingDeletionEventTest extends TestCase
     #[Test]
     public function acceptsNullOperator(): void
     {
-        $event = new ChannelPendingDeletionEvent(7, '#Test2', '#test2', null, new DateTimeImmutable());
+        $event = new ChannelPendingDeletionEvent(7, '#Test2', '#test2', null, new \DateTimeImmutable());
 
         self::assertNull($event->performedBy);
     }

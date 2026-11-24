@@ -24,11 +24,9 @@ use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
 use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\Shared\Application\Port\EventBusInterface;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionProperty;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(SetEmailHandler::class)]
@@ -163,8 +161,8 @@ final class SetEmailHandlerTest extends TestCase
     public function blockedEmailRequiresExplicitFounderLevelPermissionNotMerelyIrcopMode(): void
     {
         foreach ([[false, false], [false, true], [true, false], [true, true]] as [$levelFounder, $ircop]) {
-            $channel = RegisteredChannel::register(new DateTimeImmutable('2026-10-25'), '#example', 1, 'Example');
-            new ReflectionProperty(RegisteredChannel::class, 'id')->setValue($channel, 1);
+            $channel = RegisteredChannel::register(new \DateTimeImmutable('2026-10-25'), '#example', 1, 'Example');
+            new \ReflectionProperty(RegisteredChannel::class, 'id')->setValue($channel, 1);
             $channel->updateEmail('original@example.org');
             $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
             $channels->expects($levelFounder ? self::once() : self::never())->method('save');

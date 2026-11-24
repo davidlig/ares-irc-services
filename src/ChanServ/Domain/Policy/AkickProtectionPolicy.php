@@ -13,7 +13,7 @@ final readonly class AkickProtectionPolicy
      * @param list<string>            $protectedNicknames
      * @param Closure(string): string $fold               negotiated identity fold
      */
-    public function firstProtectedNickname(AkickMask $mask, array $protectedNicknames, Closure $fold): ?string
+    public function firstProtectedNickname(AkickMask $mask, array $protectedNicknames, \Closure $fold): ?string
     {
         if (!$mask->targetsSpecificNickname()) {
             return null;

@@ -8,7 +8,6 @@ use App\NickServ\Adapter\In\Irc\TimezoneHelpProvider;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
 
 use function array_filter;
 use function in_array;
@@ -172,8 +171,8 @@ final class TimezoneHelpProviderTest extends TestCase
         $regions = $provider->getRegions();
 
         $expectedOrder = ['Africa', 'America', 'Antarctica', 'Arctic', 'Asia', 'Atlantic', 'Australia', 'Europe', 'Indian', 'Pacific'];
-        $expectedInRegions = array_filter($expectedOrder, static fn ($r) => in_array($r, $regions, true));
-        $actualInExpected = array_filter($regions, static fn ($r) => in_array($r, $expectedOrder, true));
+        $expectedInRegions = array_filter($expectedOrder, in_array(?, $regions, true));
+        $actualInExpected = array_filter($regions, in_array(?, $expectedOrder, true));
 
         self::assertSame($expectedInRegions, $actualInExpected, 'Regions should be in PHP manual order');
     }
@@ -216,7 +215,7 @@ final class TimezoneHelpProviderTest extends TestCase
     #[Test]
     public function ensureLoadedInitializesByRegionWhenNull(): void
     {
-        $reflection = new ReflectionClass(TimezoneHelpProvider::class);
+        $reflection = new \ReflectionClass(TimezoneHelpProvider::class);
         $property = $reflection->getProperty('byRegion');
         $property->setValue(null, null);
 

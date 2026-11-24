@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\ChanServ\Application\UseCase\ConfigureSecure;
 
 use App\ChanServ\Domain\Entity\RegisteredChannel;
-use DateTimeImmutable;
 
 final readonly class ConfigureChannelSecure
 {
@@ -13,6 +12,6 @@ final readonly class ConfigureChannelSecure
         public RegisteredChannel $channel,
         public bool $enabled,
         public string $actorNickname,
-        public DateTimeImmutable $occurredAt,
+        public \DateTimeImmutable $occurredAt,
     ) {}
 }

@@ -23,13 +23,9 @@ use App\NickServ\Application\UseCase\Saregister\SaregisterNickResult;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\NickServ\Domain\ValueObject\NickStatus;
 use App\NickServ\Domain\ValueObject\RegistrationMode;
-use DateTimeImmutable;
-use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionProperty;
-use RuntimeException;
 
 use function hash;
 
@@ -38,7 +34,7 @@ use function hash;
 #[CoversClass(SaregisterNickResult::class)]
 final class SaregisterNickHandlerTest extends TestCase
 {
-    private DateTimeImmutable $now;
+    private \DateTimeImmutable $now;
 
     #[Test]
     public function rejectsInvalidNicknameBeforeAnyOperation(): void
@@ -173,15 +169,13 @@ final class SaregisterNickHandlerTest extends TestCase
             self::assertSame($tokenHash, $nick->getRescueTokenHash());
             self::assertSame('optional@example.com', $nick->getEmail());
             self::assertSame('es', $nick->getLanguage());
-            new ReflectionProperty($nick, 'id')->setValue($nick, 42);
+            new \ReflectionProperty($nick, 'id')->setValue($nick, 42);
         });
 
         $eventPublisher = $this->createMock(RegistrationEventPublisher::class);
-        $eventPublisher->expects(self::once())->method('publish')->with(self::callback(function (object $event): bool {
-            return $event instanceof NickPasswordHashAvailable
+        $eventPublisher->expects(self::once())->method('publish')->with(self::callback(fn (object $event): bool => $event instanceof NickPasswordHashAvailable
                 && 'NewNick' === $event->nickname
-                && 'hashed_password' === $event->passwordHash;
-        }));
+                && 'hashed_password' === $event->passwordHash));
 
         $historyRepo = $this->createMock(NickHistoryRepositoryInterface::class);
         $historyRepo->expects(self::once())->method('save');
@@ -252,7 +246,7 @@ final class SaregisterNickHandlerTest extends TestCase
         $tokenHash = hash('sha256', 'uuid-token-v4');
 
         $mailSender = $this->createMock(SaregisterMailSender::class);
-        $mailSender->expects(self::once())->method('sendRescueToken')->willThrowException(new RuntimeException('SMTP down'));
+        $mailSender->expects(self::once())->method('sendRescueToken')->willThrowException(new \RuntimeException('SMTP down'));
 
         $codec = $this->createStub(RescueTokenCodec::class);
         $codec->method('generate')->willReturn('uuid-token-v4');
@@ -282,14 +276,14 @@ final class SaregisterNickHandlerTest extends TestCase
 
         $handler = $this->handler(codec: $codec);
 
-        $this->expectException(LogicException::class);
+        $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('Generated rescue token is invalid.');
         $handler->handle($this->command());
     }
 
     protected function setUp(): void
     {
-        $this->now = new DateTimeImmutable('2026-10-30T15:00:00Z');
+        $this->now = new \DateTimeImmutable('2026-10-30T15:00:00Z');
     }
 
     private function handler(
@@ -327,7 +321,7 @@ final class SaregisterNickHandlerTest extends TestCase
 
         $defaultRepo = $this->createStub(RegisterNickRepository::class);
         $defaultRepo->method('save')->willReturnCallback(static function (RegisteredNick $nick): void {
-            new ReflectionProperty($nick, 'id')->setValue($nick, 100);
+            new \ReflectionProperty($nick, 'id')->setValue($nick, 100);
         });
 
         return new SaregisterNickHandler(

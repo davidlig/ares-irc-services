@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\NickServ\Application\PublishedEvent;
 
 use App\NickServ\Application\Port\In\NickServEvent;
-use DateTimeImmutable;
 
 final readonly class NickAutomaticModesChangedEvent implements NickServEvent
 {
@@ -22,6 +21,6 @@ final readonly class NickAutomaticModesChangedEvent implements NickServEvent
         public ?int $performedByNickId,
         public string $performedByIp,
         public string $performedByHost,
-        public DateTimeImmutable $occurredAt,
+        public \DateTimeImmutable $occurredAt,
     ) {}
 }

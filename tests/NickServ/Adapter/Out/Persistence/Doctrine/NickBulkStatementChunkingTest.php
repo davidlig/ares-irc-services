@@ -10,7 +10,6 @@ use App\NickServ\Adapter\Out\User\NickAccountResolver;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\Tests\Bootstrap\Persistence\QueryCaptureLogger;
 use App\Tests\NickServ\Support\NegotiatedCaseMapping;
-use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Logging\Middleware;
@@ -123,7 +122,7 @@ final class NickBulkStatementChunkingTest extends TestCase
     {
         $repository = new RegisteredNickDoctrineRepository($this->em, NegotiatedCaseMapping::network());
         $accounts = array_values($repository->findByNicks($this->expectedNames()));
-        $seenAt = new DateTimeImmutable('2026-05-06 07:08:09');
+        $seenAt = new \DateTimeImmutable('2026-05-06 07:08:09');
         foreach ($accounts as $account) {
             $account->markSeen($seenAt);
         }

@@ -8,7 +8,6 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbBlock;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbValue;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbNativeRowCodec;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbUnsignedDecimal;
-use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -31,7 +30,7 @@ final class UdbNativeRowCodecTest extends TestCase
     #[Test]
     public function itEncodesMaximumUnsignedNumberAsEightLittleEndianBytes(): void
     {
-        $row = UdbNativeRowCodec::encode(UdbBlock::Settings, ['clones'], UdbValue::number(UdbUnsignedDecimal::parse('18446744073709551615') ?? throw new LogicException('The test uint64 fixture must be valid.')));
+        $row = UdbNativeRowCodec::encode(UdbBlock::Settings, ['clones'], UdbValue::number(UdbUnsignedDecimal::parse('18446744073709551615') ?? throw new \LogicException('The test uint64 fixture must be valid.')));
 
         self::assertSame('S' . "\x01\x02\x00" . pack('V2', 34, 8) . "\x00\x00\x00\x00" . pack('V', 6) . 'clones' . str_repeat("\xFF", 8), $row);
     }

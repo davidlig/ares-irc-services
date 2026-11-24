@@ -7,7 +7,6 @@ namespace App\MemoServ\Application\UseCase\Read;
 use App\MemoServ\Application\Port\Out\MemoChannelPort;
 use App\MemoServ\Application\Port\Out\MemoRepositoryInterface;
 use App\MemoServ\Application\Port\Out\MemoUserAccountPort;
-use LogicException;
 
 final readonly class ReadMemoHandler implements ReadMemoHandlerInterface
 {
@@ -41,7 +40,7 @@ final readonly class ReadMemoHandler implements ReadMemoHandlerInterface
         if (null === $from) {
             $senderNickId = $memo->getSenderNickId();
             if (null === $senderNickId) {
-                throw new LogicException('Memo sender representation is missing.');
+                throw new \LogicException('Memo sender representation is missing.');
             }
             $from = $this->userAccountPort->findNicknameById($senderNickId) ?? (string) $senderNickId;
         }

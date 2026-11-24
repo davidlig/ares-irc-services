@@ -24,7 +24,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
-use ReflectionClass;
 
 #[CoversClass(DoctrineOperatorRoleNetworkProjection::class)]
 #[CoversClass(OperRoleForcedVhostChangedEvent::class)]
@@ -111,9 +110,9 @@ final class DoctrineOperatorRoleNetworkProjectionTest extends TestCase
         $connection = $this->createStub(ActiveProtocolModuleHolderInterface::class);
         $connection->method('getProtocolModule')->willReturn($module);
 
-        $modes = new ReflectionClass(IrcopModeApplier::class)->newInstanceWithoutConstructor();
-        $vhost = new ReflectionClass(ForcedVhostApplier::class)->newInstanceWithoutConstructor();
-        $operclass = new ReflectionClass(IrcopOperclassApplier::class)->newInstanceWithoutConstructor();
+        $modes = new \ReflectionClass(IrcopModeApplier::class)->newInstanceWithoutConstructor();
+        $vhost = new \ReflectionClass(ForcedVhostApplier::class)->newInstanceWithoutConstructor();
+        $operclass = new \ReflectionClass(IrcopOperclassApplier::class)->newInstanceWithoutConstructor();
 
         return new DoctrineOperatorRoleNetworkProjection(
             $modes,

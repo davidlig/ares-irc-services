@@ -38,9 +38,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-use RuntimeException;
 use Symfony\Contracts\Translation\TranslatorInterface;
-use Throwable;
 
 #[CoversClass(NickServCommandListener::class)]
 final class NickServCommandListenerTest extends TestCase
@@ -206,7 +204,7 @@ final class NickServCommandListenerTest extends TestCase
         $sender = self::senderView();
         $this->userLookup->expects(self::atLeastOnce())->method('findByUid')->with(self::SENDER_UID)->willReturn($sender);
 
-        $throwCommand = $this->createThrowCommand('LIST', new RuntimeException('Unexpected error.'));
+        $throwCommand = $this->createThrowCommand('LIST', new \RuntimeException('Unexpected error.'));
         $this->nickServService = $this->createNickServServiceWithCommands([$throwCommand]);
         $this->listener = new NickServCommandListener(
             $this->nickServBot,
@@ -300,12 +298,12 @@ final class NickServCommandListenerTest extends TestCase
         );
     }
 
-    private function createThrowCommand(string $name, Throwable $e): NickServCommandInterface
+    private function createThrowCommand(string $name, \Throwable $e): NickServCommandInterface
     {
         return new class($name, $e) implements NickServCommandInterface {
             public function __construct(
                 private readonly string $commandName,
-                private readonly Throwable $exception,
+                private readonly \Throwable $exception,
             ) {}
 
             public function getName(): string

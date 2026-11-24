@@ -29,11 +29,9 @@ use App\NickServ\Application\UseCase\Suspend\SuspendNickOutcome;
 use App\NickServ\Application\UseCase\Suspend\SuspendNickResult;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\Shared\Application\Port\EventBusInterface;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use const DATE_ATOM;
@@ -644,7 +642,7 @@ final class SuspendCommandTest extends TestCase
 
     private function createActivatedNick(string $nickname): RegisteredNick
     {
-        $nick = RegisteredNick::createPending($nickname, 'hash', 'test@example.com', 'en', new DateTimeImmutable('+1 hour'), new DateTimeImmutable());
+        $nick = RegisteredNick::createPending($nickname, 'hash', 'test@example.com', 'en', new \DateTimeImmutable('+1 hour'), new \DateTimeImmutable());
         $nick->activate();
 
         return $nick;
@@ -652,10 +650,10 @@ final class SuspendCommandTest extends TestCase
 
     private function createNickWithId(string $nickname, int $id): RegisteredNick
     {
-        $nick = RegisteredNick::createPending($nickname, 'hash', 'test@example.com', 'en', new DateTimeImmutable('+1 hour'), new DateTimeImmutable());
+        $nick = RegisteredNick::createPending($nickname, 'hash', 'test@example.com', 'en', new \DateTimeImmutable('+1 hour'), new \DateTimeImmutable());
         $nick->activate();
 
-        $reflection = new ReflectionClass(RegisteredNick::class);
+        $reflection = new \ReflectionClass(RegisteredNick::class);
         $idProp = $reflection->getProperty('id');
         $idProp->setValue($nick, $id);
 
@@ -709,7 +707,7 @@ final class SuspendCommandTest extends TestCase
     private function clock(): Clock
     {
         $clock = $this->createStub(Clock::class);
-        $clock->method('now')->willReturn(new DateTimeImmutable('2026-09-06 12:00:00 UTC'));
+        $clock->method('now')->willReturn(new \DateTimeImmutable('2026-09-06 12:00:00 UTC'));
 
         return $clock;
     }

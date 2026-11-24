@@ -12,11 +12,9 @@ use App\NickServ\Application\Service\NickDropService;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use Psr\Log\LoggerInterface;
-use RuntimeException;
 
 use function sprintf;
 
@@ -34,7 +32,7 @@ final class PurgeTasksPostDropFailureDoctrineTest extends DoctrineIntegrationTes
     {
         $goneId = $this->persistInactive('Gone', 'gone@example.com');
         $this->persistInactive('Healthy', 'healthy@example.com');
-        $failure = new RuntimeException('force rename failed');
+        $failure = new \RuntimeException('force rename failed');
         $dropped = [];
         $dropService = $this->createStub(NickDropService::class);
         $dropService->method('dropNick')->willReturnCallback(function (RegisteredNick $nick) use ($failure, &$dropped): void {
@@ -62,7 +60,7 @@ final class PurgeTasksPostDropFailureDoctrineTest extends DoctrineIntegrationTes
     {
         $goneId = $this->persistPendingDeletion('Gone', 'gone@example.com');
         $this->persistPendingDeletion('Healthy', 'healthy@example.com');
-        $failure = new RuntimeException('drop event subscriber failed');
+        $failure = new \RuntimeException('drop event subscriber failed');
         $dropped = [];
         $dropService = $this->createStub(NickDropService::class);
         $dropService->method('hardDropNick')->willReturnCallback(function (RegisteredNick $nick) use ($failure, &$dropped): void {
@@ -133,8 +131,8 @@ final class PurgeTasksPostDropFailureDoctrineTest extends DoctrineIntegrationTes
         return $clock;
     }
 
-    private function now(): DateTimeImmutable
+    private function now(): \DateTimeImmutable
     {
-        return new DateTimeImmutable('2026-09-06 12:00:00 UTC');
+        return new \DateTimeImmutable('2026-09-06 12:00:00 UTC');
     }
 }

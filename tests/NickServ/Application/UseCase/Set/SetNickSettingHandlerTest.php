@@ -33,12 +33,10 @@ use App\NickServ\Application\UseCase\Set\SetNickSettingOutcome;
 use App\NickServ\Application\UseCase\Set\SetNickSettingResult;
 use App\NickServ\Domain\Entity\ForbiddenVhost;
 use App\NickServ\Domain\Entity\RegisteredNick;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
 
 use function strtolower;
 
@@ -140,7 +138,7 @@ final class SetNickSettingHandlerTest extends TestCase
     public function operatorEmailChangeAllowsAnAbsentCurrentAddressWithoutToken(): void
     {
         $account = $this->account();
-        new ReflectionClass(RegisteredNick::class)->getProperty('email')->setValue($account, null);
+        new \ReflectionClass(RegisteredNick::class)->getProperty('email')->setValue($account, null);
         $validator = $this->createMock(RescueTokenValidator::class);
         $validator->expects(self::never())->method('validate');
         $result = $this->handler($this->repositoryReturning($account), validator: $validator)->handle($this->input(SetNickSettingOption::Email, 'new@example.com', true));
@@ -152,7 +150,7 @@ final class SetNickSettingHandlerTest extends TestCase
     public function ownerEmailRequiresConfirmedReusableRescueCredentialWithoutEmail(): void
     {
         $account = $this->account();
-        new ReflectionClass(RegisteredNick::class)->getProperty('email')->setValue($account, null);
+        new \ReflectionClass(RegisteredNick::class)->getProperty('email')->setValue($account, null);
         $repository = $this->repositoryReturning($account);
         $validator = $this->createMock(RescueTokenValidator::class);
         $validator->expects(self::exactly(2))->method('validate')->with(self::callback(static fn (RescueTokenValidation $input): bool => 1 === $input->accountId && 'RIGHT' === $input->token && 'ip:client' === $input->clientKey))->willReturn(new RescueTokenValidationResult(RescueTokenValidationOutcome::Valid));
@@ -236,7 +234,7 @@ final class SetNickSettingHandlerTest extends TestCase
         )->outcome);
 
         $forbidden = $this->createStub(ForbiddenVhostRepositoryInterface::class);
-        $forbidden->method('findAll')->willReturn([ForbiddenVhost::create('*.blocked', null, new DateTimeImmutable())]);
+        $forbidden->method('findAll')->willReturn([ForbiddenVhost::create('*.blocked', null, new \DateTimeImmutable())]);
         self::assertSame(SetNickSettingOutcome::InvalidVhost, $this->handler($repository, forbidden: $forbidden)->handle(
             $this->input(SetNickSettingOption::Vhost, 'foo.blocked'),
         )->outcome);
@@ -352,7 +350,7 @@ final class SetNickSettingHandlerTest extends TestCase
         ?EmailDomainPolicy $emailPolicy = null,
     ): SetNickSettingHandler {
         $clock = $this->createStub(Clock::class);
-        $clock->method('now')->willReturn(new DateTimeImmutable('2026-09-09 12:00:00 UTC'));
+        $clock->method('now')->willReturn(new \DateTimeImmutable('2026-09-09 12:00:00 UTC'));
 
         return new SetNickSettingHandler(
             $emailPolicy ?? $this->createStub(EmailDomainPolicy::class),
@@ -392,11 +390,11 @@ final class SetNickSettingHandlerTest extends TestCase
             'hash',
             strtolower($nickname) . '@example.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable(),
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable(),
         );
         $account->activate();
-        new ReflectionClass(RegisteredNick::class)->getProperty('id')->setValue($account, $id);
+        new \ReflectionClass(RegisteredNick::class)->getProperty('id')->setValue($account, $id);
 
         return $account;
     }

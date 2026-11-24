@@ -11,7 +11,6 @@ use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\Shared\Adapter\In\Irc\Presentation\Component;
 use App\Shared\Adapter\In\Irc\Presentation\Fragment;
 use App\Shared\Adapter\In\Irc\Presentation\Role;
-use DateTimeImmutable;
 
 use function strtoupper;
 use function trim;
@@ -38,7 +37,7 @@ final readonly class SetSecureHandler implements SetOptionHandlerInterface
             $channel,
             $on,
             $context->sender->nick,
-            new DateTimeImmutable(),
+            new \DateTimeImmutable(),
         ));
         $context->reply($on ? 'set.secure.on' : 'set.secure.off', role: Role::Success);
 

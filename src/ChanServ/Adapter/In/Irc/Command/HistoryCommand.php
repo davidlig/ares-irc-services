@@ -21,7 +21,6 @@ use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use App\Shared\Adapter\In\Irc\Presentation\Component;
 use App\Shared\Adapter\In\Irc\Presentation\Fragment;
 use App\Shared\Adapter\In\Irc\Presentation\Role;
-use DateTimeImmutable;
 
 use function array_slice;
 use function base64_decode;
@@ -189,7 +188,7 @@ final readonly class HistoryCommand implements ChanServCommandInterface, IrcopAu
             actorAccountId: $context->senderAccount?->id,
             actorIp: $this->decodeIp($sender->ipBase64),
             actorHost: sprintf('%s@%s', $sender->ident, $sender->hostname),
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
             message: $message,
             entryId: $entryId,
             page: $page,

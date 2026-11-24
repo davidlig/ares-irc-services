@@ -27,11 +27,9 @@ use App\NickServ\Application\UseCase\SyncNetworkIdentification\SyncNetworkIdenti
 use App\NickServ\Application\UseCase\SyncNetworkIdentification\SyncNetworkIdentificationHandler;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\Tests\NickServ\Support\NegotiatedCaseMapping;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
 
 #[CoversClass(SyncNetworkIdentification::class)]
 #[CoversClass(SyncNetworkIdentificationHandler::class)]
@@ -55,7 +53,7 @@ final class SyncNetworkIdentificationHandlerTest extends TestCase
         $handler = $this->handler($repository, $events, $identifiedSessions, new SessionLanguageRegistry());
         $command = new SyncNetworkIdentification(
             new NetworkUser('001ABC', 'MyNick', 'ident', 'host', 'cloak', 'ip', isIdentified: true),
-            new DateTimeImmutable('2026-09-15 20:00:00'),
+            new \DateTimeImmutable('2026-09-15 20:00:00'),
         );
 
         $handler->handle($command);
@@ -95,7 +93,7 @@ final class SyncNetworkIdentificationHandlerTest extends TestCase
         $handler = $this->handler($repository, $events, $identifiedSessions, $sessionLanguages);
         $command = new SyncNetworkIdentification(
             new NetworkUser('001ABC', 'NewNick', 'ident', 'host', 'cloak', 'ip', isIdentified: true),
-            new DateTimeImmutable('2026-09-15 20:00:00'),
+            new \DateTimeImmutable('2026-09-15 20:00:00'),
         );
 
         $handler->handle($command);
@@ -132,7 +130,7 @@ final class SyncNetworkIdentificationHandlerTest extends TestCase
         $handler = $this->handler($repository, $events, $identifiedSessions, $sessionLanguages);
         $command = new SyncNetworkIdentification(
             new NetworkUser('001ABC', 'OtherNick', 'ident', 'host', 'cloak', 'ip', isIdentified: false),
-            new DateTimeImmutable('2026-09-15 20:00:00'),
+            new \DateTimeImmutable('2026-09-15 20:00:00'),
         );
 
         $handler->handle($command);
@@ -155,7 +153,7 @@ final class SyncNetworkIdentificationHandlerTest extends TestCase
 
         $handler->handle(new SyncNetworkIdentification(
             new NetworkUser('001ABC', 'OtherNick', 'ident', 'host', 'cloak', 'ip'),
-            new DateTimeImmutable('2026-09-15 20:00:00'),
+            new \DateTimeImmutable('2026-09-15 20:00:00'),
         ));
 
         self::assertNull($identifiedSessions->findNick('001ABC'));
@@ -202,12 +200,12 @@ final class SyncNetworkIdentificationHandlerTest extends TestCase
             'hash',
             'user@example.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable(),
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable(),
         );
         $account->activate();
 
-        $reflection = new ReflectionClass($account);
+        $reflection = new \ReflectionClass($account);
         $reflection->getProperty('id')->setValue($account, $id);
 
         return $account;

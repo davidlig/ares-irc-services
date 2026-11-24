@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Irc\Domain\ValueObject;
 
-use InvalidArgumentException;
-
 use function filter_var;
 use function sprintf;
 
@@ -18,14 +16,14 @@ readonly class Hostname
     public function __construct(public string $value)
     {
         if ('' === $value) {
-            throw new InvalidArgumentException('Hostname cannot be empty.');
+            throw new \InvalidArgumentException('Hostname cannot be empty.');
         }
 
         $isValidDomain = false !== filter_var($value, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME);
         $isValidIp = false !== filter_var($value, FILTER_VALIDATE_IP);
 
         if (!$isValidDomain && !$isValidIp) {
-            throw new InvalidArgumentException(sprintf('"%s" is not a valid hostname or IP address.', $value));
+            throw new \InvalidArgumentException(sprintf('"%s" is not a valid hostname or IP address.', $value));
         }
     }
 

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Tests\NickServ\Application\Service;
 
 use App\NickServ\Application\Service\PasswordPolicy;
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -54,7 +53,7 @@ final class PasswordPolicyTest extends TestCase
     #[DataProvider('invalidConfiguration')]
     public function testRejectsInvalidConfiguration(int $minimum, string $complexity): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         new PasswordPolicy($minimum, $complexity);
     }
 

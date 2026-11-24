@@ -19,7 +19,6 @@ use App\OperServ\Application\UseCase\ManageRole\ManageRoleHandler;
 use App\OperServ\Application\UseCase\ManageRole\ManageRoleResult;
 use App\OperServ\Application\UseCase\ManageRole\RoleAction;
 use App\OperServ\Application\UseCase\ManageRole\RoleOutcome;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -35,7 +34,7 @@ use function trim;
 #[CoversClass(OperatorRoleRecord::class)]
 final class ManageRoleHandlerTest extends TestCase
 {
-    private DateTimeImmutable $occurredAt;
+    private \DateTimeImmutable $occurredAt;
 
     /**
      * @param list<string>                              $permissionCatalog
@@ -468,7 +467,7 @@ final class ManageRoleHandlerTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->occurredAt = new DateTimeImmutable('2026-09-08T12:30:00+00:00');
+        $this->occurredAt = new \DateTimeImmutable('2026-09-08T12:30:00+00:00');
     }
 
     /**

@@ -10,7 +10,6 @@ use App\Irc\Domain\ValueObject\Hostname;
 use App\Irc\Domain\ValueObject\LinkPassword;
 use App\Irc\Domain\ValueObject\Port;
 use App\Irc\Domain\ValueObject\ServerName;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -21,7 +20,7 @@ final class ConnectionLostEventTest extends TestCase
     #[Test]
     public function constructionAndProperties(): void
     {
-        $before = new DateTimeImmutable();
+        $before = new \DateTimeImmutable();
         $serverLink = new ServerLink(
             serverName: new ServerName('services.example.com'),
             host: new Hostname('127.0.0.1'),
@@ -31,7 +30,7 @@ final class ConnectionLostEventTest extends TestCase
             useTls: false,
         );
         $event = new ConnectionLostEvent($serverLink, 'Connection reset');
-        $after = new DateTimeImmutable();
+        $after = new \DateTimeImmutable();
 
         self::assertSame($serverLink, $event->serverLink);
         self::assertSame('Connection reset', $event->reason);

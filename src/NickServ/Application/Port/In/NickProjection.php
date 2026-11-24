@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\NickServ\Application\Port\In;
 
-use DateTimeImmutable;
-
 final readonly class NickProjection
 {
     /** @param list<string> $automaticModes */
@@ -19,7 +17,7 @@ final readonly class NickProjection
         public bool $pendingVerification,
         public bool $suspended = false,
         public ?string $suspensionReason = null,
-        public ?DateTimeImmutable $suspendedUntil = null,
+        public ?\DateTimeImmutable $suspendedUntil = null,
         public array $automaticModes = [],
     ) {}
 }

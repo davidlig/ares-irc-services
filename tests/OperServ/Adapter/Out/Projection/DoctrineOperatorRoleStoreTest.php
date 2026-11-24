@@ -13,12 +13,9 @@ use App\OperServ\Domain\Entity\OperRole;
 use App\OperServ\Domain\Repository\OperIrcopRepositoryInterface;
 use App\OperServ\Domain\Repository\OperPermissionRepositoryInterface;
 use App\OperServ\Domain\Repository\OperRoleRepositoryInterface;
-use DateTimeImmutable;
-use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionProperty;
 
 use function array_map;
 
@@ -63,7 +60,7 @@ final class DoctrineOperatorRoleStoreTest extends TestCase
     {
         $roles = $this->createMock(OperRoleRepositoryInterface::class);
         $roles->expects(self::once())->method('save')->willReturnCallback(static function (OperRole $role): void {
-            new ReflectionProperty(OperRole::class, 'id')->setValue($role, 9);
+            new \ReflectionProperty(OperRole::class, 'id')->setValue($role, 9);
         });
         $store = $this->store($roles, $this->createStub(OperPermissionRepositoryInterface::class));
 
@@ -178,7 +175,7 @@ final class DoctrineOperatorRoleStoreTest extends TestCase
     public function invalidatesPermissionSnapshotsAfterChangingRolePermissions(): void
     {
         $role = self::role(7, 'ADMIN');
-        $operator = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 42, $role);
+        $operator = OperIrcop::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), 42, $role);
         $roles = $this->createMock(OperRoleRepositoryInterface::class);
         $roles->expects(self::once())->method('findByName')->with('ADMIN')->willReturn($role);
         $roles->expects(self::once())->method('save')->with($role);
@@ -195,7 +192,7 @@ final class DoctrineOperatorRoleStoreTest extends TestCase
     public function invalidatesPermissionSnapshotsBeforeRemovingARole(): void
     {
         $role = self::role(7, 'ADMIN');
-        $operator = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 42, $role);
+        $operator = OperIrcop::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), 42, $role);
         $roles = $this->createMock(OperRoleRepositoryInterface::class);
         $roles->expects(self::once())->method('findByName')->with('ADMIN')->willReturn($role);
         $operators = $this->createMock(OperIrcopRepositoryInterface::class);
@@ -217,7 +214,7 @@ final class DoctrineOperatorRoleStoreTest extends TestCase
     #[Test]
     public function rejectsMutationWhenTheRoleDisappeared(): void
     {
-        $this->expectException(LogicException::class);
+        $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('Role disappeared during mutation.');
 
         $this->store(
@@ -237,7 +234,7 @@ final class DoctrineOperatorRoleStoreTest extends TestCase
     private static function role(int $id, string $name, string $description = ''): OperRole
     {
         $role = OperRole::create($name, $description);
-        new ReflectionProperty(OperRole::class, 'id')->setValue($role, $id);
+        new \ReflectionProperty(OperRole::class, 'id')->setValue($role, $id);
 
         return $role;
     }

@@ -18,11 +18,9 @@ use App\NickServ\Application\Security\NickServPermission;
 use App\NickServ\Application\UseCase\Noexpire\SetNoexpireNick;
 use App\NickServ\Application\UseCase\Noexpire\SetNoexpireNickHandlerInterface;
 use App\NickServ\Application\UseCase\Noexpire\SetNoexpireNickResult;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Stringable;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function implode;
@@ -185,7 +183,7 @@ final class NoexpireCommandTest extends TestCase
             ksort($params);
             $formatted = [];
             foreach ($params as $key => $value) {
-                $formatted[] = (string) $key . ': ' . (is_scalar($value) || $value instanceof Stringable ? (string) $value : '');
+                $formatted[] = (string) $key . ': ' . (is_scalar($value) || $value instanceof \Stringable ? (string) $value : '');
             }
 
             return $id . ' [' . implode(', ', $formatted) . ']';
@@ -211,7 +209,7 @@ final class NoexpireCommandTest extends TestCase
     private function clock(): Clock
     {
         $clock = $this->createStub(Clock::class);
-        $clock->method('now')->willReturn(new DateTimeImmutable('2026-09-06 12:00:00 UTC'));
+        $clock->method('now')->willReturn(new \DateTimeImmutable('2026-09-06 12:00:00 UTC'));
 
         return $clock;
     }

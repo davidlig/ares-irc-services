@@ -43,13 +43,10 @@ use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
 use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
 use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
 use App\Shared\Application\Port\EventBusInterface;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-use ReflectionProperty;
-use RuntimeException;
 use Symfony\Component\Translation\Loader\ArrayLoader;
 use Symfony\Component\Translation\Translator;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -678,13 +675,11 @@ final class NickServServiceTest extends TestCase
             $messages[] = $message;
         });
         $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static function (string $id, array $parameters = []): string {
-            return match ($id) {
-                'set.password.syntax' => 'SET PASSWORD <new_password>',
-                'saset.password.syntax' => 'SASET <nickname> PASSWORD <new_password>',
-                'error.syntax' => 'Syntax: ' . (is_string($parameters['%syntax%'] ?? null) ? $parameters['%syntax%'] : ''),
-                default => $id,
-            };
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $parameters = []): string => match ($id) {
+            'set.password.syntax' => 'SET PASSWORD <new_password>',
+            'saset.password.syntax' => 'SASET <nickname> PASSWORD <new_password>',
+            'error.syntax' => 'Syntax: ' . (is_string($parameters['%syntax%'] ?? null) ? $parameters['%syntax%'] : ''),
+            default => $id,
         });
         $dispatchedEvents = [];
         $events = $this->createMock(EventBusInterface::class);
@@ -794,7 +789,7 @@ final class NickServServiceTest extends TestCase
 
             public function execute(NickServContext $context): null
             {
-                throw new RuntimeException('Handler error');
+                throw new \RuntimeException('Handler error');
             }
         };
 
@@ -817,7 +812,7 @@ final class NickServServiceTest extends TestCase
             $this->createStub(EventBusInterface::class),
         );
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Handler error');
         $service->dispatch('CRASH', $sender);
     }
@@ -1462,8 +1457,8 @@ final class NickServServiceTest extends TestCase
         foreach ([true, false] as $allowed) {
             $messages = [];
             $repository = $this->createStub(RegisteredNickRepositoryInterface::class);
-            $account = RegisteredNick::createActive('Admin', 'hash', null, 'en', new DateTimeImmutable());
-            new ReflectionProperty(RegisteredNick::class, 'id')->setValue($account, 1);
+            $account = RegisteredNick::createActive('Admin', 'hash', null, 'en', new \DateTimeImmutable());
+            new \ReflectionProperty(RegisteredNick::class, 'id')->setValue($account, 1);
             $repository->method('findByNick')->willReturn($account);
             $authorization = $this->createStub(AuthorizationCheckerInterface::class);
             $authorization->method('isGranted')->willReturn($allowed);

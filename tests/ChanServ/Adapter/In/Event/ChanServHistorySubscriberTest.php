@@ -16,7 +16,6 @@ use App\ChanServ\Application\PublishedEvent\ChannelSuspendedEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelUnsuspendedEvent;
 use App\ChanServ\Application\Service\ChannelHistoryService;
 use App\ChanServ\Domain\Entity\ChannelHistory;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -68,12 +67,12 @@ final class ChanServHistorySubscriberTest extends TestCase
             channelNameLower: '#test',
             reason: 'Spamming',
             duration: '7d',
-            expiresAt: new DateTimeImmutable('2024-01-22 10:30:00'),
+            expiresAt: new \DateTimeImmutable('2024-01-22 10:30:00'),
             performedBy: 'OperNick',
             performedByNickId: 456,
             performedByIp: '192.168.1.100',
             performedByHost: 'oper@example.com',
-            occurredAt: new DateTimeImmutable('2024-01-15 10:30:00'),
+            occurredAt: new \DateTimeImmutable('2024-01-15 10:30:00'),
         );
 
         $subscriber->onChannelSuspended($event);
@@ -110,7 +109,7 @@ final class ChanServHistorySubscriberTest extends TestCase
             performedByNickId: 456,
             performedByIp: '192.168.1.100',
             performedByHost: 'oper@example.com',
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
         );
 
         $subscriber->onChannelSuspended($event);
@@ -144,7 +143,7 @@ final class ChanServHistorySubscriberTest extends TestCase
             performedByNickId: 456,
             performedByIp: '192.168.1.100',
             performedByHost: 'oper@example.com',
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
         );
 
         $subscriber->onChannelUnsuspended($event);
@@ -165,7 +164,7 @@ final class ChanServHistorySubscriberTest extends TestCase
             performedByNickId: null,
             performedByIp: '*',
             performedByHost: '*',
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
             isRetry: true,
         ));
     }
@@ -192,12 +191,10 @@ final class ChanServHistorySubscriberTest extends TestCase
         $oldFounder = new ChanAccountView(1, 'OldFounder', 'en');
         $newFounder = new ChanAccountView(2, 'NewFounder', 'en');
         $accountPort = $this->createStub(ChanUserAccountPort::class);
-        $accountPort->method('findAccountById')->willReturnCallback(static function (int $id) use ($oldFounder, $newFounder): ?ChanAccountView {
-            return match ($id) {
-                1 => $oldFounder,
-                2 => $newFounder,
-                default => null,
-            };
+        $accountPort->method('findAccountById')->willReturnCallback(static fn (int $id): ?ChanAccountView => match ($id) {
+            1 => $oldFounder,
+            2 => $newFounder,
+            default => null,
         });
         $subscriber = new ChanServHistorySubscriber($historyService, $accountPort);
 
@@ -211,7 +208,7 @@ final class ChanServHistorySubscriberTest extends TestCase
             performedByIp: '192.168.1.100',
             performedByHost: 'oper@example.com',
             byOperator: true,
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
         );
 
         $subscriber->onChannelFounderChanged($event);
@@ -246,7 +243,7 @@ final class ChanServHistorySubscriberTest extends TestCase
             performedByIp: '192.168.1.100',
             performedByHost: 'oper@example.com',
             byOperator: true,
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
         );
 
         $subscriber->onChannelFounderChanged($event);
@@ -270,12 +267,10 @@ final class ChanServHistorySubscriberTest extends TestCase
         $oldSucc = new ChanAccountView(5, 'OldSucc', 'en');
         $newSucc = new ChanAccountView(6, 'NewSucc', 'en');
         $accountPort = $this->createStub(ChanUserAccountPort::class);
-        $accountPort->method('findAccountById')->willReturnCallback(static function (int $id) use ($oldSucc, $newSucc): ?ChanAccountView {
-            return match ($id) {
-                5 => $oldSucc,
-                6 => $newSucc,
-                default => null,
-            };
+        $accountPort->method('findAccountById')->willReturnCallback(static fn (int $id): ?ChanAccountView => match ($id) {
+            5 => $oldSucc,
+            6 => $newSucc,
+            default => null,
         });
         $subscriber = new ChanServHistorySubscriber($historyService, $accountPort);
 
@@ -288,7 +283,7 @@ final class ChanServHistorySubscriberTest extends TestCase
             performedByNickId: 1,
             performedByIp: '10.0.0.1',
             performedByHost: 'founder@host',
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
         );
 
         $subscriber->onChannelSuccessorChanged($event);
@@ -313,11 +308,9 @@ final class ChanServHistorySubscriberTest extends TestCase
         $historyService = new ChannelHistoryService($historyRepo);
         $newSucc = new ChanAccountView(6, 'NewSucc', 'en');
         $accountPort = $this->createStub(ChanUserAccountPort::class);
-        $accountPort->method('findAccountById')->willReturnCallback(static function (int $id) use ($newSucc): ?ChanAccountView {
-            return match ($id) {
-                6 => $newSucc,
-                default => null,
-            };
+        $accountPort->method('findAccountById')->willReturnCallback(static fn (int $id): ?ChanAccountView => match ($id) {
+            6 => $newSucc,
+            default => null,
         });
         $subscriber = new ChanServHistorySubscriber($historyService, $accountPort);
 
@@ -330,7 +323,7 @@ final class ChanServHistorySubscriberTest extends TestCase
             performedByNickId: 1,
             performedByIp: '10.0.0.1',
             performedByHost: 'founder@host',
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
         );
 
         $subscriber->onChannelSuccessorChanged($event);
@@ -353,11 +346,9 @@ final class ChanServHistorySubscriberTest extends TestCase
         $historyService = new ChannelHistoryService($historyRepo);
         $oldSucc = new ChanAccountView(5, 'OldSucc', 'en');
         $accountPort = $this->createStub(ChanUserAccountPort::class);
-        $accountPort->method('findAccountById')->willReturnCallback(static function (int $id) use ($oldSucc): ?ChanAccountView {
-            return match ($id) {
-                5 => $oldSucc,
-                default => null,
-            };
+        $accountPort->method('findAccountById')->willReturnCallback(static fn (int $id): ?ChanAccountView => match ($id) {
+            5 => $oldSucc,
+            default => null,
         });
         $subscriber = new ChanServHistorySubscriber($historyService, $accountPort);
 
@@ -370,7 +361,7 @@ final class ChanServHistorySubscriberTest extends TestCase
             performedByNickId: 1,
             performedByIp: '10.0.0.1',
             performedByHost: 'founder@host',
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
         );
 
         $subscriber->onChannelSuccessorChanged($event);
@@ -408,7 +399,7 @@ final class ChanServHistorySubscriberTest extends TestCase
             performedByNickId: 1,
             performedByIp: '10.0.0.1',
             performedByHost: 'founder@host',
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
         );
 
         $subscriber->onChannelAccessChanged($event);
@@ -446,7 +437,7 @@ final class ChanServHistorySubscriberTest extends TestCase
             performedByNickId: 1,
             performedByIp: '10.0.0.1',
             performedByHost: 'founder@host',
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
         );
 
         $subscriber->onChannelAccessChanged($event);
@@ -483,7 +474,7 @@ final class ChanServHistorySubscriberTest extends TestCase
             performedByNickId: 1,
             performedByIp: '10.0.0.1',
             performedByHost: 'founder@host',
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
         );
 
         $subscriber->onChannelAkickChanged($event);
@@ -517,7 +508,7 @@ final class ChanServHistorySubscriberTest extends TestCase
             performedByNickId: 1,
             performedByIp: '10.0.0.1',
             performedByHost: 'founder@host',
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
         );
 
         $subscriber->onChannelAkickChanged($event);
@@ -554,7 +545,7 @@ final class ChanServHistorySubscriberTest extends TestCase
             performedByNickId: 1,
             performedByIp: '10.0.0.1',
             performedByHost: 'founder@host',
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
         );
 
         $subscriber->onChannelAkickChanged($event);
@@ -590,7 +581,7 @@ final class ChanServHistorySubscriberTest extends TestCase
             performedByNickId: 1,
             performedByIp: '10.0.0.1',
             performedByHost: 'founder@host',
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
         );
 
         $subscriber->onChannelAkickChanged($event);
@@ -626,7 +617,7 @@ final class ChanServHistorySubscriberTest extends TestCase
             performedByNickId: 1,
             performedByIp: '10.0.0.1',
             performedByHost: 'founder@host',
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
             count: 3,
         );
 

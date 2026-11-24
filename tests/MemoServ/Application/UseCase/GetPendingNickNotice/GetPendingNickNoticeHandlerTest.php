@@ -14,7 +14,6 @@ use App\MemoServ\Application\UseCase\GetPendingNickNotice\GetPendingNickNoticeRe
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use stdClass;
 
 #[CoversClass(GetPendingNickNotice::class)]
 #[CoversClass(GetPendingNickNoticeHandler::class)]
@@ -65,7 +64,7 @@ final class GetPendingNickNoticeHandlerTest extends TestCase
         $memoRepository->expects(self::never())->method('countUnreadByTargetNick');
         $memoRepository->expects(self::once())->method('countUnreadByTargetNickIds')->with([10, 11])->willReturn([10 => 1, 11 => 0]);
         $cache = new BurstMemoNoticeCache();
-        $cache->beginBatch([10, 11], [10 => 2], new stdClass());
+        $cache->beginBatch([10, 11], [10 => 2], new \stdClass());
         $userAccountPort = $this->createStub(MemoUserAccountPort::class);
         $userAccountPort->method('getLanguage')->willReturn('en');
         $handler = new GetPendingNickNoticeHandler($memoRepository, $userAccountPort, $cache);
@@ -83,7 +82,7 @@ final class GetPendingNickNoticeHandlerTest extends TestCase
         $memoRepository->expects(self::once())->method('countUnreadByTargetNick')->with(99)->willReturn(0);
         $memoRepository->expects(self::never())->method('countUnreadByTargetNickIds');
         $cache = new BurstMemoNoticeCache();
-        $token = new stdClass();
+        $token = new \stdClass();
         $cache->beginBatch([10], [], $token);
         $userAccountPort = $this->createStub(MemoUserAccountPort::class);
         $handler = new GetPendingNickNoticeHandler($memoRepository, $userAccountPort, $cache);
@@ -100,7 +99,7 @@ final class GetPendingNickNoticeHandlerTest extends TestCase
         $memoRepository->expects(self::once())->method('countUnreadByTargetNick')->with(20)->willReturn(5);
         $memoRepository->expects(self::never())->method('countUnreadByTargetNickIds');
         $cache = new BurstMemoNoticeCache();
-        $cache->beginBatch([10], [10 => 1], new stdClass());
+        $cache->beginBatch([10], [10 => 1], new \stdClass());
         $userAccountPort = $this->createStub(MemoUserAccountPort::class);
         $userAccountPort->method('getLanguage')->willReturn('en');
         $handler = new GetPendingNickNoticeHandler($memoRepository, $userAccountPort, $cache);

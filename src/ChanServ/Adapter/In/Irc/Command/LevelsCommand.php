@@ -20,7 +20,6 @@ use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use App\Shared\Adapter\In\Irc\Presentation\Component;
 use App\Shared\Adapter\In\Irc\Presentation\Fragment;
 use App\Shared\Adapter\In\Irc\Presentation\Role;
-use DateTimeImmutable;
 
 use function in_array;
 use function sprintf;
@@ -191,12 +190,12 @@ final readonly class LevelsCommand implements ChanServCommandInterface
         $senderAccount = $context->senderAccount;
         $result = $this->manageLevels->handle(new ManageChannelLevels(
             $channelName,
-            null === $senderAccount ? null : $senderAccount->id,
+            $senderAccount?->id,
             $context->isLevelFounder,
             $action,
             $this->visibleLevelKeys($modeSupport),
             $context->sender->nick,
-            new DateTimeImmutable(),
+            new \DateTimeImmutable(),
             '' === $levelKey ? null : $levelKey,
             '' === $valueString ? null : (int) $valueString,
         ));

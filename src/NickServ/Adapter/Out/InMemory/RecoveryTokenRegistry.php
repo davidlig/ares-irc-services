@@ -7,7 +7,6 @@ namespace App\NickServ\Adapter\Out\InMemory;
 use App\NickServ\Application\Port\Out\RecoveryTokenStore;
 use App\Shared\Domain\IrcIdentityFold;
 use DateTimeImmutable;
-use OverflowException;
 
 use function count;
 use function hash;
@@ -39,10 +38,10 @@ final class RecoveryTokenRegistry implements RecoveryTokenStore
         $this->lastRecoverAt = [];
     }
 
-    public function store(string $nickname, string $token, DateTimeImmutable $expiresAt): void
+    public function store(string $nickname, string $token, \DateTimeImmutable $expiresAt): void
     {
         if (!isset($this->entries[IrcIdentityFold::fold($nickname)]) && count($this->entries) >= $this->maxEntries) {
-            throw new OverflowException('Recovery token capacity exhausted.');
+            throw new \OverflowException('Recovery token capacity exhausted.');
         }
         $this->entries[IrcIdentityFold::fold($nickname)] = [
             'token' => hash('sha256', strtolower(trim($token))),
@@ -55,7 +54,7 @@ final class RecoveryTokenRegistry implements RecoveryTokenStore
      * Returns true if the token matches and has not expired, then removes the entry.
      * Returns false if the token is missing, mismatched, or expired.
      */
-    public function consume(string $nickname, string $token, DateTimeImmutable $now): bool
+    public function consume(string $nickname, string $token, \DateTimeImmutable $now): bool
     {
         $valid = $this->matches($nickname, $token, $now);
         if ($valid) {
@@ -65,7 +64,7 @@ final class RecoveryTokenRegistry implements RecoveryTokenStore
         return $valid;
     }
 
-    public function matches(string $nickname, string $token, DateTimeImmutable $now): bool
+    public function matches(string $nickname, string $token, \DateTimeImmutable $now): bool
     {
         $key = IrcIdentityFold::fold($nickname);
         $entry = $this->entries[$key] ?? null;
@@ -92,7 +91,7 @@ final class RecoveryTokenRegistry implements RecoveryTokenStore
     /**
      * Returns the last reserved recovery request time for this nick, or null.
      */
-    public function getLastRecoverAt(string $nickname): ?DateTimeImmutable
+    public function getLastRecoverAt(string $nickname): ?\DateTimeImmutable
     {
         return $this->lastRecoverAt[IrcIdentityFold::fold($nickname)] ?? null;
     }
@@ -100,10 +99,10 @@ final class RecoveryTokenRegistry implements RecoveryTokenStore
     /**
      * Reserves a recovery request timestamp before attempting delivery.
      */
-    public function recordRecover(string $nickname, DateTimeImmutable $now): void
+    public function recordRecover(string $nickname, \DateTimeImmutable $now): void
     {
         if (!isset($this->lastRecoverAt[IrcIdentityFold::fold($nickname)]) && count($this->lastRecoverAt) >= $this->maxEntries) {
-            throw new OverflowException('Recovery timestamp capacity exhausted.');
+            throw new \OverflowException('Recovery timestamp capacity exhausted.');
         }
         $this->lastRecoverAt[IrcIdentityFold::fold($nickname)] = $now;
     }
@@ -112,7 +111,7 @@ final class RecoveryTokenRegistry implements RecoveryTokenStore
      * Removes expired recovery entries and lastRecoverAt entries older than maxAgeSecondsForRecover.
      * Returns the total number of entries removed.
      */
-    public function pruneExpired(DateTimeImmutable $now, int $maxAgeSecondsForRecover = 86400): int
+    public function pruneExpired(\DateTimeImmutable $now, int $maxAgeSecondsForRecover = 86400): int
     {
         $recoverCutoff = $now->modify(sprintf('-%d seconds', $maxAgeSecondsForRecover));
         $removed = 0;

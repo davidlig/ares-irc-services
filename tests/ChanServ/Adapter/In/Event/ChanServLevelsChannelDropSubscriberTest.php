@@ -9,7 +9,6 @@ use App\ChanServ\Application\Port\Out\ChannelLevelRepositoryInterface;
 use App\ChanServ\Application\PublishedEvent\ChannelDropCleanupEvent;
 use App\ChanServ\Application\UseCase\CleanupChannelLevels\CleanupChannelLevels;
 use App\ChanServ\Application\UseCase\CleanupChannelLevels\CleanupChannelLevelsHandler;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -37,7 +36,7 @@ final class ChanServLevelsChannelDropSubscriberTest extends TestCase
 
         $subscriber->onChannelDrop(new ChannelDropCleanupEvent(
             channelId: 12345,
-            occurredAt: new DateTimeImmutable('2026-01-02 03:04:05'),
+            occurredAt: new \DateTimeImmutable('2026-01-02 03:04:05'),
             channelName: '#test',
             channelNameLower: '#test',
             reason: 'manual',

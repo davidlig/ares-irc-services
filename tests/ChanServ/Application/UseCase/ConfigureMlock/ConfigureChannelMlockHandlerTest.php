@@ -18,11 +18,9 @@ use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\ValueObject\ChannelModeLock;
 use App\ChanServ\Domain\ValueObject\ChannelSetting;
 use App\ChanServ\Domain\ValueObject\ModeName;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionProperty;
 
 #[CoversClass(ConfigureChannelMlock::class)]
 #[CoversClass(ConfigureChannelMlockHandler::class)]
@@ -33,8 +31,8 @@ final class ConfigureChannelMlockHandlerTest extends TestCase
     #[Test]
     public function itPersistsTheSemanticSnapshotAndPublishesItsChange(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Test');
-        new ReflectionProperty(RegisteredChannel::class, 'id')->setValue($channel, 1);
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 1, 'Test');
+        new \ReflectionProperty(RegisteredChannel::class, 'id')->setValue($channel, 1);
         $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channels->expects(self::once())->method('save')->with($channel);
         $events = $this->createMock(ChanServEventPublisher::class);
@@ -49,7 +47,7 @@ final class ConfigureChannelMlockHandlerTest extends TestCase
         $historyRepository = $this->createMock(ChannelHistoryRepositoryInterface::class);
         $historyRepository->expects(self::once())->method('save')->willReturnCallback(static function (ChannelHistory $entry) use (&$saved): void { $saved = $entry; });
 
-        $result = new ConfigureChannelMlockHandler($channels, new DoctrineChannelMlockStorage(), $events, new ChannelHistoryService($historyRepository))->handle(new ConfigureChannelMlock($channel, $lock, 'Founder', new DateTimeImmutable()));
+        $result = new ConfigureChannelMlockHandler($channels, new DoctrineChannelMlockStorage(), $events, new ChannelHistoryService($historyRepository))->handle(new ConfigureChannelMlock($channel, $lock, 'Founder', new \DateTimeImmutable()));
 
         self::assertSame($lock, $result->modeLock);
         self::assertSame('+nk', $channel->getMlock());
@@ -65,18 +63,18 @@ final class ConfigureChannelMlockHandlerTest extends TestCase
     #[Test]
     public function itKeepsInactiveAndActiveEmptyLocksDistinct(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Test');
-        new ReflectionProperty(RegisteredChannel::class, 'id')->setValue($channel, 1);
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 1, 'Test');
+        new \ReflectionProperty(RegisteredChannel::class, 'id')->setValue($channel, 1);
         $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $events = $this->createStub(ChanServEventPublisher::class);
         $handler = new ConfigureChannelMlockHandler($channels, new DoctrineChannelMlockStorage(), $events, $this->historyService());
 
-        $activeResult = $handler->handle(new ConfigureChannelMlock($channel, ChannelModeLock::active(), 'Founder', new DateTimeImmutable()));
+        $activeResult = $handler->handle(new ConfigureChannelMlock($channel, ChannelModeLock::active(), 'Founder', new \DateTimeImmutable()));
         self::assertTrue($activeResult->modeLock->active);
         self::assertSame('', $channel->getMlock());
         self::assertTrue($channel->isMlockActive());
 
-        $inactiveResult = $handler->handle(new ConfigureChannelMlock($channel, ChannelModeLock::inactive(), 'Founder', new DateTimeImmutable()));
+        $inactiveResult = $handler->handle(new ConfigureChannelMlock($channel, ChannelModeLock::inactive(), 'Founder', new \DateTimeImmutable()));
         self::assertFalse($inactiveResult->modeLock->active);
         self::assertSame('', $channel->getMlock());
         self::assertFalse($channel->isMlockActive());

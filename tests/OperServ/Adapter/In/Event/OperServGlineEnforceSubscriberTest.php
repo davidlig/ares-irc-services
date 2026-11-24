@@ -11,12 +11,10 @@ use App\Irc\Application\PublishedEvent\NetworkSynchronizationCompletedEvent;
 use App\OperServ\Adapter\In\Event\OperServGlineEnforceSubscriber;
 use App\OperServ\Application\Port\Out\GlineEntry;
 use App\OperServ\Application\Port\Out\GlineRepository;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
-use Stringable;
 
 #[CoversClass(OperServGlineEnforceSubscriber::class)]
 final class OperServGlineEnforceSubscriberTest extends TestCase
@@ -32,8 +30,8 @@ final class OperServGlineEnforceSubscriberTest extends TestCase
     #[Test]
     public function onSyncCompleteAppliesActiveGlines(): void
     {
-        $gline1 = new GlineEntry('*@badhost1.com', null, 'Spam', new DateTimeImmutable('2026-01-01T00:00:00+00:00'), null, 1);
-        $gline2 = new GlineEntry('*@badhost2.com', null, 'Bots', new DateTimeImmutable('2026-01-01T00:00:00+00:00'), null, 2);
+        $gline1 = new GlineEntry('*@badhost1.com', null, 'Spam', new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), null, 1);
+        $gline2 = new GlineEntry('*@badhost2.com', null, 'Bots', new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), null, 2);
 
         $glineRepo = $this->createStub(GlineRepository::class);
         $glineRepo->method('findActiveAt')->willReturn([$gline1, $gline2]);
@@ -89,7 +87,7 @@ final class OperServGlineEnforceSubscriberTest extends TestCase
     #[Test]
     public function onSyncCompleteNoProtocolModuleLogsWarning(): void
     {
-        $gline = new GlineEntry('*@test1234.com', null, 'Test', new DateTimeImmutable('2026-01-01T00:00:00+00:00'), null, 1);
+        $gline = new GlineEntry('*@test1234.com', null, 'Test', new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), null, 1);
         $glineRepo = $this->createStub(GlineRepository::class);
         $glineRepo->method('findActiveAt')->willReturn([$gline]);
 
@@ -100,7 +98,7 @@ final class OperServGlineEnforceSubscriberTest extends TestCase
         $logger = new class extends NullLogger {
             public bool $warningLogged = false;
 
-            public function warning(string|Stringable $message, array $context = []): void
+            public function warning(\Stringable|string $message, array $context = []): void
             {
                 $this->warningLogged = true;
             }
@@ -122,7 +120,7 @@ final class OperServGlineEnforceSubscriberTest extends TestCase
     #[Test]
     public function onSyncCompleteNoServerSidLogsWarning(): void
     {
-        $gline = new GlineEntry('*@test1234.com', null, 'Test', new DateTimeImmutable('2026-01-01T00:00:00+00:00'), null, 1);
+        $gline = new GlineEntry('*@test1234.com', null, 'Test', new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), null, 1);
         $glineRepo = $this->createStub(GlineRepository::class);
         $glineRepo->method('findActiveAt')->willReturn([$gline]);
 
@@ -135,7 +133,7 @@ final class OperServGlineEnforceSubscriberTest extends TestCase
         $logger = new class extends NullLogger {
             public bool $warningLogged = false;
 
-            public function warning(string|Stringable $message, array $context = []): void
+            public function warning(\Stringable|string $message, array $context = []): void
             {
                 $this->warningLogged = true;
             }
@@ -157,8 +155,8 @@ final class OperServGlineEnforceSubscriberTest extends TestCase
     #[Test]
     public function onSyncCompleteUsesCorrectDuration(): void
     {
-        $futureExpiry = new DateTimeImmutable('+1 hour');
-        $gline = new GlineEntry('*@test1234.com', null, 'Test', new DateTimeImmutable('2026-01-01T00:00:00+00:00'), $futureExpiry, 1);
+        $futureExpiry = new \DateTimeImmutable('+1 hour');
+        $gline = new GlineEntry('*@test1234.com', null, 'Test', new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), $futureExpiry, 1);
 
         $glineRepo = $this->createStub(GlineRepository::class);
         $glineRepo->method('findActiveAt')->willReturn([$gline]);
@@ -194,7 +192,7 @@ final class OperServGlineEnforceSubscriberTest extends TestCase
     #[Test]
     public function onSyncCompletePermanentGlineUsesZeroDuration(): void
     {
-        $gline = new GlineEntry('*@test1234.com', null, 'Test', new DateTimeImmutable('2026-01-01T00:00:00+00:00'), null, 1);
+        $gline = new GlineEntry('*@test1234.com', null, 'Test', new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), null, 1);
 
         $glineRepo = $this->createStub(GlineRepository::class);
         $glineRepo->method('findActiveAt')->willReturn([$gline]);
@@ -224,7 +222,7 @@ final class OperServGlineEnforceSubscriberTest extends TestCase
     #[Test]
     public function onSyncCompleteParsesUserAtHostMaskCorrectly(): void
     {
-        $gline = new GlineEntry('ident@*.badisp.com', null, 'Test', new DateTimeImmutable('2026-01-01T00:00:00+00:00'), null, 1);
+        $gline = new GlineEntry('ident@*.badisp.com', null, 'Test', new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), null, 1);
 
         $glineRepo = $this->createStub(GlineRepository::class);
         $glineRepo->method('findActiveAt')->willReturn([$gline]);

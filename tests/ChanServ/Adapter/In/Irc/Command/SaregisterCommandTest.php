@@ -70,13 +70,11 @@ final class SaregisterCommandTest extends TestCase
     public function handlesSuccessfulRegistration(): void
     {
         $handler = $this->createMock(SaregisterChannelHandlerInterface::class);
-        $handler->expects(self::once())->method('handle')->with(self::callback(function (SaregisterChannel $cmd): bool {
-            return '#mychan' === $cmd->channelName
+        $handler->expects(self::once())->method('handle')->with(self::callback(fn (SaregisterChannel $cmd): bool => '#mychan' === $cmd->channelName
                 && 'Alice' === $cmd->targetNickname
                 && 'Official channel' === $cmd->description
                 && 'Oper' === $cmd->actorNickname
-                && true === $cmd->actorIrcOperator;
-        }))->willReturn(SaregisterChannelResult::registered('#mychan', 'Alice'));
+                && true === $cmd->actorIrcOperator))->willReturn(SaregisterChannelResult::registered('#mychan', 'Alice'));
 
         $command = new SaregisterCommand($handler);
         $messages = [];

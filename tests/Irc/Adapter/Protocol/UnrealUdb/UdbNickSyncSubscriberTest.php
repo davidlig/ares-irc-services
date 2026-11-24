@@ -26,11 +26,9 @@ use App\OperServ\Application\Port\In\OperatorNetworkProjection;
 use App\OperServ\Application\Port\In\OperatorNetworkProjectionQuery;
 use App\OperServ\Application\PublishedEvent\OperIrcopChangedEvent;
 use App\OperServ\Application\PublishedEvent\OperRoleForcedVhostChangedEvent;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RuntimeException;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -61,7 +59,7 @@ final class UdbNickSyncSubscriberTest extends TestCase
         $writer->expects($this->once())->method('delete')->willReturn(true)->with('N', 'nick');
 
         $sub = $this->createSubscriber(writer: $writer);
-        $sub->onNickDrop(new NickDropEvent(1, 'nick', 'nick', 'manual', new DateTimeImmutable()));
+        $sub->onNickDrop(new NickDropEvent(1, 'nick', 'nick', 'manual', new \DateTimeImmutable()));
     }
 
     #[Test]
@@ -227,7 +225,7 @@ final class UdbNickSyncSubscriberTest extends TestCase
         $writer->expects($this->once())->method('insert')->willReturn(true)->with('N', 'nick::suspend', 'bad conduct');
 
         $sub = $this->createSubscriber(writer: $writer);
-        $sub->onNickSuspended(new NickSuspendedEvent(7, 'nick', 'bad conduct', '30d', null, 'root', null, '127.0.0.1', 'host', new DateTimeImmutable()));
+        $sub->onNickSuspended(new NickSuspendedEvent(7, 'nick', 'bad conduct', '30d', null, 'root', null, '127.0.0.1', 'host', new \DateTimeImmutable()));
     }
 
     #[Test]
@@ -237,7 +235,7 @@ final class UdbNickSyncSubscriberTest extends TestCase
         $writer->expects($this->once())->method('delete')->willReturn(true)->with('N', 'nick::suspend');
 
         $sub = $this->createSubscriber(writer: $writer);
-        $sub->onNickUnsuspended(new NickUnsuspendedEvent(7, 'nick', 'root', null, '127.0.0.1', 'host', new DateTimeImmutable()));
+        $sub->onNickUnsuspended(new NickUnsuspendedEvent(7, 'nick', 'root', null, '127.0.0.1', 'host', new \DateTimeImmutable()));
     }
 
     #[Test]
@@ -397,7 +395,7 @@ final class UdbNickSyncSubscriberTest extends TestCase
     #[Test]
     public function automaticModeChangesUseTheSameNativeProjectionAsFullExportsAndClearTheRecord(): void
     {
-        $time = new DateTimeImmutable();
+        $time = new \DateTimeImmutable();
         foreach ([['bot', 'channel-deaf', 'invisible'], []] as $intentions) {
             $nick = new NickProjection(7, 'nick', null, null, false, null, false, automaticModes: $intentions);
             $repo = $this->createStub(NickProjectionQuery::class);
@@ -424,12 +422,12 @@ final class UdbNickSyncSubscriberTest extends TestCase
         $repo = $this->createStub(NickProjectionQuery::class);
         $repo->method('findById')->willReturn(new NickProjection(7, 'nick', null, null, false, null, false, automaticModes: ['bot']));
         $writer = $this->createMock(UdbRecordWriterInterface::class);
-        $writer->expects(self::once())->method('insert')->willThrowException(new RuntimeException('network failed'));
+        $writer->expects(self::once())->method('insert')->willThrowException(new \RuntimeException('network failed'));
         $dispatcher = new EventDispatcher();
         $dispatcher->addSubscriber($this->createSubscriber(repo: $repo, writer: $writer));
         $ran = false;
         $dispatcher->addListener(NickAutomaticModesChangedEvent::class, static function () use (&$ran): void { $ran = true; }, -10);
-        $dispatcher->dispatch(new NickAutomaticModesChangedEvent(7, 'nick', [], ['bot'], 'Admin', 1, '*', '*', new DateTimeImmutable()));
+        $dispatcher->dispatch(new NickAutomaticModesChangedEvent(7, 'nick', [], ['bot'], 'Admin', 1, '*', '*', new \DateTimeImmutable()));
         self::assertTrue($ran);
     }
 

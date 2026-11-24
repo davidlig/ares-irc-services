@@ -6,7 +6,6 @@ namespace App\ChanServ\Adapter\Out\Persistence\Doctrine;
 
 use App\ChanServ\Application\Port\Out\ChannelHistoryRepositoryInterface;
 use App\ChanServ\Domain\Entity\ChannelHistory;
-use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 
 use function array_filter;
@@ -92,7 +91,7 @@ final readonly class ChannelHistoryDoctrineRepository implements ChannelHistoryR
         return is_numeric($result) ? (int) $result : 0;
     }
 
-    public function deleteOlderThan(DateTimeImmutable $threshold): int
+    public function deleteOlderThan(\DateTimeImmutable $threshold): int
     {
         $qb = $this->em->createQueryBuilder();
         $qb->delete(ChannelHistory::class, 'h')

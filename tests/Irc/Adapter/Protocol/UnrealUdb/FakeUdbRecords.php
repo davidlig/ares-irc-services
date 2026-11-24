@@ -11,7 +11,6 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbValue;
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbRecordMutationStoreInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbRecordRepositoryInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbUnsignedDecimal;
-use RuntimeException;
 
 use function array_map;
 use function str_starts_with;
@@ -41,7 +40,7 @@ final class FakeUdbRecords implements UdbRecordRepositoryInterface, UdbRecordMut
         $typed = [];
         foreach ($this->blocks[$block] ?? [] as $path => $value) {
             $typed[$path] = UdbSchema::typedValueForStoredRecord($block, $path, $value)
-                ?? throw new RuntimeException('Fake UDB row is not schema-valid.');
+                ?? throw new \RuntimeException('Fake UDB row is not schema-valid.');
         }
 
         return $typed;
@@ -50,7 +49,7 @@ final class FakeUdbRecords implements UdbRecordRepositoryInterface, UdbRecordMut
     public function upsert(string $block, string $path, UdbValue $value): bool
     {
         if ($this->fail) {
-            throw new RuntimeException('store unavailable');
+            throw new \RuntimeException('store unavailable');
         }
 
         $identity = strtolower($path);
@@ -93,7 +92,7 @@ final class FakeUdbRecords implements UdbRecordRepositoryInterface, UdbRecordMut
     public function deleteCascade(string $block, string $path): bool
     {
         if ($this->fail) {
-            throw new RuntimeException('store unavailable');
+            throw new \RuntimeException('store unavailable');
         }
 
         $identity = strtolower($path);
@@ -141,7 +140,7 @@ final class FakeUdbRecords implements UdbRecordRepositoryInterface, UdbRecordMut
     public function allocateBlockDropSequence(string $block, UdbStreamOrigin $origin): UdbUnsignedDecimal
     {
         if ($this->fail) {
-            throw new RuntimeException('store unavailable');
+            throw new \RuntimeException('store unavailable');
         }
 
         return $this->advance($origin);
@@ -150,7 +149,7 @@ final class FakeUdbRecords implements UdbRecordRepositoryInterface, UdbRecordMut
     public function seedBlock(string $block, array $records): void
     {
         if ($this->fail) {
-            throw new RuntimeException('store unavailable');
+            throw new \RuntimeException('store unavailable');
         }
 
         foreach ($records as $path => $value) {
@@ -161,7 +160,7 @@ final class FakeUdbRecords implements UdbRecordRepositoryInterface, UdbRecordMut
     public function replaceBlock(string $block, array $records): void
     {
         if ($this->fail) {
-            throw new RuntimeException('store unavailable');
+            throw new \RuntimeException('store unavailable');
         }
 
         $this->blocks[$block] = array_map(static fn (string|UdbValue $value): string => $value->logicalValue(), $records);
@@ -170,9 +169,9 @@ final class FakeUdbRecords implements UdbRecordRepositoryInterface, UdbRecordMut
     private function advance(UdbStreamOrigin $origin): UdbUnsignedDecimal
     {
         if (null === $this->origin || $this->origin->sid !== $origin->sid || $this->origin->epoch !== $origin->epoch) {
-            throw new RuntimeException('Unexpected stream origin in fake UDB store.');
+            throw new \RuntimeException('Unexpected stream origin in fake UDB store.');
         }
-        $this->watermark = $this->watermark->increment() ?? throw new RuntimeException('Fake UDB sequence overflow.');
+        $this->watermark = $this->watermark->increment() ?? throw new \RuntimeException('Fake UDB sequence overflow.');
 
         return $this->watermark;
     }

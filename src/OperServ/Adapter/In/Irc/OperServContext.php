@@ -16,11 +16,6 @@ use App\Shared\Adapter\In\Irc\Presentation\Fragment;
 use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
 use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
 use App\Shared\Adapter\In\Irc\Presentation\Role;
-use DateTimeImmutable;
-use DateTimeInterface;
-use DateTimeZone;
-use InvalidArgumentException;
-use Stringable;
 use Symfony\Component\Translation\TranslatorBagInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -170,15 +165,15 @@ final readonly class OperServContext
         return $this->translator->trans($key, $this->wrapParams($params), $domain, $this->language);
     }
 
-    public function formatDate(?DateTimeInterface $date): string
+    public function formatDate(?\DateTimeInterface $date): string
     {
         if (null === $date) {
             return '—';
         }
 
-        $immutable = $date instanceof DateTimeImmutable ? $date : DateTimeImmutable::createFromInterface($date);
+        $immutable = $date instanceof \DateTimeImmutable ? $date : \DateTimeImmutable::createFromInterface($date);
 
-        return $immutable->setTimezone(new DateTimeZone($this->timezone))->format('d/m/Y H:i T');
+        return $immutable->setTimezone(new \DateTimeZone($this->timezone))->format('d/m/Y H:i T');
     }
 
     public function commandRegistry(): OperServCommandRegistry
@@ -236,10 +231,10 @@ final readonly class OperServContext
         foreach ($this->wrapParams($params) as $name => $value) {
             if ($value instanceof Fragment) {
                 $values[$name] = $value;
-            } elseif (null === $value || is_scalar($value) || $value instanceof Stringable) {
+            } elseif (null === $value || is_scalar($value) || $value instanceof \Stringable) {
                 $values[$name] = (string) $value;
             } else {
-                throw new InvalidArgumentException('IRC presentation parameters must be text or fragments.');
+                throw new \InvalidArgumentException('IRC presentation parameters must be text or fragments.');
             }
         }
 

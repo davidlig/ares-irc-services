@@ -6,7 +6,6 @@ namespace App\Tests\ChanServ\Adapter\Out\InMemory;
 
 use App\ChanServ\Adapter\Out\InMemory\FounderChangeTokenRegistry;
 use App\NickServ\Adapter\In\Maintenance\PruneMemoryRegistriesTask;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -18,8 +17,8 @@ final class FounderChangeTokenRegistryTest extends TestCase
     #[Test]
     public function maintenancePrunesExpiredTokensAndStaleRequestsOnly(): void
     {
-        $now = new DateTimeImmutable('2026-01-01 00:00:00');
-        $registry = new FounderChangeTokenRegistry(static function () use (&$now): DateTimeImmutable { return $now; });
+        $now = new \DateTimeImmutable('2026-01-01 00:00:00');
+        $registry = new FounderChangeTokenRegistry(static function () use (&$now): \DateTimeImmutable { return $now; });
         $registry->recordRequest(1);
         $registry->store(1, 10, 'expired', $now->modify('+1 hour'));
         $now = $now->modify('+25 hours');
@@ -49,7 +48,7 @@ final class FounderChangeTokenRegistryTest extends TestCase
     public function storeAndConsumeReturnsNewFounderNickId(): void
     {
         $registry = new FounderChangeTokenRegistry();
-        $expires = new DateTimeImmutable()->modify('+1 hour');
+        $expires = new \DateTimeImmutable()->modify('+1 hour');
         $registry->store(10, 99, 'secret-token', $expires);
 
         self::assertSame(99, $registry->consume(10, 'secret-token'));
@@ -60,7 +59,7 @@ final class FounderChangeTokenRegistryTest extends TestCase
     public function consumeReturnsNullWhenTokenWrong(): void
     {
         $registry = new FounderChangeTokenRegistry();
-        $registry->store(10, 99, 'secret', new DateTimeImmutable()->modify('+1 hour'));
+        $registry->store(10, 99, 'secret', new \DateTimeImmutable()->modify('+1 hour'));
 
         self::assertNull($registry->consume(10, 'wrong'));
     }
@@ -69,7 +68,7 @@ final class FounderChangeTokenRegistryTest extends TestCase
     public function consumeReturnsNullWhenExpired(): void
     {
         $registry = new FounderChangeTokenRegistry();
-        $registry->store(10, 99, 'secret', new DateTimeImmutable()->modify('-1 second'));
+        $registry->store(10, 99, 'secret', new \DateTimeImmutable()->modify('-1 second'));
 
         self::assertNull($registry->consume(10, 'secret'));
     }
@@ -81,6 +80,6 @@ final class FounderChangeTokenRegistryTest extends TestCase
         self::assertNull($registry->getLastRequestAt(5));
 
         $registry->recordRequest(5);
-        self::assertInstanceOf(DateTimeImmutable::class, $registry->getLastRequestAt(5));
+        self::assertInstanceOf(\DateTimeImmutable::class, $registry->getLastRequestAt(5));
     }
 }

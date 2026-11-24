@@ -45,7 +45,6 @@ use App\MemoServ\Application\UseCase\Read\ReadMemoHandler;
 use App\Shared\Application\Port\EventBusInterface;
 use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use Psr\Log\LoggerInterface;
@@ -94,8 +93,8 @@ final class RegistrationDecisionMemoRoutingTest extends DoctrineIntegrationTestC
                 'SecretOperator',
                 $accepted,
                 'canal duplicado',
-                new DateTimeImmutable('2026-10-28T14:35:00+02:00'),
-                new DateTimeImmutable('2026-10-27T12:35:00+00:00'),
+                new \DateTimeImmutable('2026-10-28T14:35:00+02:00'),
+                new \DateTimeImmutable('2026-10-27T12:35:00+00:00'),
             ));
         }
 
@@ -154,7 +153,7 @@ final class RegistrationDecisionMemoRoutingTest extends DoctrineIntegrationTestC
             false,
             'indefinida',
             null,
-            new DateTimeImmutable('2026-10-27T13:35:00+00:00'),
+            new \DateTimeImmutable('2026-10-27T13:35:00+00:00'),
         ));
         self::assertStringNotContainsString('Disponible', $repository->findByTargetNick(12)[2]->getMessage());
         $repository->deleteAllForNick(12);
@@ -206,7 +205,7 @@ final class RegistrationDecisionMemoRoutingTest extends DoctrineIntegrationTestC
         foreach ([true, false] as $accepted) {
             $name = $accepted ? '#accepted' : '#rejected';
             $channels->save(RegisteredChannel::createPendingRegistration(
-                new DateTimeImmutable('2026-10-26T12:00:00+00:00'),
+                new \DateTimeImmutable('2026-10-26T12:00:00+00:00'),
                 $name,
                 12,
                 'request',
@@ -216,7 +215,7 @@ final class RegistrationDecisionMemoRoutingTest extends DoctrineIntegrationTestC
                 true,
                 7,
                 'Operator',
-                new DateTimeImmutable('2026-10-27T12:00:00+00:00'),
+                new \DateTimeImmutable('2026-10-27T12:00:00+00:00'),
                 $accepted ? null : 'reason',
                 true,
             ));

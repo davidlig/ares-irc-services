@@ -14,11 +14,9 @@ use App\OperServ\Adapter\In\Event\IrcopOperclassApplier;
 use App\OperServ\Domain\Entity\OperIrcop;
 use App\OperServ\Domain\Entity\OperRole;
 use App\OperServ\Domain\Repository\OperIrcopRepositoryInterface;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
 
 #[CoversClass(IrcopOperclassApplier::class)]
 final class IrcopOperclassApplierTest extends TestCase
@@ -102,12 +100,12 @@ final class IrcopOperclassApplierTest extends TestCase
     {
         $role = OperRole::create('ADMIN');
         $role->changeOperclass('services:admin');
-        new ReflectionClass($role)->getProperty('id')->setValue($role, 5);
+        new \ReflectionClass($role)->getProperty('id')->setValue($role, 5);
 
         $nick = new NickProjection(7, 'TestNick', 'hash', null, false, null, false);
 
-        $missingNickIrcop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 99, $role);
-        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 7, $role);
+        $missingNickIrcop = OperIrcop::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), 99, $role);
+        $ircop = OperIrcop::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), 7, $role);
 
         $ircopRepository = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepository->method('findByRoleId')->willReturn([$missingNickIrcop, $ircop]);
@@ -129,11 +127,11 @@ final class IrcopOperclassApplierTest extends TestCase
     public function updateForRoleRemovesTheOperclassWhenCleared(): void
     {
         $role = OperRole::create('ADMIN');
-        new ReflectionClass($role)->getProperty('id')->setValue($role, 5);
+        new \ReflectionClass($role)->getProperty('id')->setValue($role, 5);
 
         $nick = new NickProjection(7, 'TestNick', 'hash', null, false, null, false);
 
-        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 7, $role);
+        $ircop = OperIrcop::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), 7, $role);
 
         $ircopRepository = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepository->method('findByRoleId')->willReturn([$ircop]);

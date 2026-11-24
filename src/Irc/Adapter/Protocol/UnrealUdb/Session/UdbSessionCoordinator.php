@@ -31,10 +31,8 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbWireLogRedactor;
 use App\Irc\Adapter\Runtime\LoopSchedulerInterface;
 use App\Irc\Adapter\Runtime\RevoltLoopScheduler;
 use App\Irc\Adapter\Runtime\SessionEventPump;
-use LogicException;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
-use Throwable;
 
 use function array_diff;
 use function array_filter;
@@ -461,7 +459,7 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
             if ($this->wireTakeover->canPromote()) {
                 $this->completeWireBootstrap();
             }
-        } catch (Throwable $exception) {
+        } catch (\Throwable $exception) {
             $this->logger->error('UDB imported generation tail replay failed; takeover remains unapproved.', ['error' => $exception->getMessage()]);
             $this->retryWireBootstrap();
         }
@@ -508,7 +506,7 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
                 $this->eventPump->enqueueCoalesced('udb-mutation-flush', function (): void {
                     $this->flushMutations();
                 });
-            } catch (LogicException) {
+            } catch (\LogicException) {
             }
         }
     }
@@ -710,7 +708,7 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
 
         try {
             $outcome = $this->wireTakeover?->accept($frame) ?? UdbWireTakeoverOutcome::ignored();
-        } catch (Throwable) {
+        } catch (\Throwable) {
             $this->logger->error('UDB bootstrap inventory persistence failed; requesting a fresh inventory.');
             $this->retryWireBootstrap();
 
@@ -925,7 +923,7 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
             $this->authority->approve($fingerprint);
             $this->mutations?->beginLocalStream($this->streamOrigin());
             $this->approved = true;
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             $this->logger->error('UDB wire bootstrap finalization failed; the store stays unapproved.', [
                 'error' => $e->getMessage(),
             ]);
@@ -1050,7 +1048,7 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
         if ($this->isWireBootstrapActive() && $this->peer->isAuthorized() && '*' === $frame->target) {
             try {
                 $outcome = $this->wireTakeover?->acceptMutation($frame) ?? UdbWireTakeoverOutcome::ignored();
-            } catch (Throwable) {
+            } catch (\Throwable) {
                 $this->logger->error('UDB bootstrap mutation persistence failed; requesting a fresh inventory.');
                 $this->retryWireBootstrap();
 
@@ -1147,7 +1145,7 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
             if (null !== $sequence) {
                 $this->enqueueMutation(new UdbMutation(UdbBlock::Lines->letter(), $path, null)->assigned($sequence, $origin));
             }
-        } catch (Throwable $exception) {
+        } catch (\Throwable $exception) {
             $this->errorCorrelation = $this->errorCorrelation->incrementNonZero();
             $this->logger->error('UDB EXP compare-and-delete failed.', ['path' => $frame->path, 'error' => $exception->getMessage()]);
             $this->write(UdbWireCodec::err($this->sid, $frame->sourceSid, 'EXP', 3, $this->errorCorrelation, UdbBlock::Lines));

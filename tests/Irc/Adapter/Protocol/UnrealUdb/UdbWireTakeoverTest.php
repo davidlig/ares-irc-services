@@ -34,13 +34,10 @@ use App\OperServ\Application\Port\In\OperatorNetworkProjectionQuery;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
 use Doctrine\DBAL\Exception;
 use Doctrine\ORM\EntityManagerInterface;
-use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Psr\Log\LoggerInterface;
-use ReflectionMethod;
-use ReflectionProperty;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function base64_encode;
@@ -839,7 +836,7 @@ final class UdbWireTakeoverTest extends DoctrineIntegrationTestCase
     {
         $this->stagedTransfer(UdbBlock::Ips, ['1.2.3.4::clones' => '*5']);
 
-        $this->expectException(LogicException::class);
+        $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('Cannot finalize an incomplete UDB wire takeover round.');
 
         try {
@@ -1111,7 +1108,7 @@ final class UdbWireTakeoverTest extends DoctrineIntegrationTestCase
         try {
             $this->takeover->finalize();
             self::fail('A corrupted persisted generation was promoted.');
-        } catch (LogicException $exception) {
+        } catch (\LogicException $exception) {
             self::assertStringContainsString('UDB', $exception->getMessage());
             self::assertContains($connection->fetchOne('SELECT COUNT(*) FROM udb_records'), [0, '0']);
             self::assertFalse($connection->isTransactionActive());
@@ -1156,7 +1153,7 @@ final class UdbWireTakeoverTest extends DoctrineIntegrationTestCase
         $this->assertIgnored($this->takeover->accept($this->frame(UdbFrameKind::Begin, UdbBlock::Ips, checksum: $digest)));
         $this->assertError($this->takeover->accept($this->frame(UdbFrameKind::Begin, UdbBlock::Ips, txid: 'tx1', checksum: $digest)), UdbBlock::Ips, 1, 'BEGIN', 3);
         $this->assertError($this->takeover->accept($this->frame(UdbFrameKind::End, UdbBlock::Ips, txid: 'tx1', checksum: $digest)), UdbBlock::Ips, 1, 'END', 2);
-        new ReflectionProperty(UdbWireTakeover::class, 'generationId')->setValue($this->takeover, null);
+        new \ReflectionProperty(UdbWireTakeover::class, 'generationId')->setValue($this->takeover, null);
         $this->assertError($this->begin(UdbBlock::Ips, 'tx1', $digest), UdbBlock::Ips, 1, 'BEGIN', 5);
     }
 
@@ -1196,7 +1193,7 @@ final class UdbWireTakeoverTest extends DoctrineIntegrationTestCase
         $this->records->upsert('I', '192.0.2.1::clones', UdbValue::number(UdbUnsignedDecimal::fromInt(1)));
         $this->em->getConnection()->executeStatement("CREATE TRIGGER reject_reuse BEFORE INSERT ON udb_staged_transfers BEGIN SELECT RAISE(ABORT, 'controlled failure'); END");
         try {
-            new ReflectionMethod(UdbWireTakeover::class, 'stageReusableBlock')->invoke($this->takeover, UdbBlock::Ips, UdbUnsignedDecimal::fromInt(1), str_repeat('a', 64), 1);
+            new \ReflectionMethod(UdbWireTakeover::class, 'stageReusableBlock')->invoke($this->takeover, UdbBlock::Ips, UdbUnsignedDecimal::fromInt(1), str_repeat('a', 64), 1);
             self::fail('Failed reuse cannot leave partial copied rows.');
         } catch (Exception $error) {
             self::assertStringContainsString('controlled failure', $error->getMessage());
@@ -1227,12 +1224,12 @@ final class UdbWireTakeoverTest extends DoctrineIntegrationTestCase
     public function corruptedTailBlockRollsBackReplayBeforeApproval(): void
     {
         $this->inventory(UdbBlock::Ips, digest: str_repeat('a', 64));
-        $generation = new ReflectionProperty(UdbWireTakeover::class, 'generationId')->getValue($this->takeover);
+        $generation = new \ReflectionProperty(UdbWireTakeover::class, 'generationId')->getValue($this->takeover);
         $this->em->getConnection()->insert('udb_staged_mutations', ['generation_id' => $generation, 'sequence' => '1', 'block' => '?', 'operation' => 'DRP', 'path' => '', 'value' => null, 'value_kind' => null]);
         try {
-            new ReflectionMethod(UdbWireTakeover::class, 'replayTail')->invoke($this->takeover);
+            new \ReflectionMethod(UdbWireTakeover::class, 'replayTail')->invoke($this->takeover);
             self::fail('Corrupt staged block cannot be replayed.');
-        } catch (LogicException $error) {
+        } catch (\LogicException $error) {
             self::assertStringContainsString('invalid block', $error->getMessage());
         }
         self::assertFalse($this->em->getConnection()->isTransactionActive());
@@ -1243,14 +1240,14 @@ final class UdbWireTakeoverTest extends DoctrineIntegrationTestCase
     public function replayedAggregateConflictIsRejectedTransactionally(): void
     {
         $this->inventory(UdbBlock::Nicks, digest: str_repeat('a', 64));
-        $generation = new ReflectionProperty(UdbWireTakeover::class, 'generationId')->getValue($this->takeover);
+        $generation = new \ReflectionProperty(UdbWireTakeover::class, 'generationId')->getValue($this->takeover);
         foreach ([['nick::forbid', 'yes'], ['nick::vhost', 'fixture.test']] as $index => [$path, $value]) {
             $this->em->getConnection()->insert('udb_staged_mutations', ['generation_id' => $generation, 'sequence' => (string) ($index + 1), 'block' => 'N', 'operation' => 'INS', 'path' => $path, 'value' => $value, 'value_kind' => 1]);
         }
         try {
-            new ReflectionMethod(UdbWireTakeover::class, 'replayTail')->invoke($this->takeover);
+            new \ReflectionMethod(UdbWireTakeover::class, 'replayTail')->invoke($this->takeover);
             self::fail('Conflicting aggregate cannot be approved.');
-        } catch (LogicException $error) {
+        } catch (\LogicException $error) {
             self::assertStringContainsString('validation', $error->getMessage());
         }
         self::assertFalse($this->em->getConnection()->isTransactionActive());
@@ -1267,7 +1264,7 @@ final class UdbWireTakeoverTest extends DoctrineIntegrationTestCase
         $this->takeover->reset();
         $this->inventory(UdbBlock::Ips, digest: $digest);
         $this->begin(UdbBlock::Ips, 'tx1', $digest);
-        new ReflectionProperty(UdbWireTakeover::class, 'generationId')->setValue($this->takeover, null);
+        new \ReflectionProperty(UdbWireTakeover::class, 'generationId')->setValue($this->takeover, null);
         $this->assertError($this->end(UdbBlock::Ips, 'tx1', $digest), UdbBlock::Ips, 1, 'END', 5);
         self::assertSame([], $this->takeover->completedBlocks());
     }

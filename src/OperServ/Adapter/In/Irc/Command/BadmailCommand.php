@@ -16,7 +16,6 @@ use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentValidator;
 use App\Shared\Adapter\In\Irc\Presentation\Component;
 use App\Shared\Adapter\In\Irc\Presentation\Role;
-use DateTimeImmutable;
 
 use function array_slice;
 use function ceil;
@@ -125,7 +124,7 @@ final readonly class BadmailCommand implements OperServCommandInterface
         }
 
         $authorized = $context->isAuthorized(OperServPermission::BADMAIL);
-        $input = $this->parse($context->args, $authorized, $sender->nick, new DateTimeImmutable());
+        $input = $this->parse($context->args, $authorized, $sender->nick, new \DateTimeImmutable());
         if (null === $input) {
             $this->syntax($context, $this->syntaxKeyForArguments($context->args));
 
@@ -179,7 +178,7 @@ final readonly class BadmailCommand implements OperServCommandInterface
     }
 
     /** @param list<string> $args */
-    private function parse(array $args, bool $authorized, string $actor, DateTimeImmutable $occurredAt): ?ManageBadmail
+    private function parse(array $args, bool $authorized, string $actor, \DateTimeImmutable $occurredAt): ?ManageBadmail
     {
         $sub = strtoupper($args[0] ?? '');
         if ('ADD' === $sub && 3 <= count($args)) {

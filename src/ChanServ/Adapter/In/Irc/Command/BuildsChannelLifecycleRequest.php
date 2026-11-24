@@ -7,8 +7,6 @@ namespace App\ChanServ\Adapter\In\Irc\Command;
 use App\ChanServ\Adapter\In\Irc\ChanServContext;
 use App\ChanServ\Application\UseCase\ManageLifecycle\ChannelLifecycleAction;
 use App\ChanServ\Application\UseCase\ManageLifecycle\ManageChannelLifecycle;
-use DateTimeImmutable;
-use LogicException;
 
 use function base64_decode;
 use function inet_ntop;
@@ -27,14 +25,14 @@ trait BuildsChannelLifecycleRequest
     ): ManageChannelLifecycle {
         $sender = $context->sender;
         if (null === $sender) {
-            throw new LogicException('A sender is required for channel lifecycle commands.');
+            throw new \LogicException('A sender is required for channel lifecycle commands.');
         }
 
         return new ManageChannelLifecycle(
             channelName: $channelName,
             action: $action,
             actorNickname: $sender->nick,
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
             actorAccountId: $context->senderAccount?->id,
             actorIp: $this->decodeLifecycleIp($sender->ipBase64),
             actorHost: sprintf('%s@%s', $sender->ident, $sender->hostname),

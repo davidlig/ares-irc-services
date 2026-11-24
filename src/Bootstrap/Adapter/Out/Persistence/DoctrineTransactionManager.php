@@ -6,7 +6,6 @@ namespace App\Bootstrap\Adapter\Out\Persistence;
 
 use App\Shared\Application\Port\TransactionManagerInterface;
 use Doctrine\ORM\EntityManagerInterface;
-use Throwable;
 
 final class DoctrineTransactionManager implements TransactionManagerInterface
 {
@@ -31,7 +30,7 @@ final class DoctrineTransactionManager implements TransactionManagerInterface
             $result = $this->entityManager->wrapInTransaction(
                 static fn (): mixed => $operation(),
             );
-        } catch (Throwable $exception) {
+        } catch (\Throwable $exception) {
             $this->afterCommit = [];
 
             throw $exception;

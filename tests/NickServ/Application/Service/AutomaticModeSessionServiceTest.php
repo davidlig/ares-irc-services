@@ -13,7 +13,6 @@ use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\Service\AutomaticModeSessionService;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\NickServ\Domain\ValueObject\AutomaticModeProfile;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
@@ -154,7 +153,7 @@ final class AutomaticModeSessionServiceTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->nick = RegisteredNick::createActive('Pedro', 'hash', null, 'en', new DateTimeImmutable());
+        $this->nick = RegisteredNick::createActive('Pedro', 'hash', null, 'en', new \DateTimeImmutable());
         $this->nick->changeAutomaticModes(new AutomaticModeProfile(['bot', 'invisible']));
         $this->user = $this->user('i');
         $nicks = $this->createStub(RegisteredNickRepositoryInterface::class);

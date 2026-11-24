@@ -88,7 +88,7 @@ final class UnsuspendExpiredSuspensionsTask implements MaintenanceTaskInterface
                 try {
                     $nick->unsuspend();
                     $this->nickRepository->save($nick);
-                } catch (Throwable $e) {
+                } catch (\Throwable $e) {
                     $this->recordSaveFailure($nick, $e);
                     $this->cursor = max($this->cursor, $id);
                     $this->retryBudget->rowFailedOnItsOwn($id);
@@ -103,7 +103,7 @@ final class UnsuspendExpiredSuspensionsTask implements MaintenanceTaskInterface
 
                 try {
                     $this->announce($nick);
-                } catch (Throwable $e) {
+                } catch (\Throwable $e) {
                     $this->logger->error(sprintf(
                         'Maintenance [%s]: auto-unsuspended nick %s (id %d), but a post-unsuspend step failed.',
                         $this->getName(),
@@ -130,7 +130,7 @@ final class UnsuspendExpiredSuspensionsTask implements MaintenanceTaskInterface
      *
      * @throws Throwable when the EntityManager was closed by the failure
      */
-    private function recordSaveFailure(RegisteredNick $nick, Throwable $e): void
+    private function recordSaveFailure(RegisteredNick $nick, \Throwable $e): void
     {
         $id = $nick->getId();
         $this->retryBudget->rethrowWhenClosed(

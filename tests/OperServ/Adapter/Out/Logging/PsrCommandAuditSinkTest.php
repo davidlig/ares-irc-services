@@ -7,7 +7,6 @@ namespace App\Tests\OperServ\Adapter\Out\Logging;
 use App\OperServ\Adapter\Out\Logging\PsrCommandAuditSink;
 use App\OperServ\Application\Port\In\Audit\CommandAuditCategory;
 use App\OperServ\Application\Port\In\Audit\CommandAuditRecord;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -24,7 +23,7 @@ final class PsrCommandAuditSinkTest extends TestCase
             service: 'operserv',
             actor: 'Root',
             operation: 'operserv.role.permission.add',
-            occurredAt: new DateTimeImmutable('2026-09-08T10:15:00+02:00'),
+            occurredAt: new \DateTimeImmutable('2026-09-08T10:15:00+02:00'),
             permission: 'ROOT',
             target: 'NETWORK-ADMIN',
             targetHost: 'root@example.test',
@@ -62,7 +61,7 @@ final class PsrCommandAuditSinkTest extends TestCase
             'operserv',
             'system',
             'operserv.motd.expire',
-            new DateTimeImmutable('2026-09-08T08:15:00+00:00'),
+            new \DateTimeImmutable('2026-09-08T08:15:00+00:00'),
         );
 
         $logger = $this->createMock(LoggerInterface::class);

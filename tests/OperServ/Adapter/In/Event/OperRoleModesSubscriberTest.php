@@ -19,7 +19,6 @@ use App\OperServ\Adapter\In\Event\OperRoleModesSubscriber;
 use App\OperServ\Domain\Entity\OperIrcop;
 use App\OperServ\Domain\Entity\OperRole;
 use App\OperServ\Domain\Repository\OperIrcopRepositoryInterface;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -68,7 +67,7 @@ final class OperRoleModesSubscriberTest extends TestCase
         $event = new NickIdentifiedEvent(42, 'TestNick', '001ABCD');
 
         $role = OperRole::create('ADMIN');
-        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 42, $role);
+        $ircop = OperIrcop::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), 42, $role);
 
         $ircopRepository = $this->createMock(OperIrcopRepositoryInterface::class);
         $ircopRepository
@@ -96,7 +95,7 @@ final class OperRoleModesSubscriberTest extends TestCase
         $role = OperRole::create('ADMIN', 'Admin role');
         $role->changeUserModes(['o', 's']);
 
-        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 42, $role, null, null);
+        $ircop = OperIrcop::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), 42, $role, null, null);
 
         $ircopRepository = $this->createMock(OperIrcopRepositoryInterface::class);
         $ircopRepository

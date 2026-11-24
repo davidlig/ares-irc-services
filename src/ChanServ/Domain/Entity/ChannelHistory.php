@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Domain\Entity;
 
-use DateTimeImmutable;
-
 final class ChannelHistory
 {
     private int $id;
@@ -18,7 +16,7 @@ final class ChannelHistory
 
     private readonly ?int $performedByNickId;
 
-    private readonly DateTimeImmutable $performedAt;
+    private readonly \DateTimeImmutable $performedAt;
 
     private readonly string $message;
 
@@ -34,7 +32,7 @@ final class ChannelHistory
         string $action,
         string $performedBy,
         ?int $performedByNickId,
-        DateTimeImmutable $performedAt,
+        \DateTimeImmutable $performedAt,
         string $message,
         array $extraData = [],
     ) {
@@ -52,7 +50,7 @@ final class ChannelHistory
      * @param array<string, mixed> $extraData
      */
     public static function record(
-        DateTimeImmutable $performedAt,
+        \DateTimeImmutable $performedAt,
         int $channelId,
         string $action,
         string $performedBy,
@@ -97,7 +95,7 @@ final class ChannelHistory
         return $this->performedByNickId;
     }
 
-    public function getPerformedAt(): DateTimeImmutable
+    public function getPerformedAt(): \DateTimeImmutable
     {
         return $this->performedAt;
     }

@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\NickServ\Domain\Entity;
 
-use DateTimeImmutable;
-
 /**
  * Immutable record of an action performed on a registered nickname.
  *
@@ -24,7 +22,7 @@ final class NickHistory
 
     private readonly ?int $performedByNickId;
 
-    private readonly DateTimeImmutable $performedAt;
+    private readonly \DateTimeImmutable $performedAt;
 
     private readonly string $message;
 
@@ -40,7 +38,7 @@ final class NickHistory
         string $action,
         string $performedBy,
         ?int $performedByNickId,
-        DateTimeImmutable $performedAt,
+        \DateTimeImmutable $performedAt,
         string $message,
         array $extraData = [],
     ) {
@@ -63,7 +61,7 @@ final class NickHistory
         string $performedBy,
         ?int $performedByNickId,
         string $message,
-        DateTimeImmutable $performedAt,
+        \DateTimeImmutable $performedAt,
         array $extraData = [],
     ): self {
         return new self(
@@ -103,7 +101,7 @@ final class NickHistory
         return $this->performedByNickId;
     }
 
-    public function getPerformedAt(): DateTimeImmutable
+    public function getPerformedAt(): \DateTimeImmutable
     {
         return $this->performedAt;
     }

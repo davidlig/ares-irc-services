@@ -14,11 +14,6 @@ use App\Shared\Adapter\In\Irc\Presentation\Fragment;
 use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
 use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
 use App\Shared\Adapter\In\Irc\Presentation\Role;
-use DateTimeImmutable;
-use DateTimeInterface;
-use DateTimeZone;
-use InvalidArgumentException;
-use Stringable;
 use Symfony\Component\Translation\TranslatorBagInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -180,15 +175,15 @@ final readonly class MemoServContext implements IrcopAuthorizationSubject
         return $this->timezone;
     }
 
-    public function formatDate(?DateTimeInterface $date): string
+    public function formatDate(?\DateTimeInterface $date): string
     {
         if (null === $date) {
             return '—';
         }
 
-        $dt = $date instanceof DateTimeImmutable ? $date : DateTimeImmutable::createFromInterface($date);
+        $dt = $date instanceof \DateTimeImmutable ? $date : \DateTimeImmutable::createFromInterface($date);
 
-        return $dt->setTimezone(new DateTimeZone($this->timezone))->format('d/m/Y H:i T');
+        return $dt->setTimezone(new \DateTimeZone($this->timezone))->format('d/m/Y H:i T');
     }
 
     public function getRegistry(): MemoServCommandRegistry
@@ -230,10 +225,10 @@ final readonly class MemoServContext implements IrcopAuthorizationSubject
         foreach ($this->wrapParams($params) as $name => $value) {
             if ($value instanceof Fragment) {
                 $values[$name] = $value;
-            } elseif (null === $value || is_scalar($value) || $value instanceof Stringable) {
+            } elseif (null === $value || is_scalar($value) || $value instanceof \Stringable) {
                 $values[$name] = (string) $value;
             } else {
-                throw new InvalidArgumentException('IRC presentation parameters must be text or fragments.');
+                throw new \InvalidArgumentException('IRC presentation parameters must be text or fragments.');
             }
         }
 

@@ -18,7 +18,6 @@ use App\Shared\Adapter\In\Irc\Presentation\Appearance;
 use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
 use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
 use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -68,7 +67,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
         try {
             $adapter->trans('help.command_line', ['command' => ['invalid']]);
             self::fail('A non-text HELP parameter must be rejected.');
-        } catch (InvalidArgumentException $exception) {
+        } catch (\InvalidArgumentException $exception) {
             self::assertSame('HELP parameters must be text.', $exception->getMessage());
         }
     }

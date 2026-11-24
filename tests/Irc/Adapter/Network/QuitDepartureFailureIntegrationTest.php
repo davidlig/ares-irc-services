@@ -22,14 +22,11 @@ use App\Irc\Domain\ValueObject\ChannelName;
 use App\Irc\Domain\ValueObject\Ident;
 use App\Irc\Domain\ValueObject\Nick;
 use App\Irc\Domain\ValueObject\Uid;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-use RuntimeException;
 use Symfony\Component\EventDispatcher\EventDispatcher;
-use Throwable;
 
 /**
  * A quit whose channel-departure listener throws (for example a ChanServ listener hitting a failed
@@ -66,7 +63,7 @@ final class QuitDepartureFailureIntegrationTest extends TestCase
         $users->add($quitter);
         $users->add($witness);
         foreach (['#first', '#second', '#third'] as $name) {
-            $channel = new Channel(new ChannelName($name), '+nt', new DateTimeImmutable('@1700000000'));
+            $channel = new Channel(new ChannelName($name), '+nt', new \DateTimeImmutable('@1700000000'));
             $channel->syncMember($quitter->uid, ChannelMemberRole::None);
             $channel->syncMember($witness->uid, ChannelMemberRole::None);
             $channels->save($channel);
@@ -74,8 +71,8 @@ final class QuitDepartureFailureIntegrationTest extends TestCase
             $witness->addChannel($channel->name);
         }
 
-        $firstFailure = new RuntimeException('departure listener failed on #first');
-        $secondFailure = new RuntimeException('departure listener failed on #third');
+        $firstFailure = new \RuntimeException('departure listener failed on #first');
+        $secondFailure = new \RuntimeException('departure listener failed on #third');
         $departures = [];
         $quits = [];
         // Same priority as the published-event bridge, so it runs before the network state update.
@@ -99,7 +96,7 @@ final class QuitDepartureFailureIntegrationTest extends TestCase
         $caught = null;
         try {
             $dispatcher->dispatch(new UserQuitReceivedEvent(self::QUITTER, 'Bye'));
-        } catch (Throwable $exception) {
+        } catch (\Throwable $exception) {
             $caught = $exception;
         }
 
@@ -136,13 +133,13 @@ final class QuitDepartureFailureIntegrationTest extends TestCase
 
         $quitter = $this->createUser(self::QUITTER, 'Quitter');
         $users->add($quitter);
-        $channel = new Channel(new ChannelName('#first'), '+nt', new DateTimeImmutable('@1700000000'));
+        $channel = new Channel(new ChannelName('#first'), '+nt', new \DateTimeImmutable('@1700000000'));
         $channel->syncMember($quitter->uid, ChannelMemberRole::None);
         $channels->save($channel);
         $quitter->addChannel($channel->name);
 
-        $departureFailure = new RuntimeException('departure listener failed on #first');
-        $quitFailure = new RuntimeException('quit listener failed');
+        $departureFailure = new \RuntimeException('departure listener failed on #first');
+        $quitFailure = new \RuntimeException('quit listener failed');
         $quits = [];
         $dispatcher->addListener(UserLeftChannelEvent::class, static function () use ($departureFailure): void {
             throw $departureFailure;
@@ -160,7 +157,7 @@ final class QuitDepartureFailureIntegrationTest extends TestCase
         $caught = null;
         try {
             $dispatcher->dispatch(new UserQuitReceivedEvent(self::QUITTER, 'Bye'));
-        } catch (Throwable $exception) {
+        } catch (\Throwable $exception) {
             $caught = $exception;
         }
 
@@ -185,7 +182,7 @@ final class QuitDepartureFailureIntegrationTest extends TestCase
             $logger,
         ));
         $users->add($this->createUser(self::QUITTER, 'Quitter'));
-        $quitFailure = new RuntimeException('quit listener failed');
+        $quitFailure = new \RuntimeException('quit listener failed');
         $dispatcher->addListener(UserQuitNetworkEvent::class, static function () use ($quitFailure): void {
             throw $quitFailure;
         });
@@ -194,7 +191,7 @@ final class QuitDepartureFailureIntegrationTest extends TestCase
         $caught = null;
         try {
             $dispatcher->dispatch(new UserQuitReceivedEvent(self::QUITTER, 'Bye'));
-        } catch (Throwable $exception) {
+        } catch (\Throwable $exception) {
             $caught = $exception;
         }
 
@@ -212,7 +209,7 @@ final class QuitDepartureFailureIntegrationTest extends TestCase
             'cloaked.example.com',
             'vhost.example.com',
             '+i',
-            new DateTimeImmutable(),
+            new \DateTimeImmutable(),
             'Real Name',
             '001',
             'base64ip',

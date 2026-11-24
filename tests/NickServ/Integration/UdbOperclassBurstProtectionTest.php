@@ -40,7 +40,6 @@ use App\NickServ\Application\UseCase\SyncNetworkIdentification\SyncNetworkIdenti
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
@@ -48,8 +47,6 @@ use Psr\Log\AbstractLogger;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
 use Psr\Log\NullLogger;
-use RuntimeException;
-use Stringable;
 use Symfony\Component\Clock\MockClock;
 
 use function array_keys;
@@ -71,8 +68,8 @@ final class UdbOperclassBurstProtectionTest extends DoctrineIntegrationTestCase
     #[Test]
     public function burstWithAnIdentifiedOperclassIrcopCompletesEveryChunk(): void
     {
-        $registeredAt = new DateTimeImmutable('2026-01-01 00:00:00');
-        $seenAt = new DateTimeImmutable('2026-03-04 05:06:07');
+        $registeredAt = new \DateTimeImmutable('2026-01-01 00:00:00');
+        $seenAt = new \DateTimeImmutable('2026-03-04 05:06:07');
         $repository = new RegisteredNickDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network());
         for ($i = 1; $i <= self::USERS; ++$i) {
             $repository->save(RegisteredNick::createActive($this->nick($i), 'hash', null, 'en', $registeredAt));
@@ -121,15 +118,15 @@ final class UdbOperclassBurstProtectionTest extends DoctrineIntegrationTestCase
     #[Test]
     public function aFailingChunkIsLoggedAndDoesNotSkipLaterChunks(): void
     {
-        $registeredAt = new DateTimeImmutable('2026-01-01 00:00:00');
-        $seenAt = new DateTimeImmutable('2026-03-04 05:06:07');
+        $registeredAt = new \DateTimeImmutable('2026-01-01 00:00:00');
+        $seenAt = new \DateTimeImmutable('2026-03-04 05:06:07');
         $repository = new class($this->entityManager, NegotiatedCaseMapping::network()) extends RegisteredNickDoctrineRepository {
             public int $calls = 0;
 
             public function saveActivityBatch(array $nicks): void
             {
                 if (1 === ++$this->calls) {
-                    throw new RuntimeException('first chunk storage failure');
+                    throw new \RuntimeException('first chunk storage failure');
                 }
                 parent::saveActivityBatch($nicks);
             }
@@ -144,7 +141,7 @@ final class UdbOperclassBurstProtectionTest extends DoctrineIntegrationTestCase
             /** @var list<array{level: mixed, message: string, context: array<mixed>}> */
             public array $records = [];
 
-            public function log(mixed $level, string|Stringable $message, array $context = []): void
+            public function log(mixed $level, \Stringable|string $message, array $context = []): void
             {
                 $this->records[] = ['level' => $level, 'message' => (string) $message, 'context' => $context];
             }
@@ -167,7 +164,7 @@ final class UdbOperclassBurstProtectionTest extends DoctrineIntegrationTestCase
         $context = $logger->records[0]['context'];
         self::assertSame(['chunk', 'users', 'exception'], array_keys($context));
         self::assertSame([1, 200], [$context['chunk'], $context['users']]);
-        self::assertInstanceOf(RuntimeException::class, $context['exception']);
+        self::assertInstanceOf(\RuntimeException::class, $context['exception']);
         self::assertSame('first chunk storage failure', $context['exception']->getMessage());
     }
 
@@ -176,7 +173,7 @@ final class UdbOperclassBurstProtectionTest extends DoctrineIntegrationTestCase
         return sprintf('User%03d', $number);
     }
 
-    private function subscriber(RegisteredNickDoctrineRepository $repository, BurstState $burstState, NickServEventPublisher $publisher, DateTimeImmutable $now, ?LoggerInterface $logger = null): NickProtectionSubscriber
+    private function subscriber(RegisteredNickDoctrineRepository $repository, BurstState $burstState, NickServEventPublisher $publisher, \DateTimeImmutable $now, ?LoggerInterface $logger = null): NickProtectionSubscriber
     {
         $clock = $this->createStub(Clock::class);
         $clock->method('now')->willReturn($now);

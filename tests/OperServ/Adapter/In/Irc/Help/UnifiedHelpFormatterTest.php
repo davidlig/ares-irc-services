@@ -15,7 +15,6 @@ use App\OperServ\Adapter\In\Irc\Help\HelpableCommandInterface;
 use App\OperServ\Adapter\In\Irc\Help\HelpFormatterContextInterface;
 use App\OperServ\Adapter\In\Irc\Help\UnifiedHelpFormatter;
 use App\Tests\Shared\Translations\TranslationCatalog;
-use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -439,12 +438,12 @@ final class OperServHelpFormatterContext implements HelpFormatterContextInterfac
 
     public function reply(string $key, array $params = []): void
     {
-        throw new LogicException('Rendering must not send translated replies.');
+        throw new \LogicException('Rendering must not send translated replies.');
     }
 
     public function replyRaw(string $message): void
     {
-        throw new LogicException('Rendering must not send raw replies.');
+        throw new \LogicException('Rendering must not send raw replies.');
     }
 
     public function trans(string $key, array $params = []): string

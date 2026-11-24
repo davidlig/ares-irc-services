@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Tests\Shared\Translations;
 
 use App\Bootstrap\Adapter\Out\Translation\IrcYamlTranslationLoader;
-use RuntimeException;
 use Symfony\Component\Translation\MessageCatalogueInterface;
 use Symfony\Component\Yaml\Tag\TaggedValue;
 use Symfony\Component\Yaml\Yaml;
@@ -20,7 +19,7 @@ final class TranslationCatalog
     {
         $source = Yaml::parseFile($file, Yaml::PARSE_CONSTANT | Yaml::PARSE_CUSTOM_TAGS);
         if (!is_array($source)) {
-            throw new RuntimeException('Translation catalog must be a mapping.');
+            throw new \RuntimeException('Translation catalog must be a mapping.');
         }
 
         return self::resolve($source, new IrcYamlTranslationLoader()->load($file, 'en'));

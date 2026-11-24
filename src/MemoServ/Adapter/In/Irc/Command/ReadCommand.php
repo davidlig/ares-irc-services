@@ -14,7 +14,6 @@ use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentValidator;
 use App\Shared\Adapter\In\Irc\Presentation\Component;
 use App\Shared\Adapter\In\Irc\Presentation\Role;
-use DateTimeImmutable;
 
 use function str_starts_with;
 
@@ -115,7 +114,7 @@ final readonly class ReadCommand implements MemoServCommandInterface
             senderNickId: $senderAccount->id,
             channelName: $targetChannel,
             index: $index,
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
         ));
 
         switch ($result->outcome) {

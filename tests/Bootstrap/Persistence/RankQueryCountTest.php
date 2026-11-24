@@ -72,7 +72,6 @@ use App\NickServ\Adapter\Out\Persistence\Doctrine\NickAccountBatchDoctrineQuery;
 use App\NickServ\Adapter\Out\Persistence\Doctrine\RegisteredNickDoctrineRepository;
 use App\NickServ\Adapter\Out\User\NickAccountResolver;
 use App\Tests\NickServ\Support\NegotiatedCaseMapping;
-use DateTimeImmutable;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Logging\Middleware;
 use Doctrine\ORM\Configuration;
@@ -117,7 +116,7 @@ final class RankQueryCountTest extends TestCase
             $connection->insert('channel_access', ['channel_id' => 1, 'nick_id' => $i, 'level' => 300]);
         }
         $connection->insert('channel_levels', ['channel_id' => 1, 'level_key' => 'NOJOIN', 'value' => 1]);
-        $akick = ChannelAkick::create(new DateTimeImmutable('2026-09-27 00:00:00'), 1, 1, 'N2!*@*', 'Join fixture');
+        $akick = ChannelAkick::create(new \DateTimeImmutable('2026-09-27 00:00:00'), 1, 1, 'N2!*@*', 'Join fixture');
         $em->persist($akick);
         $em->flush();
         $akickId = $akick->getId();
@@ -162,11 +161,11 @@ final class RankQueryCountTest extends TestCase
             ));
             $dispatcher->addSubscriber(new ChanServChannelRankSubscriber($handler, new PendingChannelRankSynchronizations(), $burst, new BurstRankEventScope(NegotiatedCaseMapping::chanServ()), $this->createStub(RegisteredChannelBurstSnapshot::class), new DelinkDepartureRankScope($policy, $network)));
             $channelName = new ChannelName('#test');
-            $channel = new Channel($channelName, '', new DateTimeImmutable('@100'));
+            $channel = new Channel($channelName, '', new \DateTimeImmutable('@100'));
             $channel->syncMember(new Uid('U1'), ChannelMemberRole::None);
             $channelRepo = $this->createStub(ChannelRepositoryInterface::class);
             $channelRepo->method('findByName')->willReturn($channel);
-            $user = new NetworkUser(new Uid('U2'), new Nick('N2'), new Ident('ident'), 'host', 'cloak', 'host', '', new DateTimeImmutable('@100'), 'user', '001', '');
+            $user = new NetworkUser(new Uid('U2'), new Nick('N2'), new Ident('ident'), 'host', 'cloak', 'host', '', new \DateTimeImmutable('@100'), 'user', '001', '');
             $userRepo = $this->createStub(NetworkUserRepositoryInterface::class);
             $userRepo->method('findByUid')->willReturn($user);
             $userRepo->method('findByNick')->willReturn($user);
@@ -252,11 +251,11 @@ final class RankQueryCountTest extends TestCase
                 $dispatcher->addSubscriber(new ChanServChannelRankSubscriber($handler, new PendingChannelRankSynchronizations(), $burst, new BurstRankEventScope(NegotiatedCaseMapping::chanServ()), $this->createStub(RegisteredChannelBurstSnapshot::class), new DelinkDepartureRankScope($policy, $network)));
 
                 $channelName = new ChannelName('#test');
-                $channel = new Channel($channelName, '+nt', new DateTimeImmutable('@100'));
+                $channel = new Channel($channelName, '+nt', new \DateTimeImmutable('@100'));
                 $splitUids = [];
                 for ($i = 0; $i <= $size; ++$i) {
                     $uid = sprintf('%sAAA%03d', 0 === $i ? '001' : '002', $i);
-                    $user = new NetworkUser(new Uid($uid), new Nick(0 === $i ? 'Hub' : 'N' . $i), new Ident('ident'), 'host', 'cloak', 'host', '+r', new DateTimeImmutable('@100'), 'user', 0 === $i ? '001' : '002', '');
+                    $user = new NetworkUser(new Uid($uid), new Nick(0 === $i ? 'Hub' : 'N' . $i), new Ident('ident'), 'host', 'cloak', 'host', '+r', new \DateTimeImmutable('@100'), 'user', 0 === $i ? '001' : '002', '');
                     $user->addChannel($channelName);
                     $users->add($user);
                     $channel->syncMember($user->uid, ChannelMemberRole::None);
@@ -265,7 +264,7 @@ final class RankQueryCountTest extends TestCase
                     }
                 }
                 for ($i = 1; $i <= 200; ++$i) {
-                    $local = new NetworkUser(new Uid(sprintf('001AAB%03d', $i)), new Nick('L' . $i), new Ident('ident'), 'host', 'cloak', 'host', '+r', new DateTimeImmutable('@100'), 'user', '001', '');
+                    $local = new NetworkUser(new Uid(sprintf('001AAB%03d', $i)), new Nick('L' . $i), new Ident('ident'), 'host', 'cloak', 'host', '+r', new \DateTimeImmutable('@100'), 'user', '001', '');
                     $local->addChannel($channelName);
                     $users->add($local);
                     $channel->syncMember($local->uid, ChannelMemberRole::None);

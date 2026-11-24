@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Irc\Domain\ValueObject;
 
-use InvalidArgumentException;
-
 use function preg_match;
 use function sprintf;
 use function strlen;
@@ -25,15 +23,15 @@ readonly class Uid
     public function __construct(public string $value)
     {
         if ('' === $value) {
-            throw new InvalidArgumentException('UID cannot be empty.');
+            throw new \InvalidArgumentException('UID cannot be empty.');
         }
 
         if (strlen($value) > self::MAX_LENGTH) {
-            throw new InvalidArgumentException(sprintf('UID must not exceed %d characters.', self::MAX_LENGTH));
+            throw new \InvalidArgumentException(sprintf('UID must not exceed %d characters.', self::MAX_LENGTH));
         }
 
         if (1 === preg_match('/[\x00-\x1F\x7F]/', $value)) {
-            throw new InvalidArgumentException('UID must not contain control characters.');
+            throw new \InvalidArgumentException('UID must not contain control characters.');
         }
     }
 

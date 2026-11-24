@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\ChanServ\Application\Port\Out;
 
 use App\ChanServ\Domain\Entity\ChannelHistory;
-use DateTimeImmutable;
 
 interface ChannelHistoryRepositoryInterface
 {
@@ -24,5 +23,5 @@ interface ChannelHistoryRepositoryInterface
 
     public function deleteByChannelId(int $channelId): int;
 
-    public function deleteOlderThan(DateTimeImmutable $threshold): int;
+    public function deleteOlderThan(\DateTimeImmutable $threshold): int;
 }

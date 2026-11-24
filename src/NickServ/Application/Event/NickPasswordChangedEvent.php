@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\NickServ\Application\Event;
 
 use App\NickServ\Application\Port\In\NickServEvent;
-use DateTimeImmutable;
 
 /**
  * Dispatched when a nickname password is changed.
@@ -21,6 +20,6 @@ final readonly class NickPasswordChangedEvent implements NickServEvent
         public ?int $performedByNickId,
         public string $performedByIp,
         public string $performedByHost,
-        public DateTimeImmutable $occurredAt,
+        public \DateTimeImmutable $occurredAt,
     ) {}
 }

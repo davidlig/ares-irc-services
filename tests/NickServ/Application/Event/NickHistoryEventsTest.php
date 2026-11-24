@@ -9,7 +9,6 @@ use App\NickServ\Application\Event\NickPasswordChangedEvent;
 use App\NickServ\Application\Event\NickRecoveredEvent;
 use App\NickServ\Application\PublishedEvent\NickSuspendedEvent;
 use App\NickServ\Application\PublishedEvent\NickUnsuspendedEvent;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -24,13 +23,13 @@ final class NickHistoryEventsTest extends TestCase
     #[Test]
     public function nickSuspendedEventCanBeConstructed(): void
     {
-        $occurredAt = new DateTimeImmutable('2024-01-15 10:30:00');
+        $occurredAt = new \DateTimeImmutable('2024-01-15 10:30:00');
         $event = new NickSuspendedEvent(
             nickId: 123,
             nickname: 'TestNick',
             reason: 'Spamming',
             duration: '7d',
-            expiresAt: new DateTimeImmutable('2024-01-22 10:30:00'),
+            expiresAt: new \DateTimeImmutable('2024-01-22 10:30:00'),
             performedBy: 'OperNick',
             performedByNickId: 456,
             performedByIp: '192.168.1.100',
@@ -64,7 +63,7 @@ final class NickHistoryEventsTest extends TestCase
             performedByNickId: 456,
             performedByIp: '192.168.1.100',
             performedByHost: 'oper@example.com',
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
         );
 
         self::assertSame(123, $event->nickId);
@@ -75,7 +74,7 @@ final class NickHistoryEventsTest extends TestCase
     #[Test]
     public function nickUnsuspendedEventCanBeConstructed(): void
     {
-        $occurredAt = new DateTimeImmutable('2024-01-15 10:30:00');
+        $occurredAt = new \DateTimeImmutable('2024-01-15 10:30:00');
         $event = new NickUnsuspendedEvent(
             nickId: 123,
             nickname: 'TestNick',
@@ -98,7 +97,7 @@ final class NickHistoryEventsTest extends TestCase
     #[Test]
     public function nickPasswordChangedEventCanBeConstructed(): void
     {
-        $occurredAt = new DateTimeImmutable('2024-01-15 10:30:00');
+        $occurredAt = new \DateTimeImmutable('2024-01-15 10:30:00');
         $event = new NickPasswordChangedEvent(
             nickId: 123,
             nickname: 'TestNick',
@@ -131,7 +130,7 @@ final class NickHistoryEventsTest extends TestCase
             performedByNickId: 456,
             performedByIp: '192.168.1.100',
             performedByHost: 'oper@example.com',
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
         );
 
         self::assertFalse($event->changedByOwner);
@@ -142,7 +141,7 @@ final class NickHistoryEventsTest extends TestCase
     #[Test]
     public function nickEmailChangedEventCanBeConstructed(): void
     {
-        $occurredAt = new DateTimeImmutable('2024-01-15 10:30:00');
+        $occurredAt = new \DateTimeImmutable('2024-01-15 10:30:00');
         $event = new NickEmailChangedEvent(
             nickId: 123,
             nickname: 'TestNick',
@@ -181,7 +180,7 @@ final class NickHistoryEventsTest extends TestCase
             performedByNickId: 456,
             performedByIp: '192.168.1.100',
             performedByHost: 'oper@example.com',
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
         );
 
         self::assertNull($event->oldEmail);
@@ -192,7 +191,7 @@ final class NickHistoryEventsTest extends TestCase
     #[Test]
     public function nickRecoveredEventCanBeConstructed(): void
     {
-        $occurredAt = new DateTimeImmutable('2024-01-15 10:30:00');
+        $occurredAt = new \DateTimeImmutable('2024-01-15 10:30:00');
         $event = new NickRecoveredEvent(
             nickId: 123,
             nickname: 'TestNick',

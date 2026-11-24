@@ -8,7 +8,6 @@ use App\ChanServ\Application\Port\Out\ChannelActivityPendingQuery;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\Service\ChanDropService;
 use App\Irc\Application\Port\In\Maintenance\PrerequisiteAwareMaintenanceTaskInterface;
-use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
@@ -75,7 +74,7 @@ final readonly class PurgeInactiveChannelsTask implements PrerequisiteAwareMaint
             return;
         }
 
-        $now = new DateTimeImmutable();
+        $now = new \DateTimeImmutable();
         $threshold = $now->modify(sprintf('-%d days', $this->inactivityExpiryDays));
         $inactive = $this->channelRepository->iterateRegisteredInactiveSince($threshold);
 
@@ -106,7 +105,7 @@ final readonly class PurgeInactiveChannelsTask implements PrerequisiteAwareMaint
 
             try {
                 $this->dropService->hardDropChannel($channel, $now, 'inactivity');
-            } catch (Throwable $e) {
+            } catch (\Throwable $e) {
                 $this->failures->recordFailureAfterPossibleCommit(
                     $channelId,
                     $channelName,

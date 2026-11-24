@@ -26,7 +26,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Stringable;
 use Symfony\Component\Translation\Translator;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -294,7 +293,7 @@ final class RecoverCommandTest extends TestCase
             ksort($params);
             $formatted = [];
             foreach ($params as $key => $value) {
-                $formatted[] = (string) $key . ': ' . (is_scalar($value) || $value instanceof Stringable ? (string) $value : '');
+                $formatted[] = (string) $key . ': ' . (is_scalar($value) || $value instanceof \Stringable ? (string) $value : '');
             }
 
             return $id . ' [' . implode(', ', $formatted) . ']';

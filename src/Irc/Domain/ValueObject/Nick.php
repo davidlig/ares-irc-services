@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Irc\Domain\ValueObject;
 
-use InvalidArgumentException;
-
 use function preg_match;
 use function sprintf;
 use function strcasecmp;
@@ -20,11 +18,11 @@ readonly class Nick
     public function __construct(public string $value)
     {
         if ('' === $value) {
-            throw new InvalidArgumentException('Nick cannot be empty.');
+            throw new \InvalidArgumentException('Nick cannot be empty.');
         }
 
         if (!preg_match('/^[A-Za-z\[\]\\\\`_^{|}][A-Za-z0-9\[\]\\\\`_^{|}\-]*$/', $value)) {
-            throw new InvalidArgumentException(sprintf('"%s" is not a valid IRC nickname.', $value));
+            throw new \InvalidArgumentException(sprintf('"%s" is not a valid IRC nickname.', $value));
         }
     }
 

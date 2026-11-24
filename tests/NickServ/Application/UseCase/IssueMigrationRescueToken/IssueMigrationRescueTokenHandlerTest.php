@@ -12,11 +12,9 @@ use App\NickServ\Application\Port\Out\RescueTokenNotifier;
 use App\NickServ\Application\UseCase\IssueMigrationRescueToken\IssueMigrationRescueToken;
 use App\NickServ\Application\UseCase\IssueMigrationRescueToken\IssueMigrationRescueTokenHandler;
 use App\NickServ\Domain\Entity\RegisteredNick;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionProperty;
 
 use function str_repeat;
 
@@ -42,7 +40,7 @@ final class IssueMigrationRescueTokenHandlerTest extends TestCase
         $codec = new UuidRescueTokenCodec();
         $temporary = new InMemoryTemporaryRescueTokenStore();
         $handler = new IssueMigrationRescueTokenHandler($repo, $codec, $temporary, $notifier);
-        $now = new DateTimeImmutable('2026-09-06');
+        $now = new \DateTimeImmutable('2026-09-06');
         $command = new IssueMigrationRescueToken(42, 'UID1', $now);
         $handler->handle($command);
         $handler->handle($command);
@@ -63,14 +61,14 @@ final class IssueMigrationRescueTokenHandlerTest extends TestCase
     #[Test]
     public function missingPendingAndCapacityExhaustionNeverClaimDelivery(): void
     {
-        $pending = RegisteredNick::createPending('Pending', 'hash', 'p@example.com', 'en', new DateTimeImmutable('+1 hour'), new DateTimeImmutable());
+        $pending = RegisteredNick::createPending('Pending', 'hash', 'p@example.com', 'en', new \DateTimeImmutable('+1 hour'), new \DateTimeImmutable());
         foreach ([null, $pending, $this->account()] as $account) {
             $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
             $repo->method('findById')->willReturn($account);
             $notifier = $this->createMock(RescueTokenNotifier::class);
             $notifier->expects(self::never())->method('issued');
             $temporary = new InMemoryTemporaryRescueTokenStore(1);
-            $now = new DateTimeImmutable('2026-09-06');
+            $now = new \DateTimeImmutable('2026-09-06');
             $temporary->replace(99, str_repeat('a', 64), $now->modify('+1 hour'));
             $handler = new IssueMigrationRescueTokenHandler($repo, new UuidRescueTokenCodec(), $temporary, $notifier);
             $handler->handle(new IssueMigrationRescueToken(42, 'UID1', $now));
@@ -87,14 +85,14 @@ final class IssueMigrationRescueTokenHandlerTest extends TestCase
         $repo->method('findById')->willReturn($account);
         $notifier = $this->createMock(RescueTokenNotifier::class);
         $notifier->expects(self::once())->method('issued')->with('UID1', self::anything(), 'es', UserMessagePreference::PrivateMessage);
-        new IssueMigrationRescueTokenHandler($repo, new UuidRescueTokenCodec(), new InMemoryTemporaryRescueTokenStore(), $notifier)->handle(new IssueMigrationRescueToken(42, 'UID1', new DateTimeImmutable('2026-09-06')));
+        new IssueMigrationRescueTokenHandler($repo, new UuidRescueTokenCodec(), new InMemoryTemporaryRescueTokenStore(), $notifier)->handle(new IssueMigrationRescueToken(42, 'UID1', new \DateTimeImmutable('2026-09-06')));
     }
 
     private function account(): RegisteredNick
     {
-        $account = RegisteredNick::createPending('Alice', 'hash', 'a@example.com', 'es', new DateTimeImmutable('+1 hour'), new DateTimeImmutable());
+        $account = RegisteredNick::createPending('Alice', 'hash', 'a@example.com', 'es', new \DateTimeImmutable('+1 hour'), new \DateTimeImmutable());
         $account->activate();
-        new ReflectionProperty($account, 'id')->setValue($account, 42);
+        new \ReflectionProperty($account, 'id')->setValue($account, 42);
 
         return $account;
     }

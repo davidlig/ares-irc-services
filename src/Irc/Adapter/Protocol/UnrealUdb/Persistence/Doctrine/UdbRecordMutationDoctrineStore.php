@@ -21,8 +21,6 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Clock\ClockInterface;
-use Throwable;
-use UnexpectedValueException;
 
 use function count;
 use function explode;
@@ -61,7 +59,7 @@ final class UdbRecordMutationDoctrineStore implements UdbRecordMutationStoreInte
             $connection->commit();
 
             return $checkpoint;
-        } catch (Throwable $exception) {
+        } catch (\Throwable $exception) {
             $this->rollBackAndDiscardUnitOfWork($connection);
 
             throw $exception;
@@ -141,7 +139,7 @@ final class UdbRecordMutationDoctrineStore implements UdbRecordMutationStoreInte
     public function allocateBlockDropSequence(string $block, UdbStreamOrigin $origin): UdbUnsignedDecimal
     {
         if (null === UdbBlock::tryFrom($block)) {
-            throw new UnexpectedValueException('A UDB block drop requires a canonical block.');
+            throw new \UnexpectedValueException('A UDB block drop requires a canonical block.');
         }
         $connection = $this->em->getConnection();
         $connection->beginTransaction();
@@ -151,7 +149,7 @@ final class UdbRecordMutationDoctrineStore implements UdbRecordMutationStoreInte
             $connection->commit();
 
             return $checkpoint->watermark;
-        } catch (Throwable $exception) {
+        } catch (\Throwable $exception) {
             $this->rollBackAndDiscardUnitOfWork($connection);
 
             throw $exception;
@@ -163,7 +161,7 @@ final class UdbRecordMutationDoctrineStore implements UdbRecordMutationStoreInte
     /**
      * @param Closure(): bool $operation
      */
-    private function mutate(string $block, UdbStreamOrigin $origin, Closure $operation): ?UdbUnsignedDecimal
+    private function mutate(string $block, UdbStreamOrigin $origin, \Closure $operation): ?UdbUnsignedDecimal
     {
         $connection = $this->em->getConnection();
         $connection->beginTransaction();
@@ -181,7 +179,7 @@ final class UdbRecordMutationDoctrineStore implements UdbRecordMutationStoreInte
             $records = $this->recordsByBlock($block);
             $blockType = UdbBlock::tryFrom($block);
             if (null === $blockType || !UdbSchema::validateAggregateTyped($blockType, $records)) {
-                throw new UnexpectedValueException('The UDB mutation would create an invalid block aggregate.');
+                throw new \UnexpectedValueException('The UDB mutation would create an invalid block aggregate.');
             }
             $this->refreshManifest($block, $records);
             $checkpoint = $this->authorityState()->advanceDatasetCheckpoint($origin);
@@ -189,7 +187,7 @@ final class UdbRecordMutationDoctrineStore implements UdbRecordMutationStoreInte
             $connection->commit();
 
             return $checkpoint->watermark;
-        } catch (Throwable $exception) {
+        } catch (\Throwable $exception) {
             $this->rollBackAndDiscardUnitOfWork($connection);
 
             throw $exception;
@@ -333,12 +331,12 @@ final class UdbRecordMutationDoctrineStore implements UdbRecordMutationStoreInte
         foreach ($rows as $row) {
             $kind = UdbValueKind::tryFrom($row['valueKind']);
             if (null === $kind) {
-                throw new UnexpectedValueException('A persisted UDB record has an unknown value kind.');
+                throw new \UnexpectedValueException('A persisted UDB record has an unknown value kind.');
             }
             $records[$row['path']] = match ($kind) {
                 UdbValueKind::None => UdbValue::none(),
                 UdbValueKind::String => UdbValue::string($row['value']),
-                UdbValueKind::Number => UdbValue::number(UdbUnsignedDecimal::parse(substr($row['value'], 1)) ?? throw new UnexpectedValueException('A persisted numeric UDB value is malformed.')),
+                UdbValueKind::Number => UdbValue::number(UdbUnsignedDecimal::parse(substr($row['value'], 1)) ?? throw new \UnexpectedValueException('A persisted numeric UDB value is malformed.')),
             };
         }
 
@@ -350,7 +348,7 @@ final class UdbRecordMutationDoctrineStore implements UdbRecordMutationStoreInte
      */
     private function refreshManifest(string $block, array $records): void
     {
-        $blockType = UdbBlock::fromLetter($block) ?? throw new UnexpectedValueException('An unknown UDB block cannot have a manifest.');
+        $blockType = UdbBlock::fromLetter($block) ?? throw new \UnexpectedValueException('An unknown UDB block cannot have a manifest.');
         $digest = UdbChecksum::fromMap($blockType, $records);
         $modifiedAt = $this->clock->now();
         $state = $this->em

@@ -26,8 +26,6 @@ use App\OperServ\Application\Security\OperatorAuthorizationService;
 use App\OperServ\Application\Security\OperatorPermissionPolicy;
 use App\OperServ\Application\Security\RootAuthorizationPolicy;
 use App\Tests\NickServ\Support\NegotiatedCaseMapping;
-use DateTimeImmutable;
-use DateTimeZone;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -57,7 +55,7 @@ final class StatusCommandTest extends TestCase
     #[Test]
     public function requesterSeesAlignedRejectionWithoutOperatorAudit(): void
     {
-        $messages = $this->executeStatus($this->rejectedChannel(new DateTimeImmutable('+1 hour')), 10);
+        $messages = $this->executeStatus($this->rejectedChannel(new \DateTimeImmutable('+1 hour')), 10);
 
         self::assertSame([
             'status.header',
@@ -83,7 +81,7 @@ final class StatusCommandTest extends TestCase
     #[Test]
     public function rejectionDetailsRemainPrivateFromOtherAccounts(): void
     {
-        $messages = $this->executeStatus($this->rejectedChannel(new DateTimeImmutable('+1 hour')), 11);
+        $messages = $this->executeStatus($this->rejectedChannel(new \DateTimeImmutable('+1 hour')), 11);
 
         self::assertSame(['status.header', 'status.rejected_private', 'status.footer'], $messages);
     }
@@ -91,7 +89,7 @@ final class StatusCommandTest extends TestCase
     #[Test]
     public function anyCentrallyRecognizedIrcopCanSeeAuditWithoutReviewPermission(): void
     {
-        $messages = $this->executeStatus($this->rejectedChannel(new DateTimeImmutable('-1 hour')), 11, '#test', true, actorIsIrcop: true);
+        $messages = $this->executeStatus($this->rejectedChannel(new \DateTimeImmutable('-1 hour')), 11, '#test', true, actorIsIrcop: true);
 
         self::assertSame([
             'status.header',
@@ -106,7 +104,7 @@ final class StatusCommandTest extends TestCase
     #[Test]
     public function configuredRootCanSeeRejectionAuditWithoutNetworkOperFlag(): void
     {
-        $messages = $this->executeStatus($this->rejectedChannel(new DateTimeImmutable('+1 hour')), 11, actorNickname: 'Root');
+        $messages = $this->executeStatus($this->rejectedChannel(new \DateTimeImmutable('+1 hour')), 11, actorNickname: 'Root');
 
         self::assertContains('status.rejection_audit', $messages);
         self::assertContains('status.restriction_until', $messages);
@@ -115,7 +113,7 @@ final class StatusCommandTest extends TestCase
     #[Test]
     public function rawOperFlagWithoutCentralRoleIsNotEnoughToSeeRejectionAudit(): void
     {
-        $messages = $this->executeStatus($this->rejectedChannel(new DateTimeImmutable('+1 hour')), 11, actorIsIrcop: true);
+        $messages = $this->executeStatus($this->rejectedChannel(new \DateTimeImmutable('+1 hour')), 11, actorIsIrcop: true);
 
         self::assertSame(['status.header', 'status.rejected_private', 'status.footer'], $messages);
     }
@@ -141,7 +139,7 @@ final class StatusCommandTest extends TestCase
         self::assertTrue($command->allowsForbiddenChannel());
         self::assertFalse($command->usesLevelFounder());
 
-        $at = new DateTimeImmutable('2026-10-26T12:00:00+00:00');
+        $at = new \DateTimeImmutable('2026-10-26T12:00:00+00:00');
         $active = RegisteredChannel::register($at, '#active', 10, 'description');
         $suspended = RegisteredChannel::register($at, '#suspended', 10, 'description');
         $suspended->suspend('policy');
@@ -232,7 +230,7 @@ final class StatusCommandTest extends TestCase
             foreach ($translationParameters as $translation) {
                 if ('status.restriction_until' === $translation['key']) {
                     self::assertSame(
-                        $channel->getRegistrationRestrictedUntil()->setTimezone(new DateTimeZone('UTC'))->format('d/m/Y H:i T'),
+                        $channel->getRegistrationRestrictedUntil()->setTimezone(new \DateTimeZone('UTC'))->format('d/m/Y H:i T'),
                         $translation['parameters']['%date%'],
                     );
                 }
@@ -242,10 +240,10 @@ final class StatusCommandTest extends TestCase
         return $messages;
     }
 
-    private function rejectedChannel(?DateTimeImmutable $restrictedUntil): RegisteredChannel
+    private function rejectedChannel(?\DateTimeImmutable $restrictedUntil): RegisteredChannel
     {
-        $channel = RegisteredChannel::createPendingRegistration(new DateTimeImmutable('-1 day'), '#test', 10, 'description');
-        $channel->rejectRegistration('Insufficient information', 2, 'Reviewer', new DateTimeImmutable('-1 hour'), $restrictedUntil);
+        $channel = RegisteredChannel::createPendingRegistration(new \DateTimeImmutable('-1 day'), '#test', 10, 'description');
+        $channel->rejectRegistration('Insufficient information', 2, 'Reviewer', new \DateTimeImmutable('-1 hour'), $restrictedUntil);
 
         return $channel;
     }

@@ -20,7 +20,6 @@ use App\Irc\Domain\Repository\NetworkUserRepositoryInterface;
 use App\Irc\Domain\ValueObject\ChannelName;
 use App\Irc\Domain\ValueObject\Nick;
 use App\Irc\Domain\ValueObject\Uid;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -41,7 +40,7 @@ final class EmptyChannelLifecycleTest extends TestCase
         $name = new ChannelName('#test');
         $uid = new Uid('001ABC123');
         $other = new Uid('001ABC124');
-        $channel = new Channel($name, '+nt', new DateTimeImmutable('@100'));
+        $channel = new Channel($name, '+nt', new \DateTimeImmutable('@100'));
         $channel->syncMember($uid, ChannelMemberRole::Op);
         $channel->syncMember($other, ChannelMemberRole::Voice);
         $channels->save($channel);
@@ -65,7 +64,7 @@ final class EmptyChannelLifecycleTest extends TestCase
         $registry = new ChannelSyncCompletedRegistry();
         $name = new ChannelName('#test');
         $uid = new Uid('001ABC123');
-        $old = new Channel($name, '+s', new DateTimeImmutable('@100'));
+        $old = new Channel($name, '+s', new \DateTimeImmutable('@100'));
         $old->syncMember($uid, ChannelMemberRole::Op);
         $channels->save($old);
         $registry->markSyncCompleted('#test');

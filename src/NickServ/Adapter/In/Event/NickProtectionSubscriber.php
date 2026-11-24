@@ -30,13 +30,11 @@ use App\NickServ\Application\UseCase\SyncNetworkIdentification\SyncNetworkIdenti
 use App\NickServ\Application\UseCase\SyncNetworkIdentification\SyncNetworkIdentificationHandlerInterface;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use Closure;
-use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Throwable;
 
 use function array_map;
 use function array_slice;
@@ -141,7 +139,7 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
             $progress = ['handledUsers' => 0, 'userInProgress' => false, 'userFailed' => false, 'unsavedActivityNicknames' => []];
             try {
                 $this->protectBurstChunk($batch, $occurredAt, $chunk, $progress);
-            } catch (Throwable $exception) {
+            } catch (\Throwable $exception) {
                 if ($this->isEntityManagerClosed()) {
                     $remainingUsers = count($pending) - $offset - $progress['handledUsers'];
                     if (!$resetDone && $this->resetClosedEntityManager($chunk)) {
@@ -294,7 +292,7 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
 
         try {
             $this->managerRegistry->resetManager();
-        } catch (Throwable $exception) {
+        } catch (\Throwable $exception) {
             $this->logger->error('NickServ burst protection could not reset the closed EntityManager.', [
                 'chunk' => $chunk,
                 'exception' => $exception,
@@ -318,7 +316,7 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
      * @param list<NetworkUser>       $batch
      * @param BurstChunkProgressShape $progress
      */
-    private function continueAfterReset(int $remainingUsers, array $batch, array $progress, int $chunk, DateTimeImmutable $occurredAt, Throwable $exception): int
+    private function continueAfterReset(int $remainingUsers, array $batch, array $progress, int $chunk, \DateTimeImmutable $occurredAt, \Throwable $exception): int
     {
         if (!$progress['userFailed']) {
             $this->logger->warning('NickServ burst protection: the EntityManager closed, resetting it and protecting the remaining burst users.', [
@@ -347,7 +345,7 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
      *
      * @param list<string> $nicknames
      */
-    private function saveActivitiesAgain(array $nicknames, int $chunk, DateTimeImmutable $occurredAt): void
+    private function saveActivitiesAgain(array $nicknames, int $chunk, \DateTimeImmutable $occurredAt): void
     {
         if ([] === $nicknames) {
             return;
@@ -359,7 +357,7 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
                 $account->markSeen($occurredAt);
             }
             $this->nickProtectionService->saveActivities($accounts);
-        } catch (Throwable $exception) {
+        } catch (\Throwable $exception) {
             $this->logger->error('NickServ burst protection could not save the last-seen activity of the users handled before the EntityManager closed.', [
                 'chunk' => $chunk,
                 'users' => count($nicknames),
@@ -375,7 +373,7 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
      * @param list<NetworkUser>       $batch
      * @param BurstChunkProgressShape $progress filled with how far protection got, for the caller's recovery
      */
-    private function protectBurstChunk(array $batch, DateTimeImmutable $occurredAt, int $chunk, array &$progress): void
+    private function protectBurstChunk(array $batch, \DateTimeImmutable $occurredAt, int $chunk, array &$progress): void
     {
         $accounts = $this->identifiedUserVhostSync->findAccountsForBurst(array_map(static fn (NetworkUser $user): string => $user->nick, $batch));
         $activityBatch = new PendingNickActivities();
@@ -397,7 +395,7 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
                 $progress['userFailed'] = false;
                 ++$progress['handledUsers'];
             }
-        } catch (Throwable $exception) {
+        } catch (\Throwable $exception) {
             $failure = $exception;
         }
         $failure = $this->finishBurstChunkStep($failure, $chunk, 'save its activity', function () use ($activityBatch, $chunk, $batch, $accounts, &$progress): void {
@@ -454,12 +452,12 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
      * One failing user is logged and skipped so the rest of its chunk is still protected,
      * unless the failure closed the EntityManager: then the chunk stops so the pass can reset it once or stop.
      */
-    private function protectBurstUser(NetworkUser $user, ?RegisteredNick $account, DateTimeImmutable $occurredAt, PendingNickActivities $activityBatch, int $chunk): void
+    private function protectBurstUser(NetworkUser $user, ?RegisteredNick $account, \DateTimeImmutable $occurredAt, PendingNickActivities $activityBatch, int $chunk): void
     {
         try {
             $this->identifiedUserVhostSync->syncVhostForLoadedUser($user, $account);
             $this->nickProtectionService->enforceProtectionWithAccount($user, $occurredAt, $account, $activityBatch);
-        } catch (Throwable $exception) {
+        } catch (\Throwable $exception) {
             if ($this->isEntityManagerClosed()) {
                 throw $exception;
             }
@@ -475,11 +473,11 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
     /**
      * @param Closure(): void $run
      */
-    private function finishBurstChunkStep(?Throwable $failure, int $chunk, string $step, Closure $run): ?Throwable
+    private function finishBurstChunkStep(?\Throwable $failure, int $chunk, string $step, \Closure $run): ?\Throwable
     {
         try {
             $run();
-        } catch (Throwable $exception) {
+        } catch (\Throwable $exception) {
             if (null === $failure) {
                 return $exception;
             }

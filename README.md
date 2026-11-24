@@ -1,6 +1,6 @@
 # Ares IRC Services
 
-[![PHP](https://img.shields.io/badge/PHP-8.5%2B-777BB4?style=flat&logo=php)](https://php.net)
+[![PHP](https://img.shields.io/badge/PHP-8.6%2B-777BB4?style=flat&logo=php)](https://php.net)
 [![Symfony](https://img.shields.io/badge/Symfony-7.4-black?style=flat&logo=symfony)](https://symfony.com)
 [![License](https://img.shields.io/badge/license-AGPL--3.0--or--later-blue.svg)](LICENSE)
 [![Coverage](https://codecov.io/gh/davidlig/ares-irc-services/branch/main/graph/badge.svg)](https://codecov.io/gh/davidlig/ares-irc-services)
@@ -9,7 +9,7 @@
 
 > **Under active development.** Functionality and APIs may change.
 
-A modular, protocol-agnostic IRC services daemon built for **PHP >= 8.5** and **Symfony 7.4**, following **Clean Architecture / DDD** principles. It ships with NickServ, ChanServ, MemoServ, and OperServ — all protocol-independent via a strategy pattern backed by a tagged-service registry.
+A modular, protocol-agnostic IRC services daemon built for **PHP >= 8.6** and **Symfony 7.4**, following **Clean Architecture / DDD** principles. It ships with NickServ, ChanServ, MemoServ, and OperServ — all protocol-independent via a strategy pattern backed by a tagged-service registry.
 
 ---
 
@@ -135,7 +135,7 @@ configuration. See OperServ HELP for available commands and permissions.
 
 | Dependency | Minimum version |
 |------------|----------------|
-| PHP | >= 8.5 |
+| PHP | >= 8.6 |
 | Symfony | 7.4 |
 | Composer | 2.x |
 
@@ -145,8 +145,10 @@ Composer directly requires `ext-ctype`, `ext-iconv`, `ext-mbstring`, `ext-pdo_my
 `ext-pdo_sqlite` (with PDO). Install both declared PDO drivers even if you use only one database.
 For PostgreSQL, also install `ext-pdo_pgsql`. Transitive dependencies and development tools may
 require additional extensions; use the platform check below for the installed dependency set.
-`ext-sockets` is not required by the Amp socket transport. Docker includes `pcntl` for graceful
-daemon signal handling.
+`ext-sockets` is optional but recommended: without it the uplink cannot set `TCP_USER_TIMEOUT`, and
+a link lost while data is waiting for acknowledgement is detected only after TCP retransmissions give
+up (about 15 minutes on Linux). Docker includes `sockets`, and `pcntl` for graceful daemon signal
+handling.
 
 Verify your setup with:
 
@@ -596,7 +598,7 @@ make coverage
 through `TEST_ARGS`. `make coverage` runs the exact 100% coverage gate. Reserve it for final
 verification; do not run a standalone full suite immediately before or after it.
 
-### Code style (PHP-CS-Fixer)
+### Code style (DressCode)
 
 ```bash
 composer cs-fix     # auto-fix
@@ -620,7 +622,7 @@ locally installed formatter, never an implicit download through `npx`. All three
 include nested `.yaml` and `.yml` files. Formatting uses two spaces, LF endings, preferred
 double quotes, and preserved prose wrapping. Check mode fails when normalization is needed.
 
-Run `composer yaml-fix` immediately after PHP-CS-Fixer, review the diff, and run
+Run `composer yaml-fix` immediately after DressCode, review the diff, and run
 `composer yaml-check` before completion. When normalizing existing YAML, compare before/after
 Symfony-parsed values, types and custom tags across the entire scope, including `deptrac.yaml`.
 Preserve IRC escapes, physical multiline blocks, `!irc` tags, placeholders, meaningful spaces
@@ -639,7 +641,7 @@ php -l path/to/file.php                                 # syntax check
 php bin/console lint:container                           # DI validation
 php bin/console lint:yaml . --exclude vendor/ --parse-tags  # YAML lint
 composer phpstan                                        # PHPStan level max
-./vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php  # format
+./vendor/bin/dresscode fix                               # format
 composer yaml-fix                                       # normalize YAML immediately afterward
 composer yaml-check                                     # check without writing; review the diff
 composer architecture                                   # Deptrac architecture boundaries

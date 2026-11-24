@@ -28,12 +28,10 @@ use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
 use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\Shared\Application\Port\EventBusInterface;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use ReflectionProperty;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(NoexpireCommand::class)]
@@ -223,7 +221,7 @@ final class NoexpireCommandTest extends TestCase
     #[Test]
     public function executeWithForbiddenChannelRepliesForbidden(): void
     {
-        $channel = RegisteredChannel::createForbidden(new DateTimeImmutable(), '#forbidden', 'Banned');
+        $channel = RegisteredChannel::createForbidden(new \DateTimeImmutable(), '#forbidden', 'Banned');
 
         $messages = [];
         $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
@@ -375,9 +373,9 @@ final class NoexpireCommandTest extends TestCase
 
     private function createChannelWithId(string $name, int $id): RegisteredChannel
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), $name, 1, 'Test description');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), $name, 1, 'Test description');
 
-        $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
+        $ref = new \ReflectionProperty(RegisteredChannel::class, 'id');
         $ref->setValue($channel, $id);
 
         return $channel;

@@ -16,16 +16,13 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbBlockStateRepositoryInterf
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbRecordRepositoryInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbUnsignedDecimal;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
-use DateTimeImmutable;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Tools\SchemaTool;
-use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
-use UnexpectedValueException;
 
 use function array_keys;
 use function count;
@@ -115,7 +112,7 @@ final class UdbStoreDoctrineRepositoryTest extends DoctrineIntegrationTestCase
         try {
             $this->records->recordsByBlock($block);
             self::fail('Invalid persisted schema rows must not be returned.');
-        } catch (UnexpectedValueException $error) {
+        } catch (\UnexpectedValueException $error) {
             self::assertSame('A persisted UDB record does not match its canonical schema.', $error->getMessage());
         }
         self::assertSame($before, $connection->fetchAllAssociative('SELECT * FROM udb_records'));
@@ -259,8 +256,8 @@ final class UdbStoreDoctrineRepositoryTest extends DoctrineIntegrationTestCase
     {
         self::assertSame([], $this->states->all());
 
-        $firstModifiedAt = new DateTimeImmutable('2026-09-13 10:00:00');
-        $secondModifiedAt = new DateTimeImmutable('2026-09-13 11:00:00');
+        $firstModifiedAt = new \DateTimeImmutable('2026-09-13 10:00:00');
+        $secondModifiedAt = new \DateTimeImmutable('2026-09-13 11:00:00');
         $this->states->upsert('S', str_repeat('a', 64), 1, $firstModifiedAt);
         $this->states->upsert('S', str_repeat('b', 64), 2, $secondModifiedAt);
         $this->states->upsert('L', str_repeat('0', 64), 0, $firstModifiedAt);
@@ -323,7 +320,7 @@ final class UdbStoreDoctrineRepositoryTest extends DoctrineIntegrationTestCase
             try {
                 $this->records->recordsByBlock('N');
                 self::fail('Corrupt persisted logical values must not be returned.');
-            } catch (UnexpectedValueException $error) {
+            } catch (\UnexpectedValueException $error) {
                 self::assertStringContainsString('persisted', $error->getMessage());
             }
         }
@@ -332,7 +329,7 @@ final class UdbStoreDoctrineRepositoryTest extends DoctrineIntegrationTestCase
     #[Test]
     public function invalidTypedUpsertIsRejectedBeforeChangingSql(): void
     {
-        $this->expectException(UnexpectedValueException::class);
+        $this->expectException(\UnexpectedValueException::class);
         $this->records->upsert('N', 'nick::pass', UdbValue::none());
     }
 
@@ -347,7 +344,7 @@ final class UdbStoreDoctrineRepositoryTest extends DoctrineIntegrationTestCase
                     $repository = new UdbRecordDoctrineRepository($em);
                     $repository->$method('N', ['nick::pass' => $value]);
                     self::fail('Invalid seed must be rolled back.');
-                } catch (UnexpectedValueException $error) {
+                } catch (\UnexpectedValueException $error) {
                     self::assertStringContainsString('typed', $error->getMessage());
                 } finally {
                     $em->getConnection()->close();
@@ -366,7 +363,7 @@ final class UdbStoreDoctrineRepositoryTest extends DoctrineIntegrationTestCase
 
     private function upsert(string $block, string $path, string $logicalValue): bool
     {
-        return $this->records->upsert($block, $path, UdbTestValues::fromLogical(UdbBlock::fromLetter($block) ?? throw new LogicException('Invalid fixture block.'), $path, $logicalValue));
+        return $this->records->upsert($block, $path, UdbTestValues::fromLogical(UdbBlock::fromLetter($block) ?? throw new \LogicException('Invalid fixture block.'), $path, $logicalValue));
     }
 
     /**
@@ -374,7 +371,7 @@ final class UdbStoreDoctrineRepositoryTest extends DoctrineIntegrationTestCase
      */
     private function seedBlock(string $block, array $records): void
     {
-        $this->records->seedBlock($block, UdbTestValues::typedMap(UdbBlock::fromLetter($block) ?? throw new LogicException('Invalid fixture block.'), $records));
+        $this->records->seedBlock($block, UdbTestValues::typedMap(UdbBlock::fromLetter($block) ?? throw new \LogicException('Invalid fixture block.'), $records));
     }
 
     /**
@@ -382,6 +379,6 @@ final class UdbStoreDoctrineRepositoryTest extends DoctrineIntegrationTestCase
      */
     private function replaceBlock(string $block, array $records): void
     {
-        $this->records->replaceBlock($block, UdbTestValues::typedMap(UdbBlock::fromLetter($block) ?? throw new LogicException('Invalid fixture block.'), $records));
+        $this->records->replaceBlock($block, UdbTestValues::typedMap(UdbBlock::fromLetter($block) ?? throw new \LogicException('Invalid fixture block.'), $records));
     }
 }

@@ -34,7 +34,6 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-use RuntimeException;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 use function array_filter;
@@ -166,7 +165,7 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
                 new UdbSessionLock($directory),
             );
 
-            $this->expectException(RuntimeException::class);
+            $this->expectException(\RuntimeException::class);
             $handler->performHandshake($this->createConnection(), $this->createServerLink());
         } finally {
             flock($foreign, LOCK_UN);
@@ -187,14 +186,14 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
         $coordinator->expects(self::once())->method('reset');
 
         $failingConnection = $this->createStub(ConnectionInterface::class);
-        $failingConnection->method('writeLine')->willThrowException(new RuntimeException('Write failed'));
+        $failingConnection->method('writeLine')->willThrowException(new \RuntimeException('Write failed'));
 
         $handler = new UnrealUdbProtocolHandler('002', $coordinator, $lock);
 
         try {
             $handler->performHandshake($failingConnection, $this->createServerLink());
             self::fail('Expected handshake failure');
-        } catch (RuntimeException $e) {
+        } catch (\RuntimeException $e) {
             self::assertSame('Write failed', $e->getMessage());
         } finally {
             // If lock was properly released, we should be able to acquire it again without error

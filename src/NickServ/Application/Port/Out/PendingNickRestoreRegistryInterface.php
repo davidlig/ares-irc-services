@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\NickServ\Application\Port\Out;
 
-use App\NickServ\Application\Service\NickProtectionService;
-
 /**
  * Tracks UIDs for which services sent an SVSNICK to restore a registered nick.
  * Used by NickProtectionService to suppress false protection triggers.

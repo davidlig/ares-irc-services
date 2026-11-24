@@ -13,12 +13,9 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbStreamOrigin;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbValueKind;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbChecksum;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbUnsignedDecimal;
-use DateTimeImmutable;
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
 
 use function hash;
 use function str_repeat;
@@ -32,7 +29,7 @@ final class UdbEntitiesTest extends TestCase
     public function recordHoldsBlockPathAndValue(): void
     {
         $record = new UdbRecord('S', 'nickserv', 'NickServ!NickServ@services');
-        new ReflectionClass(UdbRecord::class)->getProperty('id')->setValue($record, 9);
+        new \ReflectionClass(UdbRecord::class)->getProperty('id')->setValue($record, 9);
 
         self::assertSame(9, $record->getId());
         self::assertSame('S', $record->getBlock());
@@ -86,10 +83,10 @@ final class UdbEntitiesTest extends TestCase
     #[Test]
     public function blockStateHoldsManifestAndModificationTime(): void
     {
-        $modifiedAt = new DateTimeImmutable('2026-08-30 12:00:00');
+        $modifiedAt = new \DateTimeImmutable('2026-08-30 12:00:00');
         $digest = str_repeat('a', 64);
         $state = new UdbBlockState('S', $digest, $modifiedAt, 17);
-        new ReflectionClass(UdbBlockState::class)->getProperty('id')->setValue($state, 3);
+        new \ReflectionClass(UdbBlockState::class)->getProperty('id')->setValue($state, 3);
 
         self::assertSame(3, $state->getId());
         self::assertSame('S', $state->getBlock());
@@ -102,7 +99,7 @@ final class UdbEntitiesTest extends TestCase
     #[Test]
     public function blockStateDefaultsSyncTimeToNow(): void
     {
-        $before = new DateTimeImmutable();
+        $before = new \DateTimeImmutable();
         $state = new UdbBlockState('L');
 
         self::assertSame(UdbChecksum::empty(UdbBlock::Links), $state->getChecksum());
@@ -113,8 +110,8 @@ final class UdbEntitiesTest extends TestCase
     #[Test]
     public function blockStateUpdateRefreshesTheCompleteManifest(): void
     {
-        $state = new UdbBlockState('L', str_repeat('0', 64), new DateTimeImmutable('2026-08-30 12:00:00'));
-        $modifiedAt = new DateTimeImmutable('2026-09-13 16:00:00');
+        $state = new UdbBlockState('L', str_repeat('0', 64), new \DateTimeImmutable('2026-08-30 12:00:00'));
+        $modifiedAt = new \DateTimeImmutable('2026-09-13 16:00:00');
 
         $state->update(str_repeat('b', 64), 2, $modifiedAt);
 
@@ -126,7 +123,7 @@ final class UdbEntitiesTest extends TestCase
     #[Test]
     public function blockStateRejectsNonCanonicalDigests(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
 
         new UdbBlockState('S', str_repeat('A', 64));
     }
@@ -134,7 +131,7 @@ final class UdbEntitiesTest extends TestCase
     #[Test]
     public function blockStateRejectsNegativeRecordCounts(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
 
         new UdbBlockState('S', str_repeat('a', 64), recordCount: -1);
     }
@@ -184,7 +181,7 @@ final class UdbEntitiesTest extends TestCase
     {
         $state = new UdbAuthorityState();
         $state->approve(str_repeat('a', 64));
-        new ReflectionClass(UdbAuthorityState::class)->getProperty('protocolRevision')->setValue($state, str_repeat('b', 40));
+        new \ReflectionClass(UdbAuthorityState::class)->getProperty('protocolRevision')->setValue($state, str_repeat('b', 40));
 
         self::assertFalse($state->isApproved());
         self::assertSame(str_repeat('b', 40), $state->getProtocolRevision());

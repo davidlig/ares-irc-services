@@ -15,11 +15,9 @@ use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\Service\IdentifiedUserVhostSyncService;
 use App\NickServ\Application\Service\VhostDisplayResolver;
 use App\NickServ\Domain\Entity\RegisteredNick;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
 
 #[CoversClass(IdentifiedUserVhostSyncService::class)]
 final class IdentifiedUserVhostSyncServiceTest extends TestCase
@@ -125,8 +123,8 @@ final class IdentifiedUserVhostSyncServiceTest extends TestCase
             'hash',
             'u@e.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable()
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable()
         );
         $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $repo->expects(self::atLeastOnce())->method('findByNick')->with('Nick')->willReturn($account);
@@ -312,10 +310,10 @@ final class IdentifiedUserVhostSyncServiceTest extends TestCase
 
     private function createAccountWithId(string $nick): RegisteredNick
     {
-        $account = RegisteredNick::createPending($nick, 'hash', 'u@e.com', 'en', new DateTimeImmutable('+1 hour'), new DateTimeImmutable());
+        $account = RegisteredNick::createPending($nick, 'hash', 'u@e.com', 'en', new \DateTimeImmutable('+1 hour'), new \DateTimeImmutable());
         $account->activate();
 
-        $refl = new ReflectionClass($account);
+        $refl = new \ReflectionClass($account);
         $idProp = $refl->getProperty('id');
         $idProp->setValue($account, 1);
 

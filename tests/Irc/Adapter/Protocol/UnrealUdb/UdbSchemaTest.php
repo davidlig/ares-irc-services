@@ -9,7 +9,6 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbSchema;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbValue;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbValueKind;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbUnsignedDecimal;
-use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -698,6 +697,6 @@ final class UdbSchemaTest extends TestCase
 
     private static function number(string $decimal): UdbUnsignedDecimal
     {
-        return UdbUnsignedDecimal::parse($decimal) ?? throw new LogicException('The test uint64 fixture must be valid.');
+        return UdbUnsignedDecimal::parse($decimal) ?? throw new \LogicException('The test uint64 fixture must be valid.');
     }
 }

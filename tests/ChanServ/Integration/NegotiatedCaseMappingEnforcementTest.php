@@ -31,7 +31,6 @@ use App\Irc\Domain\ValueObject\ServerName;
 use App\NickServ\Adapter\Out\Persistence\Doctrine\RegisteredNickDoctrineRepository;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use Symfony\Component\EventDispatcher\EventDispatcher;
@@ -50,7 +49,7 @@ final class NegotiatedCaseMappingEnforcementTest extends DoctrineIntegrationTest
     #[Test]
     public function registrationsResolveUnderTheNegotiatedMappingAndRevertToAsciiOnLinkLoss(): void
     {
-        $now = new DateTimeImmutable('2026-11-15 10:00:00');
+        $now = new \DateTimeImmutable('2026-11-15 10:00:00');
         $this->entityManager->persist(RegisteredNick::createActive('Foo[', 'hash', null, 'en', $now));
         $this->entityManager->persist(RegisteredChannel::register($now, '#foo[', 1, 'desc'));
         $this->flushAndClear();
@@ -80,7 +79,7 @@ final class NegotiatedCaseMappingEnforcementTest extends DoctrineIntegrationTest
     #[Test]
     public function joinEnforcementAndAkickMatchFollowTheNegotiatedMapping(): void
     {
-        $now = new DateTimeImmutable('2026-11-15 10:00:00');
+        $now = new \DateTimeImmutable('2026-11-15 10:00:00');
         $channel = RegisteredChannel::register($now, '#foo[', 1, 'desc');
         $this->entityManager->persist($channel);
         $this->flushAndClear();
@@ -111,7 +110,7 @@ final class NegotiatedCaseMappingEnforcementTest extends DoctrineIntegrationTest
             new IrcNetworkIdentityFold($tracker),
         );
 
-        return $handler->handle(new EnforceChannelAkick($channelName, '001AAAAAA', new DateTimeImmutable('2026-11-15 10:00:00')));
+        return $handler->handle(new EnforceChannelAkick($channelName, '001AAAAAA', new \DateTimeImmutable('2026-11-15 10:00:00')));
     }
 
     /** @return array{EventDispatcher, NetworkIdentityEquivalenceTracker} */

@@ -27,7 +27,6 @@ use App\OperServ\Domain\ValueObject\GlobalMessageMask;
 use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
 use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
 use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -101,13 +100,13 @@ final class GlobalCommandTest extends TestCase
         $network = new GlobalCommandNetwork($trace, ['GlobalServ' => '001GS'], 7);
         $audit = new GlobalCommandAudit($trace);
         $translation = new GlobalCommandTranslation();
-        $before = new DateTimeImmutable();
+        $before = new \DateTimeImmutable();
 
         new GlobalCommand($this->handler($network, $audit))->execute(
             $this->context(['GlobalServ', 'privmsg', 'credential=must-not-enter-audit'], $translation, new GlobalCommandNotifier($trace)),
         );
 
-        $after = new DateTimeImmutable();
+        $after = new \DateTimeImmutable();
         self::assertSame(['effect', 'audit', 'reply'], $trace->events);
         self::assertSame(['001GS', 'credential=must-not-enter-audit', MessageDelivery::Interactive], $network->broadcast);
         self::assertNotNull($audit->record);

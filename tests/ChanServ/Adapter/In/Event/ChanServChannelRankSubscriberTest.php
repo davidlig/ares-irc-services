@@ -40,13 +40,10 @@ use App\Irc\Application\PublishedEvent\ServerDelinkStartedEvent;
 use App\Irc\Application\PublishedEvent\UserDepartedChannelEvent;
 use App\Irc\Application\PublishedEvent\UserJoinedChannelEvent;
 use App\Tests\NickServ\Support\NegotiatedCaseMapping;
-use ArrayObject;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RuntimeException;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
 use function array_map;
@@ -448,7 +445,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         $dispatcher->addSubscriber(new ChanServChannelRankSubscriber($handler, new PendingChannelRankSynchronizations(), $burst, $scope, $snapshot, $this->idleDelinkScope()));
         $dispatcher->addSubscriber(new ChanServBurstChannelSnapshotSubscriber($snapshot, $scope));
         $dispatcher->addListener(NetworkSynchronizationCompletedEvent::class, static function (): never {
-            throw new RuntimeException('end-of-burst pass failed');
+            throw new \RuntimeException('end-of-burst pass failed');
         }, 10);
 
         $dispatcher->dispatch(new NetworkConnectionEstablishedEvent());
@@ -457,7 +454,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         try {
             $dispatcher->dispatch(new NetworkSyncCompleteEvent($this->createStub(ConnectionInterface::class), '0A1'));
             self::fail('The end-of-sync listener failure must propagate.');
-        } catch (RuntimeException $exception) {
+        } catch (\RuntimeException $exception) {
             self::assertSame('end-of-burst pass failed', $exception->getMessage());
         }
         self::assertTrue($snapshot->contains('#registered'), 'The failure stops propagation before the snapshot closes.');
@@ -508,12 +505,12 @@ final class ChanServChannelRankSubscriberTest extends TestCase
             $this->createStub(RegisteredChannelBurstSnapshot::class),
             $this->idleDelinkScope(),
         ));
-        $completions = new ArrayObject();
+        $completions = new \ArrayObject();
         $dispatcher->addListener(NetworkSynchronizationCompletedEvent::class, static function (NetworkSynchronizationCompletedEvent $event) use ($completions): void {
             $completions->append($event);
         });
         $dispatcher->addListener(NetworkSyncCompleteEvent::class, static function (): never {
-            throw new RuntimeException('end-of-sync adapter listener failed');
+            throw new \RuntimeException('end-of-sync adapter listener failed');
         }, 15);
 
         $dispatcher->dispatch(new NetworkConnectionEstablishedEvent());
@@ -522,7 +519,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         try {
             $dispatcher->dispatch(new NetworkSyncCompleteEvent($this->createStub(ConnectionInterface::class), '0A1'));
             self::fail('The end-of-sync adapter listener failure must propagate.');
-        } catch (RuntimeException $exception) {
+        } catch (\RuntimeException $exception) {
             self::assertSame('end-of-sync adapter listener failed', $exception->getMessage());
         }
         self::assertCount(0, $completions, 'The failure stops propagation before the completion is published.');
@@ -588,7 +585,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
             null,
             '127.0.0.1',
             'host.example',
-            new DateTimeImmutable('2026-01-02 03:04:05'),
+            new \DateTimeImmutable('2026-01-02 03:04:05'),
         );
     }
 }

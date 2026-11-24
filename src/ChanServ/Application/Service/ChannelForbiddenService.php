@@ -14,7 +14,6 @@ use App\ChanServ\Application\PublishedEvent\ChannelForbiddenEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelUnforbiddenEvent;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\Exception\ChannelNameConflictException;
-use DateTimeImmutable;
 
 use function sprintf;
 
@@ -37,7 +36,7 @@ readonly class ChannelForbiddenService implements ForbiddenChannelEnforcement
         string $channelName,
         string $reason,
         string $operatorNick,
-        DateTimeImmutable $occurredAt,
+        \DateTimeImmutable $occurredAt,
         string $defaultLanguage = 'en',
     ): RegisteredChannel {
         $existing = $this->channelRepository->findByChannelNameKey($channelName);
@@ -100,7 +99,7 @@ readonly class ChannelForbiddenService implements ForbiddenChannelEnforcement
         return $forbidden;
     }
 
-    public function unforbid(string $channelName, string $operatorNick, DateTimeImmutable $occurredAt): bool
+    public function unforbid(string $channelName, string $operatorNick, \DateTimeImmutable $occurredAt): bool
     {
         $channel = $this->channelRepository->findByChannelName($channelName);
 

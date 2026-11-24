@@ -39,7 +39,7 @@ final class NegotiatedCaseMapping
     }
 
     /** @return Closure(string): string */
-    public static function fold(CaseMapping $mapping = CaseMapping::Rfc1459): Closure
+    public static function fold(CaseMapping $mapping = CaseMapping::Rfc1459): \Closure
     {
         return self::network($mapping)->fold(...);
     }

@@ -19,11 +19,9 @@ use App\Shared\Adapter\In\Irc\Presentation\Appearance;
 use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
 use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
 use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Stringable;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function implode;
@@ -49,7 +47,7 @@ final class ReadCommandTest extends TestCase
             default => $key,
         });
         $handler = $this->createStub(ReadMemoHandlerInterface::class);
-        $handler->method('handle')->willReturn(ReadMemoResult::success(1, 'Bob', 'raw %date%', new DateTimeImmutable('2026-09-06 12:00:00 UTC')));
+        $handler->method('handle')->willReturn(ReadMemoResult::success(1, 'Bob', 'raw %date%', new \DateTimeImmutable('2026-09-06 12:00:00 UTC')));
         $renderer = new IrcRenderer(new FixedStyleProvider(new PresentationStyle(components: ['table_header' => new Appearance(prefix: 'H ')], separator: '=')));
         $context = new MemoServContext(
             new SenderView('UID', 'Nick', 'i', 'h', 'c', 'ip'),
@@ -140,8 +138,8 @@ final class ReadCommandTest extends TestCase
     {
         $sender = new SenderView('001ABC', 'TestUser', 'ident', 'host', 'cloak', 'ip');
         $account = new MemoAccountView(1, 'TestUser', 'en');
-        $date = new DateTimeImmutable('2026-09-06 12:00:00 UTC');
-        $before = new DateTimeImmutable();
+        $date = new \DateTimeImmutable('2026-09-06 12:00:00 UTC');
+        $before = new \DateTimeImmutable();
 
         $handler = $this->createMock(ReadMemoHandlerInterface::class);
         $handler->expects(self::once())
@@ -168,8 +166,8 @@ final class ReadCommandTest extends TestCase
     {
         $sender = new SenderView('001ABC', 'TestUser', 'ident', 'host', 'cloak', 'ip');
         $account = new MemoAccountView(1, 'TestUser', 'en');
-        $date = new DateTimeImmutable('2026-09-06 12:00:00 UTC');
-        $before = new DateTimeImmutable();
+        $date = new \DateTimeImmutable('2026-09-06 12:00:00 UTC');
+        $before = new \DateTimeImmutable();
 
         $handler = $this->createMock(ReadMemoHandlerInterface::class);
         $handler->expects(self::once())
@@ -278,7 +276,7 @@ final class ReadCommandTest extends TestCase
             ksort($params);
             $formatted = [];
             foreach ($params as $key => $value) {
-                $formatted[] = (string) $key . ': ' . (is_scalar($value) || $value instanceof Stringable ? (string) $value : '');
+                $formatted[] = (string) $key . ': ' . (is_scalar($value) || $value instanceof \Stringable ? (string) $value : '');
             }
 
             return $id . ' [' . implode(', ', $formatted) . ']';

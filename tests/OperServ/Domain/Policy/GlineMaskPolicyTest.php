@@ -9,7 +9,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
 
 #[CoversClass(GlineMaskPolicy::class)]
 final class GlineMaskPolicyTest extends TestCase
@@ -17,7 +16,7 @@ final class GlineMaskPolicyTest extends TestCase
     #[Test]
     public function cannotBeInstantiated(): void
     {
-        $reflection = new ReflectionClass(GlineMaskPolicy::class);
+        $reflection = new \ReflectionClass(GlineMaskPolicy::class);
         $constructor = $reflection->getConstructor();
 
         self::assertNotNull($constructor);

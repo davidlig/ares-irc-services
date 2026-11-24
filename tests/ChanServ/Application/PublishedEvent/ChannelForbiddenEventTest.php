@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Tests\ChanServ\Application\PublishedEvent;
 
 use App\ChanServ\Application\PublishedEvent\ChannelForbiddenEvent;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -16,7 +15,7 @@ final class ChannelForbiddenEventTest extends TestCase
     #[Test]
     public function constructionWithAllProperties(): void
     {
-        $occurredAt = new DateTimeImmutable('2025-06-15 12:00:00');
+        $occurredAt = new \DateTimeImmutable('2025-06-15 12:00:00');
         $event = new ChannelForbiddenEvent(
             channelId: 42,
             channelName: '#Test',
@@ -37,7 +36,7 @@ final class ChannelForbiddenEventTest extends TestCase
     #[Test]
     public function requiresAnExplicitOccurrenceTime(): void
     {
-        $occurredAt = new DateTimeImmutable('2026-01-02 03:04:05');
+        $occurredAt = new \DateTimeImmutable('2026-01-02 03:04:05');
         $event = new ChannelForbiddenEvent(
             channelId: 1,
             channelName: '#Test',
@@ -53,7 +52,7 @@ final class ChannelForbiddenEventTest extends TestCase
     #[Test]
     public function occurredAtCanBeSetExplicitly(): void
     {
-        $occurredAt = new DateTimeImmutable('2025-01-01 00:00:00');
+        $occurredAt = new \DateTimeImmutable('2025-01-01 00:00:00');
         $event = new ChannelForbiddenEvent(
             channelId: 5,
             channelName: '#Channel',

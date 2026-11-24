@@ -7,7 +7,6 @@ namespace App\Irc\Adapter\Protocol\UnrealUdb;
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbAuthorityStateRepositoryInterface;
 use App\Irc\Application\Connect\ConnectionPreflightResult;
 use App\Irc\Application\Connect\ProtocolConnectionPreflightInterface;
-use Throwable;
 
 use function sprintf;
 
@@ -41,7 +40,7 @@ final readonly class UnrealUdbConnectionPreflight implements ProtocolConnectionP
     {
         try {
             $this->authority->approve(self::FRESH_SEED_FINGERPRINT);
-        } catch (Throwable $exception) {
+        } catch (\Throwable $exception) {
             return new ConnectionPreflightResult(false, sprintf('UDB fresh bootstrap failed: %s', $exception->getMessage()));
         }
 

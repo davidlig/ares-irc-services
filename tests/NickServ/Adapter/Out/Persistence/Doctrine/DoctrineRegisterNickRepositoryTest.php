@@ -8,7 +8,6 @@ use App\NickServ\Adapter\Out\Persistence\Doctrine\DoctrineRegisterNickRepository
 use App\NickServ\Application\Port\Out\RegisterNickRepository;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
@@ -27,8 +26,8 @@ final class DoctrineRegisterNickRepositoryTest extends DoctrineIntegrationTestCa
             'hash',
             'User@Example.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable(),
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable(),
         );
 
         $this->repository->save($nick);
@@ -41,7 +40,7 @@ final class DoctrineRegisterNickRepositoryTest extends DoctrineIntegrationTestCa
     #[Test]
     public function findsRegistrationByAnRfc1459EquivalentNickname(): void
     {
-        $this->repository->save(RegisteredNick::createPending('[Mixed]', 'hash', 'm@example.com', 'en', new DateTimeImmutable('+1 hour'), new DateTimeImmutable()));
+        $this->repository->save(RegisteredNick::createPending('[Mixed]', 'hash', 'm@example.com', 'en', new \DateTimeImmutable('+1 hour'), new \DateTimeImmutable()));
         $this->flushAndClear();
 
         self::assertSame('[Mixed]', $this->repository->findByNick('{MIXED}')?->getNickname());

@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Application\UseCase\RemoveOwnAccess;
 
-use DateTimeImmutable;
-
 final readonly class RemoveOwnChannelAccess
 {
     public function __construct(
@@ -14,7 +12,7 @@ final readonly class RemoveOwnChannelAccess
         public string $nickname,
         public string $actorIp,
         public string $actorHost,
-        public DateTimeImmutable $occurredAt,
+        public \DateTimeImmutable $occurredAt,
         public bool $founderEquivalent = false,
     ) {}
 }

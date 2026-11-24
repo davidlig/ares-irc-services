@@ -23,7 +23,6 @@ use App\Shared\Adapter\In\Irc\Presentation\Role;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Contracts\Translation\TranslatorInterface;
-use Throwable;
 
 /**
  * Registers ChanServ with the Service Command Gateway. Receives (senderUid, text)
@@ -92,7 +91,7 @@ final readonly class ChanServCommandListener implements ServiceCommandListenerIn
                 '%channel%' => new Fragment($e->getChannelName(), Component::Emphasis),
             ]);
             $this->chanServNotifier->sendMessage($sender->uid, $message, $messageType);
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             $this->logger->error('ChanServ dispatch error: ' . $e->getMessage(), [
                 'exception' => $e,
                 'sender' => $sender->uid,

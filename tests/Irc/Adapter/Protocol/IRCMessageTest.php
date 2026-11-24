@@ -56,4 +56,16 @@ final class IRCMessageTest extends TestCase
         self::assertSame(['12345'], $msg->params);
         self::assertNull($msg->trailing);
     }
+
+    #[Test]
+    public function fromRawLinePreservesFormFeedAtParameterBoundaries(): void
+    {
+        $message = IRCMessage::fromRawLine(":nick PRIVMSG #chan\f :text\f\r\n");
+
+        self::assertSame('PRIVMSG', $message->command);
+        self::assertSame('nick', $message->prefix);
+        self::assertSame(["#chan\f"], $message->params);
+        self::assertSame("text\f", $message->trailing);
+        self::assertSame(":nick PRIVMSG #chan\f :text\f", $message->toRawLine());
+    }
 }

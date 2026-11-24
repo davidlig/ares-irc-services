@@ -12,7 +12,6 @@ use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\PublishedEvent\ChannelFounderChangedEvent;
 use App\ChanServ\Domain\Policy\FounderTransferPolicy;
 use App\ChanServ\Domain\ValueObject\FounderTransferDecision;
-use LogicException;
 
 use function trim;
 
@@ -131,7 +130,7 @@ final readonly class TransferChannelFounderHandler implements TransferChannelFou
             FounderTransferDecision::SameFounder => TransferFounderOutcome::SameFounder,
             FounderTransferDecision::TargetIsSuccessor => TransferFounderOutcome::TargetIsSuccessor,
             FounderTransferDecision::ChannelLimitReached => TransferFounderOutcome::ChannelLimitReached,
-            FounderTransferDecision::Allowed => throw new LogicException('Allowed transfers cannot be denied.'),
+            FounderTransferDecision::Allowed => throw new \LogicException('Allowed transfers cannot be denied.'),
         };
 
         return new TransferChannelFounderResult(

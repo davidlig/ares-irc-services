@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace App\OperServ\Adapter\Out\Persistence\Doctrine\Entity;
 
-use DateTimeImmutable;
-use LogicException;
-
 /** Doctrine-only representation of a persisted MOTD row. */
 class MotdRecord
 {
@@ -21,8 +18,8 @@ class MotdRecord
         private string $botNickname,
         private string $messageType,
         private ?int $creatorNickId,
-        private DateTimeImmutable $createdAt,
-        private ?DateTimeImmutable $expiresAt,
+        private \DateTimeImmutable $createdAt,
+        private ?\DateTimeImmutable $expiresAt,
     ) {}
 
     public static function create(
@@ -30,8 +27,8 @@ class MotdRecord
         string $botNickname,
         string $messageType,
         ?int $creatorNickId,
-        DateTimeImmutable $createdAt,
-        ?DateTimeImmutable $expiresAt,
+        \DateTimeImmutable $createdAt,
+        ?\DateTimeImmutable $expiresAt,
     ): self {
         return new self($text, $botNickname, $messageType, $creatorNickId, $createdAt, $expiresAt);
     }
@@ -39,7 +36,7 @@ class MotdRecord
     public function getId(): int
     {
         if (0 === $this->id) {
-            throw new LogicException('Persisted MOTD entry must have an identifier.');
+            throw new \LogicException('Persisted MOTD entry must have an identifier.');
         }
 
         return $this->id;
@@ -70,12 +67,12 @@ class MotdRecord
         return $this->creatorNickId;
     }
 
-    public function getCreatedAt(): DateTimeImmutable
+    public function getCreatedAt(): \DateTimeImmutable
     {
         return $this->createdAt;
     }
 
-    public function getExpiresAt(): ?DateTimeImmutable
+    public function getExpiresAt(): ?\DateTimeImmutable
     {
         return $this->expiresAt;
     }

@@ -138,6 +138,7 @@ final readonly class UnifiedHelpFormatter
             'marker' => $context->trans('help.info_marker'),
             'syntax' => $context->trans('help.general_syntax'),
         ]);
+
         // Caller appends help.footer after the final general-help hint.
 
         return $lines;

@@ -9,7 +9,6 @@ use App\Shared\Application\Mail\Message\SendEmail;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use stdClass;
 use Symfony\Component\Clock\ClockInterface;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\Middleware\MiddlewareInterface;
@@ -24,7 +23,7 @@ final class EmailDelayMiddlewareTest extends TestCase
     {
         $middleware = $this->createMiddleware(5);
 
-        $message = new stdClass();
+        $message = new \stdClass();
         $envelope = new Envelope($message);
 
         $next = $this->createMock(MiddlewareInterface::class);

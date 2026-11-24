@@ -8,7 +8,6 @@ use App\NickServ\Adapter\Out\Persistence\Doctrine\ForbiddenVhostDoctrineReposito
 use App\NickServ\Application\Port\Out\ForbiddenVhostRepositoryInterface;
 use App\NickServ\Domain\Entity\ForbiddenVhost;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
-use DateTimeImmutable;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
@@ -25,7 +24,7 @@ final class ForbiddenVhostDoctrineRepositoryTest extends DoctrineIntegrationTest
     #[Test]
     public function savePersistsForbiddenVhost(): void
     {
-        $forbidden = ForbiddenVhost::create('*.badhost.com', 1, new DateTimeImmutable());
+        $forbidden = ForbiddenVhost::create('*.badhost.com', 1, new \DateTimeImmutable());
 
         $this->repository->save($forbidden);
         $this->flushAndClear();
@@ -40,7 +39,7 @@ final class ForbiddenVhostDoctrineRepositoryTest extends DoctrineIntegrationTest
     #[Test]
     public function saveWithNullCreatedByNickId(): void
     {
-        $forbidden = ForbiddenVhost::create('*.orphan.com', null, new DateTimeImmutable());
+        $forbidden = ForbiddenVhost::create('*.orphan.com', null, new \DateTimeImmutable());
 
         $this->repository->save($forbidden);
         $this->flushAndClear();
@@ -55,7 +54,7 @@ final class ForbiddenVhostDoctrineRepositoryTest extends DoctrineIntegrationTest
     #[Test]
     public function removeDeletesForbiddenVhost(): void
     {
-        $forbidden = ForbiddenVhost::create('*.tobedeleted.com', 1, new DateTimeImmutable());
+        $forbidden = ForbiddenVhost::create('*.tobedeleted.com', 1, new \DateTimeImmutable());
         $this->repository->save($forbidden);
         $this->entityManager->flush();
         $id = $forbidden->getId();
@@ -78,7 +77,7 @@ final class ForbiddenVhostDoctrineRepositoryTest extends DoctrineIntegrationTest
     #[Test]
     public function findByPatternReturnsMatchingForbiddenVhost(): void
     {
-        $forbidden = ForbiddenVhost::create('*.example.com', 1, new DateTimeImmutable());
+        $forbidden = ForbiddenVhost::create('*.example.com', 1, new \DateTimeImmutable());
         $this->repository->save($forbidden);
         $this->flushAndClear();
 
@@ -97,7 +96,7 @@ final class ForbiddenVhostDoctrineRepositoryTest extends DoctrineIntegrationTest
     #[Test]
     public function findByPatternIsExactMatch(): void
     {
-        $forbidden = ForbiddenVhost::create('*.example.com', 1, new DateTimeImmutable());
+        $forbidden = ForbiddenVhost::create('*.example.com', 1, new \DateTimeImmutable());
         $this->repository->save($forbidden);
         $this->flushAndClear();
 
@@ -109,9 +108,9 @@ final class ForbiddenVhostDoctrineRepositoryTest extends DoctrineIntegrationTest
     #[Test]
     public function findAllReturnsAllForbiddenVhosts(): void
     {
-        $forbidden1 = ForbiddenVhost::create('*.first.com', 1, new DateTimeImmutable());
-        $forbidden2 = ForbiddenVhost::create('*.second.com', 2, new DateTimeImmutable());
-        $forbidden3 = ForbiddenVhost::create('*.third.com', 3, new DateTimeImmutable());
+        $forbidden1 = ForbiddenVhost::create('*.first.com', 1, new \DateTimeImmutable());
+        $forbidden2 = ForbiddenVhost::create('*.second.com', 2, new \DateTimeImmutable());
+        $forbidden3 = ForbiddenVhost::create('*.third.com', 3, new \DateTimeImmutable());
 
         $this->repository->save($forbidden1);
         $this->repository->save($forbidden2);
@@ -138,8 +137,8 @@ final class ForbiddenVhostDoctrineRepositoryTest extends DoctrineIntegrationTest
     {
         self::assertSame(0, $this->repository->countAll());
 
-        $this->repository->save(ForbiddenVhost::create('*.first.com', 1, new DateTimeImmutable()));
-        $this->repository->save(ForbiddenVhost::create('*.second.com', 2, new DateTimeImmutable()));
+        $this->repository->save(ForbiddenVhost::create('*.first.com', 1, new \DateTimeImmutable()));
+        $this->repository->save(ForbiddenVhost::create('*.second.com', 2, new \DateTimeImmutable()));
         $this->flushAndClear();
 
         self::assertSame(2, $this->repository->countAll());
@@ -148,9 +147,9 @@ final class ForbiddenVhostDoctrineRepositoryTest extends DoctrineIntegrationTest
     #[Test]
     public function clearCreatedByNickIdSetsNullForMatchingNick(): void
     {
-        $forbidden1 = ForbiddenVhost::create('*.first.com', 1, new DateTimeImmutable());
-        $forbidden2 = ForbiddenVhost::create('*.second.com', 2, new DateTimeImmutable());
-        $forbidden3 = ForbiddenVhost::create('*.third.com', 1, new DateTimeImmutable());
+        $forbidden1 = ForbiddenVhost::create('*.first.com', 1, new \DateTimeImmutable());
+        $forbidden2 = ForbiddenVhost::create('*.second.com', 2, new \DateTimeImmutable());
+        $forbidden3 = ForbiddenVhost::create('*.third.com', 1, new \DateTimeImmutable());
 
         $this->repository->save($forbidden1);
         $this->repository->save($forbidden2);
@@ -168,7 +167,7 @@ final class ForbiddenVhostDoctrineRepositoryTest extends DoctrineIntegrationTest
     #[Test]
     public function clearCreatedByNickIdDoesNothingWhenNoMatch(): void
     {
-        $forbidden = ForbiddenVhost::create('*.example.com', 1, new DateTimeImmutable());
+        $forbidden = ForbiddenVhost::create('*.example.com', 1, new \DateTimeImmutable());
         $this->repository->save($forbidden);
         $this->flushAndClear();
 
@@ -181,11 +180,11 @@ final class ForbiddenVhostDoctrineRepositoryTest extends DoctrineIntegrationTest
     #[Test]
     public function patternIsUnique(): void
     {
-        $forbidden1 = ForbiddenVhost::create('*.unique.com', 1, new DateTimeImmutable());
+        $forbidden1 = ForbiddenVhost::create('*.unique.com', 1, new \DateTimeImmutable());
         $this->repository->save($forbidden1);
         $this->flushAndClear();
 
-        $forbidden2 = ForbiddenVhost::create('*.unique.com', 2, new DateTimeImmutable());
+        $forbidden2 = ForbiddenVhost::create('*.unique.com', 2, new \DateTimeImmutable());
 
         $this->expectException(UniqueConstraintViolationException::class);
         $this->repository->save($forbidden2);

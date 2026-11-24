@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Tests\NickServ\Application\PublishedEvent;
 
 use App\NickServ\Application\PublishedEvent\NickDropEvent;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -16,9 +15,9 @@ final class NickDropEventTest extends TestCase
     #[Test]
     public function constructionAndProperties(): void
     {
-        $before = new DateTimeImmutable();
-        $event = new NickDropEvent(1, 'TestNick', 'testnick', 'inactivity', new DateTimeImmutable());
-        $after = new DateTimeImmutable();
+        $before = new \DateTimeImmutable();
+        $event = new NickDropEvent(1, 'TestNick', 'testnick', 'inactivity', new \DateTimeImmutable());
+        $after = new \DateTimeImmutable();
 
         self::assertSame(1, $event->nickId);
         self::assertSame('TestNick', $event->nickname);
@@ -31,7 +30,7 @@ final class NickDropEventTest extends TestCase
     #[Test]
     public function constructionWithExplicitOccurredAt(): void
     {
-        $occurredAt = new DateTimeImmutable('2025-01-15 12:00:00');
+        $occurredAt = new \DateTimeImmutable('2025-01-15 12:00:00');
 
         $event = new NickDropEvent(2, 'Other', 'other', 'manual', $occurredAt);
 

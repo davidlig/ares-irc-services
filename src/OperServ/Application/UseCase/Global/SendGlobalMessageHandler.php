@@ -12,7 +12,6 @@ use App\OperServ\Application\Port\Out\GlobalMessageTransport;
 use App\OperServ\Application\Port\Out\NetworkUserLookup;
 use App\OperServ\Application\Port\Out\OperatorAccountLookup;
 use App\OperServ\Domain\ValueObject\GlobalMessageMask;
-use ValueError;
 
 /** Orchestrates GLOBAL delivery while keeping IRCd lifecycle operations behind one output port. */
 final readonly class SendGlobalMessageHandler
@@ -41,7 +40,7 @@ final readonly class SendGlobalMessageHandler
 
         try {
             $sender = GlobalMessageMask::fromString($command->senderMaskOrServiceNickname);
-        } catch (ValueError $error) {
+        } catch (\ValueError $error) {
             return SendGlobalMessageResult::invalidMask($error->getMessage());
         }
 

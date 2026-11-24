@@ -45,7 +45,6 @@ use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
 use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\Shared\Application\Port\EventBusInterface;
 use App\Tests\NickServ\Support\NegotiatedCaseMapping;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversTrait;
 use PHPUnit\Framework\Attributes\Test;
@@ -332,7 +331,7 @@ final class AkickCommandTest extends TestCase
 
         $expiredAkick = $this->createStub(ChannelAkick::class);
         $expiredAkick->method('getMask')->willReturn('*!*@*.isp.com');
-        $expiredAkick->method('getExpiresAt')->willReturn(new DateTimeImmutable('-1 day'));
+        $expiredAkick->method('getExpiresAt')->willReturn(new \DateTimeImmutable('-1 day'));
 
         $akickRepo = $this->createStub(ChannelAkickRepositoryInterface::class);
         $akickRepo->method('countByChannel')->willReturn(1);
@@ -679,7 +678,7 @@ final class AkickCommandTest extends TestCase
         $account = new ChanAccountView(1, 'User', 'en');
         $channelRepo = $this->createChannelMock(1, 1);
 
-        $now = new DateTimeImmutable('2026-10-30 12:00:00 UTC');
+        $now = new \DateTimeImmutable('2026-10-30 12:00:00 UTC');
         $akick = ChannelAkick::create($now, 1, 1, '*!*@tracked.com', 'Tracked');
         $akick->recordUsage($now);
         $akick->recordUsage($now);
@@ -1026,7 +1025,7 @@ final class AkickCommandTest extends TestCase
         $account = new ChanAccountView(1, 'User', 'en');
         $channelRepo = $this->createChannelMock(1, 1);
 
-        $expiryDate = new DateTimeImmutable('+7 days');
+        $expiryDate = new \DateTimeImmutable('+7 days');
         $akickWithExpiry = $this->createStub(ChannelAkick::class);
         $akickWithExpiry->method('getMask')->willReturn('*!*@withexpiry.com');
         $akickWithExpiry->method('getReason')->willReturn('Test');
@@ -1756,7 +1755,7 @@ final class AkickCommandTest extends TestCase
         $channelRepo = $this->createChannelMock(1, 1);
         $akickRepo = $this->createStub(ChannelAkickRepositoryInterface::class);
         $akickRepo->method('listByChannel')->willReturn([
-            ChannelAkick::create(new DateTimeImmutable(), 1, 1, '*!*@*.isp.com', 'Expired', new DateTimeImmutable('-1 day')),
+            ChannelAkick::create(new \DateTimeImmutable(), 1, 1, '*!*@*.isp.com', 'Expired', new \DateTimeImmutable('-1 day')),
         ]);
         $nickRepo = $this->createStub(ChanUserAccountPort::class);
         $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
@@ -2538,8 +2537,8 @@ final class AkickCommandTest extends TestCase
         $account = new ChanAccountView(1, 'User', 'en');
         $channelRepo = $this->createChannelMock(1, 1);
 
-        $akick1 = ChannelAkick::create(new DateTimeImmutable(), 1, 1, '*!*@one.com');
-        $akick2 = ChannelAkick::create(new DateTimeImmutable(), 1, 1, '*!*@two.com');
+        $akick1 = ChannelAkick::create(new \DateTimeImmutable(), 1, 1, '*!*@one.com');
+        $akick2 = ChannelAkick::create(new \DateTimeImmutable(), 1, 1, '*!*@two.com');
 
         $akickRepo = $this->createMock(ChannelAkickRepositoryInterface::class);
         $akickRepo->method('listByChannel')->willReturn([$akick1, $akick2]);
@@ -2634,7 +2633,7 @@ final class AkickCommandTest extends TestCase
         $account = new ChanAccountView(1, 'User', 'en');
         $channelRepo = $this->createChannelMock(1, 1);
 
-        $akick = ChannelAkick::create(new DateTimeImmutable(), 1, 1, '*!*@bad.com');
+        $akick = ChannelAkick::create(new \DateTimeImmutable(), 1, 1, '*!*@bad.com');
         $akickRepo = $this->createMock(ChannelAkickRepositoryInterface::class);
         $akickRepo->method('listByChannel')->willReturn([$akick]);
         $akickRepo->expects(self::once())->method('save')->with($akick);
@@ -2747,7 +2746,7 @@ final class AkickCommandTest extends TestCase
         $account = new ChanAccountView(1, 'User', 'en');
         $channelRepo = $this->createChannelMock(1, 1);
 
-        $now = new DateTimeImmutable('2026-10-30 12:00:00 UTC');
+        $now = new \DateTimeImmutable('2026-10-30 12:00:00 UTC');
         $akick = ChannelAkick::create($now, 1, 2, '*!*@bad.com', 'Bad reason');
         $akick->recordUsage($now);
 
@@ -2802,7 +2801,7 @@ final class AkickCommandTest extends TestCase
         $account = new ChanAccountView(1, 'User', 'en');
         $channelRepo = $this->createChannelMock(1, 1);
 
-        $now = new DateTimeImmutable('2026-10-30 12:00:00 UTC');
+        $now = new \DateTimeImmutable('2026-10-30 12:00:00 UTC');
         $akick = ChannelAkick::create($now, 1, 2, '*!*@bad.com', 'Bad reason');
 
         $akickRepo = $this->createStub(ChannelAkickRepositoryInterface::class);
@@ -2977,8 +2976,8 @@ final class AkickCommandTest extends TestCase
         $account = new ChanAccountView(1, 'User', 'en');
         $channelRepo = $this->createChannelMock(1, 1);
 
-        $akick1 = ChannelAkick::create(new DateTimeImmutable(), 1, 2, '*!*@other.com', 'Other');
-        $akick2 = ChannelAkick::create(new DateTimeImmutable(), 1, 2, '*!*@bad.com', 'Bad reason');
+        $akick1 = ChannelAkick::create(new \DateTimeImmutable(), 1, 2, '*!*@other.com', 'Other');
+        $akick2 = ChannelAkick::create(new \DateTimeImmutable(), 1, 2, '*!*@bad.com', 'Bad reason');
         $akickRepo = $this->createStub(ChannelAkickRepositoryInterface::class);
         $akickRepo->method('listByChannel')->willReturn([$akick1, $akick2]);
 
@@ -3033,7 +3032,7 @@ final class AkickCommandTest extends TestCase
         $channelRepo = $this->createChannelMock(1, 1);
 
         // Akick only targets the secret real host
-        $akick = ChannelAkick::create(new DateTimeImmutable(), 1, 2, '*!*@secret.real.host', 'Oracle probe');
+        $akick = ChannelAkick::create(new \DateTimeImmutable(), 1, 2, '*!*@secret.real.host', 'Oracle probe');
         $akickRepo = $this->createStub(ChannelAkickRepositoryInterface::class);
         $akickRepo->method('listByChannel')->willReturn([$akick]);
 

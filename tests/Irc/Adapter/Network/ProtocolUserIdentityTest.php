@@ -18,7 +18,6 @@ use App\Irc\Domain\ValueObject\ChannelName;
 use App\Irc\Domain\ValueObject\Ident;
 use App\Irc\Domain\ValueObject\Nick;
 use App\Irc\Domain\ValueObject\Uid;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -79,7 +78,7 @@ final class ProtocolUserIdentityTest extends TestCase
     private function network(): array
     {
         $users = new InMemoryNetworkUserRepository();
-        $user = new NetworkUser(new Uid('001AAAAAA'), new Nick('Alice'), new Ident('original'), 'real.test', 'cloak.test', 'display.test', '+ior', new DateTimeImmutable('@100'), 'Alice', '001', 'fwAAAQ==', 123);
+        $user = new NetworkUser(new Uid('001AAAAAA'), new Nick('Alice'), new Ident('original'), 'real.test', 'cloak.test', 'display.test', '+ior', new \DateTimeImmutable('@100'), 'Alice', '001', 'fwAAAQ==', 123);
         $user->addChannel(new ChannelName('#Channel'));
         $users->add($user);
         $dispatcher = new EventDispatcher();

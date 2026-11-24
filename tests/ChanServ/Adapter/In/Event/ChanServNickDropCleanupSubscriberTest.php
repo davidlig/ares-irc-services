@@ -14,7 +14,6 @@ use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\UseCase\CleanupDroppedNick\CleanupDroppedNickData;
 use App\ChanServ\Application\UseCase\CleanupDroppedNick\CleanupDroppedNickDataHandler;
 use App\NickServ\Application\PublishedEvent\NickDropCleanupEvent;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -59,7 +58,7 @@ final class ChanServNickDropCleanupSubscriberTest extends TestCase
             nickname: 'TestUser',
             nicknameLower: 'testuser',
             reason: 'manual',
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
         ));
     }
 }

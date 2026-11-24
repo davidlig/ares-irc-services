@@ -20,7 +20,6 @@ use App\NickServ\Application\UseCase\Status\StatusNickResult;
 use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
 use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
 use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -33,7 +32,7 @@ use function str_repeat;
 #[CoversClass(StatusCommand::class)]
 final class StatusCommandTest extends TestCase
 {
-    private DateTimeImmutable $now;
+    private \DateTimeImmutable $now;
 
     #[Test]
     public function exposesStatusMetadata(): void
@@ -257,7 +256,7 @@ final class StatusCommandTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->now = new DateTimeImmutable('2026-09-06 17:00:00 UTC');
+        $this->now = new \DateTimeImmutable('2026-09-06 17:00:00 UTC');
     }
 
     /**

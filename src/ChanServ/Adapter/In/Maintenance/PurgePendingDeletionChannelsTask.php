@@ -7,7 +7,6 @@ namespace App\ChanServ\Adapter\In\Maintenance;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\Service\ChanDropService;
 use App\Irc\Application\Port\In\Maintenance\MaintenanceTaskInterface;
-use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
@@ -60,7 +59,7 @@ final readonly class PurgePendingDeletionChannelsTask implements MaintenanceTask
      */
     public function run(): void
     {
-        $now = new DateTimeImmutable();
+        $now = new \DateTimeImmutable();
         $threshold = $now->modify(sprintf('-%d days', max(0, $this->dropGraceDays)));
         $expired = $this->channelRepository->iteratePendingDeletionBefore($threshold);
 
@@ -74,7 +73,7 @@ final readonly class PurgePendingDeletionChannelsTask implements MaintenanceTask
 
             try {
                 $this->dropService->hardDropChannel($channel, $now, 'manual-grace-expired', null);
-            } catch (Throwable $e) {
+            } catch (\Throwable $e) {
                 $this->failures->recordFailureAfterPossibleCommit(
                     $channelId,
                     $channelName,

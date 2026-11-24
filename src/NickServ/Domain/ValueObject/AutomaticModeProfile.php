@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\NickServ\Domain\ValueObject;
 
-use InvalidArgumentException;
-
 use function array_diff;
 use function array_unique;
 use function array_values;
@@ -26,7 +24,7 @@ final readonly class AutomaticModeProfile
     public function __construct(array $intentions = [])
     {
         if ([] !== array_diff($intentions, self::INTENTIONS)) {
-            throw new InvalidArgumentException('Unknown automatic-mode intention.');
+            throw new \InvalidArgumentException('Unknown automatic-mode intention.');
         }
         $normalized = array_values(array_unique($intentions));
         sort($normalized);

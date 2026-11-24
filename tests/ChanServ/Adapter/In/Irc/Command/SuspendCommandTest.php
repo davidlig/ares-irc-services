@@ -28,12 +28,10 @@ use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
 use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\Shared\Application\Port\EventBusInterface;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(SuspendCommand::class)]
@@ -204,7 +202,7 @@ final class SuspendCommandTest extends TestCase
     public function executeWithAlreadySuspendedChannelRepliesAlreadySuspended(): void
     {
         $sender = $this->createSender();
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Test channel');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 1, 'Test channel');
         $channel->suspend('previous reason');
         $messages = [];
 
@@ -566,9 +564,9 @@ final class SuspendCommandTest extends TestCase
 
     private function createChannelWithId(string $channelName, int $id): RegisteredChannel
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), $channelName, 1, 'Test channel');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), $channelName, 1, 'Test channel');
 
-        $reflection = new ReflectionClass(RegisteredChannel::class);
+        $reflection = new \ReflectionClass(RegisteredChannel::class);
         $idProp = $reflection->getProperty('id');
         $idProp->setValue($channel, $id);
 

@@ -15,10 +15,8 @@ use App\ChanServ\Application\UseCase\ManageLevels\ManageChannelLevelsOutcome;
 use App\ChanServ\Domain\Entity\ChannelHistory;
 use App\ChanServ\Domain\Entity\ChannelLevel;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use ReflectionProperty;
 
 #[CoversClass(ManageChannelLevelsHandler::class)]
 final class ManageChannelLevelsHandlerTest extends TestCase
@@ -42,7 +40,7 @@ final class ManageChannelLevelsHandlerTest extends TestCase
                 ManageChannelLevelsAction::Set,
                 ['ACCESSLIST'],
                 'Founder',
-                new DateTimeImmutable('2026-01-01'),
+                new \DateTimeImmutable('2026-01-01'),
                 $key,
                 $value,
             ));
@@ -52,8 +50,8 @@ final class ManageChannelLevelsHandlerTest extends TestCase
 
     public function testSetRecordsPriorEffectiveDefaultAndRequestedLevel(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable('2026-01-01'), '#test', 1, 'Test');
-        new ReflectionProperty(RegisteredChannel::class, 'id')->setValue($channel, 10);
+        $channel = RegisteredChannel::register(new \DateTimeImmutable('2026-01-01'), '#test', 1, 'Test');
+        new \ReflectionProperty(RegisteredChannel::class, 'id')->setValue($channel, 10);
         $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channels->method('findByChannelName')->willReturn($channel);
         $levels = $this->createMock(ChannelLevelRepositoryInterface::class);
@@ -62,7 +60,7 @@ final class ManageChannelLevelsHandlerTest extends TestCase
         $saved = null;
         $historyRepository = $this->createMock(ChannelHistoryRepositoryInterface::class);
         $historyRepository->expects(self::once())->method('save')->willReturnCallback(static function (ChannelHistory $entry) use (&$saved): void { $saved = $entry; });
-        $when = new DateTimeImmutable('2026-01-02');
+        $when = new \DateTimeImmutable('2026-01-02');
 
         $result = new ManageChannelLevelsHandler($channels, $levels, new ChannelHistoryService($historyRepository))->handle(new ManageChannelLevels(
             '#test',
@@ -104,7 +102,7 @@ final class ManageChannelLevelsHandlerTest extends TestCase
             ManageChannelLevelsAction::Reset,
             ['AUTOOP'],
             'Founder',
-            new DateTimeImmutable('2026-01-02'),
+            new \DateTimeImmutable('2026-01-02'),
         ));
 
         self::assertSame(ManageChannelLevelsOutcome::LevelsReset, $result->outcome);
@@ -136,7 +134,7 @@ final class ManageChannelLevelsHandlerTest extends TestCase
             ManageChannelLevelsAction::Set,
             ['AUTOOP'],
             'Founder',
-            new DateTimeImmutable('2026-01-02'),
+            new \DateTimeImmutable('2026-01-02'),
             'AUTOOP',
             350,
         ));

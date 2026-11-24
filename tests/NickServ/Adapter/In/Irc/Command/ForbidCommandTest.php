@@ -28,11 +28,9 @@ use App\NickServ\Application\UseCase\Forbid\ForbidNickOutcome;
 use App\NickServ\Application\UseCase\Forbid\ForbidNickResult;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\Shared\Adapter\In\Irc\Presentation\Fragment;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function is_scalar;
@@ -336,7 +334,7 @@ final class ForbidCommandTest extends TestCase
         $dropService = $this->createMock(NickDropService::class);
         $dropService->expects(self::once())->method('dropNick')->with(
             $nick,
-            new DateTimeImmutable('2026-09-06 12:00:00 UTC'),
+            new \DateTimeImmutable('2026-09-06 12:00:00 UTC'),
             'forbid',
             'OperUser',
         );
@@ -437,10 +435,10 @@ final class ForbidCommandTest extends TestCase
 
     private function createActivatedNick(string $nickname): RegisteredNick
     {
-        $nick = RegisteredNick::createPending($nickname, 'hash', 'test@example.com', 'en', new DateTimeImmutable('+1 hour'), new DateTimeImmutable());
+        $nick = RegisteredNick::createPending($nickname, 'hash', 'test@example.com', 'en', new \DateTimeImmutable('+1 hour'), new \DateTimeImmutable());
         $nick->activate();
 
-        $reflection = new ReflectionClass(RegisteredNick::class);
+        $reflection = new \ReflectionClass(RegisteredNick::class);
         $idProp = $reflection->getProperty('id');
         $idProp->setValue($nick, 1);
 
@@ -501,7 +499,7 @@ final class ForbidCommandTest extends TestCase
     private function clock(): Clock
     {
         $clock = $this->createStub(Clock::class);
-        $clock->method('now')->willReturn(new DateTimeImmutable('2026-09-06 12:00:00 UTC'));
+        $clock->method('now')->willReturn(new \DateTimeImmutable('2026-09-06 12:00:00 UTC'));
 
         return $clock;
     }

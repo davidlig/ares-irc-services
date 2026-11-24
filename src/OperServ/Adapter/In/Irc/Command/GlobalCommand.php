@@ -15,7 +15,6 @@ use App\OperServ\Application\UseCase\Global\SendGlobalMessageResult;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use App\Shared\Adapter\In\Irc\Presentation\Role;
-use DateTimeImmutable;
 
 use function array_slice;
 use function implode;
@@ -111,7 +110,7 @@ final readonly class GlobalCommand implements OperServCommandInterface
                 default => null,
             },
             message: implode(' ', array_slice($context->args, 2)),
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
         )));
     }
 

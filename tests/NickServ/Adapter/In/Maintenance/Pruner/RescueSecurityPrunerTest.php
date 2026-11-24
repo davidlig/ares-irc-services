@@ -8,7 +8,6 @@ use App\NickServ\Adapter\In\Maintenance\Pruner\RescueSecurityPruner;
 use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\RescueAttemptLimiter;
 use App\NickServ\Application\Port\Out\TemporaryRescueTokenStore;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -19,7 +18,7 @@ final class RescueSecurityPrunerTest extends TestCase
     #[Test]
     public function prunesBothBoundedStoresAtTheSameClockInstant(): void
     {
-        $now = new DateTimeImmutable();
+        $now = new \DateTimeImmutable();
         $clock = $this->createStub(Clock::class);
         $clock->method('now')->willReturn($now);
         $tokens = $this->createMock(TemporaryRescueTokenStore::class);

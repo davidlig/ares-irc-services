@@ -12,7 +12,6 @@ use App\Irc\Domain\Network\NetworkUser;
 use App\Irc\Domain\ValueObject\Ident;
 use App\Irc\Domain\ValueObject\Nick;
 use App\Irc\Domain\ValueObject\Uid;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -48,7 +47,7 @@ final class CoreToAppEventBridgeTest extends TestCase
             cloakedHost: 'cloak.host.example.com',
             virtualHost: 'vhost.example.com',
             modes: '+ixr',
-            connectedAt: new DateTimeImmutable('2024-01-15 10:30:00'),
+            connectedAt: new \DateTimeImmutable('2024-01-15 10:30:00'),
             realName: 'Test User',
             serverSid: '001',
             ipBase64: 'dGVzdGlw',
@@ -97,7 +96,7 @@ final class CoreToAppEventBridgeTest extends TestCase
             cloakedHost: 'cloak.oper.example.com',
             virtualHost: '',
             modes: '+io',
-            connectedAt: new DateTimeImmutable('2024-01-15 11:00:00'),
+            connectedAt: new \DateTimeImmutable('2024-01-15 11:00:00'),
             realName: 'IRC Operator',
             serverSid: '001',
             ipBase64: 'b3BlcmF0b3I=',
@@ -135,7 +134,7 @@ final class CoreToAppEventBridgeTest extends TestCase
             cloakedHost: 'cloak.regular.example.com',
             virtualHost: '*',
             modes: '+i',
-            connectedAt: new DateTimeImmutable('2024-01-15 12:00:00'),
+            connectedAt: new \DateTimeImmutable('2024-01-15 12:00:00'),
             realName: 'Regular User',
             serverSid: '002',
             ipBase64: 'cmVndWxhcg==',

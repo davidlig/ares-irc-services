@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Tests\NickServ\Application\PublishedEvent;
 
 use App\NickServ\Application\PublishedEvent\NickDropCleanupEvent;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -16,7 +15,7 @@ final class NickDropCleanupEventTest extends TestCase
     #[Test]
     public function exposesDropDataWithExplicitOccurrenceTime(): void
     {
-        $occurredAt = new DateTimeImmutable('2026-09-05 12:00:00');
+        $occurredAt = new \DateTimeImmutable('2026-09-05 12:00:00');
 
         $event = new NickDropCleanupEvent(42, 'TestNick', 'testnick', 'manual', $occurredAt);
 
@@ -30,11 +29,11 @@ final class NickDropCleanupEventTest extends TestCase
     #[Test]
     public function createsOccurrenceTimeByDefault(): void
     {
-        $before = new DateTimeImmutable();
+        $before = new \DateTimeImmutable();
 
-        $event = new NickDropCleanupEvent(7, 'OtherNick', 'othernick', 'inactivity', new DateTimeImmutable());
+        $event = new NickDropCleanupEvent(7, 'OtherNick', 'othernick', 'inactivity', new \DateTimeImmutable());
 
         self::assertGreaterThanOrEqual($before, $event->occurredAt);
-        self::assertLessThanOrEqual(new DateTimeImmutable(), $event->occurredAt);
+        self::assertLessThanOrEqual(new \DateTimeImmutable(), $event->occurredAt);
     }
 }

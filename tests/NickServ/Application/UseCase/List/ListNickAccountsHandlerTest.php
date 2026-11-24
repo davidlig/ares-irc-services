@@ -10,7 +10,6 @@ use App\NickServ\Application\UseCase\List\ListNickAccountsHandler;
 use App\NickServ\Application\UseCase\List\ListNickAccountsResult;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\NickServ\Domain\ValueObject\NickStatus;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -23,8 +22,8 @@ final class ListNickAccountsHandlerTest extends TestCase
     #[Test]
     public function normalizesPageBelowOneAndReturnsMappedNickData(): void
     {
-        $registeredAt = new DateTimeImmutable('2026-01-01 12:00:00 UTC');
-        $lastSeenAt = new DateTimeImmutable('2026-02-03 04:05:00 UTC');
+        $registeredAt = new \DateTimeImmutable('2026-01-01 12:00:00 UTC');
+        $lastSeenAt = new \DateTimeImmutable('2026-02-03 04:05:00 UTC');
         $nick = $this->createStub(RegisteredNick::class);
         $nick->method('getNickname')->willReturn('Davidlig');
         $nick->method('getRegisteredAt')->willReturn($registeredAt);
@@ -54,7 +53,7 @@ final class ListNickAccountsHandlerTest extends TestCase
     public function neverOnlineNickListsItsRegistrationDateAsLastSeen(): void
     {
         // Intended since #172: a never-online nick shows its registration date, not "never seen".
-        $registeredAt = new DateTimeImmutable('2026-01-01 12:00:00 UTC');
+        $registeredAt = new \DateTimeImmutable('2026-01-01 12:00:00 UTC');
         $nick = RegisteredNick::createActive('NeverOnline', 'hash', null, 'en', $registeredAt);
         $repository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $repository->method('countByPattern')->willReturn(1);

@@ -8,18 +8,14 @@ use App\OperServ\Adapter\Out\Persistence\Doctrine\DoctrineMotdRepository;
 use App\OperServ\Adapter\Out\Persistence\Doctrine\Entity\MotdRecord;
 use App\OperServ\Application\Model\MessageDelivery;
 use App\OperServ\Application\Port\Out\MotdEntry;
-use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\EntityRepository;
 use Doctrine\ORM\Query;
-use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionProperty;
-use stdClass;
 
 use function count;
 use function sprintf;
@@ -97,7 +93,7 @@ final class DoctrineMotdRepositoryTest extends TestCase
     #[Test]
     public function activeCacheRefreshesWhenTheEarliestMotdExpires(): void
     {
-        $expiresAt = new DateTimeImmutable('2026-09-08T10:00:01+00:00');
+        $expiresAt = new \DateTimeImmutable('2026-09-08T10:00:01+00:00');
         $query = $this->createMock(Query::class);
         $query->expects(self::exactly(2))->method('setParameter')->willReturnSelf();
         $query->expects(self::exactly(2))->method('getResult')
@@ -119,7 +115,7 @@ final class DoctrineMotdRepositoryTest extends TestCase
         $entityManager = $this->createMock(EntityManagerInterface::class);
         $entityManager->expects(self::once())->method('createQuery')->willReturn($query);
         $repository = new DoctrineMotdRepository($entityManager);
-        $now = new DateTimeImmutable('2026-09-08T10:00:00+00:00');
+        $now = new \DateTimeImmutable('2026-09-08T10:00:00+00:00');
 
         self::assertCount(1, $repository->findActiveAt($now));
         self::assertCount(1, $repository->findActiveAt($now->modify('+1 second')));
@@ -136,8 +132,8 @@ final class DoctrineMotdRepositoryTest extends TestCase
     #[Test]
     public function persistsAndTranslatesNewMotd(MessageDelivery $delivery, string $storedType): void
     {
-        $createdAt = new DateTimeImmutable('2026-09-08T10:00:00+00:00');
-        $expiresAt = new DateTimeImmutable('2026-09-09T10:00:00+00:00');
+        $createdAt = new \DateTimeImmutable('2026-09-08T10:00:00+00:00');
+        $expiresAt = new \DateTimeImmutable('2026-09-09T10:00:00+00:00');
         $entityManager = $this->createMock(EntityManagerInterface::class);
         $entityManager->expects(self::once())->method('persist')->with(self::callback(
             function (MotdRecord $motd) use ($storedType): bool {
@@ -171,7 +167,7 @@ final class DoctrineMotdRepositoryTest extends TestCase
         $entityManager = $this->createMock(EntityManagerInterface::class);
         $entityManager->expects(self::exactly(2))->method('find')
             ->with(MotdRecord::class, self::logicalOr(7, 8))
-            ->willReturnOnConsecutiveCalls($motd, new stdClass());
+            ->willReturnOnConsecutiveCalls($motd, new \stdClass());
         $adapter = new DoctrineMotdRepository($entityManager);
 
         $entry = $adapter->findById(7);
@@ -187,7 +183,7 @@ final class DoctrineMotdRepositoryTest extends TestCase
         $objectRepository = $this->createMock(EntityRepository::class);
         $objectRepository->expects(self::once())->method('findBy')
             ->with([], ['createdAt' => 'DESC'])
-            ->willReturn([$motd, new stdClass()]);
+            ->willReturn([$motd, new \stdClass()]);
         $entityManager = $this->createStub(EntityManagerInterface::class);
         $entityManager->method('getRepository')->willReturn($objectRepository);
 
@@ -203,7 +199,7 @@ final class DoctrineMotdRepositoryTest extends TestCase
         $dql = 'SELECT m FROM %s m
                  WHERE m.enabled = true AND (m.expiresAt IS NULL OR m.expiresAt > :at)
                  ORDER BY m.createdAt ASC';
-        $at = new DateTimeImmutable('2026-09-08T10:00:00+00:00');
+        $at = new \DateTimeImmutable('2026-09-08T10:00:00+00:00');
         $motd = $this->record(7, expiresAt: $at);
         $query = $this->createMock(Query::class);
         $query->expects(self::once())->method('setParameter')->with('at', $at)->willReturnSelf();
@@ -309,11 +305,11 @@ final class DoctrineMotdRepositoryTest extends TestCase
             'NickServ',
             'NOTICE',
             null,
-            new DateTimeImmutable('2026-09-08T10:00:00+00:00'),
+            new \DateTimeImmutable('2026-09-08T10:00:00+00:00'),
             null,
         );
 
-        $this->expectException(LogicException::class);
+        $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('Persisted MOTD entry must have an identifier.');
 
         $motd->getId();
@@ -322,14 +318,14 @@ final class DoctrineMotdRepositoryTest extends TestCase
     private function record(
         int $id,
         string $messageType = 'PRIVMSG',
-        ?DateTimeImmutable $expiresAt = null,
+        ?\DateTimeImmutable $expiresAt = null,
     ): MotdRecord {
         $motd = MotdRecord::create(
             'Welcome',
             'NickServ',
             $messageType,
             42,
-            new DateTimeImmutable('2026-09-08T10:00:00+00:00'),
+            new \DateTimeImmutable('2026-09-08T10:00:00+00:00'),
             $expiresAt,
         );
         $this->assignId($motd, $id);
@@ -339,7 +335,7 @@ final class DoctrineMotdRepositoryTest extends TestCase
 
     private function assignId(MotdRecord $motd, int $id): void
     {
-        new ReflectionProperty(MotdRecord::class, 'id')->setValue($motd, $id);
+        new \ReflectionProperty(MotdRecord::class, 'id')->setValue($motd, $id);
     }
 
     private function entry(int $id): MotdEntry
@@ -350,7 +346,7 @@ final class DoctrineMotdRepositoryTest extends TestCase
             'NickServ',
             MessageDelivery::Interactive,
             true,
-            new DateTimeImmutable('2026-09-08T10:00:00+00:00'),
+            new \DateTimeImmutable('2026-09-08T10:00:00+00:00'),
             null,
             0,
             42,

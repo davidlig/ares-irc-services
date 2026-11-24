@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\OperServ\Application\Port\Out;
 
 use App\OperServ\Application\Model\MessageDelivery;
-use DateTimeImmutable;
 
 /** Persistence capabilities required by MOTD administration. */
 interface MotdRepository
@@ -15,8 +14,8 @@ interface MotdRepository
         string $botNickname,
         MessageDelivery $delivery,
         ?int $creatorAccountId,
-        DateTimeImmutable $createdAt,
-        ?DateTimeImmutable $expiresAt,
+        \DateTimeImmutable $createdAt,
+        ?\DateTimeImmutable $expiresAt,
     ): MotdEntry;
 
     public function findById(int $id): ?MotdEntry;
@@ -25,14 +24,14 @@ interface MotdRepository
     public function findAll(): array;
 
     /** @return list<MotdEntry> */
-    public function findActiveAt(DateTimeImmutable $at): array;
+    public function findActiveAt(\DateTimeImmutable $at): array;
 
     /**
      * Expired entries ordered by expiry then id, strictly after the $after keyset cursor.
      *
      * @return list<MotdEntry>
      */
-    public function findExpiredAt(DateTimeImmutable $at, ?MotdEntry $after = null, ?int $limit = null): array;
+    public function findExpiredAt(\DateTimeImmutable $at, ?MotdEntry $after = null, ?int $limit = null): array;
 
     public function remove(MotdEntry $entry): void;
 

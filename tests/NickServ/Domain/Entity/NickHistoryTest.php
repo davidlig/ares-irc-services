@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Tests\NickServ\Domain\Entity;
 
 use App\NickServ\Domain\Entity\NickHistory;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -16,7 +15,7 @@ final class NickHistoryTest extends TestCase
     #[Test]
     public function recordCreatesHistoryEntry(): void
     {
-        $performedAt = new DateTimeImmutable('2024-01-15 10:30:00');
+        $performedAt = new \DateTimeImmutable('2024-01-15 10:30:00');
 
         $history = NickHistory::record(
             nickId: 42,
@@ -47,7 +46,7 @@ final class NickHistoryTest extends TestCase
             performedBy: 'UnregisteredOper',
             performedByNickId: null,
             message: 'Password changed via RECOVER',
-            performedAt: new DateTimeImmutable('2024-01-15 10:30:00'),
+            performedAt: new \DateTimeImmutable('2024-01-15 10:30:00'),
         );
 
         self::assertNull($history->getPerformedByNickId());
@@ -56,7 +55,7 @@ final class NickHistoryTest extends TestCase
     #[Test]
     public function recordUsesProvidedPerformedAt(): void
     {
-        $performedAt = new DateTimeImmutable('2024-01-15 10:30:00');
+        $performedAt = new \DateTimeImmutable('2024-01-15 10:30:00');
 
         $history = NickHistory::record(
             nickId: 1,
@@ -79,7 +78,7 @@ final class NickHistoryTest extends TestCase
             performedBy: 'Admin',
             performedByNickId: 5,
             message: 'Suspension lifted',
-            performedAt: new DateTimeImmutable('2024-01-15 10:30:00'),
+            performedAt: new \DateTimeImmutable('2024-01-15 10:30:00'),
             extraData: [],
         );
 
@@ -89,7 +88,7 @@ final class NickHistoryTest extends TestCase
     #[Test]
     public function toArrayReturnsCorrectFormat(): void
     {
-        $performedAt = new DateTimeImmutable('2024-01-15 10:30:00');
+        $performedAt = new \DateTimeImmutable('2024-01-15 10:30:00');
 
         $history = NickHistory::record(
             nickId: 42,
@@ -122,7 +121,7 @@ final class NickHistoryTest extends TestCase
             action: 'TEST',
             performedBy: 'Admin',
             performedByNickId: 5,
-            performedAt: new DateTimeImmutable('2024-01-15 10:30:00'),
+            performedAt: new \DateTimeImmutable('2024-01-15 10:30:00'),
             message: 'Test message',
         );
 

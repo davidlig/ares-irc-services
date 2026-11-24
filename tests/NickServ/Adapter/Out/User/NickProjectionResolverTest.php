@@ -10,14 +10,12 @@ use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\NickServ\Domain\ValueObject\AutomaticModeProfile;
 use App\NickServ\Domain\ValueObject\NickStatus;
-use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Query;
 use Doctrine\ORM\QueryBuilder;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionProperty;
 
 #[CoversClass(NickProjectionResolver::class)]
 #[CoversClass(NickProjection::class)]
@@ -26,7 +24,7 @@ final class NickProjectionResolverTest extends TestCase
     #[Test]
     public function projectsAllFromScalarArrayDqlQueryWithoutHydratingEntities(): void
     {
-        $suspendedUntil = new DateTimeImmutable('2026-10-01 12:00:00 UTC');
+        $suspendedUntil = new \DateTimeImmutable('2026-10-01 12:00:00 UTC');
         $rows = [
             [
                 'id' => 42,
@@ -133,7 +131,7 @@ final class NickProjectionResolverTest extends TestCase
         self::assertSame(10, $all[4]->id);
         self::assertTrue($all[4]->suspended);
         self::assertSame('spam', $all[4]->suspensionReason);
-        self::assertSame(new DateTimeImmutable('2026-11-01 00:00:00 UTC')->getTimestamp(), $all[4]->suspendedUntil?->getTimestamp());
+        self::assertSame(new \DateTimeImmutable('2026-11-01 00:00:00 UTC')->getTimestamp(), $all[4]->suspendedUntil?->getTimestamp());
 
         self::assertSame(11, $all[5]->id);
         self::assertTrue($all[5]->suspended);
@@ -149,12 +147,12 @@ final class NickProjectionResolverTest extends TestCase
             '$2y$12$V1fmubjfLQd.sMvEU4x.5.hjN6wtGG1aNhiJqy.dc0O0sfKFzyLGe',
             'alice@example.test',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable(),
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable(),
         );
         $nick->activate();
         $nick->changeVhost('alice.example.test');
-        new ReflectionProperty(RegisteredNick::class, 'id')->setValue($nick, 42);
+        new \ReflectionProperty(RegisteredNick::class, 'id')->setValue($nick, 42);
 
         $repository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $repository->method('all')->willReturn([$nick]);
@@ -175,7 +173,7 @@ final class NickProjectionResolverTest extends TestCase
     public function projectsForbiddenNickWithItsReason(): void
     {
         $nick = RegisteredNick::createForbidden('BadNick', 'abuse');
-        new ReflectionProperty(RegisteredNick::class, 'id')->setValue($nick, 7);
+        new \ReflectionProperty(RegisteredNick::class, 'id')->setValue($nick, 7);
 
         $repository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $repository->method('findById')->willReturn($nick);
@@ -197,10 +195,10 @@ final class NickProjectionResolverTest extends TestCase
             '$2y$12$V1fmubjfLQd.sMvEU4x.5.hjN6wtGG1aNhiJqy.dc0O0sfKFzyLGe',
             'pending@example.test',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable(),
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable(),
         );
-        new ReflectionProperty(RegisteredNick::class, 'id')->setValue($nick, 8);
+        new \ReflectionProperty(RegisteredNick::class, 'id')->setValue($nick, 8);
 
         $repository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $repository->method('findById')->willReturn($nick);
@@ -214,11 +212,11 @@ final class NickProjectionResolverTest extends TestCase
     #[Test]
     public function projectsTemporarySuspensionStateReasonAndExpiry(): void
     {
-        $nick = RegisteredNick::createPending('Suspended', 'hash', 'suspended@example.test', 'en', new DateTimeImmutable('+1 hour'), new DateTimeImmutable());
+        $nick = RegisteredNick::createPending('Suspended', 'hash', 'suspended@example.test', 'en', new \DateTimeImmutable('+1 hour'), new \DateTimeImmutable());
         $nick->activate();
-        $until = new DateTimeImmutable('2026-10-01 12:00:00 UTC');
+        $until = new \DateTimeImmutable('2026-10-01 12:00:00 UTC');
         $nick->suspend('abuse', $until);
-        new ReflectionProperty(RegisteredNick::class, 'id')->setValue($nick, 9);
+        new \ReflectionProperty(RegisteredNick::class, 'id')->setValue($nick, 9);
 
         $repository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $repository->method('findById')->willReturn($nick);
@@ -232,10 +230,10 @@ final class NickProjectionResolverTest extends TestCase
     #[Test]
     public function projectsPermanentSuspensionWithoutExpiry(): void
     {
-        $nick = RegisteredNick::createPending('Permanent', 'hash', 'permanent@example.test', 'en', new DateTimeImmutable('+1 hour'), new DateTimeImmutable());
+        $nick = RegisteredNick::createPending('Permanent', 'hash', 'permanent@example.test', 'en', new \DateTimeImmutable('+1 hour'), new \DateTimeImmutable());
         $nick->activate();
         $nick->suspend('serious abuse');
-        new ReflectionProperty(RegisteredNick::class, 'id')->setValue($nick, 10);
+        new \ReflectionProperty(RegisteredNick::class, 'id')->setValue($nick, 10);
 
         $repository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $repository->method('findById')->willReturn($nick);
@@ -258,8 +256,8 @@ final class NickProjectionResolverTest extends TestCase
     #[Test]
     public function projectsSemanticAutomaticPreferencesForBothIncrementalAndFullConsumers(): void
     {
-        $nick = RegisteredNick::createActive('Pedro', 'hash', null, 'en', new DateTimeImmutable());
-        new ReflectionProperty(RegisteredNick::class, 'id')->setValue($nick, 12);
+        $nick = RegisteredNick::createActive('Pedro', 'hash', null, 'en', new \DateTimeImmutable());
+        new \ReflectionProperty(RegisteredNick::class, 'id')->setValue($nick, 12);
         $nick->changeAutomaticModes(new AutomaticModeProfile(['bot', 'strip-formatting']));
         $repository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $repository->method('all')->willReturn([$nick]);

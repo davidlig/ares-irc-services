@@ -39,10 +39,8 @@ use App\NickServ\Domain\Entity\RegisteredNick;
 use App\NickServ\Domain\ValueObject\RegistrationMode;
 use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
-use RuntimeException;
 
 use function hash;
 use function serialize;
@@ -63,7 +61,7 @@ final class RegistrationReviewRegressionTest extends DoctrineIntegrationTestCase
         $mail = $this->createMock(RegistrationMailSender::class);
         $mail->expects(self::never())->method('sendVerification');
         $clock = $this->createStub(Clock::class);
-        $clock->method('now')->willReturn(new DateTimeImmutable('2026-11-03T18:00:00Z'));
+        $clock->method('now')->willReturn(new \DateTimeImmutable('2026-11-03T18:00:00Z'));
         $handler = new RegisterNickHandler(
             $this->createStub(EmailDomainPolicy::class),
             new DoctrineRegisterNickRepository($this->entityManager),
@@ -83,7 +81,7 @@ final class RegistrationReviewRegressionTest extends DoctrineIntegrationTestCase
     #[Test]
     public function capacityFailureBlocksSameIpOnlyAfterSqlPersistence(): void
     {
-        $now = new DateTimeImmutable('2026-10-22T12:00:00Z');
+        $now = new \DateTimeImmutable('2026-10-22T12:00:00Z');
         $db = $this->entityManager->getConnection();
         $policy = new DoctrineRegistrationPolicyRepository($db);
         $codec = new UuidRescueTokenCodec();
@@ -119,7 +117,7 @@ final class RegistrationReviewRegressionTest extends DoctrineIntegrationTestCase
     #[Test]
     public function mailFailureAlsoBlocksSameIpWithoutPersistingSecret(): void
     {
-        $now = new DateTimeImmutable('2026-10-22T12:00:00Z');
+        $now = new \DateTimeImmutable('2026-10-22T12:00:00Z');
         $db = $this->entityManager->getConnection();
         $policy = new DoctrineRegistrationPolicyRepository($db);
         $policy->change(RegistrationMode::Email);
@@ -130,7 +128,7 @@ final class RegistrationReviewRegressionTest extends DoctrineIntegrationTestCase
         $hasher = $this->createStub(PasswordHasher::class);
         $hasher->method('hash')->willReturn('hash');
         $mail = $this->createMock(RegistrationMailSender::class);
-        $mail->expects(self::exactly(2))->method('sendVerification')->willThrowException(new RuntimeException('synthetic mail failure'));
+        $mail->expects(self::exactly(2))->method('sendVerification')->willThrowException(new \RuntimeException('synthetic mail failure'));
         $register = new RegisterNickHandler($this->createStub(EmailDomainPolicy::class), new DoctrineRegisterNickRepository($this->entityManager), $hasher, $codec, $clock, $store, $policy, new InMemoryRegistrationThrottle(new RegisterThrottleRegistry()), $mail, 300);
         self::assertSame(RegisterNickOutcome::MailDeliveryFailed, $register->handle(new RegisterNick('First', 'password', 'first@example.test', 'en', 'ip:one'))->outcome);
         $count = $db->fetchOne('SELECT COUNT(*) FROM registered_nicks');
@@ -155,7 +153,7 @@ final class RegistrationReviewRegressionTest extends DoctrineIntegrationTestCase
     #[Test]
     public function resendRenewsSqlAndMemoryExpiryWithoutRevivingExpired(): void
     {
-        $now = new DateTimeImmutable('2026-10-22T12:00:00Z');
+        $now = new \DateTimeImmutable('2026-10-22T12:00:00Z');
         $originalDeadline = $now->modify('+1 second');
         $db = $this->entityManager->getConnection();
         $repo = new RegisteredNickDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network());
@@ -175,7 +173,7 @@ final class RegistrationReviewRegressionTest extends DoctrineIntegrationTestCase
         $throttle->method('remainingCooldownSeconds')->willReturn(0);
         $sent = null;
         $mailer = $this->createMock(ResendMailSender::class);
-        $mailer->expects(self::once())->method('sendResend')->willReturnCallback(static function (string $n, string $e, string $t) use (&$sent): void {$sent = $t; });
+        $mailer->expects(self::once())->method('sendResend')->willReturnCallback(static function (string $n, string $e, string $t) use (&$sent): void { $sent = $t; });
         $history = new NickHistoryService(new NickHistoryDoctrineRepository($this->entityManager));
         $resend = new ResendVerificationHandler($repo, $throttle, $codec, $store, $policy, $mailer, $clock, $history, 600, 7200);
         self::assertSame(ResendVerificationOutcome::Success, $resend->handle(new ResendVerification('Renew', 'en', 'Oper'))->outcome);

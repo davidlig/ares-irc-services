@@ -10,14 +10,11 @@ use App\OperServ\Application\Port\Out\GlineEntry;
 use App\OperServ\Application\Port\Out\GlineRepository;
 use App\OperServ\Application\PublishedEvent\GlineRemovedEvent;
 use App\Shared\Application\Port\EventBusInterface;
-use DateTimeImmutable;
-use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
-use RuntimeException;
 
 use function array_filter;
 use function array_map;
@@ -65,9 +62,9 @@ final class PurgeExpiredGlinesTaskTest extends TestCase
     #[Test]
     public function runRemovesExpiredGlinesAndLogsToDebug(): void
     {
-        $expiredGline1 = new GlineEntry('*@host1.com', null, null, new DateTimeImmutable('-2 hours'), new DateTimeImmutable('-1 hour'), 101);
+        $expiredGline1 = new GlineEntry('*@host1.com', null, null, new \DateTimeImmutable('-2 hours'), new \DateTimeImmutable('-1 hour'), 101);
 
-        $expiredGline2 = new GlineEntry('*@host2.com', null, null, new DateTimeImmutable('-2 hours'), new DateTimeImmutable('-1 hour'), 102);
+        $expiredGline2 = new GlineEntry('*@host2.com', null, null, new \DateTimeImmutable('-2 hours'), new \DateTimeImmutable('-1 hour'), 102);
 
         $glineRepo = $this->createMock(GlineRepository::class);
         $glineRepo->expects(self::once())->method('findExpiredAt')->willReturn([$expiredGline1, $expiredGline2]);
@@ -109,7 +106,7 @@ final class PurgeExpiredGlinesTaskTest extends TestCase
     #[Test]
     public function rejectsPersistedGlineWithoutIdentifier(): void
     {
-        $gline = new GlineEntry('*@host.test', null, null, new DateTimeImmutable('-2 hours'), new DateTimeImmutable('-1 hour'));
+        $gline = new GlineEntry('*@host.test', null, null, new \DateTimeImmutable('-2 hours'), new \DateTimeImmutable('-1 hour'));
         $glineRepo = $this->createMock(GlineRepository::class);
         $glineRepo->expects(self::once())->method('findExpiredAt')->willReturn([$gline]);
         $glineRepo->expects(self::never())->method('remove');
@@ -123,7 +120,7 @@ final class PurgeExpiredGlinesTaskTest extends TestCase
             3600,
         );
 
-        $this->expectException(LogicException::class);
+        $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('Persisted GLINE entry must have an identifier.');
 
         $task->run();
@@ -132,7 +129,7 @@ final class PurgeExpiredGlinesTaskTest extends TestCase
     #[Test]
     public function runRemovesCorrectGlineById(): void
     {
-        $expiredGline = new GlineEntry('*@isp.com', null, null, new DateTimeImmutable('-2 hours'), new DateTimeImmutable('-1 hour'), 999);
+        $expiredGline = new GlineEntry('*@isp.com', null, null, new \DateTimeImmutable('-2 hours'), new \DateTimeImmutable('-1 hour'), 999);
 
         $deletedIds = [];
         $glineRepo = $this->createMock(GlineRepository::class);
@@ -180,7 +177,7 @@ final class PurgeExpiredGlinesTaskTest extends TestCase
         $deleted = [];
         $glineRepo = $this->createMock(GlineRepository::class);
         $glineRepo->expects(self::exactly(2))->method('findExpiredAt')
-            ->willReturnCallback(function (DateTimeImmutable $at, ?GlineEntry $after, ?int $limit) use (&$loads): array {
+            ->willReturnCallback(function (\DateTimeImmutable $at, ?GlineEntry $after, ?int $limit) use (&$loads): array {
                 $loads[] = [$after?->id, $limit];
 
                 return null === $after ? [$this->expired(1), $this->expired(2)] : [$this->expired(3)];
@@ -204,12 +201,12 @@ final class PurgeExpiredGlinesTaskTest extends TestCase
     #[Test]
     public function aGlineThatKeepsFailingIsLoggedAndSkippedWithoutBlockingLaterRows(): void
     {
-        $failure = new RuntimeException('network sink rejected the removal');
+        $failure = new \RuntimeException('network sink rejected the removal');
         $loads = [];
         $deleted = [];
         $glineRepo = $this->createMock(GlineRepository::class);
         $glineRepo->expects(self::exactly(2))->method('findExpiredAt')
-            ->willReturnCallback(function (DateTimeImmutable $at, ?GlineEntry $after, ?int $limit) use (&$loads): array {
+            ->willReturnCallback(function (\DateTimeImmutable $at, ?GlineEntry $after, ?int $limit) use (&$loads): array {
                 $loads[] = [$after?->id, $limit];
 
                 return null === $after ? [$this->expired(1), $this->expired(2)] : [$this->expired(3)];
@@ -248,7 +245,7 @@ final class PurgeExpiredGlinesTaskTest extends TestCase
     #[Test]
     public function aFailingDebugLogIsLoggedOnItsOwnAndTheGlineRemovedFromTheNetworkIsDeleted(): void
     {
-        $failure = new RuntimeException('debug channel unavailable');
+        $failure = new \RuntimeException('debug channel unavailable');
         $glineRepo = $this->createMock(GlineRepository::class);
         $glineRepo->expects(self::once())->method('findExpiredAt')->willReturn([$this->expired(1)]);
         $glineRepo->expects(self::once())->method('deleteByIds')->with([1])->willReturn(1);
@@ -304,7 +301,7 @@ final class PurgeExpiredGlinesTaskTest extends TestCase
         try {
             $task->run();
             self::fail('The delete failure must propagate to the scheduler.');
-        } catch (RuntimeException) {
+        } catch (\RuntimeException) {
         }
         $task->run();
 
@@ -316,7 +313,7 @@ final class PurgeExpiredGlinesTaskTest extends TestCase
     {
         $repository = $this->createStub(GlineRepository::class);
         $repository->method('findExpiredAt')->willReturnCallback(
-            function (DateTimeImmutable $at, ?GlineEntry $after, ?int $limit) use ($state): array {
+            function (\DateTimeImmutable $at, ?GlineEntry $after, ?int $limit) use ($state): array {
                 $state->loads[] = [$after?->id, $limit];
                 $page = array_values(array_filter($state->ids, static fn (int $id): bool => $id > ($after->id ?? 0)));
 
@@ -327,7 +324,7 @@ final class PurgeExpiredGlinesTaskTest extends TestCase
             if ($state->deleteFailures > 0) {
                 --$state->deleteFailures;
 
-                throw new RuntimeException('database error');
+                throw new \RuntimeException('database error');
             }
             $state->ids = array_values(array_filter($state->ids, static fn (int $id): bool => !in_array($id, $ids, true)));
 
@@ -350,7 +347,7 @@ final class PurgeExpiredGlinesTaskTest extends TestCase
 
     private function expired(int $id): GlineEntry
     {
-        return new GlineEntry('*@host' . $id . '.test', null, null, new DateTimeImmutable('-2 hours'), new DateTimeImmutable('-1 hour'), $id);
+        return new GlineEntry('*@host' . $id . '.test', null, null, new \DateTimeImmutable('-2 hours'), new \DateTimeImmutable('-1 hour'), $id);
     }
 }
 

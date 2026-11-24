@@ -7,7 +7,6 @@ namespace App\ChanServ\Adapter\In\Event;
 use App\ChanServ\Application\Model\BurstRankEventScope;
 use App\ChanServ\Application\UseCase\SynchronizeBurst\SynchronizeBurstChannels;
 use App\Irc\Application\PublishedEvent\NetworkSynchronizationCompletedEvent;
-use DateTimeImmutable;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 final readonly class ChanServBurstSynchronizationSubscriber implements EventSubscriberInterface
@@ -23,7 +22,7 @@ final readonly class ChanServBurstSynchronizationSubscriber implements EventSubs
     {
         $this->scope->begin();
         try {
-            $this->handler->handle(new DateTimeImmutable());
+            $this->handler->handle(new \DateTimeImmutable());
         } finally {
             $this->scope->end();
         }

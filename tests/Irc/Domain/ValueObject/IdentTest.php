@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Tests\Irc\Domain\ValueObject;
 
 use App\Irc\Domain\ValueObject\Ident;
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -25,7 +24,7 @@ final class IdentTest extends TestCase
     #[Test]
     public function emptyIdentThrows(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Ident cannot be empty');
 
         new Ident('');

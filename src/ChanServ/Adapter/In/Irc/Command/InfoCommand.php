@@ -16,7 +16,6 @@ use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use App\Shared\Adapter\In\Irc\Presentation\Component;
 use App\Shared\Adapter\In\Irc\Presentation\Fragment;
 use App\Shared\Adapter\In\Irc\Presentation\Role;
-use DateTimeImmutable;
 
 use function implode;
 use function str_contains;
@@ -289,7 +288,7 @@ final readonly class InfoCommand implements ChanServCommandInterface
         $context->replyRaw(new ChanServDetailPresenter()->row($context, 'info.no_expire', [], null));
     }
 
-    private function presentOptionalDate(ChanServContext $context, string $key, ?DateTimeImmutable $date): void
+    private function presentOptionalDate(ChanServContext $context, string $key, ?\DateTimeImmutable $date): void
     {
         if (null !== $date) {
             $context->replyRaw(new ChanServDetailPresenter()->row($context, $key, ['%date%' => $context->formatDate($date)]));

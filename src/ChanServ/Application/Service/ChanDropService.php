@@ -15,7 +15,6 @@ use App\ChanServ\Application\PublishedEvent\ChannelDropEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelPendingDeletionEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelRestoredEvent;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
-use DateTimeImmutable;
 
 use function sprintf;
 
@@ -43,7 +42,7 @@ readonly class ChanDropService
      */
     public function softDropChannel(
         RegisteredChannel $channel,
-        DateTimeImmutable $occurredAt,
+        \DateTimeImmutable $occurredAt,
         ?string $operatorNick = null,
     ): void {
         $channelName = $channel->getName();
@@ -83,7 +82,7 @@ readonly class ChanDropService
 
     public function restoreChannel(
         RegisteredChannel $channel,
-        DateTimeImmutable $occurredAt,
+        \DateTimeImmutable $occurredAt,
         ?string $operatorNick = null,
     ): void {
         $channelName = $channel->getName();
@@ -129,7 +128,7 @@ readonly class ChanDropService
      */
     public function hardDropChannel(
         RegisteredChannel $channel,
-        DateTimeImmutable $occurredAt,
+        \DateTimeImmutable $occurredAt,
         string $reason = 'manual',
         ?string $operatorNick = null,
     ): void {
@@ -177,7 +176,7 @@ readonly class ChanDropService
 
     public function dropChannel(
         RegisteredChannel $channel,
-        DateTimeImmutable $occurredAt,
+        \DateTimeImmutable $occurredAt,
         string $reason = 'manual',
         ?string $operatorNick = null,
     ): void {

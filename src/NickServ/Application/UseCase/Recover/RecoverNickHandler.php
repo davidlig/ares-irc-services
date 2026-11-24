@@ -20,10 +20,6 @@ use App\NickServ\Application\Port\Out\TemporaryRescueTokenStore;
 use App\NickServ\Application\PublishedEvent\NickPasswordHashAvailable;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\NickServ\Domain\ValueObject\RegistrationMode;
-use DateTimeImmutable;
-use LogicException;
-use OverflowException;
-use Throwable;
 
 use function filter_var;
 use function hash_equals;
@@ -100,7 +96,7 @@ final readonly class RecoverNickHandler implements RecoverNickHandlerInterface
         $newToken = $confirmed ? $this->tokenCodec->generate() : $command->token;
         $newTokenHash = $this->tokenCodec->hash($newToken);
         if (null === $newTokenHash) {
-            throw new LogicException('The generated rescue token is invalid.');
+            throw new \LogicException('The generated rescue token is invalid.');
         }
         if (!$this->credentials->rotateAfterRecovery($account->getId(), $expectedHash, $newPasswordHash, $providedHash, $occurredAt)) {
             return RecoverNickResult::invalidToken($command->nickname);
@@ -110,7 +106,7 @@ final readonly class RecoverNickHandler implements RecoverNickHandlerInterface
             $this->temporaryTokens->prune($occurredAt);
             try {
                 $this->temporaryTokens->replace($account->getId(), $newTokenHash, $occurredAt->modify(sprintf('+%d seconds', $this->recoverTokenTtlSeconds)));
-            } catch (OverflowException) {
+            } catch (\OverflowException) {
                 $newToken = null;
                 $replacementUnavailable = true;
             }
@@ -137,7 +133,7 @@ final readonly class RecoverNickHandler implements RecoverNickHandlerInterface
         return RecoverNickResult::passwordReset($command->nickname, $newPassword, $newToken, $provisional, $replacementUnavailable);
     }
 
-    private function requestEmailToken(RecoverNick $command, RegisteredNick $account, DateTimeImmutable $now): RecoverNickResult
+    private function requestEmailToken(RecoverNick $command, RegisteredNick $account, \DateTimeImmutable $now): RecoverNickResult
     {
         $email = $account->getEmail();
         if (null === $email || false === filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -152,12 +148,12 @@ final readonly class RecoverNickHandler implements RecoverNickHandlerInterface
             $this->recoveryTokens->store($command->nickname, $token, $now->modify(sprintf('+%d seconds', $this->recoverTokenTtlSeconds)));
             // Reserve the bounded timestamp slot before external delivery.
             $this->recoveryTokens->recordRecover($command->nickname, $now);
-        } catch (OverflowException) {
+        } catch (\OverflowException) {
             return RecoverNickResult::temporarilyUnavailable();
         }
         try {
             $this->mailSender->sendRecovery($command->nickname, $email, $token, $account->getLanguage());
-        } catch (Throwable) {
+        } catch (\Throwable) {
             return RecoverNickResult::mailDeliveryFailed();
         }
 

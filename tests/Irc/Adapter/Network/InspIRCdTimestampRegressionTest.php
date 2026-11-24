@@ -17,7 +17,6 @@ use App\Irc\Application\Port\In\ChannelModeSupportInterface;
 use App\Irc\Application\Port\In\SkipIdentifiedModeStripRegistry;
 use App\Irc\Domain\Network\Channel;
 use App\Irc\Domain\ValueObject\ChannelName;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -35,7 +34,7 @@ final class InspIRCdTimestampRegressionTest extends TestCase
     #[Test]
     public function lowerFmodeIsAcceptedWithoutLoweringChannelTimestamp(): void
     {
-        [$c,$a] = $this->network();
+        [$c, $a] = $this->network();
         $a->handleMessage(IRCMessage::fromRawLine(':001 FMODE #test 99 +t'));
         self::assertSame('+nkt', $c->getModes());
         self::assertSame(100, $c->getCreatedAt()->getTimestamp());
@@ -44,7 +43,7 @@ final class InspIRCdTimestampRegressionTest extends TestCase
     #[Test]
     public function lowerLmodeIsAcceptedWithoutLoweringChannelTimestamp(): void
     {
-        [$c,$a] = $this->network();
+        [$c, $a] = $this->network();
         $a->handleMessage(IRCMessage::fromRawLine(':001 LMODE #test 99 b bad!*@* 90 setter'));
         self::assertSame(['bad!*@*'], $c->getBans());
         self::assertSame(100, $c->getCreatedAt()->getTimestamp());
@@ -53,7 +52,7 @@ final class InspIRCdTimestampRegressionTest extends TestCase
     #[Test]
     public function equalFjoinKeyUsesInspLexicallySmallerValue(): void
     {
-        [$c,$a] = $this->network();
+        [$c, $a] = $this->network();
         $a->handleMessage(IRCMessage::fromRawLine(':001 FJOIN #test 100 +nk zkey :'));
         self::assertSame('akey', $c->getModeParam('k'));
     }
@@ -61,7 +60,7 @@ final class InspIRCdTimestampRegressionTest extends TestCase
     #[Test]
     public function higherModeAndListMessagesPreserveExactStateHash(): void
     {
-        [$c,$a] = $this->network();
+        [$c, $a] = $this->network();
         $before = hash('sha256', serialize($c));
         $a->handleMessage(IRCMessage::fromRawLine(':001 FMODE #test 101 +t'));
         $a->handleMessage(IRCMessage::fromRawLine(':001 LMODE #test 101 b bad!*@* 90 setter'));
@@ -71,7 +70,7 @@ final class InspIRCdTimestampRegressionTest extends TestCase
     /** @return array{Channel, InspIRCdNetworkStateAdapter} */
     private function network(): array
     {
-        $channel = new Channel(new ChannelName('#test'), '+nk', new DateTimeImmutable('@100'));
+        $channel = new Channel(new ChannelName('#test'), '+nk', new \DateTimeImmutable('@100'));
         $channel->applyModeParam('k', 'akey');
         $repo = new InMemoryChannelRepository();
         $repo->save($channel);

@@ -10,7 +10,6 @@ use App\Irc\Application\Port\In\AutomaticModeSupport;
 use App\Irc\Application\Port\In\LocalUserModeSyncPort;
 use App\Irc\Application\Port\In\NativeAutomaticModeSupport;
 use Psr\Log\LoggerInterface;
-use Throwable;
 
 final readonly class SelectedAutomaticModeSupport implements AutomaticModeSupport, AutomaticModeDelivery
 {
@@ -48,7 +47,7 @@ final readonly class SelectedAutomaticModeSupport implements AutomaticModeSuppor
             $this->localModes->apply($uid, $delta);
 
             return true;
-        } catch (Throwable) {
+        } catch (\Throwable) {
             $this->logger->warning('Automatic nickname modes could not be delivered.', ['uid' => $uid]);
 
             return false;

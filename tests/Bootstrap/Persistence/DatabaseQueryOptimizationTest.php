@@ -18,7 +18,6 @@ use App\NickServ\Domain\Entity\RegisteredNick;
 use App\NickServ\Domain\ValueObject\NickStatus;
 use App\Shared\Domain\IrcIdentityFold;
 use App\Tests\NickServ\Support\NegotiatedCaseMapping;
-use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Logging\Middleware;
@@ -32,7 +31,6 @@ use Doctrine\Migrations\MigratorConfiguration;
 use Doctrine\ORM\Configuration;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Mapping\Driver\SimplifiedXmlDriver;
-use PDO;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
@@ -102,7 +100,7 @@ final class DatabaseQueryOptimizationTest extends TestCase
         $this->connection->executeStatement("UPDATE registered_nicks SET registered_at = '2020-01-01 00:00:00', last_seen_at = NULL WHERE id = 1");
         $this->connection->executeStatement("UPDATE registered_nicks SET registered_at = '1901-01-01 00:00:00', last_seen_at = NULL WHERE id = 2");
         $repository = new RegisteredNickDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network());
-        $threshold = new DateTimeImmutable('2021-01-01 00:00:00');
+        $threshold = new \DateTimeImmutable('2021-01-01 00:00:00');
         self::assertSame(2, self::databaseInteger($this->connection->fetchOne("SELECT COUNT(*) FROM registered_nicks WHERE status = 'registered' AND no_expire = FALSE AND COALESCE(last_seen_at, registered_at) < '2021-01-01 00:00:00'")));
         $this->migrate('latest');
         $this->entityManager->clear();
@@ -200,7 +198,7 @@ final class DatabaseQueryOptimizationTest extends TestCase
             // nesting counter remains incremented. Match the production CLI's
             // connection lifetime before reusing this connection for fixture DML.
             $native = $this->connection->getNativeConnection();
-            self::assertInstanceOf(PDO::class, $native);
+            self::assertInstanceOf(\PDO::class, $native);
             self::assertFalse($native->inTransaction(), 'Do not discard an actual uncommitted migration transaction.');
             $this->connection->close();
         }
@@ -411,8 +409,8 @@ final class DatabaseQueryOptimizationTest extends TestCase
         $nickRepository->findNicknamesByLastConnectIp('203.0.113.9');
         $nickRepository->findByEmail('FINDME@example.com');
         // Same arguments as the maintenance tasks: production adds ORDER BY id LIMIT <batch size>.
-        $nickRepository->findExpiredSuspensions(new DateTimeImmutable('2026-01-01'), UnsuspendExpiredSuspensionsTask::DEFAULT_BATCH_SIZE);
-        $nickRepository->findRegisteredInactiveSince(new DateTimeImmutable('2026-01-01'), PurgeInactiveNicknamesTask::DEFAULT_BATCH_SIZE);
+        $nickRepository->findExpiredSuspensions(new \DateTimeImmutable('2026-01-01'), UnsuspendExpiredSuspensionsTask::DEFAULT_BATCH_SIZE);
+        $nickRepository->findRegisteredInactiveSince(new \DateTimeImmutable('2026-01-01'), PurgeInactiveNicknamesTask::DEFAULT_BATCH_SIZE);
         $channelRepository = new RegisteredChannelDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network());
         $channelRepository->findByFounderNickId(999999);
         $channelRepository->findEstablishedByFounderNickId(999999);

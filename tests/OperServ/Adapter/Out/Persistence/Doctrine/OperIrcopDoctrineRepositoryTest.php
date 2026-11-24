@@ -10,16 +10,12 @@ use App\OperServ\Domain\Entity\OperIrcop;
 use App\OperServ\Domain\Entity\OperPermission;
 use App\OperServ\Domain\Entity\OperRole;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
-use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\PersistentCollection;
 use Doctrine\ORM\Query;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
-use ReflectionProperty;
-use stdClass;
-use UnexpectedValueException;
 
 use function array_map;
 
@@ -42,7 +38,7 @@ final class OperIrcopDoctrineRepositoryTest extends DoctrineIntegrationTestCase
     public function findReturnsOperIrcopWhenFound(): void
     {
         $role = $this->createOperRole('Admin');
-        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 100, role: $role);
+        $ircop = OperIrcop::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 100, role: $role);
 
         $this->repository->save($ircop);
         $this->flushAndClear();
@@ -65,7 +61,7 @@ final class OperIrcopDoctrineRepositoryTest extends DoctrineIntegrationTestCase
     public function findByNickIdReturnsOperIrcopWhenFound(): void
     {
         $role = $this->createOperRole('Admin');
-        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 200, role: $role);
+        $ircop = OperIrcop::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 200, role: $role);
 
         $this->repository->save($ircop);
         $this->flushAndClear();
@@ -80,9 +76,9 @@ final class OperIrcopDoctrineRepositoryTest extends DoctrineIntegrationTestCase
     public function findByNickIdsLoadsOnlyRequestedAssignmentsWithTheirRoles(): void
     {
         $role = $this->createOperRole('Admin');
-        $first = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 201, role: $role);
-        $second = OperIrcop::create(new DateTimeImmutable('2026-01-02T00:00:00+00:00'), nickId: 202, role: $role);
-        $other = OperIrcop::create(new DateTimeImmutable('2026-01-03T00:00:00+00:00'), nickId: 203, role: $role);
+        $first = OperIrcop::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 201, role: $role);
+        $second = OperIrcop::create(new \DateTimeImmutable('2026-01-02T00:00:00+00:00'), nickId: 202, role: $role);
+        $other = OperIrcop::create(new \DateTimeImmutable('2026-01-03T00:00:00+00:00'), nickId: 203, role: $role);
         $this->entityManager->persist($first);
         $this->entityManager->persist($second);
         $this->entityManager->persist($other);
@@ -107,13 +103,13 @@ final class OperIrcopDoctrineRepositoryTest extends DoctrineIntegrationTestCase
     #[Test]
     public function batchSnapshotCachesMissingAssignmentsAndInvalidatesAfterWrites(): void
     {
-        $token = new stdClass();
+        $token = new \stdClass();
         $this->burstCache->beginBatch($token);
         $this->burstCache->primeBatch($token, [], [901]);
         self::assertNull($this->repository->findByNickId(901));
 
         $role = $this->createOperRole('Admin');
-        $assignment = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 901, role: $role);
+        $assignment = OperIrcop::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 901, role: $role);
         $this->repository->save($assignment);
 
         self::assertSame($assignment, $this->repository->findByNickId(901));
@@ -128,7 +124,7 @@ final class OperIrcopDoctrineRepositoryTest extends DoctrineIntegrationTestCase
         $role->addPermission($permission);
         $this->entityManager->persist($permission);
         $this->entityManager->flush();
-        $this->repository->save(OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 250, role: $role));
+        $this->repository->save(OperIrcop::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 250, role: $role));
         $this->flushAndClear();
 
         $found = $this->repository->findByNickIdWithRolePermissions(250);
@@ -150,7 +146,7 @@ final class OperIrcopDoctrineRepositoryTest extends DoctrineIntegrationTestCase
         $entityManager = $this->createMock(EntityManagerInterface::class);
         $entityManager->expects(self::once())->method('createQuery')->willReturn($query);
 
-        $this->expectException(UnexpectedValueException::class);
+        $this->expectException(\UnexpectedValueException::class);
         $this->expectExceptionMessage('Authorization query did not return an IRCOP assignment.');
 
         new OperIrcopDoctrineRepository($entityManager, new BurstIrcopCache())->findByNickIdWithRolePermissions(250);
@@ -170,14 +166,14 @@ final class OperIrcopDoctrineRepositoryTest extends DoctrineIntegrationTestCase
         $first = $this->createOperRole('First');
         $second = $this->createOperRole('Second');
         $first->addPermission($permission);
-        $this->entityManager->persist(OperIrcop::create(new DateTimeImmutable('2026-01-01'), 1, $first));
-        $this->entityManager->persist(OperIrcop::create(new DateTimeImmutable('2026-01-02'), 2, $second));
+        $this->entityManager->persist(OperIrcop::create(new \DateTimeImmutable('2026-01-01'), 1, $first));
+        $this->entityManager->persist(OperIrcop::create(new \DateTimeImmutable('2026-01-02'), 2, $second));
         $this->flushAndClear();
 
         $assignments = $this->repository->findAll();
         self::assertCount(2, $assignments);
         self::assertSame([2, 1], array_map(static fn (OperIrcop $entry): int => $entry->getNickId(), $assignments));
-        $permissions = new ReflectionProperty(OperRole::class, 'permissions');
+        $permissions = new \ReflectionProperty(OperRole::class, 'permissions');
         foreach ($assignments as $assignment) {
             $role = $assignment->getRole();
             self::assertFalse($this->entityManager->isUninitializedObject($role));
@@ -193,14 +189,14 @@ final class OperIrcopDoctrineRepositoryTest extends DoctrineIntegrationTestCase
     {
         $role = $this->createOperRole('Admin');
 
-        $ircop1 = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 100, role: $role);
-        $ircop2 = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 101, role: $role);
-        $ircop3 = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 102, role: $role);
+        $ircop1 = OperIrcop::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 100, role: $role);
+        $ircop2 = OperIrcop::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 101, role: $role);
+        $ircop3 = OperIrcop::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 102, role: $role);
 
         // Set explicit timestamps to ensure ordering without sleep
-        $this->setAddedAt($ircop1, new DateTimeImmutable('-3 seconds'));
-        $this->setAddedAt($ircop2, new DateTimeImmutable('-2 seconds'));
-        $this->setAddedAt($ircop3, new DateTimeImmutable('-1 second'));
+        $this->setAddedAt($ircop1, new \DateTimeImmutable('-3 seconds'));
+        $this->setAddedAt($ircop2, new \DateTimeImmutable('-2 seconds'));
+        $this->setAddedAt($ircop3, new \DateTimeImmutable('-1 second'));
 
         $this->entityManager->persist($ircop1);
         $this->entityManager->persist($ircop2);
@@ -223,9 +219,9 @@ final class OperIrcopDoctrineRepositoryTest extends DoctrineIntegrationTestCase
         $adminRole = $this->createOperRole('Admin');
         $operRole = $this->createOperRole('Oper');
 
-        $admin1 = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 100, role: $adminRole);
-        $admin2 = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 101, role: $adminRole);
-        $oper1 = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 200, role: $operRole);
+        $admin1 = OperIrcop::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 100, role: $adminRole);
+        $admin2 = OperIrcop::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 101, role: $adminRole);
+        $oper1 = OperIrcop::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 200, role: $operRole);
 
         $this->repository->save($admin1);
         $this->repository->save($admin2);
@@ -251,7 +247,7 @@ final class OperIrcopDoctrineRepositoryTest extends DoctrineIntegrationTestCase
     public function savePersistsAndFlushes(): void
     {
         $role = $this->createOperRole('Admin');
-        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 300, role: $role, addedById: 1, reason: 'Test admin');
+        $ircop = OperIrcop::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 300, role: $role, addedById: 1, reason: 'Test admin');
 
         $this->repository->save($ircop);
 
@@ -271,7 +267,7 @@ final class OperIrcopDoctrineRepositoryTest extends DoctrineIntegrationTestCase
     public function removeRemovesAndFlushes(): void
     {
         $role = $this->createOperRole('Admin');
-        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 400, role: $role);
+        $ircop = OperIrcop::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 400, role: $role);
 
         $this->repository->save($ircop);
         $this->flushAndClear();
@@ -293,9 +289,9 @@ final class OperIrcopDoctrineRepositoryTest extends DoctrineIntegrationTestCase
         $adminRole = $this->createOperRole('Admin');
         $operRole = $this->createOperRole('Oper');
 
-        $admin1 = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 500, role: $adminRole);
-        $admin2 = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 501, role: $adminRole);
-        $oper1 = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 600, role: $operRole);
+        $admin1 = OperIrcop::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 500, role: $adminRole);
+        $admin2 = OperIrcop::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 501, role: $adminRole);
+        $oper1 = OperIrcop::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 600, role: $operRole);
 
         $this->repository->save($admin1);
         $this->repository->save($admin2);
@@ -311,8 +307,8 @@ final class OperIrcopDoctrineRepositoryTest extends DoctrineIntegrationTestCase
     public function deleteByNickIdRemovesIrcopEntry(): void
     {
         $role = $this->createOperRole('Admin');
-        $ircop1 = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 100, role: $role);
-        $ircop2 = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 200, role: $role);
+        $ircop1 = OperIrcop::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 100, role: $role);
+        $ircop2 = OperIrcop::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 200, role: $role);
 
         $this->repository->save($ircop1);
         $this->repository->save($ircop2);
@@ -329,7 +325,7 @@ final class OperIrcopDoctrineRepositoryTest extends DoctrineIntegrationTestCase
     public function deleteByNickIdDoesNothingWhenNoMatch(): void
     {
         $role = $this->createOperRole('Admin');
-        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 100, role: $role);
+        $ircop = OperIrcop::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 100, role: $role);
 
         $this->repository->save($ircop);
         $this->flushAndClear();
@@ -344,9 +340,9 @@ final class OperIrcopDoctrineRepositoryTest extends DoctrineIntegrationTestCase
     public function clearAddedByIdClearsOnlyMatchingEntries(): void
     {
         $role = $this->createOperRole('Admin');
-        $ircop1 = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 100, role: $role, addedById: 900);
-        $ircop2 = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 200, role: $role, addedById: 901);
-        $ircop3 = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 300, role: $role, addedById: 900);
+        $ircop1 = OperIrcop::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 100, role: $role, addedById: 900);
+        $ircop2 = OperIrcop::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 200, role: $role, addedById: 901);
+        $ircop3 = OperIrcop::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 300, role: $role, addedById: 900);
 
         $this->repository->save($ircop1);
         $this->repository->save($ircop2);
@@ -375,9 +371,9 @@ final class OperIrcopDoctrineRepositoryTest extends DoctrineIntegrationTestCase
         $this->repository = new OperIrcopDoctrineRepository($this->entityManager, $this->burstCache);
     }
 
-    private function setAddedAt(OperIrcop $ircop, DateTimeImmutable $time): void
+    private function setAddedAt(OperIrcop $ircop, \DateTimeImmutable $time): void
     {
-        $ref = new ReflectionProperty($ircop, 'addedAt');
+        $ref = new \ReflectionProperty($ircop, 'addedAt');
         $ref->setValue($ircop, $time);
     }
 

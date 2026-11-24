@@ -9,9 +9,7 @@ use App\OperServ\Application\Model\MessageDelivery;
 use App\OperServ\Application\Port\Out\MotdCounterFlusher;
 use App\OperServ\Application\Port\Out\MotdEntry;
 use App\OperServ\Application\Port\Out\MotdRepository;
-use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
-use LogicException;
 
 use function array_filter;
 use function array_map;
@@ -30,9 +28,9 @@ final class DoctrineMotdRepository implements MotdRepository, MotdCounterFlusher
     /** @var list<MotdEntry>|null */
     private ?array $activeMotds = null;
 
-    private ?DateTimeImmutable $activeAt = null;
+    private ?\DateTimeImmutable $activeAt = null;
 
-    private ?DateTimeImmutable $nextExpiry = null;
+    private ?\DateTimeImmutable $nextExpiry = null;
 
     public function __construct(private readonly EntityManagerInterface $entityManager) {}
 
@@ -41,8 +39,8 @@ final class DoctrineMotdRepository implements MotdRepository, MotdCounterFlusher
         string $botNickname,
         MessageDelivery $delivery,
         ?int $creatorAccountId,
-        DateTimeImmutable $createdAt,
-        ?DateTimeImmutable $expiresAt,
+        \DateTimeImmutable $createdAt,
+        ?\DateTimeImmutable $expiresAt,
     ): MotdEntry {
         $motd = MotdRecord::create(
             $text,
@@ -74,7 +72,7 @@ final class DoctrineMotdRepository implements MotdRepository, MotdCounterFlusher
         return $this->withPendingCounts($this->entries($motds));
     }
 
-    public function findActiveAt(DateTimeImmutable $at): array
+    public function findActiveAt(\DateTimeImmutable $at): array
     {
         if (null !== $this->activeMotds && null !== $this->activeAt
             && $at >= $this->activeAt && (null === $this->nextExpiry || $at < $this->nextExpiry)) {
@@ -105,14 +103,14 @@ final class DoctrineMotdRepository implements MotdRepository, MotdCounterFlusher
         return $this->withPendingCounts($entries);
     }
 
-    public function findExpiredAt(DateTimeImmutable $at, ?MotdEntry $after = null, ?int $limit = null): array
+    public function findExpiredAt(\DateTimeImmutable $at, ?MotdEntry $after = null, ?int $limit = null): array
     {
         $this->invalidateActive();
         $dql = 'SELECT m FROM %s m WHERE m.expiresAt IS NOT NULL AND m.expiresAt <= :at';
         $parameters = ['at' => $at];
         if (null !== $after) {
             if (null === $after->expiresAt) {
-                throw new LogicException('MOTD expiry cursor must be an expired entry.');
+                throw new \LogicException('MOTD expiry cursor must be an expired entry.');
             }
             $dql .= ' AND m.expiresAt >= :afterExpiresAt AND (m.expiresAt > :afterExpiresAt OR m.id > :afterId)';
             $parameters['afterExpiresAt'] = $after->expiresAt;

@@ -9,7 +9,6 @@ use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\UseCase\ListPendingRegistrations\ListPendingRegistrationsHandler;
 use App\ChanServ\Application\UseCase\ListPendingRegistrations\PendingRegistrationView;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -24,7 +23,7 @@ final class ListPendingRegistrationsHandlerTest extends TestCase
     #[Test]
     public function findsOnlyPendingRequestAndEnrichesRequesterNickname(): void
     {
-        $submittedAt = new DateTimeImmutable();
+        $submittedAt = new \DateTimeImmutable();
         $pending = RegisteredChannel::createPendingRegistration($submittedAt, '#pending', 7, 'description');
         $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channels->method('findByChannelName')->willReturn($pending);
@@ -44,7 +43,7 @@ final class ListPendingRegistrationsHandlerTest extends TestCase
     #[Test]
     public function findRejectsMissingAndNonPendingRows(): void
     {
-        $active = RegisteredChannel::register(new DateTimeImmutable(), '#active', 7, 'description');
+        $active = RegisteredChannel::register(new \DateTimeImmutable(), '#active', 7, 'description');
         $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channels->method('findByChannelName')->willReturnCallback(static fn (string $name): ?RegisteredChannel => '#active' === $name ? $active : null);
         $accounts = $this->createMock(ChanUserAccountPort::class);
@@ -58,11 +57,11 @@ final class ListPendingRegistrationsHandlerTest extends TestCase
     #[Test]
     public function pagesOnlyPendingRequestsInStableIterationOrder(): void
     {
-        $active = RegisteredChannel::register(new DateTimeImmutable(), '#active', 1, 'active');
-        $first = RegisteredChannel::createPendingRegistration(new DateTimeImmutable(), '#first', 2, 'first description');
-        $rejected = RegisteredChannel::createPendingRegistration(new DateTimeImmutable(), '#rejected', 3, 'rejected');
-        $rejected->rejectRegistration('No', 9, 'Op', new DateTimeImmutable(), null);
-        $second = RegisteredChannel::createPendingRegistration(new DateTimeImmutable(), '#second', 4, 'second description');
+        $active = RegisteredChannel::register(new \DateTimeImmutable(), '#active', 1, 'active');
+        $first = RegisteredChannel::createPendingRegistration(new \DateTimeImmutable(), '#first', 2, 'first description');
+        $rejected = RegisteredChannel::createPendingRegistration(new \DateTimeImmutable(), '#rejected', 3, 'rejected');
+        $rejected->rejectRegistration('No', 9, 'Op', new \DateTimeImmutable(), null);
+        $second = RegisteredChannel::createPendingRegistration(new \DateTimeImmutable(), '#second', 4, 'second description');
         $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channels->method('findPendingPage')->willReturnCallback(static fn (int $offset, int $limit): array => array_slice([$first, $second], $offset, $limit));
         $accounts = $this->createStub(ChanUserAccountPort::class);

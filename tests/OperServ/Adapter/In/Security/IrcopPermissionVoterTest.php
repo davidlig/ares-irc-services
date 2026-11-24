@@ -13,7 +13,6 @@ use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use stdClass;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\VoterInterface;
 
@@ -70,7 +69,7 @@ final class IrcopPermissionVoterTest extends TestCase
         $context = $this->authorizationSubject('Oper', 7, true, true);
 
         self::assertSame(VoterInterface::ACCESS_ABSTAIN, $voter->vote($token, $context, ['NICKSERV_DROP']));
-        self::assertSame(VoterInterface::ACCESS_ABSTAIN, $voter->vote($token, new stdClass(), ['operserv.kill']));
+        self::assertSame(VoterInterface::ACCESS_ABSTAIN, $voter->vote($token, new \stdClass(), ['operserv.kill']));
     }
 
     private function authorizationSubject(?string $nickname, ?int $accountId, bool $identified, bool $ircOperator): IrcopAuthorizationSubject

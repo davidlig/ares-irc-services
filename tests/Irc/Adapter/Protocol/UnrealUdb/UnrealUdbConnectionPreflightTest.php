@@ -9,7 +9,6 @@ use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbConnectionPreflight;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RuntimeException;
 
 #[CoversClass(UnrealUdbConnectionPreflight::class)]
 final class UnrealUdbConnectionPreflightTest extends TestCase
@@ -59,7 +58,7 @@ final class UnrealUdbConnectionPreflightTest extends TestCase
     {
         $authority = $this->createStub(UdbAuthorityStateRepositoryInterface::class);
         $authority->method('isApproved')->willReturn(false);
-        $authority->method('approve')->willThrowException(new RuntimeException('Database error.'));
+        $authority->method('approve')->willThrowException(new \RuntimeException('Database error.'));
 
         $result = new UnrealUdbConnectionPreflight(
             $authority,

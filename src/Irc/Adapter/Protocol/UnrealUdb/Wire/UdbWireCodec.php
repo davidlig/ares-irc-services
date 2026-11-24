@@ -7,7 +7,6 @@ namespace App\Irc\Adapter\Protocol\UnrealUdb\Wire;
 use App\Irc\Adapter\Protocol\IRCMessage;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbBlock;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbValue;
-use InvalidArgumentException;
 
 use function array_map;
 use function array_slice;
@@ -383,7 +382,7 @@ final class UdbWireCodec
     private static function line(string $line): string
     {
         if (strlen($line) + 2 > UdbPathCodec::IRC_LINE_MAX) {
-            throw new InvalidArgumentException('The serialized UDB frame exceeds the IRC line limit.');
+            throw new \InvalidArgumentException('The serialized UDB frame exceeds the IRC line limit.');
         }
 
         return $line;
@@ -396,7 +395,7 @@ final class UdbWireCodec
 
     private static function requireDigest(string $digest): string
     {
-        return UdbChecksum::parse($digest) ?? throw new InvalidArgumentException('A canonical UDB digest is required.');
+        return UdbChecksum::parse($digest) ?? throw new \InvalidArgumentException('A canonical UDB digest is required.');
     }
 
     private static function validEpoch(string $epoch): bool

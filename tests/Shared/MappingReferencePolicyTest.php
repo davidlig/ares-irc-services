@@ -7,7 +7,6 @@ namespace App\Tests\Shared;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use SimpleXMLElement;
 
 use function array_keys;
 use function glob;
@@ -94,7 +93,7 @@ final class MappingReferencePolicyTest extends TestCase
         $columns = [];
         foreach ($files as $file) {
             $xml = simplexml_load_file($file);
-            self::assertInstanceOf(SimpleXMLElement::class, $xml);
+            self::assertInstanceOf(\SimpleXMLElement::class, $xml);
             $xml->registerXPathNamespace('d', self::DOCTRINE_MAPPING_NAMESPACE);
 
             $entities = $xml->xpath('//d:entity');
@@ -103,7 +102,7 @@ final class MappingReferencePolicyTest extends TestCase
             $table = (string) $entities[0]['table'];
 
             foreach ((array) $xml->xpath('//d:field[@column]') as $field) {
-                self::assertInstanceOf(SimpleXMLElement::class, $field);
+                self::assertInstanceOf(\SimpleXMLElement::class, $field);
                 $column = (string) $field['column'];
                 if ($this->isReferenceColumn($column)) {
                     $columns[$table . '.' . $column] = true;

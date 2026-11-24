@@ -25,12 +25,9 @@ use App\NickServ\Application\UseCase\Verify\VerifyNickResult;
 use App\NickServ\Domain\Entity\NickHistory;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\NickServ\Domain\ValueObject\NickStatus;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionProperty;
-use RuntimeException;
 
 use function str_repeat;
 
@@ -147,7 +144,7 @@ final class VerifyNickHandlerTest extends TestCase
         $this->temporary->replace(42, $hash, $this->now());
         self::assertSame(VerifyNickOutcome::InvalidToken, $handler->handle($this->input())->outcome);
         $expired = RegisteredNick::createPending('Alice', 'password', null, 'en', $this->now(), $this->now());
-        new ReflectionProperty($expired, 'id')->setValue($expired, 42);
+        new \ReflectionProperty($expired, 'id')->setValue($expired, 42);
         self::assertSame(VerifyNickOutcome::InvalidToken, $this->handler($expired, $persistence)->handle($this->input())->outcome);
     }
 
@@ -203,11 +200,11 @@ final class VerifyNickHandlerTest extends TestCase
     {
         $hash = $this->challenge();
         $store = $this->createStub(RescueCredentialPersistence::class);
-        $store->method('confirm')->willThrowException(new RuntimeException('database failed'));
+        $store->method('confirm')->willThrowException(new \RuntimeException('database failed'));
         try {
             $this->handler($this->account(), $store)->handle($this->input());
             self::fail('Storage failure must propagate.');
-        } catch (RuntimeException $exception) {
+        } catch (\RuntimeException $exception) {
             self::assertSame('database failed', $exception->getMessage());
             self::assertTrue($this->temporary->matches(42, $hash, $this->now()));
         }
@@ -242,7 +239,7 @@ final class VerifyNickHandlerTest extends TestCase
     private function account(): RegisteredNick
     {
         $account = RegisteredNick::createPending('Alice', 'password-hash', 'alice@example.com', 'en', $this->now()->modify('+1 hour'), $this->now());
-        new ReflectionProperty($account, 'id')->setValue($account, 42);
+        new \ReflectionProperty($account, 'id')->setValue($account, 42);
 
         return $account;
     }
@@ -264,8 +261,8 @@ final class VerifyNickHandlerTest extends TestCase
         return new VerifyNickHandler($repo, $this->codec, $this->temporary, $limiter ?? new InMemoryRescueAttemptLimiter(), $persistence ?? $this->createStub(RescueCredentialPersistence::class), $this->sessions, $clock, $auth, $publisher ?? $this->createStub(RegistrationEventPublisher::class), $history ?? new NickHistoryService($this->createStub(NickHistoryRepositoryInterface::class)));
     }
 
-    private function now(): DateTimeImmutable
+    private function now(): \DateTimeImmutable
     {
-        return new DateTimeImmutable('2026-09-06 12:00:00 UTC');
+        return new \DateTimeImmutable('2026-09-06 12:00:00 UTC');
     }
 }

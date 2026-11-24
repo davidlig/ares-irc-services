@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace App\OperServ\Application\Port\In\Audit;
 
 use App\Shared\Application\Audit\SafeAuditMetadata;
-use DateTimeImmutable;
-use InvalidArgumentException;
 
 use function sprintf;
 use function trim;
@@ -24,7 +22,7 @@ final readonly class CommandAuditRecord
         public string $service,
         public string $actor,
         public string $operation,
-        public DateTimeImmutable $occurredAt,
+        public \DateTimeImmutable $occurredAt,
         public ?string $target = null,
         public ?string $reason = null,
         public ?string $permission = null,
@@ -41,7 +39,7 @@ final readonly class CommandAuditRecord
     private static function assertNotBlank(string $value, string $field): void
     {
         if ('' === trim($value)) {
-            throw new InvalidArgumentException(sprintf('Command audit %s cannot be blank.', $field));
+            throw new \InvalidArgumentException(sprintf('Command audit %s cannot be blank.', $field));
         }
     }
 }

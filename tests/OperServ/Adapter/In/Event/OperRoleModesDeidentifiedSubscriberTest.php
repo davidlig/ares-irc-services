@@ -14,12 +14,10 @@ use App\OperServ\Adapter\In\Event\OperRoleModesDeidentifiedSubscriber;
 use App\OperServ\Domain\Entity\OperIrcop;
 use App\OperServ\Domain\Entity\OperRole;
 use App\OperServ\Domain\Repository\OperIrcopRepositoryInterface;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
-use ReflectionClass;
 
 use function implode;
 
@@ -69,7 +67,7 @@ final class OperRoleModesDeidentifiedSubscriberTest extends TestCase
 
         $role = OperRole::create('ADMIN');
         $role->changeUserModes([]);
-        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 42, $role);
+        $ircop = OperIrcop::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), 42, $role);
 
         $ircopRepository = $this->createMock(OperIrcopRepositoryInterface::class);
         $ircopRepository
@@ -98,7 +96,7 @@ final class OperRoleModesDeidentifiedSubscriberTest extends TestCase
 
         $role = OperRole::create('ADMIN');
         $role->changeUserModes(['H', 'W']);
-        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 42, $role);
+        $ircop = OperIrcop::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), 42, $role);
 
         $ircopRepository = $this->createMock(OperIrcopRepositoryInterface::class);
         $ircopRepository
@@ -127,7 +125,7 @@ final class OperRoleModesDeidentifiedSubscriberTest extends TestCase
 
         $role = OperRole::create('ADMIN');
         $role->changeUserModes(['H']);
-        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 42, $role);
+        $ircop = OperIrcop::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), 42, $role);
 
         $ircopRepository = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepository->method('findByNickId')->willReturn($ircop);
@@ -156,7 +154,7 @@ final class OperRoleModesDeidentifiedSubscriberTest extends TestCase
 
         $role = OperRole::create('ADMIN');
         $role->changeUserModes(['H', 'q']);
-        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 42, $role);
+        $ircop = OperIrcop::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), 42, $role);
 
         $ircopRepository = $this->createMock(OperIrcopRepositoryInterface::class);
         $ircopRepository
@@ -220,7 +218,7 @@ final class OperRoleModesDeidentifiedSubscriberTest extends TestCase
 
     private function injectServerSid(ActiveConnectionHolder $holder, string $sid): void
     {
-        $reflection = new ReflectionClass($holder);
+        $reflection = new \ReflectionClass($holder);
         $property = $reflection->getProperty('serverSid');
         $property->setValue($holder, $sid);
     }

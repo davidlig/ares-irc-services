@@ -6,7 +6,6 @@ namespace App\Tests\NickServ\Adapter\In\Irc;
 
 use App\Bootstrap\Adapter\Out\Translation\IrcYamlTranslationLoader;
 use App\NickServ\Adapter\In\Irc\DurationFormatter;
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -83,7 +82,7 @@ final class DurationFormatterTest extends TestCase
     #[Test]
     public function rejectsNegativeDurations(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
 
         DurationFormatter::format(-1, static fn (string $key): string => $key);
     }
@@ -98,7 +97,7 @@ final class DurationFormatterTest extends TestCase
         $wrapped = [];
         foreach ($params as $key => $value) {
             if (!is_string($key) || !is_string($value)) {
-                throw new InvalidArgumentException('Translation parameters must have string keys and values.');
+                throw new \InvalidArgumentException('Translation parameters must have string keys and values.');
             }
 
             $wrapped['%' . trim($key, '%') . '%'] = $value;

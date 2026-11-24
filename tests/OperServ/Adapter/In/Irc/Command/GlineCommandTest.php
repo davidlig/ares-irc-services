@@ -22,7 +22,6 @@ use App\Shared\Adapter\In\Irc\Presentation\Appearance;
 use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
 use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
 use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -196,7 +195,7 @@ final class GlineCommandTest extends TestCase
         $notifier = new RecordingGlineCommandNotifier();
         $result = new ManageGlineResult(ManageGlineOutcome::Listed, entries: [
             new GlineListEntry('*@one.test', null, null, null),
-            new GlineListEntry('ident@two.test', 'reason', 'Creator', new DateTimeImmutable('2026-09-08T10:00:00+00:00')),
+            new GlineListEntry('ident@two.test', 'reason', 'Creator', new \DateTimeImmutable('2026-09-08T10:00:00+00:00')),
         ]);
 
         new GlineCommand(new RecordingGlineCommandHandler($result))->execute($this->context(['LIST'], $notifier));

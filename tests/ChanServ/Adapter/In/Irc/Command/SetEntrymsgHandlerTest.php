@@ -24,7 +24,6 @@ use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
 use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\Shared\Application\Port\EventBusInterface;
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -45,7 +44,7 @@ final class SetEntrymsgHandlerTest extends TestCase
         $channel->expects(self::once())
             ->method('updateEntrymsg')
             ->with(self::anything())
-            ->willThrowException(new InvalidArgumentException('too long'));
+            ->willThrowException(new \InvalidArgumentException('too long'));
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $messages = [];
         $notifier = $this->createStub(ChanServNotifierInterface::class);

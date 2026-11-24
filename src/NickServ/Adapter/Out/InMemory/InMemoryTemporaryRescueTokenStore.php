@@ -5,9 +5,6 @@ declare(strict_types=1);
 namespace App\NickServ\Adapter\Out\InMemory;
 
 use App\NickServ\Application\Port\Out\TemporaryRescueTokenStore;
-use DateTimeImmutable;
-use InvalidArgumentException;
-use OverflowException;
 
 use function count;
 use function hash_equals;
@@ -20,19 +17,19 @@ final class InMemoryTemporaryRescueTokenStore implements TemporaryRescueTokenSto
     public function __construct(private readonly int $maxEntries = 10000)
     {
         if ($maxEntries < 1) {
-            throw new InvalidArgumentException('Challenge capacity must be positive.');
+            throw new \InvalidArgumentException('Challenge capacity must be positive.');
         }
     }
 
-    public function replace(int $accountId, string $hash, DateTimeImmutable $expiresAt): void
+    public function replace(int $accountId, string $hash, \DateTimeImmutable $expiresAt): void
     {
         if (!isset($this->challenges[$accountId]) && count($this->challenges) >= $this->maxEntries) {
-            throw new OverflowException('Temporary rescue challenge capacity exhausted.');
+            throw new \OverflowException('Temporary rescue challenge capacity exhausted.');
         }
         $this->challenges[$accountId] = ['hash' => $hash, 'expires' => $expiresAt->getTimestamp()];
     }
 
-    public function matches(int $accountId, string $hash, DateTimeImmutable $now): bool
+    public function matches(int $accountId, string $hash, \DateTimeImmutable $now): bool
     {
         $challenge = $this->challenges[$accountId] ?? null;
 
@@ -51,7 +48,7 @@ final class InMemoryTemporaryRescueTokenStore implements TemporaryRescueTokenSto
         unset($this->challenges[$accountId]);
     }
 
-    public function prune(DateTimeImmutable $now): int
+    public function prune(\DateTimeImmutable $now): int
     {
         $removed = 0;
         foreach ($this->challenges as $accountId => $challenge) {

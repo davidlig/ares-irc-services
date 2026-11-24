@@ -18,7 +18,6 @@ use App\OperServ\Adapter\In\Event\OperRoleForcedVhostSubscriber;
 use App\OperServ\Domain\Entity\OperIrcop;
 use App\OperServ\Domain\Entity\OperRole;
 use App\OperServ\Domain\Repository\OperIrcopRepositoryInterface;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -41,7 +40,7 @@ final class OperRoleForcedVhostSubscriberTest extends TestCase
     {
         $role = OperRole::create('ADMIN', 'Admin role', true);
         $role->changeForcedVhostPattern('admin.network');
-        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 123, $role);
+        $ircop = OperIrcop::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), 123, $role);
 
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepo->method('findByNickId')->willReturn($ircop);

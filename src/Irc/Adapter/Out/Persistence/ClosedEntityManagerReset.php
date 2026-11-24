@@ -7,7 +7,6 @@ namespace App\Irc\Adapter\Out\Persistence;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use Psr\Log\LoggerInterface;
-use Throwable;
 
 /**
  * A database error can close the Doctrine EntityManager, which makes every later Doctrine-backed
@@ -40,7 +39,7 @@ final readonly class ClosedEntityManagerReset
 
             $logger->warning($scope . ': the EntityManager is closed, resetting it', $context);
             $this->managerRegistry->resetManager();
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             $logger->error($scope . ': resetting the closed EntityManager failed', $context + ['exception' => $e]);
         }
     }

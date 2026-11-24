@@ -12,12 +12,10 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbValue;
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\Doctrine\UdbRecordMutationDoctrineStore;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use Symfony\Component\Clock\MockClock;
-use UnexpectedValueException;
 
 /**
  * Live UDB mutations share the daemon EntityManager with other contexts; they
@@ -66,7 +64,7 @@ final class UdbRecordMutationIdentityMapTest extends DoctrineIntegrationTestCase
         try {
             $this->mutations->upsertWithManifest('Z', 'alice::vhost', UdbValue::string('vhost.example'), $this->origin);
             self::fail('An unknown block must be rejected.');
-        } catch (UnexpectedValueException $exception) {
+        } catch (\UnexpectedValueException $exception) {
             self::assertSame('The UDB mutation would create an invalid block aggregate.', $exception->getMessage());
         }
 
@@ -85,7 +83,7 @@ final class UdbRecordMutationIdentityMapTest extends DoctrineIntegrationTestCase
         $this->mutations->beginLocalStream($this->origin);
         self::assertSame('1', (string) $this->mutations->upsertWithManifest('N', 'alice::vhost', UdbValue::string('vhost.example'), $this->origin));
         $pendingOwned = new UdbBlockState('C');
-        $pendingUnrelated = RegisteredNick::createActive('Bob', 'hash', null, 'en', new DateTimeImmutable('2026-01-01 00:00:00'));
+        $pendingUnrelated = RegisteredNick::createActive('Bob', 'hash', null, 'en', new \DateTimeImmutable('2026-01-01 00:00:00'));
         $this->entityManager->persist($pendingOwned);
         $this->entityManager->persist($pendingUnrelated);
 
@@ -102,7 +100,7 @@ final class UdbRecordMutationIdentityMapTest extends DoctrineIntegrationTestCase
 
         $this->mutations = new UdbRecordMutationDoctrineStore($this->entityManager, new MockClock('2026-09-13 16:30:00 UTC'));
         $this->origin = new UdbStreamOrigin('002', '0123456789abcdef');
-        $this->unrelated = RegisteredNick::createActive('Alice', 'hash', null, 'en', new DateTimeImmutable('2026-01-01 00:00:00'));
+        $this->unrelated = RegisteredNick::createActive('Alice', 'hash', null, 'en', new \DateTimeImmutable('2026-01-01 00:00:00'));
         $this->entityManager->persist($this->unrelated);
         $this->entityManager->flush();
     }

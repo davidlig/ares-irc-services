@@ -8,7 +8,6 @@ use App\NickServ\Application\Port\Out\EmailChangeMailSender;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
-use Throwable;
 
 final readonly class MessengerEmailChangeMailSender implements EmailChangeMailSender
 {
@@ -40,7 +39,7 @@ final readonly class MessengerEmailChangeMailSender implements EmailChangeMailSe
                 $locale,
             );
             $this->messageBus->dispatch(new RegistrationVerificationEmail($currentEmail, $subject, $body));
-        } catch (Throwable $exception) {
+        } catch (\Throwable $exception) {
             $this->logger->error('NickServ SET EMAIL: failed to dispatch token email', [
                 'nick' => $nickname,
                 'recipient' => $currentEmail,

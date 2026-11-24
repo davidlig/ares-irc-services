@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\Protocol\UnrealUdb\Persistence;
 
-use RuntimeException;
 use Symfony\Component\Lock\Exception\LockConflictedException;
 use Symfony\Component\Lock\Key;
 use Symfony\Component\Lock\PersistingStoreInterface;
@@ -39,7 +38,7 @@ final class UdbFilePathStore implements PersistingStoreInterface
 
         $handle = @fopen($this->path, 'c');
         if (false === $handle) {
-            throw new RuntimeException('Unable to open the UDB lock file.');
+            throw new \RuntimeException('Unable to open the UDB lock file.');
         }
 
         if (!flock($handle, LOCK_EX | LOCK_NB)) {

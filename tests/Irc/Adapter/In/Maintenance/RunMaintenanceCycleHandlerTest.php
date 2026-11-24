@@ -12,7 +12,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
-use stdClass;
 
 #[CoversClass(RunMaintenanceCycleHandler::class)]
 final class RunMaintenanceCycleHandlerTest extends TestCase
@@ -20,10 +19,10 @@ final class RunMaintenanceCycleHandlerTest extends TestCase
     #[Test]
     public function invokeCausesSchedulerToRunRegisteredTasks(): void
     {
-        $holder = new stdClass();
+        $holder = new \stdClass();
         $holder->ran = false;
         $task = new class($holder) implements MaintenanceTaskInterface {
-            public function __construct(private readonly stdClass $holder) {}
+            public function __construct(private readonly \stdClass $holder) {}
 
             public function getName(): string
             {

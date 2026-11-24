@@ -49,7 +49,6 @@ use App\OperServ\Adapter\Out\Persistence\Doctrine\DoctrineBadmailRepository;
 use App\OperServ\Application\UseCase\Badmail\BadmailEmailPolicy;
 use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -62,7 +61,7 @@ final class RescueCredentialFlowTest extends DoctrineIntegrationTestCase
     #[Test]
     public function realSqlOnboardingMigrationAndRecovery(): void
     {
-        $now = new DateTimeImmutable('2026-10-21T12:00:00Z');
+        $now = new \DateTimeImmutable('2026-10-21T12:00:00Z');
         $db = $this->entityManager->getConnection();
         self::assertArrayNotHasKey('registration_mode', $db->createSchemaManager()->listTableColumns('registered_nicks'));
         $repo = new RegisteredNickDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network());
@@ -75,14 +74,14 @@ final class RescueCredentialFlowTest extends DoctrineIntegrationTestCase
         $limiter = new InMemoryRescueAttemptLimiter();
         $sessions = new IdentifiedSessionRegistry();
         $clock = $this->createStub(Clock::class);
-        $clock->method('now')->willReturnCallback(static function () use (&$now): DateTimeImmutable { return $now; });
+        $clock->method('now')->willReturnCallback(static function () use (&$now): \DateTimeImmutable { return $now; });
         $hasher = $this->createStub(PasswordHasher::class);
         $hasher->method('hash')->willReturnCallback(static fn (string $s): string => 'hash:' . $s);
         $throttle = $this->createStub(RegistrationThrottle::class);
         $throttle->method('remainingCooldownSeconds')->willReturn(0);
         $mail = $this->createMock(RegistrationMailSender::class);
         $mailToken = null;
-        $mail->expects(self::once())->method('sendVerification')->willReturnCallback(static function (string $nick, string $email, string $token) use (&$mailToken): void {$mailToken = $token; });
+        $mail->expects(self::once())->method('sendVerification')->willReturnCallback(static function (string $nick, string $email, string $token) use (&$mailToken): void { $mailToken = $token; });
         $emailPolicy = new OperServEmailDomainPolicy(new BadmailEmailPolicy(new DoctrineBadmailRepository($this->entityManager)));
         $register = new RegisterNickHandler($emailPolicy, $regrepo, $hasher, $codec, $clock, $temp, $policy, $throttle, $mail, 0);
         $events = $this->createMock(RegistrationEventPublisher::class);
@@ -154,7 +153,7 @@ final class RescueCredentialFlowTest extends DoctrineIntegrationTestCase
         $resendThrottle->method('remainingCooldownSeconds')->willReturn(0);
         $resendMail = $this->createMock(ResendMailSender::class);
         $resentToken = null;
-        $resendMail->expects(self::once())->method('sendResend')->willReturnCallback(static function (string $n, string $e, string $t) use (&$resentToken): void {$resentToken = $t; });
+        $resendMail->expects(self::once())->method('sendResend')->willReturnCallback(static function (string $n, string $e, string $t) use (&$resentToken): void { $resentToken = $t; });
         $resend = new ResendVerificationHandler($repo, $resendThrottle, $codec, $temp, $policy, $resendMail, $clock, $history, 600);
         $originalDeadline = $mailAccount->getExpiresAt();
         $now = $now->modify('+59 minutes');
@@ -162,7 +161,7 @@ final class RescueCredentialFlowTest extends DoctrineIntegrationTestCase
         self::assertSame($now->modify('+1 hour')->format('c'), $mailAccount->getExpiresAt()?->format('c'));
         $persistedExpiry = $db->fetchOne('SELECT expires_at FROM registered_nicks WHERE id=?', [$mailAccount->getId()]);
         self::assertIsString($persistedExpiry);
-        self::assertSame($mailAccount->getExpiresAt()->getTimestamp(), new DateTimeImmutable($persistedExpiry)->getTimestamp());
+        self::assertSame($mailAccount->getExpiresAt()->getTimestamp(), new \DateTimeImmutable($persistedExpiry)->getTimestamp());
         $pendingDigest = $digest();
         self::assertNotNull($resentToken);
         self::assertNotSame($mailToken, $resentToken);
@@ -202,7 +201,7 @@ final class RescueCredentialFlowTest extends DoctrineIntegrationTestCase
         $repo->save($legacy);
         $issued = [];
         $notifier = $this->createMock(RescueTokenNotifier::class);
-        $notifier->expects(self::exactly(2))->method('issued')->willReturnCallback(static function (string $uid, string $t) use (&$issued): void {$issued[] = $t; });
+        $notifier->expects(self::exactly(2))->method('issued')->willReturnCallback(static function (string $uid, string $t) use (&$issued): void { $issued[] = $t; });
         $issue = new IssueMigrationRescueTokenHandler($repo, $codec, $temp, $notifier);
         $issue->handle(new IssueMigrationRescueToken($legacy->getId(), 'LEGACYUID', $now));
         $issue->handle(new IssueMigrationRescueToken($legacy->getId(), 'LEGACYUID', $now));

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Tests\Irc\Domain\ValueObject;
 
 use App\Irc\Domain\ValueObject\ChannelName;
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -25,7 +24,7 @@ final class ChannelNameTest extends TestCase
     #[Test]
     public function mustStartWithHash(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('must start with #');
 
         new ChannelName('test');
@@ -34,7 +33,7 @@ final class ChannelNameTest extends TestCase
     #[Test]
     public function cannotBeJustHash(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('cannot be just "#"');
 
         new ChannelName('#');
@@ -43,7 +42,7 @@ final class ChannelNameTest extends TestCase
     #[Test]
     public function invalidCharactersRejected(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('contains invalid characters');
 
         new ChannelName('#chan,nel');

@@ -5,11 +5,9 @@ declare(strict_types=1);
 namespace App\Tests\MemoServ\Adapter\Out\InMemory;
 
 use App\MemoServ\Adapter\Out\InMemory\MemoSendThrottleRegistry;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
 
 #[CoversClass(MemoSendThrottleRegistry::class)]
 final class MemoSendThrottleRegistryTest extends TestCase
@@ -41,7 +39,7 @@ final class MemoSendThrottleRegistryTest extends TestCase
 
         $registry->recordSend('UID1');
 
-        self::assertInstanceOf(DateTimeImmutable::class, $registry->getLastSendAt('UID1'));
+        self::assertInstanceOf(\DateTimeImmutable::class, $registry->getLastSendAt('UID1'));
     }
 
     #[Test]
@@ -61,8 +59,8 @@ final class MemoSendThrottleRegistryTest extends TestCase
     {
         $registry = new MemoSendThrottleRegistry();
 
-        $oldDatetime = new DateTimeImmutable('-10 seconds');
-        $reflection = new ReflectionClass($registry);
+        $oldDatetime = new \DateTimeImmutable('-10 seconds');
+        $reflection = new \ReflectionClass($registry);
         $property = $reflection->getProperty('lastSendAt');
         $property->setValue($registry, ['UID1' => $oldDatetime]);
 

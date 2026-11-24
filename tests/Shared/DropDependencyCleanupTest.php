@@ -57,7 +57,6 @@ use App\OperServ\Application\Model\MessageDelivery;
 use App\OperServ\Domain\Entity\OperIrcop;
 use App\OperServ\Domain\Entity\OperRole;
 use App\Tests\NickServ\Support\NegotiatedCaseMapping;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
@@ -74,7 +73,7 @@ final class DropDependencyCleanupTest extends DoctrineIntegrationTestCase
     #[Test]
     public function nicknameHardDropLeavesNoDependentRows(): void
     {
-        $at = new DateTimeImmutable('2026-09-19 10:00:00');
+        $at = new \DateTimeImmutable('2026-09-19 10:00:00');
 
         $role = OperRole::create(name: 'Admin', description: 'Admin role');
         $this->entityManager->persist($role);
@@ -171,7 +170,7 @@ final class DropDependencyCleanupTest extends DoctrineIntegrationTestCase
     #[Test]
     public function channelHardDropLeavesNoDependentRows(): void
     {
-        $at = new DateTimeImmutable('2026-09-19 11:00:00');
+        $at = new \DateTimeImmutable('2026-09-19 11:00:00');
 
         $channel = RegisteredChannel::register($at, '#hard-drop', 555001, 'Dropped for good');
         $this->entityManager->persist($channel);

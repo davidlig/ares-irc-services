@@ -12,7 +12,6 @@ use App\OperServ\Application\Port\In\CommandAuditRecorder;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use App\Shared\Adapter\In\Irc\Presentation\Role;
-use DateTimeImmutable;
 
 final readonly class RawCommand implements OperServCommandInterface
 {
@@ -149,7 +148,7 @@ final readonly class RawCommand implements OperServCommandInterface
             service: 'OperServ',
             actor: $actor,
             operation: 'RAW',
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
             target: $operation,
             permission: 'operserv.raw',
             metadata: ['transport' => $transport],

@@ -27,7 +27,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RuntimeException;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function dirname;
@@ -263,7 +262,7 @@ final class HelpCommandTest extends TestCase
     #[DataProvider('helpArguments')]
     public function renderingFailureSendsNoPartialHelp(array $arguments): void
     {
-        $failure = new RuntimeException('Translation failed at the final footer.');
+        $failure = new \RuntimeException('Translation failed at the final footer.');
         $notifier = new HelpNotifier();
         $target = new HelpFixtureCommand('TARGET', subcommands: [[
             'name' => 'SET',
@@ -283,7 +282,7 @@ final class HelpCommandTest extends TestCase
         try {
             new HelpCommand(new UnifiedHelpFormatter())->execute($context);
             self::fail('The translation failure must propagate synchronously.');
-        } catch (RuntimeException $caught) {
+        } catch (\RuntimeException $caught) {
             self::assertSame($failure, $caught);
         }
         self::assertSame([], $notifier->messages);
@@ -294,7 +293,7 @@ final class HelpCommandTest extends TestCase
     #[DataProvider('helpArguments')]
     public function transportFailurePropagatesSynchronously(array $arguments): void
     {
-        $failure = new RuntimeException('Connection write failed.');
+        $failure = new \RuntimeException('Connection write failed.');
         $notifier = new HelpNotifier();
         $notifier->failure = $failure;
         $target = new HelpFixtureCommand('TARGET', subcommands: [[
@@ -309,7 +308,7 @@ final class HelpCommandTest extends TestCase
         try {
             new HelpCommand(new UnifiedHelpFormatter())->execute($context);
             self::fail('The send failure must propagate during HELP execution.');
-        } catch (RuntimeException $caught) {
+        } catch (\RuntimeException $caught) {
             self::assertSame($failure, $caught);
         }
         self::assertSame([], $notifier->messages);
@@ -520,7 +519,7 @@ final readonly class HelpFixtureCommand implements OperServCommandInterface
 
 final class HelpNotifier implements OperServNotifierInterface
 {
-    public ?RuntimeException $failure = null;
+    public ?\RuntimeException $failure = null;
 
     /** @var list<string> */
     public array $messages = [];
@@ -559,7 +558,7 @@ final class HelpTranslation implements TranslatorInterface
     /** @param array<string, string> $translations */
     public function __construct(
         private readonly array $translations = [],
-        private readonly ?RuntimeException $failure = null,
+        private readonly ?\RuntimeException $failure = null,
     ) {}
 
     /** @param array<string, mixed> $parameters */

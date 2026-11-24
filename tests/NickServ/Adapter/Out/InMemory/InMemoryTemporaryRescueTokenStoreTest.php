@@ -5,9 +5,6 @@ declare(strict_types=1);
 namespace App\Tests\NickServ\Adapter\Out\InMemory;
 
 use App\NickServ\Adapter\Out\InMemory\InMemoryTemporaryRescueTokenStore;
-use DateTimeImmutable;
-use InvalidArgumentException;
-use OverflowException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -19,7 +16,7 @@ final class InMemoryTemporaryRescueTokenStoreTest extends TestCase
     public function latestChallengeExpirationAndConditionalRemoval(): void
     {
         $store = new InMemoryTemporaryRescueTokenStore();
-        $now = new DateTimeImmutable('2026-01-01');
+        $now = new \DateTimeImmutable('2026-01-01');
         self::assertFalse($store->matches(1, 'a', $now));
         $store->replace(1, 'a', $now->modify('+1 hour'));
         self::assertTrue($store->matches(1, 'a', $now));
@@ -40,7 +37,7 @@ final class InMemoryTemporaryRescueTokenStoreTest extends TestCase
     public function confirmedMailRecoveryDiscardsOlderOptionalChallenges(): void
     {
         $store = new InMemoryTemporaryRescueTokenStore();
-        $now = new DateTimeImmutable('2026-01-01');
+        $now = new \DateTimeImmutable('2026-01-01');
         $store->replace(1, 'old-optional-hash', $now->modify('+1 hour'));
         $store->discard(1);
         self::assertFalse($store->matches(1, 'old-optional-hash', $now));
@@ -52,17 +49,17 @@ final class InMemoryTemporaryRescueTokenStoreTest extends TestCase
     public function capacityFailsClosedWithoutDiscardingExistingChallenge(): void
     {
         $store = new InMemoryTemporaryRescueTokenStore(1);
-        $expires = new DateTimeImmutable('2026-01-01');
+        $expires = new \DateTimeImmutable('2026-01-01');
         $store->replace(1, 'a', $expires);
         $store->replace(1, 'b', $expires);
-        $this->expectException(OverflowException::class);
+        $this->expectException(\OverflowException::class);
         $store->replace(2, 'c', $expires);
     }
 
     #[Test]
     public function invalidCapacityIsRejected(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         new InMemoryTemporaryRescueTokenStore(0);
     }
 }

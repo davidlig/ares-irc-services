@@ -20,7 +20,6 @@ use App\Irc\Domain\Server\ServerLink;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
-use Throwable;
 
 use function array_key_last;
 use function count;
@@ -141,7 +140,7 @@ final class UnrealUdbProtocolHandler implements NativeAutomaticModeSupport, Prot
             $this->coordinator->setOwnName((string) $link->serverName);
             $this->coordinator->prepareLocalStream();
             $this->sendHandshake($connection, $link);
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             $this->lock->release();
             $this->coordinator->reset();
             $this->resetRemoteIdentity();

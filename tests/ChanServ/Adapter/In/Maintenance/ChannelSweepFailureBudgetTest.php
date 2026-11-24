@@ -11,7 +11,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-use RuntimeException;
 
 #[CoversClass(ChannelSweepFailureBudget::class)]
 final class ChannelSweepFailureBudgetTest extends TestCase
@@ -22,7 +21,7 @@ final class ChannelSweepFailureBudgetTest extends TestCase
         $entityManager = $this->createStub(EntityManagerInterface::class);
         $entityManager->method('isOpen')->willReturn(false);
         /** @var ArrayObject<int, string> $errors */
-        $errors = new ArrayObject();
+        $errors = new \ArrayObject();
         $logger = $this->createStub(LoggerInterface::class);
         $logger->method('error')->willReturnCallback(static function (string $message) use ($errors): void {
             $errors[] = $message;
@@ -70,7 +69,7 @@ final class ChannelSweepFailureBudgetTest extends TestCase
     #[Test]
     public function anExhaustedChannelWithARowSpecificFailureIsRememberedAsTheNewestOne(): void
     {
-        $open = new ArrayObject([false]);
+        $open = new \ArrayObject([false]);
         $entityManager = $this->createStub(EntityManagerInterface::class);
         $entityManager->method('isOpen')->willReturnCallback(static fn (): bool => true === $open[0]);
         $errors = self::messages();
@@ -79,7 +78,7 @@ final class ChannelSweepFailureBudgetTest extends TestCase
         $budget->finishSweep();
 
         $open[0] = true;
-        $budget->recordFailure(1, '#chan1', new RuntimeException('constraint violation'), 'drop channel');
+        $budget->recordFailure(1, '#chan1', new \RuntimeException('constraint violation'), 'drop channel');
         $budget->finishSweep();
         $open[0] = false;
         $this->exhaust($budget, ChannelSweepFailureBudget::MAX_REMEMBERED_CHANNELS + 1, ChannelSweepFailureBudget::MAX_REMEMBERED_CHANNELS + 1);
@@ -98,8 +97,8 @@ final class ChannelSweepFailureBudgetTest extends TestCase
         $entityManager->method('isOpen')->willReturn(true);
         $budget = new ChannelSweepFailureBudget($this->errorLogger($errors), 'test.task', $entityManager);
 
-        $budget->recordFailureAfterPossibleCommit(1, '#gone', new RuntimeException('event failed'), 'drop channel', static fn (): bool => true, 'dropped channel', 'post-drop');
-        $budget->recordFailureAfterPossibleCommit(2, '#kept', new RuntimeException('drop failed'), 'drop channel', static fn (): bool => false, 'dropped channel', 'post-drop');
+        $budget->recordFailureAfterPossibleCommit(1, '#gone', new \RuntimeException('event failed'), 'drop channel', static fn (): bool => true, 'dropped channel', 'post-drop');
+        $budget->recordFailureAfterPossibleCommit(2, '#kept', new \RuntimeException('drop failed'), 'drop channel', static fn (): bool => false, 'dropped channel', 'post-drop');
 
         self::assertSame([
             'Maintenance [test.task]: dropped channel #gone (id 1), but a post-drop step failed.',
@@ -127,7 +126,7 @@ final class ChannelSweepFailureBudgetTest extends TestCase
     }
 
     /** @param ArrayObject<int, string> $errors */
-    private function errorLogger(ArrayObject $errors): LoggerInterface
+    private function errorLogger(\ArrayObject $errors): LoggerInterface
     {
         $logger = $this->createStub(LoggerInterface::class);
         $logger->method('error')->willReturnCallback(static function (string $message) use ($errors): void {
@@ -138,16 +137,16 @@ final class ChannelSweepFailureBudgetTest extends TestCase
     }
 
     /** @return ArrayObject<int, string> */
-    private static function messages(): ArrayObject
+    private static function messages(): \ArrayObject
     {
-        return new ArrayObject();
+        return new \ArrayObject();
     }
 
     private function recordClosedFailure(ChannelSweepFailureBudget $budget, int $channelId): void
     {
         try {
-            $budget->recordFailure($channelId, '#chan' . $channelId, new RuntimeException('deadlock'), 'drop channel');
-        } catch (RuntimeException) {
+            $budget->recordFailure($channelId, '#chan' . $channelId, new \RuntimeException('deadlock'), 'drop channel');
+        } catch (\RuntimeException) {
             return;
         }
 

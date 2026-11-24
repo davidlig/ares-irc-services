@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Domain\ValueObject;
 
-use InvalidArgumentException;
-
 final readonly class AccessLevel
 {
     public const int UNIDENTIFIED = -1;
@@ -19,7 +17,7 @@ final readonly class AccessLevel
     public static function fromEffective(int $value): self
     {
         if (self::UNIDENTIFIED > $value || self::FOUNDER < $value) {
-            throw new InvalidArgumentException('Effective access level must be between -1 and 500.');
+            throw new \InvalidArgumentException('Effective access level must be between -1 and 500.');
         }
 
         return new self($value);
@@ -32,7 +30,7 @@ final readonly class AccessLevel
         }
 
         if (1 > $value || 499 < $value) {
-            throw new InvalidArgumentException('Stored access level must be between 1 and 499.');
+            throw new \InvalidArgumentException('Stored access level must be between 1 and 499.');
         }
 
         return new self($value);

@@ -10,7 +10,6 @@ use App\MemoServ\Adapter\Out\Irc\ConfiguredChanServMemoSender;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RuntimeException;
 
 #[CoversClass(ConfiguredChanServMemoSender::class)]
 final class ConfiguredChanServMemoSenderTest extends TestCase
@@ -31,7 +30,7 @@ final class ConfiguredChanServMemoSenderTest extends TestCase
     {
         $sender = new ConfiguredChanServMemoSender(new ServiceNicknameRegistry([]));
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Configured ChanServ nickname is unavailable.');
         $sender->getSenderName();
     }

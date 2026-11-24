@@ -18,7 +18,6 @@ use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use App\Shared\Adapter\In\Irc\Presentation\Component;
 use App\Shared\Adapter\In\Irc\Presentation\Fragment;
 use App\Shared\Adapter\In\Irc\Presentation\Role;
-use DateTimeImmutable;
 
 final class ClearaccessCommand implements ChanServCommandInterface, IrcopAuditableCommandInterface
 {
@@ -114,7 +113,7 @@ final class ClearaccessCommand implements ChanServCommandInterface, IrcopAuditab
         $result = $this->handler->handle(new ClearChannelAccess(
             channelName: $channelName,
             actorNickname: $context->sender->nick,
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
         ));
         if (ClearChannelAccessOutcome::ChannelNotRegistered === $result->outcome) {
             $context->reply('presentation.error.channel_not_registered', ['%channel%' => new Fragment((string) $channelName, Component::Emphasis)], Role::Error);

@@ -56,7 +56,6 @@ use App\NickServ\Domain\ValueObject\AutomaticModeProfile;
 use App\Shared\Application\Port\EventBusInterface;
 use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use Symfony\Component\EventDispatcher\EventDispatcher;
@@ -68,7 +67,7 @@ final class AutomaticModeIdentifyLifecycleTest extends DoctrineIntegrationTestCa
     #[Test]
     public function testGuestIdentifyRestoresNicknameThenAppliesSavedModesWithoutIrcdEcho(): void
     {
-        $now = new DateTimeImmutable('2026-11-01T18:00:00Z');
+        $now = new \DateTimeImmutable('2026-11-01T18:00:00Z');
         $registeredNicks = new RegisteredNickDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network());
         $account = RegisteredNick::createActive('Pedro', 'test-hash', null, 'en', $now);
         $account->changeAutomaticModes(new AutomaticModeProfile(['bot']));

@@ -27,7 +27,6 @@ use App\ChanServ\Application\UseCase\EnforceRanks\RankEnforcementTrigger;
 use App\ChanServ\Domain\Entity\ChannelLevel;
 use App\ChanServ\Domain\ValueObject\ChannelLevelSet;
 use App\Shared\Domain\IrcIdentityFold;
-use DateTimeImmutable;
 
 use function array_unique;
 use function array_values;
@@ -52,7 +51,7 @@ final readonly class SynchronizeBurstChannelsHandler implements SynchronizeBurst
         private BurstChannelActivity $activity,
     ) {}
 
-    public function handle(DateTimeImmutable $now): void
+    public function handle(\DateTimeImmutable $now): void
     {
         $registered = [];
         $eligible = [];
@@ -65,7 +64,7 @@ final readonly class SynchronizeBurstChannelsHandler implements SynchronizeBurst
     /** @param array<string, string> $registered
      * @param list<string> $eligible
      */
-    private function synchronizePage(BurstChannelPage $page, DateTimeImmutable $now, array &$registered, array &$eligible): void
+    private function synchronizePage(BurstChannelPage $page, \DateTimeImmutable $now, array &$registered, array &$eligible): void
     {
         $akicks = [];
         foreach ($page->akicks as $akick) {

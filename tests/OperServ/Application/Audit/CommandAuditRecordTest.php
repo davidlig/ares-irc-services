@@ -7,14 +7,10 @@ namespace App\Tests\OperServ\Application\Audit;
 use App\OperServ\Application\Port\In\Audit\CommandAuditCategory;
 use App\OperServ\Application\Port\In\Audit\CommandAuditRecord;
 use App\Shared\Application\Audit\SafeAuditMetadata;
-use DateTimeImmutable;
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
-use stdClass;
 
 #[CoversClass(CommandAuditRecord::class)]
 #[CoversClass(SafeAuditMetadata::class)]
@@ -23,7 +19,7 @@ final class CommandAuditRecordTest extends TestCase
     #[Test]
     public function safeMetadataValidatorCannotBeConstructedFromApplicationCode(): void
     {
-        $reflection = new ReflectionClass(SafeAuditMetadata::class);
+        $reflection = new \ReflectionClass(SafeAuditMetadata::class);
         $instance = $reflection->newInstanceWithoutConstructor();
         $constructor = $reflection->getConstructor();
         self::assertNotNull($constructor);
@@ -34,7 +30,7 @@ final class CommandAuditRecordTest extends TestCase
     #[Test]
     public function preservesSafeSemanticData(): void
     {
-        $occurredAt = new DateTimeImmutable('2026-09-08T10:15:00+00:00');
+        $occurredAt = new \DateTimeImmutable('2026-09-08T10:15:00+00:00');
         $record = new CommandAuditRecord(
             category: CommandAuditCategory::OperatorAction,
             service: 'operserv',
@@ -79,14 +75,14 @@ final class CommandAuditRecordTest extends TestCase
             'service' => 'operserv',
             'actor' => 'Admin',
             'operation' => 'operserv.kill',
-            'occurredAt' => new DateTimeImmutable('2026-09-08T10:15:00+00:00'),
+            'occurredAt' => new \DateTimeImmutable('2026-09-08T10:15:00+00:00'),
         ];
         $arguments[$field] = $value;
 
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Command audit ' . $field . ' cannot be blank.');
 
-        new ReflectionClass(CommandAuditRecord::class)->newInstanceArgs($arguments);
+        new \ReflectionClass(CommandAuditRecord::class)->newInstanceArgs($arguments);
     }
 
     /** @return iterable<string, array{string}> */
@@ -103,7 +99,7 @@ final class CommandAuditRecordTest extends TestCase
     #[Test]
     public function rejectsSensitiveMetadataKeys(string $key): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Sensitive command audit metadata key');
 
         $this->record([$key => 'redacted']);
@@ -126,7 +122,7 @@ final class CommandAuditRecordTest extends TestCase
     #[Test]
     public function rejectsRawPayloadMetadataKeys(string $key): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Raw command audit metadata key');
 
         $this->record([$key => 'RAW PASS hunter2']);
@@ -135,7 +131,7 @@ final class CommandAuditRecordTest extends TestCase
     #[Test]
     public function rejectsEmptyMetadataKey(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('metadata keys must be non-empty strings');
 
         $this->record(['  ' => 'value']);
@@ -144,7 +140,7 @@ final class CommandAuditRecordTest extends TestCase
     #[Test]
     public function rejectsNonStringMetadataKey(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('metadata keys must be non-empty strings');
 
         $this->recordThroughReflection([0 => 'value']);
@@ -153,10 +149,10 @@ final class CommandAuditRecordTest extends TestCase
     #[Test]
     public function rejectsNonScalarMetadataValue(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('must be scalar or null');
 
-        $this->recordThroughReflection(['nested' => new stdClass()]);
+        $this->recordThroughReflection(['nested' => new \stdClass()]);
     }
 
     /** @return iterable<string, array{string}> */
@@ -172,7 +168,7 @@ final class CommandAuditRecordTest extends TestCase
     #[Test]
     public function rejectsValuesForSensitiveOptions(string $option): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Sensitive command audit options cannot include a value.');
 
         $this->record(['Option' => $option, 'new_value' => 'must-not-leak']);
@@ -196,7 +192,7 @@ final class CommandAuditRecordTest extends TestCase
             'operserv',
             'Admin',
             'operserv.raw',
-            new DateTimeImmutable('2026-09-08T10:15:00+00:00'),
+            new \DateTimeImmutable('2026-09-08T10:15:00+00:00'),
             metadata: $metadata,
         );
     }
@@ -204,12 +200,12 @@ final class CommandAuditRecordTest extends TestCase
     /** @param array<mixed> $metadata */
     private function recordThroughReflection(array $metadata): void
     {
-        new ReflectionClass(CommandAuditRecord::class)->newInstanceArgs([
+        new \ReflectionClass(CommandAuditRecord::class)->newInstanceArgs([
             'category' => CommandAuditCategory::OperatorAction,
             'service' => 'operserv',
             'actor' => 'Admin',
             'operation' => 'operserv.raw',
-            'occurredAt' => new DateTimeImmutable('2026-09-08T10:15:00+00:00'),
+            'occurredAt' => new \DateTimeImmutable('2026-09-08T10:15:00+00:00'),
             'metadata' => $metadata,
         ]);
     }

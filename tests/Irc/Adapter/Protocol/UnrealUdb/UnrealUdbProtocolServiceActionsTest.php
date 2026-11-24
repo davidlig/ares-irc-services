@@ -13,7 +13,6 @@ use App\Irc\Application\Port\In\LocalUserQuitSyncPort;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
 
 #[CoversClass(UnrealUdbProtocolServiceActions::class)]
 final class UnrealUdbProtocolServiceActionsTest extends TestCase
@@ -578,7 +577,7 @@ final class UnrealUdbProtocolServiceActionsTest extends TestCase
 
         $this->connectionHolder = new ActiveConnectionHolder();
 
-        $reflection = new ReflectionClass($this->connectionHolder);
+        $reflection = new \ReflectionClass($this->connectionHolder);
         $property = $reflection->getProperty('connection');
         $property->setValue($this->connectionHolder, $connection);
         $sidProperty = $reflection->getProperty('serverSid');

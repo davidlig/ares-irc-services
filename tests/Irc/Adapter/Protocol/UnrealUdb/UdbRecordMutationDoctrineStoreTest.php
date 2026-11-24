@@ -17,16 +17,11 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbRecordRepositoryInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbChecksum;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbUnsignedDecimal;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
-use DateTimeImmutable;
 use Doctrine\DBAL\Exception;
-use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
-use ReflectionMethod;
 use Symfony\Component\Clock\MockClock;
-use Throwable;
-use UnexpectedValueException;
 
 use function sprintf;
 use function str_repeat;
@@ -96,7 +91,7 @@ final class UdbRecordMutationDoctrineStoreTest extends DoctrineIntegrationTestCa
         );
         self::assertSame(1, $manifest->getRecordCount());
         self::assertSame(
-            new DateTimeImmutable('2026-09-13 16:30:00 UTC')->format(DATE_ATOM),
+            new \DateTimeImmutable('2026-09-13 16:30:00 UTC')->format(DATE_ATOM),
             $manifest->getModifiedAt()->format(DATE_ATOM),
         );
     }
@@ -151,7 +146,7 @@ final class UdbRecordMutationDoctrineStoreTest extends DoctrineIntegrationTestCa
     #[Test]
     public function changedUpdateRefreshesAnExistingManifestButNoOpDoesNot(): void
     {
-        $oldModifiedAt = new DateTimeImmutable('2026-09-13 15:00:00 UTC');
+        $oldModifiedAt = new \DateTimeImmutable('2026-09-13 15:00:00 UTC');
         $this->records->upsert('N', 'Nick::vhost', UdbValue::string('old.example'));
         $this->states->upsert('N', str_repeat('a', 64), 1, $oldModifiedAt);
 
@@ -256,7 +251,7 @@ final class UdbRecordMutationDoctrineStoreTest extends DoctrineIntegrationTestCa
     {
         $oldDigest = UdbTestValues::digest(UdbBlock::Nicks, ['nick::vhost' => 'old.example']);
         $this->records->upsert('N', 'nick::vhost', UdbValue::string('old.example'));
-        $this->states->upsert('N', $oldDigest, 1, new DateTimeImmutable('2026-09-13 15:00:00 UTC'));
+        $this->states->upsert('N', $oldDigest, 1, new \DateTimeImmutable('2026-09-13 15:00:00 UTC'));
         $connection = $this->entityManager->getConnection();
         $connection->executeStatement(<<<'SQL'
             CREATE TRIGGER reject_udb_manifest_update
@@ -269,7 +264,7 @@ final class UdbRecordMutationDoctrineStoreTest extends DoctrineIntegrationTestCa
         try {
             $this->upsert('N', 'nick::vhost', 'new.example');
             self::fail('The injected manifest failure must escape the persistence boundary.');
-        } catch (Throwable $exception) {
+        } catch (\Throwable $exception) {
             self::assertStringContainsString('manifest write failed', $exception->getMessage());
         }
 
@@ -303,7 +298,7 @@ final class UdbRecordMutationDoctrineStoreTest extends DoctrineIntegrationTestCa
         try {
             $this->upsert('K', sprintf('F::%s::match-type', $pattern), 'regex');
             self::fail('An invalid complete regex profile must not be committed.');
-        } catch (Throwable $exception) {
+        } catch (\Throwable $exception) {
             self::assertStringContainsString('invalid block aggregate', $exception->getMessage());
         }
 
@@ -328,7 +323,7 @@ final class UdbRecordMutationDoctrineStoreTest extends DoctrineIntegrationTestCa
         try {
             $this->mutations->allocateBlockDropSequence('?', $this->origin);
             self::fail('Unknown block cannot consume a mutation sequence.');
-        } catch (UnexpectedValueException $error) {
+        } catch (\UnexpectedValueException $error) {
             self::assertStringContainsString('canonical block', $error->getMessage());
         }
         self::assertSame('2', (string) $this->mutations->allocateBlockDropSequence('I', $this->origin));
@@ -353,7 +348,7 @@ final class UdbRecordMutationDoctrineStoreTest extends DoctrineIntegrationTestCa
         try {
             $this->mutations->allocateBlockDropSequence('I', new UdbStreamOrigin('001', str_repeat('1', 16)));
             self::fail('Foreign process origin must not allocate a local drop.');
-        } catch (UnexpectedValueException $error) {
+        } catch (\UnexpectedValueException $error) {
             self::assertStringContainsString('origin', $error->getMessage());
         }
         self::assertFalse($this->entityManager->getConnection()->isTransactionActive());
@@ -366,8 +361,8 @@ final class UdbRecordMutationDoctrineStoreTest extends DoctrineIntegrationTestCa
         $this->upsert('N', 'nick::vhost', 'fixture.test');
         $this->entityManager->getConnection()->executeStatement('UPDATE udb_records SET value_kind = 255');
         $this->entityManager->clear();
-        $this->expectException(UnexpectedValueException::class);
-        new ReflectionMethod(UdbRecordMutationDoctrineStore::class, 'recordsByBlock')->invoke($this->mutations, 'N');
+        $this->expectException(\UnexpectedValueException::class);
+        new \ReflectionMethod(UdbRecordMutationDoctrineStore::class, 'recordsByBlock')->invoke($this->mutations, 'N');
     }
 
     protected function setUp(): void
@@ -386,7 +381,7 @@ final class UdbRecordMutationDoctrineStoreTest extends DoctrineIntegrationTestCa
 
     private function upsert(string $block, string $path, string $logicalValue): ?UdbUnsignedDecimal
     {
-        $value = UdbTestValues::fromLogical(UdbBlock::fromLetter($block) ?? throw new LogicException('Invalid fixture block.'), $path, $logicalValue);
+        $value = UdbTestValues::fromLogical(UdbBlock::fromLetter($block) ?? throw new \LogicException('Invalid fixture block.'), $path, $logicalValue);
 
         return $this->mutations->upsertWithManifest($block, $path, $value, $this->origin);
     }

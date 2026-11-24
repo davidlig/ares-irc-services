@@ -14,7 +14,6 @@ use App\Irc\Domain\ValueObject\ChannelName;
 use App\Irc\Domain\ValueObject\Ident;
 use App\Irc\Domain\ValueObject\Nick;
 use App\Irc\Domain\ValueObject\Uid;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -268,7 +267,7 @@ final class ChannelModeStateSynchronizerTest extends TestCase
             'cloak.test',
             'host.test',
             '+r',
-            new DateTimeImmutable('@1000'),
+            new \DateTimeImmutable('@1000'),
             'Alice Test',
             '001',
             '192.0.2.1',
@@ -465,7 +464,7 @@ final class ChannelModeStateSynchronizerTest extends TestCase
 
     private function createChannel(string $modes = ''): Channel
     {
-        return new Channel(new ChannelName('#test'), $modes, new DateTimeImmutable('@1000'));
+        return new Channel(new ChannelName('#test'), $modes, new \DateTimeImmutable('@1000'));
     }
 
     private function createModeSupport(): ChannelModeSupportInterface

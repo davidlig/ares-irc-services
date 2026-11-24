@@ -17,9 +17,6 @@ use App\NickServ\Application\Service\PasswordPolicy;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\NickServ\Domain\ValueObject\NickStatus;
 use App\NickServ\Domain\ValueObject\RegistrationMode;
-use LogicException;
-use OverflowException;
-use Throwable;
 
 use function filter_var;
 use function sprintf;
@@ -102,13 +99,13 @@ final readonly class RegisterNickHandler implements RegisterNickHandlerInterface
             registeredAt: $now,
         );
 
-        $hash = $this->tokenGenerator->hash($token) ?? throw new LogicException('Generated rescue token is invalid.');
+        $hash = $this->tokenGenerator->hash($token) ?? throw new \LogicException('Generated rescue token is invalid.');
         $this->nickRepository->save($nick);
         $this->throttle->recordAttempt($command->clientKey, $now);
         $this->verificationStore->prune($now);
         try {
             $this->verificationStore->replace($nick->getId(), $hash, $expiresAt);
-        } catch (OverflowException) {
+        } catch (\OverflowException) {
             return RegistrationMode::Token === $mode
                 ? RegisterNickResult::temporarilyUnavailable()
                 : RegisterNickResult::mailDeliveryFailed();
@@ -119,11 +116,11 @@ final readonly class RegisterNickHandler implements RegisterNickHandlerInterface
         try {
             $this->mailSender->sendVerification(
                 $command->nickname,
-                $command->email ?? throw new LogicException('Email registration requires an address.'),
+                $command->email ?? throw new \LogicException('Email registration requires an address.'),
                 $token,
                 $command->language,
             );
-        } catch (Throwable) {
+        } catch (\Throwable) {
             return RegisterNickResult::mailDeliveryFailed();
         }
 

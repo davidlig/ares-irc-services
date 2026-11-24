@@ -35,16 +35,13 @@ use App\Irc\Application\PublishedEvent\ServiceIntroductionRequestedEvent;
 use App\OperServ\Application\Port\In\CommandAuditRecorder;
 use App\Shared\Application\Port\EventBusInterface;
 use App\Tests\ChanServ\Adapter\In\Irc\ChanServCommandDefinitionTestTrait;
-use Closure;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
-use RuntimeException;
 use Symfony\Contracts\Translation\TranslatorInterface;
-use Throwable;
 
 #[CoversClass(ChanServCommandListener::class)]
 final class ChanServCommandListenerTest extends TestCase
@@ -277,7 +274,7 @@ final class ChanServCommandListenerTest extends TestCase
         $sender = self::createSenderView();
         $this->userLookup->expects(self::atLeastOnce())->method('findByUid')->with('001ABC')->willReturn($sender);
 
-        $exception = new RuntimeException('Unexpected error');
+        $exception = new \RuntimeException('Unexpected error');
         $command = $this->createThrowCommand('SOME', $exception);
         $listener = $this->createListener([$command]);
 
@@ -399,14 +396,14 @@ final class ChanServCommandListenerTest extends TestCase
         );
     }
 
-    private function createThrowCommand(string $name, Throwable $exception): ChanServCommandInterface
+    private function createThrowCommand(string $name, \Throwable $exception): ChanServCommandInterface
     {
         return new class($name, $exception) implements ChanServCommandInterface {
             use ChanServCommandDefinitionTestTrait;
 
             public function __construct(
                 private readonly string $name,
-                private readonly Throwable $exception,
+                private readonly \Throwable $exception,
             ) {}
 
             public function getName(): string
@@ -486,14 +483,14 @@ final class ChanServCommandListenerTest extends TestCase
         };
     }
 
-    private function createDummyCommand(string $name, Closure $callback): ChanServCommandInterface
+    private function createDummyCommand(string $name, \Closure $callback): ChanServCommandInterface
     {
         return new class($name, $callback) implements ChanServCommandInterface {
             use ChanServCommandDefinitionTestTrait;
 
             public function __construct(
                 private readonly string $name,
-                private readonly Closure $callback,
+                private readonly \Closure $callback,
             ) {}
 
             public function getName(): string

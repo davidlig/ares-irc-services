@@ -15,7 +15,6 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use Throwable;
 
 use function function_exists;
 use function is_numeric;
@@ -166,7 +165,7 @@ final class ConnectCommand extends Command
             } finally {
                 $this->consumerManager->stop();
             }
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             $io->error($e->getMessage());
 
             return Command::FAILURE;

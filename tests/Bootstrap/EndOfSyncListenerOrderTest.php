@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Tests\Bootstrap;
 
 use App\Irc\Adapter\Event\NetworkSyncCompleteEvent;
-use Closure;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -64,6 +63,6 @@ final class EndOfSyncListenerOrderTest extends KernelTestCase
             return $listener[0]::class;
         }
 
-        return $listener instanceof Closure ? Closure::class : 'unknown';
+        return $listener instanceof \Closure ? \Closure::class : 'unknown';
     }
 }

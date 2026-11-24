@@ -192,7 +192,7 @@ final readonly class AkickCommand implements ChanServCommandInterface
         $expiresAt = null;
         $reason = null;
         $validRequest = true;
-        $now = new DateTimeImmutable();
+        $now = new \DateTimeImmutable();
 
         if (ManageChannelAkickAction::Add === $action) {
             [$item, $expiresAt, $reason, $validRequest] = $this->parseAddition($context, $now);
@@ -219,7 +219,7 @@ final readonly class AkickCommand implements ChanServCommandInterface
     }
 
     /** @return array{?string, ?DateTimeImmutable, ?string, bool} */
-    private function parseAddition(ChanServContext $context, DateTimeImmutable $now): array
+    private function parseAddition(ChanServContext $context, \DateTimeImmutable $now): array
     {
         $mask = trim($context->args[2] ?? '');
         if (4 > count($context->args)) {

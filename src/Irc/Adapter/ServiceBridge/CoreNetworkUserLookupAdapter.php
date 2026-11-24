@@ -10,7 +10,6 @@ use App\Irc\Domain\Network\NetworkUser;
 use App\Irc\Domain\Repository\NetworkUserRepositoryInterface;
 use App\Irc\Domain\ValueObject\Nick;
 use App\Irc\Domain\ValueObject\Uid;
-use InvalidArgumentException;
 
 use function array_map;
 
@@ -31,7 +30,7 @@ final readonly class CoreNetworkUserLookupAdapter implements NetworkUserLookupPo
     {
         try {
             $user = $this->networkUserRepository->findByUid(new Uid($uid));
-        } catch (InvalidArgumentException) {
+        } catch (\InvalidArgumentException) {
             return null;
         }
 
@@ -42,7 +41,7 @@ final readonly class CoreNetworkUserLookupAdapter implements NetworkUserLookupPo
     {
         try {
             $user = $this->networkUserRepository->findByNick(new Nick($nick));
-        } catch (InvalidArgumentException) {
+        } catch (\InvalidArgumentException) {
             return null;
         }
 
@@ -60,7 +59,7 @@ final readonly class CoreNetworkUserLookupAdapter implements NetworkUserLookupPo
     {
         try {
             return null !== $this->networkUserRepository->findByUid(new Uid($uid));
-        } catch (InvalidArgumentException) {
+        } catch (\InvalidArgumentException) {
             return false;
         }
     }

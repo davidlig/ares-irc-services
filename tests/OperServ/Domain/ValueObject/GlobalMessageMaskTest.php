@@ -8,7 +8,6 @@ use App\OperServ\Domain\ValueObject\GlobalMessageMask;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ValueError;
 
 #[CoversClass(GlobalMessageMask::class)]
 final class GlobalMessageMaskTest extends TestCase
@@ -47,7 +46,7 @@ final class GlobalMessageMaskTest extends TestCase
     #[Test]
     public function fromStringMissingExclamation(): void
     {
-        $this->expectException(ValueError::class);
+        $this->expectException(\ValueError::class);
         $this->expectExceptionMessage('Invalid mask format');
 
         GlobalMessageMask::fromString('GlobalBot@services.red');
@@ -56,7 +55,7 @@ final class GlobalMessageMaskTest extends TestCase
     #[Test]
     public function fromStringMissingAt(): void
     {
-        $this->expectException(ValueError::class);
+        $this->expectException(\ValueError::class);
         $this->expectExceptionMessage('Invalid mask format');
 
         GlobalMessageMask::fromString('GlobalBot!global');
@@ -65,7 +64,7 @@ final class GlobalMessageMaskTest extends TestCase
     #[Test]
     public function fromStringEmptyNickname(): void
     {
-        $this->expectException(ValueError::class);
+        $this->expectException(\ValueError::class);
         $this->expectExceptionMessage('Invalid mask format');
 
         GlobalMessageMask::fromString('!global@services.red');
@@ -74,7 +73,7 @@ final class GlobalMessageMaskTest extends TestCase
     #[Test]
     public function fromStringEmptyIdent(): void
     {
-        $this->expectException(ValueError::class);
+        $this->expectException(\ValueError::class);
         $this->expectExceptionMessage('Invalid mask format');
 
         GlobalMessageMask::fromString('GlobalBot!@services.red');
@@ -83,7 +82,7 @@ final class GlobalMessageMaskTest extends TestCase
     #[Test]
     public function fromStringEmptyVhost(): void
     {
-        $this->expectException(ValueError::class);
+        $this->expectException(\ValueError::class);
         $this->expectExceptionMessage('Invalid mask format');
 
         GlobalMessageMask::fromString('GlobalBot!global@');
@@ -92,7 +91,7 @@ final class GlobalMessageMaskTest extends TestCase
     #[Test]
     public function fromStringNicknameTooLong(): void
     {
-        $this->expectException(ValueError::class);
+        $this->expectException(\ValueError::class);
         $this->expectExceptionMessage('Nickname cannot exceed 30 characters');
 
         GlobalMessageMask::fromString('VeryLongNicknameThatExceedsThirtyCharacters!global@services.red');
@@ -101,7 +100,7 @@ final class GlobalMessageMaskTest extends TestCase
     #[Test]
     public function fromStringInvalidNicknameStart(): void
     {
-        $this->expectException(ValueError::class);
+        $this->expectException(\ValueError::class);
         $this->expectExceptionMessage('Nickname must start with');
 
         GlobalMessageMask::fromString('123Bot!global@services.red');
@@ -110,7 +109,7 @@ final class GlobalMessageMaskTest extends TestCase
     #[Test]
     public function fromStringInvalidNicknameChar(): void
     {
-        $this->expectException(ValueError::class);
+        $this->expectException(\ValueError::class);
         $this->expectExceptionMessage('Nickname must start with');
 
         GlobalMessageMask::fromString('Bot Name!global@services.red');
@@ -119,7 +118,7 @@ final class GlobalMessageMaskTest extends TestCase
     #[Test]
     public function fromStringIdentTooLong(): void
     {
-        $this->expectException(ValueError::class);
+        $this->expectException(\ValueError::class);
         $this->expectExceptionMessage('Ident cannot exceed 20 characters');
 
         GlobalMessageMask::fromString('Bot!very_long_identifier_name@services.red');
@@ -128,7 +127,7 @@ final class GlobalMessageMaskTest extends TestCase
     #[Test]
     public function fromStringIdentInvalidChar(): void
     {
-        $this->expectException(ValueError::class);
+        $this->expectException(\ValueError::class);
         $this->expectExceptionMessage('Ident can only contain');
 
         GlobalMessageMask::fromString('Bot!global#test@services.red');
@@ -137,7 +136,7 @@ final class GlobalMessageMaskTest extends TestCase
     #[Test]
     public function fromStringVhostTooLong(): void
     {
-        $this->expectException(ValueError::class);
+        $this->expectException(\ValueError::class);
         $this->expectExceptionMessage('Vhost cannot exceed 63 characters');
 
         GlobalMessageMask::fromString('Bot!global@this.is.a.very.long.hostname.that.exceeds.sixty.three.characters.test');
@@ -146,7 +145,7 @@ final class GlobalMessageMaskTest extends TestCase
     #[Test]
     public function fromStringVhostInvalid(): void
     {
-        $this->expectException(ValueError::class);
+        $this->expectException(\ValueError::class);
         $this->expectExceptionMessage('Vhost must be a valid hostname');
 
         GlobalMessageMask::fromString('Bot!global@-invalid.host');
@@ -155,7 +154,7 @@ final class GlobalMessageMaskTest extends TestCase
     #[Test]
     public function fromStringVhostStartsWithDot(): void
     {
-        $this->expectException(ValueError::class);
+        $this->expectException(\ValueError::class);
         $this->expectExceptionMessage('Vhost must be a valid hostname');
 
         GlobalMessageMask::fromString('Bot!global@.example.com');
@@ -164,7 +163,7 @@ final class GlobalMessageMaskTest extends TestCase
     #[Test]
     public function fromStringVhostEndsWithDot(): void
     {
-        $this->expectException(ValueError::class);
+        $this->expectException(\ValueError::class);
         $this->expectExceptionMessage('Vhost must be a valid hostname');
 
         GlobalMessageMask::fromString('Bot!global@example.com.');
@@ -214,7 +213,7 @@ final class GlobalMessageMaskTest extends TestCase
     public function fromStringNicknameStartsWithInvalidCharThrows(): void
     {
         // Testing empty nickname scenario - mask like "!bot@test.com" fails format validation
-        $this->expectException(ValueError::class);
+        $this->expectException(\ValueError::class);
         $this->expectExceptionMessage('Invalid mask format');
 
         GlobalMessageMask::fromString('!bot@test.com');
@@ -226,7 +225,7 @@ final class GlobalMessageMaskTest extends TestCase
         // Testing ident validation - ident must match pattern but this tests an edge case
         // The mask format requires nick!ident@vhost, but we need a valid format first
         // Actually the mask passes regex but fails ident validation for length/start
-        $this->expectException(ValueError::class);
+        $this->expectException(\ValueError::class);
 
         GlobalMessageMask::fromString('Bot!@test.com');
     }
@@ -236,7 +235,7 @@ final class GlobalMessageMaskTest extends TestCase
     {
         // The regex validation fails first with "Invalid mask format" for empty vhost
         // because the pattern requires at least one character after @
-        $this->expectException(ValueError::class);
+        $this->expectException(\ValueError::class);
         $this->expectExceptionMessage('Invalid mask format');
 
         GlobalMessageMask::fromString('Bot!test@');

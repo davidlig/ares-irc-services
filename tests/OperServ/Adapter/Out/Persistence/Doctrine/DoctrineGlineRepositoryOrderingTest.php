@@ -8,14 +8,12 @@ use App\OperServ\Adapter\Out\Persistence\Doctrine\DoctrineGlineRepository;
 use App\OperServ\Application\Port\Out\GlineEntry;
 use App\Tests\Bootstrap\Persistence\QueryCaptureLogger;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
-use DateTimeImmutable;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Logging\Middleware;
 use Doctrine\ORM\Configuration;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Mapping\Driver\SimplifiedXmlDriver;
 use Doctrine\ORM\Tools\SchemaTool;
-use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
@@ -32,7 +30,7 @@ final class DoctrineGlineRepositoryOrderingTest extends DoctrineIntegrationTestC
     public function listAndIndexShareOneNewestFirstOrderForGlinesCreatedInTheSameSecond(): void
     {
         $repository = new DoctrineGlineRepository($this->entityManager);
-        $sameSecond = new DateTimeImmutable('2026-05-01 10:00:00');
+        $sameSecond = new \DateTimeImmutable('2026-05-01 10:00:00');
         foreach (['*@a.test', '*@b.test', '*@c.test', '*@d.test'] as $mask) {
             $repository->save($mask, null, 'abuse', $sameSecond, null);
         }
@@ -52,16 +50,16 @@ final class DoctrineGlineRepositoryOrderingTest extends DoctrineIntegrationTestC
     public function distinctTimestampsStillListNewestFirstBeforeInsertionOrder(): void
     {
         $repository = new DoctrineGlineRepository($this->entityManager);
-        $repository->save('*@middle.test', null, 'abuse', new DateTimeImmutable('2026-05-01 10:00:02'), null);
-        $repository->save('*@oldest.test', null, 'abuse', new DateTimeImmutable('2026-05-01 10:00:01'), null);
-        $repository->save('*@newest.test', null, 'abuse', new DateTimeImmutable('2026-05-01 10:00:03'), null);
+        $repository->save('*@middle.test', null, 'abuse', new \DateTimeImmutable('2026-05-01 10:00:02'), null);
+        $repository->save('*@oldest.test', null, 'abuse', new \DateTimeImmutable('2026-05-01 10:00:01'), null);
+        $repository->save('*@newest.test', null, 'abuse', new \DateTimeImmutable('2026-05-01 10:00:03'), null);
         $this->entityManager->clear();
 
         $expected = ['*@newest.test', '*@middle.test', '*@oldest.test'];
 
         self::assertSame($expected, self::masks($repository->findAll()));
         self::assertSame($expected, self::masks($repository->findByMaskPattern('.test')));
-        self::assertSame($expected, self::masks($repository->findActiveAt(new DateTimeImmutable('2026-05-01 11:00:00'))));
+        self::assertSame($expected, self::masks($repository->findActiveAt(new \DateTimeImmutable('2026-05-01 11:00:00'))));
         foreach ($expected as $index => $mask) {
             self::assertSame($mask, $repository->findByIndex($index)?->mask);
         }
@@ -77,7 +75,7 @@ final class DoctrineGlineRepositoryOrderingTest extends DoctrineIntegrationTestC
         $repository->findAll();
         $repository->findByIndex(1);
         $repository->findByMaskPattern('host');
-        $repository->findActiveAt(new DateTimeImmutable('2026-05-01 10:00:00'));
+        $repository->findActiveAt(new \DateTimeImmutable('2026-05-01 10:00:00'));
 
         self::assertCount(4, $logger->queries);
         foreach ($logger->queries as $query) {
@@ -89,14 +87,14 @@ final class DoctrineGlineRepositoryOrderingTest extends DoctrineIntegrationTestC
     public function expiredEntriesArePagedByExpiryThenIdAfterTheKeysetCursor(): void
     {
         $repository = new DoctrineGlineRepository($this->entityManager);
-        $createdAt = new DateTimeImmutable('2026-05-01 07:00:00');
-        $repository->save('*@first.test', null, 'abuse', $createdAt, new DateTimeImmutable('2026-05-01 08:30:00'));
-        $repository->save('*@active.test', null, 'abuse', $createdAt, new DateTimeImmutable('2026-05-01 12:00:00'));
-        $repository->save('*@earliest.test', null, 'abuse', $createdAt, new DateTimeImmutable('2026-05-01 08:00:00'));
-        $repository->save('*@tied.test', null, 'abuse', $createdAt, new DateTimeImmutable('2026-05-01 08:30:00'));
+        $createdAt = new \DateTimeImmutable('2026-05-01 07:00:00');
+        $repository->save('*@first.test', null, 'abuse', $createdAt, new \DateTimeImmutable('2026-05-01 08:30:00'));
+        $repository->save('*@active.test', null, 'abuse', $createdAt, new \DateTimeImmutable('2026-05-01 12:00:00'));
+        $repository->save('*@earliest.test', null, 'abuse', $createdAt, new \DateTimeImmutable('2026-05-01 08:00:00'));
+        $repository->save('*@tied.test', null, 'abuse', $createdAt, new \DateTimeImmutable('2026-05-01 08:30:00'));
         $repository->save('*@permanent.test', null, 'abuse', $createdAt, null);
         $this->entityManager->clear();
-        $now = new DateTimeImmutable('2026-05-01 10:00:00');
+        $now = new \DateTimeImmutable('2026-05-01 10:00:00');
 
         $firstPage = $repository->findExpiredAt($now, null, 2);
         $secondPage = $repository->findExpiredAt($now, $firstPage[1], 2);
@@ -112,10 +110,10 @@ final class DoctrineGlineRepositoryOrderingTest extends DoctrineIntegrationTestC
     {
         $repository = new DoctrineGlineRepository($this->entityManager);
 
-        $this->expectException(LogicException::class);
+        $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('GLINE expiry cursor must be a persisted expired entry.');
 
-        $repository->findExpiredAt(new DateTimeImmutable(), new GlineEntry('*@host.test', null, null, new DateTimeImmutable(), null, 7), 2);
+        $repository->findExpiredAt(new \DateTimeImmutable(), new GlineEntry('*@host.test', null, null, new \DateTimeImmutable(), null, 7), 2);
     }
 
     /**

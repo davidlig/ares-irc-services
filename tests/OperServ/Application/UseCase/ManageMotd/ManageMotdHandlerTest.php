@@ -16,7 +16,6 @@ use App\OperServ\Application\UseCase\ManageMotd\ManageMotdOutcome;
 use App\OperServ\Application\UseCase\ManageMotd\ManageMotdResult;
 use App\OperServ\Application\UseCase\ManageMotd\MotdAction;
 use App\OperServ\Application\UseCase\ManageMotd\MotdListEntry;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -33,7 +32,7 @@ use const DATE_ATOM;
 #[CoversClass(MotdEntry::class)]
 final class ManageMotdHandlerTest extends TestCase
 {
-    private DateTimeImmutable $now;
+    private \DateTimeImmutable $now;
 
     #[Test]
     public function addsMotdAndRecordsSafeAuditData(): void
@@ -45,7 +44,7 @@ final class ManageMotdHandlerTest extends TestCase
             MessageDelivery::Interactive,
             42,
             $this->now,
-            new DateTimeImmutable('2026-09-15T10:15:00+00:00'),
+            new \DateTimeImmutable('2026-09-15T10:15:00+00:00'),
         )->willReturn($this->entry(4));
         $audit = $this->createMock(CommandAuditRecorder::class);
         $audit->expects(self::once())->method('record')->with(self::callback(
@@ -131,7 +130,7 @@ final class ManageMotdHandlerTest extends TestCase
     #[Test]
     public function listsEntriesUsingTheCommandTimeForExpiry(): void
     {
-        $expired = $this->entry(1, expiresAt: new DateTimeImmutable('2026-09-08T10:14:59+00:00'));
+        $expired = $this->entry(1, expiresAt: new \DateTimeImmutable('2026-09-08T10:14:59+00:00'));
         $active = $this->entry(2, expiresAt: null, enabled: false);
         $repository = $this->createMock(MotdRepository::class);
         $repository->expects(self::once())->method('findAll')->willReturn([$expired, $active]);
@@ -222,7 +221,7 @@ final class ManageMotdHandlerTest extends TestCase
             MessageDelivery::NonInteractive,
             42,
             $this->now,
-            self::callback(static fn (?DateTimeImmutable $expiry): bool => $expectedExpiry === $expiry?->format(DATE_ATOM)),
+            self::callback(static fn (?\DateTimeImmutable $expiry): bool => $expectedExpiry === $expiry?->format(DATE_ATOM)),
         )->willReturn($this->entry(9));
 
         $result = new ManageMotdHandler($repository, $this->createStub(CommandAuditRecorder::class))->handle($this->command(
@@ -248,7 +247,7 @@ final class ManageMotdHandlerTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->now = new DateTimeImmutable('2026-09-08T10:15:00+00:00');
+        $this->now = new \DateTimeImmutable('2026-09-08T10:15:00+00:00');
     }
 
     private function command(
@@ -265,7 +264,7 @@ final class ManageMotdHandlerTest extends TestCase
     private function entry(
         int $id,
         string $text = 'Welcome',
-        ?DateTimeImmutable $expiresAt = null,
+        ?\DateTimeImmutable $expiresAt = null,
         bool $enabled = true,
     ): MotdEntry {
         return new MotdEntry($id, $text, 'NickServ', MessageDelivery::NonInteractive, $enabled, $this->now, $expiresAt, 4);

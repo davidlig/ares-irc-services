@@ -13,7 +13,6 @@ use App\OperServ\Adapter\In\Irc\OperServService;
 use App\OperServ\Application\Port\Out\ServiceUserPreferences;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
-use Throwable;
 
 final readonly class OperServCommandListener implements ServiceCommandListenerInterface
 {
@@ -69,7 +68,7 @@ final readonly class OperServCommandListener implements ServiceCommandListenerIn
 
         try {
             $this->operServService->dispatch($text, $sender);
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             $this->logger->error('OperServ dispatch error', [
                 'exception_class' => $e::class,
                 'sender' => $sender->uid,

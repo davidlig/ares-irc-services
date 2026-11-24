@@ -28,7 +28,6 @@ use App\Shared\Adapter\In\Irc\Presentation\Component;
 use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
 use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
 use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -154,7 +153,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
         $translator->addResource('array', ['help.syntax_label' => 'Syntax: %syntax%'], 'en', 'chanserv');
         $adapter = $this->createAdapter($this->createContext($notifier, $translator, new ChanServCommandRegistry([])));
 
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('HELP presentation parameter must be a string: syntax');
         $adapter->trans('help.syntax_label', ['syntax' => ['HELP']]);
     }

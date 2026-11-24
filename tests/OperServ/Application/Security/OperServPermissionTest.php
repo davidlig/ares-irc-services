@@ -8,7 +8,6 @@ use App\OperServ\Application\Security\OperServPermission;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
 
 use function sprintf;
 
@@ -18,7 +17,7 @@ final class OperServPermissionTest extends TestCase
     #[Test]
     public function killConstantHasExpectedValue(): void
     {
-        $constant = new ReflectionClass(OperServPermission::class)->getConstant('KILL');
+        $constant = new \ReflectionClass(OperServPermission::class)->getConstant('KILL');
 
         self::assertSame('operserv.kill', $constant);
     }
@@ -26,7 +25,7 @@ final class OperServPermissionTest extends TestCase
     #[Test]
     public function rawConstantHasExpectedValue(): void
     {
-        $constant = new ReflectionClass(OperServPermission::class)->getConstant('RAW');
+        $constant = new \ReflectionClass(OperServPermission::class)->getConstant('RAW');
 
         self::assertSame('operserv.raw', $constant);
     }
@@ -34,7 +33,7 @@ final class OperServPermissionTest extends TestCase
     #[Test]
     public function allConstantsAreStrings(): void
     {
-        $reflection = new ReflectionClass(OperServPermission::class);
+        $reflection = new \ReflectionClass(OperServPermission::class);
         $constants = $reflection->getReflectionConstants();
 
         foreach ($constants as $constant) {
@@ -47,7 +46,7 @@ final class OperServPermissionTest extends TestCase
     #[Test]
     public function constructorIsPrivate(): void
     {
-        $reflection = new ReflectionClass(OperServPermission::class);
+        $reflection = new \ReflectionClass(OperServPermission::class);
         $constructor = $reflection->getConstructor();
 
         self::assertNotNull($constructor);
@@ -57,7 +56,7 @@ final class OperServPermissionTest extends TestCase
     #[Test]
     public function cannotBeInstantiated(): void
     {
-        $reflection = new ReflectionClass(OperServPermission::class);
+        $reflection = new \ReflectionClass(OperServPermission::class);
         $constructor = $reflection->getConstructor();
 
         self::assertNotNull($constructor);

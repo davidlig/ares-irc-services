@@ -9,7 +9,6 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbDatasetCheckpoint;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbValue;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbValueKind;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbUnsignedDecimal;
-use RuntimeException;
 
 use function fclose;
 use function feof;
@@ -63,7 +62,7 @@ final class UdbCapturedSnapshot
      */
     public function records(UdbBlock $block): iterable
     {
-        $file = $this->files[$block->letter()] ?? throw new RuntimeException('The UDB snapshot block is unavailable.');
+        $file = $this->files[$block->letter()] ?? throw new \RuntimeException('The UDB snapshot block is unavailable.');
         yield from self::readFile($file);
     }
 
@@ -74,7 +73,7 @@ final class UdbCapturedSnapshot
     {
         $stream = fopen($file, 'r');
         if (false === $stream) {
-            throw new RuntimeException('The UDB snapshot spool could not be opened.');
+            throw new \RuntimeException('The UDB snapshot spool could not be opened.');
         }
 
         try {
@@ -88,12 +87,12 @@ final class UdbCapturedSnapshot
                 $raw = self::readExact($stream, $lengths['value']);
                 $kind = UdbValueKind::tryFrom($lengths['kind']);
                 if (null === $kind) {
-                    throw new RuntimeException('The UDB snapshot spool has an unknown value kind.');
+                    throw new \RuntimeException('The UDB snapshot spool has an unknown value kind.');
                 }
                 $value = match ($kind) {
                     UdbValueKind::None => UdbValue::none(),
                     UdbValueKind::String => UdbValue::string($raw),
-                    UdbValueKind::Number => UdbValue::number(UdbUnsignedDecimal::parse(substr($raw, 1)) ?? throw new RuntimeException('The UDB snapshot spool has an invalid number.')),
+                    UdbValueKind::Number => UdbValue::number(UdbUnsignedDecimal::parse(substr($raw, 1)) ?? throw new \RuntimeException('The UDB snapshot spool has an invalid number.')),
                 };
                 yield [$path, $value];
             }
@@ -124,7 +123,7 @@ final class UdbCapturedSnapshot
         while ($offset < $length) {
             $written = fwrite($stream, substr($record, $offset));
             if (false === $written || 0 === $written) {
-                throw new RuntimeException('The UDB snapshot spool could not be written.');
+                throw new \RuntimeException('The UDB snapshot spool could not be written.');
             }
             $offset += $written;
         }
@@ -135,7 +134,7 @@ final class UdbCapturedSnapshot
     {
         $lengths = 9 === strlen($header) ? unpack('Npath/Ckind/Nvalue', $header) : false;
         if (!is_array($lengths) || !is_int($lengths['path'] ?? null) || !is_int($lengths['kind'] ?? null) || !is_int($lengths['value'] ?? null)) {
-            throw new RuntimeException('The UDB snapshot spool is malformed.');
+            throw new \RuntimeException('The UDB snapshot spool is malformed.');
         }
 
         return ['path' => $lengths['path'], 'kind' => $lengths['kind'], 'value' => $lengths['value']];
@@ -151,7 +150,7 @@ final class UdbCapturedSnapshot
                 if ('' === $value) {
                     return '';
                 }
-                throw new RuntimeException('The UDB snapshot spool ended unexpectedly.');
+                throw new \RuntimeException('The UDB snapshot spool ended unexpectedly.');
             }
             $value .= $chunk;
         }

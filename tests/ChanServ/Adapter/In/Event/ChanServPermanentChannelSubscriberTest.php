@@ -16,7 +16,6 @@ use App\Irc\Application\Port\In\ChannelModeSupportInterface;
 use App\Irc\Application\Port\In\ChannelServiceActionsPort;
 use App\Irc\Application\Port\In\ChannelView;
 use App\Tests\NickServ\Support\NegotiatedCaseMapping;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -55,7 +54,7 @@ final class ChanServPermanentChannelSubscriberTest extends TestCase
         $channelServiceActions->expects(self::once())->method('setChannelModes')->with('#test', '+rP', []);
 
         $subscriber = $this->createSubscriber($modeSupportProvider, $channelLookup, $channelServiceActions);
-        $subscriber->onChannelRegistered(new ChannelRegisteredEvent(42, '#test', '#test', new DateTimeImmutable('2026-01-02 03:04:05')));
+        $subscriber->onChannelRegistered(new ChannelRegisteredEvent(42, '#test', '#test', new \DateTimeImmutable('2026-01-02 03:04:05')));
     }
 
     #[Test]
@@ -75,7 +74,7 @@ final class ChanServPermanentChannelSubscriberTest extends TestCase
         $channelServiceActions->expects(self::once())->method('setChannelModes')->with('#test', '+r', []);
 
         $subscriber = $this->createSubscriber($modeSupportProvider, $channelLookup, $channelServiceActions);
-        $subscriber->onChannelRegistered(new ChannelRegisteredEvent(42, '#test', '#test', new DateTimeImmutable('2026-01-02 03:04:05')));
+        $subscriber->onChannelRegistered(new ChannelRegisteredEvent(42, '#test', '#test', new \DateTimeImmutable('2026-01-02 03:04:05')));
     }
 
     #[Test]
@@ -95,7 +94,7 @@ final class ChanServPermanentChannelSubscriberTest extends TestCase
         $channelServiceActions->expects(self::once())->method('setChannelModes')->with('#test', '+P', []);
 
         $subscriber = $this->createSubscriber($modeSupportProvider, $channelLookup, $channelServiceActions);
-        $subscriber->onChannelRegistered(new ChannelRegisteredEvent(42, '#test', '#test', new DateTimeImmutable('2026-01-02 03:04:05')));
+        $subscriber->onChannelRegistered(new ChannelRegisteredEvent(42, '#test', '#test', new \DateTimeImmutable('2026-01-02 03:04:05')));
     }
 
     #[Test]
@@ -115,7 +114,7 @@ final class ChanServPermanentChannelSubscriberTest extends TestCase
         $channelServiceActions->expects(self::never())->method('setChannelModes');
 
         $subscriber = $this->createSubscriber($modeSupportProvider, $channelLookup, $channelServiceActions);
-        $subscriber->onChannelRegistered(new ChannelRegisteredEvent(42, '#test', '#test', new DateTimeImmutable('2026-01-02 03:04:05')));
+        $subscriber->onChannelRegistered(new ChannelRegisteredEvent(42, '#test', '#test', new \DateTimeImmutable('2026-01-02 03:04:05')));
     }
 
     #[Test]
@@ -129,7 +128,7 @@ final class ChanServPermanentChannelSubscriberTest extends TestCase
         $channelServiceActions->expects(self::never())->method('setChannelModes');
 
         $subscriber = $this->createSubscriber($modeSupportProvider, $channelLookup, $channelServiceActions);
-        $subscriber->onChannelRegistered(new ChannelRegisteredEvent(42, '#test', '#test', new DateTimeImmutable('2026-01-02 03:04:05')));
+        $subscriber->onChannelRegistered(new ChannelRegisteredEvent(42, '#test', '#test', new \DateTimeImmutable('2026-01-02 03:04:05')));
     }
 
     #[Test]
@@ -149,7 +148,7 @@ final class ChanServPermanentChannelSubscriberTest extends TestCase
         $channelServiceActions->expects(self::once())->method('setChannelModes')->with('#test', '+P', []);
 
         $subscriber = $this->createSubscriber($modeSupportProvider, $channelLookup, $channelServiceActions);
-        $subscriber->onChannelRegistered(new ChannelRegisteredEvent(42, '#test', '#test', new DateTimeImmutable('2026-01-02 03:04:05')));
+        $subscriber->onChannelRegistered(new ChannelRegisteredEvent(42, '#test', '#test', new \DateTimeImmutable('2026-01-02 03:04:05')));
     }
 
     #[Test]
@@ -169,7 +168,7 @@ final class ChanServPermanentChannelSubscriberTest extends TestCase
         $channelServiceActions->expects(self::never())->method('setChannelModes');
 
         $subscriber = $this->createSubscriber($modeSupportProvider, $channelLookup, $channelServiceActions);
-        $subscriber->onChannelRegistered(new ChannelRegisteredEvent(42, '#test', '#test', new DateTimeImmutable('2026-01-02 03:04:05')));
+        $subscriber->onChannelRegistered(new ChannelRegisteredEvent(42, '#test', '#test', new \DateTimeImmutable('2026-01-02 03:04:05')));
     }
 
     #[Test]
@@ -189,7 +188,7 @@ final class ChanServPermanentChannelSubscriberTest extends TestCase
         $channelServiceActions->expects(self::once())->method('setChannelModes')->with('#test', '-rP', []);
 
         $subscriber = $this->createSubscriber($modeSupportProvider, $channelLookup, $channelServiceActions);
-        $subscriber->onChannelDrop(new ChannelDropEvent(42, '#test', '#test', 'inactivity', new DateTimeImmutable('2026-01-02 03:04:05')));
+        $subscriber->onChannelDrop(new ChannelDropEvent(42, '#test', '#test', 'inactivity', new \DateTimeImmutable('2026-01-02 03:04:05')));
     }
 
     #[Test]
@@ -209,7 +208,7 @@ final class ChanServPermanentChannelSubscriberTest extends TestCase
         $channelServiceActions->expects(self::once())->method('setChannelModes')->with('#test', '-P', []);
 
         $subscriber = $this->createSubscriber($modeSupportProvider, $channelLookup, $channelServiceActions);
-        $subscriber->onChannelDrop(new ChannelDropEvent(42, '#test', '#test', 'manual', new DateTimeImmutable('2026-01-02 03:04:05')));
+        $subscriber->onChannelDrop(new ChannelDropEvent(42, '#test', '#test', 'manual', new \DateTimeImmutable('2026-01-02 03:04:05')));
     }
 
     #[Test]
@@ -229,7 +228,7 @@ final class ChanServPermanentChannelSubscriberTest extends TestCase
         $channelServiceActions->expects(self::never())->method('setChannelModes');
 
         $subscriber = $this->createSubscriber($modeSupportProvider, $channelLookup, $channelServiceActions);
-        $subscriber->onChannelDrop(new ChannelDropEvent(42, '#test', '#test', 'manual', new DateTimeImmutable('2026-01-02 03:04:05')));
+        $subscriber->onChannelDrop(new ChannelDropEvent(42, '#test', '#test', 'manual', new \DateTimeImmutable('2026-01-02 03:04:05')));
     }
 
     #[Test]
@@ -243,7 +242,7 @@ final class ChanServPermanentChannelSubscriberTest extends TestCase
         $channelServiceActions->expects(self::never())->method('setChannelModes');
 
         $subscriber = $this->createSubscriber($modeSupportProvider, $channelLookup, $channelServiceActions);
-        $subscriber->onChannelDrop(new ChannelDropEvent(42, '#test', '#test', 'manual', new DateTimeImmutable('2026-01-02 03:04:05')));
+        $subscriber->onChannelDrop(new ChannelDropEvent(42, '#test', '#test', 'manual', new \DateTimeImmutable('2026-01-02 03:04:05')));
     }
 
     #[Test]
@@ -263,7 +262,7 @@ final class ChanServPermanentChannelSubscriberTest extends TestCase
         $channelServiceActions->expects(self::never())->method('setChannelModes');
 
         $subscriber = $this->createSubscriber($modeSupportProvider, $channelLookup, $channelServiceActions);
-        $subscriber->onChannelDrop(new ChannelDropEvent(42, '#test', '#test', 'manual', new DateTimeImmutable('2026-01-02 03:04:05')));
+        $subscriber->onChannelDrop(new ChannelDropEvent(42, '#test', '#test', 'manual', new \DateTimeImmutable('2026-01-02 03:04:05')));
     }
 
     private function createSubscriber(

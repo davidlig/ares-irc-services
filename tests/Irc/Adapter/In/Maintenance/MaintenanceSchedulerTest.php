@@ -15,7 +15,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-use RuntimeException;
 
 use function end;
 
@@ -129,7 +128,7 @@ final class MaintenanceSchedulerTest extends TestCase
             public function run(): void
             {
                 $this->holder->runOrder[] = 'fail';
-                throw new RuntimeException('Task failed');
+                throw new \RuntimeException('Task failed');
             }
         };
         $taskNever = new class($holder) implements MaintenanceTaskInterface {
@@ -299,7 +298,7 @@ final class MaintenanceSchedulerTest extends TestCase
 
             public function run(): void
             {
-                throw new RuntimeException('Task error');
+                throw new \RuntimeException('Task error');
             }
         };
 
@@ -320,7 +319,7 @@ final class MaintenanceSchedulerTest extends TestCase
         self::assertSame('Maintenance task failed', $logErrors[0][0]);
         self::assertSame('task.throws', $logErrors[0][1]['task']);
         self::assertSame('Task error', $logErrors[0][1]['error']);
-        self::assertInstanceOf(RuntimeException::class, $logErrors[0][1]['exception']);
+        self::assertInstanceOf(\RuntimeException::class, $logErrors[0][1]['exception']);
         $completed = end($logInfos);
         self::assertIsArray($completed);
         self::assertSame('Maintenance cycle completed', $completed[0]);
@@ -484,7 +483,7 @@ final class MaintenanceSchedulerTest extends TestCase
         $holder = new MaintenanceSchedulerTestState();
         $persistence = new MaintenanceSchedulerTestPersistence();
         $persistence->closed = true;
-        $persistence->resetFailure = new RuntimeException('reset failed');
+        $persistence->resetFailure = new \RuntimeException('reset failed');
         $task = new MaintenanceSchedulerTestPersistenceTask($holder, $persistence, 'task.only', 100);
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects(self::once())->method('warning');
@@ -575,7 +574,7 @@ class MaintenanceSchedulerTestTask implements MaintenanceTaskInterface
     {
         $this->holder->runOrder[] = $this->name;
         if ($this->fails) {
-            throw new RuntimeException($this->name . ' failed');
+            throw new \RuntimeException($this->name . ' failed');
         }
     }
 }
@@ -607,7 +606,7 @@ final class MaintenanceSchedulerTestPersistence
 
     public int $resets = 0;
 
-    public ?RuntimeException $resetFailure = null;
+    public ?\RuntimeException $resetFailure = null;
 }
 
 /** Closes the EntityManager and fails, like a task whose flush hit a database error. */

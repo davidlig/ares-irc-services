@@ -16,9 +16,7 @@ use App\NickServ\Application\UseCase\History\HistoryNickHandler;
 use App\NickServ\Domain\Entity\NickHistory;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
-use RuntimeException;
 
 #[CoversClass(HistoryNickHandler::class)]
 #[CoversClass(NickHistoryService::class)]
@@ -35,7 +33,7 @@ final class NickHistoryClearTransactionTest extends DoctrineIntegrationTestCase
             performedBy: 'Alice',
             performedByNickId: 42,
             message: 'existing record',
-            performedAt: new DateTimeImmutable('2026-01-01 UTC'),
+            performedAt: new \DateTimeImmutable('2026-01-01 UTC'),
         ));
 
         $failingRepository = new class($repository) implements NickHistoryRepositoryInterface {
@@ -43,7 +41,7 @@ final class NickHistoryClearTransactionTest extends DoctrineIntegrationTestCase
 
             public function save(NickHistory $history): void
             {
-                throw new RuntimeException('history insert failed');
+                throw new \RuntimeException('history insert failed');
             }
 
             public function findById(int $id): ?NickHistory
@@ -71,7 +69,7 @@ final class NickHistoryClearTransactionTest extends DoctrineIntegrationTestCase
                 return $this->inner->deleteByNickId($nickId);
             }
 
-            public function deleteOlderThan(DateTimeImmutable $threshold): int
+            public function deleteOlderThan(\DateTimeImmutable $threshold): int
             {
                 return $this->inner->deleteOlderThan($threshold);
             }
@@ -93,11 +91,11 @@ final class NickHistoryClearTransactionTest extends DoctrineIntegrationTestCase
             $handler->handle(new HistoryNick(
                 nickname: 'Alice',
                 action: HistoryNickAction::Clear,
-                occurredAt: new DateTimeImmutable('2026-01-02 UTC'),
+                occurredAt: new \DateTimeImmutable('2026-01-02 UTC'),
                 operatorNick: 'Oper',
             ));
             self::fail('The replacement history insertion must fail.');
-        } catch (RuntimeException $exception) {
+        } catch (\RuntimeException $exception) {
             self::assertSame('history insert failed', $exception->getMessage());
         }
 

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\ChanServ\Application\UseCase\UpdateSetting;
 
 use App\ChanServ\Domain\Entity\RegisteredChannel;
-use DateTimeImmutable;
 
 final readonly class UpdateChannelSetting
 {
@@ -17,7 +16,7 @@ final readonly class UpdateChannelSetting
         public ?int $actorAccountId,
         public string $actorIp,
         public string $actorHost,
-        public DateTimeImmutable $occurredAt,
+        public \DateTimeImmutable $occurredAt,
         public bool $hasEmailDomainBypass = false,
     ) {}
 }

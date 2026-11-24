@@ -8,7 +8,6 @@ use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
 use Doctrine\DBAL\Platforms\SQLitePlatform;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
-use RuntimeException;
 
 use function in_array;
 
@@ -24,7 +23,7 @@ final class Version20261027000001 extends AbstractMigration
         // Fresh dry runs have no physical memo table or records to inspect.
         if ($this->connection->createSchemaManager()->tablesExist(['memos'])
             && !in_array($this->connection->fetchOne('SELECT COUNT(*) FROM memos WHERE sender_name IS NOT NULL'), [false, 0, '0'], true)) {
-            throw new RuntimeException('Cannot remove service memo sender support while service-authored memos exist.');
+            throw new \RuntimeException('Cannot remove service memo sender support while service-authored memos exist.');
         }
     }
 

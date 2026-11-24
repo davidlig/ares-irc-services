@@ -18,7 +18,6 @@ use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentValidator;
 use App\Shared\Adapter\In\Irc\Presentation\Component;
 use App\Shared\Adapter\In\Irc\Presentation\Role;
-use DateTimeImmutable;
 
 use function array_slice;
 use function implode;
@@ -135,7 +134,7 @@ final readonly class MotdCommand implements OperServCommandInterface
             $action,
             $context->sender->nick,
             $context->senderAccountId(),
-            new DateTimeImmutable(),
+            new \DateTimeImmutable(),
             MotdAction::Add === $action ? trim($context->args[1] ?? '') : null,
             MotdAction::Add === $action ? match (strtoupper(trim($context->args[2] ?? ''))) {
                 'NOTICE' => MessageDelivery::NonInteractive,

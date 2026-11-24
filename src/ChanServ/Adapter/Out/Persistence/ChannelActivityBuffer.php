@@ -11,7 +11,6 @@ use Doctrine\DBAL\ParameterType;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use RuntimeException;
-use Throwable;
 
 use function array_chunk;
 use function array_diff_key;
@@ -57,7 +56,7 @@ final class ChannelActivityBuffer implements ChannelActivityPendingQuery
         private readonly LoggerInterface $logger = new NullLogger(),
     ) {}
 
-    public function record(int $channelId, DateTimeImmutable $usedAt): void
+    public function record(int $channelId, \DateTimeImmutable $usedAt): void
     {
         $this->pruneThrottleHistory($usedAt);
 
@@ -97,9 +96,9 @@ final class ChannelActivityBuffer implements ChannelActivityPendingQuery
      *
      * @throws RuntimeException when at least one chunk could not be written for a reason that is not row-specific
      */
-    public function flush(?DateTimeImmutable $now = null): void
+    public function flush(?\DateTimeImmutable $now = null): void
     {
-        $now ??= new DateTimeImmutable();
+        $now ??= new \DateTimeImmutable();
         $this->pruneThrottleHistory($now);
 
         $knownBad = array_intersect_key($this->pending, $this->rowFailures);
@@ -114,7 +113,7 @@ final class ChannelActivityBuffer implements ChannelActivityPendingQuery
         foreach ($chunks as $batch) {
             try {
                 $this->writeBatch($batch);
-            } catch (Throwable $exception) {
+            } catch (\Throwable $exception) {
                 $databaseAnswers = $this->databaseAnswers();
                 if (!$databaseAnswers || 1 < count($batch)) {
                     $this->logger->error('Could not flush a chunk of deferred ChanServ channel activity; it will be retried.', [
@@ -139,7 +138,7 @@ final class ChannelActivityBuffer implements ChannelActivityPendingQuery
         }
 
         if (null !== $firstFailure) {
-            throw new RuntimeException(sprintf('Could not flush %d of %d chunks of deferred ChanServ channel activity (%d channels kept pending).', $failedChunks, count($chunks), $failedChannels), 0, $firstFailure);
+            throw new \RuntimeException(sprintf('Could not flush %d of %d chunks of deferred ChanServ channel activity (%d channels kept pending).', $failedChunks, count($chunks), $failedChannels), 0, $firstFailure);
         }
     }
 
@@ -148,13 +147,13 @@ final class ChannelActivityBuffer implements ChannelActivityPendingQuery
      *
      * @param array<int, DateTimeImmutable> $batch
      */
-    private function writeRowsOneByOne(array $batch, DateTimeImmutable $now): void
+    private function writeRowsOneByOne(array $batch, \DateTimeImmutable $now): void
     {
         foreach ($batch as $channelId => $usedAt) {
             $row = [$channelId => $usedAt];
             try {
                 $this->writeBatch($row);
-            } catch (Throwable $exception) {
+            } catch (\Throwable $exception) {
                 $this->recordRowFailure($channelId, $exception, $now);
 
                 continue;
@@ -166,7 +165,7 @@ final class ChannelActivityBuffer implements ChannelActivityPendingQuery
     /**
      * Counts an isolated failure; the row always stays pending unless the current-time write succeeds.
      */
-    private function recordRowFailure(int $channelId, Throwable $exception, DateTimeImmutable $now): void
+    private function recordRowFailure(int $channelId, \Throwable $exception, \DateTimeImmutable $now): void
     {
         $attempts = ($this->rowFailures[$channelId] ?? 0) + 1;
         $this->rowFailures[$channelId] = $attempts;
@@ -194,7 +193,7 @@ final class ChannelActivityBuffer implements ChannelActivityPendingQuery
 
         try {
             $this->writeBatch([$channelId => $now]);
-        } catch (Throwable $currentTimeFailure) {
+        } catch (\Throwable $currentTimeFailure) {
             $this->logger->warning('Could not flush deferred ChanServ channel activity for one channel after repeated failures, not even with the current time; it stays pending, the channel is kept from inactivity expiry and the row is retried alone on later flushes.', [
                 'channel_id' => $channelId,
                 'attempts' => $attempts,
@@ -224,7 +223,7 @@ final class ChannelActivityBuffer implements ChannelActivityPendingQuery
     {
         try {
             $this->connection->fetchOne($this->connection->getDatabasePlatform()->getDummySelectSQL());
-        } catch (Throwable) {
+        } catch (\Throwable) {
             return false;
         }
 
@@ -266,7 +265,7 @@ final class ChannelActivityBuffer implements ChannelActivityPendingQuery
         $this->connection->executeStatement($sql, $params, $types);
     }
 
-    private function pruneThrottleHistory(DateTimeImmutable $now): void
+    private function pruneThrottleHistory(\DateTimeImmutable $now): void
     {
         foreach ($this->lastRecordedAt as $channelId => $recordedAt) {
             if (($now->getTimestamp() - $recordedAt->getTimestamp()) >= self::THROTTLE_WINDOW_SECONDS) {

@@ -21,11 +21,9 @@ use App\OperServ\Application\Model\MessageDelivery;
 use App\OperServ\Application\Port\Out\MotdEntry;
 use App\OperServ\Application\Port\Out\MotdRepository;
 use App\OperServ\Domain\ValueObject\GlobalMessageMask;
-use DateTimeImmutable;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use ValueError;
 
 use function array_filter;
 use function array_values;
@@ -95,7 +93,7 @@ final class MotdOnConnectSubscriber implements EventSubscriberInterface
     public function onSyncComplete(): void
     {
         $this->isSynced = true;
-        $now = new DateTimeImmutable();
+        $now = new \DateTimeImmutable();
         $this->ensurePseudoClients($this->motdRepository->findActiveAt($now), $now);
     }
 
@@ -105,7 +103,7 @@ final class MotdOnConnectSubscriber implements EventSubscriberInterface
             return;
         }
 
-        $now = new DateTimeImmutable();
+        $now = new \DateTimeImmutable();
         $activeMotds = $this->motdRepository->findActiveAt($now);
         $this->ensurePseudoClients($activeMotds, $now);
         $this->cleanupStale($activeMotds);
@@ -118,7 +116,7 @@ final class MotdOnConnectSubscriber implements EventSubscriberInterface
      *
      * @param list<MotdEntry> $activeMotds
      */
-    private function ensurePseudoClients(array $activeMotds, DateTimeImmutable $now): void
+    private function ensurePseudoClients(array $activeMotds, \DateTimeImmutable $now): void
     {
         foreach ($activeMotds as $motd) {
             $botSpec = $motd->botNickname;
@@ -129,7 +127,7 @@ final class MotdOnConnectSubscriber implements EventSubscriberInterface
 
             try {
                 $mask = GlobalMessageMask::fromString($botSpec);
-            } catch (ValueError) {
+            } catch (\ValueError) {
                 continue;
             }
 
@@ -161,7 +159,7 @@ final class MotdOnConnectSubscriber implements EventSubscriberInterface
 
             $module = $this->connectionHolder->getProtocolModule();
             $serverSid = $this->connectionHolder->getServerSid();
-            $nickReservation = null !== $module ? $module->getNickReservation() : null;
+            $nickReservation = $module?->getNickReservation();
 
             if (null === $module || null === $serverSid || null === $nickReservation) {
                 return;
@@ -261,7 +259,7 @@ final class MotdOnConnectSubscriber implements EventSubscriberInterface
 
             try {
                 $mask = GlobalMessageMask::fromString($botSpec);
-            } catch (ValueError) {
+            } catch (\ValueError) {
                 continue;
             }
 

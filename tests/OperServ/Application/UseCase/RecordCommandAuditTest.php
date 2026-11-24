@@ -8,7 +8,6 @@ use App\OperServ\Application\Port\In\Audit\CommandAuditCategory;
 use App\OperServ\Application\Port\In\Audit\CommandAuditRecord;
 use App\OperServ\Application\Port\Out\CommandAuditSink;
 use App\OperServ\Application\UseCase\RecordCommandAudit;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -48,7 +47,7 @@ final class RecordCommandAuditTest extends TestCase
             'operserv',
             'system',
             'operserv.gline.expire',
-            new DateTimeImmutable('2026-09-08T10:15:00+00:00'),
+            new \DateTimeImmutable('2026-09-08T10:15:00+00:00'),
         );
     }
 }

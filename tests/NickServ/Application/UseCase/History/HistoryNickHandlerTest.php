@@ -16,8 +16,6 @@ use App\NickServ\Application\UseCase\History\HistoryNickResult;
 use App\NickServ\Application\UseCase\History\NickHistoryEntryView;
 use App\NickServ\Domain\Entity\NickHistory;
 use App\NickServ\Domain\Entity\RegisteredNick;
-use DateTimeImmutable;
-use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -41,7 +39,7 @@ final class HistoryNickHandlerTest extends TestCase
             $this->createTransactionBoundary(),
         );
 
-        $result = $handler->handle(new HistoryNick(nickname: 'Unknown', action: HistoryNickAction::View, occurredAt: new DateTimeImmutable()));
+        $result = $handler->handle(new HistoryNick(nickname: 'Unknown', action: HistoryNickAction::View, occurredAt: new \DateTimeImmutable()));
 
         self::assertSame(HistoryNickOutcome::NotRegistered, $result->outcome);
         self::assertSame('Unknown', $result->targetNick);
@@ -75,7 +73,7 @@ final class HistoryNickHandlerTest extends TestCase
         $result = $handler->handle(new HistoryNick(
             nickname: 'TargetNick',
             action: HistoryNickAction::Add,
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
             message: 'Manual note added',
             operatorNick: 'Oper',
             operatorNickId: 1,
@@ -107,7 +105,7 @@ final class HistoryNickHandlerTest extends TestCase
         $result = $handler->handle(new HistoryNick(
             nickname: 'TargetNick',
             action: HistoryNickAction::Del,
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
             entryId: 0,
         ));
 
@@ -137,11 +135,11 @@ final class HistoryNickHandlerTest extends TestCase
             $this->createTransactionBoundary(),
         );
 
-        $resultMissing = $handler->handle(new HistoryNick(nickname: 'TargetNick', action: HistoryNickAction::Del, occurredAt: new DateTimeImmutable(), entryId: 100));
+        $resultMissing = $handler->handle(new HistoryNick(nickname: 'TargetNick', action: HistoryNickAction::Del, occurredAt: new \DateTimeImmutable(), entryId: 100));
         self::assertSame(HistoryNickOutcome::DelNotFound, $resultMissing->outcome);
         self::assertSame(100, $resultMissing->entryId);
 
-        $resultOther = $handler->handle(new HistoryNick(nickname: 'TargetNick', action: HistoryNickAction::Del, occurredAt: new DateTimeImmutable(), entryId: 101));
+        $resultOther = $handler->handle(new HistoryNick(nickname: 'TargetNick', action: HistoryNickAction::Del, occurredAt: new \DateTimeImmutable(), entryId: 101));
         self::assertSame(HistoryNickOutcome::DelNotFound, $resultOther->outcome);
         self::assertSame(101, $resultOther->entryId);
     }
@@ -167,7 +165,7 @@ final class HistoryNickHandlerTest extends TestCase
             $this->createTransactionBoundary(),
         );
 
-        $result = $handler->handle(new HistoryNick(nickname: 'TargetNick', action: HistoryNickAction::Del, occurredAt: new DateTimeImmutable(), entryId: 55));
+        $result = $handler->handle(new HistoryNick(nickname: 'TargetNick', action: HistoryNickAction::Del, occurredAt: new \DateTimeImmutable(), entryId: 55));
 
         self::assertSame(HistoryNickOutcome::DelSuccess, $result->outcome);
         self::assertSame('TargetNick', $result->targetNick);
@@ -197,13 +195,13 @@ final class HistoryNickHandlerTest extends TestCase
             $this->createTransactionBoundary(),
         );
 
-        $result = $handler->handle(new HistoryNick(nickname: 'TargetNick', action: HistoryNickAction::Clear, occurredAt: new DateTimeImmutable(), operatorNick: 'Oper'));
+        $result = $handler->handle(new HistoryNick(nickname: 'TargetNick', action: HistoryNickAction::Clear, occurredAt: new \DateTimeImmutable(), operatorNick: 'Oper'));
 
         self::assertSame(HistoryNickOutcome::ClearSuccess, $result->outcome);
         self::assertSame('TargetNick', $result->targetNick);
         self::assertSame(7, $result->deletedCount);
 
-        $emptyResult = $handler->handle(new HistoryNick(nickname: 'TargetNick', action: HistoryNickAction::Clear, occurredAt: new DateTimeImmutable(), operatorNick: 'Oper'));
+        $emptyResult = $handler->handle(new HistoryNick(nickname: 'TargetNick', action: HistoryNickAction::Clear, occurredAt: new \DateTimeImmutable(), operatorNick: 'Oper'));
         self::assertSame(0, $emptyResult->deletedCount);
     }
 
@@ -227,9 +225,9 @@ final class HistoryNickHandlerTest extends TestCase
         );
 
         try {
-            $handler->handle(new HistoryNick(nickname: 'TargetNick', action: HistoryNickAction::Clear, occurredAt: new DateTimeImmutable()));
+            $handler->handle(new HistoryNick(nickname: 'TargetNick', action: HistoryNickAction::Clear, occurredAt: new \DateTimeImmutable()));
             self::fail('A clear without its actor must fail closed.');
-        } catch (LogicException $exception) {
+        } catch (\LogicException $exception) {
             self::assertSame('HISTORY CLEAR requires its originating nickname.', $exception->getMessage());
         }
     }
@@ -254,9 +252,9 @@ final class HistoryNickHandlerTest extends TestCase
         );
 
         try {
-            $handler->handle(new HistoryNick(nickname: 'TargetNick', action: HistoryNickAction::Clear, occurredAt: new DateTimeImmutable(), operatorNick: 'Oper'));
+            $handler->handle(new HistoryNick(nickname: 'TargetNick', action: HistoryNickAction::Clear, occurredAt: new \DateTimeImmutable(), operatorNick: 'Oper'));
             self::fail('A non-integer deletion count must fail closed.');
-        } catch (LogicException $exception) {
+        } catch (\LogicException $exception) {
             self::assertSame('Nick history transaction must return the deleted count.', $exception->getMessage());
         }
     }
@@ -280,7 +278,7 @@ final class HistoryNickHandlerTest extends TestCase
             $this->createTransactionBoundary(),
         );
 
-        $result = $handler->handle(new HistoryNick(nickname: 'TargetNick', action: HistoryNickAction::View, occurredAt: new DateTimeImmutable()));
+        $result = $handler->handle(new HistoryNick(nickname: 'TargetNick', action: HistoryNickAction::View, occurredAt: new \DateTimeImmutable()));
 
         self::assertSame(HistoryNickOutcome::ViewNoEntries, $result->outcome);
         self::assertSame('TargetNick', $result->targetNick);
@@ -312,7 +310,7 @@ final class HistoryNickHandlerTest extends TestCase
             historyViewLimit: 10,
         );
 
-        $result = $handler->handle(new HistoryNick(nickname: 'TargetNick', action: HistoryNickAction::View, occurredAt: new DateTimeImmutable(), page: 2));
+        $result = $handler->handle(new HistoryNick(nickname: 'TargetNick', action: HistoryNickAction::View, occurredAt: new \DateTimeImmutable(), page: 2));
 
         self::assertSame(HistoryNickOutcome::ViewSuccess, $result->outcome);
         self::assertSame('TargetNick', $result->targetNick);
@@ -353,7 +351,7 @@ final class HistoryNickHandlerTest extends TestCase
         $result = $handler->handle(new HistoryNick(
             nickname: 'TargetNick',
             action: HistoryNickAction::View,
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
             page: PHP_INT_MAX,
         ));
 
@@ -388,7 +386,7 @@ final class HistoryNickHandlerTest extends TestCase
             historyViewLimit: 2,
         );
 
-        $result = $handler->handle(new HistoryNick(nickname: 'TargetNick', action: HistoryNickAction::View, occurredAt: new DateTimeImmutable(), showAll: true));
+        $result = $handler->handle(new HistoryNick(nickname: 'TargetNick', action: HistoryNickAction::View, occurredAt: new \DateTimeImmutable(), showAll: true));
 
         self::assertSame(HistoryNickOutcome::ViewSuccess, $result->outcome);
         self::assertTrue($result->showAll);
@@ -421,7 +419,7 @@ final class HistoryNickHandlerTest extends TestCase
             action: 'TEST_ACTION',
             performedBy: 'Oper',
             performedByNickId: $performedByNickId,
-            performedAt: new DateTimeImmutable('2026-09-06 12:00:00 UTC'),
+            performedAt: new \DateTimeImmutable('2026-09-06 12:00:00 UTC'),
             message: 'test message',
             extraData: [],
         );

@@ -13,7 +13,6 @@ use App\MemoServ\Application\UseCase\List\ListMemosHandler;
 use App\MemoServ\Application\UseCase\List\ListMemosOutcome;
 use App\MemoServ\Application\UseCase\List\ListMemosResult;
 use App\MemoServ\Domain\Entity\Memo;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -34,8 +33,8 @@ final class ListMemosHandlerTest extends TestCase
     #[Test]
     public function listsNickMemosSuccessfully(): void
     {
-        $memo1 = new Memo(1, null, 2, 'First memo', new DateTimeImmutable('-1 hour'));
-        $memo2 = new Memo(1, null, 3, str_repeat('a', 60), new DateTimeImmutable('-30 minutes'));
+        $memo1 = new Memo(1, null, 2, 'First memo', new \DateTimeImmutable('-1 hour'));
+        $memo2 = new Memo(1, null, 3, str_repeat('a', 60), new \DateTimeImmutable('-30 minutes'));
         $memoRepo = $this->createStub(MemoRepositoryInterface::class);
         $memoRepo->method('findByTargetNick')->willReturn([$memo1, $memo2]);
         $this->memoRepository = $memoRepo;
@@ -61,7 +60,7 @@ final class ListMemosHandlerTest extends TestCase
     #[Test]
     public function listsNickMemosUsesIdFallbackWhenNicknameNotFound(): void
     {
-        $memo = new Memo(1, null, 99, 'Test', new DateTimeImmutable());
+        $memo = new Memo(1, null, 99, 'Test', new \DateTimeImmutable());
         $memoRepo = $this->createStub(MemoRepositoryInterface::class);
         $memoRepo->method('findByTargetNick')->willReturn([$memo]);
         $this->memoRepository = $memoRepo;
@@ -80,7 +79,7 @@ final class ListMemosHandlerTest extends TestCase
     #[Test]
     public function serviceSenderSnapshotTakesPrecedenceOverHumanAccountLookup(): void
     {
-        $memo = new Memo(1, null, null, 'Decision', new DateTimeImmutable(), 'ChannelBot');
+        $memo = new Memo(1, null, null, 'Decision', new \DateTimeImmutable(), 'ChannelBot');
         $repository = $this->createStub(MemoRepositoryInterface::class);
         $repository->method('findByTargetNick')->willReturn([$memo]);
         $this->memoRepository = $repository;
@@ -115,7 +114,7 @@ final class ListMemosHandlerTest extends TestCase
         $channelPort->expects(self::once())->method('canReadChannelMemos')->with(5, 1)->willReturn(true);
         $this->channelPort = $channelPort;
 
-        $memo = new Memo(null, 5, 2, 'Channel message', new DateTimeImmutable());
+        $memo = new Memo(null, 5, 2, 'Channel message', new \DateTimeImmutable());
         $memoRepo = $this->createStub(MemoRepositoryInterface::class);
         $memoRepo->method('findByTargetChannel')->willReturn([$memo]);
         $this->memoRepository = $memoRepo;

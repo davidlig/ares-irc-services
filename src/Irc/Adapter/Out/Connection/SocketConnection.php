@@ -4,24 +4,25 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\Out\Connection;
 
+use Amp\CancelledException;
 use Amp\Socket\ClientTlsContext;
 use Amp\Socket\ConnectContext;
+use Amp\Socket\ConnectException;
 use Amp\Socket\Socket;
+use Amp\Socket\SocketConnector;
 use Amp\TimeoutCancellation;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
-use RuntimeException;
-use Throwable;
 
-use function Amp\Socket\connect;
-use function Amp\Socket\connectTls;
 use function implode;
 use function is_string;
 use function rtrim;
 use function sprintf;
+use function str_contains;
 use function strlen;
 use function strpos;
 use function substr;
+use function trim;
 
 class SocketConnection implements ConnectionInterface
 {
@@ -34,6 +35,8 @@ class SocketConnection implements ConnectionInterface
 
     private ?Socket $socket = null;
 
+    private readonly SocketConnector $connector;
+
     private string $recvBuffer = '';
 
     public function __construct(
@@ -43,11 +46,17 @@ class SocketConnection implements ConnectionInterface
         private readonly int $timeoutSeconds = 30,
         private readonly bool $tlsVerifyPeer = true,
         private readonly LoggerInterface $logger = new NullLogger(),
-    ) {}
+        ?SocketConnector $connector = null,
+    ) {
+        // Keep the retry policy of Amp's default connector.
+        $this->connector = $connector ?? new RetryingSocketConnector(new KeepAliveSocketConnector(logger: $logger));
+    }
 
     public function connect(): void
     {
-        $uri = sprintf('%s:%d', $this->host, $this->port);
+        // IPv6 literals need brackets in the URI but not in the TLS peer name.
+        $host = trim($this->host, '[]');
+        $uri = sprintf(str_contains($host, ':') ? '[%s]:%d' : '%s:%d', $host, $this->port);
 
         $this->logger->info('Opening TCP connection.', [
             'address' => $uri,
@@ -62,7 +71,7 @@ class SocketConnection implements ConnectionInterface
             ->withTcpNoDelay();
 
         if ($this->useTls) {
-            $tlsContext = new ClientTlsContext($this->host);
+            $tlsContext = new ClientTlsContext($host);
             if (!$this->tlsVerifyPeer) {
                 $tlsContext = $tlsContext->withoutPeerVerification();
                 $this->logger->warning('TLS peer verification is disabled for IRC connection.', [
@@ -75,24 +84,44 @@ class SocketConnection implements ConnectionInterface
 
         $cancellation = new TimeoutCancellation((float) $this->timeoutSeconds);
 
+        $socket = null;
+        $stage = 'no connection';
+
         try {
-            $this->socket = $this->useTls
-                ? connectTls($uri, $connectContext, $cancellation)
-                : connect($uri, $connectContext, $cancellation);
+            $socket = $this->connector->connect($uri, $connectContext, $cancellation);
+            if ($this->useTls) {
+                $stage = 'TLS handshake did not complete';
+                $socket->setupTls($cancellation);
+            }
+
+            $this->socket = $socket;
 
             $this->status = ConnectionStatus::Connected;
             $this->recvBuffer = '';
 
             $this->logger->info('TCP connection established.', ['address' => $uri]);
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
+            // A failed TLS handshake leaves the TCP socket connected but not stored.
+            $socket?->close();
             $this->status = ConnectionStatus::Error;
+
+            // The connect deadline is the only cancellation, so name it and the stage it ended,
+            // also when a connector reports it inside its own failure message.
+            $deadline = sprintf('%s within %d second%s', $stage, $this->timeoutSeconds, 1 === $this->timeoutSeconds ? '' : 's');
+            $carried = $e instanceof CancelledException ? $e->getPrevious() : null;
+            $reason = match (true) {
+                $carried instanceof ConnectException => $deadline . '; ' . $carried->getMessage(),
+                $e instanceof CancelledException => $deadline,
+                $cancellation->isRequested() => $deadline . '; ' . $e->getMessage(),
+                default => $e->getMessage(),
+            };
 
             $this->logger->error('TCP connection failed.', [
                 'address' => $uri,
-                'error' => $e->getMessage(),
+                'error' => $reason,
             ]);
 
-            throw new RuntimeException(sprintf('Failed to connect to %s: %s', $uri, $e->getMessage()), 0, $e);
+            throw new \RuntimeException(sprintf('Failed to connect to %s: %s', $uri, $reason), 0, $e);
         }
     }
 
@@ -157,14 +186,14 @@ class SocketConnection implements ConnectionInterface
 
             try {
                 $chunk = $this->socket?->read();
-            } catch (Throwable $e) {
+            } catch (\Throwable $e) {
                 $this->status = ConnectionStatus::Error;
 
                 $this->logger->error('Error reading from IRC connection.', [
                     'error' => $e->getMessage(),
                 ]);
 
-                throw new RuntimeException(sprintf('Error reading from IRC connection: %s', $e->getMessage()), 0, $e);
+                throw new \RuntimeException(sprintf('Error reading from IRC connection: %s', $e->getMessage()), 0, $e);
             }
 
             if (null === $chunk) {
@@ -224,7 +253,7 @@ class SocketConnection implements ConnectionInterface
             'max_line_bytes' => self::MAX_LINE_BYTES,
         ]);
 
-        throw new RuntimeException(sprintf('Incoming line exceeded maximum buffer size of %d bytes.', self::MAX_LINE_BYTES));
+        throw new \RuntimeException(sprintf('Incoming line exceeded maximum buffer size of %d bytes.', self::MAX_LINE_BYTES));
     }
 
     /** @param list<string> $parts */
@@ -236,19 +265,19 @@ class SocketConnection implements ConnectionInterface
     private function writePayload(string $payload): void
     {
         if (!$this->isConnected()) {
-            throw new RuntimeException('Cannot write: connection is not open.');
+            throw new \RuntimeException('Cannot write: connection is not open.');
         }
 
         try {
             $this->socket?->write($payload);
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             $this->status = ConnectionStatus::Error;
 
             $this->logger->error('Failed to write to the IRC connection.', [
                 'error' => $e->getMessage(),
             ]);
 
-            throw new RuntimeException('Failed to write to the IRC connection.', 0, $e);
+            throw new \RuntimeException('Failed to write to the IRC connection.', 0, $e);
         }
     }
 }

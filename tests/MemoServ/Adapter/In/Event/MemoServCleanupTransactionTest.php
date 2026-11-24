@@ -18,11 +18,9 @@ use App\MemoServ\Domain\Entity\MemoIgnore;
 use App\MemoServ\Domain\Entity\MemoSettings;
 use App\NickServ\Application\PublishedEvent\NickDropCleanupEvent;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
-use RuntimeException;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
 #[CoversClass(MemoServNickDropCleanupSubscriber::class)]
@@ -39,7 +37,7 @@ final class MemoServCleanupTransactionTest extends DoctrineIntegrationTestCase
     #[Test]
     public function nickCleanupRollsBackWithTheOwningDropTransaction(): void
     {
-        $at = new DateTimeImmutable('2026-09-07 08:00:00');
+        $at = new \DateTimeImmutable('2026-09-07 08:00:00');
         $this->entityManager->persist(new Memo(targetNickId: 11, targetChannelId: null, senderNickId: 22, message: 'target', createdAt: $at));
         $this->entityManager->persist(new Memo(targetNickId: null, targetChannelId: 33, senderNickId: 11, message: 'sender', createdAt: $at));
         $this->entityManager->persist(new MemoIgnore(targetNickId: 11, targetChannelId: null, ignoredNickId: 22));
@@ -55,10 +53,10 @@ final class MemoServCleanupTransactionTest extends DoctrineIntegrationTestCase
             $transactionManager->transactional(static function () use ($dispatcher, $at): never {
                 $dispatcher->dispatch(new NickDropCleanupEvent(11, 'Dropped', 'dropped', 'manual', $at));
 
-                throw new RuntimeException('provider deletion failed');
+                throw new \RuntimeException('provider deletion failed');
             });
             self::fail('The simulated provider failure must escape the transaction.');
-        } catch (RuntimeException $exception) {
+        } catch (\RuntimeException $exception) {
             self::assertSame('provider deletion failed', $exception->getMessage());
         }
 
@@ -71,7 +69,7 @@ final class MemoServCleanupTransactionTest extends DoctrineIntegrationTestCase
     #[Test]
     public function channelCleanupRollsBackWithTheOwningDropTransaction(): void
     {
-        $at = new DateTimeImmutable('2026-09-07 08:00:00');
+        $at = new \DateTimeImmutable('2026-09-07 08:00:00');
         $this->entityManager->persist(new Memo(targetNickId: null, targetChannelId: 44, senderNickId: 22, message: 'channel', createdAt: $at));
         $this->entityManager->persist(new MemoIgnore(targetNickId: null, targetChannelId: 44, ignoredNickId: 22));
         $this->entityManager->persist(new MemoSettings(targetNickId: null, targetChannelId: 44, enabled: false));
@@ -83,12 +81,12 @@ final class MemoServCleanupTransactionTest extends DoctrineIntegrationTestCase
 
         try {
             $transactionManager->transactional(static function () use ($dispatcher): never {
-                $dispatcher->dispatch(new ChannelDropCleanupEvent(44, new DateTimeImmutable('2026-09-07 08:00:00')));
+                $dispatcher->dispatch(new ChannelDropCleanupEvent(44, new \DateTimeImmutable('2026-09-07 08:00:00')));
 
-                throw new RuntimeException('provider deletion failed');
+                throw new \RuntimeException('provider deletion failed');
             });
             self::fail('The simulated provider failure must escape the transaction.');
-        } catch (RuntimeException $exception) {
+        } catch (\RuntimeException $exception) {
             self::assertSame('provider deletion failed', $exception->getMessage());
         }
 

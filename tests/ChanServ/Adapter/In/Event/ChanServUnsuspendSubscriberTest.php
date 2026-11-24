@@ -8,7 +8,6 @@ use App\ChanServ\Adapter\In\Event\ChanServUnsuspendSubscriber;
 use App\ChanServ\Application\Port\In\UnsuspendedChannelRestoration;
 use App\ChanServ\Application\PublishedEvent\ChannelUnsuspendedEvent;
 use App\Irc\Application\Port\In\ServiceDebugNotifierInterface;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -97,7 +96,7 @@ final class ChanServUnsuspendSubscriberTest extends TestCase
             performedByNickId: null,
             performedByIp: '*',
             performedByHost: '*',
-            occurredAt: new DateTimeImmutable('2026-01-02 03:04:05'),
+            occurredAt: new \DateTimeImmutable('2026-01-02 03:04:05'),
             isRetry: $isRetry,
         );
     }

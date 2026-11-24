@@ -13,7 +13,6 @@ use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionMethod;
 use Symfony\Component\Translation\Translator;
 use Symfony\Contracts\Translation\TranslatableInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -323,7 +322,7 @@ final class ChanServDebugNotifierTest extends TestCase
     public function logToChannelReturnsWhenDebugChannelIsNull(): void
     {
         $notifier = $this->createNotifier(debugChannel: null);
-        $method = new ReflectionMethod($notifier, 'logToChannel');
+        $method = new \ReflectionMethod($notifier, 'logToChannel');
 
         $method->invoke($notifier, 'OperUser', 'DROP', '#test', null, null, null, []);
 

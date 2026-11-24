@@ -35,7 +35,6 @@ use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
 use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\Shared\Application\Port\EventBusInterface;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversTrait;
 use PHPUnit\Framework\Attributes\Test;
@@ -85,7 +84,7 @@ final class AccessCommandTest extends TestCase
     public function replyNotIdentifiedWhenSenderAccountNull(): void
     {
         $sender = new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip');
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 1, 'Desc');
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);

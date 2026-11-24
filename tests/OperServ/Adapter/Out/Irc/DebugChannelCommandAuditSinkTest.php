@@ -8,7 +8,6 @@ use App\OperServ\Adapter\Out\Irc\CommandAuditIrcPresenter;
 use App\OperServ\Adapter\Out\Irc\DebugChannelCommandAuditSink;
 use App\OperServ\Application\Port\In\Audit\CommandAuditCategory;
 use App\OperServ\Application\Port\In\Audit\CommandAuditRecord;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -24,7 +23,7 @@ final class DebugChannelCommandAuditSinkTest extends TestCase
             'chanserv',
             'Oper',
             'chanserv.level_founder.set',
-            new DateTimeImmutable('2026-09-08T10:15:00+00:00'),
+            new \DateTimeImmutable('2026-09-08T10:15:00+00:00'),
             '#channel',
         );
 

@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Domain\ValueObject;
 
-use InvalidArgumentException;
-
 final readonly class ChannelLevelSet
 {
     /** @param array<string, int> $overrides */
@@ -23,7 +21,7 @@ final readonly class ChannelLevelSet
         foreach ($overrides as $key => $value) {
             $level = ChannelLevel::tryFrom($key);
             if (null === $level) {
-                throw new InvalidArgumentException('Unknown channel level: ' . $key);
+                throw new \InvalidArgumentException('Unknown channel level: ' . $key);
             }
             self::assertValidValue($value);
             $validated[$level->value] = $value;
@@ -63,7 +61,7 @@ final readonly class ChannelLevelSet
     private static function assertValidValue(int $value): void
     {
         if (-1 > $value || 499 < $value) {
-            throw new InvalidArgumentException('Channel level must be between -1 and 499.');
+            throw new \InvalidArgumentException('Channel level must be between -1 and 499.');
         }
     }
 }

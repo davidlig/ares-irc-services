@@ -22,7 +22,6 @@ use App\Shared\Adapter\In\Irc\Presentation\Appearance;
 use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
 use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
 use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -157,11 +156,11 @@ final class RoleCommandTest extends TestCase
         $handler = new RecordingManageRoleHandler(true, new ManageRoleResult(RoleOutcome::OperclassesListed));
         $notifier = new RecordingRoleNotifier();
         $translator = new RecordingRoleTranslation();
-        $before = new DateTimeImmutable();
+        $before = new \DateTimeImmutable();
 
         new RoleCommand($handler)->execute($this->context(['OPERCLASS', 'LIST'], $notifier, $translator));
 
-        $after = new DateTimeImmutable();
+        $after = new \DateTimeImmutable();
         self::assertCount(1, $handler->commands);
         self::assertSame(RoleAction::OperclassList, $handler->commands[0]->action);
         self::assertSame('RootOper', $handler->commands[0]->actorNickname);

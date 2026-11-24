@@ -7,7 +7,6 @@ namespace App\Irc\Adapter\Protocol\UnrealUdb\Session;
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbFilePathStore;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
-use RuntimeException;
 use Symfony\Component\Lock\Exception\LockAcquiringException;
 use Symfony\Component\Lock\LockFactory;
 use Symfony\Component\Lock\LockInterface;
@@ -48,10 +47,10 @@ final class UdbSessionLock
         $lock = $this->factory()->createLock('udb-session', null);
         try {
             if (!$lock->acquire(false)) {
-                throw new RuntimeException('The local UDB session lock is held by another process.');
+                throw new \RuntimeException('The local UDB session lock is held by another process.');
             }
         } catch (LockAcquiringException $exception) {
-            throw new RuntimeException(sprintf('Unable to acquire the local UDB session lock: %s', $exception->getPrevious()?->getMessage() ?? $exception->getMessage()), 0, $exception);
+            throw new \RuntimeException(sprintf('Unable to acquire the local UDB session lock: %s', $exception->getPrevious()?->getMessage() ?? $exception->getMessage()), 0, $exception);
         }
 
         $this->lock = $lock;
@@ -77,23 +76,23 @@ final class UdbSessionLock
     private function ensureLockDirectory(): void
     {
         if ('' === $this->lockDirectory) {
-            throw new RuntimeException('UDB lock directory is not configured.');
+            throw new \RuntimeException('UDB lock directory is not configured.');
         }
 
         $directory = $this->lockDirectory;
 
         if (!is_dir($directory)) {
             if (is_file($directory)) {
-                throw new RuntimeException('UDB lock directory is not a directory.');
+                throw new \RuntimeException('UDB lock directory is not a directory.');
             }
 
             if (!@mkdir($directory, 0o770, true) && !is_dir($directory)) {
-                throw new RuntimeException(sprintf('Unable to create UDB lock directory "%s".', $directory));
+                throw new \RuntimeException(sprintf('Unable to create UDB lock directory "%s".', $directory));
             }
         }
 
         if (!is_writable($directory)) {
-            throw new RuntimeException(sprintf('UDB lock directory "%s" is not writable.', $directory));
+            throw new \RuntimeException(sprintf('UDB lock directory "%s" is not writable.', $directory));
         }
     }
 

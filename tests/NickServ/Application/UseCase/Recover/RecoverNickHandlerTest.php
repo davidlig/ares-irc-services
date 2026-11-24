@@ -23,12 +23,9 @@ use App\NickServ\Application\UseCase\Recover\RecoverNickOutcome;
 use App\NickServ\Application\UseCase\Recover\RecoverNickResult;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\NickServ\Domain\ValueObject\RegistrationMode;
-use DateTimeImmutable;
-use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RuntimeException;
 
 use function hash;
 use function strtoupper;
@@ -42,7 +39,7 @@ final class RecoverNickHandlerTest extends TestCase
 
     private const string OLD = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 
-    private DateTimeImmutable $now;
+    private \DateTimeImmutable $now;
 
     private RecoveryTokenRegistry $pending;
 
@@ -176,7 +173,7 @@ final class RecoverNickHandlerTest extends TestCase
     public function mailFailureReturnsHonestErrorAndNoConfirmedMutation(): void
     {
         $mail = $this->createStub(RecoveryMailSender::class);
-        $mail->method('sendRecovery')->willThrowException(new RuntimeException('smtp failed'));
+        $mail->method('sendRecovery')->willThrowException(new \RuntimeException('smtp failed'));
         self::assertSame(RecoverNickOutcome::MailDeliveryFailed, $this->handler($this->account(), mail: $mail)->handle(new RecoverNick('User'))->outcome);
         self::assertNotNull($this->pending->getLastRecoverAt('User'));
     }
@@ -272,13 +269,13 @@ final class RecoverNickHandlerTest extends TestCase
         $codec->method('generate')->willReturn('invalid-generated');
         $credentials = $this->createMock(RescueCredentialPersistence::class);
         $credentials->expects(self::never())->method('rotateAfterRecovery');
-        $this->expectException(LogicException::class);
+        $this->expectException(\LogicException::class);
         $this->handler($this->account(), credentials: $credentials, codec: $codec)->handle(new RecoverNick('User', self::OLD));
     }
 
     protected function setUp(): void
     {
-        $this->now = new DateTimeImmutable('2026-10-22 UTC');
+        $this->now = new \DateTimeImmutable('2026-10-22 UTC');
         $this->pending = new RecoveryTokenRegistry();
         $this->optional = new InMemoryTemporaryRescueTokenStore();
         $this->limiter = new InMemoryRescueAttemptLimiter();

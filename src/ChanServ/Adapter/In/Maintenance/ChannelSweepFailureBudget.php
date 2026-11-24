@@ -93,7 +93,7 @@ final class ChannelSweepFailureBudget
      *
      * @throws Throwable $failure when it closed the EntityManager
      */
-    public function recordFailure(int $channelId, string $channelName, Throwable $failure, string $failedAction): void
+    public function recordFailure(int $channelId, string $channelName, \Throwable $failure, string $failedAction): void
     {
         $this->rethrowWhenClosed($channelId, $channelName, $failure, $failedAction);
         $this->skipUntilNextSweep($channelId, $channelName, $failure, $failedAction);
@@ -113,9 +113,9 @@ final class ChannelSweepFailureBudget
     public function recordFailureAfterPossibleCommit(
         int $channelId,
         string $channelName,
-        Throwable $failure,
+        \Throwable $failure,
         string $failedAction,
-        Closure $committed,
+        \Closure $committed,
         string $committedAction,
         string $postStep,
     ): void {
@@ -146,7 +146,7 @@ final class ChannelSweepFailureBudget
     /**
      * @throws Throwable $failure when it closed the EntityManager
      */
-    private function rethrowWhenClosed(int $channelId, string $channelName, Throwable $failure, string $failedAction): void
+    private function rethrowWhenClosed(int $channelId, string $channelName, \Throwable $failure, string $failedAction): void
     {
         if (!$this->entityManagerClosed()) {
             return;
@@ -164,7 +164,7 @@ final class ChannelSweepFailureBudget
         throw $failure;
     }
 
-    private function skipUntilNextSweep(int $channelId, string $channelName, Throwable $failure, string $failedAction): void
+    private function skipUntilNextSweep(int $channelId, string $channelName, \Throwable $failure, string $failedAction): void
     {
         $this->completed($channelId, true);
         $this->logger->error(sprintf(
@@ -245,7 +245,7 @@ final class ChannelSweepFailureBudget
 
         try {
             $this->connection->fetchOne($this->connection->getDatabasePlatform()->getDummySelectSQL());
-        } catch (Throwable) {
+        } catch (\Throwable) {
             return false;
         }
 

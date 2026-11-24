@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Tests\ChanServ\Application\PublishedEvent;
 
 use App\ChanServ\Application\PublishedEvent\ChannelSuspendedEvent;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -16,8 +15,8 @@ final class ChannelSuspendedEventTest extends TestCase
     #[Test]
     public function constructionWithAllProperties(): void
     {
-        $expiresAt = new DateTimeImmutable('+7 days');
-        $occurredAt = new DateTimeImmutable('2026-01-02 03:04:05');
+        $expiresAt = new \DateTimeImmutable('+7 days');
+        $occurredAt = new \DateTimeImmutable('2026-01-02 03:04:05');
         $event = new ChannelSuspendedEvent(
             channelId: 1,
             channelName: '#Test',
@@ -59,7 +58,7 @@ final class ChannelSuspendedEventTest extends TestCase
             performedByNickId: null,
             performedByIp: '*',
             performedByHost: 'admin@*',
-            occurredAt: new DateTimeImmutable('2026-01-02 03:04:05'),
+            occurredAt: new \DateTimeImmutable('2026-01-02 03:04:05'),
         );
 
         self::assertNull($event->duration);
@@ -70,7 +69,7 @@ final class ChannelSuspendedEventTest extends TestCase
     #[Test]
     public function occurredAtIsProvidedByTheCaller(): void
     {
-        $occurredAt = new DateTimeImmutable('2026-01-02 03:04:05');
+        $occurredAt = new \DateTimeImmutable('2026-01-02 03:04:05');
         $event = new ChannelSuspendedEvent(
             channelId: 1,
             channelName: '#Test',
@@ -91,14 +90,14 @@ final class ChannelSuspendedEventTest extends TestCase
     #[Test]
     public function occurredAtCanBeSetExplicitly(): void
     {
-        $occurredAt = new DateTimeImmutable('2025-06-15 12:00:00');
+        $occurredAt = new \DateTimeImmutable('2025-06-15 12:00:00');
         $event = new ChannelSuspendedEvent(
             channelId: 1,
             channelName: '#Test',
             channelNameLower: '#test',
             reason: 'test',
             duration: '30d',
-            expiresAt: new DateTimeImmutable('2025-07-15'),
+            expiresAt: new \DateTimeImmutable('2025-07-15'),
             performedBy: 'Oper',
             performedByNickId: 1,
             performedByIp: '*',

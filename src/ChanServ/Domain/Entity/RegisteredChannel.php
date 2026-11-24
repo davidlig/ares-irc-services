@@ -6,9 +6,6 @@ namespace App\ChanServ\Domain\Entity;
 
 use App\ChanServ\Domain\ValueObject\ChannelStatus;
 use App\Shared\Domain\IrcIdentityFold;
-use DateTimeImmutable;
-use InvalidArgumentException;
-use LogicException;
 
 use function sprintf;
 use function strlen;
@@ -62,7 +59,7 @@ class RegisteredChannel
 
     private ?string $topic = null;
 
-    private ?DateTimeImmutable $lastTopicSetAt = null;
+    private ?\DateTimeImmutable $lastTopicSetAt = null;
 
     /** Nickname of who last set the topic (null if set by services or unknown). */
     private ?string $lastTopicSetByNick = null;
@@ -71,18 +68,18 @@ class RegisteredChannel
 
     private ?string $suspendedReason = null;
 
-    private ?DateTimeImmutable $suspendedUntil = null;
+    private ?\DateTimeImmutable $suspendedUntil = null;
 
     private ?string $forbiddenReason = null;
 
     private bool $noExpire = false;
 
-    private ?DateTimeImmutable $lastUsedAt = null;
+    private ?\DateTimeImmutable $lastUsedAt = null;
 
-    private DateTimeImmutable $createdAt;
+    private \DateTimeImmutable $createdAt;
 
     /** Set when a manual DROP starts the recoverable deletion grace period. */
-    private ?DateTimeImmutable $pendingDeletionAt = null;
+    private ?\DateTimeImmutable $pendingDeletionAt = null;
 
     private ?string $registrationRejectionReason = null;
 
@@ -90,18 +87,18 @@ class RegisteredChannel
 
     private ?string $registrationRejectedByNickname = null;
 
-    private ?DateTimeImmutable $registrationRejectedAt = null;
+    private ?\DateTimeImmutable $registrationRejectedAt = null;
 
-    private ?DateTimeImmutable $registrationRestrictedUntil = null;
+    private ?\DateTimeImmutable $registrationRestrictedUntil = null;
 
-    private function __construct(DateTimeImmutable $createdAt)
+    private function __construct(\DateTimeImmutable $createdAt)
     {
         $this->entrymsg = '';
         $this->createdAt = $createdAt;
     }
 
     public static function register(
-        DateTimeImmutable $registeredAt,
+        \DateTimeImmutable $registeredAt,
         string $channelName,
         int $founderNickId,
         string $description,
@@ -117,7 +114,7 @@ class RegisteredChannel
     }
 
     public static function createPendingRegistration(
-        DateTimeImmutable $submittedAt,
+        \DateTimeImmutable $submittedAt,
         string $channelName,
         int $requesterAccountId,
         string $description,
@@ -129,7 +126,7 @@ class RegisteredChannel
     }
 
     public static function createForbidden(
-        DateTimeImmutable $createdAt,
+        \DateTimeImmutable $createdAt,
         string $channelName,
         string $reason,
     ): self {
@@ -242,7 +239,7 @@ class RegisteredChannel
         return $this->topic;
     }
 
-    public function getLastTopicSetAt(): ?DateTimeImmutable
+    public function getLastTopicSetAt(): ?\DateTimeImmutable
     {
         return $this->lastTopicSetAt;
     }
@@ -252,22 +249,22 @@ class RegisteredChannel
         return $this->lastTopicSetByNick;
     }
 
-    public function getLastUsedAt(): ?DateTimeImmutable
+    public function getLastUsedAt(): ?\DateTimeImmutable
     {
         return $this->lastUsedAt;
     }
 
-    public function getCreatedAt(): DateTimeImmutable
+    public function getCreatedAt(): \DateTimeImmutable
     {
         return $this->createdAt;
     }
 
-    public function getPendingDeletionAt(): ?DateTimeImmutable
+    public function getPendingDeletionAt(): ?\DateTimeImmutable
     {
         return $this->pendingDeletionAt;
     }
 
-    public function getPendingDeletionExpiresAt(int $graceDays): ?DateTimeImmutable
+    public function getPendingDeletionExpiresAt(int $graceDays): ?\DateTimeImmutable
     {
         if (null === $this->pendingDeletionAt || $graceDays <= 0) {
             return $this->pendingDeletionAt;
@@ -343,14 +340,14 @@ class RegisteredChannel
         $this->verbose = $on;
     }
 
-    public function updateTopic(?string $topic, DateTimeImmutable $updatedAt, ?string $setByNick = null): void
+    public function updateTopic(?string $topic, \DateTimeImmutable $updatedAt, ?string $setByNick = null): void
     {
         $this->topic = $topic;
         $this->lastTopicSetAt = null !== $topic ? $updatedAt : null;
         $this->lastTopicSetByNick = null !== $topic ? $setByNick : null;
     }
 
-    public function touchLastUsed(DateTimeImmutable $usedAt): void
+    public function touchLastUsed(\DateTimeImmutable $usedAt): void
     {
         $this->lastUsedAt = $usedAt;
     }
@@ -390,12 +387,12 @@ class RegisteredChannel
         return $this->registrationRejectedByNickname;
     }
 
-    public function getRegistrationRejectedAt(): ?DateTimeImmutable
+    public function getRegistrationRejectedAt(): ?\DateTimeImmutable
     {
         return $this->registrationRejectedAt;
     }
 
-    public function getRegistrationRestrictedUntil(): ?DateTimeImmutable
+    public function getRegistrationRestrictedUntil(): ?\DateTimeImmutable
     {
         return $this->registrationRestrictedUntil;
     }
@@ -403,16 +400,16 @@ class RegisteredChannel
     public function orphanRejectedRegistrationRequester(): void
     {
         if (!$this->isRejectedRegistration()) {
-            throw new LogicException('Only rejected registrations can be orphaned.');
+            throw new \LogicException('Only rejected registrations can be orphaned.');
         }
 
         $this->founderNickId = 0;
     }
 
-    public function approveRegistration(DateTimeImmutable $registeredAt): void
+    public function approveRegistration(\DateTimeImmutable $registeredAt): void
     {
         if (!$this->isPendingRegistration()) {
-            throw new LogicException('Only pending channel registrations can be approved.');
+            throw new \LogicException('Only pending channel registrations can be approved.');
         }
 
         $this->status = ChannelStatus::Active;
@@ -424,14 +421,14 @@ class RegisteredChannel
         string $reason,
         int $operatorAccountId,
         string $operatorNickname,
-        DateTimeImmutable $rejectedAt,
-        ?DateTimeImmutable $restrictedUntil,
+        \DateTimeImmutable $rejectedAt,
+        ?\DateTimeImmutable $restrictedUntil,
     ): void {
         if (!$this->isPendingRegistration()) {
-            throw new LogicException('Only pending channel registrations can be rejected.');
+            throw new \LogicException('Only pending channel registrations can be rejected.');
         }
         if ('' === trim($reason)) {
-            throw new InvalidArgumentException('A rejection reason is required.');
+            throw new \InvalidArgumentException('A rejection reason is required.');
         }
 
         $this->status = ChannelStatus::Rejected;
@@ -447,7 +444,7 @@ class RegisteredChannel
         return $this->suspendedReason;
     }
 
-    public function getSuspendedUntil(): ?DateTimeImmutable
+    public function getSuspendedUntil(): ?\DateTimeImmutable
     {
         return $this->suspendedUntil;
     }
@@ -462,10 +459,10 @@ class RegisteredChannel
         return ChannelStatus::PendingDeletion === $this->status;
     }
 
-    public function markPendingDeletion(DateTimeImmutable $at): void
+    public function markPendingDeletion(\DateTimeImmutable $at): void
     {
         if (ChannelStatus::Active !== $this->status) {
-            throw new LogicException('Only active channels can be marked for deletion.');
+            throw new \LogicException('Only active channels can be marked for deletion.');
         }
 
         $this->status = ChannelStatus::PendingDeletion;
@@ -475,14 +472,14 @@ class RegisteredChannel
     public function restoreFromPendingDeletion(): void
     {
         if (!$this->isPendingDeletion()) {
-            throw new LogicException('Only channels pending deletion can be restored.');
+            throw new \LogicException('Only channels pending deletion can be restored.');
         }
 
         $this->status = ChannelStatus::Active;
         $this->pendingDeletionAt = null;
     }
 
-    public function isCurrentlySuspended(DateTimeImmutable $now): bool
+    public function isCurrentlySuspended(\DateTimeImmutable $now): bool
     {
         if (!$this->isSuspended()) {
             return false;
@@ -495,10 +492,10 @@ class RegisteredChannel
         return $now < $this->suspendedUntil;
     }
 
-    public function suspend(string $reason, ?DateTimeImmutable $until = null): void
+    public function suspend(string $reason, ?\DateTimeImmutable $until = null): void
     {
         if ($this->isPendingRegistration() || $this->isRejectedRegistration()) {
-            throw new LogicException('Registration requests cannot be suspended.');
+            throw new \LogicException('Registration requests cannot be suspended.');
         }
 
         $this->status = ChannelStatus::Suspended;
@@ -509,7 +506,7 @@ class RegisteredChannel
     public function unsuspend(): void
     {
         if ($this->isPendingRegistration() || $this->isRejectedRegistration()) {
-            throw new LogicException('Registration requests cannot be unsuspended.');
+            throw new \LogicException('Registration requests cannot be unsuspended.');
         }
 
         $this->status = ChannelStatus::Active;
@@ -540,7 +537,7 @@ class RegisteredChannel
     public function updateForbiddenReason(string $reason): void
     {
         if (!$this->isForbidden()) {
-            throw new LogicException('Cannot update forbidden reason on a non-forbidden channel.');
+            throw new \LogicException('Cannot update forbidden reason on a non-forbidden channel.');
         }
 
         $this->forbiddenReason = $reason;
@@ -559,7 +556,7 @@ class RegisteredChannel
     private static function assertValidEntrymsg(string $entrymsg): void
     {
         if (strlen($entrymsg) > self::ENTRYMSG_MAX_LENGTH) {
-            throw new InvalidArgumentException(sprintf('Entry message cannot exceed %d characters.', self::ENTRYMSG_MAX_LENGTH));
+            throw new \InvalidArgumentException(sprintf('Entry message cannot exceed %d characters.', self::ENTRYMSG_MAX_LENGTH));
         }
     }
 }

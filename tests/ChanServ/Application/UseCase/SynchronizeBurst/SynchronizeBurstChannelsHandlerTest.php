@@ -58,7 +58,6 @@ use App\ChanServ\Domain\ValueObject\ChannelRank;
 use App\Irc\Application\Port\In\BurstCompletePort;
 use App\Irc\Application\PublishedEvent\UserDepartedChannelEvent;
 use App\Tests\NickServ\Support\NegotiatedCaseMapping;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -73,7 +72,7 @@ final class SynchronizeBurstChannelsHandlerTest extends TestCase
     #[Test]
     public function appliesEachPageInAuthorizedOrderUsingBulkData(): void
     {
-        $now = new DateTimeImmutable('2026-01-01 UTC');
+        $now = new \DateTimeImmutable('2026-01-01 UTC');
         $forbidden = $this->createStub(RegisteredChannel::class);
         $forbidden->method('getName')->willReturn('#forbidden');
         $forbidden->method('getId')->willReturn(1);
@@ -143,7 +142,7 @@ final class SynchronizeBurstChannelsHandlerTest extends TestCase
     public function registrationModesAreReconciledOnceAfterEveryPage(): void
     {
         // Intended since #166: +r/+P reconciliation runs after all pages, not once per page.
-        $now = new DateTimeImmutable('2026-01-01 UTC');
+        $now = new \DateTimeImmutable('2026-01-01 UTC');
         $first = $this->createStub(RegisteredChannel::class);
         $first->method('getName')->willReturn('#first');
         $first->method('getId')->willReturn(1);
@@ -179,7 +178,7 @@ final class SynchronizeBurstChannelsHandlerTest extends TestCase
     #[Test]
     public function akickRemovesOverlappingMemberBeforeNojoin(): void
     {
-        $now = new DateTimeImmutable('2026-01-01 UTC');
+        $now = new \DateTimeImmutable('2026-01-01 UTC');
         $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('getName')->willReturn('#active');
         $channel->method('getId')->willReturn(2);
@@ -272,7 +271,7 @@ final class SynchronizeBurstChannelsHandlerTest extends TestCase
         $topic = $this->createMock(ApplyStoredChannelTopicHandlerInterface::class);
         $topic->expects(self::once())->method('synchronizeKnownChannel')->with($channel);
         $activity = $this->createMock(BurstChannelActivity::class);
-        $activity->expects(self::once())->method('touchByIds')->with([], self::isInstanceOf(DateTimeImmutable::class));
-        new SynchronizeBurstChannelsHandler($pages, $network, $accounts, $this->createStub(ForbiddenChannelEnforcement::class), $akicks, $nojoin, $rankNetwork, $ranks, $mlockPolicies, $mlock, $topic, $this->createStub(ChannelRegistrationLifecycle::class), new BurstRankEventScope(NegotiatedCaseMapping::chanServ()), $activity)->handle(new DateTimeImmutable());
+        $activity->expects(self::once())->method('touchByIds')->with([], self::isInstanceOf(\DateTimeImmutable::class));
+        new SynchronizeBurstChannelsHandler($pages, $network, $accounts, $this->createStub(ForbiddenChannelEnforcement::class), $akicks, $nojoin, $rankNetwork, $ranks, $mlockPolicies, $mlock, $topic, $this->createStub(ChannelRegistrationLifecycle::class), new BurstRankEventScope(NegotiatedCaseMapping::chanServ()), $activity)->handle(new \DateTimeImmutable());
     }
 }

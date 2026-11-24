@@ -11,7 +11,6 @@ use App\NickServ\Application\Port\Out\NickServEventPublisher;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\PublishedEvent\NickUnsuspendedEvent;
 use App\NickServ\Domain\Entity\RegisteredNick;
-use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -19,8 +18,6 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
-use ReflectionClass;
-use RuntimeException;
 
 use function array_fill;
 use function array_filter;
@@ -72,10 +69,10 @@ final class UnsuspendExpiredSuspensionsTaskTest extends TestCase
     public function runUnsuspendsExpiredSuspensionsAndLogsToDebug(): void
     {
         $nick1 = $this->createNickWithId('Nick1', 1);
-        $nick1->suspend('Expired ban', new DateTimeImmutable('-1 hour'));
+        $nick1->suspend('Expired ban', new \DateTimeImmutable('-1 hour'));
 
         $nick2 = $this->createNickWithId('Nick2', 2);
-        $nick2->suspend('Expired ban', new DateTimeImmutable('-1 day'));
+        $nick2->suspend('Expired ban', new \DateTimeImmutable('-1 day'));
 
         $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $nickRepo->expects(self::once())->method('findExpiredSuspensions')->with($this->now(), 100)->willReturn([$nick1, $nick2]);
@@ -122,8 +119,8 @@ final class UnsuspendExpiredSuspensionsTaskTest extends TestCase
             $this->createNickWithId('Sus1', 1),
             $this->createNickWithId('Sus2', 2),
         ];
-        $nicks[0]->suspend('Ban', new DateTimeImmutable('-1 hour'));
-        $nicks[1]->suspend('Ban', new DateTimeImmutable('-1 hour'));
+        $nicks[0]->suspend('Ban', new \DateTimeImmutable('-1 hour'));
+        $nicks[1]->suspend('Ban', new \DateTimeImmutable('-1 hour'));
 
         $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $nickRepo->expects(self::once())->method('findExpiredSuspensions')->with($this->now(), 2)->willReturn($nicks);
@@ -151,9 +148,9 @@ final class UnsuspendExpiredSuspensionsTaskTest extends TestCase
     public function runClearsEntityManagerBetweenBatches(): void
     {
         $nick1 = $this->createNickWithId('Sus1', 1);
-        $nick1->suspend('Ban', new DateTimeImmutable('-1 hour'));
+        $nick1->suspend('Ban', new \DateTimeImmutable('-1 hour'));
         $nick2 = $this->createNickWithId('Sus2', 2);
-        $nick2->suspend('Ban', new DateTimeImmutable('-1 hour'));
+        $nick2->suspend('Ban', new \DateTimeImmutable('-1 hour'));
 
         $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $nickRepo->expects(self::exactly(2))->method('findExpiredSuspensions')->with($this->now(), 1)->willReturnOnConsecutiveCalls([$nick1], [$nick2]);
@@ -197,7 +194,7 @@ final class UnsuspendExpiredSuspensionsTaskTest extends TestCase
     public function runUnsuspendsCorrectNickById(): void
     {
         $nick = $this->createNickWithId('TestNick', 1);
-        $nick->suspend('Expired suspension', new DateTimeImmutable('-1 hour'));
+        $nick->suspend('Expired suspension', new \DateTimeImmutable('-1 hour'));
 
         self::assertTrue($nick->isSuspended());
 
@@ -230,10 +227,10 @@ final class UnsuspendExpiredSuspensionsTaskTest extends TestCase
     public function aSuspensionThatKeepsFailingIsLoggedAndSkippedWhileTheRestOfTheBatchIsLifted(): void
     {
         $failing = $this->createNickWithId('Broken', 1);
-        $failing->suspend('Ban', new DateTimeImmutable('-1 hour'));
+        $failing->suspend('Ban', new \DateTimeImmutable('-1 hour'));
         $healthy = $this->createNickWithId('Healthy', 2);
-        $healthy->suspend('Ban', new DateTimeImmutable('-1 hour'));
-        $failure = new RuntimeException('database rejected the update');
+        $healthy->suspend('Ban', new \DateTimeImmutable('-1 hour'));
+        $failure = new \RuntimeException('database rejected the update');
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepo->method('findExpiredSuspensions')->willReturn([$failing, $healthy]);
         $nickRepo->method('save')->willReturnCallback(static function (RegisteredNick $nick) use ($failing, $failure): void {
@@ -273,12 +270,12 @@ final class UnsuspendExpiredSuspensionsTaskTest extends TestCase
         $third = $this->createNickWithId('Third', 3);
         $fourth = $this->createNickWithId('Fourth', 4);
         foreach ([$failing, $second, $third, $fourth] as $nick) {
-            $nick->suspend('Ban', new DateTimeImmutable('-1 hour'));
+            $nick->suspend('Ban', new \DateTimeImmutable('-1 hour'));
         }
         $loads = [];
         $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $nickRepo->expects(self::exactly(2))->method('findExpiredSuspensions')
-            ->willReturnCallback(static function (DateTimeImmutable $now, int $limit, int $afterId) use ($failing, $second, $third, $fourth, &$loads): array {
+            ->willReturnCallback(static function (\DateTimeImmutable $now, int $limit, int $afterId) use ($failing, $second, $third, $fourth, &$loads): array {
                 $loads[] = [$limit, $afterId];
 
                 return 1 === count($loads) ? [$failing, $second] : [$third, $fourth];
@@ -287,7 +284,7 @@ final class UnsuspendExpiredSuspensionsTaskTest extends TestCase
         $nickRepo->method('save')->willReturnCallback(static function (RegisteredNick $nick) use ($failing, &$attempts): void {
             $attempts[] = $nick->getNickname();
             if ($nick === $failing) {
-                throw new RuntimeException('database rejected the update');
+                throw new \RuntimeException('database rejected the update');
             }
         });
         $logger = $this->createMock(LoggerInterface::class);
@@ -315,12 +312,12 @@ final class UnsuspendExpiredSuspensionsTaskTest extends TestCase
         $rows = [];
         for ($id = 1; $id <= 101; ++$id) {
             $rows[$id] = $this->createNickWithId('Nick' . $id, $id);
-            $rows[$id]->suspend('Ban', new DateTimeImmutable('-1 hour'));
+            $rows[$id]->suspend('Ban', new \DateTimeImmutable('-1 hour'));
         }
         $pages = [];
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepo->method('findExpiredSuspensions')
-            ->willReturnCallback(static function (DateTimeImmutable $now, int $limit, int $afterId = 0) use (&$rows, &$pages): array {
+            ->willReturnCallback(static function (\DateTimeImmutable $now, int $limit, int $afterId = 0) use (&$rows, &$pages): array {
                 $pages[] = [$limit, $afterId];
 
                 return array_slice(array_values(array_filter($rows, static fn (RegisteredNick $nick): bool => $nick->getId() > $afterId)), 0, $limit);
@@ -329,9 +326,9 @@ final class UnsuspendExpiredSuspensionsTaskTest extends TestCase
         $nickRepo->method('save')->willReturnCallback(static function (RegisteredNick $nick) use (&$rows, &$attempts): void {
             $attempts[] = $nick->getId();
             if ($nick->getId() <= 100) {
-                $nick->suspend('Ban', new DateTimeImmutable('-1 hour'));
+                $nick->suspend('Ban', new \DateTimeImmutable('-1 hour'));
 
-                throw new RuntimeException('database rejected the update');
+                throw new \RuntimeException('database rejected the update');
             }
             unset($rows[$nick->getId()]);
         });
@@ -357,10 +354,10 @@ final class UnsuspendExpiredSuspensionsTaskTest extends TestCase
     public function aSaveFailureThatClosesTheEntityManagerStopsTheBatchAndFailsTheTask(): void
     {
         $failing = $this->createNickWithId('Broken', 1);
-        $failing->suspend('Ban', new DateTimeImmutable('-1 hour'));
+        $failing->suspend('Ban', new \DateTimeImmutable('-1 hour'));
         $healthy = $this->createNickWithId('Healthy', 2);
-        $healthy->suspend('Ban', new DateTimeImmutable('-1 hour'));
-        $failure = new RuntimeException('flush failed');
+        $healthy->suspend('Ban', new \DateTimeImmutable('-1 hour'));
+        $failure = new \RuntimeException('flush failed');
         $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $nickRepo->method('findExpiredSuspensions')->willReturn([$failing, $healthy]);
         $nickRepo->expects(self::once())->method('save')->with($failing)->willThrowException($failure);
@@ -387,7 +384,7 @@ final class UnsuspendExpiredSuspensionsTaskTest extends TestCase
         $pages = [];
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepo->method('findExpiredSuspensions')
-            ->willReturnCallback(static function (DateTimeImmutable $now, int $limit, int $afterId) use ($nicks, &$pages): array {
+            ->willReturnCallback(static function (\DateTimeImmutable $now, int $limit, int $afterId) use ($nicks, &$pages): array {
                 $pages[] = $afterId;
 
                 return array_values(array_filter($nicks, static fn (RegisteredNick $nick): bool => $nick->getId() > $afterId));
@@ -399,7 +396,7 @@ final class UnsuspendExpiredSuspensionsTaskTest extends TestCase
             if ('Second' === $nick->getNickname() && 2 === count($attempts)) {
                 $open = false;
 
-                throw new RuntimeException('flush failed');
+                throw new \RuntimeException('flush failed');
             }
         });
         $em = $this->createStub(EntityManagerInterface::class);
@@ -411,7 +408,7 @@ final class UnsuspendExpiredSuspensionsTaskTest extends TestCase
         try {
             $task->run();
             self::fail('The closed EntityManager must fail the task.');
-        } catch (RuntimeException $e) {
+        } catch (\RuntimeException $e) {
             self::assertSame('flush failed', $e->getMessage());
         }
         $open = true;
@@ -428,7 +425,7 @@ final class UnsuspendExpiredSuspensionsTaskTest extends TestCase
         $pages = [];
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepo->method('findExpiredSuspensions')
-            ->willReturnCallback(static function (DateTimeImmutable $now, int $limit, int $afterId) use ($nicks, &$pages): array {
+            ->willReturnCallback(static function (\DateTimeImmutable $now, int $limit, int $afterId) use ($nicks, &$pages): array {
                 $pages[] = $afterId;
 
                 return array_values(array_filter($nicks, static fn (RegisteredNick $nick): bool => $nick->getId() > $afterId));
@@ -441,7 +438,7 @@ final class UnsuspendExpiredSuspensionsTaskTest extends TestCase
             if (!$this->databaseUp) {
                 $open = false;
 
-                throw new RuntimeException('connection refused');
+                throw new \RuntimeException('connection refused');
             }
         });
         $errors = [];
@@ -452,7 +449,7 @@ final class UnsuspendExpiredSuspensionsTaskTest extends TestCase
         $connection = $this->createStub(Connection::class);
         $connection->method('fetchOne')->willReturnCallback(function (): int {
             if (!$this->databaseUp) {
-                throw new RuntimeException('connection refused');
+                throw new \RuntimeException('connection refused');
             }
 
             return 1;
@@ -468,7 +465,7 @@ final class UnsuspendExpiredSuspensionsTaskTest extends TestCase
         for ($cycle = 0; $cycle < 4; ++$cycle) {
             try {
                 $task->run();
-            } catch (RuntimeException) {
+            } catch (\RuntimeException) {
                 ++$failures;
             }
             $open = true;
@@ -489,7 +486,7 @@ final class UnsuspendExpiredSuspensionsTaskTest extends TestCase
         $pages = [];
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepo->method('findExpiredSuspensions')
-            ->willReturnCallback(static function (DateTimeImmutable $now, int $limit, int $afterId) use ($nicks, &$pages): array {
+            ->willReturnCallback(static function (\DateTimeImmutable $now, int $limit, int $afterId) use ($nicks, &$pages): array {
                 $pages[] = $afterId;
 
                 return array_values(array_filter($nicks, static fn (RegisteredNick $nick): bool => $nick->getId() > $afterId));
@@ -501,7 +498,7 @@ final class UnsuspendExpiredSuspensionsTaskTest extends TestCase
             if ('Poison' === $nick->getNickname()) {
                 $open = false;
 
-                throw new RuntimeException('flush failed');
+                throw new \RuntimeException('flush failed');
             }
         });
         $errors = [];
@@ -519,7 +516,7 @@ final class UnsuspendExpiredSuspensionsTaskTest extends TestCase
         for ($cycle = 0; $cycle < 4; ++$cycle) {
             try {
                 $task->run();
-            } catch (RuntimeException) {
+            } catch (\RuntimeException) {
                 ++$failures;
             }
             $open = true;
@@ -541,7 +538,7 @@ final class UnsuspendExpiredSuspensionsTaskTest extends TestCase
         $pages = [];
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepo->method('findExpiredSuspensions')
-            ->willReturnCallback(function (DateTimeImmutable $now, int $limit, int $afterId) use (&$pages): array {
+            ->willReturnCallback(function (\DateTimeImmutable $now, int $limit, int $afterId) use (&$pages): array {
                 $pages[] = $afterId;
                 $nicks = [$this->createNickWithId('Poison', 1), $this->createNickWithId('Healthy', 2)];
 
@@ -559,7 +556,7 @@ final class UnsuspendExpiredSuspensionsTaskTest extends TestCase
                 $open = false;
             }
 
-            throw new RuntimeException('flush failed');
+            throw new \RuntimeException('flush failed');
         });
         $errors = [];
         $logger = $this->createStub(LoggerInterface::class);
@@ -576,7 +573,7 @@ final class UnsuspendExpiredSuspensionsTaskTest extends TestCase
         for ($cycle = 0; $cycle < 7; ++$cycle) {
             try {
                 $task->run();
-            } catch (RuntimeException) {
+            } catch (\RuntimeException) {
                 ++$failures;
             }
             $open = true;
@@ -599,7 +596,7 @@ final class UnsuspendExpiredSuspensionsTaskTest extends TestCase
         $pages = [];
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepo->method('findExpiredSuspensions')
-            ->willReturnCallback(static function (DateTimeImmutable $now, int $limit, int $afterId) use ($nicks, &$pages): array {
+            ->willReturnCallback(static function (\DateTimeImmutable $now, int $limit, int $afterId) use ($nicks, &$pages): array {
                 $pages[] = $afterId;
 
                 return array_values(array_filter($nicks, static fn (RegisteredNick $nick): bool => $nick->getId() > $afterId));
@@ -610,7 +607,7 @@ final class UnsuspendExpiredSuspensionsTaskTest extends TestCase
             if ('Flaky' === $nick->getNickname() && 3 !== ++$flakyAttempts) {
                 $open = false;
 
-                throw new RuntimeException('lock wait timeout');
+                throw new \RuntimeException('lock wait timeout');
             }
         });
         $em = $this->createStub(EntityManagerInterface::class);
@@ -622,7 +619,7 @@ final class UnsuspendExpiredSuspensionsTaskTest extends TestCase
         for ($cycle = 0; $cycle < 6; ++$cycle) {
             try {
                 $task->run();
-            } catch (RuntimeException) {
+            } catch (\RuntimeException) {
             }
             $open = true;
         }
@@ -635,10 +632,10 @@ final class UnsuspendExpiredSuspensionsTaskTest extends TestCase
     public function aFailureAfterTheUnsuspendWasSavedIsLoggedAsUnsuspendedAndTheBatchContinues(): void
     {
         $first = $this->createNickWithId('First', 1);
-        $first->suspend('Ban', new DateTimeImmutable('-1 hour'));
+        $first->suspend('Ban', new \DateTimeImmutable('-1 hour'));
         $second = $this->createNickWithId('Second', 2);
-        $second->suspend('Ban', new DateTimeImmutable('-1 hour'));
-        $failure = new RuntimeException('debug channel unavailable');
+        $second->suspend('Ban', new \DateTimeImmutable('-1 hour'));
+        $failure = new \RuntimeException('debug channel unavailable');
         $saved = [];
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepo->method('findExpiredSuspensions')->willReturn([$first, $second]);
@@ -667,10 +664,10 @@ final class UnsuspendExpiredSuspensionsTaskTest extends TestCase
 
     private function createNickWithId(string $nickname, int $id): RegisteredNick
     {
-        $nick = RegisteredNick::createPending($nickname, 'hash', $nickname . '@example.com', 'en', new DateTimeImmutable('+1 hour'), new DateTimeImmutable());
+        $nick = RegisteredNick::createPending($nickname, 'hash', $nickname . '@example.com', 'en', new \DateTimeImmutable('+1 hour'), new \DateTimeImmutable());
         $nick->activate();
 
-        $reflection = new ReflectionClass(RegisteredNick::class);
+        $reflection = new \ReflectionClass(RegisteredNick::class);
         $idProp = $reflection->getProperty('id');
         $idProp->setValue($nick, $id);
 
@@ -685,8 +682,8 @@ final class UnsuspendExpiredSuspensionsTaskTest extends TestCase
         return $clock;
     }
 
-    private function now(): DateTimeImmutable
+    private function now(): \DateTimeImmutable
     {
-        return new DateTimeImmutable('2026-09-06 12:00:00 UTC');
+        return new \DateTimeImmutable('2026-09-06 12:00:00 UTC');
     }
 }

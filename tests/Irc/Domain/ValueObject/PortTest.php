@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Tests\Irc\Domain\ValueObject;
 
 use App\Irc\Domain\ValueObject\Port;
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -25,7 +24,7 @@ final class PortTest extends TestCase
     #[Test]
     public function portZeroThrows(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('out of the valid range');
 
         new Port(0);
@@ -34,7 +33,7 @@ final class PortTest extends TestCase
     #[Test]
     public function portOver65535Throws(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('out of the valid range');
 
         new Port(65536);

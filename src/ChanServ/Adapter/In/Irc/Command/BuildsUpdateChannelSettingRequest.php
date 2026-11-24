@@ -8,7 +8,6 @@ use App\ChanServ\Adapter\In\Irc\ChanServContext;
 use App\ChanServ\Application\UseCase\UpdateSetting\ChannelSetting;
 use App\ChanServ\Application\UseCase\UpdateSetting\UpdateChannelSetting;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
-use DateTimeImmutable;
 
 use function base64_decode;
 use function inet_ntop;
@@ -35,7 +34,7 @@ trait BuildsUpdateChannelSettingRequest
             actorAccountId: $context->senderAccount?->id,
             actorIp: $this->decodeSettingIp($sender->ipBase64),
             actorHost: sprintf('%s@%s', $sender->ident, $sender->hostname),
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
             hasEmailDomainBypass: $context->isLevelFounder,
         );
     }

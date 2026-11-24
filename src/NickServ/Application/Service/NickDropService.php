@@ -14,7 +14,6 @@ use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\PublishedEvent\NickDropCleanupEvent;
 use App\NickServ\Application\PublishedEvent\NickDropEvent;
 use App\NickServ\Domain\Entity\RegisteredNick;
-use DateTimeImmutable;
 
 use function sprintf;
 
@@ -48,7 +47,7 @@ readonly class NickDropService
      */
     public function softDropNick(
         RegisteredNick $account,
-        DateTimeImmutable $occurredAt,
+        \DateTimeImmutable $occurredAt,
         ?string $operatorNick = null,
     ): void {
         $nickname = $account->getNickname();
@@ -113,7 +112,7 @@ readonly class NickDropService
      */
     public function hardDropNick(
         RegisteredNick $account,
-        DateTimeImmutable $occurredAt,
+        \DateTimeImmutable $occurredAt,
         string $reason = 'manual',
         ?string $operatorNick = null,
     ): void {
@@ -167,7 +166,7 @@ readonly class NickDropService
 
     public function dropNick(
         RegisteredNick $account,
-        DateTimeImmutable $occurredAt,
+        \DateTimeImmutable $occurredAt,
         string $reason = 'manual',
         ?string $operatorNick = null,
     ): void {

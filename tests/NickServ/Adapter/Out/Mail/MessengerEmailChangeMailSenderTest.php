@@ -10,7 +10,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-use RuntimeException;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -51,7 +50,7 @@ final class MessengerEmailChangeMailSenderTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturn('translated');
         $dispatcher = $this->createMock(MessageBusInterface::class);
-        $dispatcher->expects(self::once())->method('dispatch')->willThrowException(new RuntimeException('transport failed'));
+        $dispatcher->expects(self::once())->method('dispatch')->willThrowException(new \RuntimeException('transport failed'));
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects(self::once())->method('error')->with(
             'NickServ SET EMAIL: failed to dispatch token email',
@@ -60,7 +59,7 @@ final class MessengerEmailChangeMailSenderTest extends TestCase
 
                 return 'Nick' === $context['nick']
                     && 'current@example.com' === $context['recipient']
-                    && RuntimeException::class === $context['exception_class']
+                    && \RuntimeException::class === $context['exception_class']
                     && !str_contains($serialized, 'safe-token')
                     && !str_contains($serialized, 'new@example.com');
             }),
@@ -68,7 +67,7 @@ final class MessengerEmailChangeMailSenderTest extends TestCase
 
         $sender = new MessengerEmailChangeMailSender($dispatcher, $translator, $logger, 'NickServ');
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('transport failed');
         $sender->sendVerification('current@example.com', 'Nick', 'new@example.com', 'safe-token', 'en');
     }

@@ -28,8 +28,6 @@ use App\Shared\Adapter\In\Irc\Presentation\Appearance;
 use App\Shared\Adapter\In\Irc\Presentation\FixedStyleProvider;
 use App\Shared\Adapter\In\Irc\Presentation\IrcRenderer;
 use App\Shared\Adapter\In\Irc\Presentation\PresentationStyle;
-use DateTimeImmutable;
-use DateTimeZone;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -223,7 +221,7 @@ final class OperServServiceTest extends TestCase
         self::assertSame($registry, $context->commandRegistry());
         self::assertSame('OperServ', $context->getBotName());
         self::assertSame('key', $context->trans('key'));
-        self::assertSame('01/01/2026 13:00 CET', $context->formatDate(new DateTimeImmutable('2026-01-01 12:00:00', new DateTimeZone('UTC'))));
+        self::assertSame('01/01/2026 13:00 CET', $context->formatDate(new \DateTimeImmutable('2026-01-01 12:00:00', new \DateTimeZone('UTC'))));
         self::assertSame('—', $context->formatDate(null));
         self::assertSame([['001AAA', 'raw', 'NOTICE']], $notifier->messages);
     }

@@ -10,7 +10,6 @@ use App\Irc\Application\Port\Out\AntifloodClock;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
 
 #[CoversClass(AntifloodPruner::class)]
 final class AntifloodPrunerTest extends TestCase
@@ -32,7 +31,7 @@ final class AntifloodPrunerTest extends TestCase
         $registry = new AntifloodRegistry();
 
         $oldTimestamp = self::NOW - 3600;
-        $reflection = new ReflectionClass($registry);
+        $reflection = new \ReflectionClass($registry);
         $property = $reflection->getProperty('timestampsByKey');
         $property->setValue($registry, ['key1' => [$oldTimestamp]]);
 

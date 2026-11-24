@@ -11,7 +11,6 @@ use App\ChanServ\Domain\ValueObject\ModeCapability;
 use App\ChanServ\Domain\ValueObject\ModeChange;
 use App\ChanServ\Domain\ValueObject\ModeChangeAction;
 use App\ChanServ\Domain\ValueObject\ModeName;
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -122,7 +121,7 @@ final class MlockReconciliationPolicyTest extends TestCase
     #[Test]
     public function modeNameCannotBeEmpty(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         new ModeName('');
     }
 

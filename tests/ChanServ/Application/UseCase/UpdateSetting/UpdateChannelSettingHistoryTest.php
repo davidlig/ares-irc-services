@@ -15,12 +15,10 @@ use App\ChanServ\Application\UseCase\UpdateSetting\UpdateChannelSettingHandler;
 use App\ChanServ\Domain\Entity\ChannelHistory;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\Shared\Application\Port\EventBusInterface;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionProperty;
 
 #[CoversClass(UpdateChannelSettingHandler::class)]
 final class UpdateChannelSettingHistoryTest extends TestCase
@@ -42,13 +40,13 @@ final class UpdateChannelSettingHistoryTest extends TestCase
     #[DataProvider('recordedSettings')]
     public function successfulSettingRecordsOnlyActorAndApprovedAction(ChannelSetting $setting, string $value, string $action): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable('2026-01-01'), '#test', 1, 'Initial');
-        new ReflectionProperty(RegisteredChannel::class, 'id')->setValue($channel, 42);
+        $channel = RegisteredChannel::register(new \DateTimeImmutable('2026-01-01'), '#test', 1, 'Initial');
+        new \ReflectionProperty(RegisteredChannel::class, 'id')->setValue($channel, 42);
         $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $saved = null;
         $history = $this->createMock(ChannelHistoryRepositoryInterface::class);
         $history->expects(self::once())->method('save')->willReturnCallback(static function (ChannelHistory $entry) use (&$saved): void { $saved = $entry; });
-        $now = new DateTimeImmutable('2026-01-02');
+        $now = new \DateTimeImmutable('2026-01-02');
 
         $handler = new UpdateChannelSettingHandler(
             $this->createStub(EmailDomainPolicy::class),
@@ -71,8 +69,8 @@ final class UpdateChannelSettingHistoryTest extends TestCase
     #[Test]
     public function invalidSettingDoesNotRecordHistory(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable('2026-01-01'), '#test', 1, 'Initial');
-        new ReflectionProperty(RegisteredChannel::class, 'id')->setValue($channel, 42);
+        $channel = RegisteredChannel::register(new \DateTimeImmutable('2026-01-01'), '#test', 1, 'Initial');
+        new \ReflectionProperty(RegisteredChannel::class, 'id')->setValue($channel, 42);
         $history = $this->createMock(ChannelHistoryRepositoryInterface::class);
         $history->expects(self::never())->method('save');
         $handler = new UpdateChannelSettingHandler(
@@ -91,7 +89,7 @@ final class UpdateChannelSettingHistoryTest extends TestCase
             7,
             '192.0.2.1',
             'ident@host',
-            new DateTimeImmutable('2026-01-02'),
+            new \DateTimeImmutable('2026-01-02'),
         ));
 
         self::assertSame('InvalidEmail', $result->outcome->name);

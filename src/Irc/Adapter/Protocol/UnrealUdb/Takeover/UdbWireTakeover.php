@@ -29,12 +29,8 @@ use Doctrine\DBAL\ParameterType;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\EntityManagerInterface;
-use Generator;
-use LogicException;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
-use Throwable;
-use UnexpectedValueException;
 
 use function array_unique;
 use function array_values;
@@ -268,8 +264,8 @@ final class UdbWireTakeover
             $same = $prior['block'] === $block->letter()
                 && $prior['operation'] === $frame->kind->value
                 && $prior['path'] === $path
-                && (null === $prior['value'] ? null : $this->sqlBinary($prior['value'])) === (null !== $value ? $value->logicalValue() : null)
-                && (null === $value ? null : self::sqlInt($prior['value_kind'])) === (null !== $value ? $value->kind->value : null);
+                && (null === $prior['value'] ? null : $this->sqlBinary($prior['value'])) === ($value?->logicalValue())
+                && (null === $value ? null : self::sqlInt($prior['value_kind'])) === ($value?->kind->value);
 
             return $same ? UdbWireTakeoverOutcome::ignored() : UdbWireTakeoverOutcome::error($block, $this->roundId ?? UdbUnsignedDecimal::fromInt(1), $frame->kind->value, 5);
         }
@@ -293,7 +289,7 @@ final class UdbWireTakeover
     public function finalize(): string
     {
         if (!$this->isComplete() || !$this->tailReplayComplete || null === $this->generationId || null === $this->rootSid || null === $this->rootEpoch || null === $this->roundWatermark) {
-            throw new LogicException('Cannot finalize an incomplete UDB wire takeover round.');
+            throw new \LogicException('Cannot finalize an incomplete UDB wire takeover round.');
         }
 
         $checkpoint = new UdbDatasetCheckpoint(new UdbStreamOrigin($this->rootSid, $this->rootEpoch), $this->tailWatermark ?? $this->roundWatermark);
@@ -512,7 +508,7 @@ final class UdbWireTakeover
     private function stageReusableBlock(UdbBlock $block, UdbUnsignedDecimal $roundId, string $digest, int $count): void
     {
         if (null === $this->generationId || null === $this->roundWatermark) {
-            throw new LogicException('A reusable UDB block has no staged generation checkpoint.');
+            throw new \LogicException('A reusable UDB block has no staged generation checkpoint.');
         }
         $connection = $this->em->getConnection();
         $connection->beginTransaction();
@@ -549,7 +545,7 @@ final class UdbWireTakeover
                 'complete' => true,
             ]);
             $connection->commit();
-        } catch (Throwable $exception) {
+        } catch (\Throwable $exception) {
             if ($connection->isTransactionActive()) {
                 $connection->rollBack();
             }
@@ -596,7 +592,7 @@ final class UdbWireTakeover
                 'complete' => false,
             ]);
             $connection->commit();
-        } catch (Throwable $exception) {
+        } catch (\Throwable $exception) {
             if ($connection->isTransactionActive()) {
                 $connection->rollBack();
             }
@@ -655,7 +651,7 @@ final class UdbWireTakeover
                 'value' => $frame->typedValue->logicalValue(),
                 'value_kind' => $frame->typedValue->kind->value,
             ]);
-        } catch (Throwable) {
+        } catch (\Throwable) {
             return $this->abortWithError($block, $roundId, 'PUT', 'duplicate or unpersistable path');
         }
         ++$stage['count'];
@@ -723,7 +719,7 @@ final class UdbWireTakeover
         try {
             $this->stageUpdate('udb_staged_transfers', ['complete' => true], ['generation_id' => $this->generationId, 'block' => $block->letter()]);
             $connection->commit();
-        } catch (Throwable $exception) {
+        } catch (\Throwable $exception) {
             if ($connection->isTransactionActive()) {
                 $connection->rollBack();
             }
@@ -784,19 +780,19 @@ final class UdbWireTakeover
                     $lastId = self::sqlInt($row['id']);
                     $block = UdbBlock::fromLetter(self::sqlString($row['block']));
                     if (null === $block) {
-                        throw new LogicException('A staged mutation has an invalid block.');
+                        throw new \LogicException('A staged mutation has an invalid block.');
                     }
                     $this->applyTailMutation($block, self::sqlString($row['operation']), self::sqlString($row['path']), $row['value'], $row['value_kind']);
                 }
             }
             foreach (UdbBlock::all() as $block) {
                 if (!new UdbSnapshotValidator()->validate($block, $this->stagedValidationRows($block))) {
-                    throw new LogicException('A replayed UDB block failed typed aggregate validation.');
+                    throw new \LogicException('A replayed UDB block failed typed aggregate validation.');
                 }
             }
             $connection->commit();
             $this->tailReplayComplete = true;
-        } catch (Throwable $exception) {
+        } catch (\Throwable $exception) {
             if ($connection->isTransactionActive()) {
                 $connection->rollBack();
             }
@@ -824,7 +820,7 @@ final class UdbWireTakeover
                 $this->insertMutation($generationId, $mutation);
             }
             $connection->commit();
-        } catch (Throwable $exception) {
+        } catch (\Throwable $exception) {
             if ($connection->isTransactionActive()) {
                 $connection->rollBack();
             }
@@ -895,12 +891,12 @@ final class UdbWireTakeover
      */
     private function valueFromRow(array $row): UdbValue
     {
-        $kind = UdbValueKind::tryFrom($row['value_kind']) ?? throw new LogicException('A persisted staged record has an unknown typed value.');
+        $kind = UdbValueKind::tryFrom($row['value_kind']) ?? throw new \LogicException('A persisted staged record has an unknown typed value.');
 
         return match ($kind) {
             UdbValueKind::None => UdbValue::none(),
             UdbValueKind::String => UdbValue::string($row['value']),
-            UdbValueKind::Number => UdbValue::number(UdbUnsignedDecimal::parse(substr($row['value'], 1)) ?? throw new LogicException('A persisted staged number is malformed.')),
+            UdbValueKind::Number => UdbValue::number(UdbUnsignedDecimal::parse(substr($row['value'], 1)) ?? throw new \LogicException('A persisted staged number is malformed.')),
         };
     }
 
@@ -971,7 +967,7 @@ final class UdbWireTakeover
     private function applyTailMutation(UdbBlock $block, string $operation, string $path, mixed $logicalValue, mixed $valueKind): void
     {
         if (null === $this->generationId) {
-            throw new LogicException('Cannot replay mutations without a staged generation.');
+            throw new \LogicException('Cannot replay mutations without a staged generation.');
         }
         $connection = $this->em->getConnection();
         if ('DRP' === $operation) {
@@ -981,26 +977,26 @@ final class UdbWireTakeover
         }
 
         if ('INS' === $operation) {
-            $kind = UdbValueKind::tryFrom(self::sqlInt($valueKind)) ?? throw new LogicException('A staged INS has an invalid value kind.');
+            $kind = UdbValueKind::tryFrom(self::sqlInt($valueKind)) ?? throw new \LogicException('A staged INS has an invalid value kind.');
             $value = match ($kind) {
                 UdbValueKind::None => UdbValue::none(),
                 UdbValueKind::String => UdbValue::string($this->sqlBinary($logicalValue)),
-                UdbValueKind::Number => UdbValue::number(UdbUnsignedDecimal::parse(substr($this->sqlBinary($logicalValue), 1)) ?? throw new LogicException('A staged INS has a malformed number.')),
+                UdbValueKind::Number => UdbValue::number(UdbUnsignedDecimal::parse(substr($this->sqlBinary($logicalValue), 1)) ?? throw new \LogicException('A staged INS has a malformed number.')),
             };
             if (!$this->validTypedPath($block, $path, $value)) {
-                throw new LogicException('A staged INS is not valid for its typed schema.');
+                throw new \LogicException('A staged INS is not valid for its typed schema.');
             }
             $identityPath = UdbRecord::identity($path, $block->letter());
             $identityHash = UdbRecord::identityHash($identityPath);
             $existing = $connection->fetchAssociative('SELECT id, identity_path FROM udb_staged_records WHERE generation_id = ? AND block = ? AND identity_hash = ?', [$this->generationId, $block->letter(), $identityHash], [ParameterType::STRING, ParameterType::STRING, Types::BINARY]);
             if (false !== $existing && $identityPath !== $this->sqlBinary($existing['identity_path'])) {
-                throw new LogicException('A staged INS has a conflicting binary identity.');
+                throw new \LogicException('A staged INS has a conflicting binary identity.');
             }
             $this->removeStagedNickForbidSiblings($block, $identityPath);
             if (false === $existing) {
                 $count = self::sqlInt($connection->fetchOne('SELECT COUNT(*) FROM udb_staged_records WHERE generation_id = ?', [$this->generationId]));
                 if ($count >= self::MAX_STAGE_RECORDS) {
-                    throw new LogicException('The replayed generation exceeds the staged record limit.');
+                    throw new \LogicException('The replayed generation exceeds the staged record limit.');
                 }
                 $this->stageInsert('udb_staged_records', [
                     'generation_id' => $this->generationId,
@@ -1024,7 +1020,7 @@ final class UdbWireTakeover
         }
 
         if ('DEL' !== $operation) {
-            throw new LogicException('A staged mutation has an unsupported operation.');
+            throw new \LogicException('A staged mutation has an unsupported operation.');
         }
         $identity = UdbRecord::identity($path, $block->letter());
         $prefix = $identity . '::';
@@ -1072,7 +1068,7 @@ final class UdbWireTakeover
     private function validatePersistedStage(UdbBlock $block, bool $validateReceivedDigest = true): void
     {
         if (null === $this->generationId || !isset($this->inventory[$block->letter()])) {
-            throw new LogicException('A complete imported generation is missing one block inventory.');
+            throw new \LogicException('A complete imported generation is missing one block inventory.');
         }
         $transfer = $this->em->getConnection()->fetchAssociative(
             'SELECT digest, expected_count, record_count, watermark, complete, round_id FROM udb_staged_transfers WHERE generation_id = ? AND block = ?',
@@ -1087,19 +1083,19 @@ final class UdbWireTakeover
             || self::sqlInt($transfer['expected_count']) !== $expected['count']
             || self::sqlInt($transfer['record_count']) !== $expected['count']
         ) {
-            throw new LogicException('A persisted UDB block stage does not match its inventory checkpoint.');
+            throw new \LogicException('A persisted UDB block stage does not match its inventory checkpoint.');
         }
         $count = self::sqlInt($this->em->getConnection()->fetchOne('SELECT COUNT(*) FROM udb_staged_records WHERE generation_id = ? AND block = ?', [$this->generationId, $block->letter()]));
         if (($validateReceivedDigest && ($count !== $expected['count'] || UdbChecksum::fromRecords($block, $this->stagedRows($block)) !== $expected['digest']))
             || !new UdbSnapshotValidator()->validate($block, $this->stagedValidationRows($block))) {
-            throw new LogicException('A persisted UDB block stage failed final validation.');
+            throw new \LogicException('A persisted UDB block stage failed final validation.');
         }
     }
 
     private function validateGenerationMetadata(): void
     {
         if (null === $this->generationId || null === $this->roundId || null === $this->roundWatermark || null === $this->rootSid || null === $this->rootEpoch) {
-            throw new LogicException('The imported UDB generation has no complete root checkpoint.');
+            throw new \LogicException('The imported UDB generation has no complete root checkpoint.');
         }
         $row = $this->em->getConnection()->fetchAssociative('SELECT round_id, root_sid, root_epoch, watermark, promoted FROM udb_staged_generations WHERE generation_id = ?', [$this->generationId]);
         if (false === $row
@@ -1109,7 +1105,7 @@ final class UdbWireTakeover
             || $row['root_epoch'] !== $this->rootEpoch
             || $row['watermark'] !== (string) $this->roundWatermark
         ) {
-            throw new LogicException('The staged UDB generation root checkpoint changed before promotion.');
+            throw new \LogicException('The staged UDB generation root checkpoint changed before promotion.');
         }
     }
 
@@ -1121,7 +1117,7 @@ final class UdbWireTakeover
         $connection = $this->em->getConnection();
         $lastId = 0;
         $count = 0;
-        $rows = (function () use ($connection, $block, &$lastId, &$count): Generator {
+        $rows = (function () use ($connection, $block, &$lastId, &$count): \Generator {
             while (true) {
                 $batch = $connection->fetchAllAssociative('SELECT id, path, value, value_kind FROM udb_records WHERE block = ? AND id > ? ORDER BY id ASC LIMIT 256', [$block->letter(), $lastId]);
                 if ([] === $batch) {
@@ -1130,11 +1126,11 @@ final class UdbWireTakeover
                 foreach ($batch as $row) {
                     $lastId = self::sqlInt($row['id']);
                     ++$count;
-                    $kind = UdbValueKind::tryFrom(self::sqlInt($row['value_kind'])) ?? throw new LogicException('A persisted live row has an unknown value kind.');
+                    $kind = UdbValueKind::tryFrom(self::sqlInt($row['value_kind'])) ?? throw new \LogicException('A persisted live row has an unknown value kind.');
                     $value = match ($kind) {
                         UdbValueKind::None => UdbValue::none(),
                         UdbValueKind::String => UdbValue::string($this->sqlBinary($row['value'])),
-                        UdbValueKind::Number => UdbValue::number(UdbUnsignedDecimal::parse(substr($this->sqlBinary($row['value']), 1)) ?? throw new LogicException('A persisted live numeric row is malformed.')),
+                        UdbValueKind::Number => UdbValue::number(UdbUnsignedDecimal::parse(substr($this->sqlBinary($row['value']), 1)) ?? throw new \LogicException('A persisted live numeric row is malformed.')),
                     };
                     yield [self::sqlString($row['path']), $value];
                 }
@@ -1202,7 +1198,7 @@ final class UdbWireTakeover
     {
         $decoded = Type::getType(Types::BINARY)->convertToPHPValue($value, $this->em->getConnection()->getDatabasePlatform());
         if (!is_string($decoded)) {
-            throw new UnexpectedValueException('A persisted UDB binary identity is invalid.');
+            throw new \UnexpectedValueException('A persisted UDB binary identity is invalid.');
         }
 
         return $decoded;
@@ -1219,7 +1215,7 @@ final class UdbWireTakeover
         };
         $decoded = null === $normalized ? null : Type::getType(Types::BOOLEAN)->convertToPHPValue($normalized, $this->em->getConnection()->getDatabasePlatform());
         if (!is_bool($decoded)) {
-            throw new UnexpectedValueException(null === $normalized ? 'A persisted UDB Boolean field is invalid.' : 'A persisted UDB Boolean field could not be decoded.');
+            throw new \UnexpectedValueException(null === $normalized ? 'A persisted UDB Boolean field is invalid.' : 'A persisted UDB Boolean field could not be decoded.');
         }
 
         return $decoded;
@@ -1228,7 +1224,7 @@ final class UdbWireTakeover
     private static function sqlString(mixed $value): string
     {
         if (!is_string($value)) {
-            throw new UnexpectedValueException('A persisted UDB text field is invalid.');
+            throw new \UnexpectedValueException('A persisted UDB text field is invalid.');
         }
 
         return $value;
@@ -1241,7 +1237,7 @@ final class UdbWireTakeover
         }
         if (!is_string($value) || !ctype_digit($value) || strlen($value) > strlen((string) PHP_INT_MAX)
             || (strlen($value) === strlen((string) PHP_INT_MAX) && strcmp($value, (string) PHP_INT_MAX) > 0)) {
-            throw new UnexpectedValueException('A persisted UDB integer field is invalid.');
+            throw new \UnexpectedValueException('A persisted UDB integer field is invalid.');
         }
 
         return (int) $value;

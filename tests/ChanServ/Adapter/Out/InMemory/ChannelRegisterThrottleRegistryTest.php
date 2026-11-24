@@ -5,11 +5,9 @@ declare(strict_types=1);
 namespace App\Tests\ChanServ\Adapter\Out\InMemory;
 
 use App\ChanServ\Adapter\Out\InMemory\ChannelRegisterThrottleRegistry;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
 
 #[CoversClass(ChannelRegisterThrottleRegistry::class)]
 final class ChannelRegisterThrottleRegistryTest extends TestCase
@@ -28,7 +26,7 @@ final class ChannelRegisterThrottleRegistryTest extends TestCase
         $registry = new ChannelRegisterThrottleRegistry();
         $registry->recordRegistration(10);
 
-        self::assertInstanceOf(DateTimeImmutable::class, $registry->getLastRegistrationAt(10));
+        self::assertInstanceOf(\DateTimeImmutable::class, $registry->getLastRegistrationAt(10));
     }
 
     #[Test]
@@ -86,9 +84,9 @@ final class ChannelRegisterThrottleRegistryTest extends TestCase
     {
         $registry = new ChannelRegisterThrottleRegistry();
 
-        $reflection = new ReflectionClass($registry);
+        $reflection = new \ReflectionClass($registry);
         $property = $reflection->getProperty('lastRegistrationAt');
-        $property->setValue($registry, [1 => new DateTimeImmutable('-2 seconds')]);
+        $property->setValue($registry, [1 => new \DateTimeImmutable('-2 seconds')]);
 
         self::assertSame(0, $registry->getRemainingCooldownSeconds(1, 1));
     }
@@ -98,11 +96,11 @@ final class ChannelRegisterThrottleRegistryTest extends TestCase
     {
         $registry = new ChannelRegisterThrottleRegistry();
 
-        $reflection = new ReflectionClass($registry);
+        $reflection = new \ReflectionClass($registry);
         $property = $reflection->getProperty('lastRegistrationAt');
         $property->setValue($registry, [
-            1 => new DateTimeImmutable('-2 seconds'),
-            2 => new DateTimeImmutable('+1 hour'),
+            1 => new \DateTimeImmutable('-2 seconds'),
+            2 => new \DateTimeImmutable('+1 hour'),
         ]);
 
         $removed = $registry->pruneExpiredCooldowns(1);
@@ -115,9 +113,9 @@ final class ChannelRegisterThrottleRegistryTest extends TestCase
     {
         $registry = new ChannelRegisterThrottleRegistry();
 
-        $reflection = new ReflectionClass($registry);
+        $reflection = new \ReflectionClass($registry);
         $property = $reflection->getProperty('lastRegistrationAt');
-        $property->setValue($registry, [1 => new DateTimeImmutable('-2 seconds')]);
+        $property->setValue($registry, [1 => new \DateTimeImmutable('-2 seconds')]);
 
         $removed = $registry->pruneExpiredCooldowns(1);
 

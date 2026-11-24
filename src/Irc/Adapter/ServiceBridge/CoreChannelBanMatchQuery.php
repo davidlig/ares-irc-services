@@ -13,7 +13,6 @@ use App\Irc\Domain\Repository\ChannelRepositoryInterface;
 use App\Irc\Domain\Repository\NetworkUserRepositoryInterface;
 use App\Irc\Domain\ValueObject\ChannelName;
 use App\Irc\Domain\ValueObject\Uid;
-use InvalidArgumentException;
 
 use function base64_decode;
 use function in_array;
@@ -34,7 +33,7 @@ final readonly class CoreChannelBanMatchQuery implements ChannelBanMatchQuery
         try {
             $channel = $this->channels->findByName(new ChannelName($channelName));
             $userId = new Uid($uid);
-        } catch (InvalidArgumentException) {
+        } catch (\InvalidArgumentException) {
             return null;
         }
         if (null === $channel) {

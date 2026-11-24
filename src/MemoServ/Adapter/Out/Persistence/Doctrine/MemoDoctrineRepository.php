@@ -8,7 +8,6 @@ use App\MemoServ\Application\Port\Out\MemoRepositoryInterface;
 use App\MemoServ\Application\UseCase\GetPendingNickNotice\BurstMemoNoticeCache;
 use App\MemoServ\Domain\Entity\Memo;
 use Doctrine\ORM\EntityManagerInterface;
-use LogicException;
 
 use function array_key_exists;
 use function ctype_digit;
@@ -89,14 +88,14 @@ final readonly class MemoDoctrineRepository implements MemoRepositoryInterface
         $counts = [];
         foreach ($rows as $row) {
             if (!is_array($row) || !array_key_exists('nickId', $row) || !array_key_exists('unreadCount', $row)) {
-                throw new LogicException('Memo grouped unread count query returned an invalid row.');
+                throw new \LogicException('Memo grouped unread count query returned an invalid row.');
             }
             $nickId = $row['nickId'];
             $unreadCount = $row['unreadCount'];
             if ((!is_int($nickId) && (!is_string($nickId) || !ctype_digit($nickId)))
                 || (!is_int($unreadCount) && (!is_string($unreadCount) || !ctype_digit($unreadCount)))
             ) {
-                throw new LogicException('Memo grouped unread count query returned an invalid row.');
+                throw new \LogicException('Memo grouped unread count query returned an invalid row.');
             }
             $counts[(int) $nickId] = (int) $unreadCount;
         }
@@ -160,7 +159,7 @@ final readonly class MemoDoctrineRepository implements MemoRepositoryInterface
             return $result;
         }
 
-        throw new LogicException('Memo index query returned an unexpected result.');
+        throw new \LogicException('Memo index query returned an unexpected result.');
     }
 
     public function findByTargetChannelAndIndex(int $channelId, int $index): ?Memo
@@ -185,7 +184,7 @@ final readonly class MemoDoctrineRepository implements MemoRepositoryInterface
             return $result;
         }
 
-        throw new LogicException('Memo index query returned an unexpected result.');
+        throw new \LogicException('Memo index query returned an unexpected result.');
     }
 
     public function deleteByTargetNick(int $nickId): int
@@ -198,7 +197,7 @@ final readonly class MemoDoctrineRepository implements MemoRepositoryInterface
             ->execute();
 
         if (!is_int($affectedRows)) {
-            throw new LogicException('Memo delete query did not return an affected row count.');
+            throw new \LogicException('Memo delete query did not return an affected row count.');
         }
 
         return $affectedRows;
@@ -213,7 +212,7 @@ final readonly class MemoDoctrineRepository implements MemoRepositoryInterface
             ->execute();
 
         if (!is_int($affectedRows)) {
-            throw new LogicException('Memo delete query did not return an affected row count.');
+            throw new \LogicException('Memo delete query did not return an affected row count.');
         }
 
         return $affectedRows;

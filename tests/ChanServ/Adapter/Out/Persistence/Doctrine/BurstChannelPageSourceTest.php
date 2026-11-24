@@ -14,8 +14,6 @@ use App\ChanServ\Domain\Entity\ChannelLevel;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
-use DateTimeImmutable;
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -40,7 +38,7 @@ final class BurstChannelPageSourceTest extends DoctrineIntegrationTestCase
     #[Test]
     public function pageSizeMustBePositive(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         new BurstChannelPageSource(
             new RegisteredChannelDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network()),
             new ChannelAkickDoctrineRepository($this->entityManager),
@@ -52,7 +50,7 @@ final class BurstChannelPageSourceTest extends DoctrineIntegrationTestCase
     #[Test]
     public function loadsBoundedPagesWithTheirPolicyEntries(): void
     {
-        $now = new DateTimeImmutable('2026-01-01 UTC');
+        $now = new \DateTimeImmutable('2026-01-01 UTC');
         $first = RegisteredChannel::register($now, '#a', 1, 'A');
         $second = RegisteredChannel::register($now, '#b', 1, 'B');
         $third = RegisteredChannel::register($now, '#c', 1, 'C');

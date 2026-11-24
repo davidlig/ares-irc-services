@@ -7,8 +7,6 @@ namespace App\MemoServ\Adapter\Out\Translation;
 use App\MemoServ\Application\Port\Out\ChannelRegistrationMemoText;
 use App\MemoServ\Application\UseCase\NotifyChannelRegistration\NotifyChannelRegistrationDecision;
 use App\MemoServ\Domain\Entity\Memo;
-use DateTimeZone;
-use InvalidArgumentException;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function mb_check_encoding;
@@ -23,7 +21,7 @@ final readonly class ChannelRegistrationMemoTextAdapter implements ChannelRegist
     public function render(NotifyChannelRegistrationDecision $decision, string $language): array
     {
         if (!$decision->accepted && (null === $decision->rejectionReason || '' === $decision->rejectionReason)) {
-            throw new InvalidArgumentException('Rejected channel registration decision requires a reason.');
+            throw new \InvalidArgumentException('Rejected channel registration decision requires a reason.');
         }
 
         $translation = $decision->accepted ? 'registration_decision.accepted' : 'registration_decision.rejected';
@@ -39,7 +37,7 @@ final readonly class ChannelRegistrationMemoTextAdapter implements ChannelRegist
 
         if (!$decision->accepted && null !== $decision->restrictedUntil) {
             $message .= ' ' . $this->translator->trans('registration_decision.restriction', [
-                '%date%' => $decision->restrictedUntil->setTimezone(new DateTimeZone('UTC'))->format('d/m/Y H:i') . ' UTC',
+                '%date%' => $decision->restrictedUntil->setTimezone(new \DateTimeZone('UTC'))->format('d/m/Y H:i') . ' UTC',
             ], 'memoserv', $language);
         }
 
@@ -50,7 +48,7 @@ final readonly class ChannelRegistrationMemoTextAdapter implements ChannelRegist
     private static function splitIntoMemoMessages(string $message): array
     {
         if (!mb_check_encoding($message, 'UTF-8')) {
-            throw new InvalidArgumentException('Rendered registration decision memo must be valid UTF-8.');
+            throw new \InvalidArgumentException('Rendered registration decision memo must be valid UTF-8.');
         }
 
         $messages = [];

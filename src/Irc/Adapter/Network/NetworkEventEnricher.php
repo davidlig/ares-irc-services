@@ -38,8 +38,6 @@ use App\Irc\Domain\Repository\NetworkUserRepositoryInterface;
 use App\Irc\Domain\ValueObject\ChannelName;
 use App\Irc\Domain\ValueObject\Nick;
 use App\Irc\Domain\ValueObject\Uid;
-use DateTimeImmutable;
-use InvalidArgumentException;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -116,7 +114,7 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
                 hostname: $user->hostname,
                 ipBase64: $user->ipBase64,
             ));
-        } catch (Throwable $quitFailure) {
+        } catch (\Throwable $quitFailure) {
             // The quit failure propagates instead of the departure failure, so log the departure
             // failure here; otherwise it would be lost.
             if (null !== $failure) {
@@ -142,7 +140,7 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
 
         try {
             $newNick = new Nick($event->newNickStr);
-        } catch (InvalidArgumentException) {
+        } catch (\InvalidArgumentException) {
             return;
         }
 
@@ -201,7 +199,7 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
             $channel = new Channel(
                 name: $event->channelName,
                 modes: $event->modeStr,
-                createdAt: new DateTimeImmutable('@' . ($event->timestamp > 0 ? $event->timestamp : time())),
+                createdAt: new \DateTimeImmutable('@' . ($event->timestamp > 0 ? $event->timestamp : time())),
             );
         } else {
             $existingTimestamp = $channel->getCreatedAt()->getTimestamp();
@@ -225,7 +223,7 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
             }
 
             if ($event->timestamp > 0 && $existingTimestamp > 0 && $event->timestamp < $existingTimestamp) {
-                $channel->updateCreatedAt(new DateTimeImmutable('@' . $event->timestamp));
+                $channel->updateCreatedAt(new \DateTimeImmutable('@' . $event->timestamp));
                 $channel->resetModeSnapshot();
                 $channel->updateModes($event->modeStr);
             } elseif ($event->timestamp > 0 && $existingTimestamp > 0) {
@@ -238,7 +236,7 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
             } else {
                 // Timestamp-less joins retain the historical incremental update behavior.
                 if ($event->timestamp > 0) {
-                    $channel->updateCreatedAt(new DateTimeImmutable('@' . $event->timestamp));
+                    $channel->updateCreatedAt(new \DateTimeImmutable('@' . $event->timestamp));
                 }
                 if ('' !== $event->modeStr) {
                     $channel->updateModes($event->modeStr);
@@ -377,7 +375,7 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
     {
         try {
             $name = new ChannelName($channelName);
-        } catch (InvalidArgumentException) {
+        } catch (\InvalidArgumentException) {
             return;
         }
 
@@ -400,7 +398,7 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
     {
         try {
             $name = new ChannelName($channelName);
-        } catch (InvalidArgumentException) {
+        } catch (\InvalidArgumentException) {
             return;
         }
 
@@ -484,7 +482,7 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
                     $reason,
                     false,
                 ));
-            } catch (Throwable $exception) {
+            } catch (\Throwable $exception) {
                 if (null === $failure) {
                     $failure = ['channel' => $channelNameStr, 'exception' => $exception];
 
@@ -498,7 +496,7 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
         return $failure;
     }
 
-    private function logQuitDepartureFailure(NetworkUser $user, string $channelName, Throwable $exception): void
+    private function logQuitDepartureFailure(NetworkUser $user, string $channelName, \Throwable $exception): void
     {
         $this->logger->error(sprintf(
             'Channel departure of %s (%s) from %s failed during quit.',
@@ -516,7 +514,7 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
 
         try {
             return $this->userRepository->findByNick(new Nick($sourceId));
-        } catch (InvalidArgumentException) {
+        } catch (\InvalidArgumentException) {
         }
 
         return null;

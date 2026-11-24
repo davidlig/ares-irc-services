@@ -25,8 +25,6 @@ use App\ChanServ\Domain\Policy\PreparedAkickRules;
 use App\ChanServ\Domain\ValueObject\AkickAdditionDecision;
 use App\ChanServ\Domain\ValueObject\AkickMask;
 use App\ChanServ\Domain\ValueObject\AkickRule;
-use DateTimeImmutable;
-use InvalidArgumentException;
 
 use function array_filter;
 use function array_map;
@@ -122,7 +120,7 @@ final readonly class ManageChannelAkickHandler implements ManageChannelAkickHand
 
         try {
             $mask = new AkickMask($command->item);
-        } catch (InvalidArgumentException) {
+        } catch (\InvalidArgumentException) {
             return new ManageChannelAkickResult(ManageChannelAkickOutcome::InvalidMask);
         }
         if (!$mask->isSafe()) {
@@ -291,7 +289,7 @@ final readonly class ManageChannelAkickHandler implements ManageChannelAkickHand
                     $akick->getReason(),
                     $akick->getExpiresAt(),
                 );
-            } catch (InvalidArgumentException) {
+            } catch (\InvalidArgumentException) {
                 $this->activity->warning(sprintf('Skipping invalid AKICK rule for channel ID %d.', $channel->getId()));
                 continue;
             }
@@ -424,7 +422,7 @@ final readonly class ManageChannelAkickHandler implements ManageChannelAkickHand
     }
 
     /** @param list<ChannelAkick> $akicks */
-    private function enforceRules(string $channelName, array $akicks, DateTimeImmutable $now): int
+    private function enforceRules(string $channelName, array $akicks, \DateTimeImmutable $now): int
     {
         $channel = $this->network->findChannel($channelName);
         if (null === $channel || [] === $akicks) {
@@ -442,7 +440,7 @@ final readonly class ManageChannelAkickHandler implements ManageChannelAkickHand
                 );
                 $rules[] = $rule;
                 $ruleMap[spl_object_id($rule)] = $akick;
-            } catch (InvalidArgumentException) {
+            } catch (\InvalidArgumentException) {
                 continue;
             }
         }

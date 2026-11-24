@@ -8,11 +8,9 @@ use App\MemoServ\Adapter\In\Irc\Help\HelpableCommandInterface;
 use App\MemoServ\Adapter\In\Irc\Help\HelpFormatterContextInterface;
 use App\MemoServ\Adapter\In\Irc\Help\UnifiedHelpFormatter;
 use App\Tests\Shared\Translations\TranslationCatalog;
-use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Stringable;
 
 use function array_column;
 use function array_filter;
@@ -326,12 +324,12 @@ final class MemoServHelpFormatterContext implements HelpFormatterContextInterfac
 
     public function reply(string $key, array $params = []): void
     {
-        throw new LogicException('Rendering must not send translated replies.');
+        throw new \LogicException('Rendering must not send translated replies.');
     }
 
     public function replyRaw(string $message): void
     {
-        throw new LogicException('Rendering must not send raw replies.');
+        throw new \LogicException('Rendering must not send raw replies.');
     }
 
     public function trans(string $key, array $params = []): string
@@ -408,7 +406,7 @@ final class MemoServHelpFormatterContext implements HelpFormatterContextInterfac
 
         $replace = ['%bot%' => 'MemoServ', '%memoserv%' => 'MemoServ'];
         foreach ($params as $name => $value) {
-            $replace['%' . trim((string) $name, '%') . '%'] = is_scalar($value) || $value instanceof Stringable ? (string) $value : '';
+            $replace['%' . trim((string) $name, '%') . '%'] = is_scalar($value) || $value instanceof \Stringable ? (string) $value : '';
         }
 
         return strtr($translation, $replace);

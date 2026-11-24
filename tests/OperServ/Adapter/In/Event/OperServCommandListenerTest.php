@@ -31,10 +31,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-use ReflectionClass;
-use RuntimeException;
 use Symfony\Contracts\Translation\TranslatorInterface;
-use Throwable;
 
 use function array_fill;
 
@@ -47,7 +44,7 @@ final class OperServCommandListenerTest extends TestCase
     #[Test]
     public function commandLogSanitizerCannotBeInstantiated(): void
     {
-        $reflection = new ReflectionClass(OperServCommandLogSanitizer::class);
+        $reflection = new \ReflectionClass(OperServCommandLogSanitizer::class);
         $constructor = $reflection->getConstructor();
 
         self::assertNotNull($constructor);
@@ -339,7 +336,7 @@ final class OperServCommandListenerTest extends TestCase
             'OperServ',
         );
 
-        $throwCommand = self::createThrowCommand('RAW', new RuntimeException('reset-token must not be logged'));
+        $throwCommand = self::createThrowCommand('RAW', new \RuntimeException('reset-token must not be logged'));
         $operServNotifier = self::createStub(OperServNotifierInterface::class);
         $messageTypeResolver = self::createStub(ServiceUserPreferences::class);
         $messageTypeResolver->method('prefersPrivateMessages')->willReturn(false);
@@ -355,7 +352,7 @@ final class OperServCommandListenerTest extends TestCase
         $logger->expects(self::once())->method('error')->with(
             'OperServ dispatch error',
             self::callback(static fn (array $context): bool => isset($context['exception_class'], $context['sender'], $context['command'])
-                && RuntimeException::class === $context['exception_class']
+                && \RuntimeException::class === $context['exception_class']
                 && 'RAW' === $context['command']
                 && !isset($context['text'], $context['exception']))
         );
@@ -479,12 +476,12 @@ final class OperServCommandListenerTest extends TestCase
         );
     }
 
-    private static function createThrowCommand(string $name, Throwable $e): OperServCommandInterface
+    private static function createThrowCommand(string $name, \Throwable $e): OperServCommandInterface
     {
         return new class($name, $e) implements OperServCommandInterface {
             public function __construct(
                 private readonly string $commandName,
-                private readonly Throwable $exception,
+                private readonly \Throwable $exception,
             ) {}
 
             public function getName(): string

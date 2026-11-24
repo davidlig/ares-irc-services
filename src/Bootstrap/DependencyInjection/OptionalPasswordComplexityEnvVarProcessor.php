@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Bootstrap\DependencyInjection;
 
-use Closure;
 use Symfony\Component\DependencyInjection\EnvVarProcessorInterface;
 use Symfony\Component\DependencyInjection\Exception\EnvNotFoundException;
 use Symfony\Component\DependencyInjection\Exception\RuntimeException;
@@ -16,7 +15,7 @@ use function sprintf;
 /** Only absence disables composition; explicit invalid values fail closed. */
 final class OptionalPasswordComplexityEnvVarProcessor implements EnvVarProcessorInterface
 {
-    public function getEnv(string $prefix, string $name, Closure $getEnv): string
+    public function getEnv(string $prefix, string $name, \Closure $getEnv): string
     {
         try {
             $value = $getEnv($name);

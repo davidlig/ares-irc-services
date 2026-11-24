@@ -19,7 +19,6 @@ use App\Irc\Domain\Event\ChannelSyncedEvent;
 use App\Irc\Domain\Event\ExistingChannelJoinObservedEvent;
 use App\Irc\Domain\Network\Channel;
 use App\Irc\Domain\ValueObject\ChannelName;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -91,7 +90,7 @@ final class ChannelSyncCompletedMarkerSubscriberTest extends TestCase
     #[Test]
     public function onExistingChannelJoinObservedFromABurstingServerMarksChannelAsCompleted(): void
     {
-        $channel = new Channel(new ChannelName('#test'), '', new DateTimeImmutable('@0'));
+        $channel = new Channel(new ChannelName('#test'), '', new \DateTimeImmutable('@0'));
 
         $this->registry->expects(self::once())
             ->method('markSyncCompleted')
@@ -103,7 +102,7 @@ final class ChannelSyncCompletedMarkerSubscriberTest extends TestCase
     #[Test]
     public function onExistingChannelJoinObservedFromANonBurstingServerDoesNotReArm(): void
     {
-        $channel = new Channel(new ChannelName('#test'), '', new DateTimeImmutable('@0'));
+        $channel = new Channel(new ChannelName('#test'), '', new \DateTimeImmutable('@0'));
 
         $this->registry->expects(self::never())->method('markSyncCompleted');
 
@@ -113,7 +112,7 @@ final class ChannelSyncCompletedMarkerSubscriberTest extends TestCase
     #[Test]
     public function onChannelSyncedMarksChannelAsCompletedWhenSetupApplicable(): void
     {
-        $channel = new Channel(new ChannelName('#test'), '', new DateTimeImmutable('@0'));
+        $channel = new Channel(new ChannelName('#test'), '', new \DateTimeImmutable('@0'));
 
         $event = new ChannelSyncedEvent($channel, true);
 
@@ -127,7 +126,7 @@ final class ChannelSyncCompletedMarkerSubscriberTest extends TestCase
     #[Test]
     public function onChannelSyncedMarksChannelAsCompletedWhenSetupNotApplicable(): void
     {
-        $channel = new Channel(new ChannelName('#test'), '', new DateTimeImmutable('@0'));
+        $channel = new Channel(new ChannelName('#test'), '', new \DateTimeImmutable('@0'));
 
         $event = new ChannelSyncedEvent($channel, false);
 

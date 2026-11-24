@@ -11,7 +11,6 @@ use App\Irc\Domain\Network\ChannelMemberRole;
 use App\Irc\Domain\Repository\ChannelRepositoryInterface;
 use App\Irc\Domain\ValueObject\ChannelName;
 use App\Irc\Domain\ValueObject\Uid;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -45,7 +44,7 @@ final class CoreServiceChannelRegistrationAdapterTest extends TestCase
     #[Test]
     public function registerServiceChannelJoinAddsServiceToExistingChannel(): void
     {
-        $existing = new Channel(new ChannelName('#ircops'), '+nt', new DateTimeImmutable('@1700000000'));
+        $existing = new Channel(new ChannelName('#ircops'), '+nt', new \DateTimeImmutable('@1700000000'));
         $existing->syncMember(new Uid('001USER'), ChannelMemberRole::Op);
         $this->repository->save($existing);
 
@@ -61,7 +60,7 @@ final class CoreServiceChannelRegistrationAdapterTest extends TestCase
     #[Test]
     public function registerServiceChannelJoinUpdatesTimestampWhenLower(): void
     {
-        $existing = new Channel(new ChannelName('#ircops'), '+nt', new DateTimeImmutable('@1700000100'));
+        $existing = new Channel(new ChannelName('#ircops'), '+nt', new \DateTimeImmutable('@1700000100'));
         $this->repository->save($existing);
 
         $this->adapter->registerServiceChannelJoin('#ircops', '001CS', 'o', 1699999000);
@@ -74,7 +73,7 @@ final class CoreServiceChannelRegistrationAdapterTest extends TestCase
     #[Test]
     public function registerServiceChannelJoinDoesNotUpdateTimestampWhenHigher(): void
     {
-        $existing = new Channel(new ChannelName('#ircops'), '+nt', new DateTimeImmutable('@1700000000'));
+        $existing = new Channel(new ChannelName('#ircops'), '+nt', new \DateTimeImmutable('@1700000000'));
         $this->repository->save($existing);
 
         $this->adapter->registerServiceChannelJoin('#ircops', '001CS', 'o', 1700001000);

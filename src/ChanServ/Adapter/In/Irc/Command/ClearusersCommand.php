@@ -18,7 +18,6 @@ use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use App\Shared\Adapter\In\Irc\Presentation\Component;
 use App\Shared\Adapter\In\Irc\Presentation\Fragment;
 use App\Shared\Adapter\In\Irc\Presentation\Role;
-use DateTimeImmutable;
 
 use function array_slice;
 use function implode;
@@ -121,7 +120,7 @@ final class ClearusersCommand implements ChanServCommandInterface, IrcopAuditabl
             channelName: $channelName,
             reason: $kickReason,
             actorNickname: $context->sender->nick,
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new \DateTimeImmutable(),
         ));
         if (ClearChannelUsersOutcome::ChannelNotRegistered === $result->outcome) {
             $context->reply('presentation.error.channel_not_registered', ['%channel%' => new Fragment((string) $channelName, Component::Emphasis)], Role::Error);

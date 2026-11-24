@@ -18,7 +18,6 @@ use App\Irc\Domain\ValueObject\ChannelName;
 use App\Irc\Domain\ValueObject\Ident;
 use App\Irc\Domain\ValueObject\Nick;
 use App\Irc\Domain\ValueObject\Uid;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -46,13 +45,13 @@ final class CoreChannelBanMatchQueryTest extends TestCase
     #[DataProvider('addresses')]
     public function testMatchesOriginalMasksWithoutMutatingChannel(string $ip, bool $available): void
     {
-        $channel = new Channel(new ChannelName('#test'), '+nt', new DateTimeImmutable('@123'));
+        $channel = new Channel(new ChannelName('#test'), '+nt', new \DateTimeImmutable('@123'));
         $channel->addBan('ALICE!*@*.example');
         $channel->addBan('*!shown@visible.example');
         $channel->addBan('Bob!*@*');
         $channel->addBan('a:Alice!*@*');
         $before = $channel->getBans();
-        $user = new NetworkUser(new Uid('001AAA'), new Nick('Alice'), new Ident('shown'), 'real.example', 'cloak.example', 'visible.example', '+r', new DateTimeImmutable('@123'), 'Alice', '001', $ip);
+        $user = new NetworkUser(new Uid('001AAA'), new Nick('Alice'), new Ident('shown'), 'real.example', 'cloak.example', 'visible.example', '+r', new \DateTimeImmutable('@123'), 'Alice', '001', $ip);
         $channels = $this->createStub(ChannelRepositoryInterface::class);
         $channels->method('findByName')->willReturn($channel);
         $users = $this->createStub(NetworkUserRepositoryInterface::class);
@@ -83,7 +82,7 @@ final class CoreChannelBanMatchQueryTest extends TestCase
         $query = new CoreChannelBanMatchQuery($channels, $users, $holder);
         self::assertFalse($query->findMatchingBans('#absent', '001AAA')?->channelExists);
         self::assertNull($query->findMatchingBans('invalid', '001AAA'));
-        $channel = new Channel(new ChannelName('#test'), '+nt', new DateTimeImmutable('@123'));
+        $channel = new Channel(new ChannelName('#test'), '+nt', new \DateTimeImmutable('@123'));
         $channels->method('findByName')->willReturn($channel);
         self::assertNull($query->findMatchingBans('#test', '001AAA'));
         $module = $this->createStub(ProtocolModuleInterface::class);

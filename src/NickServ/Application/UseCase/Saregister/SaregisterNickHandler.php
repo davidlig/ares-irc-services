@@ -19,8 +19,6 @@ use App\NickServ\Application\Service\PasswordPolicy;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\NickServ\Domain\ValueObject\NickStatus;
 use App\NickServ\Domain\ValueObject\RegistrationMode;
-use LogicException;
-use Throwable;
 
 use function filter_var;
 use function str_starts_with;
@@ -92,7 +90,7 @@ final readonly class SaregisterNickHandler implements SaregisterNickHandlerInter
         }
 
         $token = $this->tokenGenerator->generate();
-        $tokenHash = $this->tokenGenerator->hash($token) ?? throw new LogicException('Generated rescue token is invalid.');
+        $tokenHash = $this->tokenGenerator->hash($token) ?? throw new \LogicException('Generated rescue token is invalid.');
         $passwordHash = $this->passwordHasher->hash($command->password);
         $now = $this->clock->now();
 
@@ -127,11 +125,11 @@ final readonly class SaregisterNickHandler implements SaregisterNickHandlerInter
             try {
                 $this->mailSender->sendRescueToken(
                     $command->nickname,
-                    $command->email ?? throw new LogicException('Email registration requires an address.'),
+                    $command->email ?? throw new \LogicException('Email registration requires an address.'),
                     $token,
                     $command->language,
                 );
-            } catch (Throwable) {
+            } catch (\Throwable) {
                 return SaregisterNickResult::mailDeliveryFailed($command->nickname);
             }
 

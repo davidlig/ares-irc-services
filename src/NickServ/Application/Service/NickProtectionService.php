@@ -25,7 +25,6 @@ use App\NickServ\Application\PublishedEvent\UserDeidentifiedEvent;
 use App\NickServ\Application\UseCase\IssueMigrationRescueToken\IssueMigrationRescueToken;
 use App\NickServ\Application\UseCase\IssueMigrationRescueToken\IssueMigrationRescueTokenHandlerInterface;
 use App\NickServ\Domain\Entity\RegisteredNick;
-use DateTimeImmutable;
 
 use function base64_decode;
 use function inet_ntop;
@@ -60,7 +59,7 @@ final readonly class NickProtectionService
         private ?NickServActivitySink $logger = null,
     ) {}
 
-    public function onUserJoined(NetworkUser $user, DateTimeImmutable $occurredAt): void
+    public function onUserJoined(NetworkUser $user, \DateTimeImmutable $occurredAt): void
     {
         if (!$this->burstState->isComplete()) {
             $this->burstState->addPending($user);
@@ -74,7 +73,7 @@ final readonly class NickProtectionService
     /**
      * Called when a user changes nickname. Receives only primitives; no Core event types.
      */
-    public function onNickChanged(string $uid, string $oldNick, string $newNick, DateTimeImmutable $occurredAt): void
+    public function onNickChanged(string $uid, string $oldNick, string $newNick, \DateTimeImmutable $occurredAt): void
     {
         $this->logger?->debug(sprintf(
             'NickProtection onNickChanged: old=%s new=%s uid=%s burstComplete=%s',
@@ -108,7 +107,7 @@ final readonly class NickProtectionService
         string $displayHost,
         string $hostname,
         string $ipBase64,
-        DateTimeImmutable $occurredAt,
+        \DateTimeImmutable $occurredAt,
         bool $deferPersistence = false,
     ): ?RegisteredNick {
         $this->pendingRegistry->remove($uid);
@@ -158,12 +157,12 @@ final readonly class NickProtectionService
         $this->nickRepository->saveActivityBatch($accounts);
     }
 
-    public function enforceProtection(NetworkUser $user, DateTimeImmutable $occurredAt): void
+    public function enforceProtection(NetworkUser $user, \DateTimeImmutable $occurredAt): void
     {
         $this->enforceProtectionWithAccount($user, $occurredAt, $this->nickRepository->findByNick($user->nick));
     }
 
-    public function enforceProtectionWithAccount(NetworkUser $user, DateTimeImmutable $occurredAt, ?RegisteredNick $account, ?PendingNickActivities $activityBatch = null): void
+    public function enforceProtectionWithAccount(NetworkUser $user, \DateTimeImmutable $occurredAt, ?RegisteredNick $account, ?PendingNickActivities $activityBatch = null): void
     {
         $nick = $user->nick;
 
@@ -350,7 +349,7 @@ final readonly class NickProtectionService
         return false;
     }
 
-    private function handleIdentifiedEnforcement(RegisteredNick $account, NetworkUser $user, string $nick, DateTimeImmutable $occurredAt, ?PendingNickActivities $activityBatch): void
+    private function handleIdentifiedEnforcement(RegisteredNick $account, NetworkUser $user, string $nick, \DateTimeImmutable $occurredAt, ?PendingNickActivities $activityBatch): void
     {
         $identifiedNick = $this->identifiedRegistry->findNick($user->uid);
 
@@ -381,7 +380,7 @@ final readonly class NickProtectionService
         $this->enforceGuestRename($account, $user, $nick);
     }
 
-    private function markIdentifiedAndDispatch(RegisteredNick $account, NetworkUser $user, DateTimeImmutable $occurredAt, ?PendingNickActivities $activityBatch): void
+    private function markIdentifiedAndDispatch(RegisteredNick $account, NetworkUser $user, \DateTimeImmutable $occurredAt, ?PendingNickActivities $activityBatch): void
     {
         $account->markSeen($occurredAt);
         if (null === $activityBatch) {

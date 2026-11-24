@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\NickServ\Application\UseCase\History;
 
-use DateTimeImmutable;
-
 final readonly class NickHistoryEntryView
 {
     /**
@@ -13,7 +11,7 @@ final readonly class NickHistoryEntryView
      */
     public function __construct(
         public int $id,
-        public DateTimeImmutable $performedAt,
+        public \DateTimeImmutable $performedAt,
         public string $action,
         public string $performedBy,
         public ?int $performedByNickId,

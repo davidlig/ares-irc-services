@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Tests\OperServ\Domain\ValueObject;
 
 use App\OperServ\Domain\ValueObject\ForcedVhost;
-use DomainException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -53,7 +52,7 @@ final class ForcedVhostTest extends TestCase
     #[Test]
     public function fromPatternThrowsOnEmpty(): void
     {
-        $this->expectException(DomainException::class);
+        $this->expectException(\DomainException::class);
         $this->expectExceptionMessage('VHost pattern cannot be empty.');
 
         ForcedVhost::fromPattern('');
@@ -62,7 +61,7 @@ final class ForcedVhostTest extends TestCase
     #[Test]
     public function fromPatternThrowsOnWhitespaceOnly(): void
     {
-        $this->expectException(DomainException::class);
+        $this->expectException(\DomainException::class);
         $this->expectExceptionMessage('VHost pattern cannot be empty.');
 
         ForcedVhost::fromPattern('   ');
@@ -73,7 +72,7 @@ final class ForcedVhostTest extends TestCase
     {
         $pattern = str_repeat('a', 49) . '.b';
 
-        $this->expectException(DomainException::class);
+        $this->expectException(\DomainException::class);
         $this->expectExceptionMessage('VHost pattern exceeds maximum length');
 
         ForcedVhost::fromPattern($pattern);
@@ -82,7 +81,7 @@ final class ForcedVhostTest extends TestCase
     #[Test]
     public function fromPatternThrowsOnNoDot(): void
     {
-        $this->expectException(DomainException::class);
+        $this->expectException(\DomainException::class);
         $this->expectExceptionMessage('Invalid vhost pattern format');
 
         ForcedVhost::fromPattern('admin');
@@ -91,7 +90,7 @@ final class ForcedVhostTest extends TestCase
     #[Test]
     public function fromPatternThrowsOnStartingWithDot(): void
     {
-        $this->expectException(DomainException::class);
+        $this->expectException(\DomainException::class);
         $this->expectExceptionMessage('Invalid vhost pattern format');
 
         ForcedVhost::fromPattern('.admin.ares');
@@ -100,7 +99,7 @@ final class ForcedVhostTest extends TestCase
     #[Test]
     public function fromPatternThrowsOnEndingWithDot(): void
     {
-        $this->expectException(DomainException::class);
+        $this->expectException(\DomainException::class);
         $this->expectExceptionMessage('Invalid vhost pattern format');
 
         ForcedVhost::fromPattern('admin.ares.');
@@ -109,7 +108,7 @@ final class ForcedVhostTest extends TestCase
     #[Test]
     public function fromPatternThrowsOnStartingWithHyphen(): void
     {
-        $this->expectException(DomainException::class);
+        $this->expectException(\DomainException::class);
         $this->expectExceptionMessage('Invalid vhost pattern format');
 
         ForcedVhost::fromPattern('-admin.ares');
@@ -118,7 +117,7 @@ final class ForcedVhostTest extends TestCase
     #[Test]
     public function fromPatternThrowsOnEndingWithHyphen(): void
     {
-        $this->expectException(DomainException::class);
+        $this->expectException(\DomainException::class);
         $this->expectExceptionMessage('Invalid vhost pattern format');
 
         ForcedVhost::fromPattern('admin-.ares');
@@ -127,7 +126,7 @@ final class ForcedVhostTest extends TestCase
     #[Test]
     public function fromPatternThrowsOnConsecutiveDots(): void
     {
-        $this->expectException(DomainException::class);
+        $this->expectException(\DomainException::class);
         $this->expectExceptionMessage('Invalid vhost pattern format');
 
         ForcedVhost::fromPattern('admin..ares');
@@ -301,7 +300,7 @@ final class ForcedVhostTest extends TestCase
     {
         $pattern = str_repeat('a', 50);
 
-        $this->expectException(DomainException::class);
+        $this->expectException(\DomainException::class);
         $this->expectExceptionMessage('VHost pattern exceeds maximum length');
 
         ForcedVhost::fromPattern($pattern);
@@ -310,7 +309,7 @@ final class ForcedVhostTest extends TestCase
     #[Test]
     public function fromPatternWithWhitespacePatternThrows(): void
     {
-        $this->expectException(DomainException::class);
+        $this->expectException(\DomainException::class);
         $this->expectExceptionMessage('VHost pattern cannot be empty.');
 
         ForcedVhost::fromPattern('   ');

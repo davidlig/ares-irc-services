@@ -6,13 +6,9 @@ namespace App\Tests\ChanServ\Domain\Entity;
 
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\ValueObject\ChannelStatus;
-use DateTimeImmutable;
-use InvalidArgumentException;
-use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
 
 use function str_repeat;
 
@@ -22,9 +18,9 @@ final class RegisteredChannelTest extends TestCase
     #[Test]
     public function registerCreatesChannelWithInitialState(): void
     {
-        $before = new DateTimeImmutable();
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'A channel');
-        $after = new DateTimeImmutable();
+        $before = new \DateTimeImmutable();
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 1, 'A channel');
+        $after = new \DateTimeImmutable();
 
         self::assertSame('#test', $channel->getName());
         self::assertSame('#test', $channel->getNameLower());
@@ -53,13 +49,13 @@ final class RegisteredChannelTest extends TestCase
     #[Test]
     public function pendingRegistrationIsBlockedUntilAccepted(): void
     {
-        $channel = RegisteredChannel::createPendingRegistration(new DateTimeImmutable(), '#test', 7, 'Description');
+        $channel = RegisteredChannel::createPendingRegistration(new \DateTimeImmutable(), '#test', 7, 'Description');
 
         self::assertSame(ChannelStatus::Pending, $channel->getStatus());
         self::assertTrue($channel->isPendingRegistration());
         self::assertTrue($channel->isBlocked());
 
-        $approvedAt = new DateTimeImmutable('2026-10-27T12:00:00+00:00');
+        $approvedAt = new \DateTimeImmutable('2026-10-27T12:00:00+00:00');
         $channel->approveRegistration($approvedAt);
 
         self::assertSame(ChannelStatus::Active, $channel->getStatus());
@@ -70,8 +66,8 @@ final class RegisteredChannelTest extends TestCase
     #[Test]
     public function rejectionKeepsMandatoryOperatorReasonAndRestriction(): void
     {
-        $rejectedAt = new DateTimeImmutable('2026-10-26T12:00:00+00:00');
-        $restrictedUntil = new DateTimeImmutable('2026-10-27T12:00:00+00:00');
+        $rejectedAt = new \DateTimeImmutable('2026-10-26T12:00:00+00:00');
+        $restrictedUntil = new \DateTimeImmutable('2026-10-27T12:00:00+00:00');
         $channel = RegisteredChannel::createPendingRegistration($rejectedAt, '#test', 7, 'Description');
 
         $channel->rejectRegistration('Needs a public topic', 9, 'OperNick', $rejectedAt, $restrictedUntil);
@@ -88,7 +84,7 @@ final class RegisteredChannelTest extends TestCase
     #[Test]
     public function changeFounderAndAssignSuccessor(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 1, 'Desc');
         $channel->assignSuccessor(2);
 
         self::assertSame(2, $channel->getSuccessorNickId());
@@ -102,7 +98,7 @@ final class RegisteredChannelTest extends TestCase
     #[Test]
     public function updateDescriptionUrlEmailAndEntrymsg(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 1, 'Desc');
 
         $channel->updateDescription('New desc');
         self::assertSame('New desc', $channel->getDescription());
@@ -120,7 +116,7 @@ final class RegisteredChannelTest extends TestCase
     #[Test]
     public function configureIrcopOnlyChangesPersistedChannelPolicy(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#ops', 1, 'Operators');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#ops', 1, 'Operators');
 
         $channel->configureIrcopOnly(true);
         self::assertTrue($channel->isIrcopOnly());
@@ -131,7 +127,7 @@ final class RegisteredChannelTest extends TestCase
     #[Test]
     public function configurePrivateChangesPersistedChannelPolicy(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#private', 1, 'Private');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#private', 1, 'Private');
 
         $channel->configurePrivate(true);
         self::assertTrue($channel->isPrivate());
@@ -143,9 +139,9 @@ final class RegisteredChannelTest extends TestCase
     #[Test]
     public function updateEntrymsgThrowsWhenTooLong(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 1, 'Desc');
 
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Entry message cannot exceed');
 
         $channel->updateEntrymsg(str_repeat('x', 256));
@@ -154,7 +150,7 @@ final class RegisteredChannelTest extends TestCase
     #[Test]
     public function configureTopicLockMlockAndSecure(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 1, 'Desc');
 
         $channel->configureTopicLock(true);
         self::assertTrue($channel->isTopicLock());
@@ -177,18 +173,18 @@ final class RegisteredChannelTest extends TestCase
     #[Test]
     public function updateTopicAndTouchLastUsed(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 1, 'Desc');
 
-        $channel->updateTopic('Topic here', new DateTimeImmutable('2026-01-01 00:00:00'), 'OpNick');
+        $channel->updateTopic('Topic here', new \DateTimeImmutable('2026-01-01 00:00:00'), 'OpNick');
         self::assertSame('Topic here', $channel->getTopic());
         self::assertNotNull($channel->getLastTopicSetAt());
         self::assertSame('OpNick', $channel->getLastTopicSetByNick());
 
-        $channel->updateTopic(null, new DateTimeImmutable('2026-01-01 00:00:00'));
+        $channel->updateTopic(null, new \DateTimeImmutable('2026-01-01 00:00:00'));
         self::assertNull($channel->getTopic());
         self::assertNull($channel->getLastTopicSetByNick());
 
-        $lastUsedAt = new DateTimeImmutable('2026-01-02 03:04:05');
+        $lastUsedAt = new \DateTimeImmutable('2026-01-02 03:04:05');
         $channel->touchLastUsed($lastUsedAt);
         self::assertSame($lastUsedAt, $channel->getLastUsedAt());
     }
@@ -196,8 +192,8 @@ final class RegisteredChannelTest extends TestCase
     #[Test]
     public function getIdReturnsValueSetByPersistence(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Desc');
-        $reflection = new ReflectionClass($channel);
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 1, 'Desc');
+        $reflection = new \ReflectionClass($channel);
         $idProp = $reflection->getProperty('id');
         $idProp->setValue($channel, 42);
 
@@ -207,7 +203,7 @@ final class RegisteredChannelTest extends TestCase
     #[Test]
     public function registerCreatesChannelWithActiveStatus(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 1, 'Desc');
 
         self::assertSame(ChannelStatus::Active, $channel->getStatus());
         self::assertFalse($channel->isSuspended());
@@ -216,7 +212,7 @@ final class RegisteredChannelTest extends TestCase
     #[Test]
     public function suspendSetsStatusToSuspended(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 1, 'Desc');
         $channel->suspend('Policy violation');
 
         self::assertSame(ChannelStatus::Suspended, $channel->getStatus());
@@ -226,8 +222,8 @@ final class RegisteredChannelTest extends TestCase
     #[Test]
     public function suspendWithExpirationSetsUntil(): void
     {
-        $until = new DateTimeImmutable('+7 days');
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Desc');
+        $until = new \DateTimeImmutable('+7 days');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 1, 'Desc');
         $channel->suspend('Temporary suspension', $until);
 
         self::assertSame($until, $channel->getSuspendedUntil());
@@ -236,7 +232,7 @@ final class RegisteredChannelTest extends TestCase
     #[Test]
     public function suspendPermanentSetsUntilToNull(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 1, 'Desc');
         $channel->suspend('Permanent suspension');
 
         self::assertNull($channel->getSuspendedUntil());
@@ -245,7 +241,7 @@ final class RegisteredChannelTest extends TestCase
     #[Test]
     public function unsuspendResetsToActive(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 1, 'Desc');
         $channel->suspend('Violation');
         $channel->unsuspend();
 
@@ -255,8 +251,8 @@ final class RegisteredChannelTest extends TestCase
     #[Test]
     public function unsuspendClearsReasonAndUntil(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Desc');
-        $channel->suspend('Violation', new DateTimeImmutable('+7 days'));
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 1, 'Desc');
+        $channel->suspend('Violation', new \DateTimeImmutable('+7 days'));
         $channel->unsuspend();
 
         self::assertNull($channel->getSuspendedReason());
@@ -266,7 +262,7 @@ final class RegisteredChannelTest extends TestCase
     #[Test]
     public function isSuspendedReturnsTrueWhenSuspended(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 1, 'Desc');
         $channel->suspend('Violation');
 
         self::assertTrue($channel->isSuspended());
@@ -275,7 +271,7 @@ final class RegisteredChannelTest extends TestCase
     #[Test]
     public function isSuspendedReturnsFalseWhenActive(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 1, 'Desc');
 
         self::assertFalse($channel->isSuspended());
     }
@@ -283,42 +279,42 @@ final class RegisteredChannelTest extends TestCase
     #[Test]
     public function isCurrentlySuspendedReturnsTrueWhenPermanent(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 1, 'Desc');
         $channel->suspend('Permanent');
 
-        self::assertTrue($channel->isCurrentlySuspended(new DateTimeImmutable('2026-01-02 03:04:05')));
+        self::assertTrue($channel->isCurrentlySuspended(new \DateTimeImmutable('2026-01-02 03:04:05')));
     }
 
     #[Test]
     public function isCurrentlySuspendedReturnsTrueWhenNotExpired(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Desc');
-        $channel->suspend('Temporary', new DateTimeImmutable('2026-01-02 04:00:00'));
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 1, 'Desc');
+        $channel->suspend('Temporary', new \DateTimeImmutable('2026-01-02 04:00:00'));
 
-        self::assertTrue($channel->isCurrentlySuspended(new DateTimeImmutable('2026-01-02 03:00:00')));
+        self::assertTrue($channel->isCurrentlySuspended(new \DateTimeImmutable('2026-01-02 03:00:00')));
     }
 
     #[Test]
     public function isCurrentlySuspendedReturnsFalseWhenExpired(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Desc');
-        $channel->suspend('Expired', new DateTimeImmutable('2026-01-02 02:59:59'));
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 1, 'Desc');
+        $channel->suspend('Expired', new \DateTimeImmutable('2026-01-02 02:59:59'));
 
-        self::assertFalse($channel->isCurrentlySuspended(new DateTimeImmutable('2026-01-02 03:00:00')));
+        self::assertFalse($channel->isCurrentlySuspended(new \DateTimeImmutable('2026-01-02 03:00:00')));
     }
 
     #[Test]
     public function isCurrentlySuspendedReturnsFalseWhenActive(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 1, 'Desc');
 
-        self::assertFalse($channel->isCurrentlySuspended(new DateTimeImmutable('2026-01-02 03:04:05')));
+        self::assertFalse($channel->isCurrentlySuspended(new \DateTimeImmutable('2026-01-02 03:04:05')));
     }
 
     #[Test]
     public function createForbiddenSetsForbiddenState(): void
     {
-        $channel = RegisteredChannel::createForbidden(new DateTimeImmutable(), '#forbidden', 'Spam channel');
+        $channel = RegisteredChannel::createForbidden(new \DateTimeImmutable(), '#forbidden', 'Spam channel');
 
         self::assertSame('#forbidden', $channel->getName());
         self::assertSame('#forbidden', $channel->getNameLower());
@@ -332,7 +328,7 @@ final class RegisteredChannelTest extends TestCase
     #[Test]
     public function isForbiddenReturnsFalseWhenActive(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 1, 'Desc');
 
         self::assertFalse($channel->isForbidden());
     }
@@ -340,7 +336,7 @@ final class RegisteredChannelTest extends TestCase
     #[Test]
     public function isForbiddenReturnsFalseWhenSuspended(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 1, 'Desc');
         $channel->suspend('Violation');
 
         self::assertFalse($channel->isForbidden());
@@ -349,7 +345,7 @@ final class RegisteredChannelTest extends TestCase
     #[Test]
     public function updateForbiddenReasonChangesReasonOnForbiddenChannel(): void
     {
-        $channel = RegisteredChannel::createForbidden(new DateTimeImmutable(), '#forbidden', 'Original reason');
+        $channel = RegisteredChannel::createForbidden(new \DateTimeImmutable(), '#forbidden', 'Original reason');
         $channel->updateForbiddenReason('Updated reason');
 
         self::assertSame('Updated reason', $channel->getForbiddenReason());
@@ -358,9 +354,9 @@ final class RegisteredChannelTest extends TestCase
     #[Test]
     public function updateForbiddenReasonThrowsOnNonForbiddenChannel(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 1, 'Desc');
 
-        $this->expectException(LogicException::class);
+        $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('Cannot update forbidden reason on a non-forbidden channel.');
 
         $channel->updateForbiddenReason('reason');
@@ -369,7 +365,7 @@ final class RegisteredChannelTest extends TestCase
     #[Test]
     public function getForbiddenReasonReturnsNullWhenNotForbidden(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 1, 'Desc');
 
         self::assertNull($channel->getForbiddenReason());
     }
@@ -377,7 +373,7 @@ final class RegisteredChannelTest extends TestCase
     #[Test]
     public function isNoExpireReturnsFalseByDefault(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 1, 'Desc');
 
         self::assertFalse($channel->isNoExpire());
     }
@@ -385,7 +381,7 @@ final class RegisteredChannelTest extends TestCase
     #[Test]
     public function setNoExpireSetsValue(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 1, 'Desc');
         $channel->changeNoExpire(true);
 
         self::assertTrue($channel->isNoExpire());
@@ -398,8 +394,8 @@ final class RegisteredChannelTest extends TestCase
     #[Test]
     public function markPendingDeletionAndRestore(): void
     {
-        $at = new DateTimeImmutable('2026-05-01 12:00:00');
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Desc');
+        $at = new \DateTimeImmutable('2026-05-01 12:00:00');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 1, 'Desc');
 
         $channel->markPendingDeletion($at);
 
@@ -418,21 +414,21 @@ final class RegisteredChannelTest extends TestCase
     #[Test]
     public function markPendingDeletionThrowsWhenNotActive(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 1, 'Desc');
         $channel->suspend('Reason');
 
-        $this->expectException(LogicException::class);
+        $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('Only active channels can be marked for deletion.');
 
-        $channel->markPendingDeletion(new DateTimeImmutable('2026-01-02 03:04:05'));
+        $channel->markPendingDeletion(new \DateTimeImmutable('2026-01-02 03:04:05'));
     }
 
     #[Test]
     public function restoreFromPendingDeletionThrowsWhenNotPendingDeletion(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 1, 'Desc');
 
-        $this->expectException(LogicException::class);
+        $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('Only channels pending deletion can be restored.');
 
         $channel->restoreFromPendingDeletion();
@@ -441,7 +437,7 @@ final class RegisteredChannelTest extends TestCase
     #[Test]
     public function suspensionTransitionsCannotOverwritePendingOrRejectedRegistrationState(): void
     {
-        $at = new DateTimeImmutable('2026-10-26T12:00:00+00:00');
+        $at = new \DateTimeImmutable('2026-10-26T12:00:00+00:00');
         $pending = RegisteredChannel::createPendingRegistration($at, '#pending', 7, 'description');
         $rejected = RegisteredChannel::createPendingRegistration($at, '#rejected', 8, 'description');
         $rejected->rejectRegistration('Reason', 9, 'Reviewer', $at, null);
@@ -450,12 +446,12 @@ final class RegisteredChannelTest extends TestCase
             try {
                 $request->suspend('reason');
                 self::fail('Expected a registration request to refuse suspension.');
-            } catch (LogicException) {
+            } catch (\LogicException) {
             }
             try {
                 $request->unsuspend();
                 self::fail('Expected a registration request to refuse unsuspension.');
-            } catch (LogicException) {
+            } catch (\LogicException) {
             }
         }
 
@@ -467,7 +463,7 @@ final class RegisteredChannelTest extends TestCase
     #[Test]
     public function orphaningRejectedRequesterPreservesNameRestrictionAndDecisionSnapshot(): void
     {
-        $at = new DateTimeImmutable('2026-10-26T12:00:00+00:00');
+        $at = new \DateTimeImmutable('2026-10-26T12:00:00+00:00');
         $until = $at->modify('+24 hours');
         $rejected = RegisteredChannel::createPendingRegistration($at, '#restricted', 7, 'description');
         $rejected->rejectRegistration('Reason', 9, 'Reviewer', $at, $until);
@@ -486,18 +482,18 @@ final class RegisteredChannelTest extends TestCase
     #[Test]
     public function registrationDecisionMethodsRejectWrongStatesAndBlankReasons(): void
     {
-        $at = new DateTimeImmutable('2026-10-26T12:00:00+00:00');
+        $at = new \DateTimeImmutable('2026-10-26T12:00:00+00:00');
         $active = RegisteredChannel::register($at, '#active', 7, 'description');
         try {
             $active->approveRegistration($at);
             self::fail('An active channel cannot be approved as a pending request.');
-        } catch (LogicException $exception) {
+        } catch (\LogicException $exception) {
             self::assertSame('Only pending channel registrations can be approved.', $exception->getMessage());
         }
         try {
             $active->orphanRejectedRegistrationRequester();
             self::fail('An active channel cannot be orphaned as a rejection.');
-        } catch (LogicException $exception) {
+        } catch (\LogicException $exception) {
             self::assertSame('Only rejected registrations can be orphaned.', $exception->getMessage());
         }
 
@@ -506,12 +502,12 @@ final class RegisteredChannelTest extends TestCase
         try {
             $rejected->rejectRegistration('Again', 9, 'Reviewer', $at, null);
             self::fail('A rejected request cannot be rejected a second time.');
-        } catch (LogicException $exception) {
+        } catch (\LogicException $exception) {
             self::assertSame('Only pending channel registrations can be rejected.', $exception->getMessage());
         }
 
         $pending = RegisteredChannel::createPendingRegistration($at, '#pending', 10, 'description');
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('A rejection reason is required.');
         $pending->rejectRegistration('  ', 9, 'Reviewer', $at, null);
     }
@@ -519,7 +515,7 @@ final class RegisteredChannelTest extends TestCase
     #[Test]
     public function isBlockedReturnsTrueForBlockedStates(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#test', 1, 'Desc');
 
         self::assertFalse($channel->isBlocked());
 
@@ -529,10 +525,10 @@ final class RegisteredChannelTest extends TestCase
         $channel->unsuspend();
         self::assertFalse($channel->isBlocked());
 
-        $forbidden = RegisteredChannel::createForbidden(new DateTimeImmutable(), '#forbidden', 'Reason');
+        $forbidden = RegisteredChannel::createForbidden(new \DateTimeImmutable(), '#forbidden', 'Reason');
         self::assertTrue($forbidden->isBlocked());
 
-        $channel->markPendingDeletion(new DateTimeImmutable('2026-01-02 03:04:05'));
+        $channel->markPendingDeletion(new \DateTimeImmutable('2026-01-02 03:04:05'));
         self::assertTrue($channel->isBlocked());
 
         $channel->restoreFromPendingDeletion();
@@ -542,7 +538,7 @@ final class RegisteredChannelTest extends TestCase
     #[Test]
     public function lookupKeyUsesTheRfc1459Fold(): void
     {
-        self::assertSame('#{ares}|~', RegisteredChannel::register(new DateTimeImmutable(), '#[Ares]\\^', 1, 'd')->getNameLower());
-        self::assertSame('#plain', RegisteredChannel::register(new DateTimeImmutable(), '#Plain', 1, 'd')->getNameLower());
+        self::assertSame('#{ares}|~', RegisteredChannel::register(new \DateTimeImmutable(), '#[Ares]\\^', 1, 'd')->getNameLower());
+        self::assertSame('#plain', RegisteredChannel::register(new \DateTimeImmutable(), '#Plain', 1, 'd')->getNameLower());
     }
 }

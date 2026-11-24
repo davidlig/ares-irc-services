@@ -72,11 +72,9 @@ use App\Irc\Domain\ValueObject\Uid;
 use App\OperServ\Application\Port\In\CommandAuditRecorder;
 use App\Shared\Application\Port\EventBusInterface;
 use App\Tests\NickServ\Support\NegotiatedCaseMapping;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionProperty;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -124,7 +122,7 @@ final class AkickEnforcementUnbanIntegrationTest extends TestCase
     #[Test]
     public function akickEnforcementOnJoinRecordsBanAndUnbanRemovesIt(): void
     {
-        $now = new DateTimeImmutable('2026-10-30T12:00:00Z');
+        $now = new \DateTimeImmutable('2026-10-30T12:00:00Z');
         $channelName = '#test';
 
         // 1. Setup channel and user in network state
@@ -148,7 +146,7 @@ final class AkickEnforcementUnbanIntegrationTest extends TestCase
 
         // 2. Setup registered channel and AKICK rule
         $registeredChannel = RegisteredChannel::register($now, $channelName, 1, 'Test channel');
-        $prop = new ReflectionProperty(RegisteredChannel::class, 'id');
+        $prop = new \ReflectionProperty(RegisteredChannel::class, 'id');
         $prop->setValue($registeredChannel, 10);
 
         $akickRule = ChannelAkick::create($now, 10, 1, '*!*@bad.host', 'Spamming detected');
@@ -234,7 +232,7 @@ final class AkickEnforcementUnbanIntegrationTest extends TestCase
     #[Test]
     public function akickEnforcementOnSyncRecordsBanAndUnbanRemovesIt(): void
     {
-        $now = new DateTimeImmutable('2026-10-30T12:00:00Z');
+        $now = new \DateTimeImmutable('2026-10-30T12:00:00Z');
         $channelName = '#syncchan';
 
         // 1. Setup channel with member already present
@@ -259,7 +257,7 @@ final class AkickEnforcementUnbanIntegrationTest extends TestCase
 
         // 2. Setup registered channel and AKICK rule
         $registeredChannel = RegisteredChannel::register($now, $channelName, 2, 'Sync Channel');
-        $prop = new ReflectionProperty(RegisteredChannel::class, 'id');
+        $prop = new \ReflectionProperty(RegisteredChannel::class, 'id');
         $prop->setValue($registeredChannel, 20);
 
         $akickRule = ChannelAkick::create($now, 20, 2, '*!*@evil.org', 'Sync akick');
@@ -350,7 +348,7 @@ final class AkickEnforcementUnbanIntegrationTest extends TestCase
     #[Test]
     public function endToEndAkickFollowedByChanServServiceUnbanDispatchesDoneMessage(): void
     {
-        $now = new DateTimeImmutable('2026-10-30T12:00:00Z');
+        $now = new \DateTimeImmutable('2026-10-30T12:00:00Z');
         $channelName = '#flow';
 
         $ircChannel = new Channel(new ChannelName($channelName), '+nt', $now);
@@ -372,7 +370,7 @@ final class AkickEnforcementUnbanIntegrationTest extends TestCase
         $this->userRepository->add($user);
 
         $registeredChannel = RegisteredChannel::register($now, $channelName, 1, 'Flow Channel');
-        $prop = new ReflectionProperty(RegisteredChannel::class, 'id');
+        $prop = new \ReflectionProperty(RegisteredChannel::class, 'id');
         $prop->setValue($registeredChannel, 30);
 
         $akickRule = ChannelAkick::create($now, 30, 1, '*!*@target.net', 'Flow reason');

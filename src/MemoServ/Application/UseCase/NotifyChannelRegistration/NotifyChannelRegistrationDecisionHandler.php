@@ -9,7 +9,6 @@ use App\MemoServ\Application\Port\Out\MemoRepositoryInterface;
 use App\MemoServ\Application\Port\Out\MemoUserAccountPort;
 use App\MemoServ\Application\Port\Out\ServiceMemoSender;
 use App\MemoServ\Domain\Entity\Memo;
-use InvalidArgumentException;
 
 use function mb_check_encoding;
 use function strlen;
@@ -34,7 +33,7 @@ final readonly class NotifyChannelRegistrationDecisionHandler implements NotifyC
         $messages = $this->memoText->render($decision, $language);
         foreach ($messages as $message) {
             if (255 < strlen($message) || !mb_check_encoding($message, 'UTF-8')) {
-                throw new InvalidArgumentException('Rendered registration decision memo is not a valid Memo-sized UTF-8 message.');
+                throw new \InvalidArgumentException('Rendered registration decision memo is not a valid Memo-sized UTF-8 message.');
             }
         }
 

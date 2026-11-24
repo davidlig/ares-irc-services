@@ -6,7 +6,6 @@ namespace App\Tests\NickServ\Application\UseCase\List;
 
 use App\NickServ\Application\UseCase\List\ListedNickAccount;
 use App\NickServ\Domain\ValueObject\NickStatus;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -17,8 +16,8 @@ final class ListedNickAccountTest extends TestCase
     #[Test]
     public function preservesTheNickSummaryAndOptionalConnectionDetails(): void
     {
-        $registeredAt = new DateTimeImmutable('2026-01-01T12:00:00+00:00');
-        $lastSeenAt = new DateTimeImmutable('2026-02-03T04:05:00+00:00');
+        $registeredAt = new \DateTimeImmutable('2026-01-01T12:00:00+00:00');
+        $lastSeenAt = new \DateTimeImmutable('2026-02-03T04:05:00+00:00');
         $account = new ListedNickAccount('Davidlig', $registeredAt, $lastSeenAt, '203.0.113.7', NickStatus::Registered);
 
         self::assertSame('Davidlig', $account->nickname);

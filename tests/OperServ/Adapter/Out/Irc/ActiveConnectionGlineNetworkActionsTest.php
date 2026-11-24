@@ -8,7 +8,6 @@ use App\Irc\Application\Port\In\ActiveProtocolModuleHolderInterface;
 use App\Irc\Application\Port\In\ProtocolModuleInterface;
 use App\Irc\Application\Port\In\ProtocolServiceActionsInterface;
 use App\OperServ\Adapter\Out\Irc\ActiveConnectionGlineNetworkActions;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -69,7 +68,7 @@ final class ActiveConnectionGlineNetworkActionsTest extends TestCase
             'reason',
         );
 
-        $this->adapter($actions)->add('@', new DateTimeImmutable('+1 hour'), 'reason');
+        $this->adapter($actions)->add('@', new \DateTimeImmutable('+1 hour'), 'reason');
     }
 
     #[Test]
@@ -78,7 +77,7 @@ final class ActiveConnectionGlineNetworkActionsTest extends TestCase
         $actions = $this->createMock(ProtocolServiceActionsInterface::class);
         $actions->expects(self::once())->method('addGline')->with('001', 'ident', 'host.test', 0, 'reason');
 
-        $this->adapter($actions)->add('ident@host.test', new DateTimeImmutable('-1 hour'), 'reason');
+        $this->adapter($actions)->add('ident@host.test', new \DateTimeImmutable('-1 hour'), 'reason');
     }
 
     #[Test]

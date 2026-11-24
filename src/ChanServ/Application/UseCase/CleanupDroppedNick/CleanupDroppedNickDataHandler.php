@@ -13,7 +13,6 @@ use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\PublishedEvent\ChannelDropCleanupEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelDropEvent;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
-use DateTimeImmutable;
 
 final readonly class CleanupDroppedNickDataHandler
 {
@@ -39,7 +38,7 @@ final readonly class CleanupDroppedNickDataHandler
         }
     }
 
-    private function handleFounderDrop(RegisteredChannel $channel, DateTimeImmutable $occurredAt): void
+    private function handleFounderDrop(RegisteredChannel $channel, \DateTimeImmutable $occurredAt): void
     {
         if ($channel->isRejectedRegistration()) {
             $channel->orphanRejectedRegistrationRequester();

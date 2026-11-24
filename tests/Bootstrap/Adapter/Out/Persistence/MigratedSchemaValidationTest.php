@@ -23,7 +23,6 @@ use Doctrine\ORM\Tools\Console\EntityManagerProvider\SingleManagerProvider;
 use Doctrine\Persistence\ManagerRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Component\Console\Tester\CommandTester;
 
@@ -157,7 +156,7 @@ final class MigratedSchemaValidationTest extends TestCase
         $filter = static fn (string $name): bool => 'external' !== $name;
         $connection->getConfiguration()->setSchemaAssetsFilter($filter);
         $factory = $this->createStub(ClassMetadataFactory::class);
-        $factory->method('getAllMetadata')->willThrowException(new RuntimeException('synthetic validation failure'));
+        $factory->method('getAllMetadata')->willThrowException(new \RuntimeException('synthetic validation failure'));
         $events = new EventManager();
         $em = $this->createStub(EntityManagerInterface::class);
         $em->method('getConnection')->willReturn($connection);
@@ -167,7 +166,7 @@ final class MigratedSchemaValidationTest extends TestCase
         try {
             $command->execute([]);
             self::fail('Expected synthetic validation failure.');
-        } catch (RuntimeException $error) {
+        } catch (\RuntimeException $error) {
             self::assertSame('synthetic validation failure', $error->getMessage());
         } finally {
             self::assertSame($filter, $connection->getConfiguration()->getSchemaAssetsFilter());

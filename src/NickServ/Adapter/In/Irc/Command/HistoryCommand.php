@@ -22,7 +22,6 @@ use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentValidator;
 use App\Shared\Adapter\In\Irc\Presentation\Component;
 use App\Shared\Adapter\In\Irc\Presentation\Fragment;
 use App\Shared\Adapter\In\Irc\Presentation\Role;
-use Stringable;
 
 use function array_slice;
 use function base64_decode;
@@ -369,7 +368,7 @@ final readonly class HistoryCommand implements NickServCommandInterface, IrcopAu
 
     private function stringifyExtra(mixed $value): string
     {
-        if (is_scalar($value) || $value instanceof Stringable) {
+        if (is_scalar($value) || $value instanceof \Stringable) {
             return (string) $value;
         }
 

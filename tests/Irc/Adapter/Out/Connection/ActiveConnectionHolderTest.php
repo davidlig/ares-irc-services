@@ -18,7 +18,6 @@ use App\Irc\Domain\ValueObject\ServerName;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RuntimeException;
 
 #[CoversClass(ActiveConnectionHolder::class)]
 final class ActiveConnectionHolderTest extends TestCase
@@ -164,7 +163,7 @@ final class ActiveConnectionHolderTest extends TestCase
     #[Test]
     public function writeLineWithArrayPropagatesTheConnectionFailure(): void
     {
-        $failure = new RuntimeException('Write failed');
+        $failure = new \RuntimeException('Write failed');
         $connection = $this->createMock(ConnectionInterface::class);
         $connection->expects(self::once())->method('writeLine')->with(['FIRST'])->willThrowException($failure);
         $this->holder->onBurstComplete(new NetworkBurstCompleteEvent($connection, '001'));
@@ -172,7 +171,7 @@ final class ActiveConnectionHolderTest extends TestCase
         try {
             $this->holder->writeLine(['FIRST']);
             self::fail('Expected the connection failure');
-        } catch (RuntimeException $exception) {
+        } catch (\RuntimeException $exception) {
             self::assertSame($failure, $exception);
         }
     }

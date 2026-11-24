@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace App\Tests\NickServ\Domain\Entity;
 
 use App\NickServ\Domain\Entity\RegisteredNick;
-use DateTimeImmutable;
-use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -32,12 +30,12 @@ final class RegisteredNickForbiddenTest extends TestCase
             'hash',
             'test@example.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable()
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable()
         );
         $nick->activate();
 
-        $this->expectException(LogicException::class);
+        $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('Cannot update forbidden reason on a non-forbidden account.');
 
         $nick->updateForbiddenReason('New reason');
@@ -51,13 +49,13 @@ final class RegisteredNickForbiddenTest extends TestCase
             'hash',
             'test@example.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable()
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable()
         );
         $nick->activate();
         $nick->suspend('Bad behavior', null);
 
-        $this->expectException(LogicException::class);
+        $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('Cannot update forbidden reason on a non-forbidden account.');
 
         $nick->updateForbiddenReason('New reason');
@@ -79,8 +77,8 @@ final class RegisteredNickForbiddenTest extends TestCase
             'hash',
             'test@example.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable()
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable()
         );
         $nick->activate();
 
@@ -95,8 +93,8 @@ final class RegisteredNickForbiddenTest extends TestCase
             'hash',
             'test@example.com',
             'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable()
+            new \DateTimeImmutable('+1 hour'),
+            new \DateTimeImmutable()
         );
         $nick->activate();
         $nick->suspend('Bad behavior', null);

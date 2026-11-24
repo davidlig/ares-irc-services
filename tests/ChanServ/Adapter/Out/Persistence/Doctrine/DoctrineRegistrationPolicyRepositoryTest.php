@@ -14,13 +14,9 @@ use Doctrine\DBAL\Platforms\MariaDBPlatform;
 use Doctrine\DBAL\Platforms\MySQLPlatform;
 use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
 use Doctrine\DBAL\Platforms\SQLitePlatform;
-use JsonException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\TestWith;
-use RuntimeException;
-use UnexpectedValueException;
-use ValueError;
 
 use function in_array;
 
@@ -36,7 +32,7 @@ final class DoctrineRegistrationPolicyRepositoryTest extends DoctrineIntegration
     {
         $connection = $this->createStub(Connection::class);
         $connection->method('fetchOne')->willReturn($raw);
-        $this->expectException(UnexpectedValueException::class);
+        $this->expectException(\UnexpectedValueException::class);
         new DoctrineRegistrationPolicyRepository($connection)->current();
     }
 
@@ -49,7 +45,7 @@ final class DoctrineRegistrationPolicyRepositoryTest extends DoctrineIntegration
         try {
             new DoctrineRegistrationPolicyRepository($db)->current();
             self::fail('A JSON number cannot be a registration mode.');
-        } catch (UnexpectedValueException) {
+        } catch (\UnexpectedValueException) {
             self::assertSame($before, $db->fetchAllAssociative('SELECT * FROM service_settings'));
         }
     }
@@ -59,7 +55,7 @@ final class DoctrineRegistrationPolicyRepositoryTest extends DoctrineIntegration
     {
         $connection = $this->createStub(Connection::class);
         $connection->method('fetchOne')->willReturn('"EMAIL"');
-        $this->expectException(ValueError::class);
+        $this->expectException(\ValueError::class);
         new DoctrineRegistrationPolicyRepository($connection)->current();
     }
 
@@ -68,7 +64,7 @@ final class DoctrineRegistrationPolicyRepositoryTest extends DoctrineIntegration
     {
         $connection = $this->createStub(Connection::class);
         $connection->method('fetchOne')->willReturn('not-json');
-        $this->expectException(JsonException::class);
+        $this->expectException(\JsonException::class);
         new DoctrineRegistrationPolicyRepository($connection)->current();
     }
 
@@ -77,7 +73,7 @@ final class DoctrineRegistrationPolicyRepositoryTest extends DoctrineIntegration
     {
         $connection = $this->createStub(Connection::class);
         $connection->method('fetchOne')->willReturn(123);
-        $this->expectException(UnexpectedValueException::class);
+        $this->expectException(\UnexpectedValueException::class);
         new DoctrineRegistrationPolicyRepository($connection)->current();
     }
 
@@ -177,7 +173,7 @@ final class DoctrineRegistrationPolicyRepositoryTest extends DoctrineIntegration
         $connection = $this->createMock(Connection::class);
         $connection->expects(self::exactly(3))->method('fetchOne')->willReturn('"DIRECT"');
         $connection->expects(self::exactly(3))->method('executeStatement')->willReturn(0);
-        $this->expectException(RuntimeException::class);
+        $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Registration policy changed concurrently; retry the command.');
 
         new DoctrineRegistrationPolicyRepository($connection)->change(RegistrationMode::Approval);

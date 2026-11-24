@@ -127,12 +127,10 @@ use App\Shared\Application\Port\EventBusInterface;
 use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
 use ArrayObject;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Psr\Log\LoggerInterface;
-use ReflectionProperty;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\Translation\Translator;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -166,8 +164,8 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
     #[Test]
     public function statusPrivacyUsesCentralOperatorPolicyAndDoesNotGrantMutationPermissions(): void
     {
-        $requester = RegisteredChannel::createPendingRegistration(new DateTimeImmutable('-1 day'), '#private', 10, 'request');
-        $requester->rejectRegistration('duplicate', 99, 'Reviewer', new DateTimeImmutable('-1 hour'), new DateTimeImmutable('+1 day'));
+        $requester = RegisteredChannel::createPendingRegistration(new \DateTimeImmutable('-1 day'), '#private', 10, 'request');
+        $requester->rejectRegistration('duplicate', 99, 'Reviewer', new \DateTimeImmutable('-1 hour'), new \DateTimeImmutable('+1 day'));
 
         foreach ([
             ['Requester', true, false, 10, false, ['status.header', 'status.rejected', 'status.rejection_reason', 'status.footer']],
@@ -201,9 +199,9 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
     #[Test]
     public function authorizedDropRemovesFiniteRejectedRegistrationAndSubsequentStatusIsUnregistered(): void
     {
-        $channel = RegisteredChannel::createPendingRegistration(new DateTimeImmutable('-1 day'), '#private', 10, 'request');
-        new ReflectionProperty(RegisteredChannel::class, 'id')->setValue($channel, 41);
-        $channel->rejectRegistration('duplicate', 99, 'Reviewer', new DateTimeImmutable('-1 hour'), new DateTimeImmutable('+1 day'));
+        $channel = RegisteredChannel::createPendingRegistration(new \DateTimeImmutable('-1 day'), '#private', 10, 'request');
+        new \ReflectionProperty(RegisteredChannel::class, 'id')->setValue($channel, 41);
+        $channel->rejectRegistration('duplicate', 99, 'Reviewer', new \DateTimeImmutable('-1 hour'), new \DateTimeImmutable('+1 day'));
         $state = new class($channel) {
             public ?RegisteredChannel $current;
 
@@ -213,9 +211,7 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
             }
         };
         $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
-        $channels->method('findByChannelName')->willReturnCallback(static function () use ($state): ?RegisteredChannel {
-            return $state->current;
-        });
+        $channels->method('findByChannelName')->willReturnCallback(static fn (): ?RegisteredChannel => $state->current);
         $channels->method('delete')->willReturnCallback(static function (RegisteredChannel $deletedChannel) use ($state): void {
             self::assertSame('#private', $deletedChannel->getName());
             $state->current = null;
@@ -275,9 +271,9 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
     public function pendingCancellationPreservesPermissionsAndOnlyDeletesItsTarget(bool $force, array $permissions, string $expected, bool $deleted): void
     {
         $repository = new RegisteredChannelDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network());
-        $other = RegisteredChannel::register(new DateTimeImmutable('-1 day'), '#untouched', 10, 'approved');
+        $other = RegisteredChannel::register(new \DateTimeImmutable('-1 day'), '#untouched', 10, 'approved');
         $repository->save($other);
-        $pending = RegisteredChannel::createPendingRegistration(new DateTimeImmutable('-1 day'), '#private', 10, 'request');
+        $pending = RegisteredChannel::createPendingRegistration(new \DateTimeImmutable('-1 day'), '#private', 10, 'request');
         $repository->save($pending);
         $before = $this->entityManager->getConnection()->fetchAllAssociative('SELECT * FROM registered_channels');
         $boundary = $this->createStub(ChanTransactionBoundary::class);
@@ -296,7 +292,7 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
                 $observed->outcome = $event->outcome;
             }
         });
-        $messages = new ArrayObject();
+        $messages = new \ArrayObject();
         $this->service(
             $repository,
             'RoleUser',
@@ -340,7 +336,7 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
                 $boundary,
                 registrationMode: $mode,
             );
-            $messages = new ArrayObject();
+            $messages = new \ArrayObject();
             $this->service(
                 $repository,
                 'Other',
@@ -381,14 +377,14 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
             $boundary,
         );
 
-        foreach ([new DateTimeImmutable('+1 day'), new DateTimeImmutable('-1 day'), null] as $restrictedUntil) {
+        foreach ([new \DateTimeImmutable('+1 day'), new \DateTimeImmutable('-1 day'), null] as $restrictedUntil) {
             foreach ([false, true] as $force) {
                 foreach ([[], ['chanserv.drop'], ['chanserv.drop', 'chanserv.drop.force']] as $permissions) {
-                    $channel = RegisteredChannel::createPendingRegistration(new DateTimeImmutable('-2 days'), '#private', 10, 'request');
-                    $channel->rejectRegistration('duplicate', 99, 'Reviewer', new DateTimeImmutable('-2 days'), $restrictedUntil);
+                    $channel = RegisteredChannel::createPendingRegistration(new \DateTimeImmutable('-2 days'), '#private', 10, 'request');
+                    $channel->rejectRegistration('duplicate', 99, 'Reviewer', new \DateTimeImmutable('-2 days'), $restrictedUntil);
                     $repository->save($channel);
                     $before = hash('sha256', serialize($this->entityManager->getConnection()->fetchAllAssociative('SELECT * FROM registered_channels')));
-                    $messages = new ArrayObject();
+                    $messages = new \ArrayObject();
                     $service = $this->service(
                         $repository,
                         'RoleUser',
@@ -422,7 +418,7 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
 
                     self::assertNull($this->findChannel($repository));
                     self::assertSame(["\x0303✔\x03\x0F drop.force_success"], iterator_to_array($messages));
-                    $messageBuffer = new ArrayObject();
+                    $messageBuffer = new \ArrayObject();
                     $this->service(
                         $repository,
                         'RoleUser',
@@ -452,7 +448,7 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
                         $boundary,
                         registrationMode: $registrationMode,
                     );
-                    $messages = new ArrayObject();
+                    $messages = new \ArrayObject();
                     $this->service(
                         $repository,
                         'Other',
@@ -482,9 +478,9 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
     {
         foreach (['#ircops', ''] as $debugChannel) {
             foreach (['ACCEPT #private', 'REJECT #private duplicated channel', 'PENDING', 'REJECT #private', 'ACCEPT #missing'] as $input) {
-                $channel = RegisteredChannel::createPendingRegistration(new DateTimeImmutable('-1 day'), '#private', 10, 'request');
+                $channel = RegisteredChannel::createPendingRegistration(new \DateTimeImmutable('-1 day'), '#private', 10, 'request');
                 /** @var ArrayObject<int, array{string, string, string}> $notices */
-                $notices = new ArrayObject();
+                $notices = new \ArrayObject();
                 $notifier = $this->createStub(ChanServNotifierInterface::class);
                 $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message, string $type) use (&$notices): void {
                     $notices->append([$target, $message, $type]);
@@ -497,7 +493,7 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
                 $debug = new ChanServDebugNotifier($notifier, $translator, 'en', $debugChannel, new IrcRenderer(new FixedStyleProvider(PresentationStyle::default())));
                 $presenter = new ActiveConnectionCommandAuditPresenter(new ServiceDebugNotifierRegistry([$debug]));
                 /** @var ArrayObject<int, CommandAuditRecord> $records */
-                $records = new ArrayObject();
+                $records = new \ArrayObject();
                 $sink = $this->createStub(CommandAuditSink::class);
                 $sink->method('record')->willReturnCallback(static function (CommandAuditRecord $record) use (&$records, $presenter): void {
                     $records->append($record);
@@ -516,10 +512,10 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
 
                 foreach ([true, false] as $isRoot) {
                     /** @var ArrayObject<int, array{string, string, string}> $notices */
-                    $notices = new ArrayObject();
+                    $notices = new \ArrayObject();
                     /** @var ArrayObject<int, CommandAuditRecord> $records */
-                    $records = new ArrayObject();
-                    $messages = new ArrayObject();
+                    $records = new \ArrayObject();
+                    $messages = new \ArrayObject();
                     $service = $this->service(
                         $channel,
                         $isRoot ? 'Root' : 'Other',
@@ -586,18 +582,18 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
     {
         $repository = new RegisteredChannelDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network());
         if (in_array($case, ['restricted', 'pending-deletion', 'already-registered'], true)) {
-            $existing = RegisteredChannel::createPendingRegistration(new DateTimeImmutable('-1 day'), '#private', 10, 'previous');
+            $existing = RegisteredChannel::createPendingRegistration(new \DateTimeImmutable('-1 day'), '#private', 10, 'previous');
             if ('restricted' === $case) {
-                $existing->rejectRegistration('duplicate', 99, 'Reviewer', new DateTimeImmutable(), null);
+                $existing->rejectRegistration('duplicate', 99, 'Reviewer', new \DateTimeImmutable(), null);
             } elseif ('pending-deletion' === $case) {
-                $existing->approveRegistration(new DateTimeImmutable('-1 hour'));
-                $existing->markPendingDeletion(new DateTimeImmutable());
+                $existing->approveRegistration(new \DateTimeImmutable('-1 hour'));
+                $existing->markPendingDeletion(new \DateTimeImmutable());
             }
             $repository->save($existing);
         }
         $before = $this->entityManager->getConnection()->fetchAllAssociative('SELECT * FROM registered_channels');
         /** @var ArrayObject<int, array{string, string, string}> $notices */
-        $notices = new ArrayObject();
+        $notices = new \ArrayObject();
         $notifier = $this->createStub(ChanServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message, string $type) use ($notices): void {
             $notices->append([$target, $message, $type]);
@@ -611,7 +607,7 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
             new ChanServDebugNotifier($notifier, $translator, 'en', $debugChannel, new IrcRenderer(new FixedStyleProvider(PresentationStyle::default()))),
         ]));
         /** @var ArrayObject<int, CommandAuditRecord> $records */
-        $records = new ArrayObject();
+        $records = new \ArrayObject();
         $sink = $this->createStub(CommandAuditSink::class);
         $sink->method('record')->willReturnCallback(static function (CommandAuditRecord $record) use ($records): void {
             $records->append($record);
@@ -625,7 +621,7 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
             $sink, new PsrCommandAuditSink($logger), new DebugChannelCommandAuditSink($presenter),
         ]));
         /** @var ArrayObject<int, CommandExecutedEvent> $executions */
-        $executions = new ArrayObject();
+        $executions = new \ArrayObject();
         $events = $this->createStub(EventBusInterface::class);
         $events->method('dispatch')->willReturnCallback(static function (object $event) use ($subscriber, $executions): void {
             if ($event instanceof CommandExecutedEvent) {
@@ -652,7 +648,7 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
             $this->createStub(ChannelAkickRepositoryInterface::class),
         ), $throttle, $events, $operators, $boundary, maxChannelsPerNick: 'quota' === $case ? 0 : 3, registrationMode: $query);
         $sender = $this->sender($nick, 'unidentified' !== $case, $oper);
-        $messages = new ArrayObject();
+        $messages = new \ArrayObject();
         $lookup = $this->createStub(ChannelLookupPort::class);
         $lookup->method('findByChannelName')->willReturn('missing-network' === $case ? null : new ChannelView(
             '#private',
@@ -766,13 +762,13 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
     public function requesterQuotaPolicyThroughPublicRouting(string $nickname, bool $ircop, bool $assignedRole, int $maximum, int $approved, int $rejected, string $extraState, string $registerReply, string $acceptReply, string $sessionUid, bool $online): void
     {
         $repository = new RegisteredChannelDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network());
-        $at = new DateTimeImmutable('-1 day');
+        $at = new \DateTimeImmutable('-1 day');
         for ($i = 0; $i < $approved; ++$i) {
             $repository->save(RegisteredChannel::register($at, '#approved' . $i, 10, 'approved'));
         }
         for ($i = 0; $i < $rejected; ++$i) {
             $channel = RegisteredChannel::createPendingRegistration($at, '#rejected' . $i, 10, 'rejected');
-            $channel->rejectRegistration('duplicate', 99, 'Reviewer', $at, new DateTimeImmutable('+1 day'));
+            $channel->rejectRegistration('duplicate', 99, 'Reviewer', $at, new \DateTimeImmutable('+1 day'));
             $repository->save($channel);
         }
         if ('' !== $extraState) {
@@ -819,7 +815,7 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
             maxChannelsPerNick: $maximum
         );
         $drop = new ChanDropService($repository, $this->createStub(ChanServEventPublisher::class), $this->createStub(ChanAuditSink::class), $this->createStub(ChanServActivitySink::class), $this->createStub(ChanNetworkActions::class), $boundary);
-        $messages = new ArrayObject();
+        $messages = new \ArrayObject();
         $requester = $this->sender($nickname, true, $ircop);
         $before = $this->entityManager->getConnection()->fetchAllAssociative('SELECT * FROM registered_channels');
         $this->service($repository, $nickname, true, $ircop, 10, $assignedRole, $messages, $review, $drop, $register, accountPort: $accounts, requester: $requester)
@@ -829,7 +825,7 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
             self::assertSame($before, $this->entityManager->getConnection()->fetchAllAssociative('SELECT * FROM registered_channels'));
             $repository->save(RegisteredChannel::createPendingRegistration($at, '#private', 10, 'previous request'));
         }
-        $messages = new ArrayObject();
+        $messages = new \ArrayObject();
         $this->service(
             $repository,
             'Reviewer',
@@ -856,34 +852,34 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
     #[Test]
     public function nickInfoHidesUnacceptedAssociationsThroughPublicRouting(): void
     {
-        $nick = RegisteredNick::createPending('Requester', 'synthetic-hash', null, 'en', new DateTimeImmutable('+1 day'), new DateTimeImmutable('-1 day'));
+        $nick = RegisteredNick::createPending('Requester', 'synthetic-hash', null, 'en', new \DateTimeImmutable('+1 day'), new \DateTimeImmutable('-1 day'));
         $nick->activate();
         $this->entityManager->persist($nick);
         $this->entityManager->flush();
         $repository = new RegisteredChannelDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network());
         $access = new ChannelAccessDoctrineRepository($this->entityManager);
-        $approved = RegisteredChannel::register(new DateTimeImmutable('-1 day'), '#approved', $nick->getId(), 'approved');
-        $pending = RegisteredChannel::createPendingRegistration(new DateTimeImmutable('-1 day'), '#private', $nick->getId(), 'pending');
+        $approved = RegisteredChannel::register(new \DateTimeImmutable('-1 day'), '#approved', $nick->getId(), 'approved');
+        $pending = RegisteredChannel::createPendingRegistration(new \DateTimeImmutable('-1 day'), '#private', $nick->getId(), 'pending');
         $repository->save($approved);
         $repository->save($pending);
-        $successor = RegisteredChannel::createPendingRegistration(new DateTimeImmutable('-1 day'), '#pending-successor', 99, 'pending');
+        $successor = RegisteredChannel::createPendingRegistration(new \DateTimeImmutable('-1 day'), '#pending-successor', 99, 'pending');
         $successor->assignSuccessor($nick->getId());
         $repository->save($successor);
-        $accessOnly = RegisteredChannel::createPendingRegistration(new DateTimeImmutable('-1 day'), '#rejected-access', 99, 'request');
-        $accessOnly->rejectRegistration('duplicate', 99, 'Reviewer', new DateTimeImmutable(), null);
+        $accessOnly = RegisteredChannel::createPendingRegistration(new \DateTimeImmutable('-1 day'), '#rejected-access', 99, 'request');
+        $accessOnly->rejectRegistration('duplicate', 99, 'Reviewer', new \DateTimeImmutable(), null);
         $repository->save($accessOnly);
         $access->save(new ChannelAccess($accessOnly->getId(), $nick->getId(), 100));
         // An existing access row must not accidentally reintroduce an unaccepted founder.
         $access->save(new ChannelAccess($pending->getId(), $nick->getId(), 100));
         foreach (['pending', 'rejected', 'accepted', 'removed'] as $state) {
             if ('rejected' === $state) {
-                $pending->rejectRegistration('duplicate', 99, 'Reviewer', new DateTimeImmutable(), new DateTimeImmutable('+1 day'));
+                $pending->rejectRegistration('duplicate', 99, 'Reviewer', new \DateTimeImmutable(), new \DateTimeImmutable('+1 day'));
                 $repository->save($pending);
             } elseif ('accepted' === $state) {
                 $repository->delete($pending);
-                $pending = RegisteredChannel::createPendingRegistration(new DateTimeImmutable(), '#private', $nick->getId(), 'new request');
+                $pending = RegisteredChannel::createPendingRegistration(new \DateTimeImmutable(), '#private', $nick->getId(), 'new request');
                 $repository->save($pending);
-                $pending->approveRegistration(new DateTimeImmutable());
+                $pending->approveRegistration(new \DateTimeImmutable());
                 $repository->save($pending);
             } elseif ('removed' === $state) {
                 $repository->delete($pending);
@@ -907,8 +903,8 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
     #[Test]
     public function completeSyntheticApprovalLifecyclePreservesNotificationsAuditAndHistory(): void
     {
-        $at = new DateTimeImmutable('-1 day');
-        $nick = RegisteredNick::createPending('RequesterOper', 'synthetic-hash', null, 'en', new DateTimeImmutable('+1 day'), $at);
+        $at = new \DateTimeImmutable('-1 day');
+        $nick = RegisteredNick::createPending('RequesterOper', 'synthetic-hash', null, 'en', new \DateTimeImmutable('+1 day'), $at);
         $nick->activate();
         $this->entityManager->persist($nick);
         $this->entityManager->flush();
@@ -918,7 +914,7 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
             $repository->save(RegisteredChannel::register($at, $name, $requesterId, 'approved'));
         }
         $rejected = RegisteredChannel::createPendingRegistration($at, '#private', $requesterId, 'request');
-        $rejected->rejectRegistration('duplicate', 99, 'Reviewer', $at, new DateTimeImmutable('+1 day'));
+        $rejected->rejectRegistration('duplicate', 99, 'Reviewer', $at, new \DateTimeImmutable('+1 day'));
         $repository->save($rejected);
         $accounts = $this->createStub(ChanUserAccountPort::class);
         $accounts->method('findAccountById')->willReturn(new ChanAccountView($requesterId, 'RequesterOper', 'en'));
@@ -975,7 +971,7 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
         $drop = new ChanDropService($repository, $publisher, $this->createStub(ChanAuditSink::class), $this->createStub(ChanServActivitySink::class), $this->createStub(ChanNetworkActions::class), $boundary);
         $requester = $this->sender('RequesterOper', true, true);
         $run = function (string $input, bool $asRequester = false) use ($repository, $accounts, $requester, $review, $drop, $register, $events): array {
-            $messages = new ArrayObject();
+            $messages = new \ArrayObject();
             $this->service(
                 $repository,
                 'Reviewer',
@@ -1063,7 +1059,7 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
     public function listExcludesUnacceptedRequestsBeforeCountingAndPagination(string $pattern, int $page, array $expectedNames, int $total, bool $granted): void
     {
         $repository = new RegisteredChannelDoctrineRepository($this->entityManager, NegotiatedCaseMapping::network());
-        $at = new DateTimeImmutable('-1 day');
+        $at = new \DateTimeImmutable('-1 day');
         $active = RegisteredChannel::register($at, '#visible-a', 1, 'active');
         $suspended = RegisteredChannel::register($at, '#visible-b', 1, 'suspended');
         $suspended->suspend('test');
@@ -1072,7 +1068,7 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
         $forbidden = RegisteredChannel::createForbidden($at, '#visible-d', 'test');
         $pending = RegisteredChannel::createPendingRegistration($at, '#visible-00-pending', 1, 'pending');
         $rejected = RegisteredChannel::createPendingRegistration($at, '#visible-01-rejected', 1, 'rejected');
-        $rejected->rejectRegistration('duplicate', 99, 'Reviewer', $at, new DateTimeImmutable('+1 day'));
+        $rejected->rejectRegistration('duplicate', 99, 'Reviewer', $at, new \DateTimeImmutable('+1 day'));
         foreach ([$active, $suspended, $deleting, $forbidden, $pending, $rejected] as $channel) {
             $repository->save($channel);
         }
@@ -1094,7 +1090,7 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
                 $observed->outcome = $event->outcome;
             }
         });
-        $messages = new ArrayObject();
+        $messages = new \ArrayObject();
         $service = $this->service(
             $repository,
             'Reviewer',
@@ -1128,7 +1124,7 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
             self::assertStringNotContainsString('#visible-00-pending', implode("\n", $rows));
             self::assertStringNotContainsString('#visible-01-rejected', implode("\n", $rows));
             if (1 === $page && '#visible-*' === $pattern) {
-                self::assertInstanceOf(ArrayObject::class, $messages);
+                self::assertInstanceOf(\ArrayObject::class, $messages);
                 $messages->exchangeArray([]);
                 $service->dispatch('CREG PENDING', $this->sender('Reviewer', true, true));
                 self::assertStringContainsString('#visible-00-pending', implode("\n", iterator_to_array($messages)));
@@ -1152,7 +1148,7 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
             NegotiatedCaseMapping::nickServ(),
         );
         $lookup = $this->createStub(NetworkUserLookupPort::class);
-        $messages = new ArrayObject();
+        $messages = new \ArrayObject();
         $notifier = $this->createStub(NickServNotifierInterface::class);
         $notifier->method('getNick')->willReturn('NickServ');
         $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use ($messages): void { $messages->append($message); });
@@ -1192,7 +1188,7 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
         bool $ircop,
         ?int $accountId,
         bool $hasRole,
-        array|ArrayObject &$messages,
+        \ArrayObject|array &$messages,
         ReviewRegistrationHandlerInterface $review,
         ChanDropService $dropService,
         ?RegisterChannelHandlerInterface $registerHandler = null,
@@ -1261,7 +1257,7 @@ final class RegistrationDecisionRoutingTest extends DoctrineIntegrationTestCase
         $notifier->method('getNick')->willReturn('ChanServ');
         $notifier->method('getServiceKey')->willReturn('chanserv');
         $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void {
-            if ($messages instanceof ArrayObject) {
+            if ($messages instanceof \ArrayObject) {
                 $messages->append($message);
 
                 return;

@@ -8,7 +8,6 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionLock;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RuntimeException;
 
 use function chmod;
 use function dirname;
@@ -93,7 +92,7 @@ final class UdbSessionLockTest extends TestCase
         try {
             $lock = new UdbSessionLock($this->directory);
 
-            $this->expectException(RuntimeException::class);
+            $this->expectException(\RuntimeException::class);
             $lock->acquire();
         } finally {
             flock($foreign, LOCK_UN);
@@ -120,7 +119,7 @@ final class UdbSessionLockTest extends TestCase
         file_put_contents($file, '');
 
         try {
-            $this->expectException(RuntimeException::class);
+            $this->expectException(\RuntimeException::class);
             $this->expectExceptionMessage('UDB lock directory is not a directory.');
             new UdbSessionLock($file)->acquire();
         } finally {
@@ -136,7 +135,7 @@ final class UdbSessionLockTest extends TestCase
         $file = $parent . '/file';
         file_put_contents($file, '');
         try {
-            $this->expectException(RuntimeException::class);
+            $this->expectException(\RuntimeException::class);
             $this->expectExceptionMessage('Unable to create UDB lock directory');
             new UdbSessionLock($file . '/child')->acquire();
         } finally {
@@ -149,7 +148,7 @@ final class UdbSessionLockTest extends TestCase
     {
         mkdir($this->directory . '/udb.lock', 0o770, true);
         try {
-            $this->expectException(RuntimeException::class);
+            $this->expectException(\RuntimeException::class);
             $this->expectExceptionMessage('Unable to acquire the local UDB session lock');
             new UdbSessionLock($this->directory)->acquire();
         } finally {
@@ -160,7 +159,7 @@ final class UdbSessionLockTest extends TestCase
     #[Test]
     public function aMissingLockDirectoryConfigurationFailsExplicitly(): void
     {
-        $this->expectException(RuntimeException::class);
+        $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('UDB lock directory is not configured.');
         new UdbSessionLock('')->acquire();
     }
@@ -172,7 +171,7 @@ final class UdbSessionLockTest extends TestCase
         chmod($this->directory, 0o555);
 
         try {
-            $this->expectException(RuntimeException::class);
+            $this->expectException(\RuntimeException::class);
             $this->expectExceptionMessage('is not writable.');
             new UdbSessionLock($this->directory)->acquire();
         } finally {

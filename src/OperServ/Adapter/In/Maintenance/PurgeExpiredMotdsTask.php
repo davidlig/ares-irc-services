@@ -9,11 +9,8 @@ use App\Irc\Application\Port\In\ServiceDebugNotifierInterface;
 use App\OperServ\Application\Model\MessageDelivery;
 use App\OperServ\Application\Port\Out\MotdEntry;
 use App\OperServ\Application\Port\Out\MotdRepository;
-use DateTimeImmutable;
-use DateTimeZone;
 use Psr\Log\LoggerInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
-use Throwable;
 
 use function count;
 use function sprintf;
@@ -75,7 +72,7 @@ final class PurgeExpiredMotdsTask implements PrerequisiteAwareMaintenanceTaskInt
 
     public function run(): void
     {
-        $occurredAt = new DateTimeImmutable();
+        $occurredAt = new \DateTimeImmutable();
         $batches = 0;
 
         do {
@@ -106,7 +103,7 @@ final class PurgeExpiredMotdsTask implements PrerequisiteAwareMaintenanceTaskInt
     {
         try {
             $this->debugNotifier->notify($this->formatFinalizedMessage($motd));
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             $this->logger->warning(sprintf(
                 'Maintenance [%s]: could not post the finalized notice for expired MOTD id %d to the debug channel; removing it anyway.',
                 $this->getName(),
@@ -123,7 +120,7 @@ final class PurgeExpiredMotdsTask implements PrerequisiteAwareMaintenanceTaskInt
 
     private function formatFinalizedMessage(MotdEntry $motd): string
     {
-        $timezone = new DateTimeZone($this->defaultTimezone);
+        $timezone = new \DateTimeZone($this->defaultTimezone);
         $date = ($motd->expiresAt ?? $motd->createdAt)
             ->setTimezone($timezone)
             ->format('d/m/Y H:i T');

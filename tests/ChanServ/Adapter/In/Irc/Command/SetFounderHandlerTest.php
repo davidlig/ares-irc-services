@@ -20,7 +20,6 @@ use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
 use App\Irc\Application\Port\In\ServiceNicknameRegistry;
-use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -150,7 +149,7 @@ final class SetFounderHandlerTest extends TestCase
         ];
         $application = $this->createStub(TransferChannelFounderHandlerInterface::class);
         $application->method('handle')->willReturnCallback(static function () use (&$results): TransferChannelFounderResult {
-            return array_shift($results) ?? throw new LogicException('Missing founder transfer result.');
+            return array_shift($results) ?? throw new \LogicException('Missing founder transfer result.');
         });
         $messages = [];
         $translator = $this->createStub(TranslatorInterface::class);

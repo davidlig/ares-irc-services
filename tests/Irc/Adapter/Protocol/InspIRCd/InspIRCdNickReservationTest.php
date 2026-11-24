@@ -10,7 +10,6 @@ use App\Irc\Adapter\Protocol\InspIRCd\InspIRCdNickReservation;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
 
 #[CoversClass(InspIRCdNickReservation::class)]
 final class InspIRCdNickReservationTest extends TestCase
@@ -137,7 +136,7 @@ final class InspIRCdNickReservationTest extends TestCase
 
         $this->connectionHolder = new ActiveConnectionHolder();
 
-        $reflection = new ReflectionClass($this->connectionHolder);
+        $reflection = new \ReflectionClass($this->connectionHolder);
         $property = $reflection->getProperty('connection');
         $property->setValue($this->connectionHolder, $connection);
 

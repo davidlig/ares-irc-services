@@ -11,8 +11,6 @@ use App\MemoServ\Application\Port\Out\ServiceMemoSender;
 use App\MemoServ\Application\UseCase\NotifyChannelRegistration\NotifyChannelRegistrationDecision;
 use App\MemoServ\Application\UseCase\NotifyChannelRegistration\NotifyChannelRegistrationDecisionHandler;
 use App\MemoServ\Domain\Entity\Memo;
-use DateTimeImmutable;
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -28,7 +26,7 @@ final class NotifyChannelRegistrationDecisionHandlerTest extends TestCase
     #[Test]
     public function storesEveryRenderedChunkForRequesterWithoutMemoPreferences(): void
     {
-        $occurredAt = new DateTimeImmutable('2026-10-26T10:00:00+00:00');
+        $occurredAt = new \DateTimeImmutable('2026-10-26T10:00:00+00:00');
         $accounts = $this->createMock(MemoUserAccountPort::class);
         $accounts->expects(self::once())->method('findNicknameById')->with(12)->willReturn('Requester');
         $accounts->expects(self::once())->method('getLanguage')->with(12)->willReturn('es');
@@ -63,7 +61,7 @@ final class NotifyChannelRegistrationDecisionHandlerTest extends TestCase
         self::assertSame([null, null], array_map(static fn (Memo $memo): ?int => $memo->getSenderNickId(), $saved));
         self::assertSame(['ChannelBot', 'ChannelBot'], array_map(static fn (Memo $memo): ?string => $memo->getSenderName(), $saved));
         self::assertSame(['Decision part one', 'Decision part two'], array_map(static fn (Memo $memo): string => $memo->getMessage(), $saved));
-        self::assertSame([$occurredAt, $occurredAt], array_map(static fn (Memo $memo): DateTimeImmutable => $memo->getCreatedAt(), $saved));
+        self::assertSame([$occurredAt, $occurredAt], array_map(static fn (Memo $memo): \DateTimeImmutable => $memo->getCreatedAt(), $saved));
     }
 
     #[Test]
@@ -88,7 +86,7 @@ final class NotifyChannelRegistrationDecisionHandlerTest extends TestCase
             true,
             null,
             null,
-            new DateTimeImmutable('2026-10-26T10:00:00+00:00'),
+            new \DateTimeImmutable('2026-10-26T10:00:00+00:00'),
         ));
     }
 
@@ -106,8 +104,8 @@ final class NotifyChannelRegistrationDecisionHandlerTest extends TestCase
         $sender->method('getSenderName')->willReturn('ChannelBot');
         $handler = new NotifyChannelRegistrationDecisionHandler($accounts, $repository, $texts, $sender);
 
-        $this->expectException(InvalidArgumentException::class);
-        $handler->handle(new NotifyChannelRegistrationDecision(44, '#channel', 12, 7, 'Operator', true, null, null, new DateTimeImmutable('2026-10-26T10:00:00+00:00')));
+        $this->expectException(\InvalidArgumentException::class);
+        $handler->handle(new NotifyChannelRegistrationDecision(44, '#channel', 12, 7, 'Operator', true, null, null, new \DateTimeImmutable('2026-10-26T10:00:00+00:00')));
     }
 
     /** @return iterable<string, array{string}> */

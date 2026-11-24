@@ -15,7 +15,6 @@ use Doctrine\Migrations\MigratorConfiguration;
 use Doctrine\Migrations\Version\Version;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
-use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 use function array_key_exists;
@@ -70,10 +69,10 @@ final class NativeMigrationIntegrationTest extends KernelTestCase
         try {
             $this->withDatabaseUrl('sqlite:///:memory:', static function (): void {
                 self::bootKernel(['debug' => true]);
-                throw new RuntimeException('Controlled disposable proof failure.');
+                throw new \RuntimeException('Controlled disposable proof failure.');
             });
             self::fail('The proof failure must propagate.');
-        } catch (RuntimeException $failure) {
+        } catch (\RuntimeException $failure) {
             self::assertSame('Controlled disposable proof failure.', $failure->getMessage());
         }
         self::assertSame($beforeEnv, $_ENV);

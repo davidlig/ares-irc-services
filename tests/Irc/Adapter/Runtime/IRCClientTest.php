@@ -27,7 +27,6 @@ use App\Irc\Domain\ValueObject\Port;
 use App\Irc\Domain\ValueObject\ServerName;
 use App\Shared\Application\Port\AsyncMessageDispatcherInterface;
 use App\Shared\Application\Port\EventBusInterface;
-use Closure;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use Monolog\Handler\TestHandler;
@@ -37,8 +36,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
-use RuntimeException;
-use stdClass;
+use Revolt\EventLoop;
 use Symfony\Component\Messenger\Envelope;
 
 use function array_filter;
@@ -63,6 +61,17 @@ final class IRCClientTest extends TestCase
     private IRCClient $client;
 
     private ServerLink $link;
+
+    #[Test]
+    public function runLogsTheActiveEventLoopDriver(): void
+    {
+        $handler = new TestHandler();
+        $this->createClient(logger: new Logger('irc', [$handler]))->run();
+
+        $records = $handler->getRecords();
+        self::assertSame('Entering read loop.', $records[0]->message);
+        self::assertSame(['protocol' => 'unreal', 'loop_driver' => EventLoop::getDriver()::class], $records[0]->context);
+    }
 
     #[Test]
     public function connectCallsConnectionAndHandshakeAndDispatchesConnectionEstablished(): void
@@ -108,7 +117,7 @@ final class IRCClientTest extends TestCase
 
             public function performHandshake(ConnectionInterface $connection, ServerLink $link): void
             {
-                throw new RuntimeException('Handshake failed');
+                throw new \RuntimeException('Handshake failed');
             }
 
             public function handleIncoming(IRCMessage $message, ConnectionInterface $connection): void {}
@@ -132,7 +141,7 @@ final class IRCClientTest extends TestCase
             60,
         );
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Handshake failed');
 
         try {
@@ -453,11 +462,11 @@ final class IRCClientTest extends TestCase
         $this->messageBus = $this->createMock(AsyncMessageDispatcherInterface::class);
         $this->messageBus->expects(self::once())->method('dispatch')
             ->with(self::isInstanceOf(RunMaintenanceCycle::class))
-            ->willReturn(new Envelope(new stdClass()));
+            ->willReturn(new Envelope(new \stdClass()));
 
         $scheduler = $this->createMock(LoopSchedulerInterface::class);
         $scheduler->expects(self::once())->method('repeat')
-            ->with(60.0, self::isInstanceOf(Closure::class))
+            ->with(60.0, self::isInstanceOf(\Closure::class))
             ->willReturn('watcher-123');
         $scheduler->expects(self::once())->method('cancel')->with('watcher-123');
 
@@ -497,11 +506,11 @@ final class IRCClientTest extends TestCase
         $this->messageBus = $this->createMock(AsyncMessageDispatcherInterface::class);
         $this->messageBus->expects(self::once())->method('dispatch')
             ->with(self::isInstanceOf(RunMaintenanceCycle::class))
-            ->willReturn(new Envelope(new stdClass()));
+            ->willReturn(new Envelope(new \stdClass()));
 
         $scheduler = $this->createMock(LoopSchedulerInterface::class);
         $scheduler->expects(self::once())->method('repeat')
-            ->with(60.0, self::isInstanceOf(Closure::class))
+            ->with(60.0, self::isInstanceOf(\Closure::class))
             ->willReturn('watcher-burst');
         $scheduler->expects(self::once())->method('cancel')->with('watcher-burst');
 
@@ -545,11 +554,11 @@ final class IRCClientTest extends TestCase
         $this->messageBus = $this->createMock(AsyncMessageDispatcherInterface::class);
         $this->messageBus->expects(self::exactly(2))->method('dispatch')
             ->with(self::isInstanceOf(RunMaintenanceCycle::class))
-            ->willReturn(new Envelope(new stdClass()));
+            ->willReturn(new Envelope(new \stdClass()));
 
         $scheduler = $this->createMock(LoopSchedulerInterface::class);
         $scheduler->expects(self::once())->method('repeat')
-            ->willReturnCallback(static function (float $interval, Closure $callback) use (&$repeatCallback): string {
+            ->willReturnCallback(static function (float $interval, \Closure $callback) use (&$repeatCallback): string {
                 $repeatCallback = $callback;
 
                 return 'watcher-repeat';
@@ -615,7 +624,7 @@ final class IRCClientTest extends TestCase
         $this->connection->expects(self::once())->method('connect');
         $this->connection->expects(self::atLeastOnce())->method('isConnected')->willReturn(true);
         $this->connection->expects(self::once())->method('readLine')->willThrowException(
-            new RuntimeException('Connection reset by peer')
+            new \RuntimeException('Connection reset by peer')
         );
         $this->connection->expects(self::once())->method('disconnect');
 
@@ -635,7 +644,7 @@ final class IRCClientTest extends TestCase
         $this->client = $this->createClient();
         $this->client->connect($this->link);
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Connection reset by peer');
 
         try {
@@ -778,7 +787,7 @@ final class IRCClientTest extends TestCase
         $this->eventDispatcher->method('dispatch')->willReturnArgument(0);
 
         $this->messageBus = $this->createStub(AsyncMessageDispatcherInterface::class);
-        $this->messageBus->method('dispatch')->willReturn(new Envelope(new stdClass()));
+        $this->messageBus->method('dispatch')->willReturn(new Envelope(new \stdClass()));
 
         $this->burstCompleteRegistry = new BurstCompleteRegistry();
         $this->link = new ServerLink(

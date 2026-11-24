@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Tests\NickServ\Adapter\Out\InMemory;
 
 use App\NickServ\Adapter\Out\InMemory\PendingNickProtectionRegistry;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -17,7 +16,7 @@ final class PendingNickProtectionRegistryTest extends TestCase
     public function scheduleAndHasWorkAsExpected(): void
     {
         $registry = new PendingNickProtectionRegistry();
-        $now = new DateTimeImmutable('2026-09-06 12:00:00.000000 UTC');
+        $now = new \DateTimeImmutable('2026-09-06 12:00:00.000000 UTC');
 
         self::assertFalse($registry->has('001ABC'));
 
@@ -32,7 +31,7 @@ final class PendingNickProtectionRegistryTest extends TestCase
     public function flushExpiredReturnsOnlyExpiredUids(): void
     {
         $registry = new PendingNickProtectionRegistry();
-        $now = new DateTimeImmutable('2026-09-06 12:00:00.000000 UTC');
+        $now = new \DateTimeImmutable('2026-09-06 12:00:00.000000 UTC');
 
         self::assertSame([], $registry->flushExpired($now));
 
@@ -52,7 +51,7 @@ final class PendingNickProtectionRegistryTest extends TestCase
     public function clearEmptiesRegistry(): void
     {
         $registry = new PendingNickProtectionRegistry();
-        $now = new DateTimeImmutable('2026-09-06 12:00:00.000000 UTC');
+        $now = new \DateTimeImmutable('2026-09-06 12:00:00.000000 UTC');
         $registry->schedule('001ABC', $now, 10.0);
         $registry->schedule('001DEF', $now, 10.0);
 

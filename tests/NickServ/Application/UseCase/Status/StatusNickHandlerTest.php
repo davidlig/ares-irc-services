@@ -12,7 +12,6 @@ use App\NickServ\Application\UseCase\Status\StatusNickOutcome;
 use App\NickServ\Application\UseCase\Status\StatusNickResult;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\NickServ\Domain\ValueObject\NickStatus;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -22,7 +21,7 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(StatusNickResult::class)]
 final class StatusNickHandlerTest extends TestCase
 {
-    private DateTimeImmutable $now;
+    private \DateTimeImmutable $now;
 
     #[Test]
     public function returnsUnregisteredOfflineWhenNickNotFoundAndOffline(): void
@@ -200,6 +199,6 @@ final class StatusNickHandlerTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->now = new DateTimeImmutable('2026-09-06 15:00:00 UTC');
+        $this->now = new \DateTimeImmutable('2026-09-06 15:00:00 UTC');
     }
 }

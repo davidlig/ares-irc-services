@@ -4,18 +4,16 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Application\UseCase\ManageAkick;
 
-use DateTimeImmutable;
-
 final readonly class ChannelAkickEntryView
 {
     public function __construct(
         public string $mask,
         public ?string $reason,
         public ?string $creatorNickname,
-        public ?DateTimeImmutable $expiresAt,
-        public ?DateTimeImmutable $createdAt = null,
+        public ?\DateTimeImmutable $expiresAt,
+        public ?\DateTimeImmutable $createdAt = null,
         public int $uses = 0,
-        public ?DateTimeImmutable $lastUsedAt = null,
+        public ?\DateTimeImmutable $lastUsedAt = null,
         public ?int $entryNumber = null,
     ) {}
 }

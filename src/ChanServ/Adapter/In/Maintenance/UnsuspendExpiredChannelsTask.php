@@ -9,7 +9,6 @@ use App\ChanServ\Application\PublishedEvent\ChannelUnsuspendedEvent;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\Irc\Application\Port\In\Maintenance\MaintenanceTaskInterface;
 use App\Shared\Application\Port\EventBusInterface;
-use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
@@ -86,7 +85,7 @@ final class UnsuspendExpiredChannelsTask implements MaintenanceTaskInterface
     {
         // Only channels that failed in an earlier cycle are dispatched again in this one.
         $due = array_keys($this->pendingDispatches);
-        $occurredAt = new DateTimeImmutable();
+        $occurredAt = new \DateTimeImmutable();
         $expired = $this->channelRepository->iterateExpiredSuspensions($occurredAt);
 
         foreach ($expired as $channel) {
@@ -99,7 +98,7 @@ final class UnsuspendExpiredChannelsTask implements MaintenanceTaskInterface
             try {
                 $channel->unsuspend();
                 $this->channelRepository->save($channel);
-            } catch (Throwable $e) {
+            } catch (\Throwable $e) {
                 $this->failures->recordFailure($channelId, $channelName, $e, 'auto-unsuspend channel');
 
                 continue;
@@ -120,7 +119,7 @@ final class UnsuspendExpiredChannelsTask implements MaintenanceTaskInterface
 
             try {
                 $this->eventDispatcher->dispatch($event);
-            } catch (Throwable $e) {
+            } catch (\Throwable $e) {
                 $this->postUnsuspendStepFailed($event, $e);
 
                 continue;
@@ -165,7 +164,7 @@ final class UnsuspendExpiredChannelsTask implements MaintenanceTaskInterface
     /**
      * @throws Throwable $failure when it closed the EntityManager
      */
-    private function postUnsuspendStepFailed(ChannelUnsuspendedEvent $event, Throwable $failure): void
+    private function postUnsuspendStepFailed(ChannelUnsuspendedEvent $event, \Throwable $failure): void
     {
         $this->pendingDispatches[$event->channelId] = ['event' => $event->retry(), 'retries' => 0];
         if (count($this->pendingDispatches) > self::MAX_PENDING_UNSUSPENSION_DISPATCHES) {
@@ -205,7 +204,7 @@ final class UnsuspendExpiredChannelsTask implements MaintenanceTaskInterface
 
         try {
             $this->eventDispatcher->dispatch($event);
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             $this->dispatchAgainFailed($channelId, $event, $retry, $e);
 
             return;
@@ -223,7 +222,7 @@ final class UnsuspendExpiredChannelsTask implements MaintenanceTaskInterface
     /**
      * @throws Throwable $failure when it closed the EntityManager
      */
-    private function dispatchAgainFailed(int $channelId, ChannelUnsuspendedEvent $event, int $retry, Throwable $failure): void
+    private function dispatchAgainFailed(int $channelId, ChannelUnsuspendedEvent $event, int $retry, \Throwable $failure): void
     {
         if ($retry >= self::MAX_UNSUSPENSION_DISPATCH_RETRIES) {
             unset($this->pendingDispatches[$channelId]);

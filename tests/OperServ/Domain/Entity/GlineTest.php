@@ -5,12 +5,9 @@ declare(strict_types=1);
 namespace App\Tests\OperServ\Domain\Entity;
 
 use App\OperServ\Domain\Entity\Gline;
-use DateTimeImmutable;
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
 
 use function array_fill;
 use function str_repeat;
@@ -22,37 +19,37 @@ final class GlineTest extends TestCase
     #[Test]
     public function createWithAllParameters(): void
     {
-        $expiresAt = new DateTimeImmutable('+1 day');
-        $gline = Gline::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), '*@192.168.*', 42, 'Spam bot', $expiresAt);
+        $expiresAt = new \DateTimeImmutable('+1 day');
+        $gline = Gline::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), '*@192.168.*', 42, 'Spam bot', $expiresAt);
 
         self::assertSame('*@192.168.*', $gline->getMask());
         self::assertSame(42, $gline->getCreatorNickId());
         self::assertSame('Spam bot', $gline->getReason());
         self::assertSame($expiresAt, $gline->getExpiresAt());
-        self::assertFalse($gline->isExpired(new DateTimeImmutable('2026-01-01T00:00:00+00:00')));
+        self::assertFalse($gline->isExpired(new \DateTimeImmutable('2026-01-01T00:00:00+00:00')));
         self::assertFalse($gline->isPermanent());
     }
 
     #[Test]
     public function createWithMinimalParameters(): void
     {
-        $gline = Gline::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), '*@*.badisp.com');
+        $gline = Gline::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), '*@*.badisp.com');
 
         self::assertSame('*@*.badisp.com', $gline->getMask());
         self::assertNull($gline->getCreatorNickId());
         self::assertNull($gline->getReason());
         self::assertNull($gline->getExpiresAt());
-        self::assertFalse($gline->isExpired(new DateTimeImmutable('2026-01-01T00:00:00+00:00')));
+        self::assertFalse($gline->isExpired(new \DateTimeImmutable('2026-01-01T00:00:00+00:00')));
         self::assertTrue($gline->isPermanent());
     }
 
     #[Test]
     public function emptyMaskThrowsException(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Mask must be between 1 and');
 
-        Gline::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), '');
+        Gline::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), '');
     }
 
     #[Test]
@@ -60,19 +57,19 @@ final class GlineTest extends TestCase
     {
         $longMask = str_repeat('a', 256) . '@host';
 
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Mask must be between 1 and');
 
-        Gline::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), $longMask);
+        Gline::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), $longMask);
     }
 
     #[Test]
     public function maskWithoutAtSymbolThrowsException(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Invalid mask format');
 
-        Gline::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 'baduser');
+        Gline::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), 'baduser');
     }
 
     #[Test]
@@ -80,16 +77,16 @@ final class GlineTest extends TestCase
     {
         $longReason = str_repeat('a', 256);
 
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Reason cannot exceed');
 
-        Gline::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), '*@host', null, $longReason);
+        Gline::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), '*@host', null, $longReason);
     }
 
     #[Test]
     public function emptyReasonBecomesNull(): void
     {
-        $gline = Gline::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), '*@host', null, '');
+        $gline = Gline::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), '*@host', null, '');
 
         self::assertNull($gline->getReason());
     }
@@ -97,25 +94,25 @@ final class GlineTest extends TestCase
     #[Test]
     public function isExpiredReturnsTrueForPastDate(): void
     {
-        $pastDate = new DateTimeImmutable('2025-12-31T23:59:59+00:00');
-        $gline = Gline::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), '*@host', null, null, $pastDate);
+        $pastDate = new \DateTimeImmutable('2025-12-31T23:59:59+00:00');
+        $gline = Gline::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), '*@host', null, null, $pastDate);
 
-        self::assertTrue($gline->isExpired(new DateTimeImmutable('2026-01-01T00:00:00+00:00')));
+        self::assertTrue($gline->isExpired(new \DateTimeImmutable('2026-01-01T00:00:00+00:00')));
     }
 
     #[Test]
     public function isExpiredReturnsFalseForFutureDate(): void
     {
-        $futureDate = new DateTimeImmutable('2026-01-01T01:00:00+00:00');
-        $gline = Gline::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), '*@host', null, null, $futureDate);
+        $futureDate = new \DateTimeImmutable('2026-01-01T01:00:00+00:00');
+        $gline = Gline::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), '*@host', null, null, $futureDate);
 
-        self::assertFalse($gline->isExpired(new DateTimeImmutable('2026-01-01T00:00:00+00:00')));
+        self::assertFalse($gline->isExpired(new \DateTimeImmutable('2026-01-01T00:00:00+00:00')));
     }
 
     #[Test]
     public function matchesReturnsTrueForMatchingMask(): void
     {
-        $gline = Gline::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), '*@192.168.*');
+        $gline = Gline::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), '*@192.168.*');
 
         self::assertTrue($gline->matches('user@192.168.1.1'));
         self::assertTrue($gline->matches('anyone@192.168.255.255'));
@@ -124,7 +121,7 @@ final class GlineTest extends TestCase
     #[Test]
     public function matchesReturnsFalseForNonMatchingMask(): void
     {
-        $gline = Gline::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), '*@192.168.*');
+        $gline = Gline::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), '*@192.168.*');
 
         self::assertFalse($gline->matches('user@10.0.0.1'));
         self::assertFalse($gline->matches('user@192.169.1.1'));
@@ -133,7 +130,7 @@ final class GlineTest extends TestCase
     #[Test]
     public function matchesIsCaseInsensitive(): void
     {
-        $gline = Gline::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 'BADUSER@*');
+        $gline = Gline::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), 'BADUSER@*');
 
         self::assertTrue($gline->matches('baduser@host.com'));
         self::assertTrue($gline->matches('BadUser@HOST.COM'));
@@ -142,7 +139,7 @@ final class GlineTest extends TestCase
     #[Test]
     public function updateReasonChangesReason(): void
     {
-        $gline = Gline::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), '*@host', null, 'Old reason');
+        $gline = Gline::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), '*@host', null, 'Old reason');
         $gline->updateReason('New reason');
 
         self::assertSame('New reason', $gline->getReason());
@@ -151,7 +148,7 @@ final class GlineTest extends TestCase
     #[Test]
     public function updateReasonToNullSetsNull(): void
     {
-        $gline = Gline::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), '*@host', null, 'Old reason');
+        $gline = Gline::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), '*@host', null, 'Old reason');
         $gline->updateReason(null);
 
         self::assertNull($gline->getReason());
@@ -160,8 +157,8 @@ final class GlineTest extends TestCase
     #[Test]
     public function updateExpiryChangesExpiry(): void
     {
-        $gline = Gline::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), '*@host');
-        $newExpiry = new DateTimeImmutable('+2 days');
+        $gline = Gline::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), '*@host');
+        $newExpiry = new \DateTimeImmutable('+2 days');
         $gline->updateExpiry($newExpiry);
 
         self::assertSame($newExpiry, $gline->getExpiresAt());
@@ -170,7 +167,7 @@ final class GlineTest extends TestCase
     #[Test]
     public function updateExpiryToNullMakesPermanent(): void
     {
-        $gline = Gline::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), '*@host', null, null, new DateTimeImmutable('+1 day'));
+        $gline = Gline::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), '*@host', null, null, new \DateTimeImmutable('+1 day'));
         $gline->updateExpiry(null);
 
         self::assertNull($gline->getExpiresAt());
@@ -344,8 +341,8 @@ final class GlineTest extends TestCase
     #[Test]
     public function getIdReturnsIdAfterPersistence(): void
     {
-        $gline = Gline::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), '*@host');
-        $ref = new ReflectionClass($gline);
+        $gline = Gline::create(new \DateTimeImmutable('2026-01-01T00:00:00+00:00'), '*@host');
+        $ref = new \ReflectionClass($gline);
         $prop = $ref->getProperty('id');
         $prop->setValue($gline, 123);
 
@@ -355,7 +352,7 @@ final class GlineTest extends TestCase
     #[Test]
     public function getCreatedAtReturnsDateTime(): void
     {
-        $createdAt = new DateTimeImmutable('2026-01-01T00:00:00+00:00');
+        $createdAt = new \DateTimeImmutable('2026-01-01T00:00:00+00:00');
         $gline = Gline::create($createdAt, '*@host');
 
         self::assertSame($createdAt, $gline->getCreatedAt());

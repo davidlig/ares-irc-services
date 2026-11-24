@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\ChanServ\Domain\Policy;
 
 use App\ChanServ\Domain\ValueObject\FounderTransferDecision;
-use InvalidArgumentException;
 
 final readonly class FounderTransferPolicy
 {
@@ -19,7 +18,7 @@ final readonly class FounderTransferPolicy
         int $maximumChannelsPerNick,
     ): FounderTransferDecision {
         if (0 > $targetFoundedChannelCount || 0 > $maximumChannelsPerNick) {
-            throw new InvalidArgumentException('Founder channel counts cannot be negative.');
+            throw new \InvalidArgumentException('Founder channel counts cannot be negative.');
         }
 
         $targetDecision = $this->decideTarget(
@@ -64,7 +63,7 @@ final readonly class FounderTransferPolicy
         int $maximumChannelsPerNick,
     ): FounderTransferDecision {
         if (0 > $targetFoundedChannelCount || 0 > $maximumChannelsPerNick) {
-            throw new InvalidArgumentException('Founder channel counts cannot be negative.');
+            throw new \InvalidArgumentException('Founder channel counts cannot be negative.');
         }
         if ($maximumChannelsPerNick <= $targetFoundedChannelCount) {
             return FounderTransferDecision::ChannelLimitReached;

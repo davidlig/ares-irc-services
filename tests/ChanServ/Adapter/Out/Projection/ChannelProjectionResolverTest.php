@@ -11,11 +11,9 @@ use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\Irc\Domain\ValueObject\CaseMapping;
 use App\Shared\Domain\IrcIdentityFold;
 use App\Tests\NickServ\Support\NegotiatedCaseMapping;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionProperty;
 
 use function array_find;
 use function array_map;
@@ -27,9 +25,9 @@ final class ChannelProjectionResolverTest extends TestCase
     #[Test]
     public function projectsChannelsWithoutExposingDomainEntities(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Ares', 7, 'description');
-        new ReflectionProperty(RegisteredChannel::class, 'id')->setValue($channel, 11);
-        $channel->updateTopic('Welcome', new DateTimeImmutable('2026-01-01 00:00:00'));
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#Ares', 7, 'description');
+        new \ReflectionProperty(RegisteredChannel::class, 'id')->setValue($channel, 11);
+        $channel->updateTopic('Welcome', new \DateTimeImmutable('2026-01-01 00:00:00'));
         $channel->configureMlock(true, '+ntkl', ['k' => 'secret', 'l' => '10']);
         $channel->configureTopicLock(true);
         $channel->configureSecure(true);
@@ -78,9 +76,9 @@ final class ChannelProjectionResolverTest extends TestCase
     #[Test]
     public function findsChannelsByTheirStoredKeyOnAsciiNetworks(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Ops[1]', 7, 'description');
-        new ReflectionProperty(RegisteredChannel::class, 'id')->setValue($channel, 12);
-        $pending = RegisteredChannel::createPendingRegistration(new DateTimeImmutable(), '#Req[1]', 8, 'request');
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#Ops[1]', 7, 'description');
+        new \ReflectionProperty(RegisteredChannel::class, 'id')->setValue($channel, 12);
+        $pending = RegisteredChannel::createPendingRegistration(new \DateTimeImmutable(), '#Req[1]', 8, 'request');
         $channels = $this->asciiNetworkChannels([$channel, $pending]);
         $resolver = new ChannelProjectionResolver($channels);
 
@@ -94,12 +92,12 @@ final class ChannelProjectionResolverTest extends TestCase
     #[Test]
     public function projectsSuspensionReasonOnlyForSuspendedChannels(): void
     {
-        $suspended = RegisteredChannel::register(new DateTimeImmutable(), '#Suspended', 7, 'description');
-        new ReflectionProperty(RegisteredChannel::class, 'id')->setValue($suspended, 21);
+        $suspended = RegisteredChannel::register(new \DateTimeImmutable(), '#Suspended', 7, 'description');
+        new \ReflectionProperty(RegisteredChannel::class, 'id')->setValue($suspended, 21);
         $suspended->suspend('abuse');
 
-        $active = RegisteredChannel::register(new DateTimeImmutable(), '#Active', 7, 'description');
-        new ReflectionProperty(RegisteredChannel::class, 'id')->setValue($active, 22);
+        $active = RegisteredChannel::register(new \DateTimeImmutable(), '#Active', 7, 'description');
+        new \ReflectionProperty(RegisteredChannel::class, 'id')->setValue($active, 22);
         $active->suspend('abuse');
         $active->unsuspend();
 
@@ -117,21 +115,21 @@ final class ChannelProjectionResolverTest extends TestCase
     #[Test]
     public function omitsPendingAndRejectedChannelsFromAllAndNameProjections(): void
     {
-        $pending = RegisteredChannel::createPendingRegistration(new DateTimeImmutable(), '#pending', 7, 'request');
-        $rejected = RegisteredChannel::createPendingRegistration(new DateTimeImmutable(), '#rejected', 8, 'request');
-        $rejected->rejectRegistration('No topic', 9, 'Reviewer', new DateTimeImmutable(), null);
-        $active = RegisteredChannel::register(new DateTimeImmutable(), '#active', 10, 'registered');
-        $suspended = RegisteredChannel::register(new DateTimeImmutable(), '#suspended', 11, 'registered');
+        $pending = RegisteredChannel::createPendingRegistration(new \DateTimeImmutable(), '#pending', 7, 'request');
+        $rejected = RegisteredChannel::createPendingRegistration(new \DateTimeImmutable(), '#rejected', 8, 'request');
+        $rejected->rejectRegistration('No topic', 9, 'Reviewer', new \DateTimeImmutable(), null);
+        $active = RegisteredChannel::register(new \DateTimeImmutable(), '#active', 10, 'registered');
+        $suspended = RegisteredChannel::register(new \DateTimeImmutable(), '#suspended', 11, 'registered');
         $suspended->suspend('reason');
-        $forbidden = RegisteredChannel::createForbidden(new DateTimeImmutable(), '#forbidden', 'reason');
-        $pendingDeletion = RegisteredChannel::register(new DateTimeImmutable(), '#drop', 12, 'registered');
-        $pendingDeletion->markPendingDeletion(new DateTimeImmutable());
-        new ReflectionProperty(RegisteredChannel::class, 'id')->setValue($pending, 31);
-        new ReflectionProperty(RegisteredChannel::class, 'id')->setValue($rejected, 32);
-        new ReflectionProperty(RegisteredChannel::class, 'id')->setValue($active, 33);
-        new ReflectionProperty(RegisteredChannel::class, 'id')->setValue($suspended, 34);
-        new ReflectionProperty(RegisteredChannel::class, 'id')->setValue($forbidden, 35);
-        new ReflectionProperty(RegisteredChannel::class, 'id')->setValue($pendingDeletion, 36);
+        $forbidden = RegisteredChannel::createForbidden(new \DateTimeImmutable(), '#forbidden', 'reason');
+        $pendingDeletion = RegisteredChannel::register(new \DateTimeImmutable(), '#drop', 12, 'registered');
+        $pendingDeletion->markPendingDeletion(new \DateTimeImmutable());
+        new \ReflectionProperty(RegisteredChannel::class, 'id')->setValue($pending, 31);
+        new \ReflectionProperty(RegisteredChannel::class, 'id')->setValue($rejected, 32);
+        new \ReflectionProperty(RegisteredChannel::class, 'id')->setValue($active, 33);
+        new \ReflectionProperty(RegisteredChannel::class, 'id')->setValue($suspended, 34);
+        new \ReflectionProperty(RegisteredChannel::class, 'id')->setValue($forbidden, 35);
+        new \ReflectionProperty(RegisteredChannel::class, 'id')->setValue($pendingDeletion, 36);
 
         $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channels->method('iterateAll')->willReturn([$pending, $rejected, $active, $suspended, $forbidden, $pendingDeletion]);

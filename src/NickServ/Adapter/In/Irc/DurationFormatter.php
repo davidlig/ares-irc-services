@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\NickServ\Adapter\In\Irc;
 
-use InvalidArgumentException;
-
 use function array_slice;
 use function count;
 use function implode;
@@ -31,7 +29,7 @@ final class DurationFormatter
     public static function format(int $seconds, callable $translate): string
     {
         if (0 > $seconds) {
-            throw new InvalidArgumentException('Duration must not be negative.');
+            throw new \InvalidArgumentException('Duration must not be negative.');
         }
 
         $remainingSeconds = $seconds;

@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace App\NickServ\Domain\Entity;
 
-use DateTimeImmutable;
-use InvalidArgumentException;
-
 use function fnmatch;
 use function sprintf;
 use function strlen;
@@ -25,19 +22,19 @@ class ForbiddenVhost
 
     private ?int $createdByNickId = null;
 
-    private DateTimeImmutable $createdAt;
+    private \DateTimeImmutable $createdAt;
 
     private function __construct(
         string $pattern,
         ?int $createdByNickId,
-        DateTimeImmutable $createdAt,
+        \DateTimeImmutable $createdAt,
     ) {
         $this->setPattern($pattern);
         $this->createdByNickId = $createdByNickId;
         $this->createdAt = $createdAt;
     }
 
-    public static function create(string $pattern, ?int $createdByNickId, DateTimeImmutable $createdAt): self
+    public static function create(string $pattern, ?int $createdByNickId, \DateTimeImmutable $createdAt): self
     {
         return new self($pattern, $createdByNickId, $createdAt);
     }
@@ -57,7 +54,7 @@ class ForbiddenVhost
         return $this->createdByNickId;
     }
 
-    public function getCreatedAt(): DateTimeImmutable
+    public function getCreatedAt(): \DateTimeImmutable
     {
         return $this->createdAt;
     }
@@ -75,11 +72,11 @@ class ForbiddenVhost
         $normalized = trim($pattern);
 
         if ('' === $normalized) {
-            throw new InvalidArgumentException('Pattern cannot be empty.');
+            throw new \InvalidArgumentException('Pattern cannot be empty.');
         }
 
         if (strlen($normalized) > self::MAX_PATTERN_LENGTH) {
-            throw new InvalidArgumentException(sprintf('Pattern cannot exceed %d characters.', self::MAX_PATTERN_LENGTH));
+            throw new \InvalidArgumentException(sprintf('Pattern cannot exceed %d characters.', self::MAX_PATTERN_LENGTH));
         }
 
         $this->pattern = $normalized;

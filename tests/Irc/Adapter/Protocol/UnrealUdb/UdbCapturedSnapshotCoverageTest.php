@@ -14,8 +14,6 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbUnsignedDecimal;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionMethod;
-use RuntimeException;
 
 use function fclose;
 use function file_put_contents;
@@ -77,7 +75,7 @@ final class UdbCapturedSnapshotCoverageTest extends TestCase
         $raw = '*not-a-number';
         file_put_contents($file, pack('N', strlen($path)) . pack('C', 2) . pack('N', strlen($raw)) . $path . $raw);
         try {
-            $this->expectException(RuntimeException::class);
+            $this->expectException(\RuntimeException::class);
             $this->expectExceptionMessage('invalid number');
             iterator_to_array(UdbCapturedSnapshot::readFile($file), false);
         } finally {
@@ -92,7 +90,7 @@ final class UdbCapturedSnapshotCoverageTest extends TestCase
         $directory = $this->directory();
         $snapshot = new UdbCapturedSnapshot($directory, [], [], [], new UdbDatasetCheckpoint(new UdbStreamOrigin('001', str_repeat('1', 16)), UdbUnsignedDecimal::fromInt(0)));
         try {
-            $this->expectException(RuntimeException::class);
+            $this->expectException(\RuntimeException::class);
             $this->expectExceptionMessage('block is unavailable');
             iterator_to_array($snapshot->records(UdbBlock::Ips), false);
         } finally {
@@ -103,8 +101,8 @@ final class UdbCapturedSnapshotCoverageTest extends TestCase
     #[Test]
     public function binaryHeaderBoundaryRejectsTruncationBeforeUnpacking(): void
     {
-        $decode = new ReflectionMethod(UdbCapturedSnapshot::class, 'decodeHeader');
-        $this->expectException(RuntimeException::class);
+        $decode = new \ReflectionMethod(UdbCapturedSnapshot::class, 'decodeHeader');
+        $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('The UDB snapshot spool is malformed.');
         $decode->invoke(null, pack('N', 1));
     }
@@ -119,11 +117,11 @@ final class UdbCapturedSnapshotCoverageTest extends TestCase
             try {
                 iterator_to_array(UdbCapturedSnapshot::readFile($file), false);
                 self::fail('An unknown kind must never yield a row.');
-            } catch (RuntimeException $error) {
+            } catch (\RuntimeException $error) {
                 self::assertSame('The UDB snapshot spool has an unknown value kind.', $error->getMessage());
             }
             file_put_contents($file, pack('NCN', 2, 255, 0) . 'x');
-            $this->expectException(RuntimeException::class);
+            $this->expectException(\RuntimeException::class);
             $this->expectExceptionMessage('ended unexpectedly');
             iterator_to_array(UdbCapturedSnapshot::readFile($file), false);
         } finally {

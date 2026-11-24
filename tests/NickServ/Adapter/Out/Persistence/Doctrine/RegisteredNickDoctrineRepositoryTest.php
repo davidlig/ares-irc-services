@@ -13,7 +13,6 @@ use App\NickServ\Domain\ValueObject\NickStatus;
 use App\Shared\Domain\IrcIdentityFold;
 use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
-use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Platforms\MariaDBPlatform;
 use Doctrine\DBAL\Platforms\MySQLPlatform;
@@ -24,7 +23,6 @@ use Doctrine\ORM\NativeQuery;
 use Doctrine\ORM\Query;
 use Doctrine\ORM\Query\ResultSetMapping;
 use Doctrine\ORM\QueryBuilder;
-use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
@@ -168,8 +166,8 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
         $bob = $this->createRegisteredNick('Bob', 'bob@example.com');
         $this->repository->save($alice);
         $this->repository->save($bob);
-        $alice->markSeen(new DateTimeImmutable('2026-01-01 01:02:03'));
-        $bob->markSeen(new DateTimeImmutable('2026-01-01 01:02:04'));
+        $alice->markSeen(new \DateTimeImmutable('2026-01-01 01:02:03'));
+        $bob->markSeen(new \DateTimeImmutable('2026-01-01 01:02:04'));
         $alice->updateQuitMessage('split (a@host)');
         $bob->updateQuitMessage('split (b@host)');
         $alice->updateLastConnection('192.0.2.1', 'alice.example');
@@ -204,9 +202,9 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
     public function saveActivityBatchRejectsUnmanagedAccounts(): void
     {
         $nick = $this->createRegisteredNick('Alice', 'alice@example.com');
-        $nick->markSeen(new DateTimeImmutable());
+        $nick->markSeen(new \DateTimeImmutable());
 
-        $this->expectException(LogicException::class);
+        $this->expectException(\LogicException::class);
         $this->repository->saveActivityBatch([$nick]);
     }
 
@@ -465,8 +463,8 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
             '$argon2id$v=19$m=65536,t=4,p=1$test$test',
             'pending@example.com',
             'en',
-            new DateTimeImmutable('+24 hours'),
-            new DateTimeImmutable()
+            new \DateTimeImmutable('+24 hours'),
+            new \DateTimeImmutable()
         );
 
         $this->repository->save($registered);
@@ -502,7 +500,7 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
     public function searchByPatternUsesCaseInsensitiveStrictStarGlobAndIncludesEveryStatus(): void
     {
         $david = $this->createRegisteredNick('Davidlig', 'david@example.com');
-        $david->markSeen(new DateTimeImmutable('2026-01-01 00:00:00 UTC'));
+        $david->markSeen(new \DateTimeImmutable('2026-01-01 00:00:00 UTC'));
         $david->updateLastConnection('203.0.113.7', 'user.example');
         $this->repository->save($david);
         $this->repository->save($this->createRegisteredNick('Davinia', 'davinia@example.com'));
@@ -512,8 +510,8 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
             '$argon2id$v=19$m=65536,t=4,p=1$test$test',
             'pending@example.com',
             'en',
-            new DateTimeImmutable('+24 hours'),
-            new DateTimeImmutable(),
+            new \DateTimeImmutable('+24 hours'),
+            new \DateTimeImmutable(),
         );
         $this->repository->save($pending);
 
@@ -522,7 +520,7 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
         $this->repository->save($suspended);
 
         $pendingDeletion = $this->createRegisteredNick('PendingDeletionNick', 'deletion@example.com');
-        $pendingDeletion->markPendingDeletion(new DateTimeImmutable());
+        $pendingDeletion->markPendingDeletion(new \DateTimeImmutable());
         $this->repository->save($pendingDeletion);
         $this->repository->save(RegisteredNick::createForbidden('ForbiddenNick', 'reserved'));
         $this->flushAndClear();
@@ -585,8 +583,8 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
             '$argon2id$v=19$m=65536,t=4,p=1$test$test',
             'pending@example.com',
             'en',
-            new DateTimeImmutable('+24 hours'),
-            new DateTimeImmutable(),
+            new \DateTimeImmutable('+24 hours'),
+            new \DateTimeImmutable(),
         );
         $pending->updateLastConnection($ipv4, 'pending.example');
         $this->repository->save($pending);
@@ -633,18 +631,18 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
             ->set('n.registeredAt', ':date')
             ->set('n.lastSeenAt', ':date')
             ->where('n.nicknameLower = :name')
-            ->setParameter('date', new DateTimeImmutable('-60 days')->format('Y-m-d H:i:s'))
+            ->setParameter('date', new \DateTimeImmutable('-60 days')->format('Y-m-d H:i:s'))
             ->setParameter('name', 'inactive')
             ->getQuery()
             ->execute();
         $this->entityManager->clear();
 
         $active = $this->createRegisteredNick('Active', 'active@example.com');
-        $active->markSeen(new DateTimeImmutable());
+        $active->markSeen(new \DateTimeImmutable());
         $this->repository->save($active);
         $this->flushAndClear();
 
-        $inactive = $this->repository->findRegisteredInactiveSince(new DateTimeImmutable('-30 days'));
+        $inactive = $this->repository->findRegisteredInactiveSince(new \DateTimeImmutable('-30 days'));
 
         self::assertCount(1, $inactive);
         self::assertSame('Inactive', $inactive[0]->getNickname());
@@ -654,11 +652,11 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
     public function findRegisteredInactiveSinceReturnsEmptyWhenNoneInactive(): void
     {
         $nick = $this->createRegisteredNick('Active', 'active@example.com');
-        $nick->markSeen(new DateTimeImmutable());
+        $nick->markSeen(new \DateTimeImmutable());
         $this->repository->save($nick);
         $this->flushAndClear();
 
-        $inactive = $this->repository->findRegisteredInactiveSince(new DateTimeImmutable('-30 days'));
+        $inactive = $this->repository->findRegisteredInactiveSince(new \DateTimeImmutable('-30 days'));
 
         self::assertSame([], $inactive);
     }
@@ -671,22 +669,22 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
             '$argon2id$v=19$m=65536,t=4,p=1$test$test',
             'e1@example.com',
             'en',
-            new DateTimeImmutable('-1 hour'),
-            new DateTimeImmutable()
+            new \DateTimeImmutable('-1 hour'),
+            new \DateTimeImmutable()
         );
         $expired2 = RegisteredNick::createPending(
             'Expired2',
             '$argon2id$v=19$m=65536,t=4,p=1$test$test',
             'e2@example.com',
             'en',
-            new DateTimeImmutable('-2 hours'),
-            new DateTimeImmutable()
+            new \DateTimeImmutable('-2 hours'),
+            new \DateTimeImmutable()
         );
         $this->repository->save($expired1);
         $this->repository->save($expired2);
         $this->flushAndClear();
 
-        $deleted = $this->repository->deleteExpiredPending(new DateTimeImmutable());
+        $deleted = $this->repository->deleteExpiredPending(new \DateTimeImmutable());
 
         $this->flushAndClear();
         self::assertSame(2, $deleted);
@@ -702,13 +700,13 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
             '$argon2id$v=19$m=65536,t=4,p=1$test$test',
             'pending@example.com',
             'en',
-            new DateTimeImmutable('+24 hours'),
-            new DateTimeImmutable()
+            new \DateTimeImmutable('+24 hours'),
+            new \DateTimeImmutable()
         );
         $this->repository->save($pending);
         $this->flushAndClear();
 
-        $deleted = $this->repository->deleteExpiredPending(new DateTimeImmutable());
+        $deleted = $this->repository->deleteExpiredPending(new \DateTimeImmutable());
 
         $this->flushAndClear();
         self::assertSame(0, $deleted);
@@ -719,11 +717,11 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
     public function findExpiredSuspensionsReturnsOnlyExpiredSuspensions(): void
     {
         $expired = $this->createRegisteredNick('ExpiredSus', 'expired@example.com');
-        $expired->suspend('Test reason', new DateTimeImmutable('-1 hour'));
+        $expired->suspend('Test reason', new \DateTimeImmutable('-1 hour'));
         $this->repository->save($expired);
 
         $active = $this->createRegisteredNick('ActiveSus', 'active@example.com');
-        $active->suspend('Test reason', new DateTimeImmutable('+7 days'));
+        $active->suspend('Test reason', new \DateTimeImmutable('+7 days'));
         $this->repository->save($active);
 
         $permanent = $this->createRegisteredNick('PermanentSus', 'permanent@example.com');
@@ -735,7 +733,7 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
 
         $this->flushAndClear();
 
-        $result = $this->repository->findExpiredSuspensions(new DateTimeImmutable());
+        $result = $this->repository->findExpiredSuspensions(new \DateTimeImmutable());
 
         self::assertCount(1, $result);
         self::assertSame('ExpiredSus', $result[0]->getNickname());
@@ -745,12 +743,12 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
     public function findExpiredSuspensionsReturnsEmptyWhenNoneExpired(): void
     {
         $active = $this->createRegisteredNick('ActiveSus', 'active@example.com');
-        $active->suspend('Test reason', new DateTimeImmutable('+7 days'));
+        $active->suspend('Test reason', new \DateTimeImmutable('+7 days'));
         $this->repository->save($active);
 
         $this->flushAndClear();
 
-        $result = $this->repository->findExpiredSuspensions(new DateTimeImmutable());
+        $result = $this->repository->findExpiredSuspensions(new \DateTimeImmutable());
 
         self::assertEmpty($result);
     }
@@ -759,16 +757,16 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
     public function findExpiredSuspensionsReturnsMultipleExpired(): void
     {
         $expired1 = $this->createRegisteredNick('Expired1', 'exp1@example.com');
-        $expired1->suspend('Reason 1', new DateTimeImmutable('-1 hour'));
+        $expired1->suspend('Reason 1', new \DateTimeImmutable('-1 hour'));
         $this->repository->save($expired1);
 
         $expired2 = $this->createRegisteredNick('Expired2', 'exp2@example.com');
-        $expired2->suspend('Reason 2', new DateTimeImmutable('-1 day'));
+        $expired2->suspend('Reason 2', new \DateTimeImmutable('-1 day'));
         $this->repository->save($expired2);
 
         $this->flushAndClear();
 
-        $result = $this->repository->findExpiredSuspensions(new DateTimeImmutable());
+        $result = $this->repository->findExpiredSuspensions(new \DateTimeImmutable());
 
         self::assertCount(2, $result);
         $nicknames = array_map(static fn ($n) => $n->getNickname(), $result);
@@ -780,18 +778,18 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
     public function findPendingDeletionBeforeReturnsOnlyExpiredManualDrops(): void
     {
         $expired = $this->createRegisteredNick('ExpiredDrop', 'expireddrop@example.com');
-        $expired->markPendingDeletion(new DateTimeImmutable('-8 days'));
+        $expired->markPendingDeletion(new \DateTimeImmutable('-8 days'));
         $this->repository->save($expired);
 
         $fresh = $this->createRegisteredNick('FreshDrop', 'freshdrop@example.com');
-        $fresh->markPendingDeletion(new DateTimeImmutable('-1 day'));
+        $fresh->markPendingDeletion(new \DateTimeImmutable('-1 day'));
         $this->repository->save($fresh);
 
         $active = $this->createRegisteredNick('ActiveDrop', 'activedrop@example.com');
         $this->repository->save($active);
         $this->flushAndClear();
 
-        $result = $this->repository->findPendingDeletionBefore(new DateTimeImmutable('-7 days'));
+        $result = $this->repository->findPendingDeletionBefore(new \DateTimeImmutable('-7 days'));
 
         self::assertCount(1, $result);
         self::assertSame('ExpiredDrop', $result[0]->getNickname());
@@ -811,10 +809,10 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
         $this->entityManager->createQuery(sprintf(
             "UPDATE %s n SET n.lastSeenAt = :ts WHERE n.nicknameLower IN ('inactive1', 'inactive2', 'inactive3')",
             RegisteredNick::class,
-        ))->setParameter('ts', new DateTimeImmutable('-60 days')->format('Y-m-d H:i:s'))->execute();
+        ))->setParameter('ts', new \DateTimeImmutable('-60 days')->format('Y-m-d H:i:s'))->execute();
         $this->flushAndClear();
 
-        $results = $this->repository->findRegisteredInactiveSince(new DateTimeImmutable('-30 days'), 2);
+        $results = $this->repository->findRegisteredInactiveSince(new \DateTimeImmutable('-30 days'), 2);
 
         self::assertCount(2, $results);
         self::assertTrue($results[0]->getId() < $results[1]->getId());
@@ -828,20 +826,20 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
         $pending = [];
         foreach ([1, 2, 3] as $n) {
             $inactive[$n] = $this->createRegisteredNick('Idle' . $n, 'idle' . $n . '@example.com');
-            $inactive[$n]->markSeen(new DateTimeImmutable('-60 days'));
+            $inactive[$n]->markSeen(new \DateTimeImmutable('-60 days'));
             $suspended[$n] = $this->createRegisteredNick('Held' . $n, 'held' . $n . '@example.com');
-            $suspended[$n]->suspend('Reason', new DateTimeImmutable('-1 hour'));
+            $suspended[$n]->suspend('Reason', new \DateTimeImmutable('-1 hour'));
             $pending[$n] = $this->createRegisteredNick('Gone' . $n, 'gone' . $n . '@example.com');
-            $pending[$n]->markPendingDeletion(new DateTimeImmutable('-10 days'));
+            $pending[$n]->markPendingDeletion(new \DateTimeImmutable('-10 days'));
             $this->repository->save($inactive[$n]);
             $this->repository->save($suspended[$n]);
             $this->repository->save($pending[$n]);
         }
         $this->entityManager->flush();
 
-        $idle = $this->repository->findRegisteredInactiveSince(new DateTimeImmutable('-30 days'), 1, $inactive[1]->getId());
-        $held = $this->repository->findExpiredSuspensions(new DateTimeImmutable(), 5, $suspended[2]->getId());
-        $gone = $this->repository->findPendingDeletionBefore(new DateTimeImmutable('-7 days'), null, $pending[1]->getId());
+        $idle = $this->repository->findRegisteredInactiveSince(new \DateTimeImmutable('-30 days'), 1, $inactive[1]->getId());
+        $held = $this->repository->findExpiredSuspensions(new \DateTimeImmutable(), 5, $suspended[2]->getId());
+        $gone = $this->repository->findPendingDeletionBefore(new \DateTimeImmutable('-7 days'), null, $pending[1]->getId());
 
         self::assertSame(['Idle2'], $this->nicknamesOf($idle));
         self::assertSame(['Held3'], $this->nicknamesOf($held));
@@ -852,17 +850,17 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
     public function findExpiredSuspensionsHonorsLimitAndOrdersByIdAscending(): void
     {
         $nick1 = $this->createRegisteredNick('Sus1', 'sus1@example.com');
-        $nick1->suspend('Reason', new DateTimeImmutable('-2 hours'));
+        $nick1->suspend('Reason', new \DateTimeImmutable('-2 hours'));
         $nick2 = $this->createRegisteredNick('Sus2', 'sus2@example.com');
-        $nick2->suspend('Reason', new DateTimeImmutable('-1 hour'));
+        $nick2->suspend('Reason', new \DateTimeImmutable('-1 hour'));
         $nick3 = $this->createRegisteredNick('Sus3', 'sus3@example.com');
-        $nick3->suspend('Reason', new DateTimeImmutable('-3 hours'));
+        $nick3->suspend('Reason', new \DateTimeImmutable('-3 hours'));
         $this->repository->save($nick1);
         $this->repository->save($nick2);
         $this->repository->save($nick3);
         $this->flushAndClear();
 
-        $results = $this->repository->findExpiredSuspensions(new DateTimeImmutable(), 2);
+        $results = $this->repository->findExpiredSuspensions(new \DateTimeImmutable(), 2);
 
         self::assertCount(2, $results);
         self::assertTrue($results[0]->getId() < $results[1]->getId());
@@ -872,17 +870,17 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
     public function findPendingDeletionBeforeHonorsLimitAndOrdersByIdAscending(): void
     {
         $nick1 = $this->createRegisteredNick('Drop1', 'drop1@example.com');
-        $nick1->markPendingDeletion(new DateTimeImmutable('-10 days'));
+        $nick1->markPendingDeletion(new \DateTimeImmutable('-10 days'));
         $nick2 = $this->createRegisteredNick('Drop2', 'drop2@example.com');
-        $nick2->markPendingDeletion(new DateTimeImmutable('-9 days'));
+        $nick2->markPendingDeletion(new \DateTimeImmutable('-9 days'));
         $nick3 = $this->createRegisteredNick('Drop3', 'drop3@example.com');
-        $nick3->markPendingDeletion(new DateTimeImmutable('-8 days'));
+        $nick3->markPendingDeletion(new \DateTimeImmutable('-8 days'));
         $this->repository->save($nick1);
         $this->repository->save($nick2);
         $this->repository->save($nick3);
         $this->flushAndClear();
 
-        $results = $this->repository->findPendingDeletionBefore(new DateTimeImmutable('-7 days'), 2);
+        $results = $this->repository->findPendingDeletionBefore(new \DateTimeImmutable('-7 days'), 2);
 
         self::assertCount(2, $results);
         self::assertTrue($results[0]->getId() < $results[1]->getId());
@@ -891,7 +889,7 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
     #[Test]
     public function automaticModesRoundTripSemanticIntentionsAndClearToNull(): void
     {
-        $nick = RegisteredNick::createActive('ModeUser', 'hash', null, 'en', new DateTimeImmutable());
+        $nick = RegisteredNick::createActive('ModeUser', 'hash', null, 'en', new \DateTimeImmutable());
         $nick->changeAutomaticModes(new AutomaticModeProfile(['strip-formatting', 'bot']));
         $this->repository->save($nick);
         $this->flushAndClear();
@@ -938,8 +936,8 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
             '$argon2id$v=19$m=65536,t=4,p=1$test$test',
             $email,
             'en',
-            new DateTimeImmutable('+24 hours'),
-            new DateTimeImmutable()
+            new \DateTimeImmutable('+24 hours'),
+            new \DateTimeImmutable()
         );
 
         $nick->activate();

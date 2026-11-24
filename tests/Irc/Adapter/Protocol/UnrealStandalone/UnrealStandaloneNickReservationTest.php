@@ -10,7 +10,6 @@ use App\Irc\Adapter\Protocol\UnrealStandalone\UnrealStandaloneNickReservation;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
 
 #[CoversClass(UnrealStandaloneNickReservation::class)]
 final class UnrealStandaloneNickReservationTest extends TestCase
@@ -137,7 +136,7 @@ final class UnrealStandaloneNickReservationTest extends TestCase
 
         $this->connectionHolder = new ActiveConnectionHolder();
 
-        $reflection = new ReflectionClass($this->connectionHolder);
+        $reflection = new \ReflectionClass($this->connectionHolder);
         $property = $reflection->getProperty('connection');
         $property->setValue($this->connectionHolder, $connection);
 

@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace App\OperServ\Domain\Entity;
 
-use DateTimeImmutable;
-use InvalidArgumentException;
-
 use function ctype_alnum;
 use function fnmatch;
 use function preg_match;
@@ -38,16 +35,16 @@ final class Gline
 
     private ?string $reason = null;
 
-    private DateTimeImmutable $createdAt;
+    private \DateTimeImmutable $createdAt;
 
-    private ?DateTimeImmutable $expiresAt = null;
+    private ?\DateTimeImmutable $expiresAt = null;
 
     private function __construct(
-        DateTimeImmutable $createdAt,
+        \DateTimeImmutable $createdAt,
         string $mask,
         ?int $creatorNickId,
         ?string $reason,
-        ?DateTimeImmutable $expiresAt,
+        ?\DateTimeImmutable $expiresAt,
     ) {
         $this->setMask($mask);
         $this->creatorNickId = $creatorNickId;
@@ -57,11 +54,11 @@ final class Gline
     }
 
     public static function create(
-        DateTimeImmutable $createdAt,
+        \DateTimeImmutable $createdAt,
         string $mask,
         ?int $creatorNickId = null,
         ?string $reason = null,
-        ?DateTimeImmutable $expiresAt = null,
+        ?\DateTimeImmutable $expiresAt = null,
     ): self {
         return new self($createdAt, $mask, $creatorNickId, $reason, $expiresAt);
     }
@@ -86,17 +83,17 @@ final class Gline
         return $this->reason;
     }
 
-    public function getExpiresAt(): ?DateTimeImmutable
+    public function getExpiresAt(): ?\DateTimeImmutable
     {
         return $this->expiresAt;
     }
 
-    public function getCreatedAt(): DateTimeImmutable
+    public function getCreatedAt(): \DateTimeImmutable
     {
         return $this->createdAt;
     }
 
-    public function isExpired(DateTimeImmutable $at): bool
+    public function isExpired(\DateTimeImmutable $at): bool
     {
         return null !== $this->expiresAt && $this->expiresAt < $at;
     }
@@ -119,7 +116,7 @@ final class Gline
         $this->setReason($reason);
     }
 
-    public function updateExpiry(?DateTimeImmutable $expiresAt): void
+    public function updateExpiry(?\DateTimeImmutable $expiresAt): void
     {
         $this->expiresAt = $expiresAt;
     }
@@ -214,11 +211,11 @@ final class Gline
     private function setMask(string $mask): void
     {
         if ('' === $mask || strlen($mask) > self::MAX_MASK_LENGTH) {
-            throw new InvalidArgumentException(sprintf('Mask must be between 1 and %d characters.', self::MAX_MASK_LENGTH));
+            throw new \InvalidArgumentException(sprintf('Mask must be between 1 and %d characters.', self::MAX_MASK_LENGTH));
         }
 
         if (!self::isUserHostMask($mask)) {
-            throw new InvalidArgumentException('Invalid mask format. Must be in format user@host (e.g., *@192.168.*).');
+            throw new \InvalidArgumentException('Invalid mask format. Must be in format user@host (e.g., *@192.168.*).');
         }
 
         $this->mask = $mask;
@@ -227,7 +224,7 @@ final class Gline
     private function setReason(?string $reason): void
     {
         if (null !== $reason && strlen($reason) > self::MAX_REASON_LENGTH) {
-            throw new InvalidArgumentException(sprintf('Reason cannot exceed %d characters.', self::MAX_REASON_LENGTH));
+            throw new \InvalidArgumentException(sprintf('Reason cannot exceed %d characters.', self::MAX_REASON_LENGTH));
         }
 
         $this->reason = '' !== $reason ? $reason : null;

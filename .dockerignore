@@ -19,7 +19,6 @@ compose*.yaml
 tests/
 phpunit.xml
 .phpunit.cache/
-.php-cs-fixer.*
 
 # Build artifacts
 var/

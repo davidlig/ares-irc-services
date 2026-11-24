@@ -9,7 +9,6 @@ use App\Irc\Domain\Network\NetworkUser;
 use App\Irc\Domain\ValueObject\Ident;
 use App\Irc\Domain\ValueObject\Nick;
 use App\Irc\Domain\ValueObject\Uid;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -241,7 +240,7 @@ final class InMemoryNetworkUserRepositoryTest extends TestCase
             cloakedHost: 'cloaked.host',
             virtualHost: 'vhost',
             modes: '+i',
-            connectedAt: new DateTimeImmutable(),
+            connectedAt: new \DateTimeImmutable(),
             realName: 'Test User',
             serverSid: $serverSid,
             ipBase64: 'dGVzdA==',

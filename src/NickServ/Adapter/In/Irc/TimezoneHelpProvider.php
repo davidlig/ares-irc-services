@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\NickServ\Adapter\In\Irc;
 
-use DateTimeZone;
-
 use function array_find;
 use function sort;
 use function strpos;
@@ -138,7 +136,7 @@ final class TimezoneHelpProvider
         }
 
         self::$byRegion = [];
-        $identifiers = DateTimeZone::listIdentifiers(DateTimeZone::ALL);
+        $identifiers = \DateTimeZone::listIdentifiers(\DateTimeZone::ALL);
 
         foreach ($identifiers as $id) {
             $pos = strpos($id, '/');

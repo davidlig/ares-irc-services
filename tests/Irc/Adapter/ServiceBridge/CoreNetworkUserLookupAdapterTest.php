@@ -10,7 +10,6 @@ use App\Irc\Domain\Repository\NetworkUserRepositoryInterface;
 use App\Irc\Domain\ValueObject\Ident;
 use App\Irc\Domain\ValueObject\Nick;
 use App\Irc\Domain\ValueObject\Uid;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -311,7 +310,7 @@ final class CoreNetworkUserLookupAdapterTest extends TestCase
             cloakedHost: $cloakedHost,
             virtualHost: $virtualHost,
             modes: $modes,
-            connectedAt: new DateTimeImmutable(),
+            connectedAt: new \DateTimeImmutable(),
             realName: 'Test User',
             serverSid: '001',
             ipBase64: 'dGVzdA==',

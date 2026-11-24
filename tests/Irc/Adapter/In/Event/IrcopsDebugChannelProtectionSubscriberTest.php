@@ -35,7 +35,6 @@ use App\OperServ\Application\Port\In\OperatorActor;
 use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
 use App\Shared\Domain\IrcIdentityFold;
 use App\Tests\NickServ\Support\NegotiatedCaseMapping;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -833,7 +832,7 @@ final class IrcopsDebugChannelProtectionSubscriberTest extends TestCase
         $control->expects(self::exactly(2))->method('activate')->with('#ops');
         $control->expects(self::once())->method('ensureMode')->with('#ops');
         $subscriber = $this->createSubscriber(registeredChannels: $this->query($this->projection()), operatorOnlyControl: $control);
-        $now = new DateTimeImmutable('2026-09-26T00:00:00+00:00');
+        $now = new \DateTimeImmutable('2026-09-26T00:00:00+00:00');
         $subscriber->onChannelSuspended(new ChannelSuspendedEvent(1, '#ops', '#ops', 'reason', null, null, 'Oper', null, '*', '*', $now));
         $subscriber->onChannelPendingDeletion(new ChannelPendingDeletionEvent(1, '#ops', '#ops', 'Oper', $now));
         $subscriber->onChannelUnsuspended(new ChannelUnsuspendedEvent(1, '#ops', '#ops', 'Oper', null, '*', '*', $now));
@@ -850,7 +849,7 @@ final class IrcopsDebugChannelProtectionSubscriberTest extends TestCase
         $control->expects(self::never())->method('deactivate');
         $subscriber = $this->createSubscriber(registeredChannels: $this->asciiNetworkQuery($this->projection(name: '#Ops[1]')), operatorOnlyControl: $control);
 
-        $subscriber->onChannelUnsuspended(new ChannelUnsuspendedEvent(1, '#Ops[1]', '#ops{1}', 'Oper', null, '*', '*', new DateTimeImmutable('2026-09-26T00:00:00+00:00')));
+        $subscriber->onChannelUnsuspended(new ChannelUnsuspendedEvent(1, '#Ops[1]', '#ops{1}', 'Oper', null, '*', '*', new \DateTimeImmutable('2026-09-26T00:00:00+00:00')));
     }
 
     #[Test]
@@ -861,7 +860,7 @@ final class IrcopsDebugChannelProtectionSubscriberTest extends TestCase
         $control->expects(self::never())->method('deactivate');
         $subscriber = $this->createSubscriber(registeredChannels: $this->asciiNetworkQuery($this->projection(name: '#Ops[1]')), operatorOnlyControl: $control);
 
-        $subscriber->onChannelRestored(new ChannelRestoredEvent(1, '#Ops[1]', '#ops{1}', 'Oper', new DateTimeImmutable('2026-09-26T00:00:00+00:00')));
+        $subscriber->onChannelRestored(new ChannelRestoredEvent(1, '#Ops[1]', '#ops{1}', 'Oper', new \DateTimeImmutable('2026-09-26T00:00:00+00:00')));
     }
 
     private function createEvent(string $uid, string $channelName): UserJoinedChannelEvent

@@ -18,10 +18,8 @@ use App\NickServ\Application\UseCase\Set\SetAutomaticModesOutcome;
 use App\NickServ\Application\UseCase\Set\SetAutomaticModesResult;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\NickServ\Domain\ValueObject\AutomaticModeProfile;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use ReflectionProperty;
 
 #[CoversClass(SetAutomaticModesHandler::class)]
 #[CoversClass(SetAutomaticModesResult::class)]
@@ -29,8 +27,8 @@ final class SetAutomaticModesHandlerTest extends TestCase
 {
     public function testReplacementClearAndNoOpOnlyPublishEffectiveChanges(): void
     {
-        $nick = RegisteredNick::createActive('Pedro', 'hash', null, 'en', new DateTimeImmutable());
-        new ReflectionProperty($nick, 'id')->setValue($nick, 12);
+        $nick = RegisteredNick::createActive('Pedro', 'hash', null, 'en', new \DateTimeImmutable());
+        new \ReflectionProperty($nick, 'id')->setValue($nick, 12);
         $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $repo->expects(self::exactly(2))->method('save')->with($nick);
         $validator = $this->createStub(NickTargetValidator::class);
@@ -41,7 +39,7 @@ final class SetAutomaticModesHandlerTest extends TestCase
         $events = $this->createMock(NickServEventPublisher::class);
         $events->expects(self::exactly(2))->method('publish');
         $clock = $this->createStub(Clock::class);
-        $clock->method('now')->willReturn(new DateTimeImmutable());
+        $clock->method('now')->willReturn(new \DateTimeImmutable());
         $handler = new SetAutomaticModesHandler($repo, $validator, $catalog, $users, $events, $clock);
         $actor = new NickOperationActor('Admin', 1, '001ADMIN', '001', 'admin@example.com', '127.0.0.1');
         self::assertSame(SetAutomaticModesOutcome::Changed, $handler->handle($actor, 'Pedro', 'BdiB')->outcome);
@@ -62,7 +60,7 @@ final class SetAutomaticModesHandlerTest extends TestCase
     public function testProtectsAllCentralizedAndConnectedOperatorTargetsWithoutSaving(): void
     {
         foreach (['root', 'ircop', 'service', 'connected', 'missing'] as $kind) {
-            $nick = RegisteredNick::createActive('Pedro', 'hash', null, 'en', new DateTimeImmutable());
+            $nick = RegisteredNick::createActive('Pedro', 'hash', null, 'en', new \DateTimeImmutable());
             $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
             $repo->expects(self::never())->method('save');
             $validator = $this->createStub(NickTargetValidator::class);
@@ -79,7 +77,7 @@ final class SetAutomaticModesHandlerTest extends TestCase
             $events->expects(self::never())->method('publish');
             $handler = new SetAutomaticModesHandler($repo, $validator, $this->createStub(AutomaticModeCatalog::class), $users, $events, $this->createStub(Clock::class));
             self::assertSame(match ($kind) {
-                'root' => SetAutomaticModesOutcome::Root, 'ircop','connected' => SetAutomaticModesOutcome::Ircop,
+                'root' => SetAutomaticModesOutcome::Root, 'ircop', 'connected' => SetAutomaticModesOutcome::Ircop,
                 'service' => SetAutomaticModesOutcome::Service, default => SetAutomaticModesOutcome::NotRegistered,
             }, $handler->handle(new NickOperationActor('Admin', 1, 'UID', '001', 'host', '*'), 'Pedro', 'B')->outcome);
             self::assertSame([], $nick->getAutomaticModes()->intentions);
@@ -88,8 +86,8 @@ final class SetAutomaticModesHandlerTest extends TestCase
 
     public function testUnknownSupportBlocksAssignmentButAllowsClearAndRemappingPreservesMeaning(): void
     {
-        $nick = RegisteredNick::createActive('Pedro', 'hash', null, 'en', new DateTimeImmutable());
-        new ReflectionProperty($nick, 'id')->setValue($nick, 12);
+        $nick = RegisteredNick::createActive('Pedro', 'hash', null, 'en', new \DateTimeImmutable());
+        new \ReflectionProperty($nick, 'id')->setValue($nick, 12);
         $nick->changeAutomaticModes(new AutomaticModeProfile(['strip-formatting']));
         $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $repo->expects(self::exactly(2))->method('save')->with($nick);
@@ -101,7 +99,7 @@ final class SetAutomaticModesHandlerTest extends TestCase
         $events = $this->createMock(NickServEventPublisher::class);
         $events->expects(self::exactly(2))->method('publish');
         $clock = $this->createStub(Clock::class);
-        $clock->method('now')->willReturn(new DateTimeImmutable());
+        $clock->method('now')->willReturn(new \DateTimeImmutable());
         $handler = new SetAutomaticModesHandler($repo, $validator, $catalog, $this->createStub(NickNetworkUserLookup::class), $events, $clock);
         $actor = new NickOperationActor('Admin', 1, 'UID', '001', 'host', '*');
         self::assertSame(SetAutomaticModesOutcome::Unavailable, $handler->handle($actor, 'Pedro', 'B')->outcome);

@@ -13,8 +13,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\AbstractLogger;
-use RuntimeException;
-use Stringable;
 
 use function array_column;
 use function array_key_last;
@@ -40,7 +38,7 @@ final class ClosedEntityManagerRetryBudgetTest extends TestCase
     /** @var list<array{message: string, exception: mixed}> */
     private array $logged = [];
 
-    private RuntimeException $failure;
+    private \RuntimeException $failure;
 
     /** @var list<int> ids passed to the skip callback, 0 when a failure did not skip */
     private array $skipped = [];
@@ -236,17 +234,17 @@ final class ClosedEntityManagerRetryBudgetTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->failure = new RuntimeException('foreign key violation');
+        $this->failure = new \RuntimeException('foreign key violation');
     }
 
     private function budget(): ClosedEntityManagerRetryBudget
     {
         $logger = new class($this->record(...)) extends AbstractLogger {
             /** @param Closure(string, mixed): void $record */
-            public function __construct(private readonly Closure $record) {}
+            public function __construct(private readonly \Closure $record) {}
 
             /** @param array<mixed> $context */
-            public function log($level, string|Stringable $message, array $context = []): void
+            public function log($level, \Stringable|string $message, array $context = []): void
             {
                 ($this->record)((string) $message, $context['exception'] ?? null);
             }
@@ -274,7 +272,7 @@ final class ClosedEntityManagerRetryBudgetTest extends TestCase
         try {
             $budget->rethrowWhenClosed($rowId, $em, $this->failure, sprintf('failed to touch row %d', $rowId), $this->skipRow($rowId));
             self::fail('A closed EntityManager failure must be rethrown.');
-        } catch (RuntimeException $e) {
+        } catch (\RuntimeException $e) {
             self::assertSame($this->failure, $e);
         }
 
@@ -290,7 +288,7 @@ final class ClosedEntityManagerRetryBudgetTest extends TestCase
         return str_contains($message, ' again after ') ? self::AGAIN : self::EXHAUSTED;
     }
 
-    private function skipRow(int $rowId): Closure
+    private function skipRow(int $rowId): \Closure
     {
         return function () use ($rowId): void {
             $this->skipped[] = $rowId;
@@ -305,7 +303,7 @@ final class ClosedEntityManagerRetryBudgetTest extends TestCase
         $connection->method('getDatabasePlatform')->willReturn($platform);
         $connection->method('fetchOne')->willReturnCallback(function (string $sql): int {
             if (!$this->databaseUp) {
-                throw new RuntimeException('connection refused');
+                throw new \RuntimeException('connection refused');
             }
             $this->probes[] = $sql;
 

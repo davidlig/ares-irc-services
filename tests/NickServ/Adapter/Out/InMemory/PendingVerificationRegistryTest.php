@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Tests\NickServ\Adapter\Out\InMemory;
 
 use App\NickServ\Adapter\Out\InMemory\PendingVerificationRegistry;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -79,7 +78,7 @@ final class PendingVerificationRegistryTest extends TestCase
 
         $registry->recordResend('Nick', $this->now());
 
-        self::assertInstanceOf(DateTimeImmutable::class, $registry->getLastResendAt('Nick'));
+        self::assertInstanceOf(\DateTimeImmutable::class, $registry->getLastResendAt('Nick'));
     }
 
     #[Test]
@@ -118,7 +117,7 @@ final class PendingVerificationRegistryTest extends TestCase
         $removed = $registry->pruneExpired($this->now(), 86400);
 
         self::assertSame(0, $removed);
-        self::assertInstanceOf(DateTimeImmutable::class, $registry->getLastResendAt('FreshNick'));
+        self::assertInstanceOf(\DateTimeImmutable::class, $registry->getLastResendAt('FreshNick'));
     }
 
     #[Test]
@@ -139,7 +138,7 @@ final class PendingVerificationRegistryTest extends TestCase
     public function nicknameKeysUseTheRfc1459Fold(): void
     {
         $registry = new PendingVerificationRegistry();
-        $now = new DateTimeImmutable('2026-01-01 00:00:00');
+        $now = new \DateTimeImmutable('2026-01-01 00:00:00');
         $registry->store('[Foo]', 'token', $now->modify('+1 hour'));
         $registry->recordResend('[Foo]', $now);
 
@@ -154,8 +153,8 @@ final class PendingVerificationRegistryTest extends TestCase
         self::assertFalse($registry->has('plain'));
     }
 
-    private function now(): DateTimeImmutable
+    private function now(): \DateTimeImmutable
     {
-        return new DateTimeImmutable('2026-09-06 12:00:00 UTC');
+        return new \DateTimeImmutable('2026-09-06 12:00:00 UTC');
     }
 }

@@ -20,14 +20,14 @@ final class ChannelRegisterThrottleRegistry implements ChannelRegisterThrottlePo
     /** @var array<int, DateTimeImmutable> nick ID -> last registration time */
     private array $lastRegistrationAt = [];
 
-    public function getLastRegistrationAt(int $nickId): ?DateTimeImmutable
+    public function getLastRegistrationAt(int $nickId): ?\DateTimeImmutable
     {
         return $this->lastRegistrationAt[$nickId] ?? null;
     }
 
     public function recordRegistration(int $nickId): void
     {
-        $this->lastRegistrationAt[$nickId] = new DateTimeImmutable();
+        $this->lastRegistrationAt[$nickId] = new \DateTimeImmutable();
     }
 
     /**
@@ -46,7 +46,7 @@ final class ChannelRegisterThrottleRegistry implements ChannelRegisterThrottlePo
         }
 
         $nextAllowedAt = $last->modify(sprintf('+%d seconds', $minIntervalSeconds));
-        $now = new DateTimeImmutable();
+        $now = new \DateTimeImmutable();
 
         $remaining = $now >= $nextAllowedAt ? 0 : $nextAllowedAt->getTimestamp() - $now->getTimestamp();
 
@@ -63,7 +63,7 @@ final class ChannelRegisterThrottleRegistry implements ChannelRegisterThrottlePo
             return 0;
         }
 
-        $now = new DateTimeImmutable();
+        $now = new \DateTimeImmutable();
         $removed = 0;
 
         foreach ($this->lastRegistrationAt as $nickId => $lastRegistration) {

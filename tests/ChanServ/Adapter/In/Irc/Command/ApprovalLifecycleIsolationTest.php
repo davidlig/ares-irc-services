@@ -32,13 +32,8 @@ use App\OperServ\Application\Security\RootAuthorizationPolicy;
 use App\Shared\Application\Port\EventBusInterface;
 use App\Tests\NickServ\Support\NegotiatedCaseMapping;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
-use DateTimeImmutable;
-use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
-use ReflectionClass;
-use ReflectionNamedType;
-use ReflectionProperty;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function array_key_exists;
@@ -53,7 +48,7 @@ final class ApprovalLifecycleIsolationTest extends DoctrineIntegrationTestCase
     public function rootCannotSuspendAndUnsuspendPendingOrRejectedRequests(): void
     {
         foreach ([
-            RegisteredChannel::createPendingRegistration(new DateTimeImmutable(), '#probe', 7, 'description'),
+            RegisteredChannel::createPendingRegistration(new \DateTimeImmutable(), '#probe', 7, 'description'),
             $this->rejectedChannel(),
         ] as $channel) {
             $before = serialize($channel);
@@ -68,11 +63,11 @@ final class ApprovalLifecycleIsolationTest extends DoctrineIntegrationTestCase
     #[Test]
     public function pendingDropRequestsPermanentCancellationWithoutActivatingTheRequest(): void
     {
-        $channel = RegisteredChannel::createPendingRegistration(new DateTimeImmutable(), '#probe', 7, 'description');
+        $channel = RegisteredChannel::createPendingRegistration(new \DateTimeImmutable(), '#probe', 7, 'description');
         $this->entityManager->persist($channel);
         $this->entityManager->flush();
         $drop = $this->createMock(ChanDropService::class);
-        $drop->expects(self::once())->method('hardDropChannel')->with($channel, self::isInstanceOf(DateTimeImmutable::class), 'manual', 'Root');
+        $drop->expects(self::once())->method('hardDropChannel')->with($channel, self::isInstanceOf(\DateTimeImmutable::class), 'manual', 'Root');
         $drop->expects(self::never())->method('softDropChannel');
         $before = serialize($channel);
         [$messages, $saved] = $this->route($channel, ['DROP #probe'], $drop);
@@ -85,8 +80,8 @@ final class ApprovalLifecycleIsolationTest extends DoctrineIntegrationTestCase
     #[Test]
     public function activeSuspendAndUnsuspendKeepTheirExistingBehavior(): void
     {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#probe', 7, 'description');
-        new ReflectionProperty(RegisteredChannel::class, 'id')->setValue($channel, 41);
+        $channel = RegisteredChannel::register(new \DateTimeImmutable(), '#probe', 7, 'description');
+        new \ReflectionProperty(RegisteredChannel::class, 'id')->setValue($channel, 41);
         [$messages, $saved] = $this->route($channel, ['SUSPEND #probe 0 test', 'UNSUSPEND #probe']);
 
         self::assertSame('active', $channel->getStatus()->value);
@@ -96,8 +91,8 @@ final class ApprovalLifecycleIsolationTest extends DoctrineIntegrationTestCase
 
     private function rejectedChannel(): RegisteredChannel
     {
-        $channel = RegisteredChannel::createPendingRegistration(new DateTimeImmutable(), '#probe', 7, 'description');
-        $channel->rejectRegistration('Reason', 9, 'Root', new DateTimeImmutable(), null);
+        $channel = RegisteredChannel::createPendingRegistration(new \DateTimeImmutable(), '#probe', 7, 'description');
+        $channel->rejectRegistration('Reason', 9, 'Root', new \DateTimeImmutable(), null);
 
         return $channel;
     }
@@ -182,7 +177,7 @@ final class ApprovalLifecycleIsolationTest extends DoctrineIntegrationTestCase
      */
     private function construct(string $class, array $overrides = []): object
     {
-        $reflection = new ReflectionClass($class);
+        $reflection = new \ReflectionClass($class);
         $arguments = [];
         foreach ($reflection->getConstructor()?->getParameters() ?? [] as $parameter) {
             if (array_key_exists($parameter->getName(), $overrides)) {
@@ -191,12 +186,12 @@ final class ApprovalLifecycleIsolationTest extends DoctrineIntegrationTestCase
                 $arguments[] = $parameter->getDefaultValue();
             } else {
                 $type = $parameter->getType();
-                if (!$type instanceof ReflectionNamedType) {
-                    throw new LogicException('Test helper requires named constructor parameter types.');
+                if (!$type instanceof \ReflectionNamedType) {
+                    throw new \LogicException('Test helper requires named constructor parameter types.');
                 }
                 $typeName = $type->getName();
                 if (!class_exists($typeName) && !interface_exists($typeName)) {
-                    throw new LogicException('Test helper requires class constructor parameter types.');
+                    throw new \LogicException('Test helper requires class constructor parameter types.');
                 }
                 $arguments[] = $this->createStub($typeName);
             }

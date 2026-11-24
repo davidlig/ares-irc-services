@@ -9,7 +9,6 @@ use App\ChanServ\Application\Port\Out\ChannelAccessRepositoryInterface;
 use App\ChanServ\Domain\Entity\ChannelAccess;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
@@ -25,7 +24,7 @@ final class ChannelAccessDoctrineRepositoryTest extends DoctrineIntegrationTestC
     #[Test]
     public function establishedAccessFiltersUnacceptedChannelsButPreservesMissingReferenceCompatibility(): void
     {
-        $at = new DateTimeImmutable('-1 day');
+        $at = new \DateTimeImmutable('-1 day');
         $channels = [
             RegisteredChannel::register($at, '#active', 8, 'active'),
             RegisteredChannel::register($at, '#suspended', 8, 'suspended'),

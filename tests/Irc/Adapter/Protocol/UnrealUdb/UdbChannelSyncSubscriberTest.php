@@ -38,7 +38,6 @@ use App\OperServ\Application\Port\In\GlineProjectionQuery;
 use App\OperServ\Application\Port\In\OperatorNetworkProjectionQuery;
 use App\Shared\Domain\IrcIdentityFold;
 use App\Tests\NickServ\Support\NegotiatedCaseMapping;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -90,7 +89,7 @@ final class UdbChannelSyncSubscriberTest extends TestCase
         });
 
         $sub = $this->createSubscriber(channelRepo: $channelRepo, nickRepo: $nickRepo, writer: $writer);
-        $sub->onChannelRegistered(new ChannelRegisteredEvent(1, '#chan', '#chan', new DateTimeImmutable('2026-01-01T00:00:00+00:00')));
+        $sub->onChannelRegistered(new ChannelRegisteredEvent(1, '#chan', '#chan', new \DateTimeImmutable('2026-01-01T00:00:00+00:00')));
 
         self::assertSame([
             '#chan::founder' => 'founder',
@@ -108,7 +107,7 @@ final class UdbChannelSyncSubscriberTest extends TestCase
         $writer->expects($this->never())->method('insert')->willReturn(true);
 
         $sub = $this->createSubscriber(channelRepo: $channelRepo, writer: $writer);
-        $sub->onChannelRegistered(new ChannelRegisteredEvent(1, '#chan', '#chan', new DateTimeImmutable('2026-01-01T00:00:00+00:00')));
+        $sub->onChannelRegistered(new ChannelRegisteredEvent(1, '#chan', '#chan', new \DateTimeImmutable('2026-01-01T00:00:00+00:00')));
     }
 
     #[Test]
@@ -123,8 +122,8 @@ final class UdbChannelSyncSubscriberTest extends TestCase
         $channelRepo->method('all')->willReturn([]);
 
         $sub = $this->createSubscriber(channelRepo: $channelRepo, writer: $writer);
-        $sub->onChannelRegistered(new ChannelRegisteredEvent(1, '#chan', '#chan', new DateTimeImmutable('2026-01-01T00:00:00+00:00')));
-        $sub->onChannelFounderChanged(new ChannelFounderChangedEvent(1, '#chan', 7, 9, 'oper', null, '', '', new DateTimeImmutable('2026-01-01T00:00:00+00:00')));
+        $sub->onChannelRegistered(new ChannelRegisteredEvent(1, '#chan', '#chan', new \DateTimeImmutable('2026-01-01T00:00:00+00:00')));
+        $sub->onChannelFounderChanged(new ChannelFounderChangedEvent(1, '#chan', 7, 9, 'oper', null, '', '', new \DateTimeImmutable('2026-01-01T00:00:00+00:00')));
         $sub->onChannelMlockUpdated(new ChannelMlockUpdatedEvent('#chan'));
         $sub->onChannelTopiclockUpdated(new ChannelTopiclockUpdatedEvent('#chan'));
         $sub->onChannelTopicChanged(new ChannelTopicChangedEvent($this->createIrcChannel('#chan')));
@@ -140,7 +139,7 @@ final class UdbChannelSyncSubscriberTest extends TestCase
         $writer->expects($this->never())->method('insert')->willReturn(true);
 
         $sub = $this->createSubscriber(channelRepo: $channelRepo, writer: $writer);
-        $sub->onChannelFounderChanged(new ChannelFounderChangedEvent(1, '#chan', 7, 9, 'oper', null, '', '', new DateTimeImmutable('2026-01-01T00:00:00+00:00')));
+        $sub->onChannelFounderChanged(new ChannelFounderChangedEvent(1, '#chan', 7, 9, 'oper', null, '', '', new \DateTimeImmutable('2026-01-01T00:00:00+00:00')));
     }
 
     #[Test]
@@ -156,7 +155,7 @@ final class UdbChannelSyncSubscriberTest extends TestCase
         $writer->expects($this->once())->method('delete')->willReturn(true)->with('C', '#chan::options');
 
         $sub = $this->createSubscriber(channelRepo: $channelRepo, writer: $writer);
-        $sub->onChannelSuspended(new ChannelSuspendedEvent(1, '#chan', '#chan', 'reason', null, null, 'oper', null, '', '', new DateTimeImmutable('2026-01-01T00:00:00+00:00')));
+        $sub->onChannelSuspended(new ChannelSuspendedEvent(1, '#chan', '#chan', 'reason', null, null, 'oper', null, '', '', new \DateTimeImmutable('2026-01-01T00:00:00+00:00')));
     }
 
     #[Test]
@@ -166,7 +165,7 @@ final class UdbChannelSyncSubscriberTest extends TestCase
         $writer->expects($this->once())->method('delete')->willReturn(true)->with('C', '#chan');
 
         $sub = $this->createSubscriber(writer: $writer);
-        $sub->onChannelDrop(new ChannelDropEvent(1, '#chan', '#chan', 'manual', new DateTimeImmutable('2026-01-01T00:00:00+00:00')));
+        $sub->onChannelDrop(new ChannelDropEvent(1, '#chan', '#chan', 'manual', new \DateTimeImmutable('2026-01-01T00:00:00+00:00')));
     }
 
     #[Test]
@@ -183,7 +182,7 @@ final class UdbChannelSyncSubscriberTest extends TestCase
         $writer->expects($this->once())->method('insert')->willReturn(true)->with('C', '#chan::founder', 'newfounder');
 
         $sub = $this->createSubscriber(channelRepo: $channelRepo, nickRepo: $nickRepo, writer: $writer);
-        $sub->onChannelFounderChanged(new ChannelFounderChangedEvent(1, '#chan', 7, 9, 'oper', null, '', '', new DateTimeImmutable('2026-01-01T00:00:00+00:00')));
+        $sub->onChannelFounderChanged(new ChannelFounderChangedEvent(1, '#chan', 7, 9, 'oper', null, '', '', new \DateTimeImmutable('2026-01-01T00:00:00+00:00')));
     }
 
     #[Test]
@@ -194,8 +193,8 @@ final class UdbChannelSyncSubscriberTest extends TestCase
         $writer->expects($this->once())->method('delete')->willReturn(true)->with('C', '#chan::forbid');
 
         $sub = $this->createSubscriber(writer: $writer);
-        $sub->onChannelForbidden(new ChannelForbiddenEvent(1, '#chan', '#chan', 'spam', 'oper', new DateTimeImmutable('2026-01-01T00:00:00+00:00')));
-        $sub->onChannelUnforbidden(new ChannelUnforbiddenEvent('#chan', '#chan', 'oper', new DateTimeImmutable('2026-01-01T00:00:00+00:00')));
+        $sub->onChannelForbidden(new ChannelForbiddenEvent(1, '#chan', '#chan', 'spam', 'oper', new \DateTimeImmutable('2026-01-01T00:00:00+00:00')));
+        $sub->onChannelUnforbidden(new ChannelUnforbiddenEvent('#chan', '#chan', 'oper', new \DateTimeImmutable('2026-01-01T00:00:00+00:00')));
     }
 
     #[Test]
@@ -217,7 +216,7 @@ final class UdbChannelSyncSubscriberTest extends TestCase
         });
 
         $sub = $this->createSubscriber(channelRepo: $channelRepo, writer: $writer);
-        $sub->onChannelSuspended(new ChannelSuspendedEvent(1, '#chan', '#chan', 'reason', null, null, 'oper', null, '', '', new DateTimeImmutable('2026-01-01T00:00:00+00:00')));
+        $sub->onChannelSuspended(new ChannelSuspendedEvent(1, '#chan', '#chan', 'reason', null, null, 'oper', null, '', '', new \DateTimeImmutable('2026-01-01T00:00:00+00:00')));
     }
 
     #[Test]
@@ -227,7 +226,7 @@ final class UdbChannelSyncSubscriberTest extends TestCase
         $writer->expects($this->once())->method('insert')->willReturn(true)->with('C', '#chan::suspend', '1');
 
         $sub = $this->createSubscriber(writer: $writer);
-        $sub->onChannelSuspended(new ChannelSuspendedEvent(1, '#chan', '#chan', '', null, null, 'oper', null, '', '', new DateTimeImmutable('2026-01-01T00:00:00+00:00')));
+        $sub->onChannelSuspended(new ChannelSuspendedEvent(1, '#chan', '#chan', '', null, null, 'oper', null, '', '', new \DateTimeImmutable('2026-01-01T00:00:00+00:00')));
     }
 
     #[Test]
@@ -240,7 +239,7 @@ final class UdbChannelSyncSubscriberTest extends TestCase
         $writer->expects($this->once())->method('insert')->willReturn(true)->with('C', '#pending::suspend', 'pending deletion reason');
 
         $sub = $this->createSubscriber(channelRepo: $channelRepo, writer: $writer);
-        $sub->onChannelPendingDeletion(new ChannelPendingDeletionEvent(1, '#pending', '#pending', 'oper', new DateTimeImmutable('2026-01-01T00:00:00+00:00')));
+        $sub->onChannelPendingDeletion(new ChannelPendingDeletionEvent(1, '#pending', '#pending', 'oper', new \DateTimeImmutable('2026-01-01T00:00:00+00:00')));
     }
 
     #[Test]
@@ -250,7 +249,7 @@ final class UdbChannelSyncSubscriberTest extends TestCase
         $writer->expects($this->never())->method('insert');
 
         $sub = $this->createSubscriber(writer: $writer);
-        $sub->onChannelPendingDeletion(new ChannelPendingDeletionEvent(1, '#missing', '#missing', null, new DateTimeImmutable('2026-01-01T00:00:00+00:00')));
+        $sub->onChannelPendingDeletion(new ChannelPendingDeletionEvent(1, '#missing', '#missing', null, new \DateTimeImmutable('2026-01-01T00:00:00+00:00')));
     }
 
     #[Test]
@@ -260,7 +259,7 @@ final class UdbChannelSyncSubscriberTest extends TestCase
         $writer->expects($this->once())->method('delete')->willReturn(true)->with('C', '#pending::suspend');
 
         $sub = $this->createSubscriber(writer: $writer);
-        $sub->onChannelRestored(new ChannelRestoredEvent(1, '#pending', '#pending', 'oper', new DateTimeImmutable('2026-01-01T00:00:00+00:00')));
+        $sub->onChannelRestored(new ChannelRestoredEvent(1, '#pending', '#pending', 'oper', new \DateTimeImmutable('2026-01-01T00:00:00+00:00')));
     }
 
     #[Test]
@@ -278,7 +277,7 @@ final class UdbChannelSyncSubscriberTest extends TestCase
         });
 
         $sub = $this->createSubscriber(channelRepo: $channelRepo, writer: $writer);
-        $sub->onChannelUnsuspended(new ChannelUnsuspendedEvent(1, '#chan', '#chan', 'oper', null, '', '', new DateTimeImmutable('2026-01-01T00:00:00+00:00')));
+        $sub->onChannelUnsuspended(new ChannelUnsuspendedEvent(1, '#chan', '#chan', 'oper', null, '', '', new \DateTimeImmutable('2026-01-01T00:00:00+00:00')));
 
         self::assertSame([['C', '#chan::suspend'], ['C', '#chan::options']], $deletes);
     }
@@ -343,7 +342,7 @@ final class UdbChannelSyncSubscriberTest extends TestCase
             return true;
         });
         $subscriber = $this->createSubscriber(channelRepo: $channelRepo, writer: $writer);
-        $now = new DateTimeImmutable('2026-09-26T00:00:00+00:00');
+        $now = new \DateTimeImmutable('2026-09-26T00:00:00+00:00');
 
         $subscriber->onChannelPendingDeletion(new ChannelPendingDeletionEvent(1, '#chan', '#chan', 'oper', $now));
         self::assertArrayNotHasKey('#chan::options', $inserts);
@@ -494,7 +493,7 @@ final class UdbChannelSyncSubscriberTest extends TestCase
             writer: $this->recordingWriter($inserts),
         );
 
-        $sub->onChannelRegistered(new ChannelRegisteredEvent(1, '#Ops[1]', '#ops{1}', new DateTimeImmutable('2026-01-01T00:00:00+00:00')));
+        $sub->onChannelRegistered(new ChannelRegisteredEvent(1, '#Ops[1]', '#ops{1}', new \DateTimeImmutable('2026-01-01T00:00:00+00:00')));
 
         self::assertSame(['#Ops[1]::founder' => 'founder', '#Ops[1]::topic' => 'Welcome'], $inserts);
     }
@@ -508,7 +507,7 @@ final class UdbChannelSyncSubscriberTest extends TestCase
             writer: $this->recordingWriter($inserts),
         );
 
-        $sub->onChannelPendingDeletion(new ChannelPendingDeletionEvent(1, '#Ops[1]', '#ops{1}', 'oper', new DateTimeImmutable('2026-01-01T00:00:00+00:00')));
+        $sub->onChannelPendingDeletion(new ChannelPendingDeletionEvent(1, '#Ops[1]', '#ops{1}', 'oper', new \DateTimeImmutable('2026-01-01T00:00:00+00:00')));
 
         self::assertSame(['#Ops[1]::suspend' => 'pending deletion reason', '#Ops[1]::options' => '*2'], $inserts);
     }
@@ -522,7 +521,7 @@ final class UdbChannelSyncSubscriberTest extends TestCase
             writer: $this->recordingWriter($inserts),
         );
 
-        $sub->onChannelSuspended(new ChannelSuspendedEvent(1, '#Ops[1]', '#ops{1}', 'reason', null, null, 'oper', null, '', '', new DateTimeImmutable('2026-01-01T00:00:00+00:00')));
+        $sub->onChannelSuspended(new ChannelSuspendedEvent(1, '#Ops[1]', '#ops{1}', 'reason', null, null, 'oper', null, '', '', new \DateTimeImmutable('2026-01-01T00:00:00+00:00')));
 
         self::assertSame(['#Ops[1]::suspend' => 'reason', '#Ops[1]::options' => '*6'], $inserts);
     }
@@ -536,7 +535,7 @@ final class UdbChannelSyncSubscriberTest extends TestCase
             writer: $this->recordingWriter($inserts),
         );
 
-        $sub->onChannelUnsuspended(new ChannelUnsuspendedEvent(1, '#Ops[1]', '#ops{1}', 'oper', null, '', '', new DateTimeImmutable('2026-01-01T00:00:00+00:00')));
+        $sub->onChannelUnsuspended(new ChannelUnsuspendedEvent(1, '#Ops[1]', '#ops{1}', 'oper', null, '', '', new \DateTimeImmutable('2026-01-01T00:00:00+00:00')));
 
         self::assertSame(['#Ops[1]::options' => '*4'], $inserts);
     }
@@ -657,6 +656,6 @@ final class UdbChannelSyncSubscriberTest extends TestCase
 
     private function createIrcChannel(string $name): IrcChannel
     {
-        return new IrcChannel(new ChannelName($name), '', new DateTimeImmutable('@12345'));
+        return new IrcChannel(new ChannelName($name), '', new \DateTimeImmutable('@12345'));
     }
 }

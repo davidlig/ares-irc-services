@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Application\UseCase\ShowInfo;
 
-use DateTimeImmutable;
-
 final readonly class ChannelInfoView
 {
     public function __construct(
@@ -13,8 +11,8 @@ final readonly class ChannelInfoView
         public string $founderName,
         public ?string $successorName,
         public string $description,
-        public DateTimeImmutable $createdAt,
-        public ?DateTimeImmutable $lastUsedAt,
+        public \DateTimeImmutable $createdAt,
+        public ?\DateTimeImmutable $lastUsedAt,
         public ?string $url,
         public ?string $email,
         public ?string $topic,
@@ -27,11 +25,11 @@ final readonly class ChannelInfoView
         public bool $forbidden,
         public ?string $forbiddenReason,
         public bool $pendingDeletion,
-        public ?DateTimeImmutable $pendingDeletionAt,
-        public ?DateTimeImmutable $pendingDeletionUntil,
+        public ?\DateTimeImmutable $pendingDeletionAt,
+        public ?\DateTimeImmutable $pendingDeletionUntil,
         public bool $suspended,
         public ?string $suspendedReason,
-        public ?DateTimeImmutable $suspendedUntil,
+        public ?\DateTimeImmutable $suspendedUntil,
         public bool $ircopOnly = false,
         public bool $privateInfoDenied = false,
         public bool $verbose = true,

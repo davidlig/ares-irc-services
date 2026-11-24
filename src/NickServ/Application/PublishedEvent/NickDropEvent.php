@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\NickServ\Application\PublishedEvent;
 
 use App\NickServ\Application\Port\In\NickServEvent;
-use DateTimeImmutable;
 
 /**
  * Dispatched when a registered nickname is dropped (e.g. due to inactivity or manual DROP).
@@ -19,6 +18,6 @@ final readonly class NickDropEvent implements NickServEvent
         public string $nicknameLower,
         /** Reason for drop: e.g. 'inactivity', 'manual' */
         public string $reason,
-        public DateTimeImmutable $occurredAt,
+        public \DateTimeImmutable $occurredAt,
     ) {}
 }

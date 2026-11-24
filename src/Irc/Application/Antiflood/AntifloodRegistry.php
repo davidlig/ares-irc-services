@@ -84,8 +84,7 @@ final class AntifloodRegistry
             if ($now < $lockoutUntil) {
                 $remaining = $lockoutUntil - $now;
             } else {
-                unset($this->lockoutUntilByKey[$clientKey]);
-                unset($this->notifiedByKey[$clientKey]);
+                unset($this->lockoutUntilByKey[$clientKey], $this->notifiedByKey[$clientKey]);
             }
         }
 
@@ -122,9 +121,7 @@ final class AntifloodRegistry
             $isLockedOut = $now < $lockoutUntil;
 
             if ([] === $recent && !$isLockedOut) {
-                unset($this->timestampsByKey[$clientKey]);
-                unset($this->lockoutUntilByKey[$clientKey]);
-                unset($this->notifiedByKey[$clientKey]);
+                unset($this->timestampsByKey[$clientKey], $this->lockoutUntilByKey[$clientKey], $this->notifiedByKey[$clientKey]);
                 ++$removed;
             } else {
                 $this->timestampsByKey[$clientKey] = $recent;
@@ -133,8 +130,7 @@ final class AntifloodRegistry
 
         foreach ($this->lockoutUntilByKey as $clientKey => $lockoutUntil) {
             if ($now >= $lockoutUntil && !isset($this->timestampsByKey[$clientKey])) {
-                unset($this->lockoutUntilByKey[$clientKey]);
-                unset($this->notifiedByKey[$clientKey]);
+                unset($this->lockoutUntilByKey[$clientKey], $this->notifiedByKey[$clientKey]);
                 ++$removed;
             }
         }

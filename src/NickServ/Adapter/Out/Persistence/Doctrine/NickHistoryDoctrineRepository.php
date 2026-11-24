@@ -6,7 +6,6 @@ namespace App\NickServ\Adapter\Out\Persistence\Doctrine;
 
 use App\NickServ\Application\Port\Out\NickHistoryRepositoryInterface;
 use App\NickServ\Domain\Entity\NickHistory;
-use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 
 use function array_filter;
@@ -91,7 +90,7 @@ final readonly class NickHistoryDoctrineRepository implements NickHistoryReposit
         return is_numeric($result) ? (int) $result : 0;
     }
 
-    public function deleteOlderThan(DateTimeImmutable $threshold): int
+    public function deleteOlderThan(\DateTimeImmutable $threshold): int
     {
         $qb = $this->em->createQueryBuilder();
         $qb->delete(NickHistory::class, 'h')
