@@ -27,6 +27,7 @@ use Psr\Log\LoggerInterface;
 
 use function Amp\delay;
 use function fclose;
+use function preg_match;
 use function restore_error_handler;
 use function set_error_handler;
 use function socket_get_option;
@@ -382,7 +383,10 @@ final class KeepAliveSocketConnectorTest extends TestCase
             );
             self::fail('Expected the stalled address to time out.');
         } catch (ConnectException $error) {
-            self::assertMatchesRegularExpression('/@ tcp:\/\/127\.0\.0\.1:\d+ failed: timeout exceeded \(0\.3\d\d s\)/', $error->getMessage());
+            self::assertSame(1, preg_match('/@ tcp:\/\/127\.0\.0\.1:\d+ failed: timeout exceeded \((\d+\.\d+) s\)/', $error->getMessage(), $match));
+            // A fixed share would be 0.200 s; the time left after the quick refusal is almost 0.4 s.
+            self::assertGreaterThan(0.3, (float) $match[1]);
+            self::assertLessThanOrEqual(0.4, (float) $match[1]);
         } finally {
             foreach ($resources as $resource) {
                 fclose($resource);
