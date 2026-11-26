@@ -103,7 +103,7 @@
         "dresscode/dresscode": "^1.4",
         "nette/neon": "^4.0",
         "phpstan/phpstan": "^2.3.7",
-        "phpstan/phpstan-phpunit": "^2.1.2",
+        "phpstan/phpstan-phpunit": "^2.1.4",
         "phpunit/phpunit": "^13.4.8"
     }
 }
