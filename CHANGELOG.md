@@ -1,4 +1,4 @@
-## [2.6.0] - Unreleased
+## [2.6.0] - 2026-11-26
 
 ### Bug Fixes
 
@@ -64,14 +64,28 @@
 - Expired GLINE, MOTD and AKICK purges process rows in expiry order.
 - NickServ, ChanServ, MemoServ and OperServ compare nicknames and channel names with the casemapping the IRCd negotiates: on `ascii` networks `Foo[` and `Foo{` are different users and channels, on `rfc1459` networks they are the same. Stored lookup keys use the RFC 1459 fold, so a name whose RFC 1459 form is already registered cannot be registered again. AKICK matching follows the negotiated casemapping, so ChanServ agrees with the IRCd ban (no kick loop on `ascii` networks), and NickServ `INFO` shows the owner view only to the holder of an equivalent nickname. NickServ and ChanServ `LIST` sort by the folded key.
 
+### Performance
+
+- Batch NickServ, ChanServ, MemoServ, and OperServ database lookups during end-of-burst synchronization, netsplits, history/inbox listings, and operator/G-line queries to eliminate N+1 query patterns.
+- Cache operator permission snapshots, forbidden vhost patterns, active MOTDs, registered channel names during burst, and per-IRC-line lookups; defer ChanServ channel-activity writes and batch AKICK usage updates.
+- Evaluate ChanServ ranks only for affected joining/departing members, reconcile burst channel policies in pages, and coordinate end-of-burst reconciliation (`RemoteBurstEndedEvent`).
+- Bound maintenance sweeps in batches, clear the Doctrine identity map between batches, project registered nicknames as scalar arrays in DQL, and use bulk DQL deletes for expired G-line, MOTD, and AKICK purges.
+- Add database indexes for maintenance, email search, channel-founder, AKICK expiry, channel history, memo-ignore, and channel list mode queries (`Version20261111000001`).
+
 ### Improvements
 
 - Revolt 1.1 uses PHP 8.6's IoPoll driver with epoll on supported Linux systems.
 - Plain and TLS IRC uplinks use TCP keepalive and `TCP_USER_TIMEOUT` to detect a silently lost link in about two minutes, also when data is waiting for acknowledgement. `TCP_USER_TIMEOUT` needs `ext-sockets`.
 
+### Security
+
+- Update all 23 Symfony packages to `7.4.24` (alongside `doctrine/migrations` `3.10.0` and updated Composer dependencies), resolving 10 Symfony security advisories across `symfony/doctrine-bridge`, `symfony/framework-bundle`, `symfony/http-kernel`, `symfony/mailer`, `symfony/routing`, and `symfony/security-core`.
+
 ### Upgrade
 
-- Back up the database and run the migrations (`doctrine:migrations:migrate`). `Version20261114000001` rewrites `registered_nicks.nickname_lower`, `registered_channels.name_lower` and `service_nick_reservations.nickname_lower` with the RFC 1459 fold. It aborts without changing anything when two registered nicknames or two channels differ only by `[]\^` versus `{}|~`, and lists the conflicting names; drop or rename one of each listed pair before upgrading.
+- Back up the database and run the migrations (`doctrine:migrations:migrate`) before starting services:
+  - `Version20261111000001` adds the `registered_nicks.email_search_key` generated column (`LOWER(email)`), creates `migration_172_last_seen_backup`, backfills `last_seen_at` from `registered_at` where `last_seen_at` is `NULL`, adds indexes across `registered_channels`, `registered_nicks`, `channel_akick`, `channel_history`, and `memo_ignores`, and drops `idx_name_lower` on `registered_channels`. Index creation and table alterations can lock tables; plan maintenance accordingly.
+  - `Version20261114000001` rewrites `registered_nicks.nickname_lower`, `registered_channels.name_lower` and `service_nick_reservations.nickname_lower` with the RFC 1459 fold. It aborts without changing anything when two registered nicknames or two channels differ only by `[]\^` versus `{}|~`, and lists the conflicting names; drop or rename one of each listed pair before upgrading.
 - Production IRC logs now default to `info` and no longer include per-line debug traffic. Set `IRC_LOG_LEVEL=debug` to restore redacted incoming line logs.
 - PHP 8.6 or later is required. The Docker base image is now `php:8.6-cli-trixie` and includes `ext-sockets`; install `ext-sockets` on bare-metal hosts too. To roll back the event-loop driver, set `REVOLT_DRIVER=Revolt\EventLoop\Driver\StreamSelectDriver` as a real process or container environment variable; Revolt reads it with `getenv()`, so an entry in `.env` or `.env.local` has no effect.
 - On PHP 8.6, `trim()` also strips form feed (`\f`), so a form feed around command arguments, G-line masks, vhosts or SJOIN entries is now removed like other whitespace. Raw IRC lines keep the previous character list.
