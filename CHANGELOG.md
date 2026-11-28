@@ -1,3 +1,9 @@
+## [2.6.1] - 2026-11-28
+
+### Bug Fixes
+
+- `docker/sync-env.sh` no longer re-appends a comment block of `.env` to `.env.local` on every container start: the `NICKSERV_PASSWORD_COMPLEXITY` comment no longer contains `=` or regex metacharacters, so it is not mistaken for a commented variable assignment. Repeated syncs with the repository `.env` leave `.env.local` unchanged.
+
 ## [2.6.0] - 2026-11-26
 
 ### Bug Fixes
