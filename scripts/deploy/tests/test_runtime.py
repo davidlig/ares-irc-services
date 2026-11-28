@@ -49,6 +49,16 @@ class RuntimeTests(unittest.TestCase):
         self.assertEqual(before, self.local_file.read_bytes())
         self.assertIn("already up to date", repeated.stdout)
 
+    def test_repository_env_sync_is_idempotent(self):
+        self.env_file.write_text((ROOT / ".env").read_text())
+        first = self.run_sync()
+        self.assertEqual(0, first.returncode, first.stdout + first.stderr)
+        before = self.local_file.read_bytes()
+        second = self.run_sync()
+        self.assertEqual(0, second.returncode, second.stdout + second.stderr)
+        self.assertEqual(before, self.local_file.read_bytes())
+        self.assertIn("already up to date", second.stdout)
+
     def test_optional_variables_and_comments_are_preserved(self):
         self.env_file.write_text(
             "###> ares/irc-link ###\n# Optional description\n"
